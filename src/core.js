@@ -906,6 +906,24 @@ function createViewer(container, cfg0, loader) {
     scene, camera, renderer, controls, cfg, setCfg, setModel, loadBuffer, frame, getCameraState, setZoom,
     get model() { return model; }, get sea() { return sea; }, set onCfg(f) { onCfg = f; }, set onWalk(f) { onWalk = f; }, set onPick(f) { onPick = f; }, set pickOrbit(v) { pickOrbit = !!v; }, set onPresence(f) { onPresence = f; }, set onChat(f) { onChat = f; },
     setZones, zoneSelect, zonePickAt, getZones() { return zones.map(z => Object.assign({}, z)); }, set onZone(f) { onZone = f; }, set onNear(f) { onNear = f; },
+    captureTop(size = 320, hide = []) {
+      if (!model) return null;
+      const box = new THREE.Box3().setFromObject(model), c = box.getCenter(new THREE.Vector3()), sz = box.getSize(new THREE.Vector3());
+      const h = (Math.max(sz.x, sz.z) * 0.53) || 50, cv = renderer.domElement, W = cv.width, H = cv.height, a = W / H;
+      const cam = new THREE.OrthographicCamera(-h * a, h * a, h, -h, 1, (box.max.y - box.min.y) + 3000);
+      cam.position.set(c.x, box.max.y + 500, c.z); cam.up.set(0, 0, -1); cam.lookAt(c.x, 0, c.z);
+      cam.updateProjectionMatrix(); cam.updateMatrixWorld(true);
+      const hidden = [];
+      for (const o of [landing, zoneGroup, ...hide, ...[...P.peers.values()].map(q => q.g)]) if (o && o.visible) { o.visible = false; hidden.push(o); }
+      const fog = scene.fog; scene.fog = null;
+      renderer.render(scene, cam);
+      const out = document.createElement('canvas'); out.width = out.height = size;
+      const s = Math.min(W, H);
+      out.getContext('2d').drawImage(cv, (W - s) / 2, (H - s) / 2, s, s, 0, 0, size, size);
+      const url = out.toDataURL('image/jpeg', 0.82);
+      scene.fog = fog; hidden.forEach(o => { o.visible = true; }); dirty = true;
+      return url;
+    },
     getName() { return P.name; }, set onLanding(f) { onLanding = f; }, set onName(f) { onName = f; },
     spectate(on) { spectateOn = !!on; if (spectateOn) { if (cfg.presenceUrl && !P.ws) presenceConnect(); } else if (!walking) presenceDisconnect(); },
     sendChat(text) {

@@ -60,6 +60,8 @@ ZONES_JSON = "[]"
 SPECTATE = None
 PANEL = True
 ZONES_LIVE = ""
+MAP_JSON = "[]"
+MAP_URL = ""
 # <</DEFAULTS>>
 
 SEA_SIZE = 4000
@@ -127,6 +129,38 @@ def fix_presence_url(u):
     if fixed != u:
         print(f"[AVERTISSEMENT] 0.0.0.0 est une adresse d'écoute du serveur, pas une destination : remplacée par 127.0.0.1 -> {fixed}", file=sys.stderr)
     return fixed
+
+
+def clean_map(entries):
+    """Valide les régions de la carte des mondes (adresses http/https ou relatives uniquement, vignettes d'image uniquement)."""
+    def ival(v, lo=-1000, hi=1000):
+        try:
+            return max(lo, min(hi, int(float(v))))
+        except (TypeError, ValueError):
+            return 0
+    def okurl(u):
+        u = str(u or "").strip()[:600]
+        return u if u and (re.match(r"^https?://", u, re.I) or not re.match(r"^[a-z][a-z0-9+.\-]*:", u, re.I)) else ""
+    out, seen = [], set()
+    for i, r in enumerate(entries if isinstance(entries, list) else []):
+        if not isinstance(r, dict):
+            continue
+        name = str(r.get("name") or "").strip()[:60]
+        url = okurl(r.get("url"))
+        if not name or not url:
+            continue
+        thumb = str(r.get("thumb") or "")
+        if re.match(r"^data:image/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$", thumb):
+            thumb = thumb if len(thumb) <= 200000 else ""
+        else:
+            thumb = okurl(thumb) if thumb and not thumb.startswith("data:") else ""
+        rid = _slug(r.get("id") or name) or f"r{i + 1}"
+        while rid in seen:
+            rid += "-2"
+        seen.add(rid)
+        out.append({"id": rid, "name": name, "url": url, "x": ival(r.get("x")), "y": ival(r.get("y")),
+                    "spawn": _slug(r.get("spawn")), "room": re.sub(r"[^\w .\-]", "", str(r.get("room") or "")).strip()[:64], "thumb": thumb})
+    return out
 
 
 def find_beside(path):
@@ -203,7 +237,7 @@ MESHOPT_JS = r"""__MESHOPT_JS__"""
 def build_html(glb: bytes, name: str, vendor_dir=None, *, hole=HOLE_RADIUS, hole_fade=HOLE_FADE, hole_x=HOLE_X, hole_z=HOLE_Z, wave=WAVE_AMP,
                sea_y=SEA_Y, zoom=ZOOM_RATIO, cam_dir=CAM_DIR, target=TARGET, sea_enabled=SEA_ENABLED,
                anim_enabled=ANIM_ENABLED, retina=RETINA_ENABLED, foliage_cutout=FOLIAGE_CUTOUT,
-               sea_color=SEA_COLOR, sky_color=SKY_COLOR, sea_segments=SEA_SEGMENTS, walk=WALK_ENABLED, eye_height=EYE_HEIGHT, walk_speed=WALK_SPEED, walk_ignore=WALK_IGNORE, names=NAMES_ENABLED, presence_url=PRESENCE_URL, room=ROOM, chat=CHAT_ENABLED, chat_fade=CHAT_FADE, zones=None, profile=PROFILE, spectate=SPECTATE, panel=PANEL, zones_live=ZONES_LIVE, title=None) -> str:
+               sea_color=SEA_COLOR, sky_color=SKY_COLOR, sea_segments=SEA_SEGMENTS, walk=WALK_ENABLED, eye_height=EYE_HEIGHT, walk_speed=WALK_SPEED, walk_ignore=WALK_IGNORE, names=NAMES_ENABLED, presence_url=PRESENCE_URL, room=ROOM, chat=CHAT_ENABLED, chat_fade=CHAT_FADE, zones=None, profile=PROFILE, spectate=SPECTATE, panel=PANEL, zones_live=ZONES_LIVE, map_entries=None, map_url=MAP_URL, title=None) -> str:
     used = inspect_glb(glb, name)
     presence_url = fix_presence_url(presence_url)
     need_draco = "KHR_draco_mesh_compression" in used
@@ -233,7 +267,8 @@ def build_html(glb: bytes, name: str, vendor_dir=None, *, hole=HOLE_RADIUS, hole
         "foliageCutout": float(foliage_cutout), "seaSize": SEA_SIZE, "seaSegments": int(sea_segments),
         "seaColor": int(sea_color), "skyColor": int(sky_color),
         "walk": bool(walk), "eyeHeight": float(eye_height), "walkSpeed": float(walk_speed), "walkIgnore": str(walk_ignore),
-        "names": bool(names), "chat": bool(chat), "profile": profile, "version": VERSION, "panel": bool(panel), "zonesLive": str(zones_live or ""), "spectate": bool(presence_url) if spectate is None else bool(spectate),
+        "names": bool(names), "chat": bool(chat), "profile": profile, "version": VERSION, "panel": bool(panel), "zonesLive": str(zones_live or ""),
+        "map": clean_map(json.loads(MAP_JSON) if map_entries is None else map_entries), "mapUrl": str(map_url or "")[:600], "spectate": bool(presence_url) if spectate is None else bool(spectate),
         "zones": clean_zones(json.loads(ZONES_JSON) if zones is None else zones, profile), "chatFade": float(chat_fade), "presenceUrl": str(presence_url), "room": str(room) or pathlib.Path(name).stem,
     }
     title = title or f"{pathlib.Path(name).stem} - trou {hole:g} amp {wave:g} y {sea_y:g} zoom {zoom:.2f}"
@@ -328,6 +363,8 @@ def main():
     ap.add_argument("--profile", choices=("public", "perso"), default=PROFILE, help="public : retire les zones privées (ex. Home Assistant) ; perso : les garde")
     ap.add_argument("--spectate", action=argparse.BooleanOptionalAction, default=SPECTATE, help="voir les visiteurs en promenade depuis la vue globale (se connecte dès l'ouverture de la page ; actif par défaut dès qu'une --presence-url est donnée ; --no-spectate pour l'éviter)")
     ap.add_argument("--panel", action=argparse.BooleanOptionalAction, default=PANEL, help="panneau de réglages pour les visiteurs (haute résolution, mer animée, force des vagues), bouton en haut à droite")
+    ap.add_argument("--map", type=pathlib.Path, help="fichier regions.json (carte des mondes : nom, adresse, position, vignette) exporté par le viewer ; chemin relatif : dossier de lancement, puis dossier du script")
+    ap.add_argument("--map-url", default=MAP_URL, help="adresse d'un regions.json partagé que la page relit à chaque ouverture (http/https) ; la carte intégrée sert de secours")
     ap.add_argument("--room", default=ROOM, help="salon de présence (défaut : nom du fichier)")
     ap.add_argument("--sea", dest="sea_enabled", action=argparse.BooleanOptionalAction, default=SEA_ENABLED)
     ap.add_argument("--anim", dest="anim_enabled", action=argparse.BooleanOptionalAction, default=ANIM_ENABLED)
@@ -336,6 +373,16 @@ def main():
     ap.add_argument("--vendor", type=pathlib.Path, help="racine d'un paquet npm three local (sinon cache + téléchargement)")
     a = ap.parse_args()
 
+    map_arg = None
+    if a.map:
+        mf = find_beside(a.map)
+        if mf is None:
+            sys.exit(f"[ERREUR] {a.map} introuvable (cherché dans {pathlib.Path.cwd()} puis dans {pathlib.Path(__file__).resolve().parent})")
+        try:
+            map_arg = json.loads(mf.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as e:
+            sys.exit(f"[ERREUR] {mf} illisible ({e})")
+        print(f"[carte] {len(clean_map(map_arg))} région(s) lue(s) dans {mf}")
     zones_arg = None
     if a.zones:
         zf = find_beside(a.zones)
@@ -349,7 +396,7 @@ def main():
 
     kw = dict(hole=clamp(a.hole, 30, 600), hole_fade=max(0.0, a.hole_fade), hole_x=a.hole_x, hole_z=a.hole_z, wave=clamp(a.wave, 0, 10),
               sea_y=clamp(a.sea_y, -150, 60), zoom=clamp(a.zoom, 0.05, 100), cam_dir=a.cam_dir, target=a.target,
-              foliage_cutout=clamp(a.foliage_cutout, 0, 1), sea_color=a.sea_color, sky_color=a.sky_color, sea_segments=int(clamp(a.sea_segments, 8, 1000)), walk=a.walk, walk_ignore=a.walk_ignore, zones_live=a.zones_live or "", names=a.names, presence_url=a.presence_url, room=a.room, chat=a.chat, chat_fade=clamp(a.chat_fade, 0, 3600), zones=zones_arg, profile=a.profile, spectate=a.spectate, panel=a.panel, eye_height=clamp(a.eye_height, 0.3, 5), walk_speed=clamp(a.walk_speed, 0.5, 30),
+              foliage_cutout=clamp(a.foliage_cutout, 0, 1), sea_color=a.sea_color, sky_color=a.sky_color, sea_segments=int(clamp(a.sea_segments, 8, 1000)), walk=a.walk, walk_ignore=a.walk_ignore, zones_live=a.zones_live or "", map_entries=map_arg, map_url=a.map_url, names=a.names, presence_url=a.presence_url, room=a.room, chat=a.chat, chat_fade=clamp(a.chat_fade, 0, 3600), zones=zones_arg, profile=a.profile, spectate=a.spectate, panel=a.panel, eye_height=clamp(a.eye_height, 0.3, 5), walk_speed=clamp(a.walk_speed, 0.5, 30),
               sea_enabled=a.sea_enabled, anim_enabled=a.anim_enabled, retina=a.retina, title=a.title)
 
     if a.zones_live and not a.input and str(a.zones_live).lower().endswith((".glb", ".gltf")):

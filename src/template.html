@@ -9,8 +9,8 @@
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#__SKY_HEX__}
 #view{position:fixed;inset:0}
 canvas{display:block;touch-action:none}
-#walkBtn,#helpBtn,#walkHint{font:12px/1.4 ui-monospace,Consolas,monospace;background:#fffffff0;color:#000;border:1px solid #000;border-radius:6px;padding:7px 10px}
-#walkBtn,#helpBtn{cursor:pointer}
+#walkBtn,#helpBtn,#mapBtn,#walkHint{font:12px/1.4 ui-monospace,Consolas,monospace;background:#fffffff0;color:#000;border:1px solid #000;border-radius:6px;padding:7px 10px}
+#walkBtn,#helpBtn,#mapBtn{cursor:pointer}
 #bar{position:fixed;left:12px;bottom:12px;display:flex;gap:8px}
 #presence,#nameTag{position:fixed;font:12px/1.4 ui-monospace,Consolas,monospace;background:#fffffff0;color:#000;border:1px solid #000;border-radius:6px;padding:7px 10px}
 #presence{left:12px;top:12px}
@@ -21,6 +21,16 @@ canvas{display:block;touch-action:none}
 #chatHelp{margin-top:4px;background:#000;color:#fff;border-radius:6px;padding:4px 8px}
 #chatInput{box-sizing:border-box;width:100%;margin-top:6px;font:inherit;padding:6px;border:2px solid #000;border-radius:6px}
 #nameTag{pointer-events:none;max-width:320px}
+#mapOverlay{position:fixed;inset:0;z-index:45;background:#000c;display:grid;place-items:center}
+#mapBox{background:#fff;color:#000;border:2px solid #000;border-radius:10px;padding:14px 16px;max-width:min(980px,94%);max-height:90%;overflow:auto;font:13px/1.4 ui-monospace,Consolas,monospace}
+#mapBox h2{margin:0 0 10px;font-size:15px}
+#mapGrid{display:grid;gap:10px;justify-content:start;margin-bottom:10px}
+.mapTile{display:flex;flex-direction:column;gap:4px;width:160px;padding:6px;border:2px solid #000;border-radius:8px;background:#fff;cursor:pointer;font:inherit;text-align:left;color:#000}
+.mapTile:hover{background:#eee}
+.mapTile.here{border-width:5px;cursor:default}
+.mapTile img,.mapTile .ph{width:100%;aspect-ratio:1;object-fit:cover;background:#ccc;border:1px solid #000;display:block}
+.mapTile b{word-break:break-word}
+#mapClose{font:inherit;padding:6px 14px;border:2px solid #000;border-radius:6px;background:#fff;cursor:pointer}
 #opts{position:fixed;top:12px;right:12px;z-index:20;font:12px/1.4 ui-monospace,Consolas,monospace;color:#000;text-align:right}
 #optsBtn{font:inherit;background:#fffffff0;border:1px solid #000;border-radius:6px;padding:6px 10px;cursor:pointer}
 #optsPanel{margin-top:6px;background:#fffffff0;border:1px solid #000;border-radius:6px;padding:8px 12px;text-align:left}
@@ -48,6 +58,7 @@ __IMPORTMAP__
 <div id="view"></div>
 <div id="msg">Chargement…</div>
 <div id="opts"><button id="optsBtn" hidden>Réglages</button><div id="optsPanel" hidden></div></div>
+<div id="mapOverlay" hidden><div id="mapBox"><h2>Carte des mondes</h2><div id="mapGrid"></div><button id="mapClose">Fermer (Échap)</button></div></div>
 <div id="nameTag" hidden></div>
 <div id="toast" hidden></div>
 <div id="zonePrompt" hidden></div>
@@ -55,7 +66,7 @@ __IMPORTMAP__
 <div id="modal" hidden><div><span id="modalText"></span><br><button class="ok" id="modalYes">Oui</button><button id="modalNo">Annuler</button></div></div>
 <div id="chat" hidden><div id="chatLog"></div><div id="chatHelp"></div><input id="chatInput" maxlength="200" placeholder="Message : Entrée pour envoyer, Échap pour annuler" hidden></div>
 <div id="presence" hidden>Pseudo : <input id="presenceName" maxlength="24" placeholder="Visiteur"><div id="presenceStatus"></div></div>
-<div id="bar"><button id="walkBtn" hidden></button><button id="helpBtn" hidden></button></div>
+<div id="bar"><button id="walkBtn" hidden></button><button id="helpBtn" hidden></button><button id="mapBtn" hidden>Carte (M)</button></div>
 <div id="walkHint" hidden></div>
 <script type="application/json" id="cfg">__CONFIG__</script>
 <script type="application/octet-stream" id="glb">__GLB_B64__</script>
@@ -138,6 +149,65 @@ if ((C.zones || []).length || C.zonesLive) {
 } else if (arrival) {
   arrive = async () => { if (C.walk) viewer.walkStart(); setTimeout(() => fade.classList.remove('on'), 150); };
 }
+if ((C.map || []).length || C.mapUrl) {
+  let MAP = (C.map || []).slice();
+  const ov = document.getElementById('mapOverlay'), grid = document.getElementById('mapGrid'), mb = document.getElementById('mapBtn');
+  const counts = {}; let known = false, tm = 0;
+  const norm = u => { try { const x = new URL(u, location.href); x.hash = ''; return x.href; } catch (e) { return ''; } };
+  const here = r => (r.room && r.room === C.room) || (r.url && norm(r.url) === norm(location.href));
+  const okMapUrl = u => { try { const x = new URL(u, location.href); return (x.protocol === 'http:' || x.protocol === 'https:' || (location.protocol === 'file:' && x.protocol === 'file:')) ? x : null; } catch (e) { return null; } };
+  const safeThumb = t => typeof t === 'string' && (/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+$/.test(t) || (!/^[a-z][a-z0-9+.-]*:/i.test(t) || /^https?:/i.test(t)));
+  const go = r => {
+    const u = okMapUrl(r.url); if (!u) return toast('Adresse invalide : ' + r.name);
+    u.hash = 'spawn=' + encodeURIComponent(r.spawn || 'default') + '&name=' + encodeURIComponent(viewer.getName() || 'Visiteur');
+    close(); fade.classList.add('on'); setTimeout(() => { location.href = u.href; }, 480);
+  };
+  const draw = () => {
+    grid.textContent = '';
+    const list = MAP.filter(r => r && r.name);
+    const xs = list.map(r => r.x | 0), ys = list.map(r => r.y | 0);
+    const keys = new Set(list.map(r => (r.x | 0) + ',' + (r.y | 0)));
+    const placed = list.length > 0 && keys.size === list.length && (Math.max(...xs) - Math.min(...xs)) < 14 && (Math.max(...ys) - Math.min(...ys)) < 14;
+    if (placed) grid.style.gridTemplateColumns = 'repeat(' + (Math.max(...xs) - Math.min(...xs) + 1) + ', 160px)'; else grid.style.gridTemplateColumns = 'repeat(auto-fill, 160px)';
+    for (const r of list) {
+      const t = document.createElement('button'); t.className = 'mapTile' + (here(r) ? ' here' : '');
+      if (placed) { t.style.gridColumn = String((r.x | 0) - Math.min(...xs) + 1); t.style.gridRow = String((r.y | 0) - Math.min(...ys) + 1); }
+      if (r.thumb && safeThumb(r.thumb)) { const im = document.createElement('img'); im.src = r.thumb; im.alt = ''; im.referrerPolicy = 'no-referrer'; t.append(im); } else { const ph = document.createElement('div'); ph.className = 'ph'; t.append(ph); }
+      const b = document.createElement('b'); b.textContent = r.name; t.append(b);
+      const s = document.createElement('span');
+      const n = counts[r.room || ''];
+      s.textContent = (here(r) ? '● vous êtes ici' : 'visiter →') + (known && r.room ? ' · ' + (n || 0) + ' en promenade' : '');
+      t.append(s);
+      t.onclick = () => { if (here(r)) close(); else go(r); };
+      grid.append(t);
+    }
+    if (!list.length) grid.textContent = 'Aucune région dans la carte.';
+  };
+  const fetchCounts = () => {
+    if (!C.presenceUrl) return;
+    try {
+      const ws = new WebSocket(String(C.presenceUrl).replace(/^(wss?:\/\/)0\.0\.0\.0(?=[:/]|$)/i, (m, p) => p + '127.0.0.1')); const to = setTimeout(() => { try { ws.close(); } catch (e) {} }, 4000);
+      ws.onopen = () => ws.send(JSON.stringify({ t: 'rooms' }));
+      ws.onmessage = ev => { try { const m = JSON.parse(ev.data); if (m.t === 'rooms') { for (const k in counts) delete counts[k]; Object.assign(counts, m.rooms || {}); known = true; draw(); } } catch (e) {} try { ws.close(); } catch (e) {} };
+      ws.onclose = () => clearTimeout(to); ws.onerror = () => {};
+    } catch (e) {}
+  };
+  function close() { ov.hidden = true; clearInterval(tm); }
+  const open = () => { if (document.pointerLockElement && document.exitPointerLock) document.exitPointerLock(); ov.hidden = false; draw(); fetchCounts(); clearInterval(tm); tm = setInterval(fetchCounts, 8000); };
+  mb.hidden = false; mb.onclick = () => (ov.hidden ? open() : close());
+  document.getElementById('mapClose').onclick = close;
+  ov.addEventListener('click', e => { if (e.target === ov) close(); });
+  addEventListener('keydown', e => {
+    const n = e.target && e.target.tagName;
+    if (e.code === 'KeyM' && !e.repeat && n !== 'INPUT' && n !== 'TEXTAREA') (ov.hidden ? open() : close());
+    else if (e.code === 'Escape' && !ov.hidden) close();
+  });
+  if (C.mapUrl && /^https?:$/.test(location.protocol)) {
+    fetch(new URL(C.mapUrl, location.href).href, { cache: 'no-store' }).then(r => r.ok ? r.json() : Promise.reject(new Error('http ' + r.status)))
+      .then(list => { if (Array.isArray(list)) { MAP = list.filter(r => r && typeof r.name === 'string' && typeof r.url === 'string').map(r => ({ id: String(r.id || '').slice(0, 40), name: r.name.slice(0, 60), url: r.url.slice(0, 600), x: Number(r.x) | 0, y: Number(r.y) | 0, spawn: String(r.spawn || '').slice(0, 40), room: String(r.room || '').slice(0, 64), thumb: safeThumb(r.thumb) ? String(r.thumb).slice(0, 200000) : '' })); if (!ov.hidden) draw(); } })
+      .catch(() => {});
+  }
+}
 if (C.panel !== false) {
   const ob = document.getElementById('optsBtn'), op = document.getElementById('optsPanel');
   const key = 'glb2html_opts_' + (C.room || 'x');
@@ -171,9 +241,9 @@ if (C.walk) {
   wb.hidden = false; wb.textContent = 'Promenade (F)';
   const on = !!C.presenceUrl;
   const walkKeys = ['ZQSD / WASD / flèches : marcher', 'Maj : courir', 'Espace : sauter', 'clic dans la vue puis souris : regarder', 'double-clic : se téléporter']
-    .concat(C.names ? ['clic : nom de l\'élément'] : [], (C.chat && on) ? ['Entrée : écrire un message'] : [], ((C.zones && C.zones.length) || C.zonesLive) ? ['clic ou E : panneaux et portails'] : [], ['H : masquer cette aide', 'F : quitter']).join(' · ');
+    .concat(C.names ? ['clic : nom de l\'élément'] : [], (C.chat && on) ? ['Entrée : écrire un message'] : [], ((C.zones && C.zones.length) || C.zonesLive) ? ['clic ou E : panneaux et portails'] : [], (((C.map || []).length || C.mapUrl) ? ['M : carte des mondes'] : []), ['H : masquer cette aide', 'F : quitter']).join(' · ');
   const orbitKeys = ['glisser : tourner', 'molette : zoom', 'clic droit + glisser : déplacer']
-    .concat(['double-clic : choisir le point d\'atterrissage (cercle au sol)'], C.names ? ['clic : nom de l\'élément'] : [], ((C.zones && C.zones.length) || C.zonesLive) ? ['clic : panneaux et portails'] : [], ['H : masquer cette aide', 'F : entrer en promenade']).join(' · ');
+    .concat(['double-clic : choisir le point d\'atterrissage (cercle au sol)'], C.names ? ['clic : nom de l\'élément'] : [], ((C.zones && C.zones.length) || C.zonesLive) ? ['clic : panneaux et portails'] : [], (((C.map || []).length || C.mapUrl) ? ['M : carte des mondes'] : []), ['H : masquer cette aide', 'F : entrer en promenade']).join(' · ');
   const feat = 'Cette page — réglages visiteur : ' + (C.panel !== false ? 'oui (bouton en haut à droite)' : 'non') + ' · présence : ' + (on ? 'oui (salon ' + C.room + ')' : 'non (option --presence-url)') + ' · chat : ' + (on && C.chat ? 'oui' : 'non') + ' · vue globale : ' + (on && C.spectate ? 'oui' : 'non' + (on ? ' (option --spectate)' : '')) + ' · noms au clic : ' + (C.names ? 'oui' : 'non (option --names)') + ' · glb2html ' + (C.version || '?');
   const l1 = document.createElement('div'), l2 = document.createElement('div');
   l2.style.cssText = 'font-size:11px;margin-top:4px;opacity:.85'; l2.textContent = feat; wh.append(l1, l2);

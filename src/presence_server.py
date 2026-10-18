@@ -457,6 +457,10 @@ async def handler(ws):
         PER_IP[ip] = PER_IP.get(ip, 0) + 1
         counted = True
         msg = json.loads(await asyncio.wait_for(ws.recv(), 10))
+        if isinstance(msg, dict) and msg.get("t") == "rooms":
+            await ws.send(json.dumps({"t": "rooms", "rooms": {name: len(walkers(name)) for name in ROOMS if walkers(name)},
+                                      "spectators": sum(1 for p in all_peers() if p.spectator)}, separators=(",", ":")))
+            return
         if not isinstance(msg, dict) or msg.get("t") != "hello":
             return
         room = clean_room(msg.get("room"))

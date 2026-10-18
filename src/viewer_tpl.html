@@ -78,6 +78,7 @@ small{display:block;margin-top:8px;color:#333}
 <input id="fGlb" type="file" accept=".glb" hidden>
 <input id="fDir" type="file" webkitdirectory multiple hidden>
 <input id="fZones" type="file" accept=".json,application/json" hidden>
+<input id="fMap" type="file" accept=".json,application/json" hidden>
 <script type="application/json" id="libs">__LIBS_JSON__</script>
 <script type="module">
 import * as THREE from 'three';
@@ -124,7 +125,7 @@ function inspectGlb(buf, name = 'fichier') {
 // ---------- état
 const DEF = {
   hole: 180, holeFade: 60, holeX: 0, holeZ: 0, guide: true, wave: 0.5, seaY: -50, zoom: 1, camDir: [0, 0.25, 1], target: [0, 15, 0],
-  sea: true, anim: false, retina: false, foliageCutout: 0.12, seaSize: 4000, seaSegments: 400, walk: true, eyeHeight: 1.7, walkSpeed: 3.5, walkIgnore: 'door, porte', ignoreViz: false, zones: [], profile: 'perso', spectate: true, panel: true, names: false, chat: true, chatFade: 0, presenceUrl: '', room: '',
+  sea: true, anim: false, retina: false, foliageCutout: 0.12, seaSize: 4000, seaSegments: 400, walk: true, eyeHeight: 1.7, walkSpeed: 3.5, walkIgnore: 'door, porte', ignoreViz: false, zones: [], profile: 'perso', spectate: true, panel: true, map: [], mapUrl: '', names: false, chat: true, chatFade: 0, presenceUrl: '', room: '',
   seaColor: 0x3A9AD9, skyColor: 0x87CEEB
 };
 const viewer = createViewer(document.getElementById('view'), DEF, makeLoader());
@@ -176,9 +177,13 @@ const ROWS = [
   ['presinfo'],
   ['chatbox'],
   ['sec', 'Zones : panneaux, portails, liens, commandes'],
-  ['zones']
+  ['zones'],
+  ['sec', 'Carte des mondes'],
+  ['mapui'],
+  ['txt', 'mapUrl', 'Adresse d\'un regions.json partagé (facultatif)', 'https://monsite/regions.json']
 ];
 let loadedName = '';
+let thisReg = { name: '', url: '', x: 0, y: 0, spawn: 'default', thumb: '' };
 let chatLines = [], eraseMode = false, ignoreStack = [], zoneAddMode = false, zoneSel = null;
 let placeMode = false, lastPick = null, myName = '', presLast = { state: 'off', count: 0 };
 const sync = {};
@@ -188,6 +193,11 @@ function buildRows() {
 rows.innerHTML = '';
 for (const r of ROWS) {
   if (r[0] === 'sec') { add('<h2>' + r[1] + '</h2>'); continue; }
+  if (r[0] === 'mapui') {
+    const box = add('<div id="mapUi"></div>');
+    renderMapUi();
+    continue;
+  }
   if (r[0] === 'zones') {
     const box = add('<div id="zonesBox"></div>');
     box.innerHTML = '<div class="row"><label>Type à poser</label><select id="zNewType" style="grid-column:1/-1;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;width:100%"><option value="portal">Portail (changer de région)</option><option value="url">Panneau : lien web</option><option value="ha">Panneau : commande Home Assistant</option><option value="spawn">Point d\'arrivée</option></select></div>' +
@@ -505,6 +515,14 @@ $('fZones').onchange = async e => {
   try { const list = JSON.parse(await f.text()); if (!Array.isArray(list)) throw new Error('tableau attendu'); zoneSel = null; zonesSync(list, true); setStatus('Zones importées : ' + cfg.zones.length); }
   catch (err) { setStatus('Import impossible : ' + err.message); }
 };
+$('fMap').onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  try {
+    const list = JSON.parse(await f.text()); if (!Array.isArray(list)) throw new Error('tableau attendu');
+    cfg.map = list.filter(r => r && typeof r.name === 'string' && typeof r.url === 'string').map(r => ({ id: String(r.id || ''), name: r.name, url: r.url, x: parseInt(r.x, 10) || 0, y: parseInt(r.y, 10) || 0, spawn: String(r.spawn || ''), room: String(r.room || ''), thumb: typeof r.thumb === 'string' ? r.thumb : '' }));
+    renderMapUi(); setStatus('Carte importée : ' + cfg.map.length + ' région(s)');
+  } catch (err) { setStatus('Import impossible : ' + err.message); }
+};
 $('bGlb').onclick = () => $('fGlb').click();
 $('bDir').onclick = () => $('fDir').click();
 $('fGlb').onchange = e => { if (e.target.files.length) openFiles(e.target.files); e.target.value = ''; };
@@ -621,6 +639,58 @@ function b64(u8) {
 const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const r6 = v => Math.round(v * 1e6) / 1e6;
 const rep = (s, k, v) => s.split(k).join(v);
+// ---------- carte des mondes
+function renderMapUi() {
+  const host = $('mapUi'); if (!host) return;
+  host.textContent = '';
+  const mk = (tag, props, css) => { const e = Object.assign(document.createElement(tag), props || {}); if (css) e.style.cssText = css; return e; };
+  const INP = 'font:inherit;padding:3px;border:1px solid #000;border-radius:4px;width:100%';
+  const field = (label, value, type, onchange) => {
+    const w = mk('div', { className: 'row' }); w.append(mk('label', { textContent: label }));
+    const i = mk('input', { type: type || 'text', value: value === undefined ? '' : value }, INP + ';grid-column:1/-1');
+    i.onchange = () => onchange(type === 'number' ? (parseInt(i.value, 10) || 0) : i.value.trim()); w.append(i); return w;
+  };
+  host.append(mk('small', { textContent: 'Chaque page peut afficher la carte des régions (touche M). Remplis la fiche de CETTE région, capture sa vignette, ajoute-la, puis exporte regions.json pour les autres pages.' }));
+  if (!thisReg.name) thisReg.name = baseName === 'scene' ? '' : baseName;
+  host.append(field('Nom de cette région', thisReg.name, 'text', v => { thisReg.name = v; }));
+  host.append(field('Adresse publique de cette page', thisReg.url, 'text', v => { thisReg.url = v; }));
+  host.append(field('Position sur la grille : X', thisReg.x, 'number', v => { thisReg.x = v; }));
+  host.append(field('Position sur la grille : Y', thisReg.y, 'number', v => { thisReg.y = v; }));
+  host.append(field('Point d\'arrivée des visiteurs (identifiant)', thisReg.spawn, 'text', v => { thisReg.spawn = v || 'default'; }));
+  host.append(mk('small', { textContent: 'Salon de présence de cette région : ' + (cfg.room || baseName) }));
+  const prev = mk('img', { alt: '', src: thisReg.thumb || '' }, 'width:100%;aspect-ratio:1;object-fit:cover;border:1px solid #000;margin-top:6px;display:' + (thisReg.thumb ? 'block' : 'none'));
+  host.append(prev);
+  const b1 = mk('div', { className: 'btns' });
+  const cap = mk('button', { textContent: 'Capturer la vignette (vue du dessus)' });
+  cap.onclick = () => { if (!viewer.model) return setStatus('Charge d\'abord un modèle'); thisReg.thumb = viewer.captureTop(320, [guide, vizGroup]); prev.src = thisReg.thumb; prev.style.display = 'block'; setStatus('Vignette capturée'); };
+  const add = mk('button', { textContent: 'Ajouter / mettre à jour cette région dans la carte' });
+  add.onclick = () => {
+    if (!thisReg.name || !thisReg.url) return setStatus('Indique le nom et l\'adresse publique de la région');
+    const room = cfg.room || baseName, e = { id: room.toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '') || 'region', name: thisReg.name, url: thisReg.url, x: thisReg.x, y: thisReg.y, spawn: thisReg.spawn, room, thumb: thisReg.thumb };
+    const list = (cfg.map || []).filter(r => r.room !== room); list.push(e); cfg.map = list; setStatus('Carte : ' + list.length + ' région(s)'); renderMapUi();
+  };
+  b1.append(cap, add); host.append(b1);
+  (cfg.map || []).forEach((r, idx) => {
+    const d = mk('details', {}, 'border:1px solid #000;border-radius:6px;padding:4px 8px;margin:6px 0');
+    const s = mk('summary', { textContent: r.name + '  (' + r.x + ', ' + r.y + ')' + (r.room === (cfg.room || baseName) ? '  ● cette région' : '') }, 'cursor:pointer'); d.append(s);
+    if (r.thumb) d.append(mk('img', { src: r.thumb, alt: '' }, 'width:96px;height:96px;object-fit:cover;border:1px solid #000;margin:4px 0;display:block'));
+    const upd = patch => { cfg.map[idx] = Object.assign({}, cfg.map[idx], patch); };
+    d.append(field('Nom', r.name, 'text', v => { upd({ name: v }); renderMapUi(); }));
+    d.append(field('Adresse de la page', r.url, 'text', v => upd({ url: v })));
+    d.append(field('X', r.x, 'number', v => { upd({ x: v }); renderMapUi(); }));
+    d.append(field('Y', r.y, 'number', v => { upd({ y: v }); renderMapUi(); }));
+    d.append(field('Point d\'arrivée (identifiant)', r.spawn, 'text', v => upd({ spawn: v })));
+    d.append(field('Salon de présence', r.room, 'text', v => upd({ room: v })));
+    const del = mk('button', { textContent: 'Retirer de la carte' }); del.onclick = () => { cfg.map.splice(idx, 1); renderMapUi(); };
+    const bw = mk('div', { className: 'btns' }); bw.append(del); d.append(bw); host.append(d);
+  });
+  if (!(cfg.map || []).length) host.append(mk('small', { textContent: 'Aucune région dans la carte pour le moment.' }));
+  const b2 = mk('div', { className: 'btns' });
+  const exp = mk('button', { textContent: 'Exporter regions.json' }); exp.onclick = () => download('regions.json', new Blob([JSON.stringify(cfg.map || [], null, 1)], { type: 'application/json' }));
+  const imp = mk('button', { textContent: 'Importer regions.json' }); imp.onclick = () => $('fMap').click();
+  b2.append(exp, imp); host.append(b2);
+}
+
 // ---------- récapitulatif : ligne de commande pour glb2html.py
 function buildCommand() {
   const q = s => "'" + String(s).replace(/'/g, "''") + "'";
@@ -646,6 +716,8 @@ function buildCommand() {
   if (cfg.room) a.push('--room ' + q(cfg.room));
   sw('--chat', '--no-chat', cfg.chat, DEF.chat); num('--chat-fade', cfg.chatFade, DEF.chatFade);
   if (cfg.presenceUrl && !cfg.spectate) a.push('--no-spectate');
+  if ((cfg.map || []).length) a.push('--map ' + q('regions.json'));
+  if (cfg.mapUrl) a.push('--map-url ' + q(cfg.mapUrl));
   const hasZones = (cfg.zones || []).length > 0;
   if (hasZones) { a.push('--zones ' + q('zones.json')); if ($('profileSel').value === 'perso') a.push('--profile perso'); }
   const script = $('cmdScript').value.trim() || 'glb2html.py', glb = $('cmdGlb').value.trim() || loadedName || 'fichier.glb';
@@ -653,6 +725,7 @@ function buildCommand() {
   if (dest) a.unshift('-o ' + q(dest));
   const cmd = ['python', q(script), q(glb)].concat(a).join(' ');
   const notes = [];
+  if ((cfg.map || []).length) notes.push('Carte : clique sur « Exporter regions.json » (section Carte des mondes) et place regions.json à côté de glb2html.py (ou dans le dossier de lancement).');
   if (hasZones) notes.push('Zones : clique d\'abord sur « Exporter zones (.json) » (section Zones) et place zones.json à côté de glb2html.py (ou dans le dossier où tu lances la commande), ou corrige son chemin.' + ($('profileSel').value === 'perso' ? '' : ' Profil public : les zones privées sont retirées.'));
   if (!a.length) notes.push('Aucun réglage ne diffère des valeurs par défaut du script.');
   notes.push(a.length + ' option(s) ajoutée(s). Les options absentes gardent la valeur par défaut du script.');
@@ -679,6 +752,7 @@ function liveConfig() {
     seaSize: cfg.seaSize, seaSegments: cfg.seaSegments, seaColor: cfg.seaColor, skyColor: cfg.skyColor,
     spectate: cfg.spectate, panel: cfg.panel,
     version: '__VERSION__',
+    map: cfg.map || [], mapUrl: cfg.mapUrl || '',
     zones: (cfg.zones || []).filter(z => $('profileSel').value === 'perso' || !z.private), profile: $('profileSel').value,
     walk: cfg.walk, eyeHeight: cfg.eyeHeight, walkSpeed: cfg.walkSpeed, walkIgnore: cfg.walkIgnore,
     names: cfg.names, chat: cfg.chat, chatFade: cfg.chatFade, presenceUrl: cfg.presenceUrl, room: cfg.room || baseName
@@ -716,7 +790,7 @@ $('bPy').onclick = () => {
     'HOLE_RADIUS = ' + n(c.hole) + '\nHOLE_FADE = ' + n(c.holeFade) + '\nHOLE_X = ' + n(c.holeX) + '\nHOLE_Z = ' + n(c.holeZ) + '\nWAVE_AMP = ' + n(c.wave) + '\nSEA_Y = ' + n(c.seaY) +
     '\nZOOM_RATIO = ' + n(c.zoom) + '\nCAM_DIR = ' + t(c.camDir) + '\nTARGET = ' + t(c.target) +
     '\nSEA_ENABLED = ' + B(c.sea) + '\nANIM_ENABLED = ' + B(c.anim) + '\nRETINA_ENABLED = ' + B(c.retina) +
-    '\nFOLIAGE_CUTOUT = ' + n(c.foliageCutout) + '\nSEA_COLOR = ' + col(c.seaColor) + '\nSKY_COLOR = ' + col(c.skyColor) + '\nSEA_SEGMENTS = ' + Math.round(c.seaSegments) + '\nWALK_ENABLED = ' + B(c.walk) + '\nEYE_HEIGHT = ' + n(c.eyeHeight) + '\nWALK_SPEED = ' + n(c.walkSpeed) + '\nWALK_IGNORE = ' + JSON.stringify(c.walkIgnore) + '\nNAMES_ENABLED = ' + B(c.names) + '\nCHAT_ENABLED = ' + B(c.chat) + '\nCHAT_FADE = ' + n(c.chatFade) + '\nSPECTATE = ' + B(c.spectate) + '\nPANEL = ' + B(c.panel) + '\nPROFILE = ' + JSON.stringify($('profileSel').value) + '\nZONES_JSON = ' + JSON.stringify(JSON.stringify(cfg.zones || [])) + '\nPRESENCE_URL = ' + JSON.stringify(c.presenceUrl) + '\nROOM = ' + JSON.stringify(cfg.room || '') +
+    '\nFOLIAGE_CUTOUT = ' + n(c.foliageCutout) + '\nSEA_COLOR = ' + col(c.seaColor) + '\nSKY_COLOR = ' + col(c.skyColor) + '\nSEA_SEGMENTS = ' + Math.round(c.seaSegments) + '\nWALK_ENABLED = ' + B(c.walk) + '\nEYE_HEIGHT = ' + n(c.eyeHeight) + '\nWALK_SPEED = ' + n(c.walkSpeed) + '\nWALK_IGNORE = ' + JSON.stringify(c.walkIgnore) + '\nNAMES_ENABLED = ' + B(c.names) + '\nCHAT_ENABLED = ' + B(c.chat) + '\nCHAT_FADE = ' + n(c.chatFade) + '\nSPECTATE = ' + B(c.spectate) + '\nPANEL = ' + B(c.panel) + '\nMAP_JSON = ' + JSON.stringify(JSON.stringify(cfg.map || [])) + '\nMAP_URL = ' + JSON.stringify(cfg.mapUrl || '') + '\nPROFILE = ' + JSON.stringify($('profileSel').value) + '\nZONES_JSON = ' + JSON.stringify(JSON.stringify(cfg.zones || [])) + '\nPRESENCE_URL = ' + JSON.stringify(c.presenceUrl) + '\nROOM = ' + JSON.stringify(cfg.room || '') +
     '\n# <</DEFAULTS>>';
   const py = PY_SOURCE.replace(/# <<DEFAULTS>>[\s\S]*?# <<\/DEFAULTS>>/, () => block);
   download('glb2html.py', new Blob([py], { type: 'text/x-python' }));
