@@ -3,6 +3,7 @@
 """
 presence_server - serveur de présence pour les pages générées par glb2html.
 
+Modération : tape des commandes dans cette console (liste, ejecter, bannir, bans, debannir ; « aide » pour le détail).
 Relaie les positions des visiteurs en promenade, leurs messages de chat, et les "spectateurs"
 (visiteurs en vue globale qui voient les autres sans apparaître).
 Noms réservés : chaque navigateur a une clé aléatoire ; le premier à prendre un nom le garde,
@@ -38,7 +39,9 @@ import re
 import secrets
 import signal
 import ssl
+import sys
 import tempfile
+import threading
 import time
 import unicodedata
 
@@ -227,6 +230,175 @@ class Registry:
         return base[:18] + suffix, False
 
 
+# ----------------------------------------------------------------- modération (console du serveur)
+BANS: list = []          # {"key": hash de clé, "ip": hash d'IP, "until": epoch (0 = définitif), "name", "reason", "added"}
+
+
+def bans_load():
+    BANS.clear()
+    if OPTS.bans and os.path.exists(OPTS.bans):
+        try:
+            with open(OPTS.bans, encoding="utf-8") as f:
+                BANS.extend(json.load(f))
+        except (OSError, ValueError):
+            print(f"[!] fichier de bannissements illisible ({OPTS.bans}) : ignoré")
+
+
+def bans_save():
+    if not OPTS.bans:
+        return
+    d = os.path.dirname(os.path.abspath(OPTS.bans))
+    fd, tmp = tempfile.mkstemp(dir=d, suffix=".tmp")
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        json.dump(BANS, f, ensure_ascii=False, indent=1)
+    os.replace(tmp, OPTS.bans)
+
+
+def is_banned(uidh, ip):
+    now = time.time()
+    gone = [e for e in BANS if e.get("until") and e["until"] <= now]
+    if gone:
+        for e in gone:
+            BANS.remove(e)
+        bans_save()
+    iph = REG.hash("ip:" + ip)
+    for e in BANS:
+        if (e.get("key") and e["key"] == uidh) or e.get("ip") == iph:
+            return e
+    return None
+
+
+def all_peers():
+    return [p for r in ROOMS.values() for p in r.values()]
+
+
+def find_peers(target):
+    if target.isdigit():
+        return [p for p in all_peers() if p.id == int(target)]
+    key = norm_name(target)
+    return [p for p in all_peers() if p.name and key and norm_name(p.name) == key]
+
+
+async def kick_peer(peer, reason, banned=False):
+    await send_safe(peer.ws, json.dumps({"t": "banned" if banned else "kicked", "reason": reason}))
+    try:
+        await peer.ws.close(code=4002 if banned else 4001, reason=reason[:100])
+    except Exception:
+        pass
+
+
+def fmt_until(u):
+    return "définitif" if not u else time.strftime("%d/%m/%Y %H:%M", time.localtime(u))
+
+
+HELP = """commandes (tape-les ici, puis Entrée) :
+  liste                           visiteurs connectés (n°, nom, rôle, salon, durée, IP)
+  ejecter <n°|nom> [raison]       déconnecte le visiteur (il peut revenir)
+  bannir <n°|nom> [minutes] [raison]   éjecte et interdit sa clé et son IP (défaut 60 min ; 0 = définitif)
+  bans                            bannissements en cours
+  debannir <n° de bans>           lève un bannissement
+  aide                            ce message
+  (un nom contenant des espaces : utilise le n° de « liste »)"""
+
+
+async def run_command(line):
+    line = line.strip()
+    if not line:
+        return
+    cmd, _, rest = line.partition(" ")
+    cmd, rest = cmd.lower(), rest.strip()
+    if cmd in ("aide", "help", "?"):
+        print(HELP)
+    elif cmd in ("liste", "who", "l"):
+        peers = sorted(all_peers(), key=lambda p: p.id)
+        if not peers:
+            print("(personne)")
+        for p in peers:
+            dur = int(time.monotonic() - p.t0)
+            print(f"  n°{p.id:<4} {(p.name or '(spectateur)'):<26} {'spectateur' if p.spectator else 'promeneur':<10} salon={p.room:<16} {dur // 60} min {dur % 60:02d} s   ip {p.ip}")
+    elif cmd in ("ejecter", "éjecter", "kick", "k", "bannir", "ban", "b"):
+        ban = cmd in ("bannir", "ban", "b")
+        target, _, tail = rest.partition(" ")
+        if not target:
+            print("usage : " + ("bannir <n°|nom> [minutes] [raison]" if ban else "ejecter <n°|nom> [raison]"))
+            return
+        found = find_peers(target)
+        if not found:
+            print(f"personne ne correspond à « {target} » (tape « liste »)")
+            return
+        if len(found) > 1:
+            print("plusieurs visiteurs correspondent, utilise le n° :", ", ".join(f"n°{p.id}" for p in found))
+            return
+        peer = found[0]
+        minutes = 60.0
+        tail = tail.strip()
+        if ban:
+            first, _, after = tail.partition(" ")
+            try:
+                minutes = float(first.replace(",", "."))
+                tail = after.strip()
+            except ValueError:
+                pass
+        reason = tail or ("comportement inapproprié" if ban else "éjecté par l'hôte")
+        if ban:
+            until = 0 if minutes <= 0 else time.time() + minutes * 60
+            BANS.append({"key": "" if peer.uidh.startswith("anon-") else peer.uidh, "ip": REG.hash("ip:" + peer.ip), "until": until,
+                         "name": peer.name or "(spectateur)", "reason": reason, "added": time.time()})
+            bans_save()
+            log("bannissement", peer.room, peer.who(), f"{fmt_until(until)} : {reason}")
+            asyncio.create_task(kick_peer(peer, reason, banned=True))
+            print(f"{peer.name or '(spectateur)'} banni ({'définitif' if not until else 'jusqu’au ' + fmt_until(until)})")
+        else:
+            log("éjection", peer.room, peer.who(), reason)
+            asyncio.create_task(kick_peer(peer, reason))
+            print(f"{peer.name or '(spectateur)'} éjecté")
+    elif cmd == "bans":
+        now = time.time()
+        live = [e for e in BANS if not e.get("until") or e["until"] > now]
+        if not live:
+            print("(aucun bannissement)")
+        for i, e in enumerate(live, 1):
+            print(f"  {i}. {e.get('name', '?'):<20} jusqu'au {fmt_until(e.get('until', 0)):<17} {e.get('reason', '')}")
+    elif cmd in ("debannir", "unban"):
+        now = time.time()
+        live = [e for e in BANS if not e.get("until") or e["until"] > now]
+        if not rest.isdigit() or not (1 <= int(rest) <= len(live)):
+            print("usage : debannir <n° de « bans »>")
+            return
+        e = live[int(rest) - 1]
+        BANS.remove(e)
+        bans_save()
+        log("bannissement", "-", f"{e.get('name', '?')}", "levé")
+        print(f"bannissement de {e.get('name', '?')} levé")
+    else:
+        print(f"commande inconnue : {cmd} (tape « aide »)")
+
+
+async def console_loop():
+    loop = asyncio.get_running_loop()
+    queue: asyncio.Queue = asyncio.Queue()
+    if sys.stdin is None:
+        return
+
+    def reader():
+        try:
+            for line in sys.stdin:
+                loop.call_soon_threadsafe(queue.put_nowait, line)
+        except (OSError, ValueError):
+            pass
+        loop.call_soon_threadsafe(queue.put_nowait, None)
+
+    threading.Thread(target=reader, daemon=True).start()
+    while True:
+        line = await queue.get()
+        if line is None:
+            return
+        try:
+            await run_command(line)
+        except Exception as e:  # une commande ratée ne doit jamais arrêter le serveur
+            print(f"[erreur de commande] {e}")
+
+
 # ----------------------------------------------------------------- réseau
 async def send_safe(ws, text):
     try:
@@ -273,6 +445,11 @@ async def handler(ws):
     peer, room, counted = None, None, False
     ip = remote_ip(ws)
     try:
+        eb = is_banned("", ip)
+        if eb:
+            await ws.send(json.dumps({"t": "banned", "reason": eb.get("reason", ""), "until": eb.get("until", 0)}))
+            log("refus", "-", f"ip {ip_for_log(ip)}", "banni (IP)")
+            return
         if PER_IP.get(ip, 0) >= OPTS.max_per_ip:
             await ws.send(json.dumps({"t": "full"}))
             log("refus", "-", f"ip {ip_for_log(ip)}", "limite de connexions par IP")
@@ -287,6 +464,11 @@ async def handler(ws):
         uid = str(msg.get("uid") or "")[:128]
         uidh = REG.hash(uid) if len(uid) >= 16 else "anon-" + secrets.token_hex(8)
         spectator = bool(msg.get("spectator"))
+        eb = is_banned(uidh, ip)
+        if eb:
+            await ws.send(json.dumps({"t": "banned", "reason": eb.get("reason", ""), "until": eb.get("until", 0)}))
+            log("refus", room, f"clé {uidh[:6]} ip {ip_for_log(ip)}", "banni")
+            return
         if spectator:
             if sum(1 for r in ROOMS.values() for p in r.values() if p.spectator) >= OPTS.max_spectators:
                 await ws.send(json.dumps({"t": "full"}))
@@ -417,20 +599,28 @@ async def main():
     ap.add_argument("--log-days", type=int, default=30, help="jours de journal conservés")
     ap.add_argument("--log-ip", choices=("hash", "raw", "none"), default="hash", help="adresses IP dans le journal : masquées (défaut), en clair, ou absentes")
     ap.add_argument("--proxy-header", help="derrière un reverse proxy : en-tête portant l'IP réelle du visiteur (ex. X-Forwarded-For, CF-Connecting-IP) ; à n'activer que si le serveur n'est joignable que par ce proxy")
+    ap.add_argument("--bans", default="presence_bans.json", help="fichier des bannissements ; chemin relatif = dossier du script")
     ap.add_argument("--origins", help="origines autorisées, séparées par des virgules (défaut : toutes)")
     ap.add_argument("--cert", help="certificat TLS (wss://)")
     ap.add_argument("--key", help="clé privée TLS")
     OPTS = ap.parse_args()
+    try:
+        sys.stdout.reconfigure(line_buffering=True)
+    except (AttributeError, ValueError):
+        pass
     OPTS.log = here(OPTS.log)
     OPTS.identities = here(OPTS.identities)
+    OPTS.bans = here(OPTS.bans)
     REG = Registry(OPTS.identities or None, OPTS.name_ttl_days, [x for x in OPTS.reserved.split(",")])
     setup_log()
+    bans_load()
     ctx = None
     if OPTS.cert:
         ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         ctx.load_cert_chain(OPTS.cert, OPTS.key)
     origins = [o.strip() for o in OPTS.origins.split(",")] if OPTS.origins else None
     flusher = asyncio.create_task(flush_loop())
+    console = asyncio.create_task(console_loop())
     stop = asyncio.Event()
     try:
         asyncio.get_running_loop().add_signal_handler(signal.SIGTERM, stop.set)
@@ -447,9 +637,11 @@ async def main():
             else:
                 LOG.info(f"serveur | adresse à donner à --presence-url : {scheme}://{OPTS.host}:{OPTS.port}")
             LOG.info(f"serveur | journal : {OPTS.log or '(aucun : option --log)'} | registre des noms : {OPTS.identities or '(en mémoire)'}")
+            print("modération : tape « aide » pour la liste des commandes (liste, ejecter, bannir, bans, debannir)")
             await stop.wait()
     finally:
         flusher.cancel()
+        console.cancel()
         REG.save()
 
 

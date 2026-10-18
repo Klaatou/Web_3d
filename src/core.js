@@ -534,7 +534,7 @@ function createViewer(container, cfg0, loader) {
   const P = { ws: null, id: null, peers: new Map(), last: 0, name: '', state: 'off', retry: 0, timer: 0, sent: [0, 0, 0, 0] };
   const r2 = v => Math.round(v * 100) / 100;
   const cleanName = s => String(s || '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 24);
-  function pStatus(state) { P.state = state; if (onPresence) onPresence({ state, count: state === 'online' ? P.peers.size + (walking ? 1 : 0) : 0, spectator: !walking }); }
+  function pStatus(state, reason) { P.state = state; if (onPresence) onPresence({ state, count: state === 'online' ? P.peers.size + (walking ? 1 : 0) : 0, spectator: !walking, reason: reason || '' }); }
   function setMyName(n) { n = cleanName(n); if (!n) return; P.name = n; if (onName) onName(n); }
   function makeLabel(text) {
     const cv = document.createElement('canvas'); cv.width = 256; cv.height = 64;
@@ -630,11 +630,18 @@ function createViewer(container, cfg0, loader) {
       if (q) { q.name = cleanName(m.name); const old = q.g.children.find(o => o.isSprite && !o.userData.isBubble); if (old) { q.g.remove(old); old.material.map.dispose(); old.material.dispose(); } const l = makeLabel(q.name); l.position.y = 2.1; q.g.add(l); }
     }
     else if (m.t === 'you') { setMyName(m.name); }
+    else if (m.t === 'kicked' || m.t === 'banned') {
+      P.blocked = true;
+      let r = String(m.reason || '').slice(0, 120);
+      if (m.t === 'banned' && m.until) r += ' (jusqu\'au ' + new Date(m.until * 1000).toLocaleString('fr-FR') + ')';
+      pStatus(m.t, r);
+    }
     else if (m.t === 'full') { pStatus('full'); }
     dirty = true;
   }
   function presenceConnect() {
     if (!cfg.presenceUrl || P.ws) return;
+    P.blocked = false;
     pStatus('connecting');
     let ws;
     try { ws = new WebSocket(String(cfg.presenceUrl).trim().replace(/^(wss?:\/\/)0\.0\.0\.0(?=[:/]|$)/i, (m, p) => p + '127.0.0.1')); } catch (_) { pStatus('error'); return; }
@@ -645,6 +652,7 @@ function createViewer(container, cfg0, loader) {
     ws.onclose = () => {
       if (P.ws !== ws) return;
       P.ws = null; P.id = null; clearPeers();
+      if (P.blocked) return;
       if ((walking || spectateOn) && P.state !== 'full') { pStatus('error'); clearTimeout(P.timer); P.timer = setTimeout(presenceConnect, Math.min(15000, 1500 * (++P.retry))); }
       else if (!walking) pStatus('off');
     };
