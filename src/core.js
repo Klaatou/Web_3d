@@ -557,8 +557,13 @@ function createViewer(container, cfg0, loader) {
     const nose = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.12, 8), new THREE.MeshStandardMaterial({ color: 0x333333 }));
     nose.rotation.x = -Math.PI / 2; nose.position.set(0, 1.56, -0.2); g.add(nose);
     const label = makeLabel(name); label.position.y = 2.1; g.add(label);
-    const beacon = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.8, 10), new THREE.MeshBasicMaterial({ color: 0x000000, depthTest: false, transparent: true, fog: false }));
-    beacon.rotation.x = Math.PI; beacon.position.y = 3.0; beacon.visible = false; g.add(beacon);
+    // losange flottant (style « plumbob ») à la couleur du visiteur, avec contour noir : visible sans dépendre de la couleur, masqué par les murs
+    const beacon = new THREE.Group();
+    const dia = new THREE.Mesh(new THREE.OctahedronGeometry(0.26, 0), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.95, fog: false }));
+    dia.scale.y = 1.6; beacon.add(dia);
+    const edg = new THREE.LineSegments(new THREE.EdgesGeometry(dia.geometry), new THREE.LineBasicMaterial({ color: 0x000000, fog: false }));
+    edg.scale.y = 1.6; beacon.add(edg);
+    beacon.position.y = 2.75; g.add(beacon);
     g.userData.beacon = beacon;
     return g;
   }
@@ -670,8 +675,9 @@ function createViewer(container, cfg0, loader) {
         q.g.rotation.y += d * a;
         const dist = camera.position.distanceTo(q.g.position), k = Math.max(1, dist / 28);
         const lab = q.g.children.find(o => o.isSprite && !o.userData.isBubble), bc = q.g.userData.beacon;
-        if (lab) { lab.scale.set(1.6 * k, 0.4 * k, 1); lab.position.y = 2.1 + 0.55 * (k - 1); }
-        if (bc) { bc.visible = dist > 14; bc.scale.setScalar(k); bc.position.y = 3.0 + 0.9 * (k - 1); }
+        const ks = Math.max(1, dist / 45), ly = 2.1 + 0.55 * (k - 1);
+        if (lab) { lab.scale.set(1.6 * k, 0.4 * k, 1); lab.position.y = ly; }
+        if (bc) { bc.scale.setScalar(ks); bc.position.y = ly + 0.2 * k + 0.5 * ks; bc.rotation.y += dt * 1.2; }
       }
       dirty = true;
     }
