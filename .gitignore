@@ -1,0 +1,22 @@
+# fabriqué / cache
+dist/
+.cache/
+__pycache__/
+*.pyc
+
+# données privées ou propres à une installation : ne jamais committer
+presence_identities.json
+presence_bans.json
+presence.log*
+*.log
+zones*.json
+!tests/data/zA.json
+*.reglages.json
+regions.json
+*.vignette.jpg
+
+# pages et modèles générés
+*.html
+!src/*.html
+*.glb
+!tests/data/*.glb

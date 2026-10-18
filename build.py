@@ -1,0 +1,94 @@
+#!/usr/bin/env python3
+"""Fabrique glb2html.py, glb-viewer.html et presence_server.py dans dist/ à partir de src/.
+
+Usage :  python build.py                  (télécharge three@0.160.0 depuis jsDelivr dans .cache/ au premier lancement)
+         python build.py --vendor DOSSIER (racine d'un paquet npm three déjà présent : hors ligne)
+         python build.py --out DOSSIER    (sortie ailleurs que dist/)
+"""
+import argparse, base64, json, pathlib, sys, urllib.request
+
+ROOT = pathlib.Path(__file__).resolve().parent
+SRC = ROOT / "src"
+THREE_VERSION = "0.160.0"
+CDN = f"https://cdn.jsdelivr.net/npm/three@{THREE_VERSION}/"
+
+ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+ap.add_argument("--vendor", type=pathlib.Path, help="racine d'un paquet npm three (sinon cache .cache/ + téléchargement)")
+ap.add_argument("--out", type=pathlib.Path, default=ROOT / "dist", help="dossier de sortie (défaut : dist/)")
+args = ap.parse_args()
+OUT = args.out
+OUT.mkdir(parents=True, exist_ok=True)
+CACHE = ROOT / ".cache" / f"three@{THREE_VERSION}"
+VERSION = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
+
+
+def vendor(rel):
+    if args.vendor:
+        p = args.vendor / rel
+        if not p.is_file():
+            sys.exit(f"[ERREUR] {p} introuvable (--vendor doit pointer sur la racine du paquet npm three)")
+        return p.read_bytes()
+    p = CACHE / rel
+    if not p.is_file():
+        p.parent.mkdir(parents=True, exist_ok=True)
+        print(f"[cache] téléchargement {CDN + rel}")
+        try:
+            with urllib.request.urlopen(CDN + rel, timeout=60) as r:
+                p.write_bytes(r.read())
+        except Exception as e:
+            sys.exit(f"[ERREUR] téléchargement impossible ({e}). Utilise --vendor <dossier three>.")
+    return p.read_bytes()
+
+
+core = (SRC / "core.js").read_text(encoding="utf-8")
+template = (SRC / "template.html").read_text(encoding="utf-8").replace("__CORE__", core)
+draco_js = (SRC / "draco.js.txt").read_text(encoding="utf-8").rstrip("\n")
+meshopt_js = (SRC / "meshopt.js.txt").read_text(encoding="utf-8").rstrip("\n")
+for name, t in [("template", template), ("draco", draco_js), ("meshopt", meshopt_js)]:
+    assert '"""' not in t, name          # ces textes sont insérés dans des chaînes Python r"""..."""
+    assert not t.endswith("\\"), name
+
+
+def jsurl(rel):
+    txt = vendor(rel).decode("utf-8")
+    txt = txt.replace("'../utils/BufferGeometryUtils.js'", "'three/addons/utils/BufferGeometryUtils.js'")
+    txt = txt.replace("'./../utils/TextureUtils.js'", "'three/addons/utils/TextureUtils.js'")
+    txt = txt.replace("'../utils/TextureUtils.js'", "'three/addons/utils/TextureUtils.js'")
+    return "data:text/javascript;base64," + base64.b64encode(txt.encode()).decode()
+
+
+mods = {
+    "three": "build/three.module.js",
+    "three/addons/controls/OrbitControls.js": "examples/jsm/controls/OrbitControls.js",
+    "three/addons/loaders/GLTFLoader.js": "examples/jsm/loaders/GLTFLoader.js",
+    "three/addons/utils/BufferGeometryUtils.js": "examples/jsm/utils/BufferGeometryUtils.js",
+    "three/addons/loaders/DRACOLoader.js": "examples/jsm/loaders/DRACOLoader.js",
+    "three/addons/libs/meshopt_decoder.module.js": "examples/jsm/libs/meshopt_decoder.module.js",
+    "three/addons/exporters/GLTFExporter.js": "examples/jsm/exporters/GLTFExporter.js",
+    "three/addons/utils/TextureUtils.js": "examples/jsm/utils/TextureUtils.js",
+}
+importmap = {"imports": {k: jsurl(v) for k, v in mods.items()}}
+libs = {
+    "draco_wasm_wrapper.js": "data:text/javascript;base64," + base64.b64encode(vendor("examples/jsm/libs/draco/gltf/draco_wasm_wrapper.js")).decode(),
+    "draco_decoder.wasm": "data:application/wasm;base64," + base64.b64encode(vendor("examples/jsm/libs/draco/gltf/draco_decoder.wasm")).decode(),
+}
+
+py = (SRC / "gen_tpl.py").read_text(encoding="utf-8")
+py = py.replace("__HTML_TEMPLATE__", template).replace("__DRACO_JS__", draco_js).replace("__MESHOPT_JS__", meshopt_js)
+py = py.replace("__VERSION__", VERSION)
+(OUT / "glb2html.py").write_text(py, encoding="utf-8")
+(OUT / "presence_server.py").write_text((SRC / "presence_server.py").read_text(encoding="utf-8").replace("__VERSION__", VERSION), encoding="utf-8")
+
+
+def jsq(s):  # littéral JS sûr dans <script>
+    return json.dumps(s).replace("</", "<\\/")
+
+
+v = (SRC / "viewer_tpl.html").read_text(encoding="utf-8")
+v = v.replace("__CORE__", core)  # core avant le reste : pas de placeholder dedans
+v = v.replace("__TEMPLATE_JSON__", jsq(template)).replace("__PY_JSON__", jsq(py))
+v = v.replace("__DRACO_JS_JSON__", jsq(draco_js)).replace("__MESHOPT_JS_JSON__", jsq(meshopt_js))
+v = v.replace("__LIBS_JSON__", json.dumps(libs)).replace("__IMPORTMAP_JSON__", json.dumps(importmap))
+v = v.replace("__VERSION__", VERSION)
+(OUT / "glb-viewer.html").write_text(v, encoding="utf-8")
+print(f"[OK] {VERSION} -> {OUT} (glb2html.py {len(py) // 1024} Ko, glb-viewer.html {len(v) // 1024} Ko)")
