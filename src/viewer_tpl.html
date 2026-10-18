@@ -78,6 +78,7 @@ small{display:block;margin-top:8px;color:#333}
     <div class="row"><label for="cmdDest">Fichier ou dossier de sortie (-o), facultatif</label><input id="cmdDest" type="text" placeholder="par défaut : à côté du .glb" style="grid-column:1/-1;width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px"></div>
     <div class="row"><label for="cmdMapPage">Page « carte » web à régénérer (facultatif)</label><input id="cmdMapPage" type="text" placeholder="carte.html" style="grid-column:1/-1;width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px"></div>
     <label class="chk"><input id="cmdShort" type="checkbox"><span>Commande courte : le script relit tous les réglages dans le fichier .reglages.json</span></label>
+    <label class="chk"><input id="cmdModular" type="checkbox"><span>Mode modulaire : page légère + .glb + .config.json à côté (nécessite http/https ; ajoute --modular)</span></label>
     <div class="btns"><button id="bCmd" class="wide">Générer la ligne de commande PowerShell</button></div>
     <textarea id="cmdOut" readonly rows="7" placeholder="La commande apparaît ici (seulement les options qui changent par rapport aux valeurs par défaut du script)." style="width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;margin-top:4px"></textarea>
     <div class="btns"><button id="bCmdCopy" class="wide">Copier la commande</button></div>
@@ -803,11 +804,13 @@ function buildCommand() {
   const script = $('cmdScript').value.trim() || 'glb2html.py', glb = $('cmdGlb').value.trim() || loadedName || 'fichier.glb';
   const dest = $('cmdDest').value.trim();
   if (dest) a.unshift('-o ' + q(dest));
+  if ($('cmdModular').checked) a.push('--modular');
   let cmd = ['python', q(script), q(glb)].concat(a).join(' ');
   const notes = [];
   if ($('cmdShort').checked) {
     const s2 = ['python', q(script), q(glb), '--settings ' + q(baseName + '.reglages.json')];
     if (dest) s2.push('-o ' + q(dest));
+    if ($('cmdModular').checked) s2.push('--modular');
     if (regOk) s2.push('--register ' + q('regions.json'));
     if ($('cmdMapPage').value.trim()) s2.push('--map-page ' + q($('cmdMapPage').value.trim()));
     cmd = s2.join(' ');
@@ -817,6 +820,7 @@ function buildCommand() {
   if (regOk) notes.push('Carte : à chaque exécution, cette région est ajoutée ou mise à jour dans regions.json (créé à côté de glb2html.py s\'il n\'existe pas)' + (thisReg.thumb ? ' ; clique d\'abord sur « Enregistrer la vignette » et place ' + baseName + '.vignette.jpg à côté de glb2html.py.' : ' ; capture et enregistre une vignette pour l\'afficher sur la carte.'));
   else if ((cfg.map || []).length) notes.push('Carte : clique sur « Exporter regions.json » (section Carte des mondes) et place regions.json à côté de glb2html.py (ou dans le dossier de lancement).');
   if (hasZones) notes.push('Zones : clique d\'abord sur « Exporter zones (.json) » (section Zones) et place zones.json à côté de glb2html.py (ou dans le dossier où tu lances la commande), ou corrige son chemin.' + ($('profileSel').value === 'perso' ? '' : ' Profil public : les zones privées sont retirées.'));
+  if ($('cmdModular').checked) notes.push('Mode modulaire : la commande écrit <page>.html (coquille), <page>.glb, <page>.config.json et le dossier lib/three-' + '0.160.0/ partagé. Publie-les ensemble et ouvre la page en http/https. Pour ne changer qu\'un réglage ensuite : relance la même commande avec --config-only -o <page>.html (le .glb et la coquille ne sont pas touchés ; les visiteurs rechargent). L\'export de page depuis ce viewer reste en mode autonome.');
   if (!a.length) notes.push('Aucun réglage ne diffère des valeurs par défaut du script.');
   notes.push(a.length + ' option(s) ajoutée(s). Les options absentes gardent la valeur par défaut du script.');
   return { cmd, notes };
@@ -824,7 +828,7 @@ function buildCommand() {
 $('bCmd').onclick = () => {
   const r = buildCommand(); $('cmdOut').value = r.cmd;
   const n = $('cmdNote'); n.style.display = 'block'; n.textContent = r.notes.join('\n');
-  try { localStorage.setItem('glb2html_cmd_script', $('cmdScript').value); localStorage.setItem('glb2html_cmd_glb', $('cmdGlb').value); localStorage.setItem('glb2html_cmd_dest', $('cmdDest').value); localStorage.setItem('glb2html_cmd_mappage', $('cmdMapPage').value); localStorage.setItem('glb2html_cmd_short', $('cmdShort').checked ? '1' : '0'); } catch (e) {}
+  try { localStorage.setItem('glb2html_cmd_script', $('cmdScript').value); localStorage.setItem('glb2html_cmd_glb', $('cmdGlb').value); localStorage.setItem('glb2html_cmd_dest', $('cmdDest').value); localStorage.setItem('glb2html_cmd_mappage', $('cmdMapPage').value); localStorage.setItem('glb2html_cmd_short', $('cmdShort').checked ? '1' : '0'); localStorage.setItem('glb2html_cmd_modular', $('cmdModular').checked ? '1' : '0'); } catch (e) {}
 };
 $('bCmdCopy').onclick = async () => {
   if (!$('cmdOut').value) $('bCmd').onclick();
@@ -832,7 +836,7 @@ $('bCmdCopy').onclick = async () => {
   try { await navigator.clipboard.writeText(t); setStatus('Commande copiée'); }
   catch (e) { $('cmdOut').select(); document.execCommand('copy'); setStatus('Commande copiée'); }
 };
-try { $('cmdScript').value = localStorage.getItem('glb2html_cmd_script') || ''; $('cmdGlb').value = localStorage.getItem('glb2html_cmd_glb') || ''; $('cmdDest').value = localStorage.getItem('glb2html_cmd_dest') || ''; $('cmdMapPage').value = localStorage.getItem('glb2html_cmd_mappage') || ''; $('cmdShort').checked = localStorage.getItem('glb2html_cmd_short') === '1'; } catch (e) {}
+try { $('cmdScript').value = localStorage.getItem('glb2html_cmd_script') || ''; $('cmdGlb').value = localStorage.getItem('glb2html_cmd_glb') || ''; $('cmdDest').value = localStorage.getItem('glb2html_cmd_dest') || ''; $('cmdMapPage').value = localStorage.getItem('glb2html_cmd_mappage') || ''; $('cmdShort').checked = localStorage.getItem('glb2html_cmd_short') === '1'; $('cmdModular').checked = localStorage.getItem('glb2html_cmd_modular') === '1'; } catch (e) {}
 function liveConfig() {
   const cam = viewer.getCameraState();
   return {

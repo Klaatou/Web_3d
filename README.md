@@ -33,6 +33,15 @@ python glb2html.py "Ankh-final.glb" --settings --register regions.json --map-pag
 
 `python glb2html.py --help` et `python presence_server.py --help` listent toutes les options.
 
+## Mode modulaire
+
+`--modular` produit `Ankh Island.html` (coquille légère), `Ankh Island.glb`, `Ankh Island.config.json` et `lib/three-0.160.0/` (partagé par toutes les pages du dossier). Il faut les servir en http/https (test local : `python -m http.server`). Pour changer un réglage sans toucher au `.glb` : relancer la même commande avec `--config-only -o "Ankh Island.html"` ; les visiteurs rechargent.
+
+```
+python glb2html.py "Ankh-final.glb" --settings --modular -o "Ankh Island.html"
+python glb2html.py --settings "Ankh-final.glb" --config-only --wave 2 -o "Ankh Island.html"
+```
+
 ## Carte des mondes
 
 `regions.json` est la carte : une liste de régions (nom, adresse, X, Y, point d'arrivée, salon, serveur de présence, vignette). `--register` y ajoute ou met à jour la région en cours de génération ; `--map-page` génère une page web de la carte avec un lien cliquable par région ; `--map-url a.json,b.json` fusionne les cartes de plusieurs propriétaires à chaque ouverture de la page.
