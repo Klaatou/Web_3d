@@ -174,6 +174,135 @@ def find_beside(path):
     return None
 
 
+MAP_PAGE_TEMPLATE = r"""<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>__TITLE__</title>
+<style>
+[hidden]{display:none!important}
+body{margin:0;background:#fff;color:#000;font:14px/1.5 ui-monospace,Consolas,monospace}
+main{max-width:1000px;margin:0 auto;padding:20px}
+h1{font-size:20px;margin:0 0 4px}
+#grid{display:grid;gap:12px;justify-content:start;margin:16px 0}
+.tile{box-sizing:border-box;display:flex;flex-direction:column;gap:4px;width:170px;padding:6px;border:2px solid #000;border-radius:8px;background:#fff;color:#000;text-decoration:none}
+a.tile:hover{background:#eee}
+.tile img,.tile .ph{width:100%;aspect-ratio:1;object-fit:cover;background:#ccc;border:1px solid #000;display:block}
+.tile b{word-break:break-word}
+.tile small{font-size:11px;word-break:break-all;opacity:.8}
+footer{font-size:11px;opacity:.7}
+</style>
+</head>
+<body><main>
+<h1>__TITLE__</h1>
+<div id="grid"></div>
+<footer>glb2html __VERSION__ : chaque carte est un lien qui emmène directement dans la région, à son point d'arrivée.</footer>
+</main>
+<script type="application/json" id="cfg">__CONFIG__</script>
+<script>
+(() => {
+  const C = JSON.parse(document.getElementById('cfg').textContent);
+  let MAP = C.map || [];
+  const grid = document.getElementById('grid'), counts = {}; let known = false;
+  const okUrl = u => { try { const x = new URL(u, location.href); return (x.protocol === 'http:' || x.protocol === 'https:' || (location.protocol === 'file:' && x.protocol === 'file:')) ? x : null; } catch (e) { return null; } };
+  const safeThumb = t => typeof t === 'string' && (/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+$/.test(t) || (!/^[a-z][a-z0-9+.-]*:/i.test(t) || /^https?:/i.test(t)));
+  const remap = vals => { const u = [...new Set(vals)].sort((a, b) => a - b), m = new Map(); let pos = 0; u.forEach((v, i) => { if (i) pos += Math.min(v - u[i - 1], 2); m.set(v, pos); }); return m; };
+  const draw = () => {
+    grid.textContent = '';
+    const list = MAP.filter(r => r && r.name);
+    const mx = remap(list.map(r => r.x | 0)), my = remap(list.map(r => r.y | 0));
+    const cols = list.length ? Math.max(...mx.values()) + 1 : 0, rows = list.length ? Math.max(...my.values()) + 1 : 0;
+    const placed = list.length > 0 && new Set(list.map(r => (r.x | 0) + ',' + (r.y | 0))).size === list.length && cols <= 14 && rows <= 14;
+    grid.style.gridTemplateColumns = placed ? 'repeat(' + cols + ', 170px)' : 'repeat(auto-fill, 170px)';
+    for (const r of list) {
+      const u = okUrl(r.url); if (u) u.hash = 'spawn=' + encodeURIComponent(r.spawn || 'default');
+      const t = document.createElement(u ? 'a' : 'div'); t.className = 'tile';
+      if (u) { t.href = u.href; t.rel = 'noopener'; }
+      if (placed) { t.style.gridColumn = String(mx.get(r.x | 0) + 1); t.style.gridRow = String(rows - my.get(r.y | 0)); }
+      if (r.thumb && safeThumb(r.thumb)) { const im = document.createElement('img'); im.src = r.thumb; im.alt = ''; im.referrerPolicy = 'no-referrer'; t.append(im); } else { const ph = document.createElement('div'); ph.className = 'ph'; t.append(ph); }
+      const b = document.createElement('b'); b.textContent = r.name; t.append(b);
+      const n = counts[r.room || ''];
+      const s = document.createElement('span'); s.textContent = 'visiter →' + (known && r.room ? ' · ' + (n || 0) + ' en promenade' : ''); t.append(s);
+      const l = document.createElement('small'); l.textContent = u ? u.href : '(adresse invalide)'; t.append(l);
+      grid.append(t);
+    }
+    if (!list.length) grid.textContent = 'Aucune région dans la carte.';
+  };
+  const fetchCounts = () => {
+    if (!C.presenceUrl) return;
+    try {
+      const ws = new WebSocket(C.presenceUrl), to = setTimeout(() => { try { ws.close(); } catch (e) {} }, 4000);
+      ws.onopen = () => ws.send(JSON.stringify({ t: 'rooms' }));
+      ws.onmessage = ev => { try { const m = JSON.parse(ev.data); if (m.t === 'rooms') { for (const k in counts) delete counts[k]; Object.assign(counts, m.rooms || {}); known = true; draw(); } } catch (e) {} try { ws.close(); } catch (e) {} };
+      ws.onclose = () => clearTimeout(to); ws.onerror = () => {};
+    } catch (e) {}
+  };
+  draw(); fetchCounts(); setInterval(fetchCounts, 10000);
+  if (C.mapUrl && /^https?:$/.test(location.protocol)) {
+    fetch(new URL(C.mapUrl, location.href).href, { cache: 'no-store' }).then(r => r.ok ? r.json() : Promise.reject(new Error('http ' + r.status)))
+      .then(list => { if (Array.isArray(list)) { MAP = list.filter(r => r && typeof r.name === 'string' && typeof r.url === 'string').map(r => ({ name: r.name.slice(0, 60), url: r.url.slice(0, 600), x: Number(r.x) | 0, y: Number(r.y) | 0, spawn: String(r.spawn || '').slice(0, 40), room: String(r.room || '').slice(0, 64), thumb: safeThumb(r.thumb) ? String(r.thumb).slice(0, 200000) : '' })); draw(); } })
+      .catch(() => {});
+  }
+})();
+</script>
+</body>
+</html>
+"""
+
+
+def data_path(arg):
+    """Fichier de données (carte) : chemin relatif -> dossier de lancement s'il y existe, sinon dossier du script (créé là si absent)."""
+    p = pathlib.Path(arg).expanduser()
+    if p.is_absolute():
+        return p
+    here = pathlib.Path.cwd() / p
+    return here if here.is_file() else pathlib.Path(__file__).resolve().parent / p
+
+
+def thumb_data_url(arg):
+    p = find_beside(arg)
+    if p is None:
+        print(f"[AVERTISSEMENT] vignette introuvable : {arg}", file=sys.stderr)
+        return ""
+    mime = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp"}.get(p.suffix.lower())
+    b = p.read_bytes()
+    if not mime or len(b) > 140000:
+        print(f"[AVERTISSEMENT] vignette ignorée (jpg/png/webp de 140 Ko maximum attendus) : {p}", file=sys.stderr)
+        return ""
+    return f"data:{mime};base64," + base64.b64encode(b).decode("ascii")
+
+
+def register_region(path, entry):
+    """Ajoute ou met à jour (par salon) une région dans le fichier de carte ; les champs non fournis gardent leur valeur."""
+    data = []
+    if path.is_file():
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as e:
+            sys.exit(f"[ERREUR] {path} illisible ({e})")
+    data = [r for r in data if isinstance(r, dict)] if isinstance(data, list) else []
+    i = next((k for k, r in enumerate(data) if (r.get("room") and r.get("room") == entry["room"]) or r.get("id") == entry["id"]), None)
+    if i is None:
+        data.append({"id": entry["id"], "name": entry["name"], "url": entry["url"], "x": 0, "y": 0, "spawn": "", "room": entry["room"], "thumb": ""})
+        i = len(data) - 1
+    for k, v in entry.items():
+        if v is not None and v != "":
+            data[i][k] = v
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+    return data
+
+
+def write_map_page(path, entries, presence_url, map_url, title):
+    cfg = {"map": clean_map(entries), "mapUrl": str(map_url or "")[:600], "presenceUrl": fix_presence_url(presence_url)}
+    page = (MAP_PAGE_TEMPLATE.replace("__TITLE__", html.escape(title or "Carte des mondes")).replace("__VERSION__", VERSION)
+            .replace("__CONFIG__", json.dumps(cfg, ensure_ascii=False).replace("</", "<\\/")))
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(page, encoding="utf-8")
+    print(f"[carte] page carte ({len(cfg['map'])} région(s)) -> {path}")
+
+
 def vendor_bytes(rel: str, vendor_dir: pathlib.Path | None) -> bytes:
     if vendor_dir:
         p = vendor_dir / rel
@@ -365,6 +494,13 @@ def main():
     ap.add_argument("--panel", action=argparse.BooleanOptionalAction, default=PANEL, help="panneau de réglages pour les visiteurs (haute résolution, mer animée, force des vagues), bouton en haut à droite")
     ap.add_argument("--map", type=pathlib.Path, help="fichier regions.json (carte des mondes : nom, adresse, position, vignette) exporté par le viewer ; chemin relatif : dossier de lancement, puis dossier du script")
     ap.add_argument("--map-url", default=MAP_URL, help="adresse d'un regions.json partagé que la page relit à chaque ouverture (http/https) ; la carte intégrée sert de secours")
+    ap.add_argument("--register", help="fichier regions.json à mettre à jour avec CETTE région (ajoutée ou mise à jour par salon) ; relatif : dossier de lancement s'il y existe, sinon dossier du script. La page générée embarque la carte à jour")
+    ap.add_argument("--region-name", help="nom affiché dans la carte (défaut : nom du .glb)")
+    ap.add_argument("--region-url", help="adresse de la page de cette région (défaut : le nom du fichier .html, relatif)")
+    ap.add_argument("--region-xy", metavar="X,Y", help="position sur la grille, comme OpenSim (X vers l'est, Y vers le nord), ex. 1000,1001")
+    ap.add_argument("--region-spawn", help="identifiant du point d'arrivée des visiteurs dans cette région (défaut : default)")
+    ap.add_argument("--thumb", help="vignette de la région (jpg, png ou webp de 140 Ko maximum), par exemple enregistrée depuis le viewer")
+    ap.add_argument("--map-page", metavar="FICHIER.html", help="génère aussi une page web « carte des mondes » (liens cliquables vers chaque région) ; sans .glb : génère seulement cette page depuis --map. Relatif : à côté de la page de la région")
     ap.add_argument("--room", default=ROOM, help="salon de présence (défaut : nom du fichier)")
     ap.add_argument("--sea", dest="sea_enabled", action=argparse.BooleanOptionalAction, default=SEA_ENABLED)
     ap.add_argument("--anim", dest="anim_enabled", action=argparse.BooleanOptionalAction, default=ANIM_ENABLED)
@@ -408,9 +544,15 @@ def main():
         out = pathlib.Path(a.output)
         write_live_zones(out, dict(kw, zones_live=a.zones_live))
         sys.exit(0)
+    if a.map_page and not a.input:
+        entries = map_arg if map_arg is not None else json.loads(MAP_JSON)
+        write_map_page(pathlib.Path(a.map_page), entries, a.presence_url, a.map_url, a.title or "Carte des mondes")
+        sys.exit(0)
     if not a.input:
         ap.error("le fichier .glb (ou le dossier) est obligatoire")
     inp = pathlib.Path(a.input)
+    if inp.is_dir() and (a.register or a.map_page):
+        print("[AVERTISSEMENT] --register et --map-page ne s'appliquent qu'à un fichier .glb, pas à un dossier", file=sys.stderr)
     if inp.is_dir():
         files = sorted(p for p in inp.iterdir() if p.suffix.lower() == ".glb")
         if not files:
@@ -431,7 +573,24 @@ def main():
             out = out.with_suffix(".html")
     else:
         out = inp.with_name(inp.stem + " - Offline.html")
-    sys.exit(0 if generate(inp, out, a.vendor, **kw) else 1)
+    if a.register:
+        room = a.room or inp.stem
+        entry = {"id": _slug(room) or "region", "name": a.region_name or inp.stem, "url": a.region_url or out.name, "room": room,
+                 "spawn": a.region_spawn if a.region_spawn else None, "thumb": thumb_data_url(a.thumb) if a.thumb else ""}
+        if a.region_xy:
+            try:
+                x, y = (int(float(v)) for v in a.region_xy.split(","))
+                entry["x"], entry["y"] = x, y
+            except ValueError:
+                sys.exit("[ERREUR] --region-xy attend deux nombres : X,Y")
+        reg = data_path(a.register)
+        kw["map_entries"] = register_region(reg, entry)
+        print(f"[carte] « {entry['name']} » ajoutée ou mise à jour dans {reg} ({len(kw['map_entries'])} région(s))")
+    ok = generate(inp, out, a.vendor, **kw)
+    if ok and a.map_page:
+        mp = pathlib.Path(a.map_page)
+        write_map_page(mp if mp.is_absolute() else out.parent / mp, kw["map_entries"] if kw.get("map_entries") is not None else json.loads(MAP_JSON), kw.get("presence_url", ""), kw.get("map_url", ""), a.title or "Carte des mondes")
+    sys.exit(0 if ok else 1)
 
 
 if __name__ == "__main__":

@@ -76,6 +76,7 @@ small{display:block;margin-top:8px;color:#333}
     <div class="row"><label for="cmdScript">Chemin de glb2html.py</label><input id="cmdScript" type="text" placeholder="glb2html.py" style="grid-column:1/-1;width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px"></div>
     <div class="row"><label for="cmdGlb">Chemin du fichier .glb</label><input id="cmdGlb" type="text" placeholder="fichier.glb" style="grid-column:1/-1;width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px"></div>
     <div class="row"><label for="cmdDest">Fichier ou dossier de sortie (-o), facultatif</label><input id="cmdDest" type="text" placeholder="par défaut : à côté du .glb" style="grid-column:1/-1;width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px"></div>
+    <div class="row"><label for="cmdMapPage">Page « carte » web à régénérer (facultatif)</label><input id="cmdMapPage" type="text" placeholder="carte.html" style="grid-column:1/-1;width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px"></div>
     <div class="btns"><button id="bCmd" class="wide">Générer la ligne de commande PowerShell</button></div>
     <textarea id="cmdOut" readonly rows="7" placeholder="La commande apparaît ici (seulement les options qui changent par rapport aux valeurs par défaut du script)." style="width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;margin-top:4px"></textarea>
     <div class="btns"><button id="bCmdCopy" class="wide">Copier la commande</button></div>
@@ -682,7 +683,9 @@ function renderMapUi() {
     const room = cfg.room || baseName, e = { id: room.toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '') || 'region', name: thisReg.name, url: thisReg.url, x: thisReg.x, y: thisReg.y, spawn: thisReg.spawn, room, thumb: thisReg.thumb };
     const list = (cfg.map || []).filter(r => r.room !== room); list.push(e); cfg.map = list; setStatus('Carte : ' + list.length + ' région(s)'); renderMapUi();
   };
-  b1.append(cap, add); host.append(b1);
+  const svt = mk('button', { textContent: 'Enregistrer la vignette (.jpg)' });
+  svt.onclick = async () => { if (!thisReg.thumb) return setStatus('Capture d\'abord la vignette'); const b = await (await fetch(thisReg.thumb)).blob(); download(baseName + '.vignette.jpg', b); setStatus('Vignette enregistrée : ' + baseName + '.vignette.jpg (à placer à côté de glb2html.py, pour --thumb)'); };
+  b1.append(cap, svt, add); host.append(b1);
   (cfg.map || []).forEach((r, idx) => {
     const d = mk('details', {}, 'border:1px solid #000;border-radius:6px;padding:4px 8px;margin:6px 0');
     const s = mk('summary', { textContent: r.name + '  (' + r.x + ', ' + r.y + ')' + (r.room === (cfg.room || baseName) ? '  ● cette région' : '') }, 'cursor:pointer'); d.append(s);
@@ -786,7 +789,13 @@ function buildCommand() {
   if (cfg.room) a.push('--room ' + q(cfg.room));
   sw('--chat', '--no-chat', cfg.chat, DEF.chat); num('--chat-fade', cfg.chatFade, DEF.chatFade);
   if (cfg.presenceUrl && !cfg.spectate) a.push('--no-spectate');
-  if ((cfg.map || []).length) a.push('--map ' + q('regions.json'));
+  const regOk = !!(thisReg.name && thisReg.url);
+  if (regOk) {
+    a.push('--register ' + q('regions.json'), '--region-name ' + q(thisReg.name), '--region-url ' + q(thisReg.url), '--region-xy ' + q(thisReg.x + ',' + thisReg.y));
+    if (thisReg.spawn && thisReg.spawn !== 'default') a.push('--region-spawn ' + q(thisReg.spawn));
+    if (thisReg.thumb) a.push('--thumb ' + q(baseName + '.vignette.jpg'));
+  } else if ((cfg.map || []).length) a.push('--map ' + q('regions.json'));
+  if ($('cmdMapPage').value.trim()) a.push('--map-page ' + q($('cmdMapPage').value.trim()));
   if (cfg.mapUrl) a.push('--map-url ' + q(cfg.mapUrl));
   const hasZones = (cfg.zones || []).length > 0;
   if (hasZones) { a.push('--zones ' + q('zones.json')); if ($('profileSel').value === 'perso') a.push('--profile perso'); }
@@ -795,7 +804,8 @@ function buildCommand() {
   if (dest) a.unshift('-o ' + q(dest));
   const cmd = ['python', q(script), q(glb)].concat(a).join(' ');
   const notes = [];
-  if ((cfg.map || []).length) notes.push('Carte : clique sur « Exporter regions.json » (section Carte des mondes) et place regions.json à côté de glb2html.py (ou dans le dossier de lancement).');
+  if (regOk) notes.push('Carte : à chaque exécution, cette région est ajoutée ou mise à jour dans regions.json (créé à côté de glb2html.py s\'il n\'existe pas)' + (thisReg.thumb ? ' ; clique d\'abord sur « Enregistrer la vignette » et place ' + baseName + '.vignette.jpg à côté de glb2html.py.' : ' ; capture et enregistre une vignette pour l\'afficher sur la carte.'));
+  else if ((cfg.map || []).length) notes.push('Carte : clique sur « Exporter regions.json » (section Carte des mondes) et place regions.json à côté de glb2html.py (ou dans le dossier de lancement).');
   if (hasZones) notes.push('Zones : clique d\'abord sur « Exporter zones (.json) » (section Zones) et place zones.json à côté de glb2html.py (ou dans le dossier où tu lances la commande), ou corrige son chemin.' + ($('profileSel').value === 'perso' ? '' : ' Profil public : les zones privées sont retirées.'));
   if (!a.length) notes.push('Aucun réglage ne diffère des valeurs par défaut du script.');
   notes.push(a.length + ' option(s) ajoutée(s). Les options absentes gardent la valeur par défaut du script.');
@@ -804,7 +814,7 @@ function buildCommand() {
 $('bCmd').onclick = () => {
   const r = buildCommand(); $('cmdOut').value = r.cmd;
   const n = $('cmdNote'); n.style.display = 'block'; n.textContent = r.notes.join('\n');
-  try { localStorage.setItem('glb2html_cmd_script', $('cmdScript').value); localStorage.setItem('glb2html_cmd_glb', $('cmdGlb').value); localStorage.setItem('glb2html_cmd_dest', $('cmdDest').value); } catch (e) {}
+  try { localStorage.setItem('glb2html_cmd_script', $('cmdScript').value); localStorage.setItem('glb2html_cmd_glb', $('cmdGlb').value); localStorage.setItem('glb2html_cmd_dest', $('cmdDest').value); localStorage.setItem('glb2html_cmd_mappage', $('cmdMapPage').value); } catch (e) {}
 };
 $('bCmdCopy').onclick = async () => {
   if (!$('cmdOut').value) $('bCmd').onclick();
@@ -812,7 +822,7 @@ $('bCmdCopy').onclick = async () => {
   try { await navigator.clipboard.writeText(t); setStatus('Commande copiée'); }
   catch (e) { $('cmdOut').select(); document.execCommand('copy'); setStatus('Commande copiée'); }
 };
-try { $('cmdScript').value = localStorage.getItem('glb2html_cmd_script') || ''; $('cmdGlb').value = localStorage.getItem('glb2html_cmd_glb') || ''; $('cmdDest').value = localStorage.getItem('glb2html_cmd_dest') || ''; } catch (e) {}
+try { $('cmdScript').value = localStorage.getItem('glb2html_cmd_script') || ''; $('cmdGlb').value = localStorage.getItem('glb2html_cmd_glb') || ''; $('cmdDest').value = localStorage.getItem('glb2html_cmd_dest') || ''; $('cmdMapPage').value = localStorage.getItem('glb2html_cmd_mappage') || ''; } catch (e) {}
 function liveConfig() {
   const cam = viewer.getCameraState();
   return {

@@ -25,7 +25,7 @@ canvas{display:block;touch-action:none}
 #mapBox{background:#fff;color:#000;border:2px solid #000;border-radius:10px;padding:14px 16px;max-width:min(980px,94%);max-height:90%;overflow:auto;font:13px/1.4 ui-monospace,Consolas,monospace}
 #mapBox h2{margin:0 0 10px;font-size:15px}
 #mapGrid{display:grid;gap:10px;justify-content:start;margin-bottom:10px}
-.mapTile{display:flex;flex-direction:column;gap:4px;width:160px;padding:6px;border:2px solid #000;border-radius:8px;background:#fff;cursor:pointer;font:inherit;text-align:left;color:#000}
+.mapTile{box-sizing:border-box;display:flex;flex-direction:column;gap:4px;width:160px;padding:6px;border:2px solid #000;border-radius:8px;background:#fff;cursor:pointer;font:inherit;text-align:left;color:#000}
 .mapTile:hover{background:#eee}
 .mapTile.here{border-width:5px;cursor:default}
 .mapTile img,.mapTile .ph{width:100%;aspect-ratio:1;object-fit:cover;background:#ccc;border:1px solid #000;display:block}
@@ -165,13 +165,14 @@ if ((C.map || []).length || C.mapUrl) {
   const draw = () => {
     grid.textContent = '';
     const list = MAP.filter(r => r && r.name);
-    const xs = list.map(r => r.x | 0), ys = list.map(r => r.y | 0);
-    const keys = new Set(list.map(r => (r.x | 0) + ',' + (r.y | 0)));
-    const placed = list.length > 0 && keys.size === list.length && (Math.max(...xs) - Math.min(...xs)) < 14 && (Math.max(...ys) - Math.min(...ys)) < 14;
-    if (placed) grid.style.gridTemplateColumns = 'repeat(' + (Math.max(...xs) - Math.min(...xs) + 1) + ', 160px)'; else grid.style.gridTemplateColumns = 'repeat(auto-fill, 160px)';
+    const remap = vals => { const u = [...new Set(vals)].sort((a, b) => a - b), m = new Map(); let pos = 0; u.forEach((v, i) => { if (i) pos += Math.min(v - u[i - 1], 2); m.set(v, pos); }); return m; };
+    const mx = remap(list.map(r => r.x | 0)), my = remap(list.map(r => r.y | 0));
+    const cols = list.length ? Math.max(...mx.values()) + 1 : 0, rows = list.length ? Math.max(...my.values()) + 1 : 0;
+    const placed = list.length > 0 && new Set(list.map(r => (r.x | 0) + ',' + (r.y | 0))).size === list.length && cols <= 14 && rows <= 14;
+    grid.style.gridTemplateColumns = placed ? 'repeat(' + cols + ', 160px)' : 'repeat(auto-fill, 160px)';
     for (const r of list) {
       const t = document.createElement('button'); t.className = 'mapTile' + (here(r) ? ' here' : '');
-      if (placed) { t.style.gridColumn = String((r.x | 0) - Math.min(...xs) + 1); t.style.gridRow = String(Math.max(...ys) - (r.y | 0) + 1); }
+      if (placed) { t.style.gridColumn = String(mx.get(r.x | 0) + 1); t.style.gridRow = String(rows - my.get(r.y | 0)); }
       if (r.thumb && safeThumb(r.thumb)) { const im = document.createElement('img'); im.src = r.thumb; im.alt = ''; im.referrerPolicy = 'no-referrer'; t.append(im); } else { const ph = document.createElement('div'); ph.className = 'ph'; t.append(ph); }
       const b = document.createElement('b'); b.textContent = r.name; t.append(b);
       const s = document.createElement('span');
