@@ -124,7 +124,7 @@ function inspectGlb(buf, name = 'fichier') {
 // ---------- état
 const DEF = {
   hole: 180, holeFade: 60, holeX: 0, holeZ: 0, guide: true, wave: 0.5, seaY: -50, zoom: 1, camDir: [0, 0.25, 1], target: [0, 15, 0],
-  sea: true, anim: false, retina: false, foliageCutout: 0.12, seaSize: 4000, seaSegments: 400, walk: true, eyeHeight: 1.7, walkSpeed: 3.5, walkIgnore: 'door, porte', ignoreViz: false, zones: [], profile: 'perso', spectate: true, names: false, chat: true, chatFade: 0, presenceUrl: '', room: '',
+  sea: true, anim: false, retina: false, foliageCutout: 0.12, seaSize: 4000, seaSegments: 400, walk: true, eyeHeight: 1.7, walkSpeed: 3.5, walkIgnore: 'door, porte', ignoreViz: false, zones: [], profile: 'perso', spectate: true, panel: true, names: false, chat: true, chatFade: 0, presenceUrl: '', room: '',
   seaColor: 0x3A9AD9, skyColor: 0x87CEEB
 };
 const viewer = createViewer(document.getElementById('view'), DEF, makeLoader());
@@ -169,6 +169,7 @@ const ROWS = [
   ['txt', 'presenceUrl', 'Serveur de présence (ws:// ou wss://, vide = aucun)', 'ws://127.0.0.1:8765'],
   ['txt', 'room', 'Salon (vide = nom du fichier)', ''],
   ['txt', 'myName', 'Mon pseudo (test dans ce viewer)', 'Visiteur'],
+  ['chk', 'panel', 'Panneau de réglages pour les visiteurs (haute résolution, vagues)'],
   ['chk', 'spectate', 'Voir les visiteurs en vue globale (connexion dès l\'ouverture)'],
   ['chk', 'chat', 'Activer le chat (avec la présence)'],
   ['rng', 'chatFade', 'Disparition des messages (s, 0 = jamais)', 0, 60, 1, false],
@@ -392,7 +393,7 @@ viewer.onZone = (z, how) => setStatus('[aperçu] ' + ({ url: 'Lien', ha: 'Comman
 viewer.onNear = z => { if (z) setStatus('[aperçu] à portée : ' + (z.label || z.id) + ' (E ou clic)'); };
 function presUpdate() {
   const e = $('presInfo'); if (!e) return;
-  const T = { off: 'hors ligne (entre en promenade pour te connecter)', connecting: 'connexion…', error: 'serveur injoignable, nouvelle tentative…', full: 'salon complet' };
+  const T = { off: 'hors ligne (entre en promenade pour te connecter)', connecting: 'connexion…', error: 'serveur injoignable, nouvelle tentative…', full: 'salon complet', kicked: 'éjecté par le serveur', banned: 'accès interdit' };
   const names = viewer.getPresence().peers.map(p => p.name).join(', ');
   e.textContent = 'présence : ' + (presLast.state === 'online' ? presLast.count + ' en ligne' + (names ? ' (avec ' + names + ')' : '') : (T[presLast.state] || presLast.state));
 }
@@ -599,7 +600,7 @@ updateGuide();
 
 $('bFrame').onclick = () => { viewer.frame(DEF.camDir, DEF.target, 1); camInfo(); };
 $('bReset').onclick = () => {
-  const keep = ['walk', 'names', 'chat', 'spectate', 'chatFade', 'ignoreViz', 'presenceUrl', 'room', 'walkIgnore', 'eyeHeight', 'walkSpeed', 'hole', 'holeFade', 'holeX', 'holeZ', 'guide', 'wave', 'seaY', 'sea', 'anim', 'retina', 'foliageCutout', 'seaColor', 'skyColor'];
+  const keep = ['walk', 'names', 'chat', 'spectate', 'panel', 'chatFade', 'ignoreViz', 'presenceUrl', 'room', 'walkIgnore', 'eyeHeight', 'walkSpeed', 'hole', 'holeFade', 'holeX', 'holeZ', 'guide', 'wave', 'seaY', 'sea', 'anim', 'retina', 'foliageCutout', 'seaColor', 'skyColor'];
   const patch = {}; keep.forEach(k => { patch[k] = DEF[k]; });
   viewer.setCfg(patch);
   buildRows(); refreshEnabled(); camInfo(); updateGuide();
@@ -640,7 +641,7 @@ function buildCommand() {
   if (!same(cam.target.map(n4).map(Number), DEF.target)) a.push('--target ' + q(cam.target.map(n4).join(',')));
   sw('--walk', '--no-walk', cfg.walk, DEF.walk); num('--eye-height', cfg.eyeHeight, DEF.eyeHeight); num('--walk-speed', cfg.walkSpeed, DEF.walkSpeed);
   if (cfg.walkIgnore !== DEF.walkIgnore) a.push('--walk-ignore ' + q(cfg.walkIgnore));
-  sw('--names', '--no-names', cfg.names, DEF.names);
+  sw('--names', '--no-names', cfg.names, DEF.names); sw('--panel', '--no-panel', cfg.panel, DEF.panel);
   if (cfg.presenceUrl) a.push('--presence-url ' + q(cfg.presenceUrl));
   if (cfg.room) a.push('--room ' + q(cfg.room));
   sw('--chat', '--no-chat', cfg.chat, DEF.chat); num('--chat-fade', cfg.chatFade, DEF.chatFade);
@@ -676,7 +677,7 @@ function liveConfig() {
     zoom: r6(cam.zoom), camDir: cam.camDir.map(r6), target: cam.target.map(r6),
     sea: cfg.sea, anim: cfg.anim, retina: cfg.retina, foliageCutout: cfg.foliageCutout,
     seaSize: cfg.seaSize, seaSegments: cfg.seaSegments, seaColor: cfg.seaColor, skyColor: cfg.skyColor,
-    spectate: cfg.spectate,
+    spectate: cfg.spectate, panel: cfg.panel,
     version: '__VERSION__',
     zones: (cfg.zones || []).filter(z => $('profileSel').value === 'perso' || !z.private), profile: $('profileSel').value,
     walk: cfg.walk, eyeHeight: cfg.eyeHeight, walkSpeed: cfg.walkSpeed, walkIgnore: cfg.walkIgnore,
@@ -715,7 +716,7 @@ $('bPy').onclick = () => {
     'HOLE_RADIUS = ' + n(c.hole) + '\nHOLE_FADE = ' + n(c.holeFade) + '\nHOLE_X = ' + n(c.holeX) + '\nHOLE_Z = ' + n(c.holeZ) + '\nWAVE_AMP = ' + n(c.wave) + '\nSEA_Y = ' + n(c.seaY) +
     '\nZOOM_RATIO = ' + n(c.zoom) + '\nCAM_DIR = ' + t(c.camDir) + '\nTARGET = ' + t(c.target) +
     '\nSEA_ENABLED = ' + B(c.sea) + '\nANIM_ENABLED = ' + B(c.anim) + '\nRETINA_ENABLED = ' + B(c.retina) +
-    '\nFOLIAGE_CUTOUT = ' + n(c.foliageCutout) + '\nSEA_COLOR = ' + col(c.seaColor) + '\nSKY_COLOR = ' + col(c.skyColor) + '\nSEA_SEGMENTS = ' + Math.round(c.seaSegments) + '\nWALK_ENABLED = ' + B(c.walk) + '\nEYE_HEIGHT = ' + n(c.eyeHeight) + '\nWALK_SPEED = ' + n(c.walkSpeed) + '\nWALK_IGNORE = ' + JSON.stringify(c.walkIgnore) + '\nNAMES_ENABLED = ' + B(c.names) + '\nCHAT_ENABLED = ' + B(c.chat) + '\nCHAT_FADE = ' + n(c.chatFade) + '\nSPECTATE = ' + B(c.spectate) + '\nPROFILE = ' + JSON.stringify($('profileSel').value) + '\nZONES_JSON = ' + JSON.stringify(JSON.stringify(cfg.zones || [])) + '\nPRESENCE_URL = ' + JSON.stringify(c.presenceUrl) + '\nROOM = ' + JSON.stringify(cfg.room || '') +
+    '\nFOLIAGE_CUTOUT = ' + n(c.foliageCutout) + '\nSEA_COLOR = ' + col(c.seaColor) + '\nSKY_COLOR = ' + col(c.skyColor) + '\nSEA_SEGMENTS = ' + Math.round(c.seaSegments) + '\nWALK_ENABLED = ' + B(c.walk) + '\nEYE_HEIGHT = ' + n(c.eyeHeight) + '\nWALK_SPEED = ' + n(c.walkSpeed) + '\nWALK_IGNORE = ' + JSON.stringify(c.walkIgnore) + '\nNAMES_ENABLED = ' + B(c.names) + '\nCHAT_ENABLED = ' + B(c.chat) + '\nCHAT_FADE = ' + n(c.chatFade) + '\nSPECTATE = ' + B(c.spectate) + '\nPANEL = ' + B(c.panel) + '\nPROFILE = ' + JSON.stringify($('profileSel').value) + '\nZONES_JSON = ' + JSON.stringify(JSON.stringify(cfg.zones || [])) + '\nPRESENCE_URL = ' + JSON.stringify(c.presenceUrl) + '\nROOM = ' + JSON.stringify(cfg.room || '') +
     '\n# <</DEFAULTS>>';
   const py = PY_SOURCE.replace(/# <<DEFAULTS>>[\s\S]*?# <<\/DEFAULTS>>/, () => block);
   download('glb2html.py', new Blob([py], { type: 'text/x-python' }));

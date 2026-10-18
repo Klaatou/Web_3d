@@ -58,6 +58,7 @@ CHAT_FADE = 0.0
 PROFILE = "public"
 ZONES_JSON = "[]"
 SPECTATE = None
+PANEL = True
 # <</DEFAULTS>>
 
 SEA_SIZE = 4000
@@ -201,7 +202,7 @@ MESHOPT_JS = r"""__MESHOPT_JS__"""
 def build_html(glb: bytes, name: str, vendor_dir=None, *, hole=HOLE_RADIUS, hole_fade=HOLE_FADE, hole_x=HOLE_X, hole_z=HOLE_Z, wave=WAVE_AMP,
                sea_y=SEA_Y, zoom=ZOOM_RATIO, cam_dir=CAM_DIR, target=TARGET, sea_enabled=SEA_ENABLED,
                anim_enabled=ANIM_ENABLED, retina=RETINA_ENABLED, foliage_cutout=FOLIAGE_CUTOUT,
-               sea_color=SEA_COLOR, sky_color=SKY_COLOR, sea_segments=SEA_SEGMENTS, walk=WALK_ENABLED, eye_height=EYE_HEIGHT, walk_speed=WALK_SPEED, walk_ignore=WALK_IGNORE, names=NAMES_ENABLED, presence_url=PRESENCE_URL, room=ROOM, chat=CHAT_ENABLED, chat_fade=CHAT_FADE, zones=None, profile=PROFILE, spectate=SPECTATE, title=None) -> str:
+               sea_color=SEA_COLOR, sky_color=SKY_COLOR, sea_segments=SEA_SEGMENTS, walk=WALK_ENABLED, eye_height=EYE_HEIGHT, walk_speed=WALK_SPEED, walk_ignore=WALK_IGNORE, names=NAMES_ENABLED, presence_url=PRESENCE_URL, room=ROOM, chat=CHAT_ENABLED, chat_fade=CHAT_FADE, zones=None, profile=PROFILE, spectate=SPECTATE, panel=PANEL, title=None) -> str:
     used = inspect_glb(glb, name)
     presence_url = fix_presence_url(presence_url)
     need_draco = "KHR_draco_mesh_compression" in used
@@ -231,7 +232,7 @@ def build_html(glb: bytes, name: str, vendor_dir=None, *, hole=HOLE_RADIUS, hole
         "foliageCutout": float(foliage_cutout), "seaSize": SEA_SIZE, "seaSegments": int(sea_segments),
         "seaColor": int(sea_color), "skyColor": int(sky_color),
         "walk": bool(walk), "eyeHeight": float(eye_height), "walkSpeed": float(walk_speed), "walkIgnore": str(walk_ignore),
-        "names": bool(names), "chat": bool(chat), "profile": profile, "version": VERSION, "spectate": bool(presence_url) if spectate is None else bool(spectate),
+        "names": bool(names), "chat": bool(chat), "profile": profile, "version": VERSION, "panel": bool(panel), "spectate": bool(presence_url) if spectate is None else bool(spectate),
         "zones": clean_zones(json.loads(ZONES_JSON) if zones is None else zones, profile), "chatFade": float(chat_fade), "presenceUrl": str(presence_url), "room": str(room) or pathlib.Path(name).stem,
     }
     title = title or f"{pathlib.Path(name).stem} - trou {hole:g} amp {wave:g} y {sea_y:g} zoom {zoom:.2f}"
@@ -303,6 +304,7 @@ def main():
     ap.add_argument("--zones", type=pathlib.Path, help="fichier .json de zones exporté par le viewer ; chemin relatif : cherché dans le dossier de lancement, puis dans le dossier du script")
     ap.add_argument("--profile", choices=("public", "perso"), default=PROFILE, help="public : retire les zones privées (ex. Home Assistant) ; perso : les garde")
     ap.add_argument("--spectate", action=argparse.BooleanOptionalAction, default=SPECTATE, help="voir les visiteurs en promenade depuis la vue globale (se connecte dès l'ouverture de la page ; actif par défaut dès qu'une --presence-url est donnée ; --no-spectate pour l'éviter)")
+    ap.add_argument("--panel", action=argparse.BooleanOptionalAction, default=PANEL, help="panneau de réglages pour les visiteurs (haute résolution, mer animée, force des vagues), bouton en haut à droite")
     ap.add_argument("--room", default=ROOM, help="salon de présence (défaut : nom du fichier)")
     ap.add_argument("--sea", dest="sea_enabled", action=argparse.BooleanOptionalAction, default=SEA_ENABLED)
     ap.add_argument("--anim", dest="anim_enabled", action=argparse.BooleanOptionalAction, default=ANIM_ENABLED)
@@ -324,7 +326,7 @@ def main():
 
     kw = dict(hole=clamp(a.hole, 30, 600), hole_fade=max(0.0, a.hole_fade), hole_x=a.hole_x, hole_z=a.hole_z, wave=clamp(a.wave, 0, 10),
               sea_y=clamp(a.sea_y, -150, 60), zoom=clamp(a.zoom, 0.05, 100), cam_dir=a.cam_dir, target=a.target,
-              foliage_cutout=clamp(a.foliage_cutout, 0, 1), sea_color=a.sea_color, sky_color=a.sky_color, sea_segments=int(clamp(a.sea_segments, 8, 1000)), walk=a.walk, walk_ignore=a.walk_ignore, names=a.names, presence_url=a.presence_url, room=a.room, chat=a.chat, chat_fade=clamp(a.chat_fade, 0, 3600), zones=zones_arg, profile=a.profile, spectate=a.spectate, eye_height=clamp(a.eye_height, 0.3, 5), walk_speed=clamp(a.walk_speed, 0.5, 30),
+              foliage_cutout=clamp(a.foliage_cutout, 0, 1), sea_color=a.sea_color, sky_color=a.sky_color, sea_segments=int(clamp(a.sea_segments, 8, 1000)), walk=a.walk, walk_ignore=a.walk_ignore, names=a.names, presence_url=a.presence_url, room=a.room, chat=a.chat, chat_fade=clamp(a.chat_fade, 0, 3600), zones=zones_arg, profile=a.profile, spectate=a.spectate, panel=a.panel, eye_height=clamp(a.eye_height, 0.3, 5), walk_speed=clamp(a.walk_speed, 0.5, 30),
               sea_enabled=a.sea_enabled, anim_enabled=a.anim_enabled, retina=a.retina, title=a.title)
 
     inp = pathlib.Path(a.input)

@@ -490,7 +490,7 @@ function createViewer(container, cfg0, loader) {
   let downPos = null, lastClick = { t: 0, x: 0, y: 0 };
   dom.addEventListener('pointerdown', e => { downPos = [e.clientX, e.clientY]; });
   dom.addEventListener('click', e => {
-    const locked = document.pointerLockElement === dom, now = performance.now();
+    const locked = document.pointerLockElement === dom, now = e.timeStamp || performance.now();
     {
       const rc = dom.getBoundingClientRect();
       const cnx = locked ? 0 : (e.clientX - rc.left) / rc.width * 2 - 1, cny = locked ? 0 : -((e.clientY - rc.top) / rc.height) * 2 + 1;
@@ -502,10 +502,6 @@ function createViewer(container, cfg0, loader) {
     }
     if (!walking) {
       const still = !!downPos && Math.hypot(e.clientX - downPos[0], e.clientY - downPos[1]) < 6;
-      if (still) {
-        if (now - lastClick.t < 400 && Math.hypot(e.clientX - lastClick.x, e.clientY - lastClick.y) < 12) { lastClick.t = 0; if (setLanding(e)) return; }
-        else lastClick = { t: now, x: e.clientX, y: e.clientY };
-      }
       if (pickOrbit && onPick && still) doPick(e, false);
       return;
     }
@@ -521,6 +517,8 @@ function createViewer(container, cfg0, loader) {
     try { const p = dom.requestPointerLock(); if (p && p.catch) p.catch(() => {}); } catch (_) {}
     doPick(e, locked);
   });
+
+  dom.addEventListener('dblclick', e => { if (!walking) setLanding(e); });
 
   // ---- présence : autres visiteurs (WebSocket)
   const uid = (() => {
@@ -820,13 +818,18 @@ function createViewer(container, cfg0, loader) {
 
   // ---- repère d'atterrissage : un cercle posé sur le sol, sous la cible de la vue globale (où F pose l'avatar)
   let onLanding = null, landY = null, landKey = '', landT = 0, landDirty = false;
+  const UPV = new THREE.Vector3(0, 1, 0), landN = new THREE.Vector3(0, 1, 0);
+  function faceUp(h, out) {
+    out.copy(UPV);
+    if (h.face) { const n = h.face.normal.clone().transformDirection(h.object.matrixWorld); if (n.y < 0) n.negate(); if (n.y > 0.6) out.copy(n); }
+  }
   const landing = new THREE.Group(); landing.visible = false; scene.add(landing);
   {
-    const bm = o => Object.assign({ transparent: true, opacity: 0.85, depthTest: false, depthWrite: false, fog: false, side: THREE.DoubleSide }, o);
+    const bm = o => Object.assign({ transparent: true, opacity: 0.85, depthTest: true, depthWrite: false, fog: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }, o);
     const ro = new THREE.Mesh(new THREE.RingGeometry(0.75, 0.9, 40), new THREE.MeshBasicMaterial(bm({ color: 0x000000 })));
-    ro.rotation.x = -Math.PI / 2; ro.position.y = 0.03; landing.add(ro);
+    ro.rotation.x = -Math.PI / 2; ro.position.y = 0.06; landing.add(ro);
     const ri = new THREE.Mesh(new THREE.RingGeometry(0.6, 0.75, 40), new THREE.MeshBasicMaterial(bm({ color: 0xffffff })));
-    ri.rotation.x = -Math.PI / 2; ri.position.y = 0.035; landing.add(ri);
+    ri.rotation.x = -Math.PI / 2; ri.position.y = 0.065; landing.add(ri);
   }
   const downRay = new THREE.Raycaster(), DOWN = new THREE.Vector3(0, -1, 0);
   function solidHit(h, tokens) {
@@ -842,7 +845,7 @@ function createViewer(container, cfg0, loader) {
     const tokens = parseIgnore(cfg.walkIgnore);
     for (const oy of [t.y + 2, 1e5]) {
       downRay.set(new THREE.Vector3(t.x, oy, t.z), DOWN);
-      for (const h of downRay.intersectObject(model, true)) if (solidHit(h, tokens)) return h.point.y;
+      for (const h of downRay.intersectObject(model, true)) if (solidHit(h, tokens)) { faceUp(h, landN); return h.point.y; }
     }
     return null;
   }
@@ -855,6 +858,7 @@ function createViewer(container, cfg0, loader) {
     if (k !== landKey) { landKey = k; landT = now; landDirty = true; }
     if (landDirty && now - landT > 120) { landDirty = false; landY = groundUnder(t); dirty = true; }
     landing.position.set(t.x, landY === null ? t.y : landY, t.z);
+    landing.quaternion.setFromUnitVectors(UPV, landN);
     landing.scale.setScalar(Math.max(1, camera.position.distanceTo(t) / 60));
   }
   function setLanding(e) {
@@ -866,7 +870,7 @@ function createViewer(container, cfg0, loader) {
     for (const h of tpRay.intersectObject(model, true)) {
       if (!solidHit(h, tokens)) continue;
       controls.target.copy(h.point); controls.update(); dirty = true;
-      landY = h.point.y; landKey = tkey(controls.target); landDirty = false;
+      landY = h.point.y; landKey = tkey(controls.target); landDirty = false; faceUp(h, landN);
       if (onLanding) onLanding(h.point.toArray());
       return true;
     }
