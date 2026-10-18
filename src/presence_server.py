@@ -2,31 +2,45 @@
 # -*- coding: utf-8 -*-
 """
 presence_server - serveur de présence pour les pages générées par glb2html.
-Relaie les positions des visiteurs en promenade et leurs messages de chat
-(rien n'est écrit sur disque ; l'historique de chat vit en mémoire tant que le salon est occupé).
+
+Relaie les positions des visiteurs en promenade, leurs messages de chat, et les "spectateurs"
+(visiteurs en vue globale qui voient les autres sans apparaître).
+Noms réservés : chaque navigateur a une clé aléatoire ; le premier à prendre un nom le garde,
+les suivants reçoivent "Nom#CODE" (code court dérivé de leur clé). Pas de compte, pas de mot de passe.
 
 Installation :  pip install websockets
-Lancement    :  python presence_server.py                       (écoute sur ws://0.0.0.0:8765)
-                python presence_server.py --port 9000 --max-per-room 30
-                python presence_server.py --cert fullchain.pem --key privkey.pem    (wss:// directement)
-                python presence_server.py --origins https://monsite.fr,https://www.monsite.fr
+Lancement    :  python presence_server.py
+                python presence_server.py --log presence.log --log-days 30
+                python presence_server.py --cert fullchain.pem --key privkey.pem      (wss:// directement)
+                python presence_server.py --proxy-header X-Forwarded-For              (derrière nginx / caddy / Cloudflare)
 
-Page hébergée en https -> l'URL doit être en wss:// (certificat requis : --cert/--key,
-ou reverse proxy nginx/caddy qui termine le TLS et transmet vers ws://127.0.0.1:8765).
-Dans la page : python glb2html.py ile.glb --presence-url wss://monsite.fr/presence --room mon-ile
+Journal (--log) : une ligne par évènement, dates JJ/MM/AAAA, fichier tourné chaque nuit (--log-days jours conservés).
+Les adresses IP y sont masquées par défaut (--log-ip hash) ; chat et pseudos y figurent : informe tes visiteurs
+et limite la durée de conservation (données personnelles).
 """
 from __future__ import annotations
 
+VERSION = "__VERSION__"
+
 import argparse
 import asyncio
+import base64
 import collections
 import colorsys
+import hashlib
 import json
+import logging
+import logging.handlers
 import math
+import os
 import random
 import re
+import secrets
+import signal
 import ssl
+import tempfile
 import time
+import unicodedata
 
 import websockets
 
@@ -35,25 +49,33 @@ HISTORY: dict[str, collections.deque] = {}
 PER_IP: dict[str, int] = {}
 NEXT_ID = 1
 OPTS = None
+REG = None
+LOG = logging.getLogger("presence")
 
 
-class Peer:
-    __slots__ = ("id", "ws", "name", "color", "p", "yaw", "last", "ip", "chat_times")
-
-    def __init__(self, pid, ws, name, color, ip):
-        self.id, self.ws, self.name, self.color, self.ip = pid, ws, name, color, ip
-        self.p, self.yaw, self.last = None, 0.0, 0.0
-        self.chat_times = []
-
-    def public(self):
-        d = {"id": self.id, "name": self.name, "color": self.color}
-        if self.p is not None:
-            d["p"], d["yaw"] = self.p, self.yaw
-        return d
+# ----------------------------------------------------------------- utilitaires
+def lan_ip():
+    import socket
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(("10.255.255.255", 1))
+        return s.getsockname()[0]
+    except OSError:
+        return None
+    finally:
+        s.close()
 
 
-def clean_name(s, fallback):
-    s = re.sub(r"[\x00-\x1f<>]", "", str(s or "")).strip()[:24]
+def here(path):
+    """Chemin relatif -> relatif au dossier de ce script (et non au dossier de lancement)."""
+    if not path:
+        return path
+    path = os.path.expanduser(path)
+    return path if os.path.isabs(path) else os.path.join(os.path.dirname(os.path.abspath(__file__)), path)
+
+
+def clean_name(s, fallback=""):
+    s = re.sub(r"[\x00-\x1f<>#]", "", str(s or "")).strip()[:24]
     return s or fallback
 
 
@@ -65,6 +87,11 @@ def clean_text(s, limit):
 def clean_room(s):
     s = re.sub(r"[^\w .\-]", "", str(s or "")).strip()[:64]
     return s or "default"
+
+
+def norm_name(s):
+    s = unicodedata.normalize("NFKD", str(s)).encode("ascii", "ignore").decode()
+    return re.sub(r"[^a-z0-9]", "", s.lower())
 
 
 def finite_list(v, n, lim=1e5):
@@ -83,6 +110,124 @@ def random_color():
     return (int(r * 255) << 16) | (int(g * 255) << 8) | int(b * 255)
 
 
+class FrFormatter(logging.Formatter):
+    def format(self, record):
+        return time.strftime("%d/%m/%Y %H:%M:%S", time.localtime(record.created)) + " | " + record.getMessage()
+
+
+def setup_log():
+    LOG.setLevel(logging.INFO)
+    LOG.propagate = False
+    handlers = [logging.StreamHandler()]
+    if OPTS.log:
+        handlers.append(logging.handlers.TimedRotatingFileHandler(OPTS.log, when="midnight", backupCount=OPTS.log_days, encoding="utf-8"))
+    for h in handlers:
+        h.setFormatter(FrFormatter())
+        LOG.addHandler(h)
+
+
+def ip_for_log(ip):
+    if OPTS.log_ip == "raw":
+        return ip
+    if OPTS.log_ip == "none":
+        return "-"
+    return hashlib.sha256((REG.salt + ip).encode()).hexdigest()[:8]
+
+
+def log(kind, room, who, extra=""):
+    line = f"{kind:<11} | salon={room} | {who}"
+    if extra:
+        line += " | " + re.sub(r"[\r\n]+", " ", str(extra))
+    LOG.info(line)
+
+
+class Peer:
+    __slots__ = ("id", "ws", "name", "color", "p", "yaw", "last", "ip", "chat_times", "spectator", "uidh", "t0", "zone_t", "room")
+
+    def __init__(self, pid, ws, name, color, ip, spectator, uidh, room):
+        self.id, self.ws, self.name, self.color, self.ip = pid, ws, name, color, ip
+        self.spectator, self.uidh, self.room = spectator, uidh, room
+        self.p, self.yaw, self.last, self.zone_t = None, 0.0, 0.0, 0.0
+        self.chat_times = []
+        self.t0 = time.monotonic()
+
+    def public(self):
+        d = {"id": self.id, "name": self.name, "color": self.color}
+        if self.p is not None:
+            d["p"], d["yaw"] = self.p, self.yaw
+        return d
+
+    def who(self):
+        return f"{self.name or '(spectateur)'} [id {self.id}, clé {self.uidh[:6]}, ip {ip_for_log(self.ip)}]"
+
+
+# ----------------------------------------------------------------- registre des noms
+class Registry:
+    """Nom -> clé de navigateur (hachée). Persistant. Un nom inutilisé depuis --name-ttl-days est libéré."""
+
+    def __init__(self, path, ttl_days, reserved):
+        self.path, self.ttl, self.dirty = path, ttl_days * 86400, False
+        self.reserved = {norm_name(x) for x in reserved if norm_name(x)}
+        self.salt, self.names, self.users = secrets.token_hex(8), {}, {}
+        if path and os.path.exists(path):
+            try:
+                with open(path, encoding="utf-8") as f:
+                    d = json.load(f)
+                self.salt = d.get("salt") or self.salt
+                self.names, self.users = d.get("names", {}), d.get("users", {})
+            except (OSError, ValueError):
+                print(f"[!] registre illisible ({path}) : démarrage à vide")
+        self.dirty = True
+        self.save()
+
+    def hash(self, uid):
+        return hashlib.sha256((self.salt + str(uid)).encode()).hexdigest()
+
+    @staticmethod
+    def code(uidh):
+        return base64.b32encode(bytes.fromhex(uidh[:10]))[:4].decode()
+
+    def save(self):
+        if not self.path or not self.dirty:
+            return
+        d = os.path.dirname(os.path.abspath(self.path))
+        fd, tmp = tempfile.mkstemp(dir=d, suffix=".tmp")
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump({"salt": self.salt, "names": self.names, "users": self.users}, f, ensure_ascii=False, indent=1)
+        os.replace(tmp, self.path)
+        self.dirty = False
+
+    def resolve(self, uidh, requested, persistent=True):
+        """Renvoie (nom affiché, nom réservé ?)."""
+        now = time.time()
+        base = clean_name(requested)
+        key = norm_name(base)
+        suffix = "#" + self.code(uidh)
+        if not base or not key:
+            return "Visiteur" + suffix, False
+        owner = self.names.get(key)
+        if owner and owner != uidh:
+            u = self.users.get(owner)
+            if not u or now - u.get("last", 0) > self.ttl:
+                self.names.pop(key, None); self.users.pop(owner, None); owner = None; self.dirty = True; self.save()
+        if owner == uidh:
+            self.users.setdefault(uidh, {"name": base, "key": key, "first": now})["last"] = now
+            self.users[uidh]["name"] = base
+            self.dirty = True
+            return base, True
+        if owner is None and key not in self.reserved and persistent:
+            prev = self.users.get(uidh, {}).get("key")
+            if prev and prev != key and self.names.get(prev) == uidh:
+                del self.names[prev]
+            self.names[key] = uidh
+            self.users[uidh] = {"name": base, "key": key, "first": self.users.get(uidh, {}).get("first", now), "last": now}
+            self.dirty = True
+            self.save()
+            return base, True
+        return base[:18] + suffix, False
+
+
+# ----------------------------------------------------------------- réseau
 async def send_safe(ws, text):
     try:
         await ws.send(text)
@@ -95,6 +240,10 @@ async def broadcast(room, msg, exclude=None):
     peers = [p for p in ROOMS.get(room, {}).values() if p is not exclude]
     if peers:
         await asyncio.gather(*(send_safe(p.ws, text) for p in peers))
+
+
+def walkers(room):
+    return [p for p in ROOMS.get(room, {}).values() if not p.spectator]
 
 
 def remote_ip(ws):
@@ -113,6 +262,12 @@ def remote_ip(ws):
         return "?"
 
 
+async def become_walker(peer, requested_name):
+    peer.name, _ = REG.resolve(peer.uidh, requested_name, persistent=not peer.uidh.startswith("anon-"))
+    peer.spectator = False
+    peer.p = None
+
+
 async def handler(ws):
     global NEXT_ID
     peer, room, counted = None, None, False
@@ -120,28 +275,39 @@ async def handler(ws):
     try:
         if PER_IP.get(ip, 0) >= OPTS.max_per_ip:
             await ws.send(json.dumps({"t": "full"}))
+            log("refus", "-", f"ip {ip_for_log(ip)}", "limite de connexions par IP")
             return
         PER_IP[ip] = PER_IP.get(ip, 0) + 1
         counted = True
-        raw = await asyncio.wait_for(ws.recv(), 10)
-        msg = json.loads(raw)
+        msg = json.loads(await asyncio.wait_for(ws.recv(), 10))
         if not isinstance(msg, dict) or msg.get("t") != "hello":
             return
         room = clean_room(msg.get("room"))
         peers = ROOMS.setdefault(room, {})
-        total = sum(len(r) for r in ROOMS.values())
-        if len(peers) >= OPTS.max_per_room or total >= OPTS.max_total:
+        uid = str(msg.get("uid") or "")[:128]
+        uidh = REG.hash(uid) if len(uid) >= 16 else "anon-" + secrets.token_hex(8)
+        spectator = bool(msg.get("spectator"))
+        if spectator:
+            if sum(1 for r in ROOMS.values() for p in r.values() if p.spectator) >= OPTS.max_spectators:
+                await ws.send(json.dumps({"t": "full"}))
+                log("refus", room, f"ip {ip_for_log(ip)}", "trop de spectateurs")
+                return
+        elif len(walkers(room)) >= OPTS.max_per_room or sum(len(r) for r in ROOMS.values()) >= OPTS.max_total:
             await ws.send(json.dumps({"t": "full"}))
+            log("refus", room, f"ip {ip_for_log(ip)}", "salon plein")
             return
         pid, NEXT_ID = NEXT_ID, NEXT_ID + 1
-        peer = Peer(pid, ws, clean_name(msg.get("name"), f"Visiteur{pid % 1000:03d}"), random_color(), ip)
-        existing = [p.public() for p in peers.values()]
+        peer = Peer(pid, ws, "", random_color(), ip, spectator, uidh, room)
+        if not spectator:
+            peer.name, _ = REG.resolve(uidh, msg.get("name"), persistent=not uidh.startswith("anon-"))
+        existing = [p.public() for p in walkers(room)]
         peers[pid] = peer
-        hist = list(HISTORY.get(room, ()))
         await ws.send(json.dumps({"t": "welcome", "id": pid, "name": peer.name, "color": peer.color, "peers": existing,
-                                  "history": hist}, separators=(",", ":")))
-        await broadcast(room, dict(peer.public(), t="join"), exclude=peer)
-        print(f"[+] {peer.name} ({ip}) -> salon '{room}' ({len(peers)})")
+                                  "history": list(HISTORY.get(room, ())), "role": "spectator" if spectator else "walker"},
+                                 separators=(",", ":")))
+        log("connexion", room, peer.who(), "spectateur" if spectator else f"promeneur ({len(walkers(room))} dans le salon)")
+        if not spectator:
+            await broadcast(room, dict(peer.public(), t="join"), exclude=peer)
         async for raw in ws:
             try:
                 m = json.loads(raw)
@@ -150,7 +316,24 @@ async def handler(ws):
             if not isinstance(m, dict):
                 continue
             t = m.get("t")
-            if t == "pos":
+            if t == "role":
+                want_walker = bool(m.get("walker"))
+                if want_walker and peer.spectator:
+                    if len(walkers(room)) >= OPTS.max_per_room:
+                        await send_safe(ws, json.dumps({"t": "full"}))
+                        continue
+                    await become_walker(peer, m.get("name"))
+                    await send_safe(ws, json.dumps({"t": "you", "name": peer.name}))
+                    await broadcast(room, dict(peer.public(), t="join"), exclude=peer)
+                    log("promenade", room, peer.who(), "début")
+                elif not want_walker and not peer.spectator:
+                    peer.spectator, peer.p = True, None
+                    await broadcast(room, {"t": "leave", "id": pid}, exclude=peer)
+                    log("promenade", room, peer.who(), "fin")
+                    peer.name = ""
+            elif peer.spectator:
+                continue
+            elif t == "pos":
                 now = time.monotonic()
                 if now - peer.last < 0.04:
                     continue
@@ -172,21 +355,32 @@ async def handler(ws):
                     await send_safe(ws, json.dumps({"t": "notice", "text": "Trop de messages, patiente quelques secondes."}))
                     continue
                 peer.chat_times.append(now)
-                msg_out = {"t": "chat", "id": pid, "name": peer.name, "text": text}
                 if OPTS.history > 0:
-                    HISTORY.setdefault(room, collections.deque(maxlen=OPTS.history)).append(
-                        {"id": pid, "name": peer.name, "text": text})
-                await broadcast(room, msg_out)
+                    HISTORY.setdefault(room, collections.deque(maxlen=OPTS.history)).append({"id": pid, "name": peer.name, "text": text})
+                log("chat", room, peer.who(), text)
+                await broadcast(room, {"t": "chat", "id": pid, "name": peer.name, "text": text})
             elif t == "name":
-                peer.name = clean_name(m.get("name"), peer.name)
-                await broadcast(room, {"t": "name", "id": pid, "name": peer.name}, exclude=peer)
+                old = peer.name
+                peer.name, _ = REG.resolve(peer.uidh, m.get("name"), persistent=not peer.uidh.startswith("anon-"))
+                if peer.name != old:
+                    await send_safe(ws, json.dumps({"t": "you", "name": peer.name}))
+                    await broadcast(room, {"t": "name", "id": pid, "name": peer.name}, exclude=peer)
+                    log("nom", room, peer.who(), f"ancien : {old}")
+            elif t == "zone":
+                now = time.monotonic()
+                if now - peer.zone_t < 0.5:
+                    continue
+                peer.zone_t = now
+                log("zone", room, peer.who(), f"{clean_text(m.get('type'), 12)} « {clean_text(m.get('label') or m.get('id'), 60)} »")
     except (websockets.ConnectionClosed, asyncio.TimeoutError, ValueError):
         pass
     finally:
         if peer is not None and room in ROOMS:
             ROOMS[room].pop(peer.id, None)
-            await broadcast(room, {"t": "leave", "id": peer.id})
-            print(f"[-] {peer.name} ({ip}) <- salon '{room}' ({len(ROOMS[room])})")
+            if not peer.spectator:
+                await broadcast(room, {"t": "leave", "id": peer.id})
+            dur = int(time.monotonic() - peer.t0)
+            log("déconnexion", room, peer.who(), f"durée {dur // 60} min {dur % 60:02d} s")
             if not ROOMS[room]:
                 del ROOMS[room]
                 HISTORY.pop(room, None)
@@ -196,31 +390,67 @@ async def handler(ws):
                 del PER_IP[ip]
 
 
+async def flush_loop():
+    while True:
+        await asyncio.sleep(20)
+        REG.save()
+
+
 async def main():
-    global OPTS
+    global OPTS, REG
     ap = argparse.ArgumentParser(description="Serveur de présence glb2html (WebSocket)")
+    ap.add_argument("--version", action="version", version=f"presence_server {VERSION}")
     ap.add_argument("--host", default="0.0.0.0")
     ap.add_argument("--port", type=int, default=8765)
-    ap.add_argument("--max-per-room", type=int, default=50)
+    ap.add_argument("--max-per-room", type=int, default=50, help="promeneurs max par salon")
+    ap.add_argument("--max-spectators", type=int, default=100, help="spectateurs (vue globale) max, tous salons")
     ap.add_argument("--max-total", type=int, default=500)
     ap.add_argument("--max-per-ip", type=int, default=10, help="connexions simultanées par adresse IP")
     ap.add_argument("--max-chat", type=int, default=200, help="longueur max d'un message de chat")
     ap.add_argument("--chat-gap", type=float, default=0.7, help="délai mini entre deux messages d'un visiteur (s)")
     ap.add_argument("--chat-burst", type=int, default=5, help="messages max par fenêtre de 10 s et par visiteur")
     ap.add_argument("--history", type=int, default=20, help="derniers messages rejoués aux nouveaux arrivants (mémoire seulement, 0 = aucun)")
-    ap.add_argument("--proxy-header", help="derrière un reverse proxy : en-tête portant l'IP réelle du visiteur (ex. X-Forwarded-For, CF-Connecting-IP) ; sans lui, la limite par IP voit toujours l'IP du proxy. À n'activer que si le serveur n'est joignable que par ce proxy")
+    ap.add_argument("--identities", default="presence_identities.json", help="registre des noms réservés (vide = en mémoire seulement) ; chemin relatif = dossier du script")
+    ap.add_argument("--name-ttl-days", type=int, default=365, help="un nom non utilisé depuis ce nombre de jours est libéré")
+    ap.add_argument("--reserved", default="", help="noms interdits à la réservation, séparés par des virgules (ex. admin,moderateur)")
+    ap.add_argument("--log", help="fichier de journal (tourné chaque nuit) ; chemin relatif = dossier du script")
+    ap.add_argument("--log-days", type=int, default=30, help="jours de journal conservés")
+    ap.add_argument("--log-ip", choices=("hash", "raw", "none"), default="hash", help="adresses IP dans le journal : masquées (défaut), en clair, ou absentes")
+    ap.add_argument("--proxy-header", help="derrière un reverse proxy : en-tête portant l'IP réelle du visiteur (ex. X-Forwarded-For, CF-Connecting-IP) ; à n'activer que si le serveur n'est joignable que par ce proxy")
     ap.add_argument("--origins", help="origines autorisées, séparées par des virgules (défaut : toutes)")
     ap.add_argument("--cert", help="certificat TLS (wss://)")
     ap.add_argument("--key", help="clé privée TLS")
     OPTS = ap.parse_args()
+    OPTS.log = here(OPTS.log)
+    OPTS.identities = here(OPTS.identities)
+    REG = Registry(OPTS.identities or None, OPTS.name_ttl_days, [x for x in OPTS.reserved.split(",")])
+    setup_log()
     ctx = None
     if OPTS.cert:
         ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         ctx.load_cert_chain(OPTS.cert, OPTS.key)
     origins = [o.strip() for o in OPTS.origins.split(",")] if OPTS.origins else None
-    async with websockets.serve(handler, OPTS.host, OPTS.port, max_size=4096, origins=origins, ssl=ctx):
-        print(f"présence : {'wss' if ctx else 'ws'}://{OPTS.host}:{OPTS.port}  (Ctrl+C pour arrêter)")
-        await asyncio.Future()
+    flusher = asyncio.create_task(flush_loop())
+    stop = asyncio.Event()
+    try:
+        asyncio.get_running_loop().add_signal_handler(signal.SIGTERM, stop.set)
+    except (NotImplementedError, AttributeError, RuntimeError):
+        pass
+    try:
+        async with websockets.serve(handler, OPTS.host, OPTS.port, max_size=4096, origins=origins, ssl=ctx):
+            scheme = "wss" if ctx else "ws"
+            LOG.info(f"serveur | presence_server {VERSION} | écoute sur {OPTS.host}:{OPTS.port}  (Ctrl+C pour arrêter)")
+            if OPTS.host in ("0.0.0.0", "::", ""):
+                ip = lan_ip()
+                LOG.info(f"serveur | adresses à donner à --presence-url : {scheme}://127.0.0.1:{OPTS.port} (cette machine)" + (f" · {scheme}://{ip}:{OPTS.port} (autres appareils du réseau)" if ip else ""))
+                LOG.info("serveur | n'utilise jamais 0.0.0.0 dans --presence-url : c'est une adresse d'écoute, pas une destination")
+            else:
+                LOG.info(f"serveur | adresse à donner à --presence-url : {scheme}://{OPTS.host}:{OPTS.port}")
+            LOG.info(f"serveur | journal : {OPTS.log or '(aucun : option --log)'} | registre des noms : {OPTS.identities or '(en mémoire)'}")
+            await stop.wait()
+    finally:
+        flusher.cancel()
+        REG.save()
 
 
 if __name__ == "__main__":
