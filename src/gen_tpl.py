@@ -59,6 +59,7 @@ PROFILE = "public"
 ZONES_JSON = "[]"
 SPECTATE = None
 PANEL = True
+ZONES_LIVE = ""
 # <</DEFAULTS>>
 
 SEA_SIZE = 4000
@@ -202,7 +203,7 @@ MESHOPT_JS = r"""__MESHOPT_JS__"""
 def build_html(glb: bytes, name: str, vendor_dir=None, *, hole=HOLE_RADIUS, hole_fade=HOLE_FADE, hole_x=HOLE_X, hole_z=HOLE_Z, wave=WAVE_AMP,
                sea_y=SEA_Y, zoom=ZOOM_RATIO, cam_dir=CAM_DIR, target=TARGET, sea_enabled=SEA_ENABLED,
                anim_enabled=ANIM_ENABLED, retina=RETINA_ENABLED, foliage_cutout=FOLIAGE_CUTOUT,
-               sea_color=SEA_COLOR, sky_color=SKY_COLOR, sea_segments=SEA_SEGMENTS, walk=WALK_ENABLED, eye_height=EYE_HEIGHT, walk_speed=WALK_SPEED, walk_ignore=WALK_IGNORE, names=NAMES_ENABLED, presence_url=PRESENCE_URL, room=ROOM, chat=CHAT_ENABLED, chat_fade=CHAT_FADE, zones=None, profile=PROFILE, spectate=SPECTATE, panel=PANEL, title=None) -> str:
+               sea_color=SEA_COLOR, sky_color=SKY_COLOR, sea_segments=SEA_SEGMENTS, walk=WALK_ENABLED, eye_height=EYE_HEIGHT, walk_speed=WALK_SPEED, walk_ignore=WALK_IGNORE, names=NAMES_ENABLED, presence_url=PRESENCE_URL, room=ROOM, chat=CHAT_ENABLED, chat_fade=CHAT_FADE, zones=None, profile=PROFILE, spectate=SPECTATE, panel=PANEL, zones_live=ZONES_LIVE, title=None) -> str:
     used = inspect_glb(glb, name)
     presence_url = fix_presence_url(presence_url)
     need_draco = "KHR_draco_mesh_compression" in used
@@ -232,7 +233,7 @@ def build_html(glb: bytes, name: str, vendor_dir=None, *, hole=HOLE_RADIUS, hole
         "foliageCutout": float(foliage_cutout), "seaSize": SEA_SIZE, "seaSegments": int(sea_segments),
         "seaColor": int(sea_color), "skyColor": int(sky_color),
         "walk": bool(walk), "eyeHeight": float(eye_height), "walkSpeed": float(walk_speed), "walkIgnore": str(walk_ignore),
-        "names": bool(names), "chat": bool(chat), "profile": profile, "version": VERSION, "panel": bool(panel), "spectate": bool(presence_url) if spectate is None else bool(spectate),
+        "names": bool(names), "chat": bool(chat), "profile": profile, "version": VERSION, "panel": bool(panel), "zonesLive": str(zones_live or ""), "spectate": bool(presence_url) if spectate is None else bool(spectate),
         "zones": clean_zones(json.loads(ZONES_JSON) if zones is None else zones, profile), "chatFade": float(chat_fade), "presenceUrl": str(presence_url), "room": str(room) or pathlib.Path(name).stem,
     }
     title = title or f"{pathlib.Path(name).stem} - trou {hole:g} amp {wave:g} y {sea_y:g} zoom {zoom:.2f}"
@@ -247,8 +248,27 @@ def build_html(glb: bytes, name: str, vendor_dir=None, *, hole=HOLE_RADIUS, hole
     return out.replace("__GLB_B64__", base64.b64encode(glb).decode("ascii"))
 
 
+def live_zones_name(out_path, zones_live):
+    return out_path.stem + ".zones.json" if zones_live == "auto" else str(zones_live or "")
+
+
+def write_live_zones(out_path, kw):
+    """Écrit à côté de la page le fichier de zones rechargeable (filtré selon le profil : le profil public n'y met jamais de zone privée)."""
+    name = live_zones_name(out_path, kw.get("zones_live"))
+    if not name:
+        return
+    zones = kw.get("zones")
+    zones = clean_zones(json.loads(ZONES_JSON) if zones is None else zones, kw.get("profile", PROFILE))
+    target = out_path.with_name(name)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(zones, ensure_ascii=False, indent=1), encoding="utf-8")
+    print(f"[zones] {len(zones)} zone(s), profil {kw.get('profile', PROFILE)} -> {target}")
+
+
 def generate(glb_path: pathlib.Path, out_path: pathlib.Path, vendor_dir, **kw):
     data = glb_path.read_bytes()
+    if kw.get("zones_live"):
+        kw = dict(kw, zones_live=live_zones_name(out_path, kw["zones_live"]))
     try:
         page = build_html(data, glb_path.name, vendor_dir, **kw)
     except ValueError as e:
@@ -256,6 +276,7 @@ def generate(glb_path: pathlib.Path, out_path: pathlib.Path, vendor_dir, **kw):
         return False
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(page, encoding="utf-8")
+    write_live_zones(out_path, dict(kw, zones_live=kw.get("zones_live") or ""))
     print(f"[OK] {glb_path.name} -> {out_path} ({len(data) / 2**20:.2f} Mo glb, {len(page) / 2**20:.2f} Mo html) [glb2html {VERSION}]")
     return True
 
@@ -278,7 +299,9 @@ def clamp(v, lo, hi):
 def main():
     ap = argparse.ArgumentParser(description="GLB -> HTML autonome hors ligne (three.js intégré)")
     ap.add_argument("--version", action="version", version=f"glb2html {VERSION}")
-    ap.add_argument("input", help="fichier .glb ou dossier de .glb")
+    ap.add_argument("input", nargs="?", help="fichier .glb ou dossier de .glb")
+    ap.add_argument("--zones-live", nargs="?", const="auto", default=(ZONES_LIVE or None), metavar="NOM", help="la page recharge ses zones à chaque ouverture depuis un fichier .zones.json placé à côté d'elle (servie en http/https ; sinon les zones intégrées servent). Sans NOM : <page>.zones.json. Le fichier est écrit par le script, filtré selon --profile")
+    ap.add_argument("--zones-only", action="store_true", help="réécrit seulement le fichier .zones.json à côté de la page indiquée par -o, sans régénérer le HTML (avec --zones-live)")
     ap.add_argument("-o", "--output", help="sortie : fichier .html, ou dossier (créé si besoin). Entrée dossier : dossier de sortie. Défaut : \"<nom> - Offline.html\" à côté du .glb")
     ap.add_argument("--hole", type=float, default=HOLE_RADIUS, help="rayon du trou 30..600 (zone plate = rayon - fondu)")
     ap.add_argument("--hole-fade", type=float, default=HOLE_FADE, help="demi-largeur du fondu du trou")
@@ -326,9 +349,20 @@ def main():
 
     kw = dict(hole=clamp(a.hole, 30, 600), hole_fade=max(0.0, a.hole_fade), hole_x=a.hole_x, hole_z=a.hole_z, wave=clamp(a.wave, 0, 10),
               sea_y=clamp(a.sea_y, -150, 60), zoom=clamp(a.zoom, 0.05, 100), cam_dir=a.cam_dir, target=a.target,
-              foliage_cutout=clamp(a.foliage_cutout, 0, 1), sea_color=a.sea_color, sky_color=a.sky_color, sea_segments=int(clamp(a.sea_segments, 8, 1000)), walk=a.walk, walk_ignore=a.walk_ignore, names=a.names, presence_url=a.presence_url, room=a.room, chat=a.chat, chat_fade=clamp(a.chat_fade, 0, 3600), zones=zones_arg, profile=a.profile, spectate=a.spectate, panel=a.panel, eye_height=clamp(a.eye_height, 0.3, 5), walk_speed=clamp(a.walk_speed, 0.5, 30),
+              foliage_cutout=clamp(a.foliage_cutout, 0, 1), sea_color=a.sea_color, sky_color=a.sky_color, sea_segments=int(clamp(a.sea_segments, 8, 1000)), walk=a.walk, walk_ignore=a.walk_ignore, zones_live=a.zones_live or "", names=a.names, presence_url=a.presence_url, room=a.room, chat=a.chat, chat_fade=clamp(a.chat_fade, 0, 3600), zones=zones_arg, profile=a.profile, spectate=a.spectate, panel=a.panel, eye_height=clamp(a.eye_height, 0.3, 5), walk_speed=clamp(a.walk_speed, 0.5, 30),
               sea_enabled=a.sea_enabled, anim_enabled=a.anim_enabled, retina=a.retina, title=a.title)
 
+    if a.zones_live and not a.input and str(a.zones_live).lower().endswith((".glb", ".gltf")):
+        a.input, a.zones_live = a.zones_live, "auto"
+        kw["zones_live"] = "auto"
+    if a.zones_only:
+        if not a.output or not a.zones_live:
+            sys.exit("[ERREUR] --zones-only demande -o <page.html> et --zones-live")
+        out = pathlib.Path(a.output)
+        write_live_zones(out, dict(kw, zones_live=a.zones_live))
+        sys.exit(0)
+    if not a.input:
+        ap.error("le fichier .glb (ou le dossier) est obligatoire")
     inp = pathlib.Path(a.input)
     if inp.is_dir():
         files = sorted(p for p in inp.iterdir() if p.suffix.lower() == ".glb")

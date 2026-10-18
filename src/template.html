@@ -87,8 +87,15 @@ if (H.get('name')) { try { localStorage.setItem('glb2html_name', H.get('name').s
 let arrive = async () => { fade.classList.remove('on'); };
 const toastEl = document.getElementById('toast'); let toastT = 0;
 const toast = t => { toastEl.textContent = t; toastEl.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { toastEl.hidden = true; }, 4000); };
-if ((C.zones || []).length) {
-  const ZS = viewer.setZones(C.zones, { editor: false });
+if ((C.zones || []).length || C.zonesLive) {
+  let ZS = viewer.setZones(C.zones || [], { editor: false });
+  let liveReady = Promise.resolve();
+  if (C.zonesLive && /^https?:$/.test(location.protocol)) {
+    liveReady = fetch(new URL(C.zonesLive, location.href).href, { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : Promise.reject(new Error('http ' + r.status)))
+      .then(list => { if (!Array.isArray(list)) throw new Error('format'); ZS = viewer.setZones(list.filter(z => z && (C.profile === 'perso' || !z.private)), { editor: false }); })
+      .catch(() => {});
+  }
   const slugId = s => String(s || '').toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
   const okUrl = u => { try { const x = new URL(u, location.href); return (x.protocol === 'http:' || x.protocol === 'https:' || (location.protocol === 'file:' && x.protocol === 'file:')) ? x : null; } catch (e) { return null; } };
   const visitor = () => viewer.getName() || 'Visiteur';
@@ -121,6 +128,7 @@ if ((C.zones || []).length) {
   const pr = document.getElementById('zonePrompt');
   viewer.onNear = z => { pr.hidden = !z; if (z) pr.textContent = 'E : ' + (z.label || z.id); };
   arrive = async () => {
+    await Promise.race([liveReady, new Promise(r => setTimeout(r, 3000))]);
     if (arrival && C.walk) {
       const id = slugId(H.get('spawn')), s = ZS.find(z => z.type === 'spawn' && z.id === id) || ZS.find(z => z.type === 'spawn' && z.id === 'default');
       viewer.walkStart(s ? { pos: [s.x, s.y, s.z], yaw: s.yaw } : undefined);
@@ -163,9 +171,9 @@ if (C.walk) {
   wb.hidden = false; wb.textContent = 'Promenade (F)';
   const on = !!C.presenceUrl;
   const walkKeys = ['ZQSD / WASD / flèches : marcher', 'Maj : courir', 'Espace : sauter', 'clic dans la vue puis souris : regarder', 'double-clic : se téléporter']
-    .concat(C.names ? ['clic : nom de l\'élément'] : [], (C.chat && on) ? ['Entrée : écrire un message'] : [], (C.zones && C.zones.length) ? ['clic ou E : panneaux et portails'] : [], ['H : masquer cette aide', 'F : quitter']).join(' · ');
+    .concat(C.names ? ['clic : nom de l\'élément'] : [], (C.chat && on) ? ['Entrée : écrire un message'] : [], ((C.zones && C.zones.length) || C.zonesLive) ? ['clic ou E : panneaux et portails'] : [], ['H : masquer cette aide', 'F : quitter']).join(' · ');
   const orbitKeys = ['glisser : tourner', 'molette : zoom', 'clic droit + glisser : déplacer']
-    .concat(['double-clic : choisir le point d\'atterrissage (cercle au sol)'], C.names ? ['clic : nom de l\'élément'] : [], (C.zones && C.zones.length) ? ['clic : panneaux et portails'] : [], ['H : masquer cette aide', 'F : entrer en promenade']).join(' · ');
+    .concat(['double-clic : choisir le point d\'atterrissage (cercle au sol)'], C.names ? ['clic : nom de l\'élément'] : [], ((C.zones && C.zones.length) || C.zonesLive) ? ['clic : panneaux et portails'] : [], ['H : masquer cette aide', 'F : entrer en promenade']).join(' · ');
   const feat = 'Cette page — réglages visiteur : ' + (C.panel !== false ? 'oui (bouton en haut à droite)' : 'non') + ' · présence : ' + (on ? 'oui (salon ' + C.room + ')' : 'non (option --presence-url)') + ' · chat : ' + (on && C.chat ? 'oui' : 'non') + ' · vue globale : ' + (on && C.spectate ? 'oui' : 'non' + (on ? ' (option --spectate)' : '')) + ' · noms au clic : ' + (C.names ? 'oui' : 'non (option --names)') + ' · glb2html ' + (C.version || '?');
   const l1 = document.createElement('div'), l2 = document.createElement('div');
   l2.style.cssText = 'font-size:11px;margin-top:4px;opacity:.85'; l2.textContent = feat; wh.append(l1, l2);
