@@ -27,7 +27,6 @@ import pathlib
 import re
 import struct
 import sys
-import urllib.parse
 import urllib.request
 
 # <<DEFAULTS>>
@@ -115,6 +114,7 @@ def clean_zones(zones, profile):
             "radius": num(z.get("radius"), 2, 0.5, 50), "w": num(z.get("w"), 2.4, 0.5, 10), "h": num(z.get("h"), 1.2, 0.3, 6),
             "target": str(z.get("target") or "")[:600], "spawn": _slug(z.get("spawn")),
             "confirm": bool(z.get("confirm")), "private": bool(z.get("private")),
+            "mesh": "" if t == "spawn" else re.sub(r"[\x00-\x1f]", "", str(z.get("mesh") or ""))[:200],
         })
     return out
 
@@ -412,8 +412,9 @@ MESHOPT_JS = r"""__MESHOPT_JS__"""
 def build_cfg(name: str, *, hole=HOLE_RADIUS, hole_fade=HOLE_FADE, hole_x=HOLE_X, hole_z=HOLE_Z, wave=WAVE_AMP,
                sea_y=SEA_Y, zoom=ZOOM_RATIO, cam_dir=CAM_DIR, target=TARGET, sea_enabled=SEA_ENABLED,
                anim_enabled=ANIM_ENABLED, retina=RETINA_ENABLED, foliage_cutout=FOLIAGE_CUTOUT,
-               sea_color=SEA_COLOR, sky_color=SKY_COLOR, sea_segments=SEA_SEGMENTS, walk=WALK_ENABLED, eye_height=EYE_HEIGHT, walk_speed=WALK_SPEED, walk_ignore=WALK_IGNORE, names=NAMES_ENABLED, presence_url=PRESENCE_URL, room=ROOM, chat=CHAT_ENABLED, chat_fade=CHAT_FADE, zones=None, profile=PROFILE, spectate=SPECTATE, panel=PANEL, zones_live=ZONES_LIVE, map_entries=None, map_url=MAP_URL) -> dict:
-    """Le dictionnaire de réglages `cfg` : identique dans la page autonome et dans <page>.config.json (mode modulaire)."""
+               sea_color=SEA_COLOR, sky_color=SKY_COLOR, sea_segments=SEA_SEGMENTS, walk=WALK_ENABLED, eye_height=EYE_HEIGHT, walk_speed=WALK_SPEED, walk_ignore=WALK_IGNORE, names=NAMES_ENABLED, presence_url=PRESENCE_URL, room=ROOM, chat=CHAT_ENABLED, chat_fade=CHAT_FADE, zones=None, profile=PROFILE, spectate=SPECTATE, panel=PANEL, zones_live=ZONES_LIVE, map_entries=None, map_url=MAP_URL, modular=False) -> dict:
+    """Le dictionnaire de réglages `cfg` : identique dans la page autonome et dans <page>.config.json (mode modulaire),
+    sauf que le mode modulaire garde les zones hors de la config (fichier <page>.zones.json, relu à chaque ouverture)."""
     presence_url = fix_presence_url(presence_url)
     cfg = {
         "hole": float(hole), "holeFade": float(hole_fade), "holeX": float(hole_x), "holeZ": float(hole_z), "wave": float(wave), "seaY": float(sea_y),
@@ -426,6 +427,8 @@ def build_cfg(name: str, *, hole=HOLE_RADIUS, hole_fade=HOLE_FADE, hole_x=HOLE_X
         "map": clean_map(json.loads(MAP_JSON) if map_entries is None else map_entries), "mapUrl": str(map_url or "")[:1200], "spectate": bool(presence_url) if spectate is None else bool(spectate),
         "zones": clean_zones(json.loads(ZONES_JSON) if zones is None else zones, profile), "chatFade": float(chat_fade), "presenceUrl": str(presence_url), "room": str(room) or pathlib.Path(name).stem,
     }
+    if modular:
+        cfg["zones"], cfg["zonesLive"] = [], ""
     return cfg
 
 
@@ -436,20 +439,44 @@ SHELL_MSG_NEW = SHELL_MSG_OLD + """<script>
 if (location.protocol === 'file:') document.getElementById('msg').textContent = 'Cette page est en mode modulaire : elle doit être servie en http ou https, pas ouverte depuis le disque. Pour la tester : python -m http.server dans son dossier, puis http://localhost:8000/' + decodeURIComponent(location.pathname.split('/').pop());
 </script>
 """
-SHELL_BOOT_NEW = """const BOOT = __BOOT__;
+# la coquille ne contient aucun nom : X.html charge X.config.json, X.glb, X.zones.json (puis zones.json) du même dossier
+SHELL_BOOT_NEW = """// fichiers frères déduits du nom de la page : copier X.html en Y.html (et ses fichiers frères en Y.*) suffit
+const BOOT = (() => {
+  let f = location.pathname.split('/').pop() || '';
+  try { f = decodeURIComponent(f); } catch (e) {}
+  const e = encodeURIComponent(f.replace(/\\.html?$/i, '') || 'index');
+  return { config: e + '.config.json', glb: e + '.glb', zones: [e + '.zones.json', 'zones.json'] };
+})();
 const C = await (async () => {
-  const r = await fetch(BOOT.config, { cache: 'no-store' });
-  if (!r.ok) { document.getElementById('msg').textContent = 'Erreur : ' + BOOT.config + ' introuvable (HTTP ' + r.status + ')'; throw new Error(BOOT.config + ' : HTTP ' + r.status); }
-  return r.json();
-})();"""
+  const fail = (nom, raison) => { document.getElementById('msg').textContent = 'Erreur : ' + nom + ' introuvable (' + raison + ')'; throw new Error(nom + ' : ' + raison); };
+  let r; try { r = await fetch(BOOT.config, { cache: 'no-store' }); } catch (e) { fail(BOOT.config, 'réseau'); }
+  if (!r.ok) fail(BOOT.config, 'HTTP ' + r.status);
+  const cfg = await r.json();
+  // zones relues à chaque ouverture : X.zones.json, sinon zones.json du même dossier, sinon aucune
+  cfg.zones = [];
+  for (const nom of BOOT.zones) {
+    try {
+      const rz = await fetch(nom, { cache: 'no-store' }); if (!rz.ok) continue;
+      const liste = await rz.json(); if (!Array.isArray(liste)) continue;
+      cfg.zones = liste.filter(z => z && (cfg.profile === 'perso' || !z.private)); break;
+    } catch (e) {}
+  }
+  return cfg;
+})();
+document.title = C.room || document.title;
+{ const sky = '#' + (Number(C.skyColor) >>> 0).toString(16).padStart(6, '0'); document.documentElement.style.background = sky; document.body.style.background = sky; }"""
 SHELL_CFG_TAG = '<script type="application/json" id="cfg">__CONFIG__</script>\n'
 SHELL_GLB_TAG = '<script type="application/octet-stream" id="glb">__GLB_B64__</script>\n'
 SHELL_LOAD_OLD = "await viewer.loadBuffer(await b64ToBuffer(document.getElementById('glb').textContent.trim()));"
 SHELL_LOAD_NEW = """const rGlb = await fetch(BOOT.glb);
   if (!rGlb.ok) throw new Error(BOOT.glb + ' : HTTP ' + rGlb.status);
   await viewer.loadBuffer(await rGlb.arrayBuffer());"""
+SHELL_TITLE_OLD = "<title>__TITLE__</title>"
 LIB_REL = "lib/three-" + THREE_VERSION
 DRACO_PATH_OLD = "draco.setDecoderPath('');"
+SHELL_SKY = "87ceeb"   # fond provisoire, remplacé par skyColor dès que la config est lue
+# la coquille connaît tous les modules (Draco et Meshopt compris) : elle ne dépend d'aucun .glb
+SHELL_MODULES = {**CORE_FILES, **DRACO_FILES, **MESHOPT_FILES}
 
 
 def replace_once(text, old, new):
@@ -469,29 +496,50 @@ def write_atomic(path: pathlib.Path, data: bytes):
     tmp.replace(path)
 
 
-def write_modular_lib(out_dir: pathlib.Path, used: set, vendor_dir):
-    """Écrit lib/three-X/ à côté des pages (partagé par toutes les pages du dossier) : modules à plat, imports réécrits, décodeurs si besoin."""
-    modules = dict(CORE_FILES)
-    if "KHR_draco_mesh_compression" in used:
-        modules.update(DRACO_FILES)
-    if "EXT_meshopt_compression" in used:
-        modules.update(MESHOPT_FILES)
+def write_modular_lib(out_dir: pathlib.Path, vendor_dir):
+    """Écrit lib/three-X/ à côté des pages (partagé par toutes les pages du dossier) : modules à plat, imports réécrits,
+    Draco et Meshopt toujours présents (la coquille ne sait pas ce que contient le .glb)."""
     lib = out_dir / LIB_REL
-    for rel in modules.values():
+    for rel in SHELL_MODULES.values():
         write_atomic(lib / lib_name(rel), fix_imports(vendor_bytes(rel, vendor_dir)).encode("utf-8"))
-    if "KHR_draco_mesh_compression" in used:
-        for rel in DRACO_LIBS.values():
-            write_atomic(lib / "draco" / lib_name(rel), vendor_bytes(rel, vendor_dir))
+    for rel in DRACO_LIBS.values():
+        write_atomic(lib / "draco" / lib_name(rel), vendor_bytes(rel, vendor_dir))
+
+
+def shell_lib_files():
+    """Contenu attendu de lib/three-X/ pour le viewer : ({spécificateur: nom de fichier}, [fichiers de draco/])."""
+    return {spec: lib_name(rel) for spec, rel in SHELL_MODULES.items()}, [lib_name(rel) for rel in DRACO_LIBS.values()]
 
 
 def modular_names(out_path: pathlib.Path):
-    """Fichiers frères de la page modulaire : (glb, config)."""
-    return out_path.with_suffix(".glb"), out_path.with_suffix(".config.json")
+    """Fichiers frères de la page modulaire : (glb, config, zones)."""
+    return out_path.with_suffix(".glb"), out_path.with_suffix(".config.json"), out_path.with_suffix(".zones.json")
 
 
-def build_html(glb: bytes, name: str, vendor_dir=None, *, modular=False, page_name=None, **kw) -> str:
-    """Page autonome (GLB en base64, three.js en data:) ou, avec modular=True, coquille légère qui charge <page>.config.json,
-    <page>.glb et lib/three-X/ (voir generate pour les fichiers écrits). Les réglages kw sont ceux de build_cfg + title."""
+def build_shell() -> str:
+    """La coquille universelle du mode modulaire : même texte, octet pour octet, pour toutes les régions (le viewer en met
+    une copie dans son .zip). Elle charge <nom de la page>.config.json / .glb / .zones.json du même dossier et lib/three-X/.
+    Aucun nom, aucun titre, aucune couleur propre à une région n'y est écrit."""
+    importmap = {"imports": {spec: f"./{LIB_REL}/{lib_name(rel)}" for spec, rel in SHELL_MODULES.items()}}
+    decoders = [replace_once(DRACO_JS.replace("__DRACO_LIBS__", "{}"), DRACO_PATH_OLD, f"draco.setDecoderPath('./{LIB_REL}/draco/');"), MESHOPT_JS]
+    tpl = HTML_TEMPLATE
+    tpl = replace_once(tpl, SHELL_TITLE_OLD, "<title>Chargement…</title>")
+    tpl = replace_once(tpl, SHELL_MSG_OLD, SHELL_MSG_NEW)
+    tpl = replace_once(tpl, SHELL_CFG_TAG, "")
+    tpl = replace_once(tpl, SHELL_GLB_TAG, "")
+    tpl = replace_once(tpl, SHELL_BOOT_OLD, SHELL_BOOT_NEW)
+    tpl = replace_once(tpl, SHELL_LOAD_OLD, SHELL_LOAD_NEW)
+    out = (tpl.replace("__SKY_HEX__", SHELL_SKY).replace("__IMPORTMAP__", json.dumps(importmap, indent=1))
+           .replace("__DECODERS__", "\n".join(decoders)))
+    left = re.findall(r"__(?:TITLE|SKY_HEX|IMPORTMAP|CONFIG|DECODERS|GLB_B64|CORE)__", out)
+    if left:
+        raise RuntimeError(f"coquille modulaire : marqueur(s) non remplacé(s) {sorted(set(left))}")
+    return out
+
+
+def build_html(glb: bytes, name: str, vendor_dir=None, **kw) -> str:
+    """Page autonome : GLB en base64, three.js et décodeurs en data:, s'ouvre depuis le disque. (La page modulaire est build_shell.)
+    Les réglages kw sont ceux de build_cfg + title."""
     title = kw.pop("title", None)
     cfg = build_cfg(name, **kw)
     hole, wave, sea_y, zoom, sky_color = cfg["hole"], cfg["wave"], cfg["seaY"], cfg["zoom"], cfg["skyColor"]
@@ -504,36 +552,20 @@ def build_html(glb: bytes, name: str, vendor_dir=None, *, modular=False, page_na
         modules.update(DRACO_FILES)
     if need_meshopt:
         modules.update(MESHOPT_FILES)
-    if modular:
-        importmap = {"imports": {spec: f"./{LIB_REL}/{lib_name(rel)}" for spec, rel in modules.items()}}
-    else:
-        importmap = {"imports": {spec: js_data_url(vendor_bytes(rel, vendor_dir)) for spec, rel in modules.items()}}
+    importmap = {"imports": {spec: js_data_url(vendor_bytes(rel, vendor_dir)) for spec, rel in modules.items()}}
 
     decoders = []
     if need_draco:
-        if modular:
-            decoders.append(replace_once(DRACO_JS.replace("__DRACO_LIBS__", "{}"), DRACO_PATH_OLD, f"draco.setDecoderPath('./{LIB_REL}/draco/');"))
-        else:
-            libs = {
-                "draco_wasm_wrapper.js": bin_data_url(vendor_bytes(DRACO_LIBS["draco_wasm_wrapper.js"], vendor_dir), "text/javascript"),
-                "draco_decoder.wasm": bin_data_url(vendor_bytes(DRACO_LIBS["draco_decoder.wasm"], vendor_dir), "application/wasm"),
-            }
-            decoders.append(DRACO_JS.replace("__DRACO_LIBS__", json.dumps(libs)))
+        libs = {
+            "draco_wasm_wrapper.js": bin_data_url(vendor_bytes(DRACO_LIBS["draco_wasm_wrapper.js"], vendor_dir), "text/javascript"),
+            "draco_decoder.wasm": bin_data_url(vendor_bytes(DRACO_LIBS["draco_decoder.wasm"], vendor_dir), "application/wasm"),
+        }
+        decoders.append(DRACO_JS.replace("__DRACO_LIBS__", json.dumps(libs)))
     if need_meshopt:
         decoders.append(MESHOPT_JS)
 
     title = title or f"{pathlib.Path(name).stem} - trou {hole:g} amp {wave:g} y {sea_y:g} zoom {zoom:.2f}"
-
-    tpl = HTML_TEMPLATE
-    if modular:
-        stem = pathlib.Path(page_name or name).stem
-        boot = json.dumps({"config": urllib.parse.quote(stem + ".config.json"), "glb": urllib.parse.quote(stem + ".glb")}).replace("</", "<\\/")
-        tpl = replace_once(tpl, SHELL_MSG_OLD, SHELL_MSG_NEW)
-        tpl = replace_once(tpl, SHELL_CFG_TAG, "")
-        tpl = replace_once(tpl, SHELL_GLB_TAG, "")
-        tpl = replace_once(tpl, SHELL_BOOT_OLD, SHELL_BOOT_NEW.replace("__BOOT__", boot))
-        tpl = replace_once(tpl, SHELL_LOAD_OLD, SHELL_LOAD_NEW)
-    out = (tpl
+    out = (HTML_TEMPLATE
            .replace("__TITLE__", html.escape(title))
            .replace("__SKY_HEX__", f"{int(sky_color):06x}")
            .replace("__IMPORTMAP__", json.dumps(importmap, indent=1))
@@ -560,34 +592,57 @@ def write_live_zones(out_path, kw):
     print(f"[zones] {len(zones)} zone(s), profil {kw.get('profile', PROFILE)} -> {target}")
 
 
+def zones_given(kw):
+    """Vrai si une source de zones a été donnée (--zones, --settings ou ZONES_JSON du script exporté par le viewer)."""
+    return kw.get("zones") is not None or bool(json.loads(ZONES_JSON))
+
+
+def write_modular_zones(zones_path: pathlib.Path, kw):
+    """Écrit <page>.zones.json (zones nettoyées, filtrées selon le profil), relu par la page à chaque ouverture."""
+    profile = kw.get("profile", PROFILE)
+    zones = clean_zones(json.loads(ZONES_JSON) if kw.get("zones") is None else kw["zones"], profile)
+    write_atomic(zones_path, json.dumps(zones, ensure_ascii=False, indent=1).encode("utf-8"))
+    print(f"[zones] {len(zones)} zone(s), profil {profile} -> {zones_path}")
+
+
 def generate(glb_path: pathlib.Path, out_path: pathlib.Path, vendor_dir, modular=False, **kw):
     data = glb_path.read_bytes()
-    if kw.get("zones_live"):
+    if modular:
+        if kw.get("title"):
+            print("[AVERTISSEMENT] --title est ignoré en mode modulaire : le titre de la page est le salon (--room) de la config", file=sys.stderr)
+        if kw.get("zones_live"):
+            print("[AVERTISSEMENT] --zones-live est ignoré en mode modulaire : les zones sont toujours relues dans <page>.zones.json", file=sys.stderr)
+        kw = dict(kw, zones_live="")
+    elif kw.get("zones_live"):
         kw = dict(kw, zones_live=live_zones_name(out_path, kw["zones_live"]))
     try:
-        page = build_html(data, glb_path.name, vendor_dir, modular=modular, page_name=out_path.name, **kw)
         used = inspect_glb(data, glb_path.name)
+        page = build_shell() if modular else build_html(data, glb_path.name, vendor_dir, **kw)
     except ValueError as e:
         print(f"[ERREUR] {e}", file=sys.stderr)
         return False
     out_path.parent.mkdir(parents=True, exist_ok=True)
     if modular:
-        glb_out, cfg_out = modular_names(out_path)
-        write_modular_lib(out_path.parent, used, vendor_dir)
+        glb_out, cfg_out, zones_out = modular_names(out_path)
+        write_modular_lib(out_path.parent, vendor_dir)
         write_atomic(glb_out, data)
         write_config(cfg_out, glb_path.name, kw)
+        # sans source de zones, un X.zones.json existant (peut-être modifié à la main) n'est pas écrasé
+        if zones_given(kw) or not zones_out.is_file():
+            write_modular_zones(zones_out, kw)
     write_atomic(out_path, page.encode("utf-8"))
-    write_live_zones(out_path, dict(kw, zones_live=kw.get("zones_live") or ""))
+    if not modular:
+        write_live_zones(out_path, dict(kw, zones_live=kw.get("zones_live") or ""))
     if modular:
-        print(f"[OK] {glb_path.name} -> {out_path} (modulaire : coquille {len(page) / 1024:.0f} Ko + {glb_out.name} {len(data) / 2**20:.2f} Mo + {cfg_out.name} + {LIB_REL}/) [glb2html {VERSION}]")
+        print(f"[OK] {glb_path.name} -> {out_path} (modulaire : coquille {len(page) / 1024:.0f} Ko + {glb_out.name} {len(data) / 2**20:.2f} Mo + {cfg_out.name} + {zones_out.name} + {LIB_REL}/) [glb2html {VERSION}]")
     else:
         print(f"[OK] {glb_path.name} -> {out_path} ({len(data) / 2**20:.2f} Mo glb, {len(page) / 2**20:.2f} Mo html) [glb2html {VERSION}]")
     return True
 
 
 def write_config(cfg_path: pathlib.Path, name: str, kw):
-    """Écrit <page>.config.json = le dictionnaire cfg de la page (zones et carte comprises), JSON sans BOM."""
-    cfg = build_cfg(name, **{k: v for k, v in kw.items() if k != "title"})
+    """Écrit <page>.config.json = le dictionnaire cfg de la page modulaire (carte comprise, zones exclues), JSON sans BOM."""
+    cfg = build_cfg(name, **{k: v for k, v in kw.items() if k != "title"}, modular=True)
     write_atomic(cfg_path, json.dumps(cfg, ensure_ascii=False, indent=1).encode("utf-8"))
     return cfg
 
@@ -634,7 +689,7 @@ def main():
     ap.add_argument("--version", action="version", version=f"glb2html {VERSION}")
     ap.add_argument("input", nargs="?", help="fichier .glb ou dossier de .glb")
     ap.add_argument("--zones-live", nargs="?", const="auto", default=(ZONES_LIVE or None), metavar="NOM", help="la page recharge ses zones à chaque ouverture depuis un fichier .zones.json placé à côté d'elle (servie en http/https ; sinon les zones intégrées servent). Sans NOM : <page>.zones.json. Le fichier est écrit par le script, filtré selon --profile")
-    ap.add_argument("--zones-only", action="store_true", help="réécrit seulement le fichier .zones.json à côté de la page indiquée par -o, sans régénérer le HTML (avec --zones-live)")
+    ap.add_argument("--zones-only", action="store_true", help="réécrit seulement les zones, sans régénérer le HTML : <page>.zones.json d'une page modulaire déjà générée (avec --zones FICHIER), ou, avec --zones-live, le fichier de zones d'une page autonome")
     ap.add_argument("-o", "--output", help="sortie : fichier .html, ou dossier (créé si besoin). Entrée dossier : dossier de sortie. Défaut : \"<nom> - Offline.html\" à côté du .glb")
     ap.add_argument("--hole", type=float, default=HOLE_RADIUS, help="rayon du trou 30..600 (zone plate = rayon - fondu)")
     ap.add_argument("--hole-fade", type=float, default=HOLE_FADE, help="demi-largeur du fondu du trou")
@@ -657,7 +712,7 @@ def main():
     ap.add_argument("--presence-url", default=PRESENCE_URL, help="serveur de présence ws:// ou wss:// (voir presence_server.py) ; vide = désactivé")
     ap.add_argument("--chat", action=argparse.BooleanOptionalAction, default=CHAT_ENABLED, help="chat entre visiteurs (nécessite --presence-url ; touche Entrée en promenade)")
     ap.add_argument("--chat-fade", type=float, default=CHAT_FADE, help="secondes avant disparition des messages et bulles ; 0 = restent jusqu'à ce que de nouveaux messages les remplacent")
-    ap.add_argument("--zones", type=pathlib.Path, help="fichier .json de zones exporté par le viewer ; chemin relatif : cherché dans le dossier de lancement, puis dans le dossier du script")
+    ap.add_argument("--zones", type=pathlib.Path, help="fichier .json de zones exporté par le viewer ; chemin relatif : cherché dans le dossier de lancement, puis dans le dossier du script. Une zone peut porter un champ mesh (nom exact d'un élément du modèle) : l'élément devient cliquable")
     ap.add_argument("--profile", choices=("public", "perso"), default=PROFILE, help="public : retire les zones privées (ex. Home Assistant) ; perso : les garde")
     ap.add_argument("--spectate", action=argparse.BooleanOptionalAction, default=SPECTATE, help="voir les visiteurs en promenade depuis la vue globale (se connecte dès l'ouverture de la page ; actif par défaut dès qu'une --presence-url est donnée ; --no-spectate pour l'éviter)")
     ap.add_argument("--panel", action=argparse.BooleanOptionalAction, default=PANEL, help="panneau de réglages pour les visiteurs (haute résolution, mer animée, force des vagues), bouton en haut à droite")
@@ -671,8 +726,8 @@ def main():
     ap.add_argument("--thumb", help="vignette de la région : fichier jpg/png/webp de 140 Ko maximum (intégré), ou adresse http(s) (gardée telle quelle, carte plus légère)")
     ap.add_argument("--map-page", metavar="FICHIER.html", help="génère aussi une page web « carte des mondes » (liens cliquables vers chaque région) ; sans .glb : génère seulement cette page depuis --map. Relatif : à côté de la page de la région")
     ap.add_argument("--settings", nargs="?", const="auto", default=None, metavar="FICHIER", help="reprend TOUS les réglages enregistrés par le viewer (bouton « Enregistrer dans un fichier » : trou, vagues, caméra, zones, fiche de région, vignette…). Sans nom : <nom du .glb>.reglages.json. Les options de la ligne de commande l'emportent. Relatif : dossier de lancement, puis dossier du script")
-    ap.add_argument("--modular", action="store_true", help="mode modulaire : écrit une coquille légère <page>.html + <page>.glb (octets bruts) + <page>.config.json + lib/three-X/ partagé par les pages du dossier. Demande http(s) pour l'ouverture (pas depuis le disque)")
-    ap.add_argument("--config-only", action="store_true", help="réécrit seulement <page>.config.json d'une page modulaire déjà générée (indiquée par -o), sans toucher au .glb ni à la coquille ; les visiteurs rechargent. Avec --register, met aussi la carte à jour")
+    ap.add_argument("--modular", action="store_true", help="mode modulaire : écrit une coquille <page>.html identique pour toutes les régions (elle déduit ses fichiers de son nom) + <page>.glb (octets bruts) + <page>.config.json (réglages) + <page>.zones.json (zones, relues à chaque ouverture ; à défaut zones.json du dossier) + lib/three-X/ partagé (Draco et Meshopt compris). Demande http(s) pour l'ouverture (pas depuis le disque)")
+    ap.add_argument("--config-only", action="store_true", help="réécrit seulement <page>.config.json d'une page modulaire déjà générée (indiquée par -o), sans toucher au .glb ni à la coquille ; les visiteurs rechargent. <page>.zones.json n'est réécrit que si --zones est donné. Avec --register, met aussi la carte à jour")
     ap.add_argument("--room", default=ROOM, help="salon de présence (défaut : nom du fichier)")
     ap.add_argument("--sea", dest="sea_enabled", action=argparse.BooleanOptionalAction, default=SEA_ENABLED)
     ap.add_argument("--anim", dest="anim_enabled", action=argparse.BooleanOptionalAction, default=ANIM_ENABLED)
@@ -745,10 +800,19 @@ def main():
         a.input, a.zones_live = a.zones_live, "auto"
         kw["zones_live"] = "auto"
     if a.zones_only:
-        if not a.output or not a.zones_live:
-            sys.exit("[ERREUR] --zones-only demande -o <page.html> et --zones-live")
+        if not a.output:
+            sys.exit("[ERREUR] --zones-only demande -o <page.html>")
         out = pathlib.Path(a.output)
-        write_live_zones(out, dict(kw, zones_live=a.zones_live))
+        if a.zones_live:   # page autonome qui recharge ses zones
+            write_live_zones(out, dict(kw, zones_live=a.zones_live))
+            sys.exit(0)
+        if not out.suffix:
+            out = out.with_suffix(".html")
+        if not (modular_names(out)[1].is_file() or a.modular):
+            sys.exit(f"[ERREUR] --zones-only demande --zones-live (page autonome) ou une page modulaire déjà générée ({modular_names(out)[1].name} introuvable à côté de la page)")
+        if zones_arg is None:
+            sys.exit("[ERREUR] --zones-only demande --zones FICHIER (ou --settings) : aucune zone à écrire")
+        write_modular_zones(modular_names(out)[2], kw)
         sys.exit(0)
     if a.config_only:
         if not a.output:
@@ -756,7 +820,7 @@ def main():
         out = pathlib.Path(a.output)
         if not out.suffix:
             out = out.with_suffix(".html")
-        glb_out, cfg_out = modular_names(out)
+        glb_out, cfg_out, zones_out = modular_names(out)
         if not out.is_file() or not glb_out.is_file():
             sys.exit(f"[ERREUR] {out} ou {glb_out.name} introuvable : génère d'abord la page avec --modular")
         name = pathlib.Path(a.input).name if a.input else glb_out.name
@@ -770,11 +834,12 @@ def main():
             reg = data_path(a.register)
             kw["map_entries"] = register_region(reg, entry)
             print(f"[carte] « {entry['name']} » ajoutée ou mise à jour dans {reg} ({len(kw['map_entries'])} région(s))")
-        if kw.get("zones_live"):
-            kw["zones_live"] = live_zones_name(out, kw["zones_live"])
         write_config(cfg_out, name, kw)
-        write_live_zones(out, dict(kw, zones_live=kw.get("zones_live") or ""))
         print(f"[OK] réglages -> {cfg_out} (coquille et .glb inchangés) [glb2html {VERSION}]")
+        if a.zones:   # les zones ne sont touchées que si --zones est donné
+            write_modular_zones(zones_out, kw)
+        else:
+            print(f"[zones] {zones_out.name} non modifié (donne --zones FICHIER pour le réécrire)")
         if a.map_page and kw.get("map_entries") is not None and clean_map(kw["map_entries"]):
             mp = pathlib.Path(a.map_page)
             write_map_page(mp if mp.is_absolute() else out.parent / mp, kw["map_entries"], kw.get("presence_url", ""), kw.get("map_url", ""), a.title or "Carte des mondes")

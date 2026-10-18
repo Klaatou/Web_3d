@@ -5,7 +5,7 @@ Usage :  python build.py                  (télécharge three@0.160.0 depuis jsD
          python build.py --vendor DOSSIER (racine d'un paquet npm three déjà présent : hors ligne)
          python build.py --out DOSSIER    (sortie ailleurs que dist/)
 """
-import argparse, base64, json, pathlib, sys, urllib.request
+import argparse, base64, json, pathlib, sys, types, urllib.request
 
 ROOT = pathlib.Path(__file__).resolve().parent
 SRC = ROOT / "src"
@@ -77,6 +77,12 @@ py = (SRC / "gen_tpl.py").read_text(encoding="utf-8")
 py = py.replace("__HTML_TEMPLATE__", template).replace("__DRACO_JS__", draco_js).replace("__MESHOPT_JS__", meshopt_js)
 py = py.replace("__VERSION__", VERSION)
 (OUT / "glb2html.py").write_text(py, encoding="utf-8")
+# la coquille modulaire est fabriquée par glb2html.py lui-même (build_shell) : le viewer en met une copie identique dans son .zip
+gen = types.ModuleType("glb2html_build")
+exec(compile(py, "glb2html.py", "exec"), gen.__dict__)
+shell = gen.build_shell()
+shell_modules, shell_draco = gen.shell_lib_files()
+shell_lib = {"dir": gen.LIB_REL, "modules": shell_modules, "draco": shell_draco}
 (OUT / "presence_server.py").write_text((SRC / "presence_server.py").read_text(encoding="utf-8").replace("__VERSION__", VERSION), encoding="utf-8")
 
 
@@ -89,6 +95,7 @@ v = v.replace("__CORE__", core)  # core avant le reste : pas de placeholder deda
 v = v.replace("__TEMPLATE_JSON__", jsq(template)).replace("__PY_JSON__", jsq(py))
 v = v.replace("__DRACO_JS_JSON__", jsq(draco_js)).replace("__MESHOPT_JS_JSON__", jsq(meshopt_js))
 v = v.replace("__LIBS_JSON__", json.dumps(libs)).replace("__IMPORTMAP_JSON__", json.dumps(importmap))
+v = v.replace("__SHELL_JSON__", jsq(shell)).replace("__SHELL_LIB_JSON__", json.dumps(shell_lib))
 v = v.replace("__VERSION__", VERSION)
 (OUT / "glb-viewer.html").write_text(v, encoding="utf-8")
 print(f"[OK] {VERSION} -> {OUT} (glb2html.py {len(py) // 1024} Ko, glb-viewer.html {len(v) // 1024} Ko)")

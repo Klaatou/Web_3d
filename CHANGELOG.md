@@ -2,6 +2,16 @@
 
 Les dates sont au format jj/mm/aaaa.
 
+## v20 (18/10/2026)
+- Mode modulaire universel : la coquille `<page>.html` est la même, octet pour octet, pour toutes les régions (~85 Ko). Elle déduit ses fichiers de son propre nom (`X.html` charge `X.config.json`, `X.glb` et `X.zones.json` du même dossier) : aucun nom écrit en dur, elle se copie sous un autre nom avec ses trois fichiers frères renommés. Titre de l'onglet = champ `room` de la config, fond = `skyColor`. `lib/three-0.160.0/` contient toujours Draco et Meshopt (la coquille ne dépend plus du contenu du `.glb`).
+- Zones relues à chaque rechargement : `X.zones.json`, sinon `zones.json` du même dossier, sinon aucune zone, sans erreur. Corrige la v19, où modifier `zones.json` dans le dossier du site n'avait aucun effet (les zones étaient figées dans la config). Le mode modulaire écrit les zones dans `X.zones.json`, jamais dans `config.json` (`zones: []`).
+- `--config-only` ne touche pas `X.zones.json`, sauf si `--zones` est donné. `--zones-only` marche sur une page modulaire (`-o X.html --zones z.json`). Régénérer avec `--modular` sans source de zones n'écrase pas un `X.zones.json` existant.
+- Viewer : bouton « Exporter la structure modulaire (.zip) » à côté de « Exporter HTML autonome » (inchangé) : `X.html`, `X.glb`, `X.config.json`, `X.zones.json`, `lib/three-0.160.0/` (`draco/` compris). Le `X.html` du zip est identique octet pour octet à celui de `glb2html.py --modular` : `build.py` prend le texte de la coquille dans `gen_tpl.py` (`build_shell`), sans le recopier.
+- Zones liées à un élément du modèle (champ `mesh`, nom exact) : l'élément devient cliquable (curseur main, contour au survol), touche E à moins de `radius` mètres de l'élément, portail déclenché en s'approchant. Un élément traversable (`walkIgnore`) ne bloque pas le clic (valable pour toutes les zones). Si l'élément est introuvable dans le modèle, la zone reste à sa position.
+- Viewer : boutons « Lier à un élément » (le clic ignore les éléments traversables : il lie la boîte, pas le voile transparent devant) et « Délier » dans chaque zone. `mesh` est validé dans `clean_zones`.
+- `--title` et `--zones-live` sont ignorés (avec avertissement) en mode modulaire.
+- Tests : nouveau `tests/modulaire.py` (coquille identique, copie renommée, rechargement des zones, secours `zones.json`, `--config-only` / `--zones-only`, zones liées, voile traversable, touche E, portail à l'approche, deux exports du viewer, zip) ; `tests/smoke.py` inchangé.
+
 ## v19 (18/10/2026)
 - Mode modulaire : `--modular` écrit une coquille légère `<page>.html` (~80 Ko), `<page>.glb` (octets bruts, non encodés), `<page>.config.json` (le même `cfg` que la page autonome, zones et carte comprises) et `lib/three-0.160.0/` partagé par toutes les pages du dossier (modules à plat, décodeurs Draco/Meshopt ajoutés au besoin). La page se charge par `fetch` : elle exige http(s) (message explicatif si ouverte depuis le disque). Le mode autonome reste le défaut.
 - `--config-only -o page.html` : réécrit seulement `<page>.config.json` (et `regions.json` / la page carte avec `--register` / `--map-page`), sans toucher au `.glb` ni à la coquille. Le salon (`room`) existant est conservé si `--room` n'est pas donné. Les visiteurs rechargent la page pour voir le changement.

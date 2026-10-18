@@ -35,12 +35,31 @@ python glb2html.py "Ankh-final.glb" --settings --register regions.json --map-pag
 
 ## Mode modulaire
 
-`--modular` produit `Ankh Island.html` (coquille légère), `Ankh Island.glb`, `Ankh Island.config.json` et `lib/three-0.160.0/` (partagé par toutes les pages du dossier). Il faut les servir en http/https (test local : `python -m http.server`). Pour changer un réglage sans toucher au `.glb` : relancer la même commande avec `--config-only -o "Ankh Island.html"` ; les visiteurs rechargent.
+`--modular` produit, pour la page `Ankh Island.html` :
+
+| Fichier | Rôle |
+|---|---|
+| `Ankh Island.html` | Coquille (~85 Ko), **identique pour toutes les régions** : elle déduit ses fichiers de son propre nom. Titre de l'onglet = `room`, fond = `skyColor`. |
+| `Ankh Island.glb` | Le modèle, octets bruts. |
+| `Ankh Island.config.json` | Les réglages. Relu à chaque rechargement (F5). |
+| `Ankh Island.zones.json` | Les zones. Relu à chaque rechargement ; s'il est absent, `zones.json` du même dossier ; sinon aucune zone. |
+| `lib/three-0.160.0/` | three.js, Draco et Meshopt, partagés par toutes les pages du dossier. |
+
+Il faut servir le dossier en http/https (test local : `python -m http.server`). Copier une page sous un autre nom marche : renommer ses trois fichiers frères de la même façon.
 
 ```
 python glb2html.py "Ankh-final.glb" --settings --modular -o "Ankh Island.html"
 python glb2html.py --settings "Ankh-final.glb" --config-only --wave 2 -o "Ankh Island.html"
+python glb2html.py -o "Ankh Island.html" --zones-only --zones zones.json
 ```
+
+`--config-only` ne réécrit que la config (les zones ne bougent que si `--zones` est donné) ; `--zones-only` ne réécrit que les zones. Les visiteurs rechargent la page.
+
+Le viewer exporte la même structure : bouton « Exporter la structure modulaire (.zip) », à côté de « Exporter HTML autonome » (page unique qui s'ouvre depuis le disque, sans serveur). Le `.html` du zip est identique à celui de `glb2html.py --modular`.
+
+### Zones liées à un élément du modèle
+
+Une zone peut porter un champ `mesh` : le nom exact d'un élément du modèle. L'élément devient cliquable (curseur main, contour au survol), la touche E agit à moins de `radius` mètres de l'élément, et un portail se déclenche en s'approchant. Un élément traversable (`walkIgnore`) ne bloque pas le clic. Dans le viewer, section Zones : « Lier à un élément » (le clic ignore les éléments traversables) et « Délier ».
 
 ## Carte des mondes
 
@@ -48,7 +67,7 @@ python glb2html.py --settings "Ankh-final.glb" --config-only --wave 2 -o "Ankh I
 
 ## Développer
 
-Voir `CLAUDE.md` (architecture, décisions, feuille de route) et `HISTORIQUE.md` (comment retrouver chaque version) et `tests/smoke.py` (test de fumée dans Chromium sans tête).
+Voir `CLAUDE.md` (architecture, décisions, feuille de route) et `HISTORIQUE.md` (comment retrouver chaque version) `tests/smoke.py` (test de fumée dans Chromium sans tête) et `tests/modulaire.py` (mode modulaire universel, zones liées, exports du viewer).
 
 ## Sécurité
 

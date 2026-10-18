@@ -66,12 +66,13 @@ small{display:block;margin-top:8px;color:#333}
     <h2>Export</h2>
     <div class="row"><label for="profileSel">Profil d'export</label><select id="profileSel" style="grid-column:1/-1;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;width:100%"><option value="public">public : sans les zones privées</option><option value="perso">perso : toutes les zones</option></select></div>
     <div class="btns">
-      <button id="bHtml" class="main wide" disabled>Exporter HTML autonome</button>
+      <button id="bHtml" class="main" disabled>Exporter HTML autonome</button>
+      <button id="bZip" class="main" disabled>Exporter la structure modulaire (.zip)</button>
       <button id="bPy" class="wide">Exporter script Python (réglages actuels)</button>
       <button id="bFrame">Recadrer</button>
       <button id="bReset">Valeurs par défaut</button>
     </div>
-    <small>L'export HTML reprend la caméra exactement telle qu'affichée (direction, cible, zoom). Aucun accès réseau, ni ici ni dans le fichier exporté.</small>
+    <small>L'export HTML reprend la caméra exactement telle qu'affichée (direction, cible, zoom). Aucun accès réseau, ni ici ni dans le fichier exporté. « HTML autonome » : une seule page, qui s'ouvre depuis le disque. « Structure modulaire » : un .zip à décompresser dans le dossier du site (page légère, .glb, .config.json, .zones.json, lib/) ; il faut le servir en http/https, et la page se renomme avec ses trois fichiers frères.</small>
     <h2>Récapitulatif pour le script</h2>
     <div class="row"><label for="cmdScript">Chemin de glb2html.py</label><input id="cmdScript" type="text" placeholder="glb2html.py" style="grid-column:1/-1;width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px"></div>
     <div class="row"><label for="cmdGlb">Chemin du fichier .glb</label><input id="cmdGlb" type="text" placeholder="fichier.glb" style="grid-column:1/-1;width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px"></div>
@@ -105,6 +106,8 @@ const HTML_TEMPLATE = __TEMPLATE_JSON__;
 const PY_SOURCE = __PY_JSON__;
 const DRACO_JS = __DRACO_JS_JSON__;
 const MESHOPT_JS = __MESHOPT_JS_JSON__;
+const SHELL = __SHELL_JSON__;            // coquille universelle du mode modulaire : fabriquée par glb2html.py (build_shell), identique octet pour octet
+const SHELL_LIB = __SHELL_LIB_JSON__;    // contenu de lib/three-X/ : { dir, modules: {spécificateur: fichier}, draco: [fichiers] }
 
 __CORE__
 
@@ -196,7 +199,7 @@ const ROWS = [
 ];
 let loadedName = '';
 let thisReg = { name: '', url: '', x: 0, y: 0, spawn: 'default', thumb: '' };
-let chatLines = [], eraseMode = false, ignoreStack = [], zoneAddMode = false, zoneSel = null;
+let chatLines = [], eraseMode = false, ignoreStack = [], zoneAddMode = false, zoneSel = null, linkZone = null;
 let placeMode = false, lastPick = null, myName = '', presLast = { state: 'off', count: 0 };
 const sync = {};
 const rows = $('rows');
@@ -347,7 +350,7 @@ function updateIgnoreViz() {
 }
 function zoneAddLabel() { const b = $('bZoneAdd'); if (b) b.textContent = zoneAddMode ? 'Pose ACTIVE : clique sur la scène' : 'Poser une zone par un clic sur la scène'; }
 function zoneDefaults(type) {
-  const base = { type, label: '', shape: 'ring', trigger: 'click', radius: 2, w: 2.4, h: 1.2, target: '', spawn: '', confirm: false, private: false, yaw: 0 };
+  const base = { type, label: '', shape: 'ring', trigger: 'click', radius: 2, w: 2.4, h: 1.2, target: '', spawn: '', confirm: false, private: false, yaw: 0, mesh: '' };
   if (type === 'portal') return Object.assign(base, { label: 'Portail', trigger: 'enter' });
   if (type === 'url') return Object.assign(base, { label: 'Lien', shape: 'board', target: 'https://' });
   if (type === 'ha') return Object.assign(base, { label: 'Commande', shape: 'board', target: 'http://homeassistant.local:8123/api/webhook/', private: true, confirm: true });
@@ -396,9 +399,18 @@ function renderZoneList() {
         d.appendChild(inp('Déclenchement', 'select', z.trigger, v => upd({ trigger: v }, true), [['enter', 'en marchant dedans'], ['click', 'au clic ou touche E'], ['both', 'les deux']]));
       } else if (z.type === 'url') d.appendChild(inp('Adresse web', 'text', z.target, v => upd({ target: v })));
       else { d.appendChild(inp('Adresse du webhook Home Assistant', 'text', z.target, v => upd({ target: v }))); d.appendChild(inp('Demander confirmation', 'checkbox', z.confirm, v => upd({ confirm: v }))); }
-      d.appendChild(inp('Forme', 'select', z.shape, v => upd({ shape: v }, true), [['ring', 'cercle au sol'], ['board', 'panneau']]));
-      d.appendChild(inp(z.shape === 'board' ? 'Portée de la touche E (m)' : 'Rayon (m)', 'number', z.radius, v => upd({ radius: v })));
-      if (z.shape === 'board') { d.appendChild(inp('Largeur du panneau (m)', 'number', z.w, v => upd({ w: v }))); d.appendChild(inp('Hauteur du panneau (m)', 'number', z.h, v => upd({ h: v }))); }
+      const lk = document.createElement('small'); lk.style.margin = '6px 0 2px';
+      lk.textContent = !z.mesh ? 'Aucun élément lié : la zone est posée à sa position (panneau ou cercle).' : 'Élément lié : « ' + z.mesh + ' »' + (viewer.meshInfo(z.mesh) ? ' (' + viewer.meshInfo(z.mesh).count + ' morceau(x))' : ' — introuvable dans ce modèle : la zone reste à sa position');
+      d.appendChild(lk);
+      const lb = document.createElement('div'); lb.className = 'btns';
+      const bl = document.createElement('button'); bl.textContent = linkZone === z.id ? 'Clique sur l\'élément dans la scène…' : 'Lier à un élément';
+      bl.onclick = () => { linkZone = linkZone === z.id ? null : z.id; zoneAddMode = false; zoneAddLabel(); setStatus(linkZone ? 'Clique sur l\'élément à lier (les éléments traversables sont ignorés)' : 'Liaison annulée'); renderZoneList(); };
+      const bu = document.createElement('button'); bu.textContent = 'Délier'; bu.disabled = !z.mesh;
+      bu.onclick = () => { linkZone = null; upd({ mesh: '' }, true); setStatus('Zone déliée : elle reprend sa position'); };
+      lb.append(bl, bu); d.appendChild(lb);
+      if (!z.mesh) d.appendChild(inp('Forme', 'select', z.shape, v => upd({ shape: v }, true), [['ring', 'cercle au sol'], ['board', 'panneau']]));
+      d.appendChild(inp(z.mesh ? 'Distance de déclenchement : touche E ou approche (m, depuis l\'élément)' : (z.shape === 'board' ? 'Portée de la touche E (m)' : 'Rayon (m)'), 'number', z.radius, v => upd({ radius: v })));
+      if (z.shape === 'board' && !z.mesh) { d.appendChild(inp('Largeur du panneau (m)', 'number', z.w, v => upd({ w: v }))); d.appendChild(inp('Hauteur du panneau (m)', 'number', z.h, v => upd({ h: v }))); }
       d.appendChild(inp('Privé (absent de l\'export public)', 'checkbox', z.private, v => upd({ private: v }, true)));
     }
     d.appendChild(inp('Position X', 'number', z.x, v => upd({ x: v }))); d.appendChild(inp('Position Y', 'number', z.y, v => upd({ y: v })));
@@ -473,7 +485,7 @@ async function afterLoad(name, size) {
   baseName = name.replace(/\.[^.]+$/, '').replace(/[\\/:*?"<>|]/g, '_') || 'scene'; loadedName = name;
   const restored = restoreFor({ name, size: size || 0 });
   $('hint').style.display = 'none';
-  $('bHtml').disabled = false;
+  $('bHtml').disabled = false; $('bZip').disabled = false;
   if ($('bWalk')) $('bWalk').disabled = false;
   camInfo();
   setStatus(name + ' • ' + countMeshes(viewer.model) + ' meshes • prêt' + (restored ? ' • réglages retrouvés (' + restored + ')' : ''));
@@ -605,6 +617,20 @@ updateGuide();
       viewer.setCfg({ holeX: x, holeZ: z }); sync.holeX(x); sync.holeZ(z);
       placeMode = false; viewer.renderer.domElement.style.cursor = ''; sync.place();
       setStatus('Trou placé en X ' + x + ' • Z ' + z);
+      return;
+    }
+    if (linkZone) {
+      // les éléments traversables (walkIgnore) sont ignorés : on lie la boîte, pas le voile transparent devant
+      const h = ray.intersectObject(viewer.model, true).find(x => x.object.isMesh && x.object.visible && !viewer.isTraversable(x.object));
+      if (!h) { setStatus('Aucun élément ici : clique sur le modèle'); return; }
+      let name = ''; for (let q = h.object; q && q !== viewer.model && !name; q = q.parent) name = q.name;
+      if (!name) { setStatus('Cet élément n\'a pas de nom dans le modèle : impossible de le lier'); return; }
+      const info = viewer.meshInfo(name), r2 = v => Math.round(v * 100) / 100, list = viewer.getZones(), i = list.findIndex(x => x.id === linkZone);
+      linkZone = null;
+      if (i < 0 || !info) { renderZoneList(); return; }
+      Object.assign(list[i], { mesh: name, x: r2(info.center[0]), y: r2(info.min[1]), z: r2(info.center[2]) });
+      zoneSel = list[i].id; zonesSync(list, true);
+      setStatus('Zone « ' + (list[i].label || list[i].id) + ' » liée à l\'élément « ' + name + ' »' + (info.count > 1 ? ' (attention : ' + info.count + ' morceaux portent ce nom, tous deviennent cliquables)' : ''));
       return;
     }
     if (zoneAddMode) {
@@ -821,7 +847,7 @@ function buildCommand() {
   if (regOk) notes.push('Carte : à chaque exécution, cette région est ajoutée ou mise à jour dans regions.json (créé à côté de glb2html.py s\'il n\'existe pas)' + (thisReg.thumb ? ' ; clique d\'abord sur « Enregistrer la vignette » et place ' + baseName + '.vignette.jpg à côté de glb2html.py.' : ' ; capture et enregistre une vignette pour l\'afficher sur la carte.'));
   else if ((cfg.map || []).length) notes.push('Carte : clique sur « Exporter regions.json » (section Carte des mondes) et place regions.json à côté de glb2html.py (ou dans le dossier de lancement).');
   if (hasZones) notes.push('Zones : clique d\'abord sur « Exporter zones (.json) » (section Zones) et place zones.json à côté de glb2html.py (ou dans le dossier où tu lances la commande), ou corrige son chemin.' + ($('profileSel').value === 'perso' ? '' : ' Profil public : les zones privées sont retirées.'));
-  if ($('cmdModular').checked) notes.push('Mode modulaire : la commande écrit <page>.html (coquille), <page>.glb, <page>.config.json et le dossier lib/three-' + '0.160.0/ partagé. Publie-les ensemble et ouvre la page en http/https. Pour ne changer qu\'un réglage ensuite : relance la même commande avec --config-only -o <page>.html (le .glb et la coquille ne sont pas touchés ; les visiteurs rechargent). L\'export de page depuis ce viewer reste en mode autonome.');
+  if ($('cmdModular').checked) notes.push('Mode modulaire : la commande écrit <page>.html (coquille), <page>.glb, <page>.config.json et le dossier lib/three-' + '0.160.0/ partagé. Publie-les ensemble et ouvre la page en http/https. Pour ne changer qu\'un réglage ensuite : relance la même commande avec --config-only -o <page>.html (le .glb et la coquille ne sont pas touchés ; les visiteurs rechargent). Le viewer sait aussi exporter cette structure : bouton « Exporter la structure modulaire (.zip) ».');
   if (!a.length) notes.push('Aucun réglage ne diffère des valeurs par défaut du script.');
   notes.push(a.length + ' option(s) ajoutée(s). Les options absentes gardent la valeur par défaut du script.');
   return { cmd, notes };
@@ -874,6 +900,50 @@ $('bHtml').onclick = () => {
     download(baseName + ($('profileSel').value === 'perso' ? ' - Offline perso.html' : ' - Offline.html'), new Blob([out], { type: 'text/html' }));
     setStatus('Export HTML OK • ' + (out.length / 2 ** 20).toFixed(2) + ' Mo');
   } catch (e) { console.error(e); setStatus('Erreur export : ' + (e.message || e)); }
+};
+// ---------- export modulaire : X.html (coquille universelle), X.glb, X.config.json, X.zones.json, lib/three-X/ (draco/ compris)
+const CRC_T = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(u8) { let c = 0xFFFFFFFF; for (let i = 0; i < u8.length; i++) c = CRC_T[(c ^ u8[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+// zip sans compression (méthode « stocké »), noms en UTF-8 : files = [[chemin, Uint8Array], ...]
+function makeZip(files) {
+  const enc = new TextEncoder(), parts = [], central = [], d = new Date();
+  const time = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1), date = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+  let off = 0, csize = 0;
+  for (const [name, data] of files) {
+    const nb = enc.encode(name), crc = crc32(data);
+    const lh = new DataView(new ArrayBuffer(30));
+    lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true); lh.setUint16(10, time, true); lh.setUint16(12, date, true);
+    lh.setUint32(14, crc, true); lh.setUint32(18, data.length, true); lh.setUint32(22, data.length, true); lh.setUint16(26, nb.length, true);
+    parts.push(lh.buffer, nb, data);
+    const ch = new DataView(new ArrayBuffer(46));
+    ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true); ch.setUint16(12, time, true); ch.setUint16(14, date, true);
+    ch.setUint32(16, crc, true); ch.setUint32(20, data.length, true); ch.setUint32(24, data.length, true); ch.setUint16(28, nb.length, true); ch.setUint32(42, off, true);
+    central.push(ch.buffer, nb); csize += 46 + nb.length;
+    off += 30 + nb.length + data.length;
+  }
+  const end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true); end.setUint32(12, csize, true); end.setUint32(16, off, true);
+  return new Blob([...parts, ...central, end.buffer], { type: 'application/zip' });
+}
+const fromDataUrl = u => { const bin = atob(u.slice(u.indexOf(',') + 1)), o = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) o[i] = bin.charCodeAt(i); return o; };
+$('bZip').onclick = () => {
+  try {
+    if (!glbBytes) return setStatus('Charge un modèle d\'abord');
+    inspectGlb(glbBytes.buffer, baseName);
+    const enc = new TextEncoder(), c = liveConfig();
+    const zones = c.zones;                                   // déjà filtrées selon le profil d'export
+    const files = [
+      [baseName + '.html', enc.encode(SHELL)],
+      [baseName + '.glb', glbBytes],
+      [baseName + '.config.json', enc.encode(JSON.stringify(Object.assign(c, { zones: [], zonesLive: '' }), null, 1))],
+      [baseName + '.zones.json', enc.encode(JSON.stringify(zones, null, 1))]
+    ];
+    for (const [spec, f] of Object.entries(SHELL_LIB.modules)) files.push([SHELL_LIB.dir + '/' + f, fromDataUrl(IMPORTS[spec])]);
+    for (const f of SHELL_LIB.draco) files.push([SHELL_LIB.dir + '/draco/' + f, fromDataUrl(LIBS[f])]);
+    const blob = makeZip(files);
+    download(baseName + '.modulaire.zip', blob);
+    setStatus('Export modulaire OK • ' + files.length + ' fichiers, ' + (blob.size / 2 ** 20).toFixed(2) + ' Mo • à décompresser dans le dossier du site, servi en http/https');
+  } catch (e) { console.error(e); setStatus('Erreur export modulaire : ' + (e.message || e)); }
 };
 $('bPy').onclick = () => {
   const c = liveConfig();

@@ -305,6 +305,7 @@ function createViewer(container, cfg0, loader) {
     root.updateMatrixWorld(true);
     root.traverse(o => { if (o.isMesh) { o.updateMatrix(); o.matrixAutoUpdate = false; } });
     scene.add(root);
+    if (zones.length) { resolveLinks(); buildZones(); }
     const size = new THREE.Box3().setFromObject(root).getSize(new THREE.Vector3());
     fit = Math.max(size.x, size.y, size.z) / 2 / Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2) * 1.35 || 1;
     frame();
@@ -413,7 +414,7 @@ function createViewer(container, cfg0, loader) {
     walking = true;
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
     zoneInside.clear(); nearZone = null;
-    for (const z of zones) if (z.type === 'portal' && z.trigger !== 'click' && Math.hypot(W.pos.x - z.x, W.pos.z - z.z) <= z.radius) zoneInside.add(z.id);
+    for (const z of zones) if (z.type === 'portal' && z.trigger !== 'click' && zoneDist(z).d <= z.radius) zoneInside.add(z.id);
     walkStep(0); dirty = true;
     presenceEnter();
     if (onWalk) onWalk(true);
@@ -701,6 +702,35 @@ function createViewer(container, cfg0, loader) {
   // ---- zones : panneaux, portails, liens, commandes
   const zoneGroup = new THREE.Group(); scene.add(zoneGroup);
   let zones = [], zoneHit = [], zoneAll = [], zoneInside = new Set(), nearZone = null, zoneEditor = false, selBox = null, onZone = null, onNear = null;
+  // zones liées à un élément du modèle (champ mesh = nom exact) : id de zone -> { meshes, box } ; mesh 3D -> zone
+  const zoneLink = new Map(), meshZone = new Map();
+  const zoneOf = o => o.userData.zone || meshZone.get(o) || null;
+  function findMeshes(name) {
+    const out = new Set();
+    if (model && name) model.traverse(o => { if (o.name === name) o.traverse(c => { if (c.isMesh) out.add(c); }); });
+    return [...out];
+  }
+  function resolveLinks() {
+    zoneLink.clear();
+    for (const z of zones) {
+      if (!z.mesh || z.type === 'spawn') continue;
+      const meshes = findMeshes(z.mesh);
+      if (!meshes.length) { console.warn('zone « ' + z.id + ' » : élément « ' + z.mesh + ' » introuvable dans le modèle'); continue; }
+      const box = new THREE.Box3();
+      for (const m of meshes) box.expandByObject(m);
+      zoneLink.set(z.id, { meshes, box });
+    }
+  }
+  // contour d'un élément (noir + blanc décalé, lisible sur tout fond)
+  function outlineOf(box) {
+    const g = new THREE.Group();
+    for (const [b, c] of [[box.clone(), 0x000000], [box.clone().expandByScalar(0.05), 0xffffff]]) {
+      const h = new THREE.Box3Helper(b, c); h.material.depthTest = false; h.material.transparent = true; h.material.fog = false; h.renderOrder = 999; g.add(h);
+    }
+    return g;
+  }
+  const hoverG = new THREE.Group(); hoverG.visible = false; scene.add(hoverG);
+  let hoverZone = null, hoverT = 0;
   const ZONE_TYPES = ['url', 'ha', 'portal', 'spawn'];
   const slug = s => String(s || '').toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
   function cleanZone(z, i) {
@@ -711,7 +741,8 @@ function createViewer(container, cfg0, loader) {
       x: num(z.x, 0, -1e5, 1e5), y: num(z.y, 0, -1e5, 1e5), z: num(z.z, 0, -1e5, 1e5), yaw: num(z.yaw, 0, -7, 7),
       shape: z.shape === 'board' ? 'board' : 'ring', trigger: ['click', 'enter', 'both'].includes(z.trigger) ? z.trigger : 'click',
       radius: num(z.radius, 2, 0.5, 50), w: num(z.w, 2.4, 0.5, 10), h: num(z.h, 1.2, 0.3, 6),
-      target: String(z.target || '').slice(0, 600), spawn: slug(z.spawn), confirm: !!z.confirm, private: !!z.private
+      target: String(z.target || '').slice(0, 600), spawn: slug(z.spawn), confirm: !!z.confirm, private: !!z.private,
+      mesh: type === 'spawn' ? '' : String(z.mesh || '').replace(/[\u0000-\u001f]/g, '').slice(0, 200)
     };
     if (type !== 'portal') o.trigger = 'click';
     return o;
@@ -739,13 +770,26 @@ function createViewer(container, cfg0, loader) {
       c.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) { if (o.material.map) o.material.map.dispose(); o.material.dispose(); } });
     }
     if (selBox) { scene.remove(selBox); selBox.geometry.dispose(); selBox.material.dispose(); selBox = null; }
-    zoneHit = []; zoneAll = [];
+    zoneHit = []; zoneAll = []; meshZone.clear();
+    setHover(null);
     for (const z of zones) {
-      const g = new THREE.Group(); g.position.set(z.x, z.y, z.z); g.rotation.y = z.yaw; g.userData.zoneId = z.id;
+      const link = zoneLink.get(z.id);
+      const g = new THREE.Group(); g.userData.zoneId = z.id;
+      if (!link) { g.position.set(z.x, z.y, z.z); g.rotation.y = z.yaw; }
       const kind = { url: 'Lien web', ha: 'Commande', portal: 'Portail', spawn: 'Arrivée' }[z.type];
       const priv = zoneEditor && z.private ? ' (privé)' : '';
       const clickable = z.type !== 'spawn' && z.trigger !== 'enter';
       let main = null;
+      if (link) {
+        // zone liée à un élément : l'élément est la zone (cliquable, E à moins de radius m). Seul l'éditeur montre un repère.
+        for (const m of link.meshes) if (!meshZone.has(m)) meshZone.set(m, z);
+        zoneAll.push(...link.meshes); if (clickable) zoneHit.push(...link.meshes);
+        if (!zoneEditor) continue;
+        g.add(outlineOf(link.box));
+        const lab = makeLabel((z.label || kind) + ' ⇢ ' + z.mesh + priv); lab.position.set((link.box.min.x + link.box.max.x) / 2, link.box.max.y + 0.9, (link.box.min.z + link.box.max.z) / 2); g.add(lab);
+        zoneGroup.add(g);
+        continue;
+      }
       if (z.type === 'spawn') {
         if (!zoneEditor) continue;
         const cone = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.9, 12), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, depthTest: false, fog: false }));
@@ -778,6 +822,7 @@ function createViewer(container, cfg0, loader) {
       seen.add(id); z.id = id; return z;
     });
     nearZone = null; zoneInside.clear();
+    resolveLinks();
     buildZones();
     return zones.map(z => Object.assign({}, z));
   }
@@ -797,30 +842,62 @@ function createViewer(container, cfg0, loader) {
     tpV.set(nx, ny); tpRay.setFromCamera(tpV, camera);
     const h = tpRay.intersectObjects(zoneHit, false)[0];
     if (!h || (maxDist && h.distance > maxDist)) return null;
-    if (model) { const m = tpRay.intersectObject(model, true)[0]; if (m && m.distance < h.distance - 0.05) return null; }
-    return h.object.userData.zone;
+    const z = zoneOf(h.object), link = z && zoneLink.get(z.id);
+    if (model) {
+      // un élément traversable (walkIgnore) ne bloque pas le clic, ni les autres morceaux de l'élément visé
+      const tokens = parseIgnore(cfg.walkIgnore);
+      for (const m of tpRay.intersectObject(model, true)) {
+        if (m.distance >= h.distance - 0.05) break;
+        if (isIgnoredMesh(m.object, tokens) || (link && link.meshes.includes(m.object))) continue;
+        return null;
+      }
+    }
+    return z;
   }
+  function setHover(z) {
+    if (z === hoverZone) return;
+    hoverZone = z;
+    const link = z && zoneLink.get(z.id);
+    hoverG.visible = !!link;
+    if (link) { hoverG.clear(); hoverG.add(outlineOf(link.box)); }
+    dom.style.cursor = z ? 'pointer' : '';
+    dirty = true;
+  }
+  dom.addEventListener('pointermove', e => {
+    if (zoneEditor || !onZone || !zoneHit.length || e.buttons || document.pointerLockElement === dom) { if (hoverZone) setHover(null); return; }
+    const now = performance.now(); if (now - hoverT < 50) return; hoverT = now;
+    const r = dom.getBoundingClientRect();
+    setHover(zoneFromClick((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1, walking ? 14 : 0));
+  });
+  dom.addEventListener('pointerleave', () => setHover(null));
   function zonePickAt(cx, cy) {
     if (!zoneAll.length) return null;
     const r = dom.getBoundingClientRect();
     camera.updateMatrixWorld(true);
     tpV.set((cx - r.left) / r.width * 2 - 1, -((cy - r.top) / r.height) * 2 + 1); tpRay.setFromCamera(tpV, camera);
     const h = tpRay.intersectObjects(zoneAll, false)[0];
-    return h ? h.object.userData.zone : null;
+    return h ? zoneOf(h.object) : null;
+  }
+  // distance horizontale du marcheur à la zone (ou à son élément s'il est lié) et écart vertical (0 = à hauteur de l'élément)
+  function zoneDist(z) {
+    const l = zoneLink.get(z.id);
+    if (!l) return { d: Math.hypot(W.pos.x - z.x, W.pos.z - z.z), dy: W.pos.y - z.y };
+    const b = l.box, p = W.pos;
+    return { d: Math.hypot(Math.max(b.min.x - p.x, 0, p.x - b.max.x), Math.max(b.min.z - p.z, 0, p.z - b.max.z)), dy: p.y < b.min.y ? p.y - b.min.y : (p.y > b.max.y ? p.y - b.max.y : 0) };
   }
   function zoneTick() {
     if (!zones.length) return;
     let best = null, bd = 1e9;
     for (const z of zones) {
       if (z.type === 'spawn') continue;
-      const d = Math.hypot(W.pos.x - z.x, W.pos.z - z.z), dy = W.pos.y - z.y;
+      const { d, dy } = zoneDist(z);
       if (z.type === 'portal' && z.trigger !== 'click') {
         const inside = d <= z.radius && dy > -1.5 && dy < 3.5, was = zoneInside.has(z.id);
         if (inside && !was) { zoneInside.add(z.id); fireZone(z, 'enter'); }
         else if (!inside && was) zoneInside.delete(z.id);
       }
       if (z.trigger !== 'enter') {
-        const reach = (z.shape === 'board' ? Math.max(z.radius, 2) : z.radius) + 1.5;
+        const reach = zoneLink.has(z.id) ? z.radius : (z.shape === 'board' ? Math.max(z.radius, 2) : z.radius) + 1.5;
         if (d <= reach && Math.abs(dy) < 3.5 && d < bd) { best = z; bd = d; }
       }
     }
@@ -905,7 +982,10 @@ function createViewer(container, cfg0, loader) {
   return {
     scene, camera, renderer, controls, cfg, setCfg, setModel, loadBuffer, frame, getCameraState, setZoom,
     get model() { return model; }, get sea() { return sea; }, set onCfg(f) { onCfg = f; }, set onWalk(f) { onWalk = f; }, set onPick(f) { onPick = f; }, set pickOrbit(v) { pickOrbit = !!v; }, set onPresence(f) { onPresence = f; }, set onChat(f) { onChat = f; },
-    setZones, zoneSelect, zonePickAt, getZones() { return zones.map(z => Object.assign({}, z)); }, set onZone(f) { onZone = f; }, set onNear(f) { onNear = f; },
+    setZones, zoneSelect, zonePickAt, findMeshes,
+    // boîte (monde) de l'élément de ce nom : { min, max, center, count } ou null
+    meshInfo(name) { const m = findMeshes(name); if (!m.length) return null; const b = new THREE.Box3(); m.forEach(o => b.expandByObject(o)); return { min: b.min.toArray(), max: b.max.toArray(), center: b.getCenter(new THREE.Vector3()).toArray(), count: m.length }; },
+    isTraversable(o) { return isIgnoredMesh(o, parseIgnore(cfg.walkIgnore)); }, getZones() { return zones.map(z => Object.assign({}, z)); }, set onZone(f) { onZone = f; }, set onNear(f) { onNear = f; },
     captureTop(size = 320, hide = []) {
       if (!model) return null;
       const box = new THREE.Box3().setFromObject(model), c = box.getCenter(new THREE.Vector3()), sz = box.getSize(new THREE.Vector3());
@@ -914,7 +994,7 @@ function createViewer(container, cfg0, loader) {
       cam.position.set(c.x, box.max.y + 500, c.z); cam.up.set(0, 0, -1); cam.lookAt(c.x, 0, c.z);
       cam.updateProjectionMatrix(); cam.updateMatrixWorld(true);
       const hidden = [];
-      for (const o of [landing, zoneGroup, ...hide, ...[...P.peers.values()].map(q => q.g)]) if (o && o.visible) { o.visible = false; hidden.push(o); }
+      for (const o of [landing, zoneGroup, hoverG, ...hide, ...[...P.peers.values()].map(q => q.g)]) if (o && o.visible) { o.visible = false; hidden.push(o); }
       const fog = scene.fog; scene.fog = null;
       renderer.render(scene, cam);
       const out = document.createElement('canvas'); out.width = out.height = size;
