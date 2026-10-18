@@ -293,6 +293,7 @@ function createViewer(container, cfg0, loader) {
 
   function setModel(root) {
     if (walking) walkStop();
+    landY = null; landKey = '';
     if (model) { scene.remove(model); disposeObject(model); }
     model = root;
     fixMaterials(root);
@@ -817,25 +818,44 @@ function createViewer(container, cfg0, loader) {
     if (e.code === 'KeyE' && !e.repeat && walking && !typing(e) && nearZone && onZone) fireZone(nearZone, 'key');
   });
 
-  // ---- repère d'atterrissage : la cible de la vue globale = l'endroit où F pose l'avatar
-  let onLanding = null;
+  // ---- repère d'atterrissage : un cercle posé sur le sol, sous la cible de la vue globale (où F pose l'avatar)
+  let onLanding = null, landY = null, landKey = '', landT = 0, landDirty = false;
   const landing = new THREE.Group(); landing.visible = false; scene.add(landing);
   {
-    const bm = o => Object.assign({ transparent: true, depthTest: false, fog: false }, o);
-    const pin = new THREE.Mesh(new THREE.ConeGeometry(0.35, 1.1, 12), new THREE.MeshBasicMaterial(bm({ color: 0x000000 })));
-    pin.rotation.x = Math.PI; pin.position.y = 0.55; landing.add(pin);
-    const ro = new THREE.Mesh(new THREE.RingGeometry(0.55, 0.8, 32), new THREE.MeshBasicMaterial(bm({ color: 0x000000, side: THREE.DoubleSide })));
-    ro.rotation.x = -Math.PI / 2; ro.position.y = 0.02; landing.add(ro);
-    const ri = new THREE.Mesh(new THREE.RingGeometry(0.4, 0.55, 32), new THREE.MeshBasicMaterial(bm({ color: 0xffffff, side: THREE.DoubleSide })));
-    ri.rotation.x = -Math.PI / 2; ri.position.y = 0.025; landing.add(ri);
-    const lab = makeLabel('Atterrissage (F)'); lab.material.depthTest = false; lab.position.y = 1.9; landing.add(lab);
+    const bm = o => Object.assign({ transparent: true, opacity: 0.85, depthTest: false, depthWrite: false, fog: false, side: THREE.DoubleSide }, o);
+    const ro = new THREE.Mesh(new THREE.RingGeometry(0.75, 0.9, 40), new THREE.MeshBasicMaterial(bm({ color: 0x000000 })));
+    ro.rotation.x = -Math.PI / 2; ro.position.y = 0.03; landing.add(ro);
+    const ri = new THREE.Mesh(new THREE.RingGeometry(0.6, 0.75, 40), new THREE.MeshBasicMaterial(bm({ color: 0xffffff })));
+    ri.rotation.x = -Math.PI / 2; ri.position.y = 0.035; landing.add(ri);
   }
-  function landingTick() {
+  const downRay = new THREE.Raycaster(), DOWN = new THREE.Vector3(0, -1, 0);
+  function solidHit(h, tokens) {
+    const o = h.object;
+    if (!o.isMesh || !o.visible) return false;
+    const m = Array.isArray(o.material) ? o.material[h.face ? h.face.materialIndex : 0] : o.material;
+    if (m && (isFoliageName(m.name) || nameHas(m.name, tokens))) return false;
+    return !isIgnoredMesh(o, tokens);
+  }
+  // même règle que l'atterrissage : surface la plus haute à moins de 2 m au-dessus de la cible, sinon la plus haute du modèle
+  function groundUnder(t) {
+    if (!model) return null;
+    const tokens = parseIgnore(cfg.walkIgnore);
+    for (const oy of [t.y + 2, 1e5]) {
+      downRay.set(new THREE.Vector3(t.x, oy, t.z), DOWN);
+      for (const h of downRay.intersectObject(model, true)) if (solidHit(h, tokens)) return h.point.y;
+    }
+    return null;
+  }
+  const tkey = t => t.x.toFixed(2) + ',' + t.y.toFixed(2) + ',' + t.z.toFixed(2);
+  function landingTick(now) {
     const show = !!model && !walking && cfg.landingMarker !== false;
     if (landing.visible !== show) { landing.visible = show; dirty = true; }
     if (!show) return;
-    landing.position.copy(controls.target);
-    landing.scale.setScalar(Math.max(1, camera.position.distanceTo(controls.target) / 28));
+    const t = controls.target, k = tkey(t);
+    if (k !== landKey) { landKey = k; landT = now; landDirty = true; }
+    if (landDirty && now - landT > 120) { landDirty = false; landY = groundUnder(t); dirty = true; }
+    landing.position.set(t.x, landY === null ? t.y : landY, t.z);
+    landing.scale.setScalar(Math.max(1, camera.position.distanceTo(t) / 60));
   }
   function setLanding(e) {
     if (!model) return false;
@@ -844,12 +864,9 @@ function createViewer(container, cfg0, loader) {
     tpV.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); tpRay.setFromCamera(tpV, camera);
     const tokens = parseIgnore(cfg.walkIgnore);
     for (const h of tpRay.intersectObject(model, true)) {
-      const o = h.object;
-      if (!o.isMesh || !o.visible) continue;
-      const m = Array.isArray(o.material) ? o.material[h.face ? h.face.materialIndex : 0] : o.material;
-      if (m && (isFoliageName(m.name) || nameHas(m.name, tokens))) continue;
-      if (isIgnoredMesh(o, tokens)) continue;
+      if (!solidHit(h, tokens)) continue;
       controls.target.copy(h.point); controls.update(); dirty = true;
+      landY = h.point.y; landKey = tkey(controls.target); landDirty = false;
       if (onLanding) onLanding(h.point.toArray());
       return true;
     }
@@ -862,7 +879,7 @@ function createViewer(container, cfg0, loader) {
     let moved = false;
     if (walking) { walkStep(dt); moved = true; } else moved = controls.update();
     presenceTick(dt, performance.now());
-    landingTick();
+    landingTick(performance.now());
     if (seaMat && seaMat.uniforms) { seaMat.uniforms.uTime.value = clock.elapsedTime; dirty = true; }
     if (dirty || moved) { renderer.render(scene, camera); dirty = false; }
   });
