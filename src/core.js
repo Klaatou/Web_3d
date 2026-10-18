@@ -393,13 +393,14 @@ function createViewer(container, cfg0, loader) {
     }
     camera.position.set(W.pos.x, W.pos.y + cfg.eyeHeight, W.pos.z);
     camera.rotation.set(W.pitch, W.yaw, 0);
+    if (dt > 0) zoneTick();
   }
-  function walkStart() {
+  function walkStart(opts) {
     if (!model || walking) return walking;
     W.grid = buildCollisionGrid(model, 3, parseIgnore(cfg.walkIgnore));
     W.saved = { pos: camera.position.clone(), target: controls.target.clone(), fov: camera.fov };
-    const t = controls.target, fx = t.x - camera.position.x, fz = t.z - camera.position.z;
-    W.yaw = Math.hypot(fx, fz) > 1e-3 ? Math.atan2(-fx, -fz) : 0;
+    const t = (opts && opts.pos) ? new THREE.Vector3().fromArray(opts.pos) : controls.target, fx = t.x - camera.position.x, fz = t.z - camera.position.z;
+    W.yaw = (opts && Number.isFinite(opts.yaw)) ? opts.yaw : (Math.hypot(fx, fz) > 1e-3 ? Math.atan2(-fx, -fz) : 0);
     W.pitch = 0;
     let g = W.grid.ground(t.x, t.z, t.y + 2);
     if (g === null) g = W.grid.ground(t.x, t.z, 1e6);
@@ -410,6 +411,8 @@ function createViewer(container, cfg0, loader) {
     camera.rotation.order = 'YXZ';
     walking = true;
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    zoneInside.clear(); nearZone = null;
+    for (const z of zones) if (z.type === 'portal' && z.trigger !== 'click' && Math.hypot(W.pos.x - z.x, W.pos.z - z.z) <= z.radius) zoneInside.add(z.id);
     walkStep(0); dirty = true;
     presenceConnect();
     if (onWalk) onWalk(true);
@@ -424,6 +427,7 @@ function createViewer(container, cfg0, loader) {
     camera.position.copy(W.saved.pos); controls.target.copy(W.saved.target);
     controls.enabled = true; controls.update();
     W.grid = null; dirty = true;
+    zoneInside.clear(); if (nearZone) { nearZone = null; if (onNear) onNear(null); }
     presenceDisconnect();
     if (onWalk) onWalk(false);
   }
@@ -486,6 +490,15 @@ function createViewer(container, cfg0, loader) {
   dom.addEventListener('pointerdown', e => { downPos = [e.clientX, e.clientY]; });
   dom.addEventListener('click', e => {
     const locked = document.pointerLockElement === dom, now = performance.now();
+    {
+      const rc = dom.getBoundingClientRect();
+      const cnx = locked ? 0 : (e.clientX - rc.left) / rc.width * 2 - 1, cny = locked ? 0 : -((e.clientY - rc.top) / rc.height) * 2 + 1;
+      const still = !!downPos && Math.hypot(e.clientX - downPos[0], e.clientY - downPos[1]) < 6;
+      if (zones.length && onZone && (walking || (still && !zoneEditor))) {
+        const zc = zoneFromClick(cnx, cny, walking ? 14 : 0);
+        if (zc) { onZone(zc, 'click'); return; }
+      }
+    }
     if (!walking) {
       if (pickOrbit && onPick && downPos && Math.hypot(e.clientX - downPos[0], e.clientY - downPos[1]) < 6) doPick(e, false);
       return;
@@ -637,6 +650,134 @@ function createViewer(container, cfg0, loader) {
     }
   }
 
+  // ---- zones : panneaux, portails, liens, commandes
+  const zoneGroup = new THREE.Group(); scene.add(zoneGroup);
+  let zones = [], zoneHit = [], zoneAll = [], zoneInside = new Set(), nearZone = null, zoneEditor = false, selBox = null, onZone = null, onNear = null;
+  const ZONE_TYPES = ['url', 'ha', 'portal', 'spawn'];
+  const slug = s => String(s || '').toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
+  function cleanZone(z, i) {
+    const num = (v, d, lo, hi) => { v = Number(v); return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d; };
+    const type = ZONE_TYPES.includes(z.type) ? z.type : 'portal';
+    const o = {
+      id: slug(z.id) || ('z' + (i + 1)), type, label: String(z.label || '').slice(0, 60),
+      x: num(z.x, 0, -1e5, 1e5), y: num(z.y, 0, -1e5, 1e5), z: num(z.z, 0, -1e5, 1e5), yaw: num(z.yaw, 0, -7, 7),
+      shape: z.shape === 'board' ? 'board' : 'ring', trigger: ['click', 'enter', 'both'].includes(z.trigger) ? z.trigger : 'click',
+      radius: num(z.radius, 2, 0.5, 50), w: num(z.w, 2.4, 0.5, 10), h: num(z.h, 1.2, 0.3, 6),
+      target: String(z.target || '').slice(0, 600), spawn: slug(z.spawn), confirm: !!z.confirm, private: !!z.private
+    };
+    if (type !== 'portal') o.trigger = 'click';
+    return o;
+  }
+  function boardTex(label, sub, w, h) {
+    const W2 = 512, H2 = Math.max(96, Math.round(512 * h / w));
+    const cv = document.createElement('canvas'); cv.width = W2; cv.height = H2;
+    const g = cv.getContext('2d');
+    g.fillStyle = '#fff'; g.fillRect(0, 0, W2, H2);
+    g.strokeStyle = '#000'; g.lineWidth = 10; g.strokeRect(5, 5, W2 - 10, H2 - 10);
+    g.fillStyle = '#000'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.font = 'bold 46px sans-serif';
+    const words = String(label).split(/\s+/), lines = []; let cur = '';
+    for (const w3 of words) { const t = cur ? cur + ' ' + w3 : w3; if (g.measureText(t).width > W2 - 60 && cur) { lines.push(cur); cur = w3; } else cur = t; }
+    if (cur) lines.push(cur);
+    const shown = lines.slice(0, 3), lh = 54, y0 = H2 / 2 - 14 - (shown.length - 1) * lh / 2;
+    shown.forEach((l, i) => g.fillText(l, W2 / 2, y0 + i * lh, W2 - 60));
+    g.font = '28px sans-serif'; g.fillText(sub, W2 / 2, H2 - 34, W2 - 60);
+    const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+    return tex;
+  }
+  function buildZones() {
+    for (const c of [...zoneGroup.children]) {
+      zoneGroup.remove(c);
+      c.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) { if (o.material.map) o.material.map.dispose(); o.material.dispose(); } });
+    }
+    if (selBox) { scene.remove(selBox); selBox.geometry.dispose(); selBox.material.dispose(); selBox = null; }
+    zoneHit = []; zoneAll = [];
+    for (const z of zones) {
+      const g = new THREE.Group(); g.position.set(z.x, z.y, z.z); g.rotation.y = z.yaw; g.userData.zoneId = z.id;
+      const kind = { url: 'Lien web', ha: 'Commande', portal: 'Portail', spawn: 'Arrivée' }[z.type];
+      const priv = zoneEditor && z.private ? ' (privé)' : '';
+      const clickable = z.type !== 'spawn' && z.trigger !== 'enter';
+      let main = null;
+      if (z.type === 'spawn') {
+        if (!zoneEditor) continue;
+        const cone = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.9, 12), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, depthTest: false, fog: false }));
+        cone.rotation.x = -Math.PI / 2; cone.position.y = 0.6; g.add(cone); main = cone;
+        const l = makeLabel('arrivée : ' + z.id); l.position.y = 1.7; g.add(l);
+      } else if (z.shape === 'board') {
+        const sub = kind + (clickable ? ' · clic ou E' : '') + priv;
+        const plane = new THREE.Mesh(new THREE.PlaneGeometry(z.w, z.h), new THREE.MeshBasicMaterial({ map: boardTex(z.label || kind, sub, z.w, z.h), side: THREE.DoubleSide, fog: false }));
+        plane.position.y = 0.9 + z.h / 2; g.add(plane); main = plane;
+        const post = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.92, 0.1), new THREE.MeshStandardMaterial({ color: 0x333333 })); post.position.y = 0.46; g.add(post);
+      } else {
+        const cyl = new THREE.Mesh(new THREE.CylinderGeometry(z.radius, z.radius, 2.4, 48, 1, true), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.16, side: THREE.DoubleSide, depthWrite: false, fog: false }));
+        cyl.position.y = 1.2; g.add(cyl); main = cyl;
+        const r1 = new THREE.Mesh(new THREE.RingGeometry(Math.max(0.05, z.radius - 0.16), z.radius, 64), new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide, fog: false }));
+        r1.rotation.x = -Math.PI / 2; r1.position.y = 0.05; g.add(r1);
+        const r2 = new THREE.Mesh(new THREE.RingGeometry(Math.max(0.02, z.radius - 0.3), Math.max(0.04, z.radius - 0.16), 64), new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, fog: false }));
+        r2.rotation.x = -Math.PI / 2; r2.position.y = 0.055; g.add(r2);
+        const lab = makeLabel((z.label || kind) + priv); lab.position.y = 2.9; g.add(lab);
+      }
+      if (main) { main.userData.zone = z; zoneAll.push(main); if (clickable) zoneHit.push(main); }
+      zoneGroup.add(g);
+    }
+    dirty = true;
+  }
+  function setZones(list, opts) {
+    zoneEditor = !!(opts && opts.editor);
+    const seen = new Set();
+    zones = (Array.isArray(list) ? list : []).map((z, i) => cleanZone(z || {}, i)).map(z => {
+      let id = z.id, n = 2; while (seen.has(id)) id = z.id + '-' + (n++);
+      seen.add(id); z.id = id; return z;
+    });
+    nearZone = null; zoneInside.clear();
+    buildZones();
+    return zones.map(z => Object.assign({}, z));
+  }
+  function zoneSelect(id) {
+    if (selBox) { scene.remove(selBox); selBox.geometry.dispose(); selBox.material.dispose(); selBox = null; }
+    const g = zoneGroup.children.find(c => c.userData.zoneId === id);
+    if (g) { selBox = new THREE.BoxHelper(g, 0x000000); selBox.material.depthTest = false; selBox.material.transparent = true; scene.add(selBox); }
+    dirty = true;
+  }
+  function zoneFromClick(nx, ny, maxDist) {
+    if (!zoneHit.length) return null;
+    camera.updateMatrixWorld(true);
+    tpV.set(nx, ny); tpRay.setFromCamera(tpV, camera);
+    const h = tpRay.intersectObjects(zoneHit, false)[0];
+    if (!h || (maxDist && h.distance > maxDist)) return null;
+    if (model) { const m = tpRay.intersectObject(model, true)[0]; if (m && m.distance < h.distance - 0.05) return null; }
+    return h.object.userData.zone;
+  }
+  function zonePickAt(cx, cy) {
+    if (!zoneAll.length) return null;
+    const r = dom.getBoundingClientRect();
+    camera.updateMatrixWorld(true);
+    tpV.set((cx - r.left) / r.width * 2 - 1, -((cy - r.top) / r.height) * 2 + 1); tpRay.setFromCamera(tpV, camera);
+    const h = tpRay.intersectObjects(zoneAll, false)[0];
+    return h ? h.object.userData.zone : null;
+  }
+  function zoneTick() {
+    if (!zones.length) return;
+    let best = null, bd = 1e9;
+    for (const z of zones) {
+      if (z.type === 'spawn') continue;
+      const d = Math.hypot(W.pos.x - z.x, W.pos.z - z.z), dy = W.pos.y - z.y;
+      if (z.type === 'portal' && z.trigger !== 'click') {
+        const inside = d <= z.radius && dy > -1.5 && dy < 3.5, was = zoneInside.has(z.id);
+        if (inside && !was) { zoneInside.add(z.id); if (onZone) onZone(z, 'enter'); }
+        else if (!inside && was) zoneInside.delete(z.id);
+      }
+      if (z.trigger !== 'enter') {
+        const reach = (z.shape === 'board' ? Math.max(z.radius, 2) : z.radius) + 1.5;
+        if (d <= reach && Math.abs(dy) < 3.5 && d < bd) { best = z; bd = d; }
+      }
+    }
+    if (best !== nearZone) { nearZone = best; if (onNear) onNear(best); }
+  }
+  window.addEventListener('keydown', e => {
+    if (e.code === 'KeyE' && !e.repeat && walking && !typing(e) && nearZone && onZone) onZone(nearZone, 'key');
+  });
+
   const clock = new THREE.Clock();
   renderer.setAnimationLoop(() => {
     const dt = Math.min(clock.getDelta(), 0.1);
@@ -650,6 +791,8 @@ function createViewer(container, cfg0, loader) {
   return {
     scene, camera, renderer, controls, cfg, setCfg, setModel, loadBuffer, frame, getCameraState, setZoom,
     get model() { return model; }, get sea() { return sea; }, set onCfg(f) { onCfg = f; }, set onWalk(f) { onWalk = f; }, set onPick(f) { onPick = f; }, set pickOrbit(v) { pickOrbit = !!v; }, set onPresence(f) { onPresence = f; }, set onChat(f) { onChat = f; },
+    setZones, zoneSelect, zonePickAt, getZones() { return zones.map(z => Object.assign({}, z)); }, set onZone(f) { onZone = f; }, set onNear(f) { onNear = f; },
+    getName() { return P.name; },
     sendChat(text) {
       const t = String(text || '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, 200);
       if (!t || !P.ws || P.ws.readyState !== 1 || !P.id) return false;

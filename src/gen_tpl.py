@@ -16,11 +16,15 @@ Draco et Meshopt gérés automatiquement (décodeurs intégrés seulement si le 
 """
 from __future__ import annotations
 
+VERSION = "__VERSION__"
+
 import argparse
 import base64
 import html
 import json
+import math
 import pathlib
+import re
 import struct
 import sys
 import urllib.request
@@ -51,6 +55,9 @@ PRESENCE_URL = ""
 ROOM = ""
 CHAT_ENABLED = True
 CHAT_FADE = 0.0
+PROFILE = "public"
+ZONES_JSON = "[]"
+SPECTATE = None
 # <</DEFAULTS>>
 
 SEA_SIZE = 4000
@@ -71,6 +78,64 @@ DRACO_LIBS = {
     "draco_decoder.wasm": "examples/jsm/libs/draco/gltf/draco_decoder.wasm",
 }
 MESHOPT_FILES = {"three/addons/libs/meshopt_decoder.module.js": "examples/jsm/libs/meshopt_decoder.module.js"}
+
+
+ZONE_TYPES = ("url", "ha", "portal", "spawn")
+
+
+def _slug(s):
+    return re.sub(r"^-+|-+$", "", re.sub(r"[^a-z0-9_-]+", "-", str(s or "").lower()))[:40]
+
+
+def clean_zones(zones, profile):
+    """Valide les zones ; le profil 'public' retire toutes les zones privées (leurs adresses ne sont jamais écrites dans la page)."""
+    def num(v, d, lo, hi):
+        try:
+            v = float(v)
+        except (TypeError, ValueError):
+            return d
+        return d if not math.isfinite(v) else min(hi, max(lo, v))
+    out = []
+    for i, z in enumerate(zones if isinstance(zones, list) else []):
+        if not isinstance(z, dict):
+            continue
+        if z.get("private") and profile != "perso":
+            continue
+        t = z.get("type") if z.get("type") in ZONE_TYPES else "portal"
+        out.append({
+            "id": _slug(z.get("id")) or f"z{i + 1}", "type": t, "label": str(z.get("label") or "")[:60],
+            "x": num(z.get("x"), 0, -1e5, 1e5), "y": num(z.get("y"), 0, -1e5, 1e5), "z": num(z.get("z"), 0, -1e5, 1e5),
+            "yaw": num(z.get("yaw"), 0, -7, 7), "shape": "board" if z.get("shape") == "board" else "ring",
+            "trigger": (z.get("trigger") if z.get("trigger") in ("click", "enter", "both") else "click") if t == "portal" else "click",
+            "radius": num(z.get("radius"), 2, 0.5, 50), "w": num(z.get("w"), 2.4, 0.5, 10), "h": num(z.get("h"), 1.2, 0.3, 6),
+            "target": str(z.get("target") or "")[:600], "spawn": _slug(z.get("spawn")),
+            "confirm": bool(z.get("confirm")), "private": bool(z.get("private")),
+        })
+    return out
+
+
+def fix_presence_url(u):
+    u = str(u or "").strip()
+    if not u:
+        return u
+    if not re.match(r"^wss?://", u, re.I):
+        print(f"[AVERTISSEMENT] --presence-url doit commencer par ws:// ou wss:// (reçu : {u})", file=sys.stderr)
+        return u
+    fixed = re.sub(r"^(wss?://)(0\.0\.0\.0)(?=[:/]|$)", r"\g<1>127.0.0.1", u, flags=re.I)
+    if fixed != u:
+        print(f"[AVERTISSEMENT] 0.0.0.0 est une adresse d'écoute du serveur, pas une destination : remplacée par 127.0.0.1 -> {fixed}", file=sys.stderr)
+    return fixed
+
+
+def find_beside(path):
+    """Chemin absolu : tel quel. Relatif : d'abord le dossier de lancement, puis le dossier de ce script."""
+    path = pathlib.Path(path).expanduser()
+    if path.is_absolute():
+        return path if path.is_file() else None
+    for base in (pathlib.Path.cwd(), pathlib.Path(__file__).resolve().parent):
+        if (base / path).is_file():
+            return base / path
+    return None
 
 
 def vendor_bytes(rel: str, vendor_dir: pathlib.Path | None) -> bytes:
@@ -136,8 +201,9 @@ MESHOPT_JS = r"""__MESHOPT_JS__"""
 def build_html(glb: bytes, name: str, vendor_dir=None, *, hole=HOLE_RADIUS, hole_fade=HOLE_FADE, hole_x=HOLE_X, hole_z=HOLE_Z, wave=WAVE_AMP,
                sea_y=SEA_Y, zoom=ZOOM_RATIO, cam_dir=CAM_DIR, target=TARGET, sea_enabled=SEA_ENABLED,
                anim_enabled=ANIM_ENABLED, retina=RETINA_ENABLED, foliage_cutout=FOLIAGE_CUTOUT,
-               sea_color=SEA_COLOR, sky_color=SKY_COLOR, sea_segments=SEA_SEGMENTS, walk=WALK_ENABLED, eye_height=EYE_HEIGHT, walk_speed=WALK_SPEED, walk_ignore=WALK_IGNORE, names=NAMES_ENABLED, presence_url=PRESENCE_URL, room=ROOM, chat=CHAT_ENABLED, chat_fade=CHAT_FADE, title=None) -> str:
+               sea_color=SEA_COLOR, sky_color=SKY_COLOR, sea_segments=SEA_SEGMENTS, walk=WALK_ENABLED, eye_height=EYE_HEIGHT, walk_speed=WALK_SPEED, walk_ignore=WALK_IGNORE, names=NAMES_ENABLED, presence_url=PRESENCE_URL, room=ROOM, chat=CHAT_ENABLED, chat_fade=CHAT_FADE, zones=None, profile=PROFILE, spectate=SPECTATE, title=None) -> str:
     used = inspect_glb(glb, name)
+    presence_url = fix_presence_url(presence_url)
     need_draco = "KHR_draco_mesh_compression" in used
     need_meshopt = "EXT_meshopt_compression" in used
 
@@ -165,7 +231,8 @@ def build_html(glb: bytes, name: str, vendor_dir=None, *, hole=HOLE_RADIUS, hole
         "foliageCutout": float(foliage_cutout), "seaSize": SEA_SIZE, "seaSegments": int(sea_segments),
         "seaColor": int(sea_color), "skyColor": int(sky_color),
         "walk": bool(walk), "eyeHeight": float(eye_height), "walkSpeed": float(walk_speed), "walkIgnore": str(walk_ignore),
-        "names": bool(names), "chat": bool(chat), "chatFade": float(chat_fade), "presenceUrl": str(presence_url), "room": str(room) or pathlib.Path(name).stem,
+        "names": bool(names), "chat": bool(chat), "profile": profile, "version": VERSION, "spectate": bool(presence_url) if spectate is None else bool(spectate),
+        "zones": clean_zones(json.loads(ZONES_JSON) if zones is None else zones, profile), "chatFade": float(chat_fade), "presenceUrl": str(presence_url), "room": str(room) or pathlib.Path(name).stem,
     }
     title = title or f"{pathlib.Path(name).stem} - trou {hole:g} amp {wave:g} y {sea_y:g} zoom {zoom:.2f}"
 
@@ -186,8 +253,9 @@ def generate(glb_path: pathlib.Path, out_path: pathlib.Path, vendor_dir, **kw):
     except ValueError as e:
         print(f"[ERREUR] {e}", file=sys.stderr)
         return False
+    out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(page, encoding="utf-8")
-    print(f"[OK] {glb_path.name} -> {out_path.name} ({len(data) / 2**20:.2f} Mo glb, {len(page) / 2**20:.2f} Mo html)")
+    print(f"[OK] {glb_path.name} -> {out_path} ({len(data) / 2**20:.2f} Mo glb, {len(page) / 2**20:.2f} Mo html) [glb2html {VERSION}]")
     return True
 
 
@@ -208,8 +276,9 @@ def clamp(v, lo, hi):
 
 def main():
     ap = argparse.ArgumentParser(description="GLB -> HTML autonome hors ligne (three.js intégré)")
+    ap.add_argument("--version", action="version", version=f"glb2html {VERSION}")
     ap.add_argument("input", help="fichier .glb ou dossier de .glb")
-    ap.add_argument("-o", "--output", help="fichier HTML de sortie (entrée fichier uniquement)")
+    ap.add_argument("-o", "--output", help="sortie : fichier .html, ou dossier (créé si besoin). Entrée dossier : dossier de sortie. Défaut : \"<nom> - Offline.html\" à côté du .glb")
     ap.add_argument("--hole", type=float, default=HOLE_RADIUS, help="rayon du trou 30..600 (zone plate = rayon - fondu)")
     ap.add_argument("--hole-fade", type=float, default=HOLE_FADE, help="demi-largeur du fondu du trou")
     ap.add_argument("--hole-x", type=float, default=HOLE_X, help="position X du centre du trou (monde)")
@@ -231,6 +300,9 @@ def main():
     ap.add_argument("--presence-url", default=PRESENCE_URL, help="serveur de présence ws:// ou wss:// (voir presence_server.py) ; vide = désactivé")
     ap.add_argument("--chat", action=argparse.BooleanOptionalAction, default=CHAT_ENABLED, help="chat entre visiteurs (nécessite --presence-url ; touche Entrée en promenade)")
     ap.add_argument("--chat-fade", type=float, default=CHAT_FADE, help="secondes avant disparition des messages et bulles ; 0 = restent jusqu'à ce que de nouveaux messages les remplacent")
+    ap.add_argument("--zones", type=pathlib.Path, help="fichier .json de zones exporté par le viewer ; chemin relatif : cherché dans le dossier de lancement, puis dans le dossier du script")
+    ap.add_argument("--profile", choices=("public", "perso"), default=PROFILE, help="public : retire les zones privées (ex. Home Assistant) ; perso : les garde")
+    ap.add_argument("--spectate", action=argparse.BooleanOptionalAction, default=SPECTATE, help="voir les visiteurs en promenade depuis la vue globale (se connecte dès l'ouverture de la page ; actif par défaut dès qu'une --presence-url est donnée ; --no-spectate pour l'éviter)")
     ap.add_argument("--room", default=ROOM, help="salon de présence (défaut : nom du fichier)")
     ap.add_argument("--sea", dest="sea_enabled", action=argparse.BooleanOptionalAction, default=SEA_ENABLED)
     ap.add_argument("--anim", dest="anim_enabled", action=argparse.BooleanOptionalAction, default=ANIM_ENABLED)
@@ -239,9 +311,20 @@ def main():
     ap.add_argument("--vendor", type=pathlib.Path, help="racine d'un paquet npm three local (sinon cache + téléchargement)")
     a = ap.parse_args()
 
+    zones_arg = None
+    if a.zones:
+        zf = find_beside(a.zones)
+        if zf is None:
+            sys.exit(f"[ERREUR] {a.zones} introuvable (cherché dans {pathlib.Path.cwd()} puis dans {pathlib.Path(__file__).resolve().parent})")
+        try:
+            zones_arg = json.loads(zf.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as e:
+            sys.exit(f"[ERREUR] {zf} illisible ({e})")
+        print(f"[zones] {len(zones_arg) if isinstance(zones_arg, list) else 0} zone(s) lue(s) dans {zf}")
+
     kw = dict(hole=clamp(a.hole, 30, 600), hole_fade=max(0.0, a.hole_fade), hole_x=a.hole_x, hole_z=a.hole_z, wave=clamp(a.wave, 0, 10),
               sea_y=clamp(a.sea_y, -150, 60), zoom=clamp(a.zoom, 0.05, 100), cam_dir=a.cam_dir, target=a.target,
-              foliage_cutout=clamp(a.foliage_cutout, 0, 1), sea_color=a.sea_color, sky_color=a.sky_color, sea_segments=int(clamp(a.sea_segments, 8, 1000)), walk=a.walk, walk_ignore=a.walk_ignore, names=a.names, presence_url=a.presence_url, room=a.room, chat=a.chat, chat_fade=clamp(a.chat_fade, 0, 3600), eye_height=clamp(a.eye_height, 0.3, 5), walk_speed=clamp(a.walk_speed, 0.5, 30),
+              foliage_cutout=clamp(a.foliage_cutout, 0, 1), sea_color=a.sea_color, sky_color=a.sky_color, sea_segments=int(clamp(a.sea_segments, 8, 1000)), walk=a.walk, walk_ignore=a.walk_ignore, names=a.names, presence_url=a.presence_url, room=a.room, chat=a.chat, chat_fade=clamp(a.chat_fade, 0, 3600), zones=zones_arg, profile=a.profile, spectate=a.spectate, eye_height=clamp(a.eye_height, 0.3, 5), walk_speed=clamp(a.walk_speed, 0.5, 30),
               sea_enabled=a.sea_enabled, anim_enabled=a.anim_enabled, retina=a.retina, title=a.title)
 
     inp = pathlib.Path(a.input)
@@ -249,14 +332,22 @@ def main():
         files = sorted(p for p in inp.iterdir() if p.suffix.lower() == ".glb")
         if not files:
             sys.exit(f"Aucun .glb dans {inp}")
-        ok = sum(generate(f, f.with_name(f.stem + " - Offline.html"), a.vendor, **kw) for f in files)
+        outdir = pathlib.Path(a.output) if a.output else None
+        ok = sum(generate(f, (outdir or f.parent) / (f.stem + " - Offline.html"), a.vendor, **kw) for f in files)
         print(f"{ok}/{len(files)} fichiers générés")
         sys.exit(0 if ok == len(files) else 1)
     if not inp.is_file():
         sys.exit(f"{inp} introuvable")
     if inp.suffix.lower() == ".gltf":
         sys.exit("Entrée .gltf : repacker d'abord en .glb (npx @gltf-transform/cli copy in.gltf out.glb)")
-    out = pathlib.Path(a.output) if a.output else inp.with_name(inp.stem + " - Offline.html")
+    if a.output:
+        out = pathlib.Path(a.output)
+        if out.is_dir() or str(a.output).endswith(("/", "\\")):
+            out = out / (inp.stem + " - Offline.html")
+        elif not out.suffix:
+            out = out.with_suffix(".html")
+    else:
+        out = inp.with_name(inp.stem + " - Offline.html")
     sys.exit(0 if generate(inp, out, a.vendor, **kw) else 1)
 
 

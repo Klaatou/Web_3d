@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>__TITLE__</title>
 <style>
+[hidden]{display:none!important}
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#__SKY_HEX__}
 #view{position:fixed;inset:0}
 canvas{display:block;touch-action:none}
@@ -20,8 +21,16 @@ canvas{display:block;touch-action:none}
 #chatHelp{margin-top:4px;background:#000;color:#fff;border-radius:6px;padding:4px 8px}
 #chatInput{box-sizing:border-box;width:100%;margin-top:6px;font:inherit;padding:6px;border:2px solid #000;border-radius:6px}
 #nameTag{pointer-events:none;max-width:320px}
+#toast{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:40;font:13px/1.4 ui-monospace,Consolas,monospace;background:#000;color:#fff;border-radius:6px;padding:8px 14px;max-width:90%}
+#zonePrompt{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);z-index:30;font:13px/1.4 ui-monospace,Consolas,monospace;background:#000;color:#fff;border-radius:6px;padding:6px 12px}
+#fade{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .45s;z-index:50}
+#fade.on{opacity:1;pointer-events:auto}
+#modal{position:fixed;inset:0;display:grid;place-items:center;background:#0008;z-index:60}
+#modal div{background:#fff;color:#000;border:2px solid #000;border-radius:8px;padding:16px 20px;font:14px/1.5 ui-monospace,Consolas,monospace;max-width:min(420px,90%)}
+#modal button{font:inherit;margin:10px 8px 0 0;padding:6px 14px;border:2px solid #000;border-radius:6px;background:#fff;cursor:pointer}
+#modal button.ok{background:#000;color:#fff}
 #nameTag div{font-size:11px}
-#walkHint{position:fixed;left:12px;bottom:54px;max-width:calc(100% - 24px)}
+#walkHint{position:fixed;left:12px;bottom:54px;max-width:max(260px,calc(100% - 430px))}
 #msg{position:fixed;inset:0;display:grid;place-items:center;font:14px ui-monospace,monospace;color:#123;pointer-events:none}
 </style>
 <script type="importmap">
@@ -32,6 +41,10 @@ __IMPORTMAP__
 <div id="view"></div>
 <div id="msg">Chargement…</div>
 <div id="nameTag" hidden></div>
+<div id="toast" hidden></div>
+<div id="zonePrompt" hidden></div>
+<div id="fade"></div>
+<div id="modal" hidden><div><span id="modalText"></span><br><button class="ok" id="modalYes">Oui</button><button id="modalNo">Annuler</button></div></div>
 <div id="chat" hidden><div id="chatLog"></div><div id="chatHelp"></div><input id="chatInput" maxlength="200" placeholder="Message : Entrée pour envoyer, Échap pour annuler" hidden></div>
 <div id="presence" hidden>Pseudo : <input id="presenceName" maxlength="24" placeholder="Visiteur"><div id="presenceStatus"></div></div>
 <div id="bar"><button id="walkBtn" hidden></button><button id="helpBtn" hidden></button></div>
@@ -59,23 +72,85 @@ async function b64ToBuffer(b64) {
 const loader = new GLTFLoader();
 __DECODERS__
 const viewer = createViewer(document.getElementById('view'), C, loader);
+const H = new URLSearchParams(location.hash.slice(1)), arrival = H.has('spawn');
+const fade = document.getElementById('fade');
+if (arrival) fade.classList.add('on');
+if (H.get('name')) { try { localStorage.setItem('glb2html_name', H.get('name').slice(0, 24)); } catch (e) {} viewer.setName(H.get('name')); }
+let arrive = async () => { fade.classList.remove('on'); };
+const toastEl = document.getElementById('toast'); let toastT = 0;
+const toast = t => { toastEl.textContent = t; toastEl.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { toastEl.hidden = true; }, 4000); };
+if ((C.zones || []).length) {
+  const ZS = viewer.setZones(C.zones, { editor: false });
+  const slugId = s => String(s || '').toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
+  const okUrl = u => { try { const x = new URL(u, location.href); return (x.protocol === 'http:' || x.protocol === 'https:' || (location.protocol === 'file:' && x.protocol === 'file:')) ? x : null; } catch (e) { return null; } };
+  const visitor = () => viewer.getName() || 'Visiteur';
+  const cool = {};
+  const askConfirm = (text, yes) => {
+    const m = document.getElementById('modal'); document.getElementById('modalText').textContent = text; m.hidden = false;
+    const close = () => { m.hidden = true; };
+    document.getElementById('modalYes').onclick = () => { close(); yes(); };
+    document.getElementById('modalNo').onclick = close;
+  };
+  const haSend = z => {
+    const now = Date.now(); if (cool[z.id] && now - cool[z.id] < 3000) return; cool[z.id] = now;
+    fetch(z.target, { method: 'POST', mode: 'no-cors', body: new URLSearchParams({ zone: z.label || z.id, visitor: visitor() }) })
+      .then(() => toast('Commande envoyée : ' + (z.label || z.id))).catch(() => toast('Échec de l\'envoi : ' + (z.label || z.id)));
+  };
+  viewer.onZone = z => {
+    const label = z.label || z.id;
+    if (z.type === 'portal') {
+      const u = okUrl(z.target); if (!u) return toast('Portail sans destination valide : ' + label);
+      u.hash = 'spawn=' + encodeURIComponent(z.spawn || '') + '&name=' + encodeURIComponent(visitor());
+      fade.classList.add('on'); setTimeout(() => { location.href = u.href; }, 480);
+    } else if (z.type === 'url') {
+      const u = okUrl(z.target); if (!u) return toast('Lien invalide : ' + label);
+      window.open(u.href, '_blank', 'noopener,noreferrer'); toast('Ouverture : ' + label);
+    } else if (z.type === 'ha') {
+      if (!okUrl(z.target)) return toast('Adresse de commande invalide : ' + label);
+      if (z.confirm) askConfirm('Envoyer la commande « ' + label + ' » ?', () => haSend(z)); else haSend(z);
+    }
+  };
+  const pr = document.getElementById('zonePrompt');
+  viewer.onNear = z => { pr.hidden = !z; if (z) pr.textContent = 'E : ' + (z.label || z.id); };
+  arrive = async () => {
+    if (arrival && C.walk) {
+      const id = slugId(H.get('spawn')), s = ZS.find(z => z.type === 'spawn' && z.id === id) || ZS.find(z => z.type === 'spawn' && z.id === 'default');
+      viewer.walkStart(s ? { pos: [s.x, s.y, s.z], yaw: s.yaw } : undefined);
+    }
+    setTimeout(() => fade.classList.remove('on'), 150);
+  };
+} else if (arrival) {
+  arrive = async () => { if (C.walk) viewer.walkStart(); setTimeout(() => fade.classList.remove('on'), 150); };
+}
 if (C.walk) {
   const wb = document.getElementById('walkBtn'), wh = document.getElementById('walkHint');
   wb.hidden = false; wb.textContent = 'Promenade (F)';
-  wh.textContent = ['ZQSD / WASD / flèches : marcher', 'Maj : courir', 'Espace : sauter', 'clic dans la vue puis souris : regarder', 'double-clic : se téléporter']
-    .concat(C.names ? ['clic : nom de l\'élément'] : [], (C.chat && C.presenceUrl) ? ['Entrée : écrire un message'] : [], ['H : masquer / afficher cette aide', 'F : quitter']).join(' · ');
+  const on = !!C.presenceUrl;
+  const walkKeys = ['ZQSD / WASD / flèches : marcher', 'Maj : courir', 'Espace : sauter', 'clic dans la vue puis souris : regarder', 'double-clic : se téléporter']
+    .concat(C.names ? ['clic : nom de l\'élément'] : [], (C.chat && on) ? ['Entrée : écrire un message'] : [], (C.zones && C.zones.length) ? ['clic ou E : panneaux et portails'] : [], ['H : masquer cette aide', 'F : quitter']).join(' · ');
+  const orbitKeys = ['glisser : tourner', 'molette : zoom', 'clic droit + glisser : déplacer']
+    .concat(['double-clic : choisir le point d\'atterrissage (cercle au sol)'], C.names ? ['clic : nom de l\'élément'] : [], (C.zones && C.zones.length) ? ['clic : panneaux et portails'] : [], ['H : masquer cette aide', 'F : entrer en promenade']).join(' · ');
+  const feat = 'Cette page — présence : ' + (on ? 'oui (salon ' + C.room + ')' : 'non (option --presence-url)') + ' · chat : ' + (on && C.chat ? 'oui' : 'non') + ' · vue globale : ' + (on && C.spectate ? 'oui' : 'non' + (on ? ' (option --spectate)' : '')) + ' · noms au clic : ' + (C.names ? 'oui' : 'non (option --names)') + ' · glb2html ' + (C.version || '?');
+  const l1 = document.createElement('div'), l2 = document.createElement('div');
+  l2.style.cssText = 'font-size:11px;margin-top:4px;opacity:.85'; l2.textContent = feat; wh.append(l1, l2);
   const hb = document.getElementById('helpBtn');
   let helpOpen = true; try { helpOpen = localStorage.getItem('glb2html_help') !== '0'; } catch (e) {}
-  const applyHelp = walking => { hb.hidden = !walking; wh.hidden = !(walking && helpOpen); hb.textContent = helpOpen ? 'Masquer l\'aide (H)' : 'Aide (H)'; };
+  const applyHelp = walking => { l1.textContent = walking ? walkKeys : orbitKeys; hb.hidden = false; wh.hidden = !helpOpen; hb.textContent = helpOpen ? 'Masquer l\'aide (H)' : 'Aide (H)'; };
   const toggleHelp = () => { helpOpen = !helpOpen; try { localStorage.setItem('glb2html_help', helpOpen ? '1' : '0'); } catch (e) {} applyHelp(viewer.walking); };
   hb.onclick = toggleHelp;
-  addEventListener('keydown', e => { const n = e.target && e.target.tagName; if (e.code === 'KeyH' && !e.repeat && viewer.walking && n !== 'INPUT') toggleHelp(); });
+  applyHelp(false);
+  addEventListener('keydown', e => { const n = e.target && e.target.tagName; if (e.code === 'KeyH' && !e.repeat && n !== 'INPUT' && n !== 'TEXTAREA') toggleHelp(); });
+  addEventListener('keydown', e => {
+    const n = e.target && e.target.tagName;
+    if ((e.code === 'Enter' || e.code === 'NumpadEnter') && viewer.walking && !(on && C.chat) && n !== 'INPUT') toast('Chat non activé sur cette page : régénère-la avec --presence-url (et lance presence_server.py)');
+  });
   wb.onclick = () => viewer.toggleWalk();
   addEventListener('keydown', e => {
     const n = e.target && e.target.tagName;
     if (e.code === 'KeyF' && !e.repeat && n !== 'INPUT') viewer.toggleWalk();
   });
-  viewer.onWalk = on => { applyHelp(on); wb.textContent = on ? 'Quitter la promenade (F)' : 'Promenade (F)'; document.getElementById('nameTag').hidden = true; };
+  viewer.onLanding = () => toast('Point d\'atterrissage choisi : appuie sur F pour t\'y poser');
+  viewer.onWalk = on2 => { applyHelp(on2); wb.textContent = on2 ? 'Quitter la promenade (F)' : 'Promenade (F)'; document.getElementById('nameTag').hidden = true; };
 }
 if (C.names) {
   const tag = document.getElementById('nameTag'); let tm = 0;
@@ -134,13 +209,22 @@ if (C.presenceUrl && C.walk) {
   try { inp.value = localStorage.getItem('glb2html_name') || ''; } catch (e) {}
   viewer.setName(inp.value);
   inp.onchange = () => { viewer.setName(inp.value); try { localStorage.setItem('glb2html_name', inp.value.trim()); } catch (e) {} };
-  const T = { off: 'hors ligne (F : te connecter en promenade)', connecting: 'connexion…', error: 'serveur injoignable, nouvelle tentative…', full: 'salon complet' };
+  const T = { off: 'hors ligne (F : te connecter en promenade)', connecting: 'connexion…', error: 'serveur injoignable (' + C.presenceUrl + '), nouvelle tentative…', full: 'salon complet' };
   st.textContent = T.off;
-  viewer.onPresence = s => { st.textContent = s.state === 'online' ? s.count + ' visiteur' + (s.count > 1 ? 's' : '') + ' en ligne' : (T[s.state] || s.state); };
+  viewer.onPresence = s => {
+    const n = s.count, pl = n > 1 ? 's' : '';
+    st.textContent = s.state === 'online' ? (s.spectator ? (n ? n + ' visiteur' + pl + ' en promenade' : 'personne en promenade') : n + ' visiteur' + pl + ' en ligne') : (T[s.state] || s.state);
+  };
+  viewer.onName = n => {
+    if (inp.value && inp.value !== n) toast('Ce nom est déjà pris : tu es « ' + n + ' »');
+    inp.value = n; try { localStorage.setItem('glb2html_name', n); } catch (e) {}
+  };
+  if (C.spectate) { st.textContent = T.connecting; viewer.spectate(true); }
 }
 try {
   await viewer.loadBuffer(await b64ToBuffer(document.getElementById('glb').textContent.trim()));
   msg.remove();
+  await arrive();
 } catch (e) {
   console.error(e);
   msg.textContent = 'Erreur de chargement : ' + (e && e.message ? e.message : e);
