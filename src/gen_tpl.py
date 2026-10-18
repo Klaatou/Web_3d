@@ -133,7 +133,7 @@ def fix_presence_url(u):
 
 def clean_map(entries):
     """Valide les régions de la carte des mondes (adresses http/https ou relatives uniquement, vignettes d'image uniquement)."""
-    def ival(v, lo=-1000, hi=1000):
+    def ival(v, lo=-1000000, hi=1000000):
         try:
             return max(lo, min(hi, int(float(v))))
         except (TypeError, ValueError):

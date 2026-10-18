@@ -50,6 +50,13 @@ small{display:block;margin-top:8px;color:#333}
   </div>
   <aside id="panel">
     <small style="margin:0 0 6px">glb-viewer __VERSION__</small>
+    <h2>Réglages mémorisés</h2>
+    <small id="setInfo">Aucun fichier chargé.</small>
+    <div class="btns">
+      <button id="bSetSave">Enregistrer dans un fichier</button>
+      <button id="bSetLoad">Charger un fichier</button>
+      <button id="bSetForget" class="wide">Oublier les réglages de ce fichier</button>
+    </div>
     <h2>Fichier</h2>
     <div class="btns">
       <button id="bGlb">Ouvrir .glb</button>
@@ -79,6 +86,7 @@ small{display:block;margin-top:8px;color:#333}
 <input id="fDir" type="file" webkitdirectory multiple hidden>
 <input id="fZones" type="file" accept=".json,application/json" hidden>
 <input id="fMap" type="file" accept=".json,application/json" hidden>
+<input id="fSettings" type="file" accept=".json,application/json" hidden>
 <script type="application/json" id="libs">__LIBS_JSON__</script>
 <script type="module">
 import * as THREE from 'three';
@@ -131,6 +139,7 @@ const DEF = {
 const viewer = createViewer(document.getElementById('view'), DEF, makeLoader());
 const cfg = viewer.cfg;
 cfg.zones = viewer.setZones([], { editor: true });
+try { const m = JSON.parse(localStorage.getItem('glb2html_map_v1') || '[]'); if (Array.isArray(m)) cfg.map = m; } catch (e) {}
 window.__viewer = viewer;
 let glbBytes = null, baseName = 'scene';
 const $ = id => document.getElementById(id);
@@ -457,13 +466,14 @@ camInfo();
 
 // ---------- chargement
 function countMeshes(root) { let n = 0; root.traverse(o => { if (o.isMesh) n++; }); return n; }
-async function afterLoad(name) {
+async function afterLoad(name, size) {
   baseName = name.replace(/\.[^.]+$/, '').replace(/[\\/:*?"<>|]/g, '_') || 'scene'; loadedName = name;
+  const restored = restoreFor({ name, size: size || 0 });
   $('hint').style.display = 'none';
   $('bHtml').disabled = false;
   if ($('bWalk')) $('bWalk').disabled = false;
   camInfo();
-  setStatus(name + ' • ' + countMeshes(viewer.model) + ' meshes • prêt');
+  setStatus(name + ' • ' + countMeshes(viewer.model) + ' meshes • prêt' + (restored ? ' • réglages retrouvés (' + restored + ')' : ''));
   updateIgnoreViz();
   cfg.roomDefault = baseName;
   if (cfg.spectate && cfg.presenceUrl) { viewer.spectate(false); viewer.spectate(true); }
@@ -475,7 +485,7 @@ async function openGlb(file) {
     inspectGlb(buf, file.name);
     glbBytes = new Uint8Array(buf.slice(0));
     await viewer.loadBuffer(buf);
-    await afterLoad(file.name);
+    await afterLoad(file.name, file.size);
   } catch (e) { console.error(e); setStatus('Erreur : ' + (e.message || e)); }
 }
 async function openGltf(gltfFile, files) {
@@ -499,7 +509,7 @@ async function openGltf(gltfFile, files) {
     const out = await new Promise((res, rej) => new GLTFExporter().parse(gltf.scene, res, rej, { binary: true }));
     glbBytes = new Uint8Array(out.slice(0));
     viewer.setModel(gltf.scene);
-    await afterLoad(gltfFile.name);
+    await afterLoad(gltfFile.name, gltfFile.size);
   } catch (e) { console.error(e); setStatus('Erreur : ' + (e.message || e) + ' (fichiers .bin / textures manquants ?)'); }
   finally { setTimeout(() => created.forEach(u => URL.revokeObjectURL(u)), 5000); }
 }
@@ -654,9 +664,12 @@ function renderMapUi() {
   if (!thisReg.name) thisReg.name = baseName === 'scene' ? '' : baseName;
   host.append(field('Nom de cette région', thisReg.name, 'text', v => { thisReg.name = v; }));
   host.append(field('Adresse publique de cette page', thisReg.url, 'text', v => { thisReg.url = v; }));
-  host.append(field('Position sur la grille : X', thisReg.x, 'number', v => { thisReg.x = v; }));
-  host.append(field('Position sur la grille : Y', thisReg.y, 'number', v => { thisReg.y = v; }));
-  host.append(field('Point d\'arrivée des visiteurs (identifiant)', thisReg.spawn, 'text', v => { thisReg.spawn = v || 'default'; }));
+  host.append(field('Position sur la grille : X (vers l\'est)', thisReg.x, 'number', v => { thisReg.x = v; }));
+  host.append(field('Position sur la grille : Y (vers le nord)', thisReg.y, 'number', v => { thisReg.y = v; }));
+  host.append(mk('small', { textContent: 'Nombres entiers, seulement relatifs entre régions, comme sur la grille d\'OpenSim : tu peux reprendre ses coordonnées (1000, 1000…). Ex. : 0,0 puis 1,0 à l\'est, 0,1 au nord.' }));
+  host.append(field('Point d\'arrivée des visiteurs (identifiant)', thisReg.spawn, 'text', v => { thisReg.spawn = v || 'default'; renderMapUi(); }));
+  { const has = viewer.getZones().some(z => z.type === 'spawn' && z.id === (thisReg.spawn || 'default'));
+    host.append(mk('small', { textContent: has ? '✔ Cette région contient bien un point d\'arrivée « ' + (thisReg.spawn || 'default') + ' » : les visiteurs venant de la carte ou d\'un portail y apparaissent.' : '⚠ Cette région n\'a pas de point d\'arrivée « ' + (thisReg.spawn || 'default') + ' » (section Zones, type « Point d\'arrivée », avec cet identifiant) : les visiteurs apparaîtront au point d\'atterrissage habituel de la touche F.' })); }
   host.append(mk('small', { textContent: 'Salon de présence de cette région : ' + (cfg.room || baseName) }));
   const prev = mk('img', { alt: '', src: thisReg.thumb || '' }, 'width:100%;aspect-ratio:1;object-fit:cover;border:1px solid #000;margin-top:6px;display:' + (thisReg.thumb ? 'block' : 'none'));
   host.append(prev);
@@ -690,6 +703,63 @@ function renderMapUi() {
   const imp = mk('button', { textContent: 'Importer regions.json' }); imp.onclick = () => $('fMap').click();
   b2.append(exp, imp); host.append(b2);
 }
+
+// ---------- mémorisation des réglages, fichier par fichier (nom + taille du .glb)
+const SKEYS = ['hole', 'holeFade', 'holeX', 'holeZ', 'wave', 'seaY', 'seaSegments', 'seaColor', 'skyColor', 'foliageCutout', 'anim', 'sea', 'retina', 'walk', 'eyeHeight', 'walkSpeed', 'walkIgnore', 'names', 'chat', 'chatFade', 'presenceUrl', 'room', 'spectate', 'panel', 'mapUrl', 'guide', 'ignoreViz'];
+let curFile = null, lastSaved = '', settingsReady = false;
+const fileKey = f => 'glb2html_set_' + f.name + '|' + f.size;
+function snapshot() {
+  const cam = viewer.getCameraState();
+  const s = { v: 1, file: curFile ? curFile.name : '', saved: new Date().toLocaleString('fr-FR'), cfg: {}, zones: cfg.zones || [],
+    camera: { camDir: cam.camDir, target: cam.target, zoom: cam.zoom }, profile: $('profileSel').value, thisReg: Object.assign({}, thisReg),
+    cmd: { script: $('cmdScript').value, glb: $('cmdGlb').value, dest: $('cmdDest').value } };
+  for (const k of SKEYS) s.cfg[k] = cfg[k];
+  return s;
+}
+const snapStr = s => JSON.stringify(Object.assign({}, s, { saved: '' }));
+function applySnapshot(s) {
+  if (!s || s.v !== 1 || !s.cfg) throw new Error('fichier de réglages non reconnu');
+  const patch = {}; for (const k of SKEYS) if (k in s.cfg) patch[k] = s.cfg[k];
+  viewer.setCfg(patch);
+  zonesSync(Array.isArray(s.zones) ? s.zones : [], false);
+  if (s.profile) $('profileSel').value = s.profile;
+  if (s.thisReg) Object.assign(thisReg, s.thisReg);
+  if (s.cmd) { if (s.cmd.script) $('cmdScript').value = s.cmd.script; if (s.cmd.glb) $('cmdGlb').value = s.cmd.glb; if (s.cmd.dest !== undefined) $('cmdDest').value = s.cmd.dest; }
+  buildRows(); refreshEnabled();
+  if (s.camera && viewer.model) viewer.frame(s.camera.camDir, s.camera.target, s.camera.zoom);
+  camInfo();
+}
+function updateSettingsInfo() {
+  const e = $('setInfo'); if (!e) return;
+  if (!curFile) { e.textContent = 'Aucun fichier chargé. Les réglages seront mémorisés automatiquement pour chaque fichier .glb.'; return; }
+  let when = ''; try { const s = JSON.parse(localStorage.getItem(fileKey(curFile)) || 'null'); if (s) when = s.saved; } catch (x) {}
+  e.textContent = 'Mémorisés automatiquement pour ' + curFile.name + (when ? ' (dernière sauvegarde ' + when + ')' : ' (rien de modifié pour l\'instant)') + '.';
+}
+function restoreFor(file) {
+  curFile = file; settingsReady = false; lastSaved = '';
+  let s = null; try { s = JSON.parse(localStorage.getItem(fileKey(file)) || 'null'); } catch (e) {}
+  let ok = false;
+  if (s) { try { applySnapshot(s); ok = true; } catch (e) { console.error(e); } }
+  settingsReady = true; lastSaved = snapStr(snapshot()); updateSettingsInfo();
+  return ok ? s.saved : '';
+}
+function autoSave() {
+  if (!settingsReady || !curFile || !viewer.model) return;
+  const s = snapshot(), str = snapStr(s);
+  if (str === lastSaved) return;
+  lastSaved = str;
+  try { localStorage.setItem(fileKey(curFile), JSON.stringify(s)); updateSettingsInfo(); } catch (e) {}
+}
+setInterval(autoSave, 1500);
+let lastMapStr = JSON.stringify(cfg.map || []);
+setInterval(() => { const m = JSON.stringify(cfg.map || []); if (m !== lastMapStr) { lastMapStr = m; try { localStorage.setItem('glb2html_map_v1', m); } catch (e) {} } }, 1500);
+$('bSetSave').onclick = () => { download((curFile ? baseName : 'reglages') + '.reglages.json', new Blob([JSON.stringify(snapshot(), null, 1)], { type: 'application/json' })); setStatus('Réglages enregistrés dans un fichier'); };
+$('bSetLoad').onclick = () => $('fSettings').click();
+$('fSettings').onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  try { applySnapshot(JSON.parse(await f.text())); setStatus('Réglages chargés depuis ' + f.name); } catch (err) { setStatus('Chargement impossible : ' + err.message); }
+};
+$('bSetForget').onclick = () => { if (!curFile) return setStatus('Aucun fichier chargé'); try { localStorage.removeItem(fileKey(curFile)); } catch (e) {} lastSaved = ''; updateSettingsInfo(); setStatus('Réglages mémorisés oubliés pour ' + curFile.name + ' (ils seront de nouveau mémorisés à la prochaine modification)'); };
 
 // ---------- récapitulatif : ligne de commande pour glb2html.py
 function buildCommand() {

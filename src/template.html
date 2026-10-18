@@ -171,7 +171,7 @@ if ((C.map || []).length || C.mapUrl) {
     if (placed) grid.style.gridTemplateColumns = 'repeat(' + (Math.max(...xs) - Math.min(...xs) + 1) + ', 160px)'; else grid.style.gridTemplateColumns = 'repeat(auto-fill, 160px)';
     for (const r of list) {
       const t = document.createElement('button'); t.className = 'mapTile' + (here(r) ? ' here' : '');
-      if (placed) { t.style.gridColumn = String((r.x | 0) - Math.min(...xs) + 1); t.style.gridRow = String((r.y | 0) - Math.min(...ys) + 1); }
+      if (placed) { t.style.gridColumn = String((r.x | 0) - Math.min(...xs) + 1); t.style.gridRow = String(Math.max(...ys) - (r.y | 0) + 1); }
       if (r.thumb && safeThumb(r.thumb)) { const im = document.createElement('img'); im.src = r.thumb; im.alt = ''; im.referrerPolicy = 'no-referrer'; t.append(im); } else { const ph = document.createElement('div'); ph.className = 'ph'; t.append(ph); }
       const b = document.createElement('b'); b.textContent = r.name; t.append(b);
       const s = document.createElement('span');
