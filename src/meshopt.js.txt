@@ -1,0 +1,2 @@
+const { MeshoptDecoder } = await import('three/addons/libs/meshopt_decoder.module.js');
+loader.setMeshoptDecoder(MeshoptDecoder);

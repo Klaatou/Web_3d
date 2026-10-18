@@ -112,7 +112,7 @@ function inspectGlb(buf, name = 'fichier') {
 // ---------- état
 const DEF = {
   hole: 180, holeFade: 60, holeX: 0, holeZ: 0, guide: true, wave: 0.5, seaY: -50, zoom: 1, camDir: [0, 0.25, 1], target: [0, 15, 0],
-  sea: true, anim: false, retina: false, foliageCutout: 0.12, seaSize: 4000, seaSegments: 400, walk: true, eyeHeight: 1.7, walkSpeed: 3.5, walkIgnore: 'door, porte', names: false, chat: true, chatFade: 0, presenceUrl: '', room: '',
+  sea: true, anim: false, retina: false, foliageCutout: 0.12, seaSize: 4000, seaSegments: 400, walk: true, eyeHeight: 1.7, walkSpeed: 3.5, walkIgnore: 'door, porte', ignoreViz: false, names: false, chat: true, chatFade: 0, presenceUrl: '', room: '',
   seaColor: 0x3A9AD9, skyColor: 0x87CEEB
 };
 const viewer = createViewer(document.getElementById('view'), DEF, makeLoader());
@@ -161,7 +161,7 @@ const ROWS = [
   ['presinfo'],
   ['chatbox']
 ];
-let chatLines = [];
+let chatLines = [], eraseMode = false, ignoreStack = [];
 let placeMode = false, lastPick = null, myName = '', presLast = { state: 'off', count: 0 };
 const sync = {};
 const rows = $('rows');
@@ -187,15 +187,19 @@ for (const r of ROWS) {
   if (r[0] === 'presinfo') { add('<pre id="presInfo">présence : hors ligne</pre>'); presUpdate(); continue; }
   if (r[0] === 'ignore') {
     const e = add('<div class="row"><label>Ignorer en collision (début de mot, séparés par des virgules)</label><input type="text" style="grid-column:1/-1;width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px"></div>');
-    const i = e.querySelector('input'); i.value = cfg.walkIgnore;
+    const i = e.querySelector('input'); i.value = cfg.walkIgnore; i.dataset.ignoreList = '1';
     i.onchange = () => { viewer.setCfg({ walkIgnore: i.value }); viewer.refreshCollision(); };
-    add('<div class="btns"><button class="wide">Ajouter à la liste le mesh visé (dernier clic)</button></div>').querySelector('button').onclick = () => {
-      if (!lastPick || !lastPick.token) return setStatus('Clique d\'abord sur un élément du modèle (la porte par exemple)');
-      const list = parseIgnore(cfg.walkIgnore), tok = lastPick.token.toLowerCase();
-      if (!list.includes(tok)) list.push(tok);
-      i.value = list.join(', '); viewer.setCfg({ walkIgnore: i.value }); viewer.refreshCollision();
-      setStatus('Ignoré en collision : ' + lastPick.token);
+    const bx = add('<div class="btns"><button id="bErase" class="wide"></button><button id="bAddPick">Ajouter le dernier mesh visé</button><button id="bUndoIgn">Annuler le dernier ajout</button></div>');
+    eraseLabel();
+    $('bErase').onclick = () => {
+      eraseMode = !eraseMode; eraseLabel();
+      if (eraseMode) { viewer.setCfg({ ignoreViz: true }); const c = rows.querySelector('input[data-key=ignoreViz]'); if (c) c.checked = true; }
+      setStatus(eraseMode ? 'Passe-muraille : clique sur chaque partie à rendre traversable (la porte, ses vitres, sa poignée…)' : 'Passe-muraille désactivé');
     };
+    $('bAddPick').onclick = () => { if (!lastPick || !lastPick.mesh) return setStatus('Clique d\'abord sur un élément du modèle'); addIgnoreExact(lastPick.mesh); };
+    $('bUndoIgn').onclick = undoIgnore;
+    const vz = add('<label class="chk"><input type="checkbox" data-key="ignoreViz"><span>Voir en filaire les éléments ignorés (non exporté)</span></label>').querySelector('input');
+    vz.checked = !!cfg.ignoreViz; vz.onchange = () => viewer.setCfg({ ignoreViz: vz.checked });
     add('<pre id="picked">Clique sur le modèle : le nom du mesh visé s\'affiche ici.</pre>');
     if (lastPick) $('picked').textContent = lastPick.text;
     continue;
@@ -253,6 +257,36 @@ for (const r of ROWS) {
   }
 }
 }
+function eraseLabel() { const b = $('bErase'); if (b) b.textContent = eraseMode ? 'Passe-muraille : ACTIF (clic = rendre traversable)' : 'Passe-muraille : inactif (clique pour activer)'; }
+function setIgnoreList(list) {
+  const v = list.join(', '); viewer.setCfg({ walkIgnore: v }); viewer.refreshCollision();
+  const t = rows.querySelector('input[data-ignore-list]'); if (t) t.value = v;
+}
+function addIgnoreExact(name) {
+  if (!name) return setStatus('Ce mesh n\'a pas de nom : impossible de l\'ignorer');
+  const tok = '=' + name.toLowerCase(), list = parseIgnore(cfg.walkIgnore);
+  if (list.includes(tok)) return setStatus(name + ' est déjà ignoré');
+  list.push(tok); ignoreStack.push(tok); setIgnoreList(list);
+  setStatus('Ignoré en collision : ' + name + ' (' + ignoreStack.length + ' ajout(s) cette session)');
+}
+function undoIgnore() {
+  const tok = ignoreStack.pop(); if (!tok) return setStatus('Rien à annuler');
+  setIgnoreList(parseIgnore(cfg.walkIgnore).filter(x => x !== tok)); setStatus('Annulé : ' + tok.slice(1));
+}
+const vizGroup = new THREE.Group(); viewer.scene.add(vizGroup);
+const vizMat = new THREE.MeshBasicMaterial({ color: 0x000000, wireframe: true, transparent: true, opacity: 0.6, depthTest: false, fog: false });
+function updateIgnoreViz() {
+  while (vizGroup.children.length) vizGroup.remove(vizGroup.children[0]);
+  if (cfg.ignoreViz && viewer.model) {
+    const tokens = parseIgnore(cfg.walkIgnore);
+    viewer.model.traverseVisible(o => {
+      if (!o.isMesh || o.isInstancedMesh || o.isSkinnedMesh || !isIgnoredMesh(o, tokens)) return;
+      const m = new THREE.Mesh(o.geometry, vizMat); m.matrixAutoUpdate = false; o.updateWorldMatrix(true, false);
+      m.matrix.copy(o.matrixWorld); m.frustumCulled = false; vizGroup.add(m);
+    });
+  }
+  viewer.requestRender();
+}
 function presUpdate() {
   const e = $('presInfo'); if (!e) return;
   const T = { off: 'hors ligne (entre en promenade pour te connecter)', connecting: 'connexion…', error: 'serveur injoignable, nouvelle tentative…', full: 'salon complet' };
@@ -266,7 +300,8 @@ viewer.onChat = m => {
 };
 viewer.onPick = info => {
   if (!info) return;
-  lastPick = { token: info.token, text: info.text };
+  lastPick = { token: info.token, mesh: info.mesh, text: info.text };
+  if (eraseMode) { addIgnoreExact(info.mesh); return; }
   const pe = $('picked'); if (pe) pe.textContent = info.text;
   setStatus('Visé : ' + (info.name || '(sans nom)') + ' • ' + (info.materials[0] ? 'matériau ' + info.materials[0] : 'sans matériau nommé'));
 };
@@ -307,6 +342,7 @@ async function afterLoad(name) {
   if ($('bWalk')) $('bWalk').disabled = false;
   camInfo();
   setStatus(name + ' • ' + countMeshes(viewer.model) + ' meshes • prêt');
+  updateIgnoreViz();
 }
 async function openGlb(file) {
   try {
@@ -390,7 +426,12 @@ function updateGuide() {
   guide.add(cross);
   viewer.requestRender();
 }
-viewer.onCfg = updateGuide;
+let lastVizKey = '';
+viewer.onCfg = () => {
+  updateGuide();
+  const k = cfg.ignoreViz + '|' + cfg.walkIgnore;
+  if (k !== lastVizKey) { lastVizKey = k; updateIgnoreViz(); }
+};
 updateGuide();
 
 // clic sur le modèle = nouvelle cible
@@ -416,19 +457,18 @@ updateGuide();
     const hit = ray.intersectObject(viewer.model, true)[0];
     if (!hit) return;
     {
-      const o = hit.object, parents = []; for (let q = o.parent; q; q = q.parent) if (q.name) parents.push(q.name);
-      const mats = (Array.isArray(o.material) ? o.material : [o.material]).map(m => m && m.name).filter(Boolean);
-      const token = o.name || parents[0] || mats[0] || '';
-      lastPick = { token, text: 'mesh : ' + (o.name || '(sans nom)') + '\nparents : ' + (parents.slice(0, 3).join(' › ') || '(aucun)') + '\nmatériau : ' + (mats.join(', ') || '(sans nom)') };
+      const d = describeObject(hit.object);
+      lastPick = { token: d.token, mesh: d.mesh, text: d.text };
       const pe = $('picked'); if (pe) pe.textContent = lastPick.text;
     }
+    if (eraseMode) { addIgnoreExact(hit.object.name); return; }
     viewer.controls.target.copy(hit.point); viewer.controls.update(); viewer.requestRender(); camInfo();
   });
 }
 
 $('bFrame').onclick = () => { viewer.frame(DEF.camDir, DEF.target, 1); camInfo(); };
 $('bReset').onclick = () => {
-  const keep = ['walk', 'names', 'chat', 'chatFade', 'presenceUrl', 'room', 'walkIgnore', 'eyeHeight', 'walkSpeed', 'hole', 'holeFade', 'holeX', 'holeZ', 'guide', 'wave', 'seaY', 'sea', 'anim', 'retina', 'foliageCutout', 'seaColor', 'skyColor'];
+  const keep = ['walk', 'names', 'chat', 'chatFade', 'ignoreViz', 'presenceUrl', 'room', 'walkIgnore', 'eyeHeight', 'walkSpeed', 'hole', 'holeFade', 'holeX', 'holeZ', 'guide', 'wave', 'seaY', 'sea', 'anim', 'retina', 'foliageCutout', 'seaColor', 'skyColor'];
   const patch = {}; keep.forEach(k => { patch[k] = DEF[k]; });
   viewer.setCfg(patch);
   buildRows(); refreshEnabled(); camInfo(); updateGuide();

@@ -1,0 +1,7 @@
+const { DRACOLoader } = await import('three/addons/loaders/DRACOLoader.js');
+const dracoManager = new THREE.LoadingManager();
+const DRACO_LIBS = __DRACO_LIBS__;
+dracoManager.setURLModifier(u => DRACO_LIBS[u.split('/').pop()] || u);
+const draco = new DRACOLoader(dracoManager);
+draco.setDecoderPath('');
+loader.setDRACOLoader(draco);

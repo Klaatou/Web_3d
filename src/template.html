@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>__TITLE__</title>
+<style>
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#__SKY_HEX__}
+#view{position:fixed;inset:0}
+canvas{display:block;touch-action:none}
+#walkBtn,#helpBtn,#walkHint{font:12px/1.4 ui-monospace,Consolas,monospace;background:#fffffff0;color:#000;border:1px solid #000;border-radius:6px;padding:7px 10px}
+#walkBtn,#helpBtn{cursor:pointer}
+#bar{position:fixed;left:12px;bottom:12px;display:flex;gap:8px}
+#presence,#nameTag{position:fixed;font:12px/1.4 ui-monospace,Consolas,monospace;background:#fffffff0;color:#000;border:1px solid #000;border-radius:6px;padding:7px 10px}
+#presence{left:12px;top:12px}
+#presence input{font:inherit;width:130px;border:1px solid #000;border-radius:4px;padding:2px 4px}
+#chat{position:fixed;right:12px;bottom:12px;width:min(380px,calc(100% - 24px));font:12px/1.4 ui-monospace,Consolas,monospace;color:#000}
+#chatLog div{background:#fffffff0;border:1px solid #000;border-radius:6px;padding:4px 8px;margin-top:4px;word-break:break-word}
+#chatLog .sys{font-style:italic}
+#chatHelp{margin-top:4px;background:#000;color:#fff;border-radius:6px;padding:4px 8px}
+#chatInput{box-sizing:border-box;width:100%;margin-top:6px;font:inherit;padding:6px;border:2px solid #000;border-radius:6px}
+#nameTag{pointer-events:none;max-width:320px}
+#nameTag div{font-size:11px}
+#walkHint{position:fixed;left:12px;bottom:54px;max-width:calc(100% - 24px)}
+#msg{position:fixed;inset:0;display:grid;place-items:center;font:14px ui-monospace,monospace;color:#123;pointer-events:none}
+</style>
+<script type="importmap">
+__IMPORTMAP__
+</script>
+</head>
+<body>
+<div id="view"></div>
+<div id="msg">Chargement…</div>
+<div id="nameTag" hidden></div>
+<div id="chat" hidden><div id="chatLog"></div><div id="chatHelp"></div><input id="chatInput" maxlength="200" placeholder="Message : Entrée pour envoyer, Échap pour annuler" hidden></div>
+<div id="presence" hidden>Pseudo : <input id="presenceName" maxlength="24" placeholder="Visiteur"><div id="presenceStatus"></div></div>
+<div id="bar"><button id="walkBtn" hidden></button><button id="helpBtn" hidden></button></div>
+<div id="walkHint" hidden></div>
+<script type="application/json" id="cfg">__CONFIG__</script>
+<script type="application/octet-stream" id="glb">__GLB_B64__</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+const C = JSON.parse(document.getElementById('cfg').textContent);
+const msg = document.getElementById('msg');
+
+__CORE__
+
+async function b64ToBuffer(b64) {
+  try { return await (await fetch('data:application/octet-stream;base64,' + b64)).arrayBuffer(); }
+  catch (e) {
+    const bin = atob(b64), out = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out.buffer;
+  }
+}
+
+const loader = new GLTFLoader();
+__DECODERS__
+const viewer = createViewer(document.getElementById('view'), C, loader);
+if (C.walk) {
+  const wb = document.getElementById('walkBtn'), wh = document.getElementById('walkHint');
+  wb.hidden = false; wb.textContent = 'Promenade (F)';
+  wh.textContent = ['ZQSD / WASD / flèches : marcher', 'Maj : courir', 'Espace : sauter', 'clic dans la vue puis souris : regarder', 'double-clic : se téléporter']
+    .concat(C.names ? ['clic : nom de l\'élément'] : [], (C.chat && C.presenceUrl) ? ['Entrée : écrire un message'] : [], ['H : masquer / afficher cette aide', 'F : quitter']).join(' · ');
+  const hb = document.getElementById('helpBtn');
+  let helpOpen = true; try { helpOpen = localStorage.getItem('glb2html_help') !== '0'; } catch (e) {}
+  const applyHelp = walking => { hb.hidden = !walking; wh.hidden = !(walking && helpOpen); hb.textContent = helpOpen ? 'Masquer l\'aide (H)' : 'Aide (H)'; };
+  const toggleHelp = () => { helpOpen = !helpOpen; try { localStorage.setItem('glb2html_help', helpOpen ? '1' : '0'); } catch (e) {} applyHelp(viewer.walking); };
+  hb.onclick = toggleHelp;
+  addEventListener('keydown', e => { const n = e.target && e.target.tagName; if (e.code === 'KeyH' && !e.repeat && viewer.walking && n !== 'INPUT') toggleHelp(); });
+  wb.onclick = () => viewer.toggleWalk();
+  addEventListener('keydown', e => {
+    const n = e.target && e.target.tagName;
+    if (e.code === 'KeyF' && !e.repeat && n !== 'INPUT') viewer.toggleWalk();
+  });
+  viewer.onWalk = on => { applyHelp(on); wb.textContent = on ? 'Quitter la promenade (F)' : 'Promenade (F)'; document.getElementById('nameTag').hidden = true; };
+}
+if (C.names) {
+  const tag = document.getElementById('nameTag'); let tm = 0;
+  viewer.pickOrbit = true;
+  viewer.onPick = (info, cx, cy) => {
+    clearTimeout(tm);
+    if (!info) { tag.hidden = true; return; }
+    tag.textContent = '';
+    const b = document.createElement('b'); b.textContent = info.name || '(sans nom)'; tag.appendChild(b);
+    const extra = [info.parents[0] && info.parents[0] !== info.name ? 'parent : ' + info.parents[0] : '', info.materials.length ? 'matériau : ' + info.materials.join(', ') : ''].filter(Boolean).join(' · ');
+    if (extra) { const d = document.createElement('div'); d.textContent = extra; tag.appendChild(d); }
+    tag.hidden = false;
+    tag.style.left = Math.max(8, Math.min(innerWidth - tag.offsetWidth - 8, cx + 12)) + 'px';
+    tag.style.top = Math.max(8, Math.min(innerHeight - tag.offsetHeight - 8, cy + 12)) + 'px';
+    tm = setTimeout(() => { tag.hidden = true; }, 7000);
+  };
+}
+if (C.presenceUrl && C.walk && C.chat) {
+  const chat = document.getElementById('chat'), log = document.getElementById('chatLog'), inp = document.getElementById('chatInput'), help = document.getElementById('chatHelp');
+  const msgs = [];
+  const render = () => {
+    chat.hidden = !viewer.walking;
+    const open = !inp.hidden, now = Date.now();
+    const fade = (C.chatFade || 0) * 1000;
+    const show = open ? msgs.slice(-12) : (fade > 0 ? msgs.filter(x => now - x.t < fade) : msgs).slice(-6);
+    log.textContent = ''; show.forEach(x => log.appendChild(x.el));
+    const st = viewer.getPresence().state;
+    help.hidden = open;
+    help.textContent = st === 'online' ? '↵ Entrée : écrire un message' : ({ connecting: 'Chat : connexion…', error: 'Chat hors ligne : nouvelle tentative…', full: 'Chat : salon complet' }[st] || 'Chat hors ligne');
+  };
+  viewer.onChat = m => {
+    const el = document.createElement('div');
+    if (m.system) { el.className = 'sys'; el.textContent = m.text; }
+    else { const b = document.createElement('b'); b.textContent = m.name + ' : '; el.appendChild(b); el.appendChild(document.createTextNode(m.text)); }
+    msgs.push({ t: m.history ? 0 : Date.now(), el }); if (msgs.length > 50) msgs.shift();
+    render();
+  };
+  const close = () => { inp.hidden = true; inp.value = ''; inp.blur(); render(); };
+  addEventListener('keydown', e => {
+    if ((e.code === 'Enter' || e.code === 'NumpadEnter') && viewer.walking && inp.hidden) {
+      e.preventDefault();
+      if (viewer.getPresence().state !== 'online') { viewer.onChat({ system: true, text: 'Chat indisponible : hors ligne' }); return; }
+      inp.hidden = false; viewer.releaseKeys(); inp.focus(); render();
+    }
+  });
+  inp.addEventListener('keydown', e => {
+    e.stopPropagation();
+    if (e.key === 'Enter') { const v = inp.value.trim(); if (v) viewer.sendChat(v); close(); }
+    else if (e.key === 'Escape') close();
+  });
+  setInterval(render, 1000);
+}
+if (C.presenceUrl && C.walk) {
+  const box = document.getElementById('presence'), st = document.getElementById('presenceStatus'), inp = document.getElementById('presenceName');
+  box.hidden = false;
+  try { inp.value = localStorage.getItem('glb2html_name') || ''; } catch (e) {}
+  viewer.setName(inp.value);
+  inp.onchange = () => { viewer.setName(inp.value); try { localStorage.setItem('glb2html_name', inp.value.trim()); } catch (e) {} };
+  const T = { off: 'hors ligne (F : te connecter en promenade)', connecting: 'connexion…', error: 'serveur injoignable, nouvelle tentative…', full: 'salon complet' };
+  st.textContent = T.off;
+  viewer.onPresence = s => { st.textContent = s.state === 'online' ? s.count + ' visiteur' + (s.count > 1 ? 's' : '') + ' en ligne' : (T[s.state] || s.state); };
+}
+try {
+  await viewer.loadBuffer(await b64ToBuffer(document.getElementById('glb').textContent.trim()));
+  msg.remove();
+} catch (e) {
+  console.error(e);
+  msg.textContent = 'Erreur de chargement : ' + (e && e.message ? e.message : e);
+}
+</script>
+</body>
+</html>
