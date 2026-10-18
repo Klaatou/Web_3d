@@ -11,6 +11,16 @@ function nameHas(name, tokens) {
 }
 function parseIgnore(s) { return String(s || '').toLowerCase().split(/[,;]+/).map(x => x.trim()).filter(Boolean); }
 
+function describeObject(o) {
+  const parents = []; for (let q = o.parent; q; q = q.parent) if (q.name) parents.push(q.name);
+  const mats = (Array.isArray(o.material) ? o.material : [o.material]).map(m => m && m.name).filter(Boolean);
+  const token = o.name || parents[0] || mats[0] || '';
+  return {
+    name: token, mesh: o.name || '', parents, materials: mats, token,
+    text: 'mesh : ' + (o.name || '(sans nom)') + '\nparents : ' + (parents.slice(0, 3).join(' › ') || '(aucun)') + '\nmatériau : ' + (mats.join(', ') || '(sans nom)')
+  };
+}
+
 function isFoliageName(n) {
   n = (n || '').toLowerCase();
   return !TRUNK_KEYS.some(k => n.includes(k)) && FOLIAGE_KEYS.some(k => n.includes(k));
@@ -160,7 +170,7 @@ function disposeObject(root) {
 
 function createViewer(container, cfg0, loader) {
   const cfg = Object.assign({}, cfg0);
-  let onCfg = null, onWalk = null, walking = false;
+  let onCfg = null, onWalk = null, onPick = null, onPresence = null, pickOrbit = false, walking = false;
   const W = { pos: new THREE.Vector3(), spawn: new THREE.Vector3(), vy: 0, grounded: true, yaw: 0, pitch: 0, keys: new Set(), jumpReq: false, drag: false, saved: null, grid: null };
   let model = null, fit = 1, sea = null, seaMat = null, dirty = true, foliageMats = [];
 
@@ -393,6 +403,7 @@ function createViewer(container, cfg0, loader) {
     walking = true;
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
     walkStep(0); dirty = true;
+    presenceConnect();
     if (onWalk) onWalk(true);
     return true;
   }
@@ -405,6 +416,7 @@ function createViewer(container, cfg0, loader) {
     camera.position.copy(W.saved.pos); controls.target.copy(W.saved.target);
     controls.enabled = true; controls.update();
     W.grid = null; dirty = true;
+    presenceDisconnect();
     if (onWalk) onWalk(false);
   }
   const typing = e => { const n = e.target && e.target.tagName; return n === 'INPUT' || n === 'TEXTAREA' || n === 'SELECT'; };
@@ -448,33 +460,156 @@ function createViewer(container, cfg0, loader) {
     }
     return false;
   }
-  let lastClick = { t: 0, x: 0, y: 0 };
+  // nom de l'élément visé (clic simple)
+  function pickNdc(nx, ny) {
+    if (!model) return null;
+    camera.updateMatrixWorld(true);
+    tpV.set(nx, ny); tpRay.setFromCamera(tpV, camera);
+    for (const h of tpRay.intersectObject(model, true)) if (h.object.isMesh && h.object.visible) return Object.assign(describeObject(h.object), { point: h.point.toArray() });
+    return null;
+  }
+  function doPick(e, locked) {
+    if (!onPick) return;
+    const r = dom.getBoundingClientRect();
+    const info = pickNdc(locked ? 0 : (e.clientX - r.left) / r.width * 2 - 1, locked ? 0 : -((e.clientY - r.top) / r.height) * 2 + 1);
+    onPick(info, locked ? r.left + r.width / 2 : e.clientX, locked ? r.top + r.height / 2 : e.clientY);
+  }
+  let downPos = null, lastClick = { t: 0, x: 0, y: 0 };
+  dom.addEventListener('pointerdown', e => { downPos = [e.clientX, e.clientY]; });
   dom.addEventListener('click', e => {
-    if (!walking) return;
     const locked = document.pointerLockElement === dom, now = performance.now();
+    if (!walking) {
+      if (pickOrbit && onPick && downPos && Math.hypot(e.clientX - downPos[0], e.clientY - downPos[1]) < 6) doPick(e, false);
+      return;
+    }
     if (now - lastClick.t < 400 && (locked || Math.hypot(e.clientX - lastClick.x, e.clientY - lastClick.y) < 12)) {
       lastClick.t = 0;
       const r = dom.getBoundingClientRect();
       walkTeleport(locked ? 0 : (e.clientX - r.left) / r.width * 2 - 1, locked ? 0 : -((e.clientY - r.top) / r.height) * 2 + 1);
+      if (onPick) onPick(null, 0, 0);
       return;
     }
     lastClick = { t: now, x: e.clientX, y: e.clientY };
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
     try { const p = dom.requestPointerLock(); if (p && p.catch) p.catch(() => {}); } catch (_) {}
+    doPick(e, locked);
   });
+
+  // ---- présence : autres visiteurs (WebSocket)
+  const P = { ws: null, id: null, peers: new Map(), last: 0, name: '', state: 'off', retry: 0, timer: 0, sent: [0, 0, 0, 0] };
+  const r2 = v => Math.round(v * 100) / 100;
+  const cleanName = s => String(s || '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 24);
+  function pStatus(state) { P.state = state; if (onPresence) onPresence({ state, count: state === 'online' ? P.peers.size + 1 : 0 }); }
+  function makeLabel(text) {
+    const cv = document.createElement('canvas'); cv.width = 256; cv.height = 64;
+    const g = cv.getContext('2d');
+    g.fillStyle = 'rgba(255,255,255,0.92)'; g.fillRect(0, 0, 256, 64);
+    g.strokeStyle = '#000'; g.lineWidth = 3; g.strokeRect(1.5, 1.5, 253, 61);
+    g.fillStyle = '#000'; g.font = 'bold 30px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText(text || '?', 128, 34, 240);
+    const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, fog: false }));
+    sp.scale.set(1.6, 0.4, 1);
+    return sp;
+  }
+  function makeAvatar(name, color) {
+    const g = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.28, 1.0, 4, 12), new THREE.MeshStandardMaterial({ color, roughness: 0.7 }));
+    body.position.y = 0.78; g.add(body);
+    const nose = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, 0.3), new THREE.MeshStandardMaterial({ color: 0xffffff }));
+    nose.position.set(0, 1.4, -0.3); g.add(nose);
+    const label = makeLabel(name); label.position.y = 2.15; g.add(label);
+    return g;
+  }
+  function disposeAvatar(g) {
+    scene.remove(g);
+    g.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) { if (o.material.map) o.material.map.dispose(); o.material.dispose(); } });
+  }
+  function addPeer(q) {
+    if (!q || q.id === P.id || P.peers.has(q.id)) return;
+    const g = makeAvatar(q.name, q.color | 0); g.visible = false; scene.add(g);
+    const peer = { id: q.id, name: q.name, color: q.color | 0, g, tx: 0, ty: 0, tz: 0, tyaw: 0 };
+    if (Array.isArray(q.p)) { peer.tx = q.p[0]; peer.ty = q.p[1]; peer.tz = q.p[2]; peer.tyaw = q.yaw || 0; g.position.set(peer.tx, peer.ty, peer.tz); g.rotation.y = peer.tyaw; g.visible = true; }
+    P.peers.set(q.id, peer);
+  }
+  function removePeer(id) { const q = P.peers.get(id); if (q) { disposeAvatar(q.g); P.peers.delete(id); } }
+  function clearPeers() { for (const id of [...P.peers.keys()]) removePeer(id); }
+  function presenceMsg(m) {
+    if (!m || typeof m !== 'object') return;
+    if (m.t === 'welcome') { P.id = m.id; (m.peers || []).forEach(addPeer); pStatus('online'); }
+    else if (m.t === 'join') { addPeer(m); pStatus('online'); }
+    else if (m.t === 'leave') { removePeer(m.id); pStatus('online'); }
+    else if (m.t === 'pos') {
+      const q = P.peers.get(m.id);
+      if (q && Array.isArray(m.p) && m.p.every(Number.isFinite)) {
+        q.tx = m.p[0]; q.ty = m.p[1]; q.tz = m.p[2]; q.tyaw = Number.isFinite(m.yaw) ? m.yaw : q.tyaw;
+        if (!q.g.visible) { q.g.position.set(q.tx, q.ty, q.tz); q.g.rotation.y = q.tyaw; q.g.visible = true; }
+      }
+    }
+    else if (m.t === 'name') {
+      const q = P.peers.get(m.id);
+      if (q) { q.name = cleanName(m.name); const old = q.g.children.find(o => o.isSprite); if (old) { q.g.remove(old); old.material.map.dispose(); old.material.dispose(); } const l = makeLabel(q.name); l.position.y = 2.15; q.g.add(l); }
+    }
+    else if (m.t === 'full') { pStatus('full'); }
+    dirty = true;
+  }
+  function presenceConnect() {
+    if (!cfg.presenceUrl || P.ws) return;
+    pStatus('connecting');
+    let ws;
+    try { ws = new WebSocket(cfg.presenceUrl); } catch (_) { pStatus('error'); return; }
+    P.ws = ws;
+    ws.onopen = () => { P.retry = 0; ws.send(JSON.stringify({ t: 'hello', room: cfg.room || '', name: P.name })); };
+    ws.onmessage = ev => { let m; try { m = JSON.parse(ev.data); } catch (_) { return; } presenceMsg(m); };
+    ws.onerror = () => {};
+    ws.onclose = () => {
+      if (P.ws !== ws) return;
+      P.ws = null; P.id = null; clearPeers();
+      if (walking && P.state !== 'full') { pStatus('error'); clearTimeout(P.timer); P.timer = setTimeout(presenceConnect, Math.min(15000, 1500 * (++P.retry))); }
+      else if (!walking) pStatus('off');
+    };
+  }
+  function presenceDisconnect() {
+    clearTimeout(P.timer);
+    const ws = P.ws; P.ws = null; P.id = null;
+    if (ws) { try { ws.close(); } catch (_) {} }
+    clearPeers(); if (P.state !== 'off') pStatus('off');
+  }
+  function presenceTick(dt, now) {
+    if (P.peers.size) {
+      const a = 1 - Math.exp(-dt * 10);
+      for (const q of P.peers.values()) {
+        if (!q.g.visible) continue;
+        q.g.position.x += (q.tx - q.g.position.x) * a; q.g.position.y += (q.ty - q.g.position.y) * a; q.g.position.z += (q.tz - q.g.position.z) * a;
+        const d = Math.atan2(Math.sin(q.tyaw - q.g.rotation.y), Math.cos(q.tyaw - q.g.rotation.y));
+        q.g.rotation.y += d * a;
+      }
+      dirty = true;
+    }
+    if (walking && P.ws && P.ws.readyState === 1 && P.id && now - P.last > 90) {
+      const cur = [r2(W.pos.x), r2(W.pos.y), r2(W.pos.z), r2(W.yaw)], s = P.sent;
+      if (now - P.last > 1000 || cur.some((v, i) => Math.abs(v - s[i]) > 0.004)) {
+        P.last = now; P.sent = cur;
+        P.ws.send(JSON.stringify({ t: 'pos', p: cur.slice(0, 3), yaw: cur[3] }));
+      }
+    }
+  }
 
   const clock = new THREE.Clock();
   renderer.setAnimationLoop(() => {
     const dt = Math.min(clock.getDelta(), 0.1);
     let moved = false;
     if (walking) { walkStep(dt); moved = true; } else moved = controls.update();
+    presenceTick(dt, performance.now());
     if (seaMat && seaMat.uniforms) { seaMat.uniforms.uTime.value = clock.elapsedTime; dirty = true; }
     if (dirty || moved) { renderer.render(scene, camera); dirty = false; }
   });
 
   return {
     scene, camera, renderer, controls, cfg, setCfg, setModel, loadBuffer, frame, getCameraState, setZoom,
-    get model() { return model; }, get sea() { return sea; }, set onCfg(f) { onCfg = f; }, set onWalk(f) { onWalk = f; }, get walking() { return walking; },
+    get model() { return model; }, get sea() { return sea; }, set onCfg(f) { onCfg = f; }, set onWalk(f) { onWalk = f; }, set onPick(f) { onPick = f; }, set pickOrbit(v) { pickOrbit = !!v; }, set onPresence(f) { onPresence = f; },
+    setName(n) { P.name = cleanName(n); if (P.ws && P.ws.readyState === 1) P.ws.send(JSON.stringify({ t: 'name', name: P.name })); },
+    getPresence() { return { state: P.state, id: P.id, peers: [...P.peers.values()].map(q => ({ id: q.id, name: q.name, pos: q.g.position.toArray(), visible: q.g.visible })) }; }, get walking() { return walking; },
     walkTick(dt) { if (walking) walkStep(dt); },
     refreshCollision() { if (walking && model) W.grid = buildCollisionGrid(model, 3, parseIgnore(cfg.walkIgnore)); },
     teleportNdc(nx, ny) { return walkTeleport(nx, ny); },
