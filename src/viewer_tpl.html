@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>GLB → HTML autonome · réglages</title>
+<title>GLB → HTML autonome · réglages · __VERSION__</title>
 <style>
 *{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -49,6 +49,7 @@ small{display:block;margin-top:8px;color:#333}
     <div id="drop">Dépose pour charger</div>
   </div>
   <aside id="panel">
+    <small style="margin:0 0 6px">glb-viewer __VERSION__</small>
     <h2>Fichier</h2>
     <div class="btns">
       <button id="bGlb">Ouvrir .glb</button>
@@ -64,6 +65,14 @@ small{display:block;margin-top:8px;color:#333}
       <button id="bReset">Valeurs par défaut</button>
     </div>
     <small>L'export HTML reprend la caméra exactement telle qu'affichée (direction, cible, zoom). Aucun accès réseau, ni ici ni dans le fichier exporté.</small>
+    <h2>Récapitulatif pour le script</h2>
+    <div class="row"><label for="cmdScript">Chemin de glb2html.py</label><input id="cmdScript" type="text" placeholder="glb2html.py" style="grid-column:1/-1;width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px"></div>
+    <div class="row"><label for="cmdGlb">Chemin du fichier .glb</label><input id="cmdGlb" type="text" placeholder="fichier.glb" style="grid-column:1/-1;width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px"></div>
+    <div class="row"><label for="cmdDest">Fichier ou dossier de sortie (-o), facultatif</label><input id="cmdDest" type="text" placeholder="par défaut : à côté du .glb" style="grid-column:1/-1;width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px"></div>
+    <div class="btns"><button id="bCmd" class="wide">Générer la ligne de commande PowerShell</button></div>
+    <textarea id="cmdOut" readonly rows="7" placeholder="La commande apparaît ici (seulement les options qui changent par rapport aux valeurs par défaut du script)." style="width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;margin-top:4px"></textarea>
+    <div class="btns"><button id="bCmdCopy" class="wide">Copier la commande</button></div>
+    <pre id="cmdNote" style="display:none"></pre>
   </aside>
 </div>
 <input id="fGlb" type="file" accept=".glb" hidden>
@@ -168,6 +177,7 @@ const ROWS = [
   ['sec', 'Zones : panneaux, portails, liens, commandes'],
   ['zones']
 ];
+let loadedName = '';
 let chatLines = [], eraseMode = false, ignoreStack = [], zoneAddMode = false, zoneSel = null;
 let placeMode = false, lastPick = null, myName = '', presLast = { state: 'off', count: 0 };
 const sync = {};
@@ -194,7 +204,12 @@ for (const r of ROWS) {
     const [, key, label, ph] = r;
     const e = add('<div class="row"><label>' + label + '</label><input type="text" style="grid-column:1/-1;width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px"></div>');
     const i = e.querySelector('input'); i.placeholder = ph; i.value = key === 'myName' ? myName : (cfg[key] || ''); if (key === 'myName') i.dataset.myname = '1';
-    i.onchange = () => { if (key === 'myName') { myName = i.value; viewer.setName(i.value); } else viewer.setCfg({ [key]: i.value.trim() }); };
+    i.onchange = () => {
+      if (key === 'myName') { myName = i.value; viewer.setName(i.value); return; }
+      let v = i.value.trim();
+      if (key === 'presenceUrl') { const f = v.replace(/^(wss?:\/\/)0\.0\.0\.0(?=[:/]|$)/i, (m, p) => p + '127.0.0.1'); if (f !== v) { v = f; i.value = f; setStatus('0.0.0.0 est une adresse d\'écoute du serveur : remplacée par 127.0.0.1'); } }
+      viewer.setCfg({ [key]: v });
+    };
     continue;
   }
   if (r[0] === 'chatbox') {
@@ -225,7 +240,7 @@ for (const r of ROWS) {
     continue;
   }
   if (r[0] === 'btnwalk') {
-    const e = add('<div class="btns"><button id="bWalk" class="wide"></button></div><small>Clique sur le modèle pour viser un endroit, puis entre en promenade : l\'avatar apparaît là. Ensuite clic dans la vue pour capturer la souris.</small>');
+    const e = add('<div class="btns"><button id="bWalk" class="wide"></button></div><small>Clique sur le modèle pour viser un endroit (un cercle au sol le montre), puis entre en promenade : l\'avatar apparaît là. Ensuite clic dans la vue pour capturer la souris.</small>');
     const b = e.querySelector('button'); b.disabled = !viewer.model;
     walkLabel(); b.onclick = () => viewer.toggleWalk();
     continue;
@@ -432,13 +447,15 @@ camInfo();
 // ---------- chargement
 function countMeshes(root) { let n = 0; root.traverse(o => { if (o.isMesh) n++; }); return n; }
 async function afterLoad(name) {
-  baseName = name.replace(/\.[^.]+$/, '').replace(/[\\/:*?"<>|]/g, '_') || 'scene';
+  baseName = name.replace(/\.[^.]+$/, '').replace(/[\\/:*?"<>|]/g, '_') || 'scene'; loadedName = name;
   $('hint').style.display = 'none';
   $('bHtml').disabled = false;
   if ($('bWalk')) $('bWalk').disabled = false;
   camInfo();
   setStatus(name + ' • ' + countMeshes(viewer.model) + ' meshes • prêt');
   updateIgnoreViz();
+  cfg.roomDefault = baseName;
+  if (cfg.spectate && cfg.presenceUrl) { viewer.spectate(false); viewer.spectate(true); }
 }
 async function openGlb(file) {
   try {
@@ -603,6 +620,55 @@ function b64(u8) {
 const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const r6 = v => Math.round(v * 1e6) / 1e6;
 const rep = (s, k, v) => s.split(k).join(v);
+// ---------- récapitulatif : ligne de commande pour glb2html.py
+function buildCommand() {
+  const q = s => "'" + String(s).replace(/'/g, "''") + "'";
+  const n4 = v => String(Math.round(v * 1e4) / 1e4);
+  const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  const cam = viewer.getCameraState(), hexc = v => v.toString(16).padStart(6, '0');
+  const a = [];
+  const num = (flag, v, d) => { if (Math.abs(v - d) > 1e-9) a.push(flag + ' ' + n4(v)); };
+  const sw = (on, off, v, d) => { if (v !== d) a.push(v ? on : off); };
+  sw('--sea', '--no-sea', cfg.sea, DEF.sea); sw('--anim', '--no-anim', cfg.anim, DEF.anim); sw('--retina', '--no-retina', cfg.retina, DEF.retina);
+  num('--hole', cfg.hole, DEF.hole); num('--hole-fade', cfg.holeFade, DEF.holeFade); num('--hole-x', cfg.holeX, DEF.holeX); num('--hole-z', cfg.holeZ, DEF.holeZ);
+  num('--wave', cfg.wave, DEF.wave); num('--sea-y', cfg.seaY, DEF.seaY); num('--sea-segments', cfg.seaSegments, DEF.seaSegments);
+  if (cfg.seaColor !== DEF.seaColor) a.push('--sea-color ' + hexc(cfg.seaColor));
+  if (cfg.skyColor !== DEF.skyColor) a.push('--sky-color ' + hexc(cfg.skyColor));
+  num('--foliage-cutout', cfg.foliageCutout, DEF.foliageCutout);
+  num('--zoom', cam.zoom, DEF.zoom);
+  if (!same(cam.camDir.map(n4).map(Number), DEF.camDir)) a.push('--cam-dir ' + q(cam.camDir.map(n4).join(',')));
+  if (!same(cam.target.map(n4).map(Number), DEF.target)) a.push('--target ' + q(cam.target.map(n4).join(',')));
+  sw('--walk', '--no-walk', cfg.walk, DEF.walk); num('--eye-height', cfg.eyeHeight, DEF.eyeHeight); num('--walk-speed', cfg.walkSpeed, DEF.walkSpeed);
+  if (cfg.walkIgnore !== DEF.walkIgnore) a.push('--walk-ignore ' + q(cfg.walkIgnore));
+  sw('--names', '--no-names', cfg.names, DEF.names);
+  if (cfg.presenceUrl) a.push('--presence-url ' + q(cfg.presenceUrl));
+  if (cfg.room) a.push('--room ' + q(cfg.room));
+  sw('--chat', '--no-chat', cfg.chat, DEF.chat); num('--chat-fade', cfg.chatFade, DEF.chatFade);
+  if (cfg.presenceUrl && !cfg.spectate) a.push('--no-spectate');
+  const hasZones = (cfg.zones || []).length > 0;
+  if (hasZones) { a.push('--zones ' + q('zones.json')); if ($('profileSel').value === 'perso') a.push('--profile perso'); }
+  const script = $('cmdScript').value.trim() || 'glb2html.py', glb = $('cmdGlb').value.trim() || loadedName || 'fichier.glb';
+  const dest = $('cmdDest').value.trim();
+  if (dest) a.unshift('-o ' + q(dest));
+  const cmd = ['python', q(script), q(glb)].concat(a).join(' ');
+  const notes = [];
+  if (hasZones) notes.push('Zones : clique d\'abord sur « Exporter zones (.json) » (section Zones) et place zones.json à côté de glb2html.py (ou dans le dossier où tu lances la commande), ou corrige son chemin.' + ($('profileSel').value === 'perso' ? '' : ' Profil public : les zones privées sont retirées.'));
+  if (!a.length) notes.push('Aucun réglage ne diffère des valeurs par défaut du script.');
+  notes.push(a.length + ' option(s) ajoutée(s). Les options absentes gardent la valeur par défaut du script.');
+  return { cmd, notes };
+}
+$('bCmd').onclick = () => {
+  const r = buildCommand(); $('cmdOut').value = r.cmd;
+  const n = $('cmdNote'); n.style.display = 'block'; n.textContent = r.notes.join('\n');
+  try { localStorage.setItem('glb2html_cmd_script', $('cmdScript').value); localStorage.setItem('glb2html_cmd_glb', $('cmdGlb').value); localStorage.setItem('glb2html_cmd_dest', $('cmdDest').value); } catch (e) {}
+};
+$('bCmdCopy').onclick = async () => {
+  if (!$('cmdOut').value) $('bCmd').onclick();
+  const t = $('cmdOut').value;
+  try { await navigator.clipboard.writeText(t); setStatus('Commande copiée'); }
+  catch (e) { $('cmdOut').select(); document.execCommand('copy'); setStatus('Commande copiée'); }
+};
+try { $('cmdScript').value = localStorage.getItem('glb2html_cmd_script') || ''; $('cmdGlb').value = localStorage.getItem('glb2html_cmd_glb') || ''; $('cmdDest').value = localStorage.getItem('glb2html_cmd_dest') || ''; } catch (e) {}
 function liveConfig() {
   const cam = viewer.getCameraState();
   return {
@@ -611,6 +677,7 @@ function liveConfig() {
     sea: cfg.sea, anim: cfg.anim, retina: cfg.retina, foliageCutout: cfg.foliageCutout,
     seaSize: cfg.seaSize, seaSegments: cfg.seaSegments, seaColor: cfg.seaColor, skyColor: cfg.skyColor,
     spectate: cfg.spectate,
+    version: '__VERSION__',
     zones: (cfg.zones || []).filter(z => $('profileSel').value === 'perso' || !z.private), profile: $('profileSel').value,
     walk: cfg.walk, eyeHeight: cfg.eyeHeight, walkSpeed: cfg.walkSpeed, walkIgnore: cfg.walkIgnore,
     names: cfg.names, chat: cfg.chat, chatFade: cfg.chatFade, presenceUrl: cfg.presenceUrl, room: cfg.room || baseName
