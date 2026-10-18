@@ -159,7 +159,7 @@ def clean_map(entries):
             rid += "-2"
         seen.add(rid)
         out.append({"id": rid, "name": name, "url": url, "x": ival(r.get("x")), "y": ival(r.get("y")),
-                    "spawn": _slug(r.get("spawn")), "room": re.sub(r"[^\w .\-]", "", str(r.get("room") or "")).strip()[:64], "thumb": thumb})
+                    "spawn": _slug(r.get("spawn")), "presence": (str(r.get("presence"))[:300] if re.match(r"^wss?://", str(r.get("presence") or ""), re.I) else ""), "room": re.sub(r"[^\w .\-]", "", str(r.get("room") or "")).strip()[:64], "thumb": thumb})
     return out
 
 
@@ -205,6 +205,7 @@ footer{font-size:11px;opacity:.7}
   const C = JSON.parse(document.getElementById('cfg').textContent);
   let MAP = C.map || [];
   const grid = document.getElementById('grid'), counts = {}; let known = false;
+  const srvOf = r => (r.presence || C.presenceUrl || '');
   const okUrl = u => { try { const x = new URL(u, location.href); return (x.protocol === 'http:' || x.protocol === 'https:' || (location.protocol === 'file:' && x.protocol === 'file:')) ? x : null; } catch (e) { return null; } };
   const safeThumb = t => typeof t === 'string' && (/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+$/.test(t) || (!/^[a-z][a-z0-9+.-]*:/i.test(t) || /^https?:/i.test(t)));
   const remap = vals => { const u = [...new Set(vals)].sort((a, b) => a - b), m = new Map(); let pos = 0; u.forEach((v, i) => { if (i) pos += Math.min(v - u[i - 1], 2); m.set(v, pos); }); return m; };
@@ -222,27 +223,37 @@ footer{font-size:11px;opacity:.7}
       if (placed) { t.style.gridColumn = String(mx.get(r.x | 0) + 1); t.style.gridRow = String(rows - my.get(r.y | 0)); }
       if (r.thumb && safeThumb(r.thumb)) { const im = document.createElement('img'); im.src = r.thumb; im.alt = ''; im.referrerPolicy = 'no-referrer'; t.append(im); } else { const ph = document.createElement('div'); ph.className = 'ph'; t.append(ph); }
       const b = document.createElement('b'); b.textContent = r.name; t.append(b);
-      const n = counts[r.room || ''];
-      const s = document.createElement('span'); s.textContent = 'visiter →' + (known && r.room ? ' · ' + (n || 0) + ' en promenade' : ''); t.append(s);
+      const n = counts[srvOf(r) + '|' + (r.room || '')];
+      const s = document.createElement('span'); s.textContent = 'visiter →' + (known && r.room && srvOf(r) ? ' · ' + (n || 0) + ' en promenade' : ''); t.append(s);
       const l = document.createElement('small'); l.textContent = u ? u.href : '(adresse invalide)'; t.append(l);
       grid.append(t);
     }
     if (!list.length) grid.textContent = 'Aucune région dans la carte.';
   };
-  const fetchCounts = () => {
-    if (!C.presenceUrl) return;
+  const queryServer = srv => {
     try {
-      const ws = new WebSocket(C.presenceUrl), to = setTimeout(() => { try { ws.close(); } catch (e) {} }, 4000);
+      const ws = new WebSocket(srv), to = setTimeout(() => { try { ws.close(); } catch (e) {} }, 4000);
       ws.onopen = () => ws.send(JSON.stringify({ t: 'rooms' }));
-      ws.onmessage = ev => { try { const m = JSON.parse(ev.data); if (m.t === 'rooms') { for (const k in counts) delete counts[k]; Object.assign(counts, m.rooms || {}); known = true; draw(); } } catch (e) {} try { ws.close(); } catch (e) {} };
+      ws.onmessage = ev => {
+        try { const m = JSON.parse(ev.data); if (m.t === 'rooms') { for (const k of Object.keys(counts)) if (k.startsWith(srv + '|')) delete counts[k]; for (const [room, n] of Object.entries(m.rooms || {})) counts[srv + '|' + room] = n; known = true; draw(); } } catch (e) {}
+        try { ws.close(); } catch (e) {}
+      };
       ws.onclose = () => clearTimeout(to); ws.onerror = () => {};
     } catch (e) {}
   };
+  const fetchCounts = () => { for (const srv of new Set(MAP.map(srvOf).filter(Boolean))) queryServer(srv); };
   draw(); fetchCounts(); setInterval(fetchCounts, 10000);
   if (C.mapUrl && /^https?:$/.test(location.protocol)) {
-    fetch(new URL(C.mapUrl, location.href).href, { cache: 'no-store' }).then(r => r.ok ? r.json() : Promise.reject(new Error('http ' + r.status)))
-      .then(list => { if (Array.isArray(list)) { MAP = list.filter(r => r && typeof r.name === 'string' && typeof r.url === 'string').map(r => ({ name: r.name.slice(0, 60), url: r.url.slice(0, 600), x: Number(r.x) | 0, y: Number(r.y) | 0, spawn: String(r.spawn || '').slice(0, 40), room: String(r.room || '').slice(0, 64), thumb: safeThumb(r.thumb) ? String(r.thumb).slice(0, 200000) : '' })); draw(); } })
-      .catch(() => {});
+    const urls = String(C.mapUrl).split(',').map(s => s.trim()).filter(Boolean);
+    Promise.allSettled(urls.map(u => fetch(new URL(u, location.href).href, { cache: 'no-store' }).then(r => r.ok ? r.json() : Promise.reject(new Error('http ' + r.status))))).then(res => {
+      const merged = [], seen = new Set();
+      for (const x of res) if (x.status === 'fulfilled' && Array.isArray(x.value)) for (const r of x.value) {
+        if (!r || typeof r.name !== 'string' || typeof r.url !== 'string') continue;
+        const e = { name: r.name.slice(0, 60), url: r.url.slice(0, 600), x: Number(r.x) | 0, y: Number(r.y) | 0, spawn: String(r.spawn || '').slice(0, 40), room: String(r.room || '').slice(0, 64), presence: /^wss?:\/\//i.test(String(r.presence || '')) ? String(r.presence).slice(0, 300) : '', thumb: safeThumb(r.thumb) ? String(r.thumb).slice(0, 200000) : '' };
+        const k = e.url + '|' + e.room; if (!seen.has(k)) { seen.add(k); merged.push(e); }
+      }
+      if (merged.length) { MAP = merged; draw(); fetchCounts(); }
+    });
   }
 })();
 </script>
@@ -261,6 +272,8 @@ def data_path(arg):
 
 
 def thumb_data_url(arg):
+    if re.match(r"^https?://", str(arg), re.I):
+        return str(arg)[:600]
     p = find_beside(arg)
     if p is None:
         print(f"[AVERTISSEMENT] vignette introuvable : {arg}", file=sys.stderr)
@@ -295,12 +308,41 @@ def register_region(path, entry):
 
 
 def write_map_page(path, entries, presence_url, map_url, title):
-    cfg = {"map": clean_map(entries), "mapUrl": str(map_url or "")[:600], "presenceUrl": fix_presence_url(presence_url)}
+    cfg = {"map": clean_map(entries), "mapUrl": str(map_url or "")[:1200], "presenceUrl": fix_presence_url(presence_url)}
     page = (MAP_PAGE_TEMPLATE.replace("__TITLE__", html.escape(title or "Carte des mondes")).replace("__VERSION__", VERSION)
             .replace("__CONFIG__", json.dumps(cfg, ensure_ascii=False).replace("</", "<\\/")))
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(page, encoding="utf-8")
     print(f"[carte] page carte ({len(cfg['map'])} région(s)) -> {path}")
+
+
+def settings_defaults(S):
+    """Valeurs par défaut tirées d'un fichier de réglages enregistré par le viewer (« Enregistrer dans un fichier »)."""
+    c = S.get("cfg") if isinstance(S.get("cfg"), dict) else {}
+    cam = S.get("camera") if isinstance(S.get("camera"), dict) else {}
+    d = {}
+    def put(dest, v, conv):
+        if v is None:
+            return
+        try:
+            d[dest] = conv(v)
+        except (TypeError, ValueError, IndexError):
+            pass
+    vec = lambda v: tuple(float(x) for x in list(v)[:3]) if len(v) >= 3 else (_ for _ in ()).throw(ValueError())
+    for k, dest, conv in (("hole", "hole", float), ("holeFade", "hole_fade", float), ("holeX", "hole_x", float), ("holeZ", "hole_z", float),
+                          ("wave", "wave", float), ("seaY", "sea_y", float), ("seaSegments", "sea_segments", int), ("seaColor", "sea_color", int),
+                          ("skyColor", "sky_color", int), ("foliageCutout", "foliage_cutout", float), ("anim", "anim_enabled", bool),
+                          ("sea", "sea_enabled", bool), ("retina", "retina", bool), ("walk", "walk", bool), ("eyeHeight", "eye_height", float),
+                          ("walkSpeed", "walk_speed", float), ("walkIgnore", "walk_ignore", str), ("names", "names", bool), ("chat", "chat", bool),
+                          ("chatFade", "chat_fade", float), ("presenceUrl", "presence_url", str), ("room", "room", str), ("spectate", "spectate", bool),
+                          ("panel", "panel", bool), ("mapUrl", "map_url", str)):
+        put(dest, c.get(k), conv)
+    put("zoom", cam.get("zoom"), float)
+    put("cam_dir", cam.get("camDir"), vec)
+    put("target", cam.get("target"), vec)
+    if S.get("profile") in ("public", "perso"):
+        d["profile"] = S["profile"]
+    return d
 
 
 def vendor_bytes(rel: str, vendor_dir: pathlib.Path | None) -> bytes:
@@ -397,7 +439,7 @@ def build_html(glb: bytes, name: str, vendor_dir=None, *, hole=HOLE_RADIUS, hole
         "seaColor": int(sea_color), "skyColor": int(sky_color),
         "walk": bool(walk), "eyeHeight": float(eye_height), "walkSpeed": float(walk_speed), "walkIgnore": str(walk_ignore),
         "names": bool(names), "chat": bool(chat), "profile": profile, "version": VERSION, "panel": bool(panel), "zonesLive": str(zones_live or ""),
-        "map": clean_map(json.loads(MAP_JSON) if map_entries is None else map_entries), "mapUrl": str(map_url or "")[:600], "spectate": bool(presence_url) if spectate is None else bool(spectate),
+        "map": clean_map(json.loads(MAP_JSON) if map_entries is None else map_entries), "mapUrl": str(map_url or "")[:1200], "spectate": bool(presence_url) if spectate is None else bool(spectate),
         "zones": clean_zones(json.loads(ZONES_JSON) if zones is None else zones, profile), "chatFade": float(chat_fade), "presenceUrl": str(presence_url), "room": str(room) or pathlib.Path(name).stem,
     }
     title = title or f"{pathlib.Path(name).stem} - trou {hole:g} amp {wave:g} y {sea_y:g} zoom {zoom:.2f}"
@@ -493,14 +535,15 @@ def main():
     ap.add_argument("--spectate", action=argparse.BooleanOptionalAction, default=SPECTATE, help="voir les visiteurs en promenade depuis la vue globale (se connecte dès l'ouverture de la page ; actif par défaut dès qu'une --presence-url est donnée ; --no-spectate pour l'éviter)")
     ap.add_argument("--panel", action=argparse.BooleanOptionalAction, default=PANEL, help="panneau de réglages pour les visiteurs (haute résolution, mer animée, force des vagues), bouton en haut à droite")
     ap.add_argument("--map", type=pathlib.Path, help="fichier regions.json (carte des mondes : nom, adresse, position, vignette) exporté par le viewer ; chemin relatif : dossier de lancement, puis dossier du script")
-    ap.add_argument("--map-url", default=MAP_URL, help="adresse d'un regions.json partagé que la page relit à chaque ouverture (http/https) ; la carte intégrée sert de secours")
+    ap.add_argument("--map-url", default=MAP_URL, help="adresse(s) de regions.json partagé(s), séparées par des virgules : la page les relit à chaque ouverture (http/https), les fusionne et complète avec la carte intégrée. Un autre site doit autoriser l'accès (CORS)")
     ap.add_argument("--register", help="fichier regions.json à mettre à jour avec CETTE région (ajoutée ou mise à jour par salon) ; relatif : dossier de lancement s'il y existe, sinon dossier du script. La page générée embarque la carte à jour")
     ap.add_argument("--region-name", help="nom affiché dans la carte (défaut : nom du .glb)")
     ap.add_argument("--region-url", help="adresse de la page de cette région (défaut : le nom du fichier .html, relatif)")
     ap.add_argument("--region-xy", metavar="X,Y", help="position sur la grille, comme OpenSim (X vers l'est, Y vers le nord), ex. 1000,1001")
     ap.add_argument("--region-spawn", help="identifiant du point d'arrivée des visiteurs dans cette région (défaut : default)")
-    ap.add_argument("--thumb", help="vignette de la région (jpg, png ou webp de 140 Ko maximum), par exemple enregistrée depuis le viewer")
+    ap.add_argument("--thumb", help="vignette de la région : fichier jpg/png/webp de 140 Ko maximum (intégré), ou adresse http(s) (gardée telle quelle, carte plus légère)")
     ap.add_argument("--map-page", metavar="FICHIER.html", help="génère aussi une page web « carte des mondes » (liens cliquables vers chaque région) ; sans .glb : génère seulement cette page depuis --map. Relatif : à côté de la page de la région")
+    ap.add_argument("--settings", nargs="?", const="auto", default=None, metavar="FICHIER", help="reprend TOUS les réglages enregistrés par le viewer (bouton « Enregistrer dans un fichier » : trou, vagues, caméra, zones, fiche de région, vignette…). Sans nom : <nom du .glb>.reglages.json. Les options de la ligne de commande l'emportent. Relatif : dossier de lancement, puis dossier du script")
     ap.add_argument("--room", default=ROOM, help="salon de présence (défaut : nom du fichier)")
     ap.add_argument("--sea", dest="sea_enabled", action=argparse.BooleanOptionalAction, default=SEA_ENABLED)
     ap.add_argument("--anim", dest="anim_enabled", action=argparse.BooleanOptionalAction, default=ANIM_ENABLED)
@@ -508,6 +551,40 @@ def main():
     ap.add_argument("--title", help="titre de la page")
     ap.add_argument("--vendor", type=pathlib.Path, help="racine d'un paquet npm three local (sinon cache + téléchargement)")
     a = ap.parse_args()
+    S = {}
+    if a.settings:
+        if str(a.settings).lower().endswith((".glb", ".gltf")) and not a.input:
+            a.input, a.settings = a.settings, "auto"
+        if a.settings == "auto":
+            if not a.input:
+                sys.exit("[ERREUR] --settings sans nom demande le .glb (le fichier cherché est <nom du .glb>.reglages.json)")
+            wanted = pathlib.Path(a.input).stem + ".reglages.json"
+        else:
+            wanted = a.settings
+        sp = find_beside(wanted)
+        if sp is None:
+            sys.exit(f"[ERREUR] fichier de réglages {wanted} introuvable (cherché dans {pathlib.Path.cwd()} puis dans {pathlib.Path(__file__).resolve().parent})")
+        try:
+            S = json.loads(sp.read_text(encoding="utf-8"))
+            if not isinstance(S, dict) or not isinstance(S.get("cfg"), dict):
+                raise ValueError("ce n'est pas un fichier de réglages du viewer")
+        except (OSError, ValueError) as e:
+            sys.exit(f"[ERREUR] {sp} illisible ({e})")
+        defaults = settings_defaults(S)
+        ap.set_defaults(**defaults)
+        keep_input = a.input
+        a = ap.parse_args()
+        if str(a.settings).lower().endswith((".glb", ".gltf")) and not a.input:
+            a.input, a.settings = a.settings, "auto"
+        if not a.input:
+            a.input = keep_input
+        print(f"[réglages] {len(defaults)} paramètre(s) repris de {sp}")
+    S_reg = S.get("thisReg") if isinstance(S.get("thisReg"), dict) else {}
+    S_cmd = S.get("cmd") if isinstance(S.get("cmd"), dict) else {}
+    if S and not a.output and S_cmd.get("dest"):
+        a.output = S_cmd["dest"]
+    if S and not a.map_page and S_cmd.get("mapPage"):
+        a.map_page = S_cmd["mapPage"]
 
     map_arg = None
     if a.map:
@@ -519,7 +596,7 @@ def main():
         except (OSError, ValueError) as e:
             sys.exit(f"[ERREUR] {mf} illisible ({e})")
         print(f"[carte] {len(clean_map(map_arg))} région(s) lue(s) dans {mf}")
-    zones_arg = None
+    zones_arg = S.get("zones") if (S and not a.zones and isinstance(S.get("zones"), list)) else None
     if a.zones:
         zf = find_beside(a.zones)
         if zf is None:
@@ -544,8 +621,28 @@ def main():
         out = pathlib.Path(a.output)
         write_live_zones(out, dict(kw, zones_live=a.zones_live))
         sys.exit(0)
+    if a.register and not a.input:
+        if not (a.region_name and a.region_url and a.room):
+            sys.exit("[ERREUR] enregistrer une région sans .glb demande --region-name, --region-url et --room")
+        entry = {"id": _slug(a.room) or "region", "name": a.region_name, "url": a.region_url, "room": a.room,
+                 "spawn": a.region_spawn or None, "thumb": thumb_data_url(a.thumb) if a.thumb else "",
+                 "presence": fix_presence_url(a.presence_url) if a.presence_url else None}
+        if a.region_xy:
+            try:
+                x, y = (int(float(v)) for v in a.region_xy.split(","))
+                entry["x"], entry["y"] = x, y
+            except ValueError:
+                sys.exit("[ERREUR] --region-xy attend deux nombres : X,Y")
+        reg = data_path(a.register)
+        data = register_region(reg, entry)
+        print(f"[carte] « {entry['name']} » ajoutée ou mise à jour dans {reg} ({len(data)} région(s))")
+        if a.map_page:
+            write_map_page(pathlib.Path(a.map_page), data, a.presence_url, a.map_url, a.title or "Carte des mondes")
+        sys.exit(0)
     if a.map_page and not a.input:
         entries = map_arg if map_arg is not None else json.loads(MAP_JSON)
+        if not clean_map(entries):
+            sys.exit("[ERREUR] aucune région à afficher : donne --map regions.json")
         write_map_page(pathlib.Path(a.map_page), entries, a.presence_url, a.map_url, a.title or "Carte des mondes")
         sys.exit(0)
     if not a.input:
@@ -575,8 +672,17 @@ def main():
         out = inp.with_name(inp.stem + " - Offline.html")
     if a.register:
         room = a.room or inp.stem
-        entry = {"id": _slug(room) or "region", "name": a.region_name or inp.stem, "url": a.region_url or out.name, "room": room,
-                 "spawn": a.region_spawn if a.region_spawn else None, "thumb": thumb_data_url(a.thumb) if a.thumb else ""}
+        use_reg = bool(S_reg.get("name") and S_reg.get("url"))
+        entry = {"id": _slug(room) or "region", "name": a.region_name or (S_reg.get("name") if use_reg else "") or inp.stem,
+                 "url": a.region_url or (S_reg.get("url") if use_reg else "") or out.name, "room": room,
+                 "spawn": a.region_spawn or ((S_reg.get("spawn") if use_reg and S_reg.get("spawn") != "default" else None)) or None,
+                 "thumb": thumb_data_url(a.thumb) if a.thumb else (S_reg.get("thumb") if use_reg and str(S_reg.get("thumb") or "").startswith("data:image/") else ""),
+                 "presence": fix_presence_url(a.presence_url) if a.presence_url else None}
+        if not a.region_xy and use_reg:
+            try:
+                entry["x"], entry["y"] = int(S_reg.get("x", 0)), int(S_reg.get("y", 0))
+            except (TypeError, ValueError):
+                pass
         if a.region_xy:
             try:
                 x, y = (int(float(v)) for v in a.region_xy.split(","))
@@ -588,8 +694,12 @@ def main():
         print(f"[carte] « {entry['name']} » ajoutée ou mise à jour dans {reg} ({len(kw['map_entries'])} région(s))")
     ok = generate(inp, out, a.vendor, **kw)
     if ok and a.map_page:
-        mp = pathlib.Path(a.map_page)
-        write_map_page(mp if mp.is_absolute() else out.parent / mp, kw["map_entries"] if kw.get("map_entries") is not None else json.loads(MAP_JSON), kw.get("presence_url", ""), kw.get("map_url", ""), a.title or "Carte des mondes")
+        entries = kw["map_entries"] if kw.get("map_entries") is not None else json.loads(MAP_JSON)
+        if not clean_map(entries):
+            print("[AVERTISSEMENT] --map-page ignoré : aucune région à afficher (donne --register ou --map)", file=sys.stderr)
+        else:
+            mp = pathlib.Path(a.map_page)
+            write_map_page(mp if mp.is_absolute() else out.parent / mp, entries, kw.get("presence_url", ""), kw.get("map_url", ""), a.title or "Carte des mondes")
     sys.exit(0 if ok else 1)
 
 

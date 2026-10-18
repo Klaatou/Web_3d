@@ -77,6 +77,7 @@ small{display:block;margin-top:8px;color:#333}
     <div class="row"><label for="cmdGlb">Chemin du fichier .glb</label><input id="cmdGlb" type="text" placeholder="fichier.glb" style="grid-column:1/-1;width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px"></div>
     <div class="row"><label for="cmdDest">Fichier ou dossier de sortie (-o), facultatif</label><input id="cmdDest" type="text" placeholder="par défaut : à côté du .glb" style="grid-column:1/-1;width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px"></div>
     <div class="row"><label for="cmdMapPage">Page « carte » web à régénérer (facultatif)</label><input id="cmdMapPage" type="text" placeholder="carte.html" style="grid-column:1/-1;width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px"></div>
+    <label class="chk"><input id="cmdShort" type="checkbox"><span>Commande courte : le script relit tous les réglages dans le fichier .reglages.json</span></label>
     <div class="btns"><button id="bCmd" class="wide">Générer la ligne de commande PowerShell</button></div>
     <textarea id="cmdOut" readonly rows="7" placeholder="La commande apparaît ici (seulement les options qui changent par rapport aux valeurs par défaut du script)." style="width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;margin-top:4px"></textarea>
     <div class="btns"><button id="bCmdCopy" class="wide">Copier la commande</button></div>
@@ -715,7 +716,7 @@ function snapshot() {
   const cam = viewer.getCameraState();
   const s = { v: 1, file: curFile ? curFile.name : '', saved: new Date().toLocaleString('fr-FR'), cfg: {}, zones: cfg.zones || [],
     camera: { camDir: cam.camDir, target: cam.target, zoom: cam.zoom }, profile: $('profileSel').value, thisReg: Object.assign({}, thisReg),
-    cmd: { script: $('cmdScript').value, glb: $('cmdGlb').value, dest: $('cmdDest').value } };
+    cmd: { script: $('cmdScript').value, glb: $('cmdGlb').value, dest: $('cmdDest').value, mapPage: $('cmdMapPage').value } };
   for (const k of SKEYS) s.cfg[k] = cfg[k];
   return s;
 }
@@ -727,7 +728,7 @@ function applySnapshot(s) {
   zonesSync(Array.isArray(s.zones) ? s.zones : [], false);
   if (s.profile) $('profileSel').value = s.profile;
   if (s.thisReg) Object.assign(thisReg, s.thisReg);
-  if (s.cmd) { if (s.cmd.script) $('cmdScript').value = s.cmd.script; if (s.cmd.glb) $('cmdGlb').value = s.cmd.glb; if (s.cmd.dest !== undefined) $('cmdDest').value = s.cmd.dest; }
+  if (s.cmd) { if (s.cmd.script) $('cmdScript').value = s.cmd.script; if (s.cmd.glb) $('cmdGlb').value = s.cmd.glb; if (s.cmd.dest !== undefined) $('cmdDest').value = s.cmd.dest; if (s.cmd.mapPage !== undefined) $('cmdMapPage').value = s.cmd.mapPage; }
   buildRows(); refreshEnabled();
   if (s.camera && viewer.model) viewer.frame(s.camera.camDir, s.camera.target, s.camera.zoom);
   camInfo();
@@ -802,8 +803,17 @@ function buildCommand() {
   const script = $('cmdScript').value.trim() || 'glb2html.py', glb = $('cmdGlb').value.trim() || loadedName || 'fichier.glb';
   const dest = $('cmdDest').value.trim();
   if (dest) a.unshift('-o ' + q(dest));
-  const cmd = ['python', q(script), q(glb)].concat(a).join(' ');
+  let cmd = ['python', q(script), q(glb)].concat(a).join(' ');
   const notes = [];
+  if ($('cmdShort').checked) {
+    const s2 = ['python', q(script), q(glb), '--settings ' + q(baseName + '.reglages.json')];
+    if (dest) s2.push('-o ' + q(dest));
+    if (regOk) s2.push('--register ' + q('regions.json'));
+    if ($('cmdMapPage').value.trim()) s2.push('--map-page ' + q($('cmdMapPage').value.trim()));
+    cmd = s2.join(' ');
+    notes.push('Commande courte : elle relit TOUS tes réglages (trou, vagues, caméra, zones, fiche de région…) dans ' + baseName + '.reglages.json. Clique sur « Enregistrer dans un fichier » (section Réglages mémorisés) et place ce fichier à côté de glb2html.py, puis refais-le après chaque modification. Ce que tu ajoutes à la ligne l\'emporte sur le fichier.');
+    return { cmd, notes };
+  }
   if (regOk) notes.push('Carte : à chaque exécution, cette région est ajoutée ou mise à jour dans regions.json (créé à côté de glb2html.py s\'il n\'existe pas)' + (thisReg.thumb ? ' ; clique d\'abord sur « Enregistrer la vignette » et place ' + baseName + '.vignette.jpg à côté de glb2html.py.' : ' ; capture et enregistre une vignette pour l\'afficher sur la carte.'));
   else if ((cfg.map || []).length) notes.push('Carte : clique sur « Exporter regions.json » (section Carte des mondes) et place regions.json à côté de glb2html.py (ou dans le dossier de lancement).');
   if (hasZones) notes.push('Zones : clique d\'abord sur « Exporter zones (.json) » (section Zones) et place zones.json à côté de glb2html.py (ou dans le dossier où tu lances la commande), ou corrige son chemin.' + ($('profileSel').value === 'perso' ? '' : ' Profil public : les zones privées sont retirées.'));
@@ -814,7 +824,7 @@ function buildCommand() {
 $('bCmd').onclick = () => {
   const r = buildCommand(); $('cmdOut').value = r.cmd;
   const n = $('cmdNote'); n.style.display = 'block'; n.textContent = r.notes.join('\n');
-  try { localStorage.setItem('glb2html_cmd_script', $('cmdScript').value); localStorage.setItem('glb2html_cmd_glb', $('cmdGlb').value); localStorage.setItem('glb2html_cmd_dest', $('cmdDest').value); localStorage.setItem('glb2html_cmd_mappage', $('cmdMapPage').value); } catch (e) {}
+  try { localStorage.setItem('glb2html_cmd_script', $('cmdScript').value); localStorage.setItem('glb2html_cmd_glb', $('cmdGlb').value); localStorage.setItem('glb2html_cmd_dest', $('cmdDest').value); localStorage.setItem('glb2html_cmd_mappage', $('cmdMapPage').value); localStorage.setItem('glb2html_cmd_short', $('cmdShort').checked ? '1' : '0'); } catch (e) {}
 };
 $('bCmdCopy').onclick = async () => {
   if (!$('cmdOut').value) $('bCmd').onclick();
@@ -822,7 +832,7 @@ $('bCmdCopy').onclick = async () => {
   try { await navigator.clipboard.writeText(t); setStatus('Commande copiée'); }
   catch (e) { $('cmdOut').select(); document.execCommand('copy'); setStatus('Commande copiée'); }
 };
-try { $('cmdScript').value = localStorage.getItem('glb2html_cmd_script') || ''; $('cmdGlb').value = localStorage.getItem('glb2html_cmd_glb') || ''; $('cmdDest').value = localStorage.getItem('glb2html_cmd_dest') || ''; $('cmdMapPage').value = localStorage.getItem('glb2html_cmd_mappage') || ''; } catch (e) {}
+try { $('cmdScript').value = localStorage.getItem('glb2html_cmd_script') || ''; $('cmdGlb').value = localStorage.getItem('glb2html_cmd_glb') || ''; $('cmdDest').value = localStorage.getItem('glb2html_cmd_dest') || ''; $('cmdMapPage').value = localStorage.getItem('glb2html_cmd_mappage') || ''; $('cmdShort').checked = localStorage.getItem('glb2html_cmd_short') === '1'; } catch (e) {}
 function liveConfig() {
   const cam = viewer.getCameraState();
   return {
