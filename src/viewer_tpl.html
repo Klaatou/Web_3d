@@ -815,6 +815,7 @@ function buildCommand() {
     if ($('cmdMapPage').value.trim()) s2.push('--map-page ' + q($('cmdMapPage').value.trim()));
     cmd = s2.join(' ');
     notes.push('Commande courte : elle relit TOUS tes réglages (trou, vagues, caméra, zones, fiche de région…) dans ' + baseName + '.reglages.json. Clique sur « Enregistrer dans un fichier » (section Réglages mémorisés) et place ce fichier à côté de glb2html.py, puis refais-le après chaque modification. Ce que tu ajoutes à la ligne l\'emporte sur le fichier.');
+    if ($('cmdModular').checked) notes.push('Mode modulaire : la commande écrit <page>.html (coquille), <page>.glb, <page>.config.json et lib/three-0.160.0/. Publie-les ensemble, en http/https. Pour ne changer qu\'un réglage : même commande avec --config-only -o <page>.html (sans --modular).');
     return { cmd, notes };
   }
   if (regOk) notes.push('Carte : à chaque exécution, cette région est ajoutée ou mise à jour dans regions.json (créé à côté de glb2html.py s\'il n\'existe pas)' + (thisReg.thumb ? ' ; clique d\'abord sur « Enregistrer la vignette » et place ' + baseName + '.vignette.jpg à côté de glb2html.py.' : ' ; capture et enregistre une vignette pour l\'afficher sur la carte.'));
