@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>GLB → HTML autonome · réglages</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;font:12px/1.4 ui-monospace,SFMono-Regular,Consolas,monospace;color:#111;background:#fff}
+#app{display:grid;grid-template-columns:1fr 330px;height:100vh}
+#view{position:relative;min-width:0;min-height:0;overflow:hidden;background:#87ceeb}
+#view canvas{display:block;touch-action:none}
+#stat{position:absolute;left:10px;top:10px;max-width:calc(100% - 20px);padding:6px 10px;background:#fffffff0;border:1px solid #000;border-radius:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+#hint{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;text-align:center;font-size:14px;color:#000}
+#hint div{background:#fffffff0;border:2px dashed #000;border-radius:10px;padding:22px 30px}
+#drop{position:absolute;inset:0;display:none;place-items:center;background:#ffffffd0;border:3px dashed #000;font-size:16px;z-index:5}
+#drop.on{display:grid}
+#panel{overflow:auto;padding:12px;border-left:1px solid #000;background:#fff}
+h2{margin:14px 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.12em;border-bottom:1px solid #000;padding-bottom:3px}
+h2:first-child{margin-top:0}
+.row{display:grid;grid-template-columns:1fr auto;gap:2px 8px;align-items:center;margin:7px 0}
+.row label{grid-column:1/-1}
+.row input[type=range]{width:100%;margin:0}
+.row input[type=number]{width:74px;font:inherit;padding:2px 4px;border:1px solid #000;border-radius:4px}
+.row.off{opacity:.45}
+.chk{display:flex;gap:8px;align-items:center;margin:7px 0;cursor:pointer}
+.chk input{width:15px;height:15px;margin:0}
+.col{display:flex;gap:8px;align-items:center;margin:7px 0}
+.col input{width:42px;height:26px;padding:0;border:1px solid #000}
+button{font:inherit;padding:7px 10px;border:1px solid #000;border-radius:6px;background:#fff;cursor:pointer}
+button:hover{background:#eee}
+button.main{background:#000;color:#fff}
+button.main:hover{background:#333}
+button:disabled{opacity:.35;cursor:default}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:6px 0}
+.btns .wide{grid-column:1/-1}
+pre{margin:6px 0 0;padding:6px;border:1px solid #000;border-radius:4px;white-space:pre-wrap;font:inherit}
+small{display:block;margin-top:8px;color:#333}
+@media(max-width:760px){#app{grid-template-columns:1fr;grid-template-rows:55vh 1fr}#panel{border-left:0;border-top:1px solid #000}}
+</style>
+<script type="importmap">__IMPORTMAP_JSON__</script>
+</head>
+<body>
+<div id="app">
+  <div id="view">
+    <div id="stat">Aucun fichier</div>
+    <div id="hint"><div>Dépose un .glb ici<br>(ou .gltf + .bin / textures ensemble)</div></div>
+    <div id="drop">Dépose pour charger</div>
+  </div>
+  <aside id="panel">
+    <h2>Fichier</h2>
+    <div class="btns">
+      <button id="bGlb">Ouvrir .glb</button>
+      <button id="bDir">Ouvrir dossier glTF</button>
+    </div>
+    <div id="rows"></div>
+    <h2>Export</h2>
+    <div class="btns">
+      <button id="bHtml" class="main wide" disabled>Exporter HTML autonome</button>
+      <button id="bPy" class="wide">Exporter script Python (réglages actuels)</button>
+      <button id="bFrame">Recadrer</button>
+      <button id="bReset">Valeurs par défaut</button>
+    </div>
+    <small>L'export HTML reprend la caméra exactement telle qu'affichée (direction, cible, zoom). Aucun accès réseau, ni ici ni dans le fichier exporté.</small>
+  </aside>
+</div>
+<input id="fGlb" type="file" accept=".glb" hidden>
+<input id="fDir" type="file" webkitdirectory multiple hidden>
+<script type="application/json" id="libs">__LIBS_JSON__</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+
+const IMPORTS = JSON.parse(document.querySelector('script[type=importmap]').textContent).imports;
+const LIBS = JSON.parse(document.getElementById('libs').textContent);
+const HTML_TEMPLATE = __TEMPLATE_JSON__;
+const PY_SOURCE = __PY_JSON__;
+const DRACO_JS = __DRACO_JS_JSON__;
+const MESHOPT_JS = __MESHOPT_JS_JSON__;
+
+__CORE__
+
+// ---------- chargeurs
+function makeLoader(manager) {
+  const l = new GLTFLoader(manager);
+  const dm = new THREE.LoadingManager();
+  dm.setURLModifier(u => LIBS[u.split('/').pop()] || u);
+  const d = new DRACOLoader(dm); d.setDecoderPath('');
+  l.setDRACOLoader(d);
+  l.setMeshoptDecoder(MeshoptDecoder);
+  return l;
+}
+
+function inspectGlb(buf, name = 'fichier') {
+  const dv = new DataView(buf);
+  if (buf.byteLength < 20 || dv.getUint32(0, true) !== 0x46546C67) throw new Error(name + ' : pas un GLB (magic absent)');
+  if (dv.getUint32(4, true) !== 2) throw new Error(name + ' : glTF version ' + dv.getUint32(4, true) + ' non supportée');
+  if (dv.getUint32(8, true) !== buf.byteLength) throw new Error(name + ' : taille annoncée différente de la taille du fichier (tronqué ?)');
+  if (dv.getUint32(16, true) !== 0x4E4F534A) throw new Error(name + ' : premier chunk non JSON');
+  const json = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, 20, dv.getUint32(12, true))));
+  const used = new Set([...(json.extensionsUsed || []), ...(json.extensionsRequired || [])]);
+  const ext = [...(json.buffers || []), ...(json.images || [])].map(x => x.uri).filter(u => u && !u.startsWith('data:'));
+  if (ext.length) throw new Error(name + ' : référence des fichiers externes (' + ext.slice(0, 3).join(', ') + ') → ouvre le dossier glTF au lieu du .glb');
+  if (used.has('KHR_texture_basisu')) throw new Error(name + ' : textures KTX2/Basis non gérées hors ligne');
+  return used;
+}
+
+// ---------- état
+const DEF = {
+  hole: 180, holeFade: 60, holeX: 0, holeZ: 0, guide: true, wave: 0.5, seaY: -50, zoom: 1, camDir: [0, 0.25, 1], target: [0, 15, 0],
+  sea: true, anim: false, retina: false, foliageCutout: 0.12, seaSize: 4000, seaSegments: 400, walk: true, eyeHeight: 1.7, walkSpeed: 3.5, walkIgnore: 'door, porte', names: false, chat: true, chatFade: 0, presenceUrl: '', room: '',
+  seaColor: 0x3A9AD9, skyColor: 0x87CEEB
+};
+const viewer = createViewer(document.getElementById('view'), DEF, makeLoader());
+const cfg = viewer.cfg;
+window.__viewer = viewer;
+let glbBytes = null, baseName = 'scene';
+const $ = id => document.getElementById(id);
+const setStatus = t => { $('stat').textContent = t; };
+const hex = n => '#' + n.toString(16).padStart(6, '0');
+
+// ---------- panneau de réglages
+const ROWS = [
+  ['sec', 'Mer'],
+  ['chk', 'sea', 'Mer visible'],
+  ['chk', 'anim', 'Vagues animées'],
+  ['rng', 'wave', 'Amplitude des vagues', 0, 10, 0.1, true],
+  ['rng', 'hole', 'Rayon du trou (zone plate = rayon − fondu)', 30, 600, 10, true],
+  ['rng', 'holeFade', 'Fondu du trou', 0, 200, 5, true],
+  ['rng', 'holeX', 'Position du trou X', -600, 600, 1, true],
+  ['rng', 'holeZ', 'Position du trou Z', -600, 600, 1, true],
+  ['place'],
+  ['info'],
+  ['rng', 'seaSegments', 'Finesse du maillage de la mer (segments)', 64, 800, 8, true],
+  ['chk', 'guide', 'Afficher le guide du trou (non exporté)'],
+  ['rng', 'seaY', 'Hauteur de la mer', -150, 60, 0.5, false],
+  ['col', 'seaColor', 'Couleur mer'],
+  ['col', 'skyColor', 'Couleur ciel'],
+  ['sec', 'Rendu'],
+  ['chk', 'retina', 'Haute résolution (rendu ×' + Math.min(Math.max(window.devicePixelRatio || 1, 2), 3) + ', écran dPR ' + (window.devicePixelRatio || 1).toFixed(2) + ')'],
+  ['rng', 'foliageCutout', 'Seuil alpha du feuillage', 0, 0.5, 0.01, false],
+  ['sec', 'Caméra'],
+  ['zoom'],
+  ['sec', 'Promenade (hauteur d\'avatar)'],
+  ['btnwalk'],
+  ['rng', 'eyeHeight', 'Hauteur des yeux (m)', 0.5, 3, 0.05, false],
+  ['rng', 'walkSpeed', 'Vitesse de marche (m/s)', 1, 10, 0.5, false],
+  ['chk', 'walk', 'Inclure la promenade dans l\'export (touche F)'],
+  ['ignore'],
+  ['sec', 'Partage'],
+  ['chk', 'names', 'Afficher le nom de l\'élément au clic (dans l\'export)'],
+  ['txt', 'presenceUrl', 'Serveur de présence (ws:// ou wss://, vide = aucun)', 'ws://127.0.0.1:8765'],
+  ['txt', 'room', 'Salon (vide = nom du fichier)', ''],
+  ['txt', 'myName', 'Mon pseudo (test dans ce viewer)', 'Visiteur'],
+  ['chk', 'chat', 'Activer le chat (avec la présence)'],
+  ['rng', 'chatFade', 'Disparition des messages (s, 0 = jamais)', 0, 60, 1, false],
+  ['presinfo'],
+  ['chatbox']
+];
+let chatLines = [];
+let placeMode = false, lastPick = null, myName = '', presLast = { state: 'off', count: 0 };
+const sync = {};
+const rows = $('rows');
+function add(html) { const d = document.createElement('div'); d.innerHTML = html; const e = d.firstElementChild; rows.appendChild(e); return e; }
+function buildRows() {
+rows.innerHTML = '';
+for (const r of ROWS) {
+  if (r[0] === 'sec') { add('<h2>' + r[1] + '</h2>'); continue; }
+  if (r[0] === 'txt') {
+    const [, key, label, ph] = r;
+    const e = add('<div class="row"><label>' + label + '</label><input type="text" style="grid-column:1/-1;width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px"></div>');
+    const i = e.querySelector('input'); i.placeholder = ph; i.value = key === 'myName' ? myName : (cfg[key] || '');
+    i.onchange = () => { if (key === 'myName') { myName = i.value; viewer.setName(i.value); } else viewer.setCfg({ [key]: i.value.trim() }); };
+    continue;
+  }
+  if (r[0] === 'chatbox') {
+    const e = add('<div class="row"><label>Chat (test dans ce viewer, visible après connexion)</label><pre id="chatLog" style="grid-column:1/-1;max-height:140px;overflow:auto;margin:0"></pre><input id="chatText" type="text" maxlength="200" placeholder="Message puis Entrée" style="grid-column:1/-1;width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px"></div>');
+    const i = e.querySelector('#chatText'), lg = e.querySelector('#chatLog');
+    lg.textContent = chatLines.join('\n');
+    i.onkeydown = ev => { if (ev.key === 'Enter') { if (viewer.sendChat(i.value)) i.value = ''; else setStatus('Chat : non connecté (entre en promenade avec un serveur de présence)'); } };
+    continue;
+  }
+  if (r[0] === 'presinfo') { add('<pre id="presInfo">présence : hors ligne</pre>'); presUpdate(); continue; }
+  if (r[0] === 'ignore') {
+    const e = add('<div class="row"><label>Ignorer en collision (début de mot, séparés par des virgules)</label><input type="text" style="grid-column:1/-1;width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px"></div>');
+    const i = e.querySelector('input'); i.value = cfg.walkIgnore;
+    i.onchange = () => { viewer.setCfg({ walkIgnore: i.value }); viewer.refreshCollision(); };
+    add('<div class="btns"><button class="wide">Ajouter à la liste le mesh visé (dernier clic)</button></div>').querySelector('button').onclick = () => {
+      if (!lastPick || !lastPick.token) return setStatus('Clique d\'abord sur un élément du modèle (la porte par exemple)');
+      const list = parseIgnore(cfg.walkIgnore), tok = lastPick.token.toLowerCase();
+      if (!list.includes(tok)) list.push(tok);
+      i.value = list.join(', '); viewer.setCfg({ walkIgnore: i.value }); viewer.refreshCollision();
+      setStatus('Ignoré en collision : ' + lastPick.token);
+    };
+    add('<pre id="picked">Clique sur le modèle : le nom du mesh visé s\'affiche ici.</pre>');
+    if (lastPick) $('picked').textContent = lastPick.text;
+    continue;
+  }
+  if (r[0] === 'btnwalk') {
+    const e = add('<div class="btns"><button id="bWalk" class="wide"></button></div><small>Clique sur le modèle pour viser un endroit, puis entre en promenade : l\'avatar apparaît là. Ensuite clic dans la vue pour capturer la souris.</small>');
+    const b = e.querySelector('button'); b.disabled = !viewer.model;
+    walkLabel(); b.onclick = () => viewer.toggleWalk();
+    continue;
+  }
+  if (r[0] === 'info') { add('<pre id="holeInfo"></pre>'); continue; }
+  if (r[0] === 'place') {
+    const e = add('<div class="btns"><button id="bPlace" class="wide"></button></div>');
+    const b = e.querySelector('button'); b.dataset.animOnly = '1';
+    const label = () => { b.textContent = placeMode ? 'Clic sur la scène = centre du trou (ACTIF, clique)' : 'Placer le trou par un clic sur la scène'; };
+    label(); b.onclick = () => { placeMode = !placeMode; viewer.renderer.domElement.style.cursor = placeMode ? 'crosshair' : ''; label(); setStatus(placeMode ? 'Mode placement du trou : clique sur l\'île ou la mer' : 'Mode placement annulé'); };
+    sync.place = label;
+    continue;
+  }
+  if (r[0] === 'chk') {
+    const [, key, label] = r;
+    const e = add('<label class="chk"><input type="checkbox"><span>' + label + '</span></label>');
+    const i = e.querySelector('input'); i.checked = cfg[key];
+    i.onchange = () => { viewer.setCfg({ [key]: i.checked }); refreshEnabled(); };
+    continue;
+  }
+  if (r[0] === 'col') {
+    const [, key, label] = r;
+    const e = add('<div class="col"><input type="color"><span>' + label + '</span><code></code></div>');
+    const i = e.querySelector('input'), c = e.querySelector('code');
+    i.value = hex(cfg[key]); c.textContent = i.value;
+    i.oninput = () => { c.textContent = i.value; viewer.setCfg({ [key]: parseInt(i.value.slice(1), 16) }); };
+    continue;
+  }
+  if (r[0] === 'rng') {
+    const [, key, label, min, max, step, animOnly] = r;
+    const e = add('<div class="row"><label>' + label + (animOnly ? ' (mer animée)' : '') + '</label><input type="range"><input type="number"></div>');
+    if (animOnly) e.dataset.animOnly = '1';
+    const [rg, nb] = e.querySelectorAll('input');
+    for (const x of [rg, nb]) { x.min = min; x.max = max; x.step = step; x.value = cfg[key]; }
+    const apply = v => { v = Math.min(max, Math.max(min, v)); if (!isNaN(v)) { rg.value = nb.value = v; viewer.setCfg({ [key]: v }); } };
+    rg.oninput = () => apply(parseFloat(rg.value));
+    nb.onchange = () => apply(parseFloat(nb.value));
+    sync[key] = v => { rg.value = nb.value = v; };
+    continue;
+  }
+  if (r[0] === 'zoom') {
+    const e = add('<div class="row"><label>Zoom (distance / cadrage auto)</label><input type="range" min="0.5" max="3" step="0.01"><input type="number" min="0.05" max="100" step="0.01"></div>');
+    const [rg, nb] = e.querySelectorAll('input');
+    rg.value = nb.value = 1;
+    rg.oninput = () => { nb.value = rg.value; viewer.setZoom(parseFloat(rg.value)); };
+    nb.onchange = () => { const v = Math.min(100, Math.max(0.05, parseFloat(nb.value))); if (!isNaN(v)) { rg.value = v; nb.value = v; viewer.setZoom(v); } };
+    sync.zoom = v => { rg.value = v; nb.value = v.toFixed(2); };
+    add('<pre id="cam"></pre>');
+  }
+}
+}
+function presUpdate() {
+  const e = $('presInfo'); if (!e) return;
+  const T = { off: 'hors ligne (entre en promenade pour te connecter)', connecting: 'connexion…', error: 'serveur injoignable, nouvelle tentative…', full: 'salon complet' };
+  const names = viewer.getPresence().peers.map(p => p.name).join(', ');
+  e.textContent = 'présence : ' + (presLast.state === 'online' ? presLast.count + ' en ligne' + (names ? ' (avec ' + names + ')' : '') : (T[presLast.state] || presLast.state));
+}
+viewer.onPresence = s => { presLast = s; presUpdate(); };
+viewer.onChat = m => {
+  chatLines.push(m.system ? '* ' + m.text : m.name + ' : ' + m.text); if (chatLines.length > 40) chatLines.shift();
+  const lg = $('chatLog'); if (lg) { lg.textContent = chatLines.join('\n'); lg.scrollTop = lg.scrollHeight; }
+};
+viewer.onPick = info => {
+  if (!info) return;
+  lastPick = { token: info.token, text: info.text };
+  const pe = $('picked'); if (pe) pe.textContent = info.text;
+  setStatus('Visé : ' + (info.name || '(sans nom)') + ' • ' + (info.materials[0] ? 'matériau ' + info.materials[0] : 'sans matériau nommé'));
+};
+function walkLabel() { const b = $('bWalk'); if (b) b.textContent = viewer.walking ? 'Quitter la promenade (F)' : 'Entrer en mode promenade (F)'; }
+viewer.onWalk = on => {
+  walkLabel(); updateGuide();
+  setStatus(on ? 'Promenade : ZQSD/WASD/flèches marcher • Maj courir • Espace sauter • clic dans la vue puis souris • double-clic téléporter • F quitter' : (baseName + ' • prêt'));
+};
+addEventListener('keydown', e => {
+  const n = e.target && e.target.tagName;
+  if (e.code === 'KeyF' && !e.repeat && n !== 'INPUT' && n !== 'TEXTAREA' && n !== 'SELECT' && viewer.model) viewer.toggleWalk();
+});
+function refreshEnabled() {
+  const off = !(cfg.sea && cfg.anim);
+  rows.querySelectorAll('[data-anim-only]').forEach(e => {
+    if (e.tagName === 'BUTTON') { e.disabled = off; return; }
+    e.classList.toggle('off', off);
+    e.querySelectorAll('input').forEach(i => { i.disabled = off; });
+  });
+}
+buildRows();
+refreshEnabled();
+const f3 = a => a.map(v => v.toFixed(2)).join(', ');
+function camInfo() {
+  const s = viewer.getCameraState();
+  sync.zoom(s.zoom);
+  $('cam').textContent = 'direction : ' + f3(s.camDir) + '\ncible     : ' + f3(s.target) + '\nzoom      : ' + s.zoom.toFixed(3);
+}
+viewer.controls.addEventListener('change', camInfo);
+camInfo();
+
+// ---------- chargement
+function countMeshes(root) { let n = 0; root.traverse(o => { if (o.isMesh) n++; }); return n; }
+async function afterLoad(name) {
+  baseName = name.replace(/\.[^.]+$/, '').replace(/[\\/:*?"<>|]/g, '_') || 'scene';
+  $('hint').style.display = 'none';
+  $('bHtml').disabled = false;
+  if ($('bWalk')) $('bWalk').disabled = false;
+  camInfo();
+  setStatus(name + ' • ' + countMeshes(viewer.model) + ' meshes • prêt');
+}
+async function openGlb(file) {
+  try {
+    setStatus('Lecture de ' + file.name + '…');
+    const buf = await file.arrayBuffer();
+    inspectGlb(buf, file.name);
+    glbBytes = new Uint8Array(buf.slice(0));
+    await viewer.loadBuffer(buf);
+    await afterLoad(file.name);
+  } catch (e) { console.error(e); setStatus('Erreur : ' + (e.message || e)); }
+}
+async function openGltf(gltfFile, files) {
+  const urls = new Map(), created = [];
+  try {
+    setStatus('Lecture de ' + gltfFile.name + ' + ' + (files.length - 1) + ' fichiers…');
+    for (const f of files) {
+      if (f === gltfFile) continue;
+      const u = URL.createObjectURL(f); created.push(u);
+      urls.set(f.name, u);
+      if (f.webkitRelativePath) urls.set(f.webkitRelativePath.split('/').slice(1).join('/'), u);
+    }
+    const manager = new THREE.LoadingManager();
+    manager.setURLModifier(u => {
+      if (/^(blob|data):/.test(u)) return u;
+      const k = decodeURIComponent(u.split('?')[0].split('#')[0]);
+      return urls.get(k) || urls.get(k.split('/').pop()) || u;
+    });
+    const gltf = await makeLoader(manager).parseAsync(await gltfFile.text(), '');
+    setStatus('Conversion en GLB autonome…');
+    const out = await new Promise((res, rej) => new GLTFExporter().parse(gltf.scene, res, rej, { binary: true }));
+    glbBytes = new Uint8Array(out.slice(0));
+    viewer.setModel(gltf.scene);
+    await afterLoad(gltfFile.name);
+  } catch (e) { console.error(e); setStatus('Erreur : ' + (e.message || e) + ' (fichiers .bin / textures manquants ?)'); }
+  finally { setTimeout(() => created.forEach(u => URL.revokeObjectURL(u)), 5000); }
+}
+async function openFiles(list) {
+  const files = [...list];
+  const gltf = files.find(f => /\.gltf$/i.test(f.name)), glb = files.find(f => /\.glb$/i.test(f.name));
+  if (glb && !gltf) return openGlb(glb);
+  if (gltf) return openGltf(gltf, files);
+  setStatus('Aucun .glb ni .gltf trouvé');
+}
+$('bGlb').onclick = () => $('fGlb').click();
+$('bDir').onclick = () => $('fDir').click();
+$('fGlb').onchange = e => { if (e.target.files.length) openFiles(e.target.files); e.target.value = ''; };
+$('fDir').onchange = e => { if (e.target.files.length) openFiles(e.target.files); e.target.value = ''; };
+const dropEl = $('drop');
+addEventListener('dragover', e => { e.preventDefault(); dropEl.classList.add('on'); });
+addEventListener('dragleave', e => { if (!e.relatedTarget) dropEl.classList.remove('on'); });
+addEventListener('drop', e => { e.preventDefault(); dropEl.classList.remove('on'); if (e.dataTransfer.files.length) openFiles(e.dataTransfer.files); });
+
+// guide visuel du trou (viewer uniquement)
+const guide = new THREE.Group();
+viewer.scene.add(guide);
+const gm = (M, o) => new M(Object.assign({ color: 0x000000, transparent: true, depthTest: false, depthWrite: false, fog: false }, o));
+function circle(r, dashed) {
+  const pts = []; for (let i = 0; i < 128; i++) { const a = i / 128 * Math.PI * 2; pts.push(new THREE.Vector3(Math.cos(a) * r, 0, Math.sin(a) * r)); }
+  const l = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(pts), dashed ? gm(THREE.LineDashedMaterial, { dashSize: 10, gapSize: 8 }) : gm(THREE.LineBasicMaterial));
+  if (dashed) l.computeLineDistances();
+  return l;
+}
+function updateGuide() {
+  while (guide.children.length) { const c = guide.children[0]; guide.remove(c); c.geometry.dispose(); c.material.dispose(); }
+  guide.visible = !!cfg.guide && !viewer.walking;
+  guide.position.set(cfg.holeX, cfg.seaY + 0.3, cfg.holeZ);
+  const flatR = cfg.hole - cfg.holeFade;
+  if (flatR > 1) {
+    const disc = new THREE.Mesh(new THREE.CircleGeometry(flatR, 96), gm(THREE.MeshBasicMaterial, { opacity: 0.14, side: THREE.DoubleSide }));
+    disc.rotation.x = -Math.PI / 2; guide.add(disc);
+    guide.add(circle(flatR, false));
+  }
+  guide.add(circle(cfg.hole + cfg.holeFade, true));
+  const cell = cfg.seaSize / cfg.seaSegments;
+  const cellTxt = '\nmaille de la mer : ' + cell.toFixed(1) + (flatR > 1 && cell > flatR / 2 ? ' → TROP GROSSE pour ce trou, augmente la finesse' : '');
+  const info = document.getElementById('holeInfo');
+  if (info) info.textContent = flatR > 1
+    ? 'zone plate (trait plein) : rayon ' + flatR + '\nvagues pleines (tirets) : à partir de ' + (cfg.hole + cfg.holeFade) + cellTxt
+    : 'AUCUNE ZONE PLATE : rayon (' + cfg.hole + ') ≤ fondu (' + cfg.holeFade + ')\n→ augmente le rayon ou réduis le fondu\nvagues pleines (tirets) : à partir de ' + (cfg.hole + cfg.holeFade) + cellTxt;
+  const cross = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints([[-20, 0, 0], [20, 0, 0], [0, 0, -20], [0, 0, 20]].map(p => new THREE.Vector3(...p))), gm(THREE.LineBasicMaterial));
+  guide.add(cross);
+  viewer.requestRender();
+}
+viewer.onCfg = updateGuide;
+updateGuide();
+
+// clic sur le modèle = nouvelle cible
+{
+  const dom = viewer.renderer.domElement, ray = new THREE.Raycaster(), p = new THREE.Vector2();
+  let down = null;
+  dom.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY]; });
+  dom.addEventListener('click', e => {
+    if (viewer.walking || !down || e.button !== 0 || (!viewer.model && !placeMode)) return;
+    if ((e.clientX - down[0]) ** 2 + (e.clientY - down[1]) ** 2 > 25) return;
+    const r = dom.getBoundingClientRect();
+    p.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    ray.setFromCamera(p, viewer.camera);
+    if (placeMode) {
+      const h = ray.intersectObjects([viewer.model, viewer.sea].filter(Boolean), true)[0];
+      if (!h) return;
+      const x = Math.max(-600, Math.min(600, Math.round(h.point.x))), z = Math.max(-600, Math.min(600, Math.round(h.point.z)));
+      viewer.setCfg({ holeX: x, holeZ: z }); sync.holeX(x); sync.holeZ(z);
+      placeMode = false; viewer.renderer.domElement.style.cursor = ''; sync.place();
+      setStatus('Trou placé en X ' + x + ' • Z ' + z);
+      return;
+    }
+    const hit = ray.intersectObject(viewer.model, true)[0];
+    if (!hit) return;
+    {
+      const o = hit.object, parents = []; for (let q = o.parent; q; q = q.parent) if (q.name) parents.push(q.name);
+      const mats = (Array.isArray(o.material) ? o.material : [o.material]).map(m => m && m.name).filter(Boolean);
+      const token = o.name || parents[0] || mats[0] || '';
+      lastPick = { token, text: 'mesh : ' + (o.name || '(sans nom)') + '\nparents : ' + (parents.slice(0, 3).join(' › ') || '(aucun)') + '\nmatériau : ' + (mats.join(', ') || '(sans nom)') };
+      const pe = $('picked'); if (pe) pe.textContent = lastPick.text;
+    }
+    viewer.controls.target.copy(hit.point); viewer.controls.update(); viewer.requestRender(); camInfo();
+  });
+}
+
+$('bFrame').onclick = () => { viewer.frame(DEF.camDir, DEF.target, 1); camInfo(); };
+$('bReset').onclick = () => {
+  const keep = ['walk', 'names', 'chat', 'chatFade', 'presenceUrl', 'room', 'walkIgnore', 'eyeHeight', 'walkSpeed', 'hole', 'holeFade', 'holeX', 'holeZ', 'guide', 'wave', 'seaY', 'sea', 'anim', 'retina', 'foliageCutout', 'seaColor', 'skyColor'];
+  const patch = {}; keep.forEach(k => { patch[k] = DEF[k]; });
+  viewer.setCfg(patch);
+  buildRows(); refreshEnabled(); camInfo(); updateGuide();
+};
+
+// ---------- exports
+function download(name, blob) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+function b64(u8) {
+  let s = '';
+  for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000));
+  return btoa(s);
+}
+const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const r6 = v => Math.round(v * 1e6) / 1e6;
+const rep = (s, k, v) => s.split(k).join(v);
+function liveConfig() {
+  const cam = viewer.getCameraState();
+  return {
+    hole: cfg.hole, holeFade: cfg.holeFade, holeX: cfg.holeX, holeZ: cfg.holeZ, wave: cfg.wave, seaY: cfg.seaY,
+    zoom: r6(cam.zoom), camDir: cam.camDir.map(r6), target: cam.target.map(r6),
+    sea: cfg.sea, anim: cfg.anim, retina: cfg.retina, foliageCutout: cfg.foliageCutout,
+    seaSize: cfg.seaSize, seaSegments: cfg.seaSegments, seaColor: cfg.seaColor, skyColor: cfg.skyColor,
+    walk: cfg.walk, eyeHeight: cfg.eyeHeight, walkSpeed: cfg.walkSpeed, walkIgnore: cfg.walkIgnore,
+    names: cfg.names, chat: cfg.chat, chatFade: cfg.chatFade, presenceUrl: cfg.presenceUrl, room: cfg.room || baseName
+  };
+}
+$('bHtml').onclick = () => {
+  try {
+    if (!glbBytes) return setStatus('Charge un modèle d\'abord');
+    const used = inspectGlb(glbBytes.buffer, baseName);
+    const names = ['three', 'three/addons/controls/OrbitControls.js', 'three/addons/loaders/GLTFLoader.js', 'three/addons/utils/BufferGeometryUtils.js'];
+    const dec = [];
+    if (used.has('KHR_draco_mesh_compression')) { names.push('three/addons/loaders/DRACOLoader.js'); dec.push(rep(DRACO_JS, '__DRACO_LIBS__', JSON.stringify(LIBS))); }
+    if (used.has('EXT_meshopt_compression')) { names.push('three/addons/libs/meshopt_decoder.module.js'); dec.push(MESHOPT_JS); }
+    const imports = {}; names.forEach(n => { imports[n] = IMPORTS[n]; });
+    const c = liveConfig();
+    const title = baseName + ' - trou ' + c.hole + ' amp ' + c.wave + ' y ' + c.seaY + ' zoom ' + c.zoom.toFixed(2);
+    let out = HTML_TEMPLATE;
+    out = rep(out, '__TITLE__', esc(title));
+    out = rep(out, '__SKY_HEX__', c.skyColor.toString(16).padStart(6, '0'));
+    out = rep(out, '__IMPORTMAP__', JSON.stringify({ imports }, null, 1));
+    out = rep(out, '__CONFIG__', JSON.stringify(c).replace(/<\//g, '<\\/'));
+    out = rep(out, '__DECODERS__', dec.join('\n'));
+    out = rep(out, '__GLB_B64__', b64(glbBytes));
+    download(baseName + ' - Offline.html', new Blob([out], { type: 'text/html' }));
+    setStatus('Export HTML OK • ' + (out.length / 2 ** 20).toFixed(2) + ' Mo');
+  } catch (e) { console.error(e); setStatus('Erreur export : ' + (e.message || e)); }
+};
+$('bPy').onclick = () => {
+  const c = liveConfig();
+  const n = v => Number.isInteger(v) ? v.toFixed(1) : String(r6(v));
+  const t = a => '(' + a.map(n).join(', ') + ')';
+  const B = v => v ? 'True' : 'False';
+  const col = v => '0x' + v.toString(16).toUpperCase().padStart(6, '0');
+  const block = '# <<DEFAULTS>>\n' +
+    'HOLE_RADIUS = ' + n(c.hole) + '\nHOLE_FADE = ' + n(c.holeFade) + '\nHOLE_X = ' + n(c.holeX) + '\nHOLE_Z = ' + n(c.holeZ) + '\nWAVE_AMP = ' + n(c.wave) + '\nSEA_Y = ' + n(c.seaY) +
+    '\nZOOM_RATIO = ' + n(c.zoom) + '\nCAM_DIR = ' + t(c.camDir) + '\nTARGET = ' + t(c.target) +
+    '\nSEA_ENABLED = ' + B(c.sea) + '\nANIM_ENABLED = ' + B(c.anim) + '\nRETINA_ENABLED = ' + B(c.retina) +
+    '\nFOLIAGE_CUTOUT = ' + n(c.foliageCutout) + '\nSEA_COLOR = ' + col(c.seaColor) + '\nSKY_COLOR = ' + col(c.skyColor) + '\nSEA_SEGMENTS = ' + Math.round(c.seaSegments) + '\nWALK_ENABLED = ' + B(c.walk) + '\nEYE_HEIGHT = ' + n(c.eyeHeight) + '\nWALK_SPEED = ' + n(c.walkSpeed) + '\nWALK_IGNORE = ' + JSON.stringify(c.walkIgnore) + '\nNAMES_ENABLED = ' + B(c.names) + '\nCHAT_ENABLED = ' + B(c.chat) + '\nCHAT_FADE = ' + n(c.chatFade) + '\nPRESENCE_URL = ' + JSON.stringify(c.presenceUrl) + '\nROOM = ' + JSON.stringify(cfg.room || '') +
+    '\n# <</DEFAULTS>>';
+  const py = PY_SOURCE.replace(/# <<DEFAULTS>>[\s\S]*?# <<\/DEFAULTS>>/, () => block);
+  download('glb2html.py', new Blob([py], { type: 'text/x-python' }));
+  setStatus('Script Python exporté • glb2html.py');
+};
+</script>
+</body>
+</html>

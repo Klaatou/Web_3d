@@ -7,18 +7,26 @@ function nameHas(name, tokens) {
   const low = name.toLowerCase();
   const words = name.replace(/([a-z0-9])([A-Z])/g, '$1 $2').toLowerCase().split(/[^a-z0-9\u00e0-\u00ff]+/).filter(Boolean);
   const compact = words.join('');
-  return tokens.some(t => /[^a-z0-9\u00e0-\u00ff]/.test(t) ? low.includes(t) : (compact.startsWith(t) || words.some(w => w.startsWith(t))));
+  return tokens.some(t => t[0] === '=' ? low === t.slice(1) : (/[^a-z0-9\u00e0-\u00ff]/.test(t) ? low.includes(t) : (compact.startsWith(t) || words.some(w => w.startsWith(t)))));
 }
 function parseIgnore(s) { return String(s || '').toLowerCase().split(/[,;]+/).map(x => x.trim()).filter(Boolean); }
 
 function describeObject(o) {
+  const sz = new THREE.Box3().setFromObject(o).getSize(new THREE.Vector3());
   const parents = []; for (let q = o.parent; q; q = q.parent) if (q.name) parents.push(q.name);
   const mats = (Array.isArray(o.material) ? o.material : [o.material]).map(m => m && m.name).filter(Boolean);
   const token = o.name || parents[0] || mats[0] || '';
   return {
-    name: token, mesh: o.name || '', parents, materials: mats, token,
-    text: 'mesh : ' + (o.name || '(sans nom)') + '\nparents : ' + (parents.slice(0, 3).join(' › ') || '(aucun)') + '\nmatériau : ' + (mats.join(', ') || '(sans nom)')
+    name: token, mesh: o.name || '', parents, materials: mats, token, size: sz.toArray(),
+    text: 'mesh : ' + (o.name || '(sans nom)') + '\nparents : ' + (parents.slice(0, 3).join(' › ') || '(aucun)') + '\nmatériau : ' + (mats.join(', ') || '(sans nom)') + '\ntaille (m) : ' + sz.toArray().map(v => v.toFixed(2)).join(' × ')
   };
+}
+
+function isIgnoredMesh(o, tokens) {
+  if (!tokens.length) return false;
+  for (let p = o; p; p = p.parent) if (nameHas(p.name, tokens)) return true;
+  const mats = Array.isArray(o.material) ? o.material : [o.material];
+  return mats.length > 0 && mats.every(m => !m || nameHas(m.name, tokens));
 }
 
 function isFoliageName(n) {
@@ -170,7 +178,7 @@ function disposeObject(root) {
 
 function createViewer(container, cfg0, loader) {
   const cfg = Object.assign({}, cfg0);
-  let onCfg = null, onWalk = null, onPick = null, onPresence = null, pickOrbit = false, walking = false;
+  let onCfg = null, onWalk = null, onPick = null, onPresence = null, onChat = null, pickOrbit = false, walking = false;
   const W = { pos: new THREE.Vector3(), spawn: new THREE.Vector3(), vy: 0, grounded: true, yaw: 0, pitch: 0, keys: new Set(), jumpReq: false, drag: false, saved: null, grid: null };
   let model = null, fit = 1, sea = null, seaMat = null, dirty = true, foliageMats = [];
 
@@ -514,13 +522,37 @@ function createViewer(container, cfg0, loader) {
   }
   function makeAvatar(name, color) {
     const g = new THREE.Group();
-    const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.28, 1.0, 4, 12), new THREE.MeshStandardMaterial({ color, roughness: 0.7 }));
-    body.position.y = 0.78; g.add(body);
-    const nose = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, 0.3), new THREE.MeshStandardMaterial({ color: 0xffffff }));
-    nose.position.set(0, 1.4, -0.3); g.add(nose);
-    const label = makeLabel(name); label.position.y = 2.15; g.add(label);
+    const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.26, 0.85, 4, 12), new THREE.MeshStandardMaterial({ color, roughness: 0.7 }));
+    body.position.y = 0.69; g.add(body);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.17, 16, 12), new THREE.MeshStandardMaterial({ color: 0xf0c8a0, roughness: 0.8 }));
+    head.position.y = 1.56; g.add(head);
+    const nose = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.12, 8), new THREE.MeshStandardMaterial({ color: 0x333333 }));
+    nose.rotation.x = -Math.PI / 2; nose.position.set(0, 1.56, -0.2); g.add(nose);
+    const label = makeLabel(name); label.position.y = 2.1; g.add(label);
     return g;
   }
+  function makeBubble(text) {
+    const m = document.createElement('canvas').getContext('2d'); m.font = '28px sans-serif';
+    const lines = []; let cur = '';
+    for (const w of String(text).split(/\s+/)) { const t = cur ? cur + ' ' + w : w; if (m.measureText(t).width > 470 && cur) { lines.push(cur); cur = w; } else cur = t; }
+    if (cur) lines.push(cur);
+    const shown = lines.slice(0, 4); if (lines.length > 4) shown[3] = shown[3].slice(0, 36) + '…';
+    const lh = 36, h = shown.length * lh + 20;
+    const cv = document.createElement('canvas'); cv.width = 512; cv.height = h;
+    const g = cv.getContext('2d');
+    g.fillStyle = 'rgba(255,255,255,0.95)'; g.fillRect(0, 0, 512, h);
+    g.strokeStyle = '#000'; g.lineWidth = 4; g.strokeRect(2, 2, 508, h - 4);
+    g.fillStyle = '#000'; g.font = '28px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    shown.forEach((l, i) => g.fillText(l, 256, 10 + lh / 2 + i * lh, 480));
+    const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, fog: false }));
+    sp.scale.set(2.56, h * 0.005, 1);
+    sp.position.y = 2.4 + h * 0.0025;
+    sp.userData.isBubble = true;
+    return sp;
+  }
+  function removeBubble(q) { if (q.bubble) { q.g.remove(q.bubble); q.bubble.material.map.dispose(); q.bubble.material.dispose(); q.bubble = null; } }
+  function showBubble(q, text) { removeBubble(q); q.bubble = makeBubble(text); q.bubbleUntil = cfg.chatFade > 0 ? performance.now() + cfg.chatFade * 1000 : Infinity; q.g.add(q.bubble); }
   function disposeAvatar(g) {
     scene.remove(g);
     g.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) { if (o.material.map) o.material.map.dispose(); o.material.dispose(); } });
@@ -536,9 +568,18 @@ function createViewer(container, cfg0, loader) {
   function clearPeers() { for (const id of [...P.peers.keys()]) removePeer(id); }
   function presenceMsg(m) {
     if (!m || typeof m !== 'object') return;
-    if (m.t === 'welcome') { P.id = m.id; (m.peers || []).forEach(addPeer); pStatus('online'); }
-    else if (m.t === 'join') { addPeer(m); pStatus('online'); }
-    else if (m.t === 'leave') { removePeer(m.id); pStatus('online'); }
+    if (m.t === 'welcome') {
+      P.id = m.id; (m.peers || []).forEach(addPeer); pStatus('online');
+      if (onChat && cfg.chat !== false) (m.history || []).forEach(h => onChat({ id: h.id, name: cleanName(h.name) || '?', text: String(h.text || '').slice(0, 200), self: false, history: true }));
+    }
+    else if (m.t === 'join') { addPeer(m); pStatus('online'); if (onChat && cfg.chat !== false) onChat({ system: true, text: (cleanName(m.name) || '?') + ' a rejoint' }); }
+    else if (m.t === 'leave') { const q = P.peers.get(m.id); removePeer(m.id); pStatus('online'); if (q && onChat && cfg.chat !== false) onChat({ system: true, text: q.name + ' est parti' }); }
+    else if (m.t === 'chat' && cfg.chat !== false) {
+      const text = String(m.text || '').slice(0, 200), q = P.peers.get(m.id);
+      if (q) showBubble(q, text);
+      if (onChat) onChat({ id: m.id, name: cleanName(m.name) || (q && q.name) || '?', text, self: m.id === P.id, history: false });
+    }
+    else if (m.t === 'notice') { if (onChat && cfg.chat !== false) onChat({ system: true, text: String(m.text || '').slice(0, 120) }); }
     else if (m.t === 'pos') {
       const q = P.peers.get(m.id);
       if (q && Array.isArray(m.p) && m.p.every(Number.isFinite)) {
@@ -548,7 +589,7 @@ function createViewer(container, cfg0, loader) {
     }
     else if (m.t === 'name') {
       const q = P.peers.get(m.id);
-      if (q) { q.name = cleanName(m.name); const old = q.g.children.find(o => o.isSprite); if (old) { q.g.remove(old); old.material.map.dispose(); old.material.dispose(); } const l = makeLabel(q.name); l.position.y = 2.15; q.g.add(l); }
+      if (q) { q.name = cleanName(m.name); const old = q.g.children.find(o => o.isSprite && !o.userData.isBubble); if (old) { q.g.remove(old); old.material.map.dispose(); old.material.dispose(); } const l = makeLabel(q.name); l.position.y = 2.1; q.g.add(l); }
     }
     else if (m.t === 'full') { pStatus('full'); }
     dirty = true;
@@ -579,6 +620,7 @@ function createViewer(container, cfg0, loader) {
     if (P.peers.size) {
       const a = 1 - Math.exp(-dt * 10);
       for (const q of P.peers.values()) {
+        if (q.bubble && now > q.bubbleUntil) removeBubble(q);
         if (!q.g.visible) continue;
         q.g.position.x += (q.tx - q.g.position.x) * a; q.g.position.y += (q.ty - q.g.position.y) * a; q.g.position.z += (q.tz - q.g.position.z) * a;
         const d = Math.atan2(Math.sin(q.tyaw - q.g.rotation.y), Math.cos(q.tyaw - q.g.rotation.y));
@@ -607,9 +649,15 @@ function createViewer(container, cfg0, loader) {
 
   return {
     scene, camera, renderer, controls, cfg, setCfg, setModel, loadBuffer, frame, getCameraState, setZoom,
-    get model() { return model; }, get sea() { return sea; }, set onCfg(f) { onCfg = f; }, set onWalk(f) { onWalk = f; }, set onPick(f) { onPick = f; }, set pickOrbit(v) { pickOrbit = !!v; }, set onPresence(f) { onPresence = f; },
+    get model() { return model; }, get sea() { return sea; }, set onCfg(f) { onCfg = f; }, set onWalk(f) { onWalk = f; }, set onPick(f) { onPick = f; }, set pickOrbit(v) { pickOrbit = !!v; }, set onPresence(f) { onPresence = f; }, set onChat(f) { onChat = f; },
+    sendChat(text) {
+      const t = String(text || '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, 200);
+      if (!t || !P.ws || P.ws.readyState !== 1 || !P.id) return false;
+      P.ws.send(JSON.stringify({ t: 'chat', text: t })); return true;
+    },
+    releaseKeys() { W.keys.clear(); },
     setName(n) { P.name = cleanName(n); if (P.ws && P.ws.readyState === 1) P.ws.send(JSON.stringify({ t: 'name', name: P.name })); },
-    getPresence() { return { state: P.state, id: P.id, peers: [...P.peers.values()].map(q => ({ id: q.id, name: q.name, pos: q.g.position.toArray(), visible: q.g.visible })) }; }, get walking() { return walking; },
+    getPresence() { return { state: P.state, id: P.id, peers: [...P.peers.values()].map(q => ({ id: q.id, name: q.name, pos: q.g.position.toArray(), visible: q.g.visible, bubble: !!q.bubble })) }; }, get walking() { return walking; },
     walkTick(dt) { if (walking) walkStep(dt); },
     refreshCollision() { if (walking && model) W.grid = buildCollisionGrid(model, 3, parseIgnore(cfg.walkIgnore)); },
     teleportNdc(nx, ny) { return walkTeleport(nx, ny); },
