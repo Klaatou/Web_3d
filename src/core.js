@@ -500,7 +500,12 @@ function createViewer(container, cfg0, loader) {
       }
     }
     if (!walking) {
-      if (pickOrbit && onPick && downPos && Math.hypot(e.clientX - downPos[0], e.clientY - downPos[1]) < 6) doPick(e, false);
+      const still = !!downPos && Math.hypot(e.clientX - downPos[0], e.clientY - downPos[1]) < 6;
+      if (still) {
+        if (now - lastClick.t < 400 && Math.hypot(e.clientX - lastClick.x, e.clientY - lastClick.y) < 12) { lastClick.t = 0; if (setLanding(e)) return; }
+        else lastClick = { t: now, x: e.clientX, y: e.clientY };
+      }
+      if (pickOrbit && onPick && still) doPick(e, false);
       return;
     }
     if (now - lastClick.t < 400 && (locked || Math.hypot(e.clientX - lastClick.x, e.clientY - lastClick.y) < 12)) {
@@ -812,12 +817,52 @@ function createViewer(container, cfg0, loader) {
     if (e.code === 'KeyE' && !e.repeat && walking && !typing(e) && nearZone && onZone) fireZone(nearZone, 'key');
   });
 
+  // ---- repère d'atterrissage : la cible de la vue globale = l'endroit où F pose l'avatar
+  let onLanding = null;
+  const landing = new THREE.Group(); landing.visible = false; scene.add(landing);
+  {
+    const bm = o => Object.assign({ transparent: true, depthTest: false, fog: false }, o);
+    const pin = new THREE.Mesh(new THREE.ConeGeometry(0.35, 1.1, 12), new THREE.MeshBasicMaterial(bm({ color: 0x000000 })));
+    pin.rotation.x = Math.PI; pin.position.y = 0.55; landing.add(pin);
+    const ro = new THREE.Mesh(new THREE.RingGeometry(0.55, 0.8, 32), new THREE.MeshBasicMaterial(bm({ color: 0x000000, side: THREE.DoubleSide })));
+    ro.rotation.x = -Math.PI / 2; ro.position.y = 0.02; landing.add(ro);
+    const ri = new THREE.Mesh(new THREE.RingGeometry(0.4, 0.55, 32), new THREE.MeshBasicMaterial(bm({ color: 0xffffff, side: THREE.DoubleSide })));
+    ri.rotation.x = -Math.PI / 2; ri.position.y = 0.025; landing.add(ri);
+    const lab = makeLabel('Atterrissage (F)'); lab.material.depthTest = false; lab.position.y = 1.9; landing.add(lab);
+  }
+  function landingTick() {
+    const show = !!model && !walking && cfg.landingMarker !== false;
+    if (landing.visible !== show) { landing.visible = show; dirty = true; }
+    if (!show) return;
+    landing.position.copy(controls.target);
+    landing.scale.setScalar(Math.max(1, camera.position.distanceTo(controls.target) / 28));
+  }
+  function setLanding(e) {
+    if (!model) return false;
+    const r = dom.getBoundingClientRect();
+    camera.updateMatrixWorld(true);
+    tpV.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); tpRay.setFromCamera(tpV, camera);
+    const tokens = parseIgnore(cfg.walkIgnore);
+    for (const h of tpRay.intersectObject(model, true)) {
+      const o = h.object;
+      if (!o.isMesh || !o.visible) continue;
+      const m = Array.isArray(o.material) ? o.material[h.face ? h.face.materialIndex : 0] : o.material;
+      if (m && (isFoliageName(m.name) || nameHas(m.name, tokens))) continue;
+      if (isIgnoredMesh(o, tokens)) continue;
+      controls.target.copy(h.point); controls.update(); dirty = true;
+      if (onLanding) onLanding(h.point.toArray());
+      return true;
+    }
+    return false;
+  }
+
   const clock = new THREE.Clock();
   renderer.setAnimationLoop(() => {
     const dt = Math.min(clock.getDelta(), 0.1);
     let moved = false;
     if (walking) { walkStep(dt); moved = true; } else moved = controls.update();
     presenceTick(dt, performance.now());
+    landingTick();
     if (seaMat && seaMat.uniforms) { seaMat.uniforms.uTime.value = clock.elapsedTime; dirty = true; }
     if (dirty || moved) { renderer.render(scene, camera); dirty = false; }
   });
@@ -826,7 +871,7 @@ function createViewer(container, cfg0, loader) {
     scene, camera, renderer, controls, cfg, setCfg, setModel, loadBuffer, frame, getCameraState, setZoom,
     get model() { return model; }, get sea() { return sea; }, set onCfg(f) { onCfg = f; }, set onWalk(f) { onWalk = f; }, set onPick(f) { onPick = f; }, set pickOrbit(v) { pickOrbit = !!v; }, set onPresence(f) { onPresence = f; }, set onChat(f) { onChat = f; },
     setZones, zoneSelect, zonePickAt, getZones() { return zones.map(z => Object.assign({}, z)); }, set onZone(f) { onZone = f; }, set onNear(f) { onNear = f; },
-    getName() { return P.name; }, set onName(f) { onName = f; },
+    getName() { return P.name; }, set onLanding(f) { onLanding = f; }, set onName(f) { onName = f; },
     spectate(on) { spectateOn = !!on; if (spectateOn) { if (cfg.presenceUrl && !P.ws) presenceConnect(); } else if (!walking) presenceDisconnect(); },
     sendChat(text) {
       const t = String(text || '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, 200);
