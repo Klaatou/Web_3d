@@ -178,7 +178,7 @@ function disposeObject(root) {
 
 function createViewer(container, cfg0, loader) {
   const cfg = Object.assign({}, cfg0);
-  let onCfg = null, onWalk = null, onPick = null, onPresence = null, onChat = null, pickOrbit = false, walking = false;
+  let onCfg = null, onWalk = null, onPick = null, onPresence = null, onChat = null, onName = null, spectateOn = false, pickOrbit = false, walking = false;
   const W = { pos: new THREE.Vector3(), spawn: new THREE.Vector3(), vy: 0, grounded: true, yaw: 0, pitch: 0, keys: new Set(), jumpReq: false, drag: false, saved: null, grid: null };
   let model = null, fit = 1, sea = null, seaMat = null, dirty = true, foliageMats = [];
 
@@ -414,7 +414,7 @@ function createViewer(container, cfg0, loader) {
     zoneInside.clear(); nearZone = null;
     for (const z of zones) if (z.type === 'portal' && z.trigger !== 'click' && Math.hypot(W.pos.x - z.x, W.pos.z - z.z) <= z.radius) zoneInside.add(z.id);
     walkStep(0); dirty = true;
-    presenceConnect();
+    presenceEnter();
     if (onWalk) onWalk(true);
     return true;
   }
@@ -428,7 +428,7 @@ function createViewer(container, cfg0, loader) {
     controls.enabled = true; controls.update();
     W.grid = null; dirty = true;
     zoneInside.clear(); if (nearZone) { nearZone = null; if (onNear) onNear(null); }
-    presenceDisconnect();
+    presenceLeave();
     if (onWalk) onWalk(false);
   }
   const typing = e => { const n = e.target && e.target.tagName; return n === 'INPUT' || n === 'TEXTAREA' || n === 'SELECT'; };
@@ -496,7 +496,7 @@ function createViewer(container, cfg0, loader) {
       const still = !!downPos && Math.hypot(e.clientX - downPos[0], e.clientY - downPos[1]) < 6;
       if (zones.length && onZone && (walking || (still && !zoneEditor))) {
         const zc = zoneFromClick(cnx, cny, walking ? 14 : 0);
-        if (zc) { onZone(zc, 'click'); return; }
+        if (zc) { fireZone(zc, 'click'); return; }
       }
     }
     if (!walking) {
@@ -517,10 +517,21 @@ function createViewer(container, cfg0, loader) {
   });
 
   // ---- présence : autres visiteurs (WebSocket)
+  const uid = (() => {
+    let u = ''; try { u = localStorage.getItem('glb2html_uid') || ''; } catch (_) {}
+    if (u.length < 16) {
+      const a = new Uint8Array(16);
+      if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(a); else for (let i = 0; i < 16; i++) a[i] = Math.random() * 256;
+      u = [...a].map(b => b.toString(16).padStart(2, '0')).join('');
+      try { localStorage.setItem('glb2html_uid', u); } catch (_) {}
+    }
+    return u;
+  })();
   const P = { ws: null, id: null, peers: new Map(), last: 0, name: '', state: 'off', retry: 0, timer: 0, sent: [0, 0, 0, 0] };
   const r2 = v => Math.round(v * 100) / 100;
   const cleanName = s => String(s || '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 24);
-  function pStatus(state) { P.state = state; if (onPresence) onPresence({ state, count: state === 'online' ? P.peers.size + 1 : 0 }); }
+  function pStatus(state) { P.state = state; if (onPresence) onPresence({ state, count: state === 'online' ? P.peers.size + (walking ? 1 : 0) : 0, spectator: !walking }); }
+  function setMyName(n) { n = cleanName(n); if (!n) return; P.name = n; if (onName) onName(n); }
   function makeLabel(text) {
     const cv = document.createElement('canvas'); cv.width = 256; cv.height = 64;
     const g = cv.getContext('2d');
@@ -542,6 +553,9 @@ function createViewer(container, cfg0, loader) {
     const nose = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.12, 8), new THREE.MeshStandardMaterial({ color: 0x333333 }));
     nose.rotation.x = -Math.PI / 2; nose.position.set(0, 1.56, -0.2); g.add(nose);
     const label = makeLabel(name); label.position.y = 2.1; g.add(label);
+    const beacon = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.8, 10), new THREE.MeshBasicMaterial({ color: 0x000000, depthTest: false, transparent: true, fog: false }));
+    beacon.rotation.x = Math.PI; beacon.position.y = 3.0; beacon.visible = false; g.add(beacon);
+    g.userData.beacon = beacon;
     return g;
   }
   function makeBubble(text) {
@@ -583,6 +597,8 @@ function createViewer(container, cfg0, loader) {
     if (!m || typeof m !== 'object') return;
     if (m.t === 'welcome') {
       P.id = m.id; (m.peers || []).forEach(addPeer); pStatus('online');
+      if (m.name) setMyName(m.name);
+      if (m.role === 'spectator' && walking && P.ws) P.ws.send(JSON.stringify({ t: 'role', walker: true, name: P.name }));
       if (onChat && cfg.chat !== false) (m.history || []).forEach(h => onChat({ id: h.id, name: cleanName(h.name) || '?', text: String(h.text || '').slice(0, 200), self: false, history: true }));
     }
     else if (m.t === 'join') { addPeer(m); pStatus('online'); if (onChat && cfg.chat !== false) onChat({ system: true, text: (cleanName(m.name) || '?') + ' a rejoint' }); }
@@ -604,6 +620,7 @@ function createViewer(container, cfg0, loader) {
       const q = P.peers.get(m.id);
       if (q) { q.name = cleanName(m.name); const old = q.g.children.find(o => o.isSprite && !o.userData.isBubble); if (old) { q.g.remove(old); old.material.map.dispose(); old.material.dispose(); } const l = makeLabel(q.name); l.position.y = 2.1; q.g.add(l); }
     }
+    else if (m.t === 'you') { setMyName(m.name); }
     else if (m.t === 'full') { pStatus('full'); }
     dirty = true;
   }
@@ -611,17 +628,26 @@ function createViewer(container, cfg0, loader) {
     if (!cfg.presenceUrl || P.ws) return;
     pStatus('connecting');
     let ws;
-    try { ws = new WebSocket(cfg.presenceUrl); } catch (_) { pStatus('error'); return; }
+    try { ws = new WebSocket(String(cfg.presenceUrl).trim().replace(/^(wss?:\/\/)0\.0\.0\.0(?=[:/]|$)/i, (m, p) => p + '127.0.0.1')); } catch (_) { pStatus('error'); return; }
     P.ws = ws;
-    ws.onopen = () => { P.retry = 0; ws.send(JSON.stringify({ t: 'hello', room: cfg.room || '', name: P.name })); };
+    ws.onopen = () => { P.retry = 0; ws.send(JSON.stringify({ t: 'hello', room: cfg.room || cfg.roomDefault || '', name: P.name, uid, spectator: !walking })); };
     ws.onmessage = ev => { let m; try { m = JSON.parse(ev.data); } catch (_) { return; } presenceMsg(m); };
     ws.onerror = () => {};
     ws.onclose = () => {
       if (P.ws !== ws) return;
       P.ws = null; P.id = null; clearPeers();
-      if (walking && P.state !== 'full') { pStatus('error'); clearTimeout(P.timer); P.timer = setTimeout(presenceConnect, Math.min(15000, 1500 * (++P.retry))); }
+      if ((walking || spectateOn) && P.state !== 'full') { pStatus('error'); clearTimeout(P.timer); P.timer = setTimeout(presenceConnect, Math.min(15000, 1500 * (++P.retry))); }
       else if (!walking) pStatus('off');
     };
+  }
+  function presenceEnter() {
+    if (!cfg.presenceUrl) return;
+    if (P.ws && P.ws.readyState === 1 && P.id) { P.ws.send(JSON.stringify({ t: 'role', walker: true, name: P.name })); pStatus('online'); }
+    else if (!P.ws) presenceConnect();
+  }
+  function presenceLeave() {
+    if (spectateOn && P.ws && P.ws.readyState === 1) { P.ws.send(JSON.stringify({ t: 'role', walker: false })); pStatus('online'); }
+    else presenceDisconnect();
   }
   function presenceDisconnect() {
     clearTimeout(P.timer);
@@ -638,6 +664,10 @@ function createViewer(container, cfg0, loader) {
         q.g.position.x += (q.tx - q.g.position.x) * a; q.g.position.y += (q.ty - q.g.position.y) * a; q.g.position.z += (q.tz - q.g.position.z) * a;
         const d = Math.atan2(Math.sin(q.tyaw - q.g.rotation.y), Math.cos(q.tyaw - q.g.rotation.y));
         q.g.rotation.y += d * a;
+        const dist = camera.position.distanceTo(q.g.position), k = Math.max(1, dist / 28);
+        const lab = q.g.children.find(o => o.isSprite && !o.userData.isBubble), bc = q.g.userData.beacon;
+        if (lab) { lab.scale.set(1.6 * k, 0.4 * k, 1); lab.position.y = 2.1 + 0.55 * (k - 1); }
+        if (bc) { bc.visible = dist > 14; bc.scale.setScalar(k); bc.position.y = 3.0 + 0.9 * (k - 1); }
       }
       dirty = true;
     }
@@ -739,6 +769,10 @@ function createViewer(container, cfg0, loader) {
     if (g) { selBox = new THREE.BoxHelper(g, 0x000000); selBox.material.depthTest = false; selBox.material.transparent = true; scene.add(selBox); }
     dirty = true;
   }
+  function fireZone(z, how) {
+    if (walking && P.ws && P.ws.readyState === 1 && P.id) P.ws.send(JSON.stringify({ t: 'zone', id: z.id, type: z.type, label: z.label }));
+    if (onZone) onZone(z, how);
+  }
   function zoneFromClick(nx, ny, maxDist) {
     if (!zoneHit.length) return null;
     camera.updateMatrixWorld(true);
@@ -764,7 +798,7 @@ function createViewer(container, cfg0, loader) {
       const d = Math.hypot(W.pos.x - z.x, W.pos.z - z.z), dy = W.pos.y - z.y;
       if (z.type === 'portal' && z.trigger !== 'click') {
         const inside = d <= z.radius && dy > -1.5 && dy < 3.5, was = zoneInside.has(z.id);
-        if (inside && !was) { zoneInside.add(z.id); if (onZone) onZone(z, 'enter'); }
+        if (inside && !was) { zoneInside.add(z.id); fireZone(z, 'enter'); }
         else if (!inside && was) zoneInside.delete(z.id);
       }
       if (z.trigger !== 'enter') {
@@ -775,7 +809,7 @@ function createViewer(container, cfg0, loader) {
     if (best !== nearZone) { nearZone = best; if (onNear) onNear(best); }
   }
   window.addEventListener('keydown', e => {
-    if (e.code === 'KeyE' && !e.repeat && walking && !typing(e) && nearZone && onZone) onZone(nearZone, 'key');
+    if (e.code === 'KeyE' && !e.repeat && walking && !typing(e) && nearZone && onZone) fireZone(nearZone, 'key');
   });
 
   const clock = new THREE.Clock();
@@ -792,7 +826,8 @@ function createViewer(container, cfg0, loader) {
     scene, camera, renderer, controls, cfg, setCfg, setModel, loadBuffer, frame, getCameraState, setZoom,
     get model() { return model; }, get sea() { return sea; }, set onCfg(f) { onCfg = f; }, set onWalk(f) { onWalk = f; }, set onPick(f) { onPick = f; }, set pickOrbit(v) { pickOrbit = !!v; }, set onPresence(f) { onPresence = f; }, set onChat(f) { onChat = f; },
     setZones, zoneSelect, zonePickAt, getZones() { return zones.map(z => Object.assign({}, z)); }, set onZone(f) { onZone = f; }, set onNear(f) { onNear = f; },
-    getName() { return P.name; },
+    getName() { return P.name; }, set onName(f) { onName = f; },
+    spectate(on) { spectateOn = !!on; if (spectateOn) { if (cfg.presenceUrl && !P.ws) presenceConnect(); } else if (!walking) presenceDisconnect(); },
     sendChat(text) {
       const t = String(text || '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, 200);
       if (!t || !P.ws || P.ws.readyState !== 1 || !P.id) return false;
