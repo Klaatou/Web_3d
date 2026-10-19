@@ -153,12 +153,12 @@ async def verifier(br, url, etiquette):
     _, cur, t = await sur(pg, centre)
     rapport(cur == "pointer" and t is not None and t.split("\n")[0] == "Boîte liée" and t.split("\n")[1] == URL_L, f"{etiquette} : survol de l'élément lié : main + infobulle (nom, adresse exacte)", (cur, t))
     # survol : marqueur au sol (lien, portail, commande)
-    for ident, pos, attendu in [("sol", [-3, 15.1, 3], ("Lien au sol", URL_M)), ("nom", [0, 15.1, 7], ("Nom permanent", URL_N)),
-                                ("ha", [3, 15.1, 6], ("Lumière salon", "Commande : Lumière salon")),
-                                ("enterre", [-6, 15.1, 7], ("Enterré", "https://exemple.org/enterre")),
-                                ("ent", [3, 15.1, 2], ("Portail marche", "Région : cette région #arr")),
-                                ("por", [-3, 15.1, 7], ("Portail", "Région : https://autre.example/region.html #quai")),
-                                ("pan", [-6, 15.1, 3], ("Ancien panneau", "https://exemple.org/pan"))]:
+    for ident, pos, attendu in [("sol", [-3, 15.005, 3], ("Lien au sol", URL_M)), ("nom", [0, 15.005, 7], ("Nom permanent", URL_N)),
+                                ("ha", [3, 15.005, 6], ("Lumière salon", "Commande : Lumière salon")),
+                                ("enterre", [-6, 15.005, 7], ("Enterré", "https://exemple.org/enterre")),
+                                ("ent", [3, 15.005, 2], ("Portail marche", "Région : cette région #arr")),
+                                ("por", [-3, 15.005, 7], ("Portail", "Région : https://autre.example/region.html #quai")),
+                                ("pan", [-6, 15.005, 3], ("Ancien panneau", "https://exemple.org/pan"))]:
         _, cur, t = await sur(pg, pos)
         rapport(cur == "pointer" and t is not None and tuple(t.split("\n")) == attendu, f"{etiquette} : survol du marqueur « {ident} » : main + infobulle", (cur, t))
     rapport("secret" not in (t or "") and "homeassistant" not in await pg.evaluate("document.getElementById('zoneTip').innerText"), f"{etiquette} : l'infobulle d'une commande n'affiche pas le webhook")
@@ -167,7 +167,7 @@ async def verifier(br, url, etiquette):
     pos = await pg.evaluate("Object.fromEntries(window.__viewer.scene.children.flatMap(c => c.children).filter(g => g.userData && g.userData.zoneId).map(g => [g.userData.zoneId, g.position.y]))")
     rapport(abs(pos["enterre"] - 14.4) < 0.01 and abs(pos["surobjet"] - 15) < 0.01 and abs(pos["cache"]) < 0.01, f"{etiquette} : le marqueur reste exactement à la position de la zone (sous le sol, sous un objet)", pos)
     # zone posée volontairement sous le sol : marqueur visible et survolable (ce qu'on voit est survolable)
-    _, cur, t = await sur(pg, [6, 0.1, 4])
+    _, cur, t = await sur(pg, [6, 0.005, 4])
     rapport(cur == "pointer" and t is not None and t.startswith("Sous le sol"), f"{etiquette} : zone sous le sol : marqueur survolable", (cur, t))
     # hors zone : plus d'infobulle, curseur normal
     await pg.mouse.move(12, 12)
@@ -177,7 +177,7 @@ async def verifier(br, url, etiquette):
     rapport(await tip(pg) is None and await pg.evaluate("document.querySelector('canvas').style.cursor") != "pointer", f"{etiquette} : hors zone, infobulle masquée et curseur normal")
     # clic = suivre le lien
     await pg.evaluate("window.__opened.length = 0")
-    pt, _, _ = await sur(pg, [-3, 15.1, 3])
+    pt, _, _ = await sur(pg, [-3, 15.005, 3])
     await pg.mouse.click(*pt)
     await pg.wait_for_timeout(300)
     rapport(await pg.evaluate("window.__opened") == [URL_M], f"{etiquette} : clic sur le marqueur = ouvre le lien", await pg.evaluate("window.__opened"))
