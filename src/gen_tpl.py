@@ -114,7 +114,7 @@ def clean_zones(zones, profile):
             "trigger": (z.get("trigger") if z.get("trigger") in ("click", "enter", "both") else "click") if t == "portal" else "click",
             "radius": num(z.get("radius"), 2, 0.5, 50), "w": num(z.get("w"), 2.4, 0.5, 10), "h": num(z.get("h"), 1.2, 0.3, 6),
             "target": str(z.get("target") or "")[:600], "spawn": _slug(z.get("spawn")),
-            "confirm": bool(z.get("confirm")), "private": bool(z.get("private")),
+            "confirm": bool(z.get("confirm")), "private": bool(z.get("private")), "showName": bool(z.get("showName")),
             "mesh": "" if t == "spawn" else re.sub(r"[\x00-\x1f]", "", str(z.get("mesh") or ""))[:200],
         })
     return out

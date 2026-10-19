@@ -2,6 +2,15 @@
 
 Les dates sont au format jj/mm/aaaa.
 
+## v24 (19/10/2026)
+- Page exportée (autonome et modulaire) : plus aucun cylindre pour les zones lien web, commande HA et portail. Zone liée à un élément : aucun objet ajouté ; au survol, curseur main, léger contour de l'élément et infobulle (nom + destination : adresse web, « Région : … », « Commande : … » ; jamais le webhook). Zone non liée : marqueur discret au sol (disque plat de 0,4 m + anneau fin, semi-transparent) avec le même survol ; la surface de visée est plus large que le marqueur et masquée par le relief. Clic = suivre le lien. Plus de panneau de texte permanent : le nom ne s'affiche qu'au survol ou à portée (« E : … »).
+- Nouvelle option par zone « Toujours afficher le nom » (champ `showName`, décochée par défaut ; viewer, `clean_zones`, `.zones.json`, `.reglages.json`) : nom permanent au-dessus de l'élément ou du marqueur ; panneau complet pour une zone non liée de forme « panneau ».
+- Viewer (édition) : cylindres conservés et toujours visibles pour toutes les zones non liées, panneaux compris (portée), contour pour les zones liées. Pas d'infobulle en édition.
+- Changement de comportement : les zones non liées de forme « panneau » ne sont plus dessinées dans la page exportée sauf avec « Toujours afficher le nom ».
+- La page exportée expose `window.__viewer` (comme le viewer) pour les tests.
+- Tests : nouveau `tests/v24.py` (aucun mesh de cylindre, zone liée sans objet ajouté, marqueurs, infobulle avec destination exacte, webhook non affiché, marqueur masqué par le relief, clic, nom permanent, cylindres du viewer, case à cocher), en modulaire et en autonome.
+- `MODE_EMPLOI.md` : nouvelle section 2 bis.
+
 ## v23 (19/10/2026)
 - Viewer, clic : un clic simple sur le modèle n'a plus d'effet sur la cible caméra ni sur le cercle d'atterrissage, dans aucun mode. Il affiche le nom de l'élément ET les coordonnées du point touché (x, y, z, 2 décimales) dans « picked » et la barre d'état. Seul le double-clic choisit la cible / l'atterrissage, comme la page exportée.
 - Viewer, zone : bouton « Placer ici (dernier point cliqué) » (copie x, y, z du dernier clic simple).

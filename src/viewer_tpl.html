@@ -386,7 +386,7 @@ function setRotation(deg) {
   setStatus('Région tournée de ' + Math.round(d * 180 / Math.PI) + '° : ' + list.length + ' zone(s) déplacée(s). Recapture la vignette.');
 }
 function zoneDefaults(type) {
-  const base = { type, label: '', shape: 'ring', trigger: 'click', radius: 2, w: 2.4, h: 1.2, target: '', spawn: '', confirm: false, private: false, yaw: 0, mesh: '' };
+  const base = { type, label: '', shape: 'ring', trigger: 'click', radius: 2, w: 2.4, h: 1.2, target: '', spawn: '', confirm: false, private: false, showName: false, yaw: 0, mesh: '' };
   if (type === 'portal') return Object.assign(base, { label: 'Portail', trigger: 'enter' });
   if (type === 'url') return Object.assign(base, { label: 'Lien', shape: 'board', target: 'https://' });
   if (type === 'ha') return Object.assign(base, { label: 'Commande', shape: 'board', target: 'http://homeassistant.local:8123/api/webhook/', private: true, confirm: true });
@@ -447,6 +447,7 @@ function renderZoneList() {
       if (!z.mesh) d.appendChild(inp('Forme', 'select', z.shape, v => upd({ shape: v }, true), [['ring', 'cercle au sol'], ['board', 'panneau']]));
       d.appendChild(inp(z.mesh ? 'Distance de déclenchement : touche E ou approche (m, depuis l\'élément)' : (z.shape === 'board' ? 'Portée de la touche E (m)' : 'Rayon (m)'), 'number', z.radius, v => upd({ radius: v })));
       if (z.shape === 'board' && !z.mesh) { d.appendChild(inp('Largeur du panneau (m)', 'number', z.w, v => upd({ w: v }))); d.appendChild(inp('Hauteur du panneau (m)', 'number', z.h, v => upd({ h: v }))); }
+      d.appendChild(inp('Toujours afficher le nom (sinon : au survol ou à portée)', 'checkbox', z.showName, v => upd({ showName: v })));
       d.appendChild(inp('Privé (absent de l\'export public)', 'checkbox', z.private, v => upd({ private: v }, true)));
     }
     d.appendChild(inp('Position X', 'number', z.x, v => upd({ x: v }))); d.appendChild(inp('Position Y', 'number', z.y, v => upd({ y: v })));

@@ -1,4 +1,4 @@
-# Mode d'emploi : zones, portails et points d'arrivée (v23)
+# Mode d'emploi : zones, portails et points d'arrivée (v24)
 
 ## 1. La règle qui explique 90 % des pannes
 
@@ -38,7 +38,26 @@ Les portails ne fonctionnent qu'en promenade.
 Deux cercles à ne pas confondre :
 
 - le **petit cercle** (noir et blanc, posé sur le sol) est le **repère d'atterrissage** : il montre où l'avatar apparaîtra en appuyant sur F. Il suit la cible, donc il ne change qu'au double-clic ;
-- le **grand cercle** (cylindre translucide avec son nom) est une **zone** de forme « cercle au sol » : son rayon est celui de la fiche de la zone.
+- le **grand cercle** (cylindre translucide avec son nom) est une **zone** : son rayon est celui de la fiche de la zone. **Il n'existe que dans le viewer** (voir § 2 bis).
+
+## 2 bis. Ce que voit le visiteur : les liens se comportent comme sur le web
+
+Dans le **viewer** (édition), chaque zone non liée garde son **cylindre translucide**, toujours visible, pour la repérer et la positionner (les panneaux aussi) ; une zone liée à un élément y est entourée d'un contour. Rien de tout cela n'est exporté.
+
+Dans la **page exportée** (autonome ou modulaire), il n'y a **aucun cylindre** pour les zones lien web, commande Home Assistant et portail :
+
+| Zone | Ce qui est ajouté dans la scène | Au survol |
+|---|---|---|
+| **liée à un élément** | **rien** | le curseur devient une **main**, l'élément reçoit un léger **contour**, une **infobulle** affiche le nom et la destination |
+| **non liée** | un **marqueur discret au sol** (petit disque plat de 0,4 m, semi-transparent, avec un anneau fin) | même chose : main, infobulle, le marqueur s'éclaircit |
+
+L'infobulle donne le **nom** puis la **destination** : l'adresse web pour un lien, « Région : adresse (#arrivée) » pour un portail (« cette région » si la destination est vide), « Commande : nom » pour une commande Home Assistant (l'adresse du webhook n'est **jamais** affichée). Un **clic** suit le lien. Un portail réglé « en marchant dedans » reste sans survol (il se déclenche seul).
+
+Aucun panneau de texte permanent : le nom ne s'affiche qu'au survol, ou quand on est à portée (« E : … » en bas de l'écran).
+
+**Toujours afficher le nom** (fiche de la zone, **décochée par défaut**) : garde un nom visible en permanence, au-dessus de l'élément ou du marqueur ; pour une zone non liée de forme « panneau », c'est le panneau complet qui est affiché.
+
+*Changement depuis la v23* : les zones non liées de forme « panneau » ne sont plus dessinées dans la page exportée, sauf si **Toujours afficher le nom** est coché.
 
 ## 3. Poser une zone
 

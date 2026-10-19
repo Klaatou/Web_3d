@@ -39,6 +39,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 19/10/2026 |  | v21 | v21 : correctif « Lier à un élément » (mode exclusif, boîte en coordonnées monde, mesh nommé touché, refus au-delà de 30 m, contour fil de fer) |
 | 19/10/2026 |  | v22 | v22 : portail vers un point d'arrivée de la même région, mode d'emploi |
 | 19/10/2026 |  | v23 | v23 : clic simple sans effet sur la cible, liaison au morceau cliqué (nom#index, limite 10 m), rotation de la région, mode d'emploi |
+| 19/10/2026 |  | v24 | v24 : les liens se comportent comme sur le web (plus de cylindres dans la page exportée, marqueur au sol, infobulle au survol, option « Toujours afficher le nom »), mode d'emploi |
 
 ## Commandes utiles
 

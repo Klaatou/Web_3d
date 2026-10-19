@@ -803,6 +803,33 @@ function createViewer(container, cfg0, loader) {
   }
   const hoverG = new THREE.Group(); hoverG.visible = false; scene.add(hoverG);
   let hoverZone = null, hoverT = 0;
+  // page exportée : marqueur discret au sol (id de zone -> matériaux), infobulle au survol
+  const MARK_OP = 0.4, markerMat = new Map();
+  let tipEl = null;
+  function zoneTipText(z) {
+    const name = z.label || z.id;
+    if (z.type === 'url') return [name, z.target];
+    if (z.type === 'ha') return [name, 'Commande : ' + name];
+    return [name, 'Région : ' + (String(z.target || '').trim() || 'cette région') + (z.spawn ? ' #' + z.spawn : '')];
+  }
+  function tipShow(z, cx, cy) {
+    if (!z) { if (tipEl) tipEl.hidden = true; return; }
+    if (!tipEl) {
+      tipEl = document.createElement('div'); tipEl.id = 'zoneTip';
+      tipEl.style.cssText = 'position:fixed;left:0;top:0;z-index:40;pointer-events:none;max-width:min(420px,90vw);overflow-wrap:anywhere;font:12px/1.4 ui-monospace,Consolas,monospace;background:#000;color:#fff;border:1px solid #fff;border-radius:6px;padding:5px 9px';
+      document.body.appendChild(tipEl);
+    }
+    const [t, sub] = zoneTipText(z);
+    if (tipEl.dataset.zone !== z.id) {
+      tipEl.dataset.zone = z.id; tipEl.textContent = '';
+      const b = document.createElement('b'); b.textContent = t; tipEl.appendChild(b);
+      if (sub) { tipEl.appendChild(document.createElement('br')); tipEl.appendChild(document.createTextNode(sub)); }
+    }
+    tipEl.hidden = false;
+    const w = tipEl.offsetWidth, h = tipEl.offsetHeight;
+    tipEl.style.left = Math.max(4, Math.min(innerWidth - w - 4, cx + 14)) + 'px';
+    tipEl.style.top = Math.max(4, Math.min(innerHeight - h - 4, cy + 18)) + 'px';
+  }
   const ZONE_TYPES = ['url', 'ha', 'portal', 'spawn'];
   const slug = s => String(s || '').toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
   function cleanZone(z, i) {
@@ -813,7 +840,7 @@ function createViewer(container, cfg0, loader) {
       x: num(z.x, 0, -1e5, 1e5), y: num(z.y, 0, -1e5, 1e5), z: num(z.z, 0, -1e5, 1e5), yaw: num(z.yaw, 0, -7, 7),
       shape: z.shape === 'board' ? 'board' : 'ring', trigger: ['click', 'enter', 'both'].includes(z.trigger) ? z.trigger : 'click',
       radius: num(z.radius, 2, 0.5, 50), w: num(z.w, 2.4, 0.5, 10), h: num(z.h, 1.2, 0.3, 6),
-      target: String(z.target || '').slice(0, 600), spawn: slug(z.spawn), confirm: !!z.confirm, private: !!z.private,
+      target: String(z.target || '').slice(0, 600), spawn: slug(z.spawn), confirm: !!z.confirm, private: !!z.private, showName: !!z.showName,
       mesh: type === 'spawn' ? '' : String(z.mesh || '').replace(/[\u0000-\u001f]/g, '').slice(0, 200)
     };
     if (type !== 'portal') o.trigger = 'click';
@@ -844,6 +871,7 @@ function createViewer(container, cfg0, loader) {
     if (selBox) { scene.remove(selBox); selBox.geometry.dispose(); selBox.material.dispose(); selBox = null; }
     zoneHit = []; zoneAll = []; meshZone.clear();
     setHover(null);
+    markerMat.clear();
     for (const z of zones) {
       const link = zoneLink.get(z.id);
       const g = new THREE.Group(); g.userData.zoneId = z.id;
@@ -853,12 +881,12 @@ function createViewer(container, cfg0, loader) {
       const clickable = z.type !== 'spawn' && z.trigger !== 'enter';
       let main = null;
       if (link) {
-        // zone liée à un élément : l'élément est la zone (cliquable, E à moins de radius m). Seul l'éditeur montre un repère.
+        // zone liée à un élément : l'élément est la zone (cliquable, E à moins de radius m). Aucun objet ajouté dans la page exportée.
         for (const m of link.meshes) if (!meshZone.has(m)) meshZone.set(m, z);
         zoneAll.push(...link.meshes); if (clickable) zoneHit.push(...link.meshes);
-        if (!zoneEditor) continue;
-        g.add(outlineOf(link.box));
-        const lab = makeLabel((z.label || kind) + ' ⇢ ' + z.mesh + priv); lab.position.set((link.box.min.x + link.box.max.x) / 2, link.box.max.y + 0.9, (link.box.min.z + link.box.max.z) / 2); g.add(lab);
+        if (!zoneEditor && !z.showName) continue;
+        if (zoneEditor) g.add(outlineOf(link.box));
+        const lab = makeLabel(zoneEditor ? (z.label || kind) + ' ⇢ ' + z.mesh + priv : (z.label || z.id)); lab.position.set((link.box.min.x + link.box.max.x) / 2, link.box.max.y + 0.9, (link.box.min.z + link.box.max.z) / 2); g.add(lab);
         zoneGroup.add(g);
         continue;
       }
@@ -867,19 +895,38 @@ function createViewer(container, cfg0, loader) {
         const cone = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.9, 12), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, depthTest: false, fog: false }));
         cone.rotation.x = -Math.PI / 2; cone.position.y = 0.6; g.add(cone); main = cone;
         const l = makeLabel('arrivée : ' + z.id); l.position.y = 1.7; g.add(l);
-      } else if (z.shape === 'board') {
-        const sub = kind + (clickable ? ' · clic ou E' : '') + priv;
-        const plane = new THREE.Mesh(new THREE.PlaneGeometry(z.w, z.h), new THREE.MeshBasicMaterial({ map: boardTex(z.label || kind, sub, z.w, z.h), side: THREE.DoubleSide, fog: false }));
+      } else if (zoneEditor) {
+        // éditeur : le cylindre (portée de la zone) reste toujours visible, pour repérer et positionner ; le panneau s'y ajoute
+        if (z.shape === 'board') {
+          const sub = kind + (clickable ? ' · clic ou E' : '') + priv;
+          const plane = new THREE.Mesh(new THREE.PlaneGeometry(z.w, z.h), new THREE.MeshBasicMaterial({ map: boardTex(z.label || kind, sub, z.w, z.h), side: THREE.DoubleSide, fog: false }));
+          plane.position.y = 0.9 + z.h / 2; g.add(plane); main = plane;
+          const post = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.92, 0.1), new THREE.MeshStandardMaterial({ color: 0x333333 })); post.position.y = 0.46; g.add(post);
+        }
+        const rad = z.shape === 'board' ? Math.max(z.radius, 2) : z.radius;
+        const cyl = new THREE.Mesh(new THREE.CylinderGeometry(rad, rad, 2.4, 48, 1, true), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.16, side: THREE.DoubleSide, depthWrite: false, fog: false }));
+        cyl.position.y = 1.2; g.add(cyl); if (!main) main = cyl; else { cyl.userData.zone = z; zoneAll.push(cyl); }
+        const r1 = new THREE.Mesh(new THREE.RingGeometry(Math.max(0.05, rad - 0.16), rad, 64), new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide, fog: false }));
+        r1.rotation.x = -Math.PI / 2; r1.position.y = 0.05; g.add(r1);
+        const r2 = new THREE.Mesh(new THREE.RingGeometry(Math.max(0.02, rad - 0.3), Math.max(0.04, rad - 0.16), 64), new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, fog: false }));
+        r2.rotation.x = -Math.PI / 2; r2.position.y = 0.055; g.add(r2);
+        if (z.shape !== 'board') { const lab = makeLabel((z.label || kind) + priv); lab.position.y = 2.9; g.add(lab); }
+      } else if (z.showName && z.shape === 'board') {
+        // page exportée, « Toujours afficher le nom » : le panneau
+        const plane = new THREE.Mesh(new THREE.PlaneGeometry(z.w, z.h), new THREE.MeshBasicMaterial({ map: boardTex(z.label || kind, kind + (clickable ? ' · clic ou E' : ''), z.w, z.h), side: THREE.DoubleSide, fog: false }));
         plane.position.y = 0.9 + z.h / 2; g.add(plane); main = plane;
         const post = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.92, 0.1), new THREE.MeshStandardMaterial({ color: 0x333333 })); post.position.y = 0.46; g.add(post);
       } else {
-        const cyl = new THREE.Mesh(new THREE.CylinderGeometry(z.radius, z.radius, 2.4, 48, 1, true), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.16, side: THREE.DoubleSide, depthWrite: false, fog: false }));
-        cyl.position.y = 1.2; g.add(cyl); main = cyl;
-        const r1 = new THREE.Mesh(new THREE.RingGeometry(Math.max(0.05, z.radius - 0.16), z.radius, 64), new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide, fog: false }));
-        r1.rotation.x = -Math.PI / 2; r1.position.y = 0.05; g.add(r1);
-        const r2 = new THREE.Mesh(new THREE.RingGeometry(Math.max(0.02, z.radius - 0.3), Math.max(0.04, z.radius - 0.16), 64), new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, fog: false }));
-        r2.rotation.x = -Math.PI / 2; r2.position.y = 0.055; g.add(r2);
-        const lab = makeLabel((z.label || kind) + priv); lab.position.y = 2.9; g.add(lab);
+        // page exportée : marqueur discret au sol (disque plat 0,4 m + anneau fin), zone de visée plus large et invisible
+        const mat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: MARK_OP, side: THREE.DoubleSide, depthWrite: false, fog: false });
+        const disc = new THREE.Mesh(new THREE.CircleGeometry(0.2, 32), mat); disc.rotation.x = -Math.PI / 2; disc.position.y = 0.04; g.add(disc);
+        const ring = new THREE.Mesh(new THREE.RingGeometry(0.2, 0.26, 32), mat.clone()); ring.material.color.set(0xffffff); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.045; g.add(ring);
+        markerMat.set(z.id, [mat, ring.material]);
+        if (clickable) {
+          const hit = new THREE.Mesh(new THREE.CircleGeometry(0.6, 16), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide })); hit.visible = false;
+          hit.rotation.x = -Math.PI / 2; hit.position.y = 0.06; g.add(hit); main = hit;
+        }
+        if (z.showName) { const lab = makeLabel(z.label || z.id); lab.position.y = 1.2; g.add(lab); }
       }
       if (main) { main.userData.zone = z; zoneAll.push(main); if (clickable) zoneHit.push(main); }
       zoneGroup.add(g);
@@ -928,9 +975,13 @@ function createViewer(container, cfg0, loader) {
     }
     return z;
   }
-  function setHover(z) {
+  function setHover(z, cx, cy) {
+    if (z && cx !== undefined) tipShow(z, cx, cy);
     if (z === hoverZone) return;
+    if (hoverZone) for (const m of markerMat.get(hoverZone.id) || []) m.opacity = MARK_OP;
+    if (!z) tipShow(null);
     hoverZone = z;
+    if (z) { const mm = markerMat.get(z.id); if (mm) for (const m of mm) m.opacity = 0.8; }
     const link = z && zoneLink.get(z.id);
     hoverG.visible = !!link;
     if (link) { hoverG.clear(); hoverG.add(outlineOf(link.box)); }
@@ -941,7 +992,8 @@ function createViewer(container, cfg0, loader) {
     if (linkLock || zoneEditor || !onZone || !zoneHit.length || e.buttons || document.pointerLockElement === dom) { if (hoverZone) setHover(null); return; }
     const now = performance.now(); if (now - hoverT < 50) return; hoverT = now;
     const r = dom.getBoundingClientRect();
-    setHover(zoneFromClick((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1, walking ? 14 : 0));
+    const zh = zoneFromClick((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1, walking ? 14 : 0);
+    setHover(zh, e.clientX, e.clientY);
   });
   dom.addEventListener('pointerleave', () => setHover(null));
   function zonePickAt(cx, cy) {

@@ -98,6 +98,7 @@ if (H.get('name')) { try { localStorage.setItem('glb2html_name', H.get('name').s
 let arrive = async () => { fade.classList.remove('on'); };
 const toastEl = document.getElementById('toast'); let toastT = 0;
 const toast = t => { toastEl.textContent = t; toastEl.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { toastEl.hidden = true; }, 4000); };
+window.__viewer = viewer;
 if ((C.zones || []).length || C.zonesLive) {
   let ZS = viewer.setZones(C.zones || [], { editor: false });
   let liveReady = Promise.resolve();
