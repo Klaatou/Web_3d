@@ -919,23 +919,14 @@ function createViewer(container, cfg0, loader) {
       } else {
         // page exportée : marqueur discret au sol (anneau fin noir et blanc + disque translucide, ~1 m), surface de visée plus large et invisible.
         // Décalé vers la caméra (polygonOffset) et relevé de 10 cm : un sol irrégulier ne le masque pas.
-        // le marqueur colle au sol réel quand la zone est posée trop bas : rayon vers le bas depuis 1,5 m au-dessus de la zone.
-        // S'il existe déjà une surface à moins de 15 cm de la zone (sol sous un objet posé dessus : une box, par exemple), la zone est bien posée : rien ne bouge.
-        let snapped = false;
-        if (model) {
-          model.updateMatrixWorld(true);
-          const rc = new THREE.Raycaster(new THREE.Vector3(z.x, z.y + 1.5, z.z), new THREE.Vector3(0, -1, 0), 0, 60), tk = parseIgnore(cfg.walkIgnore);
-          const hs = rc.intersectObject(model, true).filter(q => !isIgnoredMesh(q.object, tk));
-          if (hs.some(q => Math.abs(q.point.y - z.y) <= 0.15)) snapped = true;
-          else if (hs.length) { g.position.y = hs[0].point.y; snapped = true; }
-        }
-        const mk = (geo, color, op) => { const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color, transparent: true, opacity: op, side: THREE.DoubleSide, depthWrite: false, fog: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4, depthTest: snapped })); m.rotation.x = -Math.PI / 2; m.renderOrder = 5; g.add(m); return m; };
+        // le marqueur reste exactement à la position de la zone (y + 10 cm), tracé sans test de profondeur : visible même si la zone est sous le relief
+        const mk = (geo, color, op) => { const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color, transparent: true, opacity: op, side: THREE.DoubleSide, depthWrite: false, fog: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4, depthTest: false })); m.rotation.x = -Math.PI / 2; m.renderOrder = 5; g.add(m); return m; };
         const disc = mk(new THREE.CircleGeometry(0.4, 40), 0x000000, MARK_OP); disc.position.y = 0.1;
         const ring1 = mk(new THREE.RingGeometry(0.4, 0.5, 40), 0x000000, 0.9); ring1.position.y = 0.11;
         const ring2 = mk(new THREE.RingGeometry(0.32, 0.4, 40), 0xffffff, 0.9); ring2.position.y = 0.115;
         markerMat.set(z.id, [disc.material, ring1.material, ring2.material]);
         const hit = new THREE.Mesh(new THREE.CircleGeometry(0.8, 16), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide })); hit.visible = false;
-        hit.rotation.x = -Math.PI / 2; hit.position.y = 0.12; g.add(hit); main = hit;
+        hit.rotation.x = -Math.PI / 2; hit.position.y = 0.12; hit.userData.marker = true; g.add(hit); main = hit;
         if (z.showName) { const lab = makeLabel(z.label || z.id); lab.position.y = 1.2; g.add(lab); }
       }
       if (main) { main.userData.zone = z; zoneAll.push(main); if (clickable || (!zoneEditor && z.type !== 'spawn')) zoneHit.push(main); }
@@ -974,7 +965,8 @@ function createViewer(container, cfg0, loader) {
     const h = tpRay.intersectObjects(zoneHit, false)[0];
     if (!h || (maxDist && h.distance > maxDist)) return null;
     const z = zoneOf(h.object), link = z && zoneLink.get(z.id);
-    if (model) {
+    if (model && !h.object.userData.marker) {
+      // (un marqueur est tracé sans test de profondeur : ce qu'on voit est survolable, le relief ne le masque pas)
       // un élément traversable (walkIgnore) ne bloque pas le clic, ni les autres morceaux de l'élément visé
       const tokens = parseIgnore(cfg.walkIgnore);
       for (const m of tpRay.intersectObject(model, true)) {
