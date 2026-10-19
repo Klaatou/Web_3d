@@ -352,7 +352,7 @@ async def test_viewer(br, pages):
     ea = []
     pa.on("pageerror", lambda e: ea.append(str(e)))
     await pa.goto(auto.as_uri())
-    await pa.wait_for_timeout(2500)
+    await pa.wait_for_function("document.getElementById('msg') === null", timeout=30000)
     rapport(await pa.evaluate("document.getElementById('msg') === null") and not ea and dl.suggested_filename.endswith("Offline perso.html"), "export HTML autonome : s'ouvre depuis le disque, sans erreur", (ea, dl.suggested_filename))
     rapport("<script type=\"application/octet-stream\" id=\"glb\">" in auto.read_text(encoding="utf-8") and "lib/three" not in auto.read_text(encoding="utf-8"), "export HTML autonome : toujours un fichier unique (glb et three.js intégrés)")
 
@@ -382,7 +382,7 @@ async def test_viewer(br, pages):
         ez = []
         pz.on("pageerror", lambda e: ez.append(str(e)))
         await pz.goto(f"http://127.0.0.1:{port}/boite.html")
-        await pz.wait_for_timeout(3000)
+        await pz.wait_for_function("document.getElementById('msg') === null", timeout=30000)
         rapport(await pz.evaluate("document.getElementById('msg') === null") and not ez and await pz.title() == "boite", "structure du zip servie en http : la page se charge, sans erreur", (ez, await pz.title()))
     finally:
         proc.kill()

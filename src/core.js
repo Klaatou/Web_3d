@@ -433,6 +433,22 @@ function createViewer(container, cfg0, loader) {
     presenceLeave();
     if (onWalk) onWalk(false);
   }
+
+  // téléportation dans la même région (portail interne) : pose l'avatar en pos/yaw sans quitter la promenade
+  function teleportTo(pos, yaw) {
+    if (!model) return false;
+    if (!walking) return walkStart({ pos, yaw });
+    const x = pos[0], y = pos[1], z = pos[2];
+    let g = W.grid.ground(x, z, y + 2);
+    if (g === null) g = W.grid.ground(x, z, 1e6);
+    W.pos.set(x, g === null ? y : g, z); W.spawn.copy(W.pos);
+    if (Number.isFinite(yaw)) W.yaw = yaw;
+    W.pitch = 0; W.vy = 0; W.grounded = true;
+    zoneInside.clear(); nearZone = null; if (onNear) onNear(null);
+    for (const q of zones) if (q.type === 'portal' && q.trigger !== 'click' && zoneDist(q).d <= q.radius) zoneInside.add(q.id);
+    walkStep(0); dirty = true;
+    return true;
+  }
   const typing = e => { const n = e.target && e.target.tagName; return n === 'INPUT' || n === 'TEXTAREA' || n === 'SELECT'; };
   const MOVE_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'ShiftLeft', 'ShiftRight']);
   window.addEventListener('keydown', e => { if (!walking || typing(e) || !MOVE_KEYS.has(e.code)) return; W.keys.add(e.code); if (e.code === 'Space') W.jumpReq = true; e.preventDefault(); });
@@ -1028,7 +1044,7 @@ function createViewer(container, cfg0, loader) {
     walkTick(dt) { if (walking) walkStep(dt); },
     refreshCollision() { if (walking && model) W.grid = buildCollisionGrid(model, 3, parseIgnore(cfg.walkIgnore)); },
     teleportNdc(nx, ny) { return walkTeleport(nx, ny); },
-    toggleWalk() { return walking ? walkStop() : walkStart(); }, walkStart, walkStop,
+    toggleWalk() { return walking ? walkStop() : walkStart(); }, walkStart, walkStop, teleportTo,
     getWalk() { return { pos: W.pos.toArray(), yaw: W.yaw, pitch: W.pitch, grounded: W.grounded, tris: W.grid ? W.grid.count : 0 }; }, get fit() { return fit; }, requestRender() { dirty = true; }
   };
 }

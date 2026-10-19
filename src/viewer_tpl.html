@@ -401,7 +401,7 @@ function renderZoneList() {
     d.appendChild(inp('Nom affiché', 'text', z.label, v => upd({ label: v }, true)));
     if (z.type !== 'spawn') {
       if (z.type === 'portal') {
-        d.appendChild(inp('Page de destination (adresse ou fichier .html)', 'text', z.target, v => upd({ target: v })));
+        d.appendChild(inp('Page de destination (adresse ou fichier .html ; vide = cette région)', 'text', z.target, v => upd({ target: v })));
         d.appendChild(inp('Point d\'arrivée dans cette page (identifiant)', 'text', z.spawn, v => upd({ spawn: v })));
         d.appendChild(inp('Déclenchement', 'select', z.trigger, v => upd({ trigger: v }, true), [['enter', 'en marchant dedans'], ['click', 'au clic ou touche E'], ['both', 'les deux']]));
       } else if (z.type === 'url') d.appendChild(inp('Adresse web', 'text', z.target, v => upd({ target: v })));
@@ -430,7 +430,14 @@ function renderZoneList() {
   });
   if (!cfg.zones.length) { const p = document.createElement('small'); p.textContent = 'Aucune zone pour le moment.'; host.appendChild(p); }
 }
-viewer.onZone = (z, how) => setStatus('[aperçu] ' + ({ url: 'Lien', ha: 'Commande', portal: 'Portail', spawn: 'Arrivée' }[z.type]) + ' « ' + (z.label || z.id) + ' » déclenché (' + how + ') → ' + (z.target || '(sans cible)') + (z.spawn ? ' #' + z.spawn : ''));
+viewer.onZone = (z, how) => {
+  setStatus('[aperçu] ' + ({ url: 'Lien', ha: 'Commande', portal: 'Portail', spawn: 'Arrivée' }[z.type]) + ' « ' + (z.label || z.id) + ' » déclenché (' + how + ') → ' + (z.target || '(sans cible)') + (z.spawn ? ' #' + z.spawn : ''));
+  // aperçu : un portail sans destination déplace dans la région vers son point d'arrivée
+  if (z.type === 'portal' && !String(z.target || '').trim() && viewer.walking) {
+    const id = z.spawn || 'default', s = viewer.getZones().find(q => q.type === 'spawn' && q.id === id);
+    if (s) viewer.teleportTo([s.x, s.y, s.z], s.yaw); else setStatus('[aperçu] point d\'arrivée « ' + id + ' » introuvable');
+  }
+};
 viewer.onNear = z => { if (z) setStatus('[aperçu] à portée : ' + (z.label || z.id) + ' (E ou clic)'); };
 function presUpdate() {
   const e = $('presInfo'); if (!e) return;

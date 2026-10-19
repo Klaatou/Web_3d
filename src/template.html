@@ -125,6 +125,15 @@ if ((C.zones || []).length || C.zonesLive) {
   viewer.onZone = z => {
     const label = z.label || z.id;
     if (z.type === 'portal') {
+      // destination vide ou égale à cette page : déplacement dans la même région, vers son point d'arrivée
+      const same = !String(z.target || '').trim() || (() => { const x = okUrl(z.target); if (!x) return false; x.hash = ''; const h = new URL(location.href); h.hash = ''; return x.href === h.href; })();
+      if (same) {
+        const id = z.spawn || 'default', s = ZS.find(q => q.type === 'spawn' && q.id === id);
+        if (!s) return toast('Point d\'arrivée « ' + id + ' » introuvable dans cette région');
+        fade.classList.add('on');
+        setTimeout(() => { if (viewer.walking) viewer.teleportTo([s.x, s.y, s.z], s.yaw); setTimeout(() => fade.classList.remove('on'), 150); }, 480);
+        return;
+      }
       const u = okUrl(z.target); if (!u) return toast('Portail sans destination valide : ' + label);
       u.hash = 'spawn=' + encodeURIComponent(z.spawn || '') + '&name=' + encodeURIComponent(visitor());
       fade.classList.add('on'); setTimeout(() => { location.href = u.href; }, 480);

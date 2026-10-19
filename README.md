@@ -67,7 +67,7 @@ Une zone peut porter un champ `mesh` : le nom exact d'un élément du modèle. L
 
 ## Développer
 
-Voir `CLAUDE.md` (architecture, décisions, feuille de route) et `HISTORIQUE.md` (comment retrouver chaque version) `tests/smoke.py` (test de fumée dans Chromium sans tête) et `tests/modulaire.py` (mode modulaire universel, zones liées, exports du viewer).
+Voir `CLAUDE.md` (architecture, décisions, feuille de route) et `HISTORIQUE.md` (comment retrouver chaque version) `tests/smoke.py` (test de fumée dans Chromium sans tête) `tests/modulaire.py` (mode modulaire universel, zones liées, exports du viewer) et `tests/portail_interne.py` (portail dans la même région). Mode d'emploi des zones et portails : `MODE_EMPLOI.md`.
 
 ## Sécurité
 
