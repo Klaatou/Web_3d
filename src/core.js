@@ -919,13 +919,15 @@ function createViewer(container, cfg0, loader) {
       } else {
         // page exportée : marqueur discret au sol (anneau fin noir et blanc + disque translucide, ~1 m), surface de visée plus large et invisible.
         // Décalé vers la caméra (polygonOffset) et relevé de 10 cm : un sol irrégulier ne le masque pas.
-        // le marqueur colle au sol réel : rayon vers le bas depuis 1,5 m au-dessus de la zone (sinon, tracé sans test de profondeur)
+        // le marqueur colle au sol réel quand la zone est posée trop bas : rayon vers le bas depuis 1,5 m au-dessus de la zone.
+        // S'il existe déjà une surface à moins de 15 cm de la zone (sol sous un objet posé dessus : une box, par exemple), la zone est bien posée : rien ne bouge.
         let snapped = false;
         if (model) {
           model.updateMatrixWorld(true);
           const rc = new THREE.Raycaster(new THREE.Vector3(z.x, z.y + 1.5, z.z), new THREE.Vector3(0, -1, 0), 0, 60), tk = parseIgnore(cfg.walkIgnore);
-          const h = rc.intersectObject(model, true).find(q => !isIgnoredMesh(q.object, tk));
-          if (h) { g.position.y = h.point.y; snapped = true; }
+          const hs = rc.intersectObject(model, true).filter(q => !isIgnoredMesh(q.object, tk));
+          if (hs.some(q => Math.abs(q.point.y - z.y) <= 0.15)) snapped = true;
+          else if (hs.length) { g.position.y = hs[0].point.y; snapped = true; }
         }
         const mk = (geo, color, op) => { const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color, transparent: true, opacity: op, side: THREE.DoubleSide, depthWrite: false, fog: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4, depthTest: snapped })); m.rotation.x = -Math.PI / 2; m.renderOrder = 5; g.add(m); return m; };
         const disc = mk(new THREE.CircleGeometry(0.4, 40), 0x000000, MARK_OP); disc.position.y = 0.1;

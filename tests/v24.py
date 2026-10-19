@@ -66,7 +66,8 @@ def make_glb(path, objets, racine=None):
 
 
 tmp.mkdir(exist_ok=True)
-make_glb(tmp / "boite.glb", [("sol", "sol", (-12, -0.2, -12, 12, 0, 12), 1.0), ("boite", "mur", (4, 0, -2, 8, 4, 2), 1.0)])
+make_glb(tmp / "boite.glb", [("sol", "sol", (-12, -0.2, -12, 12, 0, 12), 1.0), ("boite", "mur", (4, 0, -2, 8, 4, 2), 1.0),
+                              ("petit", "mur", (-10, 0, -10, -9, 0.5, -9), 1.0)])
 
 URL_L, URL_M, URL_N = "https://exemple.org/lien?a=1&b=2", "https://exemple.org/sol", "https://exemple.org/nom"
 ZONES = [
@@ -78,6 +79,7 @@ ZONES = [
     {"id": "por", "type": "portal", "label": "Portail", "trigger": "click", "target": "https://autre.example/region.html", "spawn": "quai", "x": -3, "y": 15, "z": 7, "radius": 2},
     {"id": "ent", "type": "portal", "label": "Portail marche", "trigger": "enter", "target": "", "spawn": "arr", "x": 3, "y": 15, "z": 2, "radius": 1.5},
     {"id": "enterre", "type": "url", "label": "Enterré", "target": "https://exemple.org/enterre", "x": -6, "y": 14.4, "z": 7},
+    {"id": "surobjet", "type": "url", "label": "Sous la box", "target": "https://exemple.org/box", "x": -9.5, "y": 15, "z": -9.5},
     {"id": "arr", "type": "spawn", "label": "Arrivée", "x": 0, "y": 15, "z": 0},
     {"id": "cache", "type": "url", "label": "Sous le sol", "target": "https://exemple.org/cache", "x": 6, "y": 0, "z": 4},
 ]
@@ -142,7 +144,7 @@ async def verifier(br, url, etiquette):
     rapport(sc["cyl"] == 0, f"{etiquette} : aucun mesh de cylindre dans la page exportée", sc)
     rapport(sc["planes"] == 0 or sc["groups"].get("pan", 0) <= 1, f"{etiquette} : l'ancien panneau (forme board) n'est plus dessiné sans l'option", sc)
     rapport("lie" not in sc["groups"], f"{etiquette} : zone liée à un élément = aucun objet ajouté", sc["groups"])
-    rapport(sc["circles"] >= 9, f"{etiquette} : marqueurs plats au sol pour les zones non liées", sc)
+    rapport(sc["circles"] >= 10, f"{etiquette} : marqueurs plats au sol pour les zones non liées", sc)
     rapport(sc["sprites"] == 1, f"{etiquette} : un seul nom permanent, celui de la zone cochée « Toujours afficher le nom »", sc)
 
     # survol : zone liée (curseur + infobulle exacte)
@@ -162,6 +164,8 @@ async def verifier(br, url, etiquette):
     rapport("secret" not in (t or "") and "homeassistant" not in await pg.evaluate("document.getElementById('zoneTip').innerText"), f"{etiquette} : l'infobulle d'une commande n'affiche pas le webhook")
     await pg.screenshot(path=str(tmp / f"{etiquette}.png"))
     ga = await pg.evaluate("window.__viewer.scene.children.flatMap(c => c.children).filter(g => g.userData && g.userData.zoneId === 'enterre').map(g => g.position.y)")
+    gb = await pg.evaluate("window.__viewer.scene.children.flatMap(c => c.children).filter(g => g.userData && g.userData.zoneId === 'surobjet').map(g => g.position.y)")
+    rapport(len(gb) == 1 and abs(gb[0] - 15) < 0.01, f"{etiquette} : zone calée au sol sous un objet posé dessus : le marqueur reste au sol, pas sur l'objet", gb)
     rapport(len(ga) == 1 and abs(ga[0] - 15) < 0.01, f"{etiquette} : zone posée 60 cm sous le sol : le marqueur est recollé au sol réel", ga)
     rapport(await pg.evaluate("window.__viewer.zoneInfo({ type: 'portal', label: 'P', id: 'p', target: 'https://a.b/c.html', spawn: 'q' })") == ["P", "Région : https://a.b/c.html #q"], f"{etiquette} : texte d'approche « E : nom → destination »")
     # contre-épreuve : un marqueur caché sous le sol n'est pas survolé (le relief le masque)
@@ -201,7 +205,7 @@ async def viewer_edition(br):
     await pg.wait_for_timeout(500)
     sc = await pg.evaluate(SCAN)
     # sol, pan, nom, ha, por : cylindres ; lie (liée) : contour ; arr : cône
-    rapport(sc["cyl"] == 8, "viewer : un cylindre pour chaque zone non liée (panneaux compris), toujours visible", sc)
+    rapport(sc["cyl"] == 9, "viewer : un cylindre pour chaque zone non liée (panneaux compris), toujours visible", sc)
     rapport(await pg.evaluate("document.querySelector('canvas').style.cursor") != "pointer" and await tip(pg) is None, "viewer : pas d'infobulle en édition")
     # « Toujours afficher le nom » : décochée pour la zone « sol », cochée pour la zone « nom », modifiable
     boite = lambda i: pg.locator("#zoneList details").nth(i).get_by_text("Toujours afficher le nom").locator("xpath=following-sibling::input[1]")
