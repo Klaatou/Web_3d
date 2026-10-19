@@ -178,7 +178,7 @@ function disposeObject(root) {
 
 function createViewer(container, cfg0, loader) {
   const cfg = Object.assign({}, cfg0);
-  let onCfg = null, onWalk = null, onPick = null, onPresence = null, onChat = null, onName = null, spectateOn = false, pickOrbit = false, walking = false;
+  let onCfg = null, onWalk = null, onPick = null, onPresence = null, onChat = null, onName = null, spectateOn = false, pickOrbit = false, walking = false, linkLock = false;
   const W = { pos: new THREE.Vector3(), spawn: new THREE.Vector3(), vy: 0, grounded: true, yaw: 0, pitch: 0, keys: new Set(), jumpReq: false, drag: false, saved: null, grid: null };
   let model = null, fit = 1, sea = null, seaMat = null, dirty = true, foliageMats = [];
 
@@ -491,6 +491,7 @@ function createViewer(container, cfg0, loader) {
   let downPos = null, lastClick = { t: 0, x: 0, y: 0 };
   dom.addEventListener('pointerdown', e => { downPos = [e.clientX, e.clientY]; });
   dom.addEventListener('click', e => {
+    if (linkLock) return;   // mode « Lier à un élément » : exclusif, aucun autre clic n'agit
     const locked = document.pointerLockElement === dom, now = e.timeStamp || performance.now();
     {
       const rc = dom.getBoundingClientRect();
@@ -519,7 +520,7 @@ function createViewer(container, cfg0, loader) {
     doPick(e, locked);
   });
 
-  dom.addEventListener('dblclick', e => { if (!walking) setLanding(e); });
+  dom.addEventListener('dblclick', e => { if (!walking && !linkLock) setLanding(e); });
 
   // ---- présence : autres visiteurs (WebSocket)
   const uid = (() => {
@@ -705,6 +706,13 @@ function createViewer(container, cfg0, loader) {
   // zones liées à un élément du modèle (champ mesh = nom exact) : id de zone -> { meshes, box } ; mesh 3D -> zone
   const zoneLink = new Map(), meshZone = new Map();
   const zoneOf = o => o.userData.zone || meshZone.get(o) || null;
+  // boîte englobante (monde) de ces meshes, matrices à jour depuis la racine (modèle recentré, décalé ou mis à l'échelle) ; null si vide
+  function boxOfMeshes(meshes) {
+    if (model) model.updateMatrixWorld(true);
+    const b = new THREE.Box3();
+    for (const m of meshes) b.expandByObject(m);
+    return b.isEmpty() || !Number.isFinite(b.min.x + b.max.x + b.min.y + b.max.y + b.min.z + b.max.z) ? null : b;
+  }
   function findMeshes(name) {
     const out = new Set();
     if (model && name) model.traverse(o => { if (o.name === name) o.traverse(c => { if (c.isMesh) out.add(c); }); });
@@ -716,8 +724,8 @@ function createViewer(container, cfg0, loader) {
       if (!z.mesh || z.type === 'spawn') continue;
       const meshes = findMeshes(z.mesh);
       if (!meshes.length) { console.warn('zone « ' + z.id + ' » : élément « ' + z.mesh + ' » introuvable dans le modèle'); continue; }
-      const box = new THREE.Box3();
-      for (const m of meshes) box.expandByObject(m);
+      const box = boxOfMeshes(meshes);
+      if (!box) { console.warn('zone « ' + z.id + ' » : élément « ' + z.mesh + ' » sans géométrie'); continue; }
       zoneLink.set(z.id, { meshes, box });
     }
   }
@@ -829,7 +837,9 @@ function createViewer(container, cfg0, loader) {
   function zoneSelect(id) {
     if (selBox) { scene.remove(selBox); selBox.geometry.dispose(); selBox.material.dispose(); selBox = null; }
     const g = zoneGroup.children.find(c => c.userData.zoneId === id);
-    if (g) { selBox = new THREE.BoxHelper(g, 0x000000); selBox.material.depthTest = false; selBox.material.transparent = true; scene.add(selBox); }
+    const zl = g && zoneLink.get(id);
+    if (zl) { selBox = new THREE.Box3Helper(zl.box.clone(), 0x000000); selBox.material.depthTest = false; selBox.material.transparent = true; selBox.material.fog = false; selBox.renderOrder = 999; scene.add(selBox); }
+    else if (g) { selBox = new THREE.BoxHelper(g, 0x000000); selBox.material.depthTest = false; selBox.material.transparent = true; scene.add(selBox); }
     dirty = true;
   }
   function fireZone(z, how) {
@@ -864,7 +874,7 @@ function createViewer(container, cfg0, loader) {
     dirty = true;
   }
   dom.addEventListener('pointermove', e => {
-    if (zoneEditor || !onZone || !zoneHit.length || e.buttons || document.pointerLockElement === dom) { if (hoverZone) setHover(null); return; }
+    if (linkLock || zoneEditor || !onZone || !zoneHit.length || e.buttons || document.pointerLockElement === dom) { if (hoverZone) setHover(null); return; }
     const now = performance.now(); if (now - hoverT < 50) return; hoverT = now;
     const r = dom.getBoundingClientRect();
     setHover(zoneFromClick((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1, walking ? 14 : 0));
@@ -984,7 +994,8 @@ function createViewer(container, cfg0, loader) {
     get model() { return model; }, get sea() { return sea; }, set onCfg(f) { onCfg = f; }, set onWalk(f) { onWalk = f; }, set onPick(f) { onPick = f; }, set pickOrbit(v) { pickOrbit = !!v; }, set onPresence(f) { onPresence = f; }, set onChat(f) { onChat = f; },
     setZones, zoneSelect, zonePickAt, findMeshes,
     // boîte (monde) de l'élément de ce nom : { min, max, center, count } ou null
-    meshInfo(name) { const m = findMeshes(name); if (!m.length) return null; const b = new THREE.Box3(); m.forEach(o => b.expandByObject(o)); return { min: b.min.toArray(), max: b.max.toArray(), center: b.getCenter(new THREE.Vector3()).toArray(), count: m.length }; },
+    meshInfo(name) { const m = findMeshes(name); const b = m.length ? boxOfMeshes(m) : null; if (!b) return null; return { min: b.min.toArray(), max: b.max.toArray(), center: b.getCenter(new THREE.Vector3()).toArray(), size: b.getSize(new THREE.Vector3()).toArray(), count: m.length }; },
+    set linkMode(v) { linkLock = !!v; },
     isTraversable(o) { return isIgnoredMesh(o, parseIgnore(cfg.walkIgnore)); }, getZones() { return zones.map(z => Object.assign({}, z)); }, set onZone(f) { onZone = f; }, set onNear(f) { onNear = f; },
     captureTop(size = 320, hide = []) {
       if (!model) return null;

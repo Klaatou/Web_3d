@@ -41,8 +41,9 @@ def sha(p):
 
 
 # ---------- petit modèle de test : sol, une boîte, un voile traversable (nom « door… » = walkIgnore par défaut) devant la boîte
-def make_glb(path, objets):
-    """objets : [(nom, matériau, (x0, y0, z0, x1, y1, z1), alpha)] -> GLB avec un nœud et un mesh par objet."""
+def make_glb(path, objets, racine=None):
+    """objets : [(nom, matériau, (x0, y0, z0, x1, y1, z1), alpha)] -> GLB avec un nœud et un mesh par objet.
+    racine : (translation, échelle) -> les objets deviennent les enfants d'un nœud « racine » décalé et mis à l'échelle."""
     idx_box = [0, 1, 3, 0, 3, 2, 4, 6, 7, 4, 7, 5, 0, 4, 5, 0, 5, 1, 2, 3, 7, 2, 7, 6, 0, 2, 6, 0, 6, 4, 1, 5, 7, 1, 7, 3]
     binb, views, accs, meshes, nodes, mats = b"", [], [], [], [], []
     for i, (nom, mat, (x0, y0, z0, x1, y1, z1), alpha) in enumerate(objets):
@@ -59,7 +60,11 @@ def make_glb(path, objets):
         mats.append(m)
         meshes.append({"name": nom, "primitives": [{"attributes": {"POSITION": len(accs) - 2}, "indices": len(accs) - 1, "material": i}]})
         nodes.append({"name": nom, "mesh": i})
-    gltf = {"asset": {"version": "2.0"}, "scene": 0, "scenes": [{"nodes": list(range(len(nodes)))}], "nodes": nodes, "meshes": meshes,
+    tops = list(range(len(nodes)))
+    if racine:
+        nodes.append({"name": "racine", "translation": list(racine[0]), "scale": [racine[1]] * 3, "children": tops})
+        tops = [len(nodes) - 1]
+    gltf = {"asset": {"version": "2.0"}, "scene": 0, "scenes": [{"nodes": tops}], "nodes": nodes, "meshes": meshes,
             "materials": mats, "accessors": accs, "bufferViews": views, "buffers": [{"byteLength": len(binb)}]}
     js = json.dumps(gltf).encode()
     js += b" " * (-len(js) % 4)
@@ -288,6 +293,7 @@ async def main():
 
             # ---- viewer : deux exports côte à côte, structure modulaire, liaison
             await test_viewer(br, pages)
+            await test_liaison(br)
         finally:
             proc.kill()
             await br.close()
@@ -381,6 +387,57 @@ async def test_viewer(br, pages):
     finally:
         proc.kill()
     rapport(not errs, "viewer : aucune erreur JavaScript", errs)
+
+
+async def test_liaison(br):
+    """Lier à un élément sur un modèle dont la racine est décalée et mise à l'échelle (×2), avec un voile traversable devant
+    la boîte et un sol géant : la boîte englobante doit être celle de la boîte (8 m), le mode est exclusif, un élément > 30 m est refusé."""
+    make_glb(tmp / "decale.glb", [("sol", "sol", (-40, -0.2, -40, 40, 0, 40), 1.0), ("boite", "mur", (4, 0, -2, 8, 4, 2), 1.0),
+                                  ("door_voile", "verre", (2, 0, 4, 10, 6, 4.05), 0.3)], racine=((500, 20, -300), 2.0))
+    ctx = await br.new_context(viewport={"width": 1300, "height": 800})
+    pg = await ctx.new_page()
+    errs = []
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    await pg.goto((DIST / "glb-viewer.html").as_uri())
+    await pg.set_input_files("#fGlb", str(tmp / "decale.glb"))
+    await pg.wait_for_function("!document.getElementById('bZip').disabled", timeout=20000)
+    await pg.wait_for_timeout(800)
+    await pg.select_option("#profileSel", "perso")
+    await pg.set_input_files("#fZones", str(tmp / "zv.json"))
+    await pg.wait_for_timeout(300)
+    proj = """(([nom, f]) => { const v = window.__viewer, i = v.meshInfo(nom); const P = v.camera.position.constructor;
+        const p = new P(...[0, 1, 2].map(k => i.min[k] + (i.max[k] - i.min[k]) * f[k])).project(v.camera); const r = v.renderer.domElement.getBoundingClientRect();
+        return [r.left + (p.x + 1) / 2 * r.width, r.top + (1 - p.y) / 2 * r.height]; })"""
+    centre = await pg.evaluate(proj + "(['boite', [0.5, 0.5, 0.5]])")
+    sol = await pg.evaluate(proj + "(['sol', [0.15, 1, 0.5]])")
+    cible = lambda: pg.evaluate("window.__viewer.controls.target.toArray().map(v => Math.round(v * 1000) / 1000)")
+    t0 = await cible()
+    holes0 = await pg.evaluate("[window.__viewer.cfg.holeX, window.__viewer.cfg.holeZ]")
+    await pg.click("#zoneList summary")
+    await pg.get_by_role("button", name="Lier à un élément").click()
+    # le sol géant (160 m) est refusé, y compris au double-clic ; rien d'autre n'agit
+    await pg.mouse.dblclick(*sol)
+    await pg.wait_for_timeout(400)
+    z = (await pg.evaluate("window.__viewer.getZones()"))[0]
+    rapport(z["mesh"] == "" and "trop grand" in await pg.inner_text("#stat"), "liaison : un élément de plus de 30 m (sol géant) est refusé avec un message", (z["mesh"], await pg.inner_text("#stat")))
+    rapport(await cible() == t0 and await pg.evaluate("[window.__viewer.cfg.holeX, window.__viewer.cfg.holeZ]") == holes0, "liaison exclusive : le double-clic ne déplace ni la cible (repère d'atterrissage) ni le trou", (t0, await cible()))
+    # la boîte, derrière le voile traversable
+    await pg.mouse.dblclick(*centre)
+    await pg.wait_for_timeout(900)
+    z = (await pg.evaluate("window.__viewer.getZones()"))[0]
+    info = await pg.evaluate("window.__viewer.meshInfo('boite')")
+    rapport(z["mesh"] == "boite", "racine décalée et mise à l'échelle, voile et sol géant : c'est la boîte qui est liée", z["mesh"])
+    rapport(all(abs(v - 8) < 0.05 for v in info["size"]), "boîte englobante = taille de la boîte (8 × 8 × 8 m avec l'échelle ×2)", info["size"])
+    mesures = await pg.evaluate("""(() => { const v = window.__viewer, B = v.camera.position.constructor, out = [];
+        v.scene.traverse(c => { if (c.type === 'Box3Helper') out.push(c.box.getSize(new B()).toArray()); });
+        return { contours: out }; })()""")
+    rapport(mesures["contours"] and all(all(7.95 < v < 8.2 for v in c) for c in mesures["contours"]), "contour fil de fer affiché à la taille de la boîte, aucun cube parasite", mesures)
+    rapport(abs(z["x"] - info["center"][0]) < 0.01 and abs(z["z"] - info["center"][2]) < 0.01 and abs(z["y"] - info["min"][1]) < 0.01, "zone posée au pied de l'élément, en coordonnées monde", z)
+    stat = await pg.inner_text("#stat")
+    rapport("boite" in stat and "8 × 8 × 8 m" in stat, "le viewer affiche le nom choisi et sa taille en mètres", stat)
+    rapport(await cible() == t0 and await pg.evaluate("[window.__viewer.cfg.holeX, window.__viewer.cfg.holeZ]") == holes0, "après la liaison, le 2e clic du double-clic ne déplace rien", (t0, await cible()))
+    rapport(not errs, "liaison : aucune erreur JavaScript", errs)
+    await ctx.close()
 
 
 asyncio.run(main())

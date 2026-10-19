@@ -36,6 +36,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 18/10/2026 | 21:20 |  | v18 : --settings, enregistrement sans .glb, cartes multi-sources |
 | 18/10/2026 |  | v19 | v19 : mode modulaire (`--modular`, `--config-only`, case « Mode modulaire » du viewer), commit `5632bd5` |
 | 18/10/2026 |  | v20 | v20 : mode modulaire universel (coquille identique pour toutes les régions, zones relues dans `<page>.zones.json` ou `zones.json`, export `.zip` du viewer, zones liées à un élément du modèle) |
+| 19/10/2026 |  | v21 | v21 : correctif « Lier à un élément » (mode exclusif, boîte en coordonnées monde, mesh nommé touché, refus au-delà de 30 m, contour fil de fer) |
 
 ## Commandes utiles
 

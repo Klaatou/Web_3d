@@ -199,7 +199,14 @@ const ROWS = [
 ];
 let loadedName = '';
 let thisReg = { name: '', url: '', x: 0, y: 0, spawn: 'default', thumb: '' };
-let chatLines = [], eraseMode = false, ignoreStack = [], zoneAddMode = false, zoneSel = null, linkZone = null;
+let chatLines = [], eraseMode = false, ignoreStack = [], zoneAddMode = false, zoneSel = null, linkZone = null, linkGuard = 0;
+const LINK_MAX = 30;
+// quitter le mode après une liaison réussie garde le noyau verrouillé 600 ms : le 2e clic et le dblclick d'un double-clic ne doivent rien déplacer
+function setLinkZone(id, keepLock) {
+  linkZone = id; viewer.renderer.domElement.style.cursor = id ? 'crosshair' : '';
+  if (id || !keepLock) { viewer.linkMode = !!id; return; }
+  setTimeout(() => { if (!linkZone) viewer.linkMode = false; }, 600);
+}
 let placeMode = false, lastPick = null, myName = '', presLast = { state: 'off', count: 0 };
 const sync = {};
 const rows = $('rows');
@@ -220,7 +227,7 @@ for (const r of ROWS) {
       '<div id="zoneList"></div>' +
       '<div class="btns"><button id="bZoneExp">Exporter zones (.json)</button><button id="bZoneImp">Importer zones (.json)</button></div>';
     zoneAddLabel();
-    $('bZoneAdd').onclick = () => { zoneAddMode = !zoneAddMode; placeMode = false; zoneAddLabel(); setStatus(zoneAddMode ? 'Clique sur la scène pour poser la zone' : 'Pose annulée'); };
+    $('bZoneAdd').onclick = () => { zoneAddMode = !zoneAddMode; placeMode = false; if (linkZone) { setLinkZone(null); renderZoneList(); } zoneAddLabel(); setStatus(zoneAddMode ? 'Clique sur la scène pour poser la zone' : 'Pose annulée'); };
     $('bZoneExp').onclick = () => download('zones.json', new Blob([JSON.stringify(cfg.zones, null, 1)], { type: 'application/json' }));
     $('bZoneImp').onclick = () => $('fZones').click();
     renderZoneList();
@@ -276,7 +283,7 @@ for (const r of ROWS) {
     const e = add('<div class="btns"><button id="bPlace" class="wide"></button></div>');
     const b = e.querySelector('button'); b.dataset.animOnly = '1';
     const label = () => { b.textContent = placeMode ? 'Clic sur la scène = centre du trou (ACTIF, clique)' : 'Placer le trou par un clic sur la scène'; };
-    label(); b.onclick = () => { placeMode = !placeMode; viewer.renderer.domElement.style.cursor = placeMode ? 'crosshair' : ''; label(); setStatus(placeMode ? 'Mode placement du trou : clique sur l\'île ou la mer' : 'Mode placement annulé'); };
+    label(); b.onclick = () => { placeMode = !placeMode; if (linkZone) { setLinkZone(null); renderZoneList(); } viewer.renderer.domElement.style.cursor = placeMode ? 'crosshair' : ''; label(); setStatus(placeMode ? 'Mode placement du trou : clique sur l\'île ou la mer' : 'Mode placement annulé'); };
     sync.place = label;
     continue;
   }
@@ -400,13 +407,13 @@ function renderZoneList() {
       } else if (z.type === 'url') d.appendChild(inp('Adresse web', 'text', z.target, v => upd({ target: v })));
       else { d.appendChild(inp('Adresse du webhook Home Assistant', 'text', z.target, v => upd({ target: v }))); d.appendChild(inp('Demander confirmation', 'checkbox', z.confirm, v => upd({ confirm: v }))); }
       const lk = document.createElement('small'); lk.style.margin = '6px 0 2px';
-      lk.textContent = !z.mesh ? 'Aucun élément lié : la zone est posée à sa position (panneau ou cercle).' : 'Élément lié : « ' + z.mesh + ' »' + (viewer.meshInfo(z.mesh) ? ' (' + viewer.meshInfo(z.mesh).count + ' morceau(x))' : ' — introuvable dans ce modèle : la zone reste à sa position');
+      lk.textContent = !z.mesh ? 'Aucun élément lié : la zone est posée à sa position (panneau ou cercle).' : 'Élément lié : « ' + z.mesh + ' »' + (viewer.meshInfo(z.mesh) ? ' (' + viewer.meshInfo(z.mesh).count + ' morceau(x), ' + viewer.meshInfo(z.mesh).size.map(v => v.toFixed(2)).join(' × ') + ' m)' : ' — introuvable dans ce modèle : la zone reste à sa position');
       d.appendChild(lk);
       const lb = document.createElement('div'); lb.className = 'btns';
       const bl = document.createElement('button'); bl.textContent = linkZone === z.id ? 'Clique sur l\'élément dans la scène…' : 'Lier à un élément';
-      bl.onclick = () => { linkZone = linkZone === z.id ? null : z.id; zoneAddMode = false; zoneAddLabel(); setStatus(linkZone ? 'Clique sur l\'élément à lier (les éléments traversables sont ignorés)' : 'Liaison annulée'); renderZoneList(); };
+      bl.onclick = () => { setLinkZone(linkZone === z.id ? null : z.id); zoneAddMode = false; placeMode = false; zoneAddLabel(); setStatus(linkZone ? 'Clique sur l\'élément à lier (les éléments traversables sont ignorés)' : 'Liaison annulée'); renderZoneList(); };
       const bu = document.createElement('button'); bu.textContent = 'Délier'; bu.disabled = !z.mesh;
-      bu.onclick = () => { linkZone = null; upd({ mesh: '' }, true); setStatus('Zone déliée : elle reprend sa position'); };
+      bu.onclick = () => { setLinkZone(null); upd({ mesh: '' }, true); setStatus('Zone déliée : elle reprend sa position'); };
       lb.append(bl, bu); d.appendChild(lb);
       if (!z.mesh) d.appendChild(inp('Forme', 'select', z.shape, v => upd({ shape: v }, true), [['ring', 'cercle au sol'], ['board', 'panneau']]));
       d.appendChild(inp(z.mesh ? 'Distance de déclenchement : touche E ou approche (m, depuis l\'élément)' : (z.shape === 'board' ? 'Portée de la touche E (m)' : 'Rayon (m)'), 'number', z.radius, v => upd({ radius: v })));
@@ -610,6 +617,27 @@ updateGuide();
     const r = dom.getBoundingClientRect();
     p.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
     ray.setFromCamera(p, viewer.camera);
+    if (linkZone) {
+      // mode exclusif : ni atterrissage, ni trou, ni pose de zone. Les éléments traversables (walkIgnore) sont ignorés :
+      // on lie le mesh nommé touché, pas le voile transparent devant. Un refus laisse le mode actif.
+      const h = ray.intersectObject(viewer.model, true).find(x => x.object.isMesh && x.object.visible && !viewer.isTraversable(x.object));
+      if (!h) { setStatus('Aucun élément ici : clique sur le modèle'); return; }
+      let name = h.object.name;
+      if (!name) for (let q = h.object.parent; q && q !== viewer.model && !name; q = q.parent) name = q.name;
+      if (!name) { setStatus('Cet élément n\'a pas de nom dans le modèle : impossible de le lier'); return; }
+      const info = viewer.meshInfo(name), r2 = v => Math.round(v * 100) / 100;
+      if (!info) { setStatus('« ' + name + ' » n\'a pas de géométrie mesurable : impossible de le lier'); return; }
+      const sz = info.size.map(r2), dims = sz.join(' × ') + ' m';
+      if (Math.max(...sz) > LINK_MAX) { setStatus('« ' + name + ' » mesure ' + dims + ' : trop grand pour être lié (maximum ' + LINK_MAX + ' m). Clique sur un élément plus petit.'); return; }
+      const list = viewer.getZones(), i = list.findIndex(x => x.id === linkZone);
+      setLinkZone(null, true); linkGuard = performance.now() + 600;
+      if (i < 0) { renderZoneList(); return; }
+      Object.assign(list[i], { mesh: name, x: r2(info.center[0]), y: r2(info.min[1]), z: r2(info.center[2]) });
+      zoneSel = list[i].id; zonesSync(list, true);
+      setStatus('Zone « ' + (list[i].label || list[i].id) + ' » liée à l\'élément « ' + name + ' » • ' + dims + ' • contour en fil de fer dans la scène' + (info.count > 1 ? ' (attention : ' + info.count + ' morceaux portent ce nom, tous deviennent cliquables)' : ''));
+      return;
+    }
+    if (performance.now() < linkGuard) return;   // fin d'une liaison : le 2e clic d'un double-clic ne doit rien déplacer
     if (placeMode) {
       const h = ray.intersectObjects([viewer.model, viewer.sea].filter(Boolean), true)[0];
       if (!h) return;
@@ -617,20 +645,6 @@ updateGuide();
       viewer.setCfg({ holeX: x, holeZ: z }); sync.holeX(x); sync.holeZ(z);
       placeMode = false; viewer.renderer.domElement.style.cursor = ''; sync.place();
       setStatus('Trou placé en X ' + x + ' • Z ' + z);
-      return;
-    }
-    if (linkZone) {
-      // les éléments traversables (walkIgnore) sont ignorés : on lie la boîte, pas le voile transparent devant
-      const h = ray.intersectObject(viewer.model, true).find(x => x.object.isMesh && x.object.visible && !viewer.isTraversable(x.object));
-      if (!h) { setStatus('Aucun élément ici : clique sur le modèle'); return; }
-      let name = ''; for (let q = h.object; q && q !== viewer.model && !name; q = q.parent) name = q.name;
-      if (!name) { setStatus('Cet élément n\'a pas de nom dans le modèle : impossible de le lier'); return; }
-      const info = viewer.meshInfo(name), r2 = v => Math.round(v * 100) / 100, list = viewer.getZones(), i = list.findIndex(x => x.id === linkZone);
-      linkZone = null;
-      if (i < 0 || !info) { renderZoneList(); return; }
-      Object.assign(list[i], { mesh: name, x: r2(info.center[0]), y: r2(info.min[1]), z: r2(info.center[2]) });
-      zoneSel = list[i].id; zonesSync(list, true);
-      setStatus('Zone « ' + (list[i].label || list[i].id) + ' » liée à l\'élément « ' + name + ' »' + (info.count > 1 ? ' (attention : ' + info.count + ' morceaux portent ce nom, tous deviennent cliquables)' : ''));
       return;
     }
     if (zoneAddMode) {
