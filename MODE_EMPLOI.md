@@ -1,4 +1,4 @@
-# Mode d'emploi : zones, portails et points d'arrivée (v22)
+# Mode d'emploi : zones, portails et points d'arrivée (v23)
 
 ## 1. La règle qui explique 90 % des pannes
 
@@ -28,6 +28,18 @@ Exemple juste :
 
 Les portails ne fonctionnent qu'en promenade.
 
+### Clic et double-clic (vue globale du viewer)
+
+| Geste | Effet |
+|---|---|
+| **clic simple** sur le modèle | affiche, dans le bloc « picked » et la barre d'état, le **nom de l'élément** et les **coordonnées du point touché** (x, y, z, 2 décimales). Rien ne bouge : ni la cible, ni le cercle d'atterrissage. |
+| **double-clic** sur le modèle | choisit la **cible** de la vue et le **point d'atterrissage** (comme dans la page exportée) |
+
+Deux cercles à ne pas confondre :
+
+- le **petit cercle** (noir et blanc, posé sur le sol) est le **repère d'atterrissage** : il montre où l'avatar apparaîtra en appuyant sur F. Il suit la cible, donc il ne change qu'au double-clic ;
+- le **grand cercle** (cylindre translucide avec son nom) est une **zone** de forme « cercle au sol » : son rayon est celui de la fiche de la zone.
+
 ## 3. Poser une zone
 
 Dans le viewer, section **Zones : panneaux, portails, liens, commandes** :
@@ -38,6 +50,7 @@ Dans le viewer, section **Zones : panneaux, portails, liens, commandes** :
    - ou, en promenade, place-toi au bon endroit et appuie sur **P** (un cercle sous tes pieds, ou un panneau 2 m devant toi, tourné vers toi).
 3. La zone apparaît dans la liste : ouvre sa fiche pour la régler.
 4. **Voir cette zone** recadre la vue dessus ; **Supprimer** l'efface.
+5. **Placer ici (dernier point cliqué)** copie x, y, z du dernier clic simple sur le modèle dans la position de la zone : clique sur le modèle (les coordonnées s'affichent dans « picked »), ouvre la fiche, puis clique sur ce bouton.
 
 ## 4. Point d'arrivée
 
@@ -91,6 +104,16 @@ Effet : fondu, chargement de l'autre page, le visiteur y arrive directement en p
 
 Approche-toi et appuie sur **E** (ou clique) : la page s'ouvre dans un nouvel onglet.
 
+Formats acceptés pour l'adresse (aussi pour la page de destination d'un portail) :
+
+| Format | Exemple | Remarque |
+|---|---|---|
+| adresse web | `https://monsite.fr/ile.html` | marche partout |
+| fichier `.html` relatif | `autre-ile.html` | relatif à la page qui contient la zone |
+| fichier local | `file:///P:/web/autre-ile.html` | **sans guillemets** ; ne marche que si la page elle-même est ouverte depuis le disque |
+
+Les espaces s'écrivent `%20` (`file:///P:/mes%20pages/ile.html`). Toute autre forme (`javascript:`, `ftp:`…) est refusée.
+
 ### Commande Home Assistant
 
 | Champ | Réglage |
@@ -129,6 +152,13 @@ Pour qu'un objet de la scène serve lui-même de déclencheur (une porte, une bo
 
 Le visiteur déclenche alors la zone en cliquant sur l'objet, ou avec E quand il en est assez près. **Délier** remet la zone à sa position propre.
 
+**Un seul morceau est lié** : celui sur lequel tu as cliqué. Si plusieurs objets du modèle portent le même nom (fréquent dans un OAR), la zone mémorise `nom#index` (le rang de l'objet parmi ceux de ce nom) au lieu du nom seul : les autres objets de même nom ne sont pas touchés.
+
+**Limite : 10 m.** Un élément dont une dimension dépasse 10 m est refusé avec le message « Élément trop grand (L × l × h m) : probablement fusionné avec un bâtiment dans l'OAR… ». Cause : un objet appartenant à un **linkset** OpenSim est fusionné avec lui dans le GLB ; il n'existe plus seul, et on ne peut pas le lier. Deux remèdes :
+
+- le **délier dans OpenSim** (Unlink) avant d'exporter l'OAR, puis régénérer le GLB ;
+- ou garder le bâtiment tel quel et poser dessus une **zone cercle** (Forme : cercle au sol), avec le bouton **Placer ici** pour la positionner.
+
 ## 10. Zones privées
 
 **Privé (absent de l'export public)** coché : la zone reste dans tes exports « perso », mais disparaît des exports « public ». Le choix se fait dans **Profil d'export** :
@@ -144,6 +174,18 @@ Dans la section **Carte des mondes**, le champ **Point d'arrivée des visiteurs 
 
 - ✔ si cette arrivée existe dans la région ;
 - ⚠ sinon (le visiteur apparaît alors au point de départ habituel de la touche F).
+
+### Rotation de la région
+
+Quand l'OAR arrive tourné (ou l'île inversée nord-sud sur la carte), la section **Région** du viewer propose **Rotation de la région** : 0, 90, 180 ou 270° autour de l'axe vertical. Le modèle tourne, et du même angle, autour du centre de la région : les zones (position et orientation), les points d'arrivée, la cible et le cercle d'atterrissage, le trou de la mer. Les zones liées suivent leur élément. La barre d'état annonce « Région tournée de N° : M zone(s) déplacée(s). Recapture la vignette. »
+
+La rotation est mémorisée comme les autres réglages, et reprise dans la commande (`--rotate 180`), dans `.reglages.json` et dans `<page>.config.json`. La page générée applique la rotation au chargement ; les zones du fichier sont déjà dans le repère tourné : ne tourne pas deux fois.
+
+**Après une rotation**, la vignette de la carte ne correspond plus au modèle :
+
+1. section **Carte des mondes** : **Capturer la vignette (vue du dessus)** ;
+2. **Ajouter / mettre à jour cette région dans la carte** ;
+3. **Exporter regions.json** (puis régénérer ou republier les pages qui l'embarquent).
 
 ## 12. Publier les changements
 
@@ -171,3 +213,17 @@ Les zones peuvent aussi être sauvées et rechargées avec **Exporter zones (.js
 | « Portail sans destination valide » | adresse mal écrite, ou protocole non accepté | `https://…` ou nom de fichier `.html` |
 | La zone marche dans le viewer, pas dans la page | page pas republiée | voir § 12 |
 | Commande HA « envoyée » mais rien ne bouge | webhook faux, ou automatisation désactivée | teste le webhook directement depuis Home Assistant |
+| Une zone supprimée revient après rechargement | le viewer restaure les réglages mémorisés pour ce fichier, ou l'ancien `.reglages.json` / `zones.json` a été rechargé | supprime-la (**Supprimer**), attends 2 s (mémorisation automatique), ou **Oublier les réglages de ce fichier** (§ 14) ; vérifie aussi `zones.json` / `<page>.zones.json` |
+| La liaison prend un objet de 30 m | (avant v23) l'objet est fusionné avec un bâtiment dans l'OAR ; la limite était de 30 m | v23 : limite de 10 m et message explicite ; délie l'objet dans OpenSim (Unlink) ou pose une zone cercle (§ 9) |
+| Le cercle d'atterrissage « saute » | (avant v23) chaque clic simple déplaçait la cible | v23 : seul le **double-clic** le déplace ; le clic simple affiche nom et coordonnées |
+| L'île est inversée nord-sud sur la carte | l'OAR est exporté dans l'autre orientation | **Rotation de la région** : 180° (§ 11), puis recapturer la vignette, mettre à jour la région dans la carte et réexporter `regions.json` |
+
+## 14. Réglages mémorisés
+
+Le viewer mémorise **tout** (zones comprises, mais aussi trou, vagues, caméra, rotation, carte, fiche de région…) **par fichier `.glb`** dans le navigateur (clé : nom + taille du fichier). Il enregistre seul, environ toutes les 1,5 s après une modification. Au rechargement du même `.glb`, tout est restauré, et la barre d'état indique « Réglages restaurés depuis la mémoire du navigateur (N zone(s)) ».
+
+Conséquences :
+
+- une zone ajoutée ou supprimée est retrouvée telle quelle au rechargement ; pour **supprimer une zone**, ouvre sa fiche et clique sur **Supprimer** (attends 2 s avant de fermer l'onglet) ;
+- la mémoire est propre au navigateur et à l'adresse de la page du viewer : un autre navigateur ou un autre ordinateur ne voit rien. Pour transporter les réglages : **Enregistrer dans un fichier** (`.reglages.json`) puis **Charger depuis un fichier**, ou `glb2html.py --settings` ;
+- **Oublier les réglages de ce fichier** (section Réglages mémorisés) efface la mémoire de ce `.glb` : les valeurs actuelles restent à l'écran, mais ne sont plus protégées, et elles seront mémorisées de nouveau à la prochaine modification. Pour repartir de zéro : cliquer ce bouton puis recharger la page du viewer et rouvrir le `.glb`.

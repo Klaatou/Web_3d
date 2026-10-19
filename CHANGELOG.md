@@ -2,6 +2,17 @@
 
 Les dates sont au format jj/mm/aaaa.
 
+## v23 (19/10/2026)
+- Viewer, clic : un clic simple sur le modèle n'a plus d'effet sur la cible caméra ni sur le cercle d'atterrissage, dans aucun mode. Il affiche le nom de l'élément ET les coordonnées du point touché (x, y, z, 2 décimales) dans « picked » et la barre d'état. Seul le double-clic choisit la cible / l'atterrissage, comme la page exportée.
+- Viewer, zone : bouton « Placer ici (dernier point cliqué) » (copie x, y, z du dernier clic simple).
+- Liaison à un élément : on lie le morceau réellement cliqué. Si son nom est partagé par plusieurs objets (OAR : prims répétés), la zone stocke `nom#index` (rang de l'objet parmi ceux de ce nom, ordre de parcours three.js). Nom unique : le nom seul, comme avant (zones existantes inchangées). Règle commune : `resolveMeshRef` (core.js) et `resolve_mesh_ref` (glb2html.py). glb2html.py n'ouvre pas le GLB : il ne fait que transporter la référence.
+- `LINK_MAX` passe de 30 à 10 m. Refus : « Élément trop grand (L × l × h m) : probablement fusionné avec un bâtiment dans l'OAR. Délie-le dans OpenSim ou utilise une zone cercle. »
+- Viewer : au chargement d'un GLB dont les réglages sont restaurés depuis le navigateur, la barre d'état dit « Réglages restaurés depuis la mémoire du navigateur (N zone(s)) ».
+- Correctif : « Oublier les réglages de ce fichier » était annulé en 1,5 s par l'enregistrement automatique ; la mémoire reste maintenant vide jusqu'à la prochaine modification.
+- Rotation de la région (0, 90, 180, 270°, axe vertical) : réglage `rotate` (liste dans le viewer, `--rotate` dans glb2html.py, `rotate` dans la config, `.reglages.json` et la commande générée ; relu par `--settings`). Appliquée à la racine du modèle au chargement, avant recentrage, boîte englobante, sol de promenade, trou et vignette. Changer la valeur dans le viewer fait tourner du même angle, autour du centre de la région : zones (position + orientation), arrivées, caméra, cible (donc atterrissage), dernier point cliqué, et le trou de la mer (non demandé, mais il resterait hors de l'île sinon). Zones liées : elles suivent leur élément. Les zones d'un fichier donné à `--rotate` sont déjà dans le repère tourné.
+- `MODE_EMPLOI.md` mis à jour pour la v23 : clic et double-clic, « Placer ici », formats de lien web, limite de 10 m et linksets OpenSim, rotation et vignette, dépannage, nouvelle section 14 « Réglages mémorisés ».
+- Tests : nouveau `tests/v23.py` (clic simple sans effet, double-clic, « Placer ici », deux meshes de même nom à 100 m, mesh de 30 m refusé, rotation 180 avec zone sur le mesh nord, mémorisation, page générée `--rotate 180` aux mêmes positions que le viewer, « Oublier »). Pour obtenir de vrais doublons de nom, le modèle de test instancie un mesh à deux primitives : three.js rend uniques les noms de nœuds (`_instance_N`), mais les enfants des clones gardent leur nom.
+
 ## v22 (19/10/2026)
 - Portail interne : un portail dont la « Page de destination » est vide, ou désigne la page elle-même, pose le visiteur sur le point d'arrivée indiqué de la même région (fondu, sans rechargement : présence et chat conservés). Avant, la page restait sur un écran noir. Arrivée absente : message « Point d'arrivée … introuvable dans cette région ».
 - Noyau : `teleportTo(pos, yaw)` (hors promenade : `walkStart`). Les portails « en marchant dedans » sous les pieds à l'arrivée ne se déclenchent pas tout de suite (pas de ping-pong).

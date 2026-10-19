@@ -30,6 +30,7 @@ import sys
 import urllib.request
 
 # <<DEFAULTS>>
+ROTATE = 0
 HOLE_RADIUS = 180.0
 HOLE_FADE = 60.0
 HOLE_X = 0.0
@@ -117,6 +118,31 @@ def clean_zones(zones, profile):
             "mesh": "" if t == "spawn" else re.sub(r"[\x00-\x1f]", "", str(z.get("mesh") or ""))[:200],
         })
     return out
+
+
+def clean_rotate(v):
+    """Rotation de la région : 0, 90, 180 ou 270 degrés (autre valeur : arrondie au quart de tour le plus proche), comme core.js."""
+    try:
+        return (round(float(v) / 90) * 90) % 360
+    except (TypeError, ValueError, OverflowError):
+        return 0
+
+
+def resolve_mesh_ref(names, ref):
+    """Indices (dans `names`, noms des objets du modèle dans l'ordre de parcours de three.js : pré-ordre, enfants dans l'ordre du fichier)
+    désignés par le champ `mesh` d'une zone. Même règle que resolveMeshRef de core.js : le nom exact d'abord (zones anciennes, nom unique),
+    sinon « base#index » = index-ième objet nommé « base ». Liste vide si introuvable."""
+    if not ref:
+        return []
+    exact = [i for i, n in enumerate(names) if n == ref]
+    if exact:
+        return exact
+    m = re.fullmatch(r"(.*)#(\d+)", ref, re.S)
+    if not m:
+        return []
+    same = [i for i, n in enumerate(names) if n == m.group(1)]
+    k = int(m.group(2))
+    return [same[k]] if k < len(same) else []
 
 
 def fix_presence_url(u):
@@ -330,7 +356,7 @@ def settings_defaults(S):
         except (TypeError, ValueError, IndexError):
             pass
     vec = lambda v: tuple(float(x) for x in list(v)[:3]) if len(v) >= 3 else (_ for _ in ()).throw(ValueError())
-    for k, dest, conv in (("hole", "hole", float), ("holeFade", "hole_fade", float), ("holeX", "hole_x", float), ("holeZ", "hole_z", float),
+    for k, dest, conv in (("rotate", "rotate", int), ("hole", "hole", float), ("holeFade", "hole_fade", float), ("holeX", "hole_x", float), ("holeZ", "hole_z", float),
                           ("wave", "wave", float), ("seaY", "sea_y", float), ("seaSegments", "sea_segments", int), ("seaColor", "sea_color", int),
                           ("skyColor", "sky_color", int), ("foliageCutout", "foliage_cutout", float), ("anim", "anim_enabled", bool),
                           ("sea", "sea_enabled", bool), ("retina", "retina", bool), ("walk", "walk", bool), ("eyeHeight", "eye_height", float),
@@ -409,7 +435,7 @@ DRACO_JS = r"""__DRACO_JS__"""
 MESHOPT_JS = r"""__MESHOPT_JS__"""
 
 
-def build_cfg(name: str, *, hole=HOLE_RADIUS, hole_fade=HOLE_FADE, hole_x=HOLE_X, hole_z=HOLE_Z, wave=WAVE_AMP,
+def build_cfg(name: str, *, rotate=ROTATE, hole=HOLE_RADIUS, hole_fade=HOLE_FADE, hole_x=HOLE_X, hole_z=HOLE_Z, wave=WAVE_AMP,
                sea_y=SEA_Y, zoom=ZOOM_RATIO, cam_dir=CAM_DIR, target=TARGET, sea_enabled=SEA_ENABLED,
                anim_enabled=ANIM_ENABLED, retina=RETINA_ENABLED, foliage_cutout=FOLIAGE_CUTOUT,
                sea_color=SEA_COLOR, sky_color=SKY_COLOR, sea_segments=SEA_SEGMENTS, walk=WALK_ENABLED, eye_height=EYE_HEIGHT, walk_speed=WALK_SPEED, walk_ignore=WALK_IGNORE, names=NAMES_ENABLED, presence_url=PRESENCE_URL, room=ROOM, chat=CHAT_ENABLED, chat_fade=CHAT_FADE, zones=None, profile=PROFILE, spectate=SPECTATE, panel=PANEL, zones_live=ZONES_LIVE, map_entries=None, map_url=MAP_URL, modular=False) -> dict:
@@ -417,7 +443,7 @@ def build_cfg(name: str, *, hole=HOLE_RADIUS, hole_fade=HOLE_FADE, hole_x=HOLE_X
     sauf que le mode modulaire garde les zones hors de la config (fichier <page>.zones.json, relu à chaque ouverture)."""
     presence_url = fix_presence_url(presence_url)
     cfg = {
-        "hole": float(hole), "holeFade": float(hole_fade), "holeX": float(hole_x), "holeZ": float(hole_z), "wave": float(wave), "seaY": float(sea_y),
+        "rotate": clean_rotate(rotate), "hole": float(hole), "holeFade": float(hole_fade), "holeX": float(hole_x), "holeZ": float(hole_z), "wave": float(wave), "seaY": float(sea_y),
         "zoom": float(zoom), "camDir": list(map(float, cam_dir)), "target": list(map(float, target)),
         "sea": bool(sea_enabled), "anim": bool(anim_enabled), "retina": bool(retina),
         "foliageCutout": float(foliage_cutout), "seaSize": SEA_SIZE, "seaSegments": int(sea_segments),
@@ -691,6 +717,7 @@ def main():
     ap.add_argument("--zones-live", nargs="?", const="auto", default=(ZONES_LIVE or None), metavar="NOM", help="la page recharge ses zones à chaque ouverture depuis un fichier .zones.json placé à côté d'elle (servie en http/https ; sinon les zones intégrées servent). Sans NOM : <page>.zones.json. Le fichier est écrit par le script, filtré selon --profile")
     ap.add_argument("--zones-only", action="store_true", help="réécrit seulement les zones, sans régénérer le HTML : <page>.zones.json d'une page modulaire déjà générée (avec --zones FICHIER), ou, avec --zones-live, le fichier de zones d'une page autonome")
     ap.add_argument("-o", "--output", help="sortie : fichier .html, ou dossier (créé si besoin). Entrée dossier : dossier de sortie. Défaut : \"<nom> - Offline.html\" à côté du .glb")
+    ap.add_argument("--rotate", type=int, choices=(0, 90, 180, 270), default=ROTATE, help="rotation de la région autour de l'axe vertical (0, 90, 180 ou 270 degrés), appliquée au chargement avant le recentrage. Les zones, arrivées, cible et trou du fichier de zones / de réglages sont DÉJÀ dans le repère tourné (le viewer les fait tourner avec la région)")
     ap.add_argument("--hole", type=float, default=HOLE_RADIUS, help="rayon du trou 30..600 (zone plate = rayon - fondu)")
     ap.add_argument("--hole-fade", type=float, default=HOLE_FADE, help="demi-largeur du fondu du trou")
     ap.add_argument("--hole-x", type=float, default=HOLE_X, help="position X du centre du trou (monde)")
@@ -791,7 +818,7 @@ def main():
             sys.exit(f"[ERREUR] {zf} illisible ({e})")
         print(f"[zones] {len(zones_arg) if isinstance(zones_arg, list) else 0} zone(s) lue(s) dans {zf}")
 
-    kw = dict(hole=clamp(a.hole, 30, 600), hole_fade=max(0.0, a.hole_fade), hole_x=a.hole_x, hole_z=a.hole_z, wave=clamp(a.wave, 0, 10),
+    kw = dict(rotate=a.rotate, hole=clamp(a.hole, 30, 600), hole_fade=max(0.0, a.hole_fade), hole_x=a.hole_x, hole_z=a.hole_z, wave=clamp(a.wave, 0, 10),
               sea_y=clamp(a.sea_y, -150, 60), zoom=clamp(a.zoom, 0.05, 100), cam_dir=a.cam_dir, target=a.target,
               foliage_cutout=clamp(a.foliage_cutout, 0, 1), sea_color=a.sea_color, sky_color=a.sky_color, sea_segments=int(clamp(a.sea_segments, 8, 1000)), walk=a.walk, walk_ignore=a.walk_ignore, zones_live=a.zones_live or "", map_entries=map_arg, map_url=a.map_url, names=a.names, presence_url=a.presence_url, room=a.room, chat=a.chat, chat_fade=clamp(a.chat_fade, 0, 3600), zones=zones_arg, profile=a.profile, spectate=a.spectate, panel=a.panel, eye_height=clamp(a.eye_height, 0.3, 5), walk_speed=clamp(a.walk_speed, 0.5, 30),
               sea_enabled=a.sea_enabled, anim_enabled=a.anim_enabled, retina=a.retina, title=a.title)

@@ -22,6 +22,32 @@ function describeObject(o) {
   };
 }
 
+// description d'un clic : nom de l'élément + point touché (x, y, z, 2 décimales)
+function describePick(o, point) {
+  const d = describeObject(o);
+  if (point) { d.point = point; d.text += '\npoint (m) : ' + point.map(v => v.toFixed(2)).join(', '); }
+  return d;
+}
+
+// Référence d'un élément pour le champ mesh d'une zone. Nom unique dans le modèle : le nom. Nom partagé par plusieurs objets
+// (OAR : des dizaines de prims s'appellent pareil) : « nom#index », index = rang de l'objet parmi les objets de ce nom dans l'ordre
+// de parcours (pré-ordre, enfants dans l'ordre du fichier). glb2html.py applique la même règle (resolve_mesh_ref).
+function nodesNamed(root, name) { const out = []; root.traverse(o => { if (o.name === name) out.push(o); }); return out; }
+function meshRefOf(root, o) {
+  const same = nodesNamed(root, o.name);
+  return same.length > 1 ? o.name + '#' + same.indexOf(o) : o.name;
+}
+// objets désignés par une référence : le nom exact d'abord (zones anciennes), sinon « base#index »
+function resolveMeshRef(root, ref) {
+  if (!root || !ref) return [];
+  const exact = nodesNamed(root, ref);
+  if (exact.length) return exact;
+  const m = /^(.*)#(\d+)$/.exec(ref);
+  if (!m) return [];
+  const o = nodesNamed(root, m[1])[Number(m[2])];
+  return o ? [o] : [];
+}
+
 function isIgnoredMesh(o, tokens) {
   if (!tokens.length) return false;
   for (let p = o; p; p = p.parent) if (nameHas(p.name, tokens)) return true;
@@ -180,7 +206,7 @@ function createViewer(container, cfg0, loader) {
   const cfg = Object.assign({}, cfg0);
   let onCfg = null, onWalk = null, onPick = null, onPresence = null, onChat = null, onName = null, spectateOn = false, pickOrbit = false, walking = false, linkLock = false;
   const W = { pos: new THREE.Vector3(), spawn: new THREE.Vector3(), vy: 0, grounded: true, yaw: 0, pitch: 0, keys: new Set(), jumpReq: false, drag: false, saved: null, grid: null };
-  let model = null, fit = 1, sea = null, seaMat = null, dirty = true, foliageMats = [];
+  let model = null, modelRot = 0, fit = 1, sea = null, seaMat = null, dirty = true, foliageMats = [];
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(cfg.skyColor);
@@ -297,6 +323,10 @@ function createViewer(container, cfg0, loader) {
     if (model) { scene.remove(model); disposeObject(model); }
     model = root;
     fixMaterials(root);
+    // rotation de la région autour de l'axe vertical : AVANT recentrage, boîte englobante, sol de promenade et capture de vignette
+    modelRot = rotDeg();
+    if (modelRot) root.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(UPV, modelRot * Math.PI / 180));
+    root.updateMatrixWorld(true);
     // centre = moyenne des origines de meshes, puis y+15
     const sum = new THREE.Vector3(), wp = new THREE.Vector3(); let cnt = 0;
     root.traverse(o => { if (o.isMesh) { o.getWorldPosition(wp); sum.add(wp); cnt++; } });
@@ -311,6 +341,23 @@ function createViewer(container, cfg0, loader) {
     frame();
   }
 
+  // 0, 90, 180 ou 270 (autre valeur : arrondie au quart de tour le plus proche)
+  function rotDeg() { return ((Math.round((Number(cfg.rotate) || 0) / 90) * 90) % 360 + 360) % 360; }
+  // aligne le modèle déjà chargé sur cfg.rotate : rotation autour de l'axe vertical passant par le centre de la région (origine)
+  function applyRotation() {
+    if (!model) return;
+    const d = rotDeg() - modelRot;
+    if (!d) return;
+    const q = new THREE.Quaternion().setFromAxisAngle(UPV, d * Math.PI / 180);
+    model.quaternion.premultiply(q); model.position.applyQuaternion(q);
+    modelRot = rotDeg();
+    model.updateMatrixWorld(true);
+    model.traverse(o => { if (o.isMesh) o.updateMatrix(); });
+    if (zones.length) { resolveLinks(); buildZones(); }
+    if (walking) W.grid = buildCollisionGrid(model, 3, parseIgnore(cfg.walkIgnore));
+    landKey = ''; dirty = true;
+  }
+
   async function loadBuffer(buf) {
     const gltf = await loader.parseAsync(buf, '');
     setModel(gltf.scene);
@@ -321,6 +368,7 @@ function createViewer(container, cfg0, loader) {
     Object.assign(cfg, p);
     if ('skyColor' in p) { scene.background.set(cfg.skyColor); scene.fog.color.set(cfg.skyColor); hemi.color.set(cfg.skyColor); }
     if ('retina' in p) resize();
+    if ('rotate' in p) applyRotation();
     if ('sea' in p || 'anim' in p || 'seaSegments' in p) buildSea();
     else if (seaMat) {
       if ('seaColor' in p) { if (seaMat.uniforms) seaMat.uniforms.uColor.value.set(cfg.seaColor); else seaMat.color.set(cfg.seaColor); }
@@ -495,7 +543,7 @@ function createViewer(container, cfg0, loader) {
     if (!model) return null;
     camera.updateMatrixWorld(true);
     tpV.set(nx, ny); tpRay.setFromCamera(tpV, camera);
-    for (const h of tpRay.intersectObject(model, true)) if (h.object.isMesh && h.object.visible) return Object.assign(describeObject(h.object), { point: h.point.toArray() });
+    for (const h of tpRay.intersectObject(model, true)) if (h.object.isMesh && h.object.visible) return describePick(h.object, h.point.toArray());
     return null;
   }
   function doPick(e, locked) {
@@ -729,9 +777,9 @@ function createViewer(container, cfg0, loader) {
     for (const m of meshes) b.expandByObject(m);
     return b.isEmpty() || !Number.isFinite(b.min.x + b.max.x + b.min.y + b.max.y + b.min.z + b.max.z) ? null : b;
   }
-  function findMeshes(name) {
+  function findMeshes(ref) {
     const out = new Set();
-    if (model && name) model.traverse(o => { if (o.name === name) o.traverse(c => { if (c.isMesh) out.add(c); }); });
+    for (const o of resolveMeshRef(model, ref)) o.traverse(c => { if (c.isMesh) out.add(c); });
     return [...out];
   }
   function resolveLinks() {
@@ -1009,6 +1057,8 @@ function createViewer(container, cfg0, loader) {
     scene, camera, renderer, controls, cfg, setCfg, setModel, loadBuffer, frame, getCameraState, setZoom,
     get model() { return model; }, get sea() { return sea; }, set onCfg(f) { onCfg = f; }, set onWalk(f) { onWalk = f; }, set onPick(f) { onPick = f; }, set pickOrbit(v) { pickOrbit = !!v; }, set onPresence(f) { onPresence = f; }, set onChat(f) { onChat = f; },
     setZones, zoneSelect, zonePickAt, findMeshes,
+    // référence (champ mesh d'une zone) de cet objet du modèle : nom, ou nom#index si le nom est partagé
+    meshRef(o) { return model ? meshRefOf(model, o) : (o.name || ''); }, get rotation() { return modelRot; },
     // boîte (monde) de l'élément de ce nom : { min, max, center, count } ou null
     meshInfo(name) { const m = findMeshes(name); const b = m.length ? boxOfMeshes(m) : null; if (!b) return null; return { min: b.min.toArray(), max: b.max.toArray(), center: b.getCenter(new THREE.Vector3()).toArray(), size: b.getSize(new THREE.Vector3()).toArray(), count: m.length }; },
     set linkMode(v) { linkLock = !!v; },

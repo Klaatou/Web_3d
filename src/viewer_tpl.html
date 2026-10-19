@@ -138,7 +138,7 @@ function inspectGlb(buf, name = 'fichier') {
 
 // ---------- état
 const DEF = {
-  hole: 180, holeFade: 60, holeX: 0, holeZ: 0, guide: true, wave: 0.5, seaY: -50, zoom: 1, camDir: [0, 0.25, 1], target: [0, 15, 0],
+  rotate: 0, hole: 180, holeFade: 60, holeX: 0, holeZ: 0, guide: true, wave: 0.5, seaY: -50, zoom: 1, camDir: [0, 0.25, 1], target: [0, 15, 0],
   sea: true, anim: false, retina: false, foliageCutout: 0.12, seaSize: 4000, seaSegments: 400, walk: true, eyeHeight: 1.7, walkSpeed: 3.5, walkIgnore: 'door, porte', ignoreViz: false, zones: [], profile: 'perso', spectate: true, panel: true, map: [], mapUrl: '', names: false, chat: true, chatFade: 0, presenceUrl: '', room: '',
   seaColor: 0x3A9AD9, skyColor: 0x87CEEB
 };
@@ -154,6 +154,8 @@ const hex = n => '#' + n.toString(16).padStart(6, '0');
 
 // ---------- panneau de réglages
 const ROWS = [
+  ['sec', 'Région'],
+  ['rotate'],
   ['sec', 'Mer'],
   ['chk', 'sea', 'Mer visible'],
   ['chk', 'anim', 'Vagues animées'],
@@ -200,7 +202,7 @@ const ROWS = [
 let loadedName = '';
 let thisReg = { name: '', url: '', x: 0, y: 0, spawn: 'default', thumb: '' };
 let chatLines = [], eraseMode = false, ignoreStack = [], zoneAddMode = false, zoneSel = null, linkZone = null, linkGuard = 0;
-const LINK_MAX = 30;
+const LINK_MAX = 10;
 // quitter le mode après une liaison réussie garde le noyau verrouillé 600 ms : le 2e clic et le dblclick d'un double-clic ne doivent rien déplacer
 function setLinkZone(id, keepLock) {
   linkZone = id; viewer.renderer.domElement.style.cursor = id ? 'crosshair' : '';
@@ -268,7 +270,7 @@ for (const r of ROWS) {
     $('bUndoIgn').onclick = undoIgnore;
     const vz = add('<label class="chk"><input type="checkbox" data-key="ignoreViz"><span>Voir en filaire les éléments ignorés (non exporté)</span></label>').querySelector('input');
     vz.checked = !!cfg.ignoreViz; vz.onchange = () => viewer.setCfg({ ignoreViz: vz.checked });
-    add('<pre id="picked">Clique sur le modèle : le nom du mesh visé s\'affiche ici.</pre>');
+    add('<pre id="picked">Clique sur le modèle : le nom du mesh visé et les coordonnées du point touché s\'affichent ici.</pre>');
     if (lastPick) $('picked').textContent = lastPick.text;
     continue;
   }
@@ -276,6 +278,13 @@ for (const r of ROWS) {
     const e = add('<div class="btns"><button id="bWalk" class="wide"></button></div><small>Clique sur le modèle pour viser un endroit (un cercle au sol le montre), puis entre en promenade : l\'avatar apparaît là. Ensuite clic dans la vue pour capturer la souris.</small>');
     const b = e.querySelector('button'); b.disabled = !viewer.model;
     walkLabel(); b.onclick = () => viewer.toggleWalk();
+    continue;
+  }
+  if (r[0] === 'rotate') {
+    const e = add('<div class="row"><label>Rotation de la région (autour de l\'axe vertical)</label><select id="selRotate" style="grid-column:1/-1;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;width:100%"><option value="0">0° (aucune)</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select></div>');
+    const sel = e.querySelector('select'); sel.value = String(rotNorm(cfg.rotate));
+    sel.onchange = () => setRotation(parseInt(sel.value, 10));
+    add('<small>Tourne le modèle, et avec lui les zones, les arrivées, la cible, l\'atterrissage et le trou. Utile quand l\'OAR arrive tourné ou inversé nord-sud sur la carte.</small>');
     continue;
   }
   if (r[0] === 'info') { add('<pre id="holeInfo"></pre>'); continue; }
@@ -356,6 +365,26 @@ function updateIgnoreViz() {
   viewer.requestRender();
 }
 function zoneAddLabel() { const b = $('bZoneAdd'); if (b) b.textContent = zoneAddMode ? 'Pose ACTIVE : clique sur la scène' : 'Poser une zone par un clic sur la scène'; }
+const rotNorm = v => (((Math.round((Number(v) || 0) / 90) * 90) % 360) + 360) % 360;
+// change la rotation de la région : le modèle tourne (noyau), puis, du même angle autour du centre de la région,
+// zones (position + orientation), points d'arrivée, caméra, cible (donc atterrissage), trou et dernier point cliqué
+function setRotation(deg) {
+  const old = rotNorm(cfg.rotate), nw = rotNorm(deg), d = rotNorm(nw - old) * Math.PI / 180;
+  const sel = $('selRotate'); if (sel) sel.value = String(nw);
+  if (nw === old) return;
+  viewer.setCfg({ rotate: nw });
+  const Y = new THREE.Vector3(0, 1, 0), q = v => Math.round(v * 1e6) / 1e6;
+  const rot = (x, z) => { const p = new THREE.Vector3(x, 0, z).applyAxisAngle(Y, d); return [q(p.x), q(p.z)]; };
+  viewer.camera.position.applyAxisAngle(Y, d); viewer.controls.target.applyAxisAngle(Y, d); viewer.controls.update();
+  const hx = Math.round(rot(cfg.holeX, cfg.holeZ)[0]), hz = Math.round(rot(cfg.holeX, cfg.holeZ)[1]);
+  viewer.setCfg({ holeX: Math.max(-600, Math.min(600, hx)), holeZ: Math.max(-600, Math.min(600, hz)) }); if (sync.holeX) { sync.holeX(cfg.holeX); sync.holeZ(cfg.holeZ); }
+  if (lastPick && lastPick.point) { const [x, z] = rot(lastPick.point[0], lastPick.point[2]); lastPick.point = [x, lastPick.point[1], z]; }
+  const list = viewer.getZones();
+  for (const z of list) { [z.x, z.z] = rot(z.x, z.z); z.yaw = Math.atan2(Math.sin(z.yaw + d), Math.cos(z.yaw + d)); }
+  zonesSync(list, true);
+  updateIgnoreViz(); camInfo();
+  setStatus('Région tournée de ' + Math.round(d * 180 / Math.PI) + '° : ' + list.length + ' zone(s) déplacée(s). Recapture la vignette.');
+}
 function zoneDefaults(type) {
   const base = { type, label: '', shape: 'ring', trigger: 'click', radius: 2, w: 2.4, h: 1.2, target: '', spawn: '', confirm: false, private: false, yaw: 0, mesh: '' };
   if (type === 'portal') return Object.assign(base, { label: 'Portail', trigger: 'enter' });
@@ -424,8 +453,15 @@ function renderZoneList() {
     d.appendChild(inp('Position Z', 'number', z.z, v => upd({ z: v }))); d.appendChild(inp('Orientation (degrés)', 'number', Math.round(z.yaw * 180 / Math.PI), v => upd({ yaw: v * Math.PI / 180 })));
     const bt = document.createElement('div'); bt.className = 'btns';
     const go = document.createElement('button'); go.textContent = 'Voir cette zone'; go.onclick = () => { viewer.controls.target.set(z.x, z.y + 1, z.z); viewer.controls.update(); viewer.requestRender(); camInfo(); };
+    const here = document.createElement('button'); here.textContent = 'Placer ici (dernier point cliqué)';
+    here.onclick = () => {
+      if (!lastPick || !lastPick.point) return setStatus('Clique d\'abord sur le modèle : le point touché s\'affiche dans « picked »');
+      const r2 = v => Math.round(v * 100) / 100;
+      upd({ x: r2(lastPick.point[0]), y: r2(lastPick.point[1]), z: r2(lastPick.point[2]) }, true);
+      setStatus('Zone « ' + (z.label || z.id) + ' » placée en ' + lastPick.point.map(r2).join(', '));
+    };
     const del = document.createElement('button'); del.textContent = 'Supprimer'; del.onclick = () => { const list = viewer.getZones(); list.splice(idx, 1); zoneSel = null; zonesSync(list, true); };
-    bt.appendChild(go); bt.appendChild(del); d.appendChild(bt);
+    bt.appendChild(go); bt.appendChild(here); bt.appendChild(del); d.appendChild(bt);
     host.appendChild(d);
   });
   if (!cfg.zones.length) { const p = document.createElement('small'); p.textContent = 'Aucune zone pour le moment.'; host.appendChild(p); }
@@ -453,10 +489,10 @@ viewer.onChat = m => {
 };
 viewer.onPick = info => {
   if (!info) return;
-  lastPick = { token: info.token, mesh: info.mesh, text: info.text };
+  lastPick = { token: info.token, mesh: info.mesh, text: info.text, point: info.point };
   if (eraseMode) { addIgnoreExact(info.mesh); return; }
   const pe = $('picked'); if (pe) pe.textContent = info.text;
-  setStatus('Visé : ' + (info.name || '(sans nom)') + ' • ' + (info.materials[0] ? 'matériau ' + info.materials[0] : 'sans matériau nommé'));
+  setStatus('Visé : ' + (info.name || '(sans nom)') + (info.point ? ' • point ' + info.point.map(v => v.toFixed(2)).join(', ') : '') + ' • ' + (info.materials[0] ? 'matériau ' + info.materials[0] : 'sans matériau nommé'));
 };
 function walkLabel() { const b = $('bWalk'); if (b) b.textContent = viewer.walking ? 'Quitter la promenade (F)' : 'Entrer en mode promenade (F)'; }
 viewer.onWalk = on => {
@@ -502,7 +538,7 @@ async function afterLoad(name, size) {
   $('bHtml').disabled = false; $('bZip').disabled = false;
   if ($('bWalk')) $('bWalk').disabled = false;
   camInfo();
-  setStatus(name + ' • ' + countMeshes(viewer.model) + ' meshes • prêt' + (restored ? ' • réglages retrouvés (' + restored + ')' : ''));
+  setStatus(restored ? 'Réglages restaurés depuis la mémoire du navigateur (' + cfg.zones.length + ' zone(s))' : name + ' • ' + countMeshes(viewer.model) + ' meshes • prêt');
   updateIgnoreViz();
   cfg.roomDefault = baseName;
   if (cfg.spectate && cfg.presenceUrl) { viewer.spectate(false); viewer.spectate(true); }
@@ -629,19 +665,21 @@ updateGuide();
       // on lie le mesh nommé touché, pas le voile transparent devant. Un refus laisse le mode actif.
       const h = ray.intersectObject(viewer.model, true).find(x => x.object.isMesh && x.object.visible && !viewer.isTraversable(x.object));
       if (!h) { setStatus('Aucun élément ici : clique sur le modèle'); return; }
-      let name = h.object.name;
-      if (!name) for (let q = h.object.parent; q && q !== viewer.model && !name; q = q.parent) name = q.name;
-      if (!name) { setStatus('Cet élément n\'a pas de nom dans le modèle : impossible de le lier'); return; }
+      // on lie le morceau réellement cliqué : si son nom est partagé, la référence est nom#index (voir meshRefOf)
+      let obj = h.object;
+      while (obj && obj !== viewer.model && !obj.name) obj = obj.parent;
+      if (!obj || obj === viewer.model) { setStatus('Cet élément n\'a pas de nom dans le modèle : impossible de le lier'); return; }
+      const name = viewer.meshRef(obj);
       const info = viewer.meshInfo(name), r2 = v => Math.round(v * 100) / 100;
       if (!info) { setStatus('« ' + name + ' » n\'a pas de géométrie mesurable : impossible de le lier'); return; }
-      const sz = info.size.map(r2), dims = sz.join(' × ') + ' m';
-      if (Math.max(...sz) > LINK_MAX) { setStatus('« ' + name + ' » mesure ' + dims + ' : trop grand pour être lié (maximum ' + LINK_MAX + ' m). Clique sur un élément plus petit.'); return; }
+      const sz = info.size.map(r2), dims = [sz[0], sz[2], sz[1]].join(' × ') + ' m';   // L × l × h
+      if (Math.max(...sz) > LINK_MAX) { setStatus('Élément trop grand (' + dims + ') : probablement fusionné avec un bâtiment dans l\'OAR. Délie-le dans OpenSim ou utilise une zone cercle.'); return; }
       const list = viewer.getZones(), i = list.findIndex(x => x.id === linkZone);
       setLinkZone(null, true); linkGuard = performance.now() + 600;
       if (i < 0) { renderZoneList(); return; }
       Object.assign(list[i], { mesh: name, x: r2(info.center[0]), y: r2(info.min[1]), z: r2(info.center[2]) });
       zoneSel = list[i].id; zonesSync(list, true);
-      setStatus('Zone « ' + (list[i].label || list[i].id) + ' » liée à l\'élément « ' + name + ' » • ' + dims + ' • contour en fil de fer dans la scène' + (info.count > 1 ? ' (attention : ' + info.count + ' morceaux portent ce nom, tous deviennent cliquables)' : ''));
+      setStatus('Zone « ' + (list[i].label || list[i].id) + ' » liée à l\'élément « ' + name + ' » • ' + dims + ' • contour en fil de fer dans la scène' + (info.count > 1 ? ' (' + info.count + ' morceaux)' : ''));
       return;
     }
     if (performance.now() < linkGuard) return;   // fin d'une liaison : le 2e clic d'un double-clic ne doit rien déplacer
@@ -664,15 +702,16 @@ updateGuide();
       return;
     }
     { const zc = viewer.zonePickAt(e.clientX, e.clientY); if (zc) { selectZone(zc.id); return; } }
+    // clic simple : nom + point touché, rien ne bouge (la cible et le cercle d'atterrissage ne changent qu'au double-clic)
     const hit = ray.intersectObject(viewer.model, true)[0];
     if (!hit) return;
     {
-      const d = describeObject(hit.object);
-      lastPick = { token: d.token, mesh: d.mesh, text: d.text };
+      const d = describePick(hit.object, hit.point.toArray());
+      lastPick = { token: d.token, mesh: d.mesh, text: d.text, point: d.point };
       const pe = $('picked'); if (pe) pe.textContent = lastPick.text;
+      if (!eraseMode) setStatus('Visé : ' + (d.name || '(sans nom)') + ' • point ' + d.point.map(v => v.toFixed(2)).join(', ') + ' (double-clic : choisir cette cible)');
     }
     if (eraseMode) { addIgnoreExact(hit.object.name); return; }
-    viewer.controls.target.copy(hit.point); viewer.controls.update(); viewer.requestRender(); camInfo();
   });
 }
 
@@ -757,7 +796,7 @@ function renderMapUi() {
 }
 
 // ---------- mémorisation des réglages, fichier par fichier (nom + taille du .glb)
-const SKEYS = ['hole', 'holeFade', 'holeX', 'holeZ', 'wave', 'seaY', 'seaSegments', 'seaColor', 'skyColor', 'foliageCutout', 'anim', 'sea', 'retina', 'walk', 'eyeHeight', 'walkSpeed', 'walkIgnore', 'names', 'chat', 'chatFade', 'presenceUrl', 'room', 'spectate', 'panel', 'mapUrl', 'guide', 'ignoreViz'];
+const SKEYS = ['rotate', 'hole', 'holeFade', 'holeX', 'holeZ', 'wave', 'seaY', 'seaSegments', 'seaColor', 'skyColor', 'foliageCutout', 'anim', 'sea', 'retina', 'walk', 'eyeHeight', 'walkSpeed', 'walkIgnore', 'names', 'chat', 'chatFade', 'presenceUrl', 'room', 'spectate', 'panel', 'mapUrl', 'guide', 'ignoreViz'];
 let curFile = null, lastSaved = '', settingsReady = false;
 const fileKey = f => 'glb2html_set_' + f.name + '|' + f.size;
 function snapshot() {
@@ -811,7 +850,7 @@ $('fSettings').onchange = async e => {
   const f = e.target.files[0]; e.target.value = ''; if (!f) return;
   try { applySnapshot(JSON.parse(await f.text())); setStatus('Réglages chargés depuis ' + f.name); } catch (err) { setStatus('Chargement impossible : ' + err.message); }
 };
-$('bSetForget').onclick = () => { if (!curFile) return setStatus('Aucun fichier chargé'); try { localStorage.removeItem(fileKey(curFile)); } catch (e) {} lastSaved = ''; updateSettingsInfo(); setStatus('Réglages mémorisés oubliés pour ' + curFile.name + ' (ils seront de nouveau mémorisés à la prochaine modification)'); };
+$('bSetForget').onclick = () => { if (!curFile) return setStatus('Aucun fichier chargé'); try { localStorage.removeItem(fileKey(curFile)); } catch (e) {} lastSaved = snapStr(snapshot()); updateSettingsInfo(); setStatus('Réglages mémorisés oubliés pour ' + curFile.name + ' (ils seront de nouveau mémorisés à la prochaine modification)'); };
 
 // ---------- récapitulatif : ligne de commande pour glb2html.py
 function buildCommand() {
@@ -822,6 +861,7 @@ function buildCommand() {
   const a = [];
   const num = (flag, v, d) => { if (Math.abs(v - d) > 1e-9) a.push(flag + ' ' + n4(v)); };
   const sw = (on, off, v, d) => { if (v !== d) a.push(v ? on : off); };
+  if (rotNorm(cfg.rotate)) a.push('--rotate ' + rotNorm(cfg.rotate));
   sw('--sea', '--no-sea', cfg.sea, DEF.sea); sw('--anim', '--no-anim', cfg.anim, DEF.anim); sw('--retina', '--no-retina', cfg.retina, DEF.retina);
   num('--hole', cfg.hole, DEF.hole); num('--hole-fade', cfg.holeFade, DEF.holeFade); num('--hole-x', cfg.holeX, DEF.holeX); num('--hole-z', cfg.holeZ, DEF.holeZ);
   num('--wave', cfg.wave, DEF.wave); num('--sea-y', cfg.seaY, DEF.seaY); num('--sea-segments', cfg.seaSegments, DEF.seaSegments);
@@ -888,7 +928,7 @@ try { $('cmdScript').value = localStorage.getItem('glb2html_cmd_script') || ''; 
 function liveConfig() {
   const cam = viewer.getCameraState();
   return {
-    hole: cfg.hole, holeFade: cfg.holeFade, holeX: cfg.holeX, holeZ: cfg.holeZ, wave: cfg.wave, seaY: cfg.seaY,
+    rotate: rotNorm(cfg.rotate), hole: cfg.hole, holeFade: cfg.holeFade, holeX: cfg.holeX, holeZ: cfg.holeZ, wave: cfg.wave, seaY: cfg.seaY,
     zoom: r6(cam.zoom), camDir: cam.camDir.map(r6), target: cam.target.map(r6),
     sea: cfg.sea, anim: cfg.anim, retina: cfg.retina, foliageCutout: cfg.foliageCutout,
     seaSize: cfg.seaSize, seaSegments: cfg.seaSegments, seaColor: cfg.seaColor, skyColor: cfg.skyColor,
@@ -973,7 +1013,7 @@ $('bPy').onclick = () => {
   const B = v => v ? 'True' : 'False';
   const col = v => '0x' + v.toString(16).toUpperCase().padStart(6, '0');
   const block = '# <<DEFAULTS>>\n' +
-    'HOLE_RADIUS = ' + n(c.hole) + '\nHOLE_FADE = ' + n(c.holeFade) + '\nHOLE_X = ' + n(c.holeX) + '\nHOLE_Z = ' + n(c.holeZ) + '\nWAVE_AMP = ' + n(c.wave) + '\nSEA_Y = ' + n(c.seaY) +
+    'ROTATE = ' + c.rotate + '\n' + 'HOLE_RADIUS = ' + n(c.hole) + '\nHOLE_FADE = ' + n(c.holeFade) + '\nHOLE_X = ' + n(c.holeX) + '\nHOLE_Z = ' + n(c.holeZ) + '\nWAVE_AMP = ' + n(c.wave) + '\nSEA_Y = ' + n(c.seaY) +
     '\nZOOM_RATIO = ' + n(c.zoom) + '\nCAM_DIR = ' + t(c.camDir) + '\nTARGET = ' + t(c.target) +
     '\nSEA_ENABLED = ' + B(c.sea) + '\nANIM_ENABLED = ' + B(c.anim) + '\nRETINA_ENABLED = ' + B(c.retina) +
     '\nFOLIAGE_CUTOUT = ' + n(c.foliageCutout) + '\nSEA_COLOR = ' + col(c.seaColor) + '\nSKY_COLOR = ' + col(c.skyColor) + '\nSEA_SEGMENTS = ' + Math.round(c.seaSegments) + '\nWALK_ENABLED = ' + B(c.walk) + '\nEYE_HEIGHT = ' + n(c.eyeHeight) + '\nWALK_SPEED = ' + n(c.walkSpeed) + '\nWALK_IGNORE = ' + JSON.stringify(c.walkIgnore) + '\nNAMES_ENABLED = ' + B(c.names) + '\nCHAT_ENABLED = ' + B(c.chat) + '\nCHAT_FADE = ' + n(c.chatFade) + '\nSPECTATE = ' + B(c.spectate) + '\nPANEL = ' + B(c.panel) + '\nMAP_JSON = ' + JSON.stringify(JSON.stringify(cfg.map || [])) + '\nMAP_URL = ' + JSON.stringify(cfg.mapUrl || '') + '\nPROFILE = ' + JSON.stringify($('profileSel').value) + '\nZONES_JSON = ' + JSON.stringify(JSON.stringify(cfg.zones || [])) + '\nPRESENCE_URL = ' + JSON.stringify(c.presenceUrl) + '\nROOM = ' + JSON.stringify(cfg.room || '') +
