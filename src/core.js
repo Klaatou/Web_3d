@@ -919,7 +919,15 @@ function createViewer(container, cfg0, loader) {
       } else {
         // page exportée : marqueur discret au sol (anneau fin noir et blanc + disque translucide, ~1 m), surface de visée plus large et invisible.
         // Décalé vers la caméra (polygonOffset) et relevé de 10 cm : un sol irrégulier ne le masque pas.
-        const mk = (geo, color, op) => { const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color, transparent: true, opacity: op, side: THREE.DoubleSide, depthWrite: false, fog: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 })); m.rotation.x = -Math.PI / 2; m.renderOrder = 5; g.add(m); return m; };
+        // le marqueur colle au sol réel : rayon vers le bas depuis 1,5 m au-dessus de la zone (sinon, tracé sans test de profondeur)
+        let snapped = false;
+        if (model) {
+          model.updateMatrixWorld(true);
+          const rc = new THREE.Raycaster(new THREE.Vector3(z.x, z.y + 1.5, z.z), new THREE.Vector3(0, -1, 0), 0, 60), tk = parseIgnore(cfg.walkIgnore);
+          const h = rc.intersectObject(model, true).find(q => !isIgnoredMesh(q.object, tk));
+          if (h) { g.position.y = h.point.y; snapped = true; }
+        }
+        const mk = (geo, color, op) => { const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color, transparent: true, opacity: op, side: THREE.DoubleSide, depthWrite: false, fog: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4, depthTest: snapped })); m.rotation.x = -Math.PI / 2; m.renderOrder = 5; g.add(m); return m; };
         const disc = mk(new THREE.CircleGeometry(0.4, 40), 0x000000, MARK_OP); disc.position.y = 0.1;
         const ring1 = mk(new THREE.RingGeometry(0.4, 0.5, 40), 0x000000, 0.9); ring1.position.y = 0.11;
         const ring2 = mk(new THREE.RingGeometry(0.32, 0.4, 40), 0xffffff, 0.9); ring2.position.y = 0.115;
@@ -1108,7 +1116,7 @@ function createViewer(container, cfg0, loader) {
   return {
     scene, camera, renderer, controls, cfg, setCfg, setModel, loadBuffer, frame, getCameraState, setZoom,
     get model() { return model; }, get sea() { return sea; }, set onCfg(f) { onCfg = f; }, set onWalk(f) { onWalk = f; }, set onPick(f) { onPick = f; }, set pickOrbit(v) { pickOrbit = !!v; }, set onPresence(f) { onPresence = f; }, set onChat(f) { onChat = f; },
-    setZones, zoneSelect, zonePickAt, findMeshes,
+    setZones, zoneSelect, zonePickAt, findMeshes, zoneInfo: zoneTipText,
     // référence (champ mesh d'une zone) de cet objet du modèle : nom, ou nom#index si le nom est partagé
     meshRef(o) { return model ? meshRefOf(model, o) : (o.name || ''); }, get rotation() { return modelRot; },
     // boîte (monde) de l'élément de ce nom : { min, max, center, count } ou null

@@ -147,7 +147,7 @@ if ((C.zones || []).length || C.zonesLive) {
     }
   };
   const pr = document.getElementById('zonePrompt');
-  viewer.onNear = z => { pr.hidden = !z; if (z) pr.textContent = 'E : ' + (z.label || z.id); };
+  viewer.onNear = z => { pr.hidden = !z; if (z) { const [n, d] = viewer.zoneInfo(z); pr.textContent = 'E : ' + n + (d && d !== n ? ' → ' + d : ''); } };
   arrive = async () => {
     await Promise.race([liveReady, new Promise(r => setTimeout(r, 3000))]);
     if (arrival && C.walk) {

@@ -53,7 +53,7 @@ Dans la **page exportée** (autonome ou modulaire), il n'y a **aucun cylindre** 
 
 L'infobulle donne le **nom** puis la **destination** : l'adresse web pour un lien, « Région : adresse (#arrivée) » pour un portail (« cette région » si la destination est vide), « Commande : nom » pour une commande Home Assistant (l'adresse du webhook n'est **jamais** affichée). Un **clic** suit le lien. Un portail « en marchant dedans » a aussi son marqueur et son infobulle ; un clic dessus le déclenche aussi.
 
-Aucun panneau de texte permanent : le nom ne s'affiche qu'au survol, ou quand on est à portée (« E : … » en bas de l'écran).
+Aucun panneau de texte permanent : le nom ne s'affiche qu'au survol, ou quand on est à portée (« E : nom → destination » en bas de l'écran). Le marqueur se recolle au sol du modèle, même si la zone a été posée un peu en dessous.
 
 **Toujours afficher le nom** (fiche de la zone, **décochée par défaut**) : garde un nom visible en permanence, au-dessus de l'élément ou du marqueur ; pour une zone non liée de forme « panneau », c'est le panneau complet qui est affiché.
 
