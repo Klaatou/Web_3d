@@ -155,7 +155,6 @@ async def verifier(br, url, etiquette):
     # survol : marqueur au sol (lien, portail, commande)
     for ident, pos, attendu in [("sol", [-3, 15.005, 3], ("Lien au sol", URL_M)), ("nom", [0, 15.005, 7], ("Nom permanent", URL_N)),
                                 ("ha", [3, 15.005, 6], ("Lumière salon", "Commande : Lumière salon")),
-                                ("enterre", [-6, 15.005, 7], ("Enterré", "https://exemple.org/enterre")),
                                 ("ent", [3, 15.005, 2], ("Portail marche", "Région : cette région #arr")),
                                 ("por", [-3, 15.005, 7], ("Portail", "Région : https://autre.example/region.html #quai")),
                                 ("pan", [-6, 15.005, 3], ("Ancien panneau", "https://exemple.org/pan"))]:
@@ -166,9 +165,9 @@ async def verifier(br, url, etiquette):
     ga = await pg.evaluate("window.__viewer.scene.children.flatMap(c => c.children).filter(g => g.userData && g.userData.zoneId === 'enterre').map(g => g.position.y)")
     pos = await pg.evaluate("Object.fromEntries(window.__viewer.scene.children.flatMap(c => c.children).filter(g => g.userData && g.userData.zoneId).map(g => [g.userData.zoneId, g.position.y]))")
     rapport(abs(pos["enterre"] - 14.4) < 0.01 and abs(pos["surobjet"] - 15) < 0.01 and abs(pos["cache"]) < 0.01, f"{etiquette} : le marqueur reste exactement à la position de la zone (sous le sol, sous un objet)", pos)
-    # zone posée volontairement sous le sol : marqueur visible et survolable (ce qu'on voit est survolable)
+    # zone sous le sol : le relief la masque (pas de marqueur à travers les objets), donc pas de survol
     _, cur, t = await sur(pg, [6, 0.005, 4])
-    rapport(cur == "pointer" and t is not None and t.startswith("Sous le sol"), f"{etiquette} : zone sous le sol : marqueur survolable", (cur, t))
+    rapport(cur != "pointer" and t is None, f"{etiquette} : marqueur masqué par le relief : ni main ni infobulle", (cur, t))
     # hors zone : plus d'infobulle, curseur normal
     await pg.mouse.move(12, 12)
     await pg.wait_for_timeout(150)
