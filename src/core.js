@@ -804,7 +804,7 @@ function createViewer(container, cfg0, loader) {
   const hoverG = new THREE.Group(); hoverG.visible = false; scene.add(hoverG);
   let hoverZone = null, hoverT = 0;
   // page exportée : marqueur discret au sol (id de zone -> matériaux), infobulle au survol
-  const MARK_OP = 0.4, markerMat = new Map();
+  const MARK_OP = 0.35, markerMat = new Map();
   let tipEl = null;
   function zoneTipText(z) {
     const name = z.label || z.id;
@@ -917,18 +917,18 @@ function createViewer(container, cfg0, loader) {
         plane.position.y = 0.9 + z.h / 2; g.add(plane); main = plane;
         const post = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.92, 0.1), new THREE.MeshStandardMaterial({ color: 0x333333 })); post.position.y = 0.46; g.add(post);
       } else {
-        // page exportée : marqueur discret au sol (disque plat 0,4 m + anneau fin), zone de visée plus large et invisible
-        const mat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: MARK_OP, side: THREE.DoubleSide, depthWrite: false, fog: false });
-        const disc = new THREE.Mesh(new THREE.CircleGeometry(0.2, 32), mat); disc.rotation.x = -Math.PI / 2; disc.position.y = 0.04; g.add(disc);
-        const ring = new THREE.Mesh(new THREE.RingGeometry(0.2, 0.26, 32), mat.clone()); ring.material.color.set(0xffffff); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.045; g.add(ring);
-        markerMat.set(z.id, [mat, ring.material]);
-        if (clickable) {
-          const hit = new THREE.Mesh(new THREE.CircleGeometry(0.6, 16), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide })); hit.visible = false;
-          hit.rotation.x = -Math.PI / 2; hit.position.y = 0.06; g.add(hit); main = hit;
-        }
+        // page exportée : marqueur discret au sol (anneau fin noir et blanc + disque translucide, ~1 m), surface de visée plus large et invisible.
+        // Décalé vers la caméra (polygonOffset) et relevé de 10 cm : un sol irrégulier ne le masque pas.
+        const mk = (geo, color, op) => { const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color, transparent: true, opacity: op, side: THREE.DoubleSide, depthWrite: false, fog: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 })); m.rotation.x = -Math.PI / 2; m.renderOrder = 5; g.add(m); return m; };
+        const disc = mk(new THREE.CircleGeometry(0.4, 40), 0x000000, MARK_OP); disc.position.y = 0.1;
+        const ring1 = mk(new THREE.RingGeometry(0.4, 0.5, 40), 0x000000, 0.9); ring1.position.y = 0.11;
+        const ring2 = mk(new THREE.RingGeometry(0.32, 0.4, 40), 0xffffff, 0.9); ring2.position.y = 0.115;
+        markerMat.set(z.id, [disc.material, ring1.material, ring2.material]);
+        const hit = new THREE.Mesh(new THREE.CircleGeometry(0.8, 16), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide })); hit.visible = false;
+        hit.rotation.x = -Math.PI / 2; hit.position.y = 0.12; g.add(hit); main = hit;
         if (z.showName) { const lab = makeLabel(z.label || z.id); lab.position.y = 1.2; g.add(lab); }
       }
-      if (main) { main.userData.zone = z; zoneAll.push(main); if (clickable) zoneHit.push(main); }
+      if (main) { main.userData.zone = z; zoneAll.push(main); if (clickable || (!zoneEditor && z.type !== 'spawn')) zoneHit.push(main); }
       zoneGroup.add(g);
     }
     dirty = true;
@@ -978,10 +978,10 @@ function createViewer(container, cfg0, loader) {
   function setHover(z, cx, cy) {
     if (z && cx !== undefined) tipShow(z, cx, cy);
     if (z === hoverZone) return;
-    if (hoverZone) for (const m of markerMat.get(hoverZone.id) || []) m.opacity = MARK_OP;
+    if (hoverZone) (markerMat.get(hoverZone.id) || []).forEach((m, i) => { m.opacity = i ? 0.9 : MARK_OP; });
     if (!z) tipShow(null);
     hoverZone = z;
-    if (z) { const mm = markerMat.get(z.id); if (mm) for (const m of mm) m.opacity = 0.8; }
+    if (z) { const mm = markerMat.get(z.id); if (mm) mm.forEach((m, i) => { m.opacity = i ? 1 : 0.7; }); }
     const link = z && zoneLink.get(z.id);
     hoverG.visible = !!link;
     if (link) { hoverG.clear(); hoverG.add(outlineOf(link.box)); }

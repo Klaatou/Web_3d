@@ -76,6 +76,7 @@ ZONES = [
     {"id": "nom", "type": "url", "label": "Nom permanent", "target": URL_N, "x": 0, "y": 15, "z": 7, "radius": 2, "showName": True},
     {"id": "ha", "type": "ha", "label": "Lumière salon", "target": "http://homeassistant.local:8123/api/webhook/secret", "x": 3, "y": 15, "z": 6, "radius": 2},
     {"id": "por", "type": "portal", "label": "Portail", "trigger": "click", "target": "https://autre.example/region.html", "spawn": "quai", "x": -3, "y": 15, "z": 7, "radius": 2},
+    {"id": "ent", "type": "portal", "label": "Portail marche", "trigger": "enter", "target": "", "spawn": "arr", "x": 3, "y": 15, "z": 2, "radius": 1.5},
     {"id": "arr", "type": "spawn", "label": "Arrivée", "x": 0, "y": 15, "z": 0},
     {"id": "cache", "type": "url", "label": "Sous le sol", "target": "https://exemple.org/cache", "x": 6, "y": 0, "z": 4},
 ]
@@ -140,7 +141,7 @@ async def verifier(br, url, etiquette):
     rapport(sc["cyl"] == 0, f"{etiquette} : aucun mesh de cylindre dans la page exportée", sc)
     rapport(sc["planes"] == 0 or sc["groups"].get("pan", 0) <= 1, f"{etiquette} : l'ancien panneau (forme board) n'est plus dessiné sans l'option", sc)
     rapport("lie" not in sc["groups"], f"{etiquette} : zone liée à un élément = aucun objet ajouté", sc["groups"])
-    rapport(sc["circles"] >= 6, f"{etiquette} : marqueurs plats au sol pour les zones non liées", sc)
+    rapport(sc["circles"] >= 8, f"{etiquette} : marqueurs plats au sol pour les zones non liées", sc)
     rapport(sc["sprites"] == 1, f"{etiquette} : un seul nom permanent, celui de la zone cochée « Toujours afficher le nom »", sc)
 
     # survol : zone liée (curseur + infobulle exacte)
@@ -149,13 +150,15 @@ async def verifier(br, url, etiquette):
     _, cur, t = await sur(pg, centre)
     rapport(cur == "pointer" and t is not None and t.split("\n")[0] == "Boîte liée" and t.split("\n")[1] == URL_L, f"{etiquette} : survol de l'élément lié : main + infobulle (nom, adresse exacte)", (cur, t))
     # survol : marqueur au sol (lien, portail, commande)
-    for ident, pos, attendu in [("sol", [-3, 15.04, 3], ("Lien au sol", URL_M)), ("nom", [0, 15.04, 7], ("Nom permanent", URL_N)),
-                                ("ha", [3, 15.04, 6], ("Lumière salon", "Commande : Lumière salon")),
-                                ("por", [-3, 15.04, 7], ("Portail", "Région : https://autre.example/region.html #quai")),
-                                ("pan", [-6, 15.04, 3], ("Ancien panneau", "https://exemple.org/pan"))]:
+    for ident, pos, attendu in [("sol", [-3, 15.1, 3], ("Lien au sol", URL_M)), ("nom", [0, 15.1, 7], ("Nom permanent", URL_N)),
+                                ("ha", [3, 15.1, 6], ("Lumière salon", "Commande : Lumière salon")),
+                                ("ent", [3, 15.1, 2], ("Portail marche", "Région : cette région #arr")),
+                                ("por", [-3, 15.1, 7], ("Portail", "Région : https://autre.example/region.html #quai")),
+                                ("pan", [-6, 15.1, 3], ("Ancien panneau", "https://exemple.org/pan"))]:
         _, cur, t = await sur(pg, pos)
         rapport(cur == "pointer" and t is not None and tuple(t.split("\n")) == attendu, f"{etiquette} : survol du marqueur « {ident} » : main + infobulle", (cur, t))
     rapport("secret" not in (t or "") and "homeassistant" not in await pg.evaluate("document.getElementById('zoneTip').innerText"), f"{etiquette} : l'infobulle d'une commande n'affiche pas le webhook")
+    await pg.screenshot(path=str(tmp / f"{etiquette}.png"))
     # contre-épreuve : un marqueur caché sous le sol n'est pas survolé (le relief le masque)
     _, cur, t = await sur(pg, [6, 0.04, 4])
     rapport(cur != "pointer" and t is None, f"{etiquette} : marqueur masqué par le relief : ni main ni infobulle", (cur, t))
@@ -167,7 +170,7 @@ async def verifier(br, url, etiquette):
     rapport(await tip(pg) is None and await pg.evaluate("document.querySelector('canvas').style.cursor") != "pointer", f"{etiquette} : hors zone, infobulle masquée et curseur normal")
     # clic = suivre le lien
     await pg.evaluate("window.__opened.length = 0")
-    pt, _, _ = await sur(pg, [-3, 15.04, 3])
+    pt, _, _ = await sur(pg, [-3, 15.1, 3])
     await pg.mouse.click(*pt)
     await pg.wait_for_timeout(300)
     rapport(await pg.evaluate("window.__opened") == [URL_M], f"{etiquette} : clic sur le marqueur = ouvre le lien", await pg.evaluate("window.__opened"))
@@ -193,7 +196,7 @@ async def viewer_edition(br):
     await pg.wait_for_timeout(500)
     sc = await pg.evaluate(SCAN)
     # sol, pan, nom, ha, por : cylindres ; lie (liée) : contour ; arr : cône
-    rapport(sc["cyl"] == 6, "viewer : un cylindre pour chaque zone non liée (panneaux compris), toujours visible", sc)
+    rapport(sc["cyl"] == 7, "viewer : un cylindre pour chaque zone non liée (panneaux compris), toujours visible", sc)
     rapport(await pg.evaluate("document.querySelector('canvas').style.cursor") != "pointer" and await tip(pg) is None, "viewer : pas d'infobulle en édition")
     # « Toujours afficher le nom » : décochée pour la zone « sol », cochée pour la zone « nom », modifiable
     boite = lambda i: pg.locator("#zoneList details").nth(i).get_by_text("Toujours afficher le nom").locator("xpath=following-sibling::input[1]")

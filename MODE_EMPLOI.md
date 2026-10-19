@@ -49,9 +49,9 @@ Dans la **page exportée** (autonome ou modulaire), il n'y a **aucun cylindre** 
 | Zone | Ce qui est ajouté dans la scène | Au survol |
 |---|---|---|
 | **liée à un élément** | **rien** | le curseur devient une **main**, l'élément reçoit un léger **contour**, une **infobulle** affiche le nom et la destination |
-| **non liée** | un **marqueur discret au sol** (petit disque plat de 0,4 m, semi-transparent, avec un anneau fin) | même chose : main, infobulle, le marqueur s'éclaircit |
+| **non liée** | un **marqueur discret au sol** (petit anneau fin noir et blanc d'environ 1 m autour d'un disque translucide) | même chose : main, infobulle, le marqueur s'éclaircit |
 
-L'infobulle donne le **nom** puis la **destination** : l'adresse web pour un lien, « Région : adresse (#arrivée) » pour un portail (« cette région » si la destination est vide), « Commande : nom » pour une commande Home Assistant (l'adresse du webhook n'est **jamais** affichée). Un **clic** suit le lien. Un portail réglé « en marchant dedans » reste sans survol (il se déclenche seul).
+L'infobulle donne le **nom** puis la **destination** : l'adresse web pour un lien, « Région : adresse (#arrivée) » pour un portail (« cette région » si la destination est vide), « Commande : nom » pour une commande Home Assistant (l'adresse du webhook n'est **jamais** affichée). Un **clic** suit le lien. Un portail « en marchant dedans » a aussi son marqueur et son infobulle ; un clic dessus le déclenche aussi.
 
 Aucun panneau de texte permanent : le nom ne s'affiche qu'au survol, ou quand on est à portée (« E : … » en bas de l'écran).
 
