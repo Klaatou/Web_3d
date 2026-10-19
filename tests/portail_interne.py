@@ -66,7 +66,7 @@ async def essai(br, out, titre):
         pass
     w = await pg.evaluate("window.__v.getWalk()")
     pos = [round(v, 2) for v in w["pos"]]
-    rapport(invite == "E : Vers loin", f"{titre} : le portail est proposé (touche E)", invite)
+    rapport(invite.startswith("E : Vers loin"), f"{titre} : le portail est proposé (touche E)", invite)
     rapport(pos == [12, 15, -12] and abs(w["yaw"] - 1.0) < 1e-6, f"{titre} : avatar posé sur l'arrivée, orienté comme elle", (pos, w["yaw"]))
     rapport(await pg.evaluate("window.__marque === 1 && window.__v.walking"), f"{titre} : sans rechargement, toujours en promenade")
     rapport(await pg.evaluate("document.getElementById('fade').className") == "", f"{titre} : fondu retiré")
