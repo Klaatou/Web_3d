@@ -47,6 +47,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 20/10/2026 |  | v29 | v29 : oar2glb.py, taille des animaux riggés par étendue mesurée des sommets + bind_shape_matrix (échelle de convoar inconnue de l'OAR) |
 | 20/10/2026 |  | v30 | v30 : oar2glb.py, option --reperes (mât rouge à chaque animal riggé), constat : textures grises dues à --reencode |
 | 20/10/2026 |  | v31 | v31 : oar2glb.py, contrôle d'enfouissement des animaux riggés dans le journal |
+| 20/10/2026 |  | v32 | v32 : oar2glb.py, meshes riggés reconstruits depuis le .llmesh de l'OAR (la géométrie de convoar est inutilisable) |
 
 ## Commandes utiles
 

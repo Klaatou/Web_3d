@@ -196,6 +196,63 @@ def llmesh_domains(data, n=256):
     return []
 
 
+def llmesh_geometry(data, lod="high_lod"):
+    # géométrie du plus haut niveau de détail d'un .llmesh : liste (une entrée par face, None si vide) de
+    # {"pos": [(x, y, z)], "nor": [...] ou None, "uv": [(u, v)] ou None, "tri": [indices]} ; None si illisible
+    import array
+    try:
+        start = data.find(b"\n") + 1 if data[:2] == b"<?" else 0
+        hdr, end = llsd_bin(data, start)
+        blk = hdr.get(lod)
+        if not isinstance(blk, dict) or not blk.get("size"):
+            return None
+        off, size = int(blk.get("offset", 0)), int(blk["size"])
+        subs = None
+        for base in (end, end + 1):
+            try:
+                subs, _ = llsd_bin(zlib.decompress(data[base + off:base + off + size]), 0)
+                break
+            except Exception:
+                continue
+        if not isinstance(subs, list):
+            return None
+
+        def u16(b):
+            a = array.array("H")
+            a.frombytes(bytes(b[:len(b) // 2 * 2]))
+            if sys.byteorder == "big":
+                a.byteswap()
+            return a
+        out = []
+        for sm in subs:
+            if not isinstance(sm, dict) or sm.get("NoGeometry") or not sm.get("Position") or not sm.get("TriangleList"):
+                out.append(None)
+                continue
+            d = sm.get("PositionDomain") or {}
+            mn, mx = d.get("Min", [-0.5] * 3), d.get("Max", [0.5] * 3)
+            a = u16(sm["Position"])
+            n = len(a) // 3
+            pos = [tuple(mn[k] + a[3 * i + k] / 65535.0 * (mx[k] - mn[k]) for k in range(3)) for i in range(n)]
+            nor = None
+            if sm.get("Normal"):
+                b = u16(sm["Normal"])
+                if len(b) >= 3 * n:
+                    nor = [tuple(b[3 * i + k] / 65535.0 * 2.0 - 1.0 for k in range(3)) for i in range(n)]
+            uv = None
+            if sm.get("TexCoord0"):
+                t = u16(sm["TexCoord0"])
+                td = sm.get("TexCoord0Domain") or {}
+                tmn, tmx = td.get("Min", [0.0, 0.0]), td.get("Max", [1.0, 1.0])
+                if len(t) >= 2 * n:
+                    uv = [tuple(tmn[k] + t[2 * i + k] / 65535.0 * (tmx[k] - tmn[k]) for k in range(2)) for i in range(n)]
+            tri = list(u16(sm["TriangleList"]))
+            tri = tri[:len(tri) // 3 * 3]
+            out.append({"pos": pos, "nor": nor, "uv": uv, "tri": tri})
+        return out
+    except Exception:
+        return None
+
+
 def bind_shape(skin):
     m = skin.get("bind_shape_matrix") if skin else None
     if isinstance(m, list) and len(m) == 16 and all(isinstance(v, (int, float)) for v in m):
@@ -334,7 +391,8 @@ def oar_scan(oar):
                 skin, err = llmesh_skin(raw)
                 if skin is not None or err:
                     skins[m.name[7:43].lower()] = {"skin": skin, "err": err, "bsm": bind_shape(skin),
-                                                   "dom": llmesh_domains(raw) if skin is not None else []}
+                                                   "dom": llmesh_domains(raw) if skin is not None else [],
+                                                   "raw": raw if skin is not None else None}
             elif m.name.startswith("terrains/") and m.name.endswith(".r32") and terrain is None:
                 raw = t.extractfile(m).read()
                 n = int(math.isqrt(len(raw) // 4))
@@ -776,6 +834,24 @@ class ExtraBuffer:
         g.setdefault("accessors", []).append(acc)
         return len(g["accessors"]) - 1
 
+    def add_vec2(self, pts):
+        g = self.g
+        g.setdefault("bufferViews", []).append({"buffer": self.idx, "byteOffset": len(self.data), "byteLength": len(pts) * 8, "target": 34962})
+        for p in pts:
+            self.data += struct.pack("<2f", *p)
+        g.setdefault("accessors", []).append({"bufferView": len(g["bufferViews"]) - 1, "componentType": 5126, "count": len(pts), "type": "VEC2"})
+        return len(g["accessors"]) - 1
+
+    def add_indices(self, idx):
+        g = self.g
+        big = bool(idx) and max(idx) > 65535
+        fmt, size, ct = ("I", 4, 5125) if big else ("H", 2, 5123)
+        g.setdefault("bufferViews", []).append({"buffer": self.idx, "byteOffset": len(self.data), "byteLength": len(idx) * size, "target": 34963})
+        self.data += struct.pack(f"<{len(idx)}{fmt}", *idx)
+        self.data += b"\x00" * ((4 - len(self.data) % 4) % 4)
+        g.setdefault("accessors", []).append({"bufferView": len(g["bufferViews"]) - 1, "componentType": ct, "count": len(idx), "type": "SCALAR"})
+        return len(g["accessors"]) - 1
+
     def finish(self):
         if self.data:
             self.g.setdefault("buffers", []).append({"byteLength": len(self.data),
@@ -823,58 +899,82 @@ def union_domain(dom):
     return lo, hi
 
 
-def rig_mesh(g, base, cache, part, bsm, ni, dom=None):
-    # copie du mesh du nœud, sommets/normales ramenés dans l'espace du skin -> (mesh, points, mode) ou message d'erreur (str)
-    # Mesure sur Jungle_Isle : convoar cuit dans les sommets une échelle que l'OAR ne donne pas (lion 41 x 22 x 42 m pour
-    # une échelle de prim de 1 ; deux hippopotames de même mesh et d'échelles 11,2 et 13,7 sortent identiques à 70 m).
-    # On ne la déduit donc pas de l'OAR : on la mesure. Le mesh occupe tout son domaine de position (±0,5 pour un mesh
-    # normalisé) ; les sommets sont remis dans ce domaine d'après leur étendue mesurée, puis bind_shape_matrix s'applique.
+def read_acc(g, base, cache, ai, n):
+    a = g["accessors"][ai]
+    if a.get("componentType") != 5126 or a.get("type") != f"VEC{n}" or "sparse" in a or "bufferView" not in a:
+        raise ValueError(f"accesseur {ai} non géré")
+    bv = g["bufferViews"][a["bufferView"]]
+    bi = bv.get("buffer", 0)
+    if bi not in cache:
+        cache[bi] = read_uri(g["buffers"][bi]["uri"], base)
+    stride = bv.get("byteStride") or 4 * n
+    off = bv.get("byteOffset", 0) + a.get("byteOffset", 0)
+    return [struct.unpack_from(f"<{n}f", cache[bi], off + k * stride) for k in range(a["count"])]
+
+
+def rig_mesh(g, base, cache, part, bsm, ni, raw):
+    # Un mesh riggé est reconstruit depuis son .llmesh dans l'OAR (positions, normales, UV, triangles, domaine de position) :
+    # la géométrie que convoar écrit pour ces meshes est inutilisable (mêmes étendues et mêmes nombres de sommets pour des
+    # animaux différents, échelle cuite inconnue de l'OAR). L'échelle du prim est ignorée ; bind_shape_matrix s'applique.
+    # Les matériaux viennent du nœud GLB (face i du mesh = primitive i). -> (mesh, points, "asset") ou message d'erreur
     node = g["nodes"][ni]
     if "mesh" not in node:
         return "le nœud n'a pas de mesh"
-    sx, sy, sz = part["scale"] or [1, 1, 1]
+    geo = llmesh_geometry(raw) if raw else None
+    if not geo or not any(geo):
+        return "géométrie du .llmesh illisible"
     lin = [[bsm[0], bsm[4], bsm[8]], [bsm[1], bsm[5], bsm[9]], [bsm[2], bsm[6], bsm[10]]]
     t = bsm[12:15]
     li = inv3(lin)
     if li is None:
         return "bind_shape_matrix non inversible"
-    mesh = json.loads(json.dumps(g["meshes"][node["mesh"]]))
-    prims = [pr for pr in mesh.get("primitives", []) if "POSITION" in pr.get("attributes", {})]
-    raw = [[(X, -Z, Y) for X, Y, Z in read_vec3(g, base, cache, pr["attributes"]["POSITION"])] for pr in prims]
-    flat = [v for r in raw for v in r]
-    if not flat:
-        return "aucune géométrie lisible"
-    lo = [min(v[k] for v in flat) for k in range(3)]
-    hi = [max(v[k] for v in flat) for k in range(3)]
-    ext = [hi[k] - lo[k] for k in range(3)]
-    ctr = [(hi[k] + lo[k]) / 2 for k in range(3)]
-    ud = union_domain(dom) or ([-0.5] * 3, [0.5] * 3)
-    dext = [ud[1][k] - ud[0][k] for k in range(3)]
-    dctr = [(ud[1][k] + ud[0][k]) / 2 for k in range(3)]
-    k_ = [dext[k] / ext[k] if ext[k] > 1e-9 else 0.0 for k in range(3)]
-    allp = []
-    for pr, rr in zip(prims, raw):
-        out = []
-        for x, y, z in rr:
-            x, y, z = (dctr[0] + (x - ctr[0]) * k_[0], dctr[1] + (y - ctr[1]) * k_[1], dctr[2] + (z - ctr[2]) * k_[2])
-            x, y, z = (lin[0][0] * x + lin[0][1] * y + lin[0][2] * z + t[0],
-                       lin[1][0] * x + lin[1][1] * y + lin[1][2] * z + t[1],
-                       lin[2][0] * x + lin[2][1] * y + lin[2][2] * z + t[2])
-            out.append([x, z, -y])
-        pr["_pts"] = out
-        allp += out
-        if "NORMAL" in pr["attributes"]:
+    old = g["meshes"][node["mesh"]]
+    oprims = old.get("primitives", [])
+    prims, allp, nv = [], [], 0
+    for i, sm in enumerate(geo):
+        if not sm:
+            continue
+        pts = []
+        for x, y, z in sm["pos"]:
+            pts.append([lin[0][0] * x + lin[0][1] * y + lin[0][2] * z + t[0],
+                        lin[2][0] * x + lin[2][1] * y + lin[2][2] * z + t[2],
+                        -(lin[1][0] * x + lin[1][1] * y + lin[1][2] * z + t[1])])
+        pr = {"attributes": {}, "_pts": pts, "_idx": [k for k in sm["tri"] if k < len(pts)]}
+        if sm["nor"]:
             ns = []
-            for X, Y, Z in read_vec3(g, base, cache, pr["attributes"]["NORMAL"]):
-                v = (X, -Z, Y)
-                nx, ny, nz = (sum(li[i][k] * v[i] for i in range(3)) for k in range(3))
-                l = math.sqrt(nx * nx + ny * ny + nz * nz) or 1.0
-                ns.append([nx / l, nz / l, -ny / l])
+            for v in sm["nor"]:
+                nx, ny, nz = (sum(li[j][k] * v[j] for j in range(3)) for k in range(3))
+                ln = math.sqrt(nx * nx + ny * ny + nz * nz) or 1.0
+                ns.append([nx / ln, nz / ln, -ny / ln])
             pr["_nrm"] = ns
-    print(f"[riggé] mesure : '{part['name']}' sommets bruts du GLB {ext[0]:.3g} x {ext[1]:.3g} x {ext[2]:.3g} (axes OpenSim), "
-          f"domaine {fmt3(dext)}, échelle du prim {fmt3([sx, sy, sz])}, échelle de bind_shape "
-          f"{fmt3([math.sqrt(sum(bsm[c * 4 + r] ** 2 for r in range(3))) for c in range(3)])}, {len(flat)} sommets")
-    return mesh, allp, "mesurée"
+        if sm["uv"]:
+            flip = True                      # UV de Second Life : v vers le haut ; glTF : v vers le bas
+            if i < len(oprims) and "TEXCOORD_0" in oprims[i].get("attributes", {}):
+                try:
+                    cu = read_acc(g, base, cache, oprims[i]["attributes"]["TEXCOORD_0"], 2)
+                    if len(cu) == len(sm["uv"]):
+                        m = min(len(cu), 16)
+                        e_raw = sum(abs(cu[k][1] - sm["uv"][k][1]) for k in range(m))
+                        e_flip = sum(abs(cu[k][1] - (1 - sm["uv"][k][1])) for k in range(m))
+                        flip = e_flip <= e_raw
+                except Exception:
+                    pass
+            pr["_uv"] = [(u, 1.0 - v if flip else v) for u, v in sm["uv"]]
+        mat = oprims[i] if i < len(oprims) else (oprims[-1] if oprims else None)
+        if mat is not None and "material" in mat:
+            pr["material"] = mat["material"]
+        prims.append(pr)
+        allp += pts
+        nv += len(pts)
+    if not allp:
+        return "aucune géométrie"
+    mesh = {k: v for k, v in old.items() if k != "primitives"}
+    mesh["primitives"] = prims
+    oldn = sum(g["accessors"][pr["attributes"]["POSITION"]]["count"] for pr in oprims if "POSITION" in pr.get("attributes", {}))
+    print(f"[riggé] '{part['name']}' reconstruit depuis l'OAR : {len(prims)} face(s), {nv} sommets, {sum(len(p['_idx']) for p in prims) // 3} triangles "
+          f"(convoar : {len(oprims)} primitive(s), {oldn} sommets), échelle du prim ignorée {fmt3(part['scale'] or [1, 1, 1])}, "
+          f"échelle de bind_shape {fmt3([math.sqrt(sum(bsm[c * 4 + r] ** 2 for r in range(3))) for c in range(3)])}")
+    return mesh, allp, "asset"
 
 
 PLACED = []
@@ -947,8 +1047,8 @@ def place_rigged_group(g, base, cache, extra, tree, grp, items):
     # bind_shape_matrix) partagent le même repère : on les déplace ENSEMBLE (même décalage, même rotation), sans
     # jamais les poser séparément. Retourne le nombre de morceaux corrigés.
     built = []
-    for part, bsm, ni, dom in items:
-        r = rig_mesh(g, base, cache, part, bsm, ni, dom)
+    for part, bsm, ni, raw in items:
+        r = rig_mesh(g, base, cache, part, bsm, ni, raw)
         if isinstance(r, str):
             print(f"[riggé] '{part['name']}' : {r}, non corrigé")
         else:
@@ -962,7 +1062,7 @@ def place_rigged_group(g, base, cache, extra, tree, grp, items):
     ext = [hi[k] - lo[k] for k in range(3)]
     if max(ext) > MAX_ANIMAL or max(ext) < MIN_ANIMAL:
         print(f"[riggé] '{root['name']}' : taille obtenue {ext[0]:.2f} x {ext[2]:.2f} x {ext[1]:.2f} m implausible "
-              f"(hors de {MIN_ANIMAL:g} à {MAX_ANIMAL:g} m), laissé tel que convoar l'a produit (voir --diag)")
+              f"(hors de {MIN_ANIMAL:g} à {MAX_ANIMAL:g} m), laissé tel que convoar l'a produit")
         return 0
     cx, cz = (lo[0] + hi[0]) / 2, (lo[2] + hi[2]) / 2          # centré à l'horizontale sur la racine
     gx, gy, gz = root["gpos"]
@@ -985,6 +1085,10 @@ def place_rigged_group(g, base, cache, extra, tree, grp, items):
                 pr["attributes"]["POSITION"] = extra.add_vec3([[p[0] - cx, p[1], p[2] - cz] for p in pr.pop("_pts")])
             if "_nrm" in pr:
                 pr["attributes"]["NORMAL"] = extra.add_vec3(pr.pop("_nrm"))
+            if "_uv" in pr:
+                pr["attributes"]["TEXCOORD_0"] = extra.add_vec2(pr.pop("_uv"))
+            if "_idx" in pr:
+                pr["indices"] = extra.add_indices(pr.pop("_idx"))
         g["meshes"].append(mesh)
         node = g["nodes"][ni]
         PLACED_NODES.add(ni)
@@ -1021,7 +1125,7 @@ def repair(g, base, scan, keep_invisible, reperes=False):
             if p["uuid"] not in match:
                 print(f"[riggé] '{p['name']}' ({p['uuid']}) : nœud GLB introuvable, non corrigé (voir --diag)")
                 continue
-            items.append((p, sk["bsm"], match[p["uuid"]][0], sk.get("dom")))
+            items.append((p, sk["bsm"], match[p["uuid"]][0], sk.get("raw")))
         if items:
             n_rig += place_rigged_group(g, base, cache, extra, tree, grp, items)
     if reperes and PLACED:

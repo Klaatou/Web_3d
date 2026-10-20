@@ -2,6 +2,12 @@
 
 Les dates sont au format jj/mm/aaaa.
 
+## v32 (20/10/2026)
+`tools/oar2glb.py`, septième essai sur Jungle_Isle. Le clic de contrôle au pied des mâts montre que les mâts reposent bien sur le sol : l'hypothèse « animaux enfouis » de v31 était fausse. Les animaux riggés sont placés au bon endroit mais ne sont pas visibles : la géométrie que convoar écrit pour ces meshes est inutilisable (mêmes étendues de sommets pour des animaux différents, nombres de sommets multiples de 48838, échelle cuite inconnue de l'OAR).
+- Les meshes riggés sont reconstruits depuis le `.llmesh` de l'OAR (niveau de détail le plus élevé : positions, normales, UV, triangles, domaine de position), puis `bind_shape_matrix` est appliquée ; l'échelle du prim est ignorée. Aucune règle propre à un animal : tout mesh riggé de n'importe quel OAR passe par le même chemin, normalisé ou non. Les matériaux viennent du nœud GLB (face i du mesh = primitive i) ; le sens des UV est détecté en comparant avec ceux de convoar quand c'est possible. Si le `.llmesh` est illisible, le mesh est laissé tel que convoar l'a produit.
+- Journal : ligne `reconstruit depuis l'OAR` par morceau (faces, sommets, triangles, comparés à ceux de convoar).
+- Tests : géométrie convoar volontairement fausse, mesh non normalisé avec racine riggée, normales/UV/triangles de la sortie.
+
 ## v31 (20/10/2026)
 `tools/oar2glb.py`, sixième essai sur Jungle_Isle avec `--reperes` : les mâts rouges sont bien aux positions prévues, mais presque aucun animal riggé n'est visible à leur pied (seul un éléphant, et un hippopotame retrouvé derrière des rochers sans mât). Sur les captures, la base des mâts est plusieurs mètres sous le sol visible : les animaux sont probablement enfouis ou mal placés en hauteur ; la règle « pieds au dessous de la boîte racine » est suspecte.
 - Journal : pour chaque animal posé, ligne `[contrôle]` avec l'altitude des pieds, et les objets du GLB dont la boîte englobante contient le centre de l'animal (nom et altitude du sommet) : permet de voir si un animal est dans un rocher ou sous le sol.

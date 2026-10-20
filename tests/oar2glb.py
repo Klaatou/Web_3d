@@ -38,6 +38,8 @@ def llsd(v):
         return b"{" + struct.pack(">I", len(v)) + b"".join(b"k" + struct.pack(">I", len(k)) + k.encode() + llsd(x) for k, x in v.items()) + b"}"
     if isinstance(v, list):
         return b"[" + struct.pack(">I", len(v)) + b"".join(llsd(x) for x in v) + b"]"
+    if isinstance(v, bytes):
+        return b"b" + struct.pack(">I", len(v)) + v
     if isinstance(v, bool):
         return b"1" if v else b"0"
     if isinstance(v, int):
@@ -47,8 +49,19 @@ def llsd(v):
     return b"s" + struct.pack(">I", len(v)) + v.encode()
 
 
-def llmesh(skin=None):
-    geo = zlib.compress(llsd([{"NoGeometry": True}]))
+def box_sub(lo=(-0.5, -0.5, -0.5), hi=(0.5, 0.5, 0.5)):
+    # sous-maillage : boîte remplissant son domaine de position, avec normales et UV
+    pts = [(x, y, z) for x in (0, 1) for y in (0, 1) for z in (0, 1)]
+    pos = b"".join(struct.pack("<3H", *[65535 * c for c in p]) for p in pts)
+    nor = b"".join(struct.pack("<3H", 32768, 32768, 65535) for _ in pts)
+    uv = b"".join(struct.pack("<2H", 65535 * p[0], 65535 * p[1]) for p in pts)
+    idx = [0, 1, 3, 0, 3, 2, 4, 6, 7, 4, 7, 5, 0, 4, 5, 0, 5, 1, 2, 3, 7, 2, 7, 6, 0, 2, 6, 0, 6, 4, 1, 5, 7, 1, 7, 3]
+    return {"PositionDomain": {"Min": list(lo), "Max": list(hi)}, "Position": pos, "Normal": nor, "TexCoord0Domain": {"Min": [0.0, 0.0], "Max": [1.0, 1.0]},
+            "TexCoord0": uv, "TriangleList": b"".join(struct.pack("<3H", *idx[i:i + 3]) for i in range(0, 36, 3))}
+
+
+def llmesh(skin=None, geom=None):
+    geo = zlib.compress(llsd(geom if geom is not None else [{"NoGeometry": True}]))
     blocks = {"high_lod": geo}
     if skin:
         blocks["skin"] = zlib.compress(llsd(skin))
@@ -92,8 +105,8 @@ def group_xml(parts):
 
 
 I4 = [0, 0, 0, 1]
-HIPPO_MESH, ANTE_MESH, ROCK_MESH, HA_MESH, HB_MESH, COL_MESH = U(), U(), U(), U(), U(), U()
-ID = dict(colo=U(), croot=U(), ca=U(), cb=U(), hroot=U(), hippo=U(), aroot=U(), ante=U(), ghost2=U(), glass=U(), rock=U(), ghost1=U())
+HIPPO_MESH, ANTE_MESH, ROCK_MESH, HA_MESH, HB_MESH, COL_MESH, GIR_MESH = U(), U(), U(), U(), U(), U(), U()
+ID = dict(gir=U(), colo=U(), croot=U(), ca=U(), cb=U(), hroot=U(), hippo=U(), aroot=U(), ante=U(), ghost2=U(), glass=U(), rock=U(), ghost1=U())
 BSM_H = [3, 0, 0, 0, 0, 1.4, 0, 0, 0, 0, 1.6, 0, 0, 0, 0.8, 1]          # raw [-0.5,0.5]^3 -> 3 x 1.4 x 1.6, pieds à 0
 BSM_A = [1.2, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 1.4, 0, 0, 0, 0.7, 1]
 BSM_HA = [2, 0, 0, 0, 0, 0.6, 0, 0, 0, 0, 1, 0, 0, 0, 1.0, 1]            # x[-1,1] y[-.3,.3] z[.5,1.5]
@@ -108,6 +121,7 @@ GRP = [  # (fichier, parties)
     ("c", [(ID["croot"], "BoiteCheval", [80, 80, 26], [0, 0, 0], I4, [2, 2, 2], None, tex_entry(PLY, 255)),
            (ID["ca"], "Cheval", [80, 80, 26], [0, 0, 0.1], I4, [1, 1, 1], HA_MESH, None),
            (ID["cb"], "Cheval", [80, 80, 26], [0.5, 0, 0.2], I4, [1, 1, 1], HB_MESH, None)]),
+    ("gi", [(ID["gir"], "Girafe", [180, 180, 28], [0, 0, 0], I4, [1, 1, 1], GIR_MESH, None)]),
     ("k", [(ID["colo"], "Colosse", [150, 150, 30], [0, 0, 0], I4, [1, 1, 1], COL_MESH, None)]),
     ("v", [(ID["glass"], "Vitre", [30, 30, 22], [0, 0, 0], I4, [2, 2, 2], None, tex_entry(PLY, 128))]),
     ("r", [(ID["rock"], "Rocher", [150, 20, 22], [0, 0, 0], I4, [4, 4, 4], ROCK_MESH, None)]),
@@ -130,11 +144,13 @@ def make_oar(path):
         for i, (f, parts) in enumerate(GRP):
             add(f"objects/{f}_{i}.xml", ('<?xml version="1.0" encoding="utf-8"?>' + group_xml([part_xml(*p) for p in parts])).encode())
         add(f"assets/{HIPPO_MESH}_mesh.llmesh", llmesh({"joint_names": ["mPelvis", "mTorso"], "bind_shape_matrix": [float(v) for v in BSM_H],
-                                                      "inverse_bind_matrix": [[1.0] * 16], "pelvis_offset": 0.0}))
-        add(f"assets/{ANTE_MESH}_mesh.llmesh", llmesh({"joint_names": ["mPelvis"], "bind_shape_matrix": [float(v) for v in BSM_A]}))
-        add(f"assets/{HA_MESH}_mesh.llmesh", llmesh({"joint_names": ["mPelvis"], "bind_shape_matrix": [float(v) for v in BSM_HA]}))
-        add(f"assets/{HB_MESH}_mesh.llmesh", llmesh({"joint_names": ["mPelvis"], "bind_shape_matrix": [float(v) for v in BSM_HB]}))
-        add(f"assets/{COL_MESH}_mesh.llmesh", llmesh({"joint_names": ["mPelvis"], "bind_shape_matrix": [50.0, 0, 0, 0, 0, 50.0, 0, 0, 0, 0, 50.0, 0, 0, 0, 0, 1]}))
+                                                      "inverse_bind_matrix": [[1.0] * 16], "pelvis_offset": 0.0}, [box_sub()]))
+        add(f"assets/{ANTE_MESH}_mesh.llmesh", llmesh({"joint_names": ["mPelvis"], "bind_shape_matrix": [float(v) for v in BSM_A]}, [box_sub()]))
+        add(f"assets/{HA_MESH}_mesh.llmesh", llmesh({"joint_names": ["mPelvis"], "bind_shape_matrix": [float(v) for v in BSM_HA]}, [box_sub()]))
+        add(f"assets/{HB_MESH}_mesh.llmesh", llmesh({"joint_names": ["mPelvis"], "bind_shape_matrix": [float(v) for v in BSM_HB]}, [box_sub()]))
+        add(f"assets/{GIR_MESH}_mesh.llmesh", llmesh({"joint_names": ["mPelvis"], "bind_shape_matrix": [1.0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 1]},
+                                                    [box_sub((-1.0, -0.4, 0.0), (1.0, 0.4, 2.4))]))     # mesh non normalisé, bind_shape neutre
+        add(f"assets/{COL_MESH}_mesh.llmesh", llmesh({"joint_names": ["mPelvis"], "bind_shape_matrix": [50.0, 0, 0, 0, 0, 50.0, 0, 0, 0, 0, 50.0, 0, 0, 0, 0, 1]}, [box_sub()]))
         add(f"assets/{ROCK_MESH}_mesh.llmesh", llmesh())
         add("terrains/heightmap.r32", terrain())
 
@@ -213,7 +229,7 @@ def make_gltf(d, variant):
     # texture invisible standard (nom d'image) pour l'autre
     box_h = mk_mesh("BoiteHippo", (-1.5, -1.5, -1.5), (1.5, 1.5, 1.5), m_zero)
     box_a = mk_mesh("BoiteAntilope", (-1, -1, -1), (1, 1, 1), m_zero)
-    hip = mk_mesh("Hippo", (-0.5, -0.5, -0.5), (0.5, 0.5, 0.5), m_ok)
+    hip = mk_mesh("Hippo", (-35.0, -16.0, -38.0), (35.0, 16.0, 38.0), m_ok)       # géométrie fausse de convoar (étendue inventée)
     ant = mk_mesh("Antilope", (-0.5 * 3.7, -0.5 * 2.1, -0.5 * 5.3), (0.5 * 3.7, 0.5 * 2.1, 0.5 * 5.3), m_ok)   # échelle cuite inconnue de l'OAR (comme convoar sur Jungle_Isle)
     gl = mk_mesh("Vitre", (-1, -1, -1), (1, 1, 1), m_half)
     rk = mk_mesh("Rocher", (-2, -2, -2), (2, 2, 2), m_ok)
@@ -228,6 +244,8 @@ def make_gltf(d, variant):
     cha = node("Cheval", (0, 0, 0.1), ha, ID["ca"])
     chb = node("Cheval", (0.5, 0, 0.2), hb, ID["cb"])
     rc = node("BoiteCheval", (80, 80, 26), bx_c, ID["croot"], children=[cha, chb])
+    gir = mk_mesh("Girafe", (-7, -7, -7), (7, 7, 7), m_ok)         # géométrie fausse de convoar
+    rgir = node("Girafe", (180, 180, 28), gir, ID["gir"])
     col = mk_mesh("Colosse", (-0.5, -0.5, -0.5), (0.5, 0.5, 0.5), m_ok)
     rcol = node("Colosse", (150, 150, 30), col, ID["colo"])
     r3 = node("Vitre", (30, 30, 22), gl, ID["glass"])
@@ -235,7 +253,7 @@ def make_gltf(d, variant):
     r5 = node("Fantome", (200, 200, 30), orph, ID["ghost2"])
     r6 = node("Fantome0", (220, 30, 30), orph, ID["ghost1"])
     r7 = node("Orphelin", (10, 10, 25), orph)
-    g = {"asset": {"version": "2.0"}, "scene": 0, "scenes": [{"nodes": [r1, r2n, rc, rcol, r3, r4, r5, r6, r7]}], "nodes": nodes, "meshes": meshes,
+    g = {"asset": {"version": "2.0"}, "scene": 0, "scenes": [{"nodes": [r1, r2n, rc, rgir, rcol, r3, r4, r5, r6, r7]}], "nodes": nodes, "meshes": meshes,
          "materials": mats, "accessors": accs, "bufferViews": views, "buffers": [{"byteLength": len(blob), "uri": "scene.bin"}]}
     (d / "scene.bin").write_bytes(bytes(blob))
     (d / "scene.gltf").write_text(json.dumps(g), encoding="utf-8")
@@ -315,7 +333,7 @@ for variant in ("uuid", "nom"):
     r = run_tool(o, fake=sub)
     log = r.stdout + r.stderr
     rapport(r.returncode == 0 and (od / "R.glb").exists(), "oar2glb : GLB produit", log[-800:])
-    rapport("4 mesh(es) riggé(s) remis à l'échelle, 6 prim(s) invisible(s) retiré(s)" in log, "journal récapitulatif", [l for l in log.splitlines() if "correctif" in l])
+    rapport("5 mesh(es) riggé(s) remis à l'échelle, 6 prim(s) invisible(s) retiré(s)" in log, "journal récapitulatif", [l for l in log.splitlines() if "correctif" in l])
     js, bin_ = read_glb(od / "R.glb")
     bx = world_boxes(js, bin_)
     names = {js["nodes"][v[2]]["name"] for v in bx.values()}
@@ -342,6 +360,12 @@ for variant in ("uuid", "nom"):
     rapport(not any(js["nodes"][i].get("scale") for i in (v[2] for k, v in bx.items() if k in ("Hippo", "Antilope"))), "animaux : plus d'échelle de nœud")
     for gone in ("BoiteHippo", "BoiteAntilope", "BoiteCheval", "Fantome", "Fantome0", "Orphelin"):
         rapport(gone not in bx, f"{gone} retiré")
+    lo, hi, gi_ = bx["Girafe"]
+    rapport(abs(hi[0] - lo[0] - 2.0) < 0.01 and abs(hi[2] - lo[2] - 0.8) < 0.01 and abs(hi[1] - lo[1] - 2.4) < 0.01 and abs(lo[1] - 28.0) < 0.01,
+            f"mesh non normalisé, racine riggée : taille du domaine, pieds à l'altitude de la racine ({[round(hi[k] - lo[k], 3) for k in range(3)]}, pied {lo[1]:.3f})")
+    gp = js["meshes"][js["nodes"][gi_]["mesh"]]["primitives"][0]
+    rapport("TEXCOORD_0" in gp["attributes"] and "NORMAL" in gp["attributes"] and js["accessors"][gp["indices"]]["count"] == 36,
+            "mesh reconstruit : normales, UV et 12 triangles")
     lo, hi, _ = bx["Colosse"]
     rapport(abs(hi[0] - lo[0] - 1) < 1e-3 and "Colosse" in log and "implausible" in log, "taille implausible (50 m) : mesh laissé tel que convoar l'a produit")
     rapport("Vitre" in bx and "Rocher" in bx, "vitre alpha 0,5 et rocher conservés")
@@ -359,7 +383,7 @@ for variant in ("uuid", "nom"):
     r = run_tool(od2 / "R.oar", "--keep-invisible", fake=s2)
     js2, bin2 = read_glb(od2 / "R.glb")
     bx2 = world_boxes(js2, bin2)
-    rapport("4 mesh(es) riggé(s) remis à l'échelle, 0 prim(s) invisible(s) retiré(s)" in r.stdout and "BoiteHippo" in bx2 and "Orphelin" in bx2,
+    rapport("5 mesh(es) riggé(s) remis à l'échelle, 0 prim(s) invisible(s) retiré(s)" in r.stdout and "BoiteHippo" in bx2 and "Orphelin" in bx2,
             "--keep-invisible garde les prims invisibles", r.stdout[-500:])
     # --reperes
     od3 = tmp / (variant + "_rep")
@@ -372,7 +396,7 @@ for variant in ("uuid", "nom"):
     r = run_tool(od3 / "R.oar", "--reperes", fake=s3)
     js3, bin3 = read_glb(od3 / "R.glb")
     rep = [n for n in js3["nodes"] if n.get("name", "").startswith("REPERE")]
-    rapport(len(rep) == 3 and "[repères] 3" in r.stdout and any(abs(n["translation"][0] - 100) < 0.01 and abs(n["translation"][1] - 23.5) < 0.01 for n in rep),
+    rapport(len(rep) == 4 and "[repères] 4" in r.stdout and any(abs(n["translation"][0] - 100) < 0.01 and abs(n["translation"][1] - 23.5) < 0.01 for n in rep),
             f"--reperes : un mât par animal, au pied de l'animal ({len(rep)} trouvés)", r.stdout[-400:])
     # --diag
     before = (od / "R.glb").read_bytes()
@@ -381,7 +405,7 @@ for variant in ("uuid", "nom"):
     rapport(r.returncode == 0 and "riggé : oui" in out and "transparent : oui" in out, "--diag : liste les objets", out[-800:])
     rapport((od / "R.glb").read_bytes() == before, "--diag ne modifie rien")
     n_ok = sum(1 for l in out.splitlines() if "Hippo" in l and "nœud introuvable" not in l and "GLB : nœud" in l)
-    rapport(n_ok >= 1 and "nœuds GLB trouvés : 12/12" in out, f"--diag : correspondance des nœuds ({variant})", [l for l in out.splitlines() if "trouvés" in l])
+    rapport(n_ok >= 1 and "nœuds GLB trouvés : 13/13" in out, f"--diag : correspondance des nœuds ({variant})", [l for l in out.splitlines() if "trouvés" in l])
     if variant == "uuid":
         print("\n".join(l for l in out.splitlines() if "[diag]" in l or "Hippo" in l))
 

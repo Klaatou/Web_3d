@@ -1,4 +1,4 @@
-# Mode d'emploi : zones, portails et points d'arrivée (v31)
+# Mode d'emploi : zones, portails et points d'arrivée (v32)
 
 ## 1. La règle qui explique 90 % des pannes
 
@@ -251,7 +251,7 @@ Conséquences :
 
 `python oar2glb.py "J:\...\X.oar"` lance convoar, répare le résultat et écrit `X.glb` à côté de l'OAR.
 
-**Animesh (meshes riggés).** Dans l'OAR, un animal riggé a souvent une échelle de prim sans rapport avec sa vraie taille (hippopotame géant, éléphant minuscule). Le script lit le bloc skin du mesh (`assets/*_mesh.llmesh`), ignore l'échelle du prim (convoar en applique une que l'OAR ne donne pas : le script mesure l'étendue des sommets et les remet dans le domaine du mesh), applique `bind_shape_matrix`, centre l'animal à l'horizontale sur la position de la racine de l'objet et pose ses pieds sous la boîte racine (le terrain de l'OAR n'est pas utilisé : les animaux sont souvent sur des rochers). Les morceaux d'un même animal (chacun avec sa `bind_shape_matrix`) sont déplacés ensemble. Le journal indique la taille obtenue de chaque animal. Si cette taille sort de 0,1 à 12 m, l'animal est laissé tel que convoar l'a produit (garde-fou) et le journal le dit.
+**Animesh (meshes riggés).** Dans l'OAR, un animal riggé a souvent une échelle de prim sans rapport avec sa vraie taille (hippopotame géant, éléphant minuscule). Le script lit le bloc skin du mesh (`assets/*_mesh.llmesh`), ignore l'échelle du prim (la géométrie que convoar écrit pour les meshes riggés est inutilisable : le script les reconstruit depuis le `.llmesh` de l'OAR), applique `bind_shape_matrix`, centre l'animal à l'horizontale sur la position de la racine de l'objet et pose ses pieds sous la boîte racine (le terrain de l'OAR n'est pas utilisé : les animaux sont souvent sur des rochers). Les morceaux d'un même animal (chacun avec sa `bind_shape_matrix`) sont déplacés ensemble. Le journal indique la taille obtenue de chaque animal. Si cette taille sort de 0,1 à 12 m, l'animal est laissé tel que convoar l'a produit (garde-fou) et le journal le dit.
 
 **Prims invisibles.** Un prim dont toutes les faces sont à alpha 0, ou qui porte la texture invisible standard, n'est plus exporté (boîtes translucides autour des animaux). Si c'est la racine d'un linkset, les enfants restent. La boîte racine d'un animesh (prim simple, racine d'un objet dont toutes les autres parties sont des meshes riggés) est retirée aussi, même si l'OAR ne la donne pas transparente. `--keep-invisible` les garde. Le journal se termine par : « N mesh(es) riggé(s) remis à l'échelle, M prim(s) invisible(s) retiré(s) ».
 
