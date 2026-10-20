@@ -44,6 +44,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 20/10/2026 |  | v26 | v26 : oar2glb.py, correctifs après essai réel (texture invisible corrigée, morceaux d'animaux déplacés ensemble, sol sous la boîte racine, boîtes racines d'animesh retirées, journal --diag séparé) |
 | 20/10/2026 |  | v27 | v27 : oar2glb.py, garde-fou de taille des animaux (0,1 à 12 m), mesures détaillées dans --diag, récapitulatif des textures absentes |
 | 20/10/2026 |  | v28 | v28 : oar2glb.py, nouvel essai de convoar quand des images manquent, mesures des sommets dans le journal et --diag (lecture automatique du .gltf conservé) |
+| 20/10/2026 |  | v29 | v29 : oar2glb.py, taille des animaux riggés par étendue mesurée des sommets + bind_shape_matrix (échelle de convoar inconnue de l'OAR) |
 
 ## Commandes utiles
 

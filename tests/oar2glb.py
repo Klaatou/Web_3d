@@ -214,7 +214,7 @@ def make_gltf(d, variant):
     box_h = mk_mesh("BoiteHippo", (-1.5, -1.5, -1.5), (1.5, 1.5, 1.5), m_zero)
     box_a = mk_mesh("BoiteAntilope", (-1, -1, -1), (1, 1, 1), m_zero)
     hip = mk_mesh("Hippo", (-0.5, -0.5, -0.5), (0.5, 0.5, 0.5), m_ok)
-    ant = mk_mesh("Antilope", (-0.5 * 0.05, -0.5 * 0.05, -0.5 * 0.05), (0.5 * 0.05, 0.5 * 0.05, 0.5 * 0.05), m_ok)   # échelle cuite
+    ant = mk_mesh("Antilope", (-0.5 * 3.7, -0.5 * 2.1, -0.5 * 5.3), (0.5 * 3.7, 0.5 * 2.1, 0.5 * 5.3), m_ok)   # échelle cuite inconnue de l'OAR (comme convoar sur Jungle_Isle)
     gl = mk_mesh("Vitre", (-1, -1, -1), (1, 1, 1), m_half)
     rk = mk_mesh("Rocher", (-2, -2, -2), (2, 2, 2), m_ok)
     orph = mk_mesh("Orphelin", (-1, -1, -1), (1, 1, 1), m_zero)

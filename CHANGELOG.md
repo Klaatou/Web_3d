@@ -2,6 +2,14 @@
 
 Les dates sont au format jj/mm/aaaa.
 
+## v29 (20/10/2026)
+`tools/oar2glb.py`, quatrième essai sur Jungle_Isle. Les mesures de v28 ont tranché :
+- Cause des tailles absurdes : convoar sort pour les meshes riggés des sommets dont l'étendue ne correspond à rien dans l'OAR (lion 41 x 22 x 42 m pour une échelle de prim de 1 ; les deux hippopotames, de même mesh mais d'échelles 11,2 et 13,7, sortent identiques à 70 x 76 x 32 m ; éléphant et chevaux partagent la même étendue 38 x 40 x 33 m). L'échelle ÷ prim de v25 ne pouvait donc pas marcher. Les domaines de position lus dans les `.llmesh` sont ±0,5 (mesh normalisé) et `bind_shape_matrix` vaut la vraie taille de l'animal (translation z = demi-hauteur : pieds à 0).
+- Correction : les sommets sont remis dans le domaine de position du mesh d'après leur étendue mesurée dans le GLB (le mesh occupe tout son domaine), puis `bind_shape_matrix` est appliquée. Plus aucune hypothèse sur l'échelle que convoar a appliquée. Le garde-fou 0,1 à 12 m reste.
+- `--diag` : domaine de position complet (tous les sous-maillages).
+- Textures : en v28 le script a relancé convoar deux fois ; les mêmes ~150 images manquent à chaque essai, ce n'est donc pas une écriture aléatoire. Piste à vérifier : `--reencode` (les runs de test l'utilisaient, la commande habituelle n'en a pas). Comparer le nombre de textures absentes avec et sans `--reencode`.
+- Tests : étendue des sommets inconnue de l'OAR (comme convoar).
+
 ## v28 (20/10/2026)
 `tools/oar2glb.py`, troisième essai sur Jungle_Isle : le garde-fou de v27 a laissé les 16 groupes d'animaux tels que convoar les produit (plus rien dans le ciel) ; les boîtes sont retirées (79 prims invisibles). Deux problèmes restent.
 - Textures grises : 210 images absentes sur 353 au 1er essai, 173 au 2e, avec le même OAR et les mêmes options : convoar n'écrit pas toujours toutes les images qu'il annonce dans le `.gltf` (le dossier en contenait 169). Le script compare maintenant les images annoncées aux fichiers présents ; s'il en manque, il relance convoar (2 essais de plus au maximum) et reprend dans l'essai précédent les images déjà écrites. La cause de l'écriture incomplète reste inconnue (non reproduite ici).

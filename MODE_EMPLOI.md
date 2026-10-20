@@ -1,4 +1,4 @@
-# Mode d'emploi : zones, portails et points d'arrivée (v28)
+# Mode d'emploi : zones, portails et points d'arrivée (v29)
 
 ## 1. La règle qui explique 90 % des pannes
 
@@ -251,12 +251,12 @@ Conséquences :
 
 `python oar2glb.py "J:\...\X.oar"` lance convoar, répare le résultat et écrit `X.glb` à côté de l'OAR.
 
-**Animesh (meshes riggés).** Dans l'OAR, un animal riggé a souvent une échelle de prim sans rapport avec sa vraie taille (hippopotame géant, éléphant minuscule). Le script lit le bloc skin du mesh (`assets/*_mesh.llmesh`), ignore l'échelle du prim, applique `bind_shape_matrix`, centre l'animal à l'horizontale sur la position de la racine de l'objet et pose ses pieds sous la boîte racine (le terrain de l'OAR n'est pas utilisé : les animaux sont souvent sur des rochers). Les morceaux d'un même animal (chacun avec sa `bind_shape_matrix`) sont déplacés ensemble. Le journal indique la taille obtenue de chaque animal. Si cette taille sort de 0,1 à 12 m, l'animal est laissé tel que convoar l'a produit (garde-fou) et le journal le dit.
+**Animesh (meshes riggés).** Dans l'OAR, un animal riggé a souvent une échelle de prim sans rapport avec sa vraie taille (hippopotame géant, éléphant minuscule). Le script lit le bloc skin du mesh (`assets/*_mesh.llmesh`), ignore l'échelle du prim (convoar en applique une que l'OAR ne donne pas : le script mesure l'étendue des sommets et les remet dans le domaine du mesh), applique `bind_shape_matrix`, centre l'animal à l'horizontale sur la position de la racine de l'objet et pose ses pieds sous la boîte racine (le terrain de l'OAR n'est pas utilisé : les animaux sont souvent sur des rochers). Les morceaux d'un même animal (chacun avec sa `bind_shape_matrix`) sont déplacés ensemble. Le journal indique la taille obtenue de chaque animal. Si cette taille sort de 0,1 à 12 m, l'animal est laissé tel que convoar l'a produit (garde-fou) et le journal le dit.
 
 **Prims invisibles.** Un prim dont toutes les faces sont à alpha 0, ou qui porte la texture invisible standard, n'est plus exporté (boîtes translucides autour des animaux). Si c'est la racine d'un linkset, les enfants restent. La boîte racine d'un animesh (prim simple, racine d'un objet dont toutes les autres parties sont des meshes riggés) est retirée aussi, même si l'OAR ne la donne pas transparente. `--keep-invisible` les garde. Le journal se termine par : « N mesh(es) riggé(s) remis à l'échelle, M prim(s) invisible(s) retiré(s) ».
 
 **Valider avant de croire : `--diag`.** `python oar2glb.py "J:\...\X.oar" --diag` ne modifie rien et ne lance pas convoar. Il lit le `.gltf` du dossier `X-GLTF` (conservé avec `--keep`), sinon le `X.glb` voisin, ou celui donné par `--glb` et affiche une ligne par partie de l'OAR : nom, UUID, riggé oui/non, échelle du prim, échelle de `bind_shape_matrix`, transparent oui/non, nœud GLB trouvé ou non et par quelle méthode (UUID du prim, UUID du mesh, nom + position). Les lignes « nœud introuvable » sur un animal ou un prim transparent signifient que le correctif ne s'appliquera pas à lui : envoyer le journal (`oar2glb.diag.log`, la conversion écrit `oar2glb.log`) pour ajuster la correspondance. Le GLB final contient les nœuds déjà corrigés : pour diagnostiquer, garder le `-GLTF` produit avec `--keep` et passer son `.gltf` à `--glb`.
 
-Si des textures deviennent grises, relancer la conversion avec les mêmes options qu'avant (notamment `--reencode`) et chercher la ligne `[GLB] N texture(s) absente(s)`. Si convoar n'écrit pas toutes les images qu'il annonce, le script le relance (2 essais de plus au maximum) et garde les images déjà écrites.
+Si des textures deviennent grises, relancer la conversion SANS `--reencode` (sur Jungle_Isle, avec `--reencode`, environ 150 images sur 353 manquaient) et comparer le nombre de textures absentes et chercher la ligne `[GLB] N texture(s) absente(s)`. Si convoar n'écrit pas toutes les images qu'il annonce, le script le relance (2 essais de plus au maximum) et garde les images déjà écrites.
 
 Test : `python tests/oar2glb.py` (OAR synthétique et faux convoar, sans réseau).

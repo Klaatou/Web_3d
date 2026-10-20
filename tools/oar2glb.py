@@ -172,7 +172,7 @@ def llmesh_skin(data):
         return None, f"en-tête du mesh illisible ({e})"
 
 
-def llmesh_domains(data, n=4):
+def llmesh_domains(data, n=256):
     # domaines de position (min, max) des premiers sous-maillages du plus haut niveau de détail ; [] si illisible
     try:
         start = data.find(b"\n") + 1 if data[:2] == b"<?" else 0
@@ -814,30 +814,49 @@ def rigged_scale_mode(node, scale):
     return "cuite" if any(abs(v - 1) > 1e-4 for v in exp) else "aucune"
 
 
-def rig_mesh(g, base, cache, part, bsm, ni):
-    # copie du mesh du nœud, sommets/normales ramenés dans l'espace du skin (échelle du prim ignorée, bind_shape appliquée)
-    # -> (mesh, points) ou message d'erreur (str)
+def union_domain(dom):
+    # (min, max) englobant les domaines de position des sous-maillages, ou None
+    if not dom:
+        return None
+    lo = [min(d[0][k] for d in dom) for k in range(3)]
+    hi = [max(d[1][k] for d in dom) for k in range(3)]
+    return lo, hi
+
+
+def rig_mesh(g, base, cache, part, bsm, ni, dom=None):
+    # copie du mesh du nœud, sommets/normales ramenés dans l'espace du skin -> (mesh, points, mode) ou message d'erreur (str)
+    # Mesure sur Jungle_Isle : convoar cuit dans les sommets une échelle que l'OAR ne donne pas (lion 41 x 22 x 42 m pour
+    # une échelle de prim de 1 ; deux hippopotames de même mesh et d'échelles 11,2 et 13,7 sortent identiques à 70 m).
+    # On ne la déduit donc pas de l'OAR : on la mesure. Le mesh occupe tout son domaine de position (±0,5 pour un mesh
+    # normalisé) ; les sommets sont remis dans ce domaine d'après leur étendue mesurée, puis bind_shape_matrix s'applique.
     node = g["nodes"][ni]
     if "mesh" not in node:
         return "le nœud n'a pas de mesh"
     sx, sy, sz = part["scale"] or [1, 1, 1]
-    mode = rigged_scale_mode(node, (sx, sy, sz))
     lin = [[bsm[0], bsm[4], bsm[8]], [bsm[1], bsm[5], bsm[9]], [bsm[2], bsm[6], bsm[10]]]
     t = bsm[12:15]
     li = inv3(lin)
     if li is None:
         return "bind_shape_matrix non inversible"
     mesh = json.loads(json.dumps(g["meshes"][node["mesh"]]))
-    allp, raw = [], []
-    for pr in mesh.get("primitives", []):
-        if "POSITION" not in pr.get("attributes", {}):
-            continue
+    prims = [pr for pr in mesh.get("primitives", []) if "POSITION" in pr.get("attributes", {})]
+    raw = [[(X, -Z, Y) for X, Y, Z in read_vec3(g, base, cache, pr["attributes"]["POSITION"])] for pr in prims]
+    flat = [v for r in raw for v in r]
+    if not flat:
+        return "aucune géométrie lisible"
+    lo = [min(v[k] for v in flat) for k in range(3)]
+    hi = [max(v[k] for v in flat) for k in range(3)]
+    ext = [hi[k] - lo[k] for k in range(3)]
+    ctr = [(hi[k] + lo[k]) / 2 for k in range(3)]
+    ud = union_domain(dom) or ([-0.5] * 3, [0.5] * 3)
+    dext = [ud[1][k] - ud[0][k] for k in range(3)]
+    dctr = [(ud[1][k] + ud[0][k]) / 2 for k in range(3)]
+    k_ = [dext[k] / ext[k] if ext[k] > 1e-9 else 0.0 for k in range(3)]
+    allp = []
+    for pr, rr in zip(prims, raw):
         out = []
-        for X, Y, Z in read_vec3(g, base, cache, pr["attributes"]["POSITION"]):
-            x, y, z = X, -Z, Y
-            raw.append((x, y, z))
-            if mode == "cuite":
-                x, y, z = x / sx, y / sy, z / sz
+        for x, y, z in rr:
+            x, y, z = (dctr[0] + (x - ctr[0]) * k_[0], dctr[1] + (y - ctr[1]) * k_[1], dctr[2] + (z - ctr[2]) * k_[2])
             x, y, z = (lin[0][0] * x + lin[0][1] * y + lin[0][2] * z + t[0],
                        lin[1][0] * x + lin[1][1] * y + lin[1][2] * z + t[1],
                        lin[2][0] * x + lin[2][1] * y + lin[2][2] * z + t[2])
@@ -847,21 +866,15 @@ def rig_mesh(g, base, cache, part, bsm, ni):
         if "NORMAL" in pr["attributes"]:
             ns = []
             for X, Y, Z in read_vec3(g, base, cache, pr["attributes"]["NORMAL"]):
-                x, y, z = X, -Z, Y
-                if mode == "cuite":
-                    x, y, z = x * sx, y * sy, z * sz
-                v = (x, y, z)
+                v = (X, -Z, Y)
                 nx, ny, nz = (sum(li[i][k] * v[i] for i in range(3)) for k in range(3))
                 l = math.sqrt(nx * nx + ny * ny + nz * nz) or 1.0
                 ns.append([nx / l, nz / l, -ny / l])
             pr["_nrm"] = ns
-    if not allp:
-        return "aucune géométrie lisible"
-    rext = [max(r[k] for r in raw) - min(r[k] for r in raw) for k in range(3)]
-    print(f"[riggé] mesure : '{part['name']}' sommets bruts du GLB {rext[0]:.3g} x {rext[1]:.3g} x {rext[2]:.3g} (axes OpenSim), "
-          f"échelle du prim {fmt3([sx, sy, sz])}, échelle de bind_shape {fmt3([math.sqrt(sum(bsm[c * 4 + r] ** 2 for r in range(3))) for c in range(3)])}, "
-          f"{len(raw)} sommets")
-    return mesh, allp, mode
+    print(f"[riggé] mesure : '{part['name']}' sommets bruts du GLB {ext[0]:.3g} x {ext[1]:.3g} x {ext[2]:.3g} (axes OpenSim), "
+          f"domaine {fmt3(dext)}, échelle du prim {fmt3([sx, sy, sz])}, échelle de bind_shape "
+          f"{fmt3([math.sqrt(sum(bsm[c * 4 + r] ** 2 for r in range(3))) for c in range(3)])}, {len(flat)} sommets")
+    return mesh, allp, "mesurée"
 
 
 MAX_ANIMAL, MIN_ANIMAL = 12.0, 0.1       # garde-fou : un animal fait entre 10 cm et 12 m dans sa plus grande dimension
@@ -872,8 +885,8 @@ def place_rigged_group(g, base, cache, extra, tree, grp, items):
     # bind_shape_matrix) partagent le même repère : on les déplace ENSEMBLE (même décalage, même rotation), sans
     # jamais les poser séparément. Retourne le nombre de morceaux corrigés.
     built = []
-    for part, bsm, ni in items:
-        r = rig_mesh(g, base, cache, part, bsm, ni)
+    for part, bsm, ni, dom in items:
+        r = rig_mesh(g, base, cache, part, bsm, ni, dom)
         if isinstance(r, str):
             print(f"[riggé] '{part['name']}' : {r}, non corrigé")
         else:
@@ -944,7 +957,7 @@ def repair(g, base, scan, keep_invisible):
             if p["uuid"] not in match:
                 print(f"[riggé] '{p['name']}' ({p['uuid']}) : nœud GLB introuvable, non corrigé (voir --diag)")
                 continue
-            items.append((p, sk["bsm"], match[p["uuid"]][0]))
+            items.append((p, sk["bsm"], match[p["uuid"]][0], sk.get("dom")))
         if items:
             n_rig += place_rigged_group(g, base, cache, extra, tree, grp, items)
     extra.finish()
@@ -1011,7 +1024,8 @@ def diag(scan, g, glb_label, base=None):
             if bsm:
                 sk = scan["skins"][p["mesh"]]
                 print(f"      bind_shape_matrix : {[round(v, 4) for v in bsm]}")
-                print(f"      domaine de position du mesh : " + ("; ".join(f"{fmt3(a)} .. {fmt3(b)}" for a, b in sk["dom"]) or "illisible"))
+                ud = union_domain(sk["dom"])
+                print(f"      domaine de position du mesh ({len(sk['dom'])} sous-maillage(s)) : " + (f"{fmt3(ud[0])} .. {fmt3(ud[1])}" if ud else "illisible"))
                 if g and base is not None and p["uuid"] in match and "mesh" in g["nodes"][match[p["uuid"]][0]]:
                     try:
                         pts, cc = [], {}
