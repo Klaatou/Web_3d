@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Tests de tools/oar2glb.py sur un OAR synthétique et un faux convoar (aucun vrai OAR, aucun .exe).
 
+  - cheval en 2 morceaux riggés (bind_shape différentes, même nom, même position) : déplacés ensemble ;
+    boîte racine d'animesh non transparente dans l'OAR : retirée
   - hippopotame (animesh enfant d'une racine invisible, échelle de prim aberrante 30 m, échelle portée par le nœud GLB)
   - antilope (animesh, échelle de prim 0,05 m, échelle cuite dans les sommets du GLB)
   - racines invisibles (faces alpha 0 ; texture invisible standard), boîte vitrée alpha 0,5 conservée, rocher mesh sans skin
@@ -73,7 +75,8 @@ def tex_entry(default_tex, default_alpha, faces=None):
 
 
 PLY = "5748decc-f629-461c-9a36-a35a221fe21f"
-INVT = "e97cf410-8e61-7005-ec06-629eba4cd1fb"
+INVT = "8dcd4a48-2d37-4909-9f78-f7a9eb4ef903"     # « Transparent » du sélecteur de textures
+GRAD = "e97cf410-8e61-7005-ec06-629eba4cd1fb"     # dégradé alpha : VISIBLE
 
 
 def part_xml(pid, name, gpos, off, rot, scale, mesh=None, te=None):
@@ -89,10 +92,12 @@ def group_xml(parts):
 
 
 I4 = [0, 0, 0, 1]
-HIPPO_MESH, ANTE_MESH, ROCK_MESH = U(), U(), U()
-ID = dict(hroot=U(), hippo=U(), aroot=U(), ante=U(), ghost2=U(), glass=U(), rock=U(), ghost1=U())
+HIPPO_MESH, ANTE_MESH, ROCK_MESH, HA_MESH, HB_MESH = U(), U(), U(), U(), U()
+ID = dict(croot=U(), ca=U(), cb=U(), hroot=U(), hippo=U(), aroot=U(), ante=U(), ghost2=U(), glass=U(), rock=U(), ghost1=U())
 BSM_H = [3, 0, 0, 0, 0, 1.4, 0, 0, 0, 0, 1.6, 0, 0, 0, 0.8, 1]          # raw [-0.5,0.5]^3 -> 3 x 1.4 x 1.6, pieds à 0
 BSM_A = [1.2, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 1.4, 0, 0, 0, 0.7, 1]
+BSM_HA = [2, 0, 0, 0, 0, 0.6, 0, 0, 0, 0, 1, 0, 0, 0, 1.0, 1]            # x[-1,1] y[-.3,.3] z[.5,1.5]
+BSM_HB = [0.4, 0, 0, 0, 0, 0.4, 0, 0, 0, 0, 1, 0, 0.8, 0, 0.5, 1]        # x[.6,1] y[-.2,.2] z[0,1]
 
 GRP = [  # (fichier, parties)
     ("h", [(ID["hroot"], "BoiteHippo", [100, 120, 25], [0, 0, 0], I4, [3, 3, 3], None, tex_entry(PLY, 0)),
@@ -100,6 +105,9 @@ GRP = [  # (fichier, parties)
     ("a", [(ID["aroot"], "BoiteAntilope", [60, 40, 24], [0, 0, 0], I4, [2, 2, 2], None, tex_entry(INVT, 255)),
            (ID["ante"], "Antilope", [60, 40, 24], [0, 0, 0.3], [0, 0, 0.7071, 0.7071], [0.05, 0.05, 0.05], ANTE_MESH, None)]),
     ("g2", [(ID["ghost2"], "Fantome", [200, 200, 30], [0, 0, 0], I4, [1, 1, 1], None, tex_entry(PLY, 255, {1: (INVT, 255)}) and tex_entry(INVT, 255))]),
+    ("c", [(ID["croot"], "BoiteCheval", [80, 80, 26], [0, 0, 0], I4, [2, 2, 2], None, tex_entry(PLY, 255)),
+           (ID["ca"], "Cheval", [80, 80, 26], [0, 0, 0.1], I4, [1, 1, 1], HA_MESH, None),
+           (ID["cb"], "Cheval", [80, 80, 26], [0.5, 0, 0.2], I4, [1, 1, 1], HB_MESH, None)]),
     ("v", [(ID["glass"], "Vitre", [30, 30, 22], [0, 0, 0], I4, [2, 2, 2], None, tex_entry(PLY, 128))]),
     ("r", [(ID["rock"], "Rocher", [150, 20, 22], [0, 0, 0], I4, [4, 4, 4], ROCK_MESH, None)]),
     ("g1", [(ID["ghost1"], "Fantome0", [220, 30, 30], [0, 0, 0], I4, [1, 1, 1], None, tex_entry(PLY, 0, {2: (PLY, 255)}) and tex_entry(PLY, 0))]),
@@ -123,6 +131,8 @@ def make_oar(path):
         add(f"assets/{HIPPO_MESH}_mesh.llmesh", llmesh({"joint_names": ["mPelvis", "mTorso"], "bind_shape_matrix": [float(v) for v in BSM_H],
                                                       "inverse_bind_matrix": [[1.0] * 16], "pelvis_offset": 0.0}))
         add(f"assets/{ANTE_MESH}_mesh.llmesh", llmesh({"joint_names": ["mPelvis"], "bind_shape_matrix": [float(v) for v in BSM_A]}))
+        add(f"assets/{HA_MESH}_mesh.llmesh", llmesh({"joint_names": ["mPelvis"], "bind_shape_matrix": [float(v) for v in BSM_HA]}))
+        add(f"assets/{HB_MESH}_mesh.llmesh", llmesh({"joint_names": ["mPelvis"], "bind_shape_matrix": [float(v) for v in BSM_HB]}))
         add(f"assets/{ROCK_MESH}_mesh.llmesh", llmesh())
         add("terrains/heightmap.r32", terrain())
 
@@ -210,12 +220,18 @@ def make_gltf(d, variant):
     r1 = node("BoiteHippo", (100, 120, 25), box_h, ID["hroot"], children=[c1])
     c2 = node("Antilope", (0, 0, 0.3), ant, ID["ante"], rot=[0, 0, 0.7071, 0.7071])
     r2n = node("BoiteAntilope", (60, 40, 24), box_a, ID["aroot"], children=[c2])
+    bx_c = mk_mesh("BoiteCheval", (-1, -1, -1), (1, 1, 1), m_ok)      # boîte racine visible dans le GLB (alpha 1)
+    ha = mk_mesh("Cheval", (-0.5, -0.5, -0.5), (0.5, 0.5, 0.5), m_ok)
+    hb = mk_mesh("Cheval", (-0.5, -0.5, -0.5), (0.5, 0.5, 0.5), m_ok)
+    cha = node("Cheval", (0, 0, 0.1), ha, ID["ca"])
+    chb = node("Cheval", (0.5, 0, 0.2), hb, ID["cb"])
+    rc = node("BoiteCheval", (80, 80, 26), bx_c, ID["croot"], children=[cha, chb])
     r3 = node("Vitre", (30, 30, 22), gl, ID["glass"])
     r4 = node("Rocher", (150, 20, 22), rk, ID["rock"])
     r5 = node("Fantome", (200, 200, 30), orph, ID["ghost2"])
     r6 = node("Fantome0", (220, 30, 30), orph, ID["ghost1"])
     r7 = node("Orphelin", (10, 10, 25), orph)
-    g = {"asset": {"version": "2.0"}, "scene": 0, "scenes": [{"nodes": [r1, r2n, r3, r4, r5, r6, r7]}], "nodes": nodes, "meshes": meshes,
+    g = {"asset": {"version": "2.0"}, "scene": 0, "scenes": [{"nodes": [r1, r2n, rc, r3, r4, r5, r6, r7]}], "nodes": nodes, "meshes": meshes,
          "materials": mats, "accessors": accs, "bufferViews": views, "buffers": [{"byteLength": len(blob), "uri": "scene.bin"}]}
     (d / "scene.bin").write_bytes(bytes(blob))
     (d / "scene.gltf").write_text(json.dumps(g), encoding="utf-8")
@@ -227,6 +243,18 @@ def read_glb(path):
     js = json.loads(d[20:20 + ln])
     off = 20 + ln + 8
     return js, d[off:]
+
+
+def world_boxes_node(js, bin_, i):
+    n, tree, pts = js["nodes"][i], T.Tree(js), []
+    w = tree.world(i)
+    for pr in js["meshes"][n["mesh"]]["primitives"]:
+        a = js["accessors"][pr["attributes"]["POSITION"]]
+        bv = js["bufferViews"][a["bufferView"]]
+        for k in range(a["count"]):
+            x, y, z = struct.unpack_from("<3f", bin_, bv["byteOffset"] + a.get("byteOffset", 0) + k * 12)
+            pts.append([w[r] * x + w[4 + r] * y + w[8 + r] * z + w[12 + r] for r in range(3)])
+    return [min(p[k] for p in pts) for k in range(3)], [max(p[k] for p in pts) for k in range(3)]
 
 
 def world_boxes(js, bin_):
@@ -258,6 +286,7 @@ rapport(T.part_invisible(te), "TextureEntry : toutes faces alpha 0 = invisible")
 rapport(not T.part_invisible(T.parse_texture_entry(tex_entry(PLY, 0, {2: (PLY, 255)}))), "TextureEntry : une face visible = visible")
 rapport(T.part_invisible(T.parse_texture_entry(tex_entry(INVT, 255))), "TextureEntry : texture invisible standard")
 rapport(not T.part_invisible(T.parse_texture_entry(tex_entry(PLY, 128))), "TextureEntry : alpha 0,5 = visible")
+rapport(not T.part_invisible(T.parse_texture_entry(tex_entry(GRAD, 255))), "TextureEntry : le dégradé alpha e97cf410 est VISIBLE")
 sk, err = T.llmesh_skin(llmesh({"joint_names": ["a"], "bind_shape_matrix": [float(v) for v in BSM_H]}))
 rapport(sk and T.bind_shape(sk) == [float(v) for v in BSM_H], "bloc skin : bind_shape_matrix lue", (sk, err))
 rapport(T.llmesh_skin(llmesh())[0] is None, "mesh sans skin : None")
@@ -282,7 +311,7 @@ for variant in ("uuid", "nom"):
     r = run_tool(o, fake=sub)
     log = r.stdout + r.stderr
     rapport(r.returncode == 0 and (od / "R.glb").exists(), "oar2glb : GLB produit", log[-800:])
-    rapport("2 mesh(es) riggé(s) remis à l'échelle, 5 prim(s) invisible(s) retiré(s)" in log, "journal récapitulatif", [l for l in log.splitlines() if "correctif" in l])
+    rapport("4 mesh(es) riggé(s) remis à l'échelle, 6 prim(s) invisible(s) retiré(s)" in log, "journal récapitulatif", [l for l in log.splitlines() if "correctif" in l])
     js, bin_ = read_glb(od / "R.glb")
     bx = world_boxes(js, bin_)
     names = {js["nodes"][v[2]]["name"] for v in bx.values()}
@@ -295,10 +324,19 @@ for variant in ("uuid", "nom"):
         sx = (sz[0], sz[1], sz[2])
         rapport(all(abs(sx[k] - exp[k]) < 0.02 for k in range(3)), f"{nm} : taille réaliste {sx}", exp)
         rapport(abs((lo[0] + hi[0]) / 2 - c[0]) < 0.05 and abs((lo[2] + hi[2]) / 2 - c[1]) < 0.05, f"{nm} : centré sur la racine ({(lo[0] + hi[0]) / 2:.2f}, {(lo[2] + hi[2]) / 2:.2f})")
-        gx = 100 if nm == "Hippo" else 60
-        rapport(abs(lo[1] - (20 + 0.01 * gx)) < 0.02, f"{nm} : posé sur le terrain (pied à {lo[1]:.3f}, attendu {20 + 0.01 * gx})")
+        gnd = 23.5 if nm == "Hippo" else 23.0           # dessous de la boîte racine (z - échelle/2), le terrain (21) est ignoré
+        rapport(abs(lo[1] - gnd) < 0.02, f"{nm} : pieds au dessous de la boîte racine (pied à {lo[1]:.3f}, attendu {gnd})")
+    ch = [n for n in js["nodes"] if n.get("name") == "Cheval"]
+    chm = [world_boxes_node(js, bin_, js["nodes"].index(n)) for n in ch]
+    ulo = [min(b[0][k] for b in chm) for k in range(3)]
+    uhi = [max(b[1][k] for b in chm) for k in range(3)]
+    rapport(len(ch) == 2 and abs(uhi[0] - ulo[0] - 2.0) < 0.02 and abs(uhi[1] - ulo[1] - 1.5) < 0.02,
+            f"cheval en 2 morceaux : taille de l'ensemble {[round(uhi[k] - ulo[k], 3) for k in range(3)]}")
+    rapport(abs((ulo[0] + uhi[0]) / 2 - 80) < 0.02 and abs(ulo[1] - 25.0) < 0.02, f"cheval : ensemble centré sur la racine, pieds à {ulo[1]:.3f} (attendu 25)")
+    d = (chm[1][0][0] + chm[1][1][0]) / 2 - (chm[0][0][0] + chm[0][1][0]) / 2
+    rapport(abs(d - 0.8) < 0.02, f"cheval : les morceaux gardent leur position relative ({d:.3f} m, attendu 0.8)")
     rapport(not any(js["nodes"][i].get("scale") for i in (v[2] for k, v in bx.items() if k in ("Hippo", "Antilope"))), "animaux : plus d'échelle de nœud")
-    for gone in ("BoiteHippo", "BoiteAntilope", "Fantome", "Fantome0", "Orphelin"):
+    for gone in ("BoiteHippo", "BoiteAntilope", "BoiteCheval", "Fantome", "Fantome0", "Orphelin"):
         rapport(gone not in bx, f"{gone} retiré")
     rapport("Vitre" in bx and "Rocher" in bx, "vitre alpha 0,5 et rocher conservés")
     lo, hi, _ = bx["Rocher"]
@@ -315,7 +353,7 @@ for variant in ("uuid", "nom"):
     r = run_tool(od2 / "R.oar", "--keep-invisible", fake=s2)
     js2, bin2 = read_glb(od2 / "R.glb")
     bx2 = world_boxes(js2, bin2)
-    rapport("2 mesh(es) riggé(s) remis à l'échelle, 0 prim(s) invisible(s) retiré(s)" in r.stdout and "BoiteHippo" in bx2 and "Orphelin" in bx2,
+    rapport("4 mesh(es) riggé(s) remis à l'échelle, 0 prim(s) invisible(s) retiré(s)" in r.stdout and "BoiteHippo" in bx2 and "Orphelin" in bx2,
             "--keep-invisible garde les prims invisibles", r.stdout[-500:])
     # --diag
     before = (od / "R.glb").read_bytes()
@@ -324,7 +362,7 @@ for variant in ("uuid", "nom"):
     rapport(r.returncode == 0 and "riggé : oui" in out and "transparent : oui" in out, "--diag : liste les objets", out[-800:])
     rapport((od / "R.glb").read_bytes() == before, "--diag ne modifie rien")
     n_ok = sum(1 for l in out.splitlines() if "Hippo" in l and "nœud introuvable" not in l and "GLB : nœud" in l)
-    rapport(n_ok >= 1 and "nœuds GLB trouvés : 8/8" in out, f"--diag : correspondance des nœuds ({variant})", [l for l in out.splitlines() if "trouvés" in l])
+    rapport(n_ok >= 1 and "nœuds GLB trouvés : 11/11" in out, f"--diag : correspondance des nœuds ({variant})", [l for l in out.splitlines() if "trouvés" in l])
     if variant == "uuid":
         print("\n".join(l for l in out.splitlines() if "[diag]" in l or "Hippo" in l))
 

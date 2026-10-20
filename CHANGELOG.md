@@ -2,6 +2,16 @@
 
 Les dates sont au format jj/mm/aaaa.
 
+## v26 (20/10/2026)
+Correctifs de `tools/oar2glb.py` après le premier essai sur un vrai OAR (Jungle_Isle : 771 parties, 34 meshes riggés, aucun UUID dans le GLB de convoar, échelle des nœuds toujours 1 : convoar cuit l'échelle dans les sommets).
+- Erreur de v25 : la texture `e97cf410-…` est le dégradé alpha (visible), pas une texture invisible. Les textures invisibles sont maintenant `8dcd4a48-…` (« Transparent » du sélecteur) et `3a367d1c-…` (invisiprim).
+- Animaux en plusieurs morceaux (un cheval = 6 meshes riggés de même nom, chacun avec sa `bind_shape_matrix`) : chaque morceau était posé et centré séparément. Ils sont maintenant déplacés ensemble (même décalage, même rotation = racine x rotation du 1er morceau) et gardent leur position relative.
+- Sol : le terrain de cet OAR est plat (21 m) alors que les animaux sont sur des rochers (jusqu'à 36 m). Le pied de l'animal est posé sous la boîte racine (z - échelle/2) ; racine elle-même riggée : altitude de la racine. Le terrain n'est plus utilisé.
+- Boîtes laiteuses : la racine d'un objet dont toutes les autres parties sont des meshes riggés (« boîte racine d'animesh ») est retirée même si l'OAR ne la donne pas à alpha 0. Retrait des prims par nœud (convoar sort un nœud par partie) : fonctionne sans UUID dans le GLB.
+- Correspondance par nom + position : à distance égale, ordre des nœuds = ordre de l'OAR (au lieu d'un choix arbitraire entre morceaux de même nom).
+- `--diag` : indique la boîte racine d'animesh, le résumé du `TextureEntry` (texture, alpha) et le matériau GLB (couleur, mode alpha, image) des parties riggées, transparentes ou boîtes. Le journal du diagnostic va dans `oar2glb.diag.log` : il n'écrase plus `oar2glb.log` de la conversion.
+- Tests : cheval en 2 morceaux, boîte non transparente, dégradé alpha visible.
+
 ## v25 (20/10/2026)
 - `tools/oar2glb.py`, prims invisibles : les prims entièrement transparents (toutes les faces à alpha 0, ou texture invisible standard `e97cf410-…` / `3a367d1c-…`, lus dans le `TextureEntry` de l'OAR) sont retirés du GLB, ainsi que tout nœud GLB dont tous les matériaux sont à alpha 0. Une racine de linkset invisible disparaît, ses enfants restent. Option `--keep-invisible` pour les garder.
 - `tools/oar2glb.py`, meshes riggés (animesh) : le bloc skin de `assets/*_mesh.llmesh` (zlib + LLSD) est lu ; l'échelle du prim est ignorée (qu'elle soit portée par le nœud GLB ou cuite dans les sommets), `bind_shape_matrix` est appliquée aux sommets et aux normales, le modèle est centré à l'horizontale sur la position de la racine et posé au sol (terrain `terrains/*.r32` de l'OAR ; à défaut, altitude de la racine). Les autres meshes et prims ne sont pas touchés.

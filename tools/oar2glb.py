@@ -98,8 +98,8 @@ def reencode_oar(src, dst):
 
 
 # ---------- lecture de l'OAR : objets, blocs skin des meshes, terrain ----------
-# Textures « invisibles » standard (SL/OpenSim) : TEXTURE_TRANSPARENT et IMG_INVISIBLE
-INVISIBLE_TEX = {"e97cf410-8e61-7005-ec06-629eba4cd1fb", "3a367d1c-bef1-6d43-7595-e88c1e3aadb3"}
+# Textures « invisibles » standard (SL/OpenSim) : « Transparent » du sélecteur et IMG_INVISIBLE (invisiprim)
+INVISIBLE_TEX = {"8dcd4a48-2d37-4909-9f78-f7a9eb4ef903", "3a367d1c-bef1-6d43-7595-e88c1e3aadb3"}
 UUID_RX = re.compile(r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")
 
 
@@ -239,6 +239,14 @@ def part_invisible(tex_entry):
     return True
 
 
+def tex_summary(tex_entry):
+    if not tex_entry:
+        return "sans TextureEntry"
+    tex, col = tex_entry
+    n = len({f for f in list(tex) + list(col) if f is not None})
+    return f"texture {tex[None][:8]} alpha {col[None] / 255:.2f}" + (f" (+{n} face(s) à part)" if n else "")
+
+
 def _txt(el, path):
     e = el.find(path)
     return (e.text or "").strip() if e is not None and e.text else ""
@@ -266,12 +274,13 @@ def parse_object(xml_bytes):
         if sh is not None and (int(float(_txt(sh, "SculptType") or 0)) & 7) == 5:
             mesh = (_txt(sh, "SculptTexture/Guid") or _txt(sh, "SculptTexture/UUID") or _txt(sh, "SculptTexture")).lower() or None
         te = _txt(sh, "TextureEntry") if sh is not None else ""
+        tex_e = parse_texture_entry(te) if te else None
         parts.append({
             "uuid": (_txt(el, "UUID/Guid") or _txt(el, "UUID/UUID") or _txt(el, "UUID")).lower(),
             "name": _txt(el, "Name"),
             "gpos": _vec(el, "GroupPosition"), "off": _vec(el, "OffsetPosition"),
             "rot": _vec(el, "RotationOffset", "XYZW"), "scale": _vec(el, "Scale"),
-            "mesh": mesh, "invisible": part_invisible(parse_texture_entry(te)) if te else False,
+            "mesh": mesh, "invisible": part_invisible(tex_e), "tex": tex_summary(tex_e),
         })
     return parts
 
@@ -635,7 +644,7 @@ def match_nodes(g, scan):
                 q = tree.pos_os(i)
                 return min(math.dist(q, p["wpos"]), math.dist(q, grp["parts"][0]["gpos"]))
             free = [i for i in cand if i not in used] or cand
-            best = min(free, key=dist)
+            best = min(free, key=lambda i: (round(dist(i), 2), i))      # à égalité : ordre des nœuds = ordre de l'OAR
             if dist(best) <= 2.0:
                 res[p["uuid"]] = (best, how)
                 used.add(best)
@@ -680,23 +689,32 @@ def remove_node(g, i):
     n.pop("mesh", None)
 
 
+def rig_box_roots(scan):
+    # boîtes racines d'animesh : prim simple (pas un mesh) racine d'un objet dont TOUTES les autres parties sont des meshes
+    # riggés. Invisible en jeu (cadre de l'animal), mais pas forcément alpha 0 dans l'OAR : convoar la sort en boîte laiteuse.
+    out = set()
+    for grp in scan["groups"]:
+        ps = grp["parts"]
+        sk = lambda q: bool(q["mesh"] and (scan["skins"].get(q["mesh"]) or {}).get("bsm"))
+        if len(ps) > 1 and ps[0]["mesh"] is None and all(sk(q) for q in ps[1:]):
+            out.add(ps[0]["uuid"])
+    return out
+
+
 def remove_invisible(g, scan, match):
-    # prims entièrement transparents : par l'OAR (faces alpha 0 / texture invisible) et par les matériaux du GLB
-    cache, victims = {}, set()
-    by_node = {}
+    # prims entièrement transparents : par l'OAR (faces alpha 0 / texture invisible), par les matériaux du GLB,
+    # et boîtes racines d'animesh. convoar sort un nœud par partie : on retire le nœud de la partie.
+    cache, victims = {}, {}
+    boxes = rig_box_roots(scan)
     for grp in scan["groups"]:
         for p in grp["parts"]:
-            if p["uuid"] in match:
-                by_node.setdefault(match[p["uuid"]][0], []).append((p, match[p["uuid"]][1], len(grp["parts"])))
-    for i, lst in by_node.items():
-        # un nœud issu d'un linkset fusionné n'est retiré que s'il est sûrement ce prim
-        if all(p["invisible"] and (nb == 1 or how == "UUID du prim") for p, how, nb in lst):
-            victims.add(i)
+            if p["uuid"] in match and (p["invisible"] or p["uuid"] in boxes):
+                victims.setdefault(match[p["uuid"]][0], "boîte racine d'animesh" if p["uuid"] in boxes and not p["invisible"] else "transparent (OAR)")
     for i, n in enumerate(g.get("nodes", [])):
-        if node_all_invisible(g, n, cache):
-            victims.add(i)
+        if i not in victims and node_all_invisible(g, n, cache):
+            victims[i] = "matériaux transparents (GLB)"
     for i in sorted(victims):
-        print(f"[invisible] node {i} '{g['nodes'][i].get('name', '?')}' retiré")
+        print(f"[invisible] node {i} '{g['nodes'][i].get('name', '?')}' retiré : {victims[i]}")
         remove_node(g, i)
     return len(victims)
 
@@ -757,8 +775,9 @@ def rigged_scale_mode(node, scale):
     return "cuite" if any(abs(v - 1) > 1e-4 for v in exp) else "aucune"
 
 
-def fix_rigged(g, base, cache, extra, tree, part, bsm, ni, terrain, region):
-    # remet un mesh riggé à la taille de son bloc skin ; retourne un message d'erreur ou None
+def rig_mesh(g, base, cache, part, bsm, ni):
+    # copie du mesh du nœud, sommets/normales ramenés dans l'espace du skin (échelle du prim ignorée, bind_shape appliquée)
+    # -> (mesh, points) ou message d'erreur (str)
     node = g["nodes"][ni]
     if "mesh" not in node:
         return "le nœud n'a pas de mesh"
@@ -774,9 +793,8 @@ def fix_rigged(g, base, cache, extra, tree, part, bsm, ni, terrain, region):
     for pr in mesh.get("primitives", []):
         if "POSITION" not in pr.get("attributes", {}):
             continue
-        pts = read_vec3(g, base, cache, pr["attributes"]["POSITION"])
         out = []
-        for X, Y, Z in pts:
+        for X, Y, Z in read_vec3(g, base, cache, pr["attributes"]["POSITION"]):
             x, y, z = X, -Z, Y
             if mode == "cuite":
                 x, y, z = x / sx, y / sy, z / sz
@@ -792,55 +810,79 @@ def fix_rigged(g, base, cache, extra, tree, part, bsm, ni, terrain, region):
                 x, y, z = X, -Z, Y
                 if mode == "cuite":
                     x, y, z = x * sx, y * sy, z * sz
-                nx, ny, nz = (sum(li[i][0] * (x, y, z)[i] for i in range(3)), sum(li[i][1] * (x, y, z)[i] for i in range(3)),
-                              sum(li[i][2] * (x, y, z)[i] for i in range(3)))
+                v = (x, y, z)
+                nx, ny, nz = (sum(li[i][k] * v[i] for i in range(3)) for k in range(3))
                 l = math.sqrt(nx * nx + ny * ny + nz * nz) or 1.0
                 ns.append([nx / l, nz / l, -ny / l])
             pr["_nrm"] = ns
     if not allp:
         return "aucune géométrie lisible"
+    return mesh, allp, mode
+
+
+def place_rigged_group(g, base, cache, extra, tree, grp, items):
+    # items : [(partie riggée, bind_shape, nœud GLB)] d'UN objet. Les morceaux d'un même animal (chacun avec sa
+    # bind_shape_matrix) partagent le même repère : on les déplace ENSEMBLE (même décalage, même rotation), sans
+    # jamais les poser séparément. Retourne le nombre de morceaux corrigés.
+    built = []
+    for part, bsm, ni in items:
+        r = rig_mesh(g, base, cache, part, bsm, ni)
+        if isinstance(r, str):
+            print(f"[riggé] '{part['name']}' : {r}, non corrigé")
+        else:
+            built.append((part, ni) + r)
+    if not built:
+        return 0
+    allp = [p for b in built for p in b[3]]
     lo = [min(p[k] for p in allp) for k in range(3)]
     hi = [max(p[k] for p in allp) for k in range(3)]
-    cx, cz = (lo[0] + hi[0]) / 2, (lo[2] + hi[2]) / 2      # centré à l'horizontale sur la racine
-    for pr in mesh["primitives"]:
-        if "_pts" in pr:
-            pts = [[p[0] - cx, p[1], p[2] - cz] for p in pr.pop("_pts")]
-            pr["attributes"]["POSITION"] = extra.add_vec3(pts)
-        if "_nrm" in pr:
-            pr["attributes"]["NORMAL"] = extra.add_vec3(pr.pop("_nrm"))
-    g["meshes"].append(mesh)
-    node["mesh"] = len(g["meshes"]) - 1
-    # transformation du nœud : échelle du prim ignorée, rotation conservée
-    if "matrix" in node:
-        tr, rot, _ = mat_trs(node.pop("matrix"))
-        node["rotation"] = rot
-    rot = node.get("rotation", [0, 0, 0, 1])
-    node.pop("scale", None)
+    cx, cz = (lo[0] + hi[0]) / 2, (lo[2] + hi[2]) / 2          # centré à l'horizontale sur la racine
+    root = grp["parts"][0]
+    gx, gy, gz = root["gpos"]
+    q = root["rot"] or [0, 0, 0, 1]
+    pq = built[0][0]["rot"] if built[0][0] is not root and built[0][0]["rot"] else [0, 0, 0, 1]
+    a, b = q, pq                                                 # rotation monde du 1er morceau = racine x enfant
+    q = [a[3] * b[0] + a[0] * b[3] + a[1] * b[2] - a[2] * b[1], a[3] * b[1] - a[0] * b[2] + a[1] * b[3] + a[2] * b[0],
+         a[3] * b[2] + a[0] * b[1] - a[1] * b[0] + a[2] * b[3], a[3] * b[3] - a[0] * b[0] - a[1] * b[1] - a[2] * b[2]]
+    rot = [q[0], q[2], -q[1], q[3]]                              # repère glTF, appliquée à tous les morceaux
     corners = [rot_vec(rot, [x, y, z]) for x in (lo[0] - cx, hi[0] - cx) for y in (lo[1], hi[1]) for z in (lo[2] - cz, hi[2] - cz)]
     yoff = min(c[1] for c in corners)
-    gx, gy, gz = part["gpos"]
-    ground = terrain_height(terrain, gx, gy)
-    src = "terrain"
-    if ground is None:
-        ground, src = gz, "altitude de la racine (pas de terrain dans l'OAR)"
-    world = [gx, ground - yoff, -gy, 1.0]
-    if ni in tree.parent:
-        inv = mat_inv(tree.world(tree.parent[ni]))
-        world = [sum(inv[c * 4 + r] * world[c] for c in range(4)) for r in range(4)] if inv else world
-    node["translation"] = world[:3]
-    tree._w.clear()
+    # sol : le dessous de la boîte racine (prim simple posé au sol) ; racine elle-même riggée : sa position
+    if root["mesh"] is None and root["scale"]:
+        ground, src = gz - root["scale"][2] / 2, "dessous de la boîte racine"
+    else:
+        ground, src = gz, "altitude de la racine"
+    for part, ni, mesh, pts, mode in built:
+        for pr in mesh["primitives"]:
+            if "_pts" in pr:
+                pr["attributes"]["POSITION"] = extra.add_vec3([[p[0] - cx, p[1], p[2] - cz] for p in pr.pop("_pts")])
+            if "_nrm" in pr:
+                pr["attributes"]["NORMAL"] = extra.add_vec3(pr.pop("_nrm"))
+        g["meshes"].append(mesh)
+        node = g["nodes"][ni]
+        node["mesh"] = len(g["meshes"]) - 1
+        w = quat_mat(rot, t=[gx, ground - yoff, -gy])
+        if ni in tree.parent:
+            inv = mat_inv(tree.world(tree.parent[ni]))
+            if inv:
+                w = mat_mul(inv, w)
+        tr, qq, _ = mat_trs(w)
+        node.pop("matrix", None)
+        node.pop("scale", None)
+        node["translation"], node["rotation"] = tr, qq
+        tree._w.clear()
     ext = [hi[k] - lo[k] for k in range(3)]
-    print(f"[riggé] '{part['name']}' : mode d'échelle {mode}, {ext[0]:.2f} x {ext[2]:.2f} x {ext[1]:.2f} m "
-          f"(L x l x h), posé à ({gx:.1f}, {gy:.1f}), sol {ground:.2f} m ({src})")
-    return None
+    print(f"[riggé] '{root['name']}' : {len(built)} morceau(x), échelle du prim {built[0][4]}, {ext[0]:.2f} x {ext[2]:.2f} x {ext[1]:.2f} m "
+          f"(L x l x h), centré en ({gx:.1f}, {gy:.1f}), pieds à {ground:.2f} m ({src})")
+    return len(built)
 
 
 def repair(g, base, scan, keep_invisible):
     match = match_nodes(g, scan)
-    n_rig = n_inv = 0
     extra, cache, tree = ExtraBuffer(g), {}, Tree(g)
-    done = set()
+    n_rig = n_inv = 0
     for grp in scan["groups"]:
+        items = []
         for p in grp["parts"]:
             sk = scan["skins"].get(p["mesh"]) if p["mesh"] else None
             if not sk or not sk["bsm"]:
@@ -850,15 +892,9 @@ def repair(g, base, scan, keep_invisible):
             if p["uuid"] not in match:
                 print(f"[riggé] '{p['name']}' ({p['uuid']}) : nœud GLB introuvable, non corrigé (voir --diag)")
                 continue
-            ni = match[p["uuid"]][0]
-            if ni in done:
-                continue
-            err = fix_rigged(g, base, cache, extra, tree, p, sk["bsm"], ni, scan["terrain"], scan["size"])
-            if err:
-                print(f"[riggé] '{p['name']}' : {err}, non corrigé")
-            else:
-                done.add(ni)
-                n_rig += 1
+            items.append((p, sk["bsm"], match[p["uuid"]][0]))
+        if items:
+            n_rig += place_rigged_group(g, base, cache, extra, tree, grp, items)
     extra.finish()
     if not keep_invisible:
         n_inv = remove_invisible(g, scan, match)
@@ -889,6 +925,7 @@ def diag(scan, g, glb_label):
     print(f"[diag] {len(scan['groups'])} objet(s), {len(parts)} partie(s) ; terrain {'oui' if scan['terrain'] else 'non'} ; "
           f"{'GLB ' + glb_label if g else 'pas de GLB : correspondance non évaluée (--glb)'}")
     nr = ni = nm = 0
+    boxes = rig_box_roots(scan)
     for k, (grp, p) in enumerate(parts, 1):
         sk = scan["skins"].get(p["mesh"]) if p["mesh"] else None
         if sk and sk["bsm"]:
@@ -913,12 +950,26 @@ def diag(scan, g, glb_label):
             gl = "-"
         racine = "racine" if p is grp["parts"][0] else "enfant"
         print(f"{k:5d} | {p['name'] or '(sans nom)'} | {p['uuid']} | {racine} | riggé : {rig} | échelle du prim {fmt3(p['scale'])} | "
-              f"échelle bind_shape {bs} | transparent : {'oui' if p['invisible'] else 'non'} | GLB : {gl}")
-        if bsm:
+              f"échelle bind_shape {bs} | transparent : {'oui' if p['invisible'] else 'non'} | "
+              f"boîte racine d'animesh : {'oui' if p['uuid'] in boxes else 'non'} | GLB : {gl}")
+        if bsm or p["uuid"] in boxes or p["invisible"]:
             gz = terrain_height(scan["terrain"], p["gpos"][0], p["gpos"][1])
-            print(f"      riggé : racine à ({p['gpos'][0]:.1f}, {p['gpos'][1]:.1f}, {p['gpos'][2]:.2f}) ; "
-                  f"sol {'%.2f m (terrain)' % gz if gz is not None else 'inconnu (pas de terrain)'} ; translation bind_shape {fmt3(bsm[12:15])}")
-    print(f"[diag] riggés : {nr} ; transparents : {ni} ; nœuds GLB trouvés : {nm}/{len(parts)}")
+            print(f"      position {fmt3(p['gpos'])} ; terrain {'%.2f m' % gz if gz is not None else 'inconnu'} ; "
+                  f"{p['tex']}" + (f" ; translation bind_shape {fmt3(bsm[12:15])}" if bsm else ""))
+            if g and p["uuid"] in match:
+                node = g["nodes"][match[p["uuid"]][0]]
+                if "mesh" in node:
+                    for pr in g["meshes"][node["mesh"]].get("primitives", [])[:3]:
+                        m = g["materials"][pr["material"]] if "material" in pr else {}
+                        ti = ((m.get("pbrMetallicRoughness") or {}).get("baseColorTexture") or {}).get("index")
+                        im = ""
+                        if ti is not None and ti < len(g.get("textures", [])):
+                            src = g["textures"][ti].get("source")
+                            if src is not None and src < len(g.get("images", [])):
+                                im = str(g["images"][src].get("uri") or g["images"][src].get("name") or "")[:60]
+                        print(f"      matériau GLB : {m.get('name')!r} couleur {(m.get('pbrMetallicRoughness') or {}).get('baseColorFactor')} "
+                              f"mode {m.get('alphaMode', 'OPAQUE')} image {im or '-'}")
+    print(f"[diag] riggés : {nr} ; transparents : {ni} ; boîtes racines d'animesh : {len(boxes)} ; nœuds GLB trouvés : {nm}/{len(parts)}")
     if g:
         cache, nv = {}, 0
         for n in g.get("nodes", []):
@@ -1095,7 +1146,7 @@ class Tee:
 
 
 if __name__ == "__main__":
-    log = Path(__file__).resolve().with_name("oar2glb.log")
+    log = Path(__file__).resolve().with_name("oar2glb.diag.log" if "--diag" in sys.argv else "oar2glb.log")
     lf = open(log, "w", encoding="utf-8")
     sys.stdout, sys.stderr = Tee(sys.__stdout__, lf), Tee(sys.__stderr__, lf)
     print("[args]", sys.argv[1:])
