@@ -42,6 +42,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 19/10/2026 |  | v24 | v24 : les liens se comportent comme sur le web (plus de cylindres dans la page exportée, marqueur au sol, infobulle au survol, option « Toujours afficher le nom »), mode d'emploi |
 | 20/10/2026 |  | v25 | v25 : oar2glb.py retire les prims invisibles et remet à l'échelle les meshes riggés (bloc skin, bind_shape_matrix, posés au sol), option --keep-invisible, option --diag, mode d'emploi |
 | 20/10/2026 |  | v26 | v26 : oar2glb.py, correctifs après essai réel (texture invisible corrigée, morceaux d'animaux déplacés ensemble, sol sous la boîte racine, boîtes racines d'animesh retirées, journal --diag séparé) |
+| 20/10/2026 |  | v27 | v27 : oar2glb.py, garde-fou de taille des animaux (0,1 à 12 m), mesures détaillées dans --diag, récapitulatif des textures absentes |
 
 ## Commandes utiles
 

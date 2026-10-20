@@ -172,6 +172,30 @@ def llmesh_skin(data):
         return None, f"en-tête du mesh illisible ({e})"
 
 
+def llmesh_domains(data, n=4):
+    # domaines de position (min, max) des premiers sous-maillages du plus haut niveau de détail ; [] si illisible
+    try:
+        start = data.find(b"\n") + 1 if data[:2] == b"<?" else 0
+        hdr, end = llsd_bin(data, start)
+        hl = hdr.get("high_lod")
+        if not isinstance(hl, dict) or not hl.get("size"):
+            return []
+        for base in (end, end + 1):
+            try:
+                subs, _ = llsd_bin(zlib.decompress(data[base + int(hl.get("offset", 0)):base + int(hl.get("offset", 0)) + int(hl["size"])]), 0)
+                out = []
+                for sm in subs[:n]:
+                    d = sm.get("PositionDomain") or {}
+                    if "Min" in d and "Max" in d:
+                        out.append((d["Min"], d["Max"]))
+                return out
+            except Exception:
+                continue
+    except Exception:
+        pass
+    return []
+
+
 def bind_shape(skin):
     m = skin.get("bind_shape_matrix") if skin else None
     if isinstance(m, list) and len(m) == 16 and all(isinstance(v, (int, float)) for v in m):
@@ -306,9 +330,11 @@ def oar_scan(oar):
                 if parts and parts[0]["gpos"]:
                     groups.append({"file": m.name, "parts": parts})
             elif m.name.startswith("assets/") and m.name.endswith("_mesh.llmesh"):
-                skin, err = llmesh_skin(t.extractfile(m).read())
+                raw = t.extractfile(m).read()
+                skin, err = llmesh_skin(raw)
                 if skin is not None or err:
-                    skins[m.name[7:43].lower()] = {"skin": skin, "err": err, "bsm": bind_shape(skin)}
+                    skins[m.name[7:43].lower()] = {"skin": skin, "err": err, "bsm": bind_shape(skin),
+                                                   "dom": llmesh_domains(raw) if skin is not None else []}
             elif m.name.startswith("terrains/") and m.name.endswith(".r32") and terrain is None:
                 raw = t.extractfile(m).read()
                 n = int(math.isqrt(len(raw) // 4))
@@ -820,6 +846,9 @@ def rig_mesh(g, base, cache, part, bsm, ni):
     return mesh, allp, mode
 
 
+MAX_ANIMAL, MIN_ANIMAL = 12.0, 0.1       # garde-fou : un animal fait entre 10 cm et 12 m dans sa plus grande dimension
+
+
 def place_rigged_group(g, base, cache, extra, tree, grp, items):
     # items : [(partie riggée, bind_shape, nœud GLB)] d'UN objet. Les morceaux d'un même animal (chacun avec sa
     # bind_shape_matrix) partagent le même repère : on les déplace ENSEMBLE (même décalage, même rotation), sans
@@ -836,8 +865,13 @@ def place_rigged_group(g, base, cache, extra, tree, grp, items):
     allp = [p for b in built for p in b[3]]
     lo = [min(p[k] for p in allp) for k in range(3)]
     hi = [max(p[k] for p in allp) for k in range(3)]
-    cx, cz = (lo[0] + hi[0]) / 2, (lo[2] + hi[2]) / 2          # centré à l'horizontale sur la racine
     root = grp["parts"][0]
+    ext = [hi[k] - lo[k] for k in range(3)]
+    if max(ext) > MAX_ANIMAL or max(ext) < MIN_ANIMAL:
+        print(f"[riggé] '{root['name']}' : taille obtenue {ext[0]:.2f} x {ext[2]:.2f} x {ext[1]:.2f} m implausible "
+              f"(hors de {MIN_ANIMAL:g} à {MAX_ANIMAL:g} m), laissé tel que convoar l'a produit (voir --diag)")
+        return 0
+    cx, cz = (lo[0] + hi[0]) / 2, (lo[2] + hi[2]) / 2          # centré à l'horizontale sur la racine
     gx, gy, gz = root["gpos"]
     q = root["rot"] or [0, 0, 0, 1]
     pq = built[0][0]["rot"] if built[0][0] is not root and built[0][0]["rot"] else [0, 0, 0, 1]
@@ -918,7 +952,7 @@ def fmt3(v):
     return "(" + ", ".join(f"{x:.3g}" for x in v) + ")" if v else "?"
 
 
-def diag(scan, g, glb_label):
+def diag(scan, g, glb_label, base=None):
     match = match_nodes(g, scan) if g else {}
     tree = Tree(g) if g else None
     parts = [(grp, p) for grp in scan["groups"] for p in grp["parts"]]
@@ -956,6 +990,21 @@ def diag(scan, g, glb_label):
             gz = terrain_height(scan["terrain"], p["gpos"][0], p["gpos"][1])
             print(f"      position {fmt3(p['gpos'])} ; terrain {'%.2f m' % gz if gz is not None else 'inconnu'} ; "
                   f"{p['tex']}" + (f" ; translation bind_shape {fmt3(bsm[12:15])}" if bsm else ""))
+            if bsm:
+                sk = scan["skins"][p["mesh"]]
+                print(f"      bind_shape_matrix : {[round(v, 4) for v in bsm]}")
+                print(f"      domaine de position du mesh : " + ("; ".join(f"{fmt3(a)} .. {fmt3(b)}" for a, b in sk["dom"]) or "illisible"))
+                if g and base is not None and p["uuid"] in match and "mesh" in g["nodes"][match[p["uuid"]][0]]:
+                    try:
+                        pts, cc = [], {}
+                        for pr in g["meshes"][g["nodes"][match[p["uuid"]][0]]["mesh"]].get("primitives", []):
+                            pts += read_vec3(g, base, cc, pr["attributes"]["POSITION"])
+                        lo_ = [min(q[k] for q in pts) for k in range(3)]
+                        hi_ = [max(q[k] for q in pts) for k in range(3)]
+                        print(f"      sommets du GLB (axes OpenSim x, y, z) : de {fmt3([lo_[0], -hi_[2], lo_[1]])} à {fmt3([hi_[0], -lo_[2], hi_[1]])} "
+                              f"soit {fmt3([hi_[0] - lo_[0], hi_[2] - lo_[2], hi_[1] - lo_[1]])} m, {len(pts)} sommets")
+                    except Exception as e:
+                        print(f"      sommets du GLB illisibles ({e})")
             if g and p["uuid"] in match:
                 node = g["nodes"][match[p["uuid"]][0]]
                 if "mesh" in node:
@@ -1037,13 +1086,27 @@ def read_uri(uri, base, image=False):
             print(f"[GLB] {name} -> {hit.name}")
         return hit.read_bytes()
     if image:
-        print(f"[GLB] texture {name} absente : remplacée par du gris")
+        MISSING.append(name)
         return GREY_PNG
     files = sorted(base.rglob("*"))
     bufs = [x for x in files if x.suffix.lower() == ".buf"]
     sys.exit(f"[ERREUR] {name} introuvable (annoncé par le .gltf).\n  {base} contient {len(files)} fichier(s), dont {len(bufs)} .buf : "
              + ", ".join(f"{x.name} ({x.stat().st_size} o)" for x in bufs[:10])
              + f"\n  Espace libre sur {base.anchor} : {shutil.disk_usage(base).free / 2**30:.1f} Go")
+
+
+MISSING = []
+
+
+def report_missing(base, total):
+    if not MISSING:
+        return
+    from collections import Counter
+    files = [f for f in Path(base).rglob("*") if f.is_file()]
+    ext = Counter(f.suffix.lower() for f in files)
+    print(f"[GLB] {len(MISSING)} texture(s) absente(s) sur {total}, remplacée(s) par du gris. Exemples : " + ", ".join(MISSING[:3]))
+    print(f"[GLB] {base} contient {len(files)} fichier(s) : " + ", ".join(f"{k or '(sans extension)'} {v}" for k, v in ext.most_common(8)))
+    print("[GLB] fichiers images présents, exemples : " + ", ".join(f.name for f in files if f.suffix.lower() in (".jpg", ".png"))[:300])
 
 
 def pad4(b, fill=b"\x00"):
@@ -1097,7 +1160,7 @@ def main():
     if a.diag:
         scan = oar_scan(oar)
         glb = Path(a.glb) if a.glb else oar.with_suffix(".glb")
-        diag(scan, read_glb_json(glb) if glb.exists() else None, glb.name)
+        diag(scan, read_glb_json(glb) if glb.exists() else None, glb.name, glb.parent if glb.suffix.lower() == ".gltf" else None)
         return
     if not Path(a.convoar).exists():
         sys.exit(f"[ERREUR] convoar introuvable : {a.convoar} (utilise --convoar)")
@@ -1127,6 +1190,7 @@ def main():
     repair(g, outdir, scan, a.keep_invisible)
     n = drop_far(g, a.max, size)
     size = pack_glb(g, outdir, out)
+    report_missing(outdir, len(g.get("images", [])))
     print(f"[OK] {out}  ({size/1048576:.1f} Mo, {len(g.get('meshes', []))} meshes, "
           f"{len(g.get('images', []))} textures, {n} objet(s) hors région retiré(s))")
     if not a.keep:

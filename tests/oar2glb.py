@@ -92,8 +92,8 @@ def group_xml(parts):
 
 
 I4 = [0, 0, 0, 1]
-HIPPO_MESH, ANTE_MESH, ROCK_MESH, HA_MESH, HB_MESH = U(), U(), U(), U(), U()
-ID = dict(croot=U(), ca=U(), cb=U(), hroot=U(), hippo=U(), aroot=U(), ante=U(), ghost2=U(), glass=U(), rock=U(), ghost1=U())
+HIPPO_MESH, ANTE_MESH, ROCK_MESH, HA_MESH, HB_MESH, COL_MESH = U(), U(), U(), U(), U(), U()
+ID = dict(colo=U(), croot=U(), ca=U(), cb=U(), hroot=U(), hippo=U(), aroot=U(), ante=U(), ghost2=U(), glass=U(), rock=U(), ghost1=U())
 BSM_H = [3, 0, 0, 0, 0, 1.4, 0, 0, 0, 0, 1.6, 0, 0, 0, 0.8, 1]          # raw [-0.5,0.5]^3 -> 3 x 1.4 x 1.6, pieds à 0
 BSM_A = [1.2, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 1.4, 0, 0, 0, 0.7, 1]
 BSM_HA = [2, 0, 0, 0, 0, 0.6, 0, 0, 0, 0, 1, 0, 0, 0, 1.0, 1]            # x[-1,1] y[-.3,.3] z[.5,1.5]
@@ -108,6 +108,7 @@ GRP = [  # (fichier, parties)
     ("c", [(ID["croot"], "BoiteCheval", [80, 80, 26], [0, 0, 0], I4, [2, 2, 2], None, tex_entry(PLY, 255)),
            (ID["ca"], "Cheval", [80, 80, 26], [0, 0, 0.1], I4, [1, 1, 1], HA_MESH, None),
            (ID["cb"], "Cheval", [80, 80, 26], [0.5, 0, 0.2], I4, [1, 1, 1], HB_MESH, None)]),
+    ("k", [(ID["colo"], "Colosse", [150, 150, 30], [0, 0, 0], I4, [1, 1, 1], COL_MESH, None)]),
     ("v", [(ID["glass"], "Vitre", [30, 30, 22], [0, 0, 0], I4, [2, 2, 2], None, tex_entry(PLY, 128))]),
     ("r", [(ID["rock"], "Rocher", [150, 20, 22], [0, 0, 0], I4, [4, 4, 4], ROCK_MESH, None)]),
     ("g1", [(ID["ghost1"], "Fantome0", [220, 30, 30], [0, 0, 0], I4, [1, 1, 1], None, tex_entry(PLY, 0, {2: (PLY, 255)}) and tex_entry(PLY, 0))]),
@@ -133,6 +134,7 @@ def make_oar(path):
         add(f"assets/{ANTE_MESH}_mesh.llmesh", llmesh({"joint_names": ["mPelvis"], "bind_shape_matrix": [float(v) for v in BSM_A]}))
         add(f"assets/{HA_MESH}_mesh.llmesh", llmesh({"joint_names": ["mPelvis"], "bind_shape_matrix": [float(v) for v in BSM_HA]}))
         add(f"assets/{HB_MESH}_mesh.llmesh", llmesh({"joint_names": ["mPelvis"], "bind_shape_matrix": [float(v) for v in BSM_HB]}))
+        add(f"assets/{COL_MESH}_mesh.llmesh", llmesh({"joint_names": ["mPelvis"], "bind_shape_matrix": [50.0, 0, 0, 0, 0, 50.0, 0, 0, 0, 0, 50.0, 0, 0, 0, 0, 1]}))
         add(f"assets/{ROCK_MESH}_mesh.llmesh", llmesh())
         add("terrains/heightmap.r32", terrain())
 
@@ -226,12 +228,14 @@ def make_gltf(d, variant):
     cha = node("Cheval", (0, 0, 0.1), ha, ID["ca"])
     chb = node("Cheval", (0.5, 0, 0.2), hb, ID["cb"])
     rc = node("BoiteCheval", (80, 80, 26), bx_c, ID["croot"], children=[cha, chb])
+    col = mk_mesh("Colosse", (-0.5, -0.5, -0.5), (0.5, 0.5, 0.5), m_ok)
+    rcol = node("Colosse", (150, 150, 30), col, ID["colo"])
     r3 = node("Vitre", (30, 30, 22), gl, ID["glass"])
     r4 = node("Rocher", (150, 20, 22), rk, ID["rock"])
     r5 = node("Fantome", (200, 200, 30), orph, ID["ghost2"])
     r6 = node("Fantome0", (220, 30, 30), orph, ID["ghost1"])
     r7 = node("Orphelin", (10, 10, 25), orph)
-    g = {"asset": {"version": "2.0"}, "scene": 0, "scenes": [{"nodes": [r1, r2n, rc, r3, r4, r5, r6, r7]}], "nodes": nodes, "meshes": meshes,
+    g = {"asset": {"version": "2.0"}, "scene": 0, "scenes": [{"nodes": [r1, r2n, rc, rcol, r3, r4, r5, r6, r7]}], "nodes": nodes, "meshes": meshes,
          "materials": mats, "accessors": accs, "bufferViews": views, "buffers": [{"byteLength": len(blob), "uri": "scene.bin"}]}
     (d / "scene.bin").write_bytes(bytes(blob))
     (d / "scene.gltf").write_text(json.dumps(g), encoding="utf-8")
@@ -338,6 +342,8 @@ for variant in ("uuid", "nom"):
     rapport(not any(js["nodes"][i].get("scale") for i in (v[2] for k, v in bx.items() if k in ("Hippo", "Antilope"))), "animaux : plus d'échelle de nœud")
     for gone in ("BoiteHippo", "BoiteAntilope", "BoiteCheval", "Fantome", "Fantome0", "Orphelin"):
         rapport(gone not in bx, f"{gone} retiré")
+    lo, hi, _ = bx["Colosse"]
+    rapport(abs(hi[0] - lo[0] - 1) < 1e-3 and "Colosse" in log and "implausible" in log, "taille implausible (50 m) : mesh laissé tel que convoar l'a produit")
     rapport("Vitre" in bx and "Rocher" in bx, "vitre alpha 0,5 et rocher conservés")
     lo, hi, _ = bx["Rocher"]
     rapport(abs(hi[0] - lo[0] - 4) < 1e-3, "rocher sans skin : taille inchangée")
@@ -362,7 +368,7 @@ for variant in ("uuid", "nom"):
     rapport(r.returncode == 0 and "riggé : oui" in out and "transparent : oui" in out, "--diag : liste les objets", out[-800:])
     rapport((od / "R.glb").read_bytes() == before, "--diag ne modifie rien")
     n_ok = sum(1 for l in out.splitlines() if "Hippo" in l and "nœud introuvable" not in l and "GLB : nœud" in l)
-    rapport(n_ok >= 1 and "nœuds GLB trouvés : 11/11" in out, f"--diag : correspondance des nœuds ({variant})", [l for l in out.splitlines() if "trouvés" in l])
+    rapport(n_ok >= 1 and "nœuds GLB trouvés : 12/12" in out, f"--diag : correspondance des nœuds ({variant})", [l for l in out.splitlines() if "trouvés" in l])
     if variant == "uuid":
         print("\n".join(l for l in out.splitlines() if "[diag]" in l or "Hippo" in l))
 

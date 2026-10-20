@@ -2,6 +2,13 @@
 
 Les dates sont au format jj/mm/aaaa.
 
+## v27 (20/10/2026)
+`tools/oar2glb.py`, deuxième essai sur Jungle_Isle : les boîtes sont bien retirées (79 prims invisibles) mais les tailles d'animaux obtenues étaient absurdes (lion 137 m, éléphant 239 m, alligator 603 m) : la formule « sommets ÷ échelle du prim × bind_shape_matrix » ne correspond pas à ce que convoar écrit pour ces meshes (les deux hippopotames, même mesh, sortaient à 22,6 m et 18,6 m : le résultat variait en 1/échelle du prim, donc convoar n'a pas cuit cette échelle). La bonne formule n'est pas encore établie.
+- Garde-fou : si la taille obtenue pour un animal sort de 0,1 à 12 m, il n'est pas touché (laissé comme convoar l'a produit) et le journal l'indique. Aucun animal géant ou envolé ne peut plus sortir de la correction.
+- `--diag` sur un `.gltf` : pour chaque mesh riggé, `bind_shape_matrix` complète, domaine de position du mesh (`PositionDomain`, lu dans le `.llmesh`) et étendue réelle des sommets du GLB. Ces mesures serviront à établir la formule.
+- Textures absentes : un seul récapitulatif (nombre, exemples, contenu du dossier de convoar) au lieu d'une ligne par texture.
+- Tests : taille implausible (50 m).
+
 ## v26 (20/10/2026)
 Correctifs de `tools/oar2glb.py` après le premier essai sur un vrai OAR (Jungle_Isle : 771 parties, 34 meshes riggés, aucun UUID dans le GLB de convoar, échelle des nœuds toujours 1 : convoar cuit l'échelle dans les sommets).
 - Erreur de v25 : la texture `e97cf410-…` est le dégradé alpha (visible), pas une texture invisible. Les textures invisibles sont maintenant `8dcd4a48-…` (« Transparent » du sélecteur) et `3a367d1c-…` (invisiprim).
