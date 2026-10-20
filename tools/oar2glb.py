@@ -18,7 +18,7 @@ Usage :  python oar2glb.py "P:\\chemin\\MaRegion.oar" [--reencode] [--max 600] [
  6. Empaquetage en un seul .glb (buffers + textures intégrés), pur Python.
 Sortie : MaRegion.glb à côté de l'OAR.
 """
-import argparse, base64, io, json, math, os, re, shutil, struct, subprocess, sys, tarfile, traceback, uuid, zlib
+import argparse, base64, io, json, math, os, re, shutil, struct, subprocess, sys, tarfile, time, traceback, uuid, zlib
 from pathlib import Path
 
 DEFAULT_CONVOAR = r"P:\_OpenSim\SL&OS\MOSES\convoar-master\dist\convoar.exe"
@@ -507,6 +507,19 @@ def run_convoar(convoar, oar, outdir):
 
 
 # ---------- 3. lecture + contrôle ----------
+MAX_RETRY = 2
+
+
+def missing_images(outdir):
+    gl = sorted(Path(outdir).glob("*.gltf"), key=lambda q: q.stat().st_mtime)
+    if not gl:
+        return []
+    from urllib.parse import unquote
+    g = load_gltf(gl[-1])
+    return sorted({unquote(i["uri"]) for i in g.get("images", []) if "uri" in i and not i["uri"].startswith("data:")
+                   and find_file(Path(outdir), unquote(i["uri"])) is None})
+
+
 def load_gltf(path):
     txt = path.read_text(encoding="utf-8", errors="replace")
     txt = re.sub(r'\\(?!["\\/bfnrt]|u[0-9a-fA-F]{4})', r'\\\\', txt)
@@ -815,13 +828,14 @@ def rig_mesh(g, base, cache, part, bsm, ni):
     if li is None:
         return "bind_shape_matrix non inversible"
     mesh = json.loads(json.dumps(g["meshes"][node["mesh"]]))
-    allp = []
+    allp, raw = [], []
     for pr in mesh.get("primitives", []):
         if "POSITION" not in pr.get("attributes", {}):
             continue
         out = []
         for X, Y, Z in read_vec3(g, base, cache, pr["attributes"]["POSITION"]):
             x, y, z = X, -Z, Y
+            raw.append((x, y, z))
             if mode == "cuite":
                 x, y, z = x / sx, y / sy, z / sz
             x, y, z = (lin[0][0] * x + lin[0][1] * y + lin[0][2] * z + t[0],
@@ -843,6 +857,10 @@ def rig_mesh(g, base, cache, part, bsm, ni):
             pr["_nrm"] = ns
     if not allp:
         return "aucune géométrie lisible"
+    rext = [max(r[k] for r in raw) - min(r[k] for r in raw) for k in range(3)]
+    print(f"[riggé] mesure : '{part['name']}' sommets bruts du GLB {rext[0]:.3g} x {rext[1]:.3g} x {rext[2]:.3g} (axes OpenSim), "
+          f"échelle du prim {fmt3([sx, sy, sz])}, échelle de bind_shape {fmt3([math.sqrt(sum(bsm[c * 4 + r] ** 2 for r in range(3))) for c in range(3)])}, "
+          f"{len(raw)} sommets")
     return mesh, allp, mode
 
 
@@ -1001,6 +1019,11 @@ def diag(scan, g, glb_label, base=None):
                             pts += read_vec3(g, base, cc, pr["attributes"]["POSITION"])
                         lo_ = [min(q[k] for q in pts) for k in range(3)]
                         hi_ = [max(q[k] for q in pts) for k in range(3)]
+                        pa = g["meshes"][g["nodes"][match[p["uuid"]][0]]["mesh"]]["primitives"][0]["attributes"]["POSITION"]
+                        ac = g["accessors"][pa]
+                        bv = g["bufferViews"][ac["bufferView"]]
+                        bf = g["buffers"][bv.get("buffer", 0)]
+                        print(f"      accesseur POSITION {ac} ; bufferView {bv} ; buffer {str(bf.get('uri'))[:60]} {bf.get('byteLength')} o ; 3 premiers sommets {pts[:3]}")
                         print(f"      sommets du GLB (axes OpenSim x, y, z) : de {fmt3([lo_[0], -hi_[2], lo_[1]])} à {fmt3([hi_[0], -lo_[2], hi_[1]])} "
                               f"soit {fmt3([hi_[0] - lo_[0], hi_[2] - lo_[2], hi_[1] - lo_[1]])} m, {len(pts)} sommets")
                     except Exception as e:
@@ -1150,7 +1173,7 @@ def main():
     ap.add_argument("--keep", action="store_true", help="garder les fichiers intermédiaires")
     ap.add_argument("--keep-invisible", action="store_true", help="garder les prims entièrement transparents (retirés par défaut)")
     ap.add_argument("--diag", action="store_true", help="ne rien modifier : lister les objets de l'OAR, leur skin et le nœud GLB correspondant")
-    ap.add_argument("--glb", help="avec --diag : GLB (ou .gltf) à comparer, défaut : le .glb à côté de l'OAR")
+    ap.add_argument("--glb", help="avec --diag : GLB ou .gltf à comparer ; défaut : le .gltf du dossier <oar>-GLTF (conservé par --keep), sinon le .glb voisin")
     ap.add_argument("--nopause", action="store_true", help="ne pas attendre Entrée à la fin")
     a = ap.parse_args()
 
@@ -1159,7 +1182,8 @@ def main():
         sys.exit(f"[ERREUR] {oar} introuvable")
     if a.diag:
         scan = oar_scan(oar)
-        glb = Path(a.glb) if a.glb else oar.with_suffix(".glb")
+        auto = sorted((oar.parent / (oar.stem + "-GLTF")).glob("*.gltf"), key=lambda q: q.stat().st_mtime)
+        glb = Path(a.glb) if a.glb else (auto[-1] if auto else oar.with_suffix(".glb"))
         diag(scan, read_glb_json(glb) if glb.exists() else None, glb.name, glb.parent if glb.suffix.lower() == ".gltf" else None)
         return
     if not Path(a.convoar).exists():
@@ -1179,6 +1203,28 @@ def main():
         shutil.rmtree(outdir)
 
     run_convoar(a.convoar, src, outdir)
+    for essai in range(1, MAX_RETRY + 1):
+        time.sleep(3)                      # laisse finir les écritures de fichiers
+        miss = missing_images(outdir)
+        if not miss:
+            break
+        print(f"[convoar] {len(miss)} image(s) annoncée(s) par le .gltf mais absente(s) du dossier (exemples : {', '.join(miss[:2])}) : "
+              f"nouvel essai {essai}/{MAX_RETRY}, les images déjà écrites sont conservées")
+        old = outdir.with_name(outdir.name + f"-essai{essai}")
+        shutil.rmtree(old, ignore_errors=True)
+        outdir.rename(old)
+        run_convoar(a.convoar, src, outdir)
+        n_rec = 0
+        for f in old.rglob("*"):
+            if f.is_file() and f.suffix.lower() in (".jpg", ".png", ".gif", ".bmp"):
+                dst = outdir / f.relative_to(old)
+                if not dst.exists():
+                    dst.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(f, dst)
+                    n_rec += 1
+        print(f"[convoar] {n_rec} image(s) récupérée(s) de l'essai précédent")
+        if not a.keep:
+            shutil.rmtree(old, ignore_errors=True)
 
     gltfs = sorted(outdir.glob("*.gltf"), key=lambda p: p.stat().st_mtime)
     if not gltfs:

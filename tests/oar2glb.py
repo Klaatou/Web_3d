@@ -372,5 +372,26 @@ for variant in ("uuid", "nom"):
     if variant == "uuid":
         print("\n".join(l for l in out.splitlines() if "[diag]" in l or "Hippo" in l))
 
+# ---------- images absentes : nouvel essai de convoar ----------
+print("--- images absentes")
+od = tmp / "retry"
+od.mkdir()
+(od / "R.oar").write_bytes(oar.read_bytes())
+make_gltf(od / "fake_out", "uuid")
+gj = json.loads((od / "fake_out" / "scene.gltf").read_text())
+gj["images"] = [{"uri": "AA11_256_256.png"}, {"uri": "BB22_256_256.png"}]
+(od / "fake_out" / "scene.gltf").write_text(json.dumps(gj))
+PNG = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYGD4DwABBAEAHMBXQAAAAABJRU5ErkJggg==")
+(od / "fake_out" / "AA11_256_256.png").write_bytes(PNG)
+(od / "fake_out" / "BB22_256_256.png.tard").write_bytes(PNG)      # n'est renommée qu'au 2e essai
+RETRY = FAKE.replace('print("fake convoar")', 'n = pathlib.Path(__file__).with_name("n.txt")\nk = int(n.read_text()) + 1 if n.exists() else 1\nn.write_text(str(k))\n'
+                     'f = out / "BB22_256_256.png.tard"\nif k == 1:\n    f.unlink()\nelse:\n    f.rename(out / "BB22_256_256.png")\nprint("fake convoar essai", k)')
+rs = od / "convoar_fake.py"
+rs.write_text(RETRY)
+rs.chmod(0o755)
+r = run_tool(od / "R.oar", fake=rs)
+rapport("nouvel essai 1/2" in r.stdout and "absente(s) sur" not in r.stdout and (od / "R.glb").exists(),
+        "image manquante : convoar relancé, texture récupérée", r.stdout[-700:])
+
 print("\n" + ("TOUT PASSE" if not bad else f"{bad} ÉCHEC(S)"))
 sys.exit(1 if bad else 0)

@@ -1,4 +1,4 @@
-# Mode d'emploi : zones, portails et points d'arrivée (v27)
+# Mode d'emploi : zones, portails et points d'arrivée (v28)
 
 ## 1. La règle qui explique 90 % des pannes
 
@@ -255,8 +255,8 @@ Conséquences :
 
 **Prims invisibles.** Un prim dont toutes les faces sont à alpha 0, ou qui porte la texture invisible standard, n'est plus exporté (boîtes translucides autour des animaux). Si c'est la racine d'un linkset, les enfants restent. La boîte racine d'un animesh (prim simple, racine d'un objet dont toutes les autres parties sont des meshes riggés) est retirée aussi, même si l'OAR ne la donne pas transparente. `--keep-invisible` les garde. Le journal se termine par : « N mesh(es) riggé(s) remis à l'échelle, M prim(s) invisible(s) retiré(s) ».
 
-**Valider avant de croire : `--diag`.** `python oar2glb.py "J:\...\X.oar" --diag` ne modifie rien et ne lance pas convoar. Il lit le `X.glb` voisin (ou celui donné par `--glb`) et affiche une ligne par partie de l'OAR : nom, UUID, riggé oui/non, échelle du prim, échelle de `bind_shape_matrix`, transparent oui/non, nœud GLB trouvé ou non et par quelle méthode (UUID du prim, UUID du mesh, nom + position). Les lignes « nœud introuvable » sur un animal ou un prim transparent signifient que le correctif ne s'appliquera pas à lui : envoyer le journal (`oar2glb.diag.log`, la conversion écrit `oar2glb.log`) pour ajuster la correspondance. Le GLB final contient les nœuds déjà corrigés : pour diagnostiquer, garder le `-GLTF` produit avec `--keep` et passer son `.gltf` à `--glb`.
+**Valider avant de croire : `--diag`.** `python oar2glb.py "J:\...\X.oar" --diag` ne modifie rien et ne lance pas convoar. Il lit le `.gltf` du dossier `X-GLTF` (conservé avec `--keep`), sinon le `X.glb` voisin, ou celui donné par `--glb` et affiche une ligne par partie de l'OAR : nom, UUID, riggé oui/non, échelle du prim, échelle de `bind_shape_matrix`, transparent oui/non, nœud GLB trouvé ou non et par quelle méthode (UUID du prim, UUID du mesh, nom + position). Les lignes « nœud introuvable » sur un animal ou un prim transparent signifient que le correctif ne s'appliquera pas à lui : envoyer le journal (`oar2glb.diag.log`, la conversion écrit `oar2glb.log`) pour ajuster la correspondance. Le GLB final contient les nœuds déjà corrigés : pour diagnostiquer, garder le `-GLTF` produit avec `--keep` et passer son `.gltf` à `--glb`.
 
-Si des textures deviennent grises, relancer la conversion avec les mêmes options qu'avant (notamment `--reencode`) et chercher les lignes `[GLB] texture … absente`.
+Si des textures deviennent grises, relancer la conversion avec les mêmes options qu'avant (notamment `--reencode`) et chercher la ligne `[GLB] N texture(s) absente(s)`. Si convoar n'écrit pas toutes les images qu'il annonce, le script le relance (2 essais de plus au maximum) et garde les images déjà écrites.
 
 Test : `python tests/oar2glb.py` (OAR synthétique et faux convoar, sans réseau).

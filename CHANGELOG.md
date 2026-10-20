@@ -2,6 +2,13 @@
 
 Les dates sont au format jj/mm/aaaa.
 
+## v28 (20/10/2026)
+`tools/oar2glb.py`, troisième essai sur Jungle_Isle : le garde-fou de v27 a laissé les 16 groupes d'animaux tels que convoar les produit (plus rien dans le ciel) ; les boîtes sont retirées (79 prims invisibles). Deux problèmes restent.
+- Textures grises : 210 images absentes sur 353 au 1er essai, 173 au 2e, avec le même OAR et les mêmes options : convoar n'écrit pas toujours toutes les images qu'il annonce dans le `.gltf` (le dossier en contenait 169). Le script compare maintenant les images annoncées aux fichiers présents ; s'il en manque, il relance convoar (2 essais de plus au maximum) et reprend dans l'essai précédent les images déjà écrites. La cause de l'écriture incomplète reste inconnue (non reproduite ici).
+- Tailles d'animaux : d'après le code source de convoar (`PrimToMesh.ScaleMeshes`, `MeshmerizerR`), les sommets sortent en domaine ±0,5 multiplié par l'échelle du prim ; avec `bind_shape_matrix` = taille réelle (hippopotame 3,62 x 1,29 x 1,64 m, éléphant 6,23 x 3,33 x 3,63 m) le calcul de v25 devrait donner des tailles réalistes, or il en donne d'absurdes. La lecture des sommets du GLB est donc soupçonnée. Le journal de conversion imprime maintenant, par morceau, les sommets bruts du GLB, l'échelle du prim et celle de `bind_shape` ; `--diag` imprime l'accesseur POSITION, le bufferView, le buffer et les 3 premiers sommets.
+- `--diag` sans `--glb` prend automatiquement le `.gltf` du dossier `<oar>-GLTF` (conservé par `--keep`).
+- Tests : nouvel essai de convoar quand une image manque.
+
 ## v27 (20/10/2026)
 `tools/oar2glb.py`, deuxième essai sur Jungle_Isle : les boîtes sont bien retirées (79 prims invisibles) mais les tailles d'animaux obtenues étaient absurdes (lion 137 m, éléphant 239 m, alligator 603 m) : la formule « sommets ÷ échelle du prim × bind_shape_matrix » ne correspond pas à ce que convoar écrit pour ces meshes (les deux hippopotames, même mesh, sortaient à 22,6 m et 18,6 m : le résultat variait en 1/échelle du prim, donc convoar n'a pas cuit cette échelle). La bonne formule n'est pas encore établie.
 - Garde-fou : si la taille obtenue pour un animal sort de 0,1 à 12 m, il n'est pas touché (laissé comme convoar l'a produit) et le journal l'indique. Aucun animal géant ou envolé ne peut plus sortir de la correction.
