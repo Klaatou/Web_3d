@@ -878,6 +878,44 @@ def rig_mesh(g, base, cache, part, bsm, ni, dom=None):
 
 
 PLACED = []
+PLACED_NODES = set()
+
+
+def node_aabb(g, tree, i):
+    # boîte englobante monde (glTF) d'un nœud d'après les min/max de ses accesseurs POSITION, sans lire les sommets
+    n = g["nodes"][i]
+    if "mesh" not in n:
+        return None
+    lo, hi = [1e30] * 3, [-1e30] * 3
+    for pr in g["meshes"][n["mesh"]].get("primitives", []):
+        a = g["accessors"][pr["attributes"]["POSITION"]] if "POSITION" in pr.get("attributes", {}) else None
+        if not a or "min" not in a or "max" not in a:
+            continue
+        lo = [min(lo[k], a["min"][k]) for k in range(3)]
+        hi = [max(hi[k], a["max"][k]) for k in range(3)]
+    if lo[0] > hi[0]:
+        return None
+    w = tree.world(i)
+    pts = [[w[r] * x + w[4 + r] * y + w[8 + r] * z + w[12 + r] for r in range(3)] for x in (lo[0], hi[0]) for y in (lo[1], hi[1]) for z in (lo[2], hi[2])]
+    return [min(p[k] for p in pts) for k in range(3)], [max(p[k] for p in pts) for k in range(3)]
+
+
+def report_buried(g):
+    # pour chaque animal posé : objets du GLB dont la boîte englobante contient le centre de l'animal (animal enfoui ?)
+    tree = Tree(g)
+    boxes = {}
+    for i, n in enumerate(g["nodes"]):
+        if n.get("name", "").startswith("REPERE") or i in PLACED_NODES:
+            continue
+        b = node_aabb(g, tree, i)
+        if b:
+            boxes[i] = b
+    for name, gx, gy, ground, ext in PLACED:
+        c = [gx, ground + ext[2] / 2, -gy]
+        inside = sorted(((math.prod(b[1][k] - b[0][k] for k in range(3)), i) for i, b in boxes.items()
+                         if all(b[0][k] <= c[k] <= b[1][k] for k in range(3))))
+        txt = ", ".join(f"'{g['nodes'][i].get('name', '?')[:30]}' (sommet {boxes[i][1][1]:.1f} m)" for _, i in inside[:3])
+        print(f"[contrôle] '{name}' pieds à {ground:.2f} m, centre {c[1]:.2f} m : " + (f"dans la boîte de {len(inside)} objet(s) : {txt}" if inside else "libre (aucune boîte d'objet ne le contient)"))
 
 
 def add_beacons(g, ebuf):
@@ -949,6 +987,7 @@ def place_rigged_group(g, base, cache, extra, tree, grp, items):
                 pr["attributes"]["NORMAL"] = extra.add_vec3(pr.pop("_nrm"))
         g["meshes"].append(mesh)
         node = g["nodes"][ni]
+        PLACED_NODES.add(ni)
         node["mesh"] = len(g["meshes"]) - 1
         w = quat_mat(rot, t=[gx, ground - yoff, -gy])
         if ni in tree.parent:
@@ -990,6 +1029,8 @@ def repair(g, base, scan, keep_invisible, reperes=False):
     extra.finish()
     if not keep_invisible:
         n_inv = remove_invisible(g, scan, match)
+    if PLACED:
+        report_buried(g)
     print(f"[correctif] {n_rig} mesh(es) riggé(s) remis à l'échelle, {n_inv} prim(s) invisible(s) retiré(s)")
     return n_rig, n_inv
 

@@ -2,6 +2,11 @@
 
 Les dates sont au format jj/mm/aaaa.
 
+## v31 (20/10/2026)
+`tools/oar2glb.py`, sixième essai sur Jungle_Isle avec `--reperes` : les mâts rouges sont bien aux positions prévues, mais presque aucun animal riggé n'est visible à leur pied (seul un éléphant, et un hippopotame retrouvé derrière des rochers sans mât). Sur les captures, la base des mâts est plusieurs mètres sous le sol visible : les animaux sont probablement enfouis ou mal placés en hauteur ; la règle « pieds au dessous de la boîte racine » est suspecte.
+- Journal : pour chaque animal posé, ligne `[contrôle]` avec l'altitude des pieds, et les objets du GLB dont la boîte englobante contient le centre de l'animal (nom et altitude du sommet) : permet de voir si un animal est dans un rocher ou sous le sol.
+- Aucun changement de calcul.
+
 ## v30 (20/10/2026)
 `tools/oar2glb.py`, cinquième essai sur Jungle_Isle (sans `--reencode`) : textures revenues (179,9 Mo, 353 textures, aucune absente) ; la cause des textures grises était `--reencode`. Les 34 meshes riggés sortent à leur taille réelle (hippopotame 3,62 x 1,29 x 1,64 m, éléphant 6,23 x 3,33 x 3,63 m, lion 3,30 x 0,83 x 1,80 m...) et les 79 prims invisibles sont retirés.
 - Nouvelle option `--reperes` : un mât rouge de 15 m à chaque animal riggé posé (nom et taille dans le nom du nœud), pour les retrouver dans le viewer (un hippopotame de 3,6 m est minuscule à l'échelle d'une région de 256 m).
