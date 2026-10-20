@@ -100,7 +100,7 @@ BSM_HA = [2, 0, 0, 0, 0, 0.6, 0, 0, 0, 0, 1, 0, 0, 0, 1.0, 1]            # x[-1,
 BSM_HB = [0.4, 0, 0, 0, 0, 0.4, 0, 0, 0, 0, 1, 0, 0.8, 0, 0.5, 1]        # x[.6,1] y[-.2,.2] z[0,1]
 
 GRP = [  # (fichier, parties)
-    ("h", [(ID["hroot"], "BoiteHippo", [100, 120, 25], [0, 0, 0], I4, [3, 3, 3], None, tex_entry(PLY, 0)),
+    ("h", [(ID["hroot"], "BoiteHippo", [100, 120, 25], [0, 0, 0], [0, 0, 0.7071, 0.7071], [3, 3, 3], None, tex_entry(PLY, 0)),
            (ID["hippo"], "Hippo", [100, 120, 25], [0, 0, 0.5], I4, [30, 30, 30], HIPPO_MESH, None)]),
     ("a", [(ID["aroot"], "BoiteAntilope", [60, 40, 24], [0, 0, 0], I4, [2, 2, 2], None, tex_entry(INVT, 255)),
            (ID["ante"], "Antilope", [60, 40, 24], [0, 0, 0.3], [0, 0, 0.7071, 0.7071], [0.05, 0.05, 0.05], ANTE_MESH, None)]),
@@ -219,7 +219,7 @@ def make_gltf(d, variant):
     rk = mk_mesh("Rocher", (-2, -2, -2), (2, 2, 2), m_ok)
     orph = mk_mesh("Orphelin", (-1, -1, -1), (1, 1, 1), m_zero)
     c1 = node("Hippo", (0, 0, 0.5), hip, ID["hippo"], scale=(30, 30, 30))
-    r1 = node("BoiteHippo", (100, 120, 25), box_h, ID["hroot"], children=[c1])
+    r1 = node("BoiteHippo", (100, 120, 25), box_h, ID["hroot"], rot=[0, 0, 0.7071, 0.7071], children=[c1])
     c2 = node("Antilope", (0, 0, 0.3), ant, ID["ante"], rot=[0, 0, 0.7071, 0.7071])
     r2n = node("BoiteAntilope", (60, 40, 24), box_a, ID["aroot"], children=[c2])
     bx_c = mk_mesh("BoiteCheval", (-1, -1, -1), (1, 1, 1), m_ok)      # boîte racine visible dans le GLB (alpha 1)
@@ -320,7 +320,7 @@ for variant in ("uuid", "nom"):
     bx = world_boxes(js, bin_)
     names = {js["nodes"][v[2]]["name"] for v in bx.values()}
     rapport("Hippo" in bx and "Antilope" in bx, "animaux présents")
-    for nm, dims, c in (("Hippo", (3.0, 1.6, 1.4), (100, -120)), ("Antilope", None, (60, -40))):
+    for nm, dims, c in (("Hippo", (1.4, 1.6, 3.0), (100, -120)), ("Antilope", None, (60, -40))):
         lo, hi, _ = bx[nm]
         sz = [hi[k] - lo[k] for k in range(3)]
         # Antilope tournée de 90° : largeur et longueur permutées dans le monde
@@ -361,6 +361,19 @@ for variant in ("uuid", "nom"):
     bx2 = world_boxes(js2, bin2)
     rapport("4 mesh(es) riggé(s) remis à l'échelle, 0 prim(s) invisible(s) retiré(s)" in r.stdout and "BoiteHippo" in bx2 and "Orphelin" in bx2,
             "--keep-invisible garde les prims invisibles", r.stdout[-500:])
+    # --reperes
+    od3 = tmp / (variant + "_rep")
+    od3.mkdir()
+    (od3 / "R.oar").write_bytes(oar.read_bytes())
+    s3 = od3 / "convoar_fake.py"
+    s3.write_text(FAKE)
+    s3.chmod(0o755)
+    make_gltf(od3 / "fake_out", variant)
+    r = run_tool(od3 / "R.oar", "--reperes", fake=s3)
+    js3, bin3 = read_glb(od3 / "R.glb")
+    rep = [n for n in js3["nodes"] if n.get("name", "").startswith("REPERE")]
+    rapport(len(rep) == 3 and "[repères] 3" in r.stdout and any(abs(n["translation"][0] - 100) < 0.01 and abs(n["translation"][1] - 23.5) < 0.01 for n in rep),
+            f"--reperes : un mât par animal, au pied de l'animal ({len(rep)} trouvés)", r.stdout[-400:])
     # --diag
     before = (od / "R.glb").read_bytes()
     r = run_tool(o, "--diag", "--glb", str(od / "fake_out" / "scene.gltf"), fake=sub)

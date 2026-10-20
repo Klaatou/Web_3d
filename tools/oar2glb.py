@@ -877,6 +877,30 @@ def rig_mesh(g, base, cache, part, bsm, ni, dom=None):
     return mesh, allp, "mesurée"
 
 
+PLACED = []
+
+
+def add_beacons(g, ebuf):
+    # option --reperes : un mât rouge de 15 m à chaque animal posé, pour le retrouver dans le viewer
+    g.setdefault("materials", []).append({"name": "repere", "pbrMetallicRoughness": {"baseColorFactor": [1, 0, 0, 1], "metallicFactor": 0},
+                                          "emissiveFactor": [1, 0, 0], "doubleSided": True})
+    mat = len(g["materials"]) - 1
+    h, w = 15.0, 0.15
+    pts = [(x, y, z) for x in (-w, w) for y in (0, h) for z in (-w, w)]
+    idx = [0, 1, 3, 0, 3, 2, 4, 6, 7, 4, 7, 5, 0, 4, 5, 0, 5, 1, 2, 3, 7, 2, 7, 6, 0, 2, 6, 0, 6, 4, 1, 5, 7, 1, 7, 3]
+    pa = ebuf.add_vec3(pts)
+    g["bufferViews"].append({"buffer": ebuf.idx, "byteOffset": len(ebuf.data), "byteLength": len(idx) * 2, "target": 34963})
+    ebuf.data += struct.pack(f"<{len(idx)}H", *idx)
+    ebuf.data += b"\x00\x00" * (len(idx) % 2)
+    g["accessors"].append({"bufferView": len(g["bufferViews"]) - 1, "componentType": 5123, "count": len(idx), "type": "SCALAR"})
+    g["meshes"].append({"name": "repere", "primitives": [{"attributes": {"POSITION": pa}, "indices": len(g["accessors"]) - 1, "material": mat}]})
+    mi = len(g["meshes"]) - 1
+    for name, gx, gy, ground, ext in PLACED:
+        g["nodes"].append({"name": f"REPERE {name} ({ext[0]:.1f} x {ext[2]:.1f} x {ext[1]:.1f} m)", "mesh": mi, "translation": [gx, ground, -gy]})
+        g["scenes"][0]["nodes"].append(len(g["nodes"]) - 1)
+    print(f"[repères] {len(PLACED)} mât(s) rouge(s) de 15 m ajouté(s), un par animal posé")
+
+
 MAX_ANIMAL, MIN_ANIMAL = 12.0, 0.1       # garde-fou : un animal fait entre 10 cm et 12 m dans sa plus grande dimension
 
 
@@ -937,12 +961,13 @@ def place_rigged_group(g, base, cache, extra, tree, grp, items):
         node["translation"], node["rotation"] = tr, qq
         tree._w.clear()
     ext = [hi[k] - lo[k] for k in range(3)]
+    PLACED.append((root["name"], gx, gy, ground, ext))
     print(f"[riggé] '{root['name']}' : {len(built)} morceau(x), échelle du prim {built[0][4]}, {ext[0]:.2f} x {ext[2]:.2f} x {ext[1]:.2f} m "
           f"(L x l x h), centré en ({gx:.1f}, {gy:.1f}), pieds à {ground:.2f} m ({src})")
     return len(built)
 
 
-def repair(g, base, scan, keep_invisible):
+def repair(g, base, scan, keep_invisible, reperes=False):
     match = match_nodes(g, scan)
     extra, cache, tree = ExtraBuffer(g), {}, Tree(g)
     n_rig = n_inv = 0
@@ -960,6 +985,8 @@ def repair(g, base, scan, keep_invisible):
             items.append((p, sk["bsm"], match[p["uuid"]][0], sk.get("dom")))
         if items:
             n_rig += place_rigged_group(g, base, cache, extra, tree, grp, items)
+    if reperes and PLACED:
+        add_beacons(g, extra)
     extra.finish()
     if not keep_invisible:
         n_inv = remove_invisible(g, scan, match)
@@ -1186,6 +1213,7 @@ def main():
     ap.add_argument("--convoar", default=shutil.which("convoar") or DEFAULT_CONVOAR)
     ap.add_argument("--keep", action="store_true", help="garder les fichiers intermédiaires")
     ap.add_argument("--keep-invisible", action="store_true", help="garder les prims entièrement transparents (retirés par défaut)")
+    ap.add_argument("--reperes", action="store_true", help="ajouter un mât rouge de 15 m à chaque animal riggé posé (pour le retrouver dans le viewer)")
     ap.add_argument("--diag", action="store_true", help="ne rien modifier : lister les objets de l'OAR, leur skin et le nœud GLB correspondant")
     ap.add_argument("--glb", help="avec --diag : GLB ou .gltf à comparer ; défaut : le .gltf du dossier <oar>-GLTF (conservé par --keep), sinon le .glb voisin")
     ap.add_argument("--nopause", action="store_true", help="ne pas attendre Entrée à la fin")
@@ -1247,7 +1275,7 @@ def main():
     check(g)
     if objs and any(not (0 <= o["pos"][0] <= 256 and 0 <= o["pos"][1] <= 256) for o in objs):
         fix_positions(g, objs)
-    repair(g, outdir, scan, a.keep_invisible)
+    repair(g, outdir, scan, a.keep_invisible, a.reperes)
     n = drop_far(g, a.max, size)
     size = pack_glb(g, outdir, out)
     report_missing(outdir, len(g.get("images", [])))

@@ -2,6 +2,12 @@
 
 Les dates sont au format jj/mm/aaaa.
 
+## v30 (20/10/2026)
+`tools/oar2glb.py`, cinquième essai sur Jungle_Isle (sans `--reencode`) : textures revenues (179,9 Mo, 353 textures, aucune absente) ; la cause des textures grises était `--reencode`. Les 34 meshes riggés sortent à leur taille réelle (hippopotame 3,62 x 1,29 x 1,64 m, éléphant 6,23 x 3,33 x 3,63 m, lion 3,30 x 0,83 x 1,80 m...) et les 79 prims invisibles sont retirés.
+- Nouvelle option `--reperes` : un mât rouge de 15 m à chaque animal riggé posé (nom et taille dans le nom du nœud), pour les retrouver dans le viewer (un hippopotame de 3,6 m est minuscule à l'échelle d'une région de 256 m).
+- Point à vérifier à l'œil : les étendues de sommets de convoar sont identiques pour des animaux différents (lion et chimpanzé ; éléphant et chevaux ; alligator et flamant), ce qui laisse penser que convoar partage des géométries entre meshes riggés. Si des animaux apparaissent avec la forme d'un autre, la reconstruction des meshes depuis les `.llmesh` de l'OAR sera la suite.
+- Test : orientation et position d'un groupe dont la racine est tournée.
+
 ## v29 (20/10/2026)
 `tools/oar2glb.py`, quatrième essai sur Jungle_Isle. Les mesures de v28 ont tranché :
 - Cause des tailles absurdes : convoar sort pour les meshes riggés des sommets dont l'étendue ne correspond à rien dans l'OAR (lion 41 x 22 x 42 m pour une échelle de prim de 1 ; les deux hippopotames, de même mesh mais d'échelles 11,2 et 13,7, sortent identiques à 70 x 76 x 32 m ; éléphant et chevaux partagent la même étendue 38 x 40 x 33 m). L'échelle ÷ prim de v25 ne pouvait donc pas marcher. Les domaines de position lus dans les `.llmesh` sont ±0,5 (mesh normalisé) et `bind_shape_matrix` vaut la vraie taille de l'animal (translation z = demi-hauteur : pieds à 0).
