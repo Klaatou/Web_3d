@@ -40,14 +40,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 19/10/2026 |  | v22 | v22 : portail vers un point d'arrivée de la même région, mode d'emploi |
 | 19/10/2026 |  | v23 | v23 : clic simple sans effet sur la cible, liaison au morceau cliqué (nom#index, limite 10 m), rotation de la région, mode d'emploi |
 | 19/10/2026 |  | v24 | v24 : les liens se comportent comme sur le web (plus de cylindres dans la page exportée, marqueur au sol, infobulle au survol, option « Toujours afficher le nom »), mode d'emploi |
-| 20/10/2026 |  | v25 | v25 : oar2glb.py retire les prims invisibles et remet à l'échelle les meshes riggés (bloc skin, bind_shape_matrix, posés au sol), option --keep-invisible, option --diag, mode d'emploi |
-| 20/10/2026 |  | v26 | v26 : oar2glb.py, correctifs après essai réel (texture invisible corrigée, morceaux d'animaux déplacés ensemble, sol sous la boîte racine, boîtes racines d'animesh retirées, journal --diag séparé) |
-| 20/10/2026 |  | v27 | v27 : oar2glb.py, garde-fou de taille des animaux (0,1 à 12 m), mesures détaillées dans --diag, récapitulatif des textures absentes |
-| 20/10/2026 |  | v28 | v28 : oar2glb.py, nouvel essai de convoar quand des images manquent, mesures des sommets dans le journal et --diag (lecture automatique du .gltf conservé) |
-| 20/10/2026 |  | v29 | v29 : oar2glb.py, taille des animaux riggés par étendue mesurée des sommets + bind_shape_matrix (échelle de convoar inconnue de l'OAR) |
-| 20/10/2026 |  | v30 | v30 : oar2glb.py, option --reperes (mât rouge à chaque animal riggé), constat : textures grises dues à --reencode |
-| 20/10/2026 |  | v31 | v31 : oar2glb.py, contrôle d'enfouissement des animaux riggés dans le journal |
-| 20/10/2026 |  | v32 | v32 : oar2glb.py, meshes riggés reconstruits depuis le .llmesh de l'OAR (la géométrie de convoar est inutilisable) |
+| 20/10/2026 |  | v25 | v25 : oar2glb.py, meshes riggés reconstruits depuis le .llmesh de l'OAR, prims invisibles et boîtes d'animesh retirés, --diag, --reperes, --keep-invisible, relance de convoar si des images manquent, mode d'emploi |
 
 ## Commandes utiles
 

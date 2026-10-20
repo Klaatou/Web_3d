@@ -2,7 +2,7 @@
 """
 oar2glb.py - OAR OpenSim -> GLB unique (convoar + réparation + empaquetage)
 
-Usage :  python oar2glb.py "P:\\chemin\\MaRegion.oar" [--reencode] [--max 600] [--convoar chemin\\convoar.exe] [--keep] [--keep-invisible]
+Usage :  python oar2glb.py "P:\\chemin\\MaRegion.oar" [--reencode] [--max 600] [--convoar chemin\\convoar.exe] [--keep] [--keep-invisible] [--reperes]
          python oar2glb.py "P:\\chemin\\MaRegion.oar" --diag [--glb MaRegion.glb]     (ne modifie rien, ne lance pas convoar)
 
 Étapes :

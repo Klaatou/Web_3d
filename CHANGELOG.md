@@ -2,63 +2,18 @@
 
 Les dates sont au format jj/mm/aaaa.
 
-## v32 (20/10/2026)
-`tools/oar2glb.py`, septième essai sur Jungle_Isle. Le clic de contrôle au pied des mâts montre que les mâts reposent bien sur le sol : l'hypothèse « animaux enfouis » de v31 était fausse. Les animaux riggés sont placés au bon endroit mais ne sont pas visibles : la géométrie que convoar écrit pour ces meshes est inutilisable (mêmes étendues de sommets pour des animaux différents, nombres de sommets multiples de 48838, échelle cuite inconnue de l'OAR).
-- Les meshes riggés sont reconstruits depuis le `.llmesh` de l'OAR (niveau de détail le plus élevé : positions, normales, UV, triangles, domaine de position), puis `bind_shape_matrix` est appliquée ; l'échelle du prim est ignorée. Aucune règle propre à un animal : tout mesh riggé de n'importe quel OAR passe par le même chemin, normalisé ou non. Les matériaux viennent du nœud GLB (face i du mesh = primitive i) ; le sens des UV est détecté en comparant avec ceux de convoar quand c'est possible. Si le `.llmesh` est illisible, le mesh est laissé tel que convoar l'a produit.
-- Journal : ligne `reconstruit depuis l'OAR` par morceau (faces, sommets, triangles, comparés à ceux de convoar).
-- Tests : géométrie convoar volontairement fausse, mesh non normalisé avec racine riggée, normales/UV/triangles de la sortie.
-
-## v31 (20/10/2026)
-`tools/oar2glb.py`, sixième essai sur Jungle_Isle avec `--reperes` : les mâts rouges sont bien aux positions prévues, mais presque aucun animal riggé n'est visible à leur pied (seul un éléphant, et un hippopotame retrouvé derrière des rochers sans mât). Sur les captures, la base des mâts est plusieurs mètres sous le sol visible : les animaux sont probablement enfouis ou mal placés en hauteur ; la règle « pieds au dessous de la boîte racine » est suspecte.
-- Journal : pour chaque animal posé, ligne `[contrôle]` avec l'altitude des pieds, et les objets du GLB dont la boîte englobante contient le centre de l'animal (nom et altitude du sommet) : permet de voir si un animal est dans un rocher ou sous le sol.
-- Aucun changement de calcul.
-
-## v30 (20/10/2026)
-`tools/oar2glb.py`, cinquième essai sur Jungle_Isle (sans `--reencode`) : textures revenues (179,9 Mo, 353 textures, aucune absente) ; la cause des textures grises était `--reencode`. Les 34 meshes riggés sortent à leur taille réelle (hippopotame 3,62 x 1,29 x 1,64 m, éléphant 6,23 x 3,33 x 3,63 m, lion 3,30 x 0,83 x 1,80 m...) et les 79 prims invisibles sont retirés.
-- Nouvelle option `--reperes` : un mât rouge de 15 m à chaque animal riggé posé (nom et taille dans le nom du nœud), pour les retrouver dans le viewer (un hippopotame de 3,6 m est minuscule à l'échelle d'une région de 256 m).
-- Point à vérifier à l'œil : les étendues de sommets de convoar sont identiques pour des animaux différents (lion et chimpanzé ; éléphant et chevaux ; alligator et flamant), ce qui laisse penser que convoar partage des géométries entre meshes riggés. Si des animaux apparaissent avec la forme d'un autre, la reconstruction des meshes depuis les `.llmesh` de l'OAR sera la suite.
-- Test : orientation et position d'un groupe dont la racine est tournée.
-
-## v29 (20/10/2026)
-`tools/oar2glb.py`, quatrième essai sur Jungle_Isle. Les mesures de v28 ont tranché :
-- Cause des tailles absurdes : convoar sort pour les meshes riggés des sommets dont l'étendue ne correspond à rien dans l'OAR (lion 41 x 22 x 42 m pour une échelle de prim de 1 ; les deux hippopotames, de même mesh mais d'échelles 11,2 et 13,7, sortent identiques à 70 x 76 x 32 m ; éléphant et chevaux partagent la même étendue 38 x 40 x 33 m). L'échelle ÷ prim de v25 ne pouvait donc pas marcher. Les domaines de position lus dans les `.llmesh` sont ±0,5 (mesh normalisé) et `bind_shape_matrix` vaut la vraie taille de l'animal (translation z = demi-hauteur : pieds à 0).
-- Correction : les sommets sont remis dans le domaine de position du mesh d'après leur étendue mesurée dans le GLB (le mesh occupe tout son domaine), puis `bind_shape_matrix` est appliquée. Plus aucune hypothèse sur l'échelle que convoar a appliquée. Le garde-fou 0,1 à 12 m reste.
-- `--diag` : domaine de position complet (tous les sous-maillages).
-- Textures : en v28 le script a relancé convoar deux fois ; les mêmes ~150 images manquent à chaque essai, ce n'est donc pas une écriture aléatoire. Piste à vérifier : `--reencode` (les runs de test l'utilisaient, la commande habituelle n'en a pas). Comparer le nombre de textures absentes avec et sans `--reencode`.
-- Tests : étendue des sommets inconnue de l'OAR (comme convoar).
-
-## v28 (20/10/2026)
-`tools/oar2glb.py`, troisième essai sur Jungle_Isle : le garde-fou de v27 a laissé les 16 groupes d'animaux tels que convoar les produit (plus rien dans le ciel) ; les boîtes sont retirées (79 prims invisibles). Deux problèmes restent.
-- Textures grises : 210 images absentes sur 353 au 1er essai, 173 au 2e, avec le même OAR et les mêmes options : convoar n'écrit pas toujours toutes les images qu'il annonce dans le `.gltf` (le dossier en contenait 169). Le script compare maintenant les images annoncées aux fichiers présents ; s'il en manque, il relance convoar (2 essais de plus au maximum) et reprend dans l'essai précédent les images déjà écrites. La cause de l'écriture incomplète reste inconnue (non reproduite ici).
-- Tailles d'animaux : d'après le code source de convoar (`PrimToMesh.ScaleMeshes`, `MeshmerizerR`), les sommets sortent en domaine ±0,5 multiplié par l'échelle du prim ; avec `bind_shape_matrix` = taille réelle (hippopotame 3,62 x 1,29 x 1,64 m, éléphant 6,23 x 3,33 x 3,63 m) le calcul de v25 devrait donner des tailles réalistes, or il en donne d'absurdes. La lecture des sommets du GLB est donc soupçonnée. Le journal de conversion imprime maintenant, par morceau, les sommets bruts du GLB, l'échelle du prim et celle de `bind_shape` ; `--diag` imprime l'accesseur POSITION, le bufferView, le buffer et les 3 premiers sommets.
-- `--diag` sans `--glb` prend automatiquement le `.gltf` du dossier `<oar>-GLTF` (conservé par `--keep`).
-- Tests : nouvel essai de convoar quand une image manque.
-
-## v27 (20/10/2026)
-`tools/oar2glb.py`, deuxième essai sur Jungle_Isle : les boîtes sont bien retirées (79 prims invisibles) mais les tailles d'animaux obtenues étaient absurdes (lion 137 m, éléphant 239 m, alligator 603 m) : la formule « sommets ÷ échelle du prim × bind_shape_matrix » ne correspond pas à ce que convoar écrit pour ces meshes (les deux hippopotames, même mesh, sortaient à 22,6 m et 18,6 m : le résultat variait en 1/échelle du prim, donc convoar n'a pas cuit cette échelle). La bonne formule n'est pas encore établie.
-- Garde-fou : si la taille obtenue pour un animal sort de 0,1 à 12 m, il n'est pas touché (laissé comme convoar l'a produit) et le journal l'indique. Aucun animal géant ou envolé ne peut plus sortir de la correction.
-- `--diag` sur un `.gltf` : pour chaque mesh riggé, `bind_shape_matrix` complète, domaine de position du mesh (`PositionDomain`, lu dans le `.llmesh`) et étendue réelle des sommets du GLB. Ces mesures serviront à établir la formule.
-- Textures absentes : un seul récapitulatif (nombre, exemples, contenu du dossier de convoar) au lieu d'une ligne par texture.
-- Tests : taille implausible (50 m).
-
-## v26 (20/10/2026)
-Correctifs de `tools/oar2glb.py` après le premier essai sur un vrai OAR (Jungle_Isle : 771 parties, 34 meshes riggés, aucun UUID dans le GLB de convoar, échelle des nœuds toujours 1 : convoar cuit l'échelle dans les sommets).
-- Erreur de v25 : la texture `e97cf410-…` est le dégradé alpha (visible), pas une texture invisible. Les textures invisibles sont maintenant `8dcd4a48-…` (« Transparent » du sélecteur) et `3a367d1c-…` (invisiprim).
-- Animaux en plusieurs morceaux (un cheval = 6 meshes riggés de même nom, chacun avec sa `bind_shape_matrix`) : chaque morceau était posé et centré séparément. Ils sont maintenant déplacés ensemble (même décalage, même rotation = racine x rotation du 1er morceau) et gardent leur position relative.
-- Sol : le terrain de cet OAR est plat (21 m) alors que les animaux sont sur des rochers (jusqu'à 36 m). Le pied de l'animal est posé sous la boîte racine (z - échelle/2) ; racine elle-même riggée : altitude de la racine. Le terrain n'est plus utilisé.
-- Boîtes laiteuses : la racine d'un objet dont toutes les autres parties sont des meshes riggés (« boîte racine d'animesh ») est retirée même si l'OAR ne la donne pas à alpha 0. Retrait des prims par nœud (convoar sort un nœud par partie) : fonctionne sans UUID dans le GLB.
-- Correspondance par nom + position : à distance égale, ordre des nœuds = ordre de l'OAR (au lieu d'un choix arbitraire entre morceaux de même nom).
-- `--diag` : indique la boîte racine d'animesh, le résumé du `TextureEntry` (texture, alpha) et le matériau GLB (couleur, mode alpha, image) des parties riggées, transparentes ou boîtes. Le journal du diagnostic va dans `oar2glb.diag.log` : il n'écrase plus `oar2glb.log` de la conversion.
-- Tests : cheval en 2 morceaux, boîte non transparente, dégradé alpha visible.
-
 ## v25 (20/10/2026)
-- `tools/oar2glb.py`, prims invisibles : les prims entièrement transparents (toutes les faces à alpha 0, ou texture invisible standard `e97cf410-…` / `3a367d1c-…`, lus dans le `TextureEntry` de l'OAR) sont retirés du GLB, ainsi que tout nœud GLB dont tous les matériaux sont à alpha 0. Une racine de linkset invisible disparaît, ses enfants restent. Option `--keep-invisible` pour les garder.
-- `tools/oar2glb.py`, meshes riggés (animesh) : le bloc skin de `assets/*_mesh.llmesh` (zlib + LLSD) est lu ; l'échelle du prim est ignorée (qu'elle soit portée par le nœud GLB ou cuite dans les sommets), `bind_shape_matrix` est appliquée aux sommets et aux normales, le modèle est centré à l'horizontale sur la position de la racine et posé au sol (terrain `terrains/*.r32` de l'OAR ; à défaut, altitude de la racine). Les autres meshes et prims ne sont pas touchés.
-- Correspondance nœud GLB ↔ objet de l'OAR : UUID du prim lu dans le nom/extras/matériaux du nœud, sinon UUID du mesh, sinon nom + position (2 m). Non validée sur un vrai GLB de convoar : utiliser `--diag`.
-- Nouvelle option `--diag` : ne modifie rien, ne lance pas convoar ; liste pour chaque partie de l'OAR : nom, UUID, riggé, échelle du prim, échelle de `bind_shape_matrix`, transparent, nœud GLB trouvé (et méthode), sol. Compare avec `--glb` (défaut : le `.glb` à côté de l'OAR).
-- Journal : « N mesh(es) riggé(s) remis à l'échelle, M prim(s) invisible(s) retiré(s) ».
-- Tests : nouveau `tests/oar2glb.py` (OAR synthétique, faux convoar, deux variantes de GLB).
-- `MODE_EMPLOI.md` : nouvelle section 15 (conversion d'un OAR).
+`tools/oar2glb.py` : correction des animaux riggés (animesh) et des prims invisibles, validée sur un vrai OAR (Jungle_Isle : 771 parties, 34 meshes riggés). Cette version regroupe les itérations de mise au point du 20/10/2026.
+- **Meshes riggés reconstruits depuis l'OAR.** Pour tout mesh riggé, le `.llmesh` de l'OAR (`assets/*_mesh.llmesh`) est décodé (positions, normales, UV, triangles, domaine de position, bloc skin zlib + LLSD binaire) et `bind_shape_matrix` est appliquée ; l'échelle du prim est ignorée. Raison : la géométrie que convoar écrit pour ces meshes est inutilisable (étendues de sommets identiques pour des animaux différents, échelle cuite inconnue de l'OAR). Aucune règle propre à un animal. Matériaux et textures repris du nœud GLB (face i = primitive i), sens des UV détecté. Si le `.llmesh` est illisible, le mesh reste tel que convoar l'a produit.
+- **Placement.** Les morceaux d'un même animal (un cheval = 6 meshes de même nom, chacun avec sa `bind_shape_matrix`) sont déplacés ensemble : centrés à l'horizontale sur la racine, rotation = racine x rotation du premier morceau, pieds sous la boîte racine (z moins la moitié de son échelle) ou à l'altitude de la racine si elle est elle-même riggée. Le terrain de l'OAR n'est pas utilisé. Garde-fou : une taille hors de 0,1 à 12 m laisse le mesh tel quel.
+- **Prims invisibles retirés** (`--keep-invisible` pour les garder) : toutes les faces à alpha 0, ou texture invisible standard (`8dcd4a48-…`, `3a367d1c-…` ; `e97cf410-…` est le dégradé alpha, visible), nœuds dont tous les matériaux sont à alpha 0, et boîte racine d'animesh (prim simple, racine d'un objet dont toutes les autres parties sont des meshes riggés). Les enfants d'une racine retirée restent.
+- **Correspondance nœud GLB ↔ partie de l'OAR** : UUID du prim, sinon UUID du mesh, sinon nom + position (2 m), ordre de l'OAR à distance égale. convoar ne conserve aucun UUID : sur Jungle_Isle tout passe par nom + position.
+- **`--diag`** : ne modifie rien, ne lance pas convoar ; une ligne par partie de l'OAR (nom, UUID, riggé, échelle du prim, `bind_shape_matrix`, domaine de position, transparent, boîte racine d'animesh, nœud GLB trouvé et méthode, matériau GLB). Lit le `.gltf` de `<oar>-GLTF` (conservé par `--keep`), sinon le `.glb` voisin, ou `--glb`. Journal dans `oar2glb.diag.log` (la conversion écrit `oar2glb.log`).
+- **`--reperes`** : un mât rouge de 15 m à chaque animal riggé posé, pour les retrouver dans le viewer.
+- **Textures** : constat sur Jungle_Isle : `--reencode` faisait manquer environ 150 images sur 353 (textures grises) ; sans lui, aucune absente. Le script compare les images annoncées par le `.gltf` aux fichiers présents, relance convoar (2 essais de plus au maximum) en gardant les images déjà écrites, et résume les absentes en une ligne.
+- Journal : « N mesh(es) riggé(s) remis à l'échelle, M prim(s) invisible(s) retiré(s) » et une ligne `[contrôle]` par animal (objets dont la boîte englobante contient son centre).
+- Tests : `tests/oar2glb.py` (OAR synthétique, faux convoar, deux variantes de GLB : UUID dans les extras ou noms seuls ; cheval en 2 morceaux, mesh non normalisé, racine tournée, taille implausible, image manquante).
+- `MODE_EMPLOI.md` : section 15 complète (commandes de `oar2glb.py`).
 
 ## v24 (19/10/2026)
 - Page exportée (autonome et modulaire) : plus aucun cylindre pour les zones lien web, commande HA et portail. Zone liée à un élément : aucun objet ajouté ; au survol, curseur main, léger contour de l'élément et infobulle (nom + destination : adresse web, « Région : … », « Commande : … » ; jamais le webhook). Zone non liée : marqueur discret au sol (disque plat de 0,4 m + anneau fin, semi-transparent) avec le même survol ; la surface de visée est plus large que le marqueur et masquée par le relief. Clic = suivre le lien. Plus de panneau de texte permanent : le nom ne s'affiche qu'au survol ou à portée (« E : … »).

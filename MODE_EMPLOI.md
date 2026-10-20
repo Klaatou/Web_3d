@@ -1,4 +1,4 @@
-# Mode d'emploi : zones, portails et points d'arrivée (v32)
+# Mode d'emploi : zones, portails et points d'arrivée (v25)
 
 ## 1. La règle qui explique 90 % des pannes
 
@@ -249,16 +249,71 @@ Conséquences :
 
 ## 15. Convertir un OAR en GLB (`tools/oar2glb.py`)
 
-`python oar2glb.py "J:\...\X.oar"` lance convoar, répare le résultat et écrit `X.glb` à côté de l'OAR.
+`oar2glb.py` transforme une sauvegarde de région OpenSim (`.oar`) en un seul fichier `.glb` prêt pour le viewer et pour `glb2html.py`. Il lance convoar, répare sa sortie et assemble le tout. La sortie est écrite à côté de l'OAR : `X.oar` donne `X.glb`.
 
-**Animesh (meshes riggés).** Dans l'OAR, un animal riggé a souvent une échelle de prim sans rapport avec sa vraie taille (hippopotame géant, éléphant minuscule). Le script lit le bloc skin du mesh (`assets/*_mesh.llmesh`), ignore l'échelle du prim (la géométrie que convoar écrit pour les meshes riggés est inutilisable : le script les reconstruit depuis le `.llmesh` de l'OAR), applique `bind_shape_matrix`, centre l'animal à l'horizontale sur la position de la racine de l'objet et pose ses pieds sous la boîte racine (le terrain de l'OAR n'est pas utilisé : les animaux sont souvent sur des rochers). Les morceaux d'un même animal (chacun avec sa `bind_shape_matrix`) sont déplacés ensemble. Le journal indique la taille obtenue de chaque animal. Si cette taille sort de 0,1 à 12 m, l'animal est laissé tel que convoar l'a produit (garde-fou) et le journal le dit.
+### Les commandes (PowerShell, une seule ligne)
 
-**Prims invisibles.** Un prim dont toutes les faces sont à alpha 0, ou qui porte la texture invisible standard, n'est plus exporté (boîtes translucides autour des animaux). Si c'est la racine d'un linkset, les enfants restent. La boîte racine d'un animesh (prim simple, racine d'un objet dont toutes les autres parties sont des meshes riggés) est retirée aussi, même si l'OAR ne la donne pas transparente. `--keep-invisible` les garde. Le journal se termine par : « N mesh(es) riggé(s) remis à l'échelle, M prim(s) invisible(s) retiré(s) ».
+Se placer d'abord dans le dossier du script : `cd "P:\_OpenSim\SL&OS\Web_3d"`.
 
-**Valider avant de croire : `--diag`.** `python oar2glb.py "J:\...\X.oar" --diag` ne modifie rien et ne lance pas convoar. Il lit le `.gltf` du dossier `X-GLTF` (conservé avec `--keep`), sinon le `X.glb` voisin, ou celui donné par `--glb` et affiche une ligne par partie de l'OAR : nom, UUID, riggé oui/non, échelle du prim, échelle de `bind_shape_matrix`, transparent oui/non, nœud GLB trouvé ou non et par quelle méthode (UUID du prim, UUID du mesh, nom + position). Les lignes « nœud introuvable » sur un animal ou un prim transparent signifient que le correctif ne s'appliquera pas à lui : envoyer le journal (`oar2glb.diag.log`, la conversion écrit `oar2glb.log`) pour ajuster la correspondance. Le GLB final contient les nœuds déjà corrigés : pour diagnostiquer, garder le `-GLTF` produit avec `--keep` et passer son `.gltf` à `--glb`.
+| Besoin | Commande |
+|---|---|
+| Conversion normale | `python oar2glb.py "J:\...\X.oar"` |
+| Conversion qui garde les dossiers intermédiaires (nécessaire pour `--diag`) | `python oar2glb.py "J:\...\X.oar" --keep` |
+| Retrouver les animaux dans le viewer (mât rouge de 15 m à chacun) | `python oar2glb.py "J:\...\X.oar" --keep --reperes` |
+| Garder les prims invisibles | `python oar2glb.py "J:\...\X.oar" --keep-invisible` |
+| Vérifier ce que le script voit, sans rien modifier | `python oar2glb.py "J:\...\X.oar" --diag` |
+| Idem, en désignant le GLB ou le `.gltf` à comparer | `python oar2glb.py "J:\...\X.oar" --diag --glb "J:\...\X-GLTF\fichier.gltf"` |
+| Ne pas attendre « Entrée » à la fin | ajouter `--nopause` |
 
-Si des textures deviennent grises, relancer la conversion SANS `--reencode` (sur Jungle_Isle, avec `--reencode`, environ 150 images sur 353 manquaient) et comparer le nombre de textures absentes et chercher la ligne `[GLB] N texture(s) absente(s)`. Si convoar n'écrit pas toutes les images qu'il annonce, le script le relance (2 essais de plus au maximum) et garde les images déjà écrites.
+Avant de refaire une conversion, supprimer l'ancien dossier intermédiaire : `Remove-Item -Recurse -Force "J:\...\X-GLTF*"`.
 
-**Retrouver les animaux : `--reperes`.** Ajoute un mât rouge de 15 m à chaque animal riggé posé ; le nom du nœud donne l'animal et sa taille. À retirer une fois les animaux vérifiés (relancer sans l'option).
+### Les options
 
-Test : `python tests/oar2glb.py` (OAR synthétique et faux convoar, sans réseau).
+| Option | Effet |
+|---|---|
+| `--keep` | garde le dossier `X-GLTF` (images, tampons, `.gltf`) ; indispensable pour lancer ensuite `--diag` |
+| `--keep-invisible` | garde les prims entièrement transparents (retirés par défaut) |
+| `--reperes` | ajoute un mât rouge de 15 m à chaque animal riggé posé ; le nom du nœud donne l'animal et sa taille ; à retirer en relançant sans l'option |
+| `--diag` | ne modifie rien et ne lance pas convoar : liste chaque partie de l'OAR (voir plus bas) |
+| `--glb CHEMIN` | avec `--diag` : GLB ou `.gltf` à comparer ; par défaut le `.gltf` du dossier `X-GLTF`, sinon le `X.glb` voisin |
+| `--max N` | hauteur maximale (m) d'un objet racine ; au-delà (skybox) il est retiré ; défaut 600 |
+| `--convoar CHEMIN` | chemin de `convoar.exe` si ce n'est pas celui par défaut |
+| `--reencode` | **à éviter** : réencode les textures avant convoar ; sur Jungle_Isle il faisait manquer environ 150 textures sur 353 (textures grises). À n'utiliser que si convoar affiche beaucoup d'erreurs « unhandled number of components » et que les textures restent bonnes |
+| `--nopause` | ne pas attendre « Entrée » à la fin |
+
+### Ce que le script corrige
+
+- **Animaux riggés (animesh).** La géométrie que convoar écrit pour ces meshes est inutilisable (hippopotames géants, éléphants minuscules ou envolés, formes partagées entre animaux). Le script la reconstruit depuis le fichier `.llmesh` de l'OAR : positions, normales, UV, triangles, puis `bind_shape_matrix` ; l'échelle du prim est ignorée. Les morceaux d'un même animal restent ensemble. L'animal est centré sur la position de la racine de l'objet et ses pieds sont posés sous la boîte racine (à l'altitude de la racine si elle est elle-même riggée). Les textures viennent de convoar (face n du mesh = matériau n). Aucune règle ne dépend du nom d'un animal. Un animal dont la taille calculée sort de 0,1 à 12 m reste tel que convoar l'a produit (le journal le dit).
+- **Prims invisibles.** Sont retirés : les prims dont toutes les faces sont à alpha 0 ou portent une texture invisible standard, les nœuds dont tous les matériaux sont transparents, et la boîte racine d'un animesh (prim simple, racine d'un objet dont tous les autres morceaux sont des meshes riggés). Les enfants d'une racine retirée restent.
+- **Textures.** Le script compare les images annoncées par le `.gltf` aux fichiers présents ; s'il en manque, il relance convoar (2 essais de plus au maximum) en gardant les images déjà écrites.
+- **Positions des régions plus grandes que 256 m** et objets hors région : traitement inchangé.
+
+### Lire le journal (`oar2glb.log`, à côté du script)
+
+| Ligne | Sens |
+|---|---|
+| `[riggé] 'Nom' reconstruit depuis l'OAR : N face(s), M sommets...` | un morceau d'animal a été reconstruit ; les chiffres « convoar » à côté montrent ce que convoar avait écrit |
+| `[riggé] 'Nom' : 5 morceau(x)... pieds à 27.11 m (dessous de la boîte racine)` | animal posé ; taille L x l x h et altitude des pieds |
+| `[riggé] ... nœud GLB introuvable` | le morceau n'a pas été retrouvé dans le GLB ; lancer `--diag` |
+| `[riggé] ... taille obtenue ... implausible` | garde-fou : l'animal est laissé tel que convoar l'a produit |
+| `[invisible] node N 'Nom' retiré : ...` | prim retiré, avec la raison |
+| `[correctif] N mesh(es) riggé(s) remis à l'échelle, M prim(s) invisible(s) retiré(s)` | récapitulatif |
+| `[contrôle] 'Nom' pieds à ... : dans la boîte de N objet(s)` | objets dont la boîte englobante contient le centre de l'animal (indice si un animal est dans un rocher) |
+| `[GLB] N texture(s) absente(s) sur M` | images manquantes, remplacées par du gris |
+| `[OK] ...glb (taille, meshes, textures)` | fin normale |
+
+### Diagnostic : `--diag`
+
+À lancer après une conversion faite avec `--keep`. Le journal est `oar2glb.diag.log`. Chaque partie de l'OAR donne une ligne : nom, UUID, racine ou enfant, riggé oui/non, échelle du prim, échelle de `bind_shape_matrix`, transparent oui/non, boîte racine d'animesh oui/non, et le nœud GLB trouvé avec la méthode (UUID du prim, UUID du mesh, nom + position). Les animaux et prims invisibles affichent en plus le résumé du `TextureEntry`, la matrice complète, le domaine de position et le matériau GLB. Une ligne « nœud introuvable » sur un animal ou un prim transparent signifie que le correctif ne s'appliquera pas à lui.
+
+### Si quelque chose ne va pas
+
+| Symptôme | Cause probable | Remède |
+|---|---|---|
+| Beaucoup de textures grises | `--reencode`, ou images non écrites par convoar | relancer sans `--reencode` ; lire `[GLB] N texture(s) absente(s)` |
+| Un animal invisible ou à la mauvaise place | nœud non retrouvé, ou animal caché | `--keep --reperes`, puis `--diag` ; envoyer `oar2glb.log` et `oar2glb.diag.log` |
+| Un animal avec la mauvaise texture | l'ordre des faces du mesh ne suit pas celui des matériaux de convoar | signaler l'animal avec son journal |
+| Des prims transparents qu'on voulait garder | retirés par défaut | `--keep-invisible` |
+| « convoar introuvable » | chemin différent | `--convoar "P:\...\convoar.exe"` |
+
+Test du script : `python tests/oar2glb.py` (OAR synthétique et faux convoar, sans réseau).
