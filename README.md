@@ -26,7 +26,7 @@ Le résultat est dans `dist/`. Au premier lancement, three.js r160 est télécha
 2. Générer la page avec les mêmes réglages (une seule ligne) :
 
 ```
-python glb2html.py "Ankh-final.glb" --settings --register regions.json --map-page carte.html -o "Ankh Island.html"
+python glb2html.py "Region-final.glb" --settings --register regions.json --map-page carte.html -o "Region.html"
 ```
 
 3. Lancer le serveur de présence : `python presence_server.py --log presence.log`.
@@ -35,22 +35,22 @@ python glb2html.py "Ankh-final.glb" --settings --register regions.json --map-pag
 
 ## Mode modulaire
 
-`--modular` produit, pour la page `Ankh Island.html` :
+`--modular` produit, pour la page `Region.html` :
 
 | Fichier | Rôle |
 |---|---|
-| `Ankh Island.html` | Coquille (~85 Ko), **identique pour toutes les régions** : elle déduit ses fichiers de son propre nom. Titre de l'onglet = `room`, fond = `skyColor`. |
-| `Ankh Island.glb` | Le modèle, octets bruts. |
-| `Ankh Island.config.json` | Les réglages. Relu à chaque rechargement (F5). |
-| `Ankh Island.zones.json` | Les zones. Relu à chaque rechargement ; s'il est absent, `zones.json` du même dossier ; sinon aucune zone. |
+| `Region.html` | Coquille (~85 Ko), **identique pour toutes les régions** : elle déduit ses fichiers de son propre nom. Titre de l'onglet = `room`, fond = `skyColor`. |
+| `Region.glb` | Le modèle, octets bruts. |
+| `Region.config.json` | Les réglages. Relu à chaque rechargement (F5). |
+| `Region.zones.json` | Les zones. Relu à chaque rechargement ; s'il est absent, `zones.json` du même dossier ; sinon aucune zone. |
 | `lib/three-0.160.0/` | three.js, Draco et Meshopt, partagés par toutes les pages du dossier. |
 
 Il faut servir le dossier en http/https (test local : `python -m http.server`). Copier une page sous un autre nom marche : renommer ses trois fichiers frères de la même façon.
 
 ```
-python glb2html.py "Ankh-final.glb" --settings --modular -o "Ankh Island.html"
-python glb2html.py --settings "Ankh-final.glb" --config-only --wave 2 -o "Ankh Island.html"
-python glb2html.py -o "Ankh Island.html" --zones-only --zones zones.json
+python glb2html.py "Region-final.glb" --settings --modular -o "Region.html"
+python glb2html.py --settings "Region-final.glb" --config-only --wave 2 -o "Region.html"
+python glb2html.py -o "Region.html" --zones-only --zones zones.json
 ```
 
 `--config-only` ne réécrit que la config (les zones ne bougent que si `--zones` est donné) ; `--zones-only` ne réécrit que les zones. Les visiteurs rechargent la page.
