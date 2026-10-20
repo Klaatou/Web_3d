@@ -41,6 +41,14 @@
 - Clic simple = information seule (nom + point) ; seul le double-clic déplace cible et atterrissage.
 - Rotation de la région (`rotate` : 0/90/180/270) appliquée au chargement à la racine du modèle, avant recentrage. Les positions stockées (zones, arrivées, cible, trou) sont dans le repère déjà tourné : le viewer les fait tourner quand on change la valeur, glb2html.py ne les touche jamais.
 
+## Décisions de la v25 (20/10/2026) : `tools/oar2glb.py`
+- La géométrie que convoar écrit pour les meshes riggés (animesh) est inutilisable (mêmes étendues de sommets pour des animaux différents, échelle cuite inconnue de l'OAR) : le script les reconstruit depuis `assets/*_mesh.llmesh` (zlib + LLSD binaire : `high_lod`, `skin`) et applique `bind_shape_matrix` ; l'échelle du prim est ignorée. Aucune règle propre à un animal ou à un OAR.
+- convoar ne conserve aucun UUID dans le GLB : la correspondance nœud ↔ partie de l'OAR se fait par nom + position (ordre de l'OAR à distance égale).
+- Ne pas utiliser `--reencode` par défaut : sur Jungle_Isle il faisait manquer environ 150 textures sur 353.
+- `e97cf410-…` est le dégradé alpha (visible) ; les textures invisibles sont `8dcd4a48-…` et `3a367d1c-…`.
+- Le terrain de l'OAR peut être plat (21 m) : les animaux sont posés sous leur boîte racine, jamais sur le terrain.
+- Tester avec `python tests/oar2glb.py` ; sur un vrai OAR : `--keep --reperes` puis `--diag`. Le journal de conversion est `oar2glb.log`, celui du diagnostic `oar2glb.diag.log`.
+
 ## Feuille de route (priorité décroissante)
 1. ~~Mode modulaire~~ **fait (v19), rendu universel en v20.** Sorties : `<page>.html` (coquille, identique pour toutes les régions, octet pour octet), `<page>.glb`, `<page>.config.json` (= le dict `cfg`, sans zones : `zones: []`), `<page>.zones.json` et `lib/three-0.160.0/` (Draco et Meshopt toujours présents). Décisions :
    - La coquille ne contient aucun nom : elle déduit `X.config.json`, `X.glb`, `X.zones.json` du nom de sa propre page (`location.pathname`), titre = `room`, fond = `skyColor`. Copier la page sous un autre nom avec ses fichiers frères renommés doit marcher.
