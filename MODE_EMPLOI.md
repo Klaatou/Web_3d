@@ -1,4 +1,4 @@
-# Mode d'emploi : zones, portails et points d'arrivée (v24)
+# Mode d'emploi : zones, portails et points d'arrivée (v25)
 
 ## 1. La règle qui explique 90 % des pannes
 
@@ -246,3 +246,15 @@ Conséquences :
 - une zone ajoutée ou supprimée est retrouvée telle quelle au rechargement ; pour **supprimer une zone**, ouvre sa fiche et clique sur **Supprimer** (attends 2 s avant de fermer l'onglet) ;
 - la mémoire est propre au navigateur et à l'adresse de la page du viewer : un autre navigateur ou un autre ordinateur ne voit rien. Pour transporter les réglages : **Enregistrer dans un fichier** (`.reglages.json`) puis **Charger depuis un fichier**, ou `glb2html.py --settings` ;
 - **Oublier les réglages de ce fichier** (section Réglages mémorisés) efface la mémoire de ce `.glb` : les valeurs actuelles restent à l'écran, mais ne sont plus protégées, et elles seront mémorisées de nouveau à la prochaine modification. Pour repartir de zéro : cliquer ce bouton puis recharger la page du viewer et rouvrir le `.glb`.
+
+## 15. Convertir un OAR en GLB (`tools/oar2glb.py`)
+
+`python oar2glb.py "J:\...\X.oar"` lance convoar, répare le résultat et écrit `X.glb` à côté de l'OAR.
+
+**Animesh (meshes riggés).** Dans l'OAR, un animal riggé a souvent une échelle de prim sans rapport avec sa vraie taille (hippopotame géant, éléphant minuscule). Le script lit le bloc skin du mesh (`assets/*_mesh.llmesh`), ignore l'échelle du prim, applique `bind_shape_matrix`, centre le modèle à l'horizontale sur la position de la racine de l'objet et le pose sur le terrain de l'OAR (sans terrain : à l'altitude de la racine). Le journal indique la taille obtenue de chaque animal.
+
+**Prims invisibles.** Un prim dont toutes les faces sont à alpha 0, ou qui porte la texture invisible standard, n'est plus exporté (boîtes translucides autour des animaux). Si c'est la racine d'un linkset, les enfants restent. `--keep-invisible` les garde. Le journal se termine par : « N mesh(es) riggé(s) remis à l'échelle, M prim(s) invisible(s) retiré(s) ».
+
+**Valider avant de croire : `--diag`.** `python oar2glb.py "J:\...\X.oar" --diag` ne modifie rien et ne lance pas convoar. Il lit le `X.glb` voisin (ou celui donné par `--glb`) et affiche une ligne par partie de l'OAR : nom, UUID, riggé oui/non, échelle du prim, échelle de `bind_shape_matrix`, transparent oui/non, nœud GLB trouvé ou non et par quelle méthode (UUID du prim, UUID du mesh, nom + position). Les lignes « nœud introuvable » sur un animal ou un prim transparent signifient que le correctif ne s'appliquera pas à lui : envoyer le journal (`oar2glb.log`) pour ajuster la correspondance. Le GLB final contient les nœuds déjà corrigés : pour diagnostiquer, garder le `-GLTF` produit avec `--keep` et passer son `.gltf` à `--glb`.
+
+Test : `python tests/oar2glb.py` (OAR synthétique et faux convoar, sans réseau).

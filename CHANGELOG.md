@@ -2,6 +2,15 @@
 
 Les dates sont au format jj/mm/aaaa.
 
+## v25 (20/10/2026)
+- `tools/oar2glb.py`, prims invisibles : les prims entièrement transparents (toutes les faces à alpha 0, ou texture invisible standard `e97cf410-…` / `3a367d1c-…`, lus dans le `TextureEntry` de l'OAR) sont retirés du GLB, ainsi que tout nœud GLB dont tous les matériaux sont à alpha 0. Une racine de linkset invisible disparaît, ses enfants restent. Option `--keep-invisible` pour les garder.
+- `tools/oar2glb.py`, meshes riggés (animesh) : le bloc skin de `assets/*_mesh.llmesh` (zlib + LLSD) est lu ; l'échelle du prim est ignorée (qu'elle soit portée par le nœud GLB ou cuite dans les sommets), `bind_shape_matrix` est appliquée aux sommets et aux normales, le modèle est centré à l'horizontale sur la position de la racine et posé au sol (terrain `terrains/*.r32` de l'OAR ; à défaut, altitude de la racine). Les autres meshes et prims ne sont pas touchés.
+- Correspondance nœud GLB ↔ objet de l'OAR : UUID du prim lu dans le nom/extras/matériaux du nœud, sinon UUID du mesh, sinon nom + position (2 m). Non validée sur un vrai GLB de convoar : utiliser `--diag`.
+- Nouvelle option `--diag` : ne modifie rien, ne lance pas convoar ; liste pour chaque partie de l'OAR : nom, UUID, riggé, échelle du prim, échelle de `bind_shape_matrix`, transparent, nœud GLB trouvé (et méthode), sol. Compare avec `--glb` (défaut : le `.glb` à côté de l'OAR).
+- Journal : « N mesh(es) riggé(s) remis à l'échelle, M prim(s) invisible(s) retiré(s) ».
+- Tests : nouveau `tests/oar2glb.py` (OAR synthétique, faux convoar, deux variantes de GLB).
+- `MODE_EMPLOI.md` : nouvelle section 15 (conversion d'un OAR).
+
 ## v24 (19/10/2026)
 - Page exportée (autonome et modulaire) : plus aucun cylindre pour les zones lien web, commande HA et portail. Zone liée à un élément : aucun objet ajouté ; au survol, curseur main, léger contour de l'élément et infobulle (nom + destination : adresse web, « Région : … », « Commande : … » ; jamais le webhook). Zone non liée : marqueur discret au sol (disque plat de 0,4 m + anneau fin, semi-transparent) avec le même survol ; la surface de visée est plus large que le marqueur et masquée par le relief. Clic = suivre le lien. Plus de panneau de texte permanent : le nom ne s'affiche qu'au survol ou à portée (« E : … »).
 - Nouvelle option par zone « Toujours afficher le nom » (champ `showName`, décochée par défaut ; viewer, `clean_zones`, `.zones.json`, `.reglages.json`) : nom permanent au-dessus de l'élément ou du marqueur ; panneau complet pour une zone non liée de forme « panneau ».
