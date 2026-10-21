@@ -649,9 +649,14 @@ function createViewer(container, cfg0, loader) {
     const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
     const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, fog: false }));
     sp.scale.set(2.56, h * 0.005, 1);
-    sp.position.y = 2.4 + h * 0.0025;
-    sp.userData.isBubble = true;
+    sp.userData.isBubble = true; sp.userData.w = 2.56; sp.userData.h = h * 0.005;   // taille de base : agrandie avec le même k que le nom
     return sp;
+  }
+  // hauteurs (repère de l'avatar) du nom, de la bulle et du losange : bas, haut ; pour les tests
+  function avatarStack(q) {
+    const box = (o, half) => o ? { y: o.position.y, bottom: o.position.y - half, top: o.position.y + half } : null;
+    const lab = q.g.children.find(o => o.isSprite && !o.userData.isBubble), bc = q.g.userData.beacon;
+    return { label: box(lab, lab ? lab.scale.y / 2 : 0), bubble: box(q.bubble, q.bubble ? q.bubble.scale.y / 2 : 0), beacon: box(bc, bc ? 0.26 * 1.6 * bc.scale.y : 0), dist: camera.position.distanceTo(q.g.position) };
   }
   function removeBubble(q) { if (q.bubble) { q.g.remove(q.bubble); q.bubble.material.map.dispose(); q.bubble.material.dispose(); q.bubble = null; } }
   function showBubble(q, text) { removeBubble(q); q.bubble = makeBubble(text); q.bubbleUntil = cfg.chatFade > 0 ? performance.now() + cfg.chatFade * 1000 : Infinity; q.g.add(q.bubble); }
@@ -751,7 +756,18 @@ function createViewer(container, cfg0, loader) {
         const lab = q.g.children.find(o => o.isSprite && !o.userData.isBubble), bc = q.g.userData.beacon;
         const ks = Math.max(1, dist / 45), ly = 2.1 + 0.55 * (k - 1);
         if (lab) { lab.scale.set(1.6 * k, 0.4 * k, 1); lab.position.y = ly; }
-        if (bc) { bc.scale.setScalar(ks); bc.position.y = ly + 0.2 * k + 0.5 * ks; bc.rotation.y += dt * 1.2; }
+        // pile de bas en haut : nom, bulle (si elle existe), losange, avec une marge entre chacun ; tailles réelles des sprites (scale.y)
+        let top = ly + 0.2 * k;                                        // haut du nom
+        if (q.bubble) {
+          const u = q.bubble.userData; q.bubble.scale.set(u.w * k, u.h * k, 1);
+          q.bubble.position.y = top + 0.1 * k + q.bubble.scale.y / 2; top = q.bubble.position.y + q.bubble.scale.y / 2;
+        }
+        if (bc) {
+          bc.scale.setScalar(ks);
+          const want = top + 0.5 * ks;                                  // sans bulle : ly + 0,2 k + 0,5 ks, comme avant
+          bc.position.y = q.bcY === undefined ? want : q.bcY + (want - q.bcY) * (1 - Math.exp(-dt * 12));   // glisse à l'apparition / disparition de la bulle
+          q.bcY = bc.position.y; bc.rotation.y += dt * 1.2;
+        }
       }
       dirty = true;
     }
@@ -1142,7 +1158,7 @@ function createViewer(container, cfg0, loader) {
     },
     releaseKeys() { W.keys.clear(); },
     setName(n) { P.name = cleanName(n); if (P.ws && P.ws.readyState === 1) P.ws.send(JSON.stringify({ t: 'name', name: P.name })); },
-    getPresence() { return { state: P.state, id: P.id, peers: [...P.peers.values()].map(q => ({ id: q.id, name: q.name, pos: q.g.position.toArray(), visible: q.g.visible, bubble: !!q.bubble })) }; }, get walking() { return walking; },
+    getPresence() { return { state: P.state, id: P.id, peers: [...P.peers.values()].map(q => ({ id: q.id, name: q.name, pos: q.g.position.toArray(), visible: q.g.visible, bubble: !!q.bubble, stack: avatarStack(q) })) }; }, get walking() { return walking; },
     walkTick(dt) { if (walking) walkStep(dt); },
     refreshCollision() { if (walking && model) W.grid = buildCollisionGrid(model, 3, parseIgnore(cfg.walkIgnore)); },
     teleportNdc(nx, ny) { return walkTeleport(nx, ny); },

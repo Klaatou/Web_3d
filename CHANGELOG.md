@@ -2,6 +2,11 @@
 
 Les dates sont au format jj/mm/aaaa.
 
+## v27 (21/10/2026)
+- **Repère des avatars visiteurs : la bulle de chat n'est plus recouverte.** Les repères sont empilés de bas en haut : nom, bulle (si elle existe), losange, avec une marge entre chacun, calculée sur les tailles réelles des sprites (`scale.y`). Le nom et la bulle suivent le même facteur d'éloignement k (la bulle grossit avec la distance comme le nom, donc le nom ne la recouvre plus de loin) ; le bas du losange est toujours au-dessus du haut de la bulle, de 1 à 4 lignes, de près comme de loin. Sans bulle, le losange est exactement à sa hauteur d'avant ; à l'apparition ou à la disparition d'une bulle il glisse (environ 0,2 s) au lieu de sauter. Ni couleur ni forme modifiées, protocole de présence inchangé.
+- `getPresence()` expose en plus, par visiteur, `stack` (hauteurs bas / haut du nom, de la bulle et du losange, distance à la caméra), pour les tests.
+- Tests : nouveau `tests/v27.py` (faux WebSocket injecté, sans serveur ni réseau) : nom < bulle < losange pour 1 et 4 lignes, à 8 m et à 120 m ; sans bulle, hauteur inchangée ; retour à la hauteur d'origine quand la bulle expire.
+
 ## v26 (21/10/2026)
 - **Coquille unique en mode modulaire.** Une seule coquille (par défaut `index.html`) et un seul `lib/three-0.160.0/` servent plusieurs régions d'un même dossier ; chaque région n'ajoute que `NOM.glb`, `NOM.config.json` et `NOM.zones.json`. Adresse : `index.html?region=NOM` (`NOM.html` accepté : l'extension est retirée).
 - La coquille reste identique, octet pour octet, pour toutes les régions (elle lit `?region=` à l'exécution). **Sans paramètre `region`, comportement inchangé** (fichiers déduits du nom de la page) : les pages déjà publiées et leurs coquilles continuent de marcher. Sans paramètre ni fichier correspondant : « Erreur : … introuvable (HTTP …) ».
