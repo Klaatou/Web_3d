@@ -430,6 +430,33 @@ r = run_tool(od / "R.oar", fake=rs)
 rapport("nouvel essai 1/2" in r.stdout and "absente(s) sur" not in r.stdout and (od / "R.glb").exists(),
         "image manquante : convoar relancé, texture récupérée", r.stdout[-700:])
 
+# ---------- réencodage des textures : illisibles remplacées par un gris, sculpt maps intactes ----------
+print("--- réencodage")
+from PIL import Image  # noqa: E402
+def j2k(color, size=(32, 32)):
+    b = io.BytesIO(); Image.new("RGB", size, color).save(b, "JPEG2000", no_jp2=True); return b.getvalue()
+u_ok, u_bad, u_sc = U(), U(), U()
+sculpt_xml = ("<SceneObjectGroup><SceneObjectPart><Shape><SculptTexture><UUID>%s</UUID></SculptTexture></Shape></SceneObjectPart></SceneObjectGroup>" % u_sc).encode()
+cassee = b"ceci n'est pas du JPEG2000" * 20
+reenc_src, reenc_dst = tmp / "RE.oar", tmp / "RE-reenc.oar"
+with tarfile.open(reenc_src, "w:gz") as t:
+    for nom, data in ((f"assets/{u_ok}_texture.jp2", j2k((200, 30, 30))), (f"assets/{u_bad}_texture.jp2", cassee),
+                      (f"assets/{u_sc}_texture.jp2", cassee), ("objects/sculpt.xml", sculpt_xml)):
+        ti = tarfile.TarInfo(nom); ti.size = len(data); t.addfile(ti, io.BytesIO(data))
+T.reencode_oar(reenc_src, reenc_dst)
+with tarfile.open(reenc_dst) as t:
+    out = {m.name: t.extractfile(m).read() for m in t if m.isfile()}
+def lisible(d):
+    try:
+        im = Image.open(io.BytesIO(d)); im.load(); return im.size
+    except Exception:
+        return None
+rapport(lisible(out[f"assets/{u_ok}_texture.jp2"]) == (32, 32), "texture valide : réencodée, lisible")
+rapport(lisible(out[f"assets/{u_bad}_texture.jp2"]) == (4, 4), "texture illisible : remplacée par un gris 4x4 lisible", lisible(out[f"assets/{u_bad}_texture.jp2"]))
+rapport(out[f"assets/{u_sc}_texture.jp2"] == cassee, "sculpt map : laissée intacte")
+liste = reenc_dst.with_name("RE-reenc-illisibles.txt")
+rapport(liste.is_file() and liste.read_text(encoding="utf-8").split() == [f"assets/{u_bad}_texture.jp2"], "liste des illisibles écrite (une seule, hors sculpt map)")
+
 # ---------- version ----------
 print("--- version")
 vfile = (ROOT / "VERSION").read_text(encoding="utf-8").strip()

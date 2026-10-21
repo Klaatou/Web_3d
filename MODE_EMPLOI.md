@@ -278,7 +278,7 @@ Avant de refaire une conversion, supprimer l'ancien dossier intermédiaire : `Re
 | `--glb CHEMIN` | avec `--diag` : GLB ou `.gltf` à comparer ; par défaut le `.gltf` du dossier `X-GLTF`, sinon le `X.glb` voisin |
 | `--max N` | hauteur maximale (m) d'un objet racine ; au-delà (skybox) il est retiré ; défaut 600 |
 | `--convoar CHEMIN` | chemin de `convoar.exe` si ce n'est pas celui par défaut |
-| `--reencode` | **à éviter** : réencode les textures avant convoar ; sur Jungle_Isle il faisait manquer environ 150 textures sur 353 (textures grises). À n'utiliser que si convoar affiche beaucoup d'erreurs « unhandled number of components » et que les textures restent bonnes |
+| `--reencode` | **à éviter** : réencode les textures avant convoar ; sur Jungle_Isle il faisait manquer environ 150 textures sur 353 (textures grises). À n'utiliser que si convoar affiche beaucoup d'erreurs « unhandled number of components » ou plante dans `OpenJPEG.DotNetDecode64` (code retour 3221225477). Les textures que Pillow ne sait pas lire sont remplacées par un gris 4x4 (liste dans `X-reenc-illisibles.txt`, à côté de l'OAR) pour ne pas les laisser au décodeur de convoar ; les sculpt maps restent intactes ; 8 cœurs au plus et envoi par lots de 512 pour limiter la mémoire |
 | `--nopause` | ne pas attendre « Entrée » à la fin |
 
 ### Ce que le script corrige

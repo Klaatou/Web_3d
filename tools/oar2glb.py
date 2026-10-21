@@ -54,6 +54,17 @@ def reencode_one(data):
         return None
 
 
+def neutral_texture():
+    # petit J2K gris, même format que reencode_one : remplace une texture que Pillow ne sait pas lire
+    from PIL import Image
+    buf = io.BytesIO()
+    Image.new("RGB", (4, 4), (128, 128, 128)).save(buf, "JPEG2000", num_resolutions=3, no_jp2=True)
+    return buf.getvalue()
+
+
+REENC_BATCH = 512      # textures envoyées aux workers par lot : borne la mémoire (ex.map sur tout enverrait tout d'un coup)
+
+
 def reencode_oar(src, dst):
     try:
         import PIL  # noqa: F401
@@ -77,26 +88,36 @@ def reencode_oar(src, dst):
            if d is not None and m.name.startswith("assets/") and m.name.endswith("_texture.jp2")
            and m.name[7:43].lower() not in sculpts]
     print(f"[textures] {len(sculpts)} sculpt maps laissées intactes")
-    workers = max(1, (os.cpu_count() or 2) - 1)
+    workers = max(1, min(8, (os.cpu_count() or 2) - 1))   # 8 au plus : chaque worker garde ses textures décodées en mémoire
     print(f"[textures] {len(idx)} textures à réencoder sur {workers} cœurs ({time.time() - t0:.0f} s)")
-    ok = bad = 0
+    ok = bad = k = 0
+    grey, illisibles = neutral_texture(), []
     step = max(1, len(idx) // 20)
     with ProcessPoolExecutor(max_workers=workers) as ex:
-        for k, (i, res) in enumerate(zip(idx, ex.map(reencode_one, [members[i][1] for i in idx], chunksize=8)), 1):
-            if res is None:
-                bad += 1
-            else:
+        for b in range(0, len(idx), REENC_BATCH):
+            sub = idx[b:b + REENC_BATCH]
+            for i, res in zip(sub, ex.map(reencode_one, [members[i][1] for i in sub], chunksize=8)):
+                k += 1
                 m, _ = members[i]
+                if res is None:      # illisible pour Pillow : le décodeur de convoar peut planter dessus, on met un gris neutre
+                    bad += 1
+                    illisibles.append(m.name)
+                    res = grey
+                else:
+                    ok += 1
                 m.size = len(res)
                 members[i] = (m, res)
-                ok += 1
-            if k % step == 0 or k == len(idx):
-                print(f"[textures] {k}/{len(idx)} ({100 * k // len(idx)} %) - {time.time() - t0:.0f} s", flush=True)
+                if k % step == 0 or k == len(idx):
+                    print(f"[textures] {k}/{len(idx)} ({100 * k // len(idx)} %) - {time.time() - t0:.0f} s", flush=True)
     print(f"[textures] écriture de {dst.name}...")
     with tarfile.open(dst, "w:gz", compresslevel=1) as tout:
         for m, d in members:
             tout.addfile(m, io.BytesIO(d) if d is not None else None)
-    print(f"[textures] {ok} réencodées, {bad} illisibles (laissées telles quelles) - {time.time() - t0:.0f} s")
+    liste = dst.with_name(dst.stem + "-illisibles.txt")
+    if illisibles:
+        liste.write_text("\n".join(illisibles) + "\n", encoding="utf-8")
+    print(f"[textures] {ok} réencodées, {bad} illisibles remplacées par un gris neutre"
+          + (f" (liste : {liste.name})" if illisibles else "") + f" - {time.time() - t0:.0f} s")
 
 
 # ---------- lecture de l'OAR : objets, blocs skin des meshes, terrain ----------
