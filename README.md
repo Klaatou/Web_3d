@@ -41,7 +41,7 @@ python glb2html.py "Region-final.glb" --settings --register regions.json --map-p
 |---|---|
 | `Region.html` | Coquille (~85 Ko), **identique pour toutes les régions** : elle déduit ses fichiers de son propre nom. Titre de l'onglet = `room`, fond = `skyColor`. |
 | `Region.glb` | Le modèle, octets bruts. |
-| `Region.config.json` | Les réglages. Relu à chaque rechargement (F5). |
+| `Region.config.json` | Réglages de rendu de la page (mer, caméra, promenade, présence, carte), sans les zones. Relu à chaque rechargement (F5). Détail et comparaison avec `.reglages.json` : `MODE_EMPLOI.md` § 16. |
 | `Region.zones.json` | Les zones. Relu à chaque rechargement ; s'il est absent, `zones.json` du même dossier ; sinon aucune zone. |
 | `lib/three-0.160.0/` | three.js, Draco et Meshopt, partagés par toutes les pages du dossier. |
 

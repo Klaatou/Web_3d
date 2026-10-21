@@ -317,3 +317,93 @@ Avant de refaire une conversion, supprimer l'ancien dossier intermédiaire : `Re
 | « convoar introuvable » | chemin différent | `--convoar "P:\...\convoar.exe"` |
 
 Test du script : `python tests/oar2glb.py` (OAR synthétique et faux convoar, sans réseau).
+
+## 16. Fichiers JSON d'une région modulaire
+
+Pour une page `Region.html` produite par `--modular` (ou par « Exporter la structure modulaire (.zip) » du viewer), le dossier contient :
+
+| Fichier              | Rôle                                                                                   | Relu à chaque F5 |
+|----------------------|----------------------------------------------------------------------------------------|------------------|
+| `Region.html`        | coquille identique pour toutes les régions, elle déduit ses fichiers de son nom        | non              |
+| `Region.glb`         | le modèle                                                                              | non              |
+| `Region.config.json` | réglages de **rendu de la page** (voir plus bas)                                       | oui              |
+| `Region.zones.json`  | zones, portails, arrivées                                                              | oui              |
+| `zones.json`         | zones de secours, communes aux pages du dossier qui n'ont pas leur propre `.zones.json` | oui              |
+| `lib/three-0.160.0/` | three.js, Draco, Meshopt, partagés par toutes les pages du dossier                     | non              |
+
+### Quel fichier de zones est lu
+
+Dans l'ordre, et on s'arrête au premier qui donne une liste JSON valide :
+
+1. `Region.zones.json`
+2. `zones.json` du même dossier, **seulement si** le premier est absent, inaccessible (erreur HTTP) ou n'est pas une liste
+3. sinon : aucune zone
+
+Il n'y a **pas de fusion** : dès que `Region.zones.json` est lu, `zones.json` est ignoré. Un `zones.json` posé à côté d'une région qui a déjà son `.zones.json` n'a donc aucun effet.
+
+Les zones marquées **privées** sont retirées à la lecture, dans l'un comme dans l'autre fichier, sauf si `profile` vaut `perso` dans `Region.config.json`.
+
+### Region.config.json : le rendu de la page, pas le viewer
+
+C'est le dictionnaire de réglages que la page lit au démarrage (le même que celui intégré dans une page autonome). Il est **à plat** :
+
+- mer, trou, vagues, ciel, rotation de la région ;
+- caméra de départ : `camDir`, `target`, `zoom` ;
+- promenade : `walk`, `eyeHeight`, `walkSpeed`, `walkIgnore` ;
+- `names`, `panel`, `retina`, `anim`, `foliageCutout` ;
+- présence : `presenceUrl`, `room`, `chat`, `chatFade`, `spectate` ;
+- carte des mondes : `map` (carte résolue) et `mapUrl` ;
+- `profile` (`public` ou `perso`), `version`, `seaSize`.
+
+`zones` y est **toujours vide** (`[]`) et `zonesLive` toujours vide : en modulaire, les zones sont uniquement dans `Region.zones.json`.
+
+Le viewer ne lit jamais ce fichier : il travaille avec son propre fichier de réglages (ci-dessous).
+
+### `.reglages.json` et `.config.json` n'ont pas la même structure
+
+`<nom>.reglages.json` est l'état de travail du viewer (« Enregistrer dans un fichier »). Il est **imbriqué** :
+
+```
+{ v, file, saved,
+  cfg:     { rotate, hole, holeFade, ..., mapUrl, guide, ignoreViz },
+  camera:  { camDir, target, zoom },
+  zones:   [ ...toutes les zones, privées comprises ],
+  profile, thisReg: { fiche de cette région pour la carte },
+  cmd:     { script, glb, dest, mapPage } }
+```
+
+| | `<nom>.reglages.json` (viewer) | `<page>.config.json` (page) |
+|---|---|---|
+| Structure | imbriquée (`cfg`, `camera`, ...) | à plat |
+| Caméra | sous-objet `camera` | à la racine (`camDir`, `target`, `zoom`) |
+| Zones | toutes, privées comprises | toujours vide |
+| Carte | seulement la fiche de cette région (`thisReg`) | carte complète résolue (`map`) |
+| Propre à lui | `guide`, `ignoreViz`, `cmd`, `thisReg` | `seaSize`, `version` |
+| Écrit par | le viewer | `glb2html.py` |
+| Lu par | le viewer, `glb2html.py --settings` | la page exportée |
+
+La conversion ne va que dans un sens :
+
+```
+<nom>.reglages.json  ->  glb2html.py --settings  ->  <page>.config.json + <page>.zones.json
+```
+
+Un `.config.json` ne peut pas être donné à `--settings` (le script cherche la clé `cfg` et refuse le fichier), ni rechargé dans le viewer (« fichier de réglages non reconnu »). Pour garder ses réglages, il faut donc conserver le `.reglages.json` : le `.config.json` n'en est qu'un produit dérivé.
+
+### Quel fichier modifier, et ce qui l'écrase
+
+| Je veux changer...                    | Je modifie / je lance                                                    | Ce qui peut l'écraser ensuite                                              |
+|---------------------------------------|--------------------------------------------------------------------------|----------------------------------------------------------------------------|
+| un réglage de rendu (vagues, ciel...) | `--config-only` (voir ci-dessous), ou `Region.config.json` à la main     | tout nouveau `--modular` ou `--config-only` réécrit `Region.config.json`   |
+| une zone                              | `Region.zones.json` à la main, ou **Exporter zones (.json)** (§ 12)      | `--modular` avec `--zones` ou `--settings` ; `--config-only` avec `--zones` |
+| l'état de travail du viewer           | **Enregistrer dans un fichier**                                          | rien (c'est la source)                                                     |
+
+Sans `--zones` ni `--settings`, un `Region.zones.json` déjà présent (modifié à la main, par exemple) n'est pas écrasé. Dès qu'une source de zones est donnée, il est réécrit.
+
+Changer un réglage sans toucher au `.glb`, à la coquille ni aux zones :
+
+```
+python glb2html.py --settings "Region-final.glb" --config-only --wave 2 -o "Region.html"
+```
+
+Les options de la ligne de commande l'emportent sur le `.reglages.json`. Les visiteurs voient le changement à leur prochain rechargement.
