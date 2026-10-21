@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fabrique glb2html.py, glb-viewer.html, presence_server.py et oar2glb.py dans dist/ à partir de src/.
+"""Fabrique glb2html.py, glb-viewer.html, presence_server.py, oar2glb.py, glb2tiles.py (et glb-stats.py) dans dist/ à partir de src/ et tools/.
 
 Usage :  python build.py                  (télécharge three@0.160.0 depuis jsDelivr dans .cache/ au premier lancement)
          python build.py --vendor DOSSIER (racine d'un paquet npm three déjà présent : hors ligne)
@@ -85,6 +85,8 @@ shell_modules, shell_draco = gen.shell_lib_files()
 shell_lib = {"dir": gen.LIB_REL, "modules": shell_modules, "draco": shell_draco}
 (OUT / "presence_server.py").write_text((SRC / "presence_server.py").read_text(encoding="utf-8").replace("__VERSION__", VERSION), encoding="utf-8")
 (OUT / "oar2glb.py").write_text((ROOT / "tools" / "oar2glb.py").read_text(encoding="utf-8").replace("__VERSION__", VERSION), encoding="utf-8")
+(OUT / "glb2tiles.py").write_text((ROOT / "tools" / "glb2tiles.py").read_text(encoding="utf-8").replace("__VERSION__", VERSION), encoding="utf-8")
+(OUT / "glb-stats.py").write_text((ROOT / "tools" / "glb-stats.py").read_text(encoding="utf-8"), encoding="utf-8")   # fonctions communes de glb2tiles.py : doit rester à côté
 
 
 def jsq(s):  # littéral JS sûr dans <script>

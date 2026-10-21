@@ -12,6 +12,7 @@ Outils :
 | `glb2html.py` | Script qui fait la même chose en ligne de commande (hors ligne, sans navigateur). |
 | `presence_server.py` | Serveur WebSocket de présence, chat, modération et compteurs de visiteurs. |
 | `oar2glb.py` | Convertit une sauvegarde OpenSim (`.oar`) en `.glb` (convoar + réparation) ; `--version` affiche sa version. Détail : `MODE_EMPLOI.md` § 15. |
+| `glb2tiles.py` (+ `glb-stats.py` à côté) | Découpe un GLB énorme en tuiles autonomes (`X.tiles/*.glb` + `X.tiles.json`) ; `--analyse` mesure et recommande sans rien écrire. Le chargement des tuiles par la page viendra plus tard. Détail : `MODE_EMPLOI.md` § 17. |
 
 ## Fabriquer les fichiers
 

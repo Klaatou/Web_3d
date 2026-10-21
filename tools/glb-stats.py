@@ -69,25 +69,11 @@ def fmt(n):
     return f"{n:,}".replace(",", " ")
 
 
-def main():
-    ap = argparse.ArgumentParser(description="Analyse rapide d'un GLB (en-tête JSON seulement).")
-    ap.add_argument("glb")
-    ap.add_argument("--bloc", type=float, default=256.0, help="côté des blocs en mètres (défaut 256)")
-    ap.add_argument("--sortie", help="écrit aussi le rapport dans ce fichier (UTF-8)")
-    a = ap.parse_args()
-    try:
-        sys.stdout.reconfigure(encoding="utf-8")
-    except Exception:
-        pass
-
-    taille = os.path.getsize(a.glb)
-    g, njson = lire_json(a.glb)
+def modele(g):
+    """Mesures communes (utilisées aussi par glb2tiles.py) : accessors, images, boîtes par mesh, instances de meshes."""
     acc, bvs = g.get("accessors", []), g.get("bufferViews", [])
     meshes, nodes, mats = g.get("meshes", []), g.get("nodes", []), g.get("materials", [])
     imgs, texs = g.get("images", []), g.get("textures", [])
-    out = []
-    p = out.append
-
     def acc_octets(i):
         x = acc[i]
         return x.get("count", 0) * NCOMP.get(x.get("type"), 1) * COMP.get(x.get("componentType"), 4)
@@ -161,8 +147,28 @@ def main():
     som_uniques = sum(acc[i]["count"] for i in pos_uniques)
     som_rendus = sum(info[mi]["som"] for mi, _, _ in inst)
     tri_rendus = sum(info[mi]["tri"] for mi, _, _ in inst)
+    return {"acc": acc, "bvs": bvs, "meshes": meshes, "nodes": nodes, "mats": mats, "imgs": imgs, "texs": texs,
+            "acc_octets": acc_octets, "img_octets": img_octets, "imgs_materiau": imgs_materiau, "info": info,
+            "racines": racines, "inst": inst, "vus": vus, "utilises": utilises, "img_utilisees": img_utilisees,
+            "geo_total": geo_total, "img_total": img_total, "som_uniques": som_uniques, "som_rendus": som_rendus,
+            "tri_rendus": tri_rendus}
 
-    p(f"Fichier : {os.path.basename(a.glb)} ({mo(taille):,.1f} Mo ; en-tête JSON lu : {mo(njson):,.1f} Mo)".replace(",", " "))
+
+def rapport(chemin, bloc=256.0, g=None, njson=0):
+    """Rapport texte (liste de lignes) ; `g` et `njson` : JSON déjà lu (sinon relu depuis `chemin`)."""
+    taille = os.path.getsize(chemin)
+    if g is None:
+        g, njson = lire_json(chemin)
+    m = modele(g)
+    acc, bvs, meshes, nodes, mats = m["acc"], m["bvs"], m["meshes"], m["nodes"], m["mats"]
+    imgs, texs, acc_octets, img_octets = m["imgs"], m["texs"], m["acc_octets"], m["img_octets"]
+    info, inst, vus = m["info"], m["inst"], m["vus"]
+    utilises, img_utilisees, geo_total, img_total = m["utilises"], m["img_utilisees"], m["geo_total"], m["img_total"]
+    som_uniques, som_rendus, tri_rendus = m["som_uniques"], m["som_rendus"], m["tri_rendus"]
+    out = []
+    p = out.append
+
+    p(f"Fichier : {os.path.basename(chemin)} ({mo(taille):,.1f} Mo ; en-tête JSON lu : {mo(njson):,.1f} Mo)".replace(",", " "))
     p("")
     p("== Contenu ==")
     p(f"Nœuds parcourus : {vus} | meshes : {len(meshes)} (utilisés : {len(utilises)}) | instances de meshes : {len(inst)}")
@@ -196,8 +202,8 @@ def main():
             b = par_racine.setdefault(r, [1e30, -1e30, 1e30, -1e30, 0])
             b[0] = min(b[0], min(c[0] for c in cs)); b[1] = max(b[1], max(c[0] for c in cs))
             b[2] = min(b[2], min(c[2] for c in cs)); b[3] = max(b[3], max(c[2] for c in cs)); b[4] += 1
-        gros = sorted(((max(b[1] - b[0], b[3] - b[2]), r, b[4]) for r, b in par_racine.items() if max(b[1] - b[0], b[3] - b[2]) > a.bloc), reverse=True)
-        p(f"Objets racine : {len(par_racine)} | plus grands qu'un bloc de {a.bloc:.0f} m : {len(gros)}")
+        gros = sorted(((max(b[1] - b[0], b[3] - b[2]), r, b[4]) for r, b in par_racine.items() if max(b[1] - b[0], b[3] - b[2]) > bloc), reverse=True)
+        p(f"Objets racine : {len(par_racine)} | plus grands qu'un bloc de {bloc:.0f} m : {len(gros)}")
         for etendue, r, nb in gros[:5]:
             p(f"  - nœud {r} « {nodes[r].get('name', '')[:40]} » : {etendue:.0f} m, {nb} mesh(es)")
 
@@ -207,7 +213,7 @@ def main():
         for mi, _, cs in inst:
             cx = sum(c[0] for c in cs) / 8
             cz = sum(c[2] for c in cs) / 8
-            k = (int((cx - x0) // a.bloc), int((cz - z0) // a.bloc))
+            k = (int((cx - x0) // bloc), int((cz - z0) // bloc))
             b = blocs.setdefault(k, {"n": 0, "tri": 0, "meshes": set(), "imgs": set()})
             b["n"] += 1
             b["tri"] += info[mi]["tri"]
@@ -223,7 +229,7 @@ def main():
             ga = set().union(*[info[i]["accs"] for i in b["meshes"]])
             lignes.append((k, b["n"], b["tri"], mo(sum(acc_octets(i) for i in ga)), mo(sum(img_octets[i] for i in b["imgs"]))))
         p("")
-        p(f"== Blocs de {a.bloc:.0f} m : {len(blocs)} non vides (centre des instances ; géométrie et textures sans doublon dans le bloc) ==")
+        p(f"== Blocs de {bloc:.0f} m : {len(blocs)} non vides (centre des instances ; géométrie et textures sans doublon dans le bloc) ==")
         if len(lignes) <= 60:
             p(f"{'bloc (x,z)':>10} {'instances':>10} {'triangles':>12} {'géom. Mo':>9} {'text. Mo':>9}")
             for k, n_, tri_, g_, t_ in lignes:
@@ -246,7 +252,20 @@ def main():
         p(f"Somme des blocs : géométrie {tot_geo:,.1f} Mo (contre {mo(geo_total):,.1f} Mo sans doublon dans tout le fichier) : écart = surcoût si les meshes partagés sont dupliqués dans chaque bloc.".replace(",", " "))
         p(f"Géométrie utilisée par plusieurs blocs : {bib_geo:,.1f} Mo ({100 * bib_geo / max(mo(geo_total), 1e-9):.0f} % du total) | textures utilisées par plusieurs blocs : {bib_img:,.1f} Mo ({100 * bib_img / max(mo(img_total), 1e-9):.0f} % du total) : taille d'une bibliothèque commune chargée une fois.".replace(",", " "))
 
-    texte = "\n".join(out)
+    return out
+
+
+def main():
+    ap = argparse.ArgumentParser(description="Analyse rapide d'un GLB (en-tête JSON seulement).")
+    ap.add_argument("glb")
+    ap.add_argument("--bloc", type=float, default=256.0, help="côté des blocs en mètres (défaut 256)")
+    ap.add_argument("--sortie", help="écrit aussi le rapport dans ce fichier (UTF-8)")
+    a = ap.parse_args()
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+    texte = "\n".join(rapport(a.glb, a.bloc))
     print(texte)
     if a.sortie:
         with open(a.sortie, "w", encoding="utf-8") as f:
