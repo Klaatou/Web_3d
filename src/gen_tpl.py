@@ -27,6 +27,7 @@ import pathlib
 import re
 import struct
 import sys
+import urllib.parse
 import urllib.request
 
 # <<DEFAULTS>>
@@ -462,15 +463,26 @@ SHELL_BOOT_OLD = "const C = JSON.parse(document.getElementById('cfg').textConten
 SHELL_MSG_OLD = '<div id="msg">Chargement…</div>\n'
 # script classique : depuis le disque, les modules sont bloqués par le navigateur et le module de la page ne s'exécute jamais
 SHELL_MSG_NEW = SHELL_MSG_OLD + """<script>
-if (location.protocol === 'file:') document.getElementById('msg').textContent = 'Cette page est en mode modulaire : elle doit être servie en http ou https, pas ouverte depuis le disque. Pour la tester : python -m http.server dans son dossier, puis http://localhost:8000/' + decodeURIComponent(location.pathname.split('/').pop());
+if (location.protocol === 'file:') document.getElementById('msg').textContent = 'Cette page est en mode modulaire : elle doit être servie en http ou https, pas ouverte depuis le disque. Pour la tester : python -m http.server dans son dossier, puis http://localhost:8000/' + decodeURIComponent(location.pathname.split('/').pop()) + location.search;
 </script>
 """
 # la coquille ne contient aucun nom : X.html charge X.config.json, X.glb, X.zones.json (puis zones.json) du même dossier
-SHELL_BOOT_NEW = """// fichiers frères déduits du nom de la page : copier X.html en Y.html (et ses fichiers frères en Y.*) suffit
+SHELL_BOOT_NEW = """// fichiers frères : par défaut déduits du nom de la page (copier X.html en Y.html et ses frères en Y.* suffit) ;
+// avec ?region=NOM, de NOM : une seule coquille peut servir plusieurs régions du même dossier
 const BOOT = (() => {
-  let f = location.pathname.split('/').pop() || '';
-  try { f = decodeURIComponent(f); } catch (e) {}
-  const e = encodeURIComponent(f.replace(/\\.html?$/i, '') || 'index');
+  const fail = raison => { document.getElementById('msg').textContent = 'Erreur : ' + raison; throw new Error(raison); };
+  const q = new URLSearchParams(location.search);
+  let e;
+  if (q.has('region')) {
+    // NOM doit être un seul nom de fichier du dossier : jamais d'adresse, de chemin ni de dossier parent (aucune requête avant ce contrôle)
+    const nom = (q.get('region') || '').replace(/\\.html?$/i, '');
+    if (!nom || /[\\/\\\\:?#\\x00-\\x1f]/.test(nom) || nom.includes('..') || nom.startsWith('.')) fail('paramètre region refusé « ' + nom + ' » (un seul nom de fichier, sans / \\ : ? # ni .., sans point au début)');
+    e = encodeURIComponent(nom);
+  } else {
+    let f = location.pathname.split('/').pop() || '';
+    try { f = decodeURIComponent(f); } catch (x) {}
+    e = encodeURIComponent(f.replace(/\\.html?$/i, '') || 'index');
+  }
   return { config: e + '.config.json', glb: e + '.glb', zones: [e + '.zones.json', 'zones.json'] };
 })();
 const C = await (async () => {
@@ -540,6 +552,27 @@ def shell_lib_files():
 def modular_names(out_path: pathlib.Path):
     """Fichiers frères de la page modulaire : (glb, config, zones)."""
     return out_path.with_suffix(".glb"), out_path.with_suffix(".config.json"), out_path.with_suffix(".zones.json")
+
+
+DEFAULT_SHELL = "index.html"
+
+
+def valid_region_name(name) -> bool:
+    """Même règle que la coquille (?region=NOM) : un seul nom de fichier, sans / \\ : ? # ni .., sans point au début."""
+    name = re.sub(r"\.html?$", "", str(name or ""), flags=re.I)
+    return bool(name) and not re.search(r"[/\\:?#\x00-\x1f]", name) and ".." not in name and not name.startswith(".")
+
+
+def shell_page_address(shell_name: str, region: str) -> str:
+    """Adresse d'une région servie par une coquille commune : COQUILLE.html?region=NOM (le #spawn= s'ajoute après)."""
+    return f"{shell_name}?region={urllib.parse.quote(region, safe='')}"
+
+
+def lib_missing(out_dir: pathlib.Path):
+    """Fichiers de lib/three-X/ absents (la coquille commune et les pages déjà publiées les partagent)."""
+    mods, draco = shell_lib_files()
+    lib = out_dir / LIB_REL
+    return [str(lib / n) for n in list(mods.values()) + ["draco/" + n for n in draco] if not (lib / n).is_file()]
 
 
 def build_shell() -> str:
@@ -631,8 +664,15 @@ def write_modular_zones(zones_path: pathlib.Path, kw):
     print(f"[zones] {len(zones)} zone(s), profil {profile} -> {zones_path}")
 
 
-def generate(glb_path: pathlib.Path, out_path: pathlib.Path, vendor_dir, modular=False, **kw):
+def generate(glb_path: pathlib.Path, out_path: pathlib.Path, vendor_dir, modular=False, shell=None, **kw):
+    """shell : nom de la coquille commune (COQUILLE.html). Alors out_path désigne la région (NOM = son nom sans extension) :
+    seuls NOM.glb, NOM.config.json et NOM.zones.json sont écrits, plus la coquille et lib/ s'ils sont absents."""
     data = glb_path.read_bytes()
+    if shell:
+        modular = True
+        if not valid_region_name(out_path.stem):
+            print(f"[ERREUR] nom de région « {out_path.stem} » refusé par la coquille commune (un seul nom de fichier, sans / \\ : ? # ni .., sans point au début)", file=sys.stderr)
+            return False
     if modular:
         if kw.get("title"):
             print("[AVERTISSEMENT] --title est ignoré en mode modulaire : le titre de la page est le salon (--room) de la config", file=sys.stderr)
@@ -650,16 +690,29 @@ def generate(glb_path: pathlib.Path, out_path: pathlib.Path, vendor_dir, modular
     out_path.parent.mkdir(parents=True, exist_ok=True)
     if modular:
         glb_out, cfg_out, zones_out = modular_names(out_path)
-        write_modular_lib(out_path.parent, vendor_dir)
+        if not shell or lib_missing(out_path.parent):
+            write_modular_lib(out_path.parent, vendor_dir)
         write_atomic(glb_out, data)
         write_config(cfg_out, glb_path.name, kw)
         # sans source de zones, un X.zones.json existant (peut-être modifié à la main) n'est pas écrasé
         if zones_given(kw) or not zones_out.is_file():
             write_modular_zones(zones_out, kw)
-    write_atomic(out_path, page.encode("utf-8"))
+    if shell:
+        shell_path = out_path.with_name(shell)
+        if not shell_path.is_file():
+            write_atomic(shell_path, page.encode("utf-8"))
+            print(f"[coquille] {shell_path} écrite")
+        elif shell_path.read_bytes() == page.encode("utf-8"):
+            print(f"[coquille] {shell_path} déjà présente et identique")
+        else:
+            print(f"[AVERTISSEMENT] {shell_path} existe et diffère de la coquille de cette version : conservée (les autres régions la partagent). Supprime-la pour la renouveler", file=sys.stderr)
+    else:
+        write_atomic(out_path, page.encode("utf-8"))
     if not modular:
         write_live_zones(out_path, dict(kw, zones_live=kw.get("zones_live") or ""))
-    if modular:
+    if shell:
+        print(f"[OK] {glb_path.name} -> {glb_out.name} + {cfg_out.name} + {zones_out.name}, coquille commune {shell} ; adresse : {shell_page_address(shell, out_path.stem)} [glb2html {VERSION}]")
+    elif modular:
         print(f"[OK] {glb_path.name} -> {out_path} (modulaire : coquille {len(page) / 1024:.0f} Ko + {glb_out.name} {len(data) / 2**20:.2f} Mo + {cfg_out.name} + {zones_out.name} + {LIB_REL}/) [glb2html {VERSION}]")
     else:
         print(f"[OK] {glb_path.name} -> {out_path} ({len(data) / 2**20:.2f} Mo glb, {len(page) / 2**20:.2f} Mo html) [glb2html {VERSION}]")
@@ -710,6 +763,11 @@ def region_entry(a, S_reg, room, stem, page_name):
     return entry
 
 
+def page_name_of(a, out):
+    """Adresse relative de la région pour la carte : la page elle-même, ou COQUILLE.html?region=NOM avec une coquille commune."""
+    return shell_page_address(a.shared_shell, out.stem) if a.shared_shell else out.name
+
+
 def main():
     ap = argparse.ArgumentParser(description="GLB -> HTML autonome hors ligne (three.js intégré)")
     ap.add_argument("--version", action="version", version=f"glb2html {VERSION}")
@@ -754,6 +812,7 @@ def main():
     ap.add_argument("--map-page", metavar="FICHIER.html", help="génère aussi une page web « carte des mondes » (liens cliquables vers chaque région) ; sans .glb : génère seulement cette page depuis --map. Relatif : à côté de la page de la région")
     ap.add_argument("--settings", nargs="?", const="auto", default=None, metavar="FICHIER", help="reprend TOUS les réglages enregistrés par le viewer (bouton « Enregistrer dans un fichier » : trou, vagues, caméra, zones, fiche de région, vignette…). Sans nom : <nom du .glb>.reglages.json. Les options de la ligne de commande l'emportent. Relatif : dossier de lancement, puis dossier du script")
     ap.add_argument("--modular", action="store_true", help="mode modulaire : écrit une coquille <page>.html identique pour toutes les régions (elle déduit ses fichiers de son nom) + <page>.glb (octets bruts) + <page>.config.json (réglages) + <page>.zones.json (zones, relues à chaque ouverture ; à défaut zones.json du dossier) + lib/three-X/ partagé (Draco et Meshopt compris). Demande http(s) pour l'ouverture (pas depuis le disque)")
+    ap.add_argument("--shared-shell", nargs="?", const=DEFAULT_SHELL, default=None, metavar="COQUILLE.html", help=f"mode modulaire à coquille commune : une seule coquille (défaut {DEFAULT_SHELL}) sert plusieurs régions du même dossier, à l'adresse COQUILLE.html?region=NOM. -o désigne la région (NOM = son nom sans extension, ex. -o Ankh.html) : seuls NOM.glb, NOM.config.json et NOM.zones.json sont écrits, plus la coquille et lib/three-X/ s'ils sont absents (une coquille existante n'est jamais écrasée). --register écrit cette adresse dans regions.json. Implique --modular")
     ap.add_argument("--config-only", action="store_true", help="réécrit seulement <page>.config.json d'une page modulaire déjà générée (indiquée par -o), sans toucher au .glb ni à la coquille ; les visiteurs rechargent. <page>.zones.json n'est réécrit que si --zones est donné. Avec --register, met aussi la carte à jour")
     ap.add_argument("--room", default=ROOM, help="salon de présence (défaut : nom du fichier)")
     ap.add_argument("--sea", dest="sea_enabled", action=argparse.BooleanOptionalAction, default=SEA_ENABLED)
@@ -790,6 +849,10 @@ def main():
         if not a.input:
             a.input = keep_input
         print(f"[réglages] {len(defaults)} paramètre(s) repris de {sp}")
+    if a.shared_shell:
+        if "/" in a.shared_shell or "\\" in a.shared_shell or not a.shared_shell.lower().endswith((".html", ".htm")):
+            sys.exit(f"[ERREUR] --shared-shell attend un nom de fichier .html sans dossier (reçu « {a.shared_shell} »)")
+        a.modular = True
     S_reg = S.get("thisReg") if isinstance(S.get("thisReg"), dict) else {}
     S_cmd = S.get("cmd") if isinstance(S.get("cmd"), dict) else {}
     if S and not a.output and S_cmd.get("dest"):
@@ -848,7 +911,10 @@ def main():
         if not out.suffix:
             out = out.with_suffix(".html")
         glb_out, cfg_out, zones_out = modular_names(out)
-        if not out.is_file() or not glb_out.is_file():
+        if a.shared_shell:
+            if not glb_out.is_file() or not out.with_name(a.shared_shell).is_file():
+                sys.exit(f"[ERREUR] {a.shared_shell} ou {glb_out.name} introuvable : génère d'abord la région avec --shared-shell")
+        elif not out.is_file() or not glb_out.is_file():
             sys.exit(f"[ERREUR] {out} ou {glb_out.name} introuvable : génère d'abord la page avec --modular")
         name = pathlib.Path(a.input).name if a.input else glb_out.name
         if not a.room and cfg_out.is_file():
@@ -857,7 +923,7 @@ def main():
             except (OSError, ValueError):
                 pass
         if a.register:
-            entry = region_entry(a, S_reg, kw["room"] or pathlib.Path(name).stem, pathlib.Path(name).stem, out.name)
+            entry = region_entry(a, S_reg, kw["room"] or pathlib.Path(name).stem, pathlib.Path(name).stem, page_name_of(a, out))
             reg = data_path(a.register)
             kw["map_entries"] = register_region(reg, entry)
             print(f"[carte] « {entry['name']} » ajoutée ou mise à jour dans {reg} ({len(kw['map_entries'])} région(s))")
@@ -905,7 +971,7 @@ def main():
         if not files:
             sys.exit(f"Aucun .glb dans {inp}")
         outdir = pathlib.Path(a.output) if a.output else None
-        ok = sum(generate(f, (outdir or f.parent) / (f.stem + " - Offline.html"), a.vendor, modular=a.modular, **kw) for f in files)
+        ok = sum(generate(f, (outdir or f.parent) / (f.stem + (".html" if a.shared_shell else " - Offline.html")), a.vendor, modular=a.modular, shell=a.shared_shell, **kw) for f in files)
         print(f"{ok}/{len(files)} fichiers générés")
         sys.exit(0 if ok == len(files) else 1)
     if not inp.is_file():
@@ -915,17 +981,19 @@ def main():
     if a.output:
         out = pathlib.Path(a.output)
         if out.is_dir() or str(a.output).endswith(("/", "\\")):
-            out = out / (inp.stem + " - Offline.html")
+            out = out / (inp.stem + (".html" if a.shared_shell else " - Offline.html"))
         elif not out.suffix:
             out = out.with_suffix(".html")
     else:
-        out = inp.with_name(inp.stem + " - Offline.html")
+        out = inp.with_name(inp.stem + (".html" if a.shared_shell else " - Offline.html"))
+    if a.shared_shell and not valid_region_name(out.stem):
+        sys.exit(f"[ERREUR] nom de région « {out.stem} » refusé par la coquille commune (un seul nom de fichier, sans / \\ : ? # ni .., sans point au début) : choisis un autre -o")
     if a.register:
-        entry = region_entry(a, S_reg, a.room or inp.stem, inp.stem, out.name)
+        entry = region_entry(a, S_reg, a.room or inp.stem, inp.stem, page_name_of(a, out))
         reg = data_path(a.register)
         kw["map_entries"] = register_region(reg, entry)
         print(f"[carte] « {entry['name']} » ajoutée ou mise à jour dans {reg} ({len(kw['map_entries'])} région(s))")
-    ok = generate(inp, out, a.vendor, modular=a.modular, **kw)
+    ok = generate(inp, out, a.vendor, modular=a.modular, shell=a.shared_shell, **kw)
     if ok and a.map_page:
         entries = kw["map_entries"] if kw.get("map_entries") is not None else json.loads(MAP_JSON)
         if not clean_map(entries):

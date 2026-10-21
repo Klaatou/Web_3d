@@ -430,5 +430,22 @@ r = run_tool(od / "R.oar", fake=rs)
 rapport("nouvel essai 1/2" in r.stdout and "absente(s) sur" not in r.stdout and (od / "R.glb").exists(),
         "image manquante : convoar relancé, texture récupérée", r.stdout[-700:])
 
+# ---------- version ----------
+print("--- version")
+vfile = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
+v = subprocess.run([sys.executable, str(TOOL), "--version"], capture_output=True, text=True, cwd=tmp, timeout=30)   # le délai prouve qu'aucune pause « Entrée » n'attend
+rapport(v.returncode == 0 and v.stdout.strip() == "oar2glb __VERSION__" and not v.stderr, "--version (source) : affiche la version et rend la main, sans pause", (v.returncode, v.stdout, v.stderr))
+dist = ROOT / "dist" / "oar2glb.py"
+rapport(dist.is_file(), "dist/oar2glb.py fabriqué par build.py (lancer python build.py avant)")
+if dist.is_file():
+    txt = dist.read_text(encoding="utf-8")
+    v = subprocess.run([sys.executable, str(dist), "--version"], capture_output=True, text=True, cwd=tmp, timeout=30)
+    rapport("__VERSION__" not in txt and v.returncode == 0 and v.stdout.strip() == "oar2glb " + vfile, "--version (dist) : version du fichier VERSION", (v.returncode, v.stdout, vfile))
+    r = subprocess.run([sys.executable, str(dist), str(tmp / "R.oar"), "--convoar", str(fake), "--nopause"], capture_output=True, text=True, cwd=tmp)
+    log = dist.with_name("oar2glb.log")
+    lignes = log.read_text(encoding="utf-8").splitlines() if log.is_file() else []
+    rapport(r.stdout.splitlines()[:1] == ["[oar2glb] " + vfile] and lignes[:1] == ["[oar2glb] " + vfile], "le journal commence par la version", (r.stdout[:120], lignes[:2]))
+    log.unlink(missing_ok=True)
+
 print("\n" + ("TOUT PASSE" if not bad else f"{bad} ÉCHEC(S)"))
 sys.exit(1 if bad else 0)

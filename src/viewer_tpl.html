@@ -72,7 +72,7 @@ small{display:block;margin-top:8px;color:#333}
       <button id="bFrame">Recadrer</button>
       <button id="bReset">Valeurs par défaut</button>
     </div>
-    <small>L'export HTML reprend la caméra exactement telle qu'affichée (direction, cible, zoom). Aucun accès réseau, ni ici ni dans le fichier exporté. « HTML autonome » : une seule page, qui s'ouvre depuis le disque. « Structure modulaire » : un .zip à décompresser dans le dossier du site (page légère, .glb, .config.json, .zones.json, lib/) ; il faut le servir en http/https, et la page se renomme avec ses trois fichiers frères.</small>
+    <small>L'export HTML reprend la caméra exactement telle qu'affichée (direction, cible, zoom). Aucun accès réseau, ni ici ni dans le fichier exporté. « HTML autonome » : une seule page, qui s'ouvre depuis le disque. « Structure modulaire » : un .zip à décompresser dans le dossier du site (index.html = coquille commune, NOM.glb, NOM.config.json, NOM.zones.json, lib/) ; il faut le servir en http/https ; la région s'ouvre à index.html?region=NOM, et plusieurs régions peuvent partager la même coquille.</small>
     <h2>Récapitulatif pour le script</h2>
     <div class="row"><label for="cmdScript">Chemin de glb2html.py</label><input id="cmdScript" type="text" placeholder="glb2html.py" style="grid-column:1/-1;width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px"></div>
     <div class="row"><label for="cmdGlb">Chemin du fichier .glb</label><input id="cmdGlb" type="text" placeholder="fichier.glb" style="grid-column:1/-1;width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px"></div>
@@ -80,6 +80,7 @@ small{display:block;margin-top:8px;color:#333}
     <div class="row"><label for="cmdMapPage">Page « carte » web à régénérer (facultatif)</label><input id="cmdMapPage" type="text" placeholder="carte.html" style="grid-column:1/-1;width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px"></div>
     <label class="chk"><input id="cmdShort" type="checkbox"><span>Commande courte : le script relit tous les réglages dans le fichier .reglages.json</span></label>
     <label class="chk"><input id="cmdModular" type="checkbox"><span>Mode modulaire : page légère + .glb + .config.json à côté (nécessite http/https ; ajoute --modular)</span></label>
+    <label class="chk"><input id="cmdShared" type="checkbox"><span>Coquille commune : index.html?region=NOM, seuls .glb, .config.json et .zones.json par région (nécessite http/https ; ajoute --shared-shell à la place de --modular)</span></label>
     <div class="btns"><button id="bCmd" class="wide">Générer la ligne de commande PowerShell</button></div>
     <textarea id="cmdOut" readonly rows="7" placeholder="La commande apparaît ici (seulement les options qui changent par rapport aux valeurs par défaut du script)." style="width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;margin-top:4px"></textarea>
     <div class="btns"><button id="bCmdCopy" class="wide">Copier la commande</button></div>
@@ -854,6 +855,7 @@ $('fSettings').onchange = async e => {
 $('bSetForget').onclick = () => { if (!curFile) return setStatus('Aucun fichier chargé'); try { localStorage.removeItem(fileKey(curFile)); } catch (e) {} lastSaved = snapStr(snapshot()); updateSettingsInfo(); setStatus('Réglages mémorisés oubliés pour ' + curFile.name + ' (ils seront de nouveau mémorisés à la prochaine modification)'); };
 
 // ---------- récapitulatif : ligne de commande pour glb2html.py
+const SHARED_NOTE = 'Coquille commune : la commande écrit NOM.glb, NOM.config.json et NOM.zones.json (NOM = nom du fichier de sortie -o sans extension, sinon nom du .glb), plus index.html et lib/three-0.160.0/ s\'ils sont absents (une coquille existante n\'est jamais écrasée). La région s\'ouvre à index.html?region=NOM, en http/https ; --register écrit cette adresse dans regions.json si le champ « adresse » de la fiche de région est vide. Pour ne changer qu\'un réglage ensuite : même commande avec --config-only -o NOM.html.';
 function buildCommand() {
   const q = s => "'" + String(s).replace(/'/g, "''") + "'";
   const n4 = v => String(Math.round(v * 1e4) / 1e4);
@@ -892,24 +894,27 @@ function buildCommand() {
   const script = $('cmdScript').value.trim() || 'glb2html.py', glb = $('cmdGlb').value.trim() || loadedName || 'fichier.glb';
   const dest = $('cmdDest').value.trim();
   if (dest) a.unshift('-o ' + q(dest));
-  if ($('cmdModular').checked) a.push('--modular');
+  const shared = $('cmdShared').checked, modular = $('cmdModular').checked && !shared;
+  if (shared) a.push('--shared-shell'); else if (modular) a.push('--modular');
   let cmd = ['python', q(script), q(glb)].concat(a).join(' ');
   const notes = [];
   if ($('cmdShort').checked) {
     const s2 = ['python', q(script), q(glb), '--settings ' + q(baseName + '.reglages.json')];
     if (dest) s2.push('-o ' + q(dest));
-    if ($('cmdModular').checked) s2.push('--modular');
+    if (shared) s2.push('--shared-shell'); else if (modular) s2.push('--modular');
     if (regOk) s2.push('--register ' + q('regions.json'));
     if ($('cmdMapPage').value.trim()) s2.push('--map-page ' + q($('cmdMapPage').value.trim()));
     cmd = s2.join(' ');
     notes.push('Commande courte : elle relit TOUS tes réglages (trou, vagues, caméra, zones, fiche de région…) dans ' + baseName + '.reglages.json. Clique sur « Enregistrer dans un fichier » (section Réglages mémorisés) et place ce fichier à côté de glb2html.py, puis refais-le après chaque modification. Ce que tu ajoutes à la ligne l\'emporte sur le fichier.');
-    if ($('cmdModular').checked) notes.push('Mode modulaire : la commande écrit <page>.html (coquille), <page>.glb, <page>.config.json et lib/three-0.160.0/. Publie-les ensemble, en http/https. Pour ne changer qu\'un réglage : même commande avec --config-only -o <page>.html (sans --modular).');
+    if (modular) notes.push('Mode modulaire : la commande écrit <page>.html (coquille), <page>.glb, <page>.config.json et lib/three-0.160.0/. Publie-les ensemble, en http/https. Pour ne changer qu\'un réglage : même commande avec --config-only -o <page>.html (sans --modular).');
+    if (shared) notes.push(SHARED_NOTE);
     return { cmd, notes };
   }
   if (regOk) notes.push('Carte : à chaque exécution, cette région est ajoutée ou mise à jour dans regions.json (créé à côté de glb2html.py s\'il n\'existe pas)' + (thisReg.thumb ? ' ; clique d\'abord sur « Enregistrer la vignette » et place ' + baseName + '.vignette.jpg à côté de glb2html.py.' : ' ; capture et enregistre une vignette pour l\'afficher sur la carte.'));
   else if ((cfg.map || []).length) notes.push('Carte : clique sur « Exporter regions.json » (section Carte des mondes) et place regions.json à côté de glb2html.py (ou dans le dossier de lancement).');
   if (hasZones) notes.push('Zones : clique d\'abord sur « Exporter zones (.json) » (section Zones) et place zones.json à côté de glb2html.py (ou dans le dossier où tu lances la commande), ou corrige son chemin.' + ($('profileSel').value === 'perso' ? '' : ' Profil public : les zones privées sont retirées.'));
-  if ($('cmdModular').checked) notes.push('Mode modulaire : la commande écrit <page>.html (coquille), <page>.glb, <page>.config.json et le dossier lib/three-' + '0.160.0/ partagé. Publie-les ensemble et ouvre la page en http/https. Pour ne changer qu\'un réglage ensuite : relance la même commande avec --config-only -o <page>.html (le .glb et la coquille ne sont pas touchés ; les visiteurs rechargent). Le viewer sait aussi exporter cette structure : bouton « Exporter la structure modulaire (.zip) ».');
+  if (shared) notes.push(SHARED_NOTE);
+  if (modular) notes.push('Mode modulaire : la commande écrit <page>.html (coquille), <page>.glb, <page>.config.json et le dossier lib/three-' + '0.160.0/ partagé. Publie-les ensemble et ouvre la page en http/https. Pour ne changer qu\'un réglage ensuite : relance la même commande avec --config-only -o <page>.html (le .glb et la coquille ne sont pas touchés ; les visiteurs rechargent). Le viewer sait aussi exporter cette structure : bouton « Exporter la structure modulaire (.zip) ».');
   if (!a.length) notes.push('Aucun réglage ne diffère des valeurs par défaut du script.');
   notes.push(a.length + ' option(s) ajoutée(s). Les options absentes gardent la valeur par défaut du script.');
   return { cmd, notes };
@@ -917,7 +922,7 @@ function buildCommand() {
 $('bCmd').onclick = () => {
   const r = buildCommand(); $('cmdOut').value = r.cmd;
   const n = $('cmdNote'); n.style.display = 'block'; n.textContent = r.notes.join('\n');
-  try { localStorage.setItem('glb2html_cmd_script', $('cmdScript').value); localStorage.setItem('glb2html_cmd_glb', $('cmdGlb').value); localStorage.setItem('glb2html_cmd_dest', $('cmdDest').value); localStorage.setItem('glb2html_cmd_mappage', $('cmdMapPage').value); localStorage.setItem('glb2html_cmd_short', $('cmdShort').checked ? '1' : '0'); localStorage.setItem('glb2html_cmd_modular', $('cmdModular').checked ? '1' : '0'); } catch (e) {}
+  try { localStorage.setItem('glb2html_cmd_script', $('cmdScript').value); localStorage.setItem('glb2html_cmd_glb', $('cmdGlb').value); localStorage.setItem('glb2html_cmd_dest', $('cmdDest').value); localStorage.setItem('glb2html_cmd_mappage', $('cmdMapPage').value); localStorage.setItem('glb2html_cmd_short', $('cmdShort').checked ? '1' : '0'); localStorage.setItem('glb2html_cmd_modular', $('cmdModular').checked ? '1' : '0'); localStorage.setItem('glb2html_cmd_shared', $('cmdShared').checked ? '1' : '0'); } catch (e) {}
 };
 $('bCmdCopy').onclick = async () => {
   if (!$('cmdOut').value) $('bCmd').onclick();
@@ -925,7 +930,7 @@ $('bCmdCopy').onclick = async () => {
   try { await navigator.clipboard.writeText(t); setStatus('Commande copiée'); }
   catch (e) { $('cmdOut').select(); document.execCommand('copy'); setStatus('Commande copiée'); }
 };
-try { $('cmdScript').value = localStorage.getItem('glb2html_cmd_script') || ''; $('cmdGlb').value = localStorage.getItem('glb2html_cmd_glb') || ''; $('cmdDest').value = localStorage.getItem('glb2html_cmd_dest') || ''; $('cmdMapPage').value = localStorage.getItem('glb2html_cmd_mappage') || ''; $('cmdShort').checked = localStorage.getItem('glb2html_cmd_short') === '1'; $('cmdModular').checked = localStorage.getItem('glb2html_cmd_modular') === '1'; } catch (e) {}
+try { $('cmdScript').value = localStorage.getItem('glb2html_cmd_script') || ''; $('cmdGlb').value = localStorage.getItem('glb2html_cmd_glb') || ''; $('cmdDest').value = localStorage.getItem('glb2html_cmd_dest') || ''; $('cmdMapPage').value = localStorage.getItem('glb2html_cmd_mappage') || ''; $('cmdShort').checked = localStorage.getItem('glb2html_cmd_short') === '1'; $('cmdModular').checked = localStorage.getItem('glb2html_cmd_modular') === '1'; $('cmdShared').checked = localStorage.getItem('glb2html_cmd_shared') === '1'; } catch (e) {}
 function liveConfig() {
   const cam = viewer.getCameraState();
   return {
@@ -963,7 +968,7 @@ $('bHtml').onclick = () => {
     setStatus('Export HTML OK • ' + (out.length / 2 ** 20).toFixed(2) + ' Mo');
   } catch (e) { console.error(e); setStatus('Erreur export : ' + (e.message || e)); }
 };
-// ---------- export modulaire : X.html (coquille universelle), X.glb, X.config.json, X.zones.json, lib/three-X/ (draco/ compris)
+// ---------- export modulaire : index.html (coquille commune), X.glb, X.config.json, X.zones.json, lib/three-X/ (draco/ compris)
 const CRC_T = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
 function crc32(u8) { let c = 0xFFFFFFFF; for (let i = 0; i < u8.length; i++) c = CRC_T[(c ^ u8[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
 // zip sans compression (méthode « stocké »), noms en UTF-8 : files = [[chemin, Uint8Array], ...]
@@ -992,10 +997,12 @@ $('bZip').onclick = () => {
   try {
     if (!glbBytes) return setStatus('Charge un modèle d\'abord');
     inspectGlb(glbBytes.buffer, baseName);
+    // même règle que la coquille (?region=NOM) : un seul nom de fichier
+    if (!baseName || /[\/\\:?#\x00-\x1f]/.test(baseName) || baseName.includes('..') || baseName.startsWith('.')) return setStatus('Nom de région refusé par la coquille commune : « ' + baseName + ' » (renomme le .glb : sans / \\ : ? # ni .., sans point au début)');
     const enc = new TextEncoder(), c = liveConfig();
     const zones = c.zones;                                   // déjà filtrées selon le profil d'export
     const files = [
-      [baseName + '.html', enc.encode(SHELL)],
+      ['index.html', enc.encode(SHELL)],
       [baseName + '.glb', glbBytes],
       [baseName + '.config.json', enc.encode(JSON.stringify(Object.assign(c, { zones: [], zonesLive: '' }), null, 1))],
       [baseName + '.zones.json', enc.encode(JSON.stringify(zones, null, 1))]
@@ -1004,7 +1011,7 @@ $('bZip').onclick = () => {
     for (const f of SHELL_LIB.draco) files.push([SHELL_LIB.dir + '/draco/' + f, fromDataUrl(LIBS[f])]);
     const blob = makeZip(files);
     download(baseName + '.modulaire.zip', blob);
-    setStatus('Export modulaire OK • ' + files.length + ' fichiers, ' + (blob.size / 2 ** 20).toFixed(2) + ' Mo • à décompresser dans le dossier du site, servi en http/https');
+    setStatus('Export modulaire OK • ' + files.length + ' fichiers, ' + (blob.size / 2 ** 20).toFixed(2) + ' Mo • à décompresser dans le dossier du site, servi en http/https • adresse : index.html?region=' + encodeURIComponent(baseName));
   } catch (e) { console.error(e); setStatus('Erreur export modulaire : ' + (e.message || e)); }
 };
 $('bPy').onclick = () => {

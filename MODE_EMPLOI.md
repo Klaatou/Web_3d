@@ -102,7 +102,7 @@ Si l'arrivée n'existe pas, un message « Point d'arrivée … introuvable dans 
 
 | Champ | Réglage |
 |---|---|
-| Page de destination | l'autre page : `autre-region.html` si elle est dans le même dossier, sinon son adresse complète `https://…/autre-region.html` |
+| Page de destination | l'autre page : `autre-region.html` si elle est dans le même dossier, sinon son adresse complète `https://…/autre-region.html`. Avec une coquille commune (§ 16) : `index.html?region=AutreRegion` (le `#spawn=` s'ajoute après) |
 | Point d'arrivée dans cette page | l'**Identifiant** d'une arrivée **de l'autre page** (vide = `default`) |
 
 Effet : fondu, chargement de l'autre page, le visiteur y arrive directement en promenade, avec son pseudo.
@@ -316,11 +316,15 @@ Avant de refaire une conversion, supprimer l'ancien dossier intermédiaire : `Re
 | Des prims transparents qu'on voulait garder | retirés par défaut | `--keep-invisible` |
 | « convoar introuvable » | chemin différent | `--convoar "P:\...\convoar.exe"` |
 
+`python oar2glb.py --version` affiche la version (`oar2glb v26 (21/10/2026)`) sans rien lancer ; la première ligne du journal (`oar2glb.log`, `oar2glb.diag.log`) la rappelle : `[oar2glb] v26 (21/10/2026)`. Joindre ce journal à tout signalement donne donc la version utilisée. Le fichier est fabriqué dans `dist/` par `python build.py`.
+
 Test du script : `python tests/oar2glb.py` (OAR synthétique et faux convoar, sans réseau).
 
 ## 16. Fichiers JSON d'une région modulaire
 
 Pour une page `Region.html` produite par `--modular` (ou par « Exporter la structure modulaire (.zip) » du viewer), le dossier contient :
+
+Ces fichiers sont ceux d'une région à coquille propre (`--modular`). Pour plusieurs régions dans un même dossier avec **une seule** coquille, voir « Coquille unique pour plusieurs régions » plus bas.
 
 | Fichier              | Rôle                                                                                   | Relu à chaque F5 |
 |----------------------|----------------------------------------------------------------------------------------|------------------|
@@ -330,6 +334,34 @@ Pour une page `Region.html` produite par `--modular` (ou par « Exporter la stru
 | `Region.zones.json`  | zones, portails, arrivées                                                              | oui              |
 | `zones.json`         | zones de secours, communes aux pages du dossier qui n'ont pas leur propre `.zones.json` | oui              |
 | `lib/three-0.160.0/` | three.js, Draco, Meshopt, partagés par toutes les pages du dossier                     | non              |
+
+### Coquille unique pour plusieurs régions (`--shared-shell`, v26)
+
+Une seule coquille (par défaut `index.html`) sert toutes les régions d'un même dossier, avec un seul `lib/`. Chaque région n'ajoute que trois fichiers. La région s'ouvre à **`index.html?region=NOM`**, où NOM est le nom des fichiers sans extension (`?region=NOM.html` est accepté : l'extension est retirée).
+
+```
+dossier/
+  index.html            la coquille, identique pour toutes les régions
+  lib/three-0.160.0/    partagé
+  Ankh.glb   Ankh.config.json   Ankh.zones.json
+  Jungle.glb Jungle.config.json Jungle.zones.json
+```
+
+| Besoin | Commande (PowerShell, une seule ligne) |
+|---|---|
+| Générer une région | `python glb2html.py "Ankh.glb" --settings --shared-shell --register regions.json -o "Ankh.html"` |
+| Autre nom de coquille | `--shared-shell monde.html` (adresse `monde.html?region=Ankh`) |
+| Changer un réglage | `python glb2html.py --settings "Ankh.glb" --config-only --shared-shell --wave 2 -o "Ankh.html"` |
+| Changer les zones seules | `python glb2html.py -o "Ankh.html" --zones-only --zones zones.json` |
+
+Règles :
+
+- `-o` désigne la **région** : son nom sans extension donne NOM. `Ankh.html` n'est pas écrit ; sont écrits `Ankh.glb`, `Ankh.config.json`, `Ankh.zones.json`, plus `index.html` et `lib/three-0.160.0/` **s'ils sont absents**. Une coquille existante n'est jamais écrasée (les autres régions la partagent) : si elle diffère de celle de la version courante, le script avertit ; la supprimer pour la renouveler.
+- `--register` écrit l'adresse `index.html?region=NOM` dans `regions.json` (sauf `--region-url` ou fiche du `.reglages.json`). Les portails et la carte ajoutent `#spawn=…` après la query string : `index.html?region=NOM#spawn=default&name=…`. « ● vous êtes ici » reconnaît la région par son salon, puis par l'adresse complète (query string comprise).
+- **Sans paramètre `region`**, la coquille se comporte comme avant : elle déduit ses fichiers du nom de la page (`index.html` charge `index.config.json`, `index.glb`, `index.zones.json`). Les pages déjà publiées et leurs coquilles continuent donc de marcher, sans rien changer. Sans paramètre ni fichier correspondant, la page affiche « Erreur : … introuvable (HTTP 404) » avec le nom du fichier cherché.
+- **Sécurité.** NOM doit être un seul nom de fichier. Sont refusés, avec un message d'erreur dans la page et **aucune requête réseau** : un nom vide, contenant `/` `\` `:` `?` `#` ou `..` (même encodés dans l'adresse), ou commençant par un point. Sans cela, `?region=https://autre-site/x` ferait charger config, zones et modèle depuis un site étranger (portails piégés, webhooks Home Assistant envoyés ailleurs). Le script refuse de la même façon un `-o` dont le nom serait refusé.
+- Viewer : « Exporter la structure modulaire (.zip) » donne la même structure (`index.html`, `NOM.glb`, `NOM.config.json`, `NOM.zones.json`, `lib/`) ; la case « Coquille commune » du récapitulatif pour le script ajoute `--shared-shell` à la place de `--modular`. Le `.zip` écrase `index.html` à la décompression : pour un dossier qui a déjà plusieurs régions, ne copier que les fichiers de NOM si la coquille n'a pas changé.
+- Comme tout mode modulaire, la page demande http/https (pas d'ouverture depuis le disque).
 
 ### Quel fichier de zones est lu
 

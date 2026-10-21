@@ -2,7 +2,8 @@
 """
 oar2glb.py - OAR OpenSim -> GLB unique (convoar + réparation + empaquetage)
 
-Usage :  python oar2glb.py "P:\\chemin\\MaRegion.oar" [--reencode] [--max 600] [--convoar chemin\\convoar.exe] [--keep] [--keep-invisible] [--reperes]
+Usage :  python oar2glb.py --version
+         python oar2glb.py "P:\\chemin\\MaRegion.oar" [--reencode] [--max 600] [--convoar chemin\\convoar.exe] [--keep] [--keep-invisible] [--reperes]
          python oar2glb.py "P:\\chemin\\MaRegion.oar" --diag [--glb MaRegion.glb]     (ne modifie rien, ne lance pas convoar)
 
 Étapes :
@@ -21,6 +22,7 @@ Sortie : MaRegion.glb à côté de l'OAR.
 import argparse, base64, io, json, math, os, re, shutil, struct, subprocess, sys, tarfile, time, traceback, uuid, zlib
 from pathlib import Path
 
+VERSION = "__VERSION__"      # remplacé par build.py (fichier VERSION) dans dist/oar2glb.py
 DEFAULT_CONVOAR = r"P:\_OpenSim\SL&OS\MOSES\convoar-master\dist\convoar.exe"
 
 LAUNCHER_CS = r"""
@@ -1352,6 +1354,7 @@ def pack_glb(g, base, out):
 
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument("--version", action="version", version=f"oar2glb {VERSION}")
     ap.add_argument("oar")
     ap.add_argument("--reencode", action="store_true", help="réencoder les textures J2K avant convoar")
     ap.add_argument("--max", type=float, default=600.0, help="hauteur max (m) d'un objet racine (skybox au-delà), défaut 600")
@@ -1443,9 +1446,13 @@ class Tee:
 
 
 if __name__ == "__main__":
+    if "--version" in sys.argv[1:]:      # ni journal ni pause « Entrée »
+        print(f"oar2glb {VERSION}")
+        sys.exit(0)
     log = Path(__file__).resolve().with_name("oar2glb.diag.log" if "--diag" in sys.argv else "oar2glb.log")
     lf = open(log, "w", encoding="utf-8")
     sys.stdout, sys.stderr = Tee(sys.__stdout__, lf), Tee(sys.__stderr__, lf)
+    print(f"[oar2glb] {VERSION}")
     print("[args]", sys.argv[1:])
     code = 0
     try:

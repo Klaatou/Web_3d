@@ -4,15 +4,16 @@ Outils pour mettre une région 3D sur le web : `glb2html` (générateur de pages
 
 Transforme une région 3D exportée en `.glb` (OpenSim, par exemple) en **page web autonome** : vue 3D, promenade avec avatar, visiteurs en temps réel, chat, zones et portails, carte des mondes.
 
-Trois outils :
+Outils :
 
 | Fichier fabriqué | Rôle |
 |---|---|
 | `glb-viewer.html` | Page de réglages et d'export : on charge un `.glb`, on règle la mer, le trou, la caméra, la promenade, les zones, la fiche de région, puis on exporte. |
 | `glb2html.py` | Script qui fait la même chose en ligne de commande (hors ligne, sans navigateur). |
 | `presence_server.py` | Serveur WebSocket de présence, chat, modération et compteurs de visiteurs. |
+| `oar2glb.py` | Convertit une sauvegarde OpenSim (`.oar`) en `.glb` (convoar + réparation) ; `--version` affiche sa version. Détail : `MODE_EMPLOI.md` § 15. |
 
-## Fabriquer les trois fichiers
+## Fabriquer les fichiers
 
 ```
 python build.py
@@ -56,6 +57,16 @@ python glb2html.py -o "Region.html" --zones-only --zones zones.json
 `--config-only` ne réécrit que la config (les zones ne bougent que si `--zones` est donné) ; `--zones-only` ne réécrit que les zones. Les visiteurs rechargent la page.
 
 Le viewer exporte la même structure : bouton « Exporter la structure modulaire (.zip) », à côté de « Exporter HTML autonome » (page unique qui s'ouvre depuis le disque, sans serveur). Le `.html` du zip est identique à celui de `glb2html.py --modular`.
+
+### Coquille unique pour plusieurs régions
+
+Avec `--shared-shell`, une seule coquille (`index.html` par défaut) et un seul `lib/` servent plusieurs régions du même dossier ; chaque région n'ajoute que `NOM.glb`, `NOM.config.json` et `NOM.zones.json`, et s'ouvre à `index.html?region=NOM`. Sans paramètre `region`, la coquille se comporte comme avant (pages déjà publiées inchangées). NOM doit être un seul nom de fichier : `../x`, `https://…`, `a/b`, un nom vide ou commençant par un point sont refusés sans aucune requête réseau.
+
+```
+python glb2html.py "Ankh.glb" --settings --shared-shell --register regions.json -o "Ankh.html"
+```
+
+`-o` désigne la région (`Ankh.html` n'est pas écrit) ; la coquille et `lib/` ne sont écrits que s'ils sont absents. `--register` enregistre l'adresse `index.html?region=Ankh`. Détail : `MODE_EMPLOI.md` § 16.
 
 ### Zones liées à un élément du modèle
 

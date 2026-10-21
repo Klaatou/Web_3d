@@ -7,6 +7,8 @@
   - --config-only ne touche pas <page>.zones.json sauf avec --zones ; --zones-only marche sur une page modulaire ;
   - zones liées à un élément (champ mesh) : curseur main au survol, clic, touche E, portail à l'approche ;
     un élément traversable (walkIgnore) ne bloque pas le clic ;
+  - coquille unique (v26) : index.html?region=NOM sert plusieurs régions d'un même dossier (--shared-shell), région simple
+    inchangée, NOM refusé sans aucune requête réseau (../x, https://..., a/b, vide...), carte, portails et #spawn= ;
   - viewer : « Exporter HTML autonome » et « Exporter la structure modulaire (.zip) » côte à côte, les deux exports
     fonctionnent, la coquille du .zip est identique à celle de glb2html.py --modular, « Lier à un élément » / « Délier ».
 
@@ -292,11 +294,168 @@ async def main():
             (site / "boite.zones.json").write_text(json.dumps(ZA), encoding="utf-8")
 
             # ---- viewer : deux exports côte à côte, structure modulaire, liaison
+            await test_coquille_commune(br)
             await test_viewer(br, pages)
             await test_liaison(br)
         finally:
             proc.kill()
             await br.close()
+
+
+async def test_coquille_commune(br):
+    """Une seule coquille (index.html) pour plusieurs régions : glb2html.py --shared-shell, ?region=NOM, paramètres refusés."""
+    from urllib.parse import quote
+    site2 = tmp / "site2"
+    reg = tmp / "regions2.json"
+    zb = [{"id": "arr", "type": "spawn", "x": 0, "y": 5, "z": 0, "yaw": 0}]
+    zw = [{"id": "arr", "type": "spawn", "x": 0, "y": 40, "z": 0, "yaw": 0}]
+    (tmp / "zb2.json").write_text(json.dumps(zb), encoding="utf-8")
+    (tmp / "zw2.json").write_text(json.dumps(zw), encoding="utf-8")
+    comm = ["--shared-shell", "--register", reg]
+    r = run(tmp / "boite.glb", "-o", site2 / "boite.html", *comm, "--room", "boite", "--region-name", "Boîte", "--region-xy", "1000,1000", "--zones", tmp / "zb2.json", "--no-sea")
+    run(DATA / "walk3.glb", "-o", site2 / "walk3.html", *comm, "--room", "walk3", "--region-name", "Marche", "--region-xy", "1001,1000", "--zones", tmp / "zw2.json")
+    run("-o", site2 / "boite.html", "--config-only", "--shared-shell", "--register", reg, "--room", "boite", "--region-name", "Boîte", "--region-xy", "1000,1000")   # la carte de boite connaît walk3
+    noms = sorted(p.name for p in site2.iterdir())
+    rapport(noms == ["boite.config.json", "boite.glb", "boite.zones.json", "index.html", "lib", "walk3.config.json", "walk3.glb", "walk3.zones.json"], "--shared-shell : par région seulement X.glb, X.config.json, X.zones.json ; une coquille index.html et un lib/ partagés", noms)
+    rapport((site2 / "index.html").read_bytes() == coques["boite"], "la coquille commune est identique, octet pour octet, à celle des pages modulaires")
+    rapport("index.html?region=boite" in r.stdout, "la ligne [OK] donne l'adresse index.html?region=NOM", r.stdout[-300:])
+    entrees = {e["room"]: e for e in json.loads(reg.read_text(encoding="utf-8"))}
+    rapport(entrees["boite"]["url"] == "index.html?region=boite" and entrees["walk3"]["url"] == "index.html?region=walk3", "--register écrit COQUILLE.html?region=NOM dans regions.json", {k: v["url"] for k, v in entrees.items()})
+    cfgb = json.loads((site2 / "boite.config.json").read_text(encoding="utf-8"))
+    rapport(len(cfgb["map"]) == 2 and cfgb["room"] == "boite", "boite.config.json contient la carte des deux régions", len(cfgb["map"]))
+    # une coquille existante n'est jamais écrasée (les autres régions la partagent)
+    coque0 = (site2 / "index.html").read_bytes()
+    (site2 / "index.html").write_bytes(coque0 + b"<!-- locale -->")
+    r = run(DATA / "walk3.glb", "-o", site2 / "walk3.html", *comm, "--room", "walk3", "--region-name", "Marche", "--region-xy", "1001,1000")
+    rapport((site2 / "index.html").read_bytes() == coque0 + b"<!-- locale -->" and "AVERTISSEMENT" in r.stderr, "coquille existante et différente : conservée, avec avertissement", r.stderr[-200:])
+    (site2 / "index.html").write_bytes(coque0)
+    zw0 = sha(site2 / "walk3.zones.json")
+    rapport(json.loads((site2 / "walk3.zones.json").read_text(encoding="utf-8"))[0]["id"] == "arr" and zw0 == sha(site2 / "walk3.zones.json"), "régénérer sans zones n'écrase pas walk3.zones.json")
+    # nom de région refusé aussi côté script
+    r = run(tmp / "boite.glb", "-o", site2 / ".cache.html", "--shared-shell", ok=False)
+    rapport(r.returncode != 0 and "refusé" in (r.stdout + r.stderr) and not (site2 / ".cache.glb").exists(), "le script refuse un nom de région que la coquille refuserait")
+
+    proc, port = serveur(site2)
+    base = f"http://127.0.0.1:{port}/"
+    try:
+        async def ouvrir(url, attendre=True):
+            ctx = await br.new_context(viewport={"width": 900, "height": 600})
+            pg = await ctx.new_page()
+            pg.ctx = ctx
+            pg.errs, pg.reqs = [], []
+            pg.on("pageerror", lambda e: pg.errs.append(str(e)))
+            pg.on("request", lambda q: pg.reqs.append(q.url))
+            await pg.goto(url)
+            if attendre:
+                try:
+                    await pg.wait_for_function("document.getElementById('msg') === null", timeout=20000)
+                except Exception:
+                    pass
+                await pg.wait_for_timeout(500)
+            return pg
+
+        # ---- deux régions, une seule coquille
+        pa = await ouvrir(base + "index.html?region=boite")
+        pb = await ouvrir(base + "index.html?region=walk3")
+        rapport(await pa.title() == "boite" and await pb.title() == "walk3" and not pa.errs and not pb.errs, "index.html?region=boite et ?region=walk3 : chacune charge SA config (titre = salon), sans erreur", (await pa.title(), await pb.title(), pa.errs, pb.errs))
+        await pb.ctx.close()   # les rendus logiciels se gênent : une page à la fois autant que possible
+        rapport(all(base + n in pa.reqs for n in ("boite.config.json", "boite.glb", "boite.zones.json")) and not any("walk3" in u for u in pa.reqs), "région boite : demande boite.config.json, boite.glb, boite.zones.json, rien de walk3", [u for u in pa.reqs if "boite" in u or "walk3" in u])
+        # NOM.html accepté (extension retirée)
+        pc = await ouvrir(base + "index.html?region=boite.html")
+        rapport(await pc.title() == "boite" and not pc.errs, "?region=boite.html : l'extension est retirée", (await pc.title(), pc.errs))
+        await pc.ctx.close()
+
+        # ---- région simple inchangée : sans paramètre, nom de la page
+        shutil.copy(site2 / "boite.config.json", site2 / "index.config.json")
+        shutil.copy(site2 / "boite.glb", site2 / "index.glb")
+        pi = await ouvrir(base + "index.html")
+        rapport(await pi.title() == "boite" and not pi.errs and base + "index.config.json" in pi.reqs, "sans paramètre region : comportement d'avant (index.html charge index.config.json, index.glb)", (await pi.title(), pi.errs))
+        await pi.ctx.close()
+        for f in ("index.config.json", "index.glb"):
+            (site2 / f).unlink()
+        pn = await ouvrir(base + "index.html")
+        msg = await pn.evaluate("document.getElementById('msg') && document.getElementById('msg').textContent")
+        rapport(msg and "index.config.json" in msg and "introuvable" in msg, "sans paramètre ni fichier correspondant : message d'erreur clair", msg)
+        await pn.ctx.close()
+        pm = await ouvrir(base + "index.html?region=inexistante")
+        msg = await pm.evaluate("document.getElementById('msg') && document.getElementById('msg').textContent")
+        rapport(msg and "inexistante.config.json" in msg and "introuvable" in msg, "?region=inexistante : message d'erreur clair (fichier cité)", msg)
+        await pm.ctx.close()
+
+        # ---- paramètres refusés : message dans la page, aucune requête réseau vers config, zones ou glb
+        refuses = {"../x": "../x", "https://autre-site/x": "https://autre-site/x", "a/b": "a/b", "a\\b": "a\\b", "vide": "", ".secret": ".secret", "a..b": "a..b",
+                   "a?b": "a?b", "a#b": "a#b", "a:b": "a:b", "//autre-site/x": "//autre-site/x", ".html": ".html", "tout point": ".."}
+        for nom, val in refuses.items():
+            pr = await ouvrir(base + "index.html?region=" + quote(val, safe="") , attendre=False)
+            await pr.wait_for_timeout(600)
+            msg = await pr.evaluate("document.getElementById('msg') && document.getElementById('msg').textContent")
+            interdit = [u for u in pr.reqs if u.endswith((".config.json", ".glb", ".zones.json", "zones.json")) or not u.startswith(base)]
+            rapport(bool(msg) and "refusé" in msg and not interdit, f"paramètre refusé ({nom}) : message dans la page, aucune requête config/zones/glb ni vers un autre site", (msg, interdit))
+            await pr.ctx.close()
+        for nom, brut in {"..%2fx encodé": "%2e%2e%2fx", "..\\x encodé": "..%5Cx", "https encodé": "https%3A%2F%2Fautre-site%2Fx"}.items():
+            pr = await ouvrir(base + "index.html?region=" + brut, attendre=False)
+            await pr.wait_for_timeout(600)
+            msg = await pr.evaluate("document.getElementById('msg') && document.getElementById('msg').textContent")
+            interdit = [u for u in pr.reqs if u.endswith((".config.json", ".glb", ".zones.json", "zones.json")) or not u.startswith(base)]
+            rapport(bool(msg) and "refusé" in msg and not interdit, f"paramètre refusé ({nom}, pourcentage dans l'adresse) : aucune requête config/zones/glb", (msg, interdit))
+            await pr.ctx.close()
+        pr = await ouvrir(base + "index.html?region", attendre=False)
+        await pr.wait_for_timeout(600)
+        msg = await pr.evaluate("document.getElementById('msg') && document.getElementById('msg').textContent")
+        rapport(bool(msg) and "refusé" in msg and not [u for u in pr.reqs if u.endswith((".json", ".glb"))], "?region sans valeur : refusé", msg)
+        await pr.ctx.close()
+
+        # ---- carte : « vous êtes ici », puis visite de l'autre région (#spawn= après la query string)
+        await pa.click("#mapBtn", timeout=60000)
+        await pa.wait_for_timeout(400)
+        cartes = await pa.evaluate("[...document.querySelectorAll('#mapGrid > *')].map(e => e.innerText)")
+        ici = [c for c in cartes if "vous êtes ici" in c]
+        rapport(len(cartes) == 2 and len(ici) == 1 and "Boîte" in ici[0] and any("visiter" in c and "Marche" in c for c in cartes), "carte : « vous êtes ici » sur la région courante seulement (même coquille, autre ?region=)", cartes)
+        await pa.locator("#mapGrid > *", has_text="Marche").click()
+        try:
+            await pa.wait_for_function("location.search === '?region=walk3'", timeout=8000)
+        except Exception:
+            pass
+        rapport(pa.url.startswith(base + "index.html?region=walk3#spawn=default&name="), "carte : l'adresse visitée est index.html?region=walk3#spawn=default&name=…", pa.url)
+        await pa.wait_for_function("document.getElementById('msg') === null", timeout=20000)
+        await pa.wait_for_timeout(1200)
+        rapport(await pa.title() == "walk3" and await pa.evaluate("window.__viewer.walking") and not pa.errs, "arrivée par la carte : la région chargée est walk3, en promenade", (await pa.title(), pa.errs))
+        await pa.click("#mapBtn", timeout=60000)
+        await pa.wait_for_timeout(400)
+        cartes = await pa.evaluate("[...document.querySelectorAll('#mapGrid > *')].map(e => e.innerText)")
+        ici = [c for c in cartes if "vous êtes ici" in c]
+        rapport(len(ici) == 1 and "Marche" in ici[0], "carte, côté walk3 : « vous êtes ici » suit la région", cartes)
+
+        # ---- portails (déclenchés en marchant vers l'élément « boite », comme plus haut) : même région, puis autre région de la même coquille
+        await pa.ctx.close()
+        spawn = zb[0]
+        portail = lambda cible: [spawn, {"id": "p", "type": "portal", "label": "P", "trigger": "enter", "target": cible, "spawn": "arr", "mesh": "boite", "radius": 2}]
+
+        async def marcher(pp, jusqu_a):
+            await pp.keyboard.press("f")
+            await pp.wait_for_timeout(900)
+            await pp.keyboard.down("d")
+            t0 = time.time()
+            while time.time() - t0 < 14 and not jusqu_a():
+                await pp.wait_for_timeout(250)
+            await pp.keyboard.up("d")
+
+        (site2 / "boite.zones.json").write_text(json.dumps(portail("index.html?region=boite")), encoding="utf-8")
+        pp = await ouvrir(base + "index.html?region=boite")
+        await marcher(pp, lambda: False)   # ~14 s de marche : le portail de la même région ne doit PAS naviguer
+        toast = await pp.evaluate("document.getElementById('toast').hidden ? '' : document.getElementById('toast').textContent")
+        rapport(pp.url == base + "index.html?region=boite" and "introuvable" not in toast and not pp.errs, "portail vers la même région (?region identique) : pas de navigation, arrivée trouvée", (pp.url, toast, pp.errs))
+        await pp.ctx.close()
+        (site2 / "boite.zones.json").write_text(json.dumps(portail("index.html?region=walk3")), encoding="utf-8")
+        pp = await ouvrir(base + "index.html?region=boite")
+        await marcher(pp, lambda: "region=walk3" in pp.url)
+        rapport(pp.url.startswith(base + "index.html?region=walk3#spawn=arr&name="), "portail vers une autre région de la même coquille : …?region=walk3#spawn=arr&name=…", pp.url)
+        await pp.wait_for_function("document.getElementById('msg') === null", timeout=60000)
+        await pp.wait_for_timeout(1500)
+        rapport(await pp.title() == "walk3" and await pp.evaluate("window.__viewer.walking") and not pp.errs, "arrivée par portail : walk3 chargée, en promenade", (await pp.title(), pp.errs))
+        await pp.ctx.close()
+    finally:
+        proc.kill()
 
 
 async def test_viewer(br, pages):
@@ -365,9 +524,9 @@ async def test_viewer(br, pages):
     with zipfile.ZipFile(zp) as zf:
         rapport(zf.testzip() is None, "zip valide (CRC)")
         noms = set(zf.namelist())
-        attendus = {"boite.html", "boite.glb", "boite.config.json", "boite.zones.json"}
-        rapport(attendus <= noms and all(n.startswith("lib/three-0.160.0/") for n in noms - attendus) and "lib/three-0.160.0/draco/draco_decoder.wasm" in noms and "lib/three-0.160.0/meshopt_decoder.module.js" in noms, "zip : X.html, X.glb, X.config.json, X.zones.json, lib/three-0.160.0/ (draco/ compris)", sorted(noms))
-        rapport(zf.read("boite.html") == (site / "boite.html").read_bytes(), "X.html du zip identique octet pour octet à celui de glb2html.py --modular")
+        attendus = {"index.html", "boite.glb", "boite.config.json", "boite.zones.json"}
+        rapport(attendus <= noms and all(n.startswith("lib/three-0.160.0/") for n in noms - attendus) and "lib/three-0.160.0/draco/draco_decoder.wasm" in noms and "lib/three-0.160.0/meshopt_decoder.module.js" in noms, "zip : index.html (coquille commune), X.glb, X.config.json, X.zones.json, lib/three-0.160.0/ (draco/ compris)", sorted(noms))
+        rapport(zf.read("index.html") == (site / "boite.html").read_bytes(), "index.html du zip identique octet pour octet à la coquille de glb2html.py --modular")
         rapport(zf.read("boite.glb") == (tmp / "boite.glb").read_bytes(), "X.glb du zip = le modèle chargé")
         lib_ok = all(zf.read(n) == (site / n).read_bytes() for n in noms if n.startswith("lib/"))
         rapport(lib_ok, "lib/ du zip identique à celle de glb2html.py --modular", [n for n in noms if n.startswith("lib/") and zf.read(n) != (site / n).read_bytes()])
@@ -381,11 +540,23 @@ async def test_viewer(br, pages):
         pz = await (await br.new_context(viewport={"width": 900, "height": 600})).new_page()
         ez = []
         pz.on("pageerror", lambda e: ez.append(str(e)))
-        await pz.goto(f"http://127.0.0.1:{port}/boite.html")
+        await pz.goto(f"http://127.0.0.1:{port}/index.html?region=boite")
         await pz.wait_for_function("document.getElementById('msg') === null", timeout=30000)
         rapport(await pz.evaluate("document.getElementById('msg') === null") and not ez and await pz.title() == "boite", "structure du zip servie en http : la page se charge, sans erreur", (ez, await pz.title()))
     finally:
         proc.kill()
+    # générateur de ligne de commande : même structure que le zip
+    await pg.check("#cmdModular")
+    await pg.check("#cmdShared")
+    await pg.fill("#cmdDest", "Region.html")
+    await pg.click("#bCmd")
+    cmd = await pg.input_value("#cmdOut")
+    note = await pg.inner_text("#cmdNote")
+    rapport("--shared-shell" in cmd and "--modular" not in cmd and "-o Region.html" in cmd.replace('"', "").replace("'", "") and "index.html?region=NOM" in note, "ligne de commande : « Coquille commune » donne --shared-shell (et plus --modular)", (cmd, note))
+    await pg.uncheck("#cmdShared")
+    await pg.click("#bCmd")
+    cmd = await pg.input_value("#cmdOut")
+    rapport("--modular" in cmd and "--shared-shell" not in cmd, "ligne de commande : sans la case, --modular comme avant", cmd)
     rapport(not errs, "viewer : aucune erreur JavaScript", errs)
 
 
