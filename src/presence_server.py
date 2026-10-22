@@ -113,6 +113,14 @@ def random_color():
     return (int(r * 255) << 16) | (int(g * 255) << 8) | int(b * 255)
 
 
+def announced_color(v):
+    """Couleur annoncée par le client dans « hello » (v33) : un entier entre 0 et 0xFFFFFF, sinon None (rejet silencieux : couleur tirée au hasard).
+    Un ancien client n'envoie rien : même résultat. Les anciens serveurs ignorent simplement ce champ."""
+    if isinstance(v, bool) or not isinstance(v, int) or not 0 <= v <= 0xFFFFFF:
+        return None
+    return v
+
+
 class FrFormatter(logging.Formatter):
     def format(self, record):
         return time.strftime("%d/%m/%Y %H:%M:%S", time.localtime(record.created)) + " | " + record.getMessage()
@@ -483,7 +491,8 @@ async def handler(ws):
             log("refus", room, f"ip {ip_for_log(ip)}", "salon plein")
             return
         pid, NEXT_ID = NEXT_ID, NEXT_ID + 1
-        peer = Peer(pid, ws, "", random_color(), ip, spectator, uidh, room)
+        color = announced_color(msg.get("color"))
+        peer = Peer(pid, ws, "", random_color() if color is None else color, ip, spectator, uidh, room)
         if not spectator:
             peer.name, _ = REG.resolve(uidh, msg.get("name"), persistent=not uidh.startswith("anon-"))
         existing = [p.public() for p in walkers(room)]

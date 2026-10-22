@@ -148,7 +148,7 @@ function inspectGlb(buf, name = 'fichier') {
 // ---------- état
 const DEF = {
   rotate: 0, hole: 180, holeFade: 60, holeX: 0, holeZ: 0, guide: true, wave: 0.5, seaY: -50, zoom: 1, camDir: [0, 0.25, 1], target: [0, 15, 0],
-  sea: true, anim: false, retina: false, foliageCutout: 0.12, seaSize: 4000, seaSegments: 400, walk: true, eyeHeight: 1.7, walkSpeed: 3.5, walkIgnore: 'door, porte', ignoreViz: false, zones: [], profile: 'perso', spectate: true, panel: true, map: [], mapUrl: '', names: false, chat: true, chatFade: 0, presenceUrl: '', room: '',
+  sea: true, anim: false, retina: false, foliageCutout: 0.12, seaSize: 4000, seaSegments: 400, walk: true, eyeHeight: 1.7, walkSpeed: 3.5, walkIgnore: 'door, porte', ignoreViz: false, zones: [], profile: 'perso', spectate: true, panel: true, map: [], mapUrl: '', names: false, chat: true, chatFade: 0, presenceUrl: '', room: '', zoneMarker: 'discret', showSpawns: false, fly: true,
   seaColor: 0x3A9AD9, skyColor: 0x87CEEB
 };
 const viewer = createViewer(document.getElementById('view'), DEF, makeLoader());
@@ -190,6 +190,7 @@ const ROWS = [
   ['rng', 'eyeHeight', 'Hauteur des yeux (m)', 0.5, 3, 0.05, false],
   ['rng', 'walkSpeed', 'Vitesse de marche (m/s)', 1, 10, 0.5, false],
   ['chk', 'walk', 'Inclure la promenade dans l\'export (touche F)'],
+  ['chk', 'fly', 'Vol en promenade dans l\'export (touche Début ; E monte, C descend) — --fly / --no-fly'],
   ['ignore'],
   ['sec', 'Partage'],
   ['chk', 'names', 'Afficher le nom de l\'élément au clic (dans l\'export)'],
@@ -203,6 +204,8 @@ const ROWS = [
   ['presinfo'],
   ['chatbox'],
   ['sec', 'Zones : panneaux, portails, liens, commandes'],
+  ['zmark'],
+  ['chk', 'showSpawns', 'Dessiner les arrivées dans la page exportée (petit marqueur discret au sol) — --show-spawns'],
   ['zones'],
   ['sec', 'Carte des mondes'],
   ['mapui'],
@@ -237,11 +240,15 @@ for (const r of ROWS) {
     box.innerHTML = '<div class="row"><label>Type à poser</label><select id="zNewType" style="grid-column:1/-1;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;width:100%"><option value="portal">Portail (changer de région)</option><option value="url">Panneau : lien web</option><option value="ha">Panneau : commande Home Assistant</option><option value="spawn">Point d\'arrivée</option></select></div>' +
       '<div class="btns"><button id="bZoneAdd" class="wide"></button></div><small>En promenade, la touche P pose la zone à tes pieds (un panneau 2 m devant toi, face à toi).</small>' +
       '<div id="zoneList"></div>' +
-      '<div class="btns"><button id="bZoneExp">Exporter zones (.json)</button><button id="bZoneImp">Importer zones (.json)</button></div>';
+      '<div class="btns"><button id="bZoneExp">Exporter zones (.json)</button><button id="bZoneImp">Importer zones (.json)</button></div>' +
+      '<div class="btns" id="zDirRow"><button id="bZoneDir" class="wide">Enregistrer les zones dans le dossier de la région</button></div><small id="zDirInfo"></small>';
     zoneAddLabel();
     $('bZoneAdd').onclick = () => { zoneAddMode = !zoneAddMode; placeMode = false; if (linkZone) { setLinkZone(null); renderZoneList(); } zoneAddLabel(); setStatus(zoneAddMode ? 'Clique sur la scène pour poser la zone' : 'Pose annulée'); };
     $('bZoneExp').onclick = () => download(tilesMode ? baseName + '.zones.json' : 'zones.json', new Blob([JSON.stringify(cfg.zones, null, 1)], { type: 'application/json' }));
     $('bZoneImp').onclick = () => $('fZones').click();
+    $('zDirRow').hidden = !tilesMode; $('zDirInfo').hidden = !tilesMode;
+    $('zDirInfo').textContent = 'Navigateurs Edge et Chrome : le dossier de la région est demandé une fois (lecture-écriture), X.zones.json y est écrit après avoir gardé l\'ancien sous X.zones.bak.json. La page relit X.zones.json à chaque ouverture : F5 suffit, sans régénérer (sauf si tu changes les options de la page). Sinon : téléchargement, à placer à la main.';
+    $('bZoneDir').onclick = () => saveZonesToDir();
     renderZoneList();
     continue;
   }
@@ -296,6 +303,12 @@ for (const r of ROWS) {
     sel.onchange = () => setRotation(parseInt(sel.value, 10));
     if (tilesMode) add('<small>Région en tuiles : la rotation n\'est pas proposée ici (repère du modèle d\'origine). Avec glb2html.py --tiles --rotate, les zones doivent déjà être dans le repère tourné.</small>');
     add('<small>Tourne le modèle, et avec lui les zones, les arrivées, la cible, l\'atterrissage et le trou. Utile quand l\'OAR arrive tourné ou inversé nord-sud sur la carte.</small>');
+    continue;
+  }
+  if (r[0] === 'zmark') {
+    const e = add('<div class="row"><label>Marqueur des portails et zones libres dans la page exportée (--zone-marker)</label><select id="selZMark" style="grid-column:1/-1;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;width:100%"><option value="discret">Discret : disque de 0,4 m et anneau fin (défaut)</option><option value="portee">Portée : anneau fin et net au rayon réel de la zone, visible de loin</option><option value="aucun">Aucun marqueur</option></select></div>');
+    const sel = e.querySelector('select'); sel.value = cfg.zoneMarker || 'discret';
+    sel.onchange = () => viewer.setCfg({ zoneMarker: sel.value });
     continue;
   }
   if (r[0] === 'info') { add('<pre id="holeInfo"></pre>'); continue; }
@@ -858,7 +871,7 @@ coordInfo();
 
 $('bFrame').onclick = () => { viewer.frame(DEF.camDir, tilesMode ? tilesMode.target : DEF.target, 1); camInfo(); };
 $('bReset').onclick = () => {
-  const keep = ['walk', 'names', 'chat', 'spectate', 'panel', 'chatFade', 'ignoreViz', 'presenceUrl', 'room', 'walkIgnore', 'eyeHeight', 'walkSpeed', 'hole', 'holeFade', 'holeX', 'holeZ', 'guide', 'wave', 'seaY', 'sea', 'anim', 'retina', 'foliageCutout', 'seaColor', 'skyColor'];
+  const keep = ['zoneMarker', 'showSpawns', 'fly', 'walk', 'names', 'chat', 'spectate', 'panel', 'chatFade', 'ignoreViz', 'presenceUrl', 'room', 'walkIgnore', 'eyeHeight', 'walkSpeed', 'hole', 'holeFade', 'holeX', 'holeZ', 'guide', 'wave', 'seaY', 'sea', 'anim', 'retina', 'foliageCutout', 'seaColor', 'skyColor'];
   const patch = {}; keep.forEach(k => { patch[k] = DEF[k]; });
   viewer.setCfg(patch);
   buildRows(); refreshEnabled(); camInfo(); updateGuide();
@@ -936,8 +949,58 @@ function renderMapUi() {
   b2.append(exp, imp); host.append(b2);
 }
 
+// ---------- v33 : enregistrer X.zones.json directement dans le dossier de la région (API File System Access : Edge, Chrome)
+// Le dossier n'est demandé qu'au moment d'enregistrer ; sa poignée est gardée pour la session (et dans IndexedDB quand le navigateur le permet).
+// Sans l'API, ou si elle est refusée : téléchargement, comme le bouton « Exporter zones ».
+let zonesDirHandle = null;
+const idbDirs = (mode, fn) => new Promise((res, rej) => {
+  const o = indexedDB.open('glb2html_viewer', 1);
+  o.onupgradeneeded = () => o.result.createObjectStore('dirs');
+  o.onerror = () => rej(o.error);
+  o.onsuccess = () => {
+    try { const tx = o.result.transaction('dirs', mode), r = fn(tx.objectStore('dirs')); tx.oncomplete = () => res(r && r.result); tx.onerror = () => rej(tx.error); tx.onabort = () => rej(tx.error); }
+    catch (e) { rej(e); }   // poignée non clonable : la sauvegarde se fait quand même, sans mémoire d'une session à l'autre
+  };
+});
+async function writeInDir(dir, name, text) {
+  const h = await dir.getFileHandle(name, { create: true }), w = await h.createWritable();
+  await w.write(text); await w.close();
+}
+async function saveZonesToDir() {
+  const zname = baseName + '.zones.json', text = JSON.stringify(cfg.zones, null, 1), info = $('zDirInfo');
+  const say = t => { setStatus(t); if (info) info.textContent = t; };
+  const fallback = why => {
+    download(zname, new Blob([text], { type: 'application/json' }));
+    say(why + ' — enregistre ce fichier dans le dossier de la région, sous le nom ' + zname + ', en remplaçant l\'ancien');
+  };
+  if (typeof window.showDirectoryPicker !== 'function') return fallback('API de dossier absente (Edge ou Chrome requis)');
+  try {
+    let dir = zonesDirHandle;
+    if (!dir) { try { dir = await idbDirs('readonly', st => st.get(baseName)); } catch (e) { dir = null; } }
+    if (dir && typeof dir.queryPermission === 'function') {
+      let p = await dir.queryPermission({ mode: 'readwrite' });
+      if (p !== 'granted' && typeof dir.requestPermission === 'function') p = await dir.requestPermission({ mode: 'readwrite' });
+      if (p !== 'granted') dir = null;
+    }
+    if (!dir) dir = await window.showDirectoryPicker({ id: 'glb2html-region', mode: 'readwrite' });
+    try { await dir.getFileHandle(loadedName); } catch (e) { zonesDirHandle = null; throw Object.assign(new Error('ce dossier ne contient pas ' + loadedName + ' : choisis le dossier de la région'), { name: 'WrongFolder' }); }
+    zonesDirHandle = dir; try { await idbDirs('readwrite', st => st.put(dir, baseName)); } catch (e) {}
+    let old = null;
+    try { old = await (await (await dir.getFileHandle(zname)).getFile()).text(); } catch (e) { if (!e || e.name !== 'NotFoundError') throw e; }
+    if (old !== null) await writeInDir(dir, baseName + '.zones.bak.json', old);   // une seule copie, écrasée à chaque enregistrement
+    await writeInDir(dir, zname, text);
+    const d = new Date(), p2 = n => String(n).padStart(2, '0');
+    say('Zones enregistrées (' + (cfg.zones || []).length + ') : dossier « ' + dir.name + ' », fichier ' + zname + ', le ' + p2(d.getDate()) + '/' + p2(d.getMonth() + 1) + '/' + d.getFullYear() + ' à ' + p2(d.getHours()) + ':' + p2(d.getMinutes()) + ':' + p2(d.getSeconds())
+      + (old !== null ? ' ; ancien fichier gardé sous ' + baseName + '.zones.bak.json' : ' ; pas d\'ancien fichier') + '. La page relit ce fichier à chaque ouverture : F5 suffit, sans régénérer (sauf si tu changes les options de la page).');
+  } catch (e) {
+    if (e && e.name === 'AbortError') return say('Choix du dossier annulé : rien n\'a été écrit (le bouton « Exporter zones » télécharge le fichier)');
+    if (e && e.name === 'WrongFolder') return say('Rien écrit : ' + e.message);
+    fallback(e && (e.name === 'SecurityError' || e.name === 'NotAllowedError') ? 'Accès au dossier refusé' : 'Enregistrement dans le dossier impossible (' + (e && e.message ? e.message : e) + ')');
+  }
+}
+
 // ---------- mémorisation des réglages, fichier par fichier (nom + taille du .glb)
-const SKEYS = ['rotate', 'hole', 'holeFade', 'holeX', 'holeZ', 'wave', 'seaY', 'seaSegments', 'seaColor', 'skyColor', 'foliageCutout', 'anim', 'sea', 'retina', 'walk', 'eyeHeight', 'walkSpeed', 'walkIgnore', 'names', 'chat', 'chatFade', 'presenceUrl', 'room', 'spectate', 'panel', 'mapUrl', 'guide', 'ignoreViz'];
+const SKEYS = ['zoneMarker', 'showSpawns', 'fly', 'rotate', 'hole', 'holeFade', 'holeX', 'holeZ', 'wave', 'seaY', 'seaSegments', 'seaColor', 'skyColor', 'foliageCutout', 'anim', 'sea', 'retina', 'walk', 'eyeHeight', 'walkSpeed', 'walkIgnore', 'names', 'chat', 'chatFade', 'presenceUrl', 'room', 'spectate', 'panel', 'mapUrl', 'guide', 'ignoreViz'];
 let curFile = null, lastSaved = '', settingsReady = false;
 const fileKey = f => 'glb2html_set_' + f.name + '|' + f.size;
 function snapshot() {
@@ -946,6 +1009,7 @@ function snapshot() {
     camera: { camDir: cam.camDir, target: cam.target, zoom: cam.zoom }, profile: $('profileSel').value, thisReg: Object.assign({}, thisReg),
     cmd: { script: $('cmdScript').value, glb: $('cmdGlb').value, dest: $('cmdDest').value, mapPage: $('cmdMapPage').value } };
   for (const k of SKEYS) s.cfg[k] = cfg[k];
+  s.targetExplicit = targetExplicit();
   return s;
 }
 const snapStr = s => JSON.stringify(Object.assign({}, s, { saved: '' }));
@@ -995,6 +1059,11 @@ $('bSetForget').onclick = () => { if (!curFile) return setStatus('Aucun fichier 
 
 // ---------- récapitulatif : ligne de commande pour glb2html.py
 const SHARED_NOTE = 'Coquille commune : la commande écrit NOM.glb, NOM.config.json et NOM.zones.json (NOM = nom du fichier de sortie -o sans extension, sinon nom du .glb), plus index.html et lib/three-0.160.0/ s\'ils sont absents (une coquille existante n\'est jamais écrasée). La région s\'ouvre à index.html?region=NOM, en http/https ; --register écrit cette adresse dans regions.json si le champ « adresse » de la fiche de région est vide. Pour ne changer qu\'un réglage ensuite : même commande avec --config-only -o NOM.html.';
+// --target explicite : la cible de la caméra diffère de la cible par défaut (même test que la ligne de commande) ; sinon l'arrivée « default » cadre la page
+function targetExplicit() {
+  const cam = viewer.getCameraState(), n4 = v => String(Math.round(v * 1e4) / 1e4);
+  return tilesMode ? cam.target.some((v, i) => Math.abs(v - tilesMode.target[i]) > 0.5) : JSON.stringify(cam.target.map(n4).map(Number)) !== JSON.stringify(DEF.target);
+}
 function buildCommand() {
   const q = s => "'" + String(s).replace(/'/g, "''") + "'";
   const n4 = v => String(Math.round(v * 1e4) / 1e4);
@@ -1013,9 +1082,11 @@ function buildCommand() {
   num('--zoom', cam.zoom, DEF.zoom);
   if (!same(cam.camDir.map(n4).map(Number), DEF.camDir)) a.push('--cam-dir ' + q(cam.camDir.map(n4).join(',')));
   if (tilesMode ? cam.target.some((v, i) => Math.abs(v - tilesMode.target[i]) > 0.5) : !same(cam.target.map(n4).map(Number), DEF.target)) a.push('--target ' + q(cam.target.map(n4).join(',')));
-  sw('--walk', '--no-walk', cfg.walk, DEF.walk); num('--eye-height', cfg.eyeHeight, DEF.eyeHeight); num('--walk-speed', cfg.walkSpeed, DEF.walkSpeed);
+  sw('--walk', '--no-walk', cfg.walk, DEF.walk); sw('--fly', '--no-fly', cfg.fly, DEF.fly); num('--eye-height', cfg.eyeHeight, DEF.eyeHeight); num('--walk-speed', cfg.walkSpeed, DEF.walkSpeed);
   if (cfg.walkIgnore !== DEF.walkIgnore) a.push('--walk-ignore ' + q(cfg.walkIgnore));
   sw('--names', '--no-names', cfg.names, DEF.names); sw('--panel', '--no-panel', cfg.panel, DEF.panel);
+  if (cfg.zoneMarker !== DEF.zoneMarker) a.push('--zone-marker ' + cfg.zoneMarker);
+  sw('--show-spawns', '--no-show-spawns', cfg.showSpawns, DEF.showSpawns);
   if (cfg.presenceUrl) a.push('--presence-url ' + q(cfg.presenceUrl));
   if (cfg.room) a.push('--room ' + q(cfg.room));
   sw('--chat', '--no-chat', cfg.chat, DEF.chat); num('--chat-fade', cfg.chatFade, DEF.chatFade);
@@ -1084,7 +1155,8 @@ function liveConfig() {
     map: cfg.map || [], mapUrl: cfg.mapUrl || '',
     zones: (cfg.zones || []).filter(z => $('profileSel').value === 'perso' || !z.private), profile: $('profileSel').value,
     walk: cfg.walk, eyeHeight: cfg.eyeHeight, walkSpeed: cfg.walkSpeed, walkIgnore: cfg.walkIgnore,
-    names: cfg.names, chat: cfg.chat, chatFade: cfg.chatFade, presenceUrl: cfg.presenceUrl, room: cfg.room || baseName
+    names: cfg.names, chat: cfg.chat, chatFade: cfg.chatFade, presenceUrl: cfg.presenceUrl, room: cfg.room || baseName,
+    zoneMarker: cfg.zoneMarker || 'discret', showSpawns: !!cfg.showSpawns, fly: cfg.fly !== false, targetExplicit: targetExplicit()
   };
 }
 $('bHtml').onclick = () => {
@@ -1166,6 +1238,7 @@ $('bPy').onclick = () => {
     '\nZOOM_RATIO = ' + n(c.zoom) + '\nCAM_DIR = ' + t(c.camDir) + '\nTARGET = ' + t(c.target) +
     '\nSEA_ENABLED = ' + B(c.sea) + '\nANIM_ENABLED = ' + B(c.anim) + '\nRETINA_ENABLED = ' + B(c.retina) +
     '\nFOLIAGE_CUTOUT = ' + n(c.foliageCutout) + '\nSEA_COLOR = ' + col(c.seaColor) + '\nSKY_COLOR = ' + col(c.skyColor) + '\nSEA_SEGMENTS = ' + Math.round(c.seaSegments) + '\nWALK_ENABLED = ' + B(c.walk) + '\nEYE_HEIGHT = ' + n(c.eyeHeight) + '\nWALK_SPEED = ' + n(c.walkSpeed) + '\nWALK_IGNORE = ' + JSON.stringify(c.walkIgnore) + '\nNAMES_ENABLED = ' + B(c.names) + '\nCHAT_ENABLED = ' + B(c.chat) + '\nCHAT_FADE = ' + n(c.chatFade) + '\nSPECTATE = ' + B(c.spectate) + '\nPANEL = ' + B(c.panel) + '\nMAP_JSON = ' + JSON.stringify(JSON.stringify(cfg.map || [])) + '\nMAP_URL = ' + JSON.stringify(cfg.mapUrl || '') + '\nPROFILE = ' + JSON.stringify($('profileSel').value) + '\nZONES_JSON = ' + JSON.stringify(JSON.stringify(cfg.zones || [])) + '\nPRESENCE_URL = ' + JSON.stringify(c.presenceUrl) + '\nROOM = ' + JSON.stringify(cfg.room || '') +
+    '\nZONES_LIVE = ""' + '\nZONE_MARKER = ' + JSON.stringify(c.zoneMarker) + '\nSHOW_SPAWNS = ' + B(c.showSpawns) + '\nFLY_ENABLED = ' + B(c.fly) + '\nTARGET_EXPLICIT = ' + B(c.targetExplicit) +
     '\n# <</DEFAULTS>>';
   const py = PY_SOURCE.replace(/# <<DEFAULTS>>[\s\S]*?# <<\/DEFAULTS>>/, () => block);
   download('glb2html.py', new Blob([py], { type: 'text/x-python' }));

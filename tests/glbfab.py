@@ -34,11 +34,11 @@ class B:
         self.j["accessors"].append(a)
         return len(self.j["accessors"]) - 1
 
-    def mesh(self, verts, idx, mat=None, uv=False, colors=None, nom=None, skin=False):
+    def mesh(self, verts, idx, mat=None, uv=False, colors=None, nom=None, skin=False, idx32=False):
         d = b"".join(struct.pack("<3f", *v) for v in verts)
         pos = self.acc(self.vue(d, 34962), 5126, len(verts), "VEC3", [min(v[k] for v in verts) for k in range(3)], [max(v[k] for v in verts) for k in range(3)])
         nor = self.acc(self.vue(struct.pack("<3f", 0, 1, 0) * len(verts), 34962), 5126, len(verts), "VEC3")
-        ix = self.acc(self.vue(struct.pack("<%dH" % len(idx), *idx), 34963), 5123, len(idx), "SCALAR")
+        ix = self.acc(self.vue(struct.pack("<%d%s" % (len(idx), "I" if idx32 else "H"), *idx), 34963), 5125 if idx32 else 5123, len(idx), "SCALAR")
         at = {"POSITION": pos, "NORMAL": nor}
         if uv:
             at["TEXCOORD_0"] = self.acc(self.vue(b"".join(struct.pack("<2f", i % 2, (i // 2) % 2) for i in range(len(verts))), 34962), 5126, len(verts), "VEC2")
@@ -188,3 +188,47 @@ def region(chemin, maisons=24, instances=40, petits=12, verre=True, squelette=Tr
             b.noeud("Banc", b.mesh(cube(bx, hauteur(bx, bz), bz, 3, 1, 1), CUBE_IDX, mat=2))
     b.ecrire(chemin)
     return b
+
+
+LOURD_PATCH, LOURD_NP = 160.0, 4
+
+
+def region_lourde(chemin, lourds=(("Chateau", 3, 0), ("Cathedrale", 1, 2)), cote=708, maisons=8):
+    """v33 : région de 4 x 4 patches de 160 m (640 m de côté) pour mesurer le démarrage avec des tuiles lourdes.
+    Chaque objet lourd (une racine) est une dalle de 100 m de côté, posée à 10 cm au-dessus du terrain, `cote` x `cote` cases (708 -> plus d'un million de triangles) au centre du patch
+    (i, j) ; plus quelques maisons. Rend { nom: (x, y, z) du centre de la dalle }. Découpage attendu : glb2tiles --budget-tri 300 --min 160 --entier-poids 64."""
+    b = B()
+    b.j["materials"] = [{"name": "gris", "doubleSided": True, "pbrMetallicRoughness": {"baseColorFactor": [0.6, 0.6, 0.6, 1]}}]
+    nq = 8
+    for i in range(LOURD_NP):
+        for j in range(LOURD_NP):
+            v, idx, col = [], [], []
+            for q in range(nq + 1):
+                for p in range(nq + 1):
+                    x, z = X0 + LOURD_PATCH * i + LOURD_PATCH * p / nq, Z0 + LOURD_PATCH * j + LOURD_PATCH * q / nq
+                    v.append((x, hauteur(x, z), z))
+                    col.append(couleur_sol(hauteur(x, z)))
+            for q in range(nq):
+                for p in range(nq):
+                    a = q * (nq + 1) + p
+                    idx += [a, a + nq + 1, a + 1, a + 1, a + nq + 1, a + nq + 2]
+            b.noeud(f"Terrain {i},{j}", b.mesh(v, idx, colors=col), extras={"terrain": True})
+    centres = {}
+    for nom, i, j in lourds:
+        cx, cz = X0 + LOURD_PATCH * (i + 0.5), Z0 + LOURD_PATCH * (j + 0.5)
+        v, idx = [], []
+        for q in range(cote + 1):
+            for p in range(cote + 1):
+                x, z = cx - 50 + 100 * p / cote, cz - 50 + 100 * q / cote
+                v.append((x, hauteur(x, z) + 0.1 + 0.05 * math.sin(x * 2.1) * math.cos(z * 1.7), z))
+        for q in range(cote):
+            for p in range(cote):
+                a = q * (cote + 1) + p
+                idx += [a, a + cote + 1, a + 1, a + 1, a + cote + 1, a + cote + 2]
+        b.noeud(nom, b.mesh(v, idx, mat=0, nom=nom.lower(), idx32=True))
+        centres[nom] = (cx, hauteur(cx, cz) + 0.1, cz)
+    for k in range(maisons):
+        cx, cz = X0 + 40 + (k % 4) * 150, Z0 + 60 + (k // 4) * 300
+        b.noeud(f"Maison {k}", b.mesh(cube(cx, hauteur(cx, cz), cz, 6, 4, 6), CUBE_IDX, mat=0))
+    b.ecrire(chemin)
+    return centres

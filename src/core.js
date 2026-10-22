@@ -214,8 +214,10 @@ function disposeObject(root) {
 
 function createViewer(container, cfg0, loader) {
   const cfg = Object.assign({}, cfg0);
-  let onCfg = null, onWalk = null, onPick = null, onPresence = null, onChat = null, onName = null, spectateOn = false, pickOrbit = false, walking = false, linkLock = false;
-  const W = { pos: new THREE.Vector3(), spawn: new THREE.Vector3(), vy: 0, grounded: true, yaw: 0, pitch: 0, keys: new Set(), jumpReq: false, drag: false, saved: null, grid: null };
+  let onView = null, onFly = null, onCfg = null, onWalk = null, onPick = null, onPresence = null, onChat = null, onName = null, spectateOn = false, pickOrbit = false, walking = false, linkLock = false;
+  const W = { pos: new THREE.Vector3(), spawn: new THREE.Vector3(), vy: 0, grounded: true, yaw: 0, pitch: 0, keys: new Set(), jumpReq: false, drag: false, saved: null, grid: null,
+    fly: false, flyFloor: undefined, view: 'fps', cam: new THREE.Vector3(), cyaw: 0, cpitch: 0 };
+  let home = null;   // v33 : point de retour { pos, yaw, forF } (arrivée « default » ou cible de départ)
   let model = null, modelRot = 0, fit = 1, sea = null, seaMat = null, dirty = true, foliageMats = [];
   let seaCx = 0, seaCz = 0;   // centre de la mer : l'origine, ou le centre de la région en mode tuiles
 
@@ -381,7 +383,9 @@ function createViewer(container, cfg0, loader) {
   // modèle d'origine (aucun recentrage) ; la rotation de la région est appliquée à la racine des tuiles. Une grille de collision par tuile.
   // Zones liées à un élément (champ mesh) : ignorées (la référence nom#index se calcule sur tout le modèle).
   const TL = { on: !!cfg.tiles, src: null, refs: false, refsKnown: false, refIndex: new Map(), linkDirty: false, linkSig: '', root: null, tiles: [], extent: null, inflight: 0, gridQ: [], pending: null, forced: null, forcedUntil: 0,
-    waitT: -1e9, lastUpd: 0, infoKey: '', onInfo: null, onError: null, lastError: '', radius: 150, margin: 60, maxBytes: 200 * 1048576, maxTri: 8e6, conc: 4 };
+    waitT: -1e9, waitAt: null, waitSince: 0, anchor: null, log: [], lastUpd: 0, infoKey: '', onInfo: null, onError: null, lastError: '', radius: 150, margin: 60, maxBytes: 200 * 1048576, maxTri: 8e6, conc: 4 };
+  // v33 : budget de temps (ms par image) de la construction des grilles de collision : normal, et généreux pour la tuile que l'avatar (ou l'arrivée demandée) attend
+  const GRID_MS = 6, GRID_MS_PRIO = 40;
   // vue d'ensemble (X.overview.glb, champ « overview » de X.tiles.json) : un nœud par fichier de tuile, masqué dès que la tuile détaillée est affichée
   // (groupe ajouté à la racine des tuiles) et réaffiché quand elle est déchargée. Jamais utilisée pour les collisions, le sol ni le budget des tuiles.
   const OV = { root: null, bytes: 0, tri: 0, cells: 0, state: 'none' };
@@ -432,7 +436,7 @@ function createViewer(container, cfg0, loader) {
     if (TL.root) { for (const t of TL.tiles) if (t.grp) tileUnload(t); scene.remove(TL.root); if (model === TL.root) model = null; }
     if (OV.root) { scene.remove(OV.root); disposeObject(OV.root); }
     OV.root = null; OV.bytes = OV.tri = OV.cells = 0; OV.state = 'none';
-    TL.tiles = []; TL.root = null; TL.gridQ = []; TL.pending = null; TL.forced = null; TL.refIndex.clear(); TL.refs = false; TL.refsKnown = false; TL.linkSig = ''; TL.src = null;
+    TL.tiles = []; TL.root = null; TL.gridQ = []; TL.pending = null; TL.forced = null; TL.anchor = null; TL.waitAt = null; TL.refIndex.clear(); TL.refs = false; TL.refsKnown = false; TL.linkSig = ''; TL.src = null;
     TL.on = false;
     scene.fog.near = BASE.fogNear; scene.fog.far = BASE.fogFar; camera.far = BASE.far; camera.updateProjectionMatrix(); controls.maxDistance = BASE.maxDist;
     seaCx = seaCz = 0; if (sea) sea.position.set(0, cfg.seaY, 0);
@@ -474,6 +478,24 @@ function createViewer(container, cfg0, loader) {
     disposeObject(grp);
     for (const t of texs) { const im = t.image; if (im && typeof im.close === 'function') { try { im.close(); } catch (e) {} } }   // libère aussi la mémoire CPU des images décodées
   }
+  // tuiles qui contiennent le point (x, z) ; à défaut la plus proche dans le rayon de chargement
+  function tilesAt(x, z) {
+    const set = TL.tiles.filter(t => inTile(t, x, z, TILE_M));
+    if (set.length) return set;
+    const n = TL.tiles.map(t => [tileDist(t, { x, z }), t]).filter(a => a[0] <= TL.radius).sort((a, b) => a[0] - b[0])[0];
+    return n ? [n[1]] : [];
+  }
+  const tileDone = t => t.state === 'ready' || t.state === 'failed';
+  const anchorOpen = () => !!TL.anchor && TL.anchor.tiles.some(t => !tileDone(t));   // l'arrivée demandée attend encore une tuile
+  // v33 : ce que « Chargement du sol… » attend : la tuile du téléport en attente, de l'arrivée demandée ou du point où l'avatar est arrêté
+  function waitInfo(now) {
+    let at, since, kind, set;
+    if (TL.pending) { at = TL.pending.at; since = TL.pending.t0 || TL.waitSince; kind = 'pending'; set = tilesAt(at.x, at.z); }
+    else if (anchorOpen()) { at = TL.anchor; since = TL.anchor.t0; kind = 'anchor'; set = TL.anchor.tiles; }
+    else if (now - TL.waitT < 600 && TL.waitAt) { at = TL.waitAt; since = TL.waitSince; kind = 'walk'; set = tilesAt(at.x, at.z); }
+    else return null;
+    return { kind, ready: set.filter(t => t.state === 'ready').length, total: set.length, secs: Math.max(0, Math.floor((now - since) / 1000)), files: set.map(t => t.file) };
+  }
   function tilesStatus() {
     let loaded = 0, loading = 0, failed = 0, bytes = 0, tri = 0;
     for (const t of TL.tiles) {
@@ -481,10 +503,11 @@ function createViewer(container, cfg0, loader) {
       else if (t.state === 'loading' || t.state === 'building') { loading++; bytes += t.bytes; tri += t.tri; }
       else if (t.state === 'failed') failed++;
     }
-    return { total: TL.tiles.length, loaded, loading, failed, bytes, tri, waiting: !!TL.pending || performance.now() - TL.waitT < 600, ov: { state: OV.state, bytes: OV.bytes, tri: OV.tri } };
+    const now = performance.now(), wait = waitInfo(now);
+    return { total: TL.tiles.length, loaded, loading, failed, bytes, tri, waiting: !!TL.pending || now - TL.waitT < 600 || !!(wait && wait.kind === 'anchor'), wait, ov: { state: OV.state, bytes: OV.bytes, tri: OV.tri } };
   }
   function tilesInfo() {
-    const s = tilesStatus(), key = [s.loaded, s.loading, s.failed, s.bytes, s.tri, s.waiting ? 1 : 0, OV.state, OV.bytes, OV.tri].join('|');
+    const s = tilesStatus(), w = s.wait, key = [s.loaded, s.loading, s.failed, s.bytes, s.tri, s.waiting ? 1 : 0, OV.state, OV.bytes, OV.tri, w ? w.kind + w.ready + '/' + w.total + ':' + w.secs : ''].join('|');
     if (key === TL.infoKey) return;
     TL.infoKey = key;
     if (TL.onInfo) TL.onInfo(s);
@@ -493,7 +516,19 @@ function createViewer(container, cfg0, loader) {
     t.state = 'failed'; t.fails = (t.fails || 0) + 1; t.retryAt = performance.now() + Math.min(30000, 3000 * Math.pow(2, t.fails - 1));
     const m = e && e.message ? e.message : String(e);
     console.warn('tuile « ' + t.file + ' » : échec (' + m + '), nouvelle tentative plus tard');
+    const L = { file: t.file, ok: false, error: m, ms: Math.round(performance.now() - (t.tStart || performance.now())), at: Math.round(performance.now()) };
+    TL.log.push(L); if (TL.log.length > 500) TL.log.shift();
+    console.log('[tuile] ' + t.file + ' : échec après ' + L.ms + ' ms (' + m + ')');
     if (TL.onError) TL.onError(t.file, m);
+  }
+  // v33 : une ligne par tuile qui devient prête (à coller dans le chat pour diagnostiquer un démarrage lent)
+  function tileReady(t) {
+    const now = performance.now();
+    const L = { file: t.file, ok: true, bytes: t.got || t.bytes, tri: t.tri, startWaitMs: Math.round(t.tStart - (t.tWant === undefined ? t.tStart : t.tWant)), downloadMs: Math.round(t.dlMs), parseMs: Math.round(t.parseMs),
+      queueMs: Math.round(t.qWait || 0), gridMs: Math.round(t.gridCpu || 0), gridWallMs: Math.round(now - t.qAt), totalMs: Math.round(now - (t.tWant === undefined ? t.tStart : t.tWant)), startAt: Math.round(t.tStart), at: Math.round(now) };
+    TL.log.push(L); if (TL.log.length > 500) TL.log.shift();
+    console.log('[tuile] ' + t.file + ' prête : ' + (L.bytes / 1048576).toFixed(1) + ' Mo · ' + L.tri + ' triangles · attente avant téléchargement ' + L.startWaitMs + ' ms · téléchargement ' + L.downloadMs + ' ms · analyse du GLB ' + L.parseMs
+      + ' ms · attente en file de grille ' + L.queueMs + ' ms · construction de la grille ' + L.gridMs + ' ms de travail (' + L.gridWallMs + ' ms écoulées) · total ' + L.totalMs + ' ms');
   }
   function tileUnload(t) {
     if (t.ac) { try { t.ac.abort(); } catch (e) {} t.ac = null; }
@@ -506,15 +541,19 @@ function createViewer(container, cfg0, loader) {
       disposeTile(t.grp); t.grp = null;
     }
     ovSync(t);
-    t.grid = null; t.gen = null; t.state = 'idle'; dirty = true;
+    t.grid = null; t.gen = null; t.state = 'idle'; t.tWant = undefined; dirty = true;
   }
   async function tileStart(t) {
     const ac = new AbortController();
     t.state = 'loading'; t.ac = ac; TL.inflight++;
+    t.tStart = performance.now(); t.gridCpu = 0; t.qWait = 0;
     try {
       const buf = await TL.src.buf(t.path, ac.signal);
       if (t.ac !== ac) return;
+      t.dlMs = performance.now() - t.tStart; t.got = buf.byteLength;
+      const tp = performance.now();
       const gltf = await loader.parseAsync(buf, '');
+      t.parseMs = performance.now() - tp;
       if (t.ac !== ac) { disposeTile(gltf.scene); return; }
       const grp = gltf.scene;
       grp.name = 'tile:' + t.file;
@@ -525,6 +564,7 @@ function createViewer(container, cfg0, loader) {
       refsAdd(t);
       ovSync(t);   // même bloc synchrone que l'ajout du groupe : jamais d'image avec les deux, ni avec aucun des deux
       t.gen = collisionGridSteps(grp, 3, parseIgnore(cfg.walkIgnore));   // construite par tranches (tilesTick)
+      t.qAt = performance.now(); t.qFirst = true;
       TL.gridQ.push(t);
       dirty = true;
     } catch (e) {
@@ -534,6 +574,7 @@ function createViewer(container, cfg0, loader) {
   function tilesFocus(now) {
     if (TL.pending) return TL.pending.at;
     if (walking) return { x: W.pos.x, z: W.pos.z };
+    if (TL.anchor) return TL.anchor;   // v33 : l'arrivée demandée reste la référence jusqu'à la promenade (plus de délai de 4 s)
     if (TL.forced && now < TL.forcedUntil) return TL.forced;
     return { x: controls.target.x, z: controls.target.z };
   }
@@ -546,10 +587,15 @@ function createViewer(container, cfg0, loader) {
   function tilesUpdate(now) {
     if (!TL.root) return;
     TL.lastUpd = now;
+    // l'ancre (arrivée demandée) est lâchée dès que la cible de la vue globale a bougé : l'utilisateur regarde ailleurs
+    if (TL.anchor && Math.hypot(controls.target.x - TL.anchor.tx, controls.target.z - TL.anchor.tz) > 1) TL.anchor = null;
     const f = tilesFocus(now);
     for (const t of TL.tiles) t.d = tileDist(t, f);
     for (const t of TL.tiles) if (t.state !== 'idle' && t.state !== 'failed' && t.d > TL.radius + TL.margin) tileUnload(t);
-    const want = TL.tiles.filter(t => t.d <= TL.radius && (t.state === 'idle' || (t.state === 'failed' && now >= t.retryAt))).sort((a, b) => a.d - b.d);
+    let want = TL.tiles.filter(t => t.d <= TL.radius && (t.state === 'idle' || (t.state === 'failed' && now >= t.retryAt))).sort((a, b) => a.d - b.d);
+    for (const t of want) if (t.tWant === undefined) t.tWant = now;
+    // v33 : tant que les tuiles de l'arrivée demandée ne sont pas prêtes, aucune autre tuile ne démarre
+    if (anchorOpen()) want = want.filter(t => TL.anchor.tiles.includes(t));
     for (const t of want) {
       if (TL.inflight >= TL.conc) break;
       let u = tilesUsage();
@@ -567,6 +613,14 @@ function createViewer(container, cfg0, loader) {
     }
     tilesInfo();
   }
+  // point dont la tuile est attendue : le téléport en attente, l'avatar, l'arrivée demandée
+  function prioPoint() {
+    if (TL.pending) return TL.pending.at;
+    if (walking) return { x: W.pos.x, z: W.pos.z };
+    return TL.anchor || null;
+  }
+  function releaseAnchor() { if (TL.anchor) { TL.anchor = null; TL.infoKey = ''; tilesInfo(); } }
+  const markWait = (x, z) => { const n = performance.now(); if (n - TL.waitT > 600) TL.waitSince = n; TL.waitT = n; TL.waitAt = { x, z }; };
   function tilesPendingCheck() {
     const p = TL.pending;
     if (!p || TG.pending(p.at.x, p.at.z)) return;
@@ -577,15 +631,23 @@ function createViewer(container, cfg0, loader) {
   function tilesTick(now) {
     if (!TL.root) return;
     const t0 = performance.now();
-    while (TL.gridQ.length && performance.now() - t0 < 6) {
-      const t = TL.gridQ[0];
+    // v33 : la grille de la tuile qui contient l'avatar (ou l'arrivée / le téléport attendus) passe avant les autres, avec un budget par image plus généreux
+    const foc = prioPoint();
+    while (TL.gridQ.length) {
+      let k = 0;
+      if (foc) { const i = TL.gridQ.findIndex(q => inTile(q, foc.x, foc.z, TILE_M)); if (i > 0) k = i; }
+      const t = TL.gridQ[k], prio = !!foc && inTile(t, foc.x, foc.z, TILE_M);
+      if (performance.now() - t0 >= (prio ? GRID_MS_PRIO : GRID_MS)) break;
+      const s0 = performance.now();
+      if (t.qFirst) { t.qFirst = false; t.qWait = s0 - t.qAt; }
       let r;
-      try { r = t.gen.next(); } catch (e) { TL.gridQ.shift(); tileUnload(t); tileFail(t, e); continue; }
-      if (r.done) { TL.gridQ.shift(); t.grid = r.value; t.gen = null; t.state = 'ready'; t.fails = 0; dirty = true; landKey = ''; tilesPendingCheck(); tilesInfo(); }
+      try { r = t.gen.next(); } catch (e) { TL.gridQ.splice(k, 1); tileUnload(t); tileFail(t, e); continue; }
+      t.gridCpu += performance.now() - s0;
+      if (r.done) { TL.gridQ.splice(k, 1); t.grid = r.value; t.gen = null; t.state = 'ready'; t.fails = 0; t.tWant = undefined; dirty = true; landKey = ''; tileReady(t); tilesPendingCheck(); tilesInfo(); }
     }
     if (TL.linkDirty) { TL.linkDirty = false; relinkZones(); }
     if (now - TL.lastUpd > 250) tilesUpdate(now);
-    if (TL.waitT > 0 || TL.pending) tilesInfo();
+    if (TL.waitT > 0 || TL.pending || TL.anchor) tilesInfo();
   }
   // vue d'ensemble : chargée avant les tuiles ; un échec n'est pas fatal (la région fonctionne alors comme en v30)
   async function loadOverview(ov, dir) {
@@ -650,10 +712,23 @@ function createViewer(container, cfg0, loader) {
       TL.tiles.push({ file: d.file, path: dir + d.file, bytes: Math.max(0, Number(d.bytes) || 0), tri: Math.max(0, Number(d.triangles) || 0),
         box: [b.min.x, b.min.z, b.max.x, b.max.z], ymin: b.min.y, ymax: b.max.y, state: 'idle', d: 0, fails: 0, retryAt: 0, ac: null, grp: null, grid: null, gen: null });
     }
-    TL.root = root; model = root; TL.extent = ext; scene.add(root);
+    TL.root = root; model = root; TL.extent = ext; scene.add(root); TL.log = []; TL.anchor = null;
     if (!TL.refs) {   // tuiles sans références d'objets : les zones liées déjà posées sont retirées (avertissement), les libres restent
       const bad = zones.filter(z => z.mesh && z.type !== 'spawn');
       if (bad.length) { for (const z of bad) console.warn(tilesNoRefs(z)); zones = zones.filter(z => !bad.includes(z)); resolveLinks(); buildZones(); }
+    }
+    // v33 : arrivée demandée (lien #spawn=, #pos=, arrivée « default » à l'ouverture) : point de référence du chargeur jusqu'à la promenade ;
+    // les tuiles qui la contiennent démarrent AVANT la vue d'ensemble et avant toute autre tuile
+    let f = null;
+    if (Array.isArray(opts.anchor) && opts.anchor.length >= 3 && opts.anchor.every(Number.isFinite)) f = { x: opts.anchor[0], z: opts.anchor[2] };
+    else if (opts.spawn !== undefined) {
+      const id = slug(opts.spawn), s = zones.find(z => z.type === 'spawn' && z.id === id) || zones.find(z => z.type === 'spawn' && z.id === 'default');
+      if (s) f = { x: s.x, z: s.z };
+    }
+    if (f) {
+      const now0 = performance.now();
+      TL.anchor = { x: f.x, z: f.z, t0: now0, tx: controls.target.x, tz: controls.target.z, tiles: tilesAt(f.x, f.z) };
+      tilesUpdate(now0);
     }
     const ovd = doc.overview;
     if (ovd && typeof ovd === 'object' && safeRel(ovd.file) && /\.glb$/i.test(ovd.file)) await loadOverview(ovd, dir);
@@ -672,28 +747,25 @@ function createViewer(container, cfg0, loader) {
     }
     if (!ext.isEmpty()) { seaCx = (ext.min.x + ext.max.x) / 2; seaCz = (ext.min.z + ext.max.z) / 2; if (sea) sea.position.set(seaCx, cfg.seaY, seaCz); }
     frame(cfg.camDir, opts.target || cfg.target, cfg.zoom);
-    let f = null;
-    if (opts.spawn !== undefined) {
-      const id = slug(opts.spawn), s = zones.find(z => z.type === 'spawn' && z.id === id) || zones.find(z => z.type === 'spawn' && z.id === 'default');
-      if (s) f = { x: s.x, z: s.z };
-    }
+    if (TL.anchor) { TL.anchor.tx = controls.target.x; TL.anchor.tz = controls.target.z; }
     if (!f) f = { x: controls.target.x, z: controls.target.z };
     const now = performance.now();
-    TL.forced = f; TL.forcedUntil = now + 4000;   // le temps que la coquille démarre la promenade à l'arrivée
+    if (!TL.anchor) { TL.forced = f; TL.forcedUntil = now + 4000; }   // le temps que la coquille démarre la promenade (sans arrivée demandée)
     tilesUpdate(now);
-    // attend les tuiles qui contiennent le point de départ (sinon la plus proche) : prêtes ou en échec
-    const waitSet = TL.tiles.filter(t => t.d <= 0.01);
-    if (!waitSet.length) { const n = TL.tiles.filter(t => t.d <= TL.radius).sort((a, b) => a.d - b.d)[0]; if (n) waitSet.push(n); }
-    const t1 = performance.now();
-    await new Promise(res => { const chk = () => (waitSet.every(t => t.state === 'ready' || t.state === 'failed') || performance.now() - t1 > 120000) ? res() : setTimeout(chk, 100); chk(); });
+    // attend les tuiles qui contiennent le point de départ (sinon la plus proche) : prêtes ou en échec, au plus opts.waitMs (15 s par défaut) ;
+    // ensuite la page continue : la promenade démarre dès que la tuile est prête (TL.pending), « Chargement du sol… » reste affiché
+    const waitSet = TL.anchor ? TL.anchor.tiles : tilesAt(f.x, f.z);
+    const t1 = performance.now(), maxMs = Number.isFinite(opts.waitMs) ? opts.waitMs : 15000;
+    await new Promise(res => { const chk = () => (waitSet.every(tileDone) || performance.now() - t1 > maxMs) ? res() : setTimeout(chk, 100); chk(); });
     dirty = true;
-    return { tiles: TL.tiles.length, extent: ext.isEmpty() ? null : ext.min.toArray().concat(ext.max.toArray()) };
+    return { tiles: TL.tiles.length, extent: ext.isEmpty() ? null : ext.min.toArray().concat(ext.max.toArray()), ready: waitSet.every(t => t.state === 'ready'), waited: Math.round(performance.now() - t1) };
   }
   function tilesState() {
     const names = t => TL.tiles.filter(q => t.includes(q.state)).map(q => q.file);
     return Object.assign(tilesStatus(), { on: TL.on, radius: TL.radius, margin: TL.margin, maxBytes: TL.maxBytes, maxTri: TL.maxTri, conc: TL.conc,
       overview: { state: OV.state, bytes: OV.bytes, tri: OV.tri, cells: OV.cells, visible: OV.root ? OV.root.children.filter(c => c.visible).map(c => c.name) : [], hidden: OV.root ? OV.root.children.filter(c => !c.visible).map(c => c.name) : [] },
-      ready: names(['ready']), loadingFiles: names(['loading', 'building']), failedFiles: names(['failed']), groups: TL.root ? TL.root.children.map(c => c.name) : [], inflight: TL.inflight, gridQueue: TL.gridQ.length });
+      ready: names(['ready']), loadingFiles: names(['loading', 'building']), failedFiles: names(['failed']), groups: TL.root ? TL.root.children.map(c => c.name) : [], inflight: TL.inflight, gridQueue: TL.gridQ.length,
+      anchor: TL.anchor ? { x: TL.anchor.x, z: TL.anchor.z, files: TL.anchor.tiles.map(t => t.file) } : null, log: TL.log.slice() });
   }
 
   function setCfg(p) {
@@ -712,6 +784,7 @@ function createViewer(container, cfg0, loader) {
       }
     }
     if (sea) sea.position.set(seaCx, cfg.seaY, seaCz);
+    if ('zoneMarker' in p || 'showSpawns' in p) buildZones();
     if ('foliageCutout' in p) foliageMats.forEach(m => { m.alphaTest = cfg.foliageCutout; m.needsUpdate = true; });
     dirty = true;
     if (onCfg) onCfg(cfg);
@@ -734,20 +807,67 @@ function createViewer(container, cfg0, loader) {
   // ---- promenade à hauteur d'avatar
   const dom = renderer.domElement;
   const STEP_UP = 0.6;
+  // v33 : vol (touche Début : E monte, C descend, pas de gravité, murs solides, jamais sous le sol) et trois vues (V) :
+  // 'fps' subjective, 'tps' à la troisième personne (la caméra tourne autour de l'avatar), 'free' caméra libre (l'avatar reste sur place)
+  const VIEWS = ['fps', 'tps', 'free'], VIEW_NAMES = { fps: 'subjective', tps: 'troisième personne', free: 'caméra libre' };
+  let selfAv = null, selfKey = '';
+  function updateSelf() {
+    const show = walking && W.view !== 'fps';
+    if (!show) { if (selfAv && selfAv.visible) { selfAv.visible = false; dirty = true; } return; }
+    const col = P.myColor !== null ? P.myColor : (P.serverColor !== null ? P.serverColor : 0x3366cc), key = P.name + '|' + col;
+    if (!selfAv || selfKey !== key) { if (selfAv) disposeAvatar(selfAv); selfAv = makeAvatar(P.name || 'Moi', col); scene.add(selfAv); selfKey = key; }
+    selfAv.visible = true; selfAv.position.set(W.pos.x, W.pos.y, W.pos.z); selfAv.rotation.y = W.yaw; dirty = true;
+  }
+  // sol sous un point de caméra : la surface la plus haute à moins de 1 m au-dessus, sinon (point enfoui sous le relief) la plus haute à moins de 12 m au-dessus
+  function floorAt(G, x, z, y) { let g = G.ground(x, z, y + 1); if (g === null) g = G.ground(x, z, y + 12); return g; }
+  function placeCamera(G, hasGround) {
+    const eyeY = W.pos.y + cfg.eyeHeight;
+    if (W.view === 'free') { camera.position.copy(W.cam); camera.rotation.set(W.cpitch, W.cyaw, 0); return; }
+    if (W.view === 'tps') {
+      const cp = Math.cos(W.pitch), sp = Math.sin(W.pitch), sy = Math.sin(W.yaw), cy = Math.cos(W.yaw);
+      const fx = -sy * cp, fy = sp, fz = -cy * cp;   // direction du regard
+      let D = 4;
+      if (hasGround) {   // un mur entre l'avatar et la caméra : la caméra se rapproche
+        const hl = Math.hypot(fx, fz) || 1, hit = G.wall(W.pos.x, eyeY, W.pos.z, -fx / hl, -fz / hl, D * Math.max(cp, 0.3) + 0.3);
+        if (hit) D = Math.max(0.5, (hit.t - 0.3) / Math.max(cp, 0.3));
+      }
+      const cx = W.pos.x - fx * D, cz = W.pos.z - fz * D; let cy2 = eyeY - fy * D;
+      if (hasGround) { const g = floorAt(G, cx, cz, cy2); if (g !== null && cy2 < g + 0.3) cy2 = g + 0.3; }   // la caméra ne traverse pas le sol
+      camera.position.set(cx, cy2, cz); camera.lookAt(W.pos.x, eyeY, W.pos.z);
+      return;
+    }
+    camera.position.set(W.pos.x, eyeY, W.pos.z);
+    camera.rotation.set(W.pitch, W.yaw, 0);
+  }
   function walkStep(dt) {
-    const k = W.keys;
+    const k = W.keys, free = W.view === 'free';
     const run = k.has('ShiftLeft') || k.has('ShiftRight');
-    if (k.has('ArrowLeft')) W.yaw += 1.8 * dt;
-    if (k.has('ArrowRight')) W.yaw -= 1.8 * dt;
+    const turn = (k.has('ArrowLeft') ? 1 : 0) - (k.has('ArrowRight') ? 1 : 0);
+    if (turn) { if (free) W.cyaw += 1.8 * dt * turn; else W.yaw += 1.8 * dt * turn; }
     const f = (k.has('KeyW') || k.has('ArrowUp') ? 1 : 0) - (k.has('KeyS') || k.has('ArrowDown') ? 1 : 0);
     const s = (k.has('KeyD') ? 1 : 0) - (k.has('KeyA') ? 1 : 0);
-    const sy = Math.sin(W.yaw), cy = Math.cos(W.yaw);
-    let mx = -sy * f + cy * s, mz = -cy * f - sy * s;
-    const len = Math.hypot(mx, mz);
+    const up = (k.has('KeyE') ? 1 : 0) - (k.has('KeyC') ? 1 : 0);
     const G = W.grid, hasGround = G && (G.count > 0 || G.tiled);
+    const speed = cfg.walkSpeed * (run ? 2.2 : 1);
+    if (free) {
+      // caméra libre : les touches déplacent la caméra (dans le sens du regard), l'avatar reste sur place
+      const sy = Math.sin(W.cyaw), cy = Math.cos(W.cyaw), cp = Math.cos(W.cpitch), sp = Math.sin(W.cpitch);
+      let mx = -sy * cp * f + cy * s, my = sp * f + up, mz = -cy * cp * f - sy * s;
+      const len = Math.hypot(mx, my, mz);
+      if (len > 0 && dt > 0) {
+        const d = speed * dt / len, nx = W.cam.x + mx * d, nz = W.cam.z + mz * d;
+        if (hasGround && G.tiled && G.pending(nx, nz)) markWait(nx, nz);
+        else { W.cam.x = nx; W.cam.z = nz; W.cam.y += my * d; }
+      }
+      if (hasGround) { const g = floorAt(G, W.cam.x, W.cam.z, W.cam.y); if (g !== null && W.cam.y < g + 0.3) W.cam.y = g + 0.3; }   // jamais sous le sol
+    }
+    const mf = free ? 0 : f, ms = free ? 0 : s;
+    const sy = Math.sin(W.yaw), cy = Math.cos(W.yaw);
+    let mx = -sy * mf + cy * ms, mz = -cy * mf - sy * ms;
+    const len = Math.hypot(mx, mz);
     if (len > 0 && dt > 0) {
       mx /= len; mz /= len;
-      const dist = cfg.walkSpeed * (run ? 2.2 : 1) * dt;
+      const dist = speed * dt;
       let dx = mx * dist, dz = mz * dist;
       if (hasGround) {
         const hit = G.wall(W.pos.x, W.pos.y + 0.9, W.pos.z, mx, mz, dist + 0.35);
@@ -757,35 +877,65 @@ function createViewer(container, cfg0, loader) {
           const d = dx * nx + dz * nz; dx -= d * nx; dz -= d * nz;
         }
         // mode tuiles : jamais d'avancée vers une zone dont la tuile n'est pas prête (indicateur « Chargement du sol… »)
-        if (G.tiled && G.pending(W.pos.x + dx, W.pos.z + dz)) TL.waitT = performance.now();
-        else if (G.ground(W.pos.x + dx, W.pos.z + dz, W.pos.y + STEP_UP) !== null) { W.pos.x += dx; W.pos.z += dz; }
+        if (G.tiled && G.pending(W.pos.x + dx, W.pos.z + dz)) markWait(W.pos.x + dx, W.pos.z + dz);
+        else if (W.fly || G.ground(W.pos.x + dx, W.pos.z + dz, W.pos.y + STEP_UP) !== null) { W.pos.x += dx; W.pos.z += dz; }
       } else { W.pos.x += dx; W.pos.z += dz; }
     }
-    if ((W.jumpReq || k.has('Space')) && W.grounded) { W.vy = 5.5; W.grounded = false; W.pos.y += 0.02; }
-    W.jumpReq = false;
-    const g = hasGround ? G.ground(W.pos.x, W.pos.z, W.pos.y + STEP_UP) : null;
-    if (W.grounded) {
-      if (g !== null) {
-        if (W.pos.y - g > 0.6) W.grounded = false;
-        else W.pos.y += (g - W.pos.y) * Math.min(1, dt * 18);
+    if (W.fly) {
+      // en vol : pas de gravité ; E monte, C descend ; jamais sous le sol des tuiles chargées (tuile dessous pas prête : on ne descend pas)
+      W.vy = 0; W.grounded = false;
+      const gF = hasGround ? G.ground(W.pos.x, W.pos.z, W.pos.y + STEP_UP) : null;
+      if (gF !== null) W.flyFloor = gF;
+      let ny = W.pos.y + (free ? 0 : up) * speed * dt;
+      if (hasGround && G.tiled && G.pending(W.pos.x, W.pos.z)) { if (ny < W.pos.y) { ny = W.pos.y; markWait(W.pos.x, W.pos.z); } }
+      else if (hasGround) { const fl = gF !== null ? gF : W.flyFloor; if (fl !== undefined && ny < fl) ny = fl; }
+      W.pos.y = ny;
+    } else {
+      if ((W.jumpReq || k.has('Space')) && W.grounded && !free) { W.vy = 5.5; W.grounded = false; W.pos.y += 0.02; }
+      W.jumpReq = false;
+      const g = hasGround ? G.ground(W.pos.x, W.pos.z, W.pos.y + STEP_UP) : null;
+      if (W.grounded) {
+        if (g !== null) {
+          if (W.pos.y - g > 0.6) W.grounded = false;
+          else W.pos.y += (g - W.pos.y) * Math.min(1, dt * 18);
+        }
+      }
+      if (!W.grounded && !(G && G.tiled && G.pending(W.pos.x, W.pos.z))) {
+        W.vy -= 15 * dt; W.pos.y += W.vy * dt;
+        if (g !== null && W.pos.y <= g) { W.pos.y = g; W.vy = 0; W.grounded = true; }
+        if (W.pos.y < W.spawn.y - 400) { W.pos.copy(W.spawn); W.vy = 0; W.grounded = true; }
       }
     }
-    if (!W.grounded && !(G && G.tiled && G.pending(W.pos.x, W.pos.z))) {
-      W.vy -= 15 * dt; W.pos.y += W.vy * dt;
-      if (g !== null && W.pos.y <= g) { W.pos.y = g; W.vy = 0; W.grounded = true; }
-      if (W.pos.y < W.spawn.y - 400) { W.pos.copy(W.spawn); W.vy = 0; W.grounded = true; }
-    }
-    camera.position.set(W.pos.x, W.pos.y + cfg.eyeHeight, W.pos.z);
-    camera.rotation.set(W.pitch, W.yaw, 0);
+    placeCamera(G, hasGround);
+    updateSelf();
     if (dt > 0) zoneTick();
+  }
+  function setView(v) {
+    if (!walking || !VIEWS.includes(v) || v === W.view) return W.view;
+    if (v === 'free') { W.cam.copy(camera.position); W.cyaw = W.yaw; W.cpitch = W.pitch; }
+    else if (W.view === 'free') W.keys.clear();
+    W.view = v; walkStep(0); dirty = true;
+    if (onView) onView(v, VIEW_NAMES[v]);
+    return v;
+  }
+  const cycleView = () => setView(VIEWS[(VIEWS.indexOf(W.view) + 1) % VIEWS.length]);
+  function toggleFly() {
+    if (!walking || cfg.fly === false) return false;
+    W.fly = !W.fly; W.vy = 0; W.keys.clear();
+    if (W.fly) W.grounded = false; else W.grounded = false;   // à l'atterrissage la gravité ramène l'avatar sur le sol des tuiles chargées
+    if (onFly) onFly(W.fly);
+    dirty = true;
+    return W.fly;
   }
   function walkStart(opts) {
     if (!model || walking) return walking;
+    // v33 : F sans point demandé démarre à l'arrivée « default » tant que la cible n'a pas bougé (sinon à la cible, comme avant)
+    if (!opts && home && home.forF && Math.hypot(controls.target.x - home.pos[0], controls.target.z - home.pos[2]) < 0.05) opts = { pos: home.pos, yaw: home.yaw };
     if (TL.on) {
       // la promenade attend que la tuile sous l'avatar soit prête (F de nouveau : annuler)
       const at = (opts && opts.pos) ? { x: opts.pos[0], z: opts.pos[2] } : { x: controls.target.x, z: controls.target.z };
-      if (TG.pending(at.x, at.z)) { TL.pending = { kind: 'walk', opts, at }; TL.waitT = performance.now(); tilesUpdate(TL.waitT); return false; }
-      TL.pending = null; TL.forced = null;
+      if (TG.pending(at.x, at.z)) { TL.pending = { kind: 'walk', opts, at, t0: TL.pending ? TL.pending.t0 : (TL.anchor ? TL.anchor.t0 : performance.now()) }; markWait(at.x, at.z); tilesUpdate(TL.waitT); return false; }
+      TL.pending = null; TL.forced = null; releaseAnchor();
     }
     W.grid = TL.on ? TG : buildCollisionGrid(model, 3, parseIgnore(cfg.walkIgnore));
     W.saved = { pos: camera.position.clone(), target: controls.target.clone(), fov: camera.fov };
@@ -795,7 +945,7 @@ function createViewer(container, cfg0, loader) {
     let g = W.grid.ground(t.x, t.z, t.y + 2);
     if (g === null) g = W.grid.ground(t.x, t.z, 1e6);
     W.pos.set(t.x, g === null ? t.y : g, t.z); W.spawn.copy(W.pos);
-    W.vy = 0; W.grounded = true; W.keys.clear(); W.drag = false;
+    W.vy = 0; W.grounded = true; W.keys.clear(); W.drag = false; W.fly = false; W.flyFloor = undefined; W.view = 'fps';
     controls.enabled = false;
     camera.fov = 70; camera.updateProjectionMatrix();
     camera.rotation.order = 'YXZ';
@@ -810,7 +960,7 @@ function createViewer(container, cfg0, loader) {
   }
   function walkStop() {
     if (!walking) return;
-    walking = false; W.keys.clear(); W.drag = false;
+    walking = false; W.keys.clear(); W.drag = false; W.fly = false; W.view = 'fps'; updateSelf();
     if (document.pointerLockElement === dom && document.exitPointerLock) document.exitPointerLock();
     camera.rotation.order = 'XYZ';
     camera.fov = W.saved.fov; camera.updateProjectionMatrix();
@@ -834,7 +984,7 @@ function createViewer(container, cfg0, loader) {
     if (!model) return false;
     if (!walking) return walkStart({ pos, yaw });
     const x = pos[0], y = pos[1], z = pos[2];
-    if (TL.on && TG.pending(x, z)) { TL.pending = { kind: 'tp', pos, yaw, at: { x, z } }; TL.waitT = performance.now(); tilesUpdate(TL.waitT); return true; }
+    if (TL.on && TG.pending(x, z)) { TL.pending = { kind: 'tp', pos, yaw, at: { x, z }, t0: TL.pending ? TL.pending.t0 : performance.now() }; markWait(x, z); tilesUpdate(TL.waitT); return true; }
     let g = W.grid.ground(x, z, y + 2);
     if (g === null) g = W.grid.ground(x, z, 1e6);
     W.pos.set(x, g === null ? y : g, z); W.spawn.copy(W.pos);
@@ -845,8 +995,25 @@ function createViewer(container, cfg0, loader) {
     walkStep(0); dirty = true;
     return true;
   }
+  // v33 : aller à un point (champ « Aller à », retour à l'arrivée) : en promenade, téléportation (attend la tuile, « Chargement du sol… ») ;
+  // en vue globale, la cible se déplace (la caméra la suit, avec le même décalage) et le chargeur de tuiles aussi
+  function goTo(pos, yaw) {
+    if (!model || !Array.isArray(pos) || pos.length < 3 || !pos.every(Number.isFinite)) return false;
+    if (walking) return teleportTo(pos.slice(0, 3), yaw);
+    const d = new THREE.Vector3().fromArray(pos).sub(controls.target);
+    camera.position.add(d); controls.target.add(d); controls.update();
+    landKey = ''; dirty = true;
+    if (TL.on) { TL.forced = { x: pos[0], z: pos[2] }; TL.forcedUntil = performance.now() + 15000; tilesUpdate(performance.now()); }
+    return true;
+  }
+  const returnHome = () => (home ? goTo(home.pos, home.yaw) : false);
   const typing = e => { const n = e.target && e.target.tagName; return n === 'INPUT' || n === 'TEXTAREA' || n === 'SELECT'; };
-  const MOVE_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'ShiftLeft', 'ShiftRight']);
+  const MOVE_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyE', 'KeyC', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'ShiftLeft', 'ShiftRight']);
+  window.addEventListener('keydown', e => {
+    if (!walking || e.repeat || typing(e)) return;
+    if (e.code === 'Home' && cfg.fly !== false) { toggleFly(); e.preventDefault(); }
+    else if (e.code === 'KeyV') cycleView();
+  });
   window.addEventListener('keydown', e => { if (!walking || typing(e) || !MOVE_KEYS.has(e.code)) return; W.keys.add(e.code); if (e.code === 'Space') W.jumpReq = true; e.preventDefault(); });
   window.addEventListener('keyup', e => { W.keys.delete(e.code); });
   window.addEventListener('blur', () => W.keys.clear());
@@ -854,6 +1021,11 @@ function createViewer(container, cfg0, loader) {
   window.addEventListener('mouseup', () => { W.drag = false; });
   window.addEventListener('mousemove', e => {
     if (!walking || !(W.drag || document.pointerLockElement === dom)) return;
+    if (W.view === 'free') {
+      W.cyaw -= (e.movementX || 0) * 0.0022;
+      W.cpitch = Math.max(-1.45, Math.min(1.45, W.cpitch - (e.movementY || 0) * 0.0022));
+      return;
+    }
     W.yaw -= (e.movementX || 0) * 0.0022;
     W.pitch = Math.max(-1.45, Math.min(1.45, W.pitch - (e.movementY || 0) * 0.0022));
   });
@@ -877,7 +1049,7 @@ function createViewer(container, cfg0, loader) {
       if (n.dot(tpRay.ray.direction) > 0) n.negate();
       let x = h.point.x, z = h.point.z; const y = h.point.y;
       if (n.y < 0.5) { const hl = Math.hypot(n.x, n.z) || 1; x += n.x / hl * 0.5; z += n.z / hl * 0.5; } // mur : on se place devant
-      if (W.grid && W.grid.tiled && W.grid.pending(x, z)) { TL.waitT = performance.now(); return false; }
+      if (W.grid && W.grid.tiled && W.grid.pending(x, z)) { markWait(x, z); return false; }
       const g = W.grid ? W.grid.ground(x, z, y + STEP_UP + 0.05) : null;
       W.pos.set(x, g === null ? y : g, z); W.vy = 0; W.grounded = true;
       dom.style.transition = 'opacity .12s'; dom.style.opacity = '0.35';
@@ -946,7 +1118,7 @@ function createViewer(container, cfg0, loader) {
     }
     return u;
   })();
-  const P = { ws: null, id: null, peers: new Map(), last: 0, name: '', state: 'off', retry: 0, timer: 0, sent: [0, 0, 0, 0] };
+  const P = { ws: null, id: null, peers: new Map(), last: 0, name: '', state: 'off', retry: 0, timer: 0, sent: [0, 0, 0, 0], myColor: null, serverColor: null };
   const r2 = v => Math.round(v * 100) / 100;
   const cleanName = s => String(s || '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 24);
   function pStatus(state, reason) { P.state = state; if (onPresence) onPresence({ state, count: state === 'online' ? P.peers.size + (walking ? 1 : 0) : 0, spectator: !walking, reason: reason || '' }); }
@@ -1026,6 +1198,7 @@ function createViewer(container, cfg0, loader) {
     if (!m || typeof m !== 'object') return;
     if (m.t === 'welcome') {
       P.id = m.id; (m.peers || []).forEach(addPeer); pStatus('online');
+      P.serverColor = Number.isInteger(m.color) && m.color >= 0 && m.color <= 0xFFFFFF ? m.color : null;
       if (m.name) setMyName(m.name);
       if (m.role === 'spectator' && walking && P.ws) P.ws.send(JSON.stringify({ t: 'role', walker: true, name: P.name }));
       if (onChat && cfg.chat !== false) (m.history || []).forEach(h => onChat({ id: h.id, name: cleanName(h.name) || '?', text: String(h.text || '').slice(0, 200), self: false, history: true }));
@@ -1066,7 +1239,7 @@ function createViewer(container, cfg0, loader) {
     let ws;
     try { ws = new WebSocket(String(cfg.presenceUrl).trim().replace(/^(wss?:\/\/)0\.0\.0\.0(?=[:/]|$)/i, (m, p) => p + '127.0.0.1')); } catch (_) { pStatus('error'); return; }
     P.ws = ws;
-    ws.onopen = () => { P.retry = 0; ws.send(JSON.stringify({ t: 'hello', room: cfg.room || cfg.roomDefault || '', name: P.name, uid, spectator: !walking })); };
+    ws.onopen = () => { P.retry = 0; { const h = { t: 'hello', room: cfg.room || cfg.roomDefault || '', name: P.name, uid, spectator: !walking }; if (P.myColor !== null) h.color = P.myColor; ws.send(JSON.stringify(h)); } };
     ws.onmessage = ev => { let m; try { m = JSON.parse(ev.data); } catch (_) { return; } presenceMsg(m); };
     ws.onerror = () => {};
     ws.onclose = () => {
@@ -1097,6 +1270,11 @@ function createViewer(container, cfg0, loader) {
       const a = 1 - Math.exp(-dt * 10);
       for (const q of P.peers.values()) {
         if (q.bubble && now > q.bubbleUntil) removeBubble(q);
+        if (q.blink) {   // v33 : bulle d'un message qui me cite : 6 clignotements de 300 ms (visible 150 ms, cachée 150 ms), sans dépendre de la couleur
+          const n = Math.floor((now - q.blink.t0) / 300);
+          if (n >= 6 || !q.bubble) { if (q.bubble) q.bubble.visible = true; q.blink = null; }
+          else { const v = (now - q.blink.t0) % 300 < 150; if (q.bubble.visible !== v) { q.bubble.visible = v; if (!v) q.blinkHidden = (q.blinkHidden || 0) + 1; } }
+        }
         if (!q.g.visible) continue;
         q.g.position.x += (q.tx - q.g.position.x) * a; q.g.position.y += (q.ty - q.g.position.y) * a; q.g.position.z += (q.tz - q.g.position.z) * a;
         const d = Math.atan2(Math.sin(q.tyaw - q.g.rotation.y), Math.cos(q.tyaw - q.g.rotation.y));
@@ -1275,7 +1453,15 @@ function createViewer(container, cfg0, loader) {
         continue;
       }
       if (z.type === 'spawn') {
-        if (!zoneEditor) continue;
+        if (!zoneEditor) {
+          // page exportée : les arrivées ne sont jamais dessinées, sauf avec --show-spawns (cfg.showSpawns) : petit marqueur discret au sol
+          if (!cfg.showSpawns) continue;
+          const sm = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: MARK_OP, side: THREE.DoubleSide, depthWrite: false, fog: false });
+          const sd = new THREE.Mesh(new THREE.CircleGeometry(0.15, 24), sm); sd.rotation.x = -Math.PI / 2; sd.position.y = 0.04; sd.userData.marker = 'spawn'; g.add(sd);
+          const sr = new THREE.Mesh(new THREE.RingGeometry(0.15, 0.2, 24), sm.clone()); sr.material.color.set(0xffffff); sr.rotation.x = -Math.PI / 2; sr.position.y = 0.045; sr.userData.marker = 'spawn'; g.add(sr);
+          zoneGroup.add(g);
+          continue;
+        }
         const cone = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.9, 12), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, depthTest: false, fog: false }));
         cone.rotation.x = -Math.PI / 2; cone.position.y = 0.6; g.add(cone); main = cone;
         const l = makeLabel('arrivée : ' + z.id); l.position.y = 1.7; g.add(l);
@@ -1301,11 +1487,23 @@ function createViewer(container, cfg0, loader) {
         plane.position.y = 0.9 + z.h / 2; g.add(plane); main = plane;
         const post = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.92, 0.1), new THREE.MeshStandardMaterial({ color: 0x333333 })); post.position.y = 0.46; g.add(post);
       } else {
-        // page exportée : marqueur discret au sol (disque plat 0,4 m + anneau fin), zone de visée plus large et invisible
-        const mat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: MARK_OP, side: THREE.DoubleSide, depthWrite: false, fog: false });
-        const disc = new THREE.Mesh(new THREE.CircleGeometry(0.2, 32), mat); disc.rotation.x = -Math.PI / 2; disc.position.y = 0.04; g.add(disc);
-        const ring = new THREE.Mesh(new THREE.RingGeometry(0.2, 0.26, 32), mat.clone()); ring.material.color.set(0xffffff); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.045; g.add(ring);
-        markerMat.set(z.id, [mat, ring.material]);
+        // page exportée, selon cfg.zoneMarker : « discret » (défaut) disque plat 0,4 m + anneau fin ; « portee » anneau fin et net au rayon réel de la zone
+        // (visible de loin, sans cylindre) ; « aucun » rien. La zone de visée plus large et invisible reste dans les trois cas.
+        const mkind = cfg.zoneMarker === 'portee' || cfg.zoneMarker === 'aucun' ? cfg.zoneMarker : 'discret';
+        if (mkind === 'discret') {
+          const mat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: MARK_OP, side: THREE.DoubleSide, depthWrite: false, fog: false });
+          const disc = new THREE.Mesh(new THREE.CircleGeometry(0.2, 32), mat); disc.rotation.x = -Math.PI / 2; disc.position.y = 0.04; disc.userData.marker = 'disc'; g.add(disc);
+          const ring = new THREE.Mesh(new THREE.RingGeometry(0.2, 0.26, 32), mat.clone()); ring.material.color.set(0xffffff); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.045; ring.userData.marker = 'ring'; g.add(ring);
+          markerMat.set(z.id, [mat, ring.material]);
+        } else if (mkind === 'portee') {
+          const rad = z.shape === 'board' ? Math.max(z.radius, 2) : z.radius;
+          const rb = new THREE.Mesh(new THREE.RingGeometry(Math.max(0.02, rad - 0.1), rad, 96), new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide, fog: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
+          rb.rotation.x = -Math.PI / 2; rb.position.y = 0.05; rb.userData.marker = 'range'; rb.userData.radius = rad; g.add(rb);
+          const rw = new THREE.Mesh(new THREE.RingGeometry(Math.max(0.01, rad - 0.17), Math.max(0.02, rad - 0.1), 96), new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, fog: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
+          rw.rotation.x = -Math.PI / 2; rw.position.y = 0.055; rw.userData.marker = 'range'; g.add(rw);
+          const pts = []; for (let i = 0; i < 96; i++) { const a = i / 96 * Math.PI * 2; pts.push(new THREE.Vector3(Math.cos(a) * rad, 0.06, Math.sin(a) * rad)); }
+          const ln = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0x000000, fog: false })); ln.userData.marker = 'range'; g.add(ln);   // trait d'un pixel : reste visible de très loin
+        }
         if (clickable) {
           const hit = new THREE.Mesh(new THREE.CircleGeometry(0.6, 16), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide })); hit.visible = false;
           hit.rotation.x = -Math.PI / 2; hit.position.y = 0.06; g.add(hit); main = hit;
@@ -1419,7 +1617,7 @@ function createViewer(container, cfg0, loader) {
     if (best !== nearZone) { nearZone = best; if (onNear) onNear(best); }
   }
   window.addEventListener('keydown', e => {
-    if (e.code === 'KeyE' && !e.repeat && walking && !typing(e) && nearZone && onZone) fireZone(nearZone, 'key');
+    if (e.code === 'KeyE' && !e.repeat && walking && !W.fly && !typing(e) && nearZone && onZone) fireZone(nearZone, 'key');   // en vol E monte : les zones se déclenchent au clic
   });
 
   // ---- repère d'atterrissage : un cercle posé sur le sol, sous la cible de la vue globale (où F pose l'avatar)
@@ -1508,7 +1706,7 @@ function createViewer(container, cfg0, loader) {
     get model() { return model; }, get sea() { return sea; }, set onCfg(f) { onCfg = f; }, set onWalk(f) { onWalk = f; }, set onPick(f) { onPick = f; }, set pickOrbit(v) { pickOrbit = !!v; }, set onPresence(f) { onPresence = f; }, set onChat(f) { onChat = f; },
     setZones, zoneSelect, zonePickAt, findMeshes,
     // mode tuiles (cfg.tiles) : voir loadTiles ; tilesState sert aux tests
-    closeTiles, get seaCenter() { return [seaCx, seaCz]; },
+    closeTiles, releaseAnchor, get seaCenter() { return [seaCx, seaCz]; },
     // v32 : le point visé (rayon THREE.Raycaster) sur la vue d'ensemble, hors tuiles chargées ; null si rien
     overviewHit(ray) { for (const h of ray.intersectObjects(ovCells(), true)) if (h.object.isMesh) return h.point.toArray(); return null; },
     // v32 : demande le chargement des tuiles autour de (x, z) pendant 15 s ; rend les fichiers des tuiles qui contiennent ce point
@@ -1520,6 +1718,10 @@ function createViewer(container, cfg0, loader) {
         return { id: z.id, type: z.type, mesh: z.mesh || '', linked: !!l, off, shown: !off, box: l ? l.box.min.toArray().concat(l.box.max.toArray()) : null,
           pos: l ? [(l.box.min.x + l.box.max.x) / 2, l.box.min.y, (l.box.min.z + l.box.max.z) / 2] : (g ? g.position.toArray() : [z.x, z.y, z.z]) };
       });
+    },
+    // v33 : marqueurs dessinés pour chaque zone (tests, diagnostic) : types (disc, ring, range, spawn) et rayon de l'anneau de portée
+    getMarkers() {
+      return zoneGroup.children.map(g => { const k = []; let radius = null; g.traverse(o => { if (o.userData && o.userData.marker) { k.push(o.userData.marker); if (o.userData.radius) radius = o.userData.radius; } }); return { id: g.userData.zoneId, kinds: k, radius }; });
     },
     loadTiles, tilesState, get tiled() { return TL.on; }, set onTiles(f) { TL.onInfo = f; }, set onTileError(f) { TL.onError = f; },
     // référence (champ mesh d'une zone) de cet objet du modèle : nom, ou nom#index si le nom est partagé
@@ -1539,7 +1741,7 @@ function createViewer(container, cfg0, loader) {
       cam.position.set(c.x, box.max.y + 500, c.z); cam.up.set(0, 0, -1); cam.lookAt(c.x, 0, c.z);
       cam.updateProjectionMatrix(); cam.updateMatrixWorld(true);
       const hidden = [];
-      for (const o of [landing, zoneGroup, hoverG, ...hide, ...[...P.peers.values()].map(q => q.g)]) if (o && o.visible) { o.visible = false; hidden.push(o); }
+      for (const o of [landing, zoneGroup, hoverG, selfAv, ...hide, ...[...P.peers.values()].map(q => q.g)]) if (o && o.visible) { o.visible = false; hidden.push(o); }
       const fog = scene.fog; scene.fog = null;
       renderer.render(scene, cam);
       const out = document.createElement('canvas'); out.width = out.height = size;
@@ -1557,12 +1759,25 @@ function createViewer(container, cfg0, loader) {
       P.ws.send(JSON.stringify({ t: 'chat', text: t })); return true;
     },
     releaseKeys() { W.keys.clear(); },
+    // v33 : touches fléchées tenues depuis la saisie du chat (les lettres vont dans le texte, les flèches déplacent l'avatar)
+    holdKey(code, on) { if (!walking || !code.startsWith('Arrow')) return; if (on) W.keys.add(code); else W.keys.delete(code); },
+    // v33 : point de retour ({ pos, yaw, forF }), aller à, retour, vol, vues, couleur choisie, clignotement de bulle
+    setHome(h) { home = h && Array.isArray(h.pos) && h.pos.length >= 3 && h.pos.every(Number.isFinite) ? { pos: h.pos.slice(0, 3), yaw: Number.isFinite(h.yaw) ? h.yaw : undefined, forF: !!h.forF } : null; },
+    get home() { return home; }, goTo, returnHome, toggleFly, cycleView, setView,
+    set onView(f) { onView = f; }, set onFly(f) { onFly = f; }, tickPresence(dt, now) { presenceTick(dt, now); },   // tickPresence : pas de présence à la main, pour les tests (bulle qui clignote)
+    get viewName() { return VIEW_NAMES[W.view]; }, get view() { return W.view; }, get flying() { return W.fly; },
+    setMyColor(c) { P.myColor = Number.isInteger(c) && c >= 0 && c <= 0xFFFFFF ? c : null; },
+    blinkBubble(id) { const q = P.peers.get(id); if (q && q.bubble) { q.blink = { t0: performance.now() }; q.blinkHidden = 0; dirty = true; return true; } return false; },
     setName(n) { P.name = cleanName(n); if (P.ws && P.ws.readyState === 1) P.ws.send(JSON.stringify({ t: 'name', name: P.name })); },
-    getPresence() { return { state: P.state, id: P.id, peers: [...P.peers.values()].map(q => ({ id: q.id, name: q.name, pos: q.g.position.toArray(), visible: q.g.visible, bubble: !!q.bubble, stack: avatarStack(q) })) }; }, get walking() { return walking; },
+    getPresence() { return { state: P.state, id: P.id, peers: [...P.peers.values()].map(q => ({ id: q.id, name: q.name, pos: q.g.position.toArray(), visible: q.g.visible, bubble: !!q.bubble, bubbleVisible: !!q.bubble && q.bubble.visible, blinking: !!q.blink, blinkHidden: q.blinkHidden || 0, color: q.color, stack: avatarStack(q) })) }; }, get walking() { return walking; },
     walkTick(dt) { if (walking) walkStep(dt); },
-    refreshCollision() { if (TL.on) { for (const t of TL.tiles) if (t.state === 'ready' && t.grp) { t.state = 'building'; t.grid = null; t.gen = collisionGridSteps(t.grp, 3, parseIgnore(cfg.walkIgnore)); TL.gridQ.push(t); } } else if (walking && model) W.grid = buildCollisionGrid(model, 3, parseIgnore(cfg.walkIgnore)); },
+    refreshCollision() { if (TL.on) { for (const t of TL.tiles) if (t.state === 'ready' && t.grp) { t.state = 'building'; t.grid = null; t.gen = collisionGridSteps(t.grp, 3, parseIgnore(cfg.walkIgnore)); t.qAt = performance.now(); t.qFirst = true; t.gridCpu = 0; TL.gridQ.push(t); } } else if (walking && model) W.grid = buildCollisionGrid(model, 3, parseIgnore(cfg.walkIgnore)); },
     teleportNdc(nx, ny) { return walkTeleport(nx, ny); },
-    toggleWalk() { if (TL.pending) { TL.pending = null; tilesInfo(); return false; } return walking ? walkStop() : walkStart(); }, walkStart, walkStop, teleportTo,
-    getWalk() { return { pos: W.pos.toArray(), yaw: W.yaw, pitch: W.pitch, grounded: W.grounded, tris: W.grid ? W.grid.count : 0 }; }, get fit() { return fit; }, requestRender() { dirty = true; }
+    toggleWalk() {
+      if (TL.pending) { TL.pending = null; tilesInfo(); return false; }
+      if (walking && W.view === 'free') { setView('fps'); return true; }   // caméra libre : F rend la main à l'avatar (un second F quitte la promenade)
+      return walking ? walkStop() : walkStart();
+    }, walkStart, walkStop, teleportTo,
+    getWalk() { return { pos: W.pos.toArray(), yaw: W.yaw, pitch: W.pitch, grounded: W.grounded, tris: W.grid ? W.grid.count : 0, flying: W.fly, view: W.view, cam: camera.position.toArray(), selfVisible: !!(selfAv && selfAv.visible) }; }, get fit() { return fit; }, requestRender() { dirty = true; }
   };
 }

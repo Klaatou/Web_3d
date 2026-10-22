@@ -73,13 +73,22 @@ python glb2html.py "Ankh.glb" --settings --shared-shell --register regions.json 
 
 Une zone peut porter un champ `mesh` : le nom exact d'un élément du modèle. L'élément devient cliquable (curseur main, contour au survol), la touche E agit à moins de `radius` mètres de l'élément, et un portail se déclenche en s'approchant. Un élément traversable (`walkIgnore`) ne bloque pas le clic. Dans le viewer, section Zones : « Lier à un élément » (le clic ignore les éléments traversables) et « Délier ».
 
+## Nouveautés de la v33 (détail : `MODE_EMPLOI.md` § 18)
+
+- **Démarrage avec une arrivée** (`#spawn=`, `#pos=`) dans une région en tuiles : l'arrivée est la référence du chargeur, ses tuiles se chargent d'abord, « Chargement du sol… n/m tuiles prêtes · N s » remplace l'écran noir muet (retiré après 15 s). Une ligne de console par tuile (`[tuile] …`) donne les temps de téléchargement, d'analyse et de grille de collision.
+- **Arrivée `default`** : sans lien, la page s'ouvre cadrée dessus et F y démarre (sauf `--target` explicite) ; **R** ou le bouton « Retour à l'arrivée » y ramène.
+- **Promenade** : vol (**Début**, `--no-fly` pour le retirer), trois vues (**V**), champ « Aller à x, y, z », « Copier le lien de ma position » (`#pos=x,y,z,yaw`).
+- **Marqueurs de zones** : `--zone-marker discret|portee|aucun`, `--show-spawns`.
+- **Chat** : saisie persistante, enregistrement dans un fichier texte (côté navigateur), pseudo cité (gras, bulle qui clignote, bip), complétion `@pseudo`. **Couleur de l'avatar** choisie par le visiteur : **relancer `presence_server.py`**. `--log-ip raw` écrit l'adresse IP en clair (donnée personnelle : informer les visiteurs, limiter `--log-days`).
+- **Viewer en mode tuiles** : « Enregistrer les zones dans le dossier de la région » (Edge, Chrome) ; la page relit `X.zones.json` à chaque ouverture, F5 suffit.
+
 ## Carte des mondes
 
 `regions.json` est la carte : une liste de régions (nom, adresse, X, Y, point d'arrivée, salon, serveur de présence, vignette). `--register` y ajoute ou met à jour la région en cours de génération ; `--map-page` génère une page web de la carte avec un lien cliquable par région ; `--map-url a.json,b.json` fusionne les cartes de plusieurs propriétaires à chaque ouverture de la page.
 
 ## Développer
 
-Voir `CLAUDE.md` (architecture, décisions, feuille de route) et `HISTORIQUE.md` (comment retrouver chaque version) `tests/smoke.py` (test de fumée dans Chromium sans tête) `tests/modulaire.py` (mode modulaire universel, zones liées, exports du viewer) et `tests/portail_interne.py` (portail dans la même région), `tests/tuiles.py` (région en tuiles chargée par la coquille : rayon, budget, sol continu, blocage, échecs), `tests/v31.py` (images invalides, vue d'ensemble, sortie de promenade), `tests/v32.py` (zones dans une région en tuiles : viewer, zones liées à un objet, position affichée) et `tests/v23.py` (clic, liaison, rotation). Mode d'emploi des zones et portails : `MODE_EMPLOI.md`.
+Voir `CLAUDE.md` (architecture, décisions, feuille de route) et `HISTORIQUE.md` (comment retrouver chaque version) `tests/smoke.py` (test de fumée dans Chromium sans tête) `tests/modulaire.py` (mode modulaire universel, zones liées, exports du viewer) et `tests/portail_interne.py` (portail dans la même région), `tests/tuiles.py` (région en tuiles chargée par la coquille : rayon, budget, sol continu, blocage, échecs), `tests/v31.py` (images invalides, vue d'ensemble, sortie de promenade), `tests/v32.py` (zones dans une région en tuiles : viewer, zones liées à un objet, position affichée), `tests/v33.py` (démarrage avec tuiles lourdes, arrivée par défaut, vol, vues, chat, couleur, marqueurs, zones dans le dossier) et `tests/v23.py` (clic, liaison, rotation). Mode d'emploi des zones et portails : `MODE_EMPLOI.md`.
 
 ## Sécurité
 

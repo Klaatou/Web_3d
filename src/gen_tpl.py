@@ -65,6 +65,10 @@ PANEL = True
 ZONES_LIVE = ""
 MAP_JSON = "[]"
 MAP_URL = ""
+ZONE_MARKER = "discret"
+SHOW_SPAWNS = False
+FLY_ENABLED = True
+TARGET_EXPLICIT = False
 # <</DEFAULTS>>
 
 SEA_SIZE = 4000
@@ -93,6 +97,7 @@ MESHOPT_FILES = {"three/addons/libs/meshopt_decoder.module.js": "examples/jsm/li
 
 
 ZONE_TYPES = ("url", "ha", "portal", "spawn")
+ZONE_MARKERS = ("discret", "portee", "aucun")
 
 
 def _slug(s):
@@ -369,8 +374,9 @@ def settings_defaults(S):
                           ("sea", "sea_enabled", bool), ("retina", "retina", bool), ("walk", "walk", bool), ("eyeHeight", "eye_height", float),
                           ("walkSpeed", "walk_speed", float), ("walkIgnore", "walk_ignore", str), ("names", "names", bool), ("chat", "chat", bool),
                           ("chatFade", "chat_fade", float), ("presenceUrl", "presence_url", str), ("room", "room", str), ("spectate", "spectate", bool),
-                          ("panel", "panel", bool), ("mapUrl", "map_url", str)):
+                          ("panel", "panel", bool), ("mapUrl", "map_url", str), ("zoneMarker", "zone_marker", str), ("showSpawns", "show_spawns", bool), ("fly", "fly", bool)):
         put(dest, c.get(k), conv)
+    put("target_explicit", S.get("targetExplicit"), bool)
     put("zoom", cam.get("zoom"), float)
     put("cam_dir", cam.get("camDir"), vec)
     put("target", cam.get("target"), vec)
@@ -445,7 +451,7 @@ MESHOPT_JS = r"""__MESHOPT_JS__"""
 def build_cfg(name: str, *, rotate=ROTATE, hole=HOLE_RADIUS, hole_fade=HOLE_FADE, hole_x=HOLE_X, hole_z=HOLE_Z, wave=WAVE_AMP,
                sea_y=SEA_Y, zoom=ZOOM_RATIO, cam_dir=CAM_DIR, target=TARGET, sea_enabled=SEA_ENABLED,
                anim_enabled=ANIM_ENABLED, retina=RETINA_ENABLED, foliage_cutout=FOLIAGE_CUTOUT,
-               sea_color=SEA_COLOR, sky_color=SKY_COLOR, sea_segments=SEA_SEGMENTS, walk=WALK_ENABLED, eye_height=EYE_HEIGHT, walk_speed=WALK_SPEED, walk_ignore=WALK_IGNORE, names=NAMES_ENABLED, presence_url=PRESENCE_URL, room=ROOM, chat=CHAT_ENABLED, chat_fade=CHAT_FADE, zones=None, profile=PROFILE, spectate=SPECTATE, panel=PANEL, zones_live=ZONES_LIVE, map_entries=None, map_url=MAP_URL, modular=False, tiles=None, tile_radius=TILE_RADIUS, tile_margin=TILE_MARGIN, tile_max_mo=TILE_MAX_MO, tile_max_tri=TILE_MAX_TRI, tile_concurrency=TILE_CONCURRENCY) -> dict:
+               sea_color=SEA_COLOR, sky_color=SKY_COLOR, sea_segments=SEA_SEGMENTS, walk=WALK_ENABLED, eye_height=EYE_HEIGHT, walk_speed=WALK_SPEED, walk_ignore=WALK_IGNORE, names=NAMES_ENABLED, presence_url=PRESENCE_URL, room=ROOM, chat=CHAT_ENABLED, chat_fade=CHAT_FADE, zones=None, profile=PROFILE, spectate=SPECTATE, panel=PANEL, zones_live=ZONES_LIVE, map_entries=None, map_url=MAP_URL, modular=False, zone_marker=ZONE_MARKER, show_spawns=SHOW_SPAWNS, fly=FLY_ENABLED, target_explicit=TARGET_EXPLICIT, tiles=None, tile_radius=TILE_RADIUS, tile_margin=TILE_MARGIN, tile_max_mo=TILE_MAX_MO, tile_max_tri=TILE_MAX_TRI, tile_concurrency=TILE_CONCURRENCY) -> dict:
     """Le dictionnaire de réglages `cfg` : identique dans la page autonome et dans <page>.config.json (mode modulaire),
     sauf que le mode modulaire garde les zones hors de la config (fichier <page>.zones.json, relu à chaque ouverture)."""
     presence_url = fix_presence_url(presence_url)
@@ -459,6 +465,7 @@ def build_cfg(name: str, *, rotate=ROTATE, hole=HOLE_RADIUS, hole_fade=HOLE_FADE
         "names": bool(names), "chat": bool(chat), "profile": profile, "version": VERSION, "panel": bool(panel), "zonesLive": str(zones_live or ""),
         "map": clean_map(json.loads(MAP_JSON) if map_entries is None else map_entries), "mapUrl": str(map_url or "")[:1200], "spectate": bool(presence_url) if spectate is None else bool(spectate),
         "zones": clean_zones(json.loads(ZONES_JSON) if zones is None else zones, profile), "chatFade": float(chat_fade), "presenceUrl": str(presence_url), "room": str(room) or pathlib.Path(name).stem,
+        "zoneMarker": zone_marker if zone_marker in ZONE_MARKERS else "discret", "showSpawns": bool(show_spawns), "fly": bool(fly), "targetExplicit": bool(target_explicit),
     }
     if modular:
         cfg["zones"], cfg["zonesLive"] = [], ""
@@ -517,9 +524,12 @@ SHELL_CFG_TAG = '<script type="application/json" id="cfg">__CONFIG__</script>\n'
 SHELL_GLB_TAG = '<script type="application/octet-stream" id="glb">__GLB_B64__</script>\n'
 SHELL_LOAD_OLD = "await viewer.loadBuffer(await b64ToBuffer(document.getElementById('glb').textContent.trim()));"
 SHELL_LOAD_NEW = """if (C.tiles) {
-    // région en tuiles (X.tiles.json, voir MODE_EMPLOI § 17 bis) : pas de X.glb ; ?rayon=NNN remplace tileRadius (essais)
+    // région en tuiles (X.tiles.json, voir MODE_EMPLOI § 17 bis) : pas de X.glb ; ?rayon=NNN remplace tileRadius (essais).
+    // Arrivée demandée (lien #spawn= ou #pos=) : cadrage et chargement d'abord sur ce point. Sans lien, arrivée « default » si la région en a une
+    // (sauf --target explicite) ; sinon la cible de la configuration. La page continue après 15 s même si la tuile n'est pas prête.
     const rayon = Number(new URLSearchParams(location.search).get('rayon'));
-    await viewer.loadTiles(C.tiles, { spawn: arrival ? (H.get('spawn') || '') : undefined, radius: rayon > 0 ? rayon : undefined });
+    const A = startPoint(), D = A ? null : defaultArrival(), at = A || (D && !keepTarget ? D : null);
+    await viewer.loadTiles(C.tiles, { anchor: at ? at.pos : undefined, target: at ? at.pos : undefined, radius: rayon > 0 ? rayon : undefined });
   } else {
     const rGlb = await fetch(BOOT.glb);
     if (!rGlb.ok) throw new Error(BOOT.glb + ' : HTTP ' + rGlb.status);
@@ -826,11 +836,12 @@ def generate_tiles(tiles_path: pathlib.Path, doc, out_path: pathlib.Path, vendor
     page = build_shell()
     out_path.parent.mkdir(parents=True, exist_ok=True)
     kw["tiles"] = place_tiles(tiles_path, doc, out_path.parent)
+    zones_keep = kw.pop("zones_keep", False)   # --zones désigne déjà X.zones.json de destination : jamais réécrit
     _, cfg_out, zones_out = modular_names(out_path)
     if not shell or lib_missing(out_path.parent):
         write_modular_lib(out_path.parent, vendor_dir)
     write_config(cfg_out, out_path.stem, kw)
-    if zones_given(kw) or not zones_out.is_file():
+    if (zones_given(kw) and not zones_keep) or not zones_out.is_file():
         write_modular_zones(zones_out, kw)
     write_shell_page(out_path, shell, page)
     n = len(doc["tiles"])
@@ -946,6 +957,9 @@ def main():
     ap.add_argument("--tile-max-tri", type=int, default=TILE_MAX_TRI, help="triangles de tuiles chargées en même temps (défaut %(default)d)")
     ap.add_argument("--tile-concurrency", type=int, default=TILE_CONCURRENCY, help="téléchargements simultanés (défaut %(default)d)")
     ap.add_argument("--config-only", action="store_true", help="réécrit seulement <page>.config.json d'une page modulaire déjà générée (indiquée par -o), sans toucher au .glb ni à la coquille ; les visiteurs rechargent. <page>.zones.json n'est réécrit que si --zones est donné. Avec --register, met aussi la carte à jour")
+    ap.add_argument("--zone-marker", choices=ZONE_MARKERS, default=ZONE_MARKER, help="marqueur des portails et zones libres dans la page : discret (défaut : disque de 0,4 m et anneau fin), portee (anneau fin et net au rayon réel de la zone, visible de loin) ou aucun. Les arrivées ne sont jamais dessinées (voir --show-spawns)")
+    ap.add_argument("--show-spawns", action=argparse.BooleanOptionalAction, default=SHOW_SPAWNS, help="dessine aussi les arrivées dans la page (petit marqueur discret au sol ; défaut : jamais)")
+    ap.add_argument("--fly", action=argparse.BooleanOptionalAction, default=FLY_ENABLED, help="vol en promenade (touche Début ; E monte, C descend) : activé par défaut, --no-fly le retire")
     ap.add_argument("--room", default=ROOM, help="salon de présence (défaut : nom du fichier)")
     ap.add_argument("--sea", dest="sea_enabled", action=argparse.BooleanOptionalAction, default=SEA_ENABLED)
     ap.add_argument("--anim", dest="anim_enabled", action=argparse.BooleanOptionalAction, default=ANIM_ENABLED)
@@ -1016,7 +1030,9 @@ def main():
     kw = dict(rotate=a.rotate, hole=clamp(a.hole, 30, 600), hole_fade=max(0.0, a.hole_fade), hole_x=a.hole_x, hole_z=a.hole_z, wave=clamp(a.wave, 0, 10),
               sea_y=clamp(a.sea_y, -150, 60), zoom=clamp(a.zoom, 0.05, 100), cam_dir=a.cam_dir, target=a.target,
               foliage_cutout=clamp(a.foliage_cutout, 0, 1), sea_color=a.sea_color, sky_color=a.sky_color, sea_segments=int(clamp(a.sea_segments, 8, 1000)), walk=a.walk, walk_ignore=a.walk_ignore, zones_live=a.zones_live or "", map_entries=map_arg, map_url=a.map_url, names=a.names, presence_url=a.presence_url, room=a.room, chat=a.chat, chat_fade=clamp(a.chat_fade, 0, 3600), zones=zones_arg, profile=a.profile, spectate=a.spectate, panel=a.panel, eye_height=clamp(a.eye_height, 0.3, 5), walk_speed=clamp(a.walk_speed, 0.5, 30),
-              sea_enabled=a.sea_enabled, anim_enabled=a.anim_enabled, retina=a.retina, title=a.title)
+              sea_enabled=a.sea_enabled, anim_enabled=a.anim_enabled, retina=a.retina, title=a.title,
+              zone_marker=a.zone_marker, show_spawns=a.show_spawns, fly=a.fly,
+              target_explicit=bool(tuple(a.target) != tuple(TARGET) or TARGET_EXPLICIT or getattr(a, "target_explicit", False)))
 
     if a.zones_live and not a.input and str(a.zones_live).lower().endswith((".glb", ".gltf")):
         a.input, a.zones_live = a.zones_live, "auto"
@@ -1098,6 +1114,11 @@ def main():
             reg = data_path(a.register)
             kw["map_entries"] = register_region(reg, entry)
             print(f"[carte] « {entry['name']} » ajoutée ou mise à jour dans {reg} ({len(kw['map_entries'])} région(s))")
+        if a.zones and zf is not None:
+            zdest = modular_names(out)[2]
+            if zdest.is_file() and zf.resolve() == zdest.resolve():
+                kw["zones_keep"] = True
+                print(f"[zones] zones déjà en place : {zdest} (lu pour vérification, non réécrit ni copié)")
         ok = generate_tiles(tp, tdoc, out, a.vendor, shell=a.shared_shell, **kw)
         if ok and a.map_page:
             entries = kw["map_entries"] if kw.get("map_entries") is not None else json.loads(MAP_JSON)

@@ -1,4 +1,4 @@
-# Mode d'emploi : zones, portails et points d'arrivée (v32)
+# Mode d'emploi : zones, portails et points d'arrivée (v33)
 
 ## 1. La règle qui explique 90 % des pannes
 
@@ -22,7 +22,11 @@ Exemple juste :
 | Touche | Effet |
 |---|---|
 | **F** | entrer ou sortir de la promenade. **À la sortie (v31)**, le petit cercle d'atterrissage et la cible de la vue globale se posent **au sol, sous le dernier endroit où se trouvait l'avatar** ; la caméra revient à la **même distance et dans la même direction** de cette cible qu'avant l'entrée en promenade (elle ne revient plus à l'endroit exact d'où tu étais parti). En mode tuiles, les tuiles autour de l'avatar restent donc chargées. |
-| **E** | utiliser la zone proche (son nom s'affiche en bas : « E : … ») |
+| **E** | utiliser la zone proche (son nom s'affiche en bas : « E : … »). **En vol (v33), E monte** : les zones se déclenchent alors au clic |
+| **Début** (v33) | décoller ou atterrir (bascule). En vol : **E** monte, **C** descend, pas de gravité, les murs restent solides, jamais sous le sol. Retirable avec `--no-fly` (§ 18.4) |
+| **V** (v33) | changer de vue : subjective → troisième personne → caméra libre → subjective. La vue courante est écrite en texte dans le panneau d'aide (« Vue : … ») |
+| **R** (v33) | **retour à l'arrivée** : en promenade, téléporte à l'arrivée `default` (à défaut, à la cible de départ) en attendant la tuile ; en vue globale, recadre la cible et la caméra sur ce point. Le bouton « Retour à l'arrivée (R) » fait la même chose |
+| **Entrée** (v33) | ouvrir la saisie du chat ; **Entrée envoie et garde la saisie ouverte**, **Échap** la ferme. Les flèches continuent à déplacer l'avatar (§ 18.5) |
 | **P** | dans le viewer, en promenade : poser la zone à tes pieds |
 | **M** | ouvrir la carte des mondes |
 
@@ -85,6 +89,8 @@ C'est l'endroit où un visiteur apparaît.
 Pose-le en promenade avec **P**, en regardant dans la direction voulue : position et orientation sont prises d'un coup.
 
 L'arrivée d'identifiant **`default`** est spéciale : c'est là qu'arrive un visiteur quand rien d'autre n'est précisé (portail sans point d'arrivée, arrivée demandée introuvable, venue depuis la carte sans réglage). Mets-en une dans chaque région.
+
+**Arrivée `default` et ouverture sans lien (v33)** : si la région a une arrivée `default`, la page s'ouvre **cadrée sur elle** (la cible de la caméra devient sa position) et **F démarre à son point, avec son orientation** (tant que la cible n'a pas été déplacée, par exemple au double-clic). Une cible donnée explicitement sur la ligne de commande (`--target`) garde la priorité pour le cadrage : voir la règle exacte au § 18.2.
 
 ## 5. Portail vers un autre endroit de la même région
 
@@ -710,3 +716,105 @@ Autre façon d'ouvrir : par adresse, si le viewer est servi en http (par exemple
 **Ce qui est différent du mode GLB unique** : pas d'export HTML autonome ni de `.zip` (il n'y a pas de GLB unique ; les boutons sont désactivés) ; pas de rotation de la région (repère d'origine ; avec `glb2html.py --tiles --rotate`, les zones doivent déjà être dans le repère tourné) ; le trou de la mer est relatif au **centre de la région** (comme dans la page) ; la mer est à 20 m par défaut (`--sea-y` pour la changer, la commande l'écrit) ; le filaire des éléments traversables ne montre que les tuiles déjà chargées ; le texte d'une fiche de zone liée (« tuile non chargée ») ne se met à jour qu'au prochain changement de la liste (modifier ou ajouter une zone, cliquer une zone dans la scène), pas au moment où la tuile arrive ; la zone, elle, apparaît aussitôt dans la scène.
 
 Test : `python tests/v32.py` (région synthétique de 16 tuiles : zones libre, portail, arrivée et liées posées dans le viewer, export, puis page générée).
+
+
+## 18. Nouveautés de la v33 (22/10/2026)
+
+### 18.1 Démarrage avec une arrivée (`#spawn=`, `#pos=`) dans une région en tuiles
+
+**Ce qui se passait (mesuré, 22/10/2026).** Avec un lien `#spawn=chateau`, le chargeur prenait l'arrivée pour référence pendant **4 secondes seulement**, puis revenait à la cible de caméra par défaut. Si la tuile de l'arrivée n'était pas prête à ce moment-là (tuile lourde, processeur ou réseau lents), elle était **déchargée et son téléchargement abandonné**, les tuiles autour de la cible se chargeaient à sa place, et la page attendait 120 secondes avant de continuer, **derrière un écran noir sans aucun texte**. Reproduit sur une région synthétique de 16 tuiles dont deux de plus d'un million de triangles (23 Mo, `tests/glbfab.py`), processeur ralenti 10 fois (outils de développement de Chromium) : écran noir **121,6 s**, avatar en promenade à **125,7 s** ; avec la v33 : promenade à **7,1 s**. Sans ralentissement : 2,6 s avant, 1,6 s après. La cause mesurée est la fenêtre de 4 s (la tuile de l'arrivée, déchargée, était redemandée plus tard) ; la construction de la grille de collision n'en était pas la cause sur cette région synthétique (142 ms de calcul pour 1 million de triangles sans ralentissement, 2 s à x10).
+
+**Ce que fait la v33.**
+
+- Le point d'arrivée demandé (`#spawn=ID`, ou `#pos=x,y,z,yaw`, ou l'arrivée `default` à l'ouverture sans lien) est la **référence du chargeur jusqu'à ce que la promenade démarre** (ou que la cible de la vue globale soit déplacée), jamais la cible de caméra.
+- La ou les tuiles qui contiennent ce point démarrent **avant la vue d'ensemble et avant toute autre tuile** ; **aucune autre tuile ne démarre** tant que celles-là ne sont pas prêtes (ou en échec).
+- Leur grille de collision passe en premier dans la file, avec un **budget de temps par image de 40 ms** (6 ms pour les autres tuiles). Pendant une promenade, la grille de la tuile qui contient l'avatar passe **toujours** avant les autres.
+- **Jamais d'écran noir sans texte** : dès le début, « Chargement du sol… 0/1 tuile prête · 3 s » (tuiles prêtes sur tuiles attendues, temps écoulé), sur fond noir et texte blanc encadré. **Après 15 s**, l'écran noir est retiré : on voit la scène (vue d'ensemble comprise) avec le texte, et la promenade démarre dès que la tuile est prête. Après 60 s, le texte ajoute « attente longue (tuile lourde ou réseau lent) » ; le délai de 120 s n'existe plus.
+- Si le chargement échoue, le message d'erreur n'est plus caché derrière l'écran noir.
+
+**`#pos=x,y,z[,yaw]`** (nombres seulement, point décimal, valeurs bornées à ±100 000 ; autre chose est ignoré) : arrivée anonyme à ce point, avec les mêmes règles de chargement. Le repère est celui du modèle d'origine en mode tuiles, celui de la page (modèle recentré) en mode GLB unique. Le panneau d'aide propose **« Copier le lien de ma position »** : adresse de la page (avec `?region=`) suivie de `#pos=x,y,z,yaw` (2 décimales), lisible à l'ouverture ; sans clipboard, le lien est écrit dans un champ du panneau.
+
+**Une ligne par tuile dans la console** (touche F12 du navigateur) quand elle devient prête ou échoue, à coller dans le chat de diagnostic :
+
+```
+[tuile] X.tiles/T_3_0_1.glb prête : 14.0 Mo · 1002668 triangles · attente avant téléchargement 0 ms · téléchargement 278 ms · analyse du GLB 28 ms · attente en file de grille 53 ms · construction de la grille 142 ms de travail (1004 ms écoulées) · total 1310 ms
+[tuile] X.tiles/T_3_2_4.glb : échec après 2100 ms (HTTP 404)
+```
+
+« Construction de la grille » = temps de calcul réellement consommé ; « écoulées » = temps d'horloge entre l'entrée dans la file et la fin (comprend le rendu des images). `viewer.tilesState().log` (console du navigateur : `__viewer.tilesState().log`) donne les mêmes valeurs en nombres.
+
+### 18.2 Arrivée par défaut et retour à l'arrivée
+
+Règle exacte, **sans lien** (ni `#spawn=` ni `#pos=`) :
+
+| Situation | Cadrage de départ (cible de la caméra) | Touche F (sans avoir déplacé la cible) |
+|---|---|---|
+| la région a une arrivée `default`, pas de `--target` | **la position de cette arrivée** | **son point et son orientation** |
+| la région a une arrivée `default`, `--target` donné | la cible donnée | la cible (comme avant) |
+| pas d'arrivée `default` | la cible (celle de la configuration, ou le centre de l'étendue en mode tuiles) | la cible (comme avant) |
+| configuration écrite avant la v33 (sans la clé `targetExplicit`) | la cible (comme avant) | la cible (comme avant) |
+
+Avec un lien (`#spawn=`, `#pos=`), le cadrage et la promenade se font à l'arrivée demandée. En mode tuiles, c'est ce point qui sert de référence de chargement au départ.
+
+Le viewer écrit `targetExplicit` à vrai quand la cible de sa caméra n'est pas la cible par défaut (même test que la ligne de commande `--target`). Une arrivée `default` placée dans le viewer ne change donc rien à une page dont tu as cadré la caméra à la main.
+
+**Retour à l'arrivée** : bouton « Retour à l'arrivée (R) » ou touche **R**. En promenade : téléportation à l'arrivée `default` (à défaut : à la cible de départ), avec « Chargement du sol… » si la tuile n'est pas prête, comme un portail interne. En vue globale : la cible et la caméra se déplacent sur ce point (même décalage de caméra).
+
+### 18.3 Marqueurs de zones dans la page exportée
+
+| Option | Valeur | Effet |
+|---|---|---|
+| `--zone-marker` | `discret` (défaut) | comportement d'avant : disque plat de 0,4 m semi-transparent et anneau fin |
+| | `portee` | **anneau fin et net au rayon réel de la zone**, sans cylindre ; un trait d'un pixel est ajouté à l'anneau plat pour qu'il reste tracé de loin |
+| | `aucun` | aucun marqueur ; la zone reste cliquable et se déclenche comme avant |
+| `--show-spawns` | (aucune) | dessine aussi les **arrivées** : petit disque de 0,3 m et anneau fin au sol. Sans cette option, les arrivées ne sont **jamais** dessinées dans la page exportée (seulement dans l'éditeur) |
+
+Ils concernent les portails et les zones libres (lien web, commande). Réglage dans le viewer : section « Zones » (menu « Marqueur des portails et zones libres », case « Dessiner les arrivées ») ; il figure dans le récapitulatif de la ligne de commande. Config : `zoneMarker`, `showSpawns`.
+
+### 18.4 Vol, trois vues, « Aller à »
+
+- **Vol** (`--fly`, défaut ; `--no-fly` le retire de la page et de l'aide) : **Début** décolle ou atterrit. En vol, **E** monte et **C** descend (même vitesse que la marche, **Maj** accélère), pas de gravité, les murs bloquent comme au sol, l'avatar ne descend jamais sous le sol des tuiles chargées. Vers une tuile pas encore prête, l'avatar s'arrête au bord (« Chargement du sol… »), comme à pied. À l'atterrissage la gravité le ramène sur le sol (ou sur un toit). La présence transmet la hauteur normalement. En vol, E ne déclenche plus les zones : cliquer dessus.
+- **Vues** (**V**) : subjective (la vue d'avant) ; **troisième personne** (la caméra tourne autour de l'avatar, à 4 m, se rapproche si un mur est derrière lui, ne passe jamais sous le sol, la souris règle la hauteur) ; **caméra libre** (l'avatar reste sur place, les touches de déplacement et les flèches déplacent et tournent la caméra, **E** et **C** la montent et la descendent, elle ne traverse pas le sol). En caméra libre, **V** de nouveau ou **F** rend la main à l'avatar (un second **F** quitte la promenade). L'avatar est dessiné avec le même modèle que les autres visiteurs, avec le nom et la couleur du visiteur. La vue est écrite en texte dans le panneau d'aide (« Vue : troisième personne · au sol »).
+- **« Aller à x, y, z »** (panneau d'aide) : mètres, **repère du modèle d'origine en mode tuiles, repère de la page (modèle recentré) en mode GLB unique** (le panneau le dit). Formats : `68.2, 39, -823.3` ; `68.2 39 -823.3` ; `68,2 ; 39,0 ; -823,3` (virgule décimale avec points-virgules). En promenade : téléportation, avec l'attente de la tuile ; en vue globale : la cible se déplace.
+
+### 18.5 Chat
+
+- **Saisie persistante** : **Entrée** ouvre la saisie, **Entrée envoie et la garde ouverte** (champ vidé), **Échap** la ferme et rend les touches à la promenade. Tant qu'elle est ouverte, les lettres vont dans le texte, mais les **flèches** déplacent et font tourner l'avatar. L'état est écrit dans l'aide. Rien ne change pour qui n'utilise pas le chat.
+- **Enregistrer le chat** : bouton sous le chat. Télécharge un fichier texte UTF-8 (avec marque d'ordre des octets, lisible dans le Bloc-notes, fins de ligne Windows) : une ligne `jj/mm/aaaa hh:mm:ss | Nom | texte` par message reçu ou envoyé **depuis ton arrivée**. Tout se passe dans le navigateur : **rien n'est stocké côté serveur pour toi**. Précision : le serveur de présence garde en mémoire les derniers messages d'un salon (`--history`, 20 par défaut) et les rejoue à l'arrivée d'un visiteur ; ils s'affichent mais **ne sont pas dans le fichier** (ils précèdent l'arrivée).
+- **Pseudo cité** : quand ton pseudo figure dans un message reçu **en mot entier**, sans tenir compte des majuscules, avec ou sans `@` devant (`@alice`, `ALICE,`, `l'alice` oui ; `Alicex`, `Alicia` non), le message est affiché **en gras et précédé de « @ »**, la **bulle de l'auteur clignote** 6 fois (visible 150 ms, cachée 150 ms) et un **bip court** est joué (Web Audio, volume modéré, sans fichier ; seulement après une première interaction avec la page, règle des navigateurs). Trois cases dans « Réglages » : gras, clignotement (cochées par défaut), son (décochée par défaut), mémorisées dans le navigateur. Aucun changement côté serveur. Tout est redondant avec le texte : rien ne dépend de la couleur.
+- **Complétion `@`** : quand le texte se termine par `@` suivi de lettres, une liste de **5 pseudos au plus** (visiteurs en ligne dont le pseudo commence par ces lettres) s'affiche au-dessus de la saisie ; **flèches haut et bas** pour choisir (le choix est marqué par `▶`, en gras et en inversé), **Tab ou Entrée** insèrent `@Pseudo ` (Entrée n'envoie pas tant que la liste est ouverte), **Échap** ferme la liste sans fermer la saisie. Liste vide : rien n'est affiché.
+
+### 18.6 Couleur de l'avatar (client et serveur)
+
+Réglages → « Choisir la couleur de mon avatar » : la valeur est mémorisée dans le navigateur et **envoyée dans le message `hello`** (entier de 0 à 0xFFFFFF). `presence_server.py` l'accepte si c'est **un entier entre 0 et 0xFFFFFF** ; sinon (hors bornes, flottant, texte, booléen, null, liste) il la **rejette sans rien dire** et tire une couleur au hasard, comme avant, puis la diffuse comme couleur actuelle. Un ancien client (sans couleur) fonctionne ; un ancien serveur ignore simplement le champ. Prise en compte à la prochaine connexion. **Le nom affiché reste le repère principal** (étiquette au-dessus de l'avatar) ; rien n'est basé sur la couleur seule.
+
+**À faire côté serveur : relancer `presence_server.py` avec la nouvelle version** (la couleur choisie n'est prise en compte que par la v33 du serveur). Commande type (une seule ligne, à adapter à tes options) :
+
+```
+python .\presence_server.py --host 0.0.0.0 --port 8765 --log presence.log --log-days 30 --log-ip raw
+```
+
+### 18.7 Adresses IP dans le journal : `--log-ip raw`
+
+L'option existante `--log-ip` accepte `hash` (défaut : empreinte de 8 caractères), `raw` (**adresse en clair**) ou `none`. Avec `raw`, l'adresse figure **dès la connexion**, dans la console et dans le journal (`--log`) : `connexion | salon=… | Nom [id 3, clé a1b2c3, ip ADRESSE]`. Vérifié par `tests/v33.py` (défaut : empreinte ; `raw` : adresse en clair, dans la console et dans le fichier).
+
+**Rappel : une adresse IP est une donnée personnelle.** Informe tes visiteurs que le journal les enregistre (et à quelle fin), limite la durée de conservation avec `--log-days` (30 jours par défaut ; le journal tourne chaque nuit), et ne publie jamais le journal.
+
+### 18.8 Enregistrer les zones directement dans le dossier de la région (viewer)
+
+En mode tuiles, section « Zones » du viewer : bouton **« Enregistrer les zones dans le dossier de la région »**.
+
+1. **Edge ou Chrome** (API File System Access) : le bouton demande **une seule fois** le dossier de la région (celui qui contient `X.tiles.json`, accès en lecture-écriture). Il est mémorisé pour la session (et dans IndexedDB quand le navigateur l'accepte, pour ne pas le redemander ; une confirmation d'accès peut être redemandée par le navigateur).
+2. `X.zones.json` y est écrit (X = nom de `X.tiles.json` sans extension), **après avoir gardé l'ancien sous `X.zones.bak.json`** (une seule copie, écrasée à chaque enregistrement).
+3. Le viewer affiche en texte le dossier, le fichier, la date jj/mm/aaaa et l'heure. (Le navigateur ne donne pas le chemin complet, seulement le nom du dossier.) Si le dossier choisi ne contient pas `X.tiles.json`, rien n'est écrit.
+4. **Sans l'API (Firefox, Safari), ou si l'accès est refusé** : le fichier est téléchargé et le viewer dit « enregistre ce fichier dans le dossier de la région, sous le nom X.zones.json, en remplaçant l'ancien ». Choix du dossier annulé : rien n'est écrit.
+
+**La coquille relit `X.zones.json` à chaque ouverture** : après cet enregistrement, **F5 suffit** dans le navigateur, **sans régénérer la page** — sauf si tu changes les options de la page (`--zone-marker`, `--target`, `--presence-url`…), qui sont dans `X.config.json`.
+
+### 18.9 `glb2html.py --tiles --zones` avec le fichier déjà en place
+
+Si `--zones FICHIER` désigne **le `X.zones.json` de destination** (même chemin une fois résolu, absolu ou relatif), rien n'est copié, rien n'est réécrit, rien n'échoue : le script dit « zones déjà en place ». Le fichier n'est donc pas filtré par le profil `public` ni reformaté. Sans `--zones`, un `X.zones.json` existant est de toute façon conservé.
+
+### 18.10 Mettre à jour une région déjà publiée
+
+La coquille (`index.html`), `core.js` et `X.config.json` changent ; **les tuiles et `X.tiles.json` ne changent pas** (aucun redécoupage). Supprimer la coquille `index.html` de la région (une coquille existante et différente n'est jamais écrasée), régénérer la page **sans `--zones`** (le `X.zones.json` existant est conservé), relancer `presence_server.py` (§ 18.6).

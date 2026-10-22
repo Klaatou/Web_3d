@@ -310,6 +310,8 @@ async def main():
             for ev_ in o.garde.values():
                 ev_.set()
             await o.charge()
+            # v33 : la région a une arrivée « default » : la page s'ouvre sur elle, sa tuile se charge seule d'abord, puis les voisines
+            await o.attendre("window.__viewer.tilesState().loadingFiles.length === 0 && window.__viewer.tilesState().ready.length > 1")
             e = await o.etat()
             tx, tz = await o.ev("[window.__viewer.controls.target.x, window.__viewer.controls.target.z]")
             proches = sorted(t["file"] for t in TILES if boite_dist(t, tx, tz) <= 100)
@@ -427,7 +429,7 @@ async def main():
             e = await o.etat()
             visible = await o.ev("!document.getElementById('groundWait').hidden && document.getElementById('groundWait').textContent")
             rapport(bloque[0] <= bord + 0.6 and bloque[0] > bord - 12, f"bloqué au bord de la tuile non prête (x {bloque[0]:.1f}, bord {bord:.1f})", (bloque, bord))
-            rapport(visible == "Chargement du sol…" and e["waiting"], "indicateur texte « Chargement du sol… » affiché", visible)
+            rapport(visible.startswith("Chargement du sol…") and e["waiting"], "indicateur texte « Chargement du sol… » affiché", visible)
             await o.marcher(60)
             rapport((await o.pos())[0] <= bord + 0.6 and not await o.ev("window.__viewer.getWalk().pos[1] < 0"), "toujours bloqué, ni chute ni saut", await o.pos())
             for t in tenues:
