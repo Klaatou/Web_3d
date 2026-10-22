@@ -61,6 +61,8 @@ canvas{display:block;touch-action:none}
 #walkHint,#stateInfo{user-select:text;-webkit-user-select:text;cursor:text}
 #stateInfo{font-size:11px;padding:5px 9px}
 #stateInfo div{margin:0}
+.fold{display:block;width:100%;text-align:left;font:inherit;font-weight:bold;background:#ececec;color:#000;border:1px solid #000;border-radius:4px;padding:1px 6px;margin:0 0 4px;cursor:pointer}
+.grp{margin:2px 0}.grp b{margin-right:8px}
 #tilesInfo{font:11px/1.4 ui-monospace,Consolas,monospace;color:#000}
 #tilesInfo.alone{position:fixed;left:12px;bottom:54px;background:#fffffff0;border:1px solid #000;border-radius:6px;padding:5px 9px}
 #groundWait{position:fixed;left:50%;top:38%;transform:translateX(-50%);z-index:55;max-width:90%;text-align:center;font:14px/1.4 ui-monospace,Consolas,monospace;background:#000;color:#fff;border:2px solid #fff;border-radius:6px;padding:8px 16px}
@@ -84,7 +86,7 @@ __IMPORTMAP__
 <div id="modal" hidden><div><span id="modalText"></span><br><button class="ok" id="modalYes">Oui</button><button id="modalNo">Annuler</button></div></div>
 <div id="chat" hidden><div id="chatLog"></div><div id="chatHelp"></div><button id="chatSave" type="button" title="Enregistre dans un fichier texte les messages vus depuis ton arrivée">Enregistrer le chat</button><div id="chatComplete" role="listbox" aria-label="Pseudos" hidden></div><input id="chatInput" maxlength="200" placeholder="Message : Entrée pour envoyer (reste ouvert), Échap pour fermer" hidden></div>
 <div id="presence" hidden>Pseudo : <input id="presenceName" maxlength="24" placeholder="Visiteur"><div id="presenceStatus"></div></div>
-<div id="dock"><div id="hudL"><div id="walkHint" hidden></div><div id="stateInfo" hidden></div></div>
+<div id="dock"><div id="hudL"><div id="walkHint" hidden><button type="button" id="helpHead" class="fold" aria-expanded="true">▾ Aide</button><div id="helpBody"></div></div><div id="stateInfo" hidden><button type="button" id="stateHead" class="fold" aria-expanded="true">▾ État</button><div id="stateBody"></div></div></div>
 <div id="bar"><button id="walkBtn" hidden></button><button id="flyBtn" hidden aria-pressed="false">Voler / Atterrir</button><button id="grabBtn" hidden>Capturer la souris</button><button id="homeBtn" hidden>Retour à l'arrivée (R)</button><button id="helpBtn" hidden></button><button id="mapBtn" hidden>Carte (M)</button></div></div>
 <script type="application/json" id="cfg">__CONFIG__</script>
 <script type="application/octet-stream" id="glb">__GLB_B64__</script>
@@ -175,6 +177,18 @@ let arrive = async () => {
 };
 const toastEl = document.getElementById('toast'); let toastT = 0;
 const toast = t => { toastEl.textContent = t; toastEl.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { toastEl.hidden = true; }, 4000); };
+// v35 : copie dans le presse-papiers qui marche aussi en http (contexte non sécurisé : navigator.clipboard absent) ; rend true si la copie a réussi
+async function copyText(text, field) {
+  try { if (window.isSecureContext && navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(text); return true; } } catch (e) {}
+  try {
+    const ta = document.createElement('textarea'); ta.value = text; ta.setAttribute('readonly', ''); ta.setAttribute('aria-hidden', 'true');
+    ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0'; document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, text.length);
+    let ok = false; try { ok = !!document.execCommand('copy'); } catch (e) {} ta.remove();
+    if (ok) return true;
+  } catch (e) {}
+  if (field) { field.hidden = false; field.select(); }
+  return false;
+}
 window.__viewer = viewer;
 if ((C.zones || []).length || C.zonesLive) {
   let ZS = viewer.setZones(C.zones || [], { editor: false });
@@ -223,7 +237,7 @@ if ((C.zones || []).length || C.zonesLive) {
   };
   const pr = document.getElementById('zonePrompt');
   viewer.onNear = z => { nearNow = z; refreshNear(); };
-  refreshNear = () => { pr.hidden = !nearNow; if (nearNow) pr.textContent = (viewer.flying ? 'clic : ' : 'E : ') + (nearNow.label || nearNow.id); };   // en vol, E monte : les zones se déclenchent au clic
+  refreshNear = () => { pr.hidden = !nearNow; if (nearNow) pr.textContent = 'clic : ' + (nearNow.label || nearNow.id); };   // v35 : E ne déclenche plus les zones
 }
 if ((C.map || []).length || C.mapUrl) {
   let MAP = (C.map || []).slice();
@@ -281,7 +295,7 @@ if ((C.map || []).length || C.mapUrl) {
   ov.addEventListener('click', e => { if (e.target === ov) close(); });
   addEventListener('keydown', e => {
     const n = e.target && e.target.tagName;
-    if (e.code === 'KeyM' && !e.repeat && n !== 'INPUT' && n !== 'TEXTAREA') (ov.hidden ? open() : close());
+    if (e.code === 'KeyM' && !e.repeat && n !== 'INPUT' && n !== 'TEXTAREA' && (!viewer.walking || e.ctrlKey || e.metaKey) && !e.altKey) { e.preventDefault(); (ov.hidden ? open() : close()); }   // v35 : en promenade M bascule la vue ; Ctrl+M ouvre la carte partout
     else if (e.code === 'Escape' && !ov.hidden) close();
   });
   if (C.mapUrl && /^https?:$/.test(location.protocol)) {
@@ -342,7 +356,7 @@ if (C.panel !== false) {
     bl.onclick = async () => {
       const u = new URL(location.href); u.hash = 'name=' + encodeURIComponent(viewer.getName() || (() => { try { return localStorage.getItem('glb2html_name') || ''; } catch (e) { return ''; } })() || 'Visiteur') + '&key=' + viewer.getUid();
       lo.value = u.href; lo.hidden = false;
-      try { await navigator.clipboard.writeText(u.href); toast('Lien personnel copié'); } catch (e) { lo.select(); toast('Lien prêt : copie-le depuis le champ des Réglages (Ctrl+C)'); }
+      toast((await copyText(u.href, lo)) ? 'Copié' : 'Copie impossible : le texte est sélectionné, fais Ctrl+C');
     };
     op.append(bl, lo, mk('small', { textContent: 'Ce lien est un secret : quiconque l\'ouvre prend ton identité (ton nom réservé). Ne le partage pas.' }));
     showCol();
@@ -361,20 +375,39 @@ if (C.panel !== false) {
 }
 if (C.walk) {
   const wb = document.getElementById('walkBtn'), wh = document.getElementById('walkHint');
-  wb.hidden = false; wb.textContent = 'Promenade (F)';
+  wb.hidden = false; wb.textContent = 'Promenade (P)';
   const on = !!C.presenceUrl;
   const fly = C.fly !== false;
-  const walkKeys = ['ZQSD / WASD / flèches : marcher', 'Maj : courir', 'Espace : sauter', 'clic dans la vue puis souris : regarder', 'double-clic : se téléporter', 'Échap : libérer la souris (clic et double-clic marchent alors à l\'endroit du curseur) ; G ou bouton « Capturer la souris » : la reprendre']
-    .concat(fly ? ['Début : voler / atterrir (Page Haut ou E : monter, Page Bas ou C : descendre ; descendre jusqu\'au sol pose l\'avatar ; bouton « Voler / Atterrir »)'] : [], ['V : changer de vue (subjective, troisième personne, caméra libre)', 'R : retour à l\'arrivée'],
-      C.names ? ['clic : nom de l\'élément'] : [], (C.chat && on) ? ['Entrée : écrire (la saisie reste ouverte ; Échap la ferme ; flèches : se déplacer)'] : [], ((C.zones && C.zones.length) || C.zonesLive) ? ['clic ou E : panneaux et portails'] : [], (((C.map || []).length || C.mapUrl) ? ['M : carte des mondes'] : []), ['H : masquer cette aide', 'I : masquer / afficher le bloc d\'état', 'texte de l\'aide et de l\'état : sélectionnable, Ctrl+C copie', 'F : quitter']).join(' · ');
-  const orbitKeys = ['glisser : tourner', 'molette : zoom', 'clic droit + glisser : déplacer']
-    .concat(['double-clic : choisir le point d\'atterrissage (cercle au sol)', 'R : recadrer sur l\'arrivée'], C.names ? ['clic : nom de l\'élément'] : [], ((C.zones && C.zones.length) || C.zonesLive) ? ['clic : panneaux et portails'] : [], (((C.map || []).length || C.mapUrl) ? ['M : carte des mondes'] : []), ['H : masquer cette aide', 'I : masquer / afficher le bloc d\'état', 'F : entrer en promenade']).join(' · ');
+  // v35 : aide en groupes courts (une ligne par groupe, touches sans phrases)
+  const hasZones = !!((C.zones && C.zones.length) || C.zonesLive), hasMap = !!((C.map || []).length || C.mapUrl);
+  const grp = (t, items) => ({ t, items: items.filter(Boolean) });
+  const walkGroups = [
+    grp('Déplacement', ['ZQSD / WASD / flèches', 'Maj ou double appui W S ↑ ↓ : courir', 'Espace : sauter', 'double-clic : se téléporter', 'R : retour à l\'arrivée']),
+    fly ? grp('Vol', ['F ou Début : voler / atterrir', 'Page Haut ou E : monter (maintenu au sol : décoller)', 'Page Bas ou C : descendre']) : null,
+    grp('Vue', ['V : changer de vue', 'M : subjective / 3e personne', 'Fin ou Alt + clic : caméra derrière l\'avatar', 'Alt + glisser : orbiter']),
+    grp('Souris', ['clic dans la vue puis souris : regarder', 'Échap : libérer', 'G : reprendre']),
+    (C.chat && on) ? grp('Chat', ['Entrée : écrire', 'Échap : fermer', 'flèches : se déplacer']) : null,
+    (hasZones || C.names) ? grp('Zones', [hasZones ? 'clic : panneaux et portails' : '', C.names ? 'clic : nom de l\'élément' : '']) : null,
+    grp('Page', ['P : quitter la promenade', 'H : aide', 'I : état', hasMap ? 'Ctrl+M : carte des mondes' : ''])
+  ].filter(Boolean);
+  const orbitGroups = [
+    grp('Vue globale', ['glisser : tourner', 'molette : zoom', 'clic droit + glisser : déplacer', 'R : recadrer']),
+    grp('Promenade', ['P ou F : entrer', 'double-clic : choisir le point d\'atterrissage']),
+    (hasZones || C.names) ? grp('Zones', [hasZones ? 'clic : panneaux et portails' : '', C.names ? 'clic : nom de l\'élément' : '']) : null,
+    grp('Page', ['H : aide', 'I : état', hasMap ? 'M : carte des mondes' : ''])
+  ].filter(Boolean);
   const feat = 'Cette page — réglages visiteur : ' + (C.panel !== false ? 'oui (bouton en haut à droite)' : 'non') + ' · présence : ' + (on ? 'oui (salon ' + C.room + ')' : 'non (option --presence-url)') + ' · chat : ' + (on && C.chat ? 'oui' : 'non') + ' · vue globale : ' + (on && C.spectate ? 'oui' : 'non' + (on ? ' (option --spectate)' : '')) + ' · noms au clic : ' + (C.names ? 'oui' : 'non (option --names)') + ' · glb2html ' + (C.version || '?');
   const l1 = document.createElement('div'), l2 = document.createElement('div');
-  l2.style.cssText = 'font-size:11px;margin-top:4px;opacity:.85'; l2.textContent = feat; wh.append(l1, l2);
+  l2.style.cssText = 'font-size:11px;margin-top:4px;opacity:.85'; l2.textContent = feat;
+  const hbody = document.getElementById('helpBody'), hhead = document.getElementById('helpHead');
+  hbody.append(l1, l2);
+  const fillGroups = groups => {
+    l1.textContent = '';
+    for (const g of groups) { const d = document.createElement('div'); d.className = 'grp'; const b = document.createElement('b'); b.textContent = g.t; d.append(b, g.items.join(' · ')); l1.append(d); }
+  };
   // v34 : bloc d'état (texte sélectionnable, distinct de l'aide) : vue, mode (à pied / en vol), souris, position, tuiles
-  const sb = document.getElementById('stateInfo');
-  const mkLine = id => { const d = document.createElement('div'); d.id = id; sb.append(d); return d; };
+  const sb = document.getElementById('stateInfo'), sbody = document.getElementById('stateBody'), shead = document.getElementById('stateHead');
+  const mkLine = id => { const d = document.createElement('div'); d.id = id; sbody.append(d); return d; };
   const lv = mkLine('viewInfo'), lm = mkLine('modeInfo'), lmo = mkLine('mouseInfo'), lp = mkLine('posInfo');
   const setTxt = (el, t) => { if (el.textContent !== t) el.textContent = t; };
   const fb = document.getElementById('flyBtn'), gb = document.getElementById('grabBtn');
@@ -426,10 +459,10 @@ if (C.walk) {
     const p = w ? w.pos : tg.toArray(), yaw = w ? w.yaw : Math.atan2(-(tg.x - cp.x), -(tg.z - cp.z));
     const u = new URL(location.href); u.hash = 'pos=' + p.concat([yaw]).map(x => String(Math.round(x * 100) / 100)).join(',');
     lout.value = u.href;
-    try { await navigator.clipboard.writeText(u.href); toast('Lien de ta position copié'); } catch (e) { lout.select(); toast('Lien prêt : copie-le depuis le champ du panneau d\'aide (Ctrl+C)'); }
+    toast((await copyText(u.href, lout)) ? 'Copié' : 'Copie impossible : le texte est sélectionné, fais Ctrl+C');
   };
   lk.append(lbt, ' ', lout);
-  wh.append(gt, lk);
+  hbody.append(gt, lk);
   const hm = document.getElementById('homeBtn'); hm.hidden = false;
   const goHome = () => { if (!viewer.returnHome()) toast('Pas de point de retour sur cette page'); };
   hm.onclick = goHome;
@@ -437,9 +470,20 @@ if (C.walk) {
   const hb = document.getElementById('helpBtn');
   let helpOpen = true; try { helpOpen = localStorage.getItem('glb2html_help') !== '0'; } catch (e) {}
   let stateOpen = true; try { stateOpen = localStorage.getItem('glb2html_state') !== '0'; } catch (e) {}
-  const applyHelp = walking => { l1.textContent = walking ? walkKeys : orbitKeys; viewTick(); sb.hidden = !stateOpen; hb.hidden = false; wh.hidden = !helpOpen; hb.textContent = helpOpen ? 'Masquer l\'aide (H)' : 'Aide (H)'; };
+  const applyHelp = walking => { fillGroups(walking ? walkGroups : orbitGroups); viewTick(); sb.hidden = !stateOpen; hb.hidden = false; wh.hidden = !helpOpen; hb.textContent = helpOpen ? 'Masquer l\'aide (H)' : 'Aide (H)'; };
   const toggleHelp = () => { helpOpen = !helpOpen; try { localStorage.setItem('glb2html_help', helpOpen ? '1' : '0'); } catch (e) {} applyHelp(viewer.walking); };
   hb.onclick = toggleHelp;
+  // v35 : titre cliquable de l'aide et de l'état : replie / déplie le panneau (mémorisé dans le navigateur) ; H et I masquent tout le panneau
+  const foldKey = k => { try { return localStorage.getItem(k) === '1'; } catch (e) { return false; } };
+  const foldSave = (k, v) => { try { localStorage.setItem(k, v ? '1' : '0'); } catch (e) {} };
+  const mkFold = (head, body, title, key) => {
+    let folded = foldKey(key);
+    const apply = () => { body.hidden = folded; head.textContent = (folded ? '▸ ' : '▾ ') + title; head.setAttribute('aria-expanded', folded ? 'false' : 'true'); };
+    head.onclick = () => { folded = !folded; foldSave(key, folded); apply(); };
+    head.onmousedown = e => e.preventDefault();
+    apply();
+  };
+  mkFold(hhead, hbody, 'Aide', 'glb2html_helpFold'); mkFold(shead, sbody, 'État', 'glb2html_stateFold');
   applyHelp(false);
   addEventListener('keydown', e => { const n = e.target && e.target.tagName; if (e.code === 'KeyH' && !e.repeat && n !== 'INPUT' && n !== 'TEXTAREA') toggleHelp(); });
   addEventListener('keydown', e => {   // I : le bloc d'état (vue, mode, position, tuiles) se masque ou s'affiche, indépendamment de l'aide
@@ -453,15 +497,16 @@ if (C.walk) {
   wb.onclick = () => viewer.toggleWalk();
   addEventListener('keydown', e => {
     const n = e.target && e.target.tagName;
-    if (e.code === 'KeyF' && !e.repeat && n !== 'INPUT') viewer.toggleWalk();
+    if (e.code === 'KeyF' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && n !== 'INPUT' && n !== 'TEXTAREA' && n !== 'SELECT') viewer.pressF();   // v35 : en promenade F bascule le vol ; en vue globale il entre en promenade
+    if (e.code === 'KeyP' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && n !== 'INPUT' && n !== 'TEXTAREA' && n !== 'SELECT') viewer.toggleWalk();
   });
-  viewer.onLanding = () => toast('Point d\'atterrissage choisi : appuie sur F pour t\'y poser');
-  viewer.onWalk = on2 => { fb.hidden = !(on2 && fly); gb.hidden = !on2; applyHelp(on2); posTick(); wb.textContent = on2 ? 'Quitter la promenade (F)' : 'Promenade (F)'; document.getElementById('nameTag').hidden = true; };
+  viewer.onLanding = () => toast('Point d\'atterrissage choisi : appuie sur P (ou F) pour t\'y poser');
+  viewer.onWalk = on2 => { fb.hidden = !(on2 && fly); gb.hidden = !on2; wb.hidden = on2; applyHelp(on2); posTick(); { const mbn = document.getElementById('mapBtn'); if (mbn) mbn.textContent = on2 ? 'Carte (Ctrl+M)' : 'Carte (M)'; } document.getElementById('nameTag').hidden = true; };
 }
 if (viewer.tiled) {
   // mode tuiles : ligne d'information (texte seul) dans le panneau d'aide s'il existe, indicateur « Chargement du sol… », message d'échec
   const info = document.getElementById('tilesInfo'), sb2 = document.getElementById('stateInfo');
-  if (C.walk) { info.classList.remove('alone'); sb2.append(info); }
+  if (C.walk) { info.classList.remove('alone'); (document.getElementById('stateBody') || sb2).append(info); }
   const fr = (n, d) => Number(n).toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d });
   viewer.onTiles = s => {
     info.hidden = false;

@@ -69,6 +69,7 @@ MAP_URL = ""
 ZONE_MARKER = "discret"
 SHOW_SPAWNS = False
 FLY_ENABLED = True
+ZONE_INFO_DIST = 40.0
 TARGET_EXPLICIT = False
 # <</DEFAULTS>>
 
@@ -319,6 +320,19 @@ def data_path(arg):
     return here if here.is_file() else pathlib.Path(__file__).resolve().parent / p
 
 
+def page_path(arg, base):
+    """--maj : chemin relatif d'un fichier de carte -> relatif au dossier de la page (-o), jamais au dossier de lancement ni à celui des outils."""
+    p = pathlib.Path(arg).expanduser()
+    return p if p.is_absolute() else pathlib.Path(base) / p
+
+
+def where_note(reg, out):
+    """Hors --maj : une ligne qui dit où le fichier de carte est écrit quand ce n'est pas à côté de la page (-o)."""
+    if out and pathlib.Path(reg).resolve().parent != pathlib.Path(out).resolve().parent:
+        print(f"[carte] {reg} n'est pas à côté de la page {out} (un chemin relatif de --register est cherché dans le dossier de lancement, sinon dans celui des outils). "
+              "Pour l'écrire à côté de la page : donne un chemin complet, ou mets la région à jour avec --maj (chemins relatifs à la page)")
+
+
 def thumb_data_url(arg):
     if re.match(r"^https?://", str(arg), re.I):
         return str(arg)[:600]
@@ -383,7 +397,7 @@ def settings_defaults(S):
                           ("sea", "sea_enabled", bool), ("retina", "retina", bool), ("walk", "walk", bool), ("eyeHeight", "eye_height", float),
                           ("walkSpeed", "walk_speed", float), ("walkIgnore", "walk_ignore", str), ("names", "names", bool), ("chat", "chat", bool),
                           ("chatFade", "chat_fade", float), ("presenceUrl", "presence_url", str), ("room", "room", str), ("spectate", "spectate", bool),
-                          ("panel", "panel", bool), ("mapUrl", "map_url", str), ("zoneMarker", "zone_marker", str), ("showSpawns", "show_spawns", bool), ("fly", "fly", bool)):
+                          ("panel", "panel", bool), ("mapUrl", "map_url", str), ("zoneMarker", "zone_marker", str), ("showSpawns", "show_spawns", bool), ("fly", "fly", bool), ("zoneInfoDist", "zone_info_dist", float)):
         put(dest, c.get(k), conv)
     put("target_explicit", S.get("targetExplicit"), bool)
     put("zoom", cam.get("zoom"), float)
@@ -460,7 +474,7 @@ MESHOPT_JS = r"""__MESHOPT_JS__"""
 def build_cfg(name: str, *, rotate=ROTATE, hole=HOLE_RADIUS, hole_fade=HOLE_FADE, hole_x=HOLE_X, hole_z=HOLE_Z, wave=WAVE_AMP,
                sea_y=SEA_Y, zoom=ZOOM_RATIO, cam_dir=CAM_DIR, target=TARGET, sea_enabled=SEA_ENABLED,
                anim_enabled=ANIM_ENABLED, retina=RETINA_ENABLED, foliage_cutout=FOLIAGE_CUTOUT,
-               sea_color=SEA_COLOR, sky_color=SKY_COLOR, sea_segments=SEA_SEGMENTS, walk=WALK_ENABLED, eye_height=EYE_HEIGHT, walk_speed=WALK_SPEED, walk_ignore=WALK_IGNORE, names=NAMES_ENABLED, presence_url=PRESENCE_URL, room=ROOM, chat=CHAT_ENABLED, chat_fade=CHAT_FADE, zones=None, profile=PROFILE, spectate=SPECTATE, panel=PANEL, zones_live=ZONES_LIVE, map_entries=None, map_url=MAP_URL, modular=False, zone_marker=ZONE_MARKER, show_spawns=SHOW_SPAWNS, fly=FLY_ENABLED, target_explicit=TARGET_EXPLICIT, tiles=None, tile_radius=TILE_RADIUS, tile_margin=TILE_MARGIN, tile_max_mo=TILE_MAX_MO, tile_max_tri=TILE_MAX_TRI, tile_concurrency=TILE_CONCURRENCY) -> dict:
+               sea_color=SEA_COLOR, sky_color=SKY_COLOR, sea_segments=SEA_SEGMENTS, walk=WALK_ENABLED, eye_height=EYE_HEIGHT, walk_speed=WALK_SPEED, walk_ignore=WALK_IGNORE, names=NAMES_ENABLED, presence_url=PRESENCE_URL, room=ROOM, chat=CHAT_ENABLED, chat_fade=CHAT_FADE, zones=None, profile=PROFILE, spectate=SPECTATE, panel=PANEL, zones_live=ZONES_LIVE, map_entries=None, map_url=MAP_URL, modular=False, zone_marker=ZONE_MARKER, show_spawns=SHOW_SPAWNS, fly=FLY_ENABLED, zone_info_dist=ZONE_INFO_DIST, target_explicit=TARGET_EXPLICIT, tiles=None, tile_radius=TILE_RADIUS, tile_margin=TILE_MARGIN, tile_max_mo=TILE_MAX_MO, tile_max_tri=TILE_MAX_TRI, tile_concurrency=TILE_CONCURRENCY) -> dict:
     """Le dictionnaire de réglages `cfg` : identique dans la page autonome et dans <page>.config.json (mode modulaire),
     sauf que le mode modulaire garde les zones hors de la config (fichier <page>.zones.json, relu à chaque ouverture)."""
     presence_url = fix_presence_url(presence_url)
@@ -475,6 +489,7 @@ def build_cfg(name: str, *, rotate=ROTATE, hole=HOLE_RADIUS, hole_fade=HOLE_FADE
         "map": clean_map(json.loads(MAP_JSON) if map_entries is None else map_entries), "mapUrl": str(map_url or "")[:1200], "spectate": bool(presence_url) if spectate is None else bool(spectate),
         "zones": clean_zones(json.loads(ZONES_JSON) if zones is None else zones, profile), "chatFade": float(chat_fade), "presenceUrl": str(presence_url), "room": str(room) or pathlib.Path(name).stem,
         "zoneMarker": zone_marker if zone_marker in ZONE_MARKERS else "discret", "showSpawns": bool(show_spawns), "fly": bool(fly), "targetExplicit": bool(target_explicit),
+        "zoneInfoDist": max(5.0, min(200.0, float(zone_info_dist))),
     }
     if modular:
         cfg["zones"], cfg["zonesLive"] = [], ""
@@ -879,7 +894,7 @@ MAJ_KEYS = {
     "sky_color": ("skyColor",), "sea_segments": ("seaSegments",), "walk": ("walk",), "eye_height": ("eyeHeight",), "walk_speed": ("walkSpeed",),
     "walk_ignore": ("walkIgnore",), "names": ("names",), "presence_url": ("presenceUrl",), "chat": ("chat",), "chat_fade": ("chatFade",), "profile": ("profile",),
     "spectate": ("spectate",), "panel": ("panel",), "map_url": ("mapUrl",), "room": ("room",), "sea_enabled": ("sea",), "anim_enabled": ("anim",), "retina": ("retina",),
-    "zone_marker": ("zoneMarker",), "show_spawns": ("showSpawns",), "fly": ("fly",), "tile_radius": ("tileRadius",), "tile_margin": ("tileMargin",),
+    "zone_marker": ("zoneMarker",), "show_spawns": ("showSpawns",), "fly": ("fly",), "zone_info_dist": ("zoneInfoDist",), "tile_radius": ("tileRadius",), "tile_margin": ("tileMargin",),
     "tile_max_mo": ("tileMaxMo",), "tile_max_tri": ("tileMaxTri",), "tile_concurrency": ("tileConcurrency",), "tiles": ("tiles",),
     "map": ("map",), "register": ("map",),
 }
@@ -979,14 +994,20 @@ def run_maj(a, kw, explicit, S_reg):
         kw["tiles"] = place_tiles(tp, tdoc, out.parent)
         explicit.add("tiles")
     if a.register:
-        entry = region_entry(a, S_reg, kw["room"] or out.stem, out.stem, page_name_of(a, out))
-        reg = data_path(a.register)
+        a2 = argparse.Namespace(**vars(a))
+        a2.presence_url = a.presence_url or old.get("presenceUrl") or ""
+        if a2.thumb and not re.match(r"^https?://", str(a2.thumb), re.I) and page_path(a2.thumb, out.parent).is_file():
+            a2.thumb = str(page_path(a2.thumb, out.parent))
+        entry = region_entry(a2, S_reg, kw["room"] or out.stem, out.stem, page_name_of(a, out))
+        reg = page_path(a.register, out.parent)
         kw["map_entries"] = register_region(reg, entry)
         print(f"[carte] « {entry['name']} » ajoutée ou mise à jour dans {reg} ({len(kw['map_entries'])} région(s))")
         explicit.add("register")
     elif a.map:
         explicit.add("map")
-    elif "map" not in explicit:
+    elif a.region_name or a.region_url or a.region_xy or a.region_spawn or a.thumb:
+        print("[AVERTISSEMENT] --region-name, --region-url, --region-xy, --region-spawn et --thumb ne servent qu'avec --register : ignorés", file=sys.stderr)
+    if not a.register and not a.map and "map" not in explicit:
         kw["map_entries"] = old.get("map") if isinstance(old.get("map"), list) else []
     new = build_cfg(out.stem, **{k: v for k, v in kw.items() if k != "title"}, modular=True)
     cfg, changes = merge_maj_cfg(old, new, explicit)
@@ -1033,6 +1054,10 @@ def run_maj(a, kw, explicit, S_reg):
         if clean_map(entries):
             mp = pathlib.Path(a.map_page)
             write_map_page(mp if mp.is_absolute() else out.parent / mp, entries, cfg.get("presenceUrl", ""), cfg.get("mapUrl", ""), a.title or "Carte des mondes")
+        else:
+            print("[AVERTISSEMENT] --map-page ignoré : aucune région à afficher (donne --register pour enregistrer cette région, ou --map)", file=sys.stderr)
+    if a.register or a.map_page or a.thumb or a.map:
+        print(f"[carte] avec --maj, les chemins relatifs de --register, --map, --map-page et --thumb sont relatifs au dossier de la page : {out.parent.resolve()}")
     adr = shell_page_address(a.shared_shell, out.stem) if a.shared_shell else out.name
     print(f"[OK] région mise à jour ; adresse : {adr} [glb2html {VERSION}]")
     sys.exit(0)
@@ -1134,7 +1159,8 @@ def main():
     ap.add_argument("--config-only", action="store_true", help="réécrit seulement <page>.config.json d'une page modulaire déjà générée (indiquée par -o), sans toucher au .glb ni à la coquille ; les visiteurs rechargent. <page>.zones.json n'est réécrit que si --zones est donné. Avec --register, met aussi la carte à jour")
     ap.add_argument("--zone-marker", choices=ZONE_MARKERS, default=ZONE_MARKER, help="marqueur des portails et zones libres dans la page : discret (défaut : disque de 0,4 m et anneau fin), portee (anneau fin et net au rayon réel de la zone, visible de loin) ou aucun. Les arrivées ne sont jamais dessinées (voir --show-spawns)")
     ap.add_argument("--show-spawns", action=argparse.BooleanOptionalAction, default=SHOW_SPAWNS, help="dessine aussi les arrivées dans la page (petit marqueur discret au sol ; défaut : jamais)")
-    ap.add_argument("--fly", action=argparse.BooleanOptionalAction, default=FLY_ENABLED, help="vol en promenade (touche Début ; E monte, C descend) : activé par défaut, --no-fly le retire")
+    ap.add_argument("--zone-info-dist", type=float, default=ZONE_INFO_DIST, metavar="M", help="distance (5 à 200 m, défaut 40) jusqu'à laquelle l'infobulle, le clic et le nom affiché (showName) des zones marchent en promenade")
+    ap.add_argument("--fly", action=argparse.BooleanOptionalAction, default=FLY_ENABLED, help="vol en promenade (touche F ou Début ; Page Haut / E monte, Page Bas / C descend) : activé par défaut, --no-fly le retire")
     ap.add_argument("--maj", action="store_true", help="met à jour une région déjà générée (-o REGION.html [--shared-shell [COQUILLE.html]] [--tiles X.tiles.json | X.glb]) : lit X.config.json, n'applique QUE les options données sur la ligne, garde tout le reste et X.zones.json (réécrit seulement avec --zones), écrit la version courante et renouvelle la coquille si elle est plus ancienne (ancienne copie gardée sous un nom daté). Échoue si X.config.json n'existe pas")
     ap.add_argument("--room", default=ROOM, help="salon de présence (défaut : nom du fichier)")
     ap.add_argument("--sea", dest="sea_enabled", action=argparse.BooleanOptionalAction, default=SEA_ENABLED)
@@ -1185,6 +1211,8 @@ def main():
         a.map_page = S_cmd["mapPage"]
 
     map_arg = None
+    if a.map and a.maj and a.output and not pathlib.Path(a.map).is_absolute() and page_path(a.map, pathlib.Path(a.output).parent).is_file():
+        a.map = str(page_path(a.map, pathlib.Path(a.output).parent))   # --maj : chemin relatif = relatif au dossier de la page
     if a.map:
         mf = find_beside(a.map)
         if mf is None:
@@ -1209,7 +1237,7 @@ def main():
               sea_y=clamp(a.sea_y, -150, 60), zoom=clamp(a.zoom, 0.05, 100), cam_dir=a.cam_dir, target=a.target,
               foliage_cutout=clamp(a.foliage_cutout, 0, 1), sea_color=a.sea_color, sky_color=a.sky_color, sea_segments=int(clamp(a.sea_segments, 8, 1000)), walk=a.walk, walk_ignore=a.walk_ignore, zones_live=a.zones_live or "", map_entries=map_arg, map_url=a.map_url, names=a.names, presence_url=a.presence_url, room=a.room, chat=a.chat, chat_fade=clamp(a.chat_fade, 0, 3600), zones=zones_arg, profile=a.profile, spectate=a.spectate, panel=a.panel, eye_height=clamp(a.eye_height, 0.3, 5), walk_speed=clamp(a.walk_speed, 0.5, 30),
               sea_enabled=a.sea_enabled, anim_enabled=a.anim_enabled, retina=a.retina, title=a.title,
-              zone_marker=a.zone_marker, show_spawns=a.show_spawns, fly=a.fly,
+              zone_marker=a.zone_marker, show_spawns=a.show_spawns, fly=a.fly, zone_info_dist=clamp(a.zone_info_dist, 5, 200),
               target_explicit=bool(tuple(a.target) != tuple(TARGET) or TARGET_EXPLICIT or getattr(a, "target_explicit", False)))
 
     if a.maj:
@@ -1255,6 +1283,7 @@ def main():
             reg = data_path(a.register)
             kw["map_entries"] = register_region(reg, entry)
             print(f"[carte] « {entry['name']} » ajoutée ou mise à jour dans {reg} ({len(kw['map_entries'])} région(s))")
+            where_note(reg, a.output)
         write_config(cfg_out, name, kw)
         print(f"[OK] réglages -> {cfg_out} (coquille et .glb inchangés) [glb2html {VERSION}]")
         if a.zones:   # les zones ne sont touchées que si --zones est donné
@@ -1294,6 +1323,7 @@ def main():
             reg = data_path(a.register)
             kw["map_entries"] = register_region(reg, entry)
             print(f"[carte] « {entry['name']} » ajoutée ou mise à jour dans {reg} ({len(kw['map_entries'])} région(s))")
+            where_note(reg, a.output)
         if a.zones and zf is not None:
             zdest = modular_names(out)[2]
             if zdest.is_file() and zf.resolve() == zdest.resolve():
@@ -1364,6 +1394,7 @@ def main():
         reg = data_path(a.register)
         kw["map_entries"] = register_region(reg, entry)
         print(f"[carte] « {entry['name']} » ajoutée ou mise à jour dans {reg} ({len(kw['map_entries'])} région(s))")
+        where_note(reg, a.output)
     ok = generate(inp, out, a.vendor, modular=a.modular, shell=a.shared_shell, **kw)
     if ok and a.map_page:
         entries = kw["map_entries"] if kw.get("map_entries") is not None else json.loads(MAP_JSON)

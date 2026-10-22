@@ -82,6 +82,12 @@ Une zone peut porter un champ `mesh` : le nom exact d'un élément du modèle. L
 - **Chat** : saisie persistante, enregistrement dans un fichier texte (côté navigateur), pseudo cité (gras, bulle qui clignote, bip), complétion `@pseudo`. **Couleur de l'avatar** choisie par le visiteur : **relancer `presence_server.py`**. `--log-ip raw` écrit l'adresse IP en clair (donnée personnelle : informer les visiteurs, limiter `--log-days`).
 - **Viewer en mode tuiles** : « Enregistrer les zones dans le dossier de la région » (Edge, Chrome) ; la page relit `X.zones.json` à chaque ouverture, F5 suffit.
 
+## Nouveautés de la v35 (détail : `MODE_EMPLOI.md` § 20)
+
+- **Commandes à la Firestorm** : F / Début bascule le vol, **P** entre et sort de la promenade, E / Page Haut saute (maintenu : décolle), double appui sur W S ↑ ↓ pour courir, **M** bascule vue subjective / troisième personne, **Ctrl+M** carte des mondes, **Fin** ou Alt + clic caméra derrière l'avatar. **E ne déclenche plus les zones.** Tableau complet : § 20.2.
+- **Aide en groupes courts**, aide et état repliables par leur barre de titre ; **troisième personne** : la souris orbite la caméra sans tourner l'avatar.
+- **Infobulles de zones à 40 m** (`--zone-info-dist`), **copie dans le presse-papiers** qui marche aussi en http, **`--maj` avec la carte des mondes** (`--register`, `--map-page`… relatifs au dossier de la page).
+
 ## Nouveautés de la v34 (détail : `MODE_EMPLOI.md` § 19)
 
 - **Aide sélectionnable** (Ctrl+C copie) et **bloc d'état** séparé (vue, mode « à pied » / « en vol », souris, position, tuiles) ; **H** masque l'aide, **I** l'état.

@@ -189,7 +189,7 @@ async def main():
             pe = await o.ev("({ h: getComputedStyle(document.getElementById('walkHint')).pointerEvents, s: getComputedStyle(document.getElementById('stateInfo')).pointerEvents, us: getComputedStyle(document.getElementById('walkHint')).userSelect })")
             rapport(pe["h"] != "none" and pe["s"] != "none" and pe["us"] != "none", "l'aide et l'état reçoivent la souris et ne bloquent pas la sélection", pe)
             for ident in ("walkHint", "stateInfo"):
-                r = await o.ev("(i) => { const e = document.getElementById(i).firstElementChild, b = e.getBoundingClientRect(); return [b.left + 20, b.top + b.height / 2]; }", ident)
+                r = await o.ev("(i) => { const e = document.getElementById(i).children[1].firstElementChild, b = e.getBoundingClientRect();   // v35 : le premier enfant est la barre de titre repliable return [b.left + 20, b.top + b.height / 2]; }", ident)
                 await o.pg.mouse.click(r[0], r[1], click_count=3)
                 sel = await o.ev("window.getSelection().toString()")
                 rapport(len(sel.strip()) > 8, f"triple-clic dans #{ident} : texte sélectionné ({len(sel.strip())} caractères)", sel)
@@ -205,7 +205,7 @@ async def main():
             await o.pg.keyboard.press("i")
             await o.pg.keyboard.press("h")
             rapport(await o.ev("!document.getElementById('stateInfo').hidden && !document.getElementById('walkHint').hidden"), "I puis H les réaffichent")
-            rapport("sélectionnable" in aide and "I : masquer" in aide and "G ou bouton" in aide and "Page Haut" in aide, "l'aide liste I, G / bouton, Page Haut / Page Bas, la sélection", aide[:900])
+            rapport("I : état" in aide and "G : reprendre" in aide and "Page Haut" in aide and "Page Bas" in aide, "l'aide liste I, G, Page Haut / Page Bas (v35 : groupes courts, plus d'explication de la sélection)", aide[:900])
             rapport(not o.errs, "aucune erreur JavaScript", o.errs)
             await o.ctx.close()
 

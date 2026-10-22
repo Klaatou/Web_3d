@@ -270,7 +270,7 @@ async def main():
             await pg.evaluate("window.__opened.length = 0")
             await pg.keyboard.press("e")
             await pg.wait_for_timeout(300)
-            rapport(vis and "Boîte B" in txt and await pg.evaluate("window.__opened") == ["http://127.0.0.1/b"], "touche E à 4 m de l'élément (radius 8) : invite et déclenchement", (vis, txt))
+            rapport(vis and "Boîte B" in txt and await pg.evaluate("window.__opened") == [], "touche E à 4 m de l'élément (radius 8) : invite « clic : … », E ne déclenche plus (v35)", (vis, txt))
             (site / "boite.zones.json").write_text(json.dumps([dict(ZB[0], radius=2)]), encoding="utf-8")
             await recharger(pg)
             vis, txt = await invite(pg)

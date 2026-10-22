@@ -1,4 +1,4 @@
-# Mode d'emploi : zones, portails et points d'arrivée (v34)
+# Mode d'emploi : zones, portails et points d'arrivée (v35)
 
 ## 1. La règle qui explique 90 % des pannes
 
@@ -21,9 +21,13 @@ Exemple juste :
 
 | Touche | Effet |
 |---|---|
-| **F** | entrer ou sortir de la promenade. **À la sortie (v31)**, le petit cercle d'atterrissage et la cible de la vue globale se posent **au sol, sous le dernier endroit où se trouvait l'avatar** ; la caméra revient à la **même distance et dans la même direction** de cette cible qu'avant l'entrée en promenade (elle ne revient plus à l'endroit exact d'où tu étais parti). En mode tuiles, les tuiles autour de l'avatar restent donc chargées. |
-| **E** | utiliser la zone proche (son nom s'affiche en bas : « E : … »). **En vol (v33), E monte** : les zones se déclenchent alors au clic |
-| **Début** (v33) | décoller ou atterrir (bascule). En vol : **E** monte, **C** descend, pas de gravité, les murs restent solides, jamais sous le sol. Retirable avec `--no-fly` (§ 18.4) |
+| **F** (v35) | **en vue globale : entre en promenade** ; **en promenade : bascule le vol** (comme dans Firestorm). Pour sortir de la promenade, c'est **P**. **À la sortie (v31)**, le petit cercle d'atterrissage et la cible de la vue globale se posent **au sol, sous le dernier endroit où se trouvait l'avatar** ; la caméra revient à la **même distance et dans la même direction** de cette cible qu'avant l'entrée en promenade (elle ne revient plus à l'endroit exact d'où tu étais parti). En mode tuiles, les tuiles autour de l'avatar restent donc chargées. |
+| **P** (v35) | **entrer dans la promenade / en sortir** (le bouton « Promenade (P) » reste en vue globale ; il n'y a plus de bouton « Quitter la promenade »). Dans le **viewer**, P pose une zone en promenade : on y sort avec **Maj+P** ou le bouton |
+| **E** / **Page Haut** (v35) | **appui bref au sol = saut** (comme Espace) ; **maintenu plus de 0,4 s au sol = décoller** ; en vol, maintenu = monter. **E ne déclenche plus les zones** : elles se déclenchent au clic, ou à l'entrée dans leur rayon pour un portail « en marchant dedans » (§ 8). Le nom de la zone proche s'affiche en bas : « clic : … » |
+| **Début** (v33) | décoller ou atterrir (bascule, comme **F** en promenade). En vol : **E** / **Page Haut** monte, **C** / **Page Bas** descend, pas de gravité, les murs restent solides, jamais sous le sol. Retirable avec `--no-fly` (§ 18.4) |
+| **M** (v35) | **en promenade : bascule vue subjective / troisième personne** ; hors promenade : ouvre la carte des mondes (comme avant). **Ctrl+M ouvre la carte des mondes partout** |
+| **Fin**, **Alt + clic** (v35) | remettre la caméra **derrière l'avatar** (troisième personne). **Alt + glisser** orbite la caméra (à la troisième personne la souris orbite déjà ; en vue subjective, Alt + glisser regarde autour comme la souris) |
+| **double appui** sur W, S, ↑ ou ↓ (v35) | **course** tant que la touche reste enfoncée (deux appuis à moins de 300 ms) ; **Maj** reste une course. Pas de course permanente (Ctrl+R recharge la page) |
 | **V** (v33) | changer de vue : subjective → troisième personne → caméra libre → subjective. La vue courante est écrite en texte dans le bloc d'état (« Vue : … », v34) |
 | **R** (v33) | **retour à l'arrivée** : en promenade, téléporte à l'arrivée `default` (à défaut, à la cible de départ) en attendant la tuile ; en vue globale, recadre la cible et la caméra sur ce point. Le bouton « Retour à l'arrivée (R) » fait la même chose |
 | **Entrée** (v33) | ouvrir la saisie du chat ; **Entrée envoie et garde la saisie ouverte**, **Échap** la ferme. Les flèches continuent à déplacer l'avatar (§ 18.5) |
@@ -31,8 +35,6 @@ Exemple juste :
 | **Échap** (v34) | libère la souris en promenade. La souris reste alors **libre** (un clic ou un double-clic n'aspire plus le pointeur) jusqu'à **G** ou au bouton « Capturer la souris » (§ 19.4) |
 | **G** (v34) | recapturer la souris après Échap |
 | **I** (v34) | masquer / afficher le **bloc d'état** (vue, mode, souris, position, tuiles). **H** masque seulement l'aide (§ 19.1) |
-| **P** | dans le viewer, en promenade : poser la zone à tes pieds |
-| **M** | ouvrir la carte des mondes |
 
 Les portails ne fonctionnent qu'en promenade.
 
@@ -61,7 +63,7 @@ Dans la **page exportée** (autonome ou modulaire), il n'y a **aucun cylindre** 
 
 L'infobulle donne le **nom** puis la **destination** : l'adresse web pour un lien, « Région : adresse (#arrivée) » pour un portail (« cette région » si la destination est vide), « Commande : nom » pour une commande Home Assistant (l'adresse du webhook n'est **jamais** affichée). Un **clic** suit le lien. Un portail réglé « en marchant dedans » reste sans survol (il se déclenche seul).
 
-Aucun panneau de texte permanent : le nom ne s'affiche qu'au survol, ou quand on est à portée (« E : … » en bas de l'écran).
+Aucun panneau de texte permanent : le nom ne s'affiche qu'au survol, ou quand on est à portée (« clic : … » en bas de l'écran).
 
 **Toujours afficher le nom** (fiche de la zone, **décochée par défaut**) : garde un nom visible en permanence, au-dessus de l'élément ou du marqueur ; pour une zone non liée de forme « panneau », c'est le panneau complet qui est affiché.
 
@@ -159,7 +161,7 @@ Effet : envoi d'une requête POST au webhook avec deux valeurs, `zone` (le nom a
 | Choix | Effet |
 |---|---|
 | en marchant dedans | le portail part dès qu'on entre dans le cercle |
-| au clic ou touche E | il faut cliquer dessus ou appuyer sur E à proximité |
+| au clic | il faut cliquer dessus (v35 : la touche E ne déclenche plus les zones) |
 | les deux | l'un ou l'autre |
 
 Un portail « en marchant dedans » sur lequel on arrive ne se déclenche pas tout de suite : il faut en sortir puis y rentrer. Deux portails qui se renvoient l'un vers l'autre ne font donc pas de ping-pong.
@@ -169,7 +171,7 @@ Un portail « en marchant dedans » sur lequel on arrive ne se déclenche pas to
 | Choix | Réglage de taille |
 |---|---|
 | cercle au sol | Rayon (m) |
-| panneau | Largeur, Hauteur, et Portée de la touche E (m) |
+| panneau | Largeur, Hauteur, et Portée d'approche pour l'invite « clic » (m) |
 
 ## 9. Lier une zone à un élément du modèle
 
@@ -233,8 +235,8 @@ Les zones peuvent aussi être sauvées et rechargées avec **Exporter zones (.js
 
 | Symptôme | Cause probable | Remède |
 |---|---|---|
-| Rien ne se passe en entrant dans un portail | pas en promenade | appuie sur F |
-| | déclenchement réglé « au clic ou touche E » | appuie sur E, ou passe en « en marchant dedans » |
+| Rien ne se passe en entrant dans un portail | pas en promenade | appuie sur P (ou F en vue globale) |
+| | déclenchement réglé « au clic » | clique sur le portail (v35 : E ne le déclenche plus), ou passe en « en marchant dedans » |
 | | tu étais déjà dans le cercle en arrivant | sors du cercle puis rentre |
 | « Point d'arrivée … introuvable » | le portail contient le **Nom affiché** au lieu de l'**Identifiant** | recopie l'Identifiant exact de l'arrivée (§ 1) |
 | Arrivée au mauvais endroit dans une autre région | l'arrivée visée n'existe pas dans l'**autre** page, ou elle est privée et la page est publique | crée-la dans l'autre page, ou décoche Privé |
@@ -866,3 +868,79 @@ Forme : `python glb2html.py --maj -o "X.html" [--shared-shell [COQUILLE.html]] [
 - **`#name=PSEUDO`** dans l'adresse règle le pseudo (mémorisé dans le navigateur) ; les portails et la carte l'ajoutent déjà.
 - Réglages → **« Copier mon lien personnel »** : copie l'adresse de la page avec `#name=PSEUDO&key=CLE`, où CLE est la **clé d'identité du navigateur** (32 caractères hexadécimaux, `glb2html_uid`, celle que le serveur associe au nom réservé). **Ce lien est un secret : quiconque l'ouvre prend l'identité** (le nom réservé). À l'ouverture, une clé au bon format devient celle du navigateur ; si ce navigateur en a déjà une **différente**, un message à l'écran demande confirmation avant de la remplacer. La clé est ensuite **retirée de l'adresse visible**. Une clé au mauvais format est ignorée (et retirée). Aucune modification du serveur.
 - **Page carte** (`--map-page`) : champ **« Mon pseudo »** en haut, mémorisé dans le navigateur ; les liens vers les régions reçoivent `#spawn=…&name=PSEUDO`.
+
+## 20. Nouveautés de la v35 (22/10/2026)
+
+### 20.1 Aide en groupes, panneaux repliables
+
+- L'aide est écrite en **groupes courts**, une ligne par groupe, sans phrases : **Déplacement**, **Vol**, **Vue**, **Souris**, **Chat**, **Zones**, **Page** (en vue globale : **Vue globale**, **Promenade**, **Zones**, **Page**). La mention « Ctrl+C copie » et l'explication de la sélection ont disparu ; le texte reste sélectionnable.
+- L'aide et le bloc d'état ont chacun une **barre de titre** (« ▾ Aide », « ▾ État ») : un clic la **replie** (« ▸ Aide », seule la barre reste) ou la déplie. Le titre dit l'état en texte (flèche et `aria-expanded`), jamais par la couleur. L'état replié ou déplié est **mémorisé dans le navigateur** (clés `glb2html_helpFold` et `glb2html_stateFold`). **H** et **I** continuent de masquer entièrement l'aide et l'état.
+- Le bouton « Quitter la promenade (F) » est supprimé (la touche **P** suffit). En vue globale, le bouton s'appelle « Promenade (P) ».
+
+### 20.2 Touches Firestorm / touches de cette page
+
+Colonne de gauche : les défauts du visualiseur officiel d'après le wiki de Second Life (Quick Start Guide, « Keyboard Shortcuts »), que Firestorm reprend à ma connaissance ; ils n'ont pas été comparés ici à une installation de Firestorm.
+
+| Commande | Firestorm | Cette page |
+|---|---|---|
+| Marcher avant / arrière | W ou ↑ / S ou ↓ | W ou ↑ / S ou ↓ (ZQSD en AZERTY) |
+| Pas de côté | A / D (ou Maj + flèches) | A / D (Q / D en AZERTY) |
+| Tourner | ← / → | ← / → (à la troisième personne : tourne la caméra) |
+| Courir | double appui sur W / S / ↑ / ↓ ; Ctrl+R bascule la course | **Maj**, ou **double appui** (moins de 300 ms) sur W, S, ↑ ou ↓, tant que la touche est maintenue. **Pas de course permanente** (Ctrl+R recharge la page du navigateur) |
+| Sauter | E ou Page Haut (appui bref) | **E**, **Page Haut** (appui bref) ou **Espace** |
+| Voler / atterrir | Début | **F** ou **Début** (en vue globale, F entre encore en promenade) |
+| Décoller | E ou Page Haut maintenu | **E** ou **Page Haut** maintenu **plus de 0,4 s** au sol : vol + montée |
+| Monter en vol | E ou Page Haut | **E** ou **Page Haut** maintenu |
+| Descendre en vol | C ou Page Bas | **C** ou **Page Bas** maintenu ; **atterrissage automatique** au sol |
+| Vue subjective | M | **M** bascule vue subjective / troisième personne ; **V** fait tourner les trois vues (dont la caméra libre) |
+| Orbiter la caméra | Alt + glisser | **Alt + glisser** (à la troisième personne, la souris orbite déjà autour de l'avatar sans le tourner) |
+| Caméra derrière l'avatar | Échap | **Fin** ou **Alt + clic** (Échap est réservé au navigateur : il libère la souris) |
+| Carte du monde | Ctrl+M | **Ctrl+M** partout ; **M** seul l'ouvre aussi hors promenade |
+| Chat | Entrée | **Entrée** |
+| Entrer / sortir de la promenade | (n'existe pas) | **P** ; F entre aussi, en vue globale seulement |
+| Toucher un objet, une zone | clic | **clic** (E ne déclenche plus les zones) ; un portail « en marchant dedans » part à l'entrée de son rayon |
+| Se téléporter | (carte, double-clic selon le réglage) | **double-clic** |
+
+Gardées telles quelles : ZQSD / WASD / flèches, Espace, Entrée, G, R, V, H, I, Maj.
+
+### 20.3 Vol et saut
+
+- Au sol, **E** ou **Page Haut** : un appui bref fait **sauter** (comme Espace) ; **maintenu plus de 0,4 s**, l'avatar **décolle** et monte tant que la touche est tenue. Relâchée, il reste en vol, immobile en hauteur.
+- **F** et **Début** basculent le vol ; le bouton « Voler / Atterrir » reste. Descendre jusqu'au sol (C ou Page Bas) pose l'avatar : le vol s'arrête tout seul (v34). Avec `--no-fly`, rien de tout cela ne fait voler : E et Page Haut sautent seulement.
+
+### 20.4 Troisième personne
+
+- La **souris orbite la caméra** autour de l'avatar (lacet et tangage propres à la caméra) **sans le tourner** ; à l'arrêt l'avatar garde son orientation : on peut tourner autour de lui et voir son devant.
+- Quand une touche de marche est pressée, **l'avatar se tourne vers sa direction de déplacement** (rotation lissée, quelques dixièmes de seconde) ; la marche avant va **dans la direction de la caméra**. La caméra ne traverse ni sol ni mur, comme avant.
+- **La présence transmet l'orientation de l'avatar**, pas celle de la caméra : tourner la caméra de 180° sans marcher ne change rien pour les autres visiteurs. Vue subjective et caméra libre sont inchangées. **M** (ou V) change de vue ; en passant à la vue subjective le regard garde la direction de la caméra.
+
+### 20.5 Infobulle et clic des zones : `--zone-info-dist`
+
+| Option | Config | Effet |
+|---|---|---|
+| `--zone-info-dist M` | `zoneInfoDist` | distance, **en promenade**, jusqu'à laquelle l'infobulle, le clic et le **nom affiché** (« Toujours afficher le nom ») des zones fonctionnent. **40 m par défaut** (14 m avant), de **5 à 200** (hors bornes : ramené à la borne). Réglable dans le viewer (section « Promenade »), repris dans la ligne de commande. Un nom plus loin que cette distance est masqué en promenade et réapparaît en vue globale |
+
+`glb2html.py --maj --zone-info-dist 60` suffit à l'appliquer à une région déjà publiée (§ 20.7).
+
+### 20.6 Copier dans le presse-papiers
+
+Tous les boutons « copier » (lien personnel, lien de ma position, point visé, cible, commande) utilisent `navigator.clipboard.writeText` dans un **contexte sécurisé** (https, localhost), et sinon, **en http sur une adresse publique**, un repli : champ temporaire hors écran, sélection, `document.execCommand('copy')`, suppression. La page affiche **« Copié »** quelques secondes. Si tout échoue, le champ du lien reste **affiché et sélectionné**, avec « Copie impossible : le texte est sélectionné, fais Ctrl+C ».
+
+### 20.7 `--maj` et la carte des mondes
+
+`glb2html.py --maj` accepte maintenant aussi `--register FICHIER`, `--region-name`, `--region-xy`, `--region-url`, `--region-spawn`, `--thumb`, `--map`, `--map-url` et `--map-page FICHIER.html` : il applique ce qui est donné et garde tout le reste (config et zones, comme avant). Le salon et la présence de la fiche viennent de la config existante quand tu ne les redonnes pas.
+
+**Avec `--maj`, les chemins relatifs de `--register`, `--map`, `--map-page` et `--thumb` sont relatifs au dossier de la page (celui de `-o`)**, et non au dossier des outils ni au dossier de lancement ; le message de fin le rappelle avec le dossier. Un chemin absolu est respecté. `--region-name`, `--region-url`, `--region-xy`, `--region-spawn` et `--thumb` sans `--register` sont ignorés avec un avertissement.
+
+**Sans `--maj`**, l'ancien comportement est conservé (un chemin relatif de `--register` est cherché dans le dossier de lancement, sinon dans le dossier des outils, où il est créé) ; quand le fichier n'est pas à côté de la page `-o`, une ligne dit où `regions.json` est écrit et propose `--maj` ou un chemin complet.
+
+### 20.8 Créer la carte des mondes
+
+1. **Chaque région est enregistrée dans un même `regions.json`**, à côté des pages (un seul dossier de pages, une coquille commune). Pour chaque région déjà générée, une commande `--maj --register`, **une seule ligne PowerShell** (nom, position sur la grille OpenSim, vignette facultative de 140 Ko au plus à côté de la page) :
+
+   `python glb2html.py --maj -o "X.html" --shared-shell --register regions.json --region-name "Nom affiché" --region-xy 1000,1001 --thumb vignette.png`
+
+   La fiche reçoit l'adresse `index.html?region=X`, le salon et le serveur de présence de la config de la région. Redonner la commande met la fiche à jour (identifiée par le salon), sans doublon.
+2. **Générer la page web de la carte** : `python glb2html.py --maj -o "X.html" --shared-shell --map-page carte.html` (elle lit les régions de `regions.json` enregistrées dans la config de la région `X`). Pour qu'elle contienne toutes les régions, exécute-la **après** les enregistrements, ou donne `--map regions.json --map-page carte.html`.
+3. **L'ouvrir par le serveur web**, pas depuis le disque : le dossier contenant `carte.html`, `index.html`, `lib/` et les régions est servi en http(s) (`python -m http.server` pour un essai, ou `presence_server.py --serve-dir` quand il hébergera les pages), puis ouvre `http://ADRESSE/carte.html`. Chaque lien de la carte ouvre la région à son point d'arrivée, avec le pseudo saisi en haut de la page.
+4. **Les pages des régions** affichent la carte avec la touche **M** (**Ctrl+M** en promenade) : `--map-url http://ADRESSE/regions.json` (plusieurs adresses séparées par des virgules, fusionnées) les fait relire `regions.json` à chaque ouverture, sans régénérer les pages.

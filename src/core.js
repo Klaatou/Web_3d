@@ -216,7 +216,9 @@ function createViewer(container, cfg0, loader) {
   const cfg = Object.assign({}, cfg0);
   let onMouse = null, onView = null, onFly = null, onCfg = null, onWalk = null, onPick = null, onPresence = null, onChat = null, onName = null, spectateOn = false, pickOrbit = false, walking = false, linkLock = false;
   const W = { pos: new THREE.Vector3(), spawn: new THREE.Vector3(), vy: 0, grounded: true, yaw: 0, pitch: 0, keys: new Set(), jumpReq: false, drag: false, mouseFree: false, saved: null, grid: null,
-    fly: false, flyFloor: undefined, view: 'fps', cam: new THREE.Vector3(), cyaw: 0, cpitch: 0 };
+    fly: false, flyFloor: undefined, view: 'fps', cam: new THREE.Vector3(), cyaw: 0, cpitch: 0,
+    tyaw: 0, tpitch: 0,   // v35 : caméra à la troisième personne (orbite propre) ; W.yaw reste l'orientation de l'avatar
+    run: new Set(), tap: {}, upT: 0, moved: false };
   let home = null;   // v33 : point de retour { pos, yaw, forF } (arrivée « default » ou cible de départ)
   let model = null, modelRot = 0, fit = 1, sea = null, seaMat = null, dirty = true, foliageMats = [];
   let seaCx = 0, seaCz = 0;   // centre de la mer : l'origine, ou le centre de la région en mode tuiles
@@ -824,8 +826,8 @@ function createViewer(container, cfg0, loader) {
     const eyeY = W.pos.y + cfg.eyeHeight;
     if (W.view === 'free') { camera.position.copy(W.cam); camera.rotation.set(W.cpitch, W.cyaw, 0); return; }
     if (W.view === 'tps') {
-      const cp = Math.cos(W.pitch), sp = Math.sin(W.pitch), sy = Math.sin(W.yaw), cy = Math.cos(W.yaw);
-      const fx = -sy * cp, fy = sp, fz = -cy * cp;   // direction du regard
+      const cp = Math.cos(W.tpitch), sp = Math.sin(W.tpitch), sy = Math.sin(W.tyaw), cy = Math.cos(W.tyaw);
+      const fx = -sy * cp, fy = sp, fz = -cy * cp;   // direction du regard de la caméra (v35 : indépendante de l'orientation de l'avatar)
       let D = 4;
       if (hasGround) {   // un mur entre l'avatar et la caméra : la caméra se rapproche
         const hl = Math.hypot(fx, fz) || 1, hit = G.wall(W.pos.x, eyeY, W.pos.z, -fx / hl, -fz / hl, D * Math.max(cp, 0.3) + 0.3);
@@ -840,10 +842,11 @@ function createViewer(container, cfg0, loader) {
     camera.rotation.set(W.pitch, W.yaw, 0);
   }
   function walkStep(dt) {
-    const k = W.keys, free = W.view === 'free';
-    const run = k.has('ShiftLeft') || k.has('ShiftRight');
+    const k = W.keys, free = W.view === 'free', tps = W.view === 'tps';
+    for (const c of W.run) if (!k.has(c)) W.run.delete(c);   // v35 : course par double appui (W, S, ↑, ↓) : tant que la touche reste enfoncée
+    const run = k.has('ShiftLeft') || k.has('ShiftRight') || W.run.size > 0;
     const turn = (k.has('ArrowLeft') ? 1 : 0) - (k.has('ArrowRight') ? 1 : 0);
-    if (turn) { if (free) W.cyaw += 1.8 * dt * turn; else W.yaw += 1.8 * dt * turn; }
+    if (turn) { if (free) W.cyaw += 1.8 * dt * turn; else if (tps) W.tyaw += 1.8 * dt * turn; else W.yaw += 1.8 * dt * turn; }
     const f = (k.has('KeyW') || k.has('ArrowUp') ? 1 : 0) - (k.has('KeyS') || k.has('ArrowDown') ? 1 : 0);
     const s = (k.has('KeyD') ? 1 : 0) - (k.has('KeyA') ? 1 : 0);
     const up = (k.has('KeyE') || k.has('PageUp') ? 1 : 0) - (k.has('KeyC') || k.has('PageDown') ? 1 : 0);
@@ -862,11 +865,12 @@ function createViewer(container, cfg0, loader) {
       if (hasGround) { const g = floorAt(G, W.cam.x, W.cam.z, W.cam.y); if (g !== null && W.cam.y < g + 0.3) W.cam.y = g + 0.3; }   // jamais sous le sol
     }
     const mf = free ? 0 : f, ms = free ? 0 : s;
-    const sy = Math.sin(W.yaw), cy = Math.cos(W.yaw);
+    const my0 = tps ? W.tyaw : W.yaw, sy = Math.sin(my0), cy = Math.cos(my0);   // v35 : à la troisième personne la marche suit la caméra
     let mx = -sy * mf + cy * ms, mz = -cy * mf - sy * ms;
     const len = Math.hypot(mx, mz);
     if (len > 0 && dt > 0) {
       mx /= len; mz /= len;
+      if (tps) { let d = Math.atan2(-mx, -mz) - W.yaw; d = Math.atan2(Math.sin(d), Math.cos(d)); W.yaw += d * (1 - Math.exp(-dt * 8)); }   // l'avatar se tourne vers sa direction de déplacement (lissé)
       const dist = speed * dt;
       let dx = mx * dist, dz = mz * dist;
       if (hasGround) {
@@ -881,6 +885,8 @@ function createViewer(container, cfg0, loader) {
         else if (W.fly || G.ground(W.pos.x + dx, W.pos.z + dz, W.pos.y + STEP_UP) !== null) { W.pos.x += dx; W.pos.z += dz; }
       } else { W.pos.x += dx; W.pos.z += dz; }
     }
+    // v35 : Page Haut ou E maintenu au sol plus de 0,4 s : décollage (vol + montée) ; un appui bref a déjà fait sauter l'avatar
+    if ((k.has('KeyE') || k.has('PageUp')) && !W.fly && !free && cfg.fly !== false) { W.upT += dt; if (W.upT > 0.4) startFly(); } else W.upT = 0;
     if (W.fly) {
       // en vol : pas de gravité ; E monte, C descend ; jamais sous le sol des tuiles chargées (tuile dessous pas prête : on ne descend pas)
       W.vy = 0; W.grounded = false;
@@ -913,20 +919,32 @@ function createViewer(container, cfg0, loader) {
     }
     placeCamera(G, hasGround);
     updateSelf();
-    if (dt > 0) zoneTick();
+    if (dt > 0) { zoneTick(); if (zoneLabs.length) zoneLabelTick(); }
   }
   function setView(v) {
     if (!walking || !VIEWS.includes(v) || v === W.view) return W.view;
-    if (v === 'free') { W.cam.copy(camera.position); W.cyaw = W.yaw; W.cpitch = W.pitch; }
+    const fromTps = W.view === 'tps';
+    if (v === 'free') { W.cam.copy(camera.position); W.cyaw = fromTps ? W.tyaw : W.yaw; W.cpitch = fromTps ? W.tpitch : W.pitch; }
     else if (W.view === 'free') W.keys.clear();
+    if (v === 'tps') { W.tyaw = W.yaw; W.tpitch = fromTps ? W.tpitch : W.pitch; }   // v35 : la caméra repart de la direction du regard
+    else if (fromTps) { W.yaw = W.tyaw; W.pitch = W.tpitch; }   // retour à la vue subjective : le regard garde la direction de la caméra
     W.view = v; walkStep(0); dirty = true;
     if (onView) onView(v, VIEW_NAMES[v]);
     return v;
   }
   const cycleView = () => setView(VIEWS[(VIEWS.indexOf(W.view) + 1) % VIEWS.length]);
+  function startFly() {   // décollage par touche maintenue : les touches tenues restent actives (la montée continue)
+    if (!walking || W.fly || cfg.fly === false) return false;
+    W.fly = true; W.vy = 0; W.grounded = false; W.upT = 0;
+    if (onFly) onFly(true);
+    dirty = true;
+    return true;
+  }
+  // v35 : touche M / Fin / Alt+clic : la caméra revient derrière l'avatar
+  function recenterCam() { if (!walking) return false; W.tyaw = W.yaw; W.tpitch = 0.12; walkStep(0); dirty = true; return true; }
   function toggleFly() {
     if (!walking || cfg.fly === false) return false;
-    W.fly = !W.fly; W.vy = 0; W.keys.clear();
+    W.fly = !W.fly; W.vy = 0; W.keys.clear(); W.upT = 0;
     if (W.fly) W.grounded = false; else W.grounded = false;   // à l'atterrissage la gravité ramène l'avatar sur le sol des tuiles chargées
     if (onFly) onFly(W.fly);
     dirty = true;
@@ -946,7 +964,7 @@ function createViewer(container, cfg0, loader) {
     W.saved = { pos: camera.position.clone(), target: controls.target.clone(), fov: camera.fov };
     const t = (opts && opts.pos) ? new THREE.Vector3().fromArray(opts.pos) : controls.target, fx = t.x - camera.position.x, fz = t.z - camera.position.z;
     W.yaw = (opts && Number.isFinite(opts.yaw)) ? opts.yaw : (Math.hypot(fx, fz) > 1e-3 ? Math.atan2(-fx, -fz) : 0);
-    W.pitch = 0;
+    W.pitch = 0; W.tyaw = W.yaw; W.tpitch = 0; W.run.clear(); W.upT = 0;
     let g = W.grid.ground(t.x, t.z, t.y + 2);
     if (g === null) g = W.grid.ground(t.x, t.z, 1e6);
     W.pos.set(t.x, g === null ? t.y : g, t.z); W.spawn.copy(W.pos);
@@ -962,6 +980,17 @@ function createViewer(container, cfg0, loader) {
     presenceEnter();
     if (onWalk) onWalk(true);
     return true;
+  }
+  // P (et le bouton) : entre ou sort de la promenade
+  function toggleWalk() {
+    if (TL.pending) { TL.pending = null; tilesInfo(); return false; }
+    return walking ? walkStop() : walkStart();
+  }
+  // v35 : F comme dans Firestorm bascule le vol ; hors promenade (vue globale), F entre encore en promenade ; en caméra libre il rend la main à l'avatar
+  function pressF() {
+    if (!walking || TL.pending) return toggleWalk();
+    if (W.view === 'free') { setView('fps'); return true; }
+    return toggleFly();
   }
   function walkStop() {
     if (!walking) return;
@@ -981,6 +1010,7 @@ function createViewer(container, cfg0, loader) {
     W.grid = null; dirty = true;
     zoneInside.clear(); if (nearZone) { nearZone = null; if (onNear) onNear(null); }
     presenceLeave();
+    if (zoneLabs.length) zoneLabelTick();
     if (onWalk) onWalk(false);
   }
 
@@ -993,7 +1023,7 @@ function createViewer(container, cfg0, loader) {
     let g = W.grid.ground(x, z, y + 2);
     if (g === null) g = W.grid.ground(x, z, 1e6);
     W.pos.set(x, g === null ? y : g, z); W.spawn.copy(W.pos);
-    if (Number.isFinite(yaw)) W.yaw = yaw;
+    if (Number.isFinite(yaw)) { W.yaw = yaw; W.tyaw = yaw; }
     W.pitch = 0; W.vy = 0; W.grounded = true;
     zoneInside.clear(); nearZone = null; if (onNear) onNear(null);
     for (const q of zones) if (q.type === 'portal' && q.trigger !== 'click' && !zoneOff(q) && zoneDist(q).d <= q.radius) zoneInside.add(q.id);
@@ -1029,23 +1059,42 @@ function createViewer(container, cfg0, loader) {
   });
   const typing = e => { const n = e.target && e.target.tagName; return n === 'INPUT' || n === 'TEXTAREA' || n === 'SELECT'; };
   const MOVE_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyE', 'KeyC', 'PageUp', 'PageDown', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'ShiftLeft', 'ShiftRight']);
+  const RUN_TAP = new Set(['KeyW', 'KeyS', 'ArrowUp', 'ArrowDown']);
   window.addEventListener('keydown', e => {
-    if (!walking || e.repeat || typing(e)) return;
+    if (!walking || typing(e)) return;
+    if (e.code === 'AltLeft' || e.code === 'AltRight') { e.preventDefault(); return; }   // Alt seul n'ouvre pas le menu du navigateur
+    if (e.repeat) return;
+    const mod = e.ctrlKey || e.metaKey || e.altKey;
     if (e.code === 'Home' && cfg.fly !== false) { toggleFly(); e.preventDefault(); }
-    else if (e.code === 'KeyV') cycleView();
-    else if (e.code === 'KeyG' && !e.ctrlKey && !e.metaKey && !e.altKey) grabMouse();
+    else if (e.code === 'End' && !mod) { recenterCam(); e.preventDefault(); }
+    else if (e.code === 'KeyV' && !mod) cycleView();
+    else if (e.code === 'KeyM' && !mod) setView(W.view === 'tps' ? 'fps' : 'tps');   // v35 : M bascule vue subjective / troisième personne (Ctrl+M : carte des mondes)
+    else if (e.code === 'KeyG' && !mod) grabMouse();
   });
   window.addEventListener('keydown', e => { if (!walking || typing(e) || !MOVE_KEYS.has(e.code) || e.ctrlKey || e.metaKey || e.altKey) return;   // v34 : Ctrl+C copie (le texte de l'aide est sélectionnable)
-    W.keys.add(e.code); if (e.code === 'Space') W.jumpReq = true; e.preventDefault(); });
-  window.addEventListener('keyup', e => { W.keys.delete(e.code); });
-  window.addEventListener('blur', () => W.keys.clear());
-  dom.addEventListener('mousedown', () => { if (walking) W.drag = true; });
+    const c = e.code;
+    if (c === 'Space') W.jumpReq = true;
+    if (!e.repeat) {
+      const now = performance.now();
+      if (RUN_TAP.has(c)) { if (W.tap[c] !== undefined && now - W.tap[c] < 300) W.run.add(c); W.tap[c] = now; }   // v35 : double appui rapide = course
+      if ((c === 'KeyE' || c === 'PageUp') && !W.fly && W.view !== 'free') W.jumpReq = true;   // appui bref au sol = saut (maintenu plus de 0,4 s : décollage)
+    }
+    W.keys.add(c); e.preventDefault(); });
+  window.addEventListener('keyup', e => { W.keys.delete(e.code); W.run.delete(e.code); if (walking && (e.code === 'AltLeft' || e.code === 'AltRight')) e.preventDefault(); });
+  window.addEventListener('blur', () => { W.keys.clear(); W.run.clear(); });
+  dom.addEventListener('mousedown', () => { if (walking) { W.drag = true; W.moved = false; } });
   window.addEventListener('mouseup', () => { W.drag = false; });
   window.addEventListener('mousemove', e => {
     if (!walking || !(W.drag || document.pointerLockElement === dom)) return;
+    if (W.drag && (e.movementX || e.movementY)) W.moved = true;
     if (W.view === 'free') {
       W.cyaw -= (e.movementX || 0) * 0.0022;
       W.cpitch = Math.max(-1.45, Math.min(1.45, W.cpitch - (e.movementY || 0) * 0.0022));
+      return;
+    }
+    if (W.view === 'tps') {   // v35 : la souris fait orbiter la caméra autour de l'avatar sans le tourner
+      W.tyaw -= (e.movementX || 0) * 0.0022;
+      W.tpitch = Math.max(-1.45, Math.min(1.45, W.tpitch - (e.movementY || 0) * 0.0022));
       return;
     }
     W.yaw -= (e.movementX || 0) * 0.0022;
@@ -1099,13 +1148,14 @@ function createViewer(container, cfg0, loader) {
   dom.addEventListener('pointerdown', e => { downPos = [e.clientX, e.clientY]; });
   dom.addEventListener('click', e => {
     if (linkLock) return;   // mode « Lier à un élément » : exclusif, aucun autre clic n'agit
+    if (walking && e.altKey) { if (!W.moved) recenterCam(); return; }   // v35 : Alt + clic = caméra derrière l'avatar (Alt + glisser : orbite, pas de recentrage)
     const locked = document.pointerLockElement === dom, now = e.timeStamp || performance.now();
     {
       const rc = dom.getBoundingClientRect();
       const cnx = locked ? 0 : (e.clientX - rc.left) / rc.width * 2 - 1, cny = locked ? 0 : -((e.clientY - rc.top) / rc.height) * 2 + 1;
       const still = !!downPos && Math.hypot(e.clientX - downPos[0], e.clientY - downPos[1]) < 6;
       if (zones.length && onZone && (walking || (still && !zoneEditor))) {
-        const zc = zoneFromClick(cnx, cny, walking ? 14 : 0);
+        const zc = zoneFromClick(cnx, cny, walking ? zoneInfoDist() : 0);
         if (zc) { fireZone(zc, 'click'); return; }
       }
     }
@@ -1467,7 +1517,7 @@ function createViewer(container, cfg0, loader) {
       c.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) { if (o.material.map) o.material.map.dispose(); o.material.dispose(); } });
     }
     if (selBox) { scene.remove(selBox); selBox.geometry.dispose(); selBox.material.dispose(); selBox = null; }
-    zoneHit = []; zoneAll = []; meshZone.clear();
+    zoneHit = []; zoneAll = []; zoneLabs = []; meshZone.clear();
     setHover(null);
     markerMat.clear();
     for (const z of zones) {
@@ -1485,7 +1535,7 @@ function createViewer(container, cfg0, loader) {
         zoneAll.push(...link.meshes); if (clickable) zoneHit.push(...link.meshes);
         if (!zoneEditor && !z.showName) continue;
         if (zoneEditor) g.add(outlineOf(link.box));
-        const lab = makeLabel(zoneEditor ? (z.label || kind) + ' ⇢ ' + z.mesh + priv : (z.label || z.id)); lab.position.set((link.box.min.x + link.box.max.x) / 2, link.box.max.y + 0.9, (link.box.min.z + link.box.max.z) / 2); g.add(lab);
+        const lab = makeLabel(zoneEditor ? (z.label || kind) + ' ⇢ ' + z.mesh + priv : (z.label || z.id)); lab.position.set((link.box.min.x + link.box.max.x) / 2, link.box.max.y + 0.9, (link.box.min.z + link.box.max.z) / 2); g.add(lab); if (!zoneEditor) zoneLabs.push(lab);
         zoneGroup.add(g);
         continue;
       }
@@ -1505,7 +1555,7 @@ function createViewer(container, cfg0, loader) {
       } else if (zoneEditor) {
         // éditeur : le cylindre (portée de la zone) reste toujours visible, pour repérer et positionner ; le panneau s'y ajoute
         if (z.shape === 'board') {
-          const sub = kind + (clickable ? ' · clic ou E' : '') + priv;
+          const sub = kind + (clickable ? ' · clic' : '') + priv;
           const plane = new THREE.Mesh(new THREE.PlaneGeometry(z.w, z.h), new THREE.MeshBasicMaterial({ map: boardTex(z.label || kind, sub, z.w, z.h), side: THREE.DoubleSide, fog: false }));
           plane.position.y = 0.9 + z.h / 2; g.add(plane); main = plane;
           const post = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.92, 0.1), new THREE.MeshStandardMaterial({ color: 0x333333 })); post.position.y = 0.46; g.add(post);
@@ -1520,9 +1570,9 @@ function createViewer(container, cfg0, loader) {
         if (z.shape !== 'board') { const lab = makeLabel((z.label || kind) + priv); lab.position.y = 2.9; g.add(lab); }
       } else if (z.showName && z.shape === 'board') {
         // page exportée, « Toujours afficher le nom » : le panneau
-        const plane = new THREE.Mesh(new THREE.PlaneGeometry(z.w, z.h), new THREE.MeshBasicMaterial({ map: boardTex(z.label || kind, kind + (clickable ? ' · clic ou E' : ''), z.w, z.h), side: THREE.DoubleSide, fog: false }));
-        plane.position.y = 0.9 + z.h / 2; g.add(plane); main = plane;
-        const post = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.92, 0.1), new THREE.MeshStandardMaterial({ color: 0x333333 })); post.position.y = 0.46; g.add(post);
+        const plane = new THREE.Mesh(new THREE.PlaneGeometry(z.w, z.h), new THREE.MeshBasicMaterial({ map: boardTex(z.label || kind, kind + (clickable ? ' · clic' : ''), z.w, z.h), side: THREE.DoubleSide, fog: false }));
+        plane.position.y = 0.9 + z.h / 2; g.add(plane); main = plane; zoneLabs.push(plane);
+        const post = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.92, 0.1), new THREE.MeshStandardMaterial({ color: 0x333333 })); post.position.y = 0.46; g.add(post); zoneLabs.push(post);
       } else {
         // page exportée, selon cfg.zoneMarker : « discret » (défaut) disque plat 0,4 m + anneau fin ; « portee » anneau fin et net au rayon réel de la zone
         // (visible de loin, sans cylindre) ; « aucun » rien. La zone de visée plus large et invisible reste dans les trois cas.
@@ -1547,7 +1597,7 @@ function createViewer(container, cfg0, loader) {
           const hit = new THREE.Mesh(new THREE.CircleGeometry(hr, hr > 1 ? 48 : 16), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide })); hit.visible = false;
           hit.rotation.x = -Math.PI / 2; hit.position.y = 0.06; g.add(hit); main = hit;
         }
-        if (z.showName) { const lab = makeLabel(z.label || z.id); lab.position.y = 1.2; g.add(lab); }
+        if (z.showName) { const lab = makeLabel(z.label || z.id); lab.position.y = 1.2; g.add(lab); zoneLabs.push(lab); }
       }
       if (main) { main.userData.zone = z; zoneAll.push(main); if (clickable) zoneHit.push(main); }
       zoneGroup.add(g);
@@ -1582,6 +1632,12 @@ function createViewer(container, cfg0, loader) {
   function fireZone(z, how) {
     if (walking && P.ws && P.ws.readyState === 1 && P.id) P.ws.send(JSON.stringify({ t: 'zone', id: z.id, type: z.type, label: z.label }));
     if (onZone) onZone(z, how);
+  }
+  // v35 : distance de survol et de clic des zones en promenade (config zoneInfoDist, 5 à 200 m, défaut 40) ; les noms affichés (showName) la suivent
+  const zoneInfoDist = () => Math.max(5, Math.min(200, Number(cfg.zoneInfoDist) || 40));
+  let zoneLabs = [];
+  function zoneLabelTick() {
+    for (const o of zoneLabs) { const v = !walking || !o.parent || Math.hypot(W.pos.x - (o.parent.position.x + o.position.x), W.pos.z - (o.parent.position.z + o.position.z)) <= zoneInfoDist(); if (o.visible !== v) { o.visible = v; dirty = true; } }
   }
   function zoneFromClick(nx, ny, maxDist) {
     if (!zoneHit.length) return null;
@@ -1618,7 +1674,7 @@ function createViewer(container, cfg0, loader) {
     if (linkLock || zoneEditor || !onZone || !zoneHit.length || e.buttons || document.pointerLockElement === dom) { if (hoverZone) setHover(null); return; }
     const now = performance.now(); if (now - hoverT < 50) return; hoverT = now;
     const r = dom.getBoundingClientRect();
-    const zh = zoneFromClick((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1, walking ? 14 : 0);
+    const zh = zoneFromClick((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1, walking ? zoneInfoDist() : 0);
     setHover(zh, e.clientX, e.clientY);
   });
   dom.addEventListener('pointerleave', () => setHover(null));
@@ -1655,10 +1711,6 @@ function createViewer(container, cfg0, loader) {
     }
     if (best !== nearZone) { nearZone = best; if (onNear) onNear(best); }
   }
-  window.addEventListener('keydown', e => {
-    if (e.code === 'KeyE' && !e.repeat && walking && !W.fly && !typing(e) && nearZone && onZone) fireZone(nearZone, 'key');   // en vol E monte : les zones se déclenchent au clic
-  });
-
   // ---- repère d'atterrissage : un cercle posé sur le sol, sous la cible de la vue globale (où F pose l'avatar)
   let onLanding = null, landY = null, landKey = '', landT = 0, landDirty = false;
   const UPV = new THREE.Vector3(0, 1, 0), landN = new THREE.Vector3(0, 1, 0);
@@ -1825,11 +1877,7 @@ function createViewer(container, cfg0, loader) {
     walkTick(dt) { if (walking) walkStep(dt); },
     refreshCollision() { if (TL.on) { for (const t of TL.tiles) if (t.state === 'ready' && t.grp) { t.state = 'building'; t.grid = null; t.gen = collisionGridSteps(t.grp, 3, parseIgnore(cfg.walkIgnore)); t.qAt = performance.now(); t.qFirst = true; t.gridCpu = 0; TL.gridQ.push(t); } } else if (walking && model) W.grid = buildCollisionGrid(model, 3, parseIgnore(cfg.walkIgnore)); },
     teleportNdc(nx, ny) { return walkTeleport(nx, ny); },
-    toggleWalk() {
-      if (TL.pending) { TL.pending = null; tilesInfo(); return false; }
-      if (walking && W.view === 'free') { setView('fps'); return true; }   // caméra libre : F rend la main à l'avatar (un second F quitte la promenade)
-      return walking ? walkStop() : walkStart();
-    }, walkStart, walkStop, teleportTo,
-    getWalk() { return { pos: W.pos.toArray(), yaw: W.yaw, pitch: W.pitch, grounded: W.grounded, tris: W.grid ? W.grid.count : 0, flying: W.fly, view: W.view, cam: camera.position.toArray(), selfVisible: !!(selfAv && selfAv.visible) }; }, get fit() { return fit; }, requestRender() { dirty = true; }
+    toggleWalk, pressF, recenterCam, startFly, walkStart, walkStop, teleportTo,
+    getWalk() { return { pos: W.pos.toArray(), yaw: W.yaw, pitch: W.pitch, grounded: W.grounded, tris: W.grid ? W.grid.count : 0, flying: W.fly, view: W.view, camYaw: W.view === 'tps' ? W.tyaw : (W.view === 'free' ? W.cyaw : W.yaw), camPitch: W.view === 'tps' ? W.tpitch : (W.view === 'free' ? W.cpitch : W.pitch), running: W.run.size > 0 || W.keys.has('ShiftLeft') || W.keys.has('ShiftRight'), cam: camera.position.toArray(), selfVisible: !!(selfAv && selfAv.visible) }; }, get fit() { return fit; }, requestRender() { dirty = true; }
   };
 }
