@@ -27,6 +27,7 @@ Exemple juste :
 | **Début** (v33) | décoller ou atterrir (bascule, comme **F** en promenade). En vol : **E** / **Page Haut** monte, **C** / **Page Bas** descend, pas de gravité, les murs restent solides, jamais sous le sol. Retirable avec `--no-fly` (§ 18.4) |
 | **M** (v35) | **en promenade : bascule vue subjective / troisième personne** ; hors promenade : ouvre la carte des mondes (comme avant). **Ctrl+M ouvre la carte des mondes partout** |
 | **Fin**, **Alt + clic** (v35) | remettre la caméra **derrière l'avatar** (troisième personne). **Alt + glisser** orbite la caméra (à la troisième personne la souris orbite déjà ; en vue subjective, Alt + glisser regarde autour comme la souris) |
+| **molette** (v35) | en promenade, la page ne défile pas. **Troisième personne** : règle la distance de la caméra (1 à 30 m, 4 m par défaut, mémorisée) ; **caméra libre** : avance / recule la caméra le long du regard ; vue subjective : rien (§ 20.9) |
 | **double appui** sur W, S, ↑ ou ↓ (v35) | **course** tant que la touche reste enfoncée (deux appuis à moins de 300 ms) ; **Maj** reste une course. Pas de course permanente (Ctrl+R recharge la page) |
 | **V** (v33) | changer de vue : subjective → troisième personne → caméra libre → subjective. La vue courante est écrite en texte dans le bloc d'état (« Vue : … », v34) |
 | **R** (v33) | **retour à l'arrivée** : en promenade, téléporte à l'arrivée `default` (à défaut, à la cible de départ) en attendant la tuile ; en vue globale, recadre la cible et la caméra sur ce point. Le bouton « Retour à l'arrivée (R) » fait la même chose |
@@ -895,6 +896,7 @@ Colonne de gauche : les défauts du visualiseur officiel d'après le wiki de Sec
 | Vue subjective | M | **M** bascule vue subjective / troisième personne ; **V** fait tourner les trois vues (dont la caméra libre) |
 | Orbiter la caméra | Alt + glisser | **Alt + glisser** (à la troisième personne, la souris orbite déjà autour de l'avatar sans le tourner) |
 | Caméra derrière l'avatar | Échap | **Fin** ou **Alt + clic** (Échap est réservé au navigateur : il libère la souris) |
+| Zoom caméra | molette | **molette** (3e personne : distance de la caméra ; caméra libre : avance / recule) |
 | Carte du monde | Ctrl+M | **Ctrl+M** partout ; **M** seul l'ouvre aussi hors promenade |
 | Chat | Entrée | **Entrée** |
 | Entrer / sortir de la promenade | (n'existe pas) | **P** ; F entre aussi, en vue globale seulement |
@@ -944,3 +946,9 @@ Tous les boutons « copier » (lien personnel, lien de ma position, point visé,
 2. **Générer la page web de la carte** : `python glb2html.py --maj -o "X.html" --shared-shell --map-page carte.html` (elle lit les régions de `regions.json` enregistrées dans la config de la région `X`). Pour qu'elle contienne toutes les régions, exécute-la **après** les enregistrements, ou donne `--map regions.json --map-page carte.html`.
 3. **L'ouvrir par le serveur web**, pas depuis le disque : le dossier contenant `carte.html`, `index.html`, `lib/` et les régions est servi en http(s) (`python -m http.server` pour un essai, ou `presence_server.py --serve-dir` quand il hébergera les pages), puis ouvre `http://ADRESSE/carte.html`. Chaque lien de la carte ouvre la région à son point d'arrivée, avec le pseudo saisi en haut de la page.
 4. **Les pages des régions** affichent la carte avec la touche **M** (**Ctrl+M** en promenade) : `--map-url http://ADRESSE/regions.json` (plusieurs adresses séparées par des virgules, fusionnées) les fait relire `regions.json` à chaque ouverture, sans régénérer les pages.
+
+### 20.9 Caméra libre et molette
+
+- **Troisième personne** : la **molette** règle la distance de la caméra (de **1 à 30 m**, **4 m par défaut**, mémorisée dans le navigateur, clé `glb2html_tpsDist`), avec le recul devant un mur et la protection du sol déjà en place. **Fin** remet la caméra derrière l'avatar à la distance par défaut.
+- **Caméra libre** : la molette **avance ou recule la caméra le long du regard**, d'un pas proportionnel à la distance caméra-avatar (15 %, au moins 0,5 m et au plus 20 m par cran), jamais sous le sol. La **vitesse des touches** est `max(vitesse de marche, 0,5 x distance caméra-avatar)` m/s, plafonnée à **60 m/s** ; **Maj la multiplie par 3**. **Alt + glisser** fait orbiter la caméra autour de l'avatar en gardant sa distance (lacet et tangage), le regard restant sur lui. **Fin** la remet derrière l'avatar, à 4 m.
+- **Vue subjective** : la molette ne fait rien. Dans tous les cas la page ne défile pas en promenade (sur la vue ; l'aide et l'état gardent leur défilement).

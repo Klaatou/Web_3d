@@ -458,6 +458,111 @@ async def main():
             rapport(not o.errs, "aucune erreur JavaScript", o.errs)
             await o.ctx.close()
 
+            # ================= 3 bis. molette, caméra libre =================
+            print("--- 3 bis. molette, vitesse et orbite de la caméra libre")
+            o = await Onglet(br).ouvrir(base_url + "Discret")
+            await o.walk((0, 0, 0), 0)
+            DIST_AV = """() => { const w = window.__viewer.getWalk(); return Math.hypot(w.cam[0] - w.pos[0], w.cam[1] - (w.pos[1] + 1.7), w.cam[2] - w.pos[2]); }"""
+            WHEEL = """(d) => { const e = new WheelEvent('wheel', { deltaY: d, bubbles: true, cancelable: true }); window.__viewer.renderer.domElement.dispatchEvent(e); return e.defaultPrevented; }"""
+            prev = await o.ev(WHEEL, 100)
+            w = await o.gw()
+            rapport(prev and w["view"] == "fps" and ecart(w["camYaw"], 0) < 1e-6, "vue subjective : la molette ne fait rien, mais la page ne défile pas (preventDefault)")
+            await o.touche("KeyM")
+            w = await o.gw()
+            rapport(abs(w["tpsDist"] - 4) < 1e-6 and abs(await o.ev(DIST_AV) - 4) < 0.05, "3e personne : distance par défaut 4 m", (w["tpsDist"], await o.ev(DIST_AV)))
+            await o.ev(WHEEL, 100)
+            d1 = (await o.gw())["tpsDist"]
+            await o.ev(WHEEL, 100)
+            d2 = (await o.gw())["tpsDist"]
+            rapport(d1 > 4 and d2 > d1 and abs(await o.ev(DIST_AV) - d2) < 0.1, f"3e personne : la molette éloigne la caméra (4 -> {d1:.2f} -> {d2:.2f} m)")
+            for _ in range(60):
+                await o.ev(WHEEL, 100)
+            rapport((await o.gw())["tpsDist"] <= 30.0001, "3e personne : la distance reste au plus 30 m", (await o.gw())["tpsDist"])
+            for _ in range(120):
+                await o.ev(WHEEL, -100)
+            rapport(abs((await o.gw())["tpsDist"] - 1) < 1e-6, "3e personne : la distance reste au moins 1 m")
+            await o.ev(WHEEL, 100); await o.ev(WHEEL, 100)
+            m = await o.ev("localStorage.getItem('glb2html_tpsDist')")
+            rapport(m is not None and abs(float(m) - (await o.gw())["tpsDist"]) < 1e-6, "la distance est mémorisée dans le navigateur", m)
+            await o.pg.reload()
+            await o.pg.wait_for_function("document.getElementById('msg') === null && window.__viewer", timeout=40000)
+            await o.walk((0, 0, 0), 0)
+            await o.touche("KeyM")
+            rapport(abs((await o.gw())["tpsDist"] - float(m)) < 1e-6, "elle est relue après rechargement")
+            await o.touche("End")
+            w = await o.gw()
+            rapport(abs(w["tpsDist"] - 4) < 1e-6 and abs(await o.ev(DIST_AV) - 4) < 0.05, "Fin à la 3e personne : distance par défaut, derrière l'avatar", w["tpsDist"])
+            # caméra libre
+            await o.touche("KeyV")
+            w = await o.gw()
+            rapport(w["view"] == "free", "V : caméra libre")
+            c0 = await o.ev(DIST_AV)
+            await o.ev(WHEEL, 100)
+            c1 = await o.ev(DIST_AV)
+            await o.ev(WHEEL, 100)
+            c2 = await o.ev(DIST_AV)
+            rapport(c1 > c0 + 0.4 and c2 > c1 + 0.4, f"caméra libre : un cran recule, deux crans reculent davantage ({c0:.2f} -> {c1:.2f} -> {c2:.2f} m)")
+            await o.ev(WHEEL, -100)
+            c3 = await o.ev(DIST_AV)
+            rapport(c3 < c2 - 0.4, "caméra libre : molette dans l'autre sens, on avance")
+            for _ in range(40):
+                await o.ev(WHEEL, 100)
+            hh = (await o.gw())["cam"][1]
+            for _ in range(80):
+                await o.ev(WHEEL, -100)
+            rapport((await o.gw())["cam"][1] >= FLOOR + 0.3 - 1e-6, "caméra libre : jamais sous le sol", (await o.gw())["cam"])
+            # pas : proportionnel, 20 m au plus par cran
+            await o.touche("End")
+            for _ in range(30):
+                await o.ev(WHEEL, 100)
+            ca = await o.ev(DIST_AV)
+            await o.ev(WHEEL, 100)
+            cb = await o.ev(DIST_AV)
+            rapport(0.5 <= cb - ca <= 20.0001 and cb - ca > 5, f"caméra libre : pas proportionnel à la distance ({cb - ca:.2f} m à {ca:.1f} m), au plus 20 m")
+            # vitesse des touches
+            await o.touche("End")
+            for _ in range(20):
+                await o.ev(WHEEL, 100)
+            dd = await o.ev(DIST_AV)
+            p0 = (await o.gw())["cam"]
+            await o.tenir(["KeyW"], 1, 0.1)
+            p1 = (await o.gw())["cam"]
+            v = math.dist(p0, p1) / 0.1
+            rapport(abs(v - min(60, 0.5 * dd)) < 0.5 * dd * 0.1 + 0.3 and v > 3.5 * 2, f"caméra libre : vitesse des touches = 0,5 x distance ({v:.1f} m/s pour {dd:.1f} m)", (v, dd))
+            p0 = (await o.gw())["cam"]
+            await o.tenir(["ShiftLeft", "KeyW"], 1, 0.1)
+            p1 = (await o.gw())["cam"]
+            v3 = math.dist(p0, p1) / 0.1
+            rapport(v3 > v * 2.5 or v3 >= 59, f"Maj multiplie par 3 ({v3:.1f} m/s)", (v, v3))
+            for _ in range(40):
+                await o.ev(WHEEL, 100)
+            p0 = (await o.gw())["cam"]
+            await o.tenir(["KeyW"], 1, 0.5)
+            p1 = (await o.gw())["cam"]
+            rapport(math.dist(p0, p1) / 0.5 <= 60.01, "vitesse plafonnée à 60 m/s", math.dist(p0, p1) / 0.5)
+            # Alt + glisser : orbite à distance constante, regard sur l'avatar
+            await o.touche("End")
+            for _ in range(3):
+                await o.ev(WHEEL, 100)
+            da = await o.ev(DIST_AV)
+            ca0 = (await o.gw())["cam"]
+            await o.ev("""() => { const c = window.__viewer.renderer.domElement;
+                c.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, altKey: true }));
+                for (let i = 0; i < 5; i++) window.dispatchEvent(new MouseEvent('mousemove', { movementX: 60, movementY: 10, altKey: true }));
+                window.dispatchEvent(new MouseEvent('mouseup')); }""")
+            db = await o.ev(DIST_AV)
+            w = await o.gw()
+            ex = [w["pos"][0], w["pos"][1] + 1.7, w["pos"][2]]
+            fx, fy, fz = (ex[i] - w["cam"][i] for i in range(3))
+            fl = math.sqrt(fx * fx + fy * fy + fz * fz)
+            regard = (-math.sin(w["camYaw"]) * math.cos(w["camPitch"]), math.sin(w["camPitch"]), -math.cos(w["camYaw"]) * math.cos(w["camPitch"]))
+            rapport(abs(db - da) < 0.05 and math.dist(ca0, w["cam"]) > 0.5, f"Alt + glisser : la caméra orbite et garde sa distance ({da:.2f} -> {db:.2f} m)", (da, db))
+            rapport(all(abs(regard[i] - (fx, fy, fz)[i] / fl) < 0.02 for i in range(3)), "Alt + glisser : le regard reste dirigé vers l'avatar", (regard, (fx / fl, fy / fl, fz / fl)))
+            await o.touche("End")
+            rapport(abs(await o.ev(DIST_AV) - 4) < 0.05 and ecart((await o.gw())["camYaw"], (await o.gw())["yaw"]) < 1e-6, "Fin en caméra libre : derrière l'avatar, distance par défaut")
+            rapport(not o.errs, "aucune erreur JavaScript", o.errs)
+            await o.ctx.close()
+
             # ================= 4. distance des infobulles =================
             print("--- 4. infobulle des zones : 40 m par défaut, réglable")
             cfg_d = json.loads((site / "Discret.config.json").read_text(encoding="utf-8"))

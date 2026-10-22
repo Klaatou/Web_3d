@@ -85,7 +85,7 @@ Une zone peut porter un champ `mesh` : le nom exact d'un élément du modèle. L
 ## Nouveautés de la v35 (détail : `MODE_EMPLOI.md` § 20)
 
 - **Commandes à la Firestorm** : F / Début bascule le vol, **P** entre et sort de la promenade, E / Page Haut saute (maintenu : décolle), double appui sur W S ↑ ↓ pour courir, **M** bascule vue subjective / troisième personne, **Ctrl+M** carte des mondes, **Fin** ou Alt + clic caméra derrière l'avatar. **E ne déclenche plus les zones.** Tableau complet : § 20.2.
-- **Aide en groupes courts**, aide et état repliables par leur barre de titre ; **troisième personne** : la souris orbite la caméra sans tourner l'avatar.
+- **Aide en groupes courts**, aide et état repliables par leur barre de titre ; **troisième personne** : la souris orbite la caméra sans tourner l'avatar, la molette règle sa distance ; **caméra libre** : molette, vitesse proportionnelle à la distance, Alt + glisser pour orbiter.
 - **Infobulles de zones à 40 m** (`--zone-info-dist`), **copie dans le presse-papiers** qui marche aussi en http, **`--maj` avec la carte des mondes** (`--register`, `--map-page`… relatifs au dossier de la page).
 
 ## Nouveautés de la v34 (détail : `MODE_EMPLOI.md` § 19)

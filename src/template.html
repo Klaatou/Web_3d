@@ -384,7 +384,7 @@ if (C.walk) {
   const walkGroups = [
     grp('Déplacement', ['ZQSD / WASD / flèches', 'Maj ou double appui W S ↑ ↓ : courir', 'Espace : sauter', 'double-clic : se téléporter', 'R : retour à l\'arrivée']),
     fly ? grp('Vol', ['F ou Début : voler / atterrir', 'Page Haut ou E : monter (maintenu au sol : décoller)', 'Page Bas ou C : descendre']) : null,
-    grp('Vue', ['V : changer de vue', 'M : subjective / 3e personne', 'Fin ou Alt + clic : caméra derrière l\'avatar', 'Alt + glisser : orbiter']),
+    grp('Vue', ['V : changer de vue', 'M : subjective / 3e personne', 'molette : distance de la caméra (3e personne) ou zoom (caméra libre)', 'Fin ou Alt + clic : caméra derrière l\'avatar', 'Alt + glisser : orbiter']),
     grp('Souris', ['clic dans la vue puis souris : regarder', 'Échap : libérer', 'G : reprendre']),
     (C.chat && on) ? grp('Chat', ['Entrée : écrire', 'Échap : fermer', 'flèches : se déplacer']) : null,
     (hasZones || C.names) ? grp('Zones', [hasZones ? 'clic : panneaux et portails' : '', C.names ? 'clic : nom de l\'élément' : '']) : null,

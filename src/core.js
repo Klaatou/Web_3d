@@ -218,7 +218,8 @@ function createViewer(container, cfg0, loader) {
   const W = { pos: new THREE.Vector3(), spawn: new THREE.Vector3(), vy: 0, grounded: true, yaw: 0, pitch: 0, keys: new Set(), jumpReq: false, drag: false, mouseFree: false, saved: null, grid: null,
     fly: false, flyFloor: undefined, view: 'fps', cam: new THREE.Vector3(), cyaw: 0, cpitch: 0,
     tyaw: 0, tpitch: 0,   // v35 : caméra à la troisième personne (orbite propre) ; W.yaw reste l'orientation de l'avatar
-    run: new Set(), tap: {}, upT: 0, moved: false };
+    run: new Set(), tap: {}, upT: 0, moved: false,
+    tdist: (() => { let d = 4; try { const v = parseFloat(localStorage.getItem('glb2html_tpsDist')); if (v >= 1 && v <= 30) d = v; } catch (_) {} return d; })() };   // v35 : distance de la caméra à la troisième personne (1 à 30 m, mémorisée)
   let home = null;   // v33 : point de retour { pos, yaw, forF } (arrivée « default » ou cible de départ)
   let model = null, modelRot = 0, fit = 1, sea = null, seaMat = null, dirty = true, foliageMats = [];
   let seaCx = 0, seaCz = 0;   // centre de la mer : l'origine, ou le centre de la région en mode tuiles
@@ -828,7 +829,7 @@ function createViewer(container, cfg0, loader) {
     if (W.view === 'tps') {
       const cp = Math.cos(W.tpitch), sp = Math.sin(W.tpitch), sy = Math.sin(W.tyaw), cy = Math.cos(W.tyaw);
       const fx = -sy * cp, fy = sp, fz = -cy * cp;   // direction du regard de la caméra (v35 : indépendante de l'orientation de l'avatar)
-      let D = 4;
+      let D = W.tdist;
       if (hasGround) {   // un mur entre l'avatar et la caméra : la caméra se rapproche
         const hl = Math.hypot(fx, fz) || 1, hit = G.wall(W.pos.x, eyeY, W.pos.z, -fx / hl, -fz / hl, D * Math.max(cp, 0.3) + 0.3);
         if (hit) D = Math.max(0.5, (hit.t - 0.3) / Math.max(cp, 0.3));
@@ -851,8 +852,11 @@ function createViewer(container, cfg0, loader) {
     const s = (k.has('KeyD') ? 1 : 0) - (k.has('KeyA') ? 1 : 0);
     const up = (k.has('KeyE') || k.has('PageUp') ? 1 : 0) - (k.has('KeyC') || k.has('PageDown') ? 1 : 0);
     const G = W.grid, hasGround = G && (G.count > 0 || G.tiled);
-    const speed = cfg.walkSpeed * (run ? 2.2 : 1);
+    let speed = cfg.walkSpeed * (run ? 2.2 : 1);
     if (free) {
+      // v35 : la vitesse suit la distance caméra-avatar (au moins la marche, 0,5 x la distance par seconde, 60 m/s au plus) ; Maj la multiplie par 3
+      const dd = Math.hypot(W.cam.x - W.pos.x, W.cam.y - (W.pos.y + cfg.eyeHeight), W.cam.z - W.pos.z);
+      speed = Math.min(60, Math.max(cfg.walkSpeed, 0.5 * dd)) * ((k.has('ShiftLeft') || k.has('ShiftRight')) ? 3 : 1);
       // caméra libre : les touches déplacent la caméra (dans le sens du regard), l'avatar reste sur place
       const sy = Math.sin(W.cyaw), cy = Math.cos(W.cyaw), cp = Math.cos(W.cpitch), sp = Math.sin(W.cpitch);
       let mx = -sy * cp * f + cy * s, my = sp * f + up, mz = -cy * cp * f - sy * s;
@@ -941,7 +945,18 @@ function createViewer(container, cfg0, loader) {
     return true;
   }
   // v35 : touche M / Fin / Alt+clic : la caméra revient derrière l'avatar
-  function recenterCam() { if (!walking) return false; W.tyaw = W.yaw; W.tpitch = 0.12; walkStep(0); dirty = true; return true; }
+  function setTpsDist(d) { W.tdist = Math.max(1, Math.min(30, d)); try { localStorage.setItem('glb2html_tpsDist', String(W.tdist)); } catch (_) {} }
+  function recenterCam() {
+    if (!walking) return false;
+    W.tyaw = W.yaw; W.tpitch = 0.12;
+    if (W.view === 'tps') setTpsDist(4);
+    else if (W.view === 'free') {   // caméra libre : derrière l'avatar, à la distance par défaut, le regard sur lui
+      const D = 4, cp = Math.cos(W.tpitch), sp = Math.sin(W.tpitch), eyeY = W.pos.y + cfg.eyeHeight;
+      W.cam.set(W.pos.x + Math.sin(W.yaw) * cp * D, eyeY - sp * D, W.pos.z + Math.cos(W.yaw) * cp * D); W.cyaw = W.yaw; W.cpitch = W.tpitch;
+      const G = W.grid; if (G && (G.count > 0 || G.tiled)) { const g = floorAt(G, W.cam.x, W.cam.z, W.cam.y); if (g !== null && W.cam.y < g + 0.3) W.cam.y = g + 0.3; }
+    }
+    walkStep(0); dirty = true; return true;
+  }
   function toggleFly() {
     if (!walking || cfg.fly === false) return false;
     W.fly = !W.fly; W.vy = 0; W.keys.clear(); W.upT = 0;
@@ -1087,6 +1102,17 @@ function createViewer(container, cfg0, loader) {
   window.addEventListener('mousemove', e => {
     if (!walking || !(W.drag || document.pointerLockElement === dom)) return;
     if (W.drag && (e.movementX || e.movementY)) W.moved = true;
+    if (W.view === 'free' && e.altKey) {   // v35 : Alt + glisser : la caméra orbite autour de l'avatar en gardant sa distance, le regard sur lui
+      const ex = W.pos.x, ey = W.pos.y + cfg.eyeHeight, ez = W.pos.z;
+      let ox = W.cam.x - ex, oy = W.cam.y - ey, oz = W.cam.z - ez; const d = Math.hypot(ox, oy, oz) || 1;
+      let az = Math.atan2(ox, oz) - (e.movementX || 0) * 0.0022, el = Math.max(-1.45, Math.min(1.45, Math.asin(oy / d) + (e.movementY || 0) * 0.0022));
+      W.cam.set(ex + d * Math.cos(el) * Math.sin(az), ey + d * Math.sin(el), ez + d * Math.cos(el) * Math.cos(az));
+      const G = W.grid; if (G && (G.count > 0 || G.tiled)) { const g = floorAt(G, W.cam.x, W.cam.z, W.cam.y); if (g !== null && W.cam.y < g + 0.3) W.cam.y = g + 0.3; }
+      const fx = ex - W.cam.x, fy = ey - W.cam.y, fz = ez - W.cam.z, fl = Math.hypot(fx, fy, fz) || 1;
+      W.cyaw = Math.atan2(-fx, -fz); W.cpitch = Math.asin(fy / fl);
+      walkStep(0); dirty = true;
+      return;
+    }
     if (W.view === 'free') {
       W.cyaw -= (e.movementX || 0) * 0.0022;
       W.cpitch = Math.max(-1.45, Math.min(1.45, W.cpitch - (e.movementY || 0) * 0.0022));
@@ -1100,6 +1126,27 @@ function createViewer(container, cfg0, loader) {
     W.yaw -= (e.movementX || 0) * 0.0022;
     W.pitch = Math.max(-1.45, Math.min(1.45, W.pitch - (e.movementY || 0) * 0.0022));
   });
+  // v35 : molette en promenade. Caméra libre : avance / recule la caméra le long du regard (pas = 15 % de la distance à l'avatar, 0,5 à 20 m) ;
+  // troisième personne : règle la distance de la caméra (1 à 30 m) ; vue subjective : rien. La page ne défile pas.
+  window.addEventListener('wheel', e => {
+    if (!walking) return;
+    const t = e.target;
+    if (t === dom || t === document.body || t === document.documentElement) e.preventDefault();
+    if (t !== dom && t !== document.body && t !== document.documentElement) return;
+    const sgn = Math.sign(e.deltaY); if (!sgn) return;
+    if (W.view === 'tps') { setTpsDist(W.tdist * (sgn > 0 ? 1.15 : 1 / 1.15)); walkStep(0); dirty = true; }
+    else if (W.view === 'free') {
+      const dd = Math.hypot(W.cam.x - W.pos.x, W.cam.y - (W.pos.y + cfg.eyeHeight), W.cam.z - W.pos.z);
+      const step = Math.max(0.5, Math.min(20, 0.15 * dd)) * -sgn;
+      const cp = Math.cos(W.cpitch), sp = Math.sin(W.cpitch), sy = Math.sin(W.cyaw), cy = Math.cos(W.cyaw);
+      const G = W.grid, hasGround = G && (G.count > 0 || G.tiled);
+      const nx = W.cam.x - sy * cp * step, nz = W.cam.z - cy * cp * step;
+      if (hasGround && G.tiled && G.pending(nx, nz)) markWait(nx, nz);
+      else { W.cam.x = nx; W.cam.z = nz; W.cam.y += sp * step; }
+      if (hasGround) { const g = floorAt(G, W.cam.x, W.cam.z, W.cam.y); if (g !== null && W.cam.y < g + 0.3) W.cam.y = g + 0.3; }
+      walkStep(0); dirty = true;
+    }
+  }, { passive: false });
   // téléportation : double-clic (ou double-clic au centre si la souris est capturée)
   const tpRay = new THREE.Raycaster(), tpV = new THREE.Vector2();
   function walkTeleport(nx, ny) {
@@ -1878,6 +1925,6 @@ function createViewer(container, cfg0, loader) {
     refreshCollision() { if (TL.on) { for (const t of TL.tiles) if (t.state === 'ready' && t.grp) { t.state = 'building'; t.grid = null; t.gen = collisionGridSteps(t.grp, 3, parseIgnore(cfg.walkIgnore)); t.qAt = performance.now(); t.qFirst = true; t.gridCpu = 0; TL.gridQ.push(t); } } else if (walking && model) W.grid = buildCollisionGrid(model, 3, parseIgnore(cfg.walkIgnore)); },
     teleportNdc(nx, ny) { return walkTeleport(nx, ny); },
     toggleWalk, pressF, recenterCam, startFly, walkStart, walkStop, teleportTo,
-    getWalk() { return { pos: W.pos.toArray(), yaw: W.yaw, pitch: W.pitch, grounded: W.grounded, tris: W.grid ? W.grid.count : 0, flying: W.fly, view: W.view, camYaw: W.view === 'tps' ? W.tyaw : (W.view === 'free' ? W.cyaw : W.yaw), camPitch: W.view === 'tps' ? W.tpitch : (W.view === 'free' ? W.cpitch : W.pitch), running: W.run.size > 0 || W.keys.has('ShiftLeft') || W.keys.has('ShiftRight'), cam: camera.position.toArray(), selfVisible: !!(selfAv && selfAv.visible) }; }, get fit() { return fit; }, requestRender() { dirty = true; }
+    getWalk() { return { pos: W.pos.toArray(), yaw: W.yaw, pitch: W.pitch, grounded: W.grounded, tris: W.grid ? W.grid.count : 0, flying: W.fly, view: W.view, camYaw: W.view === 'tps' ? W.tyaw : (W.view === 'free' ? W.cyaw : W.yaw), tpsDist: W.tdist, camPitch: W.view === 'tps' ? W.tpitch : (W.view === 'free' ? W.cpitch : W.pitch), running: W.run.size > 0 || W.keys.has('ShiftLeft') || W.keys.has('ShiftRight'), cam: camera.position.toArray(), selfVisible: !!(selfAv && selfAv.visible) }; }, get fit() { return fit; }, requestRender() { dirty = true; }
   };
 }

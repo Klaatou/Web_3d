@@ -363,14 +363,14 @@ async def main():
             await o.attendre(f"Math.hypot(window.__viewer.getWalk().pos[0] - {DFX}, window.__viewer.getWalk().pos[2] - {DFZ}) < 0.3", 40)
             rapport(vu, "bouton « Retour à l'arrivée » vers une tuile déchargée : « Chargement du sol… » pendant l'attente, puis l'avatar arrive")
             # vue globale : recadre
-            await o.touche("KeyF")
+            await o.touche("KeyP")   # v35 : F bascule le vol, P sort de la promenade
             await o.attendre("!window.__viewer.walking", 10)
             await o.ev("window.__viewer.goTo([500, 15, -100])")
             t1 = await o.ev("window.__viewer.controls.target.toArray()")
             await o.touche("KeyR")
             t2 = await o.ev("window.__viewer.controls.target.toArray()")
             rapport(proche([t1[0], t1[2]], [500, -100], 0.01) and proche([t2[0], t2[2]], [DFX, DFZ], 0.01), "vue globale : R recadre la cible sur l'arrivée", (t1, t2))
-            rapport(await o.ev("document.getElementById('walkHint').textContent.includes('R : recadrer sur l\\'arrivée')"), "aide en vue globale : « R : recadrer sur l'arrivée »")
+            rapport(await o.ev("document.getElementById('walkHint').textContent.includes('R : recadrer')"), "aide en vue globale : « R : recadrer » (v35 : groupes courts)")
             rapport(not o.errs, "aucune erreur JavaScript", o.errs)
             await o.fermer()
 
@@ -471,7 +471,7 @@ async def main():
                 if not mauvais:
                     await asyncio.sleep(0.05)
                 rapport(("Trois nombres" in rep) == mauvais, f"« Aller à » : « {bon} » {'refusé' if mauvais else 'accepté'}", rep)
-            await o.touche("KeyF")
+            await o.touche("KeyP")   # v35 : F bascule le vol, P sort de la promenade
             await o.attendre("!window.__viewer.walking", 10)
             await o.ev("document.getElementById('gotoIn').value = '300.25, 14, 60.75'; document.getElementById('gotoBtn').click()")
             tt = await o.ev("window.__viewer.controls.target.toArray()")
@@ -760,7 +760,7 @@ async def main():
             await B.attendre("document.getElementById('chatLog').textContent.includes('Alice : deuxième message')", 15)
             rapport(await A.ev(inp_visible), "second message envoyé, la saisie reste ouverte")
             aide = await A.ev("document.getElementById('walkHint').textContent")
-            rapport("la saisie reste ouverte" in aide and "Échap la ferme" in aide, "l'aide indique l'état de la saisie (reste ouverte, Échap la ferme)")
+            rapport("Entrée : écrire" in aide and "Échap : fermer" in aide, "l'aide donne les touches du chat (Entrée : écrire, Échap : fermer ; v35 : groupes courts)")
             # lettres dans le texte, flèches pour l'avatar
             p0 = (await A.walk())
             await A.pg.keyboard.down("ArrowLeft")

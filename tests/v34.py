@@ -189,7 +189,7 @@ async def main():
             pe = await o.ev("({ h: getComputedStyle(document.getElementById('walkHint')).pointerEvents, s: getComputedStyle(document.getElementById('stateInfo')).pointerEvents, us: getComputedStyle(document.getElementById('walkHint')).userSelect })")
             rapport(pe["h"] != "none" and pe["s"] != "none" and pe["us"] != "none", "l'aide et l'état reçoivent la souris et ne bloquent pas la sélection", pe)
             for ident in ("walkHint", "stateInfo"):
-                r = await o.ev("(i) => { const e = document.getElementById(i).children[1].firstElementChild, b = e.getBoundingClientRect();   // v35 : le premier enfant est la barre de titre repliable return [b.left + 20, b.top + b.height / 2]; }", ident)
+                r = await o.ev("(i) => { const e = document.getElementById(i).children[1].firstElementChild, b = e.getBoundingClientRect(); return [b.left + 20, b.top + b.height / 2]; }", ident)
                 await o.pg.mouse.click(r[0], r[1], click_count=3)
                 sel = await o.ev("window.getSelection().toString()")
                 rapport(len(sel.strip()) > 8, f"triple-clic dans #{ident} : texte sélectionné ({len(sel.strip())} caractères)", sel)
@@ -501,7 +501,7 @@ diff = {k for k in set(cfg0) | set(cfg1) if cfg0.get(k) != cfg1.get(k)}
 rapport(diff == {"seaY", "version"} and cfg1["seaY"] == 12.0, "--maj --sea-y 12 : seules seaY et la version changent dans X.config.json", (diff, r.stdout[-400:]))
 rapport(cfg1["hole"] == 99.0 and cfg1["walkSpeed"] == 5.0 and cfg1["zzCustom"] == {"a": [1, 2]} and cfg1["zoneMarker"] == "portee" and cfg1["presenceUrl"] == "ws://ADRESSE:9" and cfg1["room"] == "salonm" and cfg1["wave"] == 1.5,
         "valeurs modifiées à la main, clé inconnue, salon, présence et vagues : conservés")
-rapport(cfg1["version"].startswith("v34") and cfg1["tiles"] == cfg0["tiles"], "version courante écrite, champ « tiles » conservé", cfg1["version"])
+rapport(cfg1["version"] == (ROOT / "VERSION").read_text(encoding="utf-8").strip() and cfg1["tiles"] == cfg0["tiles"], "version courante écrite, champ « tiles » conservé", cfg1["version"])
 rapport(zp.read_bytes() == zbytes, "X.zones.json : octet pour octet identique (zones ajoutées à la main gardées)")
 sauv = sorted(mj.glob("index.avant-*.html"))
 rapport(len(sauv) == 1 and sauv[0].read_bytes() == vieille, "l'ancienne coquille est gardée sous un nom daté", [q.name for q in sauv])
