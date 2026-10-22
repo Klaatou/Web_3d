@@ -48,6 +48,9 @@ canvas{display:block;touch-action:none}
 #modal button.ok{background:#000;color:#fff}
 #nameTag div{font-size:11px}
 #walkHint{position:fixed;left:12px;bottom:54px;max-width:max(260px,calc(100% - 430px))}
+#tilesInfo{font:11px/1.4 ui-monospace,Consolas,monospace;color:#000}
+#tilesInfo.alone{position:fixed;left:12px;bottom:54px;background:#fffffff0;border:1px solid #000;border-radius:6px;padding:5px 9px}
+#groundWait{position:fixed;left:50%;top:38%;transform:translateX(-50%);z-index:35;font:14px/1.4 ui-monospace,Consolas,monospace;background:#000;color:#fff;border:2px solid #fff;border-radius:6px;padding:8px 16px}
 #msg{position:fixed;inset:0;display:grid;place-items:center;font:14px ui-monospace,monospace;color:#123;pointer-events:none}
 </style>
 <script type="importmap">
@@ -62,6 +65,8 @@ __IMPORTMAP__
 <div id="nameTag" hidden></div>
 <div id="toast" hidden></div>
 <div id="zonePrompt" hidden></div>
+<div id="groundWait" role="status" aria-live="polite" hidden>Chargement du sol…</div>
+<div id="tilesInfo" class="alone" hidden></div>
 <div id="fade"></div>
 <div id="modal" hidden><div><span id="modalText"></span><br><button class="ok" id="modalYes">Oui</button><button id="modalNo">Annuler</button></div></div>
 <div id="chat" hidden><div id="chatLog"></div><div id="chatHelp"></div><input id="chatInput" maxlength="200" placeholder="Message : Entrée pour envoyer, Échap pour annuler" hidden></div>
@@ -290,6 +295,19 @@ if (C.walk) {
   });
   viewer.onLanding = () => toast('Point d\'atterrissage choisi : appuie sur F pour t\'y poser');
   viewer.onWalk = on2 => { applyHelp(on2); wb.textContent = on2 ? 'Quitter la promenade (F)' : 'Promenade (F)'; document.getElementById('nameTag').hidden = true; };
+}
+if (viewer.tiled) {
+  // mode tuiles : ligne d'information (texte seul) dans le panneau d'aide s'il existe, indicateur « Chargement du sol… », message d'échec
+  const info = document.getElementById('tilesInfo'), gw = document.getElementById('groundWait'), wh2 = document.getElementById('walkHint');
+  if (C.walk) { info.classList.remove('alone'); info.style.marginTop = '4px'; wh2.append(info); }
+  const fr = (n, d) => Number(n).toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d });
+  viewer.onTiles = s => {
+    info.hidden = false;
+    info.textContent = 'Tuiles : ' + s.loaded + ' chargée' + (s.loaded > 1 ? 's' : '') + ' / ' + s.total + ' · ' + fr(s.bytes / 1048576, 0) + ' Mo · ' + (s.tri >= 1e6 ? fr(s.tri / 1e6, 2) + ' M' : fr(s.tri / 1e3, 0) + ' k') + ' triangles'
+      + (s.loading ? ' · ' + s.loading + ' en cours' : '') + (s.failed ? ' · ' + s.failed + ' en échec (nouvelle tentative)' : '');
+    gw.hidden = !s.waiting;
+  };
+  viewer.onTileError = (f, m) => toast('Tuile « ' + f + ' » : ' + m + ' (nouvelle tentative plus tard)');
 }
 if (C.names) {
   const tag = document.getElementById('nameTag'); let tm = 0;

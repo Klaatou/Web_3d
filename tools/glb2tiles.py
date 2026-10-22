@@ -656,6 +656,8 @@ class Plan:
             ek |= x["cles"]
             ei |= x["imgs"]
         self.octets_exclus = sum(self.cb[k] for k in ek - ks) + sum(self.img_oct[i] for i in ei - im)
+        # géométrie et images des exclus que des objets conservés utilisent aussi (même primitive, même texture) : retirer l'objet ne les économise pas
+        self.octets_partages = sum(self.cb[k] for k in ek & ks) + sum(self.img_oct[i] for i in ei & im)
 
     def cle_skin(self, si, cles):
         skins = self.glb.g.get("skins", [])
@@ -1090,6 +1092,11 @@ def lignes_exclusions(plan):
         return []
     out = [f"Objets exclus (--exclure, au plus {P.exclure_max_tri} triangles et {P.exclure_max_meshes} mesh(es) par objet racine) : "
            f"{len(plan.exclus)} | triangles retirés : {fmt(sum(x['tri'] for x in plan.exclus))} | octets gagnés : {fmt(plan.octets_exclus)} ({mo(plan.octets_exclus):.1f} Mo)"]
+    if plan.exclus:
+        out.append(f"  octets des exclus qu'un objet conservé utilise aussi (non gagnés) : {fmt(plan.octets_partages)} ({mo(plan.octets_partages):.1f} Mo)")
+        if plan.octets_exclus == 0:
+            out.append("  0 octet gagné : toute la géométrie et toutes les images des objets exclus sont partagées avec des objets conservés (même primitive ou même texture, "
+                       "typiquement un cube commun) ; retirer ces objets enlève des nœuds et des triangles, pas des octets.")
     if plan.gardes:
         out.append(f"  {plan.gardes} objet(s) au nom correspondant conservé(s) par les garde-fous (trop de triangles ou de meshes)")
     for nom, n in collections.Counter(x["nom"] for x in plan.exclus).most_common(20):
@@ -1244,7 +1251,7 @@ def main(argv=None, log_path=None):
                "duplication": round(dup, 3), "tiles": fiches}
         if P.exclure:
             doc["excluded"] = {"patterns": P.exclure_motifs, "maxTriangles": P.exclure_max_tri, "maxMeshes": P.exclure_max_meshes,
-                               "count": len(plan.exclus), "triangles": sum(x["tri"] for x in plan.exclus), "bytesSaved": plan.octets_exclus,
+                               "count": len(plan.exclus), "triangles": sum(x["tri"] for x in plan.exclus), "bytesSaved": plan.octets_exclus, "bytesShared": plan.octets_partages,
                                "names": dict(collections.Counter(x["nom"] for x in plan.exclus).most_common(20))}
         with open(Path(sortie) / f"{nom}.tiles.json", "w", encoding="utf-8", newline="\n") as f:
             json.dump(doc, f, ensure_ascii=False, indent=1)

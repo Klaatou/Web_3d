@@ -60,8 +60,16 @@ function isFoliageName(n) {
   return !TRUNK_KEYS.some(k => n.includes(k)) && FOLIAGE_KEYS.some(k => n.includes(k));
 }
 
-// Grille XZ de triangles (monde) pour sol et murs : exclut le feuillage
+// Grille XZ de triangles (monde) pour sol et murs : exclut le feuillage.
+// Générateur : rend la main toutes les quelques milliers de triangles (mode tuiles : construction par tranches, sans figer l'image) ;
+// buildCollisionGrid l'exécute d'une traite (promenade ordinaire, résultat identique).
 function buildCollisionGrid(root, cell = 3, tokens = []) {
+  const it = collisionGridSteps(root, cell, tokens);
+  let r; do { r = it.next(); } while (!r.done);
+  return r.value;
+}
+function* collisionGridSteps(root, cell = 3, tokens = []) {
+  let work = 0;
   const meshes = []; let total = 0;
   root.traverseVisible(o => {
     if (!o.isMesh || o.isInstancedMesh || o.isSkinnedMesh || !o.geometry || !o.geometry.attributes.position) return;
@@ -89,6 +97,7 @@ function buildCollisionGrid(root, cell = 3, tokens = []) {
     o.updateWorldMatrix(true, false);
     const M = o.matrixWorld, p = g.attributes.position, ix = g.index;
     for (const [s, e] of ranges) for (let i = s; i < e; i++, t++) {
+      if ((++work & 4095) === 0) yield;
       for (let k = 0; k < 3; k++) {
         v.fromBufferAttribute(p, ix ? ix.getX(i * 3 + k) : i * 3 + k).applyMatrix4(M);
         T[t * 9 + k * 3] = v.x; T[t * 9 + k * 3 + 1] = v.y; T[t * 9 + k * 3 + 2] = v.z;
@@ -98,6 +107,7 @@ function buildCollisionGrid(root, cell = 3, tokens = []) {
   const cells = new Map(), big = [];
   const key = (ix, iz) => (ix + 32768) * 65536 + (iz + 32768);
   for (let i = 0; i < total; i++) {
+    if ((++work & 2047) === 0) yield;
     const b = i * 9;
     const minX = Math.min(T[b], T[b + 3], T[b + 6]), maxX = Math.max(T[b], T[b + 3], T[b + 6]);
     const minZ = Math.min(T[b + 2], T[b + 5], T[b + 8]), maxZ = Math.max(T[b + 2], T[b + 5], T[b + 8]);
@@ -207,6 +217,7 @@ function createViewer(container, cfg0, loader) {
   let onCfg = null, onWalk = null, onPick = null, onPresence = null, onChat = null, onName = null, spectateOn = false, pickOrbit = false, walking = false, linkLock = false;
   const W = { pos: new THREE.Vector3(), spawn: new THREE.Vector3(), vy: 0, grounded: true, yaw: 0, pitch: 0, keys: new Set(), jumpReq: false, drag: false, saved: null, grid: null };
   let model = null, modelRot = 0, fit = 1, sea = null, seaMat = null, dirty = true, foliageMats = [];
+  let seaCx = 0, seaCz = 0;   // centre de la mer : l'origine, ou le centre de la région en mode tuiles
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(cfg.skyColor);
@@ -268,7 +279,7 @@ function createViewer(container, cfg0, loader) {
       seaMat.polygonOffset = true; seaMat.polygonOffsetFactor = -2; seaMat.polygonOffsetUnits = -2;
       sea = new THREE.Mesh(geo, seaMat);
       sea.rotation.x = -Math.PI / 2;
-      sea.position.y = cfg.seaY;
+      sea.position.set(seaCx, cfg.seaY, seaCz);
       sea.frustumCulled = false;
       sea.renderOrder = -10;
       sea.userData.isSea = true;
@@ -278,8 +289,8 @@ function createViewer(container, cfg0, loader) {
   }
   buildSea();
 
-  function fixMaterials(root) {
-    foliageMats = [];
+  function fixMaterials(root, append) {
+    if (!append) foliageMats = [];
     root.traverse(o => {
       if (!o.isMesh || !o.material) return;
       let foliageMesh = false;
@@ -345,7 +356,7 @@ function createViewer(container, cfg0, loader) {
   function rotDeg() { return ((Math.round((Number(cfg.rotate) || 0) / 90) * 90) % 360 + 360) % 360; }
   // aligne le modèle déjà chargé sur cfg.rotate : rotation autour de l'axe vertical passant par le centre de la région (origine)
   function applyRotation() {
-    if (!model) return;
+    if (!model || TL.on) return;
     const d = rotDeg() - modelRot;
     if (!d) return;
     const q = new THREE.Quaternion().setFromAxisAngle(UPV, d * Math.PI / 180);
@@ -364,6 +375,220 @@ function createViewer(container, cfg0, loader) {
     return gltf;
   }
 
+  // ---- mode tuiles (champ cfg.tiles) : région découpée par tools/glb2tiles.py (X.tiles.json, MODE_EMPLOI § 17 bis)
+  // Les tuiles dont la boîte est proche de l'avatar (en vue globale : de la cible) sont chargées, les lointaines déchargées. Repère = celui du
+  // modèle d'origine (aucun recentrage) ; la rotation de la région est appliquée à la racine des tuiles. Une grille de collision par tuile.
+  // Zones liées à un élément (champ mesh) : ignorées (la référence nom#index se calcule sur tout le modèle).
+  const TL = { on: !!cfg.tiles, root: null, tiles: [], extent: null, inflight: 0, gridQ: [], pending: null, forced: null, forcedUntil: 0,
+    waitT: -1e9, lastUpd: 0, infoKey: '', onInfo: null, onError: null, lastError: '', radius: 150, margin: 60, maxBytes: 200 * 1048576, maxTri: 8e6, conc: 4 };
+  const TILE_M = 0.5;   // tolérance (m) des tests « le point est dans la boîte de la tuile »
+  const safeRel = p => typeof p === 'string' && p !== '' && p.length < 400 && !/^[\/\\]/.test(p) && !/[\\:?#\u0000-\u001f]/.test(p) && !p.split('/').some(s => s === '' || s === '..');
+  const relUrl = (p, base) => new URL(p.split('/').map(encodeURIComponent).join('/'), base);
+  const inTile = (t, x, z, m) => x >= t.box[0] - m && x <= t.box[2] + m && z >= t.box[1] - m && z <= t.box[3] + m;
+  const tileDist = (t, f) => Math.hypot(Math.max(t.box[0] - f.x, 0, f.x - t.box[2]), Math.max(t.box[1] - f.z, 0, f.z - t.box[3]));
+  // grille composite : sol et murs des seules tuiles prêtes ; pending(x,z) = une tuile dont la boîte contient ce point n'est pas encore prête
+  const TG = {
+    tiled: true,
+    get count() { let n = 0; for (const t of TL.tiles) if (t.state === 'ready' && t.grid) n += t.grid.count; return n; },
+    ground(x, z, y0) {
+      let best = null;
+      for (const t of TL.tiles) {
+        if (t.state !== 'ready' || !t.grid || !inTile(t, x, z, TILE_M)) continue;
+        const g = t.grid.ground(x, z, y0);
+        if (g !== null && (best === null || g > best)) best = g;
+      }
+      return best;
+    },
+    wall(x, y, z, dx, dz, dist) {
+      const ex = x + dx * dist, ez = z + dz * dist, x0 = Math.min(x, ex) - TILE_M, x1 = Math.max(x, ex) + TILE_M, z0 = Math.min(z, ez) - TILE_M, z1 = Math.max(z, ez) + TILE_M;
+      let best = null;
+      for (const t of TL.tiles) {
+        if (t.state !== 'ready' || !t.grid || t.box[0] > x1 || t.box[2] < x0 || t.box[1] > z1 || t.box[3] < z0) continue;
+        const h = t.grid.wall(x, y, z, dx, dz, dist);
+        if (h && (!best || h.t < best.t)) best = h;
+      }
+      return best;
+    },
+    pending(x, z) { for (const t of TL.tiles) if (t.state !== 'ready' && inTile(t, x, z, TILE_M)) return true; return false; }
+  };
+  function disposeTile(grp) {
+    const texs = new Set();
+    grp.traverse(o => {
+      if (o.skeleton) o.skeleton.dispose();
+      if (o.material) for (const m of (Array.isArray(o.material) ? o.material : [o.material])) if (m) for (const k in m) { const v = m[k]; if (v && v.isTexture) texs.add(v); }
+    });
+    disposeObject(grp);
+    for (const t of texs) { const im = t.image; if (im && typeof im.close === 'function') { try { im.close(); } catch (e) {} } }   // libère aussi la mémoire CPU des images décodées
+  }
+  function tilesStatus() {
+    let loaded = 0, loading = 0, failed = 0, bytes = 0, tri = 0;
+    for (const t of TL.tiles) {
+      if (t.state === 'ready') { loaded++; bytes += t.bytes; tri += t.tri; }
+      else if (t.state === 'loading' || t.state === 'building') { loading++; bytes += t.bytes; tri += t.tri; }
+      else if (t.state === 'failed') failed++;
+    }
+    return { total: TL.tiles.length, loaded, loading, failed, bytes, tri, waiting: !!TL.pending || performance.now() - TL.waitT < 600 };
+  }
+  function tilesInfo() {
+    const s = tilesStatus(), key = [s.loaded, s.loading, s.failed, s.bytes, s.tri, s.waiting ? 1 : 0].join('|');
+    if (key === TL.infoKey) return;
+    TL.infoKey = key;
+    if (TL.onInfo) TL.onInfo(s);
+  }
+  function tileFail(t, e) {
+    t.state = 'failed'; t.fails = (t.fails || 0) + 1; t.retryAt = performance.now() + Math.min(30000, 3000 * Math.pow(2, t.fails - 1));
+    const m = e && e.message ? e.message : String(e);
+    console.warn('tuile « ' + t.file + ' » : échec (' + m + '), nouvelle tentative plus tard');
+    if (TL.onError) TL.onError(t.file, m);
+  }
+  function tileUnload(t) {
+    if (t.ac) { try { t.ac.abort(); } catch (e) {} t.ac = null; }
+    const i = TL.gridQ.indexOf(t); if (i >= 0) TL.gridQ.splice(i, 1);
+    if (t.grp) {
+      TL.root.remove(t.grp);
+      const ms = new Set(); t.grp.traverse(o => { if (o.material) for (const m of (Array.isArray(o.material) ? o.material : [o.material])) if (m) ms.add(m); });
+      foliageMats = foliageMats.filter(m => !ms.has(m));
+      disposeTile(t.grp); t.grp = null;
+    }
+    t.grid = null; t.gen = null; t.state = 'idle'; dirty = true;
+  }
+  async function tileStart(t) {
+    const ac = new AbortController();
+    t.state = 'loading'; t.ac = ac; TL.inflight++;
+    try {
+      const r = await fetch(t.url, { signal: ac.signal });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const buf = await r.arrayBuffer();
+      if (t.ac !== ac) return;
+      const gltf = await loader.parseAsync(buf, '');
+      if (t.ac !== ac) { disposeTile(gltf.scene); return; }
+      const grp = gltf.scene;
+      grp.name = 'tile:' + t.file;
+      fixMaterials(grp, true);
+      TL.root.add(grp); grp.updateMatrixWorld(true);
+      grp.traverse(o => { if (o.isMesh) { o.updateMatrix(); o.matrixAutoUpdate = false; } });
+      t.grp = grp; t.state = 'building';
+      t.gen = collisionGridSteps(grp, 3, parseIgnore(cfg.walkIgnore));   // construite par tranches (tilesTick)
+      TL.gridQ.push(t);
+      dirty = true;
+    } catch (e) {
+      if (t.ac === ac) { t.ac = null; tileFail(t, e); }
+    } finally { TL.inflight--; tilesInfo(); }
+  }
+  function tilesFocus(now) {
+    if (TL.pending) return TL.pending.at;
+    if (walking) return { x: W.pos.x, z: W.pos.z };
+    if (TL.forced && now < TL.forcedUntil) return TL.forced;
+    return { x: controls.target.x, z: controls.target.z };
+  }
+  function tilesUsage() {
+    let bytes = 0, tri = 0, n = 0;
+    for (const t of TL.tiles) if (t.state === 'loading' || t.state === 'building' || t.state === 'ready') { bytes += t.bytes; tri += t.tri; n++; }
+    return { bytes, tri, n };
+  }
+  // choisit les tuiles à charger (rayon, plus proches d'abord) et à décharger (rayon + marge, puis budget : les plus lointaines d'abord)
+  function tilesUpdate(now) {
+    if (!TL.root) return;
+    TL.lastUpd = now;
+    const f = tilesFocus(now);
+    for (const t of TL.tiles) t.d = tileDist(t, f);
+    for (const t of TL.tiles) if (t.state !== 'idle' && t.state !== 'failed' && t.d > TL.radius + TL.margin) tileUnload(t);
+    const want = TL.tiles.filter(t => t.d <= TL.radius && (t.state === 'idle' || (t.state === 'failed' && now >= t.retryAt))).sort((a, b) => a.d - b.d);
+    for (const t of want) {
+      if (TL.inflight >= TL.conc) break;
+      let u = tilesUsage();
+      while (u.bytes + t.bytes > TL.maxBytes || u.tri + t.tri > TL.maxTri) {
+        let v = null;
+        for (const q of TL.tiles) if ((q.state === 'loading' || q.state === 'building' || q.state === 'ready') && q.d > t.d + 1 && (!v || q.d > v.d)) v = q;
+        if (!v) break;
+        tileUnload(v); u = tilesUsage();
+      }
+      if (u.bytes + t.bytes > TL.maxBytes || u.tri + t.tri > TL.maxTri) {
+        if (t.d > 0 && u.n > 0) continue;   // plus de place : on attend qu'une tuile plus lointaine parte
+        console.warn('tuile « ' + t.file + ' » : le budget (tileMaxMo / tileMaxTri) est dépassé par cette seule tuile, chargée quand même (l\'avatar est dessus)');
+      }
+      tileStart(t);
+    }
+    tilesInfo();
+  }
+  function tilesPendingCheck() {
+    const p = TL.pending;
+    if (!p || TG.pending(p.at.x, p.at.z)) return;
+    TL.pending = null;
+    if (p.kind === 'walk') walkStart(p.opts); else teleportTo(p.pos, p.yaw);
+    tilesInfo();
+  }
+  function tilesTick(now) {
+    if (!TL.root) return;
+    const t0 = performance.now();
+    while (TL.gridQ.length && performance.now() - t0 < 6) {
+      const t = TL.gridQ[0];
+      let r;
+      try { r = t.gen.next(); } catch (e) { TL.gridQ.shift(); tileUnload(t); tileFail(t, e); continue; }
+      if (r.done) { TL.gridQ.shift(); t.grid = r.value; t.gen = null; t.state = 'ready'; t.fails = 0; dirty = true; tilesPendingCheck(); tilesInfo(); }
+    }
+    if (now - TL.lastUpd > 250) tilesUpdate(now);
+    if (TL.waitT > 0 || TL.pending) tilesInfo();
+  }
+  // charge X.tiles.json puis les tuiles autour du point de départ ; rend la main quand les tuiles qui contiennent ce point sont prêtes
+  // (ou en échec). opts : spawn (id d'arrivée du lien, sinon « default »), radius (?rayon=)
+  async function loadTiles(rel, opts) {
+    opts = opts || {};
+    if (!TL.on) throw new Error('mode tuiles non activé (champ tiles absent de la configuration)');
+    if (!safeRel(rel)) throw new Error('adresse de tuiles refusée « ' + rel + ' » (chemin relatif, sans .., sans « : », sans « ? » ni « # »)');
+    const idx = relUrl(rel, location.href);
+    const r = await fetch(idx.href, { cache: 'no-store' });
+    if (!r.ok) throw new Error(rel + ' : HTTP ' + r.status);
+    const doc = await r.json();
+    if (!doc || !Array.isArray(doc.tiles)) throw new Error(rel + ' : format inattendu (liste « tiles » absente)');
+    const num = (v, d, lo, hi) => { v = Number(v); return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d; };
+    TL.radius = num(opts.radius, num(cfg.tileRadius, 150, 10, 5000), 10, 5000);
+    TL.margin = num(cfg.tileMargin, 60, 0, 5000);
+    TL.maxBytes = num(cfg.tileMaxMo, 200, 1, 1e5) * 1048576;
+    TL.maxTri = num(cfg.tileMaxTri, 8e6, 1e3, 1e9);
+    TL.conc = Math.round(num(cfg.tileConcurrency, 4, 1, 16));
+    modelRot = rotDeg();
+    const root = new THREE.Group(); root.name = 'tiles';
+    if (modelRot) root.quaternion.setFromAxisAngle(UPV, modelRot * Math.PI / 180);
+    root.updateMatrixWorld(true);
+    const v = new THREE.Vector3(), ext = new THREE.Box3();
+    for (const d of doc.tiles) {
+      const ok = d && safeRel(d.file) && /\.glb$/i.test(d.file) && Array.isArray(d.min) && Array.isArray(d.max) && d.min.length === 3 && d.max.length === 3 && d.min.concat(d.max).every(Number.isFinite);
+      if (!ok) { console.warn('tuile ignorée (entrée invalide dans ' + rel + ') :', d && d.file); continue; }
+      const b = new THREE.Box3();
+      for (let k = 0; k < 8; k++) b.expandByPoint(v.set(k & 1 ? d.max[0] : d.min[0], k & 2 ? d.max[1] : d.min[1], k & 4 ? d.max[2] : d.min[2]).applyQuaternion(root.quaternion));
+      ext.union(b);
+      TL.tiles.push({ file: d.file, url: relUrl(d.file, idx).href, bytes: Math.max(0, Number(d.bytes) || 0), tri: Math.max(0, Number(d.triangles) || 0),
+        box: [b.min.x, b.min.z, b.max.x, b.max.z], ymin: b.min.y, ymax: b.max.y, state: 'idle', d: 0, fails: 0, retryAt: 0, ac: null, grp: null, grid: null, gen: null });
+    }
+    TL.root = root; model = root; TL.extent = ext; scene.add(root);
+    // la vue d'ensemble n'existe pas encore : la caméra se cadre sur le rayon de chargement, pas sur toute la région
+    fit = Math.max(2 * TL.radius, 200) / 2 / Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2) * 1.35;
+    if (!ext.isEmpty()) { seaCx = (ext.min.x + ext.max.x) / 2; seaCz = (ext.min.z + ext.max.z) / 2; if (sea) sea.position.set(seaCx, cfg.seaY, seaCz); }
+    frame();
+    let f = null;
+    if (opts.spawn !== undefined) {
+      const id = slug(opts.spawn), s = zones.find(z => z.type === 'spawn' && z.id === id) || zones.find(z => z.type === 'spawn' && z.id === 'default');
+      if (s) f = { x: s.x, z: s.z };
+    }
+    if (!f) f = { x: controls.target.x, z: controls.target.z };
+    const now = performance.now();
+    TL.forced = f; TL.forcedUntil = now + 4000;   // le temps que la coquille démarre la promenade à l'arrivée
+    tilesUpdate(now);
+    // attend les tuiles qui contiennent le point de départ (sinon la plus proche) : prêtes ou en échec
+    const waitSet = TL.tiles.filter(t => t.d <= 0.01);
+    if (!waitSet.length) { const n = TL.tiles.filter(t => t.d <= TL.radius).sort((a, b) => a.d - b.d)[0]; if (n) waitSet.push(n); }
+    const t1 = performance.now();
+    await new Promise(res => { const chk = () => (waitSet.every(t => t.state === 'ready' || t.state === 'failed') || performance.now() - t1 > 120000) ? res() : setTimeout(chk, 100); chk(); });
+    dirty = true;
+    return { tiles: TL.tiles.length };
+  }
+  function tilesState() {
+    const names = t => TL.tiles.filter(q => t.includes(q.state)).map(q => q.file);
+    return Object.assign(tilesStatus(), { on: TL.on, radius: TL.radius, margin: TL.margin, maxBytes: TL.maxBytes, maxTri: TL.maxTri, conc: TL.conc,
+      ready: names(['ready']), loadingFiles: names(['loading', 'building']), failedFiles: names(['failed']), groups: TL.root ? TL.root.children.map(c => c.name) : [], inflight: TL.inflight, gridQueue: TL.gridQ.length });
+  }
+
   function setCfg(p) {
     Object.assign(cfg, p);
     if ('skyColor' in p) { scene.background.set(cfg.skyColor); scene.fog.color.set(cfg.skyColor); hemi.color.set(cfg.skyColor); }
@@ -379,7 +604,7 @@ function createViewer(container, cfg0, loader) {
         seaMat.uniforms.uHoleCenter.value.set(cfg.holeX, -cfg.holeZ);
       }
     }
-    if (sea) sea.position.y = cfg.seaY;
+    if (sea) sea.position.set(seaCx, cfg.seaY, seaCz);
     if ('foliageCutout' in p) foliageMats.forEach(m => { m.alphaTest = cfg.foliageCutout; m.needsUpdate = true; });
     dirty = true;
     if (onCfg) onCfg(cfg);
@@ -412,7 +637,7 @@ function createViewer(container, cfg0, loader) {
     const sy = Math.sin(W.yaw), cy = Math.cos(W.yaw);
     let mx = -sy * f + cy * s, mz = -cy * f - sy * s;
     const len = Math.hypot(mx, mz);
-    const G = W.grid, hasGround = G && G.count > 0;
+    const G = W.grid, hasGround = G && (G.count > 0 || G.tiled);
     if (len > 0 && dt > 0) {
       mx /= len; mz /= len;
       const dist = cfg.walkSpeed * (run ? 2.2 : 1) * dt;
@@ -424,7 +649,9 @@ function createViewer(container, cfg0, loader) {
           if (nx * mx + nz * mz > 0) { nx = -nx; nz = -nz; }
           const d = dx * nx + dz * nz; dx -= d * nx; dz -= d * nz;
         }
-        if (G.ground(W.pos.x + dx, W.pos.z + dz, W.pos.y + STEP_UP) !== null) { W.pos.x += dx; W.pos.z += dz; }
+        // mode tuiles : jamais d'avancée vers une zone dont la tuile n'est pas prête (indicateur « Chargement du sol… »)
+        if (G.tiled && G.pending(W.pos.x + dx, W.pos.z + dz)) TL.waitT = performance.now();
+        else if (G.ground(W.pos.x + dx, W.pos.z + dz, W.pos.y + STEP_UP) !== null) { W.pos.x += dx; W.pos.z += dz; }
       } else { W.pos.x += dx; W.pos.z += dz; }
     }
     if ((W.jumpReq || k.has('Space')) && W.grounded) { W.vy = 5.5; W.grounded = false; W.pos.y += 0.02; }
@@ -436,7 +663,7 @@ function createViewer(container, cfg0, loader) {
         else W.pos.y += (g - W.pos.y) * Math.min(1, dt * 18);
       }
     }
-    if (!W.grounded) {
+    if (!W.grounded && !(G && G.tiled && G.pending(W.pos.x, W.pos.z))) {
       W.vy -= 15 * dt; W.pos.y += W.vy * dt;
       if (g !== null && W.pos.y <= g) { W.pos.y = g; W.vy = 0; W.grounded = true; }
       if (W.pos.y < W.spawn.y - 400) { W.pos.copy(W.spawn); W.vy = 0; W.grounded = true; }
@@ -447,7 +674,13 @@ function createViewer(container, cfg0, loader) {
   }
   function walkStart(opts) {
     if (!model || walking) return walking;
-    W.grid = buildCollisionGrid(model, 3, parseIgnore(cfg.walkIgnore));
+    if (TL.on) {
+      // la promenade attend que la tuile sous l'avatar soit prête (F de nouveau : annuler)
+      const at = (opts && opts.pos) ? { x: opts.pos[0], z: opts.pos[2] } : { x: controls.target.x, z: controls.target.z };
+      if (TG.pending(at.x, at.z)) { TL.pending = { kind: 'walk', opts, at }; TL.waitT = performance.now(); tilesUpdate(TL.waitT); return false; }
+      TL.pending = null; TL.forced = null;
+    }
+    W.grid = TL.on ? TG : buildCollisionGrid(model, 3, parseIgnore(cfg.walkIgnore));
     W.saved = { pos: camera.position.clone(), target: controls.target.clone(), fov: camera.fov };
     const t = (opts && opts.pos) ? new THREE.Vector3().fromArray(opts.pos) : controls.target, fx = t.x - camera.position.x, fz = t.z - camera.position.z;
     W.yaw = (opts && Number.isFinite(opts.yaw)) ? opts.yaw : (Math.hypot(fx, fz) > 1e-3 ? Math.atan2(-fx, -fz) : 0);
@@ -487,6 +720,7 @@ function createViewer(container, cfg0, loader) {
     if (!model) return false;
     if (!walking) return walkStart({ pos, yaw });
     const x = pos[0], y = pos[1], z = pos[2];
+    if (TL.on && TG.pending(x, z)) { TL.pending = { kind: 'tp', pos, yaw, at: { x, z } }; TL.waitT = performance.now(); tilesUpdate(TL.waitT); return true; }
     let g = W.grid.ground(x, z, y + 2);
     if (g === null) g = W.grid.ground(x, z, 1e6);
     W.pos.set(x, g === null ? y : g, z); W.spawn.copy(W.pos);
@@ -529,6 +763,7 @@ function createViewer(container, cfg0, loader) {
       if (n.dot(tpRay.ray.direction) > 0) n.negate();
       let x = h.point.x, z = h.point.z; const y = h.point.y;
       if (n.y < 0.5) { const hl = Math.hypot(n.x, n.z) || 1; x += n.x / hl * 0.5; z += n.z / hl * 0.5; } // mur : on se place devant
+      if (W.grid && W.grid.tiled && W.grid.pending(x, z)) { TL.waitT = performance.now(); return false; }
       const g = W.grid ? W.grid.ground(x, z, y + STEP_UP + 0.05) : null;
       W.pos.set(x, g === null ? y : g, z); W.vy = 0; W.grounded = true;
       dom.style.transition = 'opacity .12s'; dom.style.opacity = '0.35';
@@ -955,6 +1190,9 @@ function createViewer(container, cfg0, loader) {
     zones = (Array.isArray(list) ? list : []).map((z, i) => cleanZone(z || {}, i)).map(z => {
       let id = z.id, n = 2; while (seen.has(id)) id = z.id + '-' + (n++);
       seen.add(id); z.id = id; return z;
+    }).filter(z => {
+      if (TL.on && z.mesh && z.type !== 'spawn') { console.warn('zone « ' + z.id + ' » ignorée : liée à l\'élément « ' + z.mesh + ' », ce que le mode tuiles ne sait pas résoudre (référence calculée sur tout le modèle)'); return false; }
+      return true;
     });
     nearZone = null; zoneInside.clear();
     resolveLinks();
@@ -1115,6 +1353,7 @@ function createViewer(container, cfg0, loader) {
     const dt = Math.min(clock.getDelta(), 0.1);
     let moved = false;
     if (walking) { walkStep(dt); moved = true; } else moved = controls.update();
+    if (TL.on) tilesTick(performance.now());
     presenceTick(dt, performance.now());
     landingTick(performance.now());
     if (seaMat && seaMat.uniforms) { seaMat.uniforms.uTime.value = clock.elapsedTime; dirty = true; }
@@ -1125,6 +1364,8 @@ function createViewer(container, cfg0, loader) {
     scene, camera, renderer, controls, cfg, setCfg, setModel, loadBuffer, frame, getCameraState, setZoom,
     get model() { return model; }, get sea() { return sea; }, set onCfg(f) { onCfg = f; }, set onWalk(f) { onWalk = f; }, set onPick(f) { onPick = f; }, set pickOrbit(v) { pickOrbit = !!v; }, set onPresence(f) { onPresence = f; }, set onChat(f) { onChat = f; },
     setZones, zoneSelect, zonePickAt, findMeshes,
+    // mode tuiles (cfg.tiles) : voir loadTiles ; tilesState sert aux tests
+    loadTiles, tilesState, get tiled() { return TL.on; }, set onTiles(f) { TL.onInfo = f; }, set onTileError(f) { TL.onError = f; },
     // référence (champ mesh d'une zone) de cet objet du modèle : nom, ou nom#index si le nom est partagé
     meshRef(o) { return model ? meshRefOf(model, o) : (o.name || ''); }, get rotation() { return modelRot; },
     // boîte (monde) de l'élément de ce nom : { min, max, center, count } ou null
@@ -1160,9 +1401,9 @@ function createViewer(container, cfg0, loader) {
     setName(n) { P.name = cleanName(n); if (P.ws && P.ws.readyState === 1) P.ws.send(JSON.stringify({ t: 'name', name: P.name })); },
     getPresence() { return { state: P.state, id: P.id, peers: [...P.peers.values()].map(q => ({ id: q.id, name: q.name, pos: q.g.position.toArray(), visible: q.g.visible, bubble: !!q.bubble, stack: avatarStack(q) })) }; }, get walking() { return walking; },
     walkTick(dt) { if (walking) walkStep(dt); },
-    refreshCollision() { if (walking && model) W.grid = buildCollisionGrid(model, 3, parseIgnore(cfg.walkIgnore)); },
+    refreshCollision() { if (TL.on) { for (const t of TL.tiles) if (t.state === 'ready' && t.grp) { t.state = 'building'; t.grid = null; t.gen = collisionGridSteps(t.grp, 3, parseIgnore(cfg.walkIgnore)); TL.gridQ.push(t); } } else if (walking && model) W.grid = buildCollisionGrid(model, 3, parseIgnore(cfg.walkIgnore)); },
     teleportNdc(nx, ny) { return walkTeleport(nx, ny); },
-    toggleWalk() { return walking ? walkStop() : walkStart(); }, walkStart, walkStop, teleportTo,
+    toggleWalk() { if (TL.pending) { TL.pending = null; tilesInfo(); return false; } return walking ? walkStop() : walkStart(); }, walkStart, walkStop, teleportTo,
     getWalk() { return { pos: W.pos.toArray(), yaw: W.yaw, pitch: W.pitch, grounded: W.grounded, tris: W.grid ? W.grid.count : 0 }; }, get fit() { return fit; }, requestRender() { dirty = true; }
   };
 }

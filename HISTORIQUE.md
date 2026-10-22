@@ -45,6 +45,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 21/10/2026 |  | v27 | v27 : repères des avatars empilés (nom, bulle de chat, losange) : la bulle n'est plus recouverte, `tests/v27.py` |
 | 21/10/2026 |  | v28 | v28 : `tools/glb2tiles.py` (découpage d'un GLB énorme en tuiles autonomes, `--analyse`), `glb-stats.py` en fonctions communes, `tests/glb2tiles.py` |
 | 22/10/2026 |  | v29 | v29 : oar2glb.py terrain complet des régions de plus de 256 m (patches depuis la carte de hauteurs, `--terrain`, `--terrain-patch`, `--terrain-seul`), glb2tiles.py `--exclure` et pause sans console, `tests/terrain.py` |
+| 22/10/2026 |  | v30 | v30 : la coquille charge une région en tuiles (`tiles` dans `X.config.json`, rayon, hystérésis, budget Mo / triangles, grille de collision par tuile, sol bloqué tant que la tuile n'est pas prête, `?rayon=`), `glb2html.py --tiles`, `glb2tiles.py` explique les « octets gagnés » à 0, `tests/tuiles.py` |
 
 ## Commandes utiles
 

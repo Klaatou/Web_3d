@@ -551,6 +551,21 @@ r, txt = tout(["--analyse", "--exclure", "freebies", "--exclure", "fournisseur"]
 rapport(r == 0 and "Objets exclus (--exclure" in txt and "3 | triangles retirés : 36" in txt and "octets gagnés" in txt and "1 x « City Stores - Box - RAKis Freebies 2019 »" in txt, "--analyse : nombre d'exclus, récapitulatif par nom, octets gagnés", txt[-900:])
 r, txt = tout(["--analyse"], d / "exclure.glb")
 rapport(r == 0 and "Objets exclus" not in txt, "sans --exclure : aucune ligne d'exclusion")
+# géométrie des exclus partagée avec un objet conservé (même cube commun) : 0 octet gagné, expliqué, octets partagés comptés
+d2 = tmp / "exclure_partage"
+d2.mkdir()
+b = B()
+cm2 = b.mesh(b.positions(CUBE_V), b.indices(CUBE_I))
+b.noeud("Box - RAKis Freebies 2019", cm2, t=(5, 0, 5), racine=True)
+b.noeud("Box 2 - RAKis Freebies 2019", cm2, t=(15, 0, 5), racine=True)
+b.noeud("Maison sur le meme cube", cm2, t=(25, 0, 5), racine=True)
+b.ecrire(d2 / "partage.glb")
+r, txt, doc2 = None, None, None
+r, txt = tout(["--forcer", "--exclure", "freebies"], d2 / "partage.glb")
+doc2 = json.loads((d2 / "partage.tiles.json").read_text(encoding="utf-8"))
+ex2 = doc2.get("excluded", {})
+rapport(r == 0 and ex2.get("count") == 2 and ex2.get("bytesSaved") == 0 and ex2.get("bytesShared", 0) > 0, "exclus dont la géométrie est partagée avec un objet conservé : 0 octet gagné, octets partagés comptés dans tiles.json", ex2)
+rapport("octets gagnés : 0 (0.0 Mo)" in txt and "0 octet gagné : toute la géométrie" in txt and "non gagnés" in txt, "rapport : le 0 est expliqué", txt[-900:])
 
 # ---------- 10 ter. pause : pas de console ----------
 print("--- sans console")

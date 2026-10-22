@@ -25,6 +25,7 @@ import json
 import math
 import pathlib
 import re
+import shutil
 import struct
 import sys
 import urllib.parse
@@ -67,6 +68,11 @@ MAP_URL = ""
 # <</DEFAULTS>>
 
 SEA_SIZE = 4000
+TILE_RADIUS = 150.0         # m : charger les tuiles dont la boîte est à moins de ce rayon de l'avatar (plan X,Z)
+TILE_MARGIN = 60.0          # m : décharger au-delà de rayon + marge (hystérésis)
+TILE_MAX_MO = 200.0         # Mo de tuiles chargées en même temps
+TILE_MAX_TRI = 8000000      # triangles de tuiles chargées en même temps
+TILE_CONCURRENCY = 4        # téléchargements simultanés
 
 THREE_VERSION = "0.160.0"
 CDN = f"https://cdn.jsdelivr.net/npm/three@{THREE_VERSION}/"
@@ -439,7 +445,7 @@ MESHOPT_JS = r"""__MESHOPT_JS__"""
 def build_cfg(name: str, *, rotate=ROTATE, hole=HOLE_RADIUS, hole_fade=HOLE_FADE, hole_x=HOLE_X, hole_z=HOLE_Z, wave=WAVE_AMP,
                sea_y=SEA_Y, zoom=ZOOM_RATIO, cam_dir=CAM_DIR, target=TARGET, sea_enabled=SEA_ENABLED,
                anim_enabled=ANIM_ENABLED, retina=RETINA_ENABLED, foliage_cutout=FOLIAGE_CUTOUT,
-               sea_color=SEA_COLOR, sky_color=SKY_COLOR, sea_segments=SEA_SEGMENTS, walk=WALK_ENABLED, eye_height=EYE_HEIGHT, walk_speed=WALK_SPEED, walk_ignore=WALK_IGNORE, names=NAMES_ENABLED, presence_url=PRESENCE_URL, room=ROOM, chat=CHAT_ENABLED, chat_fade=CHAT_FADE, zones=None, profile=PROFILE, spectate=SPECTATE, panel=PANEL, zones_live=ZONES_LIVE, map_entries=None, map_url=MAP_URL, modular=False) -> dict:
+               sea_color=SEA_COLOR, sky_color=SKY_COLOR, sea_segments=SEA_SEGMENTS, walk=WALK_ENABLED, eye_height=EYE_HEIGHT, walk_speed=WALK_SPEED, walk_ignore=WALK_IGNORE, names=NAMES_ENABLED, presence_url=PRESENCE_URL, room=ROOM, chat=CHAT_ENABLED, chat_fade=CHAT_FADE, zones=None, profile=PROFILE, spectate=SPECTATE, panel=PANEL, zones_live=ZONES_LIVE, map_entries=None, map_url=MAP_URL, modular=False, tiles=None, tile_radius=TILE_RADIUS, tile_margin=TILE_MARGIN, tile_max_mo=TILE_MAX_MO, tile_max_tri=TILE_MAX_TRI, tile_concurrency=TILE_CONCURRENCY) -> dict:
     """Le dictionnaire de réglages `cfg` : identique dans la page autonome et dans <page>.config.json (mode modulaire),
     sauf que le mode modulaire garde les zones hors de la config (fichier <page>.zones.json, relu à chaque ouverture)."""
     presence_url = fix_presence_url(presence_url)
@@ -456,6 +462,10 @@ def build_cfg(name: str, *, rotate=ROTATE, hole=HOLE_RADIUS, hole_fade=HOLE_FADE
     }
     if modular:
         cfg["zones"], cfg["zonesLive"] = [], ""
+    if tiles:
+        # mode tuiles : clés présentes seulement dans ce cas (sans « tiles », la config est celle d'avant)
+        cfg.update({"tiles": str(tiles), "tileRadius": float(tile_radius), "tileMargin": float(tile_margin), "tileMaxMo": float(tile_max_mo),
+                    "tileMaxTri": int(tile_max_tri), "tileConcurrency": int(tile_concurrency)})
     return cfg
 
 
@@ -506,9 +516,15 @@ document.title = C.room || document.title;
 SHELL_CFG_TAG = '<script type="application/json" id="cfg">__CONFIG__</script>\n'
 SHELL_GLB_TAG = '<script type="application/octet-stream" id="glb">__GLB_B64__</script>\n'
 SHELL_LOAD_OLD = "await viewer.loadBuffer(await b64ToBuffer(document.getElementById('glb').textContent.trim()));"
-SHELL_LOAD_NEW = """const rGlb = await fetch(BOOT.glb);
-  if (!rGlb.ok) throw new Error(BOOT.glb + ' : HTTP ' + rGlb.status);
-  await viewer.loadBuffer(await rGlb.arrayBuffer());"""
+SHELL_LOAD_NEW = """if (C.tiles) {
+    // région en tuiles (X.tiles.json, voir MODE_EMPLOI § 17 bis) : pas de X.glb ; ?rayon=NNN remplace tileRadius (essais)
+    const rayon = Number(new URLSearchParams(location.search).get('rayon'));
+    await viewer.loadTiles(C.tiles, { spawn: arrival ? (H.get('spawn') || '') : undefined, radius: rayon > 0 ? rayon : undefined });
+  } else {
+    const rGlb = await fetch(BOOT.glb);
+    if (!rGlb.ok) throw new Error(BOOT.glb + ' : HTTP ' + rGlb.status);
+    await viewer.loadBuffer(await rGlb.arrayBuffer());
+  }"""
 SHELL_TITLE_OLD = "<title>__TITLE__</title>"
 LIB_REL = "lib/three-" + THREE_VERSION
 DRACO_PATH_OLD = "draco.setDecoderPath('');"
@@ -664,6 +680,21 @@ def write_modular_zones(zones_path: pathlib.Path, kw):
     print(f"[zones] {len(zones)} zone(s), profil {profile} -> {zones_path}")
 
 
+def write_shell_page(out_path: pathlib.Path, shell, page: str):
+    """Écrit la coquille : X.html (modulaire simple) ou COQUILLE.html à côté de la région, jamais écrasée si elle existe et diffère."""
+    if shell:
+        shell_path = out_path.with_name(shell)
+        if not shell_path.is_file():
+            write_atomic(shell_path, page.encode("utf-8"))
+            print(f"[coquille] {shell_path} écrite")
+        elif shell_path.read_bytes() == page.encode("utf-8"):
+            print(f"[coquille] {shell_path} déjà présente et identique")
+        else:
+            print(f"[AVERTISSEMENT] {shell_path} existe et diffère de la coquille de cette version : conservée (les autres régions la partagent). Supprime-la pour la renouveler", file=sys.stderr)
+    else:
+        write_atomic(out_path, page.encode("utf-8"))
+
+
 def generate(glb_path: pathlib.Path, out_path: pathlib.Path, vendor_dir, modular=False, shell=None, **kw):
     """shell : nom de la coquille commune (COQUILLE.html). Alors out_path désigne la région (NOM = son nom sans extension) :
     seuls NOM.glb, NOM.config.json et NOM.zones.json sont écrits, plus la coquille et lib/ s'ils sont absents."""
@@ -697,17 +728,7 @@ def generate(glb_path: pathlib.Path, out_path: pathlib.Path, vendor_dir, modular
         # sans source de zones, un X.zones.json existant (peut-être modifié à la main) n'est pas écrasé
         if zones_given(kw) or not zones_out.is_file():
             write_modular_zones(zones_out, kw)
-    if shell:
-        shell_path = out_path.with_name(shell)
-        if not shell_path.is_file():
-            write_atomic(shell_path, page.encode("utf-8"))
-            print(f"[coquille] {shell_path} écrite")
-        elif shell_path.read_bytes() == page.encode("utf-8"):
-            print(f"[coquille] {shell_path} déjà présente et identique")
-        else:
-            print(f"[AVERTISSEMENT] {shell_path} existe et diffère de la coquille de cette version : conservée (les autres régions la partagent). Supprime-la pour la renouveler", file=sys.stderr)
-    else:
-        write_atomic(out_path, page.encode("utf-8"))
+    write_shell_page(out_path, shell, page)
     if not modular:
         write_live_zones(out_path, dict(kw, zones_live=kw.get("zones_live") or ""))
     if shell:
@@ -716,6 +737,98 @@ def generate(glb_path: pathlib.Path, out_path: pathlib.Path, vendor_dir, modular
         print(f"[OK] {glb_path.name} -> {out_path} (modulaire : coquille {len(page) / 1024:.0f} Ko + {glb_out.name} {len(data) / 2**20:.2f} Mo + {cfg_out.name} + {zones_out.name} + {LIB_REL}/) [glb2html {VERSION}]")
     else:
         print(f"[OK] {glb_path.name} -> {out_path} ({len(data) / 2**20:.2f} Mo glb, {len(page) / 2**20:.2f} Mo html) [glb2html {VERSION}]")
+    return True
+
+
+def safe_rel_path(p) -> bool:
+    """Même règle que la coquille (safeRel) pour un chemin de tuile : relatif, sans .., sans : ? # \\, sans segment vide."""
+    p = str(p or "")
+    return bool(p) and len(p) < 400 and not re.match(r"[/\\]", p) and not re.search(r"[\\:?#\x00-\x1f]", p) and not any(x in ("", "..") for x in p.split("/"))
+
+
+def read_tiles_index(path: pathlib.Path):
+    """Lit X.tiles.json (écrit par glb2tiles.py) ; arrête avec un message clair si le fichier n'est pas utilisable."""
+    try:
+        doc = json.loads(path.read_text(encoding="utf-8-sig"))
+    except (OSError, ValueError) as e:
+        sys.exit(f"[ERREUR] {path} illisible ({e})")
+    tiles = doc.get("tiles") if isinstance(doc, dict) else None
+    if not isinstance(tiles, list) or not tiles:
+        sys.exit(f"[ERREUR] {path} : liste « tiles » absente ou vide (fichier écrit par glb2tiles.py attendu)")
+    for t in tiles:
+        ok = isinstance(t, dict) and safe_rel_path(t.get("file")) and str(t["file"]).lower().endswith(".glb")
+        for k in ("min", "max"):
+            ok = ok and isinstance(t.get(k), list) and len(t[k]) == 3 and all(isinstance(v, (int, float)) and math.isfinite(v) for v in t[k])
+        if not ok:
+            sys.exit(f"[ERREUR] {path} : entrée de tuile invalide ({str(t)[:120]}) : « file » doit être un chemin relatif .glb (sans .. ni :), « min » et « max » trois nombres")
+    return doc
+
+
+def tiles_default_target(doc, rotate=0):
+    """Cible de caméra par défaut en mode tuiles : centre de l'étendue en X,Z (repère déjà tourné), hauteur 20 m bornée à l'étendue."""
+    lo = [min(t["min"][k] for t in doc["tiles"]) for k in range(3)]
+    hi = [max(t["max"][k] for t in doc["tiles"]) for k in range(3)]
+    cx, cz = (lo[0] + hi[0]) / 2, (lo[2] + hi[2]) / 2
+    a = math.radians(clean_rotate(rotate))
+    return (round(cx * math.cos(a) + cz * math.sin(a), 2), round(min(max(20.0, lo[1]), hi[1]), 2), round(-cx * math.sin(a) + cz * math.cos(a), 2))
+
+
+def place_tiles(tiles_path: pathlib.Path, doc, page_dir: pathlib.Path):
+    """Met X.tiles.json et ses tuiles à côté de la page. Rien n'est copié si elles y sont déjà (une région fait plus d'un Go) ;
+    sinon copie, fichier par fichier, ce qui manque ou a une autre taille. Rend le chemin relatif de X.tiles.json depuis la page."""
+    src, dst = tiles_path.resolve().parent, page_dir.resolve()
+    files = [t["file"] for t in doc["tiles"]]
+    absent = [f for f in files if not (src / f).is_file()]
+    if absent:
+        print(f"[AVERTISSEMENT] {len(absent)} tuile(s) listée(s) dans {tiles_path.name} introuvable(s) à côté de lui (première : {absent[0]}) ; la page les signalera et réessaiera", file=sys.stderr)
+    if src == dst:
+        print(f"[tuiles] {len(files)} tuile(s) et {tiles_path.name} déjà à côté de la page : rien n'est copié")
+        return tiles_path.name
+    copied = same = size = 0
+    for f in files:
+        a, b = src / f, dst / f
+        if not a.is_file():
+            continue
+        if b.is_file() and b.stat().st_size == a.stat().st_size:
+            same += 1
+            continue
+        b.parent.mkdir(parents=True, exist_ok=True)
+        tmp = b.with_name(b.name + ".tmp")
+        shutil.copyfile(a, tmp)
+        tmp.replace(b)
+        copied += 1
+        size += a.stat().st_size
+    write_atomic(dst / tiles_path.name, tiles_path.read_bytes())
+    print(f"[tuiles] {tiles_path.name} copié dans {dst} ; tuiles : {copied} copiée(s) ({size / 2**20:.1f} Mo), {same} déjà présente(s) de même taille (ni vérifiées ni recopiées)")
+    return tiles_path.name
+
+
+def generate_tiles(tiles_path: pathlib.Path, doc, out_path: pathlib.Path, vendor_dir, shell=None, **kw):
+    """Région en tuiles : comme generate() en mode modulaire, mais sans .glb : écrit X.config.json (champ « tiles »), X.zones.json,
+    la coquille et lib/ ; X.tiles.json et ses tuiles ne sont copiés que s'ils ne sont pas déjà à côté de la page."""
+    if shell and not valid_region_name(out_path.stem):
+        print(f"[ERREUR] nom de région « {out_path.stem} » refusé par la coquille commune (un seul nom de fichier, sans / \\ : ? # ni .., sans point au début)", file=sys.stderr)
+        return False
+    if kw.get("title"):
+        print("[AVERTISSEMENT] --title est ignoré en mode modulaire : le titre de la page est le salon (--room) de la config", file=sys.stderr)
+    if kw.get("zones_live"):
+        print("[AVERTISSEMENT] --zones-live est ignoré en mode modulaire : les zones sont toujours relues dans <page>.zones.json", file=sys.stderr)
+    kw = dict(kw, zones_live="")
+    page = build_shell()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    kw["tiles"] = place_tiles(tiles_path, doc, out_path.parent)
+    _, cfg_out, zones_out = modular_names(out_path)
+    if not shell or lib_missing(out_path.parent):
+        write_modular_lib(out_path.parent, vendor_dir)
+    write_config(cfg_out, out_path.stem, kw)
+    if zones_given(kw) or not zones_out.is_file():
+        write_modular_zones(zones_out, kw)
+    write_shell_page(out_path, shell, page)
+    n = len(doc["tiles"])
+    if any(z.get("mesh") for z in clean_zones(json.loads(ZONES_JSON) if kw.get("zones") is None else kw["zones"], kw.get("profile", PROFILE))):
+        print("[AVERTISSEMENT] des zones sont liées à un élément du modèle (champ mesh) : en mode tuiles elles sont ignorées par la page (avertissement en console)", file=sys.stderr)
+    adr = shell_page_address(shell, out_path.stem) if shell else out_path.name
+    print(f"[OK] {n} tuile(s) -> {cfg_out.name} + {zones_out.name}, " + (f"coquille commune {shell} ; adresse : {adr}" if shell else f"coquille {out_path.name}") + f" [glb2html {VERSION}]")
     return True
 
 
@@ -813,6 +926,12 @@ def main():
     ap.add_argument("--settings", nargs="?", const="auto", default=None, metavar="FICHIER", help="reprend TOUS les réglages enregistrés par le viewer (bouton « Enregistrer dans un fichier » : trou, vagues, caméra, zones, fiche de région, vignette…). Sans nom : <nom du .glb>.reglages.json. Les options de la ligne de commande l'emportent. Relatif : dossier de lancement, puis dossier du script")
     ap.add_argument("--modular", action="store_true", help="mode modulaire : écrit une coquille <page>.html identique pour toutes les régions (elle déduit ses fichiers de son nom) + <page>.glb (octets bruts) + <page>.config.json (réglages) + <page>.zones.json (zones, relues à chaque ouverture ; à défaut zones.json du dossier) + lib/three-X/ partagé (Draco et Meshopt compris). Demande http(s) pour l'ouverture (pas depuis le disque)")
     ap.add_argument("--shared-shell", nargs="?", const=DEFAULT_SHELL, default=None, metavar="COQUILLE.html", help=f"mode modulaire à coquille commune : une seule coquille (défaut {DEFAULT_SHELL}) sert plusieurs régions du même dossier, à l'adresse COQUILLE.html?region=NOM. -o désigne la région (NOM = son nom sans extension, ex. -o Ankh.html) : seuls NOM.glb, NOM.config.json et NOM.zones.json sont écrits, plus la coquille et lib/three-X/ s'ils sont absents (une coquille existante n'est jamais écrasée). --register écrit cette adresse dans regions.json. Implique --modular")
+    ap.add_argument("--tiles", type=pathlib.Path, metavar="X.tiles.json", help="région découpée en tuiles par glb2tiles.py : pas de .glb en entrée ; -o désigne la région. Écrit X.config.json (champ « tiles »), X.zones.json, la coquille et lib/ ; X.tiles.json et ses tuiles ne sont copiés que s'ils ne sont pas déjà à côté de la page. Implique --modular. Repère = celui du modèle d'origine (aucun recentrage) ; zones liées à un élément ignorées")
+    ap.add_argument("--tile-radius", type=float, default=TILE_RADIUS, help="m : charger les tuiles dont la boîte est à moins de ce rayon de l'avatar, en plan X,Z (défaut %(default)g ; ?rayon=NNN dans l'adresse pour essayer)")
+    ap.add_argument("--tile-margin", type=float, default=TILE_MARGIN, help="m : décharger les tuiles au-delà de rayon + marge (défaut %(default)g)")
+    ap.add_argument("--tile-max-mo", type=float, default=TILE_MAX_MO, help="Mo de tuiles chargées en même temps (poids des fichiers ; défaut %(default)g) ; au-delà, les plus lointaines partent d'abord")
+    ap.add_argument("--tile-max-tri", type=int, default=TILE_MAX_TRI, help="triangles de tuiles chargées en même temps (défaut %(default)d)")
+    ap.add_argument("--tile-concurrency", type=int, default=TILE_CONCURRENCY, help="téléchargements simultanés (défaut %(default)d)")
     ap.add_argument("--config-only", action="store_true", help="réécrit seulement <page>.config.json d'une page modulaire déjà générée (indiquée par -o), sans toucher au .glb ni à la coquille ; les visiteurs rechargent. <page>.zones.json n'est réécrit que si --zones est donné. Avec --register, met aussi la carte à jour")
     ap.add_argument("--room", default=ROOM, help="salon de présence (défaut : nom du fichier)")
     ap.add_argument("--sea", dest="sea_enabled", action=argparse.BooleanOptionalAction, default=SEA_ENABLED)
@@ -904,7 +1023,7 @@ def main():
             sys.exit("[ERREUR] --zones-only demande --zones FICHIER (ou --settings) : aucune zone à écrire")
         write_modular_zones(modular_names(out)[2], kw)
         sys.exit(0)
-    if a.config_only:
+    if a.config_only and not a.tiles:
         if not a.output:
             sys.exit("[ERREUR] --config-only demande -o <page.html> (la page modulaire déjà générée)")
         out = pathlib.Path(a.output)
@@ -937,6 +1056,44 @@ def main():
             mp = pathlib.Path(a.map_page)
             write_map_page(mp if mp.is_absolute() else out.parent / mp, kw["map_entries"], kw.get("presence_url", ""), kw.get("map_url", ""), a.title or "Carte des mondes")
         sys.exit(0)
+    if a.tiles:
+        if a.input:
+            sys.exit("[ERREUR] --tiles remplace le .glb : ne donne pas de fichier .glb avec --tiles")
+        if not a.output:
+            sys.exit("[ERREUR] --tiles demande -o <Region.html> (son nom sans extension est celui de la région)")
+        out = pathlib.Path(a.output)
+        if out.is_dir() or str(a.output).endswith(("/", "\\")):
+            sys.exit("[ERREUR] avec --tiles, -o désigne la région (ex. -o Region.html), pas un dossier")
+        if not out.suffix:
+            out = out.with_suffix(".html")
+        tp = find_beside(a.tiles)
+        if tp is None:
+            sys.exit(f"[ERREUR] {a.tiles} introuvable (cherché dans {pathlib.Path.cwd()} puis dans {pathlib.Path(__file__).resolve().parent})")
+        tdoc = read_tiles_index(tp)
+        if a.target == TARGET:
+            kw["target"] = tiles_default_target(tdoc, a.rotate)
+            print(f"[tuiles] cible de caméra par défaut : {kw['target']} (centre de l'étendue, repère du modèle d'origine ; --target pour la changer)")
+        if a.sea_y == SEA_Y:
+            kw["sea_y"] = 20.0
+            print("[tuiles] hauteur de la mer par défaut : 20 m (repère du modèle d'origine, comme l'eau d'OpenSim ; --sea-y pour la changer, --no-sea pour la retirer)")
+        kw.update(tile_radius=clamp(a.tile_radius, 10, 5000), tile_margin=clamp(a.tile_margin, 0, 5000), tile_max_mo=clamp(a.tile_max_mo, 1, 100000),
+                  tile_max_tri=int(clamp(a.tile_max_tri, 1000, 10**9)), tile_concurrency=int(clamp(a.tile_concurrency, 1, 16)))
+        if a.shared_shell and not valid_region_name(out.stem):
+            sys.exit(f"[ERREUR] nom de région « {out.stem} » refusé par la coquille commune (un seul nom de fichier, sans / \\ : ? # ni .., sans point au début) : choisis un autre -o")
+        if a.register:
+            entry = region_entry(a, S_reg, a.room or out.stem, out.stem, page_name_of(a, out))
+            reg = data_path(a.register)
+            kw["map_entries"] = register_region(reg, entry)
+            print(f"[carte] « {entry['name']} » ajoutée ou mise à jour dans {reg} ({len(kw['map_entries'])} région(s))")
+        ok = generate_tiles(tp, tdoc, out, a.vendor, shell=a.shared_shell, **kw)
+        if ok and a.map_page:
+            entries = kw["map_entries"] if kw.get("map_entries") is not None else json.loads(MAP_JSON)
+            if clean_map(entries):
+                mp = pathlib.Path(a.map_page)
+                write_map_page(mp if mp.is_absolute() else out.parent / mp, entries, kw.get("presence_url", ""), kw.get("map_url", ""), a.title or "Carte des mondes")
+            else:
+                print("[AVERTISSEMENT] --map-page ignoré : aucune région à afficher (donne --register ou --map)", file=sys.stderr)
+        sys.exit(0 if ok else 1)
     if a.register and not a.input:
         if not (a.region_name and a.region_url and a.room):
             sys.exit("[ERREUR] enregistrer une région sans .glb demande --region-name, --region-url et --room")

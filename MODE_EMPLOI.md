@@ -1,4 +1,4 @@
-# Mode d'emploi : zones, portails et points d'arrivée (v29)
+# Mode d'emploi : zones, portails et points d'arrivée (v30)
 
 ## 1. La règle qui explique 90 % des pannes
 
@@ -472,7 +472,7 @@ Les options de la ligne de commande l'emportent sur le `.reglages.json`. Les vis
 
 ## 17. Découper un GLB énorme en tuiles (`tools/glb2tiles.py`, v28 ; `--exclure` et pause en v29)
 
-`glb2tiles.py` découpe un GLB trop lourd en **tuiles autonomes** : chacune est un GLB valide (ouvrable seul dans `glb-viewer.html`), avec ses propres nœuds, meshes, matériaux et images, aux coordonnées d'origine (aucun recentrage). Cette version **écrit seulement les tuiles et leur liste** ; le chargement des tuiles par la page n'existe pas encore (lot suivant). Python standard seulement. Le GLB d'entrée n'est jamais chargé en entier : l'en-tête JSON est lu, puis les indices, positions et images par morceaux.
+`glb2tiles.py` découpe un GLB trop lourd en **tuiles autonomes** : chacune est un GLB valide (ouvrable seul dans `glb-viewer.html`), avec ses propres nœuds, meshes, matériaux et images, aux coordonnées d'origine (aucun recentrage). Cet outil **écrit seulement les tuiles et leur liste** ; c'est la coquille qui les charge autour de l'avatar (v30, voir § 17 bis). Python standard seulement. Le GLB d'entrée n'est jamais chargé en entier : l'en-tête JSON est lu, puis les indices, positions et images par morceaux.
 
 `glb-stats.py` doit rester **à côté** de `glb2tiles.py` (fonctions de mesure communes) ; `python build.py` met les deux dans `dist/`.
 
@@ -514,7 +514,7 @@ Certains catalogues posent à côté de chaque bâtiment une « boîte de livrai
 
 - Plusieurs `--exclure` s'additionnent. Une expression invalide donne un message clair (`Expression régulière invalide pour --exclure`) et rien n'est lu.
 - Les nœuds retirés sont l'objet racine et tous ses descendants ; aucun autre objet ne change. Les exclus n'entrent ni dans les tuiles ni dans les calculs de poids, de triangles et de budget (la recommandation « pas de découpage » retire aussi leurs octets de la taille du GLB). Le GLB d'origine n'est pas modifié ; la partie `glb-stats` de `--analyse` décrit le fichier d'origine.
-- `--analyse` et le rapport final donnent : le nombre d'objets exclus, les triangles retirés, les octets gagnés (géométrie et images qu'aucun objet conservé n'utilise), le nombre d'objets au nom correspondant mais conservés par les garde-fous, et les 20 noms les plus fréquents avec leur nombre. `X.tiles.json` reçoit une clé `excluded` (motifs, garde-fous, `count`, `triangles`, `bytesSaved`, `names`) seulement quand `--exclure` est utilisé.
+- `--analyse` et le rapport final donnent : le nombre d'objets exclus, les triangles retirés, les octets gagnés (géométrie et images qu'aucun objet conservé n'utilise ; **0** quand tous les exclus partagent leurs primitives ou leurs images avec des objets conservés, par exemple un cube commun : le rapport le dit alors, et chiffre les octets partagés non gagnés), le nombre d'objets au nom correspondant mais conservés par les garde-fous, et les 20 noms les plus fréquents avec leur nombre. `X.tiles.json` reçoit une clé `excluded` (motifs, garde-fous, `count`, `triangles`, `bytesSaved`, `bytesShared`, `names`) seulement quand `--exclure` est utilisé.
 
 ### Comment le découpage se décide
 
@@ -567,4 +567,71 @@ Dans `--analyse`, la ligne « Lecture » indique les octets lus. Les positions n
 | Instance à 3 000 m signalée | un prim géant ou un objet égaré | l'outil la garde ; la corriger dans le modèle si c'est une erreur |
 
 Test : `python tests/glb2tiles.py` (GLB synthétiques, sans navigateur ni réseau).
+
+## 17 bis. Charger une région en tuiles dans la page (`glb2html.py --tiles`, v30)
+
+Une région de plusieurs centaines de Mo ou de plusieurs Go ne tient pas dans un navigateur : après `glb2tiles.py` (§ 17), la **coquille** charge seulement les tuiles proches de l'avatar et décharge les lointaines. Sans le champ `tiles` dans `X.config.json`, la page se comporte exactement comme avant (un seul `X.glb`).
+
+### Les commandes (PowerShell, une seule ligne)
+
+| Pour | Commande |
+|---|---|
+| Découper | `python glb2tiles.py "P:\regions\4X4.glb" --exclure "Freebies"` (écrit `4X4.tiles.json` et `4X4.tiles\` à côté du GLB) |
+| Mettre la région dans le site | `python glb2html.py --shared-shell -o "P:\site\4X4.html" --tiles "P:\regions\4X4.tiles.json"` |
+| Ouvrir | `http://…/index.html?region=4X4` (la coquille commune, comme § 16) |
+| Essayer un autre rayon | `index.html?region=4X4&rayon=300` |
+| Changer un réglage | relancer la même commande avec l'option : rien de lourd n'est recopié |
+
+`-o` désigne la région (son nom sans extension). Pas de `.glb` en entrée. `--tiles` seul (sans `--shared-shell`) donne une coquille propre `4X4.html`. Sont écrits : `4X4.config.json` (champ `tiles`), `4X4.zones.json` (si absent ou si une source de zones est donnée), la coquille et `lib/` s'ils manquent. **`4X4.tiles.json` et le dossier des tuiles ne sont copiés que s'ils ne sont pas déjà à côté de la page** : mettre `-o` dans le dossier des tuiles évite toute copie (« tuiles déjà à côté de la page : rien n'est copié ») ; sinon le script copie ce qui manque ou a une autre taille, fichier par fichier, et dit combien. Il n'y a pas de `4X4.glb`. Comme tout mode modulaire, la page demande http/https.
+
+### Les paramètres (dans `X.config.json`, avec leurs options)
+
+| Clé / option | Défaut | Sens |
+|---|---|---|
+| `tileRadius` / `--tile-radius` | 150 | m : charger les tuiles dont la **boîte** (min / max de `X.tiles.json`) est à moins de ce rayon de l'avatar, en plan X,Z (distance 0 = l'avatar est dans la boîte) |
+| `tileMargin` / `--tile-margin` | 60 | m : décharger au-delà de rayon + marge (hystérésis : pas de va-et-vient à la limite) |
+| `tileMaxMo` / `--tile-max-mo` | 200 | Mo de tuiles chargées en même temps (poids des fichiers `.glb`) |
+| `tileMaxTri` / `--tile-max-tri` | 8 000 000 | triangles de tuiles chargées en même temps |
+| `tileConcurrency` / `--tile-concurrency` | 4 | téléchargements simultanés |
+
+`?rayon=NNN` dans l'adresse remplace `tileRadius` pour cette ouverture (10 à 5 000). Ces clés n'existent dans la config que pour une région en tuiles.
+
+### Ce que fait la page
+
+- **Départ.** Les tuiles autour du point de départ se chargent d'abord, les plus proches en premier : l'arrivée du lien (`#spawn=…`, sinon l'arrivée `default`) si la page est ouverte par un portail, sinon la cible de la caméra. « Chargement… » reste affiché jusqu'à ce que les tuiles qui contiennent ce point soient prêtes (ou en échec) ; les autres arrivent ensuite. Un sol partiel est normal tant que tout n'est pas là : une tuile ne contient que ses patches de terrain et ses objets.
+- **Pendant la visite.** Le point de référence est l'avatar en promenade, ou la cible (le cercle d'atterrissage) en vue globale. Toutes les 250 ms : déchargement des tuiles au-delà de rayon + marge, chargement de celles du rayon. Si `tileMaxMo` ou `tileMaxTri` serait dépassé, les tuiles **chargées les plus lointaines** (plus lointaines que celle à charger) partent d'abord ; une tuile qui contient l'avatar est chargée même si elle dépasse seule le budget (avertissement en console).
+- **Mémoire.** Une tuile déchargée libère ses géométries, matériaux, textures et images décodées. Le budget compte le **poids des fichiers** : des textures décodées pèsent bien plus en mémoire graphique que leur fichier compressé ; en cas de page lourde, baisser `tileMaxMo` ou `tileRadius`. La grille de collision de chaque tuile coûte environ 36 octets par triangle de sol et de mur, plus l'index : à 8 millions de triangles, compter plusieurs centaines de Mo.
+- **Promenade et collisions.** Une grille de collision est construite par tuile, par tranches pour ne pas figer l'image, et supprimée avec la tuile. Sol et murs ne viennent que des tuiles prêtes. L'avatar **n'avance jamais vers un point dont une tuile n'est pas prête** : il reste sur place, le texte « Chargement du sol… » s'affiche, et il repart dès que la tuile est prête (jamais de chute). **F** attend la tuile sous l'avatar avant de démarrer la promenade (F de nouveau : annuler) ; un portail interne ou un double-clic vers une zone non chargée attend de même. Les patches de terrain ont des bords communs : le sol se prolonge d'une tuile à l'autre sans marche.
+- **Tuile en échec** (fichier absent, HTTP 404, GLB illisible) : message en haut de la page et dans la ligne d'information, avertissement en console, nouvelle tentative 3 s, 6 s, 12 s… jusqu'à 30 s après. Les autres tuiles ne sont pas retardées. Un avatar ne traverse pas la boîte d'une tuile en échec (même règle que « pas prête »).
+- **Ligne d'information** (texte seul), dans le panneau d'aide en bas à gauche (masquable avec H), sinon dans un petit cadre : « Tuiles : 7 chargées / 106 · 74 Mo · 2,10 M triangles », avec « · 2 en cours » et « · 1 en échec (nouvelle tentative) » quand il y en a.
+- **Vue globale.** Elle ne montre que les tuiles chargées, autour de la cible ; une vue d'ensemble légère viendra dans un autre lot. La caméra se cadre sur le rayon de chargement, non sur toute la région.
+
+### Repère, rotation, mer, zones
+
+- **Repère.** Celui du modèle d'origine : **aucun recentrage** (les tuiles gardent leurs coordonnées). Les coordonnées des zones, arrivées, cible de caméra et trou de la mer sont donc dans ce repère, pas dans celui du viewer (qui recentre le modèle entier, ce qu'on ne peut pas faire avec des tuiles). `--rotate` (0, 90, 180, 270) tourne la racine des tuiles autour de l'axe vertical passant par l'origine ; comme au § 11, les valeurs stockées sont dans le repère déjà tourné, et la cible par défaut écrite par `--tiles` l'est aussi.
+- **Cible et mer par défaut.** Sans `--target`, la cible de caméra est le centre de l'étendue des tuiles, à 20 m de hauteur ; sans `--sea-y`, la mer est à 20 m (l'eau d'OpenSim). La mer est centrée sur le centre de l'étendue ; le trou (`--hole`, `--hole-x`, `--hole-z`) est relatif à ce centre. Pour retirer la mer : `--no-sea`.
+- **Zones libres** (cylindres à coordonnées, arrivées, portails, panneaux) : comme avant. **Zones liées à un élément du modèle** (champ `mesh`, référence `nom#index` calculée sur tout le modèle) : **ignorées**, avec « zone « id » ignorée : liée à l'élément « … » » en console (et un avertissement de `glb2html.py` à la génération). Présence, chat, carte des mondes, portails : inchangés. Le viewer (`glb-viewer.html`) ne charge pas les tuiles : on y règle une région avec son GLB léger ou à la main dans les JSON.
+
+### Limites de cette version
+
+- Pas de vue d'ensemble de la région entière (prévue : `X.overview.glb`, chaque mesh unique simplifié une fois).
+- Les meshes partagés entre tuiles sont dupliqués dans chaque tuile qui les utilise (tuiles autonomes) : plus de Mo téléchargés.
+- Un mesh unique plus lourd que le budget de `glb2tiles.py` reste dans une seule tuile (pas de découpage par triangles).
+- Une tuile très lourde en triangles reste coûteuse à analyser : la construction de sa grille de collision est découpée, pas supprimée.
+- Pas de compression meshopt des tuiles, pas encore de textures de terrain d'OpenSim (couleurs par sommet de `oar2glb.py`).
+
+### Si quelque chose ne va pas
+
+| Symptôme | Cause probable | Que faire |
+|---|---|---|
+| « Erreur de chargement : … X.tiles.json : HTTP 404 » | `X.tiles.json` n'est pas à côté de la page, ou le champ `tiles` de la config est faux | relancer `glb2html.py --tiles` ; vérifier le dossier |
+| « adresse de tuiles refusée » | le champ `tiles` contient `..`, `:`, `?`, `#` ou commence par `/` | un chemin relatif simple (`X.tiles.json`) |
+| Sol partiel, trous | tuiles hors du rayon, ou en échec | monter `tileRadius` (ou `?rayon=`), voir la ligne d'information et la console |
+| « Chargement du sol… » qui reste | une tuile en échec devant l'avatar | corriger le fichier ; la page réessaie seule |
+| Page lourde, ralentie | trop de textures chargées | baisser `tileMaxMo`, `tileMaxTri` ou `tileRadius` |
+| Les zones liées n'apparaissent pas | elles sont ignorées en mode tuiles | les remplacer par des zones libres à coordonnées |
+| Les zones sont décalées | elles viennent du viewer (repère recentré) | les écrire dans le repère du modèle d'origine |
+
+Test : `python tests/tuiles.py` (région synthétique de 16 tuiles, Chromium sans tête).
+
 
