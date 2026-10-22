@@ -44,6 +44,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 21/10/2026 |  | v26 | v26 : coquille unique en mode modulaire (`--shared-shell`, `index.html?region=NOM`, nom refusé sans requête réseau), export `.zip` du viewer en `index.html`, `oar2glb.py --version` fabriqué dans `dist/`, notes « régions énormes » |
 | 21/10/2026 |  | v27 | v27 : repères des avatars empilés (nom, bulle de chat, losange) : la bulle n'est plus recouverte, `tests/v27.py` |
 | 21/10/2026 |  | v28 | v28 : `tools/glb2tiles.py` (découpage d'un GLB énorme en tuiles autonomes, `--analyse`), `glb-stats.py` en fonctions communes, `tests/glb2tiles.py` |
+| 22/10/2026 |  | v29 | v29 : oar2glb.py terrain complet des régions de plus de 256 m (patches depuis la carte de hauteurs, `--terrain`, `--terrain-patch`, `--terrain-seul`), glb2tiles.py `--exclure` et pause sans console, `tests/terrain.py` |
 
 ## Commandes utiles
 

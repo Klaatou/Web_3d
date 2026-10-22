@@ -1,4 +1,4 @@
-# Mode d'emploi : zones, portails et points d'arrivée (v25)
+# Mode d'emploi : zones, portails et points d'arrivée (v29)
 
 ## 1. La règle qui explique 90 % des pannes
 
@@ -264,6 +264,7 @@ Se placer d'abord dans le dossier du script : `cd "P:\_OpenSim\SL&OS\Web_3d"`.
 | Vérifier ce que le script voit, sans rien modifier | `python oar2glb.py "J:\...\X.oar" --diag` |
 | Idem, en désignant le GLB ou le `.gltf` à comparer | `python oar2glb.py "J:\...\X.oar" --diag --glb "J:\...\X-GLTF\fichier.gltf"` |
 | Ne pas attendre « Entrée » à la fin | ajouter `--nopause` |
+| Ajouter le terrain complet à un GLB existant, sans relancer convoar | `python oar2glb.py "J:\...\X.oar" --terrain-seul "J:\...\X.glb"` (écrit `X-terrain.glb`) |
 
 Avant de refaire une conversion, supprimer l'ancien dossier intermédiaire : `Remove-Item -Recurse -Force "J:\...\X-GLTF*"`.
 
@@ -279,14 +280,42 @@ Avant de refaire une conversion, supprimer l'ancien dossier intermédiaire : `Re
 | `--max N` | hauteur maximale (m) d'un objet racine ; au-delà (skybox) il est retiré ; défaut 600 |
 | `--convoar CHEMIN` | chemin de `convoar.exe` si ce n'est pas celui par défaut |
 | `--reencode` | **à éviter** : réencode les textures avant convoar ; sur Jungle_Isle il faisait manquer environ 150 textures sur 353 (textures grises). À n'utiliser que si convoar affiche beaucoup d'erreurs « unhandled number of components » ou plante dans `OpenJPEG.DotNetDecode64` (code retour 3221225477). Les textures que Pillow ne sait pas lire sont remplacées par un gris 4x4 (liste dans `X-reenc-illisibles.txt`, à côté de l'OAR) pour ne pas les laisser au décodeur de convoar ; les sculpt maps restent intactes ; 8 cœurs au plus et envoi par lots de 512 pour limiter la mémoire |
-| `--nopause` | ne pas attendre « Entrée » à la fin |
+| `--nopause` | ne pas attendre « Entrée » à la fin (la pause est aussi supprimée quand il n'y a pas de console, et avec `--terrain-seul`) |
+| `--terrain auto\|oui\|non` | terrain complet depuis la carte de hauteurs (voir plus bas) ; `auto` par défaut |
+| `--terrain-patch N` | côté d'un patch de terrain en mètres, de 2 à 255 ; défaut 64 |
+| `--terrain-seul GLB` | ne lance pas convoar : ajoute le terrain complet à ce GLB et écrit `X-terrain.glb` à côté (l'original n'est jamais modifié) |
+| `--sortie FICHIER` | avec `--terrain-seul` : fichier de sortie à la place de `X-terrain.glb` (jamais l'original) |
+
+### Terrain complet des régions de plus de 256 m (v29)
+
+convoar ne produit qu'**un** nœud « Terrain » dont l'étendue plafonne (par exemple 257 x 267 m sur une région de 1 024 m : un seizième de la région n'a pas de sol). La carte de hauteurs complète est dans l'OAR (`terrains/*.r32`, un échantillon par mètre). `oar2glb.py` s'en sert pour construire le sol :
+
+- **Patches.** Des carrés de P x P mètres (`--terrain-patch`, 64 par défaut), chacun un mesh de (P+1)² sommets. Les bords sont partagés entre voisins (mêmes hauteurs, mêmes normales, mêmes couleurs : pas de fissure, éclairage continu). Le dernier patch d'une rangée est plus petit quand n-1 n'est pas un multiple de P. Chaque patch est un objet racine nommé `Terrain i,j` (i : colonne vers l'est, j : rangée vers le nord). Repère monde : X = x, hauteur = h, Z = -y. Un seul matériau « terrain » (blanc, métal 0, rugosité 1, simple face), indices 16 bits, **pas de coordonnées de texture** : l'aspect vient de la couleur par sommet (`COLOR_0`).
+- **Normales** par différences centrées sur toute la carte (une seule différence aux bords de la carte).
+- **Couleur par sommet** d'après l'altitude `a` au-dessus du niveau d'eau et la pente :
+
+| Situation | Couleur (rouge, vert, bleu) |
+|---|---|
+| `a` ≤ 0 (sous l'eau) | sable humide (166, 150, 104) |
+| 0 < `a` ≤ 1 m | sable sec (214, 196, 142) |
+| 1 à 4 m | passage progressif du sable sec à l'herbe |
+| `a` ≥ 4 m | herbe, dégradé léger de (98, 146, 66) à `a` = 4 m vers (132, 140, 78) à `a` = 80 m |
+| pente de 32 à 38 degrés | passage progressif vers la roche grise (122, 120, 116) ; au-delà de 38 degrés : roche |
+
+- **Niveau d'eau.** `WaterHeight` lu dans `settings/*.xml` de l'OAR, sinon 20 m (défaut d'OpenSim). Le journal dit quelle valeur est utilisée et d'où elle vient.
+- **Quand remplacer.** `--terrain auto` (défaut) : si le nœud « Terrain » de convoar existe et couvre moins de 95 % de la carte (boîtes comparées en repère monde), il est retiré de la scène et les patches sont ajoutés. Sinon (région de 256 m, terrain déjà complet, pas de nœud « Terrain ») le GLB n'est **pas modifié** : il est identique à celui de `--terrain non`. `--terrain oui` ajoute toujours les patches (et retire le « Terrain » de convoar s'il existe) ; `--terrain non` ne fait rien. Un GLB qui contient déjà des patches n'en reçoit pas d'autres. Le filtre des objets hors région ne retire jamais les patches.
+- **`--terrain-seul GLB`** (sans relancer convoar, pour un GLB de plusieurs Go) : le GLB n'est **pas chargé en entier**. L'en-tête JSON est réécrit, le chunk binaire est recopié par morceaux de 8 Mo, les nouveaux tampons sont ajoutés à la fin. Sortie `X-terrain.glb` à côté de l'original (ou `--sortie`) ; l'original n'est jamais écrasé, et rien n'est écrit si le terrain de convoar est déjà complet. Les données de l'ancien « Terrain » restent dans le fichier, inutilisées (quelques Mo). Aucune pause « Entrée » à la fin.
+- **Journal.** Ligne `[terrain] carte N x N échantillons (1 m) ; niveau d'eau E m (origine) ; K patch(es) de P m ; V sommets ; B Mo ajoutés ; durée`. Un OAR sans carte de hauteurs donne `cet OAR n'a pas de carte de hauteurs ... rien n'est modifié` (code de retour 0, aucune erreur).
+- **Hors lot** : textures de terrain d'OpenSim (les quatre textures mélangées selon l'altitude), niveau de détail du terrain pour la vue d'ensemble.
+
+Test : `python tests/terrain.py` (OAR et GLB synthétiques).
 
 ### Ce que le script corrige
 
 - **Animaux riggés (animesh).** La géométrie que convoar écrit pour ces meshes est inutilisable (hippopotames géants, éléphants minuscules ou envolés, formes partagées entre animaux). Le script la reconstruit depuis le fichier `.llmesh` de l'OAR : positions, normales, UV, triangles, puis `bind_shape_matrix` ; l'échelle du prim est ignorée. Les morceaux d'un même animal restent ensemble. L'animal est centré sur la position de la racine de l'objet et ses pieds sont posés sous la boîte racine (à l'altitude de la racine si elle est elle-même riggée). Les textures viennent de convoar (face n du mesh = matériau n). Aucune règle ne dépend du nom d'un animal. Un animal dont la taille calculée sort de 0,1 à 12 m reste tel que convoar l'a produit (le journal le dit).
 - **Prims invisibles.** Sont retirés : les prims dont toutes les faces sont à alpha 0 ou portent une texture invisible standard, les nœuds dont tous les matériaux sont transparents, et la boîte racine d'un animesh (prim simple, racine d'un objet dont tous les autres morceaux sont des meshes riggés). Les enfants d'une racine retirée restent.
 - **Textures.** Le script compare les images annoncées par le `.gltf` aux fichiers présents ; s'il en manque, il relance convoar (2 essais de plus au maximum) en gardant les images déjà écrites.
-- **Positions des régions plus grandes que 256 m** et objets hors région : traitement inchangé.
+- **Positions des régions plus grandes que 256 m** et objets hors région : traitement inchangé. Le terrain de ces régions est complété par les patches (voir « Terrain complet »).
 
 ### Lire le journal (`oar2glb.log`, à côté du script)
 
@@ -300,6 +329,7 @@ Avant de refaire une conversion, supprimer l'ancien dossier intermédiaire : `Re
 | `[correctif] N mesh(es) riggé(s) remis à l'échelle, M prim(s) invisible(s) retiré(s)` | récapitulatif |
 | `[contrôle] 'Nom' pieds à ... : dans la boîte de N objet(s)` | objets dont la boîte englobante contient le centre de l'animal (indice si un animal est dans un rocher) |
 | `[GLB] N texture(s) absente(s) sur M` | images manquantes, remplacées par du gris |
+| `[terrain] ...` | décision (couverture du terrain de convoar) puis résumé des patches ajoutés |
 | `[OK] ...glb (taille, meshes, textures)` | fin normale |
 
 ### Diagnostic : `--diag`
@@ -316,7 +346,7 @@ Avant de refaire une conversion, supprimer l'ancien dossier intermédiaire : `Re
 | Des prims transparents qu'on voulait garder | retirés par défaut | `--keep-invisible` |
 | « convoar introuvable » | chemin différent | `--convoar "P:\...\convoar.exe"` |
 
-`python oar2glb.py --version` affiche la version (`oar2glb v26 (21/10/2026)`) sans rien lancer ; la première ligne du journal (`oar2glb.log`, `oar2glb.diag.log`) la rappelle : `[oar2glb] v26 (21/10/2026)`. Joindre ce journal à tout signalement donne donc la version utilisée. Le fichier est fabriqué dans `dist/` par `python build.py`.
+`python oar2glb.py --version` affiche la version (`oar2glb v29 (22/10/2026)`) sans rien lancer ; la première ligne du journal (`oar2glb.log`, `oar2glb.diag.log`) la rappelle : `[oar2glb] v29 (22/10/2026)`. Joindre ce journal à tout signalement donne donc la version utilisée. Le fichier est fabriqué dans `dist/` par `python build.py`.
 
 Test du script : `python tests/oar2glb.py` (OAR synthétique et faux convoar, sans réseau).
 
@@ -440,7 +470,7 @@ python glb2html.py --settings "Region-final.glb" --config-only --wave 2 -o "Regi
 
 Les options de la ligne de commande l'emportent sur le `.reglages.json`. Les visiteurs voient le changement à leur prochain rechargement.
 
-## 17. Découper un GLB énorme en tuiles (`tools/glb2tiles.py`, v28)
+## 17. Découper un GLB énorme en tuiles (`tools/glb2tiles.py`, v28 ; `--exclure` et pause en v29)
 
 `glb2tiles.py` découpe un GLB trop lourd en **tuiles autonomes** : chacune est un GLB valide (ouvrable seul dans `glb-viewer.html`), avec ses propres nœuds, meshes, matériaux et images, aux coordonnées d'origine (aucun recentrage). Cette version **écrit seulement les tuiles et leur liste** ; le chargement des tuiles par la page n'existe pas encore (lot suivant). Python standard seulement. Le GLB d'entrée n'est jamais chargé en entier : l'en-tête JSON est lu, puis les indices, positions et images par morceaux.
 
@@ -455,6 +485,7 @@ Les options de la ligne de commande l'emportent sur le `.reglages.json`. Les vis
 | Découper (recommandation « découper ») | `python glb2tiles.py "P:\...\Region.glb"` |
 | Découper même si la recommandation est « pas de découpage » | `python glb2tiles.py "P:\...\Region.glb" --forcer` |
 | Écrire ailleurs qu'à côté du GLB | `python glb2tiles.py "P:\...\Region.glb" --sortie "P:\...\tuiles"` |
+| Écarter les « boîtes de livraison » d'un fournisseur | `python glb2tiles.py "P:\...\Region.glb" --analyse --exclure "Freebies 20"` puis la même commande sans `--analyse` |
 
 Commencer par `--analyse` : elle donne les mesures de `glb-stats.py`, les 10 meshes les plus lourds (octets compactés, étendue en mètres), les 10 instances les plus éloignées du centre médian (valeurs aberrantes), le nombre de tuiles prévu avec les paramètres choisis, le facteur de duplication prévu, le nombre d'objets racine gardés entiers ou répartis, et une phrase de recommandation : « pas de découpage nécessaire » ou « découper : budget N Mo, T tuiles, duplication F ». Un GLB léger répond « pas de découpage nécessaire » et rien n'est écrit (même sans `--analyse`, sauf avec `--forcer`).
 
@@ -472,7 +503,18 @@ Commencer par `--analyse` : elle donne les mesures de `glb-stats.py`, les 10 mes
 | `--bloc` | 256 | côté des blocs de la partie `glb-stats` de `--analyse` |
 | `--sortie` | à côté du GLB | dossier de sortie |
 | `--forcer` | | découper même sous les seuils |
-| `--nopause` | | ne pas attendre Entrée à la fin |
+| `--exclure REGEX` | | retire du découpage les objets racine dont le nom correspond (insensible à la casse, répétable ; voir ci-dessous) |
+| `--exclure-max-tri` | 24 | triangles au plus dans l'objet racine, tous meshes compris, pour être exclu |
+| `--exclure-max-meshes` | 1 | meshes au plus dans l'objet racine pour être exclu |
+| `--nopause` | | ne pas attendre Entrée à la fin (la pause est aussi supprimée quand il n'y a pas de console : script, tâche planifiée) |
+
+### Exclure des objets (`--exclure`, v29)
+
+Certains catalogues posent à côté de chaque bâtiment une « boîte de livraison » (cube texturé de 12 triangles, un seul mesh) dont le nom se termine par celui du fournisseur, par exemple « City Stores - Box - RAKis Freebies 2019 ». `--exclure "Freebies"` les retire, **à condition** que l'objet racine ait aussi au plus `--exclure-max-tri` triangles (tous meshes compris) **et** au plus `--exclure-max-meshes` meshes. Sans ces garde-fous le nom du fournisseur retirerait aussi de vrais bâtiments (« Jewel Box House V17 with Stairs - RAKis Freebies 2 » : 143 meshes, conservé). La décision ne dépend **jamais de l'étendue** : la boîte englobante d'un petit mesh qui partage un tampon de sommets avec d'autres est gonflée, jusqu'à plusieurs dizaines de mètres pour un cube de 12 triangles.
+
+- Plusieurs `--exclure` s'additionnent. Une expression invalide donne un message clair (`Expression régulière invalide pour --exclure`) et rien n'est lu.
+- Les nœuds retirés sont l'objet racine et tous ses descendants ; aucun autre objet ne change. Les exclus n'entrent ni dans les tuiles ni dans les calculs de poids, de triangles et de budget (la recommandation « pas de découpage » retire aussi leurs octets de la taille du GLB). Le GLB d'origine n'est pas modifié ; la partie `glb-stats` de `--analyse` décrit le fichier d'origine.
+- `--analyse` et le rapport final donnent : le nombre d'objets exclus, les triangles retirés, les octets gagnés (géométrie et images qu'aucun objet conservé n'utilise), le nombre d'objets au nom correspondant mais conservés par les garde-fous, et les 20 noms les plus fréquents avec leur nombre. `X.tiles.json` reçoit une clé `excluded` (motifs, garde-fous, `count`, `triangles`, `bytesSaved`, `names`) seulement quand `--exclure` est utilisé.
 
 ### Comment le découpage se décide
 
@@ -510,7 +552,7 @@ Relancer écrase les `T_*_*_*.glb` du dossier `X.tiles/` (les autres fichiers ne
 
 ### Lire le journal (`glb2tiles.log`, à côté du script)
 
-Première ligne : `[glb2tiles] v28 (21/10/2026)`. L'avancement est écrit toutes les 5 % ou 10 s. Le rapport final donne : nombre de tuiles, médiane / 90 % / maximum du poids et des triangles, duplication réelle, nombre de racines entières et réparties, avertissements, temps total. `python glb2tiles.py --version` affiche la version sans journal ni pause.
+Première ligne : `[glb2tiles] v29 (22/10/2026)`. L'avancement est écrit toutes les 5 % ou 10 s. Le rapport final donne : nombre de tuiles, médiane / 90 % / maximum du poids et des triangles, duplication réelle, nombre de racines entières et réparties, avertissements, temps total. `python glb2tiles.py --version` affiche la version sans journal ni pause.
 
 Dans `--analyse`, la ligne « Lecture » indique les octets lus. Les positions ne sont lues que pour les primitives qui n'utilisent qu'une partie d'un tampon de sommets partagé (la boîte de l'accessor serait trop grande) ; les autres boîtes viennent de l'en-tête.
 

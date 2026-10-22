@@ -11,8 +11,8 @@ Outils :
 | `glb-viewer.html` | Page de réglages et d'export : on charge un `.glb`, on règle la mer, le trou, la caméra, la promenade, les zones, la fiche de région, puis on exporte. |
 | `glb2html.py` | Script qui fait la même chose en ligne de commande (hors ligne, sans navigateur). |
 | `presence_server.py` | Serveur WebSocket de présence, chat, modération et compteurs de visiteurs. |
-| `oar2glb.py` | Convertit une sauvegarde OpenSim (`.oar`) en `.glb` (convoar + réparation) ; `--version` affiche sa version. Détail : `MODE_EMPLOI.md` § 15. |
-| `glb2tiles.py` (+ `glb-stats.py` à côté) | Découpe un GLB énorme en tuiles autonomes (`X.tiles/*.glb` + `X.tiles.json`) ; `--analyse` mesure et recommande sans rien écrire. Le chargement des tuiles par la page viendra plus tard. Détail : `MODE_EMPLOI.md` § 17. |
+| `oar2glb.py` | Convertit une sauvegarde OpenSim (`.oar`) en `.glb` (convoar + réparation) ; `--version` affiche sa version. `--terrain-seul` ajoute le terrain complet des régions de plus de 256 m à un GLB existant. Détail : `MODE_EMPLOI.md` § 15. |
+| `glb2tiles.py` (+ `glb-stats.py` à côté) | Découpe un GLB énorme en tuiles autonomes (`X.tiles/*.glb` + `X.tiles.json`) ; `--analyse` mesure et recommande sans rien écrire. `--exclure` écarte les « boîtes de livraison » d'un catalogue. Le chargement des tuiles par la page viendra plus tard. Détail : `MODE_EMPLOI.md` § 17. |
 
 ## Fabriquer les fichiers
 

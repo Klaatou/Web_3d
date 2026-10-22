@@ -476,6 +476,93 @@ rapport(gr <= 4096 and nb > 50, "chaque lecture ≤ 4096 octets, en nombreux mor
 rapport(lus_o < taille - 500000, "l'image (600 000 octets) et les positions ne sont pas lues pendant l'analyse", (lus_o, taille))
 rapport(plan.insts[0].tri == 150 * 150 * 2, "triangles comptés par lecture des indices", plan.insts[0].tri)
 
+# ---------- 10 bis. --exclure : boîtes de livraison d'un catalogue ----------
+print("--- --exclure")
+d = tmp / "exclure"
+d.mkdir()
+b = B()
+CUBE_V = [(x, y, z) for x in (0, 1) for y in (0, 1) for z in (0, 1)]
+CUBE_I = [0, 1, 3, 0, 3, 2, 4, 6, 7, 4, 7, 5, 0, 4, 5, 0, 5, 1, 2, 3, 7, 2, 7, 6, 0, 2, 6, 0, 6, 4, 1, 5, 7, 1, 7, 3]
+# tampon de sommets partagé : le cube n'en utilise que 8 mais la boîte de l'accessor s'étend sur 80 m (boîte gonflée)
+pos_part = b.positions(CUBE_V + [(80.0, 40.0, 80.0), (-40.0, 0.0, -40.0)])
+cube_part = b.mesh(pos_part, b.indices(CUBE_I))
+v4, i4 = grille(4, 2.0)
+m30 = b.mesh(b.positions(v4), b.indices(i4[:90]))             # 30 triangles
+
+
+def cube_propre():
+    return b.mesh(b.positions(CUBE_V), b.indices(CUBE_I))
+
+
+b.noeud("Box A - RAKis Freebies 2019", cube_part, t=(5, 0, 5), racine=True)
+b.noeud("City Stores - Box - RAKis Freebies 2019", cube_propre(), t=(20, 0, 5), racine=True)
+b.noeud("Box trente triangles - RAKis Freebies", m30, t=(30, 0, 5), racine=True)
+b.noeud("Autre Box - FOURNISSEUR Gratuit", cube_propre(), t=(40, 0, 5), racine=True)
+b.noeud("Maison simple", cube_propre(), t=(50, 0, 5), racine=True)
+cm = cube_propre()
+enf = [b.noeud(f"piece{k}", cm, t=(k % 12, 0, k // 12)) for k in range(143)]
+b.noeud("Jewel Box House V17 with Stairs - RAKis Freebies 2", None, t=(60, 0, 20), enfants=enf, racine=True)
+b.ecrire(d / "exclure.glb")
+j0, b0, _, _ = lire(d / "exclure.glb")
+tri_orig = 12 * 3 + 30 + 12 + 12 * 143       # Box A, City Stores, Autre Box ; trente ; Maison ; bâtiment
+
+
+def noms_tuiles(chemin, extra):
+    """Découpe et renvoie (nombre de triangles écrits, noms de racines présents, texte)."""
+    r, txt = tout(["--forcer", *extra], chemin)
+    doc = json.loads((chemin.parent / (chemin.stem + ".tiles.json")).read_text(encoding="utf-8"))
+    tri, noms = 0, set()
+    for f in doc["tiles"]:
+        j, bb, _, _ = lire(chemin.parent / f["file"])
+        tri += sum(len(v) for v in noeuds_mesh(j, bb).values())
+        noms |= {n["name"] for n in j["nodes"]}
+    return r, tri, noms, txt, doc
+
+
+r, tri, noms, txt, doc = noms_tuiles(d / "exclure.glb", ["--exclure", "freebies"])
+rapport(r == 0 and "City Stores - Box - RAKis Freebies 2019" not in noms and "Box A - RAKis Freebies 2019" not in noms, "objet de 12 triangles au nom du fournisseur : exclu (insensible à la casse)", (r, sorted(noms)[:4]))
+rapport("Jewel Box House V17 with Stairs - RAKis Freebies 2" in noms and "piece142" in noms, "bâtiment du même fournisseur à 143 meshes : conservé avec tous ses descendants")
+rapport("Box trente triangles - RAKis Freebies" in noms, "objet de même nom avec 30 triangles : conservé (garde-fou --exclure-max-tri)")
+rapport({"Maison simple", "Autre Box - FOURNISSEUR Gratuit"} <= noms, "les autres objets ne changent pas")
+rapport(tri == tri_orig - 24, "somme des triangles des tuiles = GLB d'origine moins les exclus", (tri, tri_orig - 24))
+rapport(doc["excluded"]["count"] == 2 and doc["excluded"]["triangles"] == 24 and doc["excluded"]["bytesSaved"] > 0 and "excluded" in doc, "tiles.json : décompte, triangles et octets gagnés", doc.get("excluded"))
+rapport("Objets exclus (--exclure" in txt and ": 2 |" in txt and "RAKis Freebies 2019" in txt and "2 objet(s) au nom correspondant conservé(s)" in txt, "rapport final : décompte, noms, garde-fous", txt[-700:])
+# le poids des exclus n'entre pas dans les calculs : tuiles et poids du plan
+glb = T.Glb(d / "exclure.glb")
+try:
+    pl_sans = T.Plan(glb, T.Params())
+    pl_avec = T.Plan(glb, T.Params(exclure=["freebies"]))
+    ok_p = len(pl_avec.racines) == len(pl_sans.racines) - 2 and sum(i.tri for i in pl_avec.insts) == sum(i.tri for i in pl_sans.insts) - 24
+    ok_o = pl_avec.octets_exclus > 0 and len(pl_avec.exclus) == 2 and pl_sans.exclus == []
+finally:
+    glb.fermer()
+rapport(ok_p and ok_o, "plan : racines, instances et triangles sans les exclus ; octets gagnés calculés", (len(pl_avec.racines), pl_avec.octets_exclus))
+# garde-fous réglables
+r, tri, noms, txt, doc = noms_tuiles(d / "exclure.glb", ["--exclure", "freebies", "--exclure-max-tri", "30"])
+rapport("Box trente triangles - RAKis Freebies" not in noms and doc["excluded"]["count"] == 3, "--exclure-max-tri 30 : l'objet de 30 triangles est exclu", doc["excluded"])
+# deux --exclure cumulent
+r, tri, noms, txt, doc = noms_tuiles(d / "exclure.glb", ["--exclure", "freebies", "--exclure", "fournisseur"])
+rapport(doc["excluded"]["count"] == 3 and "Autre Box - FOURNISSEUR Gratuit" not in noms and "Maison simple" in noms and tri == tri_orig - 36, "deux --exclure cumulent leurs effets", doc["excluded"])
+# expression invalide
+r, txt = tout(["--analyse", "--exclure", "(freebies"], d / "exclure.glb")
+rapport(isinstance(r, T.ErreurGlb) and "Expression régulière invalide" in str(r) and "(freebies" in str(r), "expression invalide : message clair", r)
+# --analyse : décompte des exclus
+r, txt = tout(["--analyse", "--exclure", "freebies", "--exclure", "fournisseur"], d / "exclure.glb")
+rapport(r == 0 and "Objets exclus (--exclure" in txt and "3 | triangles retirés : 36" in txt and "octets gagnés" in txt and "1 x « City Stores - Box - RAKis Freebies 2019 »" in txt, "--analyse : nombre d'exclus, récapitulatif par nom, octets gagnés", txt[-900:])
+r, txt = tout(["--analyse"], d / "exclure.glb")
+rapport(r == 0 and "Objets exclus" not in txt, "sans --exclure : aucune ligne d'exclusion")
+
+# ---------- 10 ter. pause : pas de console ----------
+print("--- sans console")
+copie_p = tmp / "copie_pause"
+copie_p.mkdir()
+shutil.copy(TOOL, copie_p / "glb2tiles.py")
+shutil.copy(ROOT / "tools" / "glb-stats.py", copie_p / "glb-stats.py")
+r = subprocess.run([sys.executable, str(copie_p / "glb2tiles.py"), str(tmp / "leger" / "leger.glb"), "--analyse"], capture_output=True, text=True, cwd=tmp, timeout=60, stdin=subprocess.DEVNULL)
+rapport(r.returncode == 0 and "EOFError" not in r.stderr + r.stdout and "Traceback" not in r.stderr, "sans console (stdin fermé) et sans --nopause : pas d'EOFError, code 0", (r.returncode, r.stderr[-300:]))
+r = subprocess.run([sys.executable, str(copie_p / "glb2tiles.py"), str(tmp / "leger" / "leger.glb"), "--analyse", "--nopause"], capture_output=True, text=True, cwd=tmp, timeout=60, stdin=subprocess.DEVNULL)
+rapport(r.returncode == 0 and "Traceback" not in r.stderr, "--nopause accepté", (r.returncode, r.stderr[-300:]))
+
 # ---------- 11. version, journal, dist ----------
 print("--- version")
 v = subprocess.run([sys.executable, str(TOOL), "--version"], capture_output=True, text=True, cwd=tmp, timeout=30)

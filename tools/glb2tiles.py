@@ -33,6 +33,7 @@ import itertools
 import json
 import math
 import os
+import re
 import statistics
 import struct
 import sys
@@ -367,11 +368,22 @@ class Tuile:
         self.nom = f"T_{niveau}_{i}_{j}"
 
 
+def compiler_exclusions(motifs):
+    """Expressions de --exclure compilées (insensibles à la casse) ; message clair si l'une est invalide."""
+    res = []
+    for m in motifs:
+        try:
+            res.append(re.compile(m, re.IGNORECASE))
+        except re.error as e:
+            raise ErreurGlb(f"Expression régulière invalide pour --exclure : {m!r} ({e}).")
+    return res
+
+
 class Params:
     """Paramètres du découpage (les poids sont convertis en octets)."""
 
     def __init__(self, budget=32.0, budget_tri=1500000, cote_min=16.0, entier_poids=16.0, entier_etendue=256.0,
-                 seuil=150.0, seuil_tri=3000000, aberrant=1000.0, bloc=256.0):
+                 seuil=150.0, seuil_tri=3000000, aberrant=1000.0, bloc=256.0, exclure=(), exclure_max_tri=24, exclure_max_meshes=1):
         self.budget_mo, self.budget = budget, budget * MO
         self.budget_tri = budget_tri
         self.cote_min = max(cote_min, 1e-3)
@@ -380,6 +392,9 @@ class Params:
         self.seuil_mo, self.seuil_tri = seuil, seuil_tri
         self.aberrant = aberrant
         self.bloc = bloc
+        self.exclure_motifs = list(exclure)             # expressions régulières (texte) ; vérifiées par compiler_exclusions
+        self.exclure = compiler_exclusions(self.exclure_motifs)
+        self.exclure_max_tri, self.exclure_max_meshes = exclure_max_tri, exclure_max_meshes
 
     def dict(self):
         return {"budgetMo": self.budget_mo, "budgetTriangles": self.budget_tri, "minCell": self.cote_min,
@@ -582,6 +597,8 @@ class Plan:
         S = stats()
         self.racines = []
         self.insts = []
+        self.exclus = []        # objets racine retirés par --exclure : {"nom", "tri", "meshes", "cles", "imgs"}
+        self.gardes = 0         # noms qui correspondent à --exclure mais conservés par les garde-fous
         for r in self.racines_ids:
             rac = Racine()
             rac.id, rac.nodes = r, self.noeuds_racine[r]
@@ -611,6 +628,16 @@ class Plan:
                 continue
             rac.cles, rac.imgs = frozenset(cles), frozenset(imgs)
             rac.tri = sum(i.tri for i in rac.insts)
+            if self.P.exclure:
+                # décision sur le nom, le nombre de triangles et le nombre de meshes de l'objet racine ; JAMAIS sur l'étendue
+                # (la boîte d'un petit mesh qui partage un tampon de sommets est gonflée)
+                nd = self.nodes[r]
+                nom = nd.get("name") or (self.meshes[nd["mesh"]].get("name") if "mesh" in nd else "") or ""
+                if any(rx.search(nom) for rx in self.P.exclure):
+                    if rac.tri <= self.P.exclure_max_tri and len(rac.insts) <= self.P.exclure_max_meshes:
+                        self.exclus.append({"nom": nom or f"nœud {r}", "tri": rac.tri, "meshes": len(rac.insts), "cles": rac.cles, "imgs": rac.imgs})
+                        continue
+                    self.gardes += 1
             rac.lo = [min(i.lo[k] for i in rac.insts) for k in range(3)]
             rac.hi = [max(i.hi[k] for i in rac.insts) for k in range(3)]
             rac.centre = [(rac.lo[k] + rac.hi[k]) / 2 for k in range(3)]
@@ -619,6 +646,16 @@ class Plan:
             rac.entier = rac.skin or (rac.poids <= self.P.entier_poids and rac.etendue <= self.P.entier_etendue)
             self.racines.append(rac)
             self.insts.extend(rac.insts)
+        # octets gagnés : géométrie et images qu'aucun objet conservé n'utilise
+        ks, im = set(), set()
+        for rac in self.racines:
+            ks |= rac.cles
+            im |= rac.imgs
+        ek, ei = set(), set()
+        for x in self.exclus:
+            ek |= x["cles"]
+            ei |= x["imgs"]
+        self.octets_exclus = sum(self.cb[k] for k in ek - ks) + sum(self.img_oct[i] for i in ei - im)
 
     def cle_skin(self, si, cles):
         skins = self.glb.g.get("skins", [])
@@ -1036,13 +1073,28 @@ def quantile(v, q):
 def recommandation(glb, plan, tuiles):
     P = plan.P
     tri = sum(i.tri for i in plan.insts)
-    if mo(glb.taille) <= P.seuil_mo and tri <= P.seuil_tri:
-        return False, (f"Recommandation : pas de découpage nécessaire ({mo(glb.taille):.1f} Mo sous {P.seuil_mo:g} Mo "
+    taille = glb.taille - getattr(plan, "octets_exclus", 0)        # sans les objets exclus
+    if mo(taille) <= P.seuil_mo and tri <= P.seuil_tri:
+        return False, (f"Recommandation : pas de découpage nécessaire ({mo(taille):.1f} Mo sous {P.seuil_mo:g} Mo "
                        f"et {fmt(tri)} triangles sous {fmt(P.seuil_tri)}).")
     geo_u = sum(plan.cb[k] for k in {k for u in plan.unites for k in u.cles})
     st = plan.stats_tuiles(tuiles)
     dup = sum(s[0] for s in st) / geo_u if geo_u else 1.0
     return True, f"Recommandation : découper : budget {P.budget_mo:g} Mo, {len(tuiles)} tuiles, duplication {virg(dup)}."
+
+
+def lignes_exclusions(plan):
+    """Récapitulatif de --exclure : nombre, 20 noms les plus fréquents, octets gagnés ; liste vide sans option."""
+    P = plan.P
+    if not P.exclure:
+        return []
+    out = [f"Objets exclus (--exclure, au plus {P.exclure_max_tri} triangles et {P.exclure_max_meshes} mesh(es) par objet racine) : "
+           f"{len(plan.exclus)} | triangles retirés : {fmt(sum(x['tri'] for x in plan.exclus))} | octets gagnés : {fmt(plan.octets_exclus)} ({mo(plan.octets_exclus):.1f} Mo)"]
+    if plan.gardes:
+        out.append(f"  {plan.gardes} objet(s) au nom correspondant conservé(s) par les garde-fous (trop de triangles ou de meshes)")
+    for nom, n in collections.Counter(x["nom"] for x in plan.exclus).most_common(20):
+        out.append(f"  - {n} x « {nom[:70]} »")
+    return out
 
 
 def rapport_analyse(glb, plan, tuiles):
@@ -1090,6 +1142,7 @@ def rapport_analyse(glb, plan, tuiles):
         out.append(f"Triangles par tuile : médiane {fmt(quantile(tris, 0.5))} | 90 % sous {fmt(quantile(tris, 0.9))} | maximum {fmt(max(tris))}")
     ent = sum(1 for r in plan.racines if r.entier)
     skin = sum(1 for r in plan.racines if r.skin)
+    out.extend(lignes_exclusions(plan))
     out.append(f"Objets racine : {len(plan.racines)} | gardés entiers : {ent} (dont {skin} avec skin) | répartis instance par instance : {len(plan.racines) - ent}")
     avert = plan.avertissements + signalements(plan) + plan.hors_budget(tuiles)
     if avert:
@@ -1145,11 +1198,16 @@ def main(argv=None, log_path=None):
     ap.add_argument("--seuil-tri", type=int, default=3000000, help="triangles pour la recommandation « pas de découpage » (défaut 3000000)")
     ap.add_argument("--aberrant", type=float, default=1000.0, help="m : distance ou étendue au-delà de laquelle une instance est signalée (défaut 1000)")
     ap.add_argument("--bloc", type=float, default=256.0, help="côté des blocs de la section glb-stats de --analyse (défaut 256)")
+    ap.add_argument("--exclure", action="append", default=[], metavar="REGEX",
+                    help="retire du découpage les objets racine dont le nom correspond (insensible à la casse, répétable), à condition de respecter --exclure-max-tri et --exclure-max-meshes")
+    ap.add_argument("--exclure-max-tri", type=int, default=24, help="avec --exclure : triangles au plus dans l'objet racine, tous meshes compris (défaut 24)")
+    ap.add_argument("--exclure-max-meshes", type=int, default=1, help="avec --exclure : meshes au plus dans l'objet racine (défaut 1)")
     ap.add_argument("--forcer", action="store_true", help="découper même si la recommandation est « pas de découpage »")
     ap.add_argument("--sortie", help="dossier de sortie (défaut : à côté du GLB)")
     ap.add_argument("--nopause", action="store_true", help="ne pas attendre Entrée à la fin")
     a = ap.parse_args(argv)
-    P = Params(a.budget, a.budget_tri, a.cote_min, a.entier_poids, a.entier_etendue, a.seuil, a.seuil_tri, a.aberrant, a.bloc)
+    P = Params(a.budget, a.budget_tri, a.cote_min, a.entier_poids, a.entier_etendue, a.seuil, a.seuil_tri, a.aberrant, a.bloc,
+               a.exclure, a.exclure_max_tri, a.exclure_max_meshes)
     t0 = time.time()
     chemin = Path(a.glb)
     if not chemin.is_file():
@@ -1184,6 +1242,10 @@ def main(argv=None, log_path=None):
                "extent": {"min": lo, "max": hi}, "params": P.dict(), "warnings": avert,
                "roots": {"whole": ent, "split": len(plan.racines) - ent},
                "duplication": round(dup, 3), "tiles": fiches}
+        if P.exclure:
+            doc["excluded"] = {"patterns": P.exclure_motifs, "maxTriangles": P.exclure_max_tri, "maxMeshes": P.exclure_max_meshes,
+                               "count": len(plan.exclus), "triangles": sum(x["tri"] for x in plan.exclus), "bytesSaved": plan.octets_exclus,
+                               "names": dict(collections.Counter(x["nom"] for x in plan.exclus).most_common(20))}
         with open(Path(sortie) / f"{nom}.tiles.json", "w", encoding="utf-8", newline="\n") as f:
             json.dump(doc, f, ensure_ascii=False, indent=1)
             f.write("\n")
@@ -1196,6 +1258,8 @@ def main(argv=None, log_path=None):
         log(f"Triangles : médiane {fmt(quantile(tris, 0.5))} | 90 % sous {fmt(quantile(tris, 0.9))} | maximum {fmt(max(tris))}")
         log(f"Duplication réelle de la géométrie (somme des tuiles / géométrie unique) : {virg(dup)}")
         log(f"Objets racine gardés entiers : {ent} | répartis : {len(plan.racines) - ent}")
+        for ligne in lignes_exclusions(plan):
+            log(ligne)
         for w in avert:
             log("Avertissement : " + w)
         log(f"[temps] {time.time() - t0:.1f} s ; {fmt(glb.octets_lus)} octets lus sur {fmt(glb.taille)}")
@@ -1230,6 +1294,9 @@ if __name__ == "__main__":
         log(traceback.format_exc())
         code = 1
     print(f"[log] {journal}")
-    if "--nopause" not in sys.argv:
-        input("Entrée pour fermer...")
+    if "--nopause" not in sys.argv and sys.stdin and sys.stdin.isatty():      # ni console (script, tâche planifiée) : pas de pause
+        try:
+            input("Entrée pour fermer...")
+        except EOFError:
+            pass
     sys.exit(code)

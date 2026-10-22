@@ -389,9 +389,10 @@ def parse_object(xml_bytes):
     return parts
 
 
-def oar_scan(oar):
+def oar_scan(oar, terrain_seul=False):
+    # terrain_seul : ne lit que archive.xml, settings/ et terrains/ (ni objets ni meshes)
     import html as _html  # noqa: F401
-    size, groups, skins, terrain = (256.0, 256.0), [], {}, None
+    size, groups, skins, terrain, water = (256.0, 256.0), [], {}, None, None
     with tarfile.open(oar, "r:*") as t:
         for m in t:
             if not m.isfile():
@@ -401,6 +402,15 @@ def oar_scan(oar):
                 ms = re.search(r"<size_in_meters>\s*([\d.]+)\s*,\s*([\d.]+)", x)
                 if ms:
                     size = (float(ms.group(1)), float(ms.group(2)))
+            elif m.name.startswith("settings/") and m.name.endswith(".xml") and water is None:
+                mw = re.search(r"<WaterHeight>\s*([-+0-9.eE]+)\s*</WaterHeight>", t.extractfile(m).read().decode("utf-8", "replace"))
+                if mw:
+                    try:
+                        water = (float(mw.group(1)), m.name)
+                    except ValueError:
+                        pass
+            elif terrain_seul and not m.name.startswith("terrains/"):
+                continue
             elif m.name.startswith("objects/") and m.name.endswith(".xml"):
                 try:
                     parts = parse_object(t.extractfile(m).read())
@@ -437,7 +447,7 @@ def oar_scan(oar):
                       o[2] + q[3] * tq[2] + (q[0] * tq[1] - q[1] * tq[0])]
                 p["wpos"] = [gp[k] + rv[k] for k in range(3)]
             p["gpos"] = gp
-    return {"size": size, "groups": groups, "skins": skins, "terrain": terrain}
+    return {"size": size, "groups": groups, "skins": skins, "terrain": terrain, "water": water}
 
 
 def oar_info(scan):
@@ -1271,7 +1281,9 @@ def drop_far(g, vmax, size):
         keep = []
         for i in sc.get("nodes", []):
             p = node_pos(g["nodes"][i])
-            if not (-10 <= p[0] <= sx + 10 and -10 <= -p[2] <= sy + 10 and abs(p[1]) <= vmax):
+            if g["nodes"][i].get("extras", {}).get("terrain"):
+                keep.append(i)         # patches de terrain : jamais retirés
+            elif not (-10 <= p[0] <= sx + 10 and -10 <= -p[2] <= sy + 10 and abs(p[1]) <= vmax):
                 print(f"[hors région] node {i} '{g['nodes'][i].get('name', '?')}' à {[round(c, 1) for c in p]} retiré")
                 n += 1
             else:
@@ -1373,6 +1385,285 @@ def pack_glb(g, base, out):
     return total
 
 
+# ---------- 6. terrain complet (régions de plus de 256 m) ----------
+# convoar ne produit qu'un morceau de terrain sur les grandes régions : on le remplace par des carrés (patches)
+# construits depuis la carte de hauteurs de l'OAR (terrains/*.r32, 1 échantillon par mètre).
+TERRAIN_PATCH = 64            # côté d'un patch en mètres (--terrain-patch)
+TERRAIN_COUVERT_MIN = 0.95    # le terrain de convoar est gardé s'il couvre au moins cette part de la carte
+EAU_DEFAUT = 20.0             # WaterHeight par défaut d'OpenSim
+LECTURE = 8 * 1024 * 1024     # taille des lectures du GLB en mode --terrain-seul
+PENTE_ROCHE = (32.0, 38.0)    # degrés : la roche apparaît à 32, pleine à 38 (environ 35)
+# palette (rouge, vert, bleu) : documentée dans MODE_EMPLOI.md § 15
+SABLE_SEC, SABLE_HUMIDE = (214, 196, 142), (166, 150, 104)
+HERBE_BASSE, HERBE_HAUTE, ROCHE = (98, 146, 66), (132, 140, 78), (122, 120, 116)
+
+
+def mix(a, b, t):
+    t = min(max(t, 0.0), 1.0)
+    return [a[k] + (b[k] - a[k]) * t for k in range(3)]
+
+
+def couleur_terrain(h, pente, eau):
+    # h : altitude (m), pente : degrés, eau : niveau d'eau (m) -> (r, v, b) entiers
+    alt = h - eau
+    if alt <= 0:
+        c = list(SABLE_HUMIDE)                                           # sous l'eau : sable humide
+    else:
+        herbe = mix(HERBE_BASSE, HERBE_HAUTE, (alt - 4.0) / 76.0)        # dégradé léger de 4 m à 80 m au-dessus de l'eau
+        c = mix(SABLE_SEC, herbe, (alt - 1.0) / 3.0)                     # sable jusqu'à 1 m, herbe à partir de 4 m
+    c = mix(c, ROCHE, (pente - PENTE_ROCHE[0]) / (PENTE_ROCHE[1] - PENTE_ROCHE[0]))
+    return int(c[0] + 0.5), int(c[1] + 0.5), int(c[2] + 0.5)
+
+
+def terrain_patch_data(h, n, x0, y0, x1, y1, eau):
+    # patch couvrant les échantillons x0..x1, y0..y1 (bornes comprises) ; repère glTF : X = x, hauteur = h, Z = -y.
+    # Normales et pente par différences centrées sur TOUTE la carte : les bords partagés sont identiques des deux côtés.
+    nx, ny = x1 - x0 + 1, y1 - y0 + 1
+    pos, nor, col = [], [], bytearray()
+    lo, hi = [math.inf] * 3, [-math.inf] * 3
+    for y in range(y0, y1 + 1):
+        yl, yh = max(y - 1, 0), min(y + 1, n - 1)
+        r0, rl, rh = y * n, yl * n, yh * n
+        for x in range(x0, x1 + 1):
+            xl, xh = max(x - 1, 0), min(x + 1, n - 1)
+            v = h[r0 + x]
+            hx = (h[r0 + xh] - h[r0 + xl]) / (xh - xl)
+            hy = (h[rh + x] - h[rl + x]) / (yh - yl)
+            g = math.sqrt(hx * hx + hy * hy)
+            ln = math.sqrt(g * g + 1.0)
+            pos += (x, v, -y)
+            nor += (-hx / ln, 1.0 / ln, hy / ln)
+            col += bytes(couleur_terrain(v, math.degrees(math.atan(g)), eau)) + b"\xff"
+            if v < lo[1]:
+                lo[1] = v
+            if v > hi[1]:
+                hi[1] = v
+    lo[0], hi[0], lo[2], hi[2] = x0, x1, -y1, -y0
+    idx = []
+    for cy in range(ny - 1):
+        for cx in range(nx - 1):
+            a = cy * nx + cx
+            b, c = a + 1, a + nx
+            idx += (a, b, c, b, c + 1, c)            # triangles tournés vers le haut (+Y)
+    return {"nv": nx * ny, "pos": struct.pack(f"<{len(pos)}f", *pos), "nor": struct.pack(f"<{len(nor)}f", *nor),
+            "col": bytes(col), "idx": struct.pack(f"<{len(idx)}H", *idx), "ni": len(idx), "min": lo, "max": hi}
+
+
+def terrain_donnees(terrain, eau, P):
+    # tous les patches : tampon binaire + vues + accesseurs + meshes + nœuds, indices RELATIFS (voir terrain_ajouter)
+    n, h = terrain
+    blob, views, accs, meshes, nodes = bytearray(), [], [], [], []
+    def vue(data, target):
+        views.append({"buffer": 0, "byteOffset": len(blob), "byteLength": len(data), "target": target})
+        blob.extend(data)
+        blob.extend(b"\x00" * ((4 - len(blob) % 4) % 4))
+        return len(views) - 1
+    nv = 0
+    for j, y0 in enumerate(range(0, n - 1, P)):
+        for i, x0 in enumerate(range(0, n - 1, P)):
+            d = terrain_patch_data(h, n, x0, y0, min(x0 + P, n - 1), min(y0 + P, n - 1), eau)
+            nv += d["nv"]
+            a0 = len(accs)
+            accs.append({"bufferView": vue(d["pos"], 34962), "componentType": 5126, "count": d["nv"], "type": "VEC3", "min": d["min"], "max": d["max"]})
+            accs.append({"bufferView": vue(d["nor"], 34962), "componentType": 5126, "count": d["nv"], "type": "VEC3"})
+            accs.append({"bufferView": vue(d["col"], 34962), "componentType": 5121, "normalized": True, "count": d["nv"], "type": "VEC4"})
+            accs.append({"bufferView": vue(d["idx"], 34963), "componentType": 5123, "count": d["ni"], "type": "SCALAR"})
+            nom = f"Terrain {i},{j}"
+            meshes.append({"name": nom, "primitives": [{"attributes": {"POSITION": a0, "NORMAL": a0 + 1, "COLOR_0": a0 + 2},
+                                                        "indices": a0 + 3, "material": 0, "mode": 4}]})
+            nodes.append({"name": nom, "mesh": len(meshes) - 1, "extras": {"terrain": True}})
+    return {"blob": blob, "views": views, "accessors": accs, "meshes": meshes, "nodes": nodes, "vertices": nv}
+
+
+def terrain_ajouter(g, td, buffer_index, base):
+    # ajoute les patches au glTF : tampon n° buffer_index, données placées à partir de l'octet base ; retourne les nœuds ajoutés
+    g.setdefault("materials", []).append({"name": "terrain", "pbrMetallicRoughness": {"baseColorFactor": [1, 1, 1, 1], "metallicFactor": 0, "roughnessFactor": 1},
+                                          "doubleSided": False})
+    mat = len(g["materials"]) - 1
+    vo, ao, mo = len(g.setdefault("bufferViews", [])), len(g.setdefault("accessors", [])), len(g.setdefault("meshes", []))
+    for v in td["views"]:
+        g["bufferViews"].append({**v, "buffer": buffer_index, "byteOffset": v["byteOffset"] + base})
+    for a in td["accessors"]:
+        g["accessors"].append({**a, "bufferView": a["bufferView"] + vo})
+    for m in td["meshes"]:
+        pr = m["primitives"][0]
+        g["meshes"].append({"name": m["name"], "primitives": [{**pr, "attributes": {k: v + ao for k, v in pr["attributes"].items()},
+                                                               "indices": pr["indices"] + ao, "material": mat}]})
+    first = len(g.setdefault("nodes", []))
+    for nd in td["nodes"]:
+        g["nodes"].append({**nd, "mesh": nd["mesh"] + mo})
+    if not g.get("scenes"):
+        g["scenes"] = [{"nodes": []}]
+    g["scenes"][g.get("scene", 0)].setdefault("nodes", []).extend(range(first, len(g["nodes"])))
+    return list(range(first, len(g["nodes"])))
+
+
+def terrain_boite(g, tree, i):
+    # boîte monde (glTF) du mesh du nœud i d'après les min/max de ses accesseurs POSITION ; None si inconnue
+    pts = []
+    for pr in g["meshes"][g["nodes"][i]["mesh"]].get("primitives", []):
+        a = g["accessors"][pr["attributes"]["POSITION"]]
+        if "min" not in a or "max" not in a:
+            return None
+        pts += [(x, y, z) for x in (a["min"][0], a["max"][0]) for y in (a["min"][1], a["max"][1]) for z in (a["min"][2], a["max"][2])]
+    if not pts:
+        return None
+    w = tree.world(i)
+    pw = [[w[r] * p[0] + w[4 + r] * p[1] + w[8 + r] * p[2] + w[12 + r] for r in range(3)] for p in pts]
+    return [min(q[k] for q in pw) for k in range(3)], [max(q[k] for q in pw) for k in range(3)]
+
+
+def terrain_decision(g, terrain, mode):
+    # (action, nœuds convoar à retirer, message) ; action : "ajouter" ou "rien"
+    n = terrain[0]
+    if any(x.get("name", "").startswith("Terrain ") and x.get("extras", {}).get("terrain") for x in g.get("nodes", [])):
+        return "rien", [], "les patches de terrain sont déjà dans ce GLB : inchangé"
+    tree = Tree(g)
+    anciens = [i for i, x in enumerate(g.get("nodes", [])) if x.get("name") == "Terrain" and "mesh" in x]
+    if mode == "oui":
+        return "ajouter", anciens, "forcé (--terrain oui)"
+    if not anciens:
+        return "rien", [], "pas de nœud « Terrain » de convoar : inchangé (--terrain oui pour ajouter les patches quand même)"
+    surf, couvert = (n - 1.0) ** 2, 0.0
+    for i in anciens:
+        b = terrain_boite(g, tree, i)
+        if b is None:
+            return "rien", [], "nœud « Terrain » sans min/max d'accesseur : couverture inconnue, inchangé (--terrain oui pour forcer)"
+        (x0, _, z0), (x1, _, z1) = b
+        couvert += max(0.0, min(x1, n - 1.0) - max(x0, 0.0)) * max(0.0, min(z1, 0.0) - max(z0, -(n - 1.0)))
+    part = couvert / surf
+    if part >= TERRAIN_COUVERT_MIN:
+        return "rien", [], f"terrain de convoar complet (couvre {part * 100:.1f} % de la carte) : inchangé"
+    return "ajouter", anciens, f"terrain de convoar incomplet (couvre {part * 100:.1f} % de la carte)"
+
+
+def terrain_eau(scan):
+    w = scan.get("water")
+    return (w[0], "lu dans " + w[1]) if w else (EAU_DEFAUT, "défaut d'OpenSim, aucun WaterHeight dans settings/")
+
+
+def terrain_resume(terrain, scan, P, td, t0):
+    n = terrain[0]
+    eau = terrain_eau(scan)
+    print(f"[terrain] carte {n} x {n} échantillons (1 m) ; niveau d'eau {eau[0]:g} m ({eau[1]}) ; "
+          f"{len(td['nodes'])} patch(es) de {P} m ; {td['vertices']} sommets ; {len(td['blob']) / 1048576:.1f} Mo ajoutés ; {time.time() - t0:.1f} s")
+
+
+def terrain_prepare(scan, mode):
+    # contrôles communs ; retourne la carte ou None (message déjà écrit)
+    if mode == "non":
+        print("[terrain] désactivé (--terrain non)")
+        return None
+    t = scan.get("terrain")
+    if not t or t[0] < 2:
+        print("[terrain] cet OAR n'a pas de carte de hauteurs (terrains/*.r32) : terrain non généré, rien n'est modifié")
+        return None
+    if t[0] != scan["size"][0] or t[0] != scan["size"][1]:
+        print(f"[terrain] attention : carte de {t[0]} x {t[0]} échantillons pour une région de {scan['size'][0]:g} x {scan['size'][1]:g} m")
+    return t
+
+
+def terrain_pipeline(g, scan, mode, P):
+    # chaîne convoar : remplace le terrain incomplet ; les données vont dans un nouveau tampon (data: URI, lu par pack_glb)
+    t0 = time.time()
+    terrain = terrain_prepare(scan, mode)
+    if not terrain:
+        return
+    action, anciens, msg = terrain_decision(g, terrain, mode)
+    print(f"[terrain] {msg}")
+    if action == "rien":
+        return
+    td = terrain_donnees(terrain, terrain_eau(scan)[0], P)
+    for i in anciens:
+        remove_node(g, i)
+    bi = len(g.setdefault("buffers", []))
+    terrain_ajouter(g, td, bi, 0)
+    g["buffers"].append({"byteLength": len(td["blob"]), "uri": "data:application/octet-stream;base64," + base64.b64encode(bytes(td["blob"])).decode()})
+    terrain_resume(terrain, scan, P, td, t0)
+    if anciens:
+        print(f"[terrain] {len(anciens)} nœud(s) « Terrain » de convoar retiré(s) de la scène")
+
+
+def terrain_seul(glb, scan, out, mode, P, chunk=LECTURE):
+    """Ajoute les patches à un GLB existant sans le charger : en-tête JSON réécrit, chunk binaire recopié par morceaux,
+    nouveaux tampons ajoutés à la fin. Retourne un dict de mesures, ou None si rien n'est écrit."""
+    t0 = time.time()
+    terrain = terrain_prepare(scan, mode)
+    if not terrain:
+        return None
+    mesures = {"lu": 0, "lecture_max": 0}
+    with open(glb, "rb") as f:
+        def lire(k):
+            d = f.read(k)
+            mesures["lu"] += len(d)
+            mesures["lecture_max"] = max(mesures["lecture_max"], len(d))
+            return d
+        taille = os.fstat(f.fileno()).st_size
+        mag, ver, _ = struct.unpack("<4sII", lire(12))
+        if mag != b"glTF" or ver != 2:
+            sys.exit(f"[ERREUR] {glb} n'est pas un GLB version 2")
+        chunks, pos = [], 12
+        while pos + 8 <= taille:
+            f.seek(pos)
+            ln, kind = struct.unpack("<I4s", lire(8))
+            chunks.append((kind, pos + 8, ln))
+            pos += 8 + ln + (-ln % 4)
+        if not chunks or chunks[0][0] != b"JSON":
+            sys.exit(f"[ERREUR] {glb} : le premier chunk n'est pas JSON")
+        f.seek(chunks[0][1])
+        g = json.loads(lire(chunks[0][2]).decode("utf-8"))
+        binc = next((c for c in chunks if c[0] == b"BIN\x00"), None)
+        autres = [c for c in chunks[1:] if c is not binc]
+        action, anciens, msg = terrain_decision(g, terrain, mode)
+        print(f"[terrain] {msg}")
+        if action == "rien":
+            return None
+        td = terrain_donnees(terrain, terrain_eau(scan)[0], P)
+        for i in anciens:
+            remove_node(g, i)
+        bin_len = binc[2] if binc else 0
+        base = bin_len + (-bin_len % 4)
+        if binc and (not g.get("buffers") or "uri" in g["buffers"][0]):
+            sys.exit(f"[ERREUR] {glb} : le tampon 0 n'est pas celui du chunk BIN")
+        if not g.get("buffers"):
+            g["buffers"] = [{"byteLength": 0}]
+        terrain_ajouter(g, td, 0, base)
+        bin_total = base + len(td["blob"])
+        g["buffers"][0]["byteLength"] = bin_total
+        js = pad4(json.dumps(g, separators=(",", ":")).encode("utf-8"), b" ")
+        total = 12 + 8 + len(js) + 8 + bin_total + sum(8 + c[2] + (-c[2] % 4) for c in autres)
+        part = Path(str(out) + ".part")
+        try:
+            with open(part, "wb") as o:
+                o.write(struct.pack("<4sII", b"glTF", 2, total))
+                o.write(struct.pack("<I4s", len(js), b"JSON") + js)
+                o.write(struct.pack("<I4s", bin_total, b"BIN\x00"))
+                def copier(debut, longueur):
+                    f.seek(debut)
+                    while longueur > 0:
+                        d = lire(min(chunk, longueur))
+                        if not d:
+                            sys.exit(f"[ERREUR] {glb} tronqué")
+                        o.write(d)
+                        longueur -= len(d)
+                if binc:
+                    copier(binc[1], bin_len)
+                o.write(b"\x00" * (base - bin_len))
+                o.write(bytes(td["blob"]))
+                for kind, debut, ln in autres:
+                    o.write(struct.pack("<I4s", ln, kind))
+                    copier(debut, ln)
+                    o.write(b"\x00" * (-ln % 4))
+            os.replace(part, out)
+        finally:
+            part.unlink(missing_ok=True)
+    terrain_resume(terrain, scan, P, td, t0)
+    print(f"[terrain] {len(anciens)} nœud(s) « Terrain » retiré(s) de la scène (leurs données restent dans le GLB, inutilisées) ; "
+          f"{mesures['lu'] / 1048576:.1f} Mo lus, par morceaux de {chunk // 1024} Ko au plus")
+    mesures.update(patches=len(td["nodes"]), sommets=td["vertices"], ajoutes=len(td["blob"]), retires=len(anciens))
+    return mesures
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--version", action="version", version=f"oar2glb {VERSION}")
@@ -1386,11 +1677,28 @@ def main():
     ap.add_argument("--diag", action="store_true", help="ne rien modifier : lister les objets de l'OAR, leur skin et le nœud GLB correspondant")
     ap.add_argument("--glb", help="avec --diag : GLB ou .gltf à comparer ; défaut : le .gltf du dossier <oar>-GLTF (conservé par --keep), sinon le .glb voisin")
     ap.add_argument("--nopause", action="store_true", help="ne pas attendre Entrée à la fin")
+    ap.add_argument("--terrain", choices=("auto", "oui", "non"), default="auto",
+                    help="terrain complet depuis la carte de hauteurs : auto = remplace le terrain de convoar s'il couvre moins que la carte (défaut), oui = toujours, non = jamais")
+    ap.add_argument("--terrain-patch", type=int, default=TERRAIN_PATCH, help=f"côté d'un patch de terrain en mètres, 2 à 255 (défaut {TERRAIN_PATCH})")
+    ap.add_argument("--terrain-seul", metavar="GLB", help="ne pas lancer convoar : ajouter le terrain complet à ce GLB (écrit X-terrain.glb, l'original n'est jamais modifié)")
+    ap.add_argument("--sortie", help="avec --terrain-seul : fichier GLB de sortie (défaut : X-terrain.glb à côté de l'original)")
     a = ap.parse_args()
+    if not 2 <= a.terrain_patch <= 255:
+        sys.exit("[ERREUR] --terrain-patch doit être compris entre 2 et 255 (indices 16 bits : (côté + 1)² sommets au plus 65 536)")
 
     oar = Path(a.oar).resolve()
     if not oar.exists():
         sys.exit(f"[ERREUR] {oar} introuvable")
+    if a.terrain_seul:
+        glb = Path(a.terrain_seul).resolve()
+        if not glb.is_file():
+            sys.exit(f"[ERREUR] {glb} introuvable")
+        out = Path(a.sortie).resolve() if a.sortie else glb.with_name(glb.stem + "-terrain.glb")
+        if out == glb:
+            sys.exit("[ERREUR] la sortie ne peut pas être le GLB d'origine (jamais écrasé)")
+        r = terrain_seul(glb, oar_scan(oar, terrain_seul=True), out, a.terrain, a.terrain_patch)
+        print(f"[OK] {out}" if r else "[terrain] aucun fichier écrit")
+        return
     if a.diag:
         scan = oar_scan(oar)
         auto = sorted((oar.parent / (oar.stem + "-GLTF")).glob("*.gltf"), key=lambda q: q.stat().st_mtime)
@@ -1446,6 +1754,7 @@ def main():
         fix_positions(g, objs)
     repair(g, outdir, scan, a.keep_invisible, a.reperes)
     n = drop_far(g, a.max, size)
+    terrain_pipeline(g, scan, a.terrain, a.terrain_patch)      # après drop_far : les patches ne sont jamais retirés
     size = pack_glb(g, outdir, out)
     report_missing(outdir, len(g.get("images", [])))
     print(f"[OK] {out}  ({size/1048576:.1f} Mo, {len(g.get('meshes', []))} meshes, "
@@ -1486,6 +1795,6 @@ if __name__ == "__main__":
         traceback.print_exc()
         code = 1
     print(f"[log] {log}")
-    if "--nopause" not in sys.argv:
+    if "--nopause" not in sys.argv and "--terrain-seul" not in sys.argv and sys.stdin and sys.stdin.isatty():
         input("Entrée pour fermer...")
     sys.exit(code)
