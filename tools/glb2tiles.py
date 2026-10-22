@@ -3,13 +3,14 @@
 
 Usage :  python glb2tiles.py --version
          python glb2tiles.py "Region.glb" --analyse
-         python glb2tiles.py "Region.glb" [--budget 32] [--budget-tri 1500000] [--min 16] [--sortie DOSSIER]
+         python glb2tiles.py "Region.glb" [--budget 32] [--budget-tri 1500000] [--min 16] [--sortie DOSSIER] [--sans-vue-ensemble]
+         python glb2tiles.py "Region.glb" --vue-ensemble-seule [mêmes options de découpage] [--ov-budget 25] [--ov-seuil 3]
 
 Python standard seulement. Le GLB d'entrée n'est jamais chargé en entier : l'en-tête JSON est lu, puis les accessors
 et les images sont lus par seek/read, par morceaux, à la demande. Chaque tuile (quelques dizaines de Mo) est
 assemblée en mémoire puis écrite.
 
-Sorties (à côté du GLB, ou dans --sortie) : X.tiles/T_<niveau>_<i>_<j>.glb et X.tiles.json.
+Sorties (à côté du GLB, ou dans --sortie) : X.tiles/T_<niveau>_<i>_<j>.glb, X.tiles.json et (v31) X.overview.glb.
 Le journal est glb2tiles.log, écrit à côté du script (sa première ligne donne la version).
 
 Principe : quadtree adaptatif sur le plan X,Z (glTF : Y vers le haut), uniquement sur les cellules non vides. Une cellule
@@ -19,14 +20,22 @@ ET si son étendue ne dépasse pas --entier-etendue (m) ; sinon il est réparti 
 skin n'est jamais réparti. Les meshes partagés entre tuiles sont dupliqués dans chaque tuile qui les utilise.
 Les sommets de chaque primitive sont compactés (seuls les sommets indexés sont gardés). Coordonnées inchangées.
 
-Hors lot : découpage par triangles d'un mesh unique plus grand qu'une cellule (terrain, mer), vue d'ensemble,
-compression des tuiles, chargement des tuiles dans la coquille. Les GLB compressés (Draco, meshopt) sont refusés.
+Images (v31) : une image embarquée de 0 octet, d'un autre format que PNG/JPEG/WebP ou tronquée fait échouer le chargement de la tuile
+dans le navigateur ; elle est remplacée par un petit PNG gris (un seul par tuile). --analyse et le rapport en donnent le nombre.
+
+Vue d'ensemble (v31, X.overview.glb) : toute la région en géométrie légère, sans image, un nœud par fichier de tuile ; chaque primitive
+unique est simplifiée une seule fois (regroupement de sommets), le terrain est rééchantillonné sur un réseau commun. Écrite avec les
+tuiles (--sans-vue-ensemble pour s'en passer) ou seule (--vue-ensemble-seule, mêmes options de découpage). Options --ov-*.
+
+Hors lot : découpage par triangles d'un mesh unique plus grand qu'une cellule (terrain, mer), compression des tuiles.
+Les GLB compressés (Draco, meshopt) sont refusés.
 
 Les fonctions communes de mesure (lecture de l'en-tête, matrices, instances) viennent de glb-stats.py, qui doit se
 trouver à côté de ce script (build.py le recopie dans dist/).
 """
 import argparse
 import array
+import base64
 import collections
 import importlib.util
 import itertools
@@ -39,6 +48,7 @@ import struct
 import sys
 import time
 import traceback
+import zlib
 from pathlib import Path
 
 VERSION = "__VERSION__"      # remplacé par build.py (fichier VERSION) dans dist/glb2tiles.py
@@ -335,6 +345,44 @@ def images_de_texture(t):
     return [s for s in src if isinstance(s, int)]
 
 
+GRIS_IMAGE = 128             # niveau du gris des images remplacées (celui de oar2glb.py, GREY_PNG)
+PNG_SIG = b"\x89PNG\r\n\x1a\n"
+
+
+def png_gris(niveau=GRIS_IMAGE, cote=4):
+    """PNG RVB uni de cote x cote pixels (zlib et struct seulement)."""
+    def chunk(typ, data):
+        c = typ + data
+        return struct.pack(">I", len(data)) + c + struct.pack(">I", zlib.crc32(c) & 0xFFFFFFFF)
+    ligne = b"\x00" + bytes([niveau]) * (3 * cote)
+    return PNG_SIG + chunk(b"IHDR", struct.pack(">IIBBBBB", cote, cote, 8, 2, 0, 0, 0)) + chunk(b"IDAT", zlib.compress(ligne * cote, 9)) + chunk(b"IEND", b"")
+
+
+def image_valide(lecteur, n):
+    """PNG, JPEG ou WebP complet (structure seulement, sans décoder) ; faux pour 0 octet, autre format ou image tronquée.
+    lecteur(décalage, longueur) rend des octets, n est la taille de l'image : seuls l'en-tête, la fin et les en-têtes de blocs sont lus.
+    Mesuré dans Chromium (createImageBitmap) : une image tronquée échoue comme une image vide, d'où la vérification de la fin du fichier :
+    PNG = chaînage des blocs jusqu'à IEND ; JPEG = marqueur EOI (FFD9) en dernier, aux zéros et espaces de bourrage près, ou dans les 64
+    derniers octets ; WebP = taille RIFF contenue dans le fichier."""
+    tete = bytes(lecteur(0, min(n, 12)))
+    if tete[:8] == PNG_SIG:
+        p = 8
+        for _ in range(100000):
+            if p + 12 > n:
+                return False
+            ln, typ = struct.unpack(">I4s", bytes(lecteur(p, 8)))
+            p += 12 + ln
+            if typ == b"IEND":
+                return p <= n
+        return False
+    if tete[:3] == b"\xff\xd8\xff":
+        fin = bytes(lecteur(max(0, n - 64), min(n, 64)))
+        return fin.rstrip(b"\x00 \r\n").endswith(b"\xff\xd9") or b"\xff\xd9" in fin
+    if tete[:4] == b"RIFF" and tete[8:12] == b"WEBP":
+        return struct.unpack("<I", tete[4:8])[0] + 8 <= n
+    return False
+
+
 def extensions_presentes(obj, out):
     if isinstance(obj, dict):
         for k, v in obj.items():
@@ -355,7 +403,7 @@ class Inst:
 
 
 class Racine:
-    __slots__ = ("id", "nodes", "insts", "cles", "imgs", "tri", "lo", "hi", "centre", "etendue", "poids", "skin", "entier")
+    __slots__ = ("id", "nodes", "insts", "cles", "imgs", "tri", "lo", "hi", "centre", "etendue", "poids", "skin", "entier", "terrain")
 
 
 class Unite:
@@ -430,6 +478,7 @@ class Plan:
         self.analyser_prims()
         self.construire_racines()
         self.construire_unites()
+        self.verifier_images()
 
     # -- parcours de la scène
     def parcourir(self):
@@ -604,6 +653,8 @@ class Plan:
             rac.id, rac.nodes = r, self.noeuds_racine[r]
             rac.insts = []
             rac.skin = False
+            ex = self.nodes[r].get("extras")
+            rac.terrain = isinstance(ex, dict) and bool(ex.get("terrain"))      # pièce de terrain d'oar2glb.py (extras.terrain)
             cles, imgs = set(), set()
             for ni in rac.nodes:
                 n = self.nodes[ni]
@@ -659,6 +710,9 @@ class Plan:
         # géométrie et images des exclus que des objets conservés utilisent aussi (même primitive, même texture) : retirer l'objet ne les économise pas
         self.octets_partages = sum(self.cb[k] for k in ek & ks) + sum(self.img_oct[i] for i in ei & im)
 
+    def est_terrain(self, rac):
+        return rac.terrain
+
     def cle_skin(self, si, cles):
         skins = self.glb.g.get("skins", [])
         if not (0 <= si < len(skins)):
@@ -687,6 +741,48 @@ class Plan:
                     u.etendue = max(it.hi[0] - it.lo[0], it.hi[2] - it.lo[2])
                     u.nom = self.nodes[it.node].get("name") or self.meshes[it.mesh].get("name") or f"nœud {it.node}"
                     self.unites.append(u)
+
+    def donnees_image(self, ii):
+        """Octets d'une image (bufferView lu dans le GLB, ou adresse data:) ; None si l'adresse data: est illisible."""
+        src = self.glb.g["images"][ii]
+        if "bufferView" in src:
+            bv = self.glb.vue(src["bufferView"])
+            return self.glb.lire(bv.get("byteOffset", 0), bv.get("byteLength", 0))
+        try:
+            return base64.b64decode(src["uri"].split(",", 1)[1], validate=False) if ";base64," in src["uri"][:80] else None
+        except (ValueError, IndexError):
+            return b""
+
+    def verifier_images(self):
+        """Images embarquées vides ou invalides (0 octet, autre format que PNG/JPEG/WebP, tronquées) parmi celles que les unités utilisent.
+        img_ko = leurs numéros ; elles seront remplacées par un petit PNG gris dans chaque tuile qui les utilise."""
+        utilisees = sorted({i for u in self.unites for i in u.imgs})
+        self.img_ko = set()
+        if not utilisees:
+            return
+        pg = Progres("images", len(utilisees))
+        for n, ii in enumerate(utilisees):
+            src = self.glb.g["images"][ii]
+            if "bufferView" in src:
+                bv = self.glb.vue(src["bufferView"])
+                off, ln = bv.get("byteOffset", 0), bv.get("byteLength", 0)
+                ok = image_valide(lambda o, k: self.glb.lire(off + o, k), ln)
+            else:
+                d = self.donnees_image(ii)
+                ok = d is None or image_valide(lambda o, k: d[o:o + k], len(d))
+            if not ok:
+                self.img_ko.add(ii)
+            pg.avance(n + 1)
+
+    def images_remplacees(self, tuiles):
+        """(images distinctes remplacées, occurrences) : une occurrence = une image invalide dans une tuile (elle y serait écrite une fois)."""
+        tous = set()
+        occ = 0
+        for t in tuiles:
+            im = {i for u in t.units for i in u.imgs} & self.img_ko
+            tous |= im
+            occ += len(im)
+        return len(tous), occ
 
     # -- poids d'un groupe d'unités
     def poids(self, units):
@@ -774,6 +870,7 @@ class Assemblage:
         self.bin_len = 0
         self.views, self.accessors = [], []
         self.o_geo = self.o_img = 0
+        self.gris, self.nb_remplacees = None, 0
         self.prim_out = {}
         self.mesh_idx, self.mat_idx, self.tex_idx, self.img_idx, self.samp_idx, self.skin_idx = {}, {}, {}, {}, {}, {}
         self.meshes_o, self.mats_o, self.texs_o, self.imgs_o, self.samps_o, self.skins_o = [], [], [], [], [], []
@@ -944,6 +1041,14 @@ class Assemblage:
     def image(self, ii):
         if ii in self.img_idx:
             return self.img_idx[ii]
+        if ii in self.plan.img_ko:
+            # image vide, d'un autre format ou tronquée : un seul PNG gris par tuile, partagé par toutes ses références
+            if self.gris is None:
+                self.imgs_o.append({"name": "image-remplacee", "mimeType": "image/png", "bufferView": self.vue(png_gris(), geo=False)})
+                self.gris = len(self.imgs_o) - 1
+            self.img_idx[ii] = self.gris
+            self.nb_remplacees += 1
+            return self.gris
         src = self.g["images"][ii]
         d = {k: v for k, v in src.items() if k in ("name", "mimeType", "extras")}
         if "bufferView" in src:
@@ -1063,7 +1168,7 @@ def ecrire_tuile(plan, tuile, chemin):
     hi = [max(i.hi[k] for i in insts) for k in range(3)]
     return {"file": None, "level": tuile.niveau, "i": tuile.i, "j": tuile.j, "min": lo, "max": hi,
             "instances": len(insts), "triangles": sum(i.tri for i in insts), "bytes": total,
-            "geometryBytes": asm.o_geo, "imageBytes": asm.o_img}
+            "geometryBytes": asm.o_geo, "imageBytes": asm.o_img, "replacedImages": asm.nb_remplacees}
 
 
 # ---------------------------------------------------------------- rapports
@@ -1102,6 +1207,13 @@ def lignes_exclusions(plan):
     for nom, n in collections.Counter(x["nom"] for x in plan.exclus).most_common(20):
         out.append(f"  - {n} x « {nom[:70]} »")
     return out
+
+
+def ligne_images(plan, tuiles):
+    """Images vides ou invalides remplacées par un PNG gris (une phrase)."""
+    dist, occ = plan.images_remplacees(tuiles)
+    return (f"Images vides ou invalides remplacées par un PNG gris de {GRIS_IMAGE} : {fmt(dist)} distincte(s), {fmt(occ)} occurrence(s) "
+            f"(une occurrence = une image écrite dans une tuile) ; matériaux et coordonnées de texture inchangés.")
 
 
 def rapport_analyse(glb, plan, tuiles):
@@ -1150,6 +1262,7 @@ def rapport_analyse(glb, plan, tuiles):
     ent = sum(1 for r in plan.racines if r.entier)
     skin = sum(1 for r in plan.racines if r.skin)
     out.extend(lignes_exclusions(plan))
+    out.append(ligne_images(plan, tuiles))
     out.append(f"Objets racine : {len(plan.racines)} | gardés entiers : {ent} (dont {skin} avec skin) | répartis instance par instance : {len(plan.racines) - ent}")
     avert = plan.avertissements + signalements(plan) + plan.hors_budget(tuiles)
     if avert:
@@ -1173,12 +1286,544 @@ def signalements(plan):
     return [f"{len(mauvais)} instance(s) aberrante(s) (à plus de {seuil:g} m du centre médian ou d'étendue supérieure) : {ex}."]
 
 
-def ecrire_tout(glb, plan, tuiles, sortie, nom):
+# ---------------------------------------------------------------- vue d'ensemble (X.overview.glb)
+# Une seule géométrie légère pour toute la région, sans image : un nœud par fichier de tuile (mêmes clés que X.tiles.json), pour que la
+# coquille masque la partie d'une cellule dès que la tuile détaillée correspondante est affichée. Les couleurs sont des couleurs de sommets
+# (COLOR_0) : un seul matériau, donc au plus un appel de dessin par tuile. Sans normales : la coquille (GLTFLoader) rend alors en ombrage plat.
+# Chaque primitive UNIQUE est simplifiée une seule fois (regroupement de sommets sur une grille proportionnelle à sa boîte), puis recopiée
+# avec la matrice de chaque instance. Le terrain est rééchantillonné à part sur un réseau régulier commun à toutes ses pièces.
+OV_PAS_TERRAIN = 4.0
+OV_SEUIL = 3.0
+OV_SEUIL_MAX = 24.0
+OV_RESOLUTION = 10
+OV_BUDGET_MO = 25.0
+OV_BUDGET_TRI = 1500000
+OV_GRIS_DEFAUT = (0.8, 0.8, 0.8)
+LUT_LIN = [(c / 255 / 12.92 if c / 255 <= 0.04045 else ((c / 255 + 0.055) / 1.055) ** 2.4) for c in range(256)]
+
+
+class ParamsOv:
+    def __init__(self, budget_mo=OV_BUDGET_MO, budget_tri=OV_BUDGET_TRI, seuil=OV_SEUIL, seuil_max=OV_SEUIL_MAX, resolution=OV_RESOLUTION,
+                 pas_terrain=OV_PAS_TERRAIN):
+        self.budget_mo, self.budget = budget_mo, budget_mo * MO
+        self.budget_tri = budget_tri
+        self.seuil, self.seuil_max = seuil, max(seuil, seuil_max)
+        self.resolution = max(2, int(resolution))
+        self.pas_terrain = max(0.25, float(pas_terrain))
+
+    def dict(self):
+        return {"budgetMo": self.budget_mo, "budgetTriangles": self.budget_tri, "minExtent": self.seuil, "maxExtent": self.seuil_max,
+                "resolution": self.resolution, "terrainStep": self.pas_terrain}
+
+
+class Couleurs:
+    """Couleur unie (linéaire, octets RGBA) de chaque matériau : couleur moyenne de sa texture si Pillow est disponible, sinon couleur de base."""
+
+    def __init__(self, plan):
+        self.plan = plan
+        self.cache, self.moy = {}, {}
+        self.pil = None
+        try:
+            from PIL import Image
+            self.pil = Image
+        except ImportError:
+            pass
+        self.sans_pillow = self.illisibles = self.moyennes = 0
+
+    def moyenne_image(self, ii):
+        """Couleur moyenne linéaire (r, v, b) d'une image, pondérée par l'opacité ; None si illisible."""
+        if ii in self.moy:
+            return self.moy[ii]
+        res = None
+        if self.pil is not None and ii not in self.plan.img_ko:
+            try:
+                import io
+                import warnings
+                d = self.plan.donnees_image(ii)
+                if d:
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore")
+                        im = self.pil.open(io.BytesIO(bytes(d)))
+                        try:
+                            im.draft("RGB", (32, 32))
+                        except Exception:
+                            pass
+                        box = getattr(getattr(self.pil, "Resampling", self.pil), "BOX")
+                        px = list(im.convert("RGBA").resize((8, 8), box).getdata())
+                    sa = sum(p[3] for p in px)
+                    if sa > 0:
+                        res = tuple(sum(LUT_LIN[p[k]] * p[3] for p in px) / sa for k in range(3))
+                        self.moyennes += 1
+            except Exception:
+                res = None
+            if res is None:
+                self.illisibles += 1
+        self.moy[ii] = res
+        return res
+
+    def materiau(self, mi):
+        """(r, v, b, a) en octets, ou None si le matériau est translucide (alphaMode BLEND : verre, effets), omis de la vue d'ensemble."""
+        if mi is None or not (0 <= mi < len(self.plan.mats)):
+            c = tuple(int(v * 255 + 0.5) for v in OV_GRIS_DEFAUT)
+            return c + (255,)
+        if mi in self.cache:
+            return self.cache[mi]
+        m = self.plan.mats[mi]
+        res = None
+        if m.get("alphaMode") != "BLEND":
+            pbr = m.get("pbrMetallicRoughness", {})
+            fac, tex = pbr.get("baseColorFactor", [1, 1, 1, 1]), pbr.get("baseColorTexture")
+            sg = m.get("extensions", {}).get("KHR_materials_pbrSpecularGlossiness")
+            if isinstance(sg, dict):
+                fac, tex = sg.get("diffuseFactor", [1, 1, 1, 1]), sg.get("diffuseTexture")
+            fac = [float(v) for v in fac[:3]] if isinstance(fac, list) and len(fac) >= 3 and all(isinstance(v, (int, float)) for v in fac[:3]) else [1.0, 1.0, 1.0]
+            moy = None
+            if isinstance(tex, dict) and isinstance(tex.get("index"), int) and 0 <= tex["index"] < len(self.plan.texs):
+                if self.pil is None:
+                    self.sans_pillow += 1
+                else:
+                    for ii in images_de_texture(self.plan.texs[tex["index"]]):
+                        if 0 <= ii < len(self.plan.glb.g.get("images", [])):
+                            moy = self.moyenne_image(ii)
+                            break
+            if moy is None:
+                moy = (1.0, 1.0, 1.0)
+            res = tuple(int(min(1.0, max(0.0, moy[k] * fac[k])) * 255 + 0.5) for k in range(3)) + (255,)
+        self.cache[mi] = res
+        return res
+
+
+def lire_geometrie(plan, key):
+    """Indices d'origine, plage de lignes et colonnes X, Y, Z des positions d'une primitive : (idx, imin, drapeaux, (xs, ys, zs))."""
+    glb = plan.glb
+    p = plan.prims[key]
+    pa = glb.acc(p.attrs["POSITION"])
+    if p.indices is None:
+        idx, flags = array.array(U32, range(pa.count)), None
+    else:
+        idx, mq = array.array(CODE[glb.acc(p.indices).comp]), Marques()
+        for bloc in glb.blocs_indices(p.indices):
+            mq.ajouter(bloc)
+            idx.extend(bloc)
+        flags = mq.flags
+    n = p.imax - p.imin + 1
+    if pa.ncomp < 3 or pa.stride % TAILLE[pa.comp]:
+        raise ErreurGlb(f"Accessor {pa.i} : positions non gérées.")
+    raw = bytes(glb.rangee(pa, p.imin, n)) + bytes(pa.stride - pa.es)
+    arr = array.array(CODE[pa.comp])
+    arr.frombytes(raw)
+    se = pa.stride // TAILLE[pa.comp]
+    cols = [arr[k::se] for k in range(3)]
+    if pa.comp != 5126 and pa.norm:
+        cols = [[decode_norm(v, pa.comp, True) for v in c] for c in cols]
+    return idx, p.imin, flags, cols
+
+
+def regrouper(idx, imin, flags, cols, origine, cell):
+    """Regroupement de sommets : un sommet par cellule de côté `cell` (moyenne des sommets de la cellule), triangles dégénérés et doublons
+    retirés. cell=None : pas de regroupement (sommets utilisés seulement). Rend (sommets à plat array('f'), triangles à plat list d'indices)."""
+    xs, ys, zs = cols
+    n = len(xs)
+    rows = list(itertools.compress(range(n), flags)) if flags is not None else range(n)
+    ux, uy, uz = [xs[r] for r in rows], [ys[r] for r in rows], [zs[r] for r in rows]
+    if cell is None:
+        cid = list(range(len(ux)))
+        nc = len(ux)
+        px, py, pz = ux, uy, uz
+    else:
+        ox, oy, oz = origine
+        inv = 1.0 / cell
+        M = 4096
+        keys = [(int((x - ox) * inv) * M + int((y - oy) * inv)) * M + int((z - oz) * inv) for x, y, z in zip(ux, uy, uz)]
+        ids = {}
+        cid = [ids.setdefault(k, len(ids)) for k in keys]
+        nc = len(ids)
+        sx, sy, sz, cnt = [0.0] * nc, [0.0] * nc, [0.0] * nc, [0] * nc
+        for c, x, y, z in zip(cid, ux, uy, uz):
+            sx[c] += x
+            sy[c] += y
+            sz[c] += z
+            cnt[c] += 1
+        px, py, pz = [a / b for a, b in zip(sx, cnt)], [a / b for a, b in zip(sy, cnt)], [a / b for a, b in zip(sz, cnt)]
+    rowcid = array.array("i", bytes(4 * n))
+    collections.deque(map(rowcid.__setitem__, rows, cid), maxlen=0)
+    it = iter([rowcid[i - imin] for i in idx[:len(idx) // 3 * 3]])
+    vus, tris = set(), []
+    for a, b, c in zip(it, it, it):
+        if a == b or b == c or a == c:
+            continue
+        k = (a, b, c) if a < b and a < c else ((b, c, a) if b < c else (c, a, b))
+        if k in vus:
+            continue
+        vus.add(k)
+        tris.append(a)
+        tris.append(b)
+        tris.append(c)
+    # sommets réellement utilisés
+    new = {}
+    for c in tris:
+        if c not in new:
+            new[c] = len(new)
+    verts = array.array("f")
+    for c in new:
+        verts.append(px[c])
+        verts.append(py[c])
+        verts.append(pz[c])
+    return verts, [new[c] for c in tris]
+
+
+class Simplif:
+    """Primitives simplifiées, une fois chacune (clé : primitive, résolution), puis réutilisées par toutes les instances."""
+
+    def __init__(self, plan, resolution):
+        self.plan, self.res = plan, resolution
+        self.cache = {}
+        self.lus = 0
+
+    def prim(self, key):
+        r = self.cache.get(key)
+        if r is not None:
+            return r
+        p = self.plan.prims[key]
+        idx, imin, flags, cols = lire_geometrie(self.plan, key)
+        etendue = max(p.hi[k] - p.lo[k] for k in range(3))
+        cell = None if p.tri <= 24 or etendue <= 0 else etendue / self.res
+        verts, tris = regrouper(idx, imin, flags, cols, p.lo, cell)
+        self.lus += p.used
+        r = (verts, array.array(U32, tris))
+        self.cache[key] = r
+        return r
+
+
+def matrice_pos(m, verts):
+    """Positions à plat transformées par la matrice monde m (16 nombres, colonnes)."""
+    it = iter(verts)
+    out = array.array("f")
+    m0, m1, m2, m4, m5, m6, m8, m9, m10, m12, m13, m14 = m[0], m[1], m[2], m[4], m[5], m[6], m[8], m[9], m[10], m[12], m[13], m[14]
+    for x, y, z in zip(it, it, it):
+        out.append(m0 * x + m4 * y + m8 * z + m12)
+        out.append(m1 * x + m5 * y + m9 * z + m13)
+        out.append(m2 * x + m6 * y + m10 * z + m14)
+    return out
+
+
+class AccTuile:
+    """Géométrie de la vue d'ensemble pour une tuile : primitives de 65 535 sommets au plus (indices 16 bits)."""
+
+    def __init__(self):
+        self.morceaux = []        # chacun : [positions array('f'), couleurs bytearray, indices list]
+        self.tri = 0
+
+    def ajouter(self, pos, col, tris):
+        nv = len(pos) // 3
+        if not self.morceaux or (self.morceaux[-1][0] and len(self.morceaux[-1][0]) // 3 + nv > 65535):
+            self.morceaux.append([array.array("f"), bytearray(), array.array(U32)])
+        m = self.morceaux[-1]
+        base = len(m[0]) // 3
+        m[0].extend(pos)
+        m[1].extend(col)
+        m[2].extend(base + i for i in tris)
+        self.tri += len(tris) // 3
+
+
+def terrain_vue(plan, tuiles_de, couleurs, pas, acc):
+    """Réseau régulier de pas `pas` commun à toutes les pièces du terrain : hauteur et couleur interpolées dans les triangles d'origine, donc
+    aucune fente entre pièces (un point du réseau sur un bord commun reçoit la même hauteur des deux côtés). tuiles_de : liste (instance, tuile).
+    Les pièces sont lues l'une après l'autre (jamais toutes en mémoire)."""
+    if not tuiles_de:
+        return 0
+    ox = min(it.lo[0] for it, _ in tuiles_de)
+    oz = min(it.lo[2] for it, _ in tuiles_de)
+    ech = {}                      # (i, j) -> (y, couleur RGBA)
+    e = 1e-6
+    for it, nom in tuiles_de:
+        for key, pr in plan.mesh_prims[it.mesh]:
+            p = plan.prims[key]
+            if p.vide or p.mode != 4:
+                continue
+            idx, imin, flags, cols = lire_geometrie(plan, key)
+            n = len(cols[0])
+            rows = list(itertools.compress(range(n), flags)) if flags is not None else range(n)
+            m = plan.monde[it.node]
+            xs, ys, zs = cols
+            wx = [m[0] * xs[r] + m[4] * ys[r] + m[8] * zs[r] + m[12] for r in rows]
+            wy = [m[1] * xs[r] + m[5] * ys[r] + m[9] * zs[r] + m[13] for r in rows]
+            wz = [m[2] * xs[r] + m[6] * ys[r] + m[10] * zs[r] + m[14] for r in rows]
+            col = couleur_sommets(plan, pr, rows, couleurs)
+            ou = array.array("i", [-1]) * n
+            collections.deque(map(ou.__setitem__, rows, itertools.count()), maxlen=0)
+            t3 = [ou[i - imin] for i in idx[:len(idx) // 3 * 3]]
+            for a, b, c in zip(t3[0::3], t3[1::3], t3[2::3]):
+                x1, x2, x3, z1, z2, z3 = wx[a], wx[b], wx[c], wz[a], wz[b], wz[c]
+                ia, ib = math.ceil((min(x1, x2, x3) - ox) / pas - e), math.floor((max(x1, x2, x3) - ox) / pas + e)
+                ja, jb = math.ceil((min(z1, z2, z3) - oz) / pas - e), math.floor((max(z1, z2, z3) - oz) / pas + e)
+                if ia > ib or ja > jb:
+                    continue
+                den = (z2 - z3) * (x1 - x3) + (x3 - x2) * (z1 - z3)
+                if abs(den) < 1e-12:
+                    continue
+                for i in range(ia, ib + 1):
+                    px = ox + i * pas
+                    for j in range(ja, jb + 1):
+                        if (i, j) in ech:
+                            continue
+                        pz = oz + j * pas
+                        l1 = ((z2 - z3) * (px - x3) + (x3 - x2) * (pz - z3)) / den
+                        l2 = ((z3 - z1) * (px - x3) + (x1 - x3) * (pz - z3)) / den
+                        l3 = 1.0 - l1 - l2
+                        if l1 < -e or l2 < -e or l3 < -e:
+                            continue
+                        ca, cb, cc = col[a], col[b], col[c]
+                        ech[(i, j)] = (l1 * wy[a] + l2 * wy[b] + l3 * wy[c],
+                                       bytes(int(l1 * ca[k] + l2 * cb[k] + l3 * cc[k] + 0.5) for k in range(4)))
+    total = 0
+    for it, nom in tuiles_de:
+        # cases possédées par la pièce : coin bas dans [min, max[ (intervalle semi-ouvert : jamais deux pièces pour une case, jamais de case sans pièce)
+        i0, i1 = math.ceil((it.lo[0] - ox) / pas - e), math.ceil((it.hi[0] - ox) / pas - e)
+        j0, j1 = math.ceil((it.lo[2] - oz) / pas - e), math.ceil((it.hi[2] - oz) / pas - e)
+        pos, cols, tris, local = array.array("f"), bytearray(), [], {}
+
+        def sommet(i, j):
+            v = local.get((i, j))
+            if v is None:
+                s = ech[(i, j)]
+                v = local[(i, j)] = len(local)
+                pos.extend((ox + i * pas, s[0], oz + j * pas))
+                cols.extend(s[1])
+            return v
+        for i in range(i0, i1):
+            for j in range(j0, j1):
+                if (i, j) in ech and (i + 1, j) in ech and (i, j + 1) in ech and (i + 1, j + 1) in ech:
+                    v00, v10, v01, v11 = sommet(i, j), sommet(i + 1, j), sommet(i, j + 1), sommet(i + 1, j + 1)
+                    tris.extend((v00, v01, v10, v10, v01, v11))
+        if tris:
+            acc.setdefault(nom, AccTuile()).ajouter(pos, cols, tris)
+            total += len(tris) // 3
+    return total
+
+
+def couleur_sommets(plan, pr, rows, couleurs):
+    """Couleurs RGBA (octets) des sommets utilisés : COLOR_0 s'il existe (terrain d'oar2glb), sinon la couleur du matériau."""
+    ai = pr.get("attributes", {}).get("COLOR_0")
+    fond = couleurs.materiau(pr.get("material")) or (200, 200, 200, 255)
+    if ai is None:
+        return [fond] * len(rows)
+    glb = plan.glb
+    a = glb.acc(ai)
+    if a.ncomp not in (3, 4) or a.stride % TAILLE[a.comp]:
+        return [fond] * len(rows)
+    p = plan.prims[cle_prim(pr)]
+    n = p.imax - p.imin + 1
+    arr = array.array(CODE[a.comp])
+    arr.frombytes(bytes(glb.rangee(a, p.imin, n)) + bytes(a.stride - a.es))
+    se = a.stride // TAILLE[a.comp]
+    out = []
+    for r in rows:
+        v = [decode_norm(arr[r * se + k], a.comp, a.norm) for k in range(3)]
+        out.append(tuple(int(min(1.0, max(0.0, c)) * 255 + 0.5) for c in v) + (255,))
+    return out
+
+
+def fusionner(morceaux):
+    """Regroupe les morceaux consécutifs tant que le total reste à 65 535 sommets au plus : une primitive (un appel de dessin) par tuile en général."""
+    out = []
+    for pos, col, idx in morceaux:
+        nv = len(pos) // 3
+        if out and len(out[-1][0]) // 3 + nv <= 65535:
+            base = len(out[-1][0]) // 3
+            out[-1][0].extend(pos)
+            out[-1][1].extend(col)
+            out[-1][2].extend(base + i for i in idx)
+        else:
+            out.append([array.array("f", pos), bytearray(col), array.array(U32, idx)])
+    return out
+
+
+def ecrire_vue_ensemble(plan, groupes, chemin, tuiles_fichiers):
+    """Écrit X.overview.glb : un nœud par tuile (nom = fichier de la tuile), un seul matériau (couleurs de sommets). Rend (octets, triangles, nœuds)."""
+    parts, bin_len = [], 0
+    views, accessors, meshes, nodes = [], [], [], []
+
+    def vue(data, cible):
+        nonlocal bin_len
+        if bin_len % 4:
+            parts.append(bytes(4 - bin_len % 4))
+            bin_len += 4 - bin_len % 4
+        views.append({"buffer": 0, "byteOffset": bin_len, "byteLength": len(data), "target": cible})
+        parts.append(bytes(data))
+        bin_len += len(data)
+        return len(views) - 1
+    tri = 0
+    for nom in tuiles_fichiers:
+        morceaux = fusionner([m for acc in groupes for m in (acc[nom].morceaux if nom in acc else ())])
+        if not morceaux:
+            continue
+        prims = []
+        for pos, col, idx in morceaux:
+            nv = len(pos) // 3
+            if not idx:
+                continue
+            mn = [min(pos[k::3]) for k in range(3)]
+            mx = [max(pos[k::3]) for k in range(3)]
+            ap = len(accessors)
+            accessors.append({"bufferView": vue(pos.tobytes(), 34962), "componentType": 5126, "count": nv, "type": "VEC3", "min": mn, "max": mx})
+            accessors.append({"bufferView": vue(col, 34962), "componentType": 5121, "normalized": True, "count": nv, "type": "VEC4"})
+            if nv <= 65535:
+                ib, comp = array.array("H", idx).tobytes(), 5123
+            else:
+                ib, comp = array.array(U32, idx).tobytes(), 5125
+            accessors.append({"bufferView": vue(ib, 34963), "componentType": comp, "count": len(idx), "type": "SCALAR"})
+            prims.append({"attributes": {"POSITION": ap, "COLOR_0": ap + 1}, "indices": ap + 2, "material": 0, "mode": 4})
+            tri += len(idx) // 3
+        if not prims:
+            continue
+        meshes.append({"name": "vue:" + nom, "primitives": prims})
+        nodes.append({"name": nom, "mesh": len(meshes) - 1, "extras": {"tile": nom}})
+    js = {"asset": {"version": "2.0", "generator": f"glb2tiles {VERSION} (vue d'ensemble)"}, "scene": 0,
+          "scenes": [{"nodes": list(range(len(nodes)))}], "nodes": nodes, "meshes": meshes, "accessors": accessors, "bufferViews": views,
+          "materials": [{"name": "vue-ensemble", "doubleSided": True,
+                         "pbrMetallicRoughness": {"baseColorFactor": [1, 1, 1, 1], "metallicFactor": 0, "roughnessFactor": 1}}]}
+    total_bin = (bin_len + 3) & ~3
+    js["buffers"] = [{"byteLength": total_bin}]
+    if not nodes:
+        for k in ("meshes", "accessors", "bufferViews", "buffers"):
+            js.pop(k)
+    jb = json.dumps(js, separators=(",", ":")).encode("utf-8")
+    jb += b" " * (-len(jb) % 4)
+    total = 12 + 8 + len(jb) + (8 + total_bin if nodes else 0)
+    if total > LIMITE_GLB:
+        raise ErreurGlb("La vue d'ensemble dépasse la limite de 4 Go d'un GLB.")
+    tmp = str(chemin) + ".tmp"
+    with open(tmp, "wb") as f:
+        f.write(struct.pack("<4sII", b"glTF", 2, total))
+        f.write(struct.pack("<II", len(jb), 0x4E4F534A))
+        f.write(jb)
+        if nodes:
+            f.write(struct.pack("<II", total_bin, 0x004E4942))
+            for part in parts:
+                f.write(part)
+            f.write(bytes(total_bin - bin_len))
+    os.replace(tmp, chemin)
+    return total, tri, len(nodes)
+
+
+def instances_de(plan, tuile):
+    """(instances, terrain) d'une tuile : toutes les instances de ses unités, séparées selon que la racine est du terrain (extras.terrain)."""
+    objets, terrain, vus = [], [], set()
+    for u in tuile.units:
+        lst = u.racine.insts if u.entier else [i for i in u.racine.insts if i.node == u.node]
+        for it in lst:
+            if it.node in vus:
+                continue
+            vus.add(it.node)
+            (terrain if plan.est_terrain(u.racine) else objets).append(it)
+    return objets, terrain
+
+
+def vue_ensemble(plan, tuiles, noms, OP, chemin):
+    """Construit et écrit la vue d'ensemble. noms : fichier de chaque tuile (même ordre que `tuiles`). Rend le dictionnaire du rapport."""
     t0 = time.time()
+    log(f"[vue d'ensemble] budget {OP.budget_mo:g} Mo et {fmt(OP.budget_tri)} triangles, seuil d'étendue {OP.seuil:g} m, résolution {OP.resolution}, "
+        f"pas du terrain {OP.pas_terrain:g} m")
+    couleurs = Couleurs(plan)
+    omis = {"petits": 0, "squelette": 0, "translucides": 0, "budget": 0}
+    tp, cand = [], []             # pièces de terrain (instance, tuile) ; objets candidats (étendue, instance, tuile)
+    for t, nom in zip(tuiles, noms):
+        objets, terrain = instances_de(plan, t)
+        tp += [(it, nom) for it in terrain]
+        for it in objets:
+            if isinstance(plan.nodes[it.node].get("skin"), int):
+                omis["squelette"] += 1
+                continue
+            cand.append((max(it.hi[k] - it.lo[k] for k in range(3)), it, nom))
+    # terrain : au plus la moitié des budgets ; sinon le pas du réseau grossit (x 1,5) jusqu'à ce qu'il tienne
+    pas = OP.pas_terrain
+    while True:
+        acc_t = {}
+        tri_terrain = terrain_vue(plan, tp, couleurs, pas, acc_t) if tp else 0
+        oct_terrain = sum(len(p) * 4 + len(c) + len(ix) * 2 for a in acc_t.values() for p, c, ix in a.morceaux)
+        if not tp or (tri_terrain <= OP.budget_tri / 2 and oct_terrain <= OP.budget / 2) or pas > 4096:
+            break
+        pas *= 1.5
+        log(f"[vue d'ensemble] terrain trop lourd pour la moitié du budget : pas porté à {pas:g} m")
+    log(f"[vue d'ensemble] terrain : {len(tp)} pièce(s), {fmt(tri_terrain)} triangles, réseau de {pas:g} m")
+    res = OP.resolution
+    while True:
+        base = sorted((c for c in cand if c[0] >= OP.seuil), key=lambda c: -c[0])
+        omis["petits"] = len(cand) - len(base)
+        simp = Simplif(plan, res)
+        meshes = sorted({c[1].mesh for c in base})
+        pg = Progres("vue d'ensemble : primitives", len(meshes))
+        info, transl = {}, 0       # mesh -> (parties (sommets, triangles, couleur), triangles, sommets)
+        for n, m in enumerate(meshes):
+            parts, tri, nv = [], 0, 0
+            for key, pr in plan.mesh_prims[m]:
+                p = plan.prims[key]
+                if p.vide or p.mode != 4:
+                    continue
+                col = couleurs.materiau(pr.get("material"))
+                if col is None:
+                    transl += 1
+                    continue
+                v, tr = simp.prim(key)
+                if len(tr):
+                    parts.append((v, tr, col))
+                    tri += len(tr) // 3
+                    nv += len(v) // 3
+            info[m] = (parts, tri, nv)
+            pg.avance(n + 1)
+        omis["translucides"] = transl
+        # les plus grands d'abord, tant que le budget le permet : le seuil effectif est l'étendue du dernier objet gardé
+        reste_tri, reste_oct = OP.budget_tri - tri_terrain, OP.budget - oct_terrain
+        gardes, tri_tot, oct_tot = [], 0, 0
+        for c in base:
+            parts, tri, nv = info[c[1].mesh]
+            if not parts:
+                continue
+            ob = tri * 6 + nv * 16
+            if tri_tot + tri > reste_tri or oct_tot + ob > reste_oct:
+                break
+            gardes.append(c)
+            tri_tot += tri
+            oct_tot += ob
+        coupes = [c for c in base[len(gardes):] if info[c[1].mesh][0]]
+        limite = max((c[0] for c in coupes), default=0.0)
+        if limite > OP.seuil_max and res > 3:
+            res = max(3, int(res * 0.7))
+            log(f"[vue d'ensemble] budget atteint avant des objets de {limite:.0f} m : résolution réduite à {res}")
+            continue
+        break
+
+    def assembler(liste):
+        acc = {}
+        for e, it, nom in liste:
+            a = acc.setdefault(nom, AccTuile())
+            m = plan.monde[it.node]
+            for v, tr, col in info[it.mesh][0]:
+                a.ajouter(matrice_pos(m, v), bytes(col) * (len(v) // 3), list(tr))
+        return acc
+    acc_o = assembler(gardes)
+    total, tri, nn = ecrire_vue_ensemble(plan, [acc_t, acc_o], chemin, noms)
+    while total > OP.budget and gardes:            # poids réel au-dessus du budget (estimation trop optimiste) : on retire les plus petits
+        gardes = gardes[:len(gardes) - max(1, len(gardes) // 10)]
+        acc_o = assembler(gardes)
+        total, tri, nn = ecrire_vue_ensemble(plan, [acc_t, acc_o], chemin, noms)
+    omis["budget"] = len(base) - len(gardes) - sum(1 for c in base if not info[c[1].mesh][0])
+    seuil_eff = min((c[0] for c in gardes), default=OP.seuil)
+    log(f"[vue d'ensemble] {total / MO:.1f} Mo, {fmt(tri)} triangles, {len(gardes)} objet(s) sur {len(cand)}, {nn} tuile(s) en {time.time() - t0:.1f} s")
+    return {"file": chemin.name, "bytes": total, "triangles": tri, "terrainTriangles": tri_terrain, "objects": len(gardes), "candidates": len(cand),
+            "omitted": {"small": omis["petits"], "skinned": omis["squelette"], "translucentPrimitives": omis["translucides"], "budget": omis["budget"]},
+            "effectiveMinExtent": round(seuil_eff, 2), "resolution": res, "effectiveTerrainStep": round(pas, 3), "seconds": round(time.time() - t0, 1),
+            "colors": {"textureAverages": couleurs.moyennes, "unreadable": couleurs.illisibles, "withoutPillow": couleurs.sans_pillow,
+                       "pillow": couleurs.pil is not None},
+            "params": OP.dict()}
+
+
+def ecrire_tout(glb, plan, tuiles, sortie, nom):
+    """Écrit les tuiles ; ensuite seulement, supprime les T_*.glb d'une exécution précédente qui ne figurent plus dans le nouvel index.
+    Rend (fiches, dossier, nombre de fichiers supprimés)."""
     dossier = Path(sortie) / f"{nom}.tiles"
     dossier.mkdir(parents=True, exist_ok=True)
-    for ancien in dossier.glob("T_*_*_*.glb"):
-        ancien.unlink()
     fiches = []
     pg = Progres("tuiles", len(tuiles))
     for n, t in enumerate(tuiles):
@@ -1186,7 +1831,27 @@ def ecrire_tout(glb, plan, tuiles, sortie, nom):
         f["file"] = f"{nom}.tiles/{t.nom}.glb"
         fiches.append(f)
         pg.avance(n + 1)
-    return fiches, dossier
+    nouveaux = {Path(f["file"]).name for f in fiches}
+    supprimes = 0
+    for ancien in dossier.glob("T_*_*_*.glb"):
+        if ancien.name not in nouveaux:
+            ancien.unlink()
+            supprimes += 1
+    return fiches, dossier, supprimes
+
+
+def lignes_taille_instances(plan):
+    """Répartition des instances par étendue (plus grande dimension) : aide à choisir --ov-seuil de la vue d'ensemble."""
+    out = ["Étendue des instances (plus grande dimension) : instances et triangles au-dessus de chaque seuil"]
+    tot_i, tot_t = len(plan.insts), sum(i.tri for i in plan.insts)
+    for sv in (1, 2, 3, 4, 8, 16, 32, 64):
+        n = t = 0
+        for i in plan.insts:
+            if max(i.hi[k] - i.lo[k] for k in range(3)) >= sv:
+                n += 1
+                t += i.tri
+        out.append(f"  - au moins {sv} m : {fmt(n)} instances ({100 * n / max(1, tot_i):.0f} %), {fmt(t)} triangles ({100 * t / max(1, tot_t):.0f} %)")
+    return out
 
 
 def main(argv=None, log_path=None):
@@ -1209,12 +1874,24 @@ def main(argv=None, log_path=None):
                     help="retire du découpage les objets racine dont le nom correspond (insensible à la casse, répétable), à condition de respecter --exclure-max-tri et --exclure-max-meshes")
     ap.add_argument("--exclure-max-tri", type=int, default=24, help="avec --exclure : triangles au plus dans l'objet racine, tous meshes compris (défaut 24)")
     ap.add_argument("--exclure-max-meshes", type=int, default=1, help="avec --exclure : meshes au plus dans l'objet racine (défaut 1)")
+    ap.add_argument("--sans-vue-ensemble", action="store_true", help="ne pas écrire X.overview.glb (vue d'ensemble légère de toute la région)")
+    ap.add_argument("--vue-ensemble-seule", action="store_true", help="n'écrire que X.overview.glb (et sa mention dans X.tiles.json) : les tuiles existantes ne sont pas réécrites ; "
+                    "les paramètres de découpage doivent être ceux du découpage d'origine")
+    ap.add_argument("--ov-budget", type=float, default=OV_BUDGET_MO, help="Mo : poids maximal de la vue d'ensemble (défaut %(default)g)")
+    ap.add_argument("--ov-budget-tri", type=int, default=OV_BUDGET_TRI, help="triangles de la vue d'ensemble (défaut %(default)d)")
+    ap.add_argument("--ov-seuil", type=float, default=OV_SEUIL, help="m : les objets dont la plus grande dimension est plus petite sont omis (défaut %(default)g) ; le budget peut le relever")
+    ap.add_argument("--ov-seuil-max", type=float, default=OV_SEUIL_MAX, help="m : si le budget oblige à omettre des objets plus grands, la résolution baisse (défaut %(default)g)")
+    ap.add_argument("--ov-resolution", type=int, default=OV_RESOLUTION, help="cellules sur la plus grande dimension d'une primitive pour le regroupement de sommets (défaut %(default)d)")
+    ap.add_argument("--ov-terrain-pas", type=float, default=OV_PAS_TERRAIN, help="m : pas du réseau du terrain dans la vue d'ensemble (défaut %(default)g)")
     ap.add_argument("--forcer", action="store_true", help="découper même si la recommandation est « pas de découpage »")
     ap.add_argument("--sortie", help="dossier de sortie (défaut : à côté du GLB)")
     ap.add_argument("--nopause", action="store_true", help="ne pas attendre Entrée à la fin")
     a = ap.parse_args(argv)
     P = Params(a.budget, a.budget_tri, a.cote_min, a.entier_poids, a.entier_etendue, a.seuil, a.seuil_tri, a.aberrant, a.bloc,
                a.exclure, a.exclure_max_tri, a.exclure_max_meshes)
+    OP = ParamsOv(a.ov_budget, a.ov_budget_tri, a.ov_seuil, a.ov_seuil_max, a.ov_resolution, a.ov_terrain_pas)
+    if a.sans_vue_ensemble and a.vue_ensemble_seule:
+        raise ErreurGlb("--sans-vue-ensemble et --vue-ensemble-seule s'excluent.")
     t0 = time.time()
     chemin = Path(a.glb)
     if not chemin.is_file():
@@ -1226,9 +1903,15 @@ def main(argv=None, log_path=None):
         if not plan.insts:
             raise ErreurGlb("Aucun mesh positionnable dans la scène : rien à découper.")
         tuiles = plan.decouper()
+        sortie = Path(a.sortie) if a.sortie else chemin.resolve().parent
+        nom = chemin.stem
+        if a.vue_ensemble_seule and not a.analyse:
+            return vue_ensemble_seule(glb, plan, tuiles, sortie, nom, OP, t0)
         decoupe, phrase = recommandation(glb, plan, tuiles)
         if a.analyse:
             for ligne in rapport_analyse(glb, plan, tuiles):
+                log(ligne)
+            for ligne in lignes_taille_instances(plan):
                 log(ligne)
             log(f"[temps] {time.time() - t0:.1f} s")
             return 0
@@ -1236,43 +1919,104 @@ def main(argv=None, log_path=None):
         if not decoupe and not a.forcer:
             log("Rien n'est écrit (--forcer pour découper quand même).")
             return 0
-        sortie = Path(a.sortie) if a.sortie else chemin.resolve().parent
-        nom = chemin.stem
-        fiches, dossier = ecrire_tout(glb, plan, tuiles, sortie, nom)
+        fiches, dossier, supprimes = ecrire_tout(glb, plan, tuiles, sortie, nom)
         geo_u = sum(plan.cb[k] for k in {k for u in plan.unites for k in u.cles})
         dup = sum(f["geometryBytes"] for f in fiches) / geo_u if geo_u else 1.0
         ent = sum(1 for r in plan.racines if r.entier)
         avert = plan.avertissements + signalements(plan) + plan.hors_budget(tuiles)
+        img_dist, img_occ = plan.images_remplacees(tuiles)
         lo = [min(i.lo[k] for i in plan.insts) for k in range(3)]
         hi = [max(i.hi[k] for i in plan.insts) for k in range(3)]
         doc = {"version": FORMAT_TUILES, "generator": f"glb2tiles {VERSION}", "source": chemin.name,
                "extent": {"min": lo, "max": hi}, "params": P.dict(), "warnings": avert,
                "roots": {"whole": ent, "split": len(plan.racines) - ent},
-               "duplication": round(dup, 3), "tiles": fiches}
+               "duplication": round(dup, 3), "replacedImages": {"distinct": img_dist, "occurrences": img_occ, "grey": GRIS_IMAGE}, "tiles": fiches}
         if P.exclure:
             doc["excluded"] = {"patterns": P.exclure_motifs, "maxTriangles": P.exclure_max_tri, "maxMeshes": P.exclure_max_meshes,
                                "count": len(plan.exclus), "triangles": sum(x["tri"] for x in plan.exclus), "bytesSaved": plan.octets_exclus, "bytesShared": plan.octets_partages,
                                "names": dict(collections.Counter(x["nom"] for x in plan.exclus).most_common(20))}
-        with open(Path(sortie) / f"{nom}.tiles.json", "w", encoding="utf-8", newline="\n") as f:
-            json.dump(doc, f, ensure_ascii=False, indent=1)
-            f.write("\n")
+        ov = None
+        if not a.sans_vue_ensemble:
+            ov = vue_ensemble(plan, tuiles, [f["file"] for f in fiches], OP, Path(sortie) / f"{nom}.overview.glb")
+            doc["overview"] = ov
+        else:
+            ancien = Path(sortie) / f"{nom}.overview.glb"
+            if ancien.is_file():
+                log(f"Avertissement : {ancien.name} d'une exécution précédente n'est pas retiré, mais l'index ne le mentionne plus (--sans-vue-ensemble).")
+        ecrire_index(Path(sortie) / f"{nom}.tiles.json", doc)
         poids = [x["bytes"] / MO for x in fiches]
         tris = [x["triangles"] for x in fiches]
         log("")
         log("== Rapport ==")
         log(f"Tuiles : {len(fiches)} dans {dossier}")
+        if supprimes:
+            log(f"Tuiles d'une exécution précédente absentes du nouvel index : {supprimes} fichier(s) T_*.glb supprimé(s)")
         log(f"Poids (Mo) : médiane {quantile(poids, 0.5):.1f} | 90 % sous {quantile(poids, 0.9):.1f} | maximum {max(poids):.1f}")
         log(f"Triangles : médiane {fmt(quantile(tris, 0.5))} | 90 % sous {fmt(quantile(tris, 0.9))} | maximum {fmt(max(tris))}")
         log(f"Duplication réelle de la géométrie (somme des tuiles / géométrie unique) : {virg(dup)}")
         log(f"Objets racine gardés entiers : {ent} | répartis : {len(plan.racines) - ent}")
         for ligne in lignes_exclusions(plan):
             log(ligne)
+        log(ligne_images(plan, tuiles))
+        if ov:
+            for ligne in lignes_vue_ensemble(ov):
+                log(ligne)
         for w in avert:
             log("Avertissement : " + w)
         log(f"[temps] {time.time() - t0:.1f} s ; {fmt(glb.octets_lus)} octets lus sur {fmt(glb.taille)}")
         return 0
     finally:
         glb.fermer()
+
+
+def ecrire_index(chemin, doc):
+    with open(chemin, "w", encoding="utf-8", newline="\n") as f:
+        json.dump(doc, f, ensure_ascii=False, indent=1)
+        f.write("\n")
+
+
+def lignes_vue_ensemble(ov):
+    om = ov["omitted"]
+    out = [f"Vue d'ensemble {ov['file']} : {ov['bytes'] / MO:.1f} Mo, {fmt(ov['triangles'])} triangles (dont terrain {fmt(ov['terrainTriangles'])}), "
+           f"{fmt(ov['objects'])} objet(s) gardés sur {fmt(ov['candidates'])}, en {ov['seconds']:g} s",
+           f"  objets omis : {fmt(om['small'])} trop petits (étendue sous le seuil), {fmt(om['budget'])} par le budget, {fmt(om['skinned'])} avec squelette ; "
+           f"primitives translucides omises : {fmt(om['translucentPrimitives'])}",
+           f"  étendue minimale effective {ov['effectiveMinExtent']:g} m (seuil demandé {ov['params']['minExtent']:g} m), résolution {ov['resolution']}, "
+           f"pas du terrain {ov['effectiveTerrainStep']:g} m (demandé {ov['params']['terrainStep']:g} m)"]
+    c = ov["colors"]
+    if c["pillow"]:
+        out.append(f"  couleurs : moyenne de texture pour {fmt(c['textureAverages'])} image(s), {fmt(c['unreadable'])} illisible(s) (couleur de base)")
+    else:
+        out.append(f"  couleurs : Pillow absent, couleur de base du matériau ({fmt(c['withoutPillow'])} matériau(x) texturé(s) concerné(s)) ; installer Pillow pour les couleurs moyennes")
+    return out
+
+
+def vue_ensemble_seule(glb, plan, tuiles, sortie, nom, OP, t0):
+    """--vue-ensemble-seule : les tuiles et X.tiles.json existent ; le découpage recalculé doit correspondre à l'index (mêmes fichiers)."""
+    idx = Path(sortie) / f"{nom}.tiles.json"
+    if not idx.is_file():
+        raise ErreurGlb(f"{idx} introuvable : --vue-ensemble-seule suppose que le découpage a déjà été fait (dans {sortie}).")
+    try:
+        doc = json.loads(idx.read_text(encoding="utf-8-sig"))
+    except ValueError as e:
+        raise ErreurGlb(f"{idx} illisible ({e}).")
+    noms = [f"{nom}.tiles/{t.nom}.glb" for t in tuiles]
+    index = {f.get("file"): f for f in doc.get("tiles", []) if isinstance(f, dict)}
+    if set(noms) != set(index):
+        raise ErreurGlb(f"Le découpage recalculé ({len(noms)} tuiles) ne correspond pas à {idx.name} ({len(index)} tuiles) : "
+                        "utiliser les mêmes options (--budget, --budget-tri, --min, --entier-*, --exclure…) que pour le découpage d'origine.")
+    for t, f in zip(tuiles, noms):
+        if index[f].get("triangles") != sum(u.tri for u in t.units) or index[f].get("instances") != sum(u.ninst for u in t.units):
+            raise ErreurGlb(f"La tuile {f} n'a plus le contenu de {idx.name} : utiliser les mêmes options que pour le découpage d'origine.")
+    ov = vue_ensemble(plan, tuiles, noms, OP, Path(sortie) / f"{nom}.overview.glb")
+    doc["overview"] = ov
+    ecrire_index(idx, doc)
+    log("")
+    log("== Rapport ==")
+    for ligne in lignes_vue_ensemble(ov):
+        log(ligne)
+    log(f"[temps] {time.time() - t0:.1f} s ; {fmt(glb.octets_lus)} octets lus sur {fmt(glb.taille)}")
+    return 0
 
 
 if __name__ == "__main__":

@@ -21,7 +21,7 @@ Exemple juste :
 
 | Touche | Effet |
 |---|---|
-| **F** | entrer ou sortir de la promenade |
+| **F** | entrer ou sortir de la promenade. **À la sortie (v31)**, le petit cercle d'atterrissage et la cible de la vue globale se posent **au sol, sous le dernier endroit où se trouvait l'avatar** ; la caméra revient à la **même distance et dans la même direction** de cette cible qu'avant l'entrée en promenade (elle ne revient plus à l'endroit exact d'où tu étais parti). En mode tuiles, les tuiles autour de l'avatar restent donc chargées. |
 | **E** | utiliser la zone proche (son nom s'affiche en bas : « E : … ») |
 | **P** | dans le viewer, en promenade : poser la zone à tes pieds |
 | **M** | ouvrir la carte des mondes |
@@ -33,7 +33,7 @@ Les portails ne fonctionnent qu'en promenade.
 | Geste | Effet |
 |---|---|
 | **clic simple** sur le modèle | affiche, dans le bloc « picked » et la barre d'état, le **nom de l'élément** et les **coordonnées du point touché** (x, y, z, 2 décimales). Rien ne bouge : ni la cible, ni le cercle d'atterrissage. |
-| **double-clic** sur le modèle | choisit la **cible** de la vue et le **point d'atterrissage** (comme dans la page exportée) |
+| **double-clic** sur le modèle | choisit la **cible** de la vue et le **point d'atterrissage** (comme dans la page exportée). En mode tuiles (§ 17 bis), le double-clic fonctionne aussi sur la **vue d'ensemble** : la cible se place sur le point lointain et les tuiles s'y chargent. |
 
 Deux cercles à ne pas confondre :
 
@@ -470,9 +470,9 @@ python glb2html.py --settings "Region-final.glb" --config-only --wave 2 -o "Regi
 
 Les options de la ligne de commande l'emportent sur le `.reglages.json`. Les visiteurs voient le changement à leur prochain rechargement.
 
-## 17. Découper un GLB énorme en tuiles (`tools/glb2tiles.py`, v28 ; `--exclure` et pause en v29)
+## 17. Découper un GLB énorme en tuiles (`tools/glb2tiles.py`, v28 ; `--exclure` et pause en v29 ; images invalides et vue d'ensemble en v31)
 
-`glb2tiles.py` découpe un GLB trop lourd en **tuiles autonomes** : chacune est un GLB valide (ouvrable seul dans `glb-viewer.html`), avec ses propres nœuds, meshes, matériaux et images, aux coordonnées d'origine (aucun recentrage). Cet outil **écrit seulement les tuiles et leur liste** ; c'est la coquille qui les charge autour de l'avatar (v30, voir § 17 bis). Python standard seulement. Le GLB d'entrée n'est jamais chargé en entier : l'en-tête JSON est lu, puis les indices, positions et images par morceaux.
+`glb2tiles.py` découpe un GLB trop lourd en **tuiles autonomes** : chacune est un GLB valide (ouvrable seul dans `glb-viewer.html`), avec ses propres nœuds, meshes, matériaux et images, aux coordonnées d'origine (aucun recentrage). Cet outil **écrit les tuiles, leur liste et (v31) une vue d'ensemble légère de toute la région** ; c'est la coquille qui les charge autour de l'avatar (v30, voir § 17 bis). Python standard seulement. Le GLB d'entrée n'est jamais chargé en entier : l'en-tête JSON est lu, puis les indices, positions et images par morceaux.
 
 `glb-stats.py` doit rester **à côté** de `glb2tiles.py` (fonctions de mesure communes) ; `python build.py` met les deux dans `dist/`.
 
@@ -485,6 +485,8 @@ Les options de la ligne de commande l'emportent sur le `.reglages.json`. Les vis
 | Découper (recommandation « découper ») | `python glb2tiles.py "P:\...\Region.glb"` |
 | Découper même si la recommandation est « pas de découpage » | `python glb2tiles.py "P:\...\Region.glb" --forcer` |
 | Écrire ailleurs qu'à côté du GLB | `python glb2tiles.py "P:\...\Region.glb" --sortie "P:\...\tuiles"` |
+| Découper sans la vue d'ensemble | `python glb2tiles.py "P:\...\Region.glb" --sans-vue-ensemble` |
+| Refaire **seulement** la vue d'ensemble (tuiles intactes) | `python glb2tiles.py "P:\...\Region.glb" --vue-ensemble-seule` avec **les mêmes options de découpage** (`--sortie`, `--budget`, `--exclure`…) que la première fois |
 | Écarter les « boîtes de livraison » d'un fournisseur | `python glb2tiles.py "P:\...\Region.glb" --analyse --exclure "Freebies 20"` puis la même commande sans `--analyse` |
 
 Commencer par `--analyse` : elle donne les mesures de `glb-stats.py`, les 10 meshes les plus lourds (octets compactés, étendue en mètres), les 10 instances les plus éloignées du centre médian (valeurs aberrantes), le nombre de tuiles prévu avec les paramètres choisis, le facteur de duplication prévu, le nombre d'objets racine gardés entiers ou répartis, et une phrase de recommandation : « pas de découpage nécessaire » ou « découper : budget N Mo, T tuiles, duplication F ». Un GLB léger répond « pas de découpage nécessaire » et rien n'est écrit (même sans `--analyse`, sauf avec `--forcer`).
@@ -506,6 +508,13 @@ Commencer par `--analyse` : elle donne les mesures de `glb-stats.py`, les 10 mes
 | `--exclure REGEX` | | retire du découpage les objets racine dont le nom correspond (insensible à la casse, répétable ; voir ci-dessous) |
 | `--exclure-max-tri` | 24 | triangles au plus dans l'objet racine, tous meshes compris, pour être exclu |
 | `--exclure-max-meshes` | 1 | meshes au plus dans l'objet racine pour être exclu |
+| `--sans-vue-ensemble` | | ne pas écrire `X.overview.glb` |
+| `--vue-ensemble-seule` | | n'écrire que `X.overview.glb` et sa mention dans `X.tiles.json` ; le découpage recalculé doit retrouver exactement les tuiles de `X.tiles.json` (sinon : erreur « ne correspond pas », utiliser les mêmes options) |
+| `--ov-budget`, `--ov-budget-tri` | 25, 1500000 | Mo et triangles de toute la vue d'ensemble |
+| `--ov-seuil` | 3 | m : les objets dont la plus grande dimension est plus petite sont omis (le budget peut relever ce seuil) |
+| `--ov-seuil-max` | 24 | m : si le budget oblige à omettre des objets plus grands que cela, la résolution baisse |
+| `--ov-resolution` | 10 | cellules sur la plus grande dimension d'une primitive pour le regroupement de sommets (plus grand = plus fin et plus lourd) |
+| `--ov-terrain-pas` | 4 | m : pas du réseau du terrain dans la vue d'ensemble |
 | `--nopause` | | ne pas attendre Entrée à la fin (la pause est aussi supprimée quand il n'y a pas de console : script, tâche planifiée) |
 
 ### Exclure des objets (`--exclure`, v29)
@@ -515,6 +524,28 @@ Certains catalogues posent à côté de chaque bâtiment une « boîte de livrai
 - Plusieurs `--exclure` s'additionnent. Une expression invalide donne un message clair (`Expression régulière invalide pour --exclure`) et rien n'est lu.
 - Les nœuds retirés sont l'objet racine et tous ses descendants ; aucun autre objet ne change. Les exclus n'entrent ni dans les tuiles ni dans les calculs de poids, de triangles et de budget (la recommandation « pas de découpage » retire aussi leurs octets de la taille du GLB). Le GLB d'origine n'est pas modifié ; la partie `glb-stats` de `--analyse` décrit le fichier d'origine.
 - `--analyse` et le rapport final donnent : le nombre d'objets exclus, les triangles retirés, les octets gagnés (géométrie et images qu'aucun objet conservé n'utilise ; **0** quand tous les exclus partagent leurs primitives ou leurs images avec des objets conservés, par exemple un cube commun : le rapport le dit alors, et chiffre les octets partagés non gagnés), le nombre d'objets au nom correspondant mais conservés par les garde-fous, et les 20 noms les plus fréquents avec leur nombre. `X.tiles.json` reçoit une clé `excluded` (motifs, garde-fous, `count`, `triangles`, `bytesSaved`, `bytesShared`, `names`) seulement quand `--exclure` est utilisé.
+
+### Images vides ou invalides (v31)
+
+Une image embarquée **de 0 octet**, d'un **autre format** que PNG, JPEG ou WebP, ou **tronquée** fait échouer le chargement de la tuile dans le navigateur (« THREE.GLTFLoader: Couldn't load texture ») : mesuré dans Chromium, `createImageBitmap` échoue aussi sur un PNG, un JPEG ou un WebP coupé, pas seulement sur une image vide. Sur la région « Free House Gallery 4X4 », 778 images sur 19 799 étaient dans ce cas (toutes avec un `bufferView` de `byteLength` 0).
+
+- À l'écriture, chaque image de ce genre est remplacée par **un PNG gris de 4 x 4 pixels** (gris 128, celui des textures remplacées par `oar2glb.py`), **écrit une seule fois par tuile** et partagé par toutes les références de cette tuile (nom `image-remplacee`). Les matériaux, les textures et les coordonnées de texture ne changent pas.
+- Vérification sans décoder : PNG = blocs chaînés jusqu'à `IEND` ; JPEG = marqueur de fin `FFD9` en dernier (aux zéros et espaces de bourrage près) ; WebP = taille RIFF contenue dans le fichier. Seuls l'en-tête, la fin et les en-têtes de blocs sont lus (jamais l'image entière). Un fichier qui serait décodé par Chromium malgré une fin inhabituelle serait remplacé à tort : le nombre rapporté permet de s'en apercevoir.
+- `--analyse` et le rapport final donnent « Images vides ou invalides remplacées… : N distincte(s), M occurrence(s) » (une occurrence = une image écrite dans une tuile). `X.tiles.json` reçoit `"replacedImages": {"distinct": N, "occurrences": M, "grey": 128}` et chaque tuile son propre nombre.
+
+### Vue d'ensemble (`X.overview.glb`, v31)
+
+But : en vue globale, voir **toute** la région ; en promenade, voir **au loin** au-delà des tuiles chargées. Les tuiles détaillées restent la seule source des collisions et du sol.
+
+- **Écrite avec les tuiles** (ou seule avec `--vue-ensemble-seule`), à côté de `X.tiles.json`, et référencée dans `X.tiles.json` (clé `overview` : `file`, `bytes`, `triangles`, `terrainTriangles`, `objects`, `candidates`, `omitted`, `effectiveMinExtent`, `effectiveTerrainStep`, `resolution`, `seconds`, `colors`, `params`).
+- **Un nœud par fichier de tuile**, nommé comme la tuile (`X.tiles/T_3_2_5.glb`, et `extras.tile`) : la page masque la cellule dès que la tuile détaillée est **affichée** et la réaffiche quand la tuile est déchargée ou en échec. Les objets d'une cellule sont exactement ceux de la tuile : pas de double affichage, pas de trou pendant le chargement.
+- **Aucune image.** Un seul matériau ; les couleurs sont des **couleurs de sommets**. Chaque matériau devient une couleur unie : la **couleur moyenne de sa texture** si Pillow est installé (moyenne en espace linéaire, pondérée par l'opacité), sinon sa **couleur de base**. Les couleurs de sommets du terrain sont conservées. Sans normales : la page affiche la vue d'ensemble en ombrage plat. Les primitives translucides (`alphaMode` BLEND : verre, effets) et les objets à squelette sont omis.
+- **Chaque primitive UNIQUE est simplifiée une seule fois**, puis recopiée avec la matrice de chacune de ses instances (jamais simplifiée par instance). Méthode : regroupement de sommets sur une grille de côté (plus grande dimension de la primitive) / `--ov-resolution` ; un sommet par cellule (moyenne), triangles dégénérés et doublons retirés. Python standard seulement ; Pillow est facultatif (couleurs moyennes).
+- **Terrain simplifié à part.** Les pièces marquées `extras.terrain` (patches d'`oar2glb.py`) sont rééchantillonnées sur un **réseau régulier commun** de pas `--ov-terrain-pas` : hauteur et couleur interpolées dans les triangles d'origine, une case appartient à une seule pièce (donc à une seule tuile). Un point du réseau sur un bord commun reçoit la même hauteur des deux côtés : **aucune fente entre les patches** (testé). Le terrain prend au plus la moitié des budgets ; sinon son pas grossit (× 1,5) jusqu'à ce qu'il tienne (dit dans le journal).
+- **Objets omis.** Ceux dont la plus grande dimension est sous `--ov-seuil` (3 m par défaut : à 600 m, distance à laquelle la vue d'ensemble fait l'essentiel de l'image, 3 m couvrent environ 8 pixels sur un écran de 1 080 pixels de haut avec le champ de vision de 38 degrés ; à 210 m, limite du rayon de chargement, 22 pixels). Ce choix vient d'un calcul de taille à l'écran, **pas d'une mesure sur ta région** : `--analyse` imprime le nombre d'instances et de triangles au-dessus de 1, 2, 3, 4, 8, 16, 32 et 64 m pour décider sur tes données. Si le budget est atteint, les **plus grands objets sont gardés d'abord** et le seuil effectif monte (`effectiveMinExtent`) ; au-delà de `--ov-seuil-max` la résolution baisse et le calcul est refait.
+- **Budgets** : 25 Mo et 1 500 000 triangles pour toute la région (`--ov-budget`, `--ov-budget-tri`). Le rapport donne le poids, les triangles (dont le terrain), les objets gardés sur candidats, les objets omis (trop petits / par le budget / à squelette), les primitives translucides omises, les couleurs (moyennes de texture, illisibles, Pillow absent) et le temps.
+- **Le GLB n'est jamais chargé en entier** (même lecture par morceaux de 4 Mo au plus que pour les tuiles), avec une progression (« [vue d'ensemble : primitives] … ») ; les pièces de terrain sont lues une à une.
+- **Durée.** Débit mesuré sur des GLB synthétiques de taille croissante (0,5 ; 2 ; 8 ; 24 millions de triangles uniques) : environ 1,8 million de triangles uniques par seconde, linéaire (0,3 ; 1,2 ; 4,5 ; 13 s), soit 14 à 680 Mo de GLB pour 25 à 164 Mo de mémoire ; 20 000 petits meshes (4 millions de triangles, 40 000 instances) : 15 s, 377 Mo ; terrain de 1 024 m en 256 patches de 4 225 sommets : 3,6 s, 57 Mo. L'estimation pour la région de 1,3 Go est donnée dans `CHANGELOG.md` (v31).
 
 ### Comment le découpage se décide
 
@@ -528,7 +559,7 @@ Certains catalogues posent à côté de chaque bâtiment une « boîte de livrai
 
 ### Fichiers produits
 
-`X.tiles/T_<niveau>_<i>_<j>.glb` (niveau et position de la cellule dans le quadtree) et `X.tiles.json` (UTF-8 sans BOM), à côté du GLB `X.glb` :
+`X.tiles/T_<niveau>_<i>_<j>.glb` (niveau et position de la cellule dans le quadtree), `X.tiles.json` (UTF-8 sans BOM) et `X.overview.glb` (v31), à côté du GLB `X.glb` :
 
 ```
 {
@@ -541,18 +572,22 @@ Certains catalogues posent à côté de chaque bâtiment une « boîte de livrai
  "warnings": ["..."],               tuiles hors budget, valeurs aberrantes, extensions non recopiées
  "roots": {"whole": 1700, "split": 125},         objets racine gardés entiers / répartis
  "duplication": 1.8,                somme des octets de géométrie des tuiles / géométrie unique du GLB
+ "replacedImages": {"distinct": 778, "occurrences": 1200, "grey": 128},    images vides ou invalides remplacées (v31)
+ "overview": {"file": "X.overview.glb", "bytes": 23000000, "triangles": 1400000, "terrainTriangles": 131072,
+              "objects": 21000, "candidates": 30000, "omitted": {"small": 9000, "skinned": 12, "translucentPrimitives": 800, "budget": 0},
+              "effectiveMinExtent": 3, "effectiveTerrainStep": 4, "resolution": 10, "seconds": 95.0, "colors": {...}, "params": {...}},   (v31)
  "tiles": [{"file": "X.tiles/T_3_2_5.glb", "level": 3, "i": 2, "j": 5,
             "min": [x,y,z], "max": [x,y,z],   boîte du contenu réel de la tuile (un objet qui déborde de sa cellule reste couvert)
             "instances": 812, "triangles": 410233,
-            "bytes": 21345678, "geometryBytes": 9001234, "imageBytes": 12000000}]
+            "bytes": 21345678, "geometryBytes": 9001234, "imageBytes": 12000000, "replacedImages": 2}]
 }
 ```
 
-Relancer écrase les `T_*_*_*.glb` du dossier `X.tiles/` (les autres fichiers ne sont pas touchés).
+Relancer réécrit les `T_*_*_*.glb` du dossier `X.tiles/` ; **ensuite** (v31), les `T_*_*_*.glb` d'une exécution précédente qui ne figurent plus dans le nouvel index sont **supprimés** et le rapport en donne le nombre (les autres fichiers du dossier ne sont pas touchés). `--vue-ensemble-seule` ne touche à aucune tuile.
 
 ### Lire le journal (`glb2tiles.log`, à côté du script)
 
-Première ligne : `[glb2tiles] v29 (22/10/2026)`. L'avancement est écrit toutes les 5 % ou 10 s. Le rapport final donne : nombre de tuiles, médiane / 90 % / maximum du poids et des triangles, duplication réelle, nombre de racines entières et réparties, avertissements, temps total. `python glb2tiles.py --version` affiche la version sans journal ni pause.
+Première ligne : `[glb2tiles] v31 (22/10/2026)`. L'avancement est écrit toutes les 5 % ou 10 s. Le rapport final donne : nombre de tuiles, médiane / 90 % / maximum du poids et des triangles, duplication réelle, nombre de racines entières et réparties, avertissements, temps total. `python glb2tiles.py --version` affiche la version sans journal ni pause.
 
 Dans `--analyse`, la ligne « Lecture » indique les octets lus. Les positions ne sont lues que pour les primitives qui n'utilisent qu'une partie d'un tampon de sommets partagé (la boîte de l'accessor serait trop grande) ; les autres boîtes viennent de l'en-tête.
 
@@ -564,13 +599,17 @@ Dans `--analyse`, la ligne « Lecture » indique les octets lus. Les positions n
 | « glb-stats.py introuvable » | le script est seul dans son dossier | copier `glb-stats.py` à côté |
 | « Tuile … hors budget » | un mesh unique (terrain, mer) dépasse le budget, ou la cellule minimale est atteinte | normal à ce stade : voir la feuille de route (découpage par triangles) |
 | Beaucoup de tuiles pour un petit GLB | `--budget` trop petit ou duplication forte | relancer `--analyse` avec d'autres valeurs |
+| « THREE.GLTFLoader: Couldn't load texture » sur une tuile faite avant la v31 | image de 0 octet ou tronquée dans le GLB | refaire le découpage avec la v31 (images remplacées par un gris) |
+| « Le découpage recalculé … ne correspond pas à X.tiles.json » | `--vue-ensemble-seule` lancé avec d'autres options de découpage | reprendre exactement les options du découpage d'origine |
+| « Pillow absent » dans le rapport | la vue d'ensemble utilise la couleur de base des matériaux (souvent blanche pour un matériau texturé) | `pip install pillow` puis `--vue-ensemble-seule` |
+| Vue d'ensemble trop lourde ou objets manquants | budget atteint, `effectiveMinExtent` monté | `--ov-budget` / `--ov-budget-tri` plus grands, ou `--ov-seuil` plus haut ; lire les lignes « objets omis » |
 | Instance à 3 000 m signalée | un prim géant ou un objet égaré | l'outil la garde ; la corriger dans le modèle si c'est une erreur |
 
-Test : `python tests/glb2tiles.py` (GLB synthétiques, sans navigateur ni réseau).
+Test : `python tests/glb2tiles.py` (GLB synthétiques, sans navigateur ni réseau) ; `python tests/v31.py` (images invalides, vue d'ensemble, sortie de promenade).
 
 ## 17 bis. Charger une région en tuiles dans la page (`glb2html.py --tiles`, v30)
 
-Une région de plusieurs centaines de Mo ou de plusieurs Go ne tient pas dans un navigateur : après `glb2tiles.py` (§ 17), la **coquille** charge seulement les tuiles proches de l'avatar et décharge les lointaines. Sans le champ `tiles` dans `X.config.json`, la page se comporte exactement comme avant (un seul `X.glb`).
+Une région de plusieurs centaines de Mo ou de plusieurs Go ne tient pas dans un navigateur : après `glb2tiles.py` (§ 17), la **coquille** charge seulement les tuiles proches de l'avatar et décharge les lointaines, et (v31) affiche au loin la **vue d'ensemble légère** `X.overview.glb` quand elle existe. Sans le champ `tiles` dans `X.config.json`, la page se comporte exactement comme avant (un seul `X.glb`).
 
 ### Les commandes (PowerShell, une seule ligne)
 
@@ -603,8 +642,10 @@ Une région de plusieurs centaines de Mo ou de plusieurs Go ne tient pas dans un
 - **Mémoire.** Une tuile déchargée libère ses géométries, matériaux, textures et images décodées. Le budget compte le **poids des fichiers** : des textures décodées pèsent bien plus en mémoire graphique que leur fichier compressé ; en cas de page lourde, baisser `tileMaxMo` ou `tileRadius`. La grille de collision de chaque tuile coûte environ 36 octets par triangle de sol et de mur, plus l'index : à 8 millions de triangles, compter plusieurs centaines de Mo.
 - **Promenade et collisions.** Une grille de collision est construite par tuile, par tranches pour ne pas figer l'image, et supprimée avec la tuile. Sol et murs ne viennent que des tuiles prêtes. L'avatar **n'avance jamais vers un point dont une tuile n'est pas prête** : il reste sur place, le texte « Chargement du sol… » s'affiche, et il repart dès que la tuile est prête (jamais de chute). **F** attend la tuile sous l'avatar avant de démarrer la promenade (F de nouveau : annuler) ; un portail interne ou un double-clic vers une zone non chargée attend de même. Les patches de terrain ont des bords communs : le sol se prolonge d'une tuile à l'autre sans marche.
 - **Tuile en échec** (fichier absent, HTTP 404, GLB illisible) : message en haut de la page et dans la ligne d'information, avertissement en console, nouvelle tentative 3 s, 6 s, 12 s… jusqu'à 30 s après. Les autres tuiles ne sont pas retardées. Un avatar ne traverse pas la boîte d'une tuile en échec (même règle que « pas prête »).
-- **Ligne d'information** (texte seul), dans le panneau d'aide en bas à gauche (masquable avec H), sinon dans un petit cadre : « Tuiles : 7 chargées / 106 · 74 Mo · 2,10 M triangles », avec « · 2 en cours » et « · 1 en échec (nouvelle tentative) » quand il y en a.
-- **Vue globale.** Elle ne montre que les tuiles chargées, autour de la cible ; une vue d'ensemble légère viendra dans un autre lot. La caméra se cadre sur le rayon de chargement, non sur toute la région.
+- **Ligne d'information** (texte seul), dans le panneau d'aide en bas à gauche (masquable avec H), sinon dans un petit cadre : « Tuiles : 7 chargées / 106 · 74 Mo · 2,10 M triangles », avec « · 2 en cours » et « · 1 en échec (nouvelle tentative) » quand il y en a, puis (v31) « · Vue d'ensemble (à part) : 23,1 Mo · 1,40 M triangles » : la vue d'ensemble est comptée à part, hors des 200 Mo / 8 M triangles du budget.
+- **Vue d'ensemble (v31).** Si `X.tiles.json` mentionne `overview`, la page la charge **en premier** (avant toute tuile), avec les mêmes règles de sécurité de chemin que les tuiles. Elle montre toute la région en géométrie légère, sans image. Chaque cellule (un nœud par fichier de tuile) est **masquée dès que la tuile détaillée correspondante est affichée** et réaffichée quand la tuile est déchargée ou en échec : jamais les deux, jamais de trou pendant un chargement. Elle ne sert **ni aux collisions, ni au sol, ni à « Chargement du sol… »** (la promenade attend toujours la tuile), et n'entre pas dans le budget `tileMaxMo` / `tileMaxTri`. Un **double-clic** dessus en vue globale place la cible sur le point lointain ; le sol réel est repris quand sa tuile est prête. Si elle est introuvable ou illisible : avertissement en console, « Vue d'ensemble indisponible » dans la ligne d'information, la région fonctionne comme en v30.
+- **Vue globale.** Avec la vue d'ensemble, la caméra se cadre sur **toute la région** (distance maximale, brouillard et plan lointain suivent l'étendue). Sans elle (ancien `X.tiles.json` ou `--sans-vue-ensemble`), comme en v30 : seules les tuiles chargées autour de la cible, et la caméra se cadre sur le rayon de chargement.
+- **Sortie de promenade (v31).** F pour sortir place la cible de la vue globale au sol sous l'avatar et garde le décalage de caméra d'avant l'entrée en promenade ; le chargeur suit cette cible, donc les tuiles autour de l'avatar ne sont pas déchargées.
 
 ### Repère, rotation, mer, zones
 
@@ -614,7 +655,7 @@ Une région de plusieurs centaines de Mo ou de plusieurs Go ne tient pas dans un
 
 ### Limites de cette version
 
-- Pas de vue d'ensemble de la région entière (prévue : `X.overview.glb`, chaque mesh unique simplifié une fois).
+- La vue d'ensemble est grossière : les petits objets (sous `--ov-seuil`), le verre et les objets à squelette n'y figurent pas, les couleurs sont unies, le terrain est au pas de 4 m ; à la limite d'une tuile chargée, la hauteur du sol peut différer de quelques décimètres entre la tuile (1 m) et la vue d'ensemble (4 m).
 - Les meshes partagés entre tuiles sont dupliqués dans chaque tuile qui les utilise (tuiles autonomes) : plus de Mo téléchargés.
 - Un mesh unique plus lourd que le budget de `glb2tiles.py` reste dans une seule tuile (pas de découpage par triangles).
 - Une tuile très lourde en triangles reste coûteuse à analyser : la construction de sa grille de collision est découpée, pas supprimée.
@@ -628,10 +669,12 @@ Une région de plusieurs centaines de Mo ou de plusieurs Go ne tient pas dans un
 | « adresse de tuiles refusée » | le champ `tiles` contient `..`, `:`, `?`, `#` ou commence par `/` | un chemin relatif simple (`X.tiles.json`) |
 | Sol partiel, trous | tuiles hors du rayon, ou en échec | monter `tileRadius` (ou `?rayon=`), voir la ligne d'information et la console |
 | « Chargement du sol… » qui reste | une tuile en échec devant l'avatar | corriger le fichier ; la page réessaie seule |
+| Au loin, rien ou un trou | pas de vue d'ensemble (région découpée avant la v31, ou `--sans-vue-ensemble`) | `glb2tiles.py … --vue-ensemble-seule` avec les options d'origine, puis relancer `glb2html.py --tiles` (copie le fichier avec les tuiles) |
+| « Vue d'ensemble indisponible » | `X.overview.glb` absent à côté de la page, ou illisible | le copier à côté de `X.tiles.json` ; relancer `glb2html.py --tiles` |
 | Page lourde, ralentie | trop de textures chargées | baisser `tileMaxMo`, `tileMaxTri` ou `tileRadius` |
 | Les zones liées n'apparaissent pas | elles sont ignorées en mode tuiles | les remplacer par des zones libres à coordonnées |
 | Les zones sont décalées | elles viennent du viewer (repère recentré) | les écrire dans le repère du modèle d'origine |
 
-Test : `python tests/tuiles.py` (région synthétique de 16 tuiles, Chromium sans tête).
+Test : `python tests/tuiles.py` (région synthétique de 16 tuiles, Chromium sans tête) et `python tests/v31.py` (vue d'ensemble dans la coquille, sortie de promenade).
 
 

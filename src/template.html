@@ -304,7 +304,9 @@ if (viewer.tiled) {
   viewer.onTiles = s => {
     info.hidden = false;
     info.textContent = 'Tuiles : ' + s.loaded + ' chargée' + (s.loaded > 1 ? 's' : '') + ' / ' + s.total + ' · ' + fr(s.bytes / 1048576, 0) + ' Mo · ' + (s.tri >= 1e6 ? fr(s.tri / 1e6, 2) + ' M' : fr(s.tri / 1e3, 0) + ' k') + ' triangles'
-      + (s.loading ? ' · ' + s.loading + ' en cours' : '') + (s.failed ? ' · ' + s.failed + ' en échec (nouvelle tentative)' : '');
+      + (s.loading ? ' · ' + s.loading + ' en cours' : '') + (s.failed ? ' · ' + s.failed + ' en échec (nouvelle tentative)' : '')
+      + (s.ov && s.ov.state === 'ready' ? ' · Vue d\'ensemble (à part) : ' + fr(s.ov.bytes / 1048576, 1) + ' Mo · ' + (s.ov.tri >= 1e6 ? fr(s.ov.tri / 1e6, 2) + ' M' : fr(s.ov.tri / 1e3, 0) + ' k') + ' triangles' : '')
+      + (s.ov && s.ov.state === 'failed' ? ' · Vue d\'ensemble indisponible' : '');
     gw.hidden = !s.waiting;
   };
   viewer.onTileError = (f, m) => toast('Tuile « ' + f + ' » : ' + m + ' (nouvelle tentative plus tard)');

@@ -302,7 +302,8 @@ async def main():
             for t in TILES:   # tout retenu : mesure de la mémoire de base avant la moindre tuile
                 o.garde[t["file"].split("/")[-1]] = asyncio.Event()
             await o.ouvrir(base)
-            await o.attendre("window.__viewer && window.__viewer.tilesState().total > 0")
+            await o.attendre("window.__viewer && window.__viewer.tilesState().total > 0 && window.__viewer.tilesState().overview.state === 'ready'")
+            await o.pg.wait_for_timeout(500)   # la vue d'ensemble (chargée avant les tuiles) est dessinée : sa géométrie fait partie de la base
             base_mem = await o.ev("({ g: window.__viewer.renderer.info.memory.geometries, t: window.__viewer.renderer.info.memory.textures })")
             e0 = await o.etat()
             rapport(e0["total"] == len(TILES) and not e0["ready"], "index lu, aucune tuile prête tant qu'elles sont retenues", e0)

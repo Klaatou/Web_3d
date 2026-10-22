@@ -381,6 +381,11 @@ function createViewer(container, cfg0, loader) {
   // Zones liées à un élément (champ mesh) : ignorées (la référence nom#index se calcule sur tout le modèle).
   const TL = { on: !!cfg.tiles, root: null, tiles: [], extent: null, inflight: 0, gridQ: [], pending: null, forced: null, forcedUntil: 0,
     waitT: -1e9, lastUpd: 0, infoKey: '', onInfo: null, onError: null, lastError: '', radius: 150, margin: 60, maxBytes: 200 * 1048576, maxTri: 8e6, conc: 4 };
+  // vue d'ensemble (X.overview.glb, champ « overview » de X.tiles.json) : un nœud par fichier de tuile, masqué dès que la tuile détaillée est affichée
+  // (groupe ajouté à la racine des tuiles) et réaffiché quand elle est déchargée. Jamais utilisée pour les collisions, le sol ni le budget des tuiles.
+  const OV = { root: null, bytes: 0, tri: 0, cells: 0, state: 'none' };
+  const ovSync = t => { if (t.ov) { const v = !t.grp; if (t.ov.visible !== v) { t.ov.visible = v; dirty = true; } } };
+  const ovCells = () => OV.root ? OV.root.children.filter(c => c.visible) : [];
   const TILE_M = 0.5;   // tolérance (m) des tests « le point est dans la boîte de la tuile »
   const safeRel = p => typeof p === 'string' && p !== '' && p.length < 400 && !/^[\/\\]/.test(p) && !/[\\:?#\u0000-\u001f]/.test(p) && !p.split('/').some(s => s === '' || s === '..');
   const relUrl = (p, base) => new URL(p.split('/').map(encodeURIComponent).join('/'), base);
@@ -427,10 +432,10 @@ function createViewer(container, cfg0, loader) {
       else if (t.state === 'loading' || t.state === 'building') { loading++; bytes += t.bytes; tri += t.tri; }
       else if (t.state === 'failed') failed++;
     }
-    return { total: TL.tiles.length, loaded, loading, failed, bytes, tri, waiting: !!TL.pending || performance.now() - TL.waitT < 600 };
+    return { total: TL.tiles.length, loaded, loading, failed, bytes, tri, waiting: !!TL.pending || performance.now() - TL.waitT < 600, ov: { state: OV.state, bytes: OV.bytes, tri: OV.tri } };
   }
   function tilesInfo() {
-    const s = tilesStatus(), key = [s.loaded, s.loading, s.failed, s.bytes, s.tri, s.waiting ? 1 : 0].join('|');
+    const s = tilesStatus(), key = [s.loaded, s.loading, s.failed, s.bytes, s.tri, s.waiting ? 1 : 0, OV.state, OV.bytes, OV.tri].join('|');
     if (key === TL.infoKey) return;
     TL.infoKey = key;
     if (TL.onInfo) TL.onInfo(s);
@@ -450,6 +455,7 @@ function createViewer(container, cfg0, loader) {
       foliageMats = foliageMats.filter(m => !ms.has(m));
       disposeTile(t.grp); t.grp = null;
     }
+    ovSync(t);
     t.grid = null; t.gen = null; t.state = 'idle'; dirty = true;
   }
   async function tileStart(t) {
@@ -468,6 +474,7 @@ function createViewer(container, cfg0, loader) {
       TL.root.add(grp); grp.updateMatrixWorld(true);
       grp.traverse(o => { if (o.isMesh) { o.updateMatrix(); o.matrixAutoUpdate = false; } });
       t.grp = grp; t.state = 'building';
+      ovSync(t);   // même bloc synchrone que l'ajout du groupe : jamais d'image avec les deux, ni avec aucun des deux
       t.gen = collisionGridSteps(grp, 3, parseIgnore(cfg.walkIgnore));   // construite par tranches (tilesTick)
       TL.gridQ.push(t);
       dirty = true;
@@ -525,10 +532,38 @@ function createViewer(container, cfg0, loader) {
       const t = TL.gridQ[0];
       let r;
       try { r = t.gen.next(); } catch (e) { TL.gridQ.shift(); tileUnload(t); tileFail(t, e); continue; }
-      if (r.done) { TL.gridQ.shift(); t.grid = r.value; t.gen = null; t.state = 'ready'; t.fails = 0; dirty = true; tilesPendingCheck(); tilesInfo(); }
+      if (r.done) { TL.gridQ.shift(); t.grid = r.value; t.gen = null; t.state = 'ready'; t.fails = 0; dirty = true; landKey = ''; tilesPendingCheck(); tilesInfo(); }
     }
     if (now - TL.lastUpd > 250) tilesUpdate(now);
     if (TL.waitT > 0 || TL.pending) tilesInfo();
+  }
+  // vue d'ensemble : chargée avant les tuiles ; un échec n'est pas fatal (la région fonctionne alors comme en v30)
+  async function loadOverview(ov, idx) {
+    OV.state = 'loading';
+    try {
+      const r = await fetch(relUrl(ov.file, idx).href);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const buf = await r.arrayBuffer();
+      const gltf = await loader.parseAsync(buf, '');
+      const g = gltf.scene; g.name = 'overview';
+      g.quaternion.copy(TL.root.quaternion);
+      const byFile = new Map(TL.tiles.map(t => [t.file, t]));
+      let tri = 0, cells = 0;
+      for (const c of g.children) {
+        c.traverse(o => { if (o.isMesh) { o.matrixAutoUpdate = false; o.castShadow = o.receiveShadow = false; const gm = o.geometry; tri += gm.index ? gm.index.count / 3 : gm.attributes.position.count / 3; } });
+        const t = byFile.get(c.userData && c.userData.tile);   // extras.tile : GLTFLoader retire « / », « . » et les espaces des noms de nœuds
+        if (t) { t.ov = c; c.name = t.file; cells++; }
+      }
+      g.updateMatrixWorld(true);
+      g.traverse(o => { if (o.isMesh) o.updateMatrix(); });
+      scene.add(g);
+      OV.root = g; OV.bytes = buf.byteLength; OV.tri = Math.round(tri); OV.cells = cells; OV.state = 'ready';
+      for (const t of TL.tiles) ovSync(t);
+      dirty = true;
+    } catch (e) {
+      OV.state = 'failed';
+      console.warn('vue d\'ensemble « ' + ov.file + ' » indisponible (' + (e && e.message ? e.message : e) + ') : la région fonctionne sans elle');
+    }
   }
   // charge X.tiles.json puis les tuiles autour du point de départ ; rend la main quand les tuiles qui contiennent ce point sont prêtes
   // (ou en échec). opts : spawn (id d'arrivée du lien, sinon « default »), radius (?rayon=)
@@ -562,8 +597,21 @@ function createViewer(container, cfg0, loader) {
         box: [b.min.x, b.min.z, b.max.x, b.max.z], ymin: b.min.y, ymax: b.max.y, state: 'idle', d: 0, fails: 0, retryAt: 0, ac: null, grp: null, grid: null, gen: null });
     }
     TL.root = root; model = root; TL.extent = ext; scene.add(root);
-    // la vue d'ensemble n'existe pas encore : la caméra se cadre sur le rayon de chargement, pas sur toute la région
-    fit = Math.max(2 * TL.radius, 200) / 2 / Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2) * 1.35;
+    const ovd = doc.overview;
+    if (ovd && typeof ovd === 'object' && safeRel(ovd.file) && /\.glb$/i.test(ovd.file)) await loadOverview(ovd, idx);
+    else if (ovd) console.warn('vue d\'ensemble ignorée (adresse refusée) :', ovd && ovd.file);
+    const tanH = Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
+    if (OV.state === 'ready' && !ext.isEmpty()) {
+      // la vue d'ensemble montre toute la région : la caméra se cadre sur l'étendue entière (brouillard et plan lointain suivent)
+      fit = Math.max(ext.max.x - ext.min.x, ext.max.z - ext.min.z, ext.max.y - ext.min.y, 200) / 2 / tanH * 1.35;
+      const D = fit * Math.max(1, Number(cfg.zoom) || 1);
+      controls.maxDistance = Math.max(controls.maxDistance, D * 1.5);
+      scene.fog.near = Math.max(scene.fog.near, D * 1.1); scene.fog.far = Math.max(scene.fog.far, D * 3);
+      camera.far = Math.max(camera.far, scene.fog.far + D); camera.updateProjectionMatrix();
+    } else {
+      // pas de vue d'ensemble : la caméra se cadre sur le rayon de chargement, pas sur toute la région
+      fit = Math.max(2 * TL.radius, 200) / 2 / tanH * 1.35;
+    }
     if (!ext.isEmpty()) { seaCx = (ext.min.x + ext.max.x) / 2; seaCz = (ext.min.z + ext.max.z) / 2; if (sea) sea.position.set(seaCx, cfg.seaY, seaCz); }
     frame();
     let f = null;
@@ -586,6 +634,7 @@ function createViewer(container, cfg0, loader) {
   function tilesState() {
     const names = t => TL.tiles.filter(q => t.includes(q.state)).map(q => q.file);
     return Object.assign(tilesStatus(), { on: TL.on, radius: TL.radius, margin: TL.margin, maxBytes: TL.maxBytes, maxTri: TL.maxTri, conc: TL.conc,
+      overview: { state: OV.state, bytes: OV.bytes, tri: OV.tri, cells: OV.cells, visible: OV.root ? OV.root.children.filter(c => c.visible).map(c => c.name) : [], hidden: OV.root ? OV.root.children.filter(c => !c.visible).map(c => c.name) : [] },
       ready: names(['ready']), loadingFiles: names(['loading', 'building']), failedFiles: names(['failed']), groups: TL.root ? TL.root.children.map(c => c.name) : [], inflight: TL.inflight, gridQueue: TL.gridQ.length });
   }
 
@@ -707,8 +756,15 @@ function createViewer(container, cfg0, loader) {
     if (document.pointerLockElement === dom && document.exitPointerLock) document.exitPointerLock();
     camera.rotation.order = 'XYZ';
     camera.fov = W.saved.fov; camera.updateProjectionMatrix();
-    camera.position.copy(W.saved.pos); controls.target.copy(W.saved.target);
+    // v31 : la cible de la vue globale (cercle d'atterrissage) passe au sol sous l'avatar ; la caméra garde le décalage (distance et direction)
+    // qu'elle avait avant l'entrée en promenade. En mode tuiles le chargeur suit cette cible : les tuiles autour de l'avatar restent.
+    const off = W.saved.pos.clone().sub(W.saved.target);
+    let gy = W.grid ? W.grid.ground(W.pos.x, W.pos.z, W.pos.y + 2) : null;
+    if (gy === null) gy = W.pos.y;
+    controls.target.set(W.pos.x, gy, W.pos.z);
+    camera.position.copy(controls.target).add(off);
     controls.enabled = true; controls.update();
+    landKey = '';
     W.grid = null; dirty = true;
     zoneInside.clear(); if (nearZone) { nearZone = null; if (onNear) onNear(null); }
     presenceLeave();
@@ -1340,6 +1396,14 @@ function createViewer(container, cfg0, loader) {
     const tokens = parseIgnore(cfg.walkIgnore);
     for (const h of tpRay.intersectObject(model, true)) {
       if (!solidHit(h, tokens)) continue;
+      controls.target.copy(h.point); controls.update(); dirty = true;
+      landY = h.point.y; landKey = tkey(controls.target); landDirty = false; faceUp(h, landN);
+      if (onLanding) onLanding(h.point.toArray());
+      return true;
+    }
+    // mode tuiles : la vue d'ensemble sert à désigner un point lointain (la cible suit, les tuiles se chargent) ; le sol réel est repris dès que la tuile est prête
+    if (OV.root) for (const h of tpRay.intersectObjects(ovCells(), true)) {
+      if (!h.object.isMesh) continue;
       controls.target.copy(h.point); controls.update(); dirty = true;
       landY = h.point.y; landKey = tkey(controls.target); landDirty = false; faceUp(h, landN);
       if (onLanding) onLanding(h.point.toArray());

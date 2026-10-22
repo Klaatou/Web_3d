@@ -761,6 +761,9 @@ def read_tiles_index(path: pathlib.Path):
             ok = ok and isinstance(t.get(k), list) and len(t[k]) == 3 and all(isinstance(v, (int, float)) and math.isfinite(v) for v in t[k])
         if not ok:
             sys.exit(f"[ERREUR] {path} : entrée de tuile invalide ({str(t)[:120]}) : « file » doit être un chemin relatif .glb (sans .. ni :), « min » et « max » trois nombres")
+    ov = doc.get("overview")
+    if ov is not None and not (isinstance(ov, dict) and safe_rel_path(ov.get("file")) and str(ov["file"]).lower().endswith(".glb")):
+        sys.exit(f"[ERREUR] {path} : « overview » invalide ({str(ov)[:120]}) : « file » doit être un chemin relatif .glb (sans .. ni :)")
     return doc
 
 
@@ -774,32 +777,38 @@ def tiles_default_target(doc, rotate=0):
 
 
 def place_tiles(tiles_path: pathlib.Path, doc, page_dir: pathlib.Path):
-    """Met X.tiles.json et ses tuiles à côté de la page. Rien n'est copié si elles y sont déjà (une région fait plus d'un Go) ;
+    """Met X.tiles.json, ses tuiles et sa vue d'ensemble à côté de la page. Rien n'est copié si elles y sont déjà (une région fait plus d'un Go) ;
     sinon copie, fichier par fichier, ce qui manque ou a une autre taille. Rend le chemin relatif de X.tiles.json depuis la page."""
     src, dst = tiles_path.resolve().parent, page_dir.resolve()
     files = [t["file"] for t in doc["tiles"]]
+    ov = doc.get("overview")
+    ov_file = ov["file"] if isinstance(ov, dict) else None
     absent = [f for f in files if not (src / f).is_file()]
     if absent:
         print(f"[AVERTISSEMENT] {len(absent)} tuile(s) listée(s) dans {tiles_path.name} introuvable(s) à côté de lui (première : {absent[0]}) ; la page les signalera et réessaiera", file=sys.stderr)
+    if ov_file and not (src / ov_file).is_file():
+        print(f"[AVERTISSEMENT] vue d'ensemble {ov_file} introuvable à côté de {tiles_path.name} ; la page fonctionnera sans elle", file=sys.stderr)
+    ov_txt = f" ; vue d'ensemble {ov_file} placée avec les tuiles" if ov_file else ""
     if src == dst:
-        print(f"[tuiles] {len(files)} tuile(s) et {tiles_path.name} déjà à côté de la page : rien n'est copié")
+        print(f"[tuiles] {len(files)} tuile(s) et {tiles_path.name} déjà à côté de la page : rien n'est copié{ov_txt}")
         return tiles_path.name
     copied = same = size = 0
-    for f in files:
+    for f in files + ([ov_file] if ov_file else []):
         a, b = src / f, dst / f
         if not a.is_file():
             continue
         if b.is_file() and b.stat().st_size == a.stat().st_size:
-            same += 1
+            same += 1 if f != ov_file else 0
             continue
         b.parent.mkdir(parents=True, exist_ok=True)
         tmp = b.with_name(b.name + ".tmp")
         shutil.copyfile(a, tmp)
         tmp.replace(b)
-        copied += 1
+        if f != ov_file:
+            copied += 1
         size += a.stat().st_size
     write_atomic(dst / tiles_path.name, tiles_path.read_bytes())
-    print(f"[tuiles] {tiles_path.name} copié dans {dst} ; tuiles : {copied} copiée(s) ({size / 2**20:.1f} Mo), {same} déjà présente(s) de même taille (ni vérifiées ni recopiées)")
+    print(f"[tuiles] {tiles_path.name} copié dans {dst} ; tuiles : {copied} copiée(s) ({size / 2**20:.1f} Mo), {same} déjà présente(s) de même taille (ni vérifiées ni recopiées){ov_txt}")
     return tiles_path.name
 
 
