@@ -439,3 +439,90 @@ python glb2html.py --settings "Region-final.glb" --config-only --wave 2 -o "Regi
 ```
 
 Les options de la ligne de commande l'emportent sur le `.reglages.json`. Les visiteurs voient le changement à leur prochain rechargement.
+
+## 17. Découper un GLB énorme en tuiles (`tools/glb2tiles.py`, v28)
+
+`glb2tiles.py` découpe un GLB trop lourd en **tuiles autonomes** : chacune est un GLB valide (ouvrable seul dans `glb-viewer.html`), avec ses propres nœuds, meshes, matériaux et images, aux coordonnées d'origine (aucun recentrage). Cette version **écrit seulement les tuiles et leur liste** ; le chargement des tuiles par la page n'existe pas encore (lot suivant). Python standard seulement. Le GLB d'entrée n'est jamais chargé en entier : l'en-tête JSON est lu, puis les indices, positions et images par morceaux.
+
+`glb-stats.py` doit rester **à côté** de `glb2tiles.py` (fonctions de mesure communes) ; `python build.py` met les deux dans `dist/`.
+
+### Les commandes (PowerShell, une seule ligne)
+
+| Pour | Commande |
+|---|---|
+| Voir la version | `python glb2tiles.py --version` |
+| Mesurer et obtenir une recommandation, sans rien écrire | `python glb2tiles.py "P:\...\Region.glb" --analyse` |
+| Découper (recommandation « découper ») | `python glb2tiles.py "P:\...\Region.glb"` |
+| Découper même si la recommandation est « pas de découpage » | `python glb2tiles.py "P:\...\Region.glb" --forcer` |
+| Écrire ailleurs qu'à côté du GLB | `python glb2tiles.py "P:\...\Region.glb" --sortie "P:\...\tuiles"` |
+
+Commencer par `--analyse` : elle donne les mesures de `glb-stats.py`, les 10 meshes les plus lourds (octets compactés, étendue en mètres), les 10 instances les plus éloignées du centre médian (valeurs aberrantes), le nombre de tuiles prévu avec les paramètres choisis, le facteur de duplication prévu, le nombre d'objets racine gardés entiers ou répartis, et une phrase de recommandation : « pas de découpage nécessaire » ou « découper : budget N Mo, T tuiles, duplication F ». Un GLB léger répond « pas de découpage nécessaire » et rien n'est écrit (même sans `--analyse`, sauf avec `--forcer`).
+
+### Les paramètres
+
+| Option | Défaut | Sens |
+|---|---|---|
+| `--budget` | 32 | Mo par tuile (poids autonome : primitives distinctes compactées + images distinctes) |
+| `--budget-tri` | 1500000 | triangles par tuile (le poids en Mo ne suffit pas : un bloc peut avoir 5 M de triangles pour 70 Mo) |
+| `--min` | 16 | côté minimal d'une cellule, en m : on ne subdivise plus en dessous |
+| `--entier-poids` | 16 | Mo : un objet racine plus léger que cela peut rester entier |
+| `--entier-etendue` | 256 | m : …et plus petit que cela (les deux conditions ensemble ; l'étendue seule ne décide pas) |
+| `--seuil`, `--seuil-tri` | 150, 3000000 | sous ces deux valeurs : « pas de découpage nécessaire » |
+| `--aberrant` | 1000 | m : une instance plus loin que cela du centre médian, ou plus grande, est signalée |
+| `--bloc` | 256 | côté des blocs de la partie `glb-stats` de `--analyse` |
+| `--sortie` | à côté du GLB | dossier de sortie |
+| `--forcer` | | découper même sous les seuils |
+| `--nopause` | | ne pas attendre Entrée à la fin |
+
+### Comment le découpage se décide
+
+- Quadtree adaptatif sur le plan X,Z (Y est la hauteur), uniquement sur les cellules non vides. Une cellule est subdivisée tant que son poids autonome dépasse `--budget` **ou** ses triangles dépassent `--budget-tri`, et que son côté dépasse `--min`.
+- Un **objet racine** (nœud de premier niveau de la scène) reste **entier**, dans la cellule du centre de sa boîte, si son poids autonome ≤ `--entier-poids` **et** son étendue ≤ `--entier-etendue`. Sinon il est **réparti instance par instance** : chaque instance va dans la cellule de son propre centre, et les nœuds parents sont recopiés (sans mesh) avec leurs transformations d'origine.
+- Un objet qui porte un **skin** n'est jamais réparti : son objet racine entier va dans la tuile du centre de sa boîte, avec le skin, les nœuds de joints (même s'ils sont hors de l'objet) et les `inverseBindMatrices`.
+- Les meshes partagés entre tuiles sont **dupliqués** dans chaque tuile qui les utilise (tuiles autonomes). La duplication réelle est écrite dans le rapport.
+- Les sommets de chaque primitive sont **compactés** : seuls les sommets indexés sont gardés et renumérotés, avec le plus petit type d'indices (16 bits si possible). Les triangles sont identiques.
+- Un mesh **unique** plus lourd que le budget (terrain, mer) ne peut pas être réparti à ce stade : sa cellule reste telle quelle, hors budget, avec un avertissement (nom, étendue, Mo).
+- Un GLB compressé (Draco, meshopt) est refusé avec un message clair. Accessors `sparse` : refusés avec un message.
+
+### Fichiers produits
+
+`X.tiles/T_<niveau>_<i>_<j>.glb` (niveau et position de la cellule dans le quadtree) et `X.tiles.json` (UTF-8 sans BOM), à côté du GLB `X.glb` :
+
+```
+{
+ "version": 1,                      version du format
+ "generator": "glb2tiles v28 (21/10/2026)",
+ "source": "X.glb",
+ "extent": {"min": [x,y,z], "max": [x,y,z]},     étendue globale du contenu
+ "params": {"budgetMo": 32, "budgetTriangles": 1500000, "minCell": 16, "wholeWeightMo": 16, "wholeExtent": 256,
+            "thresholdMo": 150, "thresholdTriangles": 3000000, "outlier": 1000},
+ "warnings": ["..."],               tuiles hors budget, valeurs aberrantes, extensions non recopiées
+ "roots": {"whole": 1700, "split": 125},         objets racine gardés entiers / répartis
+ "duplication": 1.8,                somme des octets de géométrie des tuiles / géométrie unique du GLB
+ "tiles": [{"file": "X.tiles/T_3_2_5.glb", "level": 3, "i": 2, "j": 5,
+            "min": [x,y,z], "max": [x,y,z],   boîte du contenu réel de la tuile (un objet qui déborde de sa cellule reste couvert)
+            "instances": 812, "triangles": 410233,
+            "bytes": 21345678, "geometryBytes": 9001234, "imageBytes": 12000000}]
+}
+```
+
+Relancer écrase les `T_*_*_*.glb` du dossier `X.tiles/` (les autres fichiers ne sont pas touchés).
+
+### Lire le journal (`glb2tiles.log`, à côté du script)
+
+Première ligne : `[glb2tiles] v28 (21/10/2026)`. L'avancement est écrit toutes les 5 % ou 10 s. Le rapport final donne : nombre de tuiles, médiane / 90 % / maximum du poids et des triangles, duplication réelle, nombre de racines entières et réparties, avertissements, temps total. `python glb2tiles.py --version` affiche la version sans journal ni pause.
+
+Dans `--analyse`, la ligne « Lecture » indique les octets lus. Les positions ne sont lues que pour les primitives qui n'utilisent qu'une partie d'un tampon de sommets partagé (la boîte de l'accessor serait trop grande) ; les autres boîtes viennent de l'en-tête.
+
+### Si quelque chose ne va pas
+
+| Symptôme | Cause probable | Que faire |
+|---|---|---|
+| « GLB compressé » | le GLB utilise Draco ou meshopt | décompresser le GLB d'abord (hors de ce lot) |
+| « glb-stats.py introuvable » | le script est seul dans son dossier | copier `glb-stats.py` à côté |
+| « Tuile … hors budget » | un mesh unique (terrain, mer) dépasse le budget, ou la cellule minimale est atteinte | normal à ce stade : voir la feuille de route (découpage par triangles) |
+| Beaucoup de tuiles pour un petit GLB | `--budget` trop petit ou duplication forte | relancer `--analyse` avec d'autres valeurs |
+| Instance à 3 000 m signalée | un prim géant ou un objet égaré | l'outil la garde ; la corriger dans le modèle si c'est une erreur |
+
+Test : `python tests/glb2tiles.py` (GLB synthétiques, sans navigateur ni réseau).
+

@@ -43,6 +43,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 20/10/2026 |  | v25 | v25 : oar2glb.py, meshes riggés reconstruits depuis le .llmesh de l'OAR, prims invisibles et boîtes d'animesh retirés, --diag, --reperes, --keep-invisible, relance de convoar si des images manquent, mode d'emploi |
 | 21/10/2026 |  | v26 | v26 : coquille unique en mode modulaire (`--shared-shell`, `index.html?region=NOM`, nom refusé sans requête réseau), export `.zip` du viewer en `index.html`, `oar2glb.py --version` fabriqué dans `dist/`, notes « régions énormes » |
 | 21/10/2026 |  | v27 | v27 : repères des avatars empilés (nom, bulle de chat, losange) : la bulle n'est plus recouverte, `tests/v27.py` |
+| 21/10/2026 |  | v28 | v28 : `tools/glb2tiles.py` (découpage d'un GLB énorme en tuiles autonomes, `--analyse`), `glb-stats.py` en fonctions communes, `tests/glb2tiles.py` |
 
 ## Commandes utiles
 

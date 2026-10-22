@@ -2,6 +2,17 @@
 
 Les dates sont au format jj/mm/aaaa.
 
+## v28 (21/10/2026)
+- **Nouvel outil `tools/glb2tiles.py`** (fabriqué dans `dist/glb2tiles.py`) : découpe un GLB énorme en tuiles autonomes `X.tiles/T_<niveau>_<i>_<j>.glb` + `X.tiles.json`. Ni le viewer ni la coquille ne sont modifiés : le chargement des tuiles viendra dans un autre lot.
+- **Lecture par morceaux** : le GLB n'est jamais chargé en entier (en-tête JSON, puis indices, positions et images par seek/read). Avancement dans le journal toutes les 5 % ou 10 s. GLB compressé (Draco, meshopt) et accessors `sparse` : refus avec message.
+- **Découpage** : quadtree adaptatif sur X,Z, cellules non vides seulement, budget en Mo **et** en triangles (`--budget`, `--budget-tri`, `--min`). Objet racine gardé entier si poids autonome ≤ `--entier-poids` ET étendue ≤ `--entier-etendue`, sinon réparti instance par instance (parents recopiés avec leurs transformations). Objet avec skin : jamais réparti (joints hors de l'objet, `inverseBindMatrices` recopiés). Mesh unique plus lourd que le budget : avertissement. Meshes partagés dupliqués dans chaque tuile.
+- **Compactage** : seuls les sommets indexés sont gardés (positions, normales, tangentes, UV, couleurs, joints, poids, cibles), renumérotés, indices en 16 bits si possible, min/max des positions recalculés, `byteStride` et `normalized` gérés (éléments de 3 octets complétés à 4).
+- **`--analyse`** (lecture seule) : mesures de `glb-stats`, 10 meshes les plus lourds, 10 instances les plus éloignées, nombre de tuiles et duplication prévus, racines entières/réparties, recommandation en une phrase (« pas de découpage nécessaire » sous `--seuil` Mo et `--seuil-tri` triangles). Les positions ne sont lues que pour les primitives qui n'utilisent qu'une partie d'un tampon partagé (boîte exacte) ; le résumé le chiffre.
+- `tools/glb-stats.py` : le calcul est découpé en fonctions communes `modele(g)` et `rapport(...)`, réutilisées par `glb2tiles.py` ; sortie inchangée (vérifié octet pour octet). `build.py` copie `glb-stats.py` dans `dist/` à côté de `glb2tiles.py`.
+- `--version` (`glb2tiles vNN (jj/mm/aaaa)`, sans journal ni pause), version en première ligne de `glb2tiles.log`.
+- Tests : nouveau `tests/glb2tiles.py` (GLB synthétiques : léger, accessor partagé, racine de 80 m, racine de 600 m à 1 000 enfants, mesh hors budget, mesh réutilisé, skin, instance à 3 km, Draco refusé, lecture par morceaux, version).
+- Docs : `MODE_EMPLOI.md` § 17, `README.md`, `CLAUDE.md` (décisions v28, feuille de route).
+
 ## v27 (21/10/2026)
 - **Repère des avatars visiteurs : la bulle de chat n'est plus recouverte.** Les repères sont empilés de bas en haut : nom, bulle (si elle existe), losange, avec une marge entre chacun, calculée sur les tailles réelles des sprites (`scale.y`). Le nom et la bulle suivent le même facteur d'éloignement k (la bulle grossit avec la distance comme le nom, donc le nom ne la recouvre plus de loin) ; le bas du losange est toujours au-dessus du haut de la bulle, de 1 à 4 lignes, de près comme de loin. Sans bulle, le losange est exactement à sa hauteur d'avant ; à l'apparition ou à la disparition d'une bulle il glisse (environ 0,2 s) au lieu de sauter. Ni couleur ni forme modifiées, protocole de présence inchangé.
 - `getPresence()` expose en plus, par visiteur, `stack` (hauteurs bas / haut du nom, de la bulle et du losange, distance à la caméra), pour les tests.
