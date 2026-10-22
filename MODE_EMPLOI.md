@@ -1,4 +1,4 @@
-# Mode d'emploi : zones, portails et points d'arrivée (v33)
+# Mode d'emploi : zones, portails et points d'arrivée (v34)
 
 ## 1. La règle qui explique 90 % des pannes
 
@@ -24,9 +24,13 @@ Exemple juste :
 | **F** | entrer ou sortir de la promenade. **À la sortie (v31)**, le petit cercle d'atterrissage et la cible de la vue globale se posent **au sol, sous le dernier endroit où se trouvait l'avatar** ; la caméra revient à la **même distance et dans la même direction** de cette cible qu'avant l'entrée en promenade (elle ne revient plus à l'endroit exact d'où tu étais parti). En mode tuiles, les tuiles autour de l'avatar restent donc chargées. |
 | **E** | utiliser la zone proche (son nom s'affiche en bas : « E : … »). **En vol (v33), E monte** : les zones se déclenchent alors au clic |
 | **Début** (v33) | décoller ou atterrir (bascule). En vol : **E** monte, **C** descend, pas de gravité, les murs restent solides, jamais sous le sol. Retirable avec `--no-fly` (§ 18.4) |
-| **V** (v33) | changer de vue : subjective → troisième personne → caméra libre → subjective. La vue courante est écrite en texte dans le panneau d'aide (« Vue : … ») |
+| **V** (v33) | changer de vue : subjective → troisième personne → caméra libre → subjective. La vue courante est écrite en texte dans le bloc d'état (« Vue : … », v34) |
 | **R** (v33) | **retour à l'arrivée** : en promenade, téléporte à l'arrivée `default` (à défaut, à la cible de départ) en attendant la tuile ; en vue globale, recadre la cible et la caméra sur ce point. Le bouton « Retour à l'arrivée (R) » fait la même chose |
 | **Entrée** (v33) | ouvrir la saisie du chat ; **Entrée envoie et garde la saisie ouverte**, **Échap** la ferme. Les flèches continuent à déplacer l'avatar (§ 18.5) |
+| **Page Haut** / **Page Bas** (v34) | en vol, monter / descendre (en plus de **E** / **C**) ; la page ne défile pas. **Descendre jusqu'au sol pose l'avatar** : le vol s'arrête tout seul. Bouton « Voler / Atterrir » dans la barre du bas pour qui n'a pas de touche Début (§ 19.3) |
+| **Échap** (v34) | libère la souris en promenade. La souris reste alors **libre** (un clic ou un double-clic n'aspire plus le pointeur) jusqu'à **G** ou au bouton « Capturer la souris » (§ 19.4) |
+| **G** (v34) | recapturer la souris après Échap |
+| **I** (v34) | masquer / afficher le **bloc d'état** (vue, mode, souris, position, tuiles). **H** masque seulement l'aide (§ 19.1) |
 | **P** | dans le viewer, en promenade : poser la zone à tes pieds |
 | **M** | ouvrir la carte des mondes |
 
@@ -389,6 +393,7 @@ dossier/
 | Autre nom de coquille | `--shared-shell monde.html` (adresse `monde.html?region=Ankh`) |
 | Changer un réglage | `python glb2html.py --settings "Ankh.glb" --config-only --shared-shell --wave 2 -o "Ankh.html"` |
 | Changer les zones seules | `python glb2html.py -o "Ankh.html" --zones-only --zones zones.json` |
+| Mettre à jour une région (v34) | `python glb2html.py --maj -o "Ankh.html" --shared-shell --sea-y 12` : applique **seulement** les options données, garde le reste de la config et les zones (§ 19.6) |
 
 Règles :
 
@@ -774,7 +779,7 @@ Ils concernent les portails et les zones libres (lien web, commande). Réglage d
 ### 18.4 Vol, trois vues, « Aller à »
 
 - **Vol** (`--fly`, défaut ; `--no-fly` le retire de la page et de l'aide) : **Début** décolle ou atterrit. En vol, **E** monte et **C** descend (même vitesse que la marche, **Maj** accélère), pas de gravité, les murs bloquent comme au sol, l'avatar ne descend jamais sous le sol des tuiles chargées. Vers une tuile pas encore prête, l'avatar s'arrête au bord (« Chargement du sol… »), comme à pied. À l'atterrissage la gravité le ramène sur le sol (ou sur un toit). La présence transmet la hauteur normalement. En vol, E ne déclenche plus les zones : cliquer dessus.
-- **Vues** (**V**) : subjective (la vue d'avant) ; **troisième personne** (la caméra tourne autour de l'avatar, à 4 m, se rapproche si un mur est derrière lui, ne passe jamais sous le sol, la souris règle la hauteur) ; **caméra libre** (l'avatar reste sur place, les touches de déplacement et les flèches déplacent et tournent la caméra, **E** et **C** la montent et la descendent, elle ne traverse pas le sol). En caméra libre, **V** de nouveau ou **F** rend la main à l'avatar (un second **F** quitte la promenade). L'avatar est dessiné avec le même modèle que les autres visiteurs, avec le nom et la couleur du visiteur. La vue est écrite en texte dans le panneau d'aide (« Vue : troisième personne · au sol »).
+- **Vues** (**V**) : subjective (la vue d'avant) ; **troisième personne** (la caméra tourne autour de l'avatar, à 4 m, se rapproche si un mur est derrière lui, ne passe jamais sous le sol, la souris règle la hauteur) ; **caméra libre** (l'avatar reste sur place, les touches de déplacement et les flèches déplacent et tournent la caméra, **E** et **C** la montent et la descendent, elle ne traverse pas le sol). En caméra libre, **V** de nouveau ou **F** rend la main à l'avatar (un second **F** quitte la promenade). L'avatar est dessiné avec le même modèle que les autres visiteurs, avec le nom et la couleur du visiteur. La vue est écrite en texte dans le panneau d'aide (v34 : « Vue : troisième personne » et « Mode : à pied » dans le bloc d'état, § 19.1).
 - **« Aller à x, y, z »** (panneau d'aide) : mètres, **repère du modèle d'origine en mode tuiles, repère de la page (modèle recentré) en mode GLB unique** (le panneau le dit). Formats : `68.2, 39, -823.3` ; `68.2 39 -823.3` ; `68,2 ; 39,0 ; -823,3` (virgule décimale avec points-virgules). En promenade : téléportation, avec l'attente de la tuile ; en vue globale : la cible se déplace.
 
 ### 18.5 Chat
@@ -786,7 +791,7 @@ Ils concernent les portails et les zones libres (lien web, commande). Réglage d
 
 ### 18.6 Couleur de l'avatar (client et serveur)
 
-Réglages → « Choisir la couleur de mon avatar » : la valeur est mémorisée dans le navigateur et **envoyée dans le message `hello`** (entier de 0 à 0xFFFFFF). `presence_server.py` l'accepte si c'est **un entier entre 0 et 0xFFFFFF** ; sinon (hors bornes, flottant, texte, booléen, null, liste) il la **rejette sans rien dire** et tire une couleur au hasard, comme avant, puis la diffuse comme couleur actuelle. Un ancien client (sans couleur) fonctionne ; un ancien serveur ignore simplement le champ. Prise en compte à la prochaine connexion. **Le nom affiché reste le repère principal** (étiquette au-dessus de l'avatar) ; rien n'est basé sur la couleur seule.
+Réglages → « Choisir la couleur de mon avatar » : la valeur est mémorisée dans le navigateur et **envoyée dans le message `hello`** (entier de 0 à 0xFFFFFF). `presence_server.py` l'accepte si c'est **un entier entre 0 et 0xFFFFFF** ; sinon (hors bornes, flottant, texte, booléen, null, liste) il la **rejette sans rien dire** et tire une couleur au hasard, comme avant, puis la diffuse comme couleur actuelle. Un ancien client (sans couleur) fonctionne ; un ancien serveur ignore simplement le champ. Depuis la v34, le changement est **envoyé aussitôt** (§ 19.5). **Le nom affiché reste le repère principal** (étiquette au-dessus de l'avatar) ; rien n'est basé sur la couleur seule.
 
 **À faire côté serveur : relancer `presence_server.py` avec la nouvelle version** (la couleur choisie n'est prise en compte que par la v33 du serveur). Commande type (une seule ligne, à adapter à tes options) :
 
@@ -818,3 +823,46 @@ Si `--zones FICHIER` désigne **le `X.zones.json` de destination** (même chemin
 ### 18.10 Mettre à jour une région déjà publiée
 
 La coquille (`index.html`), `core.js` et `X.config.json` changent ; **les tuiles et `X.tiles.json` ne changent pas** (aucun redécoupage). Supprimer la coquille `index.html` de la région (une coquille existante et différente n'est jamais écrasée), régénérer la page **sans `--zones`** (le `X.zones.json` existant est conservé), relancer `presence_server.py` (§ 18.6).
+
+## 19. Nouveautés de la v34 (22/10/2026)
+
+### 19.1 Panneau d'aide sélectionnable et bloc d'état
+
+- Le **texte de l'aide** (touche **H**) se sélectionne à la souris et se copie avec **Ctrl+C**, sans bouton « copier » ; **Ctrl+C n'est plus intercepté** par la promenade (la touche **C** seule continue de descendre en vol). L'aide reçoit la souris : le survol des marqueurs de zones ne marche plus **sous** l'aide, il marche partout ailleurs. Son encombrement est borné (largeur de 440 px au plus et 45 % de la fenêtre, hauteur de 42 % de la fenêtre avec défilement).
+- Nouveau **bloc d'état**, séparé de l'aide, en dessous d'elle, avec le texte sélectionnable aussi : `Vue : …` (subjective, troisième personne, caméra libre, ou globale en orbite), `Mode : à pied` / `Mode : en vol`, `Souris : …` (§ 19.4), `Position avatar : x … y … z …` (ou cible de la vue globale), puis les lignes des tuiles et de la vue d'ensemble. L'aide ne garde que les touches et les réglages.
+- **H** masque l'aide seule (l'état reste). **I** masque ou affiche le bloc d'état (choix mémorisé dans le navigateur, clé `glb2html_state`).
+- L'étiquette « Vue : troisième personne · au sol » est remplacée par deux lignes : « Vue : troisième personne » et « Mode : à pied ».
+
+### 19.2 Zone de survol et de clic des marqueurs
+
+| Option | Rayon de la zone de survol / de clic (disque invisible au sol) |
+|---|---|
+| `--zone-marker portee` | **le rayon de l'anneau visible** (rayon réel de la zone ; 2 m au moins pour un panneau) : l'infobulle apparaît en survolant l'anneau ou son intérieur |
+| `--zone-marker discret` (défaut) | le rayon de la zone borné entre **0,6 m** (comme avant) et **1 m** |
+| `--zone-marker aucun` | 0,6 m, comme avant |
+
+### 19.3 Vol
+
+**Page Haut** monte, **Page Bas** descend (en plus de **E** et **C**), sans défilement de la page. **Début** garde la bascule. Quand on descend jusqu'au sol, **l'avatar atterrit tout seul** (le vol s'arrête, la gravité reprend) ; il ne passe jamais sous le sol. Le bouton **« Voler / Atterrir »** de la barre du bas (visible en promenade, absent avec `--no-fly`) bascule le vol ; son état (`aria-pressed`) et la ligne « Mode : … » le disent en texte.
+
+### 19.4 Souris libre après Échap
+
+En promenade, quand le pointeur est libéré (Échap, ou perte du focus), la page mémorise **« souris libre »**, écrit « Souris : libre (G ou bouton « Capturer la souris » pour la reprendre) » dans le bloc d'état et **ne redemande plus le verrouillage** : un clic simple, un double-clic (téléportation à l'endroit du curseur) et un clic sur une zone fonctionnent à l'endroit du curseur ; glisser avec le bouton enfoncé tourne toujours la vue. **Recapturer** : touche **G** ou bouton **« Capturer la souris »** (barre du bas). L'état est remis à zéro à chaque entrée en promenade (le premier clic capture comme avant).
+
+### 19.5 Couleur en direct
+
+Changer la couleur dans les Réglages pendant la connexion envoie `{"t":"color","color":N}` (au plus toutes les 300 ms, la dernière valeur part toujours). `presence_server.py` accepte un **entier de 0 à 0xFFFFFF** (sinon ignoré sans rien dire), ignore deux changements à moins de 0,2 s, met le visiteur à jour et diffuse `{"t":"color","id":…,"color":N}` aux autres ; un visiteur qui arrive ensuite reçoit la couleur à jour. L'avatar du visiteur lui-même (vue à la troisième personne) la prend aussi. Compatible : un ancien serveur ignore le message, un ancien client n'en envoie pas. **Relancer `presence_server.py`** pour en profiter.
+
+### 19.6 `glb2html.py --maj` : mettre à jour une région sans rien ressaisir
+
+| Option | Effet |
+|---|---|
+| `--maj` | lit `X.config.json` existant, **n'applique que les options explicitement données** (une valeur égale à la valeur par défaut, mais donnée, est appliquée), garde tout le reste (clés inconnues comprises) et `X.zones.json` (réécrit seulement avec `--zones`), écrit la version courante, **renouvelle la coquille** si elle diffère de celle de cette version (ancienne copie gardée sous `index.avant-AAAAMMJJ-HHMMSS.html`) et écrit `lib/` s'il manque. Sans `X.config.json`, échoue en proposant la commande sans `--maj`. Exclut `--settings` |
+
+Forme : `python glb2html.py --maj -o "X.html" [--shared-shell [COQUILLE.html]] [--tiles "X.tiles.json" | "X.glb"] [options]`. Sans `--shared-shell`, la page `X.html` doit exister. La coquille est **partagée par les autres régions du dossier** : elles gardent leur comportement (les anciennes configurations restent comprises ; aucune clé de config n'est nouvelle en v34). Le compte rendu liste les clés changées. Le profil (`--profile`) ne filtre les zones qu'à l'écriture de la liste : ajouter `--zones` pour la réécrire.
+
+### 19.7 Pseudo, lien personnel, page de lancement
+
+- **`#name=PSEUDO`** dans l'adresse règle le pseudo (mémorisé dans le navigateur) ; les portails et la carte l'ajoutent déjà.
+- Réglages → **« Copier mon lien personnel »** : copie l'adresse de la page avec `#name=PSEUDO&key=CLE`, où CLE est la **clé d'identité du navigateur** (32 caractères hexadécimaux, `glb2html_uid`, celle que le serveur associe au nom réservé). **Ce lien est un secret : quiconque l'ouvre prend l'identité** (le nom réservé). À l'ouverture, une clé au bon format devient celle du navigateur ; si ce navigateur en a déjà une **différente**, un message à l'écran demande confirmation avant de la remplacer. La clé est ensuite **retirée de l'adresse visible**. Une clé au mauvais format est ignorée (et retirée). Aucune modification du serveur.
+- **Page carte** (`--map-page`) : champ **« Mon pseudo »** en haut, mémorisé dans le navigateur ; les liens vers les régions reçoivent `#spawn=…&name=PSEUDO`.

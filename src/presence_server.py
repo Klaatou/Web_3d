@@ -153,12 +153,12 @@ def log(kind, room, who, extra=""):
 
 
 class Peer:
-    __slots__ = ("id", "ws", "name", "color", "p", "yaw", "last", "ip", "chat_times", "spectator", "uidh", "t0", "zone_t", "room")
+    __slots__ = ("id", "ws", "name", "color", "p", "yaw", "last", "ip", "chat_times", "spectator", "uidh", "t0", "zone_t", "room", "color_t")
 
     def __init__(self, pid, ws, name, color, ip, spectator, uidh, room):
         self.id, self.ws, self.name, self.color, self.ip = pid, ws, name, color, ip
         self.spectator, self.uidh, self.room = spectator, uidh, room
-        self.p, self.yaw, self.last, self.zone_t = None, 0.0, 0.0, 0.0
+        self.p, self.yaw, self.last, self.zone_t, self.color_t = None, 0.0, 0.0, 0.0, 0.0
         self.chat_times = []
         self.t0 = time.monotonic()
 
@@ -526,6 +526,17 @@ async def handler(ws):
                     await broadcast(room, {"t": "leave", "id": pid}, exclude=peer)
                     log("promenade", room, peer.who(), "fin")
                     peer.name = ""
+            elif t == "color":
+                # v34 : changement de couleur en cours de connexion ; valeur invalide ignorée sans bruit, au plus un changement toutes les 0,2 s
+                c = announced_color(m.get("color"))
+                now = time.monotonic()
+                if c is None or now - peer.color_t < 0.2:
+                    continue
+                peer.color_t = now
+                if c != peer.color:
+                    peer.color = c
+                    if not peer.spectator:
+                        await broadcast(room, {"t": "color", "id": pid, "color": c}, exclude=peer)
             elif peer.spectator:
                 continue
             elif t == "pos":

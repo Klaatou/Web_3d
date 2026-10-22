@@ -9,9 +9,12 @@
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#__SKY_HEX__}
 #view{position:fixed;inset:0}
 canvas{display:block;touch-action:none}
-#walkBtn,#helpBtn,#mapBtn,#homeBtn,#walkHint{font:12px/1.4 ui-monospace,Consolas,monospace;background:#fffffff0;color:#000;border:1px solid #000;border-radius:6px;padding:7px 10px}
-#walkBtn,#helpBtn,#mapBtn,#homeBtn{cursor:pointer}
-#bar{position:fixed;left:12px;bottom:12px;display:flex;gap:8px}
+#walkBtn,#helpBtn,#mapBtn,#homeBtn,#flyBtn,#grabBtn,#walkHint,#stateInfo{font:12px/1.4 ui-monospace,Consolas,monospace;background:#fffffff0;color:#000;border:1px solid #000;border-radius:6px;padding:7px 10px}
+#walkBtn,#helpBtn,#mapBtn,#homeBtn,#flyBtn,#grabBtn{cursor:pointer}
+#dock{position:fixed;left:12px;bottom:12px;max-width:max(260px,calc(100% - 430px));display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+#bar{display:flex;flex-wrap:wrap;gap:8px}
+#dock,#hudL,#bar{pointer-events:none}
+#walkHint,#stateInfo,#bar button{pointer-events:auto}   /* seuls l'aide, l'état et les boutons reçoivent la souris : l'espace vide entre eux laisse passer les clics et le survol */
 #presence,#nameTag{position:fixed;font:12px/1.4 ui-monospace,Consolas,monospace;background:#fffffff0;color:#000;border:1px solid #000;border-radius:6px;padding:7px 10px}
 #presence{left:12px;top:12px}
 #presence input{font:inherit;width:130px;border:1px solid #000;border-radius:4px;padding:2px 4px}
@@ -23,8 +26,7 @@ canvas{display:block;touch-action:none}
 #chatComplete{margin-top:6px;background:#fff;border:2px solid #000;border-radius:6px;font-weight:bold}
 #chatComplete div{padding:3px 8px;white-space:pre}
 #chatComplete div[aria-selected=true]{background:#000;color:#fff}
-#walkHint{pointer-events:none}
-#walkHint input,#walkHint button{pointer-events:auto;font:inherit;border:1px solid #000;border-radius:4px;padding:2px 6px;background:#fff;color:#000}
+#walkHint input,#walkHint button{font:inherit;border:1px solid #000;border-radius:4px;padding:2px 6px;background:#fff;color:#000}
 #walkHint button{cursor:pointer}
 #chatInput{box-sizing:border-box;width:100%;margin-top:6px;font:inherit;padding:6px;border:2px solid #000;border-radius:6px}
 #nameTag{pointer-events:none;max-width:320px}
@@ -54,7 +56,11 @@ canvas{display:block;touch-action:none}
 #modal button{font:inherit;margin:10px 8px 0 0;padding:6px 14px;border:2px solid #000;border-radius:6px;background:#fff;cursor:pointer}
 #modal button.ok{background:#000;color:#fff}
 #nameTag div{font-size:11px}
-#walkHint{position:fixed;left:12px;bottom:54px;max-width:max(260px,calc(100% - 430px))}
+#hudL{max-width:min(440px,45vw);display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+#walkHint{max-height:42vh;overflow:auto}
+#walkHint,#stateInfo{user-select:text;-webkit-user-select:text;cursor:text}
+#stateInfo{font-size:11px;padding:5px 9px}
+#stateInfo div{margin:0}
 #tilesInfo{font:11px/1.4 ui-monospace,Consolas,monospace;color:#000}
 #tilesInfo.alone{position:fixed;left:12px;bottom:54px;background:#fffffff0;border:1px solid #000;border-radius:6px;padding:5px 9px}
 #groundWait{position:fixed;left:50%;top:38%;transform:translateX(-50%);z-index:55;max-width:90%;text-align:center;font:14px/1.4 ui-monospace,Consolas,monospace;background:#000;color:#fff;border:2px solid #fff;border-radius:6px;padding:8px 16px}
@@ -78,8 +84,8 @@ __IMPORTMAP__
 <div id="modal" hidden><div><span id="modalText"></span><br><button class="ok" id="modalYes">Oui</button><button id="modalNo">Annuler</button></div></div>
 <div id="chat" hidden><div id="chatLog"></div><div id="chatHelp"></div><button id="chatSave" type="button" title="Enregistre dans un fichier texte les messages vus depuis ton arrivée">Enregistrer le chat</button><div id="chatComplete" role="listbox" aria-label="Pseudos" hidden></div><input id="chatInput" maxlength="200" placeholder="Message : Entrée pour envoyer (reste ouvert), Échap pour fermer" hidden></div>
 <div id="presence" hidden>Pseudo : <input id="presenceName" maxlength="24" placeholder="Visiteur"><div id="presenceStatus"></div></div>
-<div id="bar"><button id="walkBtn" hidden></button><button id="homeBtn" hidden>Retour à l'arrivée (R)</button><button id="helpBtn" hidden></button><button id="mapBtn" hidden>Carte (M)</button></div>
-<div id="walkHint" hidden></div>
+<div id="dock"><div id="hudL"><div id="walkHint" hidden></div><div id="stateInfo" hidden></div></div>
+<div id="bar"><button id="walkBtn" hidden></button><button id="flyBtn" hidden aria-pressed="false">Voler / Atterrir</button><button id="grabBtn" hidden>Capturer la souris</button><button id="homeBtn" hidden>Retour à l'arrivée (R)</button><button id="helpBtn" hidden></button><button id="mapBtn" hidden>Carte (M)</button></div></div>
 <script type="application/json" id="cfg">__CONFIG__</script>
 <script type="application/octet-stream" id="glb">__GLB_B64__</script>
 <script type="module">
@@ -102,6 +108,10 @@ async function b64ToBuffer(b64) {
 
 const loader = new GLTFLoader();
 __DECODERS__
+// v34 : lien personnel (#key=CLE, 32 caractères hexadécimaux) : sans clé déjà mémorisée dans ce navigateur, elle devient la clé de ce navigateur avant la création du visiteur
+const KEYH = (() => { const k = new URLSearchParams(location.hash.slice(1)).get('key'); return k && /^[0-9a-f]{32}$/.test(k) ? k : null; })();
+let uidStored = ''; try { uidStored = localStorage.getItem('glb2html_uid') || ''; } catch (e) {}
+if (KEYH && !uidStored) { try { localStorage.setItem('glb2html_uid', KEYH); uidStored = KEYH; } catch (e) {} }
 const viewer = createViewer(document.getElementById('view'), C, loader);
 const H = new URLSearchParams(location.hash.slice(1));
 // #pos=x,y,z[,yaw] : arrivée anonyme à ce point (nombres seulement, repère de la page : modèle d'origine en mode tuiles) ; une valeur invalide est ignorée
@@ -140,6 +150,16 @@ if (arrival) {
   bootRender(); bootTimer = setInterval(bootRender, 250);
 }
 const bootEnd = () => { bootOn = false; clearInterval(bootTimer); gw.hidden = !(viewer.tiled && viewer.tilesState().waiting); };
+if (H.has('key')) {   // la clé (secret) ne reste jamais dans l'adresse visible ; une clé différente de celle du navigateur demande confirmation à l'écran
+  try { const hp = new URLSearchParams(location.hash.slice(1)); hp.delete('key'); const hs = hp.toString(); history.replaceState(null, '', location.pathname + location.search + (hs ? '#' + hs : '')); } catch (e) {}
+  if (KEYH && uidStored !== KEYH) {
+    const m = document.getElementById('modal');
+    document.getElementById('modalText').textContent = 'Ce lien personnel remplace l\'identité de ce navigateur (nom réservé, historique) par celle de son propriétaire. Remplacer ?';
+    m.hidden = false;
+    document.getElementById('modalYes').onclick = () => { m.hidden = true; if (viewer.setUid(KEYH)) toast('Identité remplacée par celle du lien'); };
+    document.getElementById('modalNo').onclick = () => { m.hidden = true; };
+  }
+}
 if (H.get('name')) { try { localStorage.setItem('glb2html_name', H.get('name').slice(0, 24)); } catch (e) {} viewer.setName(H.get('name')); }
 let liveReady = Promise.resolve();
 let nearNow = null, refreshNear = () => {};
@@ -315,7 +335,16 @@ if (C.panel !== false) {
     const setCol = () => { VIS.color = cbCol.checked ? parseInt(inCol.value.slice(1), 16) : null; viewer.setMyColor(VIS.color); visSave(); showCol(); };
     cbCol.onchange = setCol; inCol.oninput = () => { if (cbCol.checked) setCol(); };
     const lc = mk('label'); lc.append(cbCol, mk('span', { textContent: 'Choisir la couleur de mon avatar' }), inCol); op.append(lc);
-    op.append(mk('small', { textContent: 'Couleur prise en compte à la prochaine connexion (quitte la promenade puis reviens, ou recharge la page). Décochée : le serveur en tire une au hasard.' }));
+    op.append(mk('small', { textContent: 'La couleur change aussitôt pour les autres visiteurs (et pour ton avatar en troisième personne). Décochée : le serveur en a tiré une au hasard à la connexion.' }));
+    // lien personnel : #name=PSEUDO&key=CLE ; la clé est l'identité de ce navigateur (nom réservé)
+    const bl = mk('button', { id: 'visLinkBtn', type: 'button', textContent: 'Copier mon lien personnel' }), lo = mk('input', { id: 'visLinkOut', readOnly: true, size: 24 });
+    lo.setAttribute('aria-label', 'Lien personnel'); lo.hidden = true;
+    bl.onclick = async () => {
+      const u = new URL(location.href); u.hash = 'name=' + encodeURIComponent(viewer.getName() || (() => { try { return localStorage.getItem('glb2html_name') || ''; } catch (e) { return ''; } })() || 'Visiteur') + '&key=' + viewer.getUid();
+      lo.value = u.href; lo.hidden = false;
+      try { await navigator.clipboard.writeText(u.href); toast('Lien personnel copié'); } catch (e) { lo.select(); toast('Lien prêt : copie-le depuis le champ des Réglages (Ctrl+C)'); }
+    };
+    op.append(bl, lo, mk('small', { textContent: 'Ce lien est un secret : quiconque l\'ouvre prend ton identité (ton nom réservé). Ne le partage pas.' }));
     showCol();
   }
   if (C.presenceUrl && C.walk && C.chat) {
@@ -335,27 +364,40 @@ if (C.walk) {
   wb.hidden = false; wb.textContent = 'Promenade (F)';
   const on = !!C.presenceUrl;
   const fly = C.fly !== false;
-  const walkKeys = ['ZQSD / WASD / flèches : marcher', 'Maj : courir', 'Espace : sauter', 'clic dans la vue puis souris : regarder', 'double-clic : se téléporter']
-    .concat(fly ? ['Début : voler / atterrir (en vol E monte, C descend)'] : [], ['V : changer de vue (subjective, troisième personne, caméra libre)', 'R : retour à l\'arrivée'],
-      C.names ? ['clic : nom de l\'élément'] : [], (C.chat && on) ? ['Entrée : écrire (la saisie reste ouverte ; Échap la ferme ; flèches : se déplacer)'] : [], ((C.zones && C.zones.length) || C.zonesLive) ? ['clic ou E : panneaux et portails'] : [], (((C.map || []).length || C.mapUrl) ? ['M : carte des mondes'] : []), ['H : masquer cette aide', 'F : quitter']).join(' · ');
+  const walkKeys = ['ZQSD / WASD / flèches : marcher', 'Maj : courir', 'Espace : sauter', 'clic dans la vue puis souris : regarder', 'double-clic : se téléporter', 'Échap : libérer la souris (clic et double-clic marchent alors à l\'endroit du curseur) ; G ou bouton « Capturer la souris » : la reprendre']
+    .concat(fly ? ['Début : voler / atterrir (Page Haut ou E : monter, Page Bas ou C : descendre ; descendre jusqu\'au sol pose l\'avatar ; bouton « Voler / Atterrir »)'] : [], ['V : changer de vue (subjective, troisième personne, caméra libre)', 'R : retour à l\'arrivée'],
+      C.names ? ['clic : nom de l\'élément'] : [], (C.chat && on) ? ['Entrée : écrire (la saisie reste ouverte ; Échap la ferme ; flèches : se déplacer)'] : [], ((C.zones && C.zones.length) || C.zonesLive) ? ['clic ou E : panneaux et portails'] : [], (((C.map || []).length || C.mapUrl) ? ['M : carte des mondes'] : []), ['H : masquer cette aide', 'I : masquer / afficher le bloc d\'état', 'texte de l\'aide et de l\'état : sélectionnable, Ctrl+C copie', 'F : quitter']).join(' · ');
   const orbitKeys = ['glisser : tourner', 'molette : zoom', 'clic droit + glisser : déplacer']
-    .concat(['double-clic : choisir le point d\'atterrissage (cercle au sol)', 'R : recadrer sur l\'arrivée'], C.names ? ['clic : nom de l\'élément'] : [], ((C.zones && C.zones.length) || C.zonesLive) ? ['clic : panneaux et portails'] : [], (((C.map || []).length || C.mapUrl) ? ['M : carte des mondes'] : []), ['H : masquer cette aide', 'F : entrer en promenade']).join(' · ');
+    .concat(['double-clic : choisir le point d\'atterrissage (cercle au sol)', 'R : recadrer sur l\'arrivée'], C.names ? ['clic : nom de l\'élément'] : [], ((C.zones && C.zones.length) || C.zonesLive) ? ['clic : panneaux et portails'] : [], (((C.map || []).length || C.mapUrl) ? ['M : carte des mondes'] : []), ['H : masquer cette aide', 'I : masquer / afficher le bloc d\'état', 'F : entrer en promenade']).join(' · ');
   const feat = 'Cette page — réglages visiteur : ' + (C.panel !== false ? 'oui (bouton en haut à droite)' : 'non') + ' · présence : ' + (on ? 'oui (salon ' + C.room + ')' : 'non (option --presence-url)') + ' · chat : ' + (on && C.chat ? 'oui' : 'non') + ' · vue globale : ' + (on && C.spectate ? 'oui' : 'non' + (on ? ' (option --spectate)' : '')) + ' · noms au clic : ' + (C.names ? 'oui' : 'non (option --names)') + ' · glb2html ' + (C.version || '?');
   const l1 = document.createElement('div'), l2 = document.createElement('div');
   l2.style.cssText = 'font-size:11px;margin-top:4px;opacity:.85'; l2.textContent = feat; wh.append(l1, l2);
-  // vue courante (en texte) : globale, ou la vue de la promenade (V) et le vol (Début)
-  const lv = document.createElement('div'); lv.id = 'viewInfo'; lv.style.cssText = 'font-size:11px;margin-top:4px'; wh.append(lv);
-  const viewTick = () => { const t = viewer.walking ? 'Vue : ' + viewer.viewName + (viewer.flying ? ' · en vol' : ' · au sol') : 'Vue : globale (orbite)'; if (lv.textContent !== t) lv.textContent = t; };
-  viewer.onView = viewTick; viewer.onFly = () => { viewTick(); refreshNear(); };
+  // v34 : bloc d'état (texte sélectionnable, distinct de l'aide) : vue, mode (à pied / en vol), souris, position, tuiles
+  const sb = document.getElementById('stateInfo');
+  const mkLine = id => { const d = document.createElement('div'); d.id = id; sb.append(d); return d; };
+  const lv = mkLine('viewInfo'), lm = mkLine('modeInfo'), lmo = mkLine('mouseInfo'), lp = mkLine('posInfo');
+  const setTxt = (el, t) => { if (el.textContent !== t) el.textContent = t; };
+  const fb = document.getElementById('flyBtn'), gb = document.getElementById('grabBtn');
+  const MOUSE = { captured: 'capturée (Échap pour la libérer)', free: 'libre (G ou bouton « Capturer la souris » pour la reprendre)', idle: 'clic dans la vue pour la capturer' };
+  const viewTick = () => {
+    const w = viewer.walking;
+    setTxt(lv, w ? 'Vue : ' + viewer.viewName : 'Vue : globale (orbite)');
+    lm.hidden = lmo.hidden = !w;
+    if (w) { setTxt(lm, 'Mode : ' + (viewer.flying ? 'en vol' : 'à pied')); setTxt(lmo, 'Souris : ' + MOUSE[viewer.mouseState]); }
+    fb.setAttribute('aria-pressed', viewer.flying ? 'true' : 'false');
+  };
+  viewer.onView = viewTick; viewer.onFly = () => { viewTick(); refreshNear(); }; viewer.onMouse = viewTick;
+  for (const b of [fb, gb]) b.onmousedown = e => e.preventDefault();   // le bouton ne prend pas le focus (Espace saute, il ne clique pas)
+  fb.onclick = () => { viewer.toggleFly(); viewTick(); };
+  gb.onclick = () => { viewer.grabMouse(); viewTick(); };
   // position à noter (m, une décimale) : l'avatar en promenade, sinon la cible de la vue globale (le cercle d'atterrissage)
-  const lp = document.createElement('div'); lp.id = 'posInfo'; lp.style.cssText = 'font-size:11px;margin-top:4px'; wh.append(lp);
   const f1 = v => (Math.round(v * 10) / 10).toFixed(1);
   const posTick = () => {
     const w = viewer.walking ? viewer.getWalk().pos : null, t = viewer.controls.target;
     const txt = (w ? 'avatar' : 'cible (vue globale)') + ' : x ' + f1(w ? w[0] : t.x) + ' · y ' + f1(w ? w[1] : t.y) + ' · z ' + f1(w ? w[2] : t.z) + ' m';
-    if (lp.textContent !== 'Position ' + txt) lp.textContent = 'Position ' + txt;
+    setTxt(lp, 'Position ' + txt); viewTick();
   };
-  posTick(); viewTick(); setInterval(posTick, 250);
+  posTick(); setInterval(posTick, 250);
   // « Aller à x, y, z » : mètres, repère du modèle d'origine en mode tuiles, repère de la page (modèle recentré) en mode GLB unique ; décimale « . » ou « , » (avec « ; » entre les nombres)
   const parseXYZ = txt => {
     let t = String(txt || '').trim(), parts;
@@ -394,11 +436,16 @@ if (C.walk) {
   addEventListener('keydown', e => { const n = e.target && e.target.tagName; if (e.code === 'KeyR' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && n !== 'INPUT' && n !== 'TEXTAREA' && n !== 'SELECT') goHome(); });
   const hb = document.getElementById('helpBtn');
   let helpOpen = true; try { helpOpen = localStorage.getItem('glb2html_help') !== '0'; } catch (e) {}
-  const applyHelp = walking => { l1.textContent = walking ? walkKeys : orbitKeys; viewTick(); hb.hidden = false; wh.hidden = !helpOpen; hb.textContent = helpOpen ? 'Masquer l\'aide (H)' : 'Aide (H)'; };
+  let stateOpen = true; try { stateOpen = localStorage.getItem('glb2html_state') !== '0'; } catch (e) {}
+  const applyHelp = walking => { l1.textContent = walking ? walkKeys : orbitKeys; viewTick(); sb.hidden = !stateOpen; hb.hidden = false; wh.hidden = !helpOpen; hb.textContent = helpOpen ? 'Masquer l\'aide (H)' : 'Aide (H)'; };
   const toggleHelp = () => { helpOpen = !helpOpen; try { localStorage.setItem('glb2html_help', helpOpen ? '1' : '0'); } catch (e) {} applyHelp(viewer.walking); };
   hb.onclick = toggleHelp;
   applyHelp(false);
   addEventListener('keydown', e => { const n = e.target && e.target.tagName; if (e.code === 'KeyH' && !e.repeat && n !== 'INPUT' && n !== 'TEXTAREA') toggleHelp(); });
+  addEventListener('keydown', e => {   // I : le bloc d'état (vue, mode, position, tuiles) se masque ou s'affiche, indépendamment de l'aide
+    const n = e.target && e.target.tagName;
+    if (e.code === 'KeyI' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && n !== 'INPUT' && n !== 'TEXTAREA') { stateOpen = !stateOpen; try { localStorage.setItem('glb2html_state', stateOpen ? '1' : '0'); } catch (e2) {} sb.hidden = !stateOpen; }
+  });
   addEventListener('keydown', e => {
     const n = e.target && e.target.tagName;
     if ((e.code === 'Enter' || e.code === 'NumpadEnter') && viewer.walking && !(on && C.chat) && n !== 'INPUT') toast('Chat non activé sur cette page : régénère-la avec --presence-url (et lance presence_server.py)');
@@ -409,12 +456,12 @@ if (C.walk) {
     if (e.code === 'KeyF' && !e.repeat && n !== 'INPUT') viewer.toggleWalk();
   });
   viewer.onLanding = () => toast('Point d\'atterrissage choisi : appuie sur F pour t\'y poser');
-  viewer.onWalk = on2 => { applyHelp(on2); wb.textContent = on2 ? 'Quitter la promenade (F)' : 'Promenade (F)'; document.getElementById('nameTag').hidden = true; };
+  viewer.onWalk = on2 => { fb.hidden = !(on2 && fly); gb.hidden = !on2; applyHelp(on2); posTick(); wb.textContent = on2 ? 'Quitter la promenade (F)' : 'Promenade (F)'; document.getElementById('nameTag').hidden = true; };
 }
 if (viewer.tiled) {
   // mode tuiles : ligne d'information (texte seul) dans le panneau d'aide s'il existe, indicateur « Chargement du sol… », message d'échec
-  const info = document.getElementById('tilesInfo'), wh2 = document.getElementById('walkHint');
-  if (C.walk) { info.classList.remove('alone'); info.style.marginTop = '4px'; wh2.append(info); }
+  const info = document.getElementById('tilesInfo'), sb2 = document.getElementById('stateInfo');
+  if (C.walk) { info.classList.remove('alone'); sb2.append(info); }
   const fr = (n, d) => Number(n).toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d });
   viewer.onTiles = s => {
     info.hidden = false;

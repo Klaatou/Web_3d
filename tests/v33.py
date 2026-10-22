@@ -337,7 +337,7 @@ async def main():
             w = await o.walk()
             rapport(proche([w["pos"][0], w["pos"][2]], [DFX, DFZ], 0.3) and abs(w["yaw"] - 1.0) < 1e-6, "F démarre au point de l'arrivée « default », avec son orientation", (w["pos"], w["yaw"]))
             aide = await o.ev("document.getElementById('walkHint').textContent")
-            rapport(all(s in aide for s in ("Début : voler", "V : changer de vue", "R : retour à l'arrivée", "Vue : subjective · au sol", "Aller à x, y, z", "repère du modèle d'origine")), "l'aide donne les touches (Début, E/C, V, R), la vue courante et le champ « Aller à » avec son repère", aide[:600])
+            rapport(all(s in aide for s in ("Début : voler", "V : changer de vue", "R : retour à l'arrivée", "Aller à x, y, z", "repère du modèle d'origine")) and await o.ev("document.getElementById('viewInfo').textContent === 'Vue : subjective' && document.getElementById('modeInfo').textContent === 'Mode : à pied'"), "l'aide donne les touches (Début, E/C, V, R) et le champ « Aller à » avec son repère ; la vue et le mode sont dans le bloc d'état (v34)", aide[:600])
 
             print("--- 3. retour à l'arrivée")
             await o.tenir(["KeyW", "ShiftLeft"], 60)
@@ -499,7 +499,7 @@ async def main():
             y0 = (await o.walk())["pos"][1]
             await o.touche("Home")
             w = await o.walk()
-            rapport(w["flying"] and "Vue : subjective · en vol" in await o.ev("document.getElementById('viewInfo').textContent"), "touche Début : décollage, indiqué en texte dans l'aide")
+            rapport(w["flying"] and "Mode : en vol" in await o.ev("document.getElementById('modeInfo').textContent") and await o.ev("document.getElementById('viewInfo').textContent") == "Vue : subjective", "touche Début : décollage, indiqué en texte dans le bloc d'état (« Mode : en vol »)")
             m = await o.tenir(["KeyE"], 20)
             monte = m[-1]["pos"][1] - y0
             rapport(6.5 <= monte <= 7.5, f"en vol, E monte (+{monte:.2f} m en 2 s à 3,5 m/s)", monte)
@@ -509,10 +509,10 @@ async def main():
             w = await o.walk()
             sol = sol_lourde(w["pos"][0], w["pos"][2])
             rapport(w["pos"][1] >= sol - 0.2 and w["pos"][1] <= sol + 0.6, f"en vol, C descend mais jamais sous le sol (y {w['pos'][1]:.2f}, sol {sol:.2f})", (w["pos"], sol))
-            await o.touche("Home")
+            # v34 : descendre jusqu'au sol pose l'avatar tout seul (le second Début de la v33 n'est plus nécessaire)
             m = await o.tenir([], 30)
             w = await o.walk()
-            rapport(not w["flying"] and w["grounded"] and abs(w["pos"][1] - sol_lourde(w["pos"][0], w["pos"][2])) < 0.6, "second Début : atterrissage sur le sol, au sol", (w["flying"], w["grounded"], w["pos"][1]))
+            rapport(not w["flying"] and w["grounded"] and abs(w["pos"][1] - sol_lourde(w["pos"][0], w["pos"][2])) < 0.6, "C jusqu'au sol : atterrissage automatique (v34), au sol", (w["flying"], w["grounded"], w["pos"][1]))
             # murs : Maison 0 (140, -240), cube 6 x 4 x 6 m, mur ouest à x = 137
             await o.tp(120, hauteur(120, -240), -240, -math.pi / 2)
             await o.touche("Home")

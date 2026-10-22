@@ -82,13 +82,20 @@ Une zone peut porter un champ `mesh` : le nom exact d'un élément du modèle. L
 - **Chat** : saisie persistante, enregistrement dans un fichier texte (côté navigateur), pseudo cité (gras, bulle qui clignote, bip), complétion `@pseudo`. **Couleur de l'avatar** choisie par le visiteur : **relancer `presence_server.py`**. `--log-ip raw` écrit l'adresse IP en clair (donnée personnelle : informer les visiteurs, limiter `--log-days`).
 - **Viewer en mode tuiles** : « Enregistrer les zones dans le dossier de la région » (Edge, Chrome) ; la page relit `X.zones.json` à chaque ouverture, F5 suffit.
 
+## Nouveautés de la v34 (détail : `MODE_EMPLOI.md` § 19)
+
+- **Aide sélectionnable** (Ctrl+C copie) et **bloc d'état** séparé (vue, mode « à pied » / « en vol », souris, position, tuiles) ; **H** masque l'aide, **I** l'état.
+- **Vol** : Page Haut / Page Bas, atterrissage automatique en descendant jusqu'au sol, bouton « Voler / Atterrir ». **Souris libre après Échap** : **G** ou bouton « Capturer la souris ». Zone de survol des marqueurs au rayon de l'anneau (`--zone-marker portee`).
+- **Couleur en direct** (relancer `presence_server.py`), **lien personnel** `#name=PSEUDO&key=CLE` (secret), pseudo mémorisé sur la page carte.
+- **`glb2html.py --maj`** : met à jour une région sans rien ressaisir (n'applique que les options données, garde la config et les zones, renouvelle la coquille avec copie datée).
+
 ## Carte des mondes
 
 `regions.json` est la carte : une liste de régions (nom, adresse, X, Y, point d'arrivée, salon, serveur de présence, vignette). `--register` y ajoute ou met à jour la région en cours de génération ; `--map-page` génère une page web de la carte avec un lien cliquable par région ; `--map-url a.json,b.json` fusionne les cartes de plusieurs propriétaires à chaque ouverture de la page.
 
 ## Développer
 
-Voir `CLAUDE.md` (architecture, décisions, feuille de route) et `HISTORIQUE.md` (comment retrouver chaque version) `tests/smoke.py` (test de fumée dans Chromium sans tête) `tests/modulaire.py` (mode modulaire universel, zones liées, exports du viewer) et `tests/portail_interne.py` (portail dans la même région), `tests/tuiles.py` (région en tuiles chargée par la coquille : rayon, budget, sol continu, blocage, échecs), `tests/v31.py` (images invalides, vue d'ensemble, sortie de promenade), `tests/v32.py` (zones dans une région en tuiles : viewer, zones liées à un objet, position affichée), `tests/v33.py` (démarrage avec tuiles lourdes, arrivée par défaut, vol, vues, chat, couleur, marqueurs, zones dans le dossier) et `tests/v23.py` (clic, liaison, rotation). Mode d'emploi des zones et portails : `MODE_EMPLOI.md`.
+Voir `CLAUDE.md` (architecture, décisions, feuille de route) et `HISTORIQUE.md` (comment retrouver chaque version) `tests/smoke.py` (test de fumée dans Chromium sans tête) `tests/modulaire.py` (mode modulaire universel, zones liées, exports du viewer) et `tests/portail_interne.py` (portail dans la même région), `tests/tuiles.py` (région en tuiles chargée par la coquille : rayon, budget, sol continu, blocage, échecs), `tests/v31.py` (images invalides, vue d'ensemble, sortie de promenade), `tests/v32.py` (zones dans une région en tuiles : viewer, zones liées à un objet, position affichée), `tests/v33.py` (démarrage avec tuiles lourdes, arrivée par défaut, vol, vues, chat, couleur, marqueurs, zones dans le dossier), `tests/v34.py` (aide et état, survol, vol, souris libre, couleur en direct, lien personnel, page carte, `--maj`) et `tests/v23.py` (clic, liaison, rotation). Mode d'emploi des zones et portails : `MODE_EMPLOI.md`.
 
 ## Sécurité
 

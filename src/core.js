@@ -214,8 +214,8 @@ function disposeObject(root) {
 
 function createViewer(container, cfg0, loader) {
   const cfg = Object.assign({}, cfg0);
-  let onView = null, onFly = null, onCfg = null, onWalk = null, onPick = null, onPresence = null, onChat = null, onName = null, spectateOn = false, pickOrbit = false, walking = false, linkLock = false;
-  const W = { pos: new THREE.Vector3(), spawn: new THREE.Vector3(), vy: 0, grounded: true, yaw: 0, pitch: 0, keys: new Set(), jumpReq: false, drag: false, saved: null, grid: null,
+  let onMouse = null, onView = null, onFly = null, onCfg = null, onWalk = null, onPick = null, onPresence = null, onChat = null, onName = null, spectateOn = false, pickOrbit = false, walking = false, linkLock = false;
+  const W = { pos: new THREE.Vector3(), spawn: new THREE.Vector3(), vy: 0, grounded: true, yaw: 0, pitch: 0, keys: new Set(), jumpReq: false, drag: false, mouseFree: false, saved: null, grid: null,
     fly: false, flyFloor: undefined, view: 'fps', cam: new THREE.Vector3(), cyaw: 0, cpitch: 0 };
   let home = null;   // v33 : point de retour { pos, yaw, forF } (arrivée « default » ou cible de départ)
   let model = null, modelRot = 0, fit = 1, sea = null, seaMat = null, dirty = true, foliageMats = [];
@@ -846,7 +846,7 @@ function createViewer(container, cfg0, loader) {
     if (turn) { if (free) W.cyaw += 1.8 * dt * turn; else W.yaw += 1.8 * dt * turn; }
     const f = (k.has('KeyW') || k.has('ArrowUp') ? 1 : 0) - (k.has('KeyS') || k.has('ArrowDown') ? 1 : 0);
     const s = (k.has('KeyD') ? 1 : 0) - (k.has('KeyA') ? 1 : 0);
-    const up = (k.has('KeyE') ? 1 : 0) - (k.has('KeyC') ? 1 : 0);
+    const up = (k.has('KeyE') || k.has('PageUp') ? 1 : 0) - (k.has('KeyC') || k.has('PageDown') ? 1 : 0);
     const G = W.grid, hasGround = G && (G.count > 0 || G.tiled);
     const speed = cfg.walkSpeed * (run ? 2.2 : 1);
     if (free) {
@@ -888,7 +888,12 @@ function createViewer(container, cfg0, loader) {
       if (gF !== null) W.flyFloor = gF;
       let ny = W.pos.y + (free ? 0 : up) * speed * dt;
       if (hasGround && G.tiled && G.pending(W.pos.x, W.pos.z)) { if (ny < W.pos.y) { ny = W.pos.y; markWait(W.pos.x, W.pos.z); } }
-      else if (hasGround) { const fl = gF !== null ? gF : W.flyFloor; if (fl !== undefined && ny < fl) ny = fl; }
+      else if (hasGround) {
+        const fl = gF !== null ? gF : W.flyFloor;
+        if (fl !== undefined && ny < fl) ny = fl;
+        // v34 : en descendant jusqu'au sol, l'avatar atterrit tout seul (le vol s'arrête ; jamais sous le sol)
+        if (fl !== undefined && up < 0 && !free && ny <= fl + 1e-3) { W.pos.y = fl; W.fly = false; W.vy = 0; W.grounded = true; W.keys.delete('KeyC'); W.keys.delete('PageDown'); if (onFly) onFly(false); dirty = true; ny = fl; }
+      }
       W.pos.y = ny;
     } else {
       if ((W.jumpReq || k.has('Space')) && W.grounded && !free) { W.vy = 5.5; W.grounded = false; W.pos.y += 0.02; }
@@ -945,7 +950,7 @@ function createViewer(container, cfg0, loader) {
     let g = W.grid.ground(t.x, t.z, t.y + 2);
     if (g === null) g = W.grid.ground(t.x, t.z, 1e6);
     W.pos.set(t.x, g === null ? t.y : g, t.z); W.spawn.copy(W.pos);
-    W.vy = 0; W.grounded = true; W.keys.clear(); W.drag = false; W.fly = false; W.flyFloor = undefined; W.view = 'fps';
+    W.vy = 0; W.grounded = true; W.keys.clear(); W.drag = false; W.fly = false; W.flyFloor = undefined; W.view = 'fps'; W.mouseFree = false;
     controls.enabled = false;
     camera.fov = 70; camera.updateProjectionMatrix();
     camera.rotation.order = 'YXZ';
@@ -1007,14 +1012,31 @@ function createViewer(container, cfg0, loader) {
     return true;
   }
   const returnHome = () => (home ? goTo(home.pos, home.yaw) : false);
+  // v34 : souris libre. Quand le pointeur est libéré en promenade (Échap, perte de focus), l'état « souris libre » dure jusqu'à une action
+  // explicite (touche G, bouton « Capturer la souris ») : un clic, un double-clic ou un clic sur une zone ne redemande plus le verrouillage.
+  function grabMouse() {
+    if (!walking) return false;
+    W.mouseFree = false;
+    try { const p = dom.requestPointerLock(); if (p && p.catch) p.catch(() => {}); } catch (_) {}
+    if (onMouse) onMouse(mouseState());
+    return true;
+  }
+  const mouseState = () => (document.pointerLockElement === dom ? 'captured' : (W.mouseFree ? 'free' : 'idle'));
+  document.addEventListener('pointerlockchange', () => {
+    if (!walking) return;   // sortie de promenade : walkStop libère le pointeur lui-même
+    W.mouseFree = document.pointerLockElement !== dom;
+    if (onMouse) onMouse(mouseState());
+  });
   const typing = e => { const n = e.target && e.target.tagName; return n === 'INPUT' || n === 'TEXTAREA' || n === 'SELECT'; };
-  const MOVE_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyE', 'KeyC', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'ShiftLeft', 'ShiftRight']);
+  const MOVE_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyE', 'KeyC', 'PageUp', 'PageDown', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'ShiftLeft', 'ShiftRight']);
   window.addEventListener('keydown', e => {
     if (!walking || e.repeat || typing(e)) return;
     if (e.code === 'Home' && cfg.fly !== false) { toggleFly(); e.preventDefault(); }
     else if (e.code === 'KeyV') cycleView();
+    else if (e.code === 'KeyG' && !e.ctrlKey && !e.metaKey && !e.altKey) grabMouse();
   });
-  window.addEventListener('keydown', e => { if (!walking || typing(e) || !MOVE_KEYS.has(e.code)) return; W.keys.add(e.code); if (e.code === 'Space') W.jumpReq = true; e.preventDefault(); });
+  window.addEventListener('keydown', e => { if (!walking || typing(e) || !MOVE_KEYS.has(e.code) || e.ctrlKey || e.metaKey || e.altKey) return;   // v34 : Ctrl+C copie (le texte de l'aide est sélectionnable)
+    W.keys.add(e.code); if (e.code === 'Space') W.jumpReq = true; e.preventDefault(); });
   window.addEventListener('keyup', e => { W.keys.delete(e.code); });
   window.addEventListener('blur', () => W.keys.clear());
   dom.addEventListener('mousedown', () => { if (walking) W.drag = true; });
@@ -1101,14 +1123,14 @@ function createViewer(container, cfg0, loader) {
     }
     lastClick = { t: now, x: e.clientX, y: e.clientY };
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
-    try { const p = dom.requestPointerLock(); if (p && p.catch) p.catch(() => {}); } catch (_) {}
+    if (!W.mouseFree) { try { const p = dom.requestPointerLock(); if (p && p.catch) p.catch(() => {}); } catch (_) {} }
     doPick(e, locked);
   });
 
   dom.addEventListener('dblclick', e => { if (!walking && !linkLock) setLanding(e); });
 
   // ---- présence : autres visiteurs (WebSocket)
-  const uid = (() => {
+  let uid = (() => {
     let u = ''; try { u = localStorage.getItem('glb2html_uid') || ''; } catch (_) {}
     if (u.length < 16) {
       const a = new Uint8Array(16);
@@ -1138,7 +1160,7 @@ function createViewer(container, cfg0, loader) {
   function makeAvatar(name, color) {
     const g = new THREE.Group();
     const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.26, 0.85, 4, 12), new THREE.MeshStandardMaterial({ color, roughness: 0.7 }));
-    body.position.y = 0.69; g.add(body);
+    body.position.y = 0.69; body.userData.tint = true; g.add(body);
     const head = new THREE.Mesh(new THREE.SphereGeometry(0.17, 16, 12), new THREE.MeshStandardMaterial({ color: 0xf0c8a0, roughness: 0.8 }));
     head.position.y = 1.56; g.add(head);
     const nose = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.12, 8), new THREE.MeshStandardMaterial({ color: 0x333333 }));
@@ -1147,7 +1169,7 @@ function createViewer(container, cfg0, loader) {
     // losange flottant (style « plumbob ») à la couleur du visiteur, avec contour noir : visible sans dépendre de la couleur, masqué par les murs
     const beacon = new THREE.Group();
     const dia = new THREE.Mesh(new THREE.OctahedronGeometry(0.26, 0), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.95, fog: false }));
-    dia.scale.y = 1.6; beacon.add(dia);
+    dia.scale.y = 1.6; dia.userData.tint = true; beacon.add(dia);
     const edg = new THREE.LineSegments(new THREE.EdgesGeometry(dia.geometry), new THREE.LineBasicMaterial({ color: 0x000000, fog: false }));
     edg.scale.y = 1.6; beacon.add(edg);
     beacon.position.y = 2.75; g.add(beacon);
@@ -1192,6 +1214,17 @@ function createViewer(container, cfg0, loader) {
     if (Array.isArray(q.p)) { peer.tx = q.p[0]; peer.ty = q.p[1]; peer.tz = q.p[2]; peer.tyaw = q.yaw || 0; g.position.set(peer.tx, peer.ty, peer.tz); g.rotation.y = peer.tyaw; g.visible = true; }
     P.peers.set(q.id, peer);
   }
+  // v34 : ma couleur choisie part au serveur au plus toutes les 300 ms (le sélecteur de couleur émet en continu) ; la dernière valeur part toujours (le serveur ignore deux changements à moins de 0,2 s)
+  let colorT = 0, colorTimer = 0;
+  function pushColor() {
+    clearTimeout(colorTimer);
+    if (P.myColor === null || !P.ws || P.ws.readyState !== 1 || !P.id) return;
+    const wait = 300 - (performance.now() - colorT);
+    if (wait > 0) { colorTimer = setTimeout(pushColor, wait); return; }
+    colorT = performance.now(); P.ws.send(JSON.stringify({ t: 'color', color: P.myColor }));
+  }
+  // v34 : un visiteur change de couleur en cours de connexion : corps et losange prennent la nouvelle couleur
+  function recolorPeer(q, color) { q.color = color; q.g.traverse(o => { if (o.userData.tint && o.material) o.material.color.setHex(color); }); dirty = true; }
   function removePeer(id) { const q = P.peers.get(id); if (q) { disposeAvatar(q.g); P.peers.delete(id); } }
   function clearPeers() { for (const id of [...P.peers.keys()]) removePeer(id); }
   function presenceMsg(m) {
@@ -1223,6 +1256,10 @@ function createViewer(container, cfg0, loader) {
       if (q) { q.name = cleanName(m.name); const old = q.g.children.find(o => o.isSprite && !o.userData.isBubble); if (old) { q.g.remove(old); old.material.map.dispose(); old.material.dispose(); } const l = makeLabel(q.name); l.position.y = 2.1; q.g.add(l); }
     }
     else if (m.t === 'you') { setMyName(m.name); }
+    else if (m.t === 'color') {
+      const q = P.peers.get(m.id);
+      if (q && Number.isInteger(m.color) && m.color >= 0 && m.color <= 0xFFFFFF) recolorPeer(q, m.color);
+    }
     else if (m.t === 'kicked' || m.t === 'banned') {
       P.blocked = true;
       let r = String(m.reason || '').slice(0, 120);
@@ -1505,7 +1542,9 @@ function createViewer(container, cfg0, loader) {
           const ln = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0x000000, fog: false })); ln.userData.marker = 'range'; g.add(ln);   // trait d'un pixel : reste visible de très loin
         }
         if (clickable) {
-          const hit = new THREE.Mesh(new THREE.CircleGeometry(0.6, 16), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide })); hit.visible = false;
+          // v34 : zone de survol et de clic = l'anneau visible avec « portee » (rayon réel de la zone) ; avec « discret » un peu plus large qu'avant (0,6 m au moins, 1 m au plus)
+          const hr = mkind === 'portee' ? (z.shape === 'board' ? Math.max(z.radius, 2) : z.radius) : (mkind === 'discret' ? Math.max(0.6, Math.min(z.radius, 1)) : 0.6);
+          const hit = new THREE.Mesh(new THREE.CircleGeometry(hr, hr > 1 ? 48 : 16), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide })); hit.visible = false;
           hit.rotation.x = -Math.PI / 2; hit.position.y = 0.06; g.add(hit); main = hit;
         }
         if (z.showName) { const lab = makeLabel(z.label || z.id); lab.position.y = 1.2; g.add(lab); }
@@ -1764,9 +1803,22 @@ function createViewer(container, cfg0, loader) {
     // v33 : point de retour ({ pos, yaw, forF }), aller à, retour, vol, vues, couleur choisie, clignotement de bulle
     setHome(h) { home = h && Array.isArray(h.pos) && h.pos.length >= 3 && h.pos.every(Number.isFinite) ? { pos: h.pos.slice(0, 3), yaw: Number.isFinite(h.yaw) ? h.yaw : undefined, forF: !!h.forF } : null; },
     get home() { return home; }, goTo, returnHome, toggleFly, cycleView, setView,
-    set onView(f) { onView = f; }, set onFly(f) { onFly = f; }, tickPresence(dt, now) { presenceTick(dt, now); },   // tickPresence : pas de présence à la main, pour les tests (bulle qui clignote)
+    set onMouse(f) { onMouse = f; }, grabMouse, get mouseState() { return mouseState(); }, set onView(f) { onView = f; }, set onFly(f) { onFly = f; }, tickPresence(dt, now) { presenceTick(dt, now); },   // tickPresence : pas de présence à la main, pour les tests (bulle qui clignote)
     get viewName() { return VIEW_NAMES[W.view]; }, get view() { return W.view; }, get flying() { return W.fly; },
-    setMyColor(c) { P.myColor = Number.isInteger(c) && c >= 0 && c <= 0xFFFFFF ? c : null; },
+    // v34 : la couleur choisie est envoyée au serveur aussitôt si la connexion est ouverte (sinon dans « hello ») ; l'avatar du visiteur la prend
+    setMyColor(c) {
+      P.myColor = Number.isInteger(c) && c >= 0 && c <= 0xFFFFFF ? c : null;
+      pushColor();
+      if (walking) updateSelf();
+    },
+    // v34 : clé d'identité du navigateur (lien personnel) : lecture, remplacement (la connexion est refaite pour que le serveur reconnaisse la clé)
+    getUid() { return uid; },
+    setUid(k) {
+      if (!/^[0-9a-f]{32}$/.test(String(k))) return false;
+      uid = String(k); try { localStorage.setItem('glb2html_uid', uid); } catch (_) {}
+      if (P.ws) { const ws = P.ws; P.ws = null; P.id = null; try { ws.close(); } catch (_) {} clearPeers(); if (walking || spectateOn) presenceConnect(); }
+      return true;
+    },
     blinkBubble(id) { const q = P.peers.get(id); if (q && q.bubble) { q.blink = { t0: performance.now() }; q.blinkHidden = 0; dirty = true; return true; } return false; },
     setName(n) { P.name = cleanName(n); if (P.ws && P.ws.readyState === 1) P.ws.send(JSON.stringify({ t: 'name', name: P.name })); },
     getPresence() { return { state: P.state, id: P.id, peers: [...P.peers.values()].map(q => ({ id: q.id, name: q.name, pos: q.g.position.toArray(), visible: q.g.visible, bubble: !!q.bubble, bubbleVisible: !!q.bubble && q.bubble.visible, blinking: !!q.blink, blinkHidden: q.blinkHidden || 0, color: q.color, stack: avatarStack(q) })) }; }, get walking() { return walking; },

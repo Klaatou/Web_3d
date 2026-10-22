@@ -82,7 +82,7 @@ ZONES = [
 (tmp / "z.json").write_text(json.dumps(ZONES), encoding="utf-8")
 run(tmp / "boite.glb", "-o", site / "mod.html", "--modular", "--zones", tmp / "z.json", "--profile", "perso", "--no-sea")
 run(tmp / "boite.glb", "-o", site / "auto.html", "--zones", tmp / "z.json", "--profile", "perso", "--no-sea")
-STUB = "window.__opened = []; window.open = (...a) => { window.__opened.push(String(a[0])); return null; };"
+STUB = "try { localStorage.setItem('glb2html_help', '0'); } catch (e) {} window.__opened = []; window.open = (...a) => { window.__opened.push(String(a[0])); return null; };"
 
 SCAN = """(() => {
   const v = window.__viewer, o = { cyl: 0, circles: 0, planes: 0, sprites: 0 };

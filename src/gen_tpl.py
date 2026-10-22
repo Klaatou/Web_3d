@@ -27,6 +27,7 @@ import pathlib
 import re
 import shutil
 import struct
+import time
 import sys
 import urllib.parse
 import urllib.request
@@ -231,10 +232,13 @@ a.tile:hover{background:#eee}
 .tile b{word-break:break-word}
 .tile small{font-size:11px;word-break:break-all;opacity:.8}
 footer{font-size:11px;opacity:.7}
+#who{margin:8px 0}
+#who input{font:inherit;width:200px;border:2px solid #000;border-radius:6px;padding:4px 6px}
 </style>
 </head>
 <body><main>
 <h1>__TITLE__</h1>
+<div id="who"><label>Mon pseudo : <input id="pseudo" maxlength="24" placeholder="Visiteur" autocomplete="nickname"></label> <small>mémorisé dans ce navigateur ; transmis aux régions que tu visites</small></div>
 <div id="grid"></div>
 <footer>glb2html __VERSION__ : chaque carte est un lien qui emmène directement dans la région, à son point d'arrivée.</footer>
 </main>
@@ -244,6 +248,11 @@ footer{font-size:11px;opacity:.7}
   const C = JSON.parse(document.getElementById('cfg').textContent);
   let MAP = C.map || [];
   const grid = document.getElementById('grid'), counts = {}; let known = false;
+  // v34 : pseudo mémorisé (même clé que les régions) ; les liens des cartes reçoivent #name=PSEUDO
+  const pin = document.getElementById('pseudo');
+  const pseudo = () => pin.value.replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 24);
+  try { pin.value = localStorage.getItem('glb2html_name') || ''; } catch (e) {}
+  pin.addEventListener('input', () => { try { localStorage.setItem('glb2html_name', pseudo()); } catch (e) {} draw(); });
   const srvOf = r => (r.presence || C.presenceUrl || '');
   const okUrl = u => { try { const x = new URL(u, location.href); return (x.protocol === 'http:' || x.protocol === 'https:' || (location.protocol === 'file:' && x.protocol === 'file:')) ? x : null; } catch (e) { return null; } };
   const safeThumb = t => typeof t === 'string' && (/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+$/.test(t) || (!/^[a-z][a-z0-9+.-]*:/i.test(t) || /^https?:/i.test(t)));
@@ -256,7 +265,7 @@ footer{font-size:11px;opacity:.7}
     const placed = list.length > 0 && new Set(list.map(r => (r.x | 0) + ',' + (r.y | 0))).size === list.length && cols <= 14 && rows <= 14;
     grid.style.gridTemplateColumns = placed ? 'repeat(' + cols + ', 170px)' : 'repeat(auto-fill, 170px)';
     for (const r of list) {
-      const u = okUrl(r.url); if (u) u.hash = 'spawn=' + encodeURIComponent(r.spawn || 'default');
+      const u = okUrl(r.url); if (u) u.hash = 'spawn=' + encodeURIComponent(r.spawn || 'default') + (pseudo() ? '&name=' + encodeURIComponent(pseudo()) : '');
       const t = document.createElement(u ? 'a' : 'div'); t.className = 'tile';
       if (u) { t.href = u.href; t.rel = 'noopener'; }
       if (placed) { t.style.gridColumn = String(mx.get(r.x | 0) + 1); t.style.gridRow = String(rows - my.get(r.y | 0)); }
@@ -863,6 +872,172 @@ def write_config(cfg_path: pathlib.Path, name: str, kw):
     return cfg
 
 
+# --maj : option de la ligne de commande (dest argparse) -> clés de la config qu'elle remplace. Les autres clés de la config existante sont gardées telles quelles.
+MAJ_KEYS = {
+    "rotate": ("rotate",), "hole": ("hole",), "hole_fade": ("holeFade",), "hole_x": ("holeX",), "hole_z": ("holeZ",), "wave": ("wave",), "sea_y": ("seaY",),
+    "zoom": ("zoom",), "cam_dir": ("camDir",), "target": ("target", "targetExplicit"), "foliage_cutout": ("foliageCutout",), "sea_color": ("seaColor",),
+    "sky_color": ("skyColor",), "sea_segments": ("seaSegments",), "walk": ("walk",), "eye_height": ("eyeHeight",), "walk_speed": ("walkSpeed",),
+    "walk_ignore": ("walkIgnore",), "names": ("names",), "presence_url": ("presenceUrl",), "chat": ("chat",), "chat_fade": ("chatFade",), "profile": ("profile",),
+    "spectate": ("spectate",), "panel": ("panel",), "map_url": ("mapUrl",), "room": ("room",), "sea_enabled": ("sea",), "anim_enabled": ("anim",), "retina": ("retina",),
+    "zone_marker": ("zoneMarker",), "show_spawns": ("showSpawns",), "fly": ("fly",), "tile_radius": ("tileRadius",), "tile_margin": ("tileMargin",),
+    "tile_max_mo": ("tileMaxMo",), "tile_max_tri": ("tileMaxTri",), "tile_concurrency": ("tileConcurrency",), "tiles": ("tiles",),
+    "map": ("map",), "register": ("map",),
+}
+
+
+def explicit_dests(ap):
+    """Options réellement données sur la ligne de commande (et non remplies par leur valeur par défaut) : on relit la ligne avec des défauts « absents"."""
+    saved = [(act, act.default) for act in ap._actions]
+    saved_def = dict(ap._defaults)
+    try:
+        for act in ap._actions:
+            act.default = argparse.SUPPRESS
+        ap._defaults.clear()
+        return set(vars(ap.parse_args()))
+    finally:
+        for act, d in saved:
+            act.default = d
+        ap._defaults.update(saved_def)
+
+
+def merge_maj_cfg(old: dict, new: dict, explicit) -> tuple:
+    """Config existante + seulement les clés des options explicites ; la version est toujours celle du script. Rend (config, [(clé, ancienne, nouvelle)])."""
+    out = dict(old)
+    changes = []
+    keys = []
+    for d in explicit:
+        keys += list(MAJ_KEYS.get(d, ()))
+    if "presenceUrl" in keys and "spectate" not in keys:
+        keys.append("spectate")   # sans --spectate explicite, la vue globale suit l'adresse de présence (comme à la génération)
+    for k in keys:
+        if k in new and old.get(k) != new[k]:
+            changes.append((k, old.get(k), new[k]))
+            out[k] = new[k]
+    if old.get("version") != VERSION:
+        changes.append(("version", old.get("version"), VERSION))
+    out["version"] = VERSION
+    out.pop("zones", None)
+    out["zones"] = []
+    return out, changes
+
+
+def renew_shell(shell_path: pathlib.Path, page: str):
+    """--maj : écrit la coquille de cette version si elle est absente ou différente (l'ancienne est gardée sous un nom daté). Rend un texte pour le compte rendu."""
+    new = page.encode("utf-8")
+    if not shell_path.is_file():
+        write_atomic(shell_path, new)
+        return f"coquille {shell_path.name} absente : écrite"
+    if shell_path.read_bytes() == new:
+        return f"coquille {shell_path.name} déjà à jour (identique à celle de {VERSION})"
+    stamp = time.strftime("%Y%m%d-%H%M%S")
+    bak = shell_path.with_name(f"{shell_path.stem}.avant-{stamp}{shell_path.suffix}")
+    shutil.copyfile(shell_path, bak)
+    write_atomic(shell_path, new)
+    return (f"coquille {shell_path.name} plus ancienne que {VERSION} : renouvelée, ancienne copie gardée sous {bak.name}. "
+            "Cette coquille est partagée par les autres régions du dossier : elles gardent leur comportement (les anciennes configurations restent comprises)")
+
+
+def run_maj(a, kw, explicit, S_reg):
+    """glb2html.py --maj : met à jour une région déjà générée en mode modulaire. N'applique que les options données, garde le reste de X.config.json
+    et X.zones.json (réécrit seulement avec --zones), écrit la version courante et renouvelle la coquille si elle est plus ancienne."""
+    if not a.output:
+        sys.exit("[ERREUR] --maj demande -o <Region.html> (la région déjà générée)")
+    out = pathlib.Path(a.output)
+    if out.is_dir() or str(a.output).endswith(("/", "\\")):
+        sys.exit("[ERREUR] avec --maj, -o désigne la région (ex. -o Region.html), pas un dossier")
+    if not out.suffix:
+        out = out.with_suffix(".html")
+    glb_out, cfg_out, zones_out = modular_names(out)
+    if not cfg_out.is_file():
+        cmd = "glb2html.py " + ("--tiles X.tiles.json" if a.tiles else "X.glb") + f" -o {out.name}" + (f" --shared-shell {a.shared_shell}" if a.shared_shell else "") + " [options]"
+        sys.exit(f"[ERREUR] --maj : {cfg_out} introuvable, la région n'a pas encore été générée. Génère-la d'abord, sans --maj : {cmd}")
+    try:
+        old = json.loads(cfg_out.read_text(encoding="utf-8-sig"))
+        if not isinstance(old, dict):
+            raise ValueError("ce n'est pas un objet JSON")
+    except (OSError, ValueError) as e:
+        sys.exit(f"[ERREUR] {cfg_out} illisible ({e})")
+    shell_path = out.with_name(a.shared_shell) if a.shared_shell else out
+    if not a.shared_shell and not out.is_file():
+        sys.exit(f"[ERREUR] --maj : {out} introuvable. Si la région utilise une coquille commune, donne --shared-shell NOM.html (par défaut {DEFAULT_SHELL})")
+    if a.shared_shell and not valid_region_name(out.stem):
+        sys.exit(f"[ERREUR] nom de région « {out.stem} » refusé par la coquille commune")
+    if a.input and a.tiles:
+        sys.exit("[ERREUR] --tiles remplace le .glb : ne donne pas de fichier .glb avec --tiles")
+    explicit = set(explicit) - {"input", "output", "maj", "vendor", "shared_shell", "modular", "config_only", "zones_only", "zones_live", "title", "zones", "map_page", "thumb",
+                                  "region_name", "region_url", "region_xy", "region_spawn"}
+    kw.update(tile_radius=clamp(a.tile_radius, 10, 5000), tile_margin=clamp(a.tile_margin, 0, 5000), tile_max_mo=clamp(a.tile_max_mo, 1, 100000),
+              tile_max_tri=int(clamp(a.tile_max_tri, 1000, 10**9)), tile_concurrency=int(clamp(a.tile_concurrency, 1, 16)))
+    if "room" not in explicit:
+        kw["room"] = str(old.get("room") or "")
+    tdoc = None
+    if a.tiles:
+        tp = find_beside(a.tiles)
+        if tp is None:
+            sys.exit(f"[ERREUR] {a.tiles} introuvable (cherché dans {pathlib.Path.cwd()} puis dans {pathlib.Path(__file__).resolve().parent})")
+        tdoc = read_tiles_index(tp)
+        kw["tiles"] = place_tiles(tp, tdoc, out.parent)
+        explicit.add("tiles")
+    if a.register:
+        entry = region_entry(a, S_reg, kw["room"] or out.stem, out.stem, page_name_of(a, out))
+        reg = data_path(a.register)
+        kw["map_entries"] = register_region(reg, entry)
+        print(f"[carte] « {entry['name']} » ajoutée ou mise à jour dans {reg} ({len(kw['map_entries'])} région(s))")
+        explicit.add("register")
+    elif a.map:
+        explicit.add("map")
+    elif "map" not in explicit:
+        kw["map_entries"] = old.get("map") if isinstance(old.get("map"), list) else []
+    new = build_cfg(out.stem, **{k: v for k, v in kw.items() if k != "title"}, modular=True)
+    cfg, changes = merge_maj_cfg(old, new, explicit)
+    if a.input:
+        inp = pathlib.Path(a.input)
+        if not inp.is_file():
+            sys.exit(f"{inp} introuvable")
+        try:
+            inspect_glb(inp.read_bytes(), inp.name)
+        except ValueError as e:
+            sys.exit(f"[ERREUR] {e}")
+        write_atomic(glb_out, inp.read_bytes())
+        print(f"[maj] {glb_out.name} remplacé par {inp.name}")
+    elif not a.tiles and not old.get("tiles") and not glb_out.is_file():
+        print(f"[AVERTISSEMENT] {glb_out.name} introuvable à côté de la page (la région n'a ni .glb ni tuiles ici)", file=sys.stderr)
+    write_atomic(cfg_out, json.dumps(cfg, ensure_ascii=False, indent=1).encode("utf-8"))
+    print(f"[maj] {cfg_out.name} mis à jour (glb2html {VERSION}) : " + (f"{len(changes)} clé(s) changée(s)" if changes else "aucune clé changée") + f", {len(old) - len([c for c in changes if c[0] in old])} gardée(s) telle(s) quelle(s)")
+    for k, o, n in changes:
+        print(f"  {k} : {json.dumps(o, ensure_ascii=False)[:80]} -> {json.dumps(n, ensure_ascii=False)[:80]}")
+    if "profile" in explicit:
+        print("[maj] le profil ne filtre les zones qu'à l'écriture de la liste de zones : ajoute --zones FICHIER pour la réécrire")
+    if a.zones:
+        zf = find_beside(a.zones)
+        if zf is None:
+            sys.exit(f"[ERREUR] {a.zones} introuvable")
+        try:
+            kw["zones"] = json.loads(zf.read_text(encoding="utf-8-sig"))
+        except (OSError, ValueError) as e:
+            sys.exit(f"[ERREUR] {zf} illisible ({e})")
+        if zones_out.is_file() and zf.resolve() == zones_out.resolve():
+            print(f"[zones] zones déjà en place : {zones_out} (non réécrit)")
+        else:
+            write_modular_zones(zones_out, kw)
+    else:
+        print(f"[maj] {zones_out.name} conservé tel quel" + ("" if zones_out.is_file() else " (absent)"))
+    print("[maj] " + renew_shell(shell_path, build_shell()))
+    if lib_missing(out.parent):
+        write_modular_lib(out.parent, a.vendor)
+        print(f"[maj] {LIB_REL}/ absent ou incomplet : écrit")
+    else:
+        print(f"[maj] {LIB_REL}/ présent : conservé")
+    if a.map_page:
+        entries = cfg.get("map") or []
+        if clean_map(entries):
+            mp = pathlib.Path(a.map_page)
+            write_map_page(mp if mp.is_absolute() else out.parent / mp, entries, cfg.get("presenceUrl", ""), cfg.get("mapUrl", ""), a.title or "Carte des mondes")
+    adr = shell_page_address(a.shared_shell, out.stem) if a.shared_shell else out.name
+    print(f"[OK] région mise à jour ; adresse : {adr} [glb2html {VERSION}]")
+    sys.exit(0)
+
+
 def vec3(s: str):
     v = tuple(float(x) for x in s.split(","))
     if len(v) != 3:
@@ -960,6 +1135,7 @@ def main():
     ap.add_argument("--zone-marker", choices=ZONE_MARKERS, default=ZONE_MARKER, help="marqueur des portails et zones libres dans la page : discret (défaut : disque de 0,4 m et anneau fin), portee (anneau fin et net au rayon réel de la zone, visible de loin) ou aucun. Les arrivées ne sont jamais dessinées (voir --show-spawns)")
     ap.add_argument("--show-spawns", action=argparse.BooleanOptionalAction, default=SHOW_SPAWNS, help="dessine aussi les arrivées dans la page (petit marqueur discret au sol ; défaut : jamais)")
     ap.add_argument("--fly", action=argparse.BooleanOptionalAction, default=FLY_ENABLED, help="vol en promenade (touche Début ; E monte, C descend) : activé par défaut, --no-fly le retire")
+    ap.add_argument("--maj", action="store_true", help="met à jour une région déjà générée (-o REGION.html [--shared-shell [COQUILLE.html]] [--tiles X.tiles.json | X.glb]) : lit X.config.json, n'applique QUE les options données sur la ligne, garde tout le reste et X.zones.json (réécrit seulement avec --zones), écrit la version courante et renouvelle la coquille si elle est plus ancienne (ancienne copie gardée sous un nom daté). Échoue si X.config.json n'existe pas")
     ap.add_argument("--room", default=ROOM, help="salon de présence (défaut : nom du fichier)")
     ap.add_argument("--sea", dest="sea_enabled", action=argparse.BooleanOptionalAction, default=SEA_ENABLED)
     ap.add_argument("--anim", dest="anim_enabled", action=argparse.BooleanOptionalAction, default=ANIM_ENABLED)
@@ -968,6 +1144,8 @@ def main():
     ap.add_argument("--vendor", type=pathlib.Path, help="racine d'un paquet npm three local (sinon cache + téléchargement)")
     a = ap.parse_args()
     S = {}
+    if a.maj and a.settings:
+        sys.exit("[ERREUR] --maj et --settings s'excluent : --maj ne reprend que les options données et la config existante")
     if a.settings:
         if str(a.settings).lower().endswith((".glb", ".gltf")) and not a.input:
             a.input, a.settings = a.settings, "auto"
@@ -1034,6 +1212,8 @@ def main():
               zone_marker=a.zone_marker, show_spawns=a.show_spawns, fly=a.fly,
               target_explicit=bool(tuple(a.target) != tuple(TARGET) or TARGET_EXPLICIT or getattr(a, "target_explicit", False)))
 
+    if a.maj:
+        run_maj(a, kw, explicit_dests(ap), S_reg)
     if a.zones_live and not a.input and str(a.zones_live).lower().endswith((".glb", ".gltf")):
         a.input, a.zones_live = a.zones_live, "auto"
         kw["zones_live"] = "auto"
