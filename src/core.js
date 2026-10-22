@@ -238,6 +238,7 @@ function createViewer(container, cfg0, loader) {
   controls.dampingFactor = 0.1;
   controls.minDistance = 1;
   controls.maxDistance = 2000;
+  const BASE = { far: camera.far, fogNear: scene.fog.near, fogFar: scene.fog.far, maxDist: controls.maxDistance };   // rétablis par closeTiles()
   controls.maxPolarAngle = Math.PI / 2.05;
   controls.addEventListener('change', () => { dirty = true; });
 
@@ -379,7 +380,7 @@ function createViewer(container, cfg0, loader) {
   // Les tuiles dont la boîte est proche de l'avatar (en vue globale : de la cible) sont chargées, les lointaines déchargées. Repère = celui du
   // modèle d'origine (aucun recentrage) ; la rotation de la région est appliquée à la racine des tuiles. Une grille de collision par tuile.
   // Zones liées à un élément (champ mesh) : ignorées (la référence nom#index se calcule sur tout le modèle).
-  const TL = { on: !!cfg.tiles, root: null, tiles: [], extent: null, inflight: 0, gridQ: [], pending: null, forced: null, forcedUntil: 0,
+  const TL = { on: !!cfg.tiles, src: null, refs: false, refsKnown: false, refIndex: new Map(), linkDirty: false, linkSig: '', root: null, tiles: [], extent: null, inflight: 0, gridQ: [], pending: null, forced: null, forcedUntil: 0,
     waitT: -1e9, lastUpd: 0, infoKey: '', onInfo: null, onError: null, lastError: '', radius: 150, margin: 60, maxBytes: 200 * 1048576, maxTri: 8e6, conc: 4 };
   // vue d'ensemble (X.overview.glb, champ « overview » de X.tiles.json) : un nœud par fichier de tuile, masqué dès que la tuile détaillée est affichée
   // (groupe ajouté à la racine des tuiles) et réaffiché quand elle est déchargée. Jamais utilisée pour les collisions, le sol ni le budget des tuiles.
@@ -389,6 +390,54 @@ function createViewer(container, cfg0, loader) {
   const TILE_M = 0.5;   // tolérance (m) des tests « le point est dans la boîte de la tuile »
   const safeRel = p => typeof p === 'string' && p !== '' && p.length < 400 && !/^[\/\\]/.test(p) && !/[\\:?#\u0000-\u001f]/.test(p) && !p.split('/').some(s => s === '' || s === '..');
   const relUrl = (p, base) => new URL(p.split('/').map(encodeURIComponent).join('/'), base);
+  // source des fichiers d'une région en tuiles : http relatif à la page (coquille, viewer avec ?tuiles=) ; le viewer en fournit une autre pour un dossier choisi
+  const urlSource = () => ({
+    async json(rel) { const r = await fetch(relUrl(rel, location.href).href, { cache: 'no-store' }); if (!r.ok) throw new Error(rel + ' : HTTP ' + r.status); return r.json(); },
+    async buf(rel, signal) { const r = await fetch(relUrl(rel, location.href).href, signal ? { signal } : {}); if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); }
+  });
+  // références d'objets (extras.ref écrit par glb2tiles v32) : index des nœuds des tuiles chargées, pour les zones liées à un objet
+  const refPieces = ref => (TL.refIndex.get(ref) || []).length;
+  const zoneOff = z => TL.on && TL.refs && z.mesh && z.type !== 'spawn' && !zoneLink.has(z.id);   // zone liée dont la tuile n'est pas chargée : absente
+  function refsAdd(t) {
+    t.refObjs = [];
+    t.grp.traverse(o => {
+      const r = o.userData && o.userData.ref;
+      if (typeof r !== 'string') return;
+      let l = TL.refIndex.get(r); if (!l) TL.refIndex.set(r, l = []);
+      l.push(o); t.refObjs.push(o);
+    });
+    if (t.refObjs.length) TL.linkDirty = true;
+  }
+  function refsRemove(t) {
+    if (!t.refObjs) return;
+    for (const o of t.refObjs) {
+      const r = o.userData.ref, l = TL.refIndex.get(r);
+      if (l) { const i = l.indexOf(o); if (i >= 0) l.splice(i, 1); if (!l.length) TL.refIndex.delete(r); }
+    }
+    if (t.refObjs.length) TL.linkDirty = true;
+    t.refObjs = null;
+  }
+  const linkSignature = () => zones.filter(z => z.mesh && z.type !== 'spawn').map(z => z.id + ':' + refPieces(z.mesh)).join('|');
+  function relinkZones() {
+    if (!TL.on || !TL.refs) return;
+    const sig = linkSignature();
+    if (sig === TL.linkSig) return;
+    resolveLinks(); buildZones();
+    if (selId) zoneSelect(selId);
+  }
+  // fin du mode tuiles (le viewer ouvre un autre fichier) : tout est libéré, caméra, brouillard et distance maximale d'origine
+  function closeTiles() {
+    if (walking) walkStop();
+    for (const t of TL.tiles) { if (t.ac) { try { t.ac.abort(); } catch (e) {} t.ac = null; } }
+    if (TL.root) { for (const t of TL.tiles) if (t.grp) tileUnload(t); scene.remove(TL.root); if (model === TL.root) model = null; }
+    if (OV.root) { scene.remove(OV.root); disposeObject(OV.root); }
+    OV.root = null; OV.bytes = OV.tri = OV.cells = 0; OV.state = 'none';
+    TL.tiles = []; TL.root = null; TL.gridQ = []; TL.pending = null; TL.forced = null; TL.refIndex.clear(); TL.refs = false; TL.refsKnown = false; TL.linkSig = ''; TL.src = null;
+    TL.on = false;
+    scene.fog.near = BASE.fogNear; scene.fog.far = BASE.fogFar; camera.far = BASE.far; camera.updateProjectionMatrix(); controls.maxDistance = BASE.maxDist;
+    seaCx = seaCz = 0; if (sea) sea.position.set(0, cfg.seaY, 0);
+    resolveLinks(); buildZones(); landY = null; landKey = ''; dirty = true;
+  }
   const inTile = (t, x, z, m) => x >= t.box[0] - m && x <= t.box[2] + m && z >= t.box[1] - m && z <= t.box[3] + m;
   const tileDist = (t, f) => Math.hypot(Math.max(t.box[0] - f.x, 0, f.x - t.box[2]), Math.max(t.box[1] - f.z, 0, f.z - t.box[3]));
   // grille composite : sol et murs des seules tuiles prêtes ; pending(x,z) = une tuile dont la boîte contient ce point n'est pas encore prête
@@ -453,6 +502,7 @@ function createViewer(container, cfg0, loader) {
       TL.root.remove(t.grp);
       const ms = new Set(); t.grp.traverse(o => { if (o.material) for (const m of (Array.isArray(o.material) ? o.material : [o.material])) if (m) ms.add(m); });
       foliageMats = foliageMats.filter(m => !ms.has(m));
+      refsRemove(t);
       disposeTile(t.grp); t.grp = null;
     }
     ovSync(t);
@@ -462,9 +512,7 @@ function createViewer(container, cfg0, loader) {
     const ac = new AbortController();
     t.state = 'loading'; t.ac = ac; TL.inflight++;
     try {
-      const r = await fetch(t.url, { signal: ac.signal });
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      const buf = await r.arrayBuffer();
+      const buf = await TL.src.buf(t.path, ac.signal);
       if (t.ac !== ac) return;
       const gltf = await loader.parseAsync(buf, '');
       if (t.ac !== ac) { disposeTile(gltf.scene); return; }
@@ -474,6 +522,7 @@ function createViewer(container, cfg0, loader) {
       TL.root.add(grp); grp.updateMatrixWorld(true);
       grp.traverse(o => { if (o.isMesh) { o.updateMatrix(); o.matrixAutoUpdate = false; } });
       t.grp = grp; t.state = 'building';
+      refsAdd(t);
       ovSync(t);   // même bloc synchrone que l'ajout du groupe : jamais d'image avec les deux, ni avec aucun des deux
       t.gen = collisionGridSteps(grp, 3, parseIgnore(cfg.walkIgnore));   // construite par tranches (tilesTick)
       TL.gridQ.push(t);
@@ -534,16 +583,15 @@ function createViewer(container, cfg0, loader) {
       try { r = t.gen.next(); } catch (e) { TL.gridQ.shift(); tileUnload(t); tileFail(t, e); continue; }
       if (r.done) { TL.gridQ.shift(); t.grid = r.value; t.gen = null; t.state = 'ready'; t.fails = 0; dirty = true; landKey = ''; tilesPendingCheck(); tilesInfo(); }
     }
+    if (TL.linkDirty) { TL.linkDirty = false; relinkZones(); }
     if (now - TL.lastUpd > 250) tilesUpdate(now);
     if (TL.waitT > 0 || TL.pending) tilesInfo();
   }
   // vue d'ensemble : chargée avant les tuiles ; un échec n'est pas fatal (la région fonctionne alors comme en v30)
-  async function loadOverview(ov, idx) {
+  async function loadOverview(ov, dir) {
     OV.state = 'loading';
     try {
-      const r = await fetch(relUrl(ov.file, idx).href);
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      const buf = await r.arrayBuffer();
+      const buf = await TL.src.buf(dir + ov.file);
       const gltf = await loader.parseAsync(buf, '');
       const g = gltf.scene; g.name = 'overview';
       g.quaternion.copy(TL.root.quaternion);
@@ -569,13 +617,19 @@ function createViewer(container, cfg0, loader) {
   // (ou en échec). opts : spawn (id d'arrivée du lien, sinon « default »), radius (?rayon=)
   async function loadTiles(rel, opts) {
     opts = opts || {};
+    if (opts.force) {
+      if (TL.root) closeTiles();
+      if (model) { if (walking) walkStop(); scene.remove(model); disposeObject(model); model = null; }   // un GLB unique ouvert avant
+      TL.on = true;
+    }   // le viewer ouvre une région en tuiles sans champ « tiles » dans une configuration
     if (!TL.on) throw new Error('mode tuiles non activé (champ tiles absent de la configuration)');
     if (!safeRel(rel)) throw new Error('adresse de tuiles refusée « ' + rel + ' » (chemin relatif, sans .., sans « : », sans « ? » ni « # »)');
-    const idx = relUrl(rel, location.href);
-    const r = await fetch(idx.href, { cache: 'no-store' });
-    if (!r.ok) throw new Error(rel + ' : HTTP ' + r.status);
-    const doc = await r.json();
+    // source des fichiers : adresses http relatives à la page (coquille, ou viewer avec ?tuiles=), ou fichiers choisis dans un dossier (viewer)
+    TL.src = opts.source || urlSource();
+    const doc = await TL.src.json(rel);
     if (!doc || !Array.isArray(doc.tiles)) throw new Error(rel + ' : format inattendu (liste « tiles » absente)');
+    const dir = rel.lastIndexOf('/') >= 0 ? rel.slice(0, rel.lastIndexOf('/') + 1) : '';
+    TL.refs = !!doc.nodeRefs; TL.refsKnown = true; TL.refIndex.clear(); TL.linkSig = '';
     const num = (v, d, lo, hi) => { v = Number(v); return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d; };
     TL.radius = num(opts.radius, num(cfg.tileRadius, 150, 10, 5000), 10, 5000);
     TL.margin = num(cfg.tileMargin, 60, 0, 5000);
@@ -593,12 +647,16 @@ function createViewer(container, cfg0, loader) {
       const b = new THREE.Box3();
       for (let k = 0; k < 8; k++) b.expandByPoint(v.set(k & 1 ? d.max[0] : d.min[0], k & 2 ? d.max[1] : d.min[1], k & 4 ? d.max[2] : d.min[2]).applyQuaternion(root.quaternion));
       ext.union(b);
-      TL.tiles.push({ file: d.file, url: relUrl(d.file, idx).href, bytes: Math.max(0, Number(d.bytes) || 0), tri: Math.max(0, Number(d.triangles) || 0),
+      TL.tiles.push({ file: d.file, path: dir + d.file, bytes: Math.max(0, Number(d.bytes) || 0), tri: Math.max(0, Number(d.triangles) || 0),
         box: [b.min.x, b.min.z, b.max.x, b.max.z], ymin: b.min.y, ymax: b.max.y, state: 'idle', d: 0, fails: 0, retryAt: 0, ac: null, grp: null, grid: null, gen: null });
     }
     TL.root = root; model = root; TL.extent = ext; scene.add(root);
+    if (!TL.refs) {   // tuiles sans références d'objets : les zones liées déjà posées sont retirées (avertissement), les libres restent
+      const bad = zones.filter(z => z.mesh && z.type !== 'spawn');
+      if (bad.length) { for (const z of bad) console.warn(tilesNoRefs(z)); zones = zones.filter(z => !bad.includes(z)); resolveLinks(); buildZones(); }
+    }
     const ovd = doc.overview;
-    if (ovd && typeof ovd === 'object' && safeRel(ovd.file) && /\.glb$/i.test(ovd.file)) await loadOverview(ovd, idx);
+    if (ovd && typeof ovd === 'object' && safeRel(ovd.file) && /\.glb$/i.test(ovd.file)) await loadOverview(ovd, dir);
     else if (ovd) console.warn('vue d\'ensemble ignorée (adresse refusée) :', ovd && ovd.file);
     const tanH = Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
     if (OV.state === 'ready' && !ext.isEmpty()) {
@@ -613,7 +671,7 @@ function createViewer(container, cfg0, loader) {
       fit = Math.max(2 * TL.radius, 200) / 2 / tanH * 1.35;
     }
     if (!ext.isEmpty()) { seaCx = (ext.min.x + ext.max.x) / 2; seaCz = (ext.min.z + ext.max.z) / 2; if (sea) sea.position.set(seaCx, cfg.seaY, seaCz); }
-    frame();
+    frame(cfg.camDir, opts.target || cfg.target, cfg.zoom);
     let f = null;
     if (opts.spawn !== undefined) {
       const id = slug(opts.spawn), s = zones.find(z => z.type === 'spawn' && z.id === id) || zones.find(z => z.type === 'spawn' && z.id === 'default');
@@ -629,7 +687,7 @@ function createViewer(container, cfg0, loader) {
     const t1 = performance.now();
     await new Promise(res => { const chk = () => (waitSet.every(t => t.state === 'ready' || t.state === 'failed') || performance.now() - t1 > 120000) ? res() : setTimeout(chk, 100); chk(); });
     dirty = true;
-    return { tiles: TL.tiles.length };
+    return { tiles: TL.tiles.length, extent: ext.isEmpty() ? null : ext.min.toArray().concat(ext.max.toArray()) };
   }
   function tilesState() {
     const names = t => TL.tiles.filter(q => t.includes(q.state)).map(q => q.file);
@@ -744,7 +802,7 @@ function createViewer(container, cfg0, loader) {
     walking = true;
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
     zoneInside.clear(); nearZone = null;
-    for (const z of zones) if (z.type === 'portal' && z.trigger !== 'click' && zoneDist(z).d <= z.radius) zoneInside.add(z.id);
+    for (const z of zones) if (z.type === 'portal' && z.trigger !== 'click' && !zoneOff(z) && zoneDist(z).d <= z.radius) zoneInside.add(z.id);
     walkStep(0); dirty = true;
     presenceEnter();
     if (onWalk) onWalk(true);
@@ -783,7 +841,7 @@ function createViewer(container, cfg0, loader) {
     if (Number.isFinite(yaw)) W.yaw = yaw;
     W.pitch = 0; W.vy = 0; W.grounded = true;
     zoneInside.clear(); nearZone = null; if (onNear) onNear(null);
-    for (const q of zones) if (q.type === 'portal' && q.trigger !== 'click' && zoneDist(q).d <= q.radius) zoneInside.add(q.id);
+    for (const q of zones) if (q.type === 'portal' && q.trigger !== 'click' && !zoneOff(q) && zoneDist(q).d <= q.radius) zoneInside.add(q.id);
     walkStep(0); dirty = true;
     return true;
   }
@@ -1073,6 +1131,7 @@ function createViewer(container, cfg0, loader) {
 
   // ---- zones : panneaux, portails, liens, commandes
   const zoneGroup = new THREE.Group(); scene.add(zoneGroup);
+  let selId = null;
   let zones = [], zoneHit = [], zoneAll = [], zoneInside = new Set(), nearZone = null, zoneEditor = false, selBox = null, onZone = null, onNear = null;
   // zones liées à un élément du modèle (champ mesh = nom exact) : id de zone -> { meshes, box } ; mesh 3D -> zone
   const zoneLink = new Map(), meshZone = new Map();
@@ -1086,19 +1145,36 @@ function createViewer(container, cfg0, loader) {
   }
   function findMeshes(ref) {
     const out = new Set();
-    for (const o of resolveMeshRef(model, ref)) o.traverse(c => { if (c.isMesh) out.add(c); });
+    // mode tuiles : nœuds des tuiles chargées dont extras.ref est exactement la référence (calculée par glb2tiles sur le GLB entier)
+    const objs = TL.on ? (TL.refIndex.get(ref) || []) : resolveMeshRef(model, ref);
+    for (const o of objs) o.traverse(c => { if (c.isMesh) out.add(c); });
     return [...out];
+  }
+  // boîte (monde) de l'élément : en mode tuiles, celle de l'objet ENTIER (extras.box, même si une partie seulement est chargée), sinon celle des morceaux
+  function refBox(ref, meshes) {
+    if (TL.on && TL.root) {
+      for (const o of TL.refIndex.get(ref) || []) {
+        const b = o.userData.box;
+        if (!Array.isArray(b) || b.length !== 6 || !b.every(Number.isFinite)) continue;
+        TL.root.updateMatrixWorld(true);
+        const box = new THREE.Box3(), v = new THREE.Vector3();
+        for (let k = 0; k < 8; k++) box.expandByPoint(v.set(k & 1 ? b[3] : b[0], k & 2 ? b[4] : b[1], k & 4 ? b[5] : b[2]).applyMatrix4(TL.root.matrixWorld));
+        return box;
+      }
+    }
+    return boxOfMeshes(meshes);
   }
   function resolveLinks() {
     zoneLink.clear();
     for (const z of zones) {
       if (!z.mesh || z.type === 'spawn') continue;
       const meshes = findMeshes(z.mesh);
-      if (!meshes.length) { console.warn('zone « ' + z.id + ' » : élément « ' + z.mesh + ' » introuvable dans le modèle'); continue; }
-      const box = boxOfMeshes(meshes);
+      if (!meshes.length) { if (!TL.on) console.warn('zone « ' + z.id + ' » : élément « ' + z.mesh + ' » introuvable dans le modèle'); continue; }
+      const box = refBox(z.mesh, meshes);
       if (!box) { console.warn('zone « ' + z.id + ' » : élément « ' + z.mesh + ' » sans géométrie'); continue; }
       zoneLink.set(z.id, { meshes, box });
     }
+    TL.linkSig = linkSignature();
   }
   // contour d'un élément (noir + blanc décalé, lisible sur tout fond)
   function outlineOf(box) {
@@ -1180,6 +1256,7 @@ function createViewer(container, cfg0, loader) {
     setHover(null);
     markerMat.clear();
     for (const z of zones) {
+      if (zoneOff(z)) continue;   // mode tuiles : zone liée à un objet dont aucune tuile n'est chargée
       const link = zoneLink.get(z.id);
       const g = new THREE.Group(); g.userData.zoneId = z.id;
       if (!link) { g.position.set(z.x, z.y, z.z); g.rotation.y = z.yaw; }
@@ -1240,6 +1317,7 @@ function createViewer(container, cfg0, loader) {
     }
     dirty = true;
   }
+  const tilesNoRefs = z => 'zone « ' + z.id + ' » ignorée : liée à l\'élément « ' + z.mesh + ' », ce que ces tuiles ne savent pas résoudre (tuiles écrites sans références d\'objets : redécouper avec glb2tiles v32)';
   function setZones(list, opts) {
     zoneEditor = !!(opts && opts.editor);
     const seen = new Set();
@@ -1247,7 +1325,7 @@ function createViewer(container, cfg0, loader) {
       let id = z.id, n = 2; while (seen.has(id)) id = z.id + '-' + (n++);
       seen.add(id); z.id = id; return z;
     }).filter(z => {
-      if (TL.on && z.mesh && z.type !== 'spawn') { console.warn('zone « ' + z.id + ' » ignorée : liée à l\'élément « ' + z.mesh + ' », ce que le mode tuiles ne sait pas résoudre (référence calculée sur tout le modèle)'); return false; }
+      if (TL.on && TL.refsKnown && !TL.refs && z.mesh && z.type !== 'spawn') { console.warn(tilesNoRefs(z)); return false; }
       return true;
     });
     nearZone = null; zoneInside.clear();
@@ -1256,6 +1334,7 @@ function createViewer(container, cfg0, loader) {
     return zones.map(z => Object.assign({}, z));
   }
   function zoneSelect(id) {
+    selId = id;
     if (selBox) { scene.remove(selBox); selBox.geometry.dispose(); selBox.material.dispose(); selBox = null; }
     const g = zoneGroup.children.find(c => c.userData.zoneId === id);
     const zl = g && zoneLink.get(id);
@@ -1325,7 +1404,7 @@ function createViewer(container, cfg0, loader) {
     if (!zones.length) return;
     let best = null, bd = 1e9;
     for (const z of zones) {
-      if (z.type === 'spawn') continue;
+      if (z.type === 'spawn' || zoneOff(z)) continue;
       const { d, dy } = zoneDist(z);
       if (z.type === 'portal' && z.trigger !== 'click') {
         const inside = d <= z.radius && dy > -1.5 && dy < 3.5, was = zoneInside.has(z.id);
@@ -1429,11 +1508,27 @@ function createViewer(container, cfg0, loader) {
     get model() { return model; }, get sea() { return sea; }, set onCfg(f) { onCfg = f; }, set onWalk(f) { onWalk = f; }, set onPick(f) { onPick = f; }, set pickOrbit(v) { pickOrbit = !!v; }, set onPresence(f) { onPresence = f; }, set onChat(f) { onChat = f; },
     setZones, zoneSelect, zonePickAt, findMeshes,
     // mode tuiles (cfg.tiles) : voir loadTiles ; tilesState sert aux tests
+    closeTiles, get seaCenter() { return [seaCx, seaCz]; },
+    // v32 : le point visé (rayon THREE.Raycaster) sur la vue d'ensemble, hors tuiles chargées ; null si rien
+    overviewHit(ray) { for (const h of ray.intersectObjects(ovCells(), true)) if (h.object.isMesh) return h.point.toArray(); return null; },
+    // v32 : demande le chargement des tuiles autour de (x, z) pendant 15 s ; rend les fichiers des tuiles qui contiennent ce point
+    tilesForce(x, z) { TL.forced = { x, z }; TL.forcedUntil = performance.now() + 15000; tilesUpdate(performance.now()); return TL.tiles.filter(t => inTile(t, x, z, TILE_M)).map(t => t.file); },
+    // v32 : état des zones telles que la scène les montre (tests, diagnostic)
+    getZoneState() {
+      return zones.map(z => {
+        const l = zoneLink.get(z.id), g = zoneGroup.children.find(c => c.userData.zoneId === z.id), off = zoneOff(z);
+        return { id: z.id, type: z.type, mesh: z.mesh || '', linked: !!l, off, shown: !off, box: l ? l.box.min.toArray().concat(l.box.max.toArray()) : null,
+          pos: l ? [(l.box.min.x + l.box.max.x) / 2, l.box.min.y, (l.box.min.z + l.box.max.z) / 2] : (g ? g.position.toArray() : [z.x, z.y, z.z]) };
+      });
+    },
     loadTiles, tilesState, get tiled() { return TL.on; }, set onTiles(f) { TL.onInfo = f; }, set onTileError(f) { TL.onError = f; },
     // référence (champ mesh d'une zone) de cet objet du modèle : nom, ou nom#index si le nom est partagé
-    meshRef(o) { return model ? meshRefOf(model, o) : (o.name || ''); }, get rotation() { return modelRot; },
+    meshRef(o) {
+      if (TL.on && TL.root) { for (let p = o; p && p !== TL.root; p = p.parent) if (p.userData && typeof p.userData.ref === 'string') return p.userData.ref; return ''; }
+      return model ? meshRefOf(model, o) : (o.name || '');
+    }, get rotation() { return modelRot; },
     // boîte (monde) de l'élément de ce nom : { min, max, center, count } ou null
-    meshInfo(name) { const m = findMeshes(name); const b = m.length ? boxOfMeshes(m) : null; if (!b) return null; return { min: b.min.toArray(), max: b.max.toArray(), center: b.getCenter(new THREE.Vector3()).toArray(), size: b.getSize(new THREE.Vector3()).toArray(), count: m.length }; },
+    meshInfo(name) { const m = findMeshes(name); const b = m.length ? refBox(name, m) : null; if (!b) return null; return { min: b.min.toArray(), max: b.max.toArray(), center: b.getCenter(new THREE.Vector3()).toArray(), size: b.getSize(new THREE.Vector3()).toArray(), count: m.length }; },
     set linkMode(v) { linkLock = !!v; },
     isTraversable(o) { return isIgnoredMesh(o, parseIgnore(cfg.walkIgnore)); }, getZones() { return zones.map(z => Object.assign({}, z)); }, set onZone(f) { onZone = f; }, set onNear(f) { onNear = f; },
     captureTop(size = 320, hide = []) {

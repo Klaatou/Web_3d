@@ -835,7 +835,11 @@ def generate_tiles(tiles_path: pathlib.Path, doc, out_path: pathlib.Path, vendor
     write_shell_page(out_path, shell, page)
     n = len(doc["tiles"])
     if any(z.get("mesh") for z in clean_zones(json.loads(ZONES_JSON) if kw.get("zones") is None else kw["zones"], kw.get("profile", PROFILE))):
-        print("[AVERTISSEMENT] des zones sont liées à un élément du modèle (champ mesh) : en mode tuiles elles sont ignorées par la page (avertissement en console)", file=sys.stderr)
+        if doc.get("nodeRefs"):
+            print("[tuiles] des zones sont liées à un objet (champ mesh) : la page les place avec l'objet dès que la tuile qui le contient est chargée")
+        else:
+            print(f"[AVERTISSEMENT] des zones sont liées à un élément du modèle (champ mesh), mais {tiles_path.name} a été écrit sans références d'objets (glb2tiles avant la v32) : "
+                  "ces zones seront ignorées par la page (avertissement en console). Refaire le découpage avec glb2tiles v32 pour en profiter.", file=sys.stderr)
     adr = shell_page_address(shell, out_path.stem) if shell else out_path.name
     print(f"[OK] {n} tuile(s) -> {cfg_out.name} + {zones_out.name}, " + (f"coquille commune {shell} ; adresse : {adr}" if shell else f"coquille {out_path.name}") + f" [glb2html {VERSION}]")
     return True
@@ -935,7 +939,7 @@ def main():
     ap.add_argument("--settings", nargs="?", const="auto", default=None, metavar="FICHIER", help="reprend TOUS les réglages enregistrés par le viewer (bouton « Enregistrer dans un fichier » : trou, vagues, caméra, zones, fiche de région, vignette…). Sans nom : <nom du .glb>.reglages.json. Les options de la ligne de commande l'emportent. Relatif : dossier de lancement, puis dossier du script")
     ap.add_argument("--modular", action="store_true", help="mode modulaire : écrit une coquille <page>.html identique pour toutes les régions (elle déduit ses fichiers de son nom) + <page>.glb (octets bruts) + <page>.config.json (réglages) + <page>.zones.json (zones, relues à chaque ouverture ; à défaut zones.json du dossier) + lib/three-X/ partagé (Draco et Meshopt compris). Demande http(s) pour l'ouverture (pas depuis le disque)")
     ap.add_argument("--shared-shell", nargs="?", const=DEFAULT_SHELL, default=None, metavar="COQUILLE.html", help=f"mode modulaire à coquille commune : une seule coquille (défaut {DEFAULT_SHELL}) sert plusieurs régions du même dossier, à l'adresse COQUILLE.html?region=NOM. -o désigne la région (NOM = son nom sans extension, ex. -o Ankh.html) : seuls NOM.glb, NOM.config.json et NOM.zones.json sont écrits, plus la coquille et lib/three-X/ s'ils sont absents (une coquille existante n'est jamais écrasée). --register écrit cette adresse dans regions.json. Implique --modular")
-    ap.add_argument("--tiles", type=pathlib.Path, metavar="X.tiles.json", help="région découpée en tuiles par glb2tiles.py : pas de .glb en entrée ; -o désigne la région. Écrit X.config.json (champ « tiles »), X.zones.json, la coquille et lib/ ; X.tiles.json et ses tuiles ne sont copiés que s'ils ne sont pas déjà à côté de la page. Implique --modular. Repère = celui du modèle d'origine (aucun recentrage) ; zones liées à un élément ignorées")
+    ap.add_argument("--tiles", type=pathlib.Path, metavar="X.tiles.json", help="région découpée en tuiles par glb2tiles.py : pas de .glb en entrée ; -o désigne la région. Écrit X.config.json (champ « tiles »), X.zones.json, la coquille et lib/ ; X.tiles.json et ses tuiles ne sont copiés que s'ils ne sont pas déjà à côté de la page. Implique --modular. Repère = celui du modèle d'origine (aucun recentrage) ; zones liées à un objet : possibles si les tuiles viennent de glb2tiles v32, ignorées sinon")
     ap.add_argument("--tile-radius", type=float, default=TILE_RADIUS, help="m : charger les tuiles dont la boîte est à moins de ce rayon de l'avatar, en plan X,Z (défaut %(default)g ; ?rayon=NNN dans l'adresse pour essayer)")
     ap.add_argument("--tile-margin", type=float, default=TILE_MARGIN, help="m : décharger les tuiles au-delà de rayon + marge (défaut %(default)g)")
     ap.add_argument("--tile-max-mo", type=float, default=TILE_MAX_MO, help="Mo de tuiles chargées en même temps (poids des fichiers ; défaut %(default)g) ; au-delà, les plus lointaines partent d'abord")

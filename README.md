@@ -8,11 +8,11 @@ Outils :
 
 | Fichier fabriqué | Rôle |
 |---|---|
-| `glb-viewer.html` | Page de réglages et d'export : on charge un `.glb`, on règle la mer, le trou, la caméra, la promenade, les zones, la fiche de région, puis on exporte. |
+| `glb-viewer.html` | Page de réglages et d'export : on charge un `.glb` (ou, depuis la v32, le dossier d'une région en tuiles), on règle la mer, le trou, la caméra, la promenade, les zones, la fiche de région, puis on exporte (zones et ligne de commande seulement pour une région en tuiles). |
 | `glb2html.py` | Script qui fait la même chose en ligne de commande (hors ligne, sans navigateur). |
 | `presence_server.py` | Serveur WebSocket de présence, chat, modération et compteurs de visiteurs. |
 | `oar2glb.py` | Convertit une sauvegarde OpenSim (`.oar`) en `.glb` (convoar + réparation) ; `--version` affiche sa version. `--terrain-seul` ajoute le terrain complet des régions de plus de 256 m à un GLB existant. Détail : `MODE_EMPLOI.md` § 15. |
-| `glb2tiles.py` (+ `glb-stats.py` à côté) | Découpe un GLB énorme en tuiles autonomes (`X.tiles/*.glb` + `X.tiles.json`) ; `--analyse` mesure et recommande sans rien écrire. `--exclure` écarte les « boîtes de livraison » d'un catalogue. La page charge ces tuiles autour de l'avatar (`glb2html.py --tiles`, v30). v31 : images vides ou tronquées remplacées par un gris, et vue d'ensemble légère `X.overview.glb` (toute la région, sans image) affichée au loin. Détail : `MODE_EMPLOI.md` § 17 et § 17 bis. |
+| `glb2tiles.py` (+ `glb-stats.py` à côté) | Découpe un GLB énorme en tuiles autonomes (`X.tiles/*.glb` + `X.tiles.json`) ; `--analyse` mesure et recommande sans rien écrire. `--exclure` écarte les « boîtes de livraison » d'un catalogue. La page charge ces tuiles autour de l'avatar (`glb2html.py --tiles`, v30). v31 : images vides ou tronquées remplacées par un gris, et vue d'ensemble légère `X.overview.glb` (toute la région, sans image) affichée au loin. v32 : références d'objets dans les tuiles (zones liées à un objet en mode tuiles). Détail : `MODE_EMPLOI.md` § 17 et § 17 bis. Poser des zones dans une région en tuiles avec le viewer : § 17 ter. |
 
 ## Fabriquer les fichiers
 
@@ -79,7 +79,7 @@ Une zone peut porter un champ `mesh` : le nom exact d'un élément du modèle. L
 
 ## Développer
 
-Voir `CLAUDE.md` (architecture, décisions, feuille de route) et `HISTORIQUE.md` (comment retrouver chaque version) `tests/smoke.py` (test de fumée dans Chromium sans tête) `tests/modulaire.py` (mode modulaire universel, zones liées, exports du viewer) et `tests/portail_interne.py` (portail dans la même région), `tests/tuiles.py` (région en tuiles chargée par la coquille : rayon, budget, sol continu, blocage, échecs), `tests/v31.py` (images invalides, vue d'ensemble, sortie de promenade) et `tests/v23.py` (clic, liaison, rotation). Mode d'emploi des zones et portails : `MODE_EMPLOI.md`.
+Voir `CLAUDE.md` (architecture, décisions, feuille de route) et `HISTORIQUE.md` (comment retrouver chaque version) `tests/smoke.py` (test de fumée dans Chromium sans tête) `tests/modulaire.py` (mode modulaire universel, zones liées, exports du viewer) et `tests/portail_interne.py` (portail dans la même région), `tests/tuiles.py` (région en tuiles chargée par la coquille : rayon, budget, sol continu, blocage, échecs), `tests/v31.py` (images invalides, vue d'ensemble, sortie de promenade), `tests/v32.py` (zones dans une région en tuiles : viewer, zones liées à un objet, position affichée) et `tests/v23.py` (clic, liaison, rotation). Mode d'emploi des zones et portails : `MODE_EMPLOI.md`.
 
 ## Sécurité
 

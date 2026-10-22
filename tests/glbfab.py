@@ -118,7 +118,10 @@ def couleur_sol(h):
     return (int(90 + 60 * t), int(150 - 30 * t), int(70 + 20 * t))
 
 
-def region(chemin, maisons=24, instances=40, petits=12, verre=True, squelette=True, images_cassees=False):
+VILLAGE_X0, VILLAGE_Z, STATUE, BANCS = 130.0, 60.0, (300.0, 40.0), [(200.0, 20.0), (400.0, 20.0)]
+
+
+def region(chemin, maisons=24, instances=40, petits=12, verre=True, squelette=True, images_cassees=False, village=False):
     """Terrain NP x NP patches ; `maisons` maisons rouges (texture PNG 1 pixel) ; un cube partagé par `instances` nœuds ; `petits` cubes de 0,5 m ;
     un cube de verre (BLEND) ; un objet à squelette ; images_cassees : deux matériaux qui pointent une image de 0 octet et une image tronquée."""
     b = B()
@@ -134,21 +137,21 @@ def region(chemin, maisons=24, instances=40, petits=12, verre=True, squelette=Tr
             for q in range(NQ):
                 for p in range(NQ):
                     a = q * (NQ + 1) + p
-                    idx += [a, a + 1, a + NQ + 1, a + 1, a + NQ + 2, a + NQ + 1]
+                    idx += [a, a + NQ + 1, a + 1, a + 1, a + NQ + 1, a + NQ + 2]      # dessus vers +Y : un clic (lancer de rayon, face avant seulement) touche le sol
             b.noeud(f"Terrain {i},{j}", b.mesh(v, idx, colors=col), extras={"terrain": True})
     b.j["images"] = []
     b.image(png((255, 0, 0)))
     b.j["samplers"] = [{}]
     b.j["textures"] = [{"source": 0, "sampler": 0}]
-    b.j["materials"].append({"name": "brique", "pbrMetallicRoughness": {"baseColorTexture": {"index": 0}}})        # 0 : texture rouge
+    b.j["materials"].append({"name": "brique", "doubleSided": True, "pbrMetallicRoughness": {"baseColorTexture": {"index": 0}}})        # 0 : texture rouge
     b.j["materials"].append({"name": "verre", "alphaMode": "BLEND", "pbrMetallicRoughness": {"baseColorFactor": [0.5, 0.8, 1, 0.3]}})      # 1
-    b.j["materials"].append({"name": "bleu", "pbrMetallicRoughness": {"baseColorFactor": [0.0, 0.0, 1.0, 1]}})      # 2 : couleur de base seule
+    b.j["materials"].append({"name": "bleu", "doubleSided": True, "pbrMetallicRoughness": {"baseColorFactor": [0.0, 0.0, 1.0, 1]}})      # 2 : couleur de base seule
     if images_cassees:
         vide = b.image(b"")
         tronque = b.image(png((0, 255, 0), cote=40)[:-30])
         b.j["textures"] += [{"source": vide, "sampler": 0}, {"source": tronque, "sampler": 0}]
-        b.j["materials"].append({"name": "vide", "pbrMetallicRoughness": {"baseColorTexture": {"index": 1}}})      # 3
-        b.j["materials"].append({"name": "tronquee", "pbrMetallicRoughness": {"baseColorTexture": {"index": 2}}})      # 4
+        b.j["materials"].append({"name": "vide", "doubleSided": True, "pbrMetallicRoughness": {"baseColorTexture": {"index": 1}}})      # 3
+        b.j["materials"].append({"name": "tronquee", "doubleSided": True, "pbrMetallicRoughness": {"baseColorTexture": {"index": 2}}})      # 4
     for k in range(maisons):
         cx, cz = X0 + 40 + (k % 6) * 60 + (k // 6) * 7, Z0 + 40 + (k // 6) * 80 + (k % 3) * 11
         mat = 0
@@ -172,5 +175,16 @@ def region(chemin, maisons=24, instances=40, petits=12, verre=True, squelette=Tr
         corps = b.noeud("corps", b.mesh(cube(cx, hauteur(cx, cz), cz, 6, 6, 6), CUBE_IDX, mat=2, skin=True), racine=False, skin=0)
         b.j["skins"] = [{"joints": [joint]}]
         b.noeud("Animal", None, enfants=[joint, corps])
+    if village:
+        # v32 : objet « Village » (racine sans mesh, 8 huttes enfants réparties sur 315 m : réparti sur plusieurs tuiles avec --entier-etendue 50),
+        # « Statue » (nom unique), deux « Banc » (même nom : références Banc#0 et Banc#1)
+        huttes = []
+        for k in range(8):
+            cx, cz = VILLAGE_X0 + 45 * k, VILLAGE_Z
+            huttes.append(b.noeud(f"Hutte {k}", b.mesh(cube(cx, hauteur(cx, cz), cz, 6, 4, 6), CUBE_IDX, mat=2), racine=False))
+        b.noeud("Village", None, enfants=huttes)
+        b.noeud("Statue", b.mesh(cube(STATUE[0], hauteur(*STATUE), STATUE[1], 2, 5, 2), CUBE_IDX, mat=2))
+        for k, (bx, bz) in enumerate(BANCS):
+            b.noeud("Banc", b.mesh(cube(bx, hauteur(bx, bz), bz, 3, 1, 1), CUBE_IDX, mat=2))
     b.ecrire(chemin)
     return b

@@ -45,7 +45,7 @@ small{display:block;margin-top:8px;color:#333}
 <div id="app">
   <div id="view">
     <div id="stat">Aucun fichier</div>
-    <div id="hint"><div>Dépose un .glb ici<br>(ou .gltf + .bin / textures ensemble)</div></div>
+    <div id="hint"><div>Dépose un .glb ici<br>(ou .gltf + .bin / textures ensemble)<br>ou le <b>dossier</b> d'une région en tuiles<br>(celui qui contient X.tiles.json)</div></div>
     <div id="drop">Dépose pour charger</div>
   </div>
   <aside id="panel">
@@ -61,7 +61,14 @@ small{display:block;margin-top:8px;color:#333}
     <div class="btns">
       <button id="bGlb">Ouvrir .glb</button>
       <button id="bDir">Ouvrir dossier glTF</button>
+      <button id="bTiles" class="wide">Ouvrir une région en tuiles (dossier)</button>
     </div>
+    <div class="row" id="tilesSelRow" hidden><label for="tilesSel">Région du dossier</label><select id="tilesSel" style="grid-column:1/-1;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;width:100%"></select></div>
+    <small id="tilesInfoV" hidden></small>
+    <small id="tilesLoad" hidden></small>
+    <h2>Coordonnées (m)</h2>
+    <pre id="coordInfo">Clique sur le modèle : le point visé s'affiche ici (x, y, z, une décimale).</pre>
+    <div class="btns"><button id="bCopyPick">Copier le point visé</button><button id="bCopyTarget">Copier la cible</button></div>
     <div id="rows"></div>
     <h2>Export</h2>
     <div class="row"><label for="profileSel">Profil d'export</label><select id="profileSel" style="grid-column:1/-1;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;width:100%"><option value="public">public : sans les zones privées</option><option value="perso">perso : toutes les zones</option></select></div>
@@ -75,7 +82,7 @@ small{display:block;margin-top:8px;color:#333}
     <small>L'export HTML reprend la caméra exactement telle qu'affichée (direction, cible, zoom). Aucun accès réseau, ni ici ni dans le fichier exporté. « HTML autonome » : une seule page, qui s'ouvre depuis le disque. « Structure modulaire » : un .zip à décompresser dans le dossier du site (index.html = coquille commune, NOM.glb, NOM.config.json, NOM.zones.json, lib/) ; il faut le servir en http/https ; la région s'ouvre à index.html?region=NOM, et plusieurs régions peuvent partager la même coquille.</small>
     <h2>Récapitulatif pour le script</h2>
     <div class="row"><label for="cmdScript">Chemin de glb2html.py</label><input id="cmdScript" type="text" placeholder="glb2html.py" style="grid-column:1/-1;width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px"></div>
-    <div class="row"><label for="cmdGlb">Chemin du fichier .glb</label><input id="cmdGlb" type="text" placeholder="fichier.glb" style="grid-column:1/-1;width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px"></div>
+    <div class="row"><label for="cmdGlb" id="cmdGlbLabel">Chemin du fichier .glb</label><input id="cmdGlb" type="text" placeholder="fichier.glb" style="grid-column:1/-1;width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px"></div>
     <div class="row"><label for="cmdDest">Fichier ou dossier de sortie (-o), facultatif</label><input id="cmdDest" type="text" placeholder="par défaut : à côté du .glb" style="grid-column:1/-1;width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px"></div>
     <div class="row"><label for="cmdMapPage">Page « carte » web à régénérer (facultatif)</label><input id="cmdMapPage" type="text" placeholder="carte.html" style="grid-column:1/-1;width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px"></div>
     <label class="chk"><input id="cmdShort" type="checkbox"><span>Commande courte : le script relit tous les réglages dans le fichier .reglages.json</span></label>
@@ -89,6 +96,7 @@ small{display:block;margin-top:8px;color:#333}
 </div>
 <input id="fGlb" type="file" accept=".glb" hidden>
 <input id="fDir" type="file" webkitdirectory multiple hidden>
+<input id="fTiles" type="file" webkitdirectory multiple hidden>
 <input id="fZones" type="file" accept=".json,application/json" hidden>
 <input id="fMap" type="file" accept=".json,application/json" hidden>
 <input id="fSettings" type="file" accept=".json,application/json" hidden>
@@ -211,6 +219,7 @@ function setLinkZone(id, keepLock) {
   setTimeout(() => { if (!linkZone) viewer.linkMode = false; }, 600);
 }
 let placeMode = false, lastPick = null, myName = '', presLast = { state: 'off', count: 0 };
+let tilesMode = null;   // région en tuiles ouverte : { rel, name, target } ; null = GLB unique
 const sync = {};
 const rows = $('rows');
 function add(html) { const d = document.createElement('div'); d.innerHTML = html; const e = d.firstElementChild; rows.appendChild(e); return e; }
@@ -231,7 +240,7 @@ for (const r of ROWS) {
       '<div class="btns"><button id="bZoneExp">Exporter zones (.json)</button><button id="bZoneImp">Importer zones (.json)</button></div>';
     zoneAddLabel();
     $('bZoneAdd').onclick = () => { zoneAddMode = !zoneAddMode; placeMode = false; if (linkZone) { setLinkZone(null); renderZoneList(); } zoneAddLabel(); setStatus(zoneAddMode ? 'Clique sur la scène pour poser la zone' : 'Pose annulée'); };
-    $('bZoneExp').onclick = () => download('zones.json', new Blob([JSON.stringify(cfg.zones, null, 1)], { type: 'application/json' }));
+    $('bZoneExp').onclick = () => download(tilesMode ? baseName + '.zones.json' : 'zones.json', new Blob([JSON.stringify(cfg.zones, null, 1)], { type: 'application/json' }));
     $('bZoneImp').onclick = () => $('fZones').click();
     renderZoneList();
     continue;
@@ -283,8 +292,9 @@ for (const r of ROWS) {
   }
   if (r[0] === 'rotate') {
     const e = add('<div class="row"><label>Rotation de la région (autour de l\'axe vertical)</label><select id="selRotate" style="grid-column:1/-1;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;width:100%"><option value="0">0° (aucune)</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select></div>');
-    const sel = e.querySelector('select'); sel.value = String(rotNorm(cfg.rotate));
+    const sel = e.querySelector('select'); sel.value = String(rotNorm(cfg.rotate)); if (tilesMode) sel.disabled = true;
     sel.onchange = () => setRotation(parseInt(sel.value, 10));
+    if (tilesMode) add('<small>Région en tuiles : la rotation n\'est pas proposée ici (repère du modèle d\'origine). Avec glb2html.py --tiles --rotate, les zones doivent déjà être dans le repère tourné.</small>');
     add('<small>Tourne le modèle, et avec lui les zones, les arrivées, la cible, l\'atterrissage et le trou. Utile quand l\'OAR arrive tourné ou inversé nord-sud sur la carte.</small>');
     continue;
   }
@@ -437,7 +447,7 @@ function renderZoneList() {
       } else if (z.type === 'url') d.appendChild(inp('Adresse web', 'text', z.target, v => upd({ target: v })));
       else { d.appendChild(inp('Adresse du webhook Home Assistant', 'text', z.target, v => upd({ target: v }))); d.appendChild(inp('Demander confirmation', 'checkbox', z.confirm, v => upd({ confirm: v }))); }
       const lk = document.createElement('small'); lk.style.margin = '6px 0 2px';
-      lk.textContent = !z.mesh ? 'Aucun élément lié : la zone est posée à sa position (panneau ou cercle).' : 'Élément lié : « ' + z.mesh + ' »' + (viewer.meshInfo(z.mesh) ? ' (' + viewer.meshInfo(z.mesh).count + ' morceau(x), ' + viewer.meshInfo(z.mesh).size.map(v => v.toFixed(2)).join(' × ') + ' m)' : ' — introuvable dans ce modèle : la zone reste à sa position');
+      lk.textContent = !z.mesh ? 'Aucun élément lié : la zone est posée à sa position (panneau ou cercle).' : 'Élément lié : « ' + z.mesh + ' »' + (viewer.meshInfo(z.mesh) ? ' (' + viewer.meshInfo(z.mesh).count + ' morceau(x), ' + viewer.meshInfo(z.mesh).size.map(v => v.toFixed(2)).join(' × ') + ' m)' : (tilesMode ? ' — tuile non chargée : « Voir cette zone » la charge (la zone n\'apparaît que lorsque la tuile de l\'objet est chargée)' : ' — introuvable dans ce modèle : la zone reste à sa position'));
       d.appendChild(lk);
       const lb = document.createElement('div'); lb.className = 'btns';
       const bl = document.createElement('button'); bl.textContent = linkZone === z.id ? 'Clique sur l\'élément dans la scène…' : 'Lier à un élément';
@@ -491,7 +501,7 @@ viewer.onChat = m => {
 };
 viewer.onPick = info => {
   if (!info) return;
-  lastPick = { token: info.token, mesh: info.mesh, text: info.text, point: info.point };
+  lastPick = { token: info.token, mesh: info.mesh, text: info.text, point: info.point }; coordInfo();
   if (eraseMode) { addIgnoreExact(info.mesh); return; }
   const pe = $('picked'); if (pe) pe.textContent = info.text;
   setStatus('Visé : ' + (info.name || '(sans nom)') + (info.point ? ' • point ' + info.point.map(v => v.toFixed(2)).join(', ') : '') + ' • ' + (info.materials[0] ? 'matériau ' + info.materials[0] : 'sans matériau nommé'));
@@ -526,6 +536,7 @@ const f3 = a => a.map(v => v.toFixed(2)).join(', ');
 function camInfo() {
   const s = viewer.getCameraState();
   sync.zoom(s.zoom);
+  coordInfo();
   $('cam').textContent = 'direction : ' + f3(s.camDir) + '\ncible     : ' + f3(s.target) + '\nzoom      : ' + s.zoom.toFixed(3);
 }
 viewer.controls.addEventListener('change', camInfo);
@@ -545,8 +556,16 @@ async function afterLoad(name, size) {
   cfg.roomDefault = baseName;
   if (cfg.spectate && cfg.presenceUrl) { viewer.spectate(false); viewer.spectate(true); }
 }
+function leaveTiles() {
+  if (!viewer.tiled) return;
+  $('tilesLoad').hidden = true;
+  viewer.closeTiles(); tilesMode = null; viewer.setCfg({ seaY: DEF.seaY });
+  $('tilesSelRow').hidden = true; $('tilesInfoV').hidden = true; $('cmdGlbLabel').textContent = 'Chemin du fichier .glb'; $('cmdGlb').placeholder = 'fichier.glb';
+  buildRows(); refreshEnabled();
+}
 async function openGlb(file) {
   try {
+    leaveTiles();
     setStatus('Lecture de ' + file.name + '…');
     const buf = await file.arrayBuffer();
     inspectGlb(buf, file.name);
@@ -558,6 +577,7 @@ async function openGlb(file) {
 async function openGltf(gltfFile, files) {
   const urls = new Map(), created = [];
   try {
+    leaveTiles();
     setStatus('Lecture de ' + gltfFile.name + ' + ' + (files.length - 1) + ' fichiers…');
     for (const f of files) {
       if (f === gltfFile) continue;
@@ -587,6 +607,92 @@ async function openFiles(list) {
   if (gltf) return openGltf(gltf, files);
   setStatus('Aucun .glb ni .gltf trouvé');
 }
+// ---------- région en tuiles : dossier choisi ou glissé (fichiers lus à la demande, jamais tous en mémoire), ou adresse http relative (?tuiles=)
+const safeRelV = p => typeof p === 'string' && p !== '' && p.length < 400 && !/^[\/\\]/.test(p) && !/[\\:?#\u0000-\u001f]/.test(p) && !p.split('/').some(s => s === '' || s === '..');
+const fileSource = map => ({
+  async json(rel) { const f = map.get(rel); if (!f) throw new Error(rel + ' : introuvable dans le dossier ouvert'); return JSON.parse(await f.text()); },
+  async buf(rel, signal) {
+    const f = map.get(rel); if (!f) throw new Error(rel + ' : introuvable dans le dossier ouvert');
+    const b = await f.arrayBuffer(); if (signal && signal.aborted) throw new DOMException('abandon', 'AbortError');
+    return b;
+  }
+});
+let tilesDir = null;   // { map, idx } du dossier ouvert
+async function openTiles(rel, source, name, size) {
+  try {
+    if (!safeRelV(rel)) throw new Error('adresse refusée « ' + rel + ' » (chemin relatif, sans .., sans « : », « ? » ni « # »)');
+    setStatus('Ouverture de la région en tuiles ' + rel + '…');
+    const doc = source ? await source.json(rel) : await (await fetch(rel.split('/').map(encodeURIComponent).join('/'), { cache: 'no-store' })).json();
+    if (!doc || !Array.isArray(doc.tiles) || !doc.tiles.length) throw new Error(rel + ' : pas un fichier de tuiles (liste « tiles » absente ou vide)');
+    const lo = [1e30, 1e30, 1e30], hi = [-1e30, -1e30, -1e30];
+    for (const t of doc.tiles) if (t && Array.isArray(t.min) && Array.isArray(t.max)) for (let k = 0; k < 3; k++) { lo[k] = Math.min(lo[k], t.min[k]); hi[k] = Math.max(hi[k], t.max[k]); }
+    if (!lo.every(Number.isFinite) || lo[0] > hi[0]) throw new Error(rel + ' : étendue des tuiles illisible');
+    const q2 = v => Math.round(v * 100) / 100;
+    const target = [q2((lo[0] + hi[0]) / 2), q2(Math.min(Math.max(20, lo[1]), hi[1])), q2((lo[2] + hi[2]) / 2)];   // même règle que glb2html.py --tiles (tiles_default_target)
+    if (viewer.tiled) viewer.closeTiles();
+    glbBytes = null;
+    viewer.setCfg({ rotate: 0, seaY: 20 });   // pas de rotation en mode tuiles ; mer à 20 m comme --tiles par défaut
+    await viewer.loadTiles(rel, { source, force: true, target });
+    tilesMode = { rel, name, target, tiles: doc.tiles.length, overview: !!doc.overview, refs: !!doc.nodeRefs };
+    afterLoadTiles(name, size);
+  } catch (e) { console.error(e); setStatus('Erreur : ' + (e.message || e)); }
+}
+function afterLoadTiles(name, size) {
+  baseName = name.replace(/\.tiles\.json$/i, '').replace(/\.json$/i, '').replace(/[\\/:*?"<>|]/g, '_') || 'region'; loadedName = name;
+  const restored = restoreFor({ name, size: size || 0 });
+  $('hint').style.display = 'none';
+  $('bHtml').disabled = true; $('bZip').disabled = true;
+  $('cmdGlbLabel').textContent = 'Chemin du fichier .tiles.json (de la région)'; $('cmdGlb').placeholder = baseName + '.tiles.json';
+  if (!$('cmdShared').checked) $('cmdShared').checked = true;
+  buildRows(); refreshEnabled(); camInfo(); updateIgnoreViz(); coordInfo(); updateGuide();
+  cfg.roomDefault = baseName;
+  const ti = $('tilesInfoV'); ti.hidden = false;
+  ti.textContent = 'Région en tuiles : ' + tilesMode.tiles + ' tuile(s), vue d\'ensemble ' + (tilesMode.overview ? 'oui' : 'non') + ', références d\'objets ' + (tilesMode.refs ? 'oui (zones liées à un objet possibles)' : 'non (tuiles d\'avant la v32 : zones liées impossibles, redécouper)') + '. Repère du modèle d\'origine, aucun recentrage : les coordonnées sont utilisables telles quelles par glb2html.py --tiles. Export HTML autonome et .zip indisponibles (pas de GLB unique).';
+  setStatus(restored ? 'Réglages restaurés depuis la mémoire du navigateur (' + cfg.zones.length + ' zone(s))' : name + ' • ' + tilesMode.tiles + ' tuiles • prêt (les tuiles autour de la cible se chargent ; double-clic : déplacer la cible)');
+  if ($('bWalk')) $('bWalk').disabled = false;
+  if (cfg.spectate && cfg.presenceUrl) { viewer.spectate(false); viewer.spectate(true); }
+  const tl = $('tilesLoad'); tl.hidden = false;
+  viewer.onTiles = s => { tl.textContent = 'Tuiles : ' + s.loaded + ' chargée(s) / ' + s.total + (s.loading ? ' · ' + s.loading + ' en cours' : '') + (s.failed ? ' · ' + s.failed + ' en échec' : '') + ' · ' + (Math.round(s.bytes / 104857.6) / 10) + ' Mo'; };
+}
+function openTilesIndex(rel) {
+  const f = tilesDir.map.get(rel);
+  openTiles(rel, fileSource(tilesDir.map), rel.split('/').pop(), f ? f.size : 0);
+}
+function openTilesFiles(items) {
+  const map = new Map(items.map(x => [x.path, x.file]));
+  const idx = items.map(x => x.path).filter(p => /\.tiles\.json$/i.test(p)).sort((a, b) => a.split('/').length - b.split('/').length || a.localeCompare(b));
+  if (!idx.length) return setStatus('Aucun fichier .tiles.json dans ce dossier : choisis le dossier produit par glb2tiles.py (celui qui contient X.tiles.json et X.tiles/)');
+  tilesDir = { map, idx };
+  const sel = $('tilesSel'); sel.textContent = '';
+  for (const p of idx) { const o = document.createElement('option'); o.value = p; o.textContent = p; sel.appendChild(o); }
+  $('tilesSelRow').hidden = idx.length < 2;
+  openTilesIndex(idx[0]);
+}
+$('tilesSel').onchange = () => { if (tilesDir) openTilesIndex($('tilesSel').value); };
+async function walkEntry(ent, prefix, out) {
+  if (ent.isFile) { out.push({ file: await new Promise((res, rej) => ent.file(res, rej)), path: prefix + ent.name }); return; }
+  const rd = ent.createReader();
+  for (;;) {
+    const batch = await new Promise((res, rej) => rd.readEntries(res, rej));
+    if (!batch.length) break;
+    for (const c of batch) await walkEntry(c, prefix + ent.name + '/', out);
+  }
+}
+async function openTilesDir(ents) {
+  try {
+    setStatus('Lecture du dossier…');
+    const out = [];
+    const dirs = ents.filter(x => x.isDirectory);
+    if (dirs.length === 1 && ents.length === 1) { const rd = dirs[0].createReader(); for (;;) { const b = await new Promise((res, rej) => rd.readEntries(res, rej)); if (!b.length) break; for (const c of b) await walkEntry(c, '', out); } }
+    else for (const e of ents) await walkEntry(e, '', out);
+    openTilesFiles(out);
+  } catch (e) { console.error(e); setStatus('Erreur : ' + (e.message || e)); }
+}
+$('bTiles').onclick = () => $('fTiles').click();
+$('fTiles').onchange = e => {
+  const fl = [...e.target.files]; e.target.value = '';
+  if (fl.length) openTilesFiles(fl.map(f => ({ file: f, path: f.webkitRelativePath ? f.webkitRelativePath.split('/').slice(1).join('/') : f.name })));
+};
 $('fZones').onchange = async e => {
   const f = e.target.files[0]; e.target.value = ''; if (!f) return;
   try { const list = JSON.parse(await f.text()); if (!Array.isArray(list)) throw new Error('tableau attendu'); zoneSel = null; zonesSync(list, true); setStatus('Zones importées : ' + cfg.zones.length); }
@@ -607,7 +713,12 @@ $('fDir').onchange = e => { if (e.target.files.length) openFiles(e.target.files)
 const dropEl = $('drop');
 addEventListener('dragover', e => { e.preventDefault(); dropEl.classList.add('on'); });
 addEventListener('dragleave', e => { if (!e.relatedTarget) dropEl.classList.remove('on'); });
-addEventListener('drop', e => { e.preventDefault(); dropEl.classList.remove('on'); if (e.dataTransfer.files.length) openFiles(e.dataTransfer.files); });
+addEventListener('drop', e => {
+  e.preventDefault(); dropEl.classList.remove('on');
+  const ents = e.dataTransfer.items ? [...e.dataTransfer.items].map(i => i.webkitGetAsEntry && i.webkitGetAsEntry()).filter(Boolean) : [];   // à lire pendant l'évènement
+  if (ents.some(x => x.isDirectory)) { openTilesDir(ents); return; }
+  if (e.dataTransfer.files.length) openFiles(e.dataTransfer.files);
+});
 
 // guide visuel du trou (viewer uniquement)
 const guide = new THREE.Group();
@@ -622,7 +733,8 @@ function circle(r, dashed) {
 function updateGuide() {
   while (guide.children.length) { const c = guide.children[0]; guide.remove(c); c.geometry.dispose(); c.material.dispose(); }
   guide.visible = !!cfg.guide && !viewer.walking;
-  guide.position.set(cfg.holeX, cfg.seaY + 0.3, cfg.holeZ);
+  const sc = viewer.seaCenter;   // 0, 0 hors mode tuiles
+  guide.position.set(cfg.holeX + sc[0], cfg.seaY + 0.3, cfg.holeZ + sc[1]);
   const flatR = cfg.hole - cfg.holeFade;
   if (flatR > 1) {
     const disc = new THREE.Mesh(new THREE.CircleGeometry(flatR, 96), gm(THREE.MeshBasicMaterial, { opacity: 0.14, side: THREE.DoubleSide }));
@@ -651,6 +763,30 @@ viewer.onCfg = () => {
 let lastSpecKey = '';
 updateGuide();
 
+// mode tuiles : le clic est tombé hors des tuiles détaillées chargées (la vue d'ensemble est trop grossière pour poser quoi que ce soit)
+function tileMiss(ray) {
+  const p = viewer.overviewHit(ray);
+  if (!p) return setStatus('Rien ici : clique sur la région');
+  const files = viewer.tilesForce(p[0], p[2]);
+  setStatus('Pas de tuile détaillée chargée à cet endroit (x ' + p[0].toFixed(1) + ', z ' + p[2].toFixed(1) + ') : ' + (files.length ? 'chargement de ' + files.length + ' tuile(s) en cours' : 'aucune tuile ne couvre ce point')
+    + '. Le placement se fait sur les tuiles détaillées : clique de nouveau dans quelques secondes (ou double-clic pour y déplacer la cible).');
+}
+// coordonnées du point visé et de la cible (m, une décimale), avec copie
+function f1v(v) { return (Math.round(v * 10) / 10).toFixed(1); }
+function fmtPt(p) { return 'x ' + f1v(p[0]) + ' · y ' + f1v(p[1]) + ' · z ' + f1v(p[2]); }
+function coordInfo() {
+  const e = $('coordInfo'); if (!e) return;
+  const t = viewer.controls.target;
+  e.textContent = 'point visé (clic simple) : ' + (lastPick && lastPick.point ? fmtPt(lastPick.point) + ' m' : '—') + '\ncible (double-clic ; F pose l\'avatar ici) : ' + fmtPt([t.x, t.y, t.z]) + ' m';
+}
+async function copyText(t, what, fem) {
+  try { await navigator.clipboard.writeText(t); }
+  catch (e) { const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }
+  setStatus(what + (fem ? ' copiée : ' : ' copié : ') + t);
+}
+$('bCopyPick').onclick = () => { if (!lastPick || !lastPick.point) return setStatus('Clique d\'abord sur le modèle : le point visé s\'affiche dans « Coordonnées »'); copyText(lastPick.point.map(f1v).join(', '), 'Point visé'); };
+$('bCopyTarget').onclick = () => { const t = viewer.controls.target; copyText([t.x, t.y, t.z].map(f1v).join(', '), 'Cible', true); };
+coordInfo();
 // clic sur le modèle = nouvelle cible
 {
   const dom = viewer.renderer.domElement, ray = new THREE.Raycaster(), p = new THREE.Vector2();
@@ -666,12 +802,13 @@ updateGuide();
       // mode exclusif : ni atterrissage, ni trou, ni pose de zone. Les éléments traversables (walkIgnore) sont ignorés :
       // on lie le mesh nommé touché, pas le voile transparent devant. Un refus laisse le mode actif.
       const h = ray.intersectObject(viewer.model, true).find(x => x.object.isMesh && x.object.visible && !viewer.isTraversable(x.object));
-      if (!h) { setStatus('Aucun élément ici : clique sur le modèle'); return; }
+      if (!h) { if (tilesMode) { tileMiss(ray); return; } setStatus('Aucun élément ici : clique sur le modèle'); return; }
       // on lie le morceau réellement cliqué : si son nom est partagé, la référence est nom#index (voir meshRefOf)
       let obj = h.object;
       while (obj && obj !== viewer.model && !obj.name) obj = obj.parent;
       if (!obj || obj === viewer.model) { setStatus('Cet élément n\'a pas de nom dans le modèle : impossible de le lier'); return; }
       const name = viewer.meshRef(obj);
+      if (!name) { setStatus('Cet élément n\'a pas de référence dans les tuiles (découpées avant la v32 ? redécoupe avec glb2tiles v32 pour lier une zone à un objet)'); return; }
       const info = viewer.meshInfo(name), r2 = v => Math.round(v * 100) / 100;
       if (!info) { setStatus('« ' + name + ' » n\'a pas de géométrie mesurable : impossible de le lier'); return; }
       const sz = info.size.map(r2), dims = [sz[0], sz[2], sz[1]].join(' × ') + ' m';   // L × l × h
@@ -687,16 +824,18 @@ updateGuide();
     if (performance.now() < linkGuard) return;   // fin d'une liaison : le 2e clic d'un double-clic ne doit rien déplacer
     if (placeMode) {
       const h = ray.intersectObjects([viewer.model, viewer.sea].filter(Boolean), true)[0];
-      if (!h) return;
-      const x = Math.max(-600, Math.min(600, Math.round(h.point.x))), z = Math.max(-600, Math.min(600, Math.round(h.point.z)));
+      const pt = h ? h.point.toArray() : (tilesMode ? viewer.overviewHit(ray) : null);   // le trou n'a pas besoin de la précision des tuiles
+      if (!pt) return;
+      const sc = viewer.seaCenter;   // le trou est relatif au centre de la mer (centre de la région en mode tuiles)
+      const x = Math.max(-600, Math.min(600, Math.round(pt[0] - sc[0]))), z = Math.max(-600, Math.min(600, Math.round(pt[2] - sc[1])));
       viewer.setCfg({ holeX: x, holeZ: z }); sync.holeX(x); sync.holeZ(z);
       placeMode = false; viewer.renderer.domElement.style.cursor = ''; sync.place();
       setStatus('Trou placé en X ' + x + ' • Z ' + z);
       return;
     }
     if (zoneAddMode) {
-      const h = ray.intersectObjects([viewer.model, viewer.sea].filter(Boolean), true)[0];
-      if (!h) return;
+      const h = tilesMode ? ray.intersectObject(viewer.model, true)[0] : ray.intersectObjects([viewer.model, viewer.sea].filter(Boolean), true)[0];
+      if (!h) { if (tilesMode) tileMiss(ray); return; }
       const type = $('zNewType').value, cam = viewer.camera.position, tg = viewer.controls.target;
       const yaw = type === 'spawn' ? Math.atan2(-(tg.x - cam.x), -(tg.z - cam.z)) : (type === 'portal' ? 0 : Math.atan2(cam.x - h.point.x, cam.z - h.point.z));
       zoneAddMode = false; zoneAddLabel();
@@ -706,10 +845,10 @@ updateGuide();
     { const zc = viewer.zonePickAt(e.clientX, e.clientY); if (zc) { selectZone(zc.id); return; } }
     // clic simple : nom + point touché, rien ne bouge (la cible et le cercle d'atterrissage ne changent qu'au double-clic)
     const hit = ray.intersectObject(viewer.model, true)[0];
-    if (!hit) return;
+    if (!hit) { if (tilesMode) tileMiss(ray); return; }
     {
       const d = describePick(hit.object, hit.point.toArray());
-      lastPick = { token: d.token, mesh: d.mesh, text: d.text, point: d.point };
+      lastPick = { token: d.token, mesh: d.mesh, text: d.text, point: d.point }; coordInfo();
       const pe = $('picked'); if (pe) pe.textContent = lastPick.text;
       if (!eraseMode) setStatus('Visé : ' + (d.name || '(sans nom)') + ' • point ' + d.point.map(v => v.toFixed(2)).join(', ') + ' (double-clic : choisir cette cible)');
     }
@@ -717,7 +856,7 @@ updateGuide();
   });
 }
 
-$('bFrame').onclick = () => { viewer.frame(DEF.camDir, DEF.target, 1); camInfo(); };
+$('bFrame').onclick = () => { viewer.frame(DEF.camDir, tilesMode ? tilesMode.target : DEF.target, 1); camInfo(); };
 $('bReset').onclick = () => {
   const keep = ['walk', 'names', 'chat', 'spectate', 'panel', 'chatFade', 'ignoreViz', 'presenceUrl', 'room', 'walkIgnore', 'eyeHeight', 'walkSpeed', 'hole', 'holeFade', 'holeX', 'holeZ', 'guide', 'wave', 'seaY', 'sea', 'anim', 'retina', 'foliageCutout', 'seaColor', 'skyColor'];
   const patch = {}; keep.forEach(k => { patch[k] = DEF[k]; });
@@ -867,13 +1006,13 @@ function buildCommand() {
   if (rotNorm(cfg.rotate)) a.push('--rotate ' + rotNorm(cfg.rotate));
   sw('--sea', '--no-sea', cfg.sea, DEF.sea); sw('--anim', '--no-anim', cfg.anim, DEF.anim); sw('--retina', '--no-retina', cfg.retina, DEF.retina);
   num('--hole', cfg.hole, DEF.hole); num('--hole-fade', cfg.holeFade, DEF.holeFade); num('--hole-x', cfg.holeX, DEF.holeX); num('--hole-z', cfg.holeZ, DEF.holeZ);
-  num('--wave', cfg.wave, DEF.wave); num('--sea-y', cfg.seaY, DEF.seaY); num('--sea-segments', cfg.seaSegments, DEF.seaSegments);
+  num('--wave', cfg.wave, DEF.wave); num('--sea-y', cfg.seaY, tilesMode ? 20 : DEF.seaY); num('--sea-segments', cfg.seaSegments, DEF.seaSegments);
   if (cfg.seaColor !== DEF.seaColor) a.push('--sea-color ' + hexc(cfg.seaColor));
   if (cfg.skyColor !== DEF.skyColor) a.push('--sky-color ' + hexc(cfg.skyColor));
   num('--foliage-cutout', cfg.foliageCutout, DEF.foliageCutout);
   num('--zoom', cam.zoom, DEF.zoom);
   if (!same(cam.camDir.map(n4).map(Number), DEF.camDir)) a.push('--cam-dir ' + q(cam.camDir.map(n4).join(',')));
-  if (!same(cam.target.map(n4).map(Number), DEF.target)) a.push('--target ' + q(cam.target.map(n4).join(',')));
+  if (tilesMode ? cam.target.some((v, i) => Math.abs(v - tilesMode.target[i]) > 0.5) : !same(cam.target.map(n4).map(Number), DEF.target)) a.push('--target ' + q(cam.target.map(n4).join(',')));
   sw('--walk', '--no-walk', cfg.walk, DEF.walk); num('--eye-height', cfg.eyeHeight, DEF.eyeHeight); num('--walk-speed', cfg.walkSpeed, DEF.walkSpeed);
   if (cfg.walkIgnore !== DEF.walkIgnore) a.push('--walk-ignore ' + q(cfg.walkIgnore));
   sw('--names', '--no-names', cfg.names, DEF.names); sw('--panel', '--no-panel', cfg.panel, DEF.panel);
@@ -890,17 +1029,18 @@ function buildCommand() {
   if ($('cmdMapPage').value.trim()) a.push('--map-page ' + q($('cmdMapPage').value.trim()));
   if (cfg.mapUrl) a.push('--map-url ' + q(cfg.mapUrl));
   const hasZones = (cfg.zones || []).length > 0;
-  if (hasZones) { a.push('--zones ' + q('zones.json')); if ($('profileSel').value === 'perso') a.push('--profile perso'); }
-  const script = $('cmdScript').value.trim() || 'glb2html.py', glb = $('cmdGlb').value.trim() || loadedName || 'fichier.glb';
+  if (hasZones) { a.push('--zones ' + q(tilesMode ? baseName + '.zones.json' : 'zones.json')); if ($('profileSel').value === 'perso') a.push('--profile perso'); }
+  const script = $('cmdScript').value.trim() || 'glb2html.py', glb = $('cmdGlb').value.trim() || (tilesMode ? baseName + '.tiles.json' : loadedName) || 'fichier.glb';
   const dest = $('cmdDest').value.trim();
-  if (dest) a.unshift('-o ' + q(dest));
+  if (tilesMode) { a.unshift('-o ' + q(dest || baseName + '.html')); a.push('--tiles ' + q(glb)); }
+  else if (dest) a.unshift('-o ' + q(dest));
   const shared = $('cmdShared').checked, modular = $('cmdModular').checked && !shared;
   if (shared) a.push('--shared-shell'); else if (modular) a.push('--modular');
-  let cmd = ['python', q(script), q(glb)].concat(a).join(' ');
+  let cmd = ['python', q(script)].concat(tilesMode ? [] : [q(glb)], a).join(' ');
   const notes = [];
   if ($('cmdShort').checked) {
-    const s2 = ['python', q(script), q(glb), '--settings ' + q(baseName + '.reglages.json')];
-    if (dest) s2.push('-o ' + q(dest));
+    const s2 = ['python', q(script)].concat(tilesMode ? ['--tiles ' + q(glb)] : [q(glb)], ['--settings ' + q(baseName + '.reglages.json')]);
+    if (tilesMode) s2.push('-o ' + q(dest || baseName + '.html')); else if (dest) s2.push('-o ' + q(dest));
     if (shared) s2.push('--shared-shell'); else if (modular) s2.push('--modular');
     if (regOk) s2.push('--register ' + q('regions.json'));
     if ($('cmdMapPage').value.trim()) s2.push('--map-page ' + q($('cmdMapPage').value.trim()));
@@ -912,7 +1052,8 @@ function buildCommand() {
   }
   if (regOk) notes.push('Carte : à chaque exécution, cette région est ajoutée ou mise à jour dans regions.json (créé à côté de glb2html.py s\'il n\'existe pas)' + (thisReg.thumb ? ' ; clique d\'abord sur « Enregistrer la vignette » et place ' + baseName + '.vignette.jpg à côté de glb2html.py.' : ' ; capture et enregistre une vignette pour l\'afficher sur la carte.'));
   else if ((cfg.map || []).length) notes.push('Carte : clique sur « Exporter regions.json » (section Carte des mondes) et place regions.json à côté de glb2html.py (ou dans le dossier de lancement).');
-  if (hasZones) notes.push('Zones : clique d\'abord sur « Exporter zones (.json) » (section Zones) et place zones.json à côté de glb2html.py (ou dans le dossier où tu lances la commande), ou corrige son chemin.' + ($('profileSel').value === 'perso' ? '' : ' Profil public : les zones privées sont retirées.'));
+  if (tilesMode) notes.push('Région en tuiles : lance la commande depuis le dossier de glb2html.py. -o désigne la page (la région s\'appelle comme elle) ; ' + glb + ' est lu tel quel, et ni lui ni ses tuiles ne sont recopiés s\'ils sont déjà à côté de la page (mets -o dans leur dossier). Les coordonnées (zones, cible, trou de la mer) sont celles du modèle d\'origine, utilisables telles quelles. Une page déjà générée se met à jour avec la même commande.');
+  if (hasZones) notes.push('Zones : clique d\'abord sur « Exporter zones (.json) » (section Zones) et place ' + (tilesMode ? baseName + '.zones.json' : 'zones.json') + ' à côté de glb2html.py (ou dans le dossier où tu lances la commande), ou corrige son chemin.' + ($('profileSel').value === 'perso' ? '' : ' Profil public : les zones privées sont retirées.'));
   if (shared) notes.push(SHARED_NOTE);
   if (modular) notes.push('Mode modulaire : la commande écrit <page>.html (coquille), <page>.glb, <page>.config.json et le dossier lib/three-' + '0.160.0/ partagé. Publie-les ensemble et ouvre la page en http/https. Pour ne changer qu\'un réglage ensuite : relance la même commande avec --config-only -o <page>.html (le .glb et la coquille ne sont pas touchés ; les visiteurs rechargent). Le viewer sait aussi exporter cette structure : bouton « Exporter la structure modulaire (.zip) ».');
   if (!a.length) notes.push('Aucun réglage ne diffère des valeurs par défaut du script.');
@@ -1030,6 +1171,11 @@ $('bPy').onclick = () => {
   download('glb2html.py', new Blob([py], { type: 'text/x-python' }));
   setStatus('Script Python exporté • glb2html.py');
 };
+// ouverture par adresse (viewer servi en http) : glb-viewer.html?tuiles=Region.tiles.json (chemin relatif à cette page, sans .. ni « : »)
+{
+  const t = new URLSearchParams(location.search).get('tuiles');
+  if (t) { if (safeRelV(t)) openTiles(t, null, t.split('/').pop(), 0); else setStatus('Adresse ?tuiles= refusée : chemin relatif à cette page, sans .., sans « : », « ? » ni « # »'); }
+}
 </script>
 </body>
 </html>

@@ -431,7 +431,7 @@ class Params:
     """Paramètres du découpage (les poids sont convertis en octets)."""
 
     def __init__(self, budget=32.0, budget_tri=1500000, cote_min=16.0, entier_poids=16.0, entier_etendue=256.0,
-                 seuil=150.0, seuil_tri=3000000, aberrant=1000.0, bloc=256.0, exclure=(), exclure_max_tri=24, exclure_max_meshes=1):
+                 seuil=150.0, seuil_tri=3000000, aberrant=1000.0, bloc=256.0, exclure=(), exclure_max_tri=24, exclure_max_meshes=1, references=True):
         self.budget_mo, self.budget = budget, budget * MO
         self.budget_tri = budget_tri
         self.cote_min = max(cote_min, 1e-3)
@@ -443,6 +443,7 @@ class Params:
         self.exclure_motifs = list(exclure)             # expressions régulières (texte) ; vérifiées par compiler_exclusions
         self.exclure = compiler_exclusions(self.exclure_motifs)
         self.exclure_max_tri, self.exclure_max_meshes = exclure_max_tri, exclure_max_meshes
+        self.references = references                    # v32 : extras.ref / extras.box sur chaque nœud copié (zones liées en mode tuiles)
 
     def dict(self):
         return {"budgetMo": self.budget_mo, "budgetTriangles": self.budget_tri, "minCell": self.cote_min,
@@ -479,6 +480,7 @@ class Plan:
         self.construire_racines()
         self.construire_unites()
         self.verifier_images()
+        self.calculer_references()
 
     # -- parcours de la scène
     def parcourir(self):
@@ -709,6 +711,47 @@ class Plan:
         self.octets_exclus = sum(self.cb[k] for k in ek - ks) + sum(self.img_oct[i] for i in ei - im)
         # géométrie et images des exclus que des objets conservés utilisent aussi (même primitive, même texture) : retirer l'objet ne les économise pas
         self.octets_partages = sum(self.cb[k] for k in ek & ks) + sum(self.img_oct[i] for i in ei & im)
+
+    def nom_noeud(self, ni):
+        """Nom d'un nœud pour les références : son nom, sinon celui de son mesh (comme les objets nommés que voit le chargeur)."""
+        n = self.nodes[ni]
+        nm = n.get("name") or ""
+        if not nm and isinstance(n.get("mesh"), int) and 0 <= n["mesh"] < len(self.meshes):
+            nm = self.meshes[n["mesh"]].get("name") or ""
+        return re.sub(r"[\x00-\x1f]", "", str(nm))
+
+    def calculer_references(self):
+        """Référence stable de chaque nœud dans le GLB ENTIER (v32), même règle que resolveMeshRef de core.js : le nom s'il est unique, sinon
+        « nom#index », index = rang du nœud parmi les nœuds de ce nom dans l'ordre de parcours (pré-ordre, enfants dans l'ordre du fichier).
+        Les nœuds exclus par --exclure comptent (la référence ne dépend pas de ce qu'on retire). Boîte (monde) de l'objet entier : union des
+        boîtes de toutes les instances de ses descendants, y compris celles qui sont dans d'autres tuiles."""
+        self.ref_de, self.box_de = {}, {}
+        if not self.P.references:
+            return
+        ordre = [ni for r in self.racines_ids for ni in self.noeuds_racine.get(r, ())]
+        noms = {ni: self.nom_noeud(ni) for ni in ordre}
+        total = collections.Counter(nm for nm in noms.values() if nm)
+        vu = collections.Counter()
+        for ni in ordre:
+            nm = noms[ni]
+            if not nm:
+                continue
+            ref = nm if total[nm] == 1 else f"{nm}#{vu[nm]}"
+            vu[nm] += 1
+            if len(ref) <= 200:
+                self.ref_de[ni] = ref
+        for it in self.insts:
+            n = it.node
+            while n is not None:
+                b = self.box_de.get(n)
+                if b is None:
+                    self.box_de[n] = [list(it.lo), list(it.hi)]
+                else:
+                    for k in range(3):
+                        b[0][k] = min(b[0][k], it.lo[k])
+                        b[1][k] = max(b[1][k], it.hi[k])
+                n = self.parent.get(n)
+        self.nb_refs, self.nb_partages = len(self.ref_de), sum(1 for nm, c in total.items() if c > 1)
 
     def est_terrain(self, rac):
         return rac.terrain
@@ -1125,6 +1168,13 @@ def ecrire_tuile(plan, tuile, chemin):
         for k in ("matrix", "translation", "rotation", "scale", "weights", "extras"):
             if k in src:
                 d[k] = src[k]
+        ref = plan.ref_de.get(n)
+        if ref is not None and isinstance(d.get("extras", {}), dict):
+            # v32 : référence stable dans le modèle d'origine et boîte monde de l'objet ENTIER (même quand il est réparti sur plusieurs tuiles)
+            d["extras"] = dict(d.get("extras", {}), ref=ref)
+            b = plan.box_de.get(n)
+            if b is not None:
+                d["extras"]["box"] = [round(v, 3) for v in b[0] + b[1]]
         if n in avec_mesh:
             mi = asm.mesh(src["mesh"])
             if mi is not None:
@@ -1874,6 +1924,7 @@ def main(argv=None, log_path=None):
                     help="retire du découpage les objets racine dont le nom correspond (insensible à la casse, répétable), à condition de respecter --exclure-max-tri et --exclure-max-meshes")
     ap.add_argument("--exclure-max-tri", type=int, default=24, help="avec --exclure : triangles au plus dans l'objet racine, tous meshes compris (défaut 24)")
     ap.add_argument("--exclure-max-meshes", type=int, default=1, help="avec --exclure : meshes au plus dans l'objet racine (défaut 1)")
+    ap.add_argument("--sans-references", action="store_true", help="ne pas écrire extras.ref / extras.box dans les nœuds des tuiles (format de la v31 : les zones liées à un objet sont alors ignorées en mode tuiles)")
     ap.add_argument("--sans-vue-ensemble", action="store_true", help="ne pas écrire X.overview.glb (vue d'ensemble légère de toute la région)")
     ap.add_argument("--vue-ensemble-seule", action="store_true", help="n'écrire que X.overview.glb (et sa mention dans X.tiles.json) : les tuiles existantes ne sont pas réécrites ; "
                     "les paramètres de découpage doivent être ceux du découpage d'origine")
@@ -1888,7 +1939,7 @@ def main(argv=None, log_path=None):
     ap.add_argument("--nopause", action="store_true", help="ne pas attendre Entrée à la fin")
     a = ap.parse_args(argv)
     P = Params(a.budget, a.budget_tri, a.cote_min, a.entier_poids, a.entier_etendue, a.seuil, a.seuil_tri, a.aberrant, a.bloc,
-               a.exclure, a.exclure_max_tri, a.exclure_max_meshes)
+               a.exclure, a.exclure_max_tri, a.exclure_max_meshes, not a.sans_references)
     OP = ParamsOv(a.ov_budget, a.ov_budget_tri, a.ov_seuil, a.ov_seuil_max, a.ov_resolution, a.ov_terrain_pas)
     if a.sans_vue_ensemble and a.vue_ensemble_seule:
         raise ErreurGlb("--sans-vue-ensemble et --vue-ensemble-seule s'excluent.")
@@ -1913,6 +1964,15 @@ def main(argv=None, log_path=None):
                 log(ligne)
             for ligne in lignes_taille_instances(plan):
                 log(ligne)
+            ancien = sortie / f"{nom}.tiles.json"       # v32 : tuiles déjà écrites sans les références d'objets
+            if ancien.is_file():
+                try:
+                    d_anc = json.loads(ancien.read_text(encoding="utf-8-sig"))
+                except ValueError:
+                    d_anc = {}
+                if isinstance(d_anc, dict) and d_anc.get("tiles") and not d_anc.get("nodeRefs"):
+                    log(f"Avertissement : {ancien.name} existe déjà mais ses tuiles ne portent pas les références d'objets (glb2tiles avant la v32) : "
+                        "pour lier des zones à des objets en mode tuiles, refaire le découpage.")
             log(f"[temps] {time.time() - t0:.1f} s")
             return 0
         log(phrase)
@@ -1930,7 +1990,7 @@ def main(argv=None, log_path=None):
         doc = {"version": FORMAT_TUILES, "generator": f"glb2tiles {VERSION}", "source": chemin.name,
                "extent": {"min": lo, "max": hi}, "params": P.dict(), "warnings": avert,
                "roots": {"whole": ent, "split": len(plan.racines) - ent},
-               "duplication": round(dup, 3), "replacedImages": {"distinct": img_dist, "occurrences": img_occ, "grey": GRIS_IMAGE}, "tiles": fiches}
+               "duplication": round(dup, 3), "nodeRefs": 1 if P.references else 0, "replacedImages": {"distinct": img_dist, "occurrences": img_occ, "grey": GRIS_IMAGE}, "tiles": fiches}
         if P.exclure:
             doc["excluded"] = {"patterns": P.exclure_motifs, "maxTriangles": P.exclure_max_tri, "maxMeshes": P.exclure_max_meshes,
                                "count": len(plan.exclus), "triangles": sum(x["tri"] for x in plan.exclus), "bytesSaved": plan.octets_exclus, "bytesShared": plan.octets_partages,
@@ -1958,6 +2018,10 @@ def main(argv=None, log_path=None):
         for ligne in lignes_exclusions(plan):
             log(ligne)
         log(ligne_images(plan, tuiles))
+        if P.references:
+            log(f"Références d'objets (extras.ref, extras.box) : {fmt(plan.nb_refs)} nœud(s) nommé(s), {fmt(plan.nb_partages)} nom(s) partagé(s) par plusieurs nœuds (référence nom#index) : zones liées à un objet possibles en mode tuiles.")
+        else:
+            log("Références d'objets non écrites (--sans-references) : les zones liées à un objet seront ignorées en mode tuiles.")
         if ov:
             for ligne in lignes_vue_ensemble(ov):
                 log(ligne)
@@ -2008,6 +2072,9 @@ def vue_ensemble_seule(glb, plan, tuiles, sortie, nom, OP, t0):
     for t, f in zip(tuiles, noms):
         if index[f].get("triangles") != sum(u.tri for u in t.units) or index[f].get("instances") != sum(u.ninst for u in t.units):
             raise ErreurGlb(f"La tuile {f} n'a plus le contenu de {idx.name} : utiliser les mêmes options que pour le découpage d'origine.")
+    if not doc.get("nodeRefs"):
+        log("Avertissement : ces tuiles ont été écrites sans les références d'objets (glb2tiles avant la v32) : les zones liées à un objet restent ignorées en mode tuiles. "
+            "Refaire le découpage (sans --vue-ensemble-seule) pour en profiter.")
     ov = vue_ensemble(plan, tuiles, noms, OP, Path(sortie) / f"{nom}.overview.glb")
     doc["overview"] = ov
     ecrire_index(idx, doc)

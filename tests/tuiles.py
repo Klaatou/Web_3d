@@ -149,7 +149,7 @@ def html(*a, ok=True):
 src = tmp / "source"
 src.mkdir()
 fabriquer_glb(src / "Tuilee.glb")
-run(DIST / "glb2tiles.py", src / "Tuilee.glb", "--forcer", "--budget-tri", "700", "--min", "64", "--nopause")
+run(DIST / "glb2tiles.py", src / "Tuilee.glb", "--forcer", "--budget-tri", "700", "--min", "64", "--nopause", "--sans-references")   # tuiles au format de la v31 : les zones liées y restent ignorées (v32 : tests/v32.py)
 doc = json.loads((src / "Tuilee.tiles.json").read_text(encoding="utf-8"))
 TILES = doc["tiles"]
 rapport(len(TILES) >= 4 and all((src / t["file"]).is_file() for t in TILES), f"glb2tiles : {len(TILES)} tuiles (au moins 4)", len(TILES))

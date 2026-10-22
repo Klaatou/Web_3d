@@ -277,6 +277,15 @@ if (C.walk) {
   const feat = 'Cette page — réglages visiteur : ' + (C.panel !== false ? 'oui (bouton en haut à droite)' : 'non') + ' · présence : ' + (on ? 'oui (salon ' + C.room + ')' : 'non (option --presence-url)') + ' · chat : ' + (on && C.chat ? 'oui' : 'non') + ' · vue globale : ' + (on && C.spectate ? 'oui' : 'non' + (on ? ' (option --spectate)' : '')) + ' · noms au clic : ' + (C.names ? 'oui' : 'non (option --names)') + ' · glb2html ' + (C.version || '?');
   const l1 = document.createElement('div'), l2 = document.createElement('div');
   l2.style.cssText = 'font-size:11px;margin-top:4px;opacity:.85'; l2.textContent = feat; wh.append(l1, l2);
+  // position à noter (m, une décimale) : l'avatar en promenade, sinon la cible de la vue globale (le cercle d'atterrissage)
+  const lp = document.createElement('div'); lp.id = 'posInfo'; lp.style.cssText = 'font-size:11px;margin-top:4px'; wh.append(lp);
+  const f1 = v => (Math.round(v * 10) / 10).toFixed(1);
+  const posTick = () => {
+    const w = viewer.walking ? viewer.getWalk().pos : null, t = viewer.controls.target;
+    const txt = (w ? 'avatar' : 'cible (vue globale)') + ' : x ' + f1(w ? w[0] : t.x) + ' · y ' + f1(w ? w[1] : t.y) + ' · z ' + f1(w ? w[2] : t.z) + ' m';
+    if (lp.textContent !== 'Position ' + txt) lp.textContent = 'Position ' + txt;
+  };
+  posTick(); setInterval(posTick, 250);
   const hb = document.getElementById('helpBtn');
   let helpOpen = true; try { helpOpen = localStorage.getItem('glb2html_help') !== '0'; } catch (e) {}
   const applyHelp = walking => { l1.textContent = walking ? walkKeys : orbitKeys; hb.hidden = false; wh.hidden = !helpOpen; hb.textContent = helpOpen ? 'Masquer l\'aide (H)' : 'Aide (H)'; };

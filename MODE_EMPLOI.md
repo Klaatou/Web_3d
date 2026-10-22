@@ -1,4 +1,4 @@
-# Mode d'emploi : zones, portails et points d'arrivée (v30)
+# Mode d'emploi : zones, portails et points d'arrivée (v32)
 
 ## 1. La règle qui explique 90 % des pannes
 
@@ -508,6 +508,7 @@ Commencer par `--analyse` : elle donne les mesures de `glb-stats.py`, les 10 mes
 | `--exclure REGEX` | | retire du découpage les objets racine dont le nom correspond (insensible à la casse, répétable ; voir ci-dessous) |
 | `--exclure-max-tri` | 24 | triangles au plus dans l'objet racine, tous meshes compris, pour être exclu |
 | `--exclure-max-meshes` | 1 | meshes au plus dans l'objet racine pour être exclu |
+| `--sans-references` | | ne pas écrire `extras.ref` / `extras.box` dans les nœuds des tuiles (format de la v31 : zones liées à un objet impossibles en mode tuiles) |
 | `--sans-vue-ensemble` | | ne pas écrire `X.overview.glb` |
 | `--vue-ensemble-seule` | | n'écrire que `X.overview.glb` et sa mention dans `X.tiles.json` ; le découpage recalculé doit retrouver exactement les tuiles de `X.tiles.json` (sinon : erreur « ne correspond pas », utiliser les mêmes options) |
 | `--ov-budget`, `--ov-budget-tri` | 25, 1500000 | Mo et triangles de toute la vue d'ensemble |
@@ -524,6 +525,15 @@ Certains catalogues posent à côté de chaque bâtiment une « boîte de livrai
 - Plusieurs `--exclure` s'additionnent. Une expression invalide donne un message clair (`Expression régulière invalide pour --exclure`) et rien n'est lu.
 - Les nœuds retirés sont l'objet racine et tous ses descendants ; aucun autre objet ne change. Les exclus n'entrent ni dans les tuiles ni dans les calculs de poids, de triangles et de budget (la recommandation « pas de découpage » retire aussi leurs octets de la taille du GLB). Le GLB d'origine n'est pas modifié ; la partie `glb-stats` de `--analyse` décrit le fichier d'origine.
 - `--analyse` et le rapport final donnent : le nombre d'objets exclus, les triangles retirés, les octets gagnés (géométrie et images qu'aucun objet conservé n'utilise ; **0** quand tous les exclus partagent leurs primitives ou leurs images avec des objets conservés, par exemple un cube commun : le rapport le dit alors, et chiffre les octets partagés non gagnés), le nombre d'objets au nom correspondant mais conservés par les garde-fous, et les 20 noms les plus fréquents avec leur nombre. `X.tiles.json` reçoit une clé `excluded` (motifs, garde-fous, `count`, `triangles`, `bytesSaved`, `bytesShared`, `names`) seulement quand `--exclure` est utilisé.
+
+### Références d'objets (v32) : lier une zone à un objet en mode tuiles
+
+Chaque nœud copié dans une tuile reçoit dans ses `extras` : **`ref`**, sa référence stable dans le modèle d'origine, et **`box`**, la boîte (monde, 6 nombres en m) de **l'objet entier**, même quand il est réparti sur plusieurs tuiles (chaque morceau porte la même boîte). `X.tiles.json` porte `"nodeRefs": 1`.
+
+- **Règle de la référence** (celle de `nom#index` du mode GLB unique, calculée sur le GLB entier) : le **nom** du nœud (à défaut le nom de son mesh) s'il est unique dans tout le modèle ; sinon **`nom#index`**, index = rang du nœud parmi les nœuds de ce nom, dans l'ordre de parcours (pré-ordre, enfants dans l'ordre du fichier). Les objets retirés par `--exclure` comptent dans les rangs (une référence ne change pas quand on exclut autre chose). Un nœud sans nom n'a pas de référence ; une référence de plus de 200 caractères n'est pas écrite.
+- Ces références sont celles des **noms du GLB**, pas celles que verrait le viewer en ouvrant le même GLB entier (le chargeur de three.js renomme les doublons) : une zone liée écrite en mode tuiles s'utilise en mode tuiles.
+- **Coût mesuré** (GLB synthétique de 40 000 nœuds) : +0,5 s sur 8 s, +3 Mo sur 230 Mo de tuiles.
+- Des tuiles écrites **avant la v32** n'ont pas ces extras : les zones liées y restent ignorées. `glb2tiles.py --analyse` (et `--vue-ensemble-seule`) le signalent quand `X.tiles.json` existe déjà sans `nodeRefs` ; `glb2html.py --tiles` aussi, s'il y a des zones liées. Il faut **refaire le découpage** (sans `--vue-ensemble-seule`).
 
 ### Images vides ou invalides (v31)
 
@@ -572,6 +582,7 @@ But : en vue globale, voir **toute** la région ; en promenade, voir **au loin**
  "warnings": ["..."],               tuiles hors budget, valeurs aberrantes, extensions non recopiées
  "roots": {"whole": 1700, "split": 125},         objets racine gardés entiers / répartis
  "duplication": 1.8,                somme des octets de géométrie des tuiles / géométrie unique du GLB
+ "nodeRefs": 1,                     extras.ref / extras.box dans les nœuds des tuiles (v32 ; 0 avec --sans-references)
  "replacedImages": {"distinct": 778, "occurrences": 1200, "grey": 128},    images vides ou invalides remplacées (v31)
  "overview": {"file": "X.overview.glb", "bytes": 23000000, "triangles": 1400000, "terrainTriangles": 131072,
               "objects": 21000, "candidates": 30000, "omitted": {"small": 9000, "skinned": 12, "translucentPrimitives": 800, "budget": 0},
@@ -651,7 +662,8 @@ Une région de plusieurs centaines de Mo ou de plusieurs Go ne tient pas dans un
 
 - **Repère.** Celui du modèle d'origine : **aucun recentrage** (les tuiles gardent leurs coordonnées). Les coordonnées des zones, arrivées, cible de caméra et trou de la mer sont donc dans ce repère, pas dans celui du viewer (qui recentre le modèle entier, ce qu'on ne peut pas faire avec des tuiles). `--rotate` (0, 90, 180, 270) tourne la racine des tuiles autour de l'axe vertical passant par l'origine ; comme au § 11, les valeurs stockées sont dans le repère déjà tourné, et la cible par défaut écrite par `--tiles` l'est aussi.
 - **Cible et mer par défaut.** Sans `--target`, la cible de caméra est le centre de l'étendue des tuiles, à 20 m de hauteur ; sans `--sea-y`, la mer est à 20 m (l'eau d'OpenSim). La mer est centrée sur le centre de l'étendue ; le trou (`--hole`, `--hole-x`, `--hole-z`) est relatif à ce centre. Pour retirer la mer : `--no-sea`.
-- **Zones libres** (cylindres à coordonnées, arrivées, portails, panneaux) : comme avant. **Zones liées à un élément du modèle** (champ `mesh`, référence `nom#index` calculée sur tout le modèle) : **ignorées**, avec « zone « id » ignorée : liée à l'élément « … » » en console (et un avertissement de `glb2html.py` à la génération). Présence, chat, carte des mondes, portails : inchangés. Le viewer (`glb-viewer.html`) ne charge pas les tuiles : on y règle une région avec son GLB léger ou à la main dans les JSON.
+- **Zones libres** (cylindres à coordonnées, arrivées, portails, panneaux) : comme avant. **Zones liées à un objet** (champ `mesh`, v32) : si les tuiles portent les références d'objets (`glb2tiles.py` v32, § 17), la zone **apparaît quand la tuile qui contient l'objet est chargée** et disparaît quand elle est déchargée : cliquable, touche E à moins de `radius` m de l'objet, comme en mode GLB unique. Un objet réparti sur plusieurs tuiles : la zone suit la **boîte de l'objet entier** (stockée dans les tuiles), dès qu'**un** morceau est chargé. Tuiles d'avant la v32 : zone **ignorée**, avec « zone « id » ignorée : liée à l'élément « … » … (tuiles écrites sans références d'objets : redécouper avec glb2tiles v32) » en console, et un avertissement de `glb2html.py` à la génération. Présence, chat, carte des mondes, portails : inchangés. Le viewer ouvre maintenant une région en tuiles (§ 17 ter).
+- **Position affichée (v32).** Le panneau d'aide (touche H, en bas à gauche) donne en texte la **position de la cible** en vue globale, ou de l'**avatar** en promenade : « Position cible (vue globale) : x 123.5 · y 15.0 · z -77.7 m », en mètres, une décimale, dans le repère du modèle d'origine : celui des zones. Pratique pour noter un endroit.
 
 ### Limites de cette version
 
@@ -672,9 +684,29 @@ Une région de plusieurs centaines de Mo ou de plusieurs Go ne tient pas dans un
 | Au loin, rien ou un trou | pas de vue d'ensemble (région découpée avant la v31, ou `--sans-vue-ensemble`) | `glb2tiles.py … --vue-ensemble-seule` avec les options d'origine, puis relancer `glb2html.py --tiles` (copie le fichier avec les tuiles) |
 | « Vue d'ensemble indisponible » | `X.overview.glb` absent à côté de la page, ou illisible | le copier à côté de `X.tiles.json` ; relancer `glb2html.py --tiles` |
 | Page lourde, ralentie | trop de textures chargées | baisser `tileMaxMo`, `tileMaxTri` ou `tileRadius` |
-| Les zones liées n'apparaissent pas | elles sont ignorées en mode tuiles | les remplacer par des zones libres à coordonnées |
+| Les zones liées n'apparaissent pas | la tuile de l'objet n'est pas chargée (elles n'existent que tuile chargée), ou les tuiles datent d'avant la v32 (ignorées, avertissement en console) | s'approcher / `?rayon=` ; sinon refaire le découpage avec `glb2tiles.py` v32 (§ 17), ou utiliser des zones libres à coordonnées |
 | Les zones sont décalées | elles viennent du viewer (repère recentré) | les écrire dans le repère du modèle d'origine |
 
 Test : `python tests/tuiles.py` (région synthétique de 16 tuiles, Chromium sans tête) et `python tests/v31.py` (vue d'ensemble dans la coquille, sortie de promenade).
 
+## 17 ter. Poser des zones dans une région en tuiles (viewer, v32)
 
+Le viewer (`glb-viewer.html`) ouvre une région découpée en tuiles et la montre **dans le repère du modèle d'origine** (aucun recentrage) : les coordonnées de zones, d'arrivées, de caméra et du trou de la mer qu'il produit sont directement celles que `glb2html.py --tiles` attend. Il affiche la vue d'ensemble partout et charge les tuiles détaillées **autour de la cible** (avec le même chargeur et les mêmes limites que la page : rayon 150 m, 200 Mo, 8 millions de triangles).
+
+**Pas à pas** (Edge ou Chrome récents) :
+
+1. Ouvre `glb-viewer.html` (double-clic sur le fichier, ou dans un navigateur).
+2. Clique sur **« Ouvrir une région en tuiles (dossier) »** et choisis le **dossier qui contient `X.tiles.json`** (celui où `glb2tiles.py` a écrit `X.tiles.json`, `X.overview.glb` et le dossier `X.tiles`). Ou **glisse ce dossier** dans la fenêtre. Le navigateur peut demander de confirmer l'envoi des fichiers : rien n'est envoyé nulle part, il les lit sur place, un par un, quand une tuile est nécessaire. S'il y a plusieurs régions dans le dossier, une liste « Région du dossier » apparaît.
+3. Le texte sous les boutons dit ce qui est ouvert (tuiles, vue d'ensemble, références d'objets). La région apparaît en entier ; les tuiles autour de la cible (le petit cercle noir et blanc au sol) se chargent.
+4. **Déplace la cible** : double-clic sur le terrain (même sur la vue d'ensemble : les tuiles de cet endroit se chargent). Molette pour zoomer, glisser pour tourner, clic droit + glisser pour déplacer.
+5. Dans la section **« Zones »**, choisis le type, clique **« Poser une zone par un clic sur la scène »**, puis clique sur le sol ou un objet **une fois la tuile affichée**. Si tu cliques hors d'une tuile chargée (sur la vue d'ensemble), le viewer te le dit en texte (« Pas de tuile détaillée chargée à cet endroit… »), charge la tuile, et tu cliques de nouveau quelques secondes plus tard. Tout le reste est comme en mode GLB unique : rayon et hauteur, portails (§ 5, 6), arrivées (§ 4), panneaux, Home Assistant (§ 7, 8), touche P en promenade.
+6. **Lier une zone à un objet** (§ 9) : dans la fiche de la zone, **« Lier à un élément »**, puis clic sur l'objet. La zone prend la position de l'objet. Une zone liée n'est visible que lorsque la tuile de l'objet est chargée (le texte de la fiche le dit : « tuile non chargée » ; **« Voir cette zone »** la charge). Si le viewer répond que l'élément n'a pas de référence, les tuiles datent d'avant la v32 : refaire le découpage (§ 17).
+7. Section **« Coordonnées (m) »** : le point visé (clic simple sur le modèle) et la cible, en texte (x, y, z, une décimale), avec **« Copier le point visé »** et **« Copier la cible »**.
+8. **Exporter les zones** : « Exporter zones (.json) » écrit **`X.zones.json`** (X = nom de la région) dans ton dossier de téléchargements. Pour **compléter** une région déjà faite : ouvre la région, « Importer zones (.json) » avec le `X.zones.json` existant, ajoute les nouvelles zones, exporte de nouveau.
+9. **Régénérer la page** : renseigne « Chemin de glb2html.py » et clique sur **« Générer la ligne de commande PowerShell »** : le viewer écrit la commande complète (`--tiles`, `--zones`, `-o`, coquille commune, hauteur de la mer, présence, chat…). Lance-la depuis le dossier de `glb2html.py`, en corrigeant le chemin de `X.zones.json` s'il n'est pas à côté. Si la page existe déjà et que la coquille `index.html` a changé de version, supprime-la d'abord (une coquille existante différente n'est jamais écrasée : l'avertissement le dit).
+
+Autre façon d'ouvrir : par adresse, si le viewer est servi en http (par exemple `python -m http.server` lancé dans un dossier qui contient `glb-viewer.html` et, en dessous, la région) : `http://localhost:8000/glb-viewer.html?tuiles=region/X.tiles.json`. Le chemin est relatif à la page, sans `..`, sans `:`, `?` ni `#`.
+
+**Ce qui est différent du mode GLB unique** : pas d'export HTML autonome ni de `.zip` (il n'y a pas de GLB unique ; les boutons sont désactivés) ; pas de rotation de la région (repère d'origine ; avec `glb2html.py --tiles --rotate`, les zones doivent déjà être dans le repère tourné) ; le trou de la mer est relatif au **centre de la région** (comme dans la page) ; la mer est à 20 m par défaut (`--sea-y` pour la changer, la commande l'écrit) ; le filaire des éléments traversables ne montre que les tuiles déjà chargées ; le texte d'une fiche de zone liée (« tuile non chargée ») ne se met à jour qu'au prochain changement de la liste (modifier ou ajouter une zone, cliquer une zone dans la scène), pas au moment où la tuile arrive ; la zone, elle, apparaît aussitôt dans la scène.
+
+Test : `python tests/v32.py` (région synthétique de 16 tuiles : zones libre, portail, arrivée et liées posées dans le viewer, export, puis page générée).
