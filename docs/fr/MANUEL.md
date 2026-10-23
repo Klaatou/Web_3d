@@ -1064,3 +1064,19 @@ Quand l'adresse de la coquille n'a pas de paramètre `region`, elle essaie dans 
 ### 22.10 Tests de la v37
 
 `tests/v37.py` (lot 1), `tests/v37_chat.py` (lot 2), `tests/v37_region.py` (lot 3), aide commune `tests/h37.py`. Attentes adaptées parce qu'une règle de la v37 l'impose : `v33.py` (le clignotement ne s'arrête plus seul : il s'arrête à une touche), `v35.py` (zoneInfoDist 150 par défaut, bornes 5 et 500 ; les tests de 40 m demandent `--zone-info-dist 40`), `v36.py` (la pointe du cône reste en place quand l'échelle change).
+
+## 23. Nouveautés de la v39 (23/10/2026)
+
+### 23.1 Bouton « Copier le diagnostic »
+
+En bas de la fenêtre **Informations / État** (touche **I**), le bouton **« Copier le diagnostic »** copie dans le presse-papiers un texte à coller tel quel dans une conversation d'aide : il remplace les relevés de la console F12. Le bouton reste visible quand la fenêtre est réduite ; il ne garde pas le focus (Espace et Entrée restent à la promenade et au chat). Le même bouton est en haut du panneau du viewer (`glb-viewer.html`).
+
+Le texte contient : la version du code (et celle de la configuration de la région si elle diffère), la date, la durée depuis l'ouverture, l'adresse de la page, la langue, le clavier, le navigateur, la taille de la fenêtre, la carte graphique vue par WebGL, le rendu de la dernière image (triangles, appels de dessin, géométries, textures), la mémoire JavaScript (Chrome et Edge seulement), les tuiles (prêtes, en cours, en échec) et leurs durées (première et dernière prêtes, médiane et maximum par tuile), les lignes affichées dans la fenêtre Informations / État, l'état de la présence, puis **les 10 dernières erreurs et avertissements** de la page (erreurs non attrapées, promesses rejetées, `console.error`, `console.warn`, fichiers qui ne se chargent pas).
+
+**Rien de privé** : l'hôte de la page et de tout serveur est remplacé par `ADRESSE`, les adresses IP aussi ; la partie `#` de l'adresse (pseudo, clé) n'est jamais copiée.
+
+Si le navigateur refuse la copie (page en `http://` hors `localhost`), le texte s'affiche **déjà sélectionné** sous le bouton : **Ctrl+C**. Une page fabriquée avec `--no-walk` n'a pas de fenêtre Informations / État, donc pas de bouton.
+
+### 23.2 Tests de la v39
+
+`tests/v39.py` : bouton présent dans la page et dans le viewer, en français et en anglais, adresses masquées, erreurs capturées, durées d'une région en tuiles.

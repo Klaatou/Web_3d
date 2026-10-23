@@ -1064,3 +1064,19 @@ When the address of the shell has no `region` parameter, it tries in this order:
 ### 22.10 Tests of v37
 
 `tests/v37.py` (batch 1), `tests/v37_chat.py` (batch 2), `tests/v37_region.py` (batch 3), shared helper `tests/h37.py`. Expectations adapted because a v37 rule requires it: `v33.py` (the blinking no longer stops by itself: it stops on a key), `v35.py` (zoneInfoDist 150 by default, limits 5 and 500; the 40 m tests ask for `--zone-info-dist 40`), `v36.py` (the tip of the cone stays in place when the scale changes).
+
+## 23. New in v39 (23/10/2026)
+
+### 23.1 "Copy diagnostics" button
+
+At the bottom of the **Information / Status** window (**I** key), the **"Copy diagnostics"** button copies to the clipboard a text to paste as is into a help conversation: it replaces readings from the F12 console. The button stays visible when the window is collapsed; it does not keep the focus (Space and Enter stay with walking and the chat). The same button is at the top of the viewer panel (`glb-viewer.html`).
+
+The text contains: the code version (and the region configuration version if it differs), the date, the time since opening, the page address, the language, the keyboard, the browser, the window size, the graphics card as seen by WebGL, the rendering of the last frame (triangles, draw calls, geometries, textures), the JavaScript memory (Chrome and Edge only), the tiles (ready, loading, failed) and their timings (first and last ready, median and maximum per tile), the lines shown in the Information / Status window, the presence status, then **the last 10 errors and warnings** of the page (uncaught errors, rejected promises, `console.error`, `console.warn`, files that fail to load).
+
+**Nothing private**: the host of the page and of any server is replaced by `ADRESSE`, and so are IP addresses; the `#` part of the address (nickname, key) is never copied.
+
+If the browser refuses to copy (page over `http://` other than `localhost`), the text is shown **already selected** under the button: **Ctrl+C**. A page built with `--no-walk` has no Information / Status window, hence no button.
+
+### 23.2 v39 tests
+
+`tests/v39.py`: button present in the page and in the viewer, in French and in English, addresses masked, errors captured, timings of a region split into tiles.

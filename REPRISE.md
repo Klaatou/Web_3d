@@ -1,6 +1,6 @@
 # Reprise du projet Web 3d
 
-*État au 23/10/2026, version v38. À lire après `REGLES.md` (qui est dans les fichiers du Projet, pas dans le dépôt). Ce fichier est mis à jour et commité à la fin de chaque lot. Il ne contient ni adresse IP ni nom d'hôte.*
+*État au 23/10/2026, version v39. À lire après `REGLES.md` (qui est dans les fichiers du Projet, pas dans le dépôt). Ce fichier est mis à jour et commité à la fin de chaque lot. Il ne contient ni adresse IP ni nom d'hôte.*
 
 ## 1. Ce qu'est ce projet
 
@@ -8,7 +8,8 @@ Une région OpenSim (sauvegarde `.oar`) devient une **page web 3D** où l'on se 
 
 ## 2. État du dépôt
 
-- **`main` = v38** (étiquette `v38`, fichier `VERSION` : `v38 (23/10/2026)`). Étiquettes `v14` à `v38`.
+- **`main` = v39** (étiquette `v39`, fichier `VERSION` : `v39 (23/10/2026)`). Étiquettes `v14` à `v39`.
+- **v39** : bouton « Copier le diagnostic » (fenêtre Informations / État de la page, panneau du viewer) : version, carte graphique, rendu, tuiles et durées, état, présence, 10 dernières erreurs ; adresses remplacées par `ADRESSE`, partie `#` jamais copiée. Code commun `DIAG` / `diagText` dans `src/core.js`, manuel § 23, `tests/v39.py`. Pas de bouton sur une page `--no-walk` (pas de fenêtre d'état).
 - Les sessions cloud sont **terminées** (crédit épuisé). Tout se fait désormais dans le chat, par patchs (voir `REGLES.md`).
 - **v38 (documentation, aucun changement de comportement)** : manuel, procédures et historique traduits en anglais (`docs/en/`), documents français déplacés dans `docs/fr/` (`MODE_EMPLOI.md` devenu `MANUEL.md`), `README.md` en anglais (page d'accueil GitHub) et `README.fr.md` en français, `verif_trad.py` (contrôle des traductions). Seule la chaîne de version change dans les outils fabriqués : après `python build.py`, `--maj` renouvelle la coquille des régions (ancienne copie gardée).
 - Région de référence de JJ : la « 4X4 » (`OAR-Free_House_Gallery_I(4X4)-terrain`), 1 024 x 1 024 m, 106 tuiles et une vue d'ensemble, publiée avec présence et chat. Options de sa page : mer à 18,5 m (`--sea-y 18.5`), cible de départ `--target 392,68,-373`, `default.json` posé avec `--maj --default`.
@@ -79,14 +80,14 @@ Le dossier des outils fabriqués est `dist\` ; le dépôt local est `P:\_OpenSim
 
 ## 6. À faire (dans l'ordre)
 
-1. **Bouton « Copier le diagnostic »** dans la page (versions, état, tuiles chargées, durées) pour supprimer les demandes de F12.
-2. **Démo publique** : page statique sans chat d'une petite région (par exemple Ankh Island, 12 Mo) sur GitHub Pages, dans un dépôt séparé ; plus tard, serveur de présence sur un petit VPS avec `wss://` (Caddy et un nom de domaine) : écrire la procédure d'installation. Idée plus lointaine : présence réécrite en Worker Cloudflare avec Durable Object (aucun serveur à gérer).
-3. **Idée notée** : un lien « Manuel » dans l'aide de la page et du viewer, vers `docs/fr/MANUEL.md` ou `docs/en/MANUAL.md` selon la langue (vérifié : aucun texte de `src/i18n/*.json` ne renvoie au manuel aujourd'hui).
-4. **Règles de documentation désormais** : toute modification du manuel, des procédures ou de l'historique se fait dans les deux langues, puis `verif_trad.py` sur le couple modifié (0 erreur exigée) ; chaque entrée de `CHANGELOG.md` en français puis en anglais.
+1. **Démo publique** (JJ n'est pas prêt : ne pas la lancer sans sa demande) : page statique sans chat d'une petite région (par exemple Ankh Island, 12 Mo) sur GitHub Pages, dans un dépôt séparé ; plus tard, serveur de présence sur un petit VPS avec `wss://` (Caddy et un nom de domaine) : écrire la procédure d'installation. Idée plus lointaine : présence réécrite en Worker Cloudflare avec Durable Object (aucun serveur à gérer).
+2. **Idée notée** : un lien « Manuel » dans l'aide de la page et du viewer, vers `docs/fr/MANUEL.md` ou `docs/en/MANUAL.md` selon la langue (vérifié : aucun texte de `src/i18n/*.json` ne renvoie au manuel aujourd'hui).
+3. **Règles de documentation désormais** : toute modification du manuel, des procédures ou de l'historique se fait dans les deux langues, puis `verif_trad.py` sur le couple modifié (0 erreur exigée) ; chaque entrée de `CHANGELOG.md` en français puis en anglais.
 
 ## 7. Limites connues et pièges
 
 - **Non testé ici** : Windows, Edge, carte graphique réelle, la vraie capture de souris d'Échap, une région en tuiles dans un sous-dossier, la conversion par convoar, les lignes PowerShell elles-mêmes (essayées sous Linux avec des chemins équivalents).
+- Les tests de navigateur durent de 1 à 2,5 min chacun (rendu logiciel) et un processus lancé en arrière-plan ne survit pas d'une réponse à l'autre : les lancer au premier plan, un ou deux par commande.
 - Le test `tests/v33.py` sur le clignotement de bulle dépend du rendu logiciel de Chromium : il a déjà échoué une fois sans lien avec le code.
 - Un ancien `presence_server.py` ignore les nouveautés (couleur, historique) : toujours relancer celui de `dist\` après `python build.py`.
 - `--maj` ignore les options de la carte si on n'ajoute pas `--register` ; les chemins relatifs de `--register` et `--map-page` y sont relatifs à la page.

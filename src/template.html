@@ -513,6 +513,24 @@ if (C.walk) {
   const sb = document.getElementById('stateInfo'), sbody = document.getElementById('stateBody'), shead = document.getElementById('stateHead');
   const mkLine = id => { const d = document.createElement('div'); d.id = id; sbody.append(d); return d; };
   const lv = mkLine('viewInfo'), lm = mkLine('modeInfo'), lmo = mkLine('mouseInfo'), lp = mkLine('posInfo'), lkb = mkLine('kbInfo');
+  // v39 : bouton « Copier le diagnostic » sous le contenu de la fenêtre (reste visible quand elle est réduite) : lignes affichées + diagText (core.js) ;
+  // si le navigateur refuse la copie, le texte s'affiche sélectionné dessous (Ctrl+C)
+  {
+    const row = document.createElement('div'), bd = document.createElement('button'), dout = document.createElement('textarea');
+    row.id = 'diagRow'; bd.type = 'button'; bd.id = 'diagBtn'; bd.textContent = tr('core.diag.btn');
+    bd.style.cssText = 'font:inherit;margin-top:4px;padding:2px 8px;border:1px solid #000;border-radius:4px;background:#fff;color:#000;cursor:pointer';
+    dout.id = 'diagOut'; dout.readOnly = true; dout.rows = 8; dout.hidden = true; dout.setAttribute('aria-label', tr('core.diag.btn'));
+    dout.style.cssText = 'display:block;width:100%;box-sizing:border-box;font:inherit;margin-top:4px';
+    bd.onmousedown = e => e.preventDefault();   // le bouton ne garde pas le focus : Espace et Entrée restent à la promenade et au chat
+    bd.onclick = async () => {
+      const lines = [...sbody.children].filter(e => !e.hidden && e.textContent).map(e => e.textContent);
+      if (C.presenceUrl) { const ps = document.getElementById('presenceStatus'); lines.push(tr('core.diag.line', tr('core.diag.presence'), String(C.presenceUrl).split(':')[0] + ' · ' + (ps && ps.textContent ? ps.textContent : '?'))); }
+      const t = diagText(viewer, { cfgVersion: C.version, lines });
+      dout.value = t;
+      toast((await copyText(t, dout)) ? tr('core.diag.copied') : tr('page.toast.copyfail'));
+    };
+    row.append(bd, dout); sb.append(row);
+  }
   const setTxt = (el, t) => { if (el.textContent !== t) el.textContent = t; };
   const fb = document.getElementById('flyBtn'), gb = document.getElementById('grabBtn');
   const MOUSE = { captured: tr('page.mouse.captured'), free: tr('page.mouse.free'), idle: tr('page.mouse.idle') };

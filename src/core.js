@@ -28,6 +28,74 @@ const KB = {
   }
 };
 KB.detect();
+// v39 : diagnostic à copier (bouton « Copier le diagnostic » de la page et du viewer) : état technique, durées des tuiles et 10 dernières erreurs.
+// Jamais d'adresse de serveur (remplacée par ADRESSE) ni la partie # de l'adresse (pseudo, clé).
+const DIAG = { errs: [] };
+DIAG.mask = s => String(s).replace(/data:[^,\s]*,[^\s)]*/g, 'data:…').replace(/\b([a-z][a-z0-9+.-]*:\/\/)[^\/\s'"<>)]+/gi, '$1ADRESSE');
+DIAG.str = x => {
+  if (x && typeof x === 'object' && (x.message || x.stack)) {
+    const at = String(x.stack || '').split('\n').map(l => l.trim()).filter(l => /^at |@/.test(l)).slice(0, 2);
+    return String(x.message || x) + (at.length ? ' | ' + at.join(' | ') : '');
+  }
+  if (typeof x === 'string') return x;
+  try { return JSON.stringify(x); } catch (_) { return String(x); }
+};
+DIAG.note = (kind, ...a) => {
+  try {
+    const s = DIAG.mask(a.map(DIAG.str).join(' ')).replace(/\b\d{1,3}(\.\d{1,3}){3}\b/g, 'ADRESSE').slice(0, 500);
+    DIAG.errs.push((performance.now() / 1000).toFixed(1) + ' s [' + kind + '] ' + s);
+    if (DIAG.errs.length > 10) DIAG.errs.shift();
+  } catch (_) {}
+};
+if (typeof window !== 'undefined' && !window.__web3dDiag) {
+  window.__web3dDiag = DIAG;
+  addEventListener('error', e => {
+    const t = e.target;
+    if (t && t !== window && t.tagName) DIAG.note('load', t.tagName.toLowerCase() + ' ' + (t.currentSrc || t.src || t.href || ''));
+    else DIAG.note('error', e.error || ((e.message || '') + (e.filename ? ' (' + e.filename + ':' + e.lineno + ')' : '')));
+  }, true);
+  addEventListener('unhandledrejection', e => DIAG.note('promise', e.reason));
+  for (const k of ['error', 'warn']) { const f = console[k]; console[k] = function (...a) { DIAG.note(k, ...a); return f.apply(this, a); }; }
+}
+// texte du diagnostic ; extra = { cfgVersion, lines } : version de la configuration de la région, lignes d'état propres à la page ou au viewer
+function diagText(viewer, extra) {
+  const x = extra || {}, L = (k, v) => tr('core.diag.line', k, v), out = [tr('core.diag.title')];
+  const nb = (v, d) => (Number.isFinite(v) ? i18nNum(v, d || 0) : '?');   // nombres à la manière de la langue (virgule en français)
+  out.push(L(tr('core.diag.version'), '__VERSION__' + (x.cfgVersion && x.cfgVersion !== '__VERSION__' ? ' ; ' + tr('core.diag.cfgver', x.cfgVersion) : '')));
+  out.push(L(tr('core.diag.date'), new Date().toLocaleString(({ fr: 'fr-FR', en: 'en-GB' })[LANG]) + ' ; ' + tr('core.diag.uptime', nb(performance.now() / 1000))));
+  out.push(L(tr('core.diag.page'), location.protocol + (location.host ? '//ADRESSE' : '//') + location.pathname + location.search));
+  out.push(L(tr('core.diag.lang'), LANG + ' · ' + ((navigator.languages || []).join(',') || navigator.language || '?') + ' · ' + KB.layout().toUpperCase()));
+  out.push(L(tr('core.diag.browser'), navigator.userAgent));
+  const r = viewer && viewer.renderer;
+  out.push(L(tr('core.diag.screen'), tr('core.diag.screen.v', innerWidth, innerHeight, nb(devicePixelRatio, 2), r ? nb(r.getPixelRatio(), 2) : '?')));
+  if (r) {
+    let gpu = '?';
+    try {
+      const gl = r.getContext(); gpu = String(gl.getParameter(gl.RENDERER) || '?');
+      if (/^WebKit WebGL$|^Mozilla$/i.test(gpu)) { const ext = gl.getExtension('WEBGL_debug_renderer_info'); if (ext) gpu = String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)); }
+    } catch (_) {}
+    out.push(L(tr('core.diag.gpu'), tr('core.diag.gpu.v', gpu, r.capabilities && r.capabilities.isWebGL2 ? 2 : 1, r.capabilities ? r.capabilities.maxTextureSize : '?')));
+    const i = r.info || {}, ri = i.render || {}, mi = i.memory || {};
+    out.push(L(tr('core.diag.render'), tr('core.diag.render.v', ri.triangles, ri.calls, mi.geometries, mi.textures, (i.programs || []).length)));
+  }
+  const pm = performance.memory;
+  out.push(L(tr('core.diag.mem'), pm && pm.usedJSHeapSize ? tr('core.diag.mem.v', nb(pm.usedJSHeapSize / 1048576), nb(pm.jsHeapSizeLimit / 1048576)) : tr('core.diag.na')));
+  if (viewer && viewer.tiled && viewer.tilesState) {
+    try {
+      const s = viewer.tilesState(), ok = (s.log || []).filter(l => l.ok);
+      out.push(L(tr('core.diag.tiles'), tr('core.diag.tiles.v', s.loaded, s.total, s.loading, s.failed)));
+      if (ok.length) {
+        const med = k => { const v = ok.map(l => l[k]).filter(Number.isFinite).sort((a, b) => a - b); return v.length ? v[v.length >> 1] + ' / ' + v[v.length - 1] : '?'; };
+        out.push(L(tr('core.diag.times'), tr('core.diag.times.v', nb(ok[0].at / 1000, 1), nb(ok[ok.length - 1].at / 1000, 1), med('totalMs'), med('downloadMs'), med('parseMs'))));
+      }
+      if ((s.failedFiles || []).length) out.push(L(tr('core.diag.failed'), s.failedFiles.slice(0, 5).join(', ') + (s.failedFiles.length > 5 ? ' …' : '')));
+    } catch (_) {}
+  }
+  if ((x.lines || []).length) { out.push('', tr('core.diag.state')); for (const l of x.lines) out.push('  ' + l); }
+  out.push('', tr('core.diag.errors', DIAG.errs.length));
+  if (DIAG.errs.length) for (const e of DIAG.errs) out.push('  ' + e); else out.push('  ' + tr('core.diag.noerror'));
+  return DIAG.mask(out.join('\n'));
+}
 // la lettre imprimée par la touche (minuscule) : M, comme toute touche dont la place change d'une disposition à l'autre, se reconnaît à cette lettre et non au code physique
 const keyChar = e => (typeof e.key === 'string' && e.key.length === 1 ? e.key.toLowerCase() : '');
 function parseIgnore(s) { return String(s || '').toLowerCase().split(/[,;]+/).map(x => x.trim()).filter(Boolean); }

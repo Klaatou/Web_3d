@@ -2,6 +2,11 @@
 
 Les dates sont au format jj/mm/aaaa.
 
+## v39 (23/10/2026)
+### 23/10/2026 : bouton « Copier le diagnostic »
+- **Diagnostic** : bouton « Copier le diagnostic » en bas de la fenêtre Informations / État de la page et en haut du panneau du viewer ; il copie la version, la date, la page (hôte masqué), la langue, le clavier, le navigateur, la fenêtre, la carte graphique, le rendu, la mémoire, les tuiles et leurs durées, les lignes d'état, la présence et les 10 dernières erreurs et avertissements (adresses remplacées par `ADRESSE`, partie `#` de l'adresse jamais copiée) ; copie refusée : texte affiché sélectionné. Code commun dans `src/core.js` (`DIAG`, `diagText`), textes `core.diag.*` en français et en anglais, manuel § 23, `tests/v39.py`.
+- **Diagnostics**: "Copy diagnostics" button at the bottom of the page's Information / Status window and at the top of the viewer panel; it copies the version, date, page (host masked), language, keyboard, browser, window, graphics card, rendering, memory, tiles and their timings, status lines, presence and the last 10 errors and warnings (addresses replaced by `ADRESSE`, `#` part of the address never copied); copy refused: text shown selected. Shared code in `src/core.js` (`DIAG`, `diagText`), `core.diag.*` texts in French and English, manual § 23, `tests/v39.py`.
+
 ## v38 (23/10/2026)
 ### 23/10/2026 : traductions
 - **Traductions** : `verif_trad.py` compare un document français et sa traduction (titres, tableaux, listes, code, liens, glossaire de l'interface) ; code de sortie 1 en cas d'erreur. `docs/en/PROCEDURES.md` et `docs/en/HISTORY.md` : traductions de `PROCEDURES.md` et `HISTORIQUE.md`, contrôlées par ce script.
