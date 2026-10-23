@@ -1,6 +1,6 @@
 # Que faire pour… (procédures pas à pas)
 
-*Écrit le 23/10/2026 pour la version v35. Les commandes sont en PowerShell, sur une seule ligne, avec les chemins de ta machine. La liste complète des options est dans `REFERENCE_OPTIONS.md` ; le détail des zones, touches et réglages est dans `MODE_EMPLOI.md`.*
+*Écrit le 23/10/2026 pour la version v36. Les commandes sont en PowerShell, sur une seule ligne, avec les chemins de ta machine. La liste complète des options est dans `REFERENCE_OPTIONS.md` ; le détail des zones, touches et réglages est dans `MODE_EMPLOI.md`.*
 
 **Ce qui a été essayé ici :** les commandes de `glb2html`, `glb2tiles` (y compris `--maj`, `--register`, `--map-page`) sur des régions de test, un seul GLB et en tuiles. **Ce qui ne l'a pas été :** la conversion d'un OAR par convoar (convoar n'est pas disponible dans le bac à sable), et les commandes PowerShell elles-mêmes (essayées sous Linux avec des chemins équivalents).
 
@@ -67,8 +67,8 @@ Clés utiles : `seaY` (hauteur de la mer, en m), `target` (`[x, y, z]`), `presen
    `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d"; git checkout main; git pull; git fetch; git merge origin/NOM -m "Fusion vNN"; python build.py; git push; git tag vNN HASH; git push origin vNN`
 2. Mettre à jour chaque région avec `--maj`. La coquille `index.html` est renouvelée si elle est plus ancienne (l'ancienne est gardée sous un nom daté), la config et les zones sont gardées.
    `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python glb2html.py --maj --shared-shell -o "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.html"`
-3. Recharger la page avec Ctrl+F5. La ligne du bas du panneau d'aide donne la version affichée (par exemple « glb2html v35 ») : si elle est ancienne, la mise à jour n'a pas eu lieu.
-4. Relancer le serveur de présence **seulement** si la session le demande (procédure 6).
+3. Recharger la page avec Ctrl+F5. La ligne du bas du panneau d'aide donne la version affichée (par exemple « glb2html v36 ») : si elle est ancienne, la mise à jour n'a pas eu lieu.
+4. Relancer le serveur de présence : **oui pour la v36** (ses messages et son aide sont traduits ; un ancien exemplaire continue de marcher mais reste en français). Procédure 6.
 5. Le découpage en tuiles n'est à refaire que si la session le dit, par exemple pour de nouvelles informations dans les tuiles.
 
 ## 5. Poser et modifier des zones
@@ -115,7 +115,7 @@ Avec une seule région, la carte n'apporte rien : elle sert à relier plusieurs 
 | Une valeur de réglage (mer, cible, présence) | modifier `X.config.json`, ou `--maj` avec l'option | F5 |
 | Les zones | enregistrer `X.zones.json` dans le dossier de la région | F5 |
 | Nouvelle version des outils | procédure 4 (`--maj`) | Ctrl+F5 |
-| Nouvelle version du serveur de présence | arrêter et relancer `presence_server.py` | F5 |
+| Nouvelle version du serveur de présence (v36 : messages traduits) | arrêter et relancer `presence_server.py` | F5 |
 | L'OAR a changé | reconvertir (1.1 ou 2.1), redécouper (2.3), puis `--maj` | Ctrl+F5 |
 | Les objets exclus du découpage | redécouper (2.3) avec un autre `--exclure` | Ctrl+F5 |
 | Rotation de la région (`--rotate`) | `--maj --rotate 180`, puis refaire la vignette de la carte | Ctrl+F5 |
@@ -135,3 +135,18 @@ Avec une seule région, la carte n'apporte rien : elle sert à relier plusieurs 
 | Copier le texte de l'aide | — | sélectionner à la souris, Ctrl+C ; sinon, dans la console : `copy(document.body.innerText)` |
 
 Pour tout rapport de bug, colle le texte du panneau d'état et d'aide, et les messages de la console (en ignorant ceux de LastPass).
+
+## 10. Touches utiles et langue (v36)
+
+| Besoin | Geste |
+|---|---|
+| Entrer en promenade / en sortir | **F** ou **P** (dans le viewer, P pose une zone : sortir par **F** ou **Maj+P**) |
+| Déclencher une zone proche | clic sur elle, ou **E** (portail « en marchant dedans » : à l'entrée de son rayon) |
+| Voler | **Début**, le bouton de vol, ou **Page Haut** maintenu plus de 0,4 s ; monter : **Page Haut** ou **Espace** maintenu ; descendre : **Page Bas** ou **C** ; sauter : **Espace** ou appui bref sur **Page Haut** |
+| Afficher les repères de portail | **T** (retirés de la fabrication avec `--no-zone-cone`) |
+| Clavier AZERTY ou QWERTY | réglage « Clavier » de la page (Auto par défaut) : les touches physiques ne changent pas, l'aide affiche les lettres de ta disposition |
+| Langue de la page | réglage « Langue / Language » (Auto, français, English), ou `#lang=en` dans l'adresse |
+| Langue des outils | `--lang fr` ou `--lang en` sur chaque outil, ou la variable d'environnement `WEB3D_LANG` ; sans rien, la langue du système. PowerShell, une session : `$env:WEB3D_LANG = "fr"` |
+| Copier ma position | bouton « Copier ma position » (liste URL / xyz) ; « Aller à » accepte l'URL `#pos=…` et `x, y, z` |
+
+Détail : `MODE_EMPLOI.md` §§ 2 et 21.

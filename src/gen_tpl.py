@@ -32,6 +32,23 @@ import sys
 import urllib.parse
 import urllib.request
 
+# <<I18N_PY>>
+def _i18n_boot():   # depuis les sources : charge src/i18n_py.py ; fabriqué par build.py (dist\) : ce bloc est remplacé par le texte de i18n_py.py avec les langues intégrées
+    import importlib.util, pathlib
+    here = pathlib.Path(__file__).resolve().parent
+    for p in (here / "i18n_py.py", here.parent / "src" / "i18n_py.py"):
+        if p.is_file():
+            spec = importlib.util.spec_from_file_location("i18n_py", p)
+            m = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(m)
+            return m
+    raise SystemExit("i18n_py.py not found / introuvable")
+
+
+_I18N = _i18n_boot()
+_tr, i18n_add_common = _I18N._tr, _I18N.i18n_add_common
+# <</I18N_PY>>
+
 # <<DEFAULTS>>
 ROTATE = 0
 HOLE_RADIUS = 180.0
@@ -100,7 +117,7 @@ MESHOPT_FILES = {"three/addons/libs/meshopt_decoder.module.js": "examples/jsm/li
 
 
 ZONE_TYPES = ("url", "ha", "portal", "spawn")
-ZONE_MARKERS = ("discret", "portee", "aucun")
+ZONE_MARKERS = ("discret", "portee", _tr("py.glb2html.aucun"))
 
 
 def _slug(s):
@@ -165,11 +182,11 @@ def fix_presence_url(u):
     if not u:
         return u
     if not re.match(r"^wss?://", u, re.I):
-        print(f"[AVERTISSEMENT] --presence-url doit commencer par ws:// ou wss:// (reçu : {u})", file=sys.stderr)
+        print(_tr("py.glb2html.avertissement_presence_url_doit_commencer_pa", u), file=sys.stderr)
         return u
     fixed = re.sub(r"^(wss?://)(0\.0\.0\.0)(?=[:/]|$)", r"\g<1>127.0.0.1", u, flags=re.I)
     if fixed != u:
-        print(f"[AVERTISSEMENT] 0.0.0.0 est une adresse d'écoute du serveur, pas une destination : remplacée par 127.0.0.1 -> {fixed}", file=sys.stderr)
+        print(_tr("py.glb2html.avertissement_0_0_0_0_est", fixed), file=sys.stderr)
     return fixed
 
 
@@ -334,8 +351,7 @@ def page_path(arg, base):
 def where_note(reg, out):
     """Hors --maj : une ligne qui dit où le fichier de carte est écrit quand ce n'est pas à côté de la page (-o)."""
     if out and pathlib.Path(reg).resolve().parent != pathlib.Path(out).resolve().parent:
-        print(f"[carte] {reg} n'est pas à côté de la page {out} (un chemin relatif de --register est cherché dans le dossier de lancement, sinon dans celui des outils). "
-              "Pour l'écrire à côté de la page : donne un chemin complet, ou mets la région à jour avec --maj (chemins relatifs à la page)")
+        print(_tr("py.glb2html.carte_0_n_est_pas_a", reg, out))
 
 
 def thumb_data_url(arg):
@@ -343,12 +359,12 @@ def thumb_data_url(arg):
         return str(arg)[:600]
     p = find_beside(arg)
     if p is None:
-        print(f"[AVERTISSEMENT] vignette introuvable : {arg}", file=sys.stderr)
+        print(_tr("py.glb2html.avertissement_vignette_introuvable_0", arg), file=sys.stderr)
         return ""
     mime = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp"}.get(p.suffix.lower())
     b = p.read_bytes()
     if not mime or len(b) > 140000:
-        print(f"[AVERTISSEMENT] vignette ignorée (jpg/png/webp de 140 Ko maximum attendus) : {p}", file=sys.stderr)
+        print(_tr("py.glb2html.avertissement_vignette_ignoree_jpg_png_webp", p), file=sys.stderr)
         return ""
     return f"data:{mime};base64," + base64.b64encode(b).decode("ascii")
 
@@ -360,7 +376,7 @@ def register_region(path, entry):
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, ValueError) as e:
-            sys.exit(f"[ERREUR] {path} illisible ({e})")
+            sys.exit(_tr("py.glb2html.erreur_0_illisible_1", path, e))
     data = [r for r in data if isinstance(r, dict)] if isinstance(data, list) else []
     i = next((k for k, r in enumerate(data) if (r.get("room") and r.get("room") == entry["room"]) or r.get("id") == entry["id"]), None)
     if i is None:
@@ -376,11 +392,11 @@ def register_region(path, entry):
 
 def write_map_page(path, entries, presence_url, map_url, title):
     cfg = {"map": clean_map(entries), "mapUrl": str(map_url or "")[:1200], "presenceUrl": fix_presence_url(presence_url)}
-    page = (MAP_PAGE_TEMPLATE.replace("__TITLE_ATTR__", "" if title else 'data-i18n="map.title"').replace("__TITLE__", html.escape(title or "Carte des mondes")).replace("__VERSION__", VERSION)
+    page = (MAP_PAGE_TEMPLATE.replace("__TITLE_ATTR__", "" if title else 'data-i18n="map.title"').replace("__TITLE__", html.escape(title or _tr("py.glb2html.carte_des_mondes"))).replace("__VERSION__", VERSION)
             .replace("__CONFIG__", json.dumps(cfg, ensure_ascii=False).replace("</", "<\\/")))
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(page, encoding="utf-8")
-    print(f"[carte] page carte ({len(cfg['map'])} région(s)) -> {path}")
+    print(_tr("py.glb2html.carte_page_carte_0_region_s", len(cfg['map']), path))
 
 
 def settings_defaults(S):
@@ -417,17 +433,17 @@ def vendor_bytes(rel: str, vendor_dir: pathlib.Path | None) -> bytes:
     if vendor_dir:
         p = vendor_dir / rel
         if not p.is_file():
-            sys.exit(f"[ERREUR] {p} introuvable (--vendor doit pointer sur la racine du paquet npm three)")
+            sys.exit(_tr("py.glb2html.erreur_0_introuvable_vendor_doit_pointer", p))
         return p.read_bytes()
     p = CACHE_DIR / rel
     if not p.is_file():
         p.parent.mkdir(parents=True, exist_ok=True)
-        print(f"[cache] téléchargement {CDN + rel}")
+        print(_tr("py.glb2html.cache_telechargement_0", CDN + rel))
         try:
             with urllib.request.urlopen(CDN + rel, timeout=60) as r:
                 data = r.read()
         except Exception as e:
-            sys.exit(f"[ERREUR] téléchargement impossible ({e}). Utilise --vendor <dossier three>.")
+            sys.exit(_tr("py.glb2html.erreur_telechargement_impossible_0_utilise_v", e))
         p.write_bytes(data)
     return p.read_bytes()
 
@@ -447,25 +463,23 @@ def bin_data_url(src: bytes, mime: str) -> str:
 
 def inspect_glb(data: bytes, name: str) -> set:
     if len(data) < 20 or data[:4] != b"glTF":
-        raise ValueError(f"{name} : pas un GLB (magic absent)")
+        raise ValueError(_tr("py.glb2html.0_pas_un_glb_magic_absent", name))
     version, total = struct.unpack_from("<II", data, 4)
     if version != 2:
-        raise ValueError(f"{name} : glTF version {version} non supportée")
+        raise ValueError(_tr("py.glb2html.0_gltf_version_1_non_supportee", name, version))
     if total != len(data):
-        raise ValueError(f"{name} : taille annoncée {total} != taille fichier {len(data)} (tronqué ?)")
+        raise ValueError(_tr("py.glb2html.0_taille_annoncee_1_taille_fichier", name, total, len(data)))
     clen, ctype = struct.unpack_from("<II", data, 12)
     if ctype != 0x4E4F534A:
-        raise ValueError(f"{name} : premier chunk non JSON")
+        raise ValueError(_tr("py.glb2html.0_premier_chunk_non_json", name))
     gltf = json.loads(data[20:20 + clen].decode("utf-8"))
     used = set(gltf.get("extensionsUsed", [])) | set(gltf.get("extensionsRequired", []))
     ext_refs = [x.get("uri") for x in gltf.get("buffers", []) + gltf.get("images", [])
                 if x.get("uri") and not x["uri"].startswith("data:")]
     if ext_refs:
-        raise ValueError(f"{name} : référence des fichiers externes {ext_refs[:3]} -> repacker en GLB autonome "
-                         f"(npx @gltf-transform/cli copy in.gltf out.glb)")
+        raise ValueError(_tr("py.glb2html.0_reference_des_fichiers_externes_1", name, ext_refs[:3]))
     if "KHR_texture_basisu" in used:
-        raise ValueError(f"{name} : textures KTX2/Basis non gérées hors ligne -> "
-                         f"npx @gltf-transform/cli png in.glb out.glb")
+        raise ValueError(_tr("py.glb2html.0_textures_ktx2_basis_non_gerees", name))
     return used
 
 
@@ -574,7 +588,7 @@ SHELL_MODULES = {**CORE_FILES, **DRACO_FILES, **MESHOPT_FILES}
 
 def replace_once(text, old, new):
     if text.count(old) != 1:
-        raise RuntimeError(f"gabarit modulaire : cible introuvable ou multiple ({old[:50]}…)")
+        raise RuntimeError(_tr("py.glb2html.gabarit_modulaire_cible_introuvable_ou_multi", old[:50]))
     return text.replace(old, new)
 
 
@@ -647,7 +661,7 @@ def build_shell() -> str:
            .replace("__DECODERS__", "\n".join(decoders)))
     left = re.findall(r"__(?:TITLE|SKY_HEX|IMPORTMAP|CONFIG|DECODERS|GLB_B64|CORE)__", out)
     if left:
-        raise RuntimeError(f"coquille modulaire : marqueur(s) non remplacé(s) {sorted(set(left))}")
+        raise RuntimeError(_tr("py.glb2html.coquille_modulaire_marqueur_s_non_remplace", sorted(set(left))))
     return out
 
 
@@ -703,7 +717,7 @@ def write_live_zones(out_path, kw):
     target = out_path.with_name(name)
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(zones, ensure_ascii=False, indent=1), encoding="utf-8")
-    print(f"[zones] {len(zones)} zone(s), profil {kw.get('profile', PROFILE)} -> {target}")
+    print(_tr("py.glb2html.zones_0_zone_s_profil_1", len(zones), kw.get('profile', PROFILE), target))
 
 
 def zones_given(kw):
@@ -716,7 +730,7 @@ def write_modular_zones(zones_path: pathlib.Path, kw):
     profile = kw.get("profile", PROFILE)
     zones = clean_zones(json.loads(ZONES_JSON) if kw.get("zones") is None else kw["zones"], profile)
     write_atomic(zones_path, json.dumps(zones, ensure_ascii=False, indent=1).encode("utf-8"))
-    print(f"[zones] {len(zones)} zone(s), profil {profile} -> {zones_path}")
+    print(_tr("py.glb2html.zones_0_zone_s_profil_1", len(zones), profile, zones_path))
 
 
 def write_shell_page(out_path: pathlib.Path, shell, page: str):
@@ -725,11 +739,11 @@ def write_shell_page(out_path: pathlib.Path, shell, page: str):
         shell_path = out_path.with_name(shell)
         if not shell_path.is_file():
             write_atomic(shell_path, page.encode("utf-8"))
-            print(f"[coquille] {shell_path} écrite")
+            print(_tr("py.glb2html.coquille_0_ecrite", shell_path))
         elif shell_path.read_bytes() == page.encode("utf-8"):
-            print(f"[coquille] {shell_path} déjà présente et identique")
+            print(_tr("py.glb2html.coquille_0_deja_presente_et_identique", shell_path))
         else:
-            print(f"[AVERTISSEMENT] {shell_path} existe et diffère de la coquille de cette version : conservée (les autres régions la partagent). Supprime-la pour la renouveler", file=sys.stderr)
+            print(_tr("py.glb2html.avertissement_0_existe_et_differe_de", shell_path), file=sys.stderr)
     else:
         write_atomic(out_path, page.encode("utf-8"))
 
@@ -741,13 +755,13 @@ def generate(glb_path: pathlib.Path, out_path: pathlib.Path, vendor_dir, modular
     if shell:
         modular = True
         if not valid_region_name(out_path.stem):
-            print(f"[ERREUR] nom de région « {out_path.stem} » refusé par la coquille commune (un seul nom de fichier, sans / \\ : ? # ni .., sans point au début)", file=sys.stderr)
+            print(_tr("py.glb2html.erreur_nom_de_region_0_refuse", out_path.stem), file=sys.stderr)
             return False
     if modular:
         if kw.get("title"):
-            print("[AVERTISSEMENT] --title est ignoré en mode modulaire : le titre de la page est le salon (--room) de la config", file=sys.stderr)
+            print(_tr("py.glb2html.avertissement_title_est_ignore_en_mode"), file=sys.stderr)
         if kw.get("zones_live"):
-            print("[AVERTISSEMENT] --zones-live est ignoré en mode modulaire : les zones sont toujours relues dans <page>.zones.json", file=sys.stderr)
+            print(_tr("py.glb2html.avertissement_zones_live_est_ignore_en"), file=sys.stderr)
         kw = dict(kw, zones_live="")
     elif kw.get("zones_live"):
         kw = dict(kw, zones_live=live_zones_name(out_path, kw["zones_live"]))
@@ -755,7 +769,7 @@ def generate(glb_path: pathlib.Path, out_path: pathlib.Path, vendor_dir, modular
         used = inspect_glb(data, glb_path.name)
         page = build_shell() if modular else build_html(data, glb_path.name, vendor_dir, **kw)
     except ValueError as e:
-        print(f"[ERREUR] {e}", file=sys.stderr)
+        print(_tr("py.glb2html.erreur_0", e), file=sys.stderr)
         return False
     out_path.parent.mkdir(parents=True, exist_ok=True)
     if modular:
@@ -771,11 +785,11 @@ def generate(glb_path: pathlib.Path, out_path: pathlib.Path, vendor_dir, modular
     if not modular:
         write_live_zones(out_path, dict(kw, zones_live=kw.get("zones_live") or ""))
     if shell:
-        print(f"[OK] {glb_path.name} -> {glb_out.name} + {cfg_out.name} + {zones_out.name}, coquille commune {shell} ; adresse : {shell_page_address(shell, out_path.stem)} [glb2html {VERSION}]")
+        print(_tr("py.glb2html.ok_0_1_2_3_coquille", glb_path.name, glb_out.name, cfg_out.name, zones_out.name, shell, shell_page_address(shell, out_path.stem), VERSION))
     elif modular:
-        print(f"[OK] {glb_path.name} -> {out_path} (modulaire : coquille {len(page) / 1024:.0f} Ko + {glb_out.name} {len(data) / 2**20:.2f} Mo + {cfg_out.name} + {zones_out.name} + {LIB_REL}/) [glb2html {VERSION}]")
+        print(_tr("py.glb2html.ok_0_1_modulaire_coquille_2", glb_path.name, out_path, len(page) / 1024, glb_out.name, len(data) / 2**20, cfg_out.name, zones_out.name, LIB_REL, VERSION))
     else:
-        print(f"[OK] {glb_path.name} -> {out_path} ({len(data) / 2**20:.2f} Mo glb, {len(page) / 2**20:.2f} Mo html) [glb2html {VERSION}]")
+        print(_tr("py.glb2html.ok_0_1_2_2f_mo", glb_path.name, out_path, len(data) / 2**20, len(page) / 2**20, VERSION))
     return True
 
 
@@ -790,19 +804,19 @@ def read_tiles_index(path: pathlib.Path):
     try:
         doc = json.loads(path.read_text(encoding="utf-8-sig"))
     except (OSError, ValueError) as e:
-        sys.exit(f"[ERREUR] {path} illisible ({e})")
+        sys.exit(_tr("py.glb2html.erreur_0_illisible_1", path, e))
     tiles = doc.get("tiles") if isinstance(doc, dict) else None
     if not isinstance(tiles, list) or not tiles:
-        sys.exit(f"[ERREUR] {path} : liste « tiles » absente ou vide (fichier écrit par glb2tiles.py attendu)")
+        sys.exit(_tr("py.glb2html.erreur_0_liste_tiles_absente_ou", path))
     for t in tiles:
         ok = isinstance(t, dict) and safe_rel_path(t.get("file")) and str(t["file"]).lower().endswith(".glb")
         for k in ("min", "max"):
             ok = ok and isinstance(t.get(k), list) and len(t[k]) == 3 and all(isinstance(v, (int, float)) and math.isfinite(v) for v in t[k])
         if not ok:
-            sys.exit(f"[ERREUR] {path} : entrée de tuile invalide ({str(t)[:120]}) : « file » doit être un chemin relatif .glb (sans .. ni :), « min » et « max » trois nombres")
+            sys.exit(_tr("py.glb2html.erreur_0_entree_de_tuile_invalide", path, str(t)[:120]))
     ov = doc.get("overview")
     if ov is not None and not (isinstance(ov, dict) and safe_rel_path(ov.get("file")) and str(ov["file"]).lower().endswith(".glb")):
-        sys.exit(f"[ERREUR] {path} : « overview » invalide ({str(ov)[:120]}) : « file » doit être un chemin relatif .glb (sans .. ni :)")
+        sys.exit(_tr("py.glb2html.erreur_0_overview_invalide_1_file", path, str(ov)[:120]))
     return doc
 
 
@@ -824,12 +838,12 @@ def place_tiles(tiles_path: pathlib.Path, doc, page_dir: pathlib.Path):
     ov_file = ov["file"] if isinstance(ov, dict) else None
     absent = [f for f in files if not (src / f).is_file()]
     if absent:
-        print(f"[AVERTISSEMENT] {len(absent)} tuile(s) listée(s) dans {tiles_path.name} introuvable(s) à côté de lui (première : {absent[0]}) ; la page les signalera et réessaiera", file=sys.stderr)
+        print(_tr("py.glb2html.avertissement_0_tuile_s_listee_s", len(absent), tiles_path.name, absent[0]), file=sys.stderr)
     if ov_file and not (src / ov_file).is_file():
-        print(f"[AVERTISSEMENT] vue d'ensemble {ov_file} introuvable à côté de {tiles_path.name} ; la page fonctionnera sans elle", file=sys.stderr)
-    ov_txt = f" ; vue d'ensemble {ov_file} placée avec les tuiles" if ov_file else ""
+        print(_tr("py.glb2html.avertissement_vue_d_ensemble_0_introuvable", ov_file, tiles_path.name), file=sys.stderr)
+    ov_txt = _tr("py.glb2html.vue_d_ensemble_0_placee_avec", ov_file) if ov_file else ""
     if src == dst:
-        print(f"[tuiles] {len(files)} tuile(s) et {tiles_path.name} déjà à côté de la page : rien n'est copié{ov_txt}")
+        print(_tr("py.glb2html.tuiles_0_tuile_s_et_1", len(files), tiles_path.name, ov_txt))
         return tiles_path.name
     copied = same = size = 0
     for f in files + ([ov_file] if ov_file else []):
@@ -847,7 +861,7 @@ def place_tiles(tiles_path: pathlib.Path, doc, page_dir: pathlib.Path):
             copied += 1
         size += a.stat().st_size
     write_atomic(dst / tiles_path.name, tiles_path.read_bytes())
-    print(f"[tuiles] {tiles_path.name} copié dans {dst} ; tuiles : {copied} copiée(s) ({size / 2**20:.1f} Mo), {same} déjà présente(s) de même taille (ni vérifiées ni recopiées){ov_txt}")
+    print(_tr("py.glb2html.tuiles_0_copie_dans_1_tuiles", tiles_path.name, dst, copied, size / 2**20, same, ov_txt))
     return tiles_path.name
 
 
@@ -855,12 +869,12 @@ def generate_tiles(tiles_path: pathlib.Path, doc, out_path: pathlib.Path, vendor
     """Région en tuiles : comme generate() en mode modulaire, mais sans .glb : écrit X.config.json (champ « tiles »), X.zones.json,
     la coquille et lib/ ; X.tiles.json et ses tuiles ne sont copiés que s'ils ne sont pas déjà à côté de la page."""
     if shell and not valid_region_name(out_path.stem):
-        print(f"[ERREUR] nom de région « {out_path.stem} » refusé par la coquille commune (un seul nom de fichier, sans / \\ : ? # ni .., sans point au début)", file=sys.stderr)
+        print(_tr("py.glb2html.erreur_nom_de_region_0_refuse", out_path.stem), file=sys.stderr)
         return False
     if kw.get("title"):
-        print("[AVERTISSEMENT] --title est ignoré en mode modulaire : le titre de la page est le salon (--room) de la config", file=sys.stderr)
+        print(_tr("py.glb2html.avertissement_title_est_ignore_en_mode"), file=sys.stderr)
     if kw.get("zones_live"):
-        print("[AVERTISSEMENT] --zones-live est ignoré en mode modulaire : les zones sont toujours relues dans <page>.zones.json", file=sys.stderr)
+        print(_tr("py.glb2html.avertissement_zones_live_est_ignore_en"), file=sys.stderr)
     kw = dict(kw, zones_live="")
     page = build_shell()
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -876,12 +890,11 @@ def generate_tiles(tiles_path: pathlib.Path, doc, out_path: pathlib.Path, vendor
     n = len(doc["tiles"])
     if any(z.get("mesh") for z in clean_zones(json.loads(ZONES_JSON) if kw.get("zones") is None else kw["zones"], kw.get("profile", PROFILE))):
         if doc.get("nodeRefs"):
-            print("[tuiles] des zones sont liées à un objet (champ mesh) : la page les place avec l'objet dès que la tuile qui le contient est chargée")
+            print(_tr("py.glb2html.tuiles_des_zones_sont_liees_a"))
         else:
-            print(f"[AVERTISSEMENT] des zones sont liées à un élément du modèle (champ mesh), mais {tiles_path.name} a été écrit sans références d'objets (glb2tiles avant la v32) : "
-                  "ces zones seront ignorées par la page (avertissement en console). Refaire le découpage avec glb2tiles v32 pour en profiter.", file=sys.stderr)
+            print(_tr("py.glb2html.avertissement_des_zones_sont_liees_a", tiles_path.name), file=sys.stderr)
     adr = shell_page_address(shell, out_path.stem) if shell else out_path.name
-    print(f"[OK] {n} tuile(s) -> {cfg_out.name} + {zones_out.name}, " + (f"coquille commune {shell} ; adresse : {adr}" if shell else f"coquille {out_path.name}") + f" [glb2html {VERSION}]")
+    print(_tr("py.glb2html.ok_0_tuile_s_1_2", n, cfg_out.name, zones_out.name) + (_tr("py.glb2html.coquille_commune_0_adresse_1", shell, adr) if shell else _tr("py.glb2html.shell_name", out_path.name)) + f" [glb2html {VERSION}]")
     return True
 
 
@@ -946,44 +959,43 @@ def renew_shell(shell_path: pathlib.Path, page: str):
     new = page.encode("utf-8")
     if not shell_path.is_file():
         write_atomic(shell_path, new)
-        return f"coquille {shell_path.name} absente : écrite"
+        return _tr("py.glb2html.coquille_0_absente_ecrite", shell_path.name)
     if shell_path.read_bytes() == new:
-        return f"coquille {shell_path.name} déjà à jour (identique à celle de {VERSION})"
+        return _tr("py.glb2html.coquille_0_deja_a_jour_identique", shell_path.name, VERSION)
     stamp = time.strftime("%Y%m%d-%H%M%S")
     bak = shell_path.with_name(f"{shell_path.stem}.avant-{stamp}{shell_path.suffix}")
     shutil.copyfile(shell_path, bak)
     write_atomic(shell_path, new)
-    return (f"coquille {shell_path.name} plus ancienne que {VERSION} : renouvelée, ancienne copie gardée sous {bak.name}. "
-            "Cette coquille est partagée par les autres régions du dossier : elles gardent leur comportement (les anciennes configurations restent comprises)")
+    return (_tr("py.glb2html.coquille_0_plus_ancienne_que_1", shell_path.name, VERSION, bak.name))
 
 
 def run_maj(a, kw, explicit, S_reg):
     """glb2html.py --maj : met à jour une région déjà générée en mode modulaire. N'applique que les options données, garde le reste de X.config.json
     et X.zones.json (réécrit seulement avec --zones), écrit la version courante et renouvelle la coquille si elle est plus ancienne."""
     if not a.output:
-        sys.exit("[ERREUR] --maj demande -o <Region.html> (la région déjà générée)")
+        sys.exit(_tr("py.glb2html.erreur_maj_demande_o_region_html"))
     out = pathlib.Path(a.output)
     if out.is_dir() or str(a.output).endswith(("/", "\\")):
-        sys.exit("[ERREUR] avec --maj, -o désigne la région (ex. -o Region.html), pas un dossier")
+        sys.exit(_tr("py.glb2html.erreur_avec_maj_o_designe_la"))
     if not out.suffix:
         out = out.with_suffix(".html")
     glb_out, cfg_out, zones_out = modular_names(out)
     if not cfg_out.is_file():
         cmd = "glb2html.py " + ("--tiles X.tiles.json" if a.tiles else "X.glb") + f" -o {out.name}" + (f" --shared-shell {a.shared_shell}" if a.shared_shell else "") + " [options]"
-        sys.exit(f"[ERREUR] --maj : {cfg_out} introuvable, la région n'a pas encore été générée. Génère-la d'abord, sans --maj : {cmd}")
+        sys.exit(_tr("py.glb2html.erreur_maj_0_introuvable_la_region", cfg_out, cmd))
     try:
         old = json.loads(cfg_out.read_text(encoding="utf-8-sig"))
         if not isinstance(old, dict):
-            raise ValueError("ce n'est pas un objet JSON")
+            raise ValueError(_tr("py.glb2html.ce_n_est_pas_un_objet"))
     except (OSError, ValueError) as e:
-        sys.exit(f"[ERREUR] {cfg_out} illisible ({e})")
+        sys.exit(_tr("py.glb2html.erreur_0_illisible_1", cfg_out, e))
     shell_path = out.with_name(a.shared_shell) if a.shared_shell else out
     if not a.shared_shell and not out.is_file():
-        sys.exit(f"[ERREUR] --maj : {out} introuvable. Si la région utilise une coquille commune, donne --shared-shell NOM.html (par défaut {DEFAULT_SHELL})")
+        sys.exit(_tr("py.glb2html.erreur_maj_0_introuvable_si_la", out, DEFAULT_SHELL))
     if a.shared_shell and not valid_region_name(out.stem):
-        sys.exit(f"[ERREUR] nom de région « {out.stem} » refusé par la coquille commune")
+        sys.exit(_tr("py.glb2html.erreur_nom_de_region_0_refuse_2", out.stem))
     if a.input and a.tiles:
-        sys.exit("[ERREUR] --tiles remplace le .glb : ne donne pas de fichier .glb avec --tiles")
+        sys.exit(_tr("py.glb2html.erreur_tiles_remplace_le_glb_ne"))
     explicit = set(explicit) - {"input", "output", "maj", "vendor", "shared_shell", "modular", "config_only", "zones_only", "zones_live", "title", "zones", "map_page", "thumb",
                                   "region_name", "region_url", "region_xy", "region_spawn"}
     kw.update(tile_radius=clamp(a.tile_radius, 10, 5000), tile_margin=clamp(a.tile_margin, 0, 5000), tile_max_mo=clamp(a.tile_max_mo, 1, 100000),
@@ -994,7 +1006,7 @@ def run_maj(a, kw, explicit, S_reg):
     if a.tiles:
         tp = find_beside(a.tiles)
         if tp is None:
-            sys.exit(f"[ERREUR] {a.tiles} introuvable (cherché dans {pathlib.Path.cwd()} puis dans {pathlib.Path(__file__).resolve().parent})")
+            sys.exit(_tr("py.glb2html.erreur_0_introuvable_cherche_dans_1", a.tiles, pathlib.Path.cwd(), pathlib.Path(__file__).resolve().parent))
         tdoc = read_tiles_index(tp)
         kw["tiles"] = place_tiles(tp, tdoc, out.parent)
         explicit.add("tiles")
@@ -1006,12 +1018,12 @@ def run_maj(a, kw, explicit, S_reg):
         entry = region_entry(a2, S_reg, kw["room"] or out.stem, out.stem, page_name_of(a, out))
         reg = page_path(a.register, out.parent)
         kw["map_entries"] = register_region(reg, entry)
-        print(f"[carte] « {entry['name']} » ajoutée ou mise à jour dans {reg} ({len(kw['map_entries'])} région(s))")
+        print(_tr("py.glb2html.carte_0_ajoutee_ou_mise_a", entry['name'], reg, len(kw['map_entries'])))
         explicit.add("register")
     elif a.map:
         explicit.add("map")
     elif a.region_name or a.region_url or a.region_xy or a.region_spawn or a.thumb:
-        print("[AVERTISSEMENT] --region-name, --region-url, --region-xy, --region-spawn et --thumb ne servent qu'avec --register : ignorés", file=sys.stderr)
+        print(_tr("py.glb2html.avertissement_region_name_region_url_region"), file=sys.stderr)
     if not a.register and not a.map and "map" not in explicit:
         kw["map_entries"] = old.get("map") if isinstance(old.get("map"), list) else []
     new = build_cfg(out.stem, **{k: v for k, v in kw.items() if k != "title"}, modular=True)
@@ -1019,59 +1031,59 @@ def run_maj(a, kw, explicit, S_reg):
     if a.input:
         inp = pathlib.Path(a.input)
         if not inp.is_file():
-            sys.exit(f"{inp} introuvable")
+            sys.exit(_tr("py.glb2html.0_introuvable", inp))
         try:
             inspect_glb(inp.read_bytes(), inp.name)
         except ValueError as e:
-            sys.exit(f"[ERREUR] {e}")
+            sys.exit(_tr("py.glb2html.erreur_0", e))
         write_atomic(glb_out, inp.read_bytes())
-        print(f"[maj] {glb_out.name} remplacé par {inp.name}")
+        print(_tr("py.glb2html.maj_0_remplace_par_1", glb_out.name, inp.name))
     elif not a.tiles and not old.get("tiles") and not glb_out.is_file():
-        print(f"[AVERTISSEMENT] {glb_out.name} introuvable à côté de la page (la région n'a ni .glb ni tuiles ici)", file=sys.stderr)
+        print(_tr("py.glb2html.avertissement_0_introuvable_a_cote_de", glb_out.name), file=sys.stderr)
     write_atomic(cfg_out, json.dumps(cfg, ensure_ascii=False, indent=1).encode("utf-8"))
-    print(f"[maj] {cfg_out.name} mis à jour (glb2html {VERSION}) : " + (f"{len(changes)} clé(s) changée(s)" if changes else "aucune clé changée") + f", {len(old) - len([c for c in changes if c[0] in old])} gardée(s) telle(s) quelle(s)")
+    print(_tr("py.glb2html.maj_0_mis_a_jour_glb2html", cfg_out.name, VERSION) + (_tr("py.glb2html.0_cle_s_changee_s", len(changes)) if changes else _tr("py.glb2html.aucune_cle_changee")) + _tr("py.glb2html.0_gardee_s_telle_s_quelle", len(old) - len([c for c in changes if c[0] in old])))
     for k, o, n in changes:
         print(f"  {k} : {json.dumps(o, ensure_ascii=False)[:80]} -> {json.dumps(n, ensure_ascii=False)[:80]}")
     if "profile" in explicit:
-        print("[maj] le profil ne filtre les zones qu'à l'écriture de la liste de zones : ajoute --zones FICHIER pour la réécrire")
+        print(_tr("py.glb2html.maj_le_profil_ne_filtre_les"))
     if a.zones:
         zf = find_beside(a.zones)
         if zf is None:
-            sys.exit(f"[ERREUR] {a.zones} introuvable")
+            sys.exit(_tr("py.glb2html.erreur_0_introuvable", a.zones))
         try:
             kw["zones"] = json.loads(zf.read_text(encoding="utf-8-sig"))
         except (OSError, ValueError) as e:
-            sys.exit(f"[ERREUR] {zf} illisible ({e})")
+            sys.exit(_tr("py.glb2html.erreur_0_illisible_1", zf, e))
         if zones_out.is_file() and zf.resolve() == zones_out.resolve():
-            print(f"[zones] zones déjà en place : {zones_out} (non réécrit)")
+            print(_tr("py.glb2html.zones_zones_deja_en_place_0", zones_out))
         else:
             write_modular_zones(zones_out, kw)
     else:
-        print(f"[maj] {zones_out.name} conservé tel quel" + ("" if zones_out.is_file() else " (absent)"))
+        print(_tr("py.glb2html.maj_0_conserve_tel_quel", zones_out.name) + ("" if zones_out.is_file() else _tr("py.glb2html.absent_paren")))
     print("[maj] " + renew_shell(shell_path, build_shell()))
     if lib_missing(out.parent):
         write_modular_lib(out.parent, a.vendor)
-        print(f"[maj] {LIB_REL}/ absent ou incomplet : écrit")
+        print(_tr("py.glb2html.maj_0_absent_ou_incomplet_ecrit", LIB_REL))
     else:
-        print(f"[maj] {LIB_REL}/ présent : conservé")
+        print(_tr("py.glb2html.maj_0_present_conserve", LIB_REL))
     if a.map_page:
         entries = cfg.get("map") or []
         if clean_map(entries):
             mp = pathlib.Path(a.map_page)
-            write_map_page(mp if mp.is_absolute() else out.parent / mp, entries, cfg.get("presenceUrl", ""), cfg.get("mapUrl", ""), a.title or "Carte des mondes")
+            write_map_page(mp if mp.is_absolute() else out.parent / mp, entries, cfg.get("presenceUrl", ""), cfg.get("mapUrl", ""), a.title or _tr("py.glb2html.carte_des_mondes"))
         else:
-            print("[AVERTISSEMENT] --map-page ignoré : aucune région à afficher (donne --register pour enregistrer cette région, ou --map)", file=sys.stderr)
+            print(_tr("py.glb2html.avertissement_map_page_ignore_aucune_region"), file=sys.stderr)
     if a.register or a.map_page or a.thumb or a.map:
-        print(f"[carte] avec --maj, les chemins relatifs de --register, --map, --map-page et --thumb sont relatifs au dossier de la page : {out.parent.resolve()}")
+        print(_tr("py.glb2html.carte_avec_maj_les_chemins_relatifs", out.parent.resolve()))
     adr = shell_page_address(a.shared_shell, out.stem) if a.shared_shell else out.name
-    print(f"[OK] région mise à jour ; adresse : {adr} [glb2html {VERSION}]")
+    print(_tr("py.glb2html.ok_region_mise_a_jour_adresse", adr, VERSION))
     sys.exit(0)
 
 
 def vec3(s: str):
     v = tuple(float(x) for x in s.split(","))
     if len(v) != 3:
-        raise argparse.ArgumentTypeError("format attendu : x,y,z")
+        raise argparse.ArgumentTypeError(_tr("py.glb2html.format_attendu_x_y_z"))
     return v
 
 
@@ -1101,7 +1113,7 @@ def region_entry(a, S_reg, room, stem, page_name):
             x, y = (int(float(v)) for v in a.region_xy.split(","))
             entry["x"], entry["y"] = x, y
         except ValueError:
-            sys.exit("[ERREUR] --region-xy attend deux nombres : X,Y")
+            sys.exit(_tr("py.glb2html.erreur_region_xy_attend_deux_nombres"))
     return entry
 
 
@@ -1111,91 +1123,92 @@ def page_name_of(a, out):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="GLB -> HTML autonome hors ligne (three.js intégré)")
-    ap.add_argument("--version", action="version", version=f"glb2html {VERSION}")
-    ap.add_argument("input", nargs="?", help="fichier .glb ou dossier de .glb")
-    ap.add_argument("--zones-live", nargs="?", const="auto", default=(ZONES_LIVE or None), metavar="NOM", help="la page recharge ses zones à chaque ouverture depuis un fichier .zones.json placé à côté d'elle (servie en http/https ; sinon les zones intégrées servent). Sans NOM : <page>.zones.json. Le fichier est écrit par le script, filtré selon --profile")
-    ap.add_argument("--zones-only", action="store_true", help="réécrit seulement les zones, sans régénérer le HTML : <page>.zones.json d'une page modulaire déjà générée (avec --zones FICHIER), ou, avec --zones-live, le fichier de zones d'une page autonome")
-    ap.add_argument("-o", "--output", help="sortie : fichier .html, ou dossier (créé si besoin). Entrée dossier : dossier de sortie. Défaut : \"<nom> - Offline.html\" à côté du .glb")
-    ap.add_argument("--rotate", type=int, choices=(0, 90, 180, 270), default=ROTATE, help="rotation de la région autour de l'axe vertical (0, 90, 180 ou 270 degrés), appliquée au chargement avant le recentrage. Les zones, arrivées, cible et trou du fichier de zones / de réglages sont DÉJÀ dans le repère tourné (le viewer les fait tourner avec la région)")
-    ap.add_argument("--hole", type=float, default=HOLE_RADIUS, help="rayon du trou 30..600 (zone plate = rayon - fondu)")
-    ap.add_argument("--hole-fade", type=float, default=HOLE_FADE, help="demi-largeur du fondu du trou")
-    ap.add_argument("--hole-x", type=float, default=HOLE_X, help="position X du centre du trou (monde)")
-    ap.add_argument("--hole-z", type=float, default=HOLE_Z, help="position Z du centre du trou (monde)")
-    ap.add_argument("--wave", type=float, default=WAVE_AMP, help="amplitude vagues 0..10")
-    ap.add_argument("--sea-y", type=float, default=SEA_Y, help="hauteur mer -150..60")
-    ap.add_argument("--zoom", type=float, default=ZOOM_RATIO, help="ratio de cadrage (1 = cadrage auto)")
-    ap.add_argument("--cam-dir", type=vec3, default=CAM_DIR, help="direction caméra x,y,z")
-    ap.add_argument("--target", type=vec3, default=TARGET, help="cible caméra x,y,z")
-    ap.add_argument("--foliage-cutout", type=float, default=FOLIAGE_CUTOUT, help="seuil alpha feuillage 0..0.5")
-    ap.add_argument("--sea-color", type=hexcolor, default=SEA_COLOR, help="couleur mer, ex 3a9ad9")
-    ap.add_argument("--sky-color", type=hexcolor, default=SKY_COLOR, help="couleur ciel, ex 87ceeb")
-    ap.add_argument("--sea-segments", type=int, default=SEA_SEGMENTS, help="finesse du maillage de la mer 8..1000 (maille = 4000/segments ; seulement avec --anim)")
-    ap.add_argument("--walk", action=argparse.BooleanOptionalAction, default=WALK_ENABLED, help="inclure le mode promenade (touche F) dans la page")
-    ap.add_argument("--eye-height", type=float, default=EYE_HEIGHT, help="hauteur des yeux en m (promenade)")
-    ap.add_argument("--walk-speed", type=float, default=WALK_SPEED, help="vitesse de marche en m/s (Maj = x2.2)")
-    ap.add_argument("--walk-ignore", default=WALK_IGNORE, help='noms à ignorer en collision, séparés par des virgules : "door" = début de mot, "=mesh_346_5" = nom exact ; "" = rien')
-    ap.add_argument("--names", action=argparse.BooleanOptionalAction, default=NAMES_ENABLED, help="afficher le nom de l'élément cliqué")
-    ap.add_argument("--presence-url", default=PRESENCE_URL, help="serveur de présence ws:// ou wss:// (voir presence_server.py) ; vide = désactivé")
-    ap.add_argument("--chat", action=argparse.BooleanOptionalAction, default=CHAT_ENABLED, help="chat entre visiteurs (nécessite --presence-url ; touche Entrée en promenade)")
-    ap.add_argument("--chat-fade", type=float, default=CHAT_FADE, help="secondes avant disparition des messages et bulles ; 0 = restent jusqu'à ce que de nouveaux messages les remplacent")
-    ap.add_argument("--zones", type=pathlib.Path, help="fichier .json de zones exporté par le viewer ; chemin relatif : cherché dans le dossier de lancement, puis dans le dossier du script. Une zone peut porter un champ mesh (nom exact d'un élément du modèle) : l'élément devient cliquable")
-    ap.add_argument("--profile", choices=("public", "perso"), default=PROFILE, help="public : retire les zones privées (ex. Home Assistant) ; perso : les garde")
-    ap.add_argument("--spectate", action=argparse.BooleanOptionalAction, default=SPECTATE, help="voir les visiteurs en promenade depuis la vue globale (se connecte dès l'ouverture de la page ; actif par défaut dès qu'une --presence-url est donnée ; --no-spectate pour l'éviter)")
-    ap.add_argument("--panel", action=argparse.BooleanOptionalAction, default=PANEL, help="panneau de réglages pour les visiteurs (haute résolution, mer animée, force des vagues), bouton en haut à droite")
-    ap.add_argument("--map", type=pathlib.Path, help="fichier regions.json (carte des mondes : nom, adresse, position, vignette) exporté par le viewer ; chemin relatif : dossier de lancement, puis dossier du script")
-    ap.add_argument("--map-url", default=MAP_URL, help="adresse(s) de regions.json partagé(s), séparées par des virgules : la page les relit à chaque ouverture (http/https), les fusionne et complète avec la carte intégrée. Un autre site doit autoriser l'accès (CORS)")
-    ap.add_argument("--register", help="fichier regions.json à mettre à jour avec CETTE région (ajoutée ou mise à jour par salon) ; relatif : dossier de lancement s'il y existe, sinon dossier du script. La page générée embarque la carte à jour")
-    ap.add_argument("--region-name", help="nom affiché dans la carte (défaut : nom du .glb)")
-    ap.add_argument("--region-url", help="adresse de la page de cette région (défaut : le nom du fichier .html, relatif)")
-    ap.add_argument("--region-xy", metavar="X,Y", help="position sur la grille, comme OpenSim (X vers l'est, Y vers le nord), ex. 1000,1001")
-    ap.add_argument("--region-spawn", help="identifiant du point d'arrivée des visiteurs dans cette région (défaut : default)")
-    ap.add_argument("--thumb", help="vignette de la région : fichier jpg/png/webp de 140 Ko maximum (intégré), ou adresse http(s) (gardée telle quelle, carte plus légère)")
-    ap.add_argument("--map-page", metavar="FICHIER.html", help="génère aussi une page web « carte des mondes » (liens cliquables vers chaque région) ; sans .glb : génère seulement cette page depuis --map. Relatif : à côté de la page de la région")
-    ap.add_argument("--settings", nargs="?", const="auto", default=None, metavar="FICHIER", help="reprend TOUS les réglages enregistrés par le viewer (bouton « Enregistrer dans un fichier » : trou, vagues, caméra, zones, fiche de région, vignette…). Sans nom : <nom du .glb>.reglages.json. Les options de la ligne de commande l'emportent. Relatif : dossier de lancement, puis dossier du script")
-    ap.add_argument("--modular", action="store_true", help="mode modulaire : écrit une coquille <page>.html identique pour toutes les régions (elle déduit ses fichiers de son nom) + <page>.glb (octets bruts) + <page>.config.json (réglages) + <page>.zones.json (zones, relues à chaque ouverture ; à défaut zones.json du dossier) + lib/three-X/ partagé (Draco et Meshopt compris). Demande http(s) pour l'ouverture (pas depuis le disque)")
-    ap.add_argument("--shared-shell", nargs="?", const=DEFAULT_SHELL, default=None, metavar="COQUILLE.html", help=f"mode modulaire à coquille commune : une seule coquille (défaut {DEFAULT_SHELL}) sert plusieurs régions du même dossier, à l'adresse COQUILLE.html?region=NOM. -o désigne la région (NOM = son nom sans extension, ex. -o Ankh.html) : seuls NOM.glb, NOM.config.json et NOM.zones.json sont écrits, plus la coquille et lib/three-X/ s'ils sont absents (une coquille existante n'est jamais écrasée). --register écrit cette adresse dans regions.json. Implique --modular")
-    ap.add_argument("--tiles", type=pathlib.Path, metavar="X.tiles.json", help="région découpée en tuiles par glb2tiles.py : pas de .glb en entrée ; -o désigne la région. Écrit X.config.json (champ « tiles »), X.zones.json, la coquille et lib/ ; X.tiles.json et ses tuiles ne sont copiés que s'ils ne sont pas déjà à côté de la page. Implique --modular. Repère = celui du modèle d'origine (aucun recentrage) ; zones liées à un objet : possibles si les tuiles viennent de glb2tiles v32, ignorées sinon")
-    ap.add_argument("--tile-radius", type=float, default=TILE_RADIUS, help="m : charger les tuiles dont la boîte est à moins de ce rayon de l'avatar, en plan X,Z (défaut %(default)g ; ?rayon=NNN dans l'adresse pour essayer)")
-    ap.add_argument("--tile-margin", type=float, default=TILE_MARGIN, help="m : décharger les tuiles au-delà de rayon + marge (défaut %(default)g)")
-    ap.add_argument("--tile-max-mo", type=float, default=TILE_MAX_MO, help="Mo de tuiles chargées en même temps (poids des fichiers ; défaut %(default)g) ; au-delà, les plus lointaines partent d'abord")
-    ap.add_argument("--tile-max-tri", type=int, default=TILE_MAX_TRI, help="triangles de tuiles chargées en même temps (défaut %(default)d)")
-    ap.add_argument("--tile-concurrency", type=int, default=TILE_CONCURRENCY, help="téléchargements simultanés (défaut %(default)d)")
-    ap.add_argument("--config-only", action="store_true", help="réécrit seulement <page>.config.json d'une page modulaire déjà générée (indiquée par -o), sans toucher au .glb ni à la coquille ; les visiteurs rechargent. <page>.zones.json n'est réécrit que si --zones est donné. Avec --register, met aussi la carte à jour")
-    ap.add_argument("--zone-marker", choices=ZONE_MARKERS, default=ZONE_MARKER, help="marqueur des portails et zones libres dans la page : discret (défaut : disque de 0,4 m et anneau fin), portee (anneau fin et net au rayon réel de la zone, visible de loin) ou aucun. Les arrivées ne sont jamais dessinées (voir --show-spawns)")
-    ap.add_argument("--zone-cone", action=argparse.BooleanOptionalAction, default=ZONE_CONE, help="petit cône pointé vers le bas au-dessus de chaque portail et de chaque zone « enter » ou « both » (repère visible jusqu'à --zone-info-dist ; touche T pour l'afficher ou le masquer ; défaut : affiché ; les arrivées n'en ont qu'avec --show-spawns)")
-    ap.add_argument("--show-spawns", action=argparse.BooleanOptionalAction, default=SHOW_SPAWNS, help="dessine aussi les arrivées dans la page (petit marqueur discret au sol ; défaut : jamais)")
-    ap.add_argument("--zone-info-dist", type=float, default=ZONE_INFO_DIST, metavar="M", help="distance (5 à 200 m, défaut 40) jusqu'à laquelle l'infobulle, le clic et le nom affiché (showName) des zones marchent en promenade")
-    ap.add_argument("--fly", action=argparse.BooleanOptionalAction, default=FLY_ENABLED, help="vol en promenade (touche F ou Début ; Page Haut / E monte, Page Bas / C descend) : activé par défaut, --no-fly le retire")
-    ap.add_argument("--maj", action="store_true", help="met à jour une région déjà générée (-o REGION.html [--shared-shell [COQUILLE.html]] [--tiles X.tiles.json | X.glb]) : lit X.config.json, n'applique QUE les options données sur la ligne, garde tout le reste et X.zones.json (réécrit seulement avec --zones), écrit la version courante et renouvelle la coquille si elle est plus ancienne (ancienne copie gardée sous un nom daté). Échoue si X.config.json n'existe pas")
-    ap.add_argument("--room", default=ROOM, help="salon de présence (défaut : nom du fichier)")
-    ap.add_argument("--sea", dest="sea_enabled", action=argparse.BooleanOptionalAction, default=SEA_ENABLED)
-    ap.add_argument("--anim", dest="anim_enabled", action=argparse.BooleanOptionalAction, default=ANIM_ENABLED)
-    ap.add_argument("--retina", action=argparse.BooleanOptionalAction, default=RETINA_ENABLED, help="haute résolution : rendu x2 minimum (supersampling, plus net mais ~4x plus lourd)")
-    ap.add_argument("--title", help="titre de la page")
-    ap.add_argument("--vendor", type=pathlib.Path, help="racine d'un paquet npm three local (sinon cache + téléchargement)")
+    ap = argparse.ArgumentParser(description=_tr("py.glb2html.desc"), epilog=_tr("py.glb2html.epilog"), formatter_class=argparse.RawDescriptionHelpFormatter, add_help=False)
+    i18n_add_common(ap)
+    ap.add_argument("--version", action="version", version=f"glb2html {VERSION}", help=_tr("py.common.version"))
+    ap.add_argument("input", nargs="?", help=_tr("py.glb2html.fichier_glb_ou_dossier_de_glb"))
+    ap.add_argument("--zones-live", nargs="?", const="auto", default=(ZONES_LIVE or None), metavar="NOM", help=_tr("py.glb2html.la_page_recharge_ses_zones_a"))
+    ap.add_argument("--zones-only", action="store_true", help=_tr("py.glb2html.reecrit_seulement_les_zones_sans_regenerer"))
+    ap.add_argument("-o", "--output", help=_tr("py.glb2html.sortie_fichier_html_ou_dossier_cree"))
+    ap.add_argument("--rotate", type=int, choices=(0, 90, 180, 270), default=ROTATE, help=_tr("py.glb2html.rotation_de_la_region_autour_de"))
+    ap.add_argument("--hole", type=float, default=HOLE_RADIUS, help=_tr("py.glb2html.rayon_du_trou_30_600_zone"))
+    ap.add_argument("--hole-fade", type=float, default=HOLE_FADE, help=_tr("py.glb2html.demi_largeur_du_fondu_du_trou"))
+    ap.add_argument("--hole-x", type=float, default=HOLE_X, help=_tr("py.glb2html.position_x_du_centre_du_trou"))
+    ap.add_argument("--hole-z", type=float, default=HOLE_Z, help=_tr("py.glb2html.position_z_du_centre_du_trou"))
+    ap.add_argument("--wave", type=float, default=WAVE_AMP, help=_tr("py.glb2html.amplitude_vagues_0_10"))
+    ap.add_argument("--sea-y", type=float, default=SEA_Y, help=_tr("py.glb2html.hauteur_mer_150_60"))
+    ap.add_argument("--zoom", type=float, default=ZOOM_RATIO, help=_tr("py.glb2html.ratio_de_cadrage_1_cadrage_auto"))
+    ap.add_argument("--cam-dir", type=vec3, default=CAM_DIR, help=_tr("py.glb2html.direction_camera_x_y_z"))
+    ap.add_argument("--target", type=vec3, default=TARGET, help=_tr("py.glb2html.cible_camera_x_y_z"))
+    ap.add_argument("--foliage-cutout", type=float, default=FOLIAGE_CUTOUT, help=_tr("py.glb2html.seuil_alpha_feuillage_0_0_5"))
+    ap.add_argument("--sea-color", type=hexcolor, default=SEA_COLOR, help=_tr("py.glb2html.couleur_mer_ex_3a9ad9"))
+    ap.add_argument("--sky-color", type=hexcolor, default=SKY_COLOR, help=_tr("py.glb2html.couleur_ciel_ex_87ceeb"))
+    ap.add_argument("--sea-segments", type=int, default=SEA_SEGMENTS, help=_tr("py.glb2html.finesse_du_maillage_de_la_mer"))
+    ap.add_argument("--walk", action=argparse.BooleanOptionalAction, default=WALK_ENABLED, help=_tr("py.glb2html.inclure_le_mode_promenade_touche_f"))
+    ap.add_argument("--eye-height", type=float, default=EYE_HEIGHT, help=_tr("py.glb2html.hauteur_des_yeux_en_m_promenade"))
+    ap.add_argument("--walk-speed", type=float, default=WALK_SPEED, help=_tr("py.glb2html.vitesse_de_marche_en_m_s"))
+    ap.add_argument("--walk-ignore", default=WALK_IGNORE, help=_tr("py.glb2html.noms_a_ignorer_en_collision_separes"))
+    ap.add_argument("--names", action=argparse.BooleanOptionalAction, default=NAMES_ENABLED, help=_tr("py.glb2html.afficher_le_nom_de_l_element"))
+    ap.add_argument("--presence-url", default=PRESENCE_URL, help=_tr("py.glb2html.serveur_de_presence_ws_ou_wss"))
+    ap.add_argument("--chat", action=argparse.BooleanOptionalAction, default=CHAT_ENABLED, help=_tr("py.glb2html.chat_entre_visiteurs_necessite_presence_url"))
+    ap.add_argument("--chat-fade", type=float, default=CHAT_FADE, help=_tr("py.glb2html.secondes_avant_disparition_des_messages_et"))
+    ap.add_argument("--zones", type=pathlib.Path, help=_tr("py.glb2html.fichier_json_de_zones_exporte_par"))
+    ap.add_argument("--profile", choices=("public", "perso"), default=PROFILE, help=_tr("py.glb2html.public_retire_les_zones_privees_ex"))
+    ap.add_argument("--spectate", action=argparse.BooleanOptionalAction, default=SPECTATE, help=_tr("py.glb2html.voir_les_visiteurs_en_promenade_depuis"))
+    ap.add_argument("--panel", action=argparse.BooleanOptionalAction, default=PANEL, help=_tr("py.glb2html.panneau_de_reglages_pour_les_visiteurs"))
+    ap.add_argument("--map", type=pathlib.Path, help=_tr("py.glb2html.fichier_regions_json_carte_des_mondes"))
+    ap.add_argument("--map-url", default=MAP_URL, help=_tr("py.glb2html.adresse_s_de_regions_json_partage"))
+    ap.add_argument("--register", help=_tr("py.glb2html.fichier_regions_json_a_mettre_a"))
+    ap.add_argument("--region-name", help=_tr("py.glb2html.nom_affiche_dans_la_carte_defaut"))
+    ap.add_argument("--region-url", help=_tr("py.glb2html.adresse_de_la_page_de_cette"))
+    ap.add_argument("--region-xy", metavar="X,Y", help=_tr("py.glb2html.position_sur_la_grille_comme_opensim"))
+    ap.add_argument("--region-spawn", help=_tr("py.glb2html.identifiant_du_point_d_arrivee_des"))
+    ap.add_argument("--thumb", help=_tr("py.glb2html.vignette_de_la_region_fichier_jpg"))
+    ap.add_argument("--map-page", metavar="FICHIER.html", help=_tr("py.glb2html.genere_aussi_une_page_web_carte"))
+    ap.add_argument("--settings", nargs="?", const="auto", default=None, metavar="FICHIER", help=_tr("py.glb2html.reprend_tous_les_reglages_enregistres_par"))
+    ap.add_argument("--modular", action="store_true", help=_tr("py.glb2html.mode_modulaire_ecrit_une_coquille_page"))
+    ap.add_argument("--shared-shell", nargs="?", const=DEFAULT_SHELL, default=None, metavar="COQUILLE.html", help=_tr("py.glb2html.mode_modulaire_a_coquille_commune_une", DEFAULT_SHELL))
+    ap.add_argument("--tiles", type=pathlib.Path, metavar="X.tiles.json", help=_tr("py.glb2html.region_decoupee_en_tuiles_par_glb2tiles"))
+    ap.add_argument("--tile-radius", type=float, default=TILE_RADIUS, help=_tr("py.glb2html.m_charger_les_tuiles_dont_la"))
+    ap.add_argument("--tile-margin", type=float, default=TILE_MARGIN, help=_tr("py.glb2html.m_decharger_les_tuiles_au_dela"))
+    ap.add_argument("--tile-max-mo", type=float, default=TILE_MAX_MO, help=_tr("py.glb2html.mo_de_tuiles_chargees_en_meme"))
+    ap.add_argument("--tile-max-tri", type=int, default=TILE_MAX_TRI, help=_tr("py.glb2html.triangles_de_tuiles_chargees_en_meme"))
+    ap.add_argument("--tile-concurrency", type=int, default=TILE_CONCURRENCY, help=_tr("py.glb2html.telechargements_simultanes_defaut_default_d"))
+    ap.add_argument("--config-only", action="store_true", help=_tr("py.glb2html.reecrit_seulement_page_config_json_d"))
+    ap.add_argument("--zone-marker", choices=ZONE_MARKERS, default=ZONE_MARKER, help=_tr("py.glb2html.marqueur_des_portails_et_zones_libres"))
+    ap.add_argument("--zone-cone", action=argparse.BooleanOptionalAction, default=ZONE_CONE, help=_tr("py.glb2html.petit_cone_pointe_vers_le_bas"))
+    ap.add_argument("--show-spawns", action=argparse.BooleanOptionalAction, default=SHOW_SPAWNS, help=_tr("py.glb2html.dessine_aussi_les_arrivees_dans_la"))
+    ap.add_argument("--zone-info-dist", type=float, default=ZONE_INFO_DIST, metavar="M", help=_tr("py.glb2html.distance_5_a_200_m_defaut"))
+    ap.add_argument("--fly", action=argparse.BooleanOptionalAction, default=FLY_ENABLED, help=_tr("py.glb2html.vol_en_promenade_touche_f_ou"))
+    ap.add_argument("--maj", action="store_true", help=_tr("py.glb2html.met_a_jour_une_region_deja"))
+    ap.add_argument("--room", default=ROOM, help=_tr("py.glb2html.salon_de_presence_defaut_nom_du"))
+    ap.add_argument("--sea", dest="sea_enabled", action=argparse.BooleanOptionalAction, default=SEA_ENABLED, help=_tr("py.glb2html.help.sea"))
+    ap.add_argument("--anim", dest="anim_enabled", action=argparse.BooleanOptionalAction, default=ANIM_ENABLED, help=_tr("py.glb2html.help.anim"))
+    ap.add_argument("--retina", action=argparse.BooleanOptionalAction, default=RETINA_ENABLED, help=_tr("py.glb2html.haute_resolution_rendu_x2_minimum_supersampl"))
+    ap.add_argument("--title", help=_tr("py.glb2html.titre_de_la_page"))
+    ap.add_argument("--vendor", type=pathlib.Path, help=_tr("py.glb2html.racine_d_un_paquet_npm_three"))
     a = ap.parse_args()
     S = {}
     if a.maj and a.settings:
-        sys.exit("[ERREUR] --maj et --settings s'excluent : --maj ne reprend que les options données et la config existante")
+        sys.exit(_tr("py.glb2html.erreur_maj_et_settings_s_excluent"))
     if a.settings:
         if str(a.settings).lower().endswith((".glb", ".gltf")) and not a.input:
             a.input, a.settings = a.settings, "auto"
         if a.settings == "auto":
             if not a.input:
-                sys.exit("[ERREUR] --settings sans nom demande le .glb (le fichier cherché est <nom du .glb>.reglages.json)")
+                sys.exit(_tr("py.glb2html.erreur_settings_sans_nom_demande_le"))
             wanted = pathlib.Path(a.input).stem + ".reglages.json"
         else:
             wanted = a.settings
         sp = find_beside(wanted)
         if sp is None:
-            sys.exit(f"[ERREUR] fichier de réglages {wanted} introuvable (cherché dans {pathlib.Path.cwd()} puis dans {pathlib.Path(__file__).resolve().parent})")
+            sys.exit(_tr("py.glb2html.erreur_fichier_de_reglages_0_introuvable", wanted, pathlib.Path.cwd(), pathlib.Path(__file__).resolve().parent))
         try:
             S = json.loads(sp.read_text(encoding="utf-8"))
             if not isinstance(S, dict) or not isinstance(S.get("cfg"), dict):
-                raise ValueError("ce n'est pas un fichier de réglages du viewer")
+                raise ValueError(_tr("py.glb2html.ce_n_est_pas_un_fichier"))
         except (OSError, ValueError) as e:
-            sys.exit(f"[ERREUR] {sp} illisible ({e})")
+            sys.exit(_tr("py.glb2html.erreur_0_illisible_1", sp, e))
         defaults = settings_defaults(S)
         ap.set_defaults(**defaults)
         keep_input = a.input
@@ -1204,10 +1217,10 @@ def main():
             a.input, a.settings = a.settings, "auto"
         if not a.input:
             a.input = keep_input
-        print(f"[réglages] {len(defaults)} paramètre(s) repris de {sp}")
+        print(_tr("py.glb2html.reglages_0_parametre_s_repris_de", len(defaults), sp))
     if a.shared_shell:
         if "/" in a.shared_shell or "\\" in a.shared_shell or not a.shared_shell.lower().endswith((".html", ".htm")):
-            sys.exit(f"[ERREUR] --shared-shell attend un nom de fichier .html sans dossier (reçu « {a.shared_shell} »)")
+            sys.exit(_tr("py.glb2html.erreur_shared_shell_attend_un_nom", a.shared_shell))
         a.modular = True
     S_reg = S.get("thisReg") if isinstance(S.get("thisReg"), dict) else {}
     S_cmd = S.get("cmd") if isinstance(S.get("cmd"), dict) else {}
@@ -1222,22 +1235,22 @@ def main():
     if a.map:
         mf = find_beside(a.map)
         if mf is None:
-            sys.exit(f"[ERREUR] {a.map} introuvable (cherché dans {pathlib.Path.cwd()} puis dans {pathlib.Path(__file__).resolve().parent})")
+            sys.exit(_tr("py.glb2html.erreur_0_introuvable_cherche_dans_1", a.map, pathlib.Path.cwd(), pathlib.Path(__file__).resolve().parent))
         try:
             map_arg = json.loads(mf.read_text(encoding="utf-8"))
         except (OSError, ValueError) as e:
-            sys.exit(f"[ERREUR] {mf} illisible ({e})")
-        print(f"[carte] {len(clean_map(map_arg))} région(s) lue(s) dans {mf}")
+            sys.exit(_tr("py.glb2html.erreur_0_illisible_1", mf, e))
+        print(_tr("py.glb2html.carte_0_region_s_lue_s", len(clean_map(map_arg)), mf))
     zones_arg = S.get("zones") if (S and not a.zones and isinstance(S.get("zones"), list)) else None
     if a.zones:
         zf = find_beside(a.zones)
         if zf is None:
-            sys.exit(f"[ERREUR] {a.zones} introuvable (cherché dans {pathlib.Path.cwd()} puis dans {pathlib.Path(__file__).resolve().parent})")
+            sys.exit(_tr("py.glb2html.erreur_0_introuvable_cherche_dans_1", a.zones, pathlib.Path.cwd(), pathlib.Path(__file__).resolve().parent))
         try:
             zones_arg = json.loads(zf.read_text(encoding="utf-8"))
         except (OSError, ValueError) as e:
-            sys.exit(f"[ERREUR] {zf} illisible ({e})")
-        print(f"[zones] {len(zones_arg) if isinstance(zones_arg, list) else 0} zone(s) lue(s) dans {zf}")
+            sys.exit(_tr("py.glb2html.erreur_0_illisible_1", zf, e))
+        print(_tr("py.glb2html.zones_0_zone_s_lue_s", len(zones_arg) if isinstance(zones_arg, list) else 0, zf))
 
     kw = dict(rotate=a.rotate, hole=clamp(a.hole, 30, 600), hole_fade=max(0.0, a.hole_fade), hole_x=a.hole_x, hole_z=a.hole_z, wave=clamp(a.wave, 0, 10),
               sea_y=clamp(a.sea_y, -150, 60), zoom=clamp(a.zoom, 0.05, 100), cam_dir=a.cam_dir, target=a.target,
@@ -1253,7 +1266,7 @@ def main():
         kw["zones_live"] = "auto"
     if a.zones_only:
         if not a.output:
-            sys.exit("[ERREUR] --zones-only demande -o <page.html>")
+            sys.exit(_tr("py.glb2html.erreur_zones_only_demande_o_page"))
         out = pathlib.Path(a.output)
         if a.zones_live:   # page autonome qui recharge ses zones
             write_live_zones(out, dict(kw, zones_live=a.zones_live))
@@ -1261,23 +1274,23 @@ def main():
         if not out.suffix:
             out = out.with_suffix(".html")
         if not (modular_names(out)[1].is_file() or a.modular):
-            sys.exit(f"[ERREUR] --zones-only demande --zones-live (page autonome) ou une page modulaire déjà générée ({modular_names(out)[1].name} introuvable à côté de la page)")
+            sys.exit(_tr("py.glb2html.erreur_zones_only_demande_zones_live", modular_names(out)[1].name))
         if zones_arg is None:
-            sys.exit("[ERREUR] --zones-only demande --zones FICHIER (ou --settings) : aucune zone à écrire")
+            sys.exit(_tr("py.glb2html.erreur_zones_only_demande_zones_fichier"))
         write_modular_zones(modular_names(out)[2], kw)
         sys.exit(0)
     if a.config_only and not a.tiles:
         if not a.output:
-            sys.exit("[ERREUR] --config-only demande -o <page.html> (la page modulaire déjà générée)")
+            sys.exit(_tr("py.glb2html.erreur_config_only_demande_o_page"))
         out = pathlib.Path(a.output)
         if not out.suffix:
             out = out.with_suffix(".html")
         glb_out, cfg_out, zones_out = modular_names(out)
         if a.shared_shell:
             if not glb_out.is_file() or not out.with_name(a.shared_shell).is_file():
-                sys.exit(f"[ERREUR] {a.shared_shell} ou {glb_out.name} introuvable : génère d'abord la région avec --shared-shell")
+                sys.exit(_tr("py.glb2html.erreur_0_ou_1_introuvable_genere", a.shared_shell, glb_out.name))
         elif not out.is_file() or not glb_out.is_file():
-            sys.exit(f"[ERREUR] {out} ou {glb_out.name} introuvable : génère d'abord la page avec --modular")
+            sys.exit(_tr("py.glb2html.erreur_0_ou_1_introuvable_genere_2", out, glb_out.name))
         name = pathlib.Path(a.input).name if a.input else glb_out.name
         if not a.room and cfg_out.is_file():
             try:
@@ -1288,65 +1301,65 @@ def main():
             entry = region_entry(a, S_reg, kw["room"] or pathlib.Path(name).stem, pathlib.Path(name).stem, page_name_of(a, out))
             reg = data_path(a.register)
             kw["map_entries"] = register_region(reg, entry)
-            print(f"[carte] « {entry['name']} » ajoutée ou mise à jour dans {reg} ({len(kw['map_entries'])} région(s))")
+            print(_tr("py.glb2html.carte_0_ajoutee_ou_mise_a", entry['name'], reg, len(kw['map_entries'])))
             where_note(reg, a.output)
         write_config(cfg_out, name, kw)
-        print(f"[OK] réglages -> {cfg_out} (coquille et .glb inchangés) [glb2html {VERSION}]")
+        print(_tr("py.glb2html.ok_reglages_0_coquille_et_glb", cfg_out, VERSION))
         if a.zones:   # les zones ne sont touchées que si --zones est donné
             write_modular_zones(zones_out, kw)
         else:
-            print(f"[zones] {zones_out.name} non modifié (donne --zones FICHIER pour le réécrire)")
+            print(_tr("py.glb2html.zones_0_non_modifie_donne_zones", zones_out.name))
         if a.map_page and kw.get("map_entries") is not None and clean_map(kw["map_entries"]):
             mp = pathlib.Path(a.map_page)
-            write_map_page(mp if mp.is_absolute() else out.parent / mp, kw["map_entries"], kw.get("presence_url", ""), kw.get("map_url", ""), a.title or "Carte des mondes")
+            write_map_page(mp if mp.is_absolute() else out.parent / mp, kw["map_entries"], kw.get("presence_url", ""), kw.get("map_url", ""), a.title or _tr("py.glb2html.carte_des_mondes"))
         sys.exit(0)
     if a.tiles:
         if a.input:
-            sys.exit("[ERREUR] --tiles remplace le .glb : ne donne pas de fichier .glb avec --tiles")
+            sys.exit(_tr("py.glb2html.erreur_tiles_remplace_le_glb_ne"))
         if not a.output:
-            sys.exit("[ERREUR] --tiles demande -o <Region.html> (son nom sans extension est celui de la région)")
+            sys.exit(_tr("py.glb2html.erreur_tiles_demande_o_region_html"))
         out = pathlib.Path(a.output)
         if out.is_dir() or str(a.output).endswith(("/", "\\")):
-            sys.exit("[ERREUR] avec --tiles, -o désigne la région (ex. -o Region.html), pas un dossier")
+            sys.exit(_tr("py.glb2html.erreur_avec_tiles_o_designe_la"))
         if not out.suffix:
             out = out.with_suffix(".html")
         tp = find_beside(a.tiles)
         if tp is None:
-            sys.exit(f"[ERREUR] {a.tiles} introuvable (cherché dans {pathlib.Path.cwd()} puis dans {pathlib.Path(__file__).resolve().parent})")
+            sys.exit(_tr("py.glb2html.erreur_0_introuvable_cherche_dans_1", a.tiles, pathlib.Path.cwd(), pathlib.Path(__file__).resolve().parent))
         tdoc = read_tiles_index(tp)
         if a.target == TARGET:
             kw["target"] = tiles_default_target(tdoc, a.rotate)
-            print(f"[tuiles] cible de caméra par défaut : {kw['target']} (centre de l'étendue, repère du modèle d'origine ; --target pour la changer)")
+            print(_tr("py.glb2html.tuiles_cible_de_camera_par_defaut", kw['target']))
         if a.sea_y == SEA_Y:
             kw["sea_y"] = 20.0
-            print("[tuiles] hauteur de la mer par défaut : 20 m (repère du modèle d'origine, comme l'eau d'OpenSim ; --sea-y pour la changer, --no-sea pour la retirer)")
+            print(_tr("py.glb2html.tuiles_hauteur_de_la_mer_par"))
         kw.update(tile_radius=clamp(a.tile_radius, 10, 5000), tile_margin=clamp(a.tile_margin, 0, 5000), tile_max_mo=clamp(a.tile_max_mo, 1, 100000),
                   tile_max_tri=int(clamp(a.tile_max_tri, 1000, 10**9)), tile_concurrency=int(clamp(a.tile_concurrency, 1, 16)))
         if a.shared_shell and not valid_region_name(out.stem):
-            sys.exit(f"[ERREUR] nom de région « {out.stem} » refusé par la coquille commune (un seul nom de fichier, sans / \\ : ? # ni .., sans point au début) : choisis un autre -o")
+            sys.exit(_tr("py.glb2html.erreur_nom_de_region_0_refuse_3", out.stem))
         if a.register:
             entry = region_entry(a, S_reg, a.room or out.stem, out.stem, page_name_of(a, out))
             reg = data_path(a.register)
             kw["map_entries"] = register_region(reg, entry)
-            print(f"[carte] « {entry['name']} » ajoutée ou mise à jour dans {reg} ({len(kw['map_entries'])} région(s))")
+            print(_tr("py.glb2html.carte_0_ajoutee_ou_mise_a", entry['name'], reg, len(kw['map_entries'])))
             where_note(reg, a.output)
         if a.zones and zf is not None:
             zdest = modular_names(out)[2]
             if zdest.is_file() and zf.resolve() == zdest.resolve():
                 kw["zones_keep"] = True
-                print(f"[zones] zones déjà en place : {zdest} (lu pour vérification, non réécrit ni copié)")
+                print(_tr("py.glb2html.zones_zones_deja_en_place_0_2", zdest))
         ok = generate_tiles(tp, tdoc, out, a.vendor, shell=a.shared_shell, **kw)
         if ok and a.map_page:
             entries = kw["map_entries"] if kw.get("map_entries") is not None else json.loads(MAP_JSON)
             if clean_map(entries):
                 mp = pathlib.Path(a.map_page)
-                write_map_page(mp if mp.is_absolute() else out.parent / mp, entries, kw.get("presence_url", ""), kw.get("map_url", ""), a.title or "Carte des mondes")
+                write_map_page(mp if mp.is_absolute() else out.parent / mp, entries, kw.get("presence_url", ""), kw.get("map_url", ""), a.title or _tr("py.glb2html.carte_des_mondes"))
             else:
-                print("[AVERTISSEMENT] --map-page ignoré : aucune région à afficher (donne --register ou --map)", file=sys.stderr)
+                print(_tr("py.glb2html.avertissement_map_page_ignore_aucune_region_2"), file=sys.stderr)
         sys.exit(0 if ok else 1)
     if a.register and not a.input:
         if not (a.region_name and a.region_url and a.room):
-            sys.exit("[ERREUR] enregistrer une région sans .glb demande --region-name, --region-url et --room")
+            sys.exit(_tr("py.glb2html.erreur_enregistrer_une_region_sans_glb"))
         entry = {"id": _slug(a.room) or "region", "name": a.region_name, "url": a.region_url, "room": a.room,
                  "spawn": a.region_spawn or None, "thumb": thumb_data_url(a.thumb) if a.thumb else "",
                  "presence": fix_presence_url(a.presence_url) if a.presence_url else None}
@@ -1355,36 +1368,36 @@ def main():
                 x, y = (int(float(v)) for v in a.region_xy.split(","))
                 entry["x"], entry["y"] = x, y
             except ValueError:
-                sys.exit("[ERREUR] --region-xy attend deux nombres : X,Y")
+                sys.exit(_tr("py.glb2html.erreur_region_xy_attend_deux_nombres"))
         reg = data_path(a.register)
         data = register_region(reg, entry)
-        print(f"[carte] « {entry['name']} » ajoutée ou mise à jour dans {reg} ({len(data)} région(s))")
+        print(_tr("py.glb2html.carte_0_ajoutee_ou_mise_a", entry['name'], reg, len(data)))
         if a.map_page:
-            write_map_page(pathlib.Path(a.map_page), data, a.presence_url, a.map_url, a.title or "Carte des mondes")
+            write_map_page(pathlib.Path(a.map_page), data, a.presence_url, a.map_url, a.title or _tr("py.glb2html.carte_des_mondes"))
         sys.exit(0)
     if a.map_page and not a.input:
         entries = map_arg if map_arg is not None else json.loads(MAP_JSON)
         if not clean_map(entries):
-            sys.exit("[ERREUR] aucune région à afficher : donne --map regions.json")
-        write_map_page(pathlib.Path(a.map_page), entries, a.presence_url, a.map_url, a.title or "Carte des mondes")
+            sys.exit(_tr("py.glb2html.erreur_aucune_region_a_afficher_donne"))
+        write_map_page(pathlib.Path(a.map_page), entries, a.presence_url, a.map_url, a.title or _tr("py.glb2html.carte_des_mondes"))
         sys.exit(0)
     if not a.input:
-        ap.error("le fichier .glb (ou le dossier) est obligatoire")
+        ap.error(_tr("py.glb2html.le_fichier_glb_ou_le_dossier"))
     inp = pathlib.Path(a.input)
     if inp.is_dir() and (a.register or a.map_page):
-        print("[AVERTISSEMENT] --register et --map-page ne s'appliquent qu'à un fichier .glb, pas à un dossier", file=sys.stderr)
+        print(_tr("py.glb2html.avertissement_register_et_map_page_ne"), file=sys.stderr)
     if inp.is_dir():
         files = sorted(p for p in inp.iterdir() if p.suffix.lower() == ".glb")
         if not files:
-            sys.exit(f"Aucun .glb dans {inp}")
+            sys.exit(_tr("py.glb2html.aucun_glb_dans_0", inp))
         outdir = pathlib.Path(a.output) if a.output else None
         ok = sum(generate(f, (outdir or f.parent) / (f.stem + (".html" if a.shared_shell else " - Offline.html")), a.vendor, modular=a.modular, shell=a.shared_shell, **kw) for f in files)
-        print(f"{ok}/{len(files)} fichiers générés")
+        print(_tr("py.glb2html.0_1_fichiers_generes", ok, len(files)))
         sys.exit(0 if ok == len(files) else 1)
     if not inp.is_file():
-        sys.exit(f"{inp} introuvable")
+        sys.exit(_tr("py.glb2html.0_introuvable", inp))
     if inp.suffix.lower() == ".gltf":
-        sys.exit("Entrée .gltf : repacker d'abord en .glb (npx @gltf-transform/cli copy in.gltf out.glb)")
+        sys.exit(_tr("py.glb2html.entree_gltf_repacker_d_abord_en"))
     if a.output:
         out = pathlib.Path(a.output)
         if out.is_dir() or str(a.output).endswith(("/", "\\")):
@@ -1394,21 +1407,21 @@ def main():
     else:
         out = inp.with_name(inp.stem + (".html" if a.shared_shell else " - Offline.html"))
     if a.shared_shell and not valid_region_name(out.stem):
-        sys.exit(f"[ERREUR] nom de région « {out.stem} » refusé par la coquille commune (un seul nom de fichier, sans / \\ : ? # ni .., sans point au début) : choisis un autre -o")
+        sys.exit(_tr("py.glb2html.erreur_nom_de_region_0_refuse_3", out.stem))
     if a.register:
         entry = region_entry(a, S_reg, a.room or inp.stem, inp.stem, page_name_of(a, out))
         reg = data_path(a.register)
         kw["map_entries"] = register_region(reg, entry)
-        print(f"[carte] « {entry['name']} » ajoutée ou mise à jour dans {reg} ({len(kw['map_entries'])} région(s))")
+        print(_tr("py.glb2html.carte_0_ajoutee_ou_mise_a", entry['name'], reg, len(kw['map_entries'])))
         where_note(reg, a.output)
     ok = generate(inp, out, a.vendor, modular=a.modular, shell=a.shared_shell, **kw)
     if ok and a.map_page:
         entries = kw["map_entries"] if kw.get("map_entries") is not None else json.loads(MAP_JSON)
         if not clean_map(entries):
-            print("[AVERTISSEMENT] --map-page ignoré : aucune région à afficher (donne --register ou --map)", file=sys.stderr)
+            print(_tr("py.glb2html.avertissement_map_page_ignore_aucune_region_2"), file=sys.stderr)
         else:
             mp = pathlib.Path(a.map_page)
-            write_map_page(mp if mp.is_absolute() else out.parent / mp, entries, kw.get("presence_url", ""), kw.get("map_url", ""), a.title or "Carte des mondes")
+            write_map_page(mp if mp.is_absolute() else out.parent / mp, entries, kw.get("presence_url", ""), kw.get("map_url", ""), a.title or _tr("py.glb2html.carte_des_mondes"))
     sys.exit(0 if ok else 1)
 
 

@@ -13,6 +13,7 @@ panneau d'aide. Anciennes tuiles : zones liées ignorées avec l'avertissement.
 
 Prérequis : pip install playwright ; python build.py avant. Variables facultatives : THREE_DIR, CHROMIUM. Lancer : python tests/v32.py
 """
+import os as _os_lang; _os_lang.environ["WEB3D_LANG"] = "fr"   # outils Python en français (v36)
 import asyncio, json, math, os, pathlib, shutil, socket, struct, subprocess, sys, tempfile, time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))

@@ -14,9 +14,16 @@
   - OAR sans carte de hauteurs : message clair, aucune erreur
 Lancer : python tests/terrain.py
 """
+import os as _os_lang; _os_lang.environ["WEB3D_LANG"] = "fr"   # outils Python en français (v36)
 import hashlib, io, json, math, pathlib, shutil, struct, subprocess, sys, tarfile, tempfile
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+def copie_i18n(dossier):
+    """les sources des outils (tools/, src/) cherchent i18n_py.py et i18n/ à côté ou dans src/ : on les copie avec la copie du script"""
+    shutil.copy(ROOT / "src" / "i18n_py.py", pathlib.Path(dossier) / "i18n_py.py")
+    shutil.copytree(ROOT / "src" / "i18n", pathlib.Path(dossier) / "i18n", dirs_exist_ok=True)
+
 TOOL = ROOT / "tools" / "oar2glb.py"
 sys.path.insert(0, str(ROOT / "tools"))
 import oar2glb as T  # noqa: E402
@@ -272,6 +279,7 @@ def chaine(nom, n, taille, couvre, *extra, avec_carte=True):
     (d / "convoar_fake.py").chmod(0o755)
     gltf_convoar(d / "fake_out", couvre)
     shutil.copy(TOOL, d / "oar2glb.py")
+    copie_i18n(d)
     r = lancer(d / "oar2glb.py", d / "R.oar", "--convoar", d / "convoar_fake.py", "--nopause", *extra, cwd=d)
     return r, d / "R.glb"
 
@@ -321,6 +329,7 @@ h0 = sha(orig)
 copie = tmp / "copie_seul"
 copie.mkdir()
 shutil.copy(TOOL, copie / "oar2glb.py")
+copie_i18n(copie)
 rs = lancer(copie / "oar2glb.py", oar, "--terrain-seul", orig, cwd=copie)       # sans --nopause : aucune pause « Entrée »
 out = tmp / "Gros-terrain.glb"
 rapport(rs.returncode == 0 and out.is_file() and "Traceback" not in rs.stderr, "--terrain-seul : écrit Gros-terrain.glb, sans pause", rs.stdout[-400:] + rs.stderr[-300:])
@@ -367,6 +376,7 @@ copie2 = tmp / "copie_tiles"
 copie2.mkdir()
 for f in ("glb2tiles.py", "glb-stats.py"):
     shutil.copy(ROOT / "tools" / f, copie2 / f)
+copie_i18n(copie2)
 rt = lancer(copie2 / "glb2tiles.py", out, "--budget", "0.4", "--forcer", "--nopause", cwd=copie2)
 doc_p = tmp / "Gros-terrain.tiles.json"
 rapport(rt.returncode == 0 and doc_p.is_file(), "glb2tiles s'exécute sur le GLB avec patches", rt.stdout[-500:] + rt.stderr[-300:])

@@ -47,54 +47,56 @@ __I18N__
 </script>
 <div id="app">
   <div id="view">
-    <div id="stat">Aucun fichier</div>
-    <div id="hint"><div>Dépose un .glb ici<br>(ou .gltf + .bin / textures ensemble)<br>ou le <b>dossier</b> d'une région en tuiles<br>(celui qui contient X.tiles.json)</div></div>
-    <div id="drop">Dépose pour charger</div>
+    <div id="stat" data-i18n="viewer.nofile">Aucun fichier</div>
+    <div id="hint"><div><span data-i18n="viewer.hint.1">Dépose un .glb ici</span><br><span data-i18n="viewer.hint.2">(ou .gltf + .bin / textures ensemble)</span><br><span data-i18n="viewer.hint.3">ou le dossier d'une région en tuiles</span><br><span data-i18n="viewer.hint.4">(celui qui contient X.tiles.json)</span></div></div>
+    <div id="drop" data-i18n="viewer.drop">Dépose pour charger</div>
   </div>
   <aside id="panel">
     <small style="margin:0 0 6px">glb-viewer __VERSION__</small>
-    <h2>Réglages mémorisés</h2>
-    <small id="setInfo">Aucun fichier chargé.</small>
+    <div class="row"><label for="langSel" data-i18n="viewer.lang">Langue / Language</label><select id="langSel" style="grid-column:1/-1;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;width:100%"></select></div>
+    <div class="row"><label for="kbSel" data-i18n="viewer.kb">Disposition du clavier (aide de la promenade)</label><select id="kbSel" style="grid-column:1/-1;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;width:100%"></select></div>
+    <h2 data-i18n="viewer.set.title">Réglages mémorisés</h2>
+    <small id="setInfo" data-i18n="viewer.set.nofile">Aucun fichier chargé.</small>
     <div class="btns">
-      <button id="bSetSave">Enregistrer dans un fichier</button>
-      <button id="bSetLoad">Charger un fichier</button>
-      <button id="bSetForget" class="wide">Oublier les réglages de ce fichier</button>
+      <button id="bSetSave" data-i18n="viewer.set.save">Enregistrer dans un fichier</button>
+      <button id="bSetLoad" data-i18n="viewer.set.load">Charger un fichier</button>
+      <button id="bSetForget" class="wide" data-i18n="viewer.set.forget">Oublier les réglages de ce fichier</button>
     </div>
-    <h2>Fichier</h2>
+    <h2 data-i18n="viewer.file.title">Fichier</h2>
     <div class="btns">
-      <button id="bGlb">Ouvrir .glb</button>
-      <button id="bDir">Ouvrir dossier glTF</button>
-      <button id="bTiles" class="wide">Ouvrir une région en tuiles (dossier)</button>
+      <button id="bGlb" data-i18n="viewer.file.glb">Ouvrir .glb</button>
+      <button id="bDir" data-i18n="viewer.file.dir">Ouvrir dossier glTF</button>
+      <button id="bTiles" class="wide" data-i18n="viewer.file.tiles">Ouvrir une région en tuiles (dossier)</button>
     </div>
-    <div class="row" id="tilesSelRow" hidden><label for="tilesSel">Région du dossier</label><select id="tilesSel" style="grid-column:1/-1;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;width:100%"></select></div>
+    <div class="row" id="tilesSelRow" hidden><label for="tilesSel" data-i18n="viewer.tiles.sel">Région du dossier</label><select id="tilesSel" style="grid-column:1/-1;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;width:100%"></select></div>
     <small id="tilesInfoV" hidden></small>
     <small id="tilesLoad" hidden></small>
-    <h2>Coordonnées (m)</h2>
-    <pre id="coordInfo">Clique sur le modèle : le point visé s'affiche ici (x, y, z, une décimale).</pre>
-    <div class="btns"><button id="bCopyPick">Copier le point visé</button><button id="bCopyTarget">Copier la cible</button></div>
-    <input id="copyField" readonly hidden aria-label="Texte à copier" style="width:100%;font:12px ui-monospace,Consolas,monospace">
+    <h2 data-i18n="viewer.coord.title">Coordonnées (m)</h2>
+    <pre id="coordInfo" data-i18n="viewer.coord.hint">Clique sur le modèle : le point visé s'affiche ici (x, y, z, une décimale).</pre>
+    <div class="btns"><button id="bCopyPick" data-i18n="viewer.coord.copypick">Copier le point visé</button><button id="bCopyTarget" data-i18n="viewer.coord.copytarget">Copier la cible</button></div>
+    <input id="copyField" readonly hidden aria-label="Texte à copier" data-i18n-aria="viewer.copy.aria" style="width:100%;font:12px ui-monospace,Consolas,monospace">
     <div id="rows"></div>
-    <h2>Export</h2>
-    <div class="row"><label for="profileSel">Profil d'export</label><select id="profileSel" style="grid-column:1/-1;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;width:100%"><option value="public">public : sans les zones privées</option><option value="perso">perso : toutes les zones</option></select></div>
+    <h2 data-i18n="viewer.export.title">Export</h2>
+    <div class="row"><label for="profileSel" data-i18n="viewer.export.profile">Profil d'export</label><select id="profileSel" style="grid-column:1/-1;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;width:100%"><option value="public" data-i18n="viewer.export.public">public : sans les zones privées</option><option value="perso" data-i18n="viewer.export.perso">perso : toutes les zones</option></select></div>
     <div class="btns">
-      <button id="bHtml" class="main" disabled>Exporter HTML autonome</button>
-      <button id="bZip" class="main" disabled>Exporter la structure modulaire (.zip)</button>
-      <button id="bPy" class="wide">Exporter script Python (réglages actuels)</button>
-      <button id="bFrame">Recadrer</button>
-      <button id="bReset">Valeurs par défaut</button>
+      <button id="bHtml" class="main" disabled data-i18n="viewer.export.html">Exporter HTML autonome</button>
+      <button id="bZip" class="main" disabled data-i18n="viewer.export.zip">Exporter la structure modulaire (.zip)</button>
+      <button id="bPy" class="wide" data-i18n="viewer.export.py">Exporter script Python (réglages actuels)</button>
+      <button id="bFrame" data-i18n="viewer.export.frame">Recadrer</button>
+      <button id="bReset" data-i18n="viewer.export.reset">Valeurs par défaut</button>
     </div>
-    <small>L'export HTML reprend la caméra exactement telle qu'affichée (direction, cible, zoom). Aucun accès réseau, ni ici ni dans le fichier exporté. « HTML autonome » : une seule page, qui s'ouvre depuis le disque. « Structure modulaire » : un .zip à décompresser dans le dossier du site (index.html = coquille commune, NOM.glb, NOM.config.json, NOM.zones.json, lib/) ; il faut le servir en http/https ; la région s'ouvre à index.html?region=NOM, et plusieurs régions peuvent partager la même coquille.</small>
-    <h2>Récapitulatif pour le script</h2>
-    <div class="row"><label for="cmdScript">Chemin de glb2html.py</label><input id="cmdScript" type="text" placeholder="glb2html.py" style="grid-column:1/-1;width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px"></div>
-    <div class="row"><label for="cmdGlb" id="cmdGlbLabel">Chemin du fichier .glb</label><input id="cmdGlb" type="text" placeholder="fichier.glb" style="grid-column:1/-1;width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px"></div>
-    <div class="row"><label for="cmdDest">Fichier ou dossier de sortie (-o), facultatif</label><input id="cmdDest" type="text" placeholder="par défaut : à côté du .glb" style="grid-column:1/-1;width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px"></div>
-    <div class="row"><label for="cmdMapPage">Page « carte » web à régénérer (facultatif)</label><input id="cmdMapPage" type="text" placeholder="carte.html" style="grid-column:1/-1;width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px"></div>
-    <label class="chk"><input id="cmdShort" type="checkbox"><span>Commande courte : le script relit tous les réglages dans le fichier .reglages.json</span></label>
-    <label class="chk"><input id="cmdModular" type="checkbox"><span>Mode modulaire : page légère + .glb + .config.json à côté (nécessite http/https ; ajoute --modular)</span></label>
-    <label class="chk"><input id="cmdShared" type="checkbox"><span>Coquille commune : index.html?region=NOM, seuls .glb, .config.json et .zones.json par région (nécessite http/https ; ajoute --shared-shell à la place de --modular)</span></label>
-    <div class="btns"><button id="bCmd" class="wide">Générer la ligne de commande PowerShell</button></div>
-    <textarea id="cmdOut" readonly rows="7" placeholder="La commande apparaît ici (seulement les options qui changent par rapport aux valeurs par défaut du script)." style="width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;margin-top:4px"></textarea>
-    <div class="btns"><button id="bCmdCopy" class="wide">Copier la commande</button></div>
+    <small data-i18n="viewer.export.note">L'export HTML reprend la caméra exactement telle qu'affichée (direction, cible, zoom). Aucun accès réseau, ni ici ni dans le fichier exporté. « HTML autonome » : une seule page, qui s'ouvre depuis le disque. « Structure modulaire » : un .zip à décompresser dans le dossier du site (index.html = coquille commune, NOM.glb, NOM.config.json, NOM.zones.json, lib/) ; il faut le servir en http/https ; la région s'ouvre à index.html?region=NOM, et plusieurs régions peuvent partager la même coquille.</small>
+    <h2 data-i18n="viewer.cmd.title">Récapitulatif pour le script</h2>
+    <div class="row"><label for="cmdScript" data-i18n="viewer.cmd.script">Chemin de glb2html.py</label><input id="cmdScript" type="text" placeholder="glb2html.py" style="grid-column:1/-1;width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px"></div>
+    <div class="row"><label for="cmdGlb" id="cmdGlbLabel" data-i18n="viewer.cmd.glb">Chemin du fichier .glb</label><input id="cmdGlb" type="text" placeholder="fichier.glb" data-i18n-ph="viewer.cmd.glb.ph" style="grid-column:1/-1;width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px"></div>
+    <div class="row"><label for="cmdDest" data-i18n="viewer.cmd.dest">Fichier ou dossier de sortie (-o), facultatif</label><input id="cmdDest" type="text" placeholder="par défaut : à côté du .glb" data-i18n-ph="viewer.cmd.dest.ph" style="grid-column:1/-1;width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px"></div>
+    <div class="row"><label for="cmdMapPage" data-i18n="viewer.cmd.mappage">Page « carte » web à régénérer (facultatif)</label><input id="cmdMapPage" type="text" placeholder="carte.html" style="grid-column:1/-1;width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px"></div>
+    <label class="chk"><input id="cmdShort" type="checkbox"><span data-i18n="viewer.cmd.short">Commande courte : le script relit tous les réglages dans le fichier .reglages.json</span></label>
+    <label class="chk"><input id="cmdModular" type="checkbox"><span data-i18n="viewer.cmd.modular">Mode modulaire : page légère + .glb + .config.json à côté (nécessite http/https ; ajoute --modular)</span></label>
+    <label class="chk"><input id="cmdShared" type="checkbox"><span data-i18n="viewer.cmd.shared">Coquille commune : index.html?region=NOM, seuls .glb, .config.json et .zones.json par région (nécessite http/https ; ajoute --shared-shell à la place de --modular)</span></label>
+    <div class="btns"><button id="bCmd" class="wide" data-i18n="viewer.cmd.gen">Générer la ligne de commande PowerShell</button></div>
+    <textarea id="cmdOut" readonly rows="7" placeholder="La commande apparaît ici (seulement les options qui changent par rapport aux valeurs par défaut du script)." data-i18n-ph="viewer.cmd.out.ph" style="width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;margin-top:4px"></textarea>
+    <div class="btns"><button id="bCmdCopy" class="wide" data-i18n="viewer.cmd.copy">Copier la commande</button></div>
     <pre id="cmdNote" style="display:none"></pre>
   </aside>
 </div>
@@ -135,17 +137,17 @@ function makeLoader(manager) {
   return l;
 }
 
-function inspectGlb(buf, name = 'fichier') {
+function inspectGlb(buf, name = tr('viewer.glb.defname')) {
   const dv = new DataView(buf);
-  if (buf.byteLength < 20 || dv.getUint32(0, true) !== 0x46546C67) throw new Error(name + ' : pas un GLB (magic absent)');
-  if (dv.getUint32(4, true) !== 2) throw new Error(name + ' : glTF version ' + dv.getUint32(4, true) + ' non supportée');
-  if (dv.getUint32(8, true) !== buf.byteLength) throw new Error(name + ' : taille annoncée différente de la taille du fichier (tronqué ?)');
-  if (dv.getUint32(16, true) !== 0x4E4F534A) throw new Error(name + ' : premier chunk non JSON');
+  if (buf.byteLength < 20 || dv.getUint32(0, true) !== 0x46546C67) throw new Error(tr('viewer.glb.magic', name));
+  if (dv.getUint32(4, true) !== 2) throw new Error(tr('viewer.glb.version', name, dv.getUint32(4, true)));
+  if (dv.getUint32(8, true) !== buf.byteLength) throw new Error(tr('viewer.glb.size', name));
+  if (dv.getUint32(16, true) !== 0x4E4F534A) throw new Error(tr('viewer.glb.chunk', name));
   const json = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, 20, dv.getUint32(12, true))));
   const used = new Set([...(json.extensionsUsed || []), ...(json.extensionsRequired || [])]);
   const ext = [...(json.buffers || []), ...(json.images || [])].map(x => x.uri).filter(u => u && !u.startsWith('data:'));
-  if (ext.length) throw new Error(name + ' : référence des fichiers externes (' + ext.slice(0, 3).join(', ') + ') → ouvre le dossier glTF au lieu du .glb');
-  if (used.has('KHR_texture_basisu')) throw new Error(name + ' : textures KTX2/Basis non gérées hors ligne');
+  if (ext.length) throw new Error(tr('viewer.glb.external', name, ext.slice(0, 3).join(', ')));
+  if (used.has('KHR_texture_basisu')) throw new Error(tr('viewer.glb.basis', name));
   return used;
 }
 
@@ -164,58 +166,70 @@ let glbBytes = null, baseName = 'scene';
 const $ = id => document.getElementById(id);
 const setStatus = t => { $('stat').textContent = t; };
 const hex = n => '#' + n.toString(16).padStart(6, '0');
+// v36 : langue de la page (liste construite à partir des fichiers de langue présents ; changer recharge) et disposition du clavier (lettres de l'aide de la promenade)
+{
+  document.title = tr('viewer.title', '__VERSION__');
+  applyI18n();
+  const mk = (v, tt) => Object.assign(document.createElement('option'), { value: v, textContent: tt });
+  const ls = $('langSel'); for (const [v, tt] of i18nChoices()) ls.append(mk(v, tt)); ls.value = LANG_PREF; ls.onchange = () => setLangPref(ls.value);
+  const ks = $('kbSel'); for (const [v, tt] of [['auto', tr('common.auto')], ['azerty', 'AZERTY'], ['qwerty', 'QWERTY']]) ks.append(mk(v, tt));
+  let st = {}; try { st = JSON.parse(localStorage.getItem('glb2html_visitor') || '{}') || {}; } catch (e) {}
+  if (['auto', 'azerty', 'qwerty'].includes(st.layout)) KB.setPref(st.layout);
+  ks.value = KB.pref;
+  ks.onchange = () => { KB.setPref(ks.value); st.layout = ks.value; try { localStorage.setItem('glb2html_visitor', JSON.stringify(st)); } catch (e) {} };
+}
 
 // ---------- panneau de réglages
 const ROWS = [
-  ['sec', 'Région'],
+  ['sec', tr('viewer.sec.region')],
   ['rotate'],
-  ['sec', 'Mer'],
-  ['chk', 'sea', 'Mer visible'],
-  ['chk', 'anim', 'Vagues animées'],
-  ['rng', 'wave', 'Amplitude des vagues', 0, 10, 0.1, true],
-  ['rng', 'hole', 'Rayon du trou (zone plate = rayon − fondu)', 30, 600, 10, true],
-  ['rng', 'holeFade', 'Fondu du trou', 0, 200, 5, true],
-  ['rng', 'holeX', 'Position du trou X', -600, 600, 1, true],
-  ['rng', 'holeZ', 'Position du trou Z', -600, 600, 1, true],
+  ['sec', tr('viewer.sec.sea')],
+  ['chk', 'sea', tr('viewer.row.sea')],
+  ['chk', 'anim', tr('viewer.row.anim')],
+  ['rng', 'wave', tr('viewer.row.wave'), 0, 10, 0.1, true],
+  ['rng', 'hole', tr('viewer.row.hole'), 30, 600, 10, true],
+  ['rng', 'holeFade', tr('viewer.row.holeFade'), 0, 200, 5, true],
+  ['rng', 'holeX', tr('viewer.row.holeX'), -600, 600, 1, true],
+  ['rng', 'holeZ', tr('viewer.row.holeZ'), -600, 600, 1, true],
   ['place'],
   ['info'],
-  ['rng', 'seaSegments', 'Finesse du maillage de la mer (segments)', 64, 800, 8, true],
-  ['chk', 'guide', 'Afficher le guide du trou (non exporté)'],
-  ['rng', 'seaY', 'Hauteur de la mer', -150, 60, 0.5, false],
-  ['col', 'seaColor', 'Couleur mer'],
-  ['col', 'skyColor', 'Couleur ciel'],
-  ['sec', 'Rendu'],
-  ['chk', 'retina', 'Haute résolution (rendu ×' + Math.min(Math.max(window.devicePixelRatio || 1, 2), 3) + ', écran dPR ' + (window.devicePixelRatio || 1).toFixed(2) + ')'],
-  ['rng', 'foliageCutout', 'Seuil alpha du feuillage', 0, 0.5, 0.01, false],
-  ['sec', 'Caméra'],
+  ['rng', 'seaSegments', tr('viewer.row.seaSegments'), 64, 800, 8, true],
+  ['chk', 'guide', tr('viewer.row.guide')],
+  ['rng', 'seaY', tr('viewer.row.seaY'), -150, 60, 0.5, false],
+  ['col', 'seaColor', tr('viewer.row.seaColor')],
+  ['col', 'skyColor', tr('viewer.row.skyColor')],
+  ['sec', tr('viewer.sec.render')],
+  ['chk', 'retina', tr('viewer.row.retina', Math.min(Math.max(window.devicePixelRatio || 1, 2), 3), (window.devicePixelRatio || 1).toFixed(2))],
+  ['rng', 'foliageCutout', tr('viewer.row.foliage'), 0, 0.5, 0.01, false],
+  ['sec', tr('viewer.sec.camera')],
   ['zoom'],
-  ['sec', 'Promenade (hauteur d\'avatar)'],
+  ['sec', tr('viewer.sec.walk')],
   ['btnwalk'],
-  ['rng', 'eyeHeight', 'Hauteur des yeux (m)', 0.5, 3, 0.05, false],
-  ['rng', 'walkSpeed', 'Vitesse de marche (m/s)', 1, 10, 0.5, false],
-  ['rng', 'zoneInfoDist', 'Distance des infobulles et des clics sur les zones (m) — --zone-info-dist', 5, 200, 5, false],
-  ['chk', 'walk', 'Inclure la promenade dans l\'export (touche P)'],
-  ['chk', 'fly', 'Vol en promenade dans l\'export (touche Début ou bouton ; Page Haut / Espace maintenu monte, Page Bas / C descend) — --fly / --no-fly'],
+  ['rng', 'eyeHeight', tr('viewer.row.eye'), 0.5, 3, 0.05, false],
+  ['rng', 'walkSpeed', tr('viewer.row.speed'), 1, 10, 0.5, false],
+  ['rng', 'zoneInfoDist', tr('viewer.row.infodist'), 5, 200, 5, false],
+  ['chk', 'walk', tr('viewer.row.walk')],
+  ['chk', 'fly', tr('viewer.row.fly')],
   ['ignore'],
-  ['sec', 'Partage'],
-  ['chk', 'names', 'Afficher le nom de l\'élément au clic (dans l\'export)'],
-  ['txt', 'presenceUrl', 'Serveur de présence (ws:// ou wss://, vide = aucun)', 'ws://127.0.0.1:8765'],
-  ['txt', 'room', 'Salon (vide = nom du fichier)', ''],
-  ['txt', 'myName', 'Mon pseudo (test dans ce viewer)', 'Visiteur'],
-  ['chk', 'panel', 'Panneau de réglages pour les visiteurs (haute résolution, vagues)'],
-  ['chk', 'spectate', 'Voir les visiteurs en vue globale (connexion dès l\'ouverture)'],
-  ['chk', 'chat', 'Activer le chat (avec la présence)'],
-  ['rng', 'chatFade', 'Disparition des messages (s, 0 = jamais)', 0, 60, 1, false],
+  ['sec', tr('viewer.sec.share')],
+  ['chk', 'names', tr('viewer.row.names')],
+  ['txt', 'presenceUrl', tr('viewer.row.presence'), 'ws://127.0.0.1:8765'],
+  ['txt', 'room', tr('viewer.row.room'), ''],
+  ['txt', 'myName', tr('viewer.row.myname'), 'Visiteur'],
+  ['chk', 'panel', tr('viewer.row.panel')],
+  ['chk', 'spectate', tr('viewer.row.spectate')],
+  ['chk', 'chat', tr('viewer.row.chat')],
+  ['rng', 'chatFade', tr('viewer.row.chatfade'), 0, 60, 1, false],
   ['presinfo'],
   ['chatbox'],
-  ['sec', 'Zones : panneaux, portails, liens, commandes'],
+  ['sec', tr('viewer.sec.zones')],
   ['zmark'],
-  ['chk', 'zoneCone', 'Repère en cône au-dessus des portails dans la page exportée (touche T pour le masquer) — --zone-cone'],
-  ['chk', 'showSpawns', 'Dessiner les arrivées dans la page exportée (petit marqueur discret au sol) — --show-spawns'],
+  ['chk', 'zoneCone', tr('viewer.row.cone')],
+  ['chk', 'showSpawns', tr('viewer.row.spawns')],
   ['zones'],
-  ['sec', 'Carte des mondes'],
+  ['sec', tr('viewer.sec.map')],
   ['mapui'],
-  ['txt', 'mapUrl', 'Adresse d\'un regions.json partagé (facultatif)', 'https://monsite/regions.json']
+  ['txt', 'mapUrl', tr('viewer.row.mapurl'), 'https://monsite/regions.json']
 ];
 let loadedName = '';
 let thisReg = { name: '', url: '', x: 0, y: 0, spawn: 'default', thumb: '' };
@@ -243,17 +257,17 @@ for (const r of ROWS) {
   }
   if (r[0] === 'zones') {
     const box = add('<div id="zonesBox"></div>');
-    box.innerHTML = '<div class="row"><label>Type à poser</label><select id="zNewType" style="grid-column:1/-1;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;width:100%"><option value="portal">Portail (changer de région)</option><option value="url">Panneau : lien web</option><option value="ha">Panneau : commande Home Assistant</option><option value="spawn">Point d\'arrivée</option></select></div>' +
-      '<div class="btns"><button id="bZoneAdd" class="wide"></button></div><small>En promenade, la touche P pose la zone à tes pieds (un panneau 2 m devant toi, face à toi).</small>' +
+    box.innerHTML = '<div class="row"><label>' + tr('viewer.zone.type') + '</label><select id="zNewType" style="grid-column:1/-1;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;width:100%"><option value="portal">' + tr('viewer.zone.t.portal') + '</option><option value="url">' + tr('viewer.zone.t.url') + '</option><option value="ha">' + tr('viewer.zone.t.ha') + '</option><option value="spawn">' + tr('viewer.zone.t.spawn') + '</option></select></div>' +
+      '<div class="btns"><button id="bZoneAdd" class="wide"></button></div><small>' + tr('viewer.zone.pnote') + '</small>' +
       '<div id="zoneList"></div>' +
-      '<div class="btns"><button id="bZoneExp">Exporter zones (.json)</button><button id="bZoneImp">Importer zones (.json)</button></div>' +
-      '<div class="btns" id="zDirRow"><button id="bZoneDir" class="wide">Enregistrer les zones dans le dossier de la région</button></div><small id="zDirInfo"></small>';
+      '<div class="btns"><button id="bZoneExp">' + tr('viewer.zone.exp') + '</button><button id="bZoneImp">' + tr('viewer.zone.imp') + '</button></div>' +
+      '<div class="btns" id="zDirRow"><button id="bZoneDir" class="wide">' + tr('viewer.zone.dir') + '</button></div><small id="zDirInfo"></small>';
     zoneAddLabel();
-    $('bZoneAdd').onclick = () => { zoneAddMode = !zoneAddMode; placeMode = false; if (linkZone) { setLinkZone(null); renderZoneList(); } zoneAddLabel(); setStatus(zoneAddMode ? 'Clique sur la scène pour poser la zone' : 'Pose annulée'); };
+    $('bZoneAdd').onclick = () => { zoneAddMode = !zoneAddMode; placeMode = false; if (linkZone) { setLinkZone(null); renderZoneList(); } zoneAddLabel(); setStatus(zoneAddMode ? tr('viewer.zone.addstatus') : tr('viewer.zone.cancel')); };
     $('bZoneExp').onclick = () => download(tilesMode ? baseName + '.zones.json' : 'zones.json', new Blob([JSON.stringify(cfg.zones, null, 1)], { type: 'application/json' }));
     $('bZoneImp').onclick = () => $('fZones').click();
     $('zDirRow').hidden = !tilesMode; $('zDirInfo').hidden = !tilesMode;
-    $('zDirInfo').textContent = 'Navigateurs Edge et Chrome : le dossier de la région est demandé une fois (lecture-écriture), X.zones.json y est écrit après avoir gardé l\'ancien sous X.zones.bak.json. La page relit X.zones.json à chaque ouverture : F5 suffit, sans régénérer (sauf si tu changes les options de la page). Sinon : téléchargement, à placer à la main.';
+    $('zDirInfo').textContent = tr('viewer.zone.dirinfo');
     $('bZoneDir').onclick = () => saveZonesToDir();
     renderZoneList();
     continue;
@@ -265,54 +279,54 @@ for (const r of ROWS) {
     i.onchange = () => {
       if (key === 'myName') { myName = i.value; viewer.setName(i.value); return; }
       let v = i.value.trim();
-      if (key === 'presenceUrl') { const f = v.replace(/^(wss?:\/\/)0\.0\.0\.0(?=[:/]|$)/i, (m, p) => p + '127.0.0.1'); if (f !== v) { v = f; i.value = f; setStatus('0.0.0.0 est une adresse d\'écoute du serveur : remplacée par 127.0.0.1'); } }
+      if (key === 'presenceUrl') { const f = v.replace(/^(wss?:\/\/)0\.0\.0\.0(?=[:/]|$)/i, (m, p) => p + '127.0.0.1'); if (f !== v) { v = f; i.value = f; setStatus(tr('viewer.row.presence.fix')); } }
       viewer.setCfg({ [key]: v });
     };
     continue;
   }
   if (r[0] === 'chatbox') {
-    const e = add('<div class="row"><label>Chat (test dans ce viewer, visible après connexion)</label><pre id="chatLog" style="grid-column:1/-1;max-height:140px;overflow:auto;margin:0"></pre><input id="chatText" type="text" maxlength="200" placeholder="Message puis Entrée" style="grid-column:1/-1;width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px"></div>');
+    const e = add('<div class="row"><label>' + tr('viewer.chat.label') + '</label><pre id="chatLog" style="grid-column:1/-1;max-height:140px;overflow:auto;margin:0"></pre><input id="chatText" type="text" maxlength="200" placeholder="' + tr('viewer.chat.ph') + '" style="grid-column:1/-1;width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px"></div>');
     const i = e.querySelector('#chatText'), lg = e.querySelector('#chatLog');
     lg.textContent = chatLines.join('\n');
-    i.onkeydown = ev => { if (ev.key === 'Enter') { if (viewer.sendChat(i.value)) i.value = ''; else setStatus('Chat : non connecté (entre en promenade avec un serveur de présence)'); } };
+    i.onkeydown = ev => { if (ev.key === 'Enter') { if (viewer.sendChat(i.value)) i.value = ''; else setStatus(tr('viewer.chat.offline')); } };
     continue;
   }
-  if (r[0] === 'presinfo') { add('<pre id="presInfo">présence : hors ligne</pre>'); presUpdate(); continue; }
+  if (r[0] === 'presinfo') { add('<pre id="presInfo">' + tr('viewer.pres.off0') + '</pre>'); presUpdate(); continue; }
   if (r[0] === 'ignore') {
-    const e = add('<div class="row"><label>Ignorer en collision (début de mot, séparés par des virgules)</label><input type="text" style="grid-column:1/-1;width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px"></div>');
+    const e = add('<div class="row"><label>' + tr('viewer.ign.label') + '</label><input type="text" style="grid-column:1/-1;width:100%;font:inherit;padding:4px;border:1px solid #000;border-radius:4px"></div>');
     const i = e.querySelector('input'); i.value = cfg.walkIgnore; i.dataset.ignoreList = '1';
     i.onchange = () => { viewer.setCfg({ walkIgnore: i.value }); viewer.refreshCollision(); };
-    const bx = add('<div class="btns"><button id="bErase" class="wide"></button><button id="bAddPick">Ajouter le dernier mesh visé</button><button id="bUndoIgn">Annuler le dernier ajout</button></div>');
+    const bx = add('<div class="btns"><button id="bErase" class="wide"></button><button id="bAddPick">' + tr('viewer.ign.add') + '</button><button id="bUndoIgn">' + tr('viewer.ign.undo') + '</button></div>');
     eraseLabel();
     $('bErase').onclick = () => {
       eraseMode = !eraseMode; eraseLabel();
       if (eraseMode) { viewer.setCfg({ ignoreViz: true }); const c = rows.querySelector('input[data-key=ignoreViz]'); if (c) c.checked = true; }
-      setStatus(eraseMode ? 'Passe-muraille : clique sur chaque partie à rendre traversable (la porte, ses vitres, sa poignée…)' : 'Passe-muraille désactivé');
+      setStatus(eraseMode ? tr('viewer.ign.on') : tr('viewer.ign.off'));
     };
-    $('bAddPick').onclick = () => { if (!lastPick || !lastPick.mesh) return setStatus('Clique d\'abord sur un élément du modèle'); addIgnoreExact(lastPick.mesh); };
+    $('bAddPick').onclick = () => { if (!lastPick || !lastPick.mesh) return setStatus(tr('viewer.ign.clickfirst')); addIgnoreExact(lastPick.mesh); };
     $('bUndoIgn').onclick = undoIgnore;
-    const vz = add('<label class="chk"><input type="checkbox" data-key="ignoreViz"><span>Voir en filaire les éléments ignorés (non exporté)</span></label>').querySelector('input');
+    const vz = add('<label class="chk"><input type="checkbox" data-key="ignoreViz"><span>' + tr('viewer.ign.viz') + '</span></label>').querySelector('input');
     vz.checked = !!cfg.ignoreViz; vz.onchange = () => viewer.setCfg({ ignoreViz: vz.checked });
-    add('<pre id="picked">Clique sur le modèle : le nom du mesh visé et les coordonnées du point touché s\'affichent ici.</pre>');
+    add('<pre id="picked">' + tr('viewer.ign.picked') + '</pre>');
     if (lastPick) $('picked').textContent = lastPick.text;
     continue;
   }
   if (r[0] === 'btnwalk') {
-    const e = add('<div class="btns"><button id="bWalk" class="wide"></button></div><small>Clique sur le modèle pour viser un endroit (un cercle au sol le montre), puis entre en promenade : l\'avatar apparaît là. Ensuite clic dans la vue pour capturer la souris.</small>');
+    const e = add('<div class="btns"><button id="bWalk" class="wide"></button></div><small>' + tr('viewer.walk.note') + '</small>');
     const b = e.querySelector('button'); b.disabled = !viewer.model;
     walkLabel(); b.onclick = () => viewer.toggleWalk();
     continue;
   }
   if (r[0] === 'rotate') {
-    const e = add('<div class="row"><label>Rotation de la région (autour de l\'axe vertical)</label><select id="selRotate" style="grid-column:1/-1;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;width:100%"><option value="0">0° (aucune)</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select></div>');
+    const e = add('<div class="row"><label>' + tr('viewer.rot.label') + '</label><select id="selRotate" style="grid-column:1/-1;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;width:100%"><option value="0">' + tr('viewer.rot.none') + '</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select></div>');
     const sel = e.querySelector('select'); sel.value = String(rotNorm(cfg.rotate)); if (tilesMode) sel.disabled = true;
     sel.onchange = () => setRotation(parseInt(sel.value, 10));
-    if (tilesMode) add('<small>Région en tuiles : la rotation n\'est pas proposée ici (repère du modèle d\'origine). Avec glb2html.py --tiles --rotate, les zones doivent déjà être dans le repère tourné.</small>');
-    add('<small>Tourne le modèle, et avec lui les zones, les arrivées, la cible, l\'atterrissage et le trou. Utile quand l\'OAR arrive tourné ou inversé nord-sud sur la carte.</small>');
+    if (tilesMode) add('<small>' + tr('viewer.rot.tiles') + '</small>');
+    add('<small>' + tr('viewer.rot.note') + '</small>');
     continue;
   }
   if (r[0] === 'zmark') {
-    const e = add('<div class="row"><label>Marqueur des portails et zones libres dans la page exportée (--zone-marker)</label><select id="selZMark" style="grid-column:1/-1;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;width:100%"><option value="discret">Discret : disque de 0,4 m et anneau fin (défaut)</option><option value="portee">Portée : anneau fin et net au rayon réel de la zone, visible de loin</option><option value="aucun">Aucun marqueur</option></select></div>');
+    const e = add('<div class="row"><label>' + tr('viewer.zm.label') + '</label><select id="selZMark" style="grid-column:1/-1;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;width:100%"><option value="discret">' + tr('viewer.zm.discret') + '</option><option value="portee">' + tr('viewer.zm.portee') + '</option><option value="aucun">' + tr('viewer.zm.none') + '</option></select></div>');
     const sel = e.querySelector('select'); sel.value = cfg.zoneMarker || 'discret';
     sel.onchange = () => viewer.setCfg({ zoneMarker: sel.value });
     continue;
@@ -321,8 +335,8 @@ for (const r of ROWS) {
   if (r[0] === 'place') {
     const e = add('<div class="btns"><button id="bPlace" class="wide"></button></div>');
     const b = e.querySelector('button'); b.dataset.animOnly = '1';
-    const label = () => { b.textContent = placeMode ? 'Clic sur la scène = centre du trou (ACTIF, clique)' : 'Placer le trou par un clic sur la scène'; };
-    label(); b.onclick = () => { placeMode = !placeMode; if (linkZone) { setLinkZone(null); renderZoneList(); } viewer.renderer.domElement.style.cursor = placeMode ? 'crosshair' : ''; label(); setStatus(placeMode ? 'Mode placement du trou : clique sur l\'île ou la mer' : 'Mode placement annulé'); };
+    const label = () => { b.textContent = placeMode ? tr('viewer.hole.active') : tr('viewer.hole.place'); };
+    label(); b.onclick = () => { placeMode = !placeMode; if (linkZone) { setLinkZone(null); renderZoneList(); } viewer.renderer.domElement.style.cursor = placeMode ? 'crosshair' : ''; label(); setStatus(placeMode ? tr('viewer.hole.mode') : tr('viewer.hole.cancel')); };
     sync.place = label;
     continue;
   }
@@ -343,7 +357,7 @@ for (const r of ROWS) {
   }
   if (r[0] === 'rng') {
     const [, key, label, min, max, step, animOnly] = r;
-    const e = add('<div class="row"><label>' + label + (animOnly ? ' (mer animée)' : '') + '</label><input type="range"><input type="number"></div>');
+    const e = add('<div class="row"><label>' + label + (animOnly ? tr('viewer.row.animonly') : '') + '</label><input type="range"><input type="number"></div>');
     if (animOnly) e.dataset.animOnly = '1';
     const [rg, nb] = e.querySelectorAll('input');
     for (const x of [rg, nb]) { x.min = min; x.max = max; x.step = step; x.value = cfg[key]; }
@@ -354,7 +368,7 @@ for (const r of ROWS) {
     continue;
   }
   if (r[0] === 'zoom') {
-    const e = add('<div class="row"><label>Zoom (distance / cadrage auto)</label><input type="range" min="0.5" max="3" step="0.01"><input type="number" min="0.05" max="100" step="0.01"></div>');
+    const e = add('<div class="row"><label>' + tr('viewer.row.zoom') + '</label><input type="range" min="0.5" max="3" step="0.01"><input type="number" min="0.05" max="100" step="0.01"></div>');
     const [rg, nb] = e.querySelectorAll('input');
     rg.value = nb.value = 1;
     rg.oninput = () => { nb.value = rg.value; viewer.setZoom(parseFloat(rg.value)); };
@@ -364,21 +378,21 @@ for (const r of ROWS) {
   }
 }
 }
-function eraseLabel() { const b = $('bErase'); if (b) b.textContent = eraseMode ? 'Passe-muraille : ACTIF (clic = rendre traversable)' : 'Passe-muraille : inactif (clique pour activer)'; }
+function eraseLabel() { const b = $('bErase'); if (b) b.textContent = eraseMode ? tr('viewer.ign.btn.on') : tr('viewer.ign.btn.off'); }
 function setIgnoreList(list) {
   const v = list.join(', '); viewer.setCfg({ walkIgnore: v }); viewer.refreshCollision();
   const t = rows.querySelector('input[data-ignore-list]'); if (t) t.value = v;
 }
 function addIgnoreExact(name) {
-  if (!name) return setStatus('Ce mesh n\'a pas de nom : impossible de l\'ignorer');
+  if (!name) return setStatus(tr('viewer.ign.noname'));
   const tok = '=' + name.toLowerCase(), list = parseIgnore(cfg.walkIgnore);
-  if (list.includes(tok)) return setStatus(name + ' est déjà ignoré');
+  if (list.includes(tok)) return setStatus(tr('viewer.ign.already', name));
   list.push(tok); ignoreStack.push(tok); setIgnoreList(list);
-  setStatus('Ignoré en collision : ' + name + ' (' + ignoreStack.length + ' ajout(s) cette session)');
+  setStatus(tr('viewer.ign.added', name, ignoreStack.length));
 }
 function undoIgnore() {
-  const tok = ignoreStack.pop(); if (!tok) return setStatus('Rien à annuler');
-  setIgnoreList(parseIgnore(cfg.walkIgnore).filter(x => x !== tok)); setStatus('Annulé : ' + tok.slice(1));
+  const tok = ignoreStack.pop(); if (!tok) return setStatus(tr('viewer.ign.nothing'));
+  setIgnoreList(parseIgnore(cfg.walkIgnore).filter(x => x !== tok)); setStatus(tr('viewer.ign.undone', tok.slice(1)));
 }
 const vizGroup = new THREE.Group(); viewer.scene.add(vizGroup);
 const vizMat = new THREE.MeshBasicMaterial({ color: 0x000000, wireframe: true, transparent: true, opacity: 0.6, depthTest: false, fog: false });
@@ -394,7 +408,7 @@ function updateIgnoreViz() {
   }
   viewer.requestRender();
 }
-function zoneAddLabel() { const b = $('bZoneAdd'); if (b) b.textContent = zoneAddMode ? 'Pose ACTIVE : clique sur la scène' : 'Poser une zone par un clic sur la scène'; }
+function zoneAddLabel() { const b = $('bZoneAdd'); if (b) b.textContent = zoneAddMode ? tr('viewer.zone.btn.on') : tr('viewer.zone.btn.off'); }
 const rotNorm = v => (((Math.round((Number(v) || 0) / 90) * 90) % 360) + 360) % 360;
 // change la rotation de la région : le modèle tourne (noyau), puis, du même angle autour du centre de la région,
 // zones (position + orientation), points d'arrivée, caméra, cible (donc atterrissage), trou et dernier point cliqué
@@ -413,14 +427,14 @@ function setRotation(deg) {
   for (const z of list) { [z.x, z.z] = rot(z.x, z.z); z.yaw = Math.atan2(Math.sin(z.yaw + d), Math.cos(z.yaw + d)); }
   zonesSync(list, true);
   updateIgnoreViz(); camInfo();
-  setStatus('Région tournée de ' + Math.round(d * 180 / Math.PI) + '° : ' + list.length + ' zone(s) déplacée(s). Recapture la vignette.');
+  setStatus(tr('viewer.rot.done', Math.round(d * 180 / Math.PI), list.length));
 }
 function zoneDefaults(type) {
   const base = { type, label: '', shape: 'ring', trigger: 'click', radius: 2, w: 2.4, h: 1.2, target: '', spawn: '', confirm: false, private: false, showName: false, yaw: 0, mesh: '' };
-  if (type === 'portal') return Object.assign(base, { label: 'Portail', trigger: 'enter' });
-  if (type === 'url') return Object.assign(base, { label: 'Lien', shape: 'board', target: 'https://' });
-  if (type === 'ha') return Object.assign(base, { label: 'Commande', shape: 'board', target: 'http://homeassistant.local:8123/api/webhook/', private: true, confirm: true });
-  return Object.assign(base, { id: 'arrivee', label: 'Arrivée' });
+  if (type === 'portal') return Object.assign(base, { label: tr('viewer.kind.portal'), trigger: 'enter' });
+  if (type === 'url') return Object.assign(base, { label: tr('viewer.kind.url'), shape: 'board', target: 'https://' });
+  if (type === 'ha') return Object.assign(base, { label: tr('viewer.kind.ha'), shape: 'board', target: 'http://homeassistant.local:8123/api/webhook/', private: true, confirm: true });
+  return Object.assign(base, { id: 'arrivee', label: tr('viewer.kind.spawn') });
 }
 function zonesSync(list, rerender) {
   cfg.zones = viewer.setZones(list, { editor: true });
@@ -432,7 +446,7 @@ function addZone(type, x, y, z, yaw) {
   const z0 = Object.assign(d, { x, y, z, yaw });
   list.push(z0); zonesSync(list, false);
   zoneSel = cfg.zones[cfg.zones.length - 1].id; zonesSync(viewer.getZones(), true);
-  setStatus('Zone posée : ' + (z0.label || type) + ' (' + zoneSel + ')');
+  setStatus(tr('viewer.zone.placed', z0.label || type, zoneSel));
 }
 function selectZone(id) { zoneSel = id; viewer.zoneSelect(id); renderZoneList(); }
 function renderZoneList() {
@@ -452,68 +466,68 @@ function renderZoneList() {
   viewer.getZones().forEach((z, idx) => {
     const d = document.createElement('details'); d.open = z.id === zoneSel; d.style.cssText = 'border:1px solid #000;border-radius:6px;padding:4px 8px;margin:6px 0';
     const s = document.createElement('summary'); s.style.cursor = 'pointer';
-    s.textContent = ({ url: 'Lien', ha: 'Commande', portal: 'Portail', spawn: 'Arrivée' }[z.type]) + ' : ' + (z.label || z.id) + (z.private ? ' (privé)' : '');
+    s.textContent = ({ url: tr('viewer.kind.url'), ha: tr('viewer.kind.ha'), portal: tr('viewer.kind.portal'), spawn: tr('viewer.kind.spawn') }[z.type]) + ' : ' + (z.label || z.id) + (z.private ? tr('viewer.private') : '');
     s.onclick = () => { setTimeout(() => { if (d.open) { zoneSel = z.id; viewer.zoneSelect(z.id); } }, 0); };
     d.appendChild(s);
     const upd = (patch, rerender) => { const list = viewer.getZones(); Object.assign(list[idx], patch); zonesSync(list, rerender); };
-    d.appendChild(inp('Identifiant', 'text', z.id, v => { zoneSel = null; upd({ id: v }, true); }));
-    d.appendChild(inp('Nom affiché', 'text', z.label, v => upd({ label: v }, true)));
+    d.appendChild(inp(tr('viewer.zf.id'), 'text', z.id, v => { zoneSel = null; upd({ id: v }, true); }));
+    d.appendChild(inp(tr('viewer.zf.label'), 'text', z.label, v => upd({ label: v }, true)));
     if (z.type !== 'spawn') {
       if (z.type === 'portal') {
-        d.appendChild(inp('Page de destination (adresse ou fichier .html ; vide = cette région)', 'text', z.target, v => upd({ target: v })));
-        d.appendChild(inp('Point d\'arrivée dans cette page (identifiant)', 'text', z.spawn, v => upd({ spawn: v })));
-        d.appendChild(inp('Déclenchement', 'select', z.trigger, v => upd({ trigger: v }, true), [['enter', 'en marchant dedans'], ['click', 'au clic'], ['both', 'les deux']]));
-      } else if (z.type === 'url') d.appendChild(inp('Adresse web', 'text', z.target, v => upd({ target: v })));
-      else { d.appendChild(inp('Adresse du webhook Home Assistant', 'text', z.target, v => upd({ target: v }))); d.appendChild(inp('Demander confirmation', 'checkbox', z.confirm, v => upd({ confirm: v }))); }
+        d.appendChild(inp(tr('viewer.zf.target'), 'text', z.target, v => upd({ target: v })));
+        d.appendChild(inp(tr('viewer.zf.spawn'), 'text', z.spawn, v => upd({ spawn: v })));
+        d.appendChild(inp(tr('viewer.zf.trigger'), 'select', z.trigger, v => upd({ trigger: v }, true), [['enter', tr('viewer.zf.trig.enter')], ['click', tr('viewer.zf.trig.click')], ['both', tr('viewer.zf.trig.both')]]));
+      } else if (z.type === 'url') d.appendChild(inp(tr('viewer.zf.url'), 'text', z.target, v => upd({ target: v })));
+      else { d.appendChild(inp(tr('viewer.zf.ha'), 'text', z.target, v => upd({ target: v }))); d.appendChild(inp(tr('viewer.zf.confirm'), 'checkbox', z.confirm, v => upd({ confirm: v }))); }
       const lk = document.createElement('small'); lk.style.margin = '6px 0 2px';
-      lk.textContent = !z.mesh ? 'Aucun élément lié : la zone est posée à sa position (panneau ou cercle).' : 'Élément lié : « ' + z.mesh + ' »' + (viewer.meshInfo(z.mesh) ? ' (' + viewer.meshInfo(z.mesh).count + ' morceau(x), ' + viewer.meshInfo(z.mesh).size.map(v => v.toFixed(2)).join(' × ') + ' m)' : (tilesMode ? ' — tuile non chargée : « Voir cette zone » la charge (la zone n\'apparaît que lorsque la tuile de l\'objet est chargée)' : ' — introuvable dans ce modèle : la zone reste à sa position'));
+      lk.textContent = !z.mesh ? tr('viewer.link.none') : tr('viewer.link.linked', z.mesh) + (viewer.meshInfo(z.mesh) ? tr('viewer.link.info', viewer.meshInfo(z.mesh).count, viewer.meshInfo(z.mesh).size.map(v => v.toFixed(2)).join(' × ')) : (tilesMode ? tr('viewer.link.unloaded') : tr('viewer.link.missing')));
       d.appendChild(lk);
       const lb = document.createElement('div'); lb.className = 'btns';
-      const bl = document.createElement('button'); bl.textContent = linkZone === z.id ? 'Clique sur l\'élément dans la scène…' : 'Lier à un élément';
-      bl.onclick = () => { setLinkZone(linkZone === z.id ? null : z.id); zoneAddMode = false; placeMode = false; zoneAddLabel(); setStatus(linkZone ? 'Clique sur l\'élément à lier (les éléments traversables sont ignorés)' : 'Liaison annulée'); renderZoneList(); };
-      const bu = document.createElement('button'); bu.textContent = 'Délier'; bu.disabled = !z.mesh;
-      bu.onclick = () => { setLinkZone(null); upd({ mesh: '' }, true); setStatus('Zone déliée : elle reprend sa position'); };
+      const bl = document.createElement('button'); bl.textContent = linkZone === z.id ? tr('viewer.link.click') : tr('viewer.link.btn');
+      bl.onclick = () => { setLinkZone(linkZone === z.id ? null : z.id); zoneAddMode = false; placeMode = false; zoneAddLabel(); setStatus(linkZone ? tr('viewer.link.status') : tr('viewer.link.cancel')); renderZoneList(); };
+      const bu = document.createElement('button'); bu.textContent = tr('viewer.link.unbtn'); bu.disabled = !z.mesh;
+      bu.onclick = () => { setLinkZone(null); upd({ mesh: '' }, true); setStatus(tr('viewer.link.unlinked')); };
       lb.append(bl, bu); d.appendChild(lb);
-      if (!z.mesh) d.appendChild(inp('Forme', 'select', z.shape, v => upd({ shape: v }, true), [['ring', 'cercle au sol'], ['board', 'panneau']]));
-      d.appendChild(inp(z.mesh ? 'Distance d\'approche : invite et portail (m, depuis l\'élément)' : (z.shape === 'board' ? 'Portée d\'approche pour l\'invite « clic » (m)' : 'Rayon (m)'), 'number', z.radius, v => upd({ radius: v })));
-      if (z.shape === 'board' && !z.mesh) { d.appendChild(inp('Largeur du panneau (m)', 'number', z.w, v => upd({ w: v }))); d.appendChild(inp('Hauteur du panneau (m)', 'number', z.h, v => upd({ h: v }))); }
-      d.appendChild(inp('Toujours afficher le nom (sinon : au survol ou à portée)', 'checkbox', z.showName, v => upd({ showName: v })));
-      d.appendChild(inp('Privé (absent de l\'export public)', 'checkbox', z.private, v => upd({ private: v }, true)));
+      if (!z.mesh) d.appendChild(inp(tr('viewer.zf.shape'), 'select', z.shape, v => upd({ shape: v }, true), [['ring', tr('viewer.zf.shape.ring')], ['board', tr('viewer.zf.shape.board')]]));
+      d.appendChild(inp(z.mesh ? tr('viewer.zf.r.link') : (z.shape === 'board' ? tr('viewer.zf.r.board') : tr('viewer.zf.r.ring')), 'number', z.radius, v => upd({ radius: v })));
+      if (z.shape === 'board' && !z.mesh) { d.appendChild(inp(tr('viewer.zf.w'), 'number', z.w, v => upd({ w: v }))); d.appendChild(inp(tr('viewer.zf.h'), 'number', z.h, v => upd({ h: v }))); }
+      d.appendChild(inp(tr('viewer.zf.showname'), 'checkbox', z.showName, v => upd({ showName: v })));
+      d.appendChild(inp(tr('viewer.zf.private'), 'checkbox', z.private, v => upd({ private: v }, true)));
     }
-    d.appendChild(inp('Position X', 'number', z.x, v => upd({ x: v }))); d.appendChild(inp('Position Y', 'number', z.y, v => upd({ y: v })));
-    d.appendChild(inp('Position Z', 'number', z.z, v => upd({ z: v }))); d.appendChild(inp('Orientation (degrés)', 'number', Math.round(z.yaw * 180 / Math.PI), v => upd({ yaw: v * Math.PI / 180 })));
+    d.appendChild(inp(tr('viewer.zf.x'), 'number', z.x, v => upd({ x: v }))); d.appendChild(inp(tr('viewer.zf.y'), 'number', z.y, v => upd({ y: v })));
+    d.appendChild(inp(tr('viewer.zf.z'), 'number', z.z, v => upd({ z: v }))); d.appendChild(inp(tr('viewer.zf.yaw'), 'number', Math.round(z.yaw * 180 / Math.PI), v => upd({ yaw: v * Math.PI / 180 })));
     const bt = document.createElement('div'); bt.className = 'btns';
-    const go = document.createElement('button'); go.textContent = 'Voir cette zone'; go.onclick = () => { viewer.controls.target.set(z.x, z.y + 1, z.z); viewer.controls.update(); viewer.requestRender(); camInfo(); };
-    const here = document.createElement('button'); here.textContent = 'Placer ici (dernier point cliqué)';
+    const go = document.createElement('button'); go.textContent = tr('viewer.zf.see'); go.onclick = () => { viewer.controls.target.set(z.x, z.y + 1, z.z); viewer.controls.update(); viewer.requestRender(); camInfo(); };
+    const here = document.createElement('button'); here.textContent = tr('viewer.zf.here');
     here.onclick = () => {
-      if (!lastPick || !lastPick.point) return setStatus('Clique d\'abord sur le modèle : le point touché s\'affiche dans « picked »');
+      if (!lastPick || !lastPick.point) return setStatus(tr('viewer.zf.here.first'));
       const r2 = v => Math.round(v * 100) / 100;
       upd({ x: r2(lastPick.point[0]), y: r2(lastPick.point[1]), z: r2(lastPick.point[2]) }, true);
-      setStatus('Zone « ' + (z.label || z.id) + ' » placée en ' + lastPick.point.map(r2).join(', '));
+      setStatus(tr('viewer.zone.movedto', z.label || z.id, lastPick.point.map(r2).join(', ')));
     };
-    const del = document.createElement('button'); del.textContent = 'Supprimer'; del.onclick = () => { const list = viewer.getZones(); list.splice(idx, 1); zoneSel = null; zonesSync(list, true); };
+    const del = document.createElement('button'); del.textContent = tr('viewer.zf.del'); del.onclick = () => { const list = viewer.getZones(); list.splice(idx, 1); zoneSel = null; zonesSync(list, true); };
     bt.appendChild(go); bt.appendChild(here); bt.appendChild(del); d.appendChild(bt);
     host.appendChild(d);
   });
-  if (!cfg.zones.length) { const p = document.createElement('small'); p.textContent = 'Aucune zone pour le moment.'; host.appendChild(p); }
+  if (!cfg.zones.length) { const p = document.createElement('small'); p.textContent = tr('viewer.zone.none'); host.appendChild(p); }
 }
 viewer.onZone = (z, how) => {
-  setStatus('[aperçu] ' + ({ url: 'Lien', ha: 'Commande', portal: 'Portail', spawn: 'Arrivée' }[z.type]) + ' « ' + (z.label || z.id) + ' » déclenché (' + how + ') → ' + (z.target || '(sans cible)') + (z.spawn ? ' #' + z.spawn : ''));
+  setStatus(tr('viewer.preview.fired', { url: tr('viewer.kind.url'), ha: tr('viewer.kind.ha'), portal: tr('viewer.kind.portal'), spawn: tr('viewer.kind.spawn') }[z.type], z.label || z.id, how, z.target || tr('viewer.preview.notarget'), z.spawn ? ' #' + z.spawn : ''));
   // aperçu : un portail sans destination déplace dans la région vers son point d'arrivée
   if (z.type === 'portal' && !String(z.target || '').trim() && viewer.walking) {
     const id = z.spawn || 'default', s = viewer.getZones().find(q => q.type === 'spawn' && q.id === id);
-    if (s) viewer.teleportTo([s.x, s.y, s.z], s.yaw); else setStatus('[aperçu] point d\'arrivée « ' + id + ' » introuvable');
+    if (s) viewer.teleportTo([s.x, s.y, s.z], s.yaw); else setStatus(tr('viewer.preview.nospawn', id));
   }
 };
-viewer.onNear = z => { if (z) setStatus('[aperçu] à portée : ' + (z.label || z.id) + ' (E ou clic)'); };
+viewer.onNear = z => { if (z) setStatus(tr('viewer.preview.near', z.label || z.id)); };
 function presUpdate() {
   const e = $('presInfo'); if (!e) return;
-  const T = { off: 'hors ligne (entre en promenade pour te connecter)', connecting: 'connexion…', error: 'serveur injoignable, nouvelle tentative…', full: 'salon complet', kicked: 'éjecté par le serveur', banned: 'accès interdit' };
+  const T = { off: tr('viewer.pres.off'), connecting: tr('viewer.pres.connecting'), error: tr('viewer.pres.error'), full: tr('viewer.pres.full'), kicked: tr('viewer.pres.kicked'), banned: tr('viewer.pres.banned') };
   const names = viewer.getPresence().peers.map(p => p.name).join(', ');
-  e.textContent = 'présence : ' + (presLast.state === 'online' ? presLast.count + ' en ligne' + (names ? ' (avec ' + names + ')' : '') : (T[presLast.state] || presLast.state));
+  e.textContent = tr('viewer.pres.line', presLast.state === 'online' ? tr('viewer.pres.online', presLast.count, names ? tr('viewer.pres.with', names) : '') : (T[presLast.state] || presLast.state));
 }
 viewer.onPresence = s => { presLast = s; presUpdate(); };
-viewer.onName = n => { myName = n; const i = document.querySelector('input[data-myname]'); if (i) i.value = n; setStatus('Nom attribué : ' + n); };
+viewer.onName = n => { myName = n; const i = document.querySelector('input[data-myname]'); if (i) i.value = n; setStatus(tr('viewer.name.given', n)); };
 viewer.onChat = m => {
   chatLines.push(m.system ? '* ' + m.text : m.name + ' : ' + m.text); if (chatLines.length > 40) chatLines.shift();
   const lg = $('chatLog'); if (lg) { lg.textContent = chatLines.join('\n'); lg.scrollTop = lg.scrollHeight; }
@@ -523,12 +537,12 @@ viewer.onPick = info => {
   lastPick = { token: info.token, mesh: info.mesh, text: info.text, point: info.point }; coordInfo();
   if (eraseMode) { addIgnoreExact(info.mesh); return; }
   const pe = $('picked'); if (pe) pe.textContent = info.text;
-  setStatus('Visé : ' + (info.name || '(sans nom)') + (info.point ? ' • point ' + info.point.map(v => v.toFixed(2)).join(', ') : '') + ' • ' + (info.materials[0] ? 'matériau ' + info.materials[0] : 'sans matériau nommé'));
+  setStatus(tr('viewer.pick.status', info.name || tr('core.pick.noname'), info.point ? tr('viewer.pick.point', info.point.map(v => v.toFixed(2)).join(', ')) : '', info.materials[0] ? tr('viewer.pick.mat', info.materials[0]) : tr('viewer.pick.nomat')));
 };
-function walkLabel() { const b = $('bWalk'); if (b) b.textContent = viewer.walking ? 'Quitter la promenade (F ou Maj+P)' : 'Entrer en mode promenade (P ou F)'; }
+function walkLabel() { const b = $('bWalk'); if (b) b.textContent = viewer.walking ? tr('viewer.walk.leave') : tr('viewer.walk.enter'); }
 viewer.onWalk = on => {
   walkLabel(); updateGuide();
-  setStatus(on ? 'Promenade : ' + (() => { const K = KB.keys(); return K.fwd + K.left + K.back + K.right; })() + '/flèches marcher • Maj courir • Espace sauter • clic dans la vue puis souris • double-clic téléporter • Début voler • P pose une zone • F ou Maj+P quitter' : (baseName + ' • prêt'));
+  setStatus(on ? tr('viewer.walk.status', (() => { const K = KB.keys(); return K.fwd + K.left + K.back + K.right; })()) : tr('viewer.ready', baseName));
 };
 addEventListener('keydown', e => {
   const n = e.target && e.target.tagName;
@@ -558,7 +572,7 @@ function camInfo() {
   const s = viewer.getCameraState();
   sync.zoom(s.zoom);
   coordInfo();
-  $('cam').textContent = 'direction : ' + f3(s.camDir) + '\ncible     : ' + f3(s.target) + '\nzoom      : ' + s.zoom.toFixed(3);
+  $('cam').textContent = tr('viewer.cam.info', f3(s.camDir), f3(s.target), s.zoom.toFixed(3));
 }
 viewer.controls.addEventListener('change', camInfo);
 camInfo();
@@ -572,7 +586,7 @@ async function afterLoad(name, size) {
   $('bHtml').disabled = false; $('bZip').disabled = false;
   if ($('bWalk')) $('bWalk').disabled = false;
   camInfo();
-  setStatus(restored ? 'Réglages restaurés depuis la mémoire du navigateur (' + cfg.zones.length + ' zone(s))' : name + ' • ' + countMeshes(viewer.model) + ' meshes • prêt');
+  setStatus(restored ? tr('viewer.set.restored', cfg.zones.length) : tr('viewer.loaded', name, countMeshes(viewer.model)));
   updateIgnoreViz();
   cfg.roomDefault = baseName;
   if (cfg.spectate && cfg.presenceUrl) { viewer.spectate(false); viewer.spectate(true); }
@@ -581,25 +595,25 @@ function leaveTiles() {
   if (!viewer.tiled) return;
   $('tilesLoad').hidden = true;
   viewer.closeTiles(); tilesMode = null; viewer.setCfg({ seaY: DEF.seaY });
-  $('tilesSelRow').hidden = true; $('tilesInfoV').hidden = true; $('cmdGlbLabel').textContent = 'Chemin du fichier .glb'; $('cmdGlb').placeholder = 'fichier.glb';
+  $('tilesSelRow').hidden = true; $('tilesInfoV').hidden = true; $('cmdGlbLabel').textContent = tr('viewer.cmd.glb'); $('cmdGlb').placeholder = tr('viewer.cmd.glb.ph');
   buildRows(); refreshEnabled();
 }
 async function openGlb(file) {
   try {
     leaveTiles();
-    setStatus('Lecture de ' + file.name + '…');
+    setStatus(tr('viewer.reading', file.name));
     const buf = await file.arrayBuffer();
     inspectGlb(buf, file.name);
     glbBytes = new Uint8Array(buf.slice(0));
     await viewer.loadBuffer(buf);
     await afterLoad(file.name, file.size);
-  } catch (e) { console.error(e); setStatus('Erreur : ' + (e.message || e)); }
+  } catch (e) { console.error(e); setStatus(tr('viewer.error', e.message || e)); }
 }
 async function openGltf(gltfFile, files) {
   const urls = new Map(), created = [];
   try {
     leaveTiles();
-    setStatus('Lecture de ' + gltfFile.name + ' + ' + (files.length - 1) + ' fichiers…');
+    setStatus(tr('viewer.reading.gltf', gltfFile.name, files.length - 1));
     for (const f of files) {
       if (f === gltfFile) continue;
       const u = URL.createObjectURL(f); created.push(u);
@@ -613,12 +627,12 @@ async function openGltf(gltfFile, files) {
       return urls.get(k) || urls.get(k.split('/').pop()) || u;
     });
     const gltf = await makeLoader(manager).parseAsync(await gltfFile.text(), '');
-    setStatus('Conversion en GLB autonome…');
+    setStatus(tr('viewer.converting'));
     const out = await new Promise((res, rej) => new GLTFExporter().parse(gltf.scene, res, rej, { binary: true }));
     glbBytes = new Uint8Array(out.slice(0));
     viewer.setModel(gltf.scene);
     await afterLoad(gltfFile.name, gltfFile.size);
-  } catch (e) { console.error(e); setStatus('Erreur : ' + (e.message || e) + ' (fichiers .bin / textures manquants ?)'); }
+  } catch (e) { console.error(e); setStatus(tr('viewer.error.gltf', e.message || e)); }
   finally { setTimeout(() => created.forEach(u => URL.revokeObjectURL(u)), 5000); }
 }
 async function openFiles(list) {
@@ -626,14 +640,14 @@ async function openFiles(list) {
   const gltf = files.find(f => /\.gltf$/i.test(f.name)), glb = files.find(f => /\.glb$/i.test(f.name));
   if (glb && !gltf) return openGlb(glb);
   if (gltf) return openGltf(gltf, files);
-  setStatus('Aucun .glb ni .gltf trouvé');
+  setStatus(tr('viewer.nogltf'));
 }
 // ---------- région en tuiles : dossier choisi ou glissé (fichiers lus à la demande, jamais tous en mémoire), ou adresse http relative (?tuiles=)
 const safeRelV = p => typeof p === 'string' && p !== '' && p.length < 400 && !/^[\/\\]/.test(p) && !/[\\:?#\u0000-\u001f]/.test(p) && !p.split('/').some(s => s === '' || s === '..');
 const fileSource = map => ({
-  async json(rel) { const f = map.get(rel); if (!f) throw new Error(rel + ' : introuvable dans le dossier ouvert'); return JSON.parse(await f.text()); },
+  async json(rel) { const f = map.get(rel); if (!f) throw new Error(tr('viewer.tiles.notinfolder', rel)); return JSON.parse(await f.text()); },
   async buf(rel, signal) {
-    const f = map.get(rel); if (!f) throw new Error(rel + ' : introuvable dans le dossier ouvert');
+    const f = map.get(rel); if (!f) throw new Error(tr('viewer.tiles.notinfolder', rel));
     const b = await f.arrayBuffer(); if (signal && signal.aborted) throw new DOMException('abandon', 'AbortError');
     return b;
   }
@@ -641,13 +655,13 @@ const fileSource = map => ({
 let tilesDir = null;   // { map, idx } du dossier ouvert
 async function openTiles(rel, source, name, size) {
   try {
-    if (!safeRelV(rel)) throw new Error('adresse refusée « ' + rel + ' » (chemin relatif, sans .., sans « : », « ? » ni « # »)');
-    setStatus('Ouverture de la région en tuiles ' + rel + '…');
+    if (!safeRelV(rel)) throw new Error(tr('viewer.tiles.badaddr', rel));
+    setStatus(tr('viewer.tiles.opening', rel));
     const doc = source ? await source.json(rel) : await (await fetch(rel.split('/').map(encodeURIComponent).join('/'), { cache: 'no-store' })).json();
-    if (!doc || !Array.isArray(doc.tiles) || !doc.tiles.length) throw new Error(rel + ' : pas un fichier de tuiles (liste « tiles » absente ou vide)');
+    if (!doc || !Array.isArray(doc.tiles) || !doc.tiles.length) throw new Error(tr('viewer.tiles.notindex', rel));
     const lo = [1e30, 1e30, 1e30], hi = [-1e30, -1e30, -1e30];
     for (const t of doc.tiles) if (t && Array.isArray(t.min) && Array.isArray(t.max)) for (let k = 0; k < 3; k++) { lo[k] = Math.min(lo[k], t.min[k]); hi[k] = Math.max(hi[k], t.max[k]); }
-    if (!lo.every(Number.isFinite) || lo[0] > hi[0]) throw new Error(rel + ' : étendue des tuiles illisible');
+    if (!lo.every(Number.isFinite) || lo[0] > hi[0]) throw new Error(tr('viewer.tiles.extent', rel));
     const q2 = v => Math.round(v * 100) / 100;
     const target = [q2((lo[0] + hi[0]) / 2), q2(Math.min(Math.max(20, lo[1]), hi[1])), q2((lo[2] + hi[2]) / 2)];   // même règle que glb2html.py --tiles (tiles_default_target)
     if (viewer.tiled) viewer.closeTiles();
@@ -656,24 +670,24 @@ async function openTiles(rel, source, name, size) {
     await viewer.loadTiles(rel, { source, force: true, target });
     tilesMode = { rel, name, target, tiles: doc.tiles.length, overview: !!doc.overview, refs: !!doc.nodeRefs };
     afterLoadTiles(name, size);
-  } catch (e) { console.error(e); setStatus('Erreur : ' + (e.message || e)); }
+  } catch (e) { console.error(e); setStatus(tr('viewer.error', e.message || e)); }
 }
 function afterLoadTiles(name, size) {
   baseName = name.replace(/\.tiles\.json$/i, '').replace(/\.json$/i, '').replace(/[\\/:*?"<>|]/g, '_') || 'region'; loadedName = name;
   const restored = restoreFor({ name, size: size || 0 });
   $('hint').style.display = 'none';
   $('bHtml').disabled = true; $('bZip').disabled = true;
-  $('cmdGlbLabel').textContent = 'Chemin du fichier .tiles.json (de la région)'; $('cmdGlb').placeholder = baseName + '.tiles.json';
+  $('cmdGlbLabel').textContent = tr('viewer.cmd.tilesjson'); $('cmdGlb').placeholder = baseName + '.tiles.json';
   if (!$('cmdShared').checked) $('cmdShared').checked = true;
   buildRows(); refreshEnabled(); camInfo(); updateIgnoreViz(); coordInfo(); updateGuide();
   cfg.roomDefault = baseName;
   const ti = $('tilesInfoV'); ti.hidden = false;
-  ti.textContent = 'Région en tuiles : ' + tilesMode.tiles + ' tuile(s), vue d\'ensemble ' + (tilesMode.overview ? 'oui' : 'non') + ', références d\'objets ' + (tilesMode.refs ? 'oui (zones liées à un objet possibles)' : 'non (tuiles d\'avant la v32 : zones liées impossibles, redécouper)') + '. Repère du modèle d\'origine, aucun recentrage : les coordonnées sont utilisables telles quelles par glb2html.py --tiles. Export HTML autonome et .zip indisponibles (pas de GLB unique).';
-  setStatus(restored ? 'Réglages restaurés depuis la mémoire du navigateur (' + cfg.zones.length + ' zone(s))' : name + ' • ' + tilesMode.tiles + ' tuiles • prêt (les tuiles autour de la cible se chargent ; double-clic : déplacer la cible)');
+  ti.textContent = tr('viewer.tiles.info', tilesMode.tiles, tilesMode.overview ? tr('common.yes') : tr('common.no'), tilesMode.refs ? tr('viewer.tiles.refs.yes') : tr('viewer.tiles.refs.no'));
+  setStatus(restored ? tr('viewer.set.restored', cfg.zones.length) : tr('viewer.tiles.ready', name, tilesMode.tiles));
   if ($('bWalk')) $('bWalk').disabled = false;
   if (cfg.spectate && cfg.presenceUrl) { viewer.spectate(false); viewer.spectate(true); }
   const tl = $('tilesLoad'); tl.hidden = false;
-  viewer.onTiles = s => { tl.textContent = 'Tuiles : ' + s.loaded + ' chargée(s) / ' + s.total + (s.loading ? ' · ' + s.loading + ' en cours' : '') + (s.failed ? ' · ' + s.failed + ' en échec' : '') + ' · ' + (Math.round(s.bytes / 104857.6) / 10) + ' Mo'; };
+  viewer.onTiles = s => { tl.textContent = tr('viewer.tiles.line', s.loaded, s.total, s.loading ? ' · ' + tr('page.tiles.loading', s.loading) : '', s.failed ? ' · ' + tr('viewer.tiles.failed', s.failed) : '', Math.round(s.bytes / 104857.6) / 10); };
 }
 function openTilesIndex(rel) {
   const f = tilesDir.map.get(rel);
@@ -682,7 +696,7 @@ function openTilesIndex(rel) {
 function openTilesFiles(items) {
   const map = new Map(items.map(x => [x.path, x.file]));
   const idx = items.map(x => x.path).filter(p => /\.tiles\.json$/i.test(p)).sort((a, b) => a.split('/').length - b.split('/').length || a.localeCompare(b));
-  if (!idx.length) return setStatus('Aucun fichier .tiles.json dans ce dossier : choisis le dossier produit par glb2tiles.py (celui qui contient X.tiles.json et X.tiles/)');
+  if (!idx.length) return setStatus(tr('viewer.tiles.nofile'));
   tilesDir = { map, idx };
   const sel = $('tilesSel'); sel.textContent = '';
   for (const p of idx) { const o = document.createElement('option'); o.value = p; o.textContent = p; sel.appendChild(o); }
@@ -701,13 +715,13 @@ async function walkEntry(ent, prefix, out) {
 }
 async function openTilesDir(ents) {
   try {
-    setStatus('Lecture du dossier…');
+    setStatus(tr('viewer.tiles.readdir'));
     const out = [];
     const dirs = ents.filter(x => x.isDirectory);
     if (dirs.length === 1 && ents.length === 1) { const rd = dirs[0].createReader(); for (;;) { const b = await new Promise((res, rej) => rd.readEntries(res, rej)); if (!b.length) break; for (const c of b) await walkEntry(c, '', out); } }
     else for (const e of ents) await walkEntry(e, '', out);
     openTilesFiles(out);
-  } catch (e) { console.error(e); setStatus('Erreur : ' + (e.message || e)); }
+  } catch (e) { console.error(e); setStatus(tr('viewer.error', e.message || e)); }
 }
 $('bTiles').onclick = () => $('fTiles').click();
 $('fTiles').onchange = e => {
@@ -716,16 +730,16 @@ $('fTiles').onchange = e => {
 };
 $('fZones').onchange = async e => {
   const f = e.target.files[0]; e.target.value = ''; if (!f) return;
-  try { const list = JSON.parse(await f.text()); if (!Array.isArray(list)) throw new Error('tableau attendu'); zoneSel = null; zonesSync(list, true); setStatus('Zones importées : ' + cfg.zones.length); }
-  catch (err) { setStatus('Import impossible : ' + err.message); }
+  try { const list = JSON.parse(await f.text()); if (!Array.isArray(list)) throw new Error(tr('viewer.arrayexpected')); zoneSel = null; zonesSync(list, true); setStatus(tr('viewer.zones.imported', cfg.zones.length)); }
+  catch (err) { setStatus(tr('viewer.import.fail', err.message)); }
 };
 $('fMap').onchange = async e => {
   const f = e.target.files[0]; e.target.value = ''; if (!f) return;
   try {
-    const list = JSON.parse(await f.text()); if (!Array.isArray(list)) throw new Error('tableau attendu');
+    const list = JSON.parse(await f.text()); if (!Array.isArray(list)) throw new Error(tr('viewer.arrayexpected'));
     cfg.map = list.filter(r => r && typeof r.name === 'string' && typeof r.url === 'string').map(r => ({ id: String(r.id || ''), name: r.name, url: r.url, x: parseInt(r.x, 10) || 0, y: parseInt(r.y, 10) || 0, spawn: String(r.spawn || ''), room: String(r.room || ''), thumb: typeof r.thumb === 'string' ? r.thumb : '' }));
-    renderMapUi(); setStatus('Carte importée : ' + cfg.map.length + ' région(s)');
-  } catch (err) { setStatus('Import impossible : ' + err.message); }
+    renderMapUi(); setStatus(tr('viewer.map.imported', cfg.map.length));
+  } catch (err) { setStatus(tr('viewer.import.fail', err.message)); }
 };
 $('bGlb').onclick = () => $('fGlb').click();
 $('bDir').onclick = () => $('fDir').click();
@@ -764,11 +778,11 @@ function updateGuide() {
   }
   guide.add(circle(cfg.hole + cfg.holeFade, true));
   const cell = cfg.seaSize / cfg.seaSegments;
-  const cellTxt = '\nmaille de la mer : ' + cell.toFixed(1) + (flatR > 1 && cell > flatR / 2 ? ' → TROP GROSSE pour ce trou, augmente la finesse' : '');
+  const cellTxt = tr('viewer.guide.cell', cell.toFixed(1), flatR > 1 && cell > flatR / 2 ? tr('viewer.guide.cell.big') : '');
   const info = document.getElementById('holeInfo');
   if (info) info.textContent = flatR > 1
-    ? 'zone plate (trait plein) : rayon ' + flatR + '\nvagues pleines (tirets) : à partir de ' + (cfg.hole + cfg.holeFade) + cellTxt
-    : 'AUCUNE ZONE PLATE : rayon (' + cfg.hole + ') ≤ fondu (' + cfg.holeFade + ')\n→ augmente le rayon ou réduis le fondu\nvagues pleines (tirets) : à partir de ' + (cfg.hole + cfg.holeFade) + cellTxt;
+    ? tr('viewer.guide.flat', flatR, cfg.hole + cfg.holeFade, cellTxt)
+    : tr('viewer.guide.noflat', cfg.hole, cfg.holeFade, cfg.hole + cfg.holeFade, cellTxt);
   const cross = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints([[-20, 0, 0], [20, 0, 0], [0, 0, -20], [0, 0, 20]].map(p => new THREE.Vector3(...p))), gm(THREE.LineBasicMaterial));
   guide.add(cross);
   viewer.requestRender();
@@ -787,10 +801,9 @@ updateGuide();
 // mode tuiles : le clic est tombé hors des tuiles détaillées chargées (la vue d'ensemble est trop grossière pour poser quoi que ce soit)
 function tileMiss(ray) {
   const p = viewer.overviewHit(ray);
-  if (!p) return setStatus('Rien ici : clique sur la région');
+  if (!p) return setStatus(tr('viewer.miss.nothing'));
   const files = viewer.tilesForce(p[0], p[2]);
-  setStatus('Pas de tuile détaillée chargée à cet endroit (x ' + p[0].toFixed(1) + ', z ' + p[2].toFixed(1) + ') : ' + (files.length ? 'chargement de ' + files.length + ' tuile(s) en cours' : 'aucune tuile ne couvre ce point')
-    + '. Le placement se fait sur les tuiles détaillées : clique de nouveau dans quelques secondes (ou double-clic pour y déplacer la cible).');
+  setStatus(tr('viewer.miss.msg', p[0].toFixed(1), p[2].toFixed(1), files.length ? tr('viewer.miss.loading', files.length) : tr('viewer.miss.none')));
 }
 // coordonnées du point visé et de la cible (m, une décimale), avec copie
 function f1v(v) { return (Math.round(v * 10) / 10).toFixed(1); }
@@ -798,7 +811,7 @@ function fmtPt(p) { return 'x ' + f1v(p[0]) + ' · y ' + f1v(p[1]) + ' · z ' + 
 function coordInfo() {
   const e = $('coordInfo'); if (!e) return;
   const t = viewer.controls.target;
-  e.textContent = 'point visé (clic simple) : ' + (lastPick && lastPick.point ? fmtPt(lastPick.point) + ' m' : '—') + '\ncible (double-clic ; P ou F pose l\'avatar ici) : ' + fmtPt([t.x, t.y, t.z]) + ' m';
+  e.textContent = tr('viewer.coord.info', lastPick && lastPick.point ? fmtPt(lastPick.point) + ' m' : '—', fmtPt([t.x, t.y, t.z]) + ' m');
 }
 // v35 : copie qui marche aussi en http (navigator.clipboard absent hors contexte sécurisé) : writeText, sinon textarea hors écran + execCommand ; échec : champ sélectionné
 async function copyRaw(t, field) {
@@ -812,12 +825,12 @@ async function copyRaw(t, field) {
   if (field) { field.hidden = false; field.value = t; field.select(); }
   return false;
 }
-async function copyText(t, what, fem) {
+async function copyText(t, okKey) {
   const ok = await copyRaw(t, $('copyField'));
-  setStatus(ok ? 'Copié. ' + what + (fem ? ' copiée : ' : ' copié : ') + t : 'Copie impossible : le texte est sélectionné, fais Ctrl+C');
+  setStatus(ok ? tr(okKey, t) : tr('page.toast.copyfail'));
 }
-$('bCopyPick').onclick = () => { if (!lastPick || !lastPick.point) return setStatus('Clique d\'abord sur le modèle : le point visé s\'affiche dans « Coordonnées »'); copyText(lastPick.point.map(f1v).join(', '), 'Point visé'); };
-$('bCopyTarget').onclick = () => { const t = viewer.controls.target; copyText([t.x, t.y, t.z].map(f1v).join(', '), 'Cible', true); };
+$('bCopyPick').onclick = () => { if (!lastPick || !lastPick.point) return setStatus(tr('viewer.copy.first')); copyText(lastPick.point.map(f1v).join(', '), 'viewer.copy.ok.pick'); };
+$('bCopyTarget').onclick = () => { const t = viewer.controls.target; copyText([t.x, t.y, t.z].map(f1v).join(', '), 'viewer.copy.ok.target'); };
 coordInfo();
 // clic sur le modèle = nouvelle cible
 {
@@ -834,23 +847,23 @@ coordInfo();
       // mode exclusif : ni atterrissage, ni trou, ni pose de zone. Les éléments traversables (walkIgnore) sont ignorés :
       // on lie le mesh nommé touché, pas le voile transparent devant. Un refus laisse le mode actif.
       const h = ray.intersectObject(viewer.model, true).find(x => x.object.isMesh && x.object.visible && !viewer.isTraversable(x.object));
-      if (!h) { if (tilesMode) { tileMiss(ray); return; } setStatus('Aucun élément ici : clique sur le modèle'); return; }
+      if (!h) { if (tilesMode) { tileMiss(ray); return; } setStatus(tr('viewer.click.noelem')); return; }
       // on lie le morceau réellement cliqué : si son nom est partagé, la référence est nom#index (voir meshRefOf)
       let obj = h.object;
       while (obj && obj !== viewer.model && !obj.name) obj = obj.parent;
-      if (!obj || obj === viewer.model) { setStatus('Cet élément n\'a pas de nom dans le modèle : impossible de le lier'); return; }
+      if (!obj || obj === viewer.model) { setStatus(tr('viewer.click.nonamel')); return; }
       const name = viewer.meshRef(obj);
-      if (!name) { setStatus('Cet élément n\'a pas de référence dans les tuiles (découpées avant la v32 ? redécoupe avec glb2tiles v32 pour lier une zone à un objet)'); return; }
+      if (!name) { setStatus(tr('viewer.click.noref')); return; }
       const info = viewer.meshInfo(name), r2 = v => Math.round(v * 100) / 100;
-      if (!info) { setStatus('« ' + name + ' » n\'a pas de géométrie mesurable : impossible de le lier'); return; }
+      if (!info) { setStatus(tr('viewer.click.nogeom', name)); return; }
       const sz = info.size.map(r2), dims = [sz[0], sz[2], sz[1]].join(' × ') + ' m';   // L × l × h
-      if (Math.max(...sz) > LINK_MAX) { setStatus('Élément trop grand (' + dims + ') : probablement fusionné avec un bâtiment dans l\'OAR. Délie-le dans OpenSim ou utilise une zone cercle.'); return; }
+      if (Math.max(...sz) > LINK_MAX) { setStatus(tr('viewer.click.toobig', dims)); return; }
       const list = viewer.getZones(), i = list.findIndex(x => x.id === linkZone);
       setLinkZone(null, true); linkGuard = performance.now() + 600;
       if (i < 0) { renderZoneList(); return; }
       Object.assign(list[i], { mesh: name, x: r2(info.center[0]), y: r2(info.min[1]), z: r2(info.center[2]) });
       zoneSel = list[i].id; zonesSync(list, true);
-      setStatus('Zone « ' + (list[i].label || list[i].id) + ' » liée à l\'élément « ' + name + ' » • ' + dims + ' • contour en fil de fer dans la scène' + (info.count > 1 ? ' (' + info.count + ' morceaux)' : ''));
+      setStatus(tr('viewer.click.linked', list[i].label || list[i].id, name, dims, info.count > 1 ? tr('viewer.click.pieces', info.count) : ''));
       return;
     }
     if (performance.now() < linkGuard) return;   // fin d'une liaison : le 2e clic d'un double-clic ne doit rien déplacer
@@ -862,7 +875,7 @@ coordInfo();
       const x = Math.max(-600, Math.min(600, Math.round(pt[0] - sc[0]))), z = Math.max(-600, Math.min(600, Math.round(pt[2] - sc[1])));
       viewer.setCfg({ holeX: x, holeZ: z }); sync.holeX(x); sync.holeZ(z);
       placeMode = false; viewer.renderer.domElement.style.cursor = ''; sync.place();
-      setStatus('Trou placé en X ' + x + ' • Z ' + z);
+      setStatus(tr('viewer.click.hole', x, z));
       return;
     }
     if (zoneAddMode) {
@@ -882,7 +895,7 @@ coordInfo();
       const d = describePick(hit.object, hit.point.toArray());
       lastPick = { token: d.token, mesh: d.mesh, text: d.text, point: d.point }; coordInfo();
       const pe = $('picked'); if (pe) pe.textContent = lastPick.text;
-      if (!eraseMode) setStatus('Visé : ' + (d.name || '(sans nom)') + ' • point ' + d.point.map(v => v.toFixed(2)).join(', ') + ' (double-clic : choisir cette cible)');
+      if (!eraseMode) setStatus(tr('viewer.click.pick', d.name || tr('core.pick.noname'), d.point.map(v => v.toFixed(2)).join(', ')));
     }
     if (eraseMode) { addIgnoreExact(hit.object.name); return; }
   });
@@ -922,49 +935,49 @@ function renderMapUi() {
     const i = mk('input', { type: type || 'text', value: value === undefined ? '' : value }, INP + ';grid-column:1/-1');
     i.onchange = () => onchange(type === 'number' ? (parseInt(i.value, 10) || 0) : i.value.trim()); w.append(i); return w;
   };
-  host.append(mk('small', { textContent: 'Chaque page peut afficher la carte des régions (touche M). Remplis la fiche de CETTE région, capture sa vignette, ajoute-la, puis exporte regions.json pour les autres pages.' }));
+  host.append(mk('small', { textContent: tr('viewer.map.intro') }));
   if (!thisReg.name) thisReg.name = baseName === 'scene' ? '' : baseName;
-  host.append(field('Nom de cette région', thisReg.name, 'text', v => { thisReg.name = v; }));
-  host.append(field('Adresse publique de cette page', thisReg.url, 'text', v => { thisReg.url = v; }));
-  host.append(field('Position sur la grille : X (vers l\'est)', thisReg.x, 'number', v => { thisReg.x = v; }));
-  host.append(field('Position sur la grille : Y (vers le nord)', thisReg.y, 'number', v => { thisReg.y = v; }));
-  host.append(mk('small', { textContent: 'Nombres entiers, seulement relatifs entre régions, comme sur la grille d\'OpenSim : tu peux reprendre ses coordonnées (1000, 1000…). Ex. : 0,0 puis 1,0 à l\'est, 0,1 au nord.' }));
-  host.append(field('Point d\'arrivée des visiteurs (identifiant)', thisReg.spawn, 'text', v => { thisReg.spawn = v || 'default'; renderMapUi(); }));
+  host.append(field(tr('viewer.map.name'), thisReg.name, 'text', v => { thisReg.name = v; }));
+  host.append(field(tr('viewer.map.url'), thisReg.url, 'text', v => { thisReg.url = v; }));
+  host.append(field(tr('viewer.map.x'), thisReg.x, 'number', v => { thisReg.x = v; }));
+  host.append(field(tr('viewer.map.y'), thisReg.y, 'number', v => { thisReg.y = v; }));
+  host.append(mk('small', { textContent: tr('viewer.map.gridnote') }));
+  host.append(field(tr('viewer.map.spawn'), thisReg.spawn, 'text', v => { thisReg.spawn = v || 'default'; renderMapUi(); }));
   { const has = viewer.getZones().some(z => z.type === 'spawn' && z.id === (thisReg.spawn || 'default'));
-    host.append(mk('small', { textContent: has ? '✔ Cette région contient bien un point d\'arrivée « ' + (thisReg.spawn || 'default') + ' » : les visiteurs venant de la carte ou d\'un portail y apparaissent.' : '⚠ Cette région n\'a pas de point d\'arrivée « ' + (thisReg.spawn || 'default') + ' » (section Zones, type « Point d\'arrivée », avec cet identifiant) : les visiteurs apparaîtront au point d\'atterrissage habituel de la touche F.' })); }
-  host.append(mk('small', { textContent: 'Salon de présence de cette région : ' + (cfg.room || baseName) }));
+    host.append(mk('small', { textContent: has ? tr('viewer.map.has', thisReg.spawn || 'default') : tr('viewer.map.hasnot', thisReg.spawn || 'default') })); }
+  host.append(mk('small', { textContent: tr('viewer.map.room', cfg.room || baseName) }));
   const prev = mk('img', { alt: '', src: thisReg.thumb || '' }, 'width:100%;aspect-ratio:1;object-fit:cover;border:1px solid #000;margin-top:6px;display:' + (thisReg.thumb ? 'block' : 'none'));
   host.append(prev);
   const b1 = mk('div', { className: 'btns' });
-  const cap = mk('button', { textContent: 'Capturer la vignette (vue du dessus)' });
-  cap.onclick = () => { if (!viewer.model) return setStatus('Charge d\'abord un modèle'); thisReg.thumb = viewer.captureTop(320, [guide, vizGroup]); prev.src = thisReg.thumb; prev.style.display = 'block'; setStatus('Vignette capturée'); };
-  const add = mk('button', { textContent: 'Ajouter / mettre à jour cette région dans la carte' });
+  const cap = mk('button', { textContent: tr('viewer.map.cap') });
+  cap.onclick = () => { if (!viewer.model) return setStatus(tr('viewer.map.loadfirst')); thisReg.thumb = viewer.captureTop(320, [guide, vizGroup]); prev.src = thisReg.thumb; prev.style.display = 'block'; setStatus(tr('viewer.map.captured')); };
+  const add = mk('button', { textContent: tr('viewer.map.add') });
   add.onclick = () => {
-    if (!thisReg.name || !thisReg.url) return setStatus('Indique le nom et l\'adresse publique de la région');
+    if (!thisReg.name || !thisReg.url) return setStatus(tr('viewer.map.needs'));
     const room = cfg.room || baseName, e = { id: room.toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '') || 'region', name: thisReg.name, url: thisReg.url, x: thisReg.x, y: thisReg.y, spawn: thisReg.spawn, room, thumb: thisReg.thumb };
-    const list = (cfg.map || []).filter(r => r.room !== room); list.push(e); cfg.map = list; setStatus('Carte : ' + list.length + ' région(s)'); renderMapUi();
+    const list = (cfg.map || []).filter(r => r.room !== room); list.push(e); cfg.map = list; setStatus(tr('viewer.map.count', list.length)); renderMapUi();
   };
-  const svt = mk('button', { textContent: 'Enregistrer la vignette (.jpg)' });
-  svt.onclick = async () => { if (!thisReg.thumb) return setStatus('Capture d\'abord la vignette'); const b = await (await fetch(thisReg.thumb)).blob(); download(baseName + '.vignette.jpg', b); setStatus('Vignette enregistrée : ' + baseName + '.vignette.jpg (à placer à côté de glb2html.py, pour --thumb)'); };
+  const svt = mk('button', { textContent: tr('viewer.map.savethumb') });
+  svt.onclick = async () => { if (!thisReg.thumb) return setStatus(tr('viewer.map.capfirst')); const b = await (await fetch(thisReg.thumb)).blob(); download(baseName + '.vignette.jpg', b); setStatus(tr('viewer.map.thumbsaved', baseName)); };
   b1.append(cap, svt, add); host.append(b1);
   (cfg.map || []).forEach((r, idx) => {
     const d = mk('details', {}, 'border:1px solid #000;border-radius:6px;padding:4px 8px;margin:6px 0');
-    const s = mk('summary', { textContent: r.name + '  (' + r.x + ', ' + r.y + ')' + (r.room === (cfg.room || baseName) ? '  ● cette région' : '') }, 'cursor:pointer'); d.append(s);
+    const s = mk('summary', { textContent: r.name + '  (' + r.x + ', ' + r.y + ')' + (r.room === (cfg.room || baseName) ? tr('viewer.map.here') : '') }, 'cursor:pointer'); d.append(s);
     if (r.thumb) d.append(mk('img', { src: r.thumb, alt: '' }, 'width:96px;height:96px;object-fit:cover;border:1px solid #000;margin:4px 0;display:block'));
     const upd = patch => { cfg.map[idx] = Object.assign({}, cfg.map[idx], patch); };
-    d.append(field('Nom', r.name, 'text', v => { upd({ name: v }); renderMapUi(); }));
-    d.append(field('Adresse de la page', r.url, 'text', v => upd({ url: v })));
+    d.append(field(tr('viewer.map.f.name'), r.name, 'text', v => { upd({ name: v }); renderMapUi(); }));
+    d.append(field(tr('viewer.map.f.url'), r.url, 'text', v => upd({ url: v })));
     d.append(field('X', r.x, 'number', v => { upd({ x: v }); renderMapUi(); }));
     d.append(field('Y', r.y, 'number', v => { upd({ y: v }); renderMapUi(); }));
-    d.append(field('Point d\'arrivée (identifiant)', r.spawn, 'text', v => upd({ spawn: v })));
-    d.append(field('Salon de présence', r.room, 'text', v => upd({ room: v })));
-    const del = mk('button', { textContent: 'Retirer de la carte' }); del.onclick = () => { cfg.map.splice(idx, 1); renderMapUi(); };
+    d.append(field(tr('viewer.map.f.spawn'), r.spawn, 'text', v => upd({ spawn: v })));
+    d.append(field(tr('viewer.map.f.room'), r.room, 'text', v => upd({ room: v })));
+    const del = mk('button', { textContent: tr('viewer.map.remove') }); del.onclick = () => { cfg.map.splice(idx, 1); renderMapUi(); };
     const bw = mk('div', { className: 'btns' }); bw.append(del); d.append(bw); host.append(d);
   });
-  if (!(cfg.map || []).length) host.append(mk('small', { textContent: 'Aucune région dans la carte pour le moment.' }));
+  if (!(cfg.map || []).length) host.append(mk('small', { textContent: tr('viewer.map.none') }));
   const b2 = mk('div', { className: 'btns' });
-  const exp = mk('button', { textContent: 'Exporter regions.json' }); exp.onclick = () => download('regions.json', new Blob([JSON.stringify(cfg.map || [], null, 1)], { type: 'application/json' }));
-  const imp = mk('button', { textContent: 'Importer regions.json' }); imp.onclick = () => $('fMap').click();
+  const exp = mk('button', { textContent: tr('viewer.map.exp') }); exp.onclick = () => download('regions.json', new Blob([JSON.stringify(cfg.map || [], null, 1)], { type: 'application/json' }));
+  const imp = mk('button', { textContent: tr('viewer.map.imp') }); imp.onclick = () => $('fMap').click();
   b2.append(exp, imp); host.append(b2);
 }
 
@@ -990,9 +1003,9 @@ async function saveZonesToDir() {
   const say = t => { setStatus(t); if (info) info.textContent = t; };
   const fallback = why => {
     download(zname, new Blob([text], { type: 'application/json' }));
-    say(why + ' — enregistre ce fichier dans le dossier de la région, sous le nom ' + zname + ', en remplaçant l\'ancien');
+    say(tr('viewer.zdir.fallback', why, zname));
   };
-  if (typeof window.showDirectoryPicker !== 'function') return fallback('API de dossier absente (Edge ou Chrome requis)');
+  if (typeof window.showDirectoryPicker !== 'function') return fallback(tr('viewer.zdir.noapi'));
   try {
     let dir = zonesDirHandle;
     if (!dir) { try { dir = await idbDirs('readonly', st => st.get(baseName)); } catch (e) { dir = null; } }
@@ -1002,19 +1015,19 @@ async function saveZonesToDir() {
       if (p !== 'granted') dir = null;
     }
     if (!dir) dir = await window.showDirectoryPicker({ id: 'glb2html-region', mode: 'readwrite' });
-    try { await dir.getFileHandle(loadedName); } catch (e) { zonesDirHandle = null; throw Object.assign(new Error('ce dossier ne contient pas ' + loadedName + ' : choisis le dossier de la région'), { name: 'WrongFolder' }); }
+    try { await dir.getFileHandle(loadedName); } catch (e) { zonesDirHandle = null; throw Object.assign(new Error(tr('viewer.zdir.wrong', loadedName)), { name: 'WrongFolder' }); }
     zonesDirHandle = dir; try { await idbDirs('readwrite', st => st.put(dir, baseName)); } catch (e) {}
     let old = null;
     try { old = await (await (await dir.getFileHandle(zname)).getFile()).text(); } catch (e) { if (!e || e.name !== 'NotFoundError') throw e; }
     if (old !== null) await writeInDir(dir, baseName + '.zones.bak.json', old);   // une seule copie, écrasée à chaque enregistrement
     await writeInDir(dir, zname, text);
     const d = new Date(), p2 = n => String(n).padStart(2, '0');
-    say('Zones enregistrées (' + (cfg.zones || []).length + ') : dossier « ' + dir.name + ' », fichier ' + zname + ', le ' + p2(d.getDate()) + '/' + p2(d.getMonth() + 1) + '/' + d.getFullYear() + ' à ' + p2(d.getHours()) + ':' + p2(d.getMinutes()) + ':' + p2(d.getSeconds())
-      + (old !== null ? ' ; ancien fichier gardé sous ' + baseName + '.zones.bak.json' : ' ; pas d\'ancien fichier') + '. La page relit ce fichier à chaque ouverture : F5 suffit, sans régénérer (sauf si tu changes les options de la page).');
+    say(tr('viewer.zdir.saved', (cfg.zones || []).length, dir.name, zname, p2(d.getDate()) + '/' + p2(d.getMonth() + 1) + '/' + d.getFullYear(), p2(d.getHours()) + ':' + p2(d.getMinutes()) + ':' + p2(d.getSeconds()),
+      old !== null ? tr('viewer.zdir.bak', baseName + '.zones.bak.json') : tr('viewer.zdir.nobak')));
   } catch (e) {
-    if (e && e.name === 'AbortError') return say('Choix du dossier annulé : rien n\'a été écrit (le bouton « Exporter zones » télécharge le fichier)');
-    if (e && e.name === 'WrongFolder') return say('Rien écrit : ' + e.message);
-    fallback(e && (e.name === 'SecurityError' || e.name === 'NotAllowedError') ? 'Accès au dossier refusé' : 'Enregistrement dans le dossier impossible (' + (e && e.message ? e.message : e) + ')');
+    if (e && e.name === 'AbortError') return say(tr('viewer.zdir.abort'));
+    if (e && e.name === 'WrongFolder') return say(tr('viewer.zdir.nothing', e.message));
+    fallback(e && (e.name === 'SecurityError' || e.name === 'NotAllowedError') ? tr('viewer.zdir.denied') : tr('viewer.zdir.failed', e && e.message ? e.message : e));
   }
 }
 
@@ -1024,7 +1037,7 @@ let curFile = null, lastSaved = '', settingsReady = false;
 const fileKey = f => 'glb2html_set_' + f.name + '|' + f.size;
 function snapshot() {
   const cam = viewer.getCameraState();
-  const s = { v: 1, file: curFile ? curFile.name : '', saved: new Date().toLocaleString('fr-FR'), cfg: {}, zones: cfg.zones || [],
+  const s = { v: 1, file: curFile ? curFile.name : '', saved: new Date().toLocaleString(i18nLocale), cfg: {}, zones: cfg.zones || [],
     camera: { camDir: cam.camDir, target: cam.target, zoom: cam.zoom }, profile: $('profileSel').value, thisReg: Object.assign({}, thisReg),
     cmd: { script: $('cmdScript').value, glb: $('cmdGlb').value, dest: $('cmdDest').value, mapPage: $('cmdMapPage').value } };
   for (const k of SKEYS) s.cfg[k] = cfg[k];
@@ -1033,7 +1046,7 @@ function snapshot() {
 }
 const snapStr = s => JSON.stringify(Object.assign({}, s, { saved: '' }));
 function applySnapshot(s) {
-  if (!s || s.v !== 1 || !s.cfg) throw new Error('fichier de réglages non reconnu');
+  if (!s || s.v !== 1 || !s.cfg) throw new Error(tr('viewer.set.unknown'));
   const patch = {}; for (const k of SKEYS) if (k in s.cfg) patch[k] = s.cfg[k];
   viewer.setCfg(patch);
   zonesSync(Array.isArray(s.zones) ? s.zones : [], false);
@@ -1046,9 +1059,9 @@ function applySnapshot(s) {
 }
 function updateSettingsInfo() {
   const e = $('setInfo'); if (!e) return;
-  if (!curFile) { e.textContent = 'Aucun fichier chargé. Les réglages seront mémorisés automatiquement pour chaque fichier .glb.'; return; }
+  if (!curFile) { e.textContent = tr('viewer.set.info0'); return; }
   let when = ''; try { const s = JSON.parse(localStorage.getItem(fileKey(curFile)) || 'null'); if (s) when = s.saved; } catch (x) {}
-  e.textContent = 'Mémorisés automatiquement pour ' + curFile.name + (when ? ' (dernière sauvegarde ' + when + ')' : ' (rien de modifié pour l\'instant)') + '.';
+  e.textContent = tr('viewer.set.info', curFile.name, when ? tr('viewer.set.when', when) : tr('viewer.set.nochange'));
 }
 function restoreFor(file) {
   curFile = file; settingsReady = false; lastSaved = '';
@@ -1068,16 +1081,16 @@ function autoSave() {
 setInterval(autoSave, 1500);
 let lastMapStr = JSON.stringify(cfg.map || []);
 setInterval(() => { const m = JSON.stringify(cfg.map || []); if (m !== lastMapStr) { lastMapStr = m; try { localStorage.setItem('glb2html_map_v1', m); } catch (e) {} } }, 1500);
-$('bSetSave').onclick = () => { download((curFile ? baseName : 'reglages') + '.reglages.json', new Blob([JSON.stringify(snapshot(), null, 1)], { type: 'application/json' })); setStatus('Réglages enregistrés dans un fichier'); };
+$('bSetSave').onclick = () => { download((curFile ? baseName : 'reglages') + '.reglages.json', new Blob([JSON.stringify(snapshot(), null, 1)], { type: 'application/json' })); setStatus(tr('viewer.set.saved')); };
 $('bSetLoad').onclick = () => $('fSettings').click();
 $('fSettings').onchange = async e => {
   const f = e.target.files[0]; e.target.value = ''; if (!f) return;
-  try { applySnapshot(JSON.parse(await f.text())); setStatus('Réglages chargés depuis ' + f.name); } catch (err) { setStatus('Chargement impossible : ' + err.message); }
+  try { applySnapshot(JSON.parse(await f.text())); setStatus(tr('viewer.set.loadedfrom', f.name)); } catch (err) { setStatus(tr('viewer.set.loadfail', err.message)); }
 };
-$('bSetForget').onclick = () => { if (!curFile) return setStatus('Aucun fichier chargé'); try { localStorage.removeItem(fileKey(curFile)); } catch (e) {} lastSaved = snapStr(snapshot()); updateSettingsInfo(); setStatus('Réglages mémorisés oubliés pour ' + curFile.name + ' (ils seront de nouveau mémorisés à la prochaine modification)'); };
+$('bSetForget').onclick = () => { if (!curFile) return setStatus(tr('viewer.set.nofile')); try { localStorage.removeItem(fileKey(curFile)); } catch (e) {} lastSaved = snapStr(snapshot()); updateSettingsInfo(); setStatus(tr('viewer.set.forgot', curFile.name)); };
 
 // ---------- récapitulatif : ligne de commande pour glb2html.py
-const SHARED_NOTE = 'Coquille commune : la commande écrit NOM.glb, NOM.config.json et NOM.zones.json (NOM = nom du fichier de sortie -o sans extension, sinon nom du .glb), plus index.html et lib/three-0.160.0/ s\'ils sont absents (une coquille existante n\'est jamais écrasée). La région s\'ouvre à index.html?region=NOM, en http/https ; --register écrit cette adresse dans regions.json si le champ « adresse » de la fiche de région est vide. Pour ne changer qu\'un réglage ensuite : même commande avec --config-only -o NOM.html.';
+const SHARED_NOTE = tr('viewer.cmd.sharednote');
 // --target explicite : la cible de la caméra diffère de la cible par défaut (même test que la ligne de commande) ; sinon l'arrivée « default » cadre la page
 function targetExplicit() {
   const cam = viewer.getCameraState(), n4 = v => String(Math.round(v * 1e4) / 1e4);
@@ -1136,19 +1149,19 @@ function buildCommand() {
     if (regOk) s2.push('--register ' + q('regions.json'));
     if ($('cmdMapPage').value.trim()) s2.push('--map-page ' + q($('cmdMapPage').value.trim()));
     cmd = s2.join(' ');
-    notes.push('Commande courte : elle relit TOUS tes réglages (trou, vagues, caméra, zones, fiche de région…) dans ' + baseName + '.reglages.json. Clique sur « Enregistrer dans un fichier » (section Réglages mémorisés) et place ce fichier à côté de glb2html.py, puis refais-le après chaque modification. Ce que tu ajoutes à la ligne l\'emporte sur le fichier.');
-    if (modular) notes.push('Mode modulaire : la commande écrit <page>.html (coquille), <page>.glb, <page>.config.json et lib/three-0.160.0/. Publie-les ensemble, en http/https. Pour ne changer qu\'un réglage : même commande avec --config-only -o <page>.html (sans --modular).');
+    notes.push(tr('viewer.cmd.n.short', baseName));
+    if (modular) notes.push(tr('viewer.cmd.n.modshort'));
     if (shared) notes.push(SHARED_NOTE);
     return { cmd, notes };
   }
-  if (regOk) notes.push('Carte : à chaque exécution, cette région est ajoutée ou mise à jour dans regions.json (créé à côté de glb2html.py s\'il n\'existe pas)' + (thisReg.thumb ? ' ; clique d\'abord sur « Enregistrer la vignette » et place ' + baseName + '.vignette.jpg à côté de glb2html.py.' : ' ; capture et enregistre une vignette pour l\'afficher sur la carte.'));
-  else if ((cfg.map || []).length) notes.push('Carte : clique sur « Exporter regions.json » (section Carte des mondes) et place regions.json à côté de glb2html.py (ou dans le dossier de lancement).');
-  if (tilesMode) notes.push('Région en tuiles : lance la commande depuis le dossier de glb2html.py. -o désigne la page (la région s\'appelle comme elle) ; ' + glb + ' est lu tel quel, et ni lui ni ses tuiles ne sont recopiés s\'ils sont déjà à côté de la page (mets -o dans leur dossier). Les coordonnées (zones, cible, trou de la mer) sont celles du modèle d\'origine, utilisables telles quelles. Une page déjà générée se met à jour avec la même commande.');
-  if (hasZones) notes.push('Zones : clique d\'abord sur « Exporter zones (.json) » (section Zones) et place ' + (tilesMode ? baseName + '.zones.json' : 'zones.json') + ' à côté de glb2html.py (ou dans le dossier où tu lances la commande), ou corrige son chemin.' + ($('profileSel').value === 'perso' ? '' : ' Profil public : les zones privées sont retirées.'));
+  if (regOk) notes.push(tr('viewer.cmd.n.map', thisReg.thumb ? tr('viewer.cmd.n.map.thumb', baseName) : tr('viewer.cmd.n.map.nothumb')));
+  else if ((cfg.map || []).length) notes.push(tr('viewer.cmd.n.mapexp'));
+  if (tilesMode) notes.push(tr('viewer.cmd.n.tiles', glb));
+  if (hasZones) notes.push(tr('viewer.cmd.n.zones', tilesMode ? baseName + '.zones.json' : 'zones.json', $('profileSel').value === 'perso' ? '' : tr('viewer.cmd.n.zones.pub')));
   if (shared) notes.push(SHARED_NOTE);
-  if (modular) notes.push('Mode modulaire : la commande écrit <page>.html (coquille), <page>.glb, <page>.config.json et le dossier lib/three-' + '0.160.0/ partagé. Publie-les ensemble et ouvre la page en http/https. Pour ne changer qu\'un réglage ensuite : relance la même commande avec --config-only -o <page>.html (le .glb et la coquille ne sont pas touchés ; les visiteurs rechargent). Le viewer sait aussi exporter cette structure : bouton « Exporter la structure modulaire (.zip) ».');
-  if (!a.length) notes.push('Aucun réglage ne diffère des valeurs par défaut du script.');
-  notes.push(a.length + ' option(s) ajoutée(s). Les options absentes gardent la valeur par défaut du script.');
+  if (modular) notes.push(tr('viewer.cmd.n.modular'));
+  if (!a.length) notes.push(tr('viewer.cmd.n.nodiff'));
+  notes.push(tr('viewer.cmd.n.count', a.length));
   return { cmd, notes };
 }
 $('bCmd').onclick = () => {
@@ -1160,7 +1173,7 @@ $('bCmdCopy').onclick = async () => {
   if (!$('cmdOut').value) $('bCmd').onclick();
   const t = $('cmdOut').value;
   const ok = await copyRaw(t, $('cmdOut'));
-  setStatus(ok ? 'Copié' : 'Copie impossible : le texte est sélectionné, fais Ctrl+C');
+  setStatus(ok ? tr('page.toast.copied') : tr('page.toast.copyfail'));
 };
 try { $('cmdScript').value = localStorage.getItem('glb2html_cmd_script') || ''; $('cmdGlb').value = localStorage.getItem('glb2html_cmd_glb') || ''; $('cmdDest').value = localStorage.getItem('glb2html_cmd_dest') || ''; $('cmdMapPage').value = localStorage.getItem('glb2html_cmd_mappage') || ''; $('cmdShort').checked = localStorage.getItem('glb2html_cmd_short') === '1'; $('cmdModular').checked = localStorage.getItem('glb2html_cmd_modular') === '1'; $('cmdShared').checked = localStorage.getItem('glb2html_cmd_shared') === '1'; } catch (e) {}
 function liveConfig() {
@@ -1181,7 +1194,7 @@ function liveConfig() {
 }
 $('bHtml').onclick = () => {
   try {
-    if (!glbBytes) return setStatus('Charge un modèle d\'abord');
+    if (!glbBytes) return setStatus(tr('viewer.export.nomodel'));
     const used = inspectGlb(glbBytes.buffer, baseName);
     const names = ['three', 'three/addons/controls/OrbitControls.js', 'three/addons/loaders/GLTFLoader.js', 'three/addons/utils/BufferGeometryUtils.js'];
     const dec = [];
@@ -1198,8 +1211,8 @@ $('bHtml').onclick = () => {
     out = rep(out, '__DECODERS__', dec.join('\n'));
     out = rep(out, '__GLB_B64__', b64(glbBytes));
     download(baseName + ($('profileSel').value === 'perso' ? ' - Offline perso.html' : ' - Offline.html'), new Blob([out], { type: 'text/html' }));
-    setStatus('Export HTML OK • ' + (out.length / 2 ** 20).toFixed(2) + ' Mo');
-  } catch (e) { console.error(e); setStatus('Erreur export : ' + (e.message || e)); }
+    setStatus(tr('viewer.export.htmlok', (out.length / 2 ** 20).toFixed(2)));
+  } catch (e) { console.error(e); setStatus(tr('viewer.export.err', e.message || e)); }
 };
 // ---------- export modulaire : index.html (coquille commune), X.glb, X.config.json, X.zones.json, lib/three-X/ (draco/ compris)
 const CRC_T = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
@@ -1228,10 +1241,10 @@ function makeZip(files) {
 const fromDataUrl = u => { const bin = atob(u.slice(u.indexOf(',') + 1)), o = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) o[i] = bin.charCodeAt(i); return o; };
 $('bZip').onclick = () => {
   try {
-    if (!glbBytes) return setStatus('Charge un modèle d\'abord');
+    if (!glbBytes) return setStatus(tr('viewer.export.nomodel'));
     inspectGlb(glbBytes.buffer, baseName);
     // même règle que la coquille (?region=NOM) : un seul nom de fichier
-    if (!baseName || /[\/\\:?#\x00-\x1f]/.test(baseName) || baseName.includes('..') || baseName.startsWith('.')) return setStatus('Nom de région refusé par la coquille commune : « ' + baseName + ' » (renomme le .glb : sans / \\ : ? # ni .., sans point au début)');
+    if (!baseName || /[\/\\:?#\x00-\x1f]/.test(baseName) || baseName.includes('..') || baseName.startsWith('.')) return setStatus(tr('viewer.export.badname', baseName));
     const enc = new TextEncoder(), c = liveConfig();
     const zones = c.zones;                                   // déjà filtrées selon le profil d'export
     const files = [
@@ -1244,8 +1257,8 @@ $('bZip').onclick = () => {
     for (const f of SHELL_LIB.draco) files.push([SHELL_LIB.dir + '/draco/' + f, fromDataUrl(LIBS[f])]);
     const blob = makeZip(files);
     download(baseName + '.modulaire.zip', blob);
-    setStatus('Export modulaire OK • ' + files.length + ' fichiers, ' + (blob.size / 2 ** 20).toFixed(2) + ' Mo • à décompresser dans le dossier du site, servi en http/https • adresse : index.html?region=' + encodeURIComponent(baseName));
-  } catch (e) { console.error(e); setStatus('Erreur export modulaire : ' + (e.message || e)); }
+    setStatus(tr('viewer.export.zipok', files.length, (blob.size / 2 ** 20).toFixed(2), encodeURIComponent(baseName)));
+  } catch (e) { console.error(e); setStatus(tr('viewer.export.ziperr', e.message || e)); }
 };
 $('bPy').onclick = () => {
   const c = liveConfig();
@@ -1262,12 +1275,12 @@ $('bPy').onclick = () => {
     '\n# <</DEFAULTS>>';
   const py = PY_SOURCE.replace(/# <<DEFAULTS>>[\s\S]*?# <<\/DEFAULTS>>/, () => block);
   download('glb2html.py', new Blob([py], { type: 'text/x-python' }));
-  setStatus('Script Python exporté • glb2html.py');
+  setStatus(tr('viewer.export.pyok'));
 };
 // ouverture par adresse (viewer servi en http) : glb-viewer.html?tuiles=Region.tiles.json (chemin relatif à cette page, sans .. ni « : »)
 {
   const t = new URLSearchParams(location.search).get('tuiles');
-  if (t) { if (safeRelV(t)) openTiles(t, null, t.split('/').pop(), 0); else setStatus('Adresse ?tuiles= refusée : chemin relatif à cette page, sans .., sans « : », « ? » ni « # »'); }
+  if (t) { if (safeRelV(t)) openTiles(t, null, t.split('/').pop(), 0); else setStatus(tr('viewer.tilesurl.refused')); }
 }
 </script>
 </body>

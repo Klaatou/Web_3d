@@ -51,6 +51,23 @@ import traceback
 import zlib
 from pathlib import Path
 
+# <<I18N_PY>>
+def _i18n_boot():   # depuis les sources : charge src/i18n_py.py ; fabriqué par build.py (dist\) : ce bloc est remplacé par le texte de i18n_py.py avec les langues intégrées
+    import importlib.util, pathlib
+    here = pathlib.Path(__file__).resolve().parent
+    for p in (here / "i18n_py.py", here.parent / "src" / "i18n_py.py"):
+        if p.is_file():
+            spec = importlib.util.spec_from_file_location("i18n_py", p)
+            m = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(m)
+            return m
+    raise SystemExit("i18n_py.py not found / introuvable")
+
+
+_I18N = _i18n_boot()
+_tr, i18n_add_common = _I18N._tr, _I18N.i18n_add_common
+# <</I18N_PY>>
+
 VERSION = "__VERSION__"      # remplacé par build.py (fichier VERSION) dans dist/glb2tiles.py
 FORMAT_TUILES = 1            # version du format de X.tiles.json
 BLOC_LECTURE = 4 << 20       # octets lus d'un coup dans le GLB d'entrée (lectures toujours par morceaux)
@@ -102,7 +119,7 @@ def stats():
     if _stats is None:
         p = Path(__file__).resolve().with_name("glb-stats.py")
         if not p.is_file():
-            raise ErreurGlb(f"glb-stats.py introuvable à côté de glb2tiles.py ({p.parent}) : le copier au même endroit.")
+            raise ErreurGlb(_tr("py.glb2tiles.glb_stats_py_introuvable_a_cote", p.parent))
         spec = importlib.util.spec_from_file_location("glb_stats", p)
         m = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(m)
@@ -131,7 +148,7 @@ class Glb:
 
     def __init__(self, chemin):
         if sys.byteorder != "little":
-            raise ErreurGlb("Machine big-endian non gérée.")
+            raise ErreurGlb(_tr("py.glb2tiles.machine_big_endian_non_geree"))
         self.chemin = str(chemin)
         self.taille = os.path.getsize(chemin)
         self.g, njson = stats().lire_json(self.chemin)
@@ -141,8 +158,7 @@ class Glb:
         self.nb_lectures = 0
         comp = [e for e in self.g.get("extensionsUsed", []) if e in COMPRESSIONS]
         if comp:
-            raise ErreurGlb("Ce GLB est compressé (" + ", ".join(comp) + ") : glb2tiles ne lit pas les GLB compressés "
-                            "(hors de son périmètre). Décompresser le GLB d'abord, puis relancer.")
+            raise ErreurGlb(_tr("py.glb2tiles.ce_glb_est_compresse") + ", ".join(comp) + _tr("py.glb2tiles.glb2tiles_ne_lit_pas_les_glb"))
         self.f = open(self.chemin, "rb")
         self.f.seek(20 + njson)
         ent = self.f.read(8)
@@ -154,7 +170,7 @@ class Glb:
         self.octets_lus += len(ent)
         bufs = self.g.get("buffers", [])
         if bufs and "uri" in bufs[0]:
-            raise ErreurGlb("Le tampon 0 a une adresse (uri) : seuls les GLB à tampon intégré sont gérés.")
+            raise ErreurGlb(_tr("py.glb2tiles.le_tampon_0_a_une_adresse"))
         self._acc = {}
 
     def fermer(self):
@@ -163,7 +179,7 @@ class Glb:
     def lire(self, off, n):
         """Lit n octets à partir de off (relatif au tampon BIN), par morceaux de BLOC_LECTURE."""
         if off < 0 or n < 0 or off + n > self.bin_len:
-            raise ErreurGlb(f"Lecture hors du tampon du GLB (décalage {off}, {n} octets) : fichier invalide ou tronqué.")
+            raise ErreurGlb(_tr("py.glb2tiles.lecture_hors_du_tampon_du_glb", off, n))
         out = bytearray()
         self.f.seek(self.bin_off + off)
         reste = n
@@ -171,7 +187,7 @@ class Glb:
             k = min(reste, BLOC_LECTURE)
             b = self.f.read(k)
             if len(b) != k:
-                raise ErreurGlb("Fichier GLB tronqué.")
+                raise ErreurGlb(_tr("py.glb2tiles.fichier_glb_tronque"))
             self.octets_lus += k
             self.nb_lectures += 1
             self.plus_grande_lecture = max(self.plus_grande_lecture, k)
@@ -182,10 +198,10 @@ class Glb:
     def vue(self, i):
         bvs = self.g.get("bufferViews", [])
         if i is None or not (0 <= i < len(bvs)):
-            raise ErreurGlb(f"bufferView {i} inexistant.")
+            raise ErreurGlb(_tr("py.glb2tiles.bufferview_0_inexistant", i))
         bv = bvs[i]
         if bv.get("buffer", 0) != 0:
-            raise ErreurGlb(f"bufferView {i} : seul le tampon 0 est géré.")
+            raise ErreurGlb(_tr("py.glb2tiles.bufferview_0_seul_le_tampon_0", i))
         return bv
 
     def acc(self, i):
@@ -194,25 +210,25 @@ class Glb:
             return a
         accs = self.g.get("accessors", [])
         if i is None or not (0 <= i < len(accs)):
-            raise ErreurGlb(f"Accessor {i} inexistant.")
+            raise ErreurGlb(_tr("py.glb2tiles.accessor_0_inexistant", i))
         x = accs[i]
         if "sparse" in x:
-            raise ErreurGlb(f"Accessor {i} : accessor « sparse » non géré par glb2tiles.")
+            raise ErreurGlb(_tr("py.glb2tiles.accessor_0_accessor_sparse_non_gere", i))
         if "bufferView" not in x:
-            raise ErreurGlb(f"Accessor {i} : sans bufferView (valeurs à zéro) non géré par glb2tiles.")
+            raise ErreurGlb(_tr("py.glb2tiles.accessor_0_sans_bufferview_valeurs_a", i))
         bv = self.vue(x["bufferView"])
         comp, typ = x.get("componentType"), x.get("type")
         if comp not in TAILLE or typ not in NCOMP:
-            raise ErreurGlb(f"Accessor {i} : type {typ}/{comp} inconnu.")
+            raise ErreurGlb(_tr("py.glb2tiles.accessor_0_type_1_2_inconnu", i, typ, comp))
         nc = NCOMP[typ]
         es = nc * TAILLE[comp]
         stride = bv.get("byteStride") or es
         off = bv.get("byteOffset", 0) + x.get("byteOffset", 0)
         count = x.get("count", 0)
         if stride < es:
-            raise ErreurGlb(f"Accessor {i} : byteStride ({stride}) plus petit qu'un élément ({es}).")
+            raise ErreurGlb(_tr("py.glb2tiles.accessor_0_bytestride_1_plus_petit", i, stride, es))
         if count and off + (count - 1) * stride + es > bv.get("byteOffset", 0) + bv.get("byteLength", 0):
-            raise ErreurGlb(f"Accessor {i} : dépasse son bufferView (fichier invalide).")
+            raise ErreurGlb(_tr("py.glb2tiles.accessor_0_depasse_son_bufferview_fichier", i))
         a = Acc(i, comp, nc, count, es, stride, off, bool(x.get("normalized")), typ, x.get("min"), x.get("max"))
         self._acc[i] = a
         return a
@@ -221,9 +237,9 @@ class Glb:
         """Indices d'un accessor, par morceaux (array non signé)."""
         a = self.acc(ai)
         if a.comp not in (5121, 5123, 5125) or a.ncomp != 1:
-            raise ErreurGlb(f"Accessor {ai} : type d'indices non géré.")
+            raise ErreurGlb(_tr("py.glb2tiles.accessor_0_type_d_indices_non", ai))
         if a.stride != a.es:
-            raise ErreurGlb(f"Accessor {ai} : indices avec byteStride non gérés.")
+            raise ErreurGlb(_tr("py.glb2tiles.accessor_0_indices_avec_bytestride_non", ai))
         n_par = max(1, BLOC_LECTURE // a.es)
         for debut in range(0, a.count, n_par):
             n = min(n_par, a.count - debut)
@@ -423,7 +439,7 @@ def compiler_exclusions(motifs):
         try:
             res.append(re.compile(m, re.IGNORECASE))
         except re.error as e:
-            raise ErreurGlb(f"Expression régulière invalide pour --exclure : {m!r} ({e}).")
+            raise ErreurGlb(_tr("py.glb2tiles.expression_reguliere_invalide_pour_exclure_0", m, e))
     return res
 
 
@@ -464,7 +480,7 @@ class Plan:
                 self.parent.setdefault(c, i)
         scs = g.get("scenes", [])
         if len(scs) > 1:
-            self.avertissements.append(f"{len(scs)} scènes : seule la scène {g.get('scene', 0)} est découpée.")
+            self.avertissements.append(_tr("py.glb2tiles.0_scenes_seule_la_scene_1", len(scs), g.get('scene', 0)))
         sc = scs[g.get("scene", 0)] if scs else {}
         self.racines_ids = sc.get("nodes") if scs else [i for i in range(len(self.nodes)) if i not in self.parent]
         self.cb = {}            # clé (primitive, skin) -> octets compactés
@@ -473,7 +489,7 @@ class Plan:
                         for i in g.get("images", [])]
         for i in g.get("images", []):
             if "bufferView" not in i and not str(i.get("uri", "")).startswith("data:"):
-                raise ErreurGlb("Image externe (uri) non gérée : seuls les GLB à images intégrées le sont.")
+                raise ErreurGlb(_tr("py.glb2tiles.image_externe_uri_non_geree_seuls"))
         self._imgs_mat = {}
         self.parcourir()
         self.analyser_prims()
@@ -509,7 +525,7 @@ class Plan:
                     pile.append((c, m))
             self.noeuds_racine[r] = lst
         if ignores:
-            self.avertissements.append(f"{len(ignores)} nœud(s) avec caméra ou extensions de nœud : ces champs ne sont pas recopiés dans les tuiles.")
+            self.avertissements.append(_tr("py.glb2tiles.0_nud_s_avec_camera_ou", len(ignores)))
 
     def textures_materiau(self, mi):
         res = self._imgs_mat.get(mi)
@@ -532,17 +548,17 @@ class Plan:
             if m in self.mesh_prims:
                 continue
             if not (0 <= m < len(self.meshes)):
-                raise ErreurGlb(f"Nœud {ni} : mesh {m} inexistant.")
+                raise ErreurGlb(_tr("py.glb2tiles.nud_0_mesh_1_inexistant", ni, m))
             lst = []
             for pr in self.meshes[m].get("primitives", []):
                 if "extensions" in pr:
                     ext_prim = True
                 if "POSITION" not in pr.get("attributes", {}):
-                    raise ErreurGlb(f"Mesh {m} : primitive sans POSITION non gérée.")
+                    raise ErreurGlb(_tr("py.glb2tiles.mesh_0_primitive_sans_position_non", m))
                 lst.append((cle_prim(pr), pr))
             self.mesh_prims[m] = lst
         if ext_prim:
-            self.avertissements.append("Des primitives portent des extensions : elles ne sont pas recopiées dans les tuiles.")
+            self.avertissements.append(_tr("py.glb2tiles.des_primitives_portent_des_extensions_elles"))
         cles = []
         vu = set()
         for lst in self.mesh_prims.values():
@@ -550,7 +566,7 @@ class Plan:
                 if k not in vu:
                     vu.add(k)
                     cles.append(k)
-        log(f"[analyse] {len(cles)} primitives distinctes à mesurer (lecture des indices par morceaux)")
+        log(_tr("py.glb2tiles.analyse_0_primitives_distinctes_a_mesurer", len(cles)))
         pg = Progres("primitives", len(cles))
         self.positions_lues = 0
         for n, k in enumerate(cles):
@@ -585,7 +601,7 @@ class Plan:
         p.key, p.mode, p.indices, p.attrs, p.targets = key, mode, ai, d, [dict(t) for t in tg]
         for ac in list(d.values()) + [v for t in p.targets for v in t.values()]:
             if glb.acc(ac).count != pa.count:
-                raise ErreurGlb(f"Primitive : les attributs n'ont pas tous {pa.count} sommets (accessor {ac}).")
+                raise ErreurGlb(_tr("py.glb2tiles.primitive_les_attributs_n_ont_pas", pa.count, ac))
         mq = None
         if ai is None:
             p.n_idx = p.used = pa.count
@@ -599,7 +615,7 @@ class Plan:
             p.used = mq.compter()
             p.imin, p.imax = (mq.imin, mq.imax) if p.used else (0, -1)
             if p.used and p.imax >= pa.count:
-                raise ErreurGlb(f"Accessor {ai} : un indice dépasse le nombre de sommets ({pa.count}) : fichier invalide.")
+                raise ErreurGlb(_tr("py.glb2tiles.accessor_0_un_indice_depasse_le", ai, pa.count))
         p.tri = tri_mode(mode, p.n_idx)
         p.vide = p.used == 0
         p.lo = p.hi = None
@@ -621,7 +637,7 @@ class Plan:
         if pa.mn and pa.mx and len(pa.mn) >= 3 and len(pa.mx) >= 3 and p.used == pa.count:
             return [float(v) for v in pa.mn[:3]], [float(v) for v in pa.mx[:3]]
         if pa.ncomp < 3 or pa.stride % TAILLE[pa.comp]:
-            raise ErreurGlb(f"Accessor {pa.i} : positions non gérées.")
+            raise ErreurGlb(_tr("py.glb2tiles.accessor_0_positions_non_gerees", pa.i))
         lo, hi = [math.inf] * 3, [-math.inf] * 3
         se = pa.stride // TAILLE[pa.comp]
         lignes = max(1, BLOC_LECTURE // max(pa.stride, 1))
@@ -688,7 +704,7 @@ class Plan:
                 nom = nd.get("name") or (self.meshes[nd["mesh"]].get("name") if "mesh" in nd else "") or ""
                 if any(rx.search(nom) for rx in self.P.exclure):
                     if rac.tri <= self.P.exclure_max_tri and len(rac.insts) <= self.P.exclure_max_meshes:
-                        self.exclus.append({"nom": nom or f"nœud {r}", "tri": rac.tri, "meshes": len(rac.insts), "cles": rac.cles, "imgs": rac.imgs})
+                        self.exclus.append({"nom": nom or _tr("py.glb2tiles.nud_0", r), "tri": rac.tri, "meshes": len(rac.insts), "cles": rac.cles, "imgs": rac.imgs})
                         continue
                     self.gardes += 1
             rac.lo = [min(i.lo[k] for i in rac.insts) for k in range(3)]
@@ -759,7 +775,7 @@ class Plan:
     def cle_skin(self, si, cles):
         skins = self.glb.g.get("skins", [])
         if not (0 <= si < len(skins)):
-            raise ErreurGlb(f"Skin {si} inexistant.")
+            raise ErreurGlb(_tr("py.glb2tiles.skin_0_inexistant", si))
         k = ("skin", si)
         if k not in self.cb:
             ib = skins[si].get("inverseBindMatrices")
@@ -773,7 +789,7 @@ class Plan:
                 u = Unite()
                 u.racine, u.node, u.entier, u.cles, u.imgs, u.tri = rac, None, True, rac.cles, rac.imgs, rac.tri
                 u.cx, u.cz, u.ninst, u.etendue = rac.centre[0], rac.centre[2], len(rac.insts), rac.etendue
-                u.nom = self.nodes[rac.id].get("name") or f"nœud {rac.id}"
+                u.nom = self.nodes[rac.id].get("name") or _tr("py.glb2tiles.nud_0", rac.id)
                 self.unites.append(u)
             else:
                 for it in rac.insts:
@@ -782,7 +798,7 @@ class Plan:
                     u.racine, u.node, u.entier, u.cles, u.imgs, u.tri = rac, it.node, False, mi.cles, mi.imgs, it.tri
                     u.cx, u.cz, u.ninst = it.centre[0], it.centre[2], 1
                     u.etendue = max(it.hi[0] - it.lo[0], it.hi[2] - it.lo[2])
-                    u.nom = self.nodes[it.node].get("name") or self.meshes[it.mesh].get("name") or f"nœud {it.node}"
+                    u.nom = self.nodes[it.node].get("name") or self.meshes[it.mesh].get("name") or _tr("py.glb2tiles.nud_0", it.node)
                     self.unites.append(u)
 
     def donnees_image(self, ii):
@@ -884,8 +900,7 @@ class Plan:
             lourds = sorted(t.units, key=lambda u: -(sum(self.cb[k] for k in u.cles) + sum(self.img_oct[i] for i in u.imgs)))[:3]
             noms = "; ".join(f"« {u.nom} » {u.etendue:.0f} m, "
                              f"{mo(sum(self.cb[k] for k in u.cles) + sum(self.img_oct[i] for i in u.imgs)):.1f} Mo" for u in lourds)
-            res.append(f"Tuile {t.nom} hors budget ({mo(geo + img):.1f} Mo, {fmt(tri)} triangles) : {noms}. "
-                       "Un mesh unique plus grand qu'une cellule ne peut pas être réparti à ce stade.")
+            res.append(_tr("py.glb2tiles.tuile_0_hors_budget_1_1f", t.nom, mo(geo + img), fmt(tri), noms))
         return res
 
     def aberrantes(self):
@@ -1064,7 +1079,7 @@ class Assemblage:
         if ti in self.tex_idx:
             return self.tex_idx[ti]
         if not (0 <= ti < len(self.plan.texs)):
-            raise ErreurGlb(f"Texture {ti} inexistante.")
+            raise ErreurGlb(_tr("py.glb2tiles.texture_0_inexistante", ti))
         d = json.loads(json.dumps(self.plan.texs[ti]))
         if isinstance(d.get("source"), int):
             d["source"] = self.image(d["source"])
@@ -1203,7 +1218,7 @@ def ecrire_tuile(plan, tuile, chemin):
     jb += b" " * (-len(jb) % 4)
     total = 12 + 8 + len(jb) + 8 + total_bin
     if total > LIMITE_GLB:
-        raise ErreurGlb(f"Tuile {tuile.nom} : {total / 1024 ** 3:.2f} Go, au-delà de la limite de 4 Go d'un GLB.")
+        raise ErreurGlb(_tr("py.glb2tiles.tuile_0_1_2f_go_au", tuile.nom, total / 1024 ** 3))
     tmp = str(chemin) + ".tmp"
     with open(tmp, "wb") as f:
         f.write(struct.pack("<4sII", b"glTF", 2, total))
@@ -1232,12 +1247,11 @@ def recommandation(glb, plan, tuiles):
     tri = sum(i.tri for i in plan.insts)
     taille = glb.taille - getattr(plan, "octets_exclus", 0)        # sans les objets exclus
     if mo(taille) <= P.seuil_mo and tri <= P.seuil_tri:
-        return False, (f"Recommandation : pas de découpage nécessaire ({mo(taille):.1f} Mo sous {P.seuil_mo:g} Mo "
-                       f"et {fmt(tri)} triangles sous {fmt(P.seuil_tri)}).")
+        return False, (_tr("py.glb2tiles.recommandation_pas_de_decoupage_necessaire_0", mo(taille), P.seuil_mo, fmt(tri), fmt(P.seuil_tri)))
     geo_u = sum(plan.cb[k] for k in {k for u in plan.unites for k in u.cles})
     st = plan.stats_tuiles(tuiles)
     dup = sum(s[0] for s in st) / geo_u if geo_u else 1.0
-    return True, f"Recommandation : découper : budget {P.budget_mo:g} Mo, {len(tuiles)} tuiles, duplication {virg(dup)}."
+    return True, _tr("py.glb2tiles.recommandation_decouper_budget_0_g_mo", P.budget_mo, len(tuiles), virg(dup))
 
 
 def lignes_exclusions(plan):
@@ -1245,15 +1259,13 @@ def lignes_exclusions(plan):
     P = plan.P
     if not P.exclure:
         return []
-    out = [f"Objets exclus (--exclure, au plus {P.exclure_max_tri} triangles et {P.exclure_max_meshes} mesh(es) par objet racine) : "
-           f"{len(plan.exclus)} | triangles retirés : {fmt(sum(x['tri'] for x in plan.exclus))} | octets gagnés : {fmt(plan.octets_exclus)} ({mo(plan.octets_exclus):.1f} Mo)"]
+    out = [_tr("py.glb2tiles.objets_exclus_exclure_au_plus_0", P.exclure_max_tri, P.exclure_max_meshes, len(plan.exclus), fmt(sum(x['tri'] for x in plan.exclus)), fmt(plan.octets_exclus), mo(plan.octets_exclus))]
     if plan.exclus:
-        out.append(f"  octets des exclus qu'un objet conservé utilise aussi (non gagnés) : {fmt(plan.octets_partages)} ({mo(plan.octets_partages):.1f} Mo)")
+        out.append(_tr("py.glb2tiles.octets_des_exclus_qu_un_objet", fmt(plan.octets_partages), mo(plan.octets_partages)))
         if plan.octets_exclus == 0:
-            out.append("  0 octet gagné : toute la géométrie et toutes les images des objets exclus sont partagées avec des objets conservés (même primitive ou même texture, "
-                       "typiquement un cube commun) ; retirer ces objets enlève des nœuds et des triangles, pas des octets.")
+            out.append(_tr("py.glb2tiles.0_octet_gagne_toute_la_geometrie"))
     if plan.gardes:
-        out.append(f"  {plan.gardes} objet(s) au nom correspondant conservé(s) par les garde-fous (trop de triangles ou de meshes)")
+        out.append(_tr("py.glb2tiles.0_objet_s_au_nom_correspondant", plan.gardes))
     for nom, n in collections.Counter(x["nom"] for x in plan.exclus).most_common(20):
         out.append(f"  - {n} x « {nom[:70]} »")
     return out
@@ -1262,14 +1274,13 @@ def lignes_exclusions(plan):
 def ligne_images(plan, tuiles):
     """Images vides ou invalides remplacées par un PNG gris (une phrase)."""
     dist, occ = plan.images_remplacees(tuiles)
-    return (f"Images vides ou invalides remplacées par un PNG gris de {GRIS_IMAGE} : {fmt(dist)} distincte(s), {fmt(occ)} occurrence(s) "
-            f"(une occurrence = une image écrite dans une tuile) ; matériaux et coordonnées de texture inchangés.")
+    return (_tr("py.glb2tiles.images_vides_ou_invalides_remplacees_par", GRIS_IMAGE, fmt(dist), fmt(occ)))
 
 
 def rapport_analyse(glb, plan, tuiles):
     P = plan.P
     out = []
-    out.append("== Mesures de glb-stats ==")
+    out.append(_tr("py.glb2tiles.mesures_de_glb_stats"))
     out.extend(stats().rapport(glb.chemin, P.bloc, glb.g, glb.njson))
     out.append("")
     # meshes les plus lourds
@@ -1277,7 +1288,7 @@ def rapport_analyse(glb, plan, tuiles):
     for it in plan.insts:
         insts_mesh[it.mesh].append(it)
     lourds = sorted(plan.mesh_info.items(), key=lambda kv: -sum(plan.cb[k] for k in set(kv[1].prims)))[:10]
-    out.append("== Les 10 meshes les plus lourds (octets compactés, sommets réellement utilisés) ==")
+    out.append(_tr("py.glb2tiles.les_10_meshes_les_plus_lourds"))
     for m, mi in lourds:
         o = sum(plan.cb[k] for k in set(mi.prims))
         its = insts_mesh.get(m, [])
@@ -1285,16 +1296,16 @@ def rapport_analyse(glb, plan, tuiles):
             e = its[0]
             dim = f"{e.hi[0] - e.lo[0]:.1f} x {e.hi[1] - e.lo[1]:.1f} x {e.hi[2] - e.lo[2]:.1f} m"
         else:
-            dim = "sans instance"
+            dim = _tr("py.glb2tiles.sans_instance")
         nom = plan.meshes[m].get("name") or f"mesh {m}"
-        out.append(f"  - « {nom[:40]} » : {mo(o):.2f} Mo, {fmt(mi.tri)} triangles, étendue (X x Y x Z) {dim}, {len(its)} instance(s)")
+        out.append(_tr("py.glb2tiles.0_1_2f_mo_2_triangles", nom[:40], mo(o), fmt(mi.tri), dim, len(its)))
     # instances aberrantes
     lst, (mx, mz) = plan.aberrantes()
     out.append("")
-    out.append(f"== Les 10 instances les plus éloignées du centre médian (X {mx:.0f} m, Z {mz:.0f} m) ==")
+    out.append(_tr("py.glb2tiles.les_10_instances_les_plus_eloignees", mx, mz))
     for d, ext, it in sorted(lst, key=lambda t: -t[0])[:10]:
-        nom = plan.nodes[it.node].get("name") or f"nœud {it.node}"
-        out.append(f"  - « {nom[:40]} » : distance {d:.0f} m, étendue {ext:.0f} m")
+        nom = plan.nodes[it.node].get("name") or _tr("py.glb2tiles.nud_0", it.node)
+        out.append(_tr("py.glb2tiles.0_distance_1_0f_m_etendue", nom[:40], d, ext))
     # découpage prévu
     st = plan.stats_tuiles(tuiles)
     geo_u = sum(plan.cb[k] for k in {k for u in plan.unites for k in u.cles})
@@ -1302,24 +1313,23 @@ def rapport_analyse(glb, plan, tuiles):
     dup_g = sum(s[0] for s in st) / geo_u if geo_u else 1.0
     dup_i = sum(s[1] for s in st) / img_u if img_u else 1.0
     out.append("")
-    out.append(f"== Découpage prévu (budget {P.budget_mo:g} Mo, {fmt(P.budget_tri)} triangles, cellule minimale {P.cote_min:g} m) ==")
-    out.append(f"Tuiles : {len(tuiles)} | duplication prévue : géométrie {virg(dup_g)}, images {virg(dup_i)}")
+    out.append(_tr("py.glb2tiles.decoupage_prevu_budget_0_g_mo", P.budget_mo, fmt(P.budget_tri), P.cote_min))
+    out.append(_tr("py.glb2tiles.tuiles_0_duplication_prevue_geometrie_1", len(tuiles), virg(dup_g), virg(dup_i)))
     if st:
         poids = [(s[0] + s[1]) / MO for s in st]
         tris = [s[2] for s in st]
-        out.append(f"Poids par tuile (Mo) : médiane {quantile(poids, 0.5):.1f} | 90 % sous {quantile(poids, 0.9):.1f} | maximum {max(poids):.1f}")
-        out.append(f"Triangles par tuile : médiane {fmt(quantile(tris, 0.5))} | 90 % sous {fmt(quantile(tris, 0.9))} | maximum {fmt(max(tris))}")
+        out.append(_tr("py.glb2tiles.poids_par_tuile_mo_mediane_0", quantile(poids, 0.5), quantile(poids, 0.9), max(poids)))
+        out.append(_tr("py.glb2tiles.triangles_par_tuile_mediane_0_90", fmt(quantile(tris, 0.5)), fmt(quantile(tris, 0.9)), fmt(max(tris))))
     ent = sum(1 for r in plan.racines if r.entier)
     skin = sum(1 for r in plan.racines if r.skin)
     out.extend(lignes_exclusions(plan))
     out.append(ligne_images(plan, tuiles))
-    out.append(f"Objets racine : {len(plan.racines)} | gardés entiers : {ent} (dont {skin} avec skin) | répartis instance par instance : {len(plan.racines) - ent}")
+    out.append(_tr("py.glb2tiles.objets_racine_0_gardes_entiers_1", len(plan.racines), ent, skin, len(plan.racines) - ent))
     avert = plan.avertissements + signalements(plan) + plan.hors_budget(tuiles)
     if avert:
         out.append("Avertissements :")
         out.extend("  - " + a for a in avert)
-    out.append(f"Lecture : {fmt(glb.octets_lus)} octets lus sur {fmt(glb.taille)} (plus grande lecture {fmt(glb.plus_grande_lecture)} octets"
-               f"; positions relues pour {fmt(plan.positions_lues)} octets, primitives qui partagent un tampon de sommets).")
+    out.append(_tr("py.glb2tiles.lecture_0_octets_lus_sur_1", fmt(glb.octets_lus), fmt(glb.taille), fmt(glb.plus_grande_lecture), fmt(plan.positions_lues)))
     out.append("")
     out.append(recommandation(glb, plan, tuiles)[1])
     return out
@@ -1332,8 +1342,8 @@ def signalements(plan):
     mauvais = sorted([t for t in lst if t[0] > seuil or t[1] > seuil], key=lambda t: -max(t[0], t[1]))
     if not mauvais:
         return []
-    ex = ", ".join(f"« {(plan.nodes[t[2].node].get('name') or 'nœud ' + str(t[2].node))[:30]} » ({t[0]:.0f} m du centre, étendue {t[1]:.0f} m)" for t in mauvais[:3])
-    return [f"{len(mauvais)} instance(s) aberrante(s) (à plus de {seuil:g} m du centre médian ou d'étendue supérieure) : {ex}."]
+    ex = ", ".join(_tr("py.glb2tiles.0_1_0f_m_du_centre", (plan.nodes[t[2].node].get('name') or 'nœud ' + str(t[2].node))[:30], t[0], t[1]) for t in mauvais[:3])
+    return [_tr("py.glb2tiles.0_instance_s_aberrante_s_a", len(mauvais), seuil, ex)]
 
 
 # ---------------------------------------------------------------- vue d'ensemble (X.overview.glb)
@@ -1458,7 +1468,7 @@ def lire_geometrie(plan, key):
         flags = mq.flags
     n = p.imax - p.imin + 1
     if pa.ncomp < 3 or pa.stride % TAILLE[pa.comp]:
-        raise ErreurGlb(f"Accessor {pa.i} : positions non gérées.")
+        raise ErreurGlb(_tr("py.glb2tiles.accessor_0_positions_non_gerees", pa.i))
     raw = bytes(glb.rangee(pa, p.imin, n)) + bytes(pa.stride - pa.es)
     arr = array.array(CODE[pa.comp])
     arr.frombytes(raw)
@@ -1742,7 +1752,7 @@ def ecrire_vue_ensemble(plan, groupes, chemin, tuiles_fichiers):
     jb += b" " * (-len(jb) % 4)
     total = 12 + 8 + len(jb) + (8 + total_bin if nodes else 0)
     if total > LIMITE_GLB:
-        raise ErreurGlb("La vue d'ensemble dépasse la limite de 4 Go d'un GLB.")
+        raise ErreurGlb(_tr("py.glb2tiles.la_vue_d_ensemble_depasse_la"))
     tmp = str(chemin) + ".tmp"
     with open(tmp, "wb") as f:
         f.write(struct.pack("<4sII", b"glTF", 2, total))
@@ -1773,8 +1783,7 @@ def instances_de(plan, tuile):
 def vue_ensemble(plan, tuiles, noms, OP, chemin):
     """Construit et écrit la vue d'ensemble. noms : fichier de chaque tuile (même ordre que `tuiles`). Rend le dictionnaire du rapport."""
     t0 = time.time()
-    log(f"[vue d'ensemble] budget {OP.budget_mo:g} Mo et {fmt(OP.budget_tri)} triangles, seuil d'étendue {OP.seuil:g} m, résolution {OP.resolution}, "
-        f"pas du terrain {OP.pas_terrain:g} m")
+    log(_tr("py.glb2tiles.vue_d_ensemble_budget_0_g", OP.budget_mo, fmt(OP.budget_tri), OP.seuil, OP.resolution, OP.pas_terrain))
     couleurs = Couleurs(plan)
     omis = {"petits": 0, "squelette": 0, "translucides": 0, "budget": 0}
     tp, cand = [], []             # pièces de terrain (instance, tuile) ; objets candidats (étendue, instance, tuile)
@@ -1795,8 +1804,8 @@ def vue_ensemble(plan, tuiles, noms, OP, chemin):
         if not tp or (tri_terrain <= OP.budget_tri / 2 and oct_terrain <= OP.budget / 2) or pas > 4096:
             break
         pas *= 1.5
-        log(f"[vue d'ensemble] terrain trop lourd pour la moitié du budget : pas porté à {pas:g} m")
-    log(f"[vue d'ensemble] terrain : {len(tp)} pièce(s), {fmt(tri_terrain)} triangles, réseau de {pas:g} m")
+        log(_tr("py.glb2tiles.vue_d_ensemble_terrain_trop_lourd", pas))
+    log(_tr("py.glb2tiles.vue_d_ensemble_terrain_0_piece", len(tp), fmt(tri_terrain), pas))
     res = OP.resolution
     while True:
         base = sorted((c for c in cand if c[0] >= OP.seuil), key=lambda c: -c[0])
@@ -1840,7 +1849,7 @@ def vue_ensemble(plan, tuiles, noms, OP, chemin):
         limite = max((c[0] for c in coupes), default=0.0)
         if limite > OP.seuil_max and res > 3:
             res = max(3, int(res * 0.7))
-            log(f"[vue d'ensemble] budget atteint avant des objets de {limite:.0f} m : résolution réduite à {res}")
+            log(_tr("py.glb2tiles.vue_d_ensemble_budget_atteint_avant", limite, res))
             continue
         break
 
@@ -1860,7 +1869,7 @@ def vue_ensemble(plan, tuiles, noms, OP, chemin):
         total, tri, nn = ecrire_vue_ensemble(plan, [acc_t, acc_o], chemin, noms)
     omis["budget"] = len(base) - len(gardes) - sum(1 for c in base if not info[c[1].mesh][0])
     seuil_eff = min((c[0] for c in gardes), default=OP.seuil)
-    log(f"[vue d'ensemble] {total / MO:.1f} Mo, {fmt(tri)} triangles, {len(gardes)} objet(s) sur {len(cand)}, {nn} tuile(s) en {time.time() - t0:.1f} s")
+    log(_tr("py.glb2tiles.vue_d_ensemble_0_1f_mo", total / MO, fmt(tri), len(gardes), len(cand), nn, time.time() - t0))
     return {"file": chemin.name, "bytes": total, "triangles": tri, "terrainTriangles": tri_terrain, "objects": len(gardes), "candidates": len(cand),
             "omitted": {"small": omis["petits"], "skinned": omis["squelette"], "translucentPrimitives": omis["translucides"], "budget": omis["budget"]},
             "effectiveMinExtent": round(seuil_eff, 2), "resolution": res, "effectiveTerrainStep": round(pas, 3), "seconds": round(time.time() - t0, 1),
@@ -1892,7 +1901,7 @@ def ecrire_tout(glb, plan, tuiles, sortie, nom):
 
 def lignes_taille_instances(plan):
     """Répartition des instances par étendue (plus grande dimension) : aide à choisir --ov-seuil de la vue d'ensemble."""
-    out = ["Étendue des instances (plus grande dimension) : instances et triangles au-dessus de chaque seuil"]
+    out = [_tr("py.glb2tiles.etendue_des_instances_plus_grande_dimension")]
     tot_i, tot_t = len(plan.insts), sum(i.tri for i in plan.insts)
     for sv in (1, 2, 3, 4, 8, 16, 32, 64):
         n = t = 0
@@ -1907,52 +1916,52 @@ def lignes_taille_instances(plan):
 def main(argv=None, log_path=None):
     global LOG_PATH
     LOG_PATH = log_path
-    ap = argparse.ArgumentParser(description="Découpe un GLB énorme en tuiles autonomes.")
-    ap.add_argument("glb", help="GLB d'entrée")
-    ap.add_argument("--version", action="version", version=f"glb2tiles {VERSION}")
-    ap.add_argument("--analyse", action="store_true", help="lecture seule : mesures, découpage prévu, recommandation ; n'écrit rien")
-    ap.add_argument("--budget", type=float, default=32.0, help="Mo par tuile (défaut 32)")
-    ap.add_argument("--budget-tri", type=int, default=1500000, help="triangles par tuile (défaut 1500000)")
-    ap.add_argument("--min", type=float, default=16.0, dest="cote_min", help="côté minimal d'une cellule en m (défaut 16)")
-    ap.add_argument("--entier-poids", type=float, default=16.0, help="Mo : un objet racine plus léger et plus petit que --entier-etendue reste entier (défaut 16)")
-    ap.add_argument("--entier-etendue", type=float, default=256.0, help="m : étendue maximale d'un objet racine gardé entier (défaut 256)")
-    ap.add_argument("--seuil", type=float, default=150.0, help="Mo : sous ce poids (et sous --seuil-tri) « pas de découpage » (défaut 150)")
-    ap.add_argument("--seuil-tri", type=int, default=3000000, help="triangles pour la recommandation « pas de découpage » (défaut 3000000)")
-    ap.add_argument("--aberrant", type=float, default=1000.0, help="m : distance ou étendue au-delà de laquelle une instance est signalée (défaut 1000)")
-    ap.add_argument("--bloc", type=float, default=256.0, help="côté des blocs de la section glb-stats de --analyse (défaut 256)")
+    ap = argparse.ArgumentParser(description=_tr("py.glb2tiles.desc"), epilog=_tr("py.glb2tiles.epilog"), formatter_class=argparse.RawDescriptionHelpFormatter, add_help=False)
+    i18n_add_common(ap)
+    ap.add_argument("glb", help=_tr("py.glb2tiles.glb_d_entree"))
+    ap.add_argument("--version", action="version", version=f"glb2tiles {VERSION}", help=_tr("py.common.version"))
+    ap.add_argument("--analyse", action="store_true", help=_tr("py.glb2tiles.lecture_seule_mesures_decoupage_prevu_recomm"))
+    ap.add_argument("--budget", type=float, default=32.0, help=_tr("py.glb2tiles.mo_par_tuile_defaut_32"))
+    ap.add_argument("--budget-tri", type=int, default=1500000, help=_tr("py.glb2tiles.triangles_par_tuile_defaut_1500000"))
+    ap.add_argument("--min", type=float, default=16.0, dest="cote_min", help=_tr("py.glb2tiles.cote_minimal_d_une_cellule_en"))
+    ap.add_argument("--entier-poids", type=float, default=16.0, help=_tr("py.glb2tiles.mo_un_objet_racine_plus_leger"))
+    ap.add_argument("--entier-etendue", type=float, default=256.0, help=_tr("py.glb2tiles.m_etendue_maximale_d_un_objet"))
+    ap.add_argument("--seuil", type=float, default=150.0, help=_tr("py.glb2tiles.mo_sous_ce_poids_et_sous"))
+    ap.add_argument("--seuil-tri", type=int, default=3000000, help=_tr("py.glb2tiles.triangles_pour_la_recommandation_pas_de"))
+    ap.add_argument("--aberrant", type=float, default=1000.0, help=_tr("py.glb2tiles.m_distance_ou_etendue_au_dela"))
+    ap.add_argument("--bloc", type=float, default=256.0, help=_tr("py.glb2tiles.cote_des_blocs_de_la_section"))
     ap.add_argument("--exclure", action="append", default=[], metavar="REGEX",
-                    help="retire du découpage les objets racine dont le nom correspond (insensible à la casse, répétable), à condition de respecter --exclure-max-tri et --exclure-max-meshes")
-    ap.add_argument("--exclure-max-tri", type=int, default=24, help="avec --exclure : triangles au plus dans l'objet racine, tous meshes compris (défaut 24)")
-    ap.add_argument("--exclure-max-meshes", type=int, default=1, help="avec --exclure : meshes au plus dans l'objet racine (défaut 1)")
-    ap.add_argument("--sans-references", action="store_true", help="ne pas écrire extras.ref / extras.box dans les nœuds des tuiles (format de la v31 : les zones liées à un objet sont alors ignorées en mode tuiles)")
-    ap.add_argument("--sans-vue-ensemble", action="store_true", help="ne pas écrire X.overview.glb (vue d'ensemble légère de toute la région)")
-    ap.add_argument("--vue-ensemble-seule", action="store_true", help="n'écrire que X.overview.glb (et sa mention dans X.tiles.json) : les tuiles existantes ne sont pas réécrites ; "
-                    "les paramètres de découpage doivent être ceux du découpage d'origine")
-    ap.add_argument("--ov-budget", type=float, default=OV_BUDGET_MO, help="Mo : poids maximal de la vue d'ensemble (défaut %(default)g)")
-    ap.add_argument("--ov-budget-tri", type=int, default=OV_BUDGET_TRI, help="triangles de la vue d'ensemble (défaut %(default)d)")
-    ap.add_argument("--ov-seuil", type=float, default=OV_SEUIL, help="m : les objets dont la plus grande dimension est plus petite sont omis (défaut %(default)g) ; le budget peut le relever")
-    ap.add_argument("--ov-seuil-max", type=float, default=OV_SEUIL_MAX, help="m : si le budget oblige à omettre des objets plus grands, la résolution baisse (défaut %(default)g)")
-    ap.add_argument("--ov-resolution", type=int, default=OV_RESOLUTION, help="cellules sur la plus grande dimension d'une primitive pour le regroupement de sommets (défaut %(default)d)")
-    ap.add_argument("--ov-terrain-pas", type=float, default=OV_PAS_TERRAIN, help="m : pas du réseau du terrain dans la vue d'ensemble (défaut %(default)g)")
-    ap.add_argument("--forcer", action="store_true", help="découper même si la recommandation est « pas de découpage »")
-    ap.add_argument("--sortie", help="dossier de sortie (défaut : à côté du GLB)")
-    ap.add_argument("--nopause", action="store_true", help="ne pas attendre Entrée à la fin")
+                    help=_tr("py.glb2tiles.retire_du_decoupage_les_objets_racine"))
+    ap.add_argument("--exclure-max-tri", type=int, default=24, help=_tr("py.glb2tiles.avec_exclure_triangles_au_plus_dans"))
+    ap.add_argument("--exclure-max-meshes", type=int, default=1, help=_tr("py.glb2tiles.avec_exclure_meshes_au_plus_dans"))
+    ap.add_argument("--sans-references", action="store_true", help=_tr("py.glb2tiles.ne_pas_ecrire_extras_ref_extras"))
+    ap.add_argument("--sans-vue-ensemble", action="store_true", help=_tr("py.glb2tiles.ne_pas_ecrire_x_overview_glb"))
+    ap.add_argument("--vue-ensemble-seule", action="store_true", help=_tr("py.glb2tiles.n_ecrire_que_x_overview_glb"))
+    ap.add_argument("--ov-budget", type=float, default=OV_BUDGET_MO, help=_tr("py.glb2tiles.mo_poids_maximal_de_la_vue"))
+    ap.add_argument("--ov-budget-tri", type=int, default=OV_BUDGET_TRI, help=_tr("py.glb2tiles.triangles_de_la_vue_d_ensemble"))
+    ap.add_argument("--ov-seuil", type=float, default=OV_SEUIL, help=_tr("py.glb2tiles.m_les_objets_dont_la_plus"))
+    ap.add_argument("--ov-seuil-max", type=float, default=OV_SEUIL_MAX, help=_tr("py.glb2tiles.m_si_le_budget_oblige_a"))
+    ap.add_argument("--ov-resolution", type=int, default=OV_RESOLUTION, help=_tr("py.glb2tiles.cellules_sur_la_plus_grande_dimension"))
+    ap.add_argument("--ov-terrain-pas", type=float, default=OV_PAS_TERRAIN, help=_tr("py.glb2tiles.m_pas_du_reseau_du_terrain"))
+    ap.add_argument("--forcer", action="store_true", help=_tr("py.glb2tiles.decouper_meme_si_la_recommandation_est"))
+    ap.add_argument("--sortie", help=_tr("py.glb2tiles.dossier_de_sortie_defaut_a_cote"))
+    ap.add_argument("--nopause", action="store_true", help=_tr("py.glb2tiles.ne_pas_attendre_entree_a_la"))
     a = ap.parse_args(argv)
     P = Params(a.budget, a.budget_tri, a.cote_min, a.entier_poids, a.entier_etendue, a.seuil, a.seuil_tri, a.aberrant, a.bloc,
                a.exclure, a.exclure_max_tri, a.exclure_max_meshes, not a.sans_references)
     OP = ParamsOv(a.ov_budget, a.ov_budget_tri, a.ov_seuil, a.ov_seuil_max, a.ov_resolution, a.ov_terrain_pas)
     if a.sans_vue_ensemble and a.vue_ensemble_seule:
-        raise ErreurGlb("--sans-vue-ensemble et --vue-ensemble-seule s'excluent.")
+        raise ErreurGlb(_tr("py.glb2tiles.sans_vue_ensemble_et_vue_ensemble"))
     t0 = time.time()
     chemin = Path(a.glb)
     if not chemin.is_file():
-        raise ErreurGlb(f"GLB introuvable : {chemin}")
+        raise ErreurGlb(_tr("py.glb2tiles.glb_introuvable_0", chemin))
     glb = Glb(chemin)
     try:
-        log(f"[glb2tiles] {chemin.name} : {mo(glb.taille):.1f} Mo")
+        log(_tr("py.glb2tiles.glb2tiles_0_1_1f_mo", chemin.name, mo(glb.taille)))
         plan = Plan(glb, P)
         if not plan.insts:
-            raise ErreurGlb("Aucun mesh positionnable dans la scène : rien à découper.")
+            raise ErreurGlb(_tr("py.glb2tiles.aucun_mesh_positionnable_dans_la_scene"))
         tuiles = plan.decouper()
         sortie = Path(a.sortie) if a.sortie else chemin.resolve().parent
         nom = chemin.stem
@@ -1971,13 +1980,12 @@ def main(argv=None, log_path=None):
                 except ValueError:
                     d_anc = {}
                 if isinstance(d_anc, dict) and d_anc.get("tiles") and not d_anc.get("nodeRefs"):
-                    log(f"Avertissement : {ancien.name} existe déjà mais ses tuiles ne portent pas les références d'objets (glb2tiles avant la v32) : "
-                        "pour lier des zones à des objets en mode tuiles, refaire le découpage.")
-            log(f"[temps] {time.time() - t0:.1f} s")
+                    log(_tr("py.glb2tiles.avertissement_0_existe_deja_mais_ses", ancien.name))
+            log(_tr("py.glb2tiles.temps_0_1f_s", time.time() - t0))
             return 0
         log(phrase)
         if not decoupe and not a.forcer:
-            log("Rien n'est écrit (--forcer pour découper quand même).")
+            log(_tr("py.glb2tiles.rien_n_est_ecrit_forcer_pour"))
             return 0
         fiches, dossier, supprimes = ecrire_tout(glb, plan, tuiles, sortie, nom)
         geo_u = sum(plan.cb[k] for k in {k for u in plan.unites for k in u.cles})
@@ -2002,32 +2010,32 @@ def main(argv=None, log_path=None):
         else:
             ancien = Path(sortie) / f"{nom}.overview.glb"
             if ancien.is_file():
-                log(f"Avertissement : {ancien.name} d'une exécution précédente n'est pas retiré, mais l'index ne le mentionne plus (--sans-vue-ensemble).")
+                log(_tr("py.glb2tiles.avertissement_0_d_une_execution_precedente", ancien.name))
         ecrire_index(Path(sortie) / f"{nom}.tiles.json", doc)
         poids = [x["bytes"] / MO for x in fiches]
         tris = [x["triangles"] for x in fiches]
         log("")
-        log("== Rapport ==")
-        log(f"Tuiles : {len(fiches)} dans {dossier}")
+        log(_tr("py.glb2tiles.rapport"))
+        log(_tr("py.glb2tiles.tuiles_0_dans_1", len(fiches), dossier))
         if supprimes:
-            log(f"Tuiles d'une exécution précédente absentes du nouvel index : {supprimes} fichier(s) T_*.glb supprimé(s)")
-        log(f"Poids (Mo) : médiane {quantile(poids, 0.5):.1f} | 90 % sous {quantile(poids, 0.9):.1f} | maximum {max(poids):.1f}")
-        log(f"Triangles : médiane {fmt(quantile(tris, 0.5))} | 90 % sous {fmt(quantile(tris, 0.9))} | maximum {fmt(max(tris))}")
-        log(f"Duplication réelle de la géométrie (somme des tuiles / géométrie unique) : {virg(dup)}")
-        log(f"Objets racine gardés entiers : {ent} | répartis : {len(plan.racines) - ent}")
+            log(_tr("py.glb2tiles.tuiles_d_une_execution_precedente_absentes", supprimes))
+        log(_tr("py.glb2tiles.poids_mo_mediane_0_1f_90", quantile(poids, 0.5), quantile(poids, 0.9), max(poids)))
+        log(_tr("py.glb2tiles.triangles_mediane_0_90_sous_1", fmt(quantile(tris, 0.5)), fmt(quantile(tris, 0.9)), fmt(max(tris))))
+        log(_tr("py.glb2tiles.duplication_reelle_de_la_geometrie_somme", virg(dup)))
+        log(_tr("py.glb2tiles.objets_racine_gardes_entiers_0_repartis", ent, len(plan.racines) - ent))
         for ligne in lignes_exclusions(plan):
             log(ligne)
         log(ligne_images(plan, tuiles))
         if P.references:
-            log(f"Références d'objets (extras.ref, extras.box) : {fmt(plan.nb_refs)} nœud(s) nommé(s), {fmt(plan.nb_partages)} nom(s) partagé(s) par plusieurs nœuds (référence nom#index) : zones liées à un objet possibles en mode tuiles.")
+            log(_tr("py.glb2tiles.references_d_objets_extras_ref_extras", fmt(plan.nb_refs), fmt(plan.nb_partages)))
         else:
-            log("Références d'objets non écrites (--sans-references) : les zones liées à un objet seront ignorées en mode tuiles.")
+            log(_tr("py.glb2tiles.references_d_objets_non_ecrites_sans"))
         if ov:
             for ligne in lignes_vue_ensemble(ov):
                 log(ligne)
         for w in avert:
-            log("Avertissement : " + w)
-        log(f"[temps] {time.time() - t0:.1f} s ; {fmt(glb.octets_lus)} octets lus sur {fmt(glb.taille)}")
+            log(_tr("py.glb2tiles.warning_prefix") + w)
+        log(_tr("py.glb2tiles.temps_0_1f_s_1_octets", time.time() - t0, fmt(glb.octets_lus), fmt(glb.taille)))
         return 0
     finally:
         glb.fermer()
@@ -2041,17 +2049,14 @@ def ecrire_index(chemin, doc):
 
 def lignes_vue_ensemble(ov):
     om = ov["omitted"]
-    out = [f"Vue d'ensemble {ov['file']} : {ov['bytes'] / MO:.1f} Mo, {fmt(ov['triangles'])} triangles (dont terrain {fmt(ov['terrainTriangles'])}), "
-           f"{fmt(ov['objects'])} objet(s) gardés sur {fmt(ov['candidates'])}, en {ov['seconds']:g} s",
-           f"  objets omis : {fmt(om['small'])} trop petits (étendue sous le seuil), {fmt(om['budget'])} par le budget, {fmt(om['skinned'])} avec squelette ; "
-           f"primitives translucides omises : {fmt(om['translucentPrimitives'])}",
-           f"  étendue minimale effective {ov['effectiveMinExtent']:g} m (seuil demandé {ov['params']['minExtent']:g} m), résolution {ov['resolution']}, "
-           f"pas du terrain {ov['effectiveTerrainStep']:g} m (demandé {ov['params']['terrainStep']:g} m)"]
+    out = [_tr("py.glb2tiles.vue_d_ensemble_0_1_1f", ov['file'], ov['bytes'] / MO, fmt(ov['triangles']), fmt(ov['terrainTriangles']), fmt(ov['objects']), fmt(ov['candidates']), ov['seconds']),
+           _tr("py.glb2tiles.objets_omis_0_trop_petits_etendue", fmt(om['small']), fmt(om['budget']), fmt(om['skinned']), fmt(om['translucentPrimitives'])),
+           _tr("py.glb2tiles.etendue_minimale_effective_0_g_m", ov['effectiveMinExtent'], ov['params']['minExtent'], ov['resolution'], ov['effectiveTerrainStep'], ov['params']['terrainStep'])]
     c = ov["colors"]
     if c["pillow"]:
-        out.append(f"  couleurs : moyenne de texture pour {fmt(c['textureAverages'])} image(s), {fmt(c['unreadable'])} illisible(s) (couleur de base)")
+        out.append(_tr("py.glb2tiles.couleurs_moyenne_de_texture_pour_0", fmt(c['textureAverages']), fmt(c['unreadable'])))
     else:
-        out.append(f"  couleurs : Pillow absent, couleur de base du matériau ({fmt(c['withoutPillow'])} matériau(x) texturé(s) concerné(s)) ; installer Pillow pour les couleurs moyennes")
+        out.append(_tr("py.glb2tiles.couleurs_pillow_absent_couleur_de_base", fmt(c['withoutPillow'])))
     return out
 
 
@@ -2059,36 +2064,34 @@ def vue_ensemble_seule(glb, plan, tuiles, sortie, nom, OP, t0):
     """--vue-ensemble-seule : les tuiles et X.tiles.json existent ; le découpage recalculé doit correspondre à l'index (mêmes fichiers)."""
     idx = Path(sortie) / f"{nom}.tiles.json"
     if not idx.is_file():
-        raise ErreurGlb(f"{idx} introuvable : --vue-ensemble-seule suppose que le découpage a déjà été fait (dans {sortie}).")
+        raise ErreurGlb(_tr("py.glb2tiles.0_introuvable_vue_ensemble_seule_suppose", idx, sortie))
     try:
         doc = json.loads(idx.read_text(encoding="utf-8-sig"))
     except ValueError as e:
-        raise ErreurGlb(f"{idx} illisible ({e}).")
+        raise ErreurGlb(_tr("py.glb2tiles.0_illisible_1", idx, e))
     noms = [f"{nom}.tiles/{t.nom}.glb" for t in tuiles]
     index = {f.get("file"): f for f in doc.get("tiles", []) if isinstance(f, dict)}
     if set(noms) != set(index):
-        raise ErreurGlb(f"Le découpage recalculé ({len(noms)} tuiles) ne correspond pas à {idx.name} ({len(index)} tuiles) : "
-                        "utiliser les mêmes options (--budget, --budget-tri, --min, --entier-*, --exclure…) que pour le découpage d'origine.")
+        raise ErreurGlb(_tr("py.glb2tiles.le_decoupage_recalcule_0_tuiles_ne", len(noms), idx.name, len(index)))
     for t, f in zip(tuiles, noms):
         if index[f].get("triangles") != sum(u.tri for u in t.units) or index[f].get("instances") != sum(u.ninst for u in t.units):
-            raise ErreurGlb(f"La tuile {f} n'a plus le contenu de {idx.name} : utiliser les mêmes options que pour le découpage d'origine.")
+            raise ErreurGlb(_tr("py.glb2tiles.la_tuile_0_n_a_plus", f, idx.name))
     if not doc.get("nodeRefs"):
-        log("Avertissement : ces tuiles ont été écrites sans les références d'objets (glb2tiles avant la v32) : les zones liées à un objet restent ignorées en mode tuiles. "
-            "Refaire le découpage (sans --vue-ensemble-seule) pour en profiter.")
+        log(_tr("py.glb2tiles.avertissement_ces_tuiles_ont_ete_ecrites"))
     ov = vue_ensemble(plan, tuiles, noms, OP, Path(sortie) / f"{nom}.overview.glb")
     doc["overview"] = ov
     ecrire_index(idx, doc)
     log("")
-    log("== Rapport ==")
+    log(_tr("py.glb2tiles.rapport"))
     for ligne in lignes_vue_ensemble(ov):
         log(ligne)
-    log(f"[temps] {time.time() - t0:.1f} s ; {fmt(glb.octets_lus)} octets lus sur {fmt(glb.taille)}")
+    log(_tr("py.glb2tiles.temps_0_1f_s_1_octets", time.time() - t0, fmt(glb.octets_lus), fmt(glb.taille)))
     return 0
 
 
 if __name__ == "__main__":
     if "--version" in sys.argv[1:]:      # ni journal ni pause « Entrée »
-        print(f"glb2tiles {VERSION}")
+        print(_tr("py.glb2tiles.glb2tiles_0_2", VERSION))
         sys.exit(0)
     try:
         sys.stdout.reconfigure(encoding="utf-8")
@@ -2097,7 +2100,7 @@ if __name__ == "__main__":
     journal = Path(__file__).resolve().with_name("glb2tiles.log")
     with open(journal, "w", encoding="utf-8") as lf:
         lf.write(f"[glb2tiles] {VERSION}\n")
-    print(f"[glb2tiles] {VERSION}")
+    print(_tr("py.glb2tiles.glb2tiles_0", VERSION))
     code = 0
     try:
         code = main(log_path=journal)
@@ -2106,15 +2109,15 @@ if __name__ == "__main__":
             log(e.code)
         code = e.code if isinstance(e.code, int) else 1
     except ErreurGlb as e:
-        log(f"[ERREUR] {e}")
+        log(_tr("py.glb2tiles.erreur_0", e))
         code = 2
     except Exception:
         log(traceback.format_exc())
         code = 1
-    print(f"[log] {journal}")
+    print(_tr("py.glb2tiles.log_0", journal))
     if "--nopause" not in sys.argv and sys.stdin and sys.stdin.isatty():      # ni console (script, tâche planifiée) : pas de pause
         try:
-            input("Entrée pour fermer...")
+            input(_tr("py.glb2tiles.entree_pour_fermer"))
         except EOFError:
             pass
     sys.exit(code)

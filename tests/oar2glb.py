@@ -11,6 +11,7 @@
   - --keep-invisible, --diag (n'écrit rien), analyse du TextureEntry et du bloc skin
 Lancer : python tests/oar2glb.py
 """
+import os as _os_lang; _os_lang.environ["WEB3D_LANG"] = "fr"   # outils Python en français (v36)
 import base64, io, json, math, os, pathlib, struct, subprocess, sys, tarfile, tempfile, uuid, zlib
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent

@@ -12,6 +12,7 @@ Vérifie, de près et de loin, avec une bulle de 1 ligne et de 4 lignes :
 Prérequis : pip install playwright ; python build.py avant.
 Variables facultatives : THREE_DIR (paquet npm three, hors ligne), CHROMIUM (chemin de l'exécutable).
 """
+import os as _os_lang; _os_lang.environ["WEB3D_LANG"] = "fr"   # outils Python en français (v36)
 import asyncio, os, pathlib, subprocess, sys, tempfile
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent

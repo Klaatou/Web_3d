@@ -43,7 +43,7 @@ rapport(sum(1 for v in fr.values() if ACC.search(v)) > 50, "le français contien
 
 # ---- clés utilisées dans le code
 src = {}
-for pat in ("src/core.js", "src/template.html", "src/viewer_tpl.html", "src/i18n.js", "src/gen_tpl.py", "src/presence_server.py", "tools/*.py", "gen_reference.py", "build.py"):
+for pat in ("src/core.js", "src/template.html", "src/viewer_tpl.html", "src/i18n.js", "src/gen_tpl.py", "src/presence_server.py", "src/i18n_py.py", "tools/*.py", "gen_reference.py", "build.py"):
     for p in ROOT.glob(pat):
         src[str(p.relative_to(ROOT))] = p.read_text(encoding="utf-8")
 txt = "\n".join(src.values())

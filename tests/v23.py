@@ -12,6 +12,7 @@
 Prérequis : pip install playwright ; python build.py avant.
 Variables facultatives : THREE_DIR (paquet npm three, hors ligne), CHROMIUM (chemin de l'exécutable).
 """
+import os as _os_lang; _os_lang.environ["WEB3D_LANG"] = "fr"   # outils Python en français (v36)
 import asyncio, importlib.util, json, os, pathlib, re, socket, struct, subprocess, sys, tempfile, time, zipfile
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent

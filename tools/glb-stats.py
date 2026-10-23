@@ -18,6 +18,23 @@ import os
 import struct
 import sys
 
+# <<I18N_PY>>
+def _i18n_boot():   # depuis les sources : charge src/i18n_py.py ; fabriqué par build.py (dist\) : ce bloc est remplacé par le texte de i18n_py.py avec les langues intégrées
+    import importlib.util, pathlib
+    here = pathlib.Path(__file__).resolve().parent
+    for p in (here / "i18n_py.py", here.parent / "src" / "i18n_py.py"):
+        if p.is_file():
+            spec = importlib.util.spec_from_file_location("i18n_py", p)
+            m = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(m)
+            return m
+    raise SystemExit("i18n_py.py not found / introuvable")
+
+
+_I18N = _i18n_boot()
+_tr, i18n_add_common = _I18N._tr, _I18N.i18n_add_common
+# <</I18N_PY>>
+
 COMP = {5120: 1, 5121: 1, 5122: 2, 5123: 2, 5125: 4, 5126: 4}
 NCOMP = {"SCALAR": 1, "VEC2": 2, "VEC3": 3, "VEC4": 4, "MAT2": 4, "MAT3": 9, "MAT4": 16}
 
@@ -26,10 +43,10 @@ def lire_json(chemin):
     with open(chemin, "rb") as f:
         magic, _, _ = struct.unpack("<4sII", f.read(12))
         if magic != b"glTF":
-            sys.exit("Ce fichier n'est pas un GLB.")
+            sys.exit(_tr("py.stats.ce_fichier_n_est_pas_un"))
         n, typ = struct.unpack("<II", f.read(8))
         if typ != 0x4E4F534A:
-            sys.exit("Le premier bloc du GLB n'est pas du JSON.")
+            sys.exit(_tr("py.stats.le_premier_bloc_du_glb_n"))
         return json.loads(f.read(n)), n
 
 
@@ -168,33 +185,33 @@ def rapport(chemin, bloc=256.0, g=None, njson=0):
     out = []
     p = out.append
 
-    p(f"Fichier : {os.path.basename(chemin)} ({mo(taille):,.1f} Mo ; en-tête JSON lu : {mo(njson):,.1f} Mo)".replace(",", " "))
+    p(_tr("py.stats.fichier_0_1_1f_mo_en", os.path.basename(chemin), mo(taille), mo(njson)).replace(",", " "))
     p("")
     p("== Contenu ==")
-    p(f"Nœuds parcourus : {vus} | meshes : {len(meshes)} (utilisés : {len(utilises)}) | instances de meshes : {len(inst)}")
+    p(_tr("py.stats.nuds_parcourus_0_meshes_1_utilises", vus, len(meshes), len(utilises), len(inst)))
     reutil = sum(1 for v in collections.Counter(mi for mi, _, _ in inst).values() if v > 1)
-    p(f"Meshes réutilisés plusieurs fois : {reutil} | matériaux : {len(mats)} | textures (images) : {len(imgs)} (utilisées : {len(img_utilisees)})")
-    p(f"Sommets uniques : {som_uniques:,} | sommets rendus (instances comprises) : {som_rendus:,} | triangles rendus : {tri_rendus:,}".replace(",", " "))
+    p(_tr("py.stats.meshes_reutilises_plusieurs_fois_0_materiaux", reutil, len(mats), len(imgs), len(img_utilisees)))
+    p(_tr("py.stats.sommets_uniques_0_sommets_rendus_instances", som_uniques, som_rendus, tri_rendus).replace(",", " "))
     if som_uniques:
-        p(f"Taux de réutilisation (sommets rendus / uniques) : {som_rendus / som_uniques:.1f}")
+        p(_tr("py.stats.taux_de_reutilisation_sommets_rendus_uniques", som_rendus / som_uniques))
     p("")
-    p("== Poids estimé (octets lus dans l'en-tête, sans décoder) ==")
+    p(_tr("py.stats.poids_estime_octets_lus_dans_l"))
     autres = max(0, taille - njson - geo_total - img_total)
-    p(f"Géométrie (accessors uniques) : {mo(geo_total):,.1f} Mo | Textures embarquées : {mo(img_total):,.1f} Mo | Reste : {mo(autres):,.1f} Mo".replace(",", " "))
+    p(_tr("py.stats.geometrie_accessors_uniques_0_1f_mo", mo(geo_total), mo(img_total), mo(autres)).replace(",", " "))
 
     comp = [e for e in g.get("extensionsUsed", []) if e in ("KHR_draco_mesh_compression", "EXT_meshopt_compression", "KHR_meshopt_compression")]
     if comp:
-        p(f"Attention : géométrie compressée ({', '.join(comp)}) : les Mo de géométrie ci-dessus sont la taille décodée, pas celle du fichier.")
+        p(_tr("py.stats.attention_geometrie_compressee_0_les_mo", ', '.join(comp)))
     if not inst:
-        p("Aucun mesh positionnable (accessors sans min/max ?).")
+        p(_tr("py.stats.aucun_mesh_positionnable_accessors_sans_min"))
     else:
         xs = [c[0] for _, _, cs in inst for c in cs]
         ys = [c[1] for _, _, cs in inst for c in cs]
         zs = [c[2] for _, _, cs in inst for c in cs]
         x0, x1, z0, z1 = min(xs), max(xs), min(zs), max(zs)
         p("")
-        p("== Étendue ==")
-        p(f"X : {x0:.1f} à {x1:.1f} ({x1 - x0:.0f} m) | Z : {z0:.1f} à {z1:.1f} ({z1 - z0:.0f} m) | hauteur Y : {min(ys):.1f} à {max(ys):.1f}")
+        p(_tr("py.stats.etendue"))
+        p(_tr("py.stats.x_0_1f_a_1_1f", x0, x1, x1 - x0, z0, z1, z1 - z0, min(ys), max(ys)))
 
         # racines plus grandes qu'un bloc
         par_racine = {}
@@ -203,9 +220,9 @@ def rapport(chemin, bloc=256.0, g=None, njson=0):
             b[0] = min(b[0], min(c[0] for c in cs)); b[1] = max(b[1], max(c[0] for c in cs))
             b[2] = min(b[2], min(c[2] for c in cs)); b[3] = max(b[3], max(c[2] for c in cs)); b[4] += 1
         gros = sorted(((max(b[1] - b[0], b[3] - b[2]), r, b[4]) for r, b in par_racine.items() if max(b[1] - b[0], b[3] - b[2]) > bloc), reverse=True)
-        p(f"Objets racine : {len(par_racine)} | plus grands qu'un bloc de {bloc:.0f} m : {len(gros)}")
+        p(_tr("py.stats.objets_racine_0_plus_grands_qu", len(par_racine), bloc, len(gros)))
         for etendue, r, nb in gros[:5]:
-            p(f"  - nœud {r} « {nodes[r].get('name', '')[:40]} » : {etendue:.0f} m, {nb} mesh(es)")
+            p(_tr("py.stats.nud_0_1_2_0f_m", r, nodes[r].get('name', '')[:40], etendue, nb))
 
         # répartition par blocs (centre de chaque instance)
         blocs = {}
@@ -229,7 +246,7 @@ def rapport(chemin, bloc=256.0, g=None, njson=0):
             ga = set().union(*[info[i]["accs"] for i in b["meshes"]])
             lignes.append((k, b["n"], b["tri"], mo(sum(acc_octets(i) for i in ga)), mo(sum(img_octets[i] for i in b["imgs"]))))
         p("")
-        p(f"== Blocs de {bloc:.0f} m : {len(blocs)} non vides (centre des instances ; géométrie et textures sans doublon dans le bloc) ==")
+        p(_tr("py.stats.blocs_de_0_0f_m_1", bloc, len(blocs)))
         if len(lignes) <= 60:
             p(f"{'bloc (x,z)':>10} {'instances':>10} {'triangles':>12} {'géom. Mo':>9} {'text. Mo':>9}")
             for k, n_, tri_, g_, t_ in lignes:
@@ -238,28 +255,29 @@ def rapport(chemin, bloc=256.0, g=None, njson=0):
             def quant(v, q):
                 v = sorted(v)
                 return v[min(len(v) - 1, int(q * len(v)))]
-            for nom, idx in (("géométrie (Mo)", 3), ("triangles", 2), ("textures (Mo)", 4)):
+            for nom, idx in ((_tr("py.stats.geometrie_mo"), 3), ("triangles", 2), ("textures (Mo)", 4)):
                 v = [l[idx] for l in lignes]
-                p(f"{nom:>16} : médiane {quant(v, 0.5):,.1f} | 90 % des blocs sous {quant(v, 0.9):,.1f} | maximum {max(v):,.1f}".replace(",", " "))
-            p("Les 5 blocs les plus lourds en géométrie :")
+                p(_tr("py.stats.0_16_mediane_1_1f_90", nom, quant(v, 0.5), quant(v, 0.9), max(v)).replace(",", " "))
+            p(_tr("py.stats.les_5_blocs_les_plus_lourds"))
             for k, n_, tri_, g_, t_ in sorted(lignes, key=lambda l: -l[3])[:5]:
-                p(f"  bloc {k[0]},{k[1]} : {g_:.1f} Mo de géométrie, {fmt(tri_)} triangles, {n_} instances, {t_:.1f} Mo de textures")
+                p(_tr("py.stats.bloc_0_1_2_1f_mo", k[0], k[1], g_, fmt(tri_), n_, t_))
         tot_geo = sum(l[3] for l in lignes)
         bib_geo = mo(sum(acc_octets(i) for i, bs in acc_blocs.items() if len(bs) > 1))
         bib_img = mo(sum(img_octets[i] for i, bs in img_blocs.items() if len(bs) > 1))
         p("")
-        p("== Coût de la réutilisation entre blocs ==")
-        p(f"Somme des blocs : géométrie {tot_geo:,.1f} Mo (contre {mo(geo_total):,.1f} Mo sans doublon dans tout le fichier) : écart = surcoût si les meshes partagés sont dupliqués dans chaque bloc.".replace(",", " "))
-        p(f"Géométrie utilisée par plusieurs blocs : {bib_geo:,.1f} Mo ({100 * bib_geo / max(mo(geo_total), 1e-9):.0f} % du total) | textures utilisées par plusieurs blocs : {bib_img:,.1f} Mo ({100 * bib_img / max(mo(img_total), 1e-9):.0f} % du total) : taille d'une bibliothèque commune chargée une fois.".replace(",", " "))
+        p(_tr("py.stats.cout_de_la_reutilisation_entre_blocs"))
+        p(_tr("py.stats.somme_des_blocs_geometrie_0_1f", tot_geo, mo(geo_total)).replace(",", " "))
+        p(_tr("py.stats.geometrie_utilisee_par_plusieurs_blocs_0", bib_geo, 100 * bib_geo / max(mo(geo_total), 1e-9), bib_img, 100 * bib_img / max(mo(img_total), 1e-9)).replace(",", " "))
 
     return out
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Analyse rapide d'un GLB (en-tête JSON seulement).")
-    ap.add_argument("glb")
-    ap.add_argument("--bloc", type=float, default=256.0, help="côté des blocs en mètres (défaut 256)")
-    ap.add_argument("--sortie", help="écrit aussi le rapport dans ce fichier (UTF-8)")
+    ap = argparse.ArgumentParser(description=_tr("py.stats.desc"), add_help=False)
+    i18n_add_common(ap)
+    ap.add_argument("glb", help=_tr("py.stats.help.glb"))
+    ap.add_argument("--bloc", type=float, default=256.0, help=_tr("py.stats.cote_des_blocs_en_metres_defaut"))
+    ap.add_argument("--sortie", help=_tr("py.stats.ecrit_aussi_le_rapport_dans_ce"))
     a = ap.parse_args()
     try:
         sys.stdout.reconfigure(encoding="utf-8")
