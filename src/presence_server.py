@@ -66,6 +66,8 @@ _tr, i18n_add_common = _I18N._tr, _I18N.i18n_add_common
 
 ROOMS: dict[str, dict[int, "Peer"]] = {}
 HISTORY: dict[str, collections.deque] = {}
+HIST_N = 0              # numéro du dernier message enregistré (croissant, repris du fichier d'historique au démarrage)
+HIST_MEM = 20000        # messages gardés en mémoire par salon quand --history-file est actif (les plus anciens restent dans le fichier)
 PER_IP: dict[str, int] = {}
 NEXT_ID = 1
 OPTS = None
@@ -143,6 +145,60 @@ class FrFormatter(logging.Formatter):
         return time.strftime("%d/%m/%Y %H:%M:%S", time.localtime(record.created)) + " | " + record.getMessage()
 
 
+def hist_add(room, pid, name, text):
+    """v37 : enregistre un message (mémoire, et fichier d'historique si --history-file). Jamais d'adresse IP. Retourne l'entrée (n = numéro, t = heure en secondes)."""
+    global HIST_N
+    HIST_N += 1
+    now = time.time()
+    e = {"n": HIST_N, "t": int(now), "id": pid, "name": name, "text": text}
+    keep = HIST_MEM if OPTS.history_file else OPTS.history
+    if keep > 0:
+        dq = HISTORY.setdefault(room, collections.deque(maxlen=keep))
+        dq.append(e)
+    if OPTS.history_file:
+        try:
+            line = json.dumps({"n": HIST_N, "t": int(now), "d": time.strftime("%d/%m/%Y %H:%M:%S", time.localtime(now)), "room": room, "name": name, "text": text}, ensure_ascii=False, separators=(",", ":"))
+            with open(OPTS.history_file, "a", encoding="utf-8") as f:
+                f.write(line + "\n")
+        except OSError as ex:
+            LOG.warning(_tr("py.presence.history_write_error", ex))
+    return e
+
+
+def hist_load():
+    """v37 : relit --history-file au démarrage : ignore les lignes illisibles et les messages de plus de --history-days jours (0 = tout garder), puis réécrit le fichier sans eux."""
+    global HIST_N
+    path = OPTS.history_file
+    if not path or not os.path.isfile(path):
+        return
+    limit = time.time() - OPTS.history_days * 86400 if OPTS.history_days > 0 else None
+    kept, total = [], 0
+    with open(path, "r", encoding="utf-8", errors="replace") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            total += 1
+            try:
+                d = json.loads(line)
+                n, t, room, name, text = int(d["n"]), int(d["t"]), str(d["room"]), str(d["name"]), str(d["text"])
+            except (ValueError, KeyError, TypeError):
+                continue
+            if limit is not None and t < limit:
+                continue
+            kept.append((n, t, room, name, text, line))
+    kept.sort(key=lambda x: x[0])
+    for n, t, room, name, text, _ in kept:
+        HIST_N = max(HIST_N, n)
+        HISTORY.setdefault(room, collections.deque(maxlen=HIST_MEM)).append({"n": n, "t": t, "id": 0, "name": name, "text": text})
+    if len(kept) != total:
+        tmp_path = path + ".tmp"
+        with open(tmp_path, "w", encoding="utf-8") as f:
+            f.write("".join(k[5] + "\n" for k in kept))
+        os.replace(tmp_path, path)
+    LOG.info(_tr("py.presence.history_loaded", len(kept), total - len(kept), path))
+
+
 def setup_log():
     LOG.setLevel(logging.INFO)
     LOG.propagate = False
@@ -170,12 +226,12 @@ def log(kind, room, who, extra=""):
 
 
 class Peer:
-    __slots__ = ("id", "ws", "name", "color", "p", "yaw", "last", "ip", "chat_times", "spectator", "uidh", "t0", "zone_t", "room", "color_t")
+    __slots__ = ("id", "ws", "name", "color", "p", "yaw", "last", "ip", "chat_times", "spectator", "uidh", "t0", "zone_t", "room", "color_t", "hist_t")
 
     def __init__(self, pid, ws, name, color, ip, spectator, uidh, room):
         self.id, self.ws, self.name, self.color, self.ip = pid, ws, name, color, ip
         self.spectator, self.uidh, self.room = spectator, uidh, room
-        self.p, self.yaw, self.last, self.zone_t, self.color_t = None, 0.0, 0.0, 0.0, 0.0
+        self.p, self.yaw, self.last, self.zone_t, self.color_t, self.hist_t = None, 0.0, 0.0, 0.0, 0.0, 0.0
         self.chat_times = []
         self.t0 = time.monotonic()
 
@@ -508,7 +564,7 @@ async def handler(ws):
         existing = [p.public() for p in walkers(room)]
         peers[pid] = peer
         await ws.send(json.dumps({"t": "welcome", "id": pid, "name": peer.name, "color": peer.color, "peers": existing,
-                                  "history": list(HISTORY.get(room, ())), "role": "spectator" if spectator else "walker"},
+                                  "history": list(HISTORY.get(room, ()))[-OPTS.history:] if OPTS.history > 0 else [], "role": "spectator" if spectator else "walker"},
                                  separators=(",", ":")))
         log(_tr("py.presence.ev.connect"), room, peer.who(), "spectateur" if spectator else _tr("py.presence.promeneur_0_dans_le_salon", len(walkers(room))))
         if not spectator:
@@ -571,10 +627,21 @@ async def handler(ws):
                     await send_safe(ws, json.dumps({"t": "notice", "text": _tr("py.presence.trop_de_messages_patiente_quelques_secondes")}))
                     continue
                 peer.chat_times.append(now)
-                if OPTS.history > 0:
-                    HISTORY.setdefault(room, collections.deque(maxlen=OPTS.history)).append({"id": pid, "name": peer.name, "text": text})
+                ent = hist_add(room, pid, peer.name, text) if (OPTS.history > 0 or OPTS.history_file) else {"n": 0, "t": int(time.time())}
                 log(_tr("py.presence.chat"), room, peer.who(), text)
-                await broadcast(room, {"t": "chat", "id": pid, "name": peer.name, "text": text})
+                await broadcast(room, {"t": "chat", "id": pid, "name": peer.name, "text": text, "n": ent["n"], "ts": ent["t"]})
+            elif t == "history":
+                # v37 : page plus ancienne de l'historique du salon : {t:'history', before: n, n: 50} -> {t:'history', msgs:[...], more:bool}
+                now = time.monotonic()
+                if now - peer.hist_t < 0.2:
+                    continue
+                peer.hist_t = now
+                before, cnt = m.get("before"), m.get("n")
+                if isinstance(before, bool) or not isinstance(before, (int, float)) or isinstance(cnt, bool) or not isinstance(cnt, (int, float)):
+                    continue
+                cnt = max(1, min(100, int(cnt)))
+                older = [e for e in HISTORY.get(room, ()) if e["n"] < before]
+                await send_safe(ws, json.dumps({"t": "history", "msgs": older[-cnt:], "more": len(older) > cnt}, separators=(",", ":")))
             elif t == "name":
                 old = peer.name
                 peer.name, _ = REG.resolve(peer.uidh, m.get("name"), persistent=not peer.uidh.startswith("anon-"))
@@ -599,7 +666,8 @@ async def handler(ws):
             log(_tr("py.presence.deconnexion"), room, peer.who(), _tr("py.presence.duree_0_min_1_02d_s", dur // 60, dur % 60))
             if not ROOMS[room]:
                 del ROOMS[room]
-                HISTORY.pop(room, None)
+                if not OPTS.history_file:
+                    HISTORY.pop(room, None)
         if counted and PER_IP.get(ip):
             PER_IP[ip] -= 1
             if PER_IP[ip] <= 0:
@@ -614,7 +682,7 @@ async def flush_loop():
 
 async def main():
     global OPTS, REG
-    ap = argparse.ArgumentParser(description=_tr("py.presence.serveur_de_presence_glb2html_websocket"), add_help=False)
+    ap = argparse.ArgumentParser(description=_tr("py.presence.serveur_de_presence_glb2html_websocket", VERSION), add_help=False)
     i18n_add_common(ap)
     ap.add_argument("--version", action="version", version=f"presence_server {VERSION}", help=_tr("py.common.version"))
     ap.add_argument("--host", default="0.0.0.0", help=_tr("py.presence.help.host"))
@@ -626,11 +694,13 @@ async def main():
     ap.add_argument("--max-chat", type=int, default=200, help=_tr("py.presence.longueur_max_d_un_message_de"))
     ap.add_argument("--chat-gap", type=float, default=0.7, help=_tr("py.presence.delai_mini_entre_deux_messages_d"))
     ap.add_argument("--chat-burst", type=int, default=5, help=_tr("py.presence.messages_max_par_fenetre_de_10"))
-    ap.add_argument("--history", type=int, default=20, help=_tr("py.presence.derniers_messages_rejoues_aux_nouveaux_arriv"))
+    ap.add_argument("--history", type=int, default=200, help=_tr("py.presence.derniers_messages_rejoues_aux_nouveaux_arriv"))
     ap.add_argument("--identities", default="presence_identities.json", help=_tr("py.presence.registre_des_noms_reserves_vide_en"))
     ap.add_argument("--name-ttl-days", type=int, default=365, help=_tr("py.presence.un_nom_non_utilise_depuis_ce"))
     ap.add_argument("--reserved", default="", help=_tr("py.presence.noms_interdits_a_la_reservation_separes"))
     ap.add_argument("--log", help=_tr("py.presence.fichier_de_journal_tourne_chaque_nuit"))
+    ap.add_argument("--history-file", default="", metavar="FICHIER", help=_tr("py.presence.history_file"))
+    ap.add_argument("--history-days", type=int, default=30, metavar="N", help=_tr("py.presence.history_days"))
     ap.add_argument("--log-days", type=int, default=30, help=_tr("py.presence.jours_de_journal_conserves"))
     ap.add_argument("--log-ip", choices=("hash", "raw", "none"), default="hash", help=_tr("py.presence.adresses_ip_dans_le_journal_masquees"))
     ap.add_argument("--proxy-header", help=_tr("py.presence.derriere_un_reverse_proxy_en_tete"))
@@ -646,9 +716,11 @@ async def main():
     OPTS.log = here(OPTS.log)
     OPTS.identities = here(OPTS.identities)
     OPTS.bans = here(OPTS.bans)
+    OPTS.history_file = here(OPTS.history_file) if OPTS.history_file else ""
     REG = Registry(OPTS.identities or None, OPTS.name_ttl_days, [x for x in OPTS.reserved.split(",")])
     setup_log()
     bans_load()
+    hist_load()
     ctx = None
     if OPTS.cert:
         ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)

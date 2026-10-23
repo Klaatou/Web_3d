@@ -1,6 +1,6 @@
 # Mode d'emploi : zones, portails et points d'arrivée (v36)
 
-> **Résumé (v36).** Ce fichier est le mode d'emploi détaillé ; il ne se lit pas d'un bout à l'autre. Pour **toutes les options** des outils, avec leur effet et leur défaut en français et en anglais : `REFERENCE_OPTIONS.md` (générée depuis les outils par `gen_reference.py`). Pour **faire une tâche pas à pas** (OAR vers page, région en tuiles, mise à jour, zones, serveur de présence, carte) : `PROCEDURES.md`. Ici : les zones et les portails (§§ 1 à 10), les touches (§ 2), les réglages et leurs fichiers (§§ 11 à 19) et les nouveautés version par version (§§ 19 à 21). Langue de la page et des outils : § 21.8 à 21.11.
+> **Résumé (v37).** Ce fichier est le mode d'emploi détaillé ; il ne se lit pas d'un bout à l'autre. Pour **toutes les options** des outils, avec leur effet et leur défaut en français et en anglais : `REFERENCE_OPTIONS.md` (générée depuis les outils par `gen_reference.py`). Pour **faire une tâche pas à pas** (OAR vers page, région en tuiles, mise à jour, zones, serveur de présence, carte) : `PROCEDURES.md`. Ici : les zones et les portails (§§ 1 à 10), les touches (§ 2), les réglages et leurs fichiers (§§ 11 à 19) et les nouveautés version par version (§§ 19 à 21). Langue de la page et des outils : § 21.8 à 21.11.
 
 ## 1. La règle qui explique 90 % des pannes
 
@@ -40,6 +40,7 @@ Exemple juste :
 | **Page Haut** / **Page Bas** (v34) | en vol, monter / descendre (en plus de **Espace** maintenu / **C**, v36) ; la page ne défile pas. **Descendre jusqu'au sol pose l'avatar** : le vol s'arrête tout seul. Bouton « Voler / Atterrir » dans la barre du bas pour qui n'a pas de touche Début (§ 19.3) |
 | **Échap** (v34) | libère la souris en promenade. La souris reste alors **libre** (un clic ou un double-clic n'aspire plus le pointeur) jusqu'à **G** ou au bouton « Capturer la souris » (§ 19.4) |
 | **G** (v34) | recapturer la souris après Échap |
+| **O** (v37) | ouvre / ferme la fenêtre **Réglages** (bascule, comme **H** et **I**) ; **R** est déjà pris par le retour à l'arrivée |
 | **I** (v34) | la fenêtre **Informations / État** (v36 : ancien « bloc d'état » : vue, mode, souris, clavier, position, tuiles) : masquée → déployée ; réduite → déployée ; déployée → masquée. **H** fait de même pour l'aide seule (§ 19.1, § 21.3) |
 
 Les portails ne fonctionnent qu'en promenade.
@@ -807,6 +808,8 @@ Réglages → « Choisir la couleur de mon avatar » : la valeur est mémorisée
 python .\presence_server.py --host 0.0.0.0 --port 8765 --log presence.log --log-days 30 --log-ip raw
 ```
 
+(Depuis la v37 l'exemple de lancement recommandé est `python .\presence_server.py --log presence.log --log-ip raw --log-days 0` ; voir § 22.6 pour `--log-days 0`, l'historique du chat et les données personnelles.)
+
 ### 18.7 Adresses IP dans le journal : `--log-ip raw`
 
 L'option existante `--log-ip` accepte `hash` (défaut : empreinte de 8 caractères), `raw` (**adresse en clair**) ou `none`. Avec `raw`, l'adresse figure **dès la connexion**, dans la console et dans le journal (`--log`) : `connexion | salon=… | Nom [id 3, clé a1b2c3, ip ADRESSE]`. Vérifié par `tests/v33.py` (défaut : empreinte ; `raw` : adresse en clair, dans la console et dans le fichier).
@@ -925,7 +928,7 @@ Gardées telles quelles : ZQSD / WASD / flèches, Espace, Entrée, G, R, V, H, I
 
 | Option | Config | Effet |
 |---|---|---|
-| `--zone-info-dist M` | `zoneInfoDist` | distance, **en promenade**, jusqu'à laquelle l'infobulle, le clic et le **nom affiché** (« Toujours afficher le nom ») des zones fonctionnent. **40 m par défaut** (14 m avant), de **5 à 200** (hors bornes : ramené à la borne). Réglable dans le viewer (section « Promenade »), repris dans la ligne de commande. Un nom plus loin que cette distance est masqué en promenade et réapparaît en vue globale |
+| `--zone-info-dist M` | `zoneInfoDist` | distance, **en promenade**, jusqu'à laquelle l'infobulle, le clic et le **nom affiché** (« Toujours afficher le nom ») des zones fonctionnent. **150 m par défaut depuis la v37** (40 m en v35 et v36), de **5 à 500** (hors bornes : ramené à la borne). Réglable dans le viewer (section « Promenade »), repris dans la ligne de commande. Un nom plus loin que cette distance est masqué en promenade et réapparaît en vue globale |
 
 `glb2html.py --maj --zone-info-dist 60` suffit à l'appliquer à une région déjà publiée (§ 20.7).
 
@@ -976,11 +979,11 @@ La fenêtre « État » s'appelle **Informations / État**. **H** (aide) et **I*
 
 ### 21.4 Repères de portail (cônes) : `--zone-cone`, touche T
 
-Au-dessus de chaque portail et de chaque zone « en marchant dedans » ou « les deux », la page dessine un petit **cône pointé vers le bas** (environ 0,35 m de large, 0,5 m de haut, sommet à 2 m au-dessus du centre de la zone ; teinte claire neutre, contour sombre : il se lit sans dépendre de la couleur). Il s'ajoute à `--zone-marker` (il ne le remplace pas). Visible jusqu'à `--zone-info-dist` (40 m par défaut) ; survoler le cône affiche la même infobulle que la zone. **T** affiche ou masque tous les cônes (choix mémorisé). `--no-zone-cone` les masque au départ (config `zoneCone`) ; les arrivées n'ont de cône qu'avec `--show-spawns`.
+Au-dessus de chaque portail et de chaque zone « en marchant dedans » ou « les deux », la page dessine un petit **cône pointé vers le bas** (environ 0,35 m de large, 0,5 m de haut, sommet à 2 m au-dessus du centre de la zone ; teinte claire neutre, contour sombre : il se lit sans dépendre de la couleur). Il s'ajoute à `--zone-marker` (il ne le remplace pas). Visible jusqu'à `--zone-info-dist` (150 m par défaut depuis la v37) ; survoler le cône affiche la même infobulle que la zone, avec la **distance** au visiteur (§ 22.2). Depuis la v37 sa **taille apparente est constante** (§ 22.2). **T** affiche ou masque tous les cônes (choix mémorisé). `--no-zone-cone` les masque au départ (config `zoneCone`) ; les arrivées n'ont de cône qu'avec `--show-spawns`.
 
 ### 21.5 Arrivée occupée
 
-Quand l'avatar est posé sur un point (ouverture, `#spawn=`, `#pos=`, arrivée par défaut, **R**, portail interne ou vers une autre région, « Aller à »), si un autre visiteur en promenade se trouve à moins de **1 m** (2 m en hauteur), le **nouvel arrivant** est décalé sur le point libre le plus proche : anneaux de 1,2, 2,4 puis 3,6 m, sol à moins de 1 m d'écart de hauteur, aucun mur entre les deux points, aucun visiteur à moins de 1 m. Si la présence n'est pas encore connectée, le contrôle est refait à la réception de la liste des visiteurs, seulement si l'avatar n'a pas bougé de plus de 0,3 m (on ne déplace jamais quelqu'un qui marche). Sans place libre à moins de 3,6 m, l'avatar est posé à l'endroit demandé. Les visiteurs en vue globale sont invisibles : ignorés.
+Quand l'avatar est posé sur un point (ouverture, `#spawn=`, `#pos=`, arrivée par défaut, **R**, portail interne ou vers une autre région, « Aller à »), si un autre visiteur en promenade se trouve à moins de **1 m** (2 m en hauteur), le **nouvel arrivant** est décalé sur le point libre le plus proche : anneaux de 1,2, 2,4 puis 3,6 m, sol à moins de 1 m d'écart de hauteur, aucun mur entre les deux points, aucun visiteur à moins de 1 m. **(Règle remplacée en v37 : voir § 22.3 ; les anneaux sont maintenant autour de l'occupant.)** Si la présence n'est pas encore connectée, le contrôle est refait à la réception de la liste des visiteurs, seulement si l'avatar n'a pas bougé de plus de 0,3 m (on ne déplace jamais quelqu'un qui marche). Sans place libre à moins de 3,6 m, l'avatar est posé à l'endroit demandé. Les visiteurs en vue globale sont invisibles : ignorés.
 
 ### 21.6 Sons
 
@@ -1010,3 +1013,54 @@ Le viewer (`glb-viewer.html`) a la même liste « **Langue / Language** » que l
 `glb2html.py`, `glb2tiles.py`, `oar2glb.py` et `presence_server.py` (et `glb-stats.py`, utilisé par `glb2tiles.py`) affichent leurs messages, leurs avertissements, leurs erreurs et leur aide (`--help`) en français ou en anglais. **Choix de la langue** : `--lang fr`, `--lang en` ou `--lang auto` (par défaut) ; sinon la variable d'environnement `WEB3D_LANG` ; sinon la langue du système ; sinon l'anglais. `--lang` l'emporte sur `WEB3D_LANG`. Les options elles-mêmes (`--budget`, `--exclure`…) et les commandes de modération du serveur (`liste`, `ejecter`, `bannir`, `bans`, `debannir`, `aide`) ne changent pas de langue. Les fichiers de sortie (JSON, journaux des outils) gardent leurs clés ; les journaux sont écrits dans la langue choisie.
 
 **Fichiers autonomes** : `build.py` intègre les textes de `src/i18n/*.json` (clés `py.*`) dans chaque outil de `dist\` : un outil copié seul sur une autre machine garde ses deux langues (c'est un choix de fabrication, documenté dans `CLAUDE.md`). Depuis les sources (`tools\`, `src\`), les outils lisent `i18n_py.py` et `i18n\` à côté d'eux ou dans `src\`. Ajouter une langue : § 21.9, aucun code à modifier. Une nouvelle option d'un outil doit avoir sa clé `py.*` dans **les deux** fichiers (`python tests/i18n.py` le vérifie) ; `python gen_reference.py` refait `REFERENCE_OPTIONS.md` (français puis anglais dans chaque case « Effet »), `python tests/doc_options.py` vérifie qu'aucune option n'y manque et qu'aucune description n'est vide.
+
+## 22. Nouveautés de la v37 (23/10/2026)
+
+### 22.1 Indicateur de course, boussole, fenêtres redimensionnables, touche O
+
+- La ligne **Mode** de la fenêtre Informations / État affiche **« à pied · course »** ou **« en vol · course »** tant que la course est active (touche **Maj** tenue, ou double appui rapide en cours), puis revient à « à pied » ou « en vol ».
+- **Boussole** : en haut de la page, au centre, le cap en texte, point cardinal puis degrés (« NE 45° »). C'est l'orientation de l'**avatar** en promenade, de la **caméra** en vue globale. Convention OpenSim : le nord est la direction **-Z** du modèle (z = -y d'OpenSim) ; la rotation de la région (`rotate`) est prise en compte. Lettres : français N, NE, E, SE, S, SO, O, NO ; anglais N, NE, E, SE, S, SW, W, NW. Case **« Boussole »** dans les Réglages visiteur (cochée par défaut, mémorisée). Options de `glb2html.py` : `--compass` / `--no-compass` (config `compass`, défaut activée) et `--north DEGRES` (config `northDeg`, défaut 0) pour un GLB qui ne vient pas d'OpenSim : le décalage est **ajouté** au cap affiché (180 : face à -Z, la boussole indique S). `--maj` les applique.
+- **Fenêtres Aide et Informations** : un **bord droit à tirer** (curseur de redimensionnement, double trait sur le bord) règle la largeur de chacune, de **260 px** à **70 %** de la fenêtre du navigateur ; la largeur est **mémorisée** dans le navigateur. Le texte se reflue et la **hauteur suit le contenu** (la barre de défilement de l'aide n'apparaît que si la fenêtre du navigateur est trop basse : à 260 px de large l'aide demande environ 730 px de hauteur). Les deux fenêtres restent empilées en bas à gauche : quand l'aide perd de la hauteur, elle descend pour rester collée aux informations. Les 440 px / 45 % de la v34 sont les valeurs par défaut.
+- Touche **O** : ouvre / ferme la fenêtre **Réglages** (R est déjà pris).
+
+### 22.2 Repère de portail (cône) : taille constante, distance
+
+Le cône garde la **même taille apparente** : son échelle suit la distance à la caméra (distance / 12, entre 1 et 12), sa pointe reste au même point et sa forme ne change pas. Il reste visible jusqu'à `zoneInfoDist`, **150 m par défaut** (plage de 5 à 500). Son infobulle ajoute la **distance au visiteur**, arrondie au mètre et mise à jour quand on bouge : « Portail → château · 120 m » (en vue globale : distance à la caméra).
+
+### 22.3 Arrivée occupée, améliorée
+
+Le point libre choisi est le plus proche de l'**occupant** (et non du point demandé) : anneaux de **1,5, 2,0 puis 3,0 m** autour de lui (16 candidats par anneau), mêmes conditions de sol, de mur et de distance aux autres visiteurs qu'en v36 ; dans l'anneau, le candidat le plus proche du point demandé. L'arrivant est ensuite **tourné vers l'occupant** (le plus proche s'il y en a plusieurs). Une ligne est écrite dans la console du navigateur : « arrivée occupée : décalé de X m (anneau R m) ».
+
+### 22.4 Pseudo cité : clignotement continu
+
+Quand un message cite mon pseudo, l'alerte clignote sur **ma page seulement** : une demi-seconde visible, une demi-seconde cachée, sur l'**étiquette du nom de l'auteur** (qui reste même quand sa bulle a disparu), sa **bulle** si elle existe encore, et la **ligne du message** dans le chat. **Sans limite de durée** : le clignotement continue jusqu'à ma première action (touche, clic, mouvement de l'avatar, envoi d'un message), puis tout reste visible. Plusieurs citations avant mon action clignotent toutes. Le texte n'est pas seulement une couleur : l'élément disparaît et réapparaît. (Remplace les 6 clignotements de 300 ms de la v33.)
+
+### 22.5 Paramètres du lien après `#`
+
+Le séparateur est **`&`** ; **`#` est aussi accepté** : `#name=Klaatou&lang=en` et `#name=Klaatou#lang=en` sont équivalents (`name`, `lang`, `spawn`, `pos`, `key`). Une seule fonction (`hashParams`) lit le lien dans la page, la coquille et la page carte.
+
+### 22.6 Historique du chat
+
+- `presence_server.py --history N` : derniers messages rejoués aux nouveaux arrivants, **200 par défaut** (20 avant), 0 = aucun.
+- `--history-file FICHIER` (désactivé par défaut) : chaque message est ajouté au fichier, une ligne JSON par message : `{"n":numéro,"t":secondes Unix,"d":"jj/mm/aaaa hh:mm:ss","room":salon,"name":pseudo,"text":texte}`. **Jamais l'adresse IP.** Le fichier est relu au démarrage : l'historique survit aux relances (jusqu'à 20 000 messages par salon en mémoire).
+- `--history-days N` (défaut 30 ; **0 = tout conserver**) : au démarrage, les messages plus anciens ne sont ni relus ni conservés (le fichier est réécrit sans eux).
+- **Protocole** : le client envoie `{t:'history', before:N, n:50}` (N = numéro du plus ancien message affiché) ; le serveur répond `{t:'history', msgs:[…], more:true|false}` pour son salon (au plus 100 messages, une demande toutes les 0,2 s). Chaque message (accueil, diffusion, page d'historique) porte en plus `n` et `t`/`ts` ; les anciens clients les ignorent. Un ancien serveur ne répond pas : le bouton « Messages plus anciens » se masque après 4 s.
+- **Page** : le panneau de chat ouvert est **défilable**. Réglage visiteur **« Messages d'historique affichés »** (200 par défaut, de 20 à 2000, mémorisé). Bouton **« Messages plus anciens »** (par paquets de 50, insérés en haut ; masqué si `more` vaut false ou si le serveur ne répond pas). **Titre de l'onglet** : « (3) NomDeLaRégion » = messages non lus quand la page est cachée ou le chat réduit, remis à zéro à l'ouverture du chat. **« N messages vous citent »** avec un bouton « Aller au premier » (ces messages gardent le clignotement du § 22.4 jusqu'à ma première action).
+- **Données personnelles.** Les messages (pseudo, texte, heure) sont des données personnelles : informe tes visiteurs, limite la durée avec `--history-days`, protège le fichier. De même **`--log-days 0` conserve les journaux sans limite** (la rotation nocturne continue mais plus aucun fichier n'est supprimé) : à n'utiliser que si tu l'assumes.
+- Commande de lancement du serveur (une seule ligne ; **relancer le serveur** pour profiter de l'historique) : `python .\presence_server.py --log presence.log --log-ip raw --log-days 0` ; ajoute `--history-file chat.jsonl` pour garder l'historique entre deux relances.
+
+### 22.7 Région par défaut (`default.json`)
+
+Quand l'adresse de la coquille n'a pas de paramètre `region`, elle essaie dans l'ordre : (a) `X.config.json` du nom de la page (comportement d'avant) ; (b) **`default.json`** du dossier, de la forme `{"region": "NOM"}` ; (c) la **première entrée de `regions.json`** dont l'adresse est relative et dont le paramètre `?region=NOM` est valide ; (d) sinon un message d'une phrase qui dit quoi faire. Le nom suit les mêmes contrôles de sécurité que `?region=`. `glb2html.py --shared-shell` écrit `default.json` la **première fois** qu'il fabrique une région dans un dossier où il n'existe pas ; **`--default`** fait de la région fabriquée la région par défaut même si `default.json` existe. `--maj` ne l'écrase jamais, sauf avec `--default`.
+
+### 22.8 Dossier lib : `--lib-url`
+
+`--lib-url CHEMIN` : chemin relatif (par exemple `../lib`) ou adresse `http(s)` complète où trouver three.js et ses modules. Il est inscrit dans la **table d'import de la coquille** (qui doit exister avant tout script) quand la coquille est écrite, et retenu dans la config (`libUrl`) pour que `--maj` le retrouve. Chemin relatif : `lib/three-X/` est créé à cet endroit s'il est absent ; adresse complète : rien n'est copié. Une coquille existante n'est jamais écrasée : pour changer le dossier d'une coquille déjà en place, supprime-la ou utilise `--maj` (copie datée de l'ancienne). Valeurs refusées : `?`, `#`, `\`, guillemets, autres schémas (`javascript:`), chemins commençant par `/`.
+
+### 22.9 Régions dans des sous-dossiers
+
+`?region=` accepte `dossier/nom` ou `a/b/nom` : segments faits de lettres, chiffres, point (pas au début), tiret, souligné, espace et parenthèses ; jamais `..`, `:`, `\`, `?`, `#`, ni chemin commençant par `/`. La config, le GLB ou les tuiles, les zones (et `zones.json` de ce dossier) et la vue d'ensemble se résolvent à partir du **dossier de la région** (les chemins de la config sont relatifs à ce dossier). Fabriquer : `glb2html.py X.glb --shared-shell P:\site\index.html -o P:\site\sous\dossier\Ile.html` (le chemin de la coquille désigne le dossier parent ; la région doit être dessous ; coquille, `lib/` et `default.json` sont écrits dans ce dossier parent ; combine avec `--lib-url`). L'adresse devient `index.html?region=sous/dossier/Ile`.
+
+### 22.10 Tests de la v37
+
+`tests/v37.py` (lot 1), `tests/v37_chat.py` (lot 2), `tests/v37_region.py` (lot 3), aide commune `tests/h37.py`. Attentes adaptées parce qu'une règle de la v37 l'impose : `v33.py` (le clignotement ne s'arrête plus seul : il s'arrête à une touche), `v35.py` (zoneInfoDist 150 par défaut, bornes 5 et 500 ; les tests de 40 m demandent `--zone-info-dist 40`), `v36.py` (la pointe du cône reste en place quand l'échelle change).

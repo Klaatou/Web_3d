@@ -317,7 +317,7 @@ async def test_coquille_commune(br):
     run(DATA / "walk3.glb", "-o", site2 / "walk3.html", *comm, "--room", "walk3", "--region-name", "Marche", "--region-xy", "1001,1000", "--zones", tmp / "zw2.json")
     run("-o", site2 / "boite.html", "--config-only", "--shared-shell", "--register", reg, "--room", "boite", "--region-name", "Boîte", "--region-xy", "1000,1000")   # la carte de boite connaît walk3
     noms = sorted(p.name for p in site2.iterdir())
-    rapport(noms == ["boite.config.json", "boite.glb", "boite.zones.json", "index.html", "lib", "walk3.config.json", "walk3.glb", "walk3.zones.json"], "--shared-shell : par région seulement X.glb, X.config.json, X.zones.json ; une coquille index.html et un lib/ partagés", noms)
+    rapport(noms == ["boite.config.json", "boite.glb", "boite.zones.json", "default.json", "index.html", "lib", "walk3.config.json", "walk3.glb", "walk3.zones.json"], "--shared-shell : par région seulement X.glb, X.config.json, X.zones.json ; une coquille index.html et un lib/ partagés", noms)
     rapport((site2 / "index.html").read_bytes() == coques["boite"], "la coquille commune est identique, octet pour octet, à celle des pages modulaires")
     rapport("index.html?region=boite" in r.stdout, "la ligne [OK] donne l'adresse index.html?region=NOM", r.stdout[-300:])
     entrees = {e["room"]: e for e in json.loads(reg.read_text(encoding="utf-8"))}
@@ -374,17 +374,25 @@ async def test_coquille_commune(br):
         await pi.ctx.close()
         for f in ("index.config.json", "index.glb"):
             (site2 / f).unlink()
-        pn = await ouvrir(base + "index.html")
+        # v37 : sans fichier correspondant, la coquille essaie default.json (écrit par glb2html.py à la première région) ; sans lui, un message clair
+        pd = await ouvrir(base + "index.html")
+        rapport(await pd.title() == "boite", "v37 : sans paramètre ni index.config.json, default.json désigne la région à ouvrir", await pd.title())
+        await pd.ctx.close()
+        djson = (site2 / "default.json").read_bytes()
+        (site2 / "default.json").unlink()
+        pn = await ouvrir(base + "index.html", attendre=False)
+        await pn.wait_for_timeout(1200)
         msg = await pn.evaluate("document.getElementById('msg') && document.getElementById('msg').textContent")
-        rapport(msg and "index.config.json" in msg and "introuvable" in msg, "sans paramètre ni fichier correspondant : message d'erreur clair", msg)
+        rapport(msg and "index.config.json" in msg and "default.json" in msg and "?region=" in msg, "sans paramètre, sans fichier correspondant ni default.json : message d'erreur clair (v37)", msg)
         await pn.ctx.close()
+        (site2 / "default.json").write_bytes(djson)
         pm = await ouvrir(base + "index.html?region=inexistante")
         msg = await pm.evaluate("document.getElementById('msg') && document.getElementById('msg').textContent")
         rapport(msg and "inexistante.config.json" in msg and "introuvable" in msg, "?region=inexistante : message d'erreur clair (fichier cité)", msg)
         await pm.ctx.close()
 
         # ---- paramètres refusés : message dans la page, aucune requête réseau vers config, zones ou glb
-        refuses = {"../x": "../x", "https://autre-site/x": "https://autre-site/x", "a/b": "a/b", "a\\b": "a\\b", "vide": "", ".secret": ".secret", "a..b": "a..b",
+        refuses = {"../x": "../x", "https://autre-site/x": "https://autre-site/x", "a\\b": "a\\b", "vide": "", ".secret": ".secret", "a..b": "a..b",
                    "a?b": "a?b", "a#b": "a#b", "a:b": "a:b", "//autre-site/x": "//autre-site/x", ".html": ".html", "tout point": ".."}
         for nom, val in refuses.items():
             pr = await ouvrir(base + "index.html?region=" + quote(val, safe="") , attendre=False)

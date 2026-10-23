@@ -388,7 +388,7 @@ async def main():
             ids = sorted(c["id"] for c in cones)
             rapport(ids == ["duo", "porte"], "un cône au-dessus de chaque portail (enter et both), aucun sur la zone « clic » ni sur les arrivées", ids)
             c_porte = next(c for c in cones if c["id"] == "porte")
-            rapport(abs(c_porte["pos"][0] + 10) < 0.01 and abs(c_porte["pos"][2] - 10) < 0.01 and abs(c_porte["pos"][1] - (15 + 2.25)) < 0.01, "centre du cône à 0,25 m sous un sommet situé 2,0 m au-dessus du centre de la zone", c_porte)
+            rapport(abs(c_porte["pos"][0] + 10) < 0.01 and abs(c_porte["pos"][2] - 10) < 0.01 and abs(c_porte["pos"][1] - 0.25 * c_porte["scale"] - (15 + 2.0)) < 0.01, "pointe du cône à 2,0 m au-dessus du centre de la zone (centre moins 0,25 x échelle : la pointe reste en place quand l'échelle change, v37)", c_porte)
             geo = await o.ev("""() => { let r = null; window.__viewer.scene.traverse(o => { if (o.userData && o.userData.cone && !r) { const g = o.geometry.parameters; r = [g.radius * 2, g.height, o.rotation.x, o.material.color.getHex(), o.children.length]; } }); return r; }""")
             rapport(abs(geo[0] - 0.35) < 0.01 and abs(geo[1] - 0.5) < 0.01 and abs(geo[2] - math.pi) < 1e-6 and geo[4] == 1, "cône de 0,35 m x 0,5 m, pointe vers le bas, avec un contour (arêtes)", geo)
             rapport(geo[3] == 0xe8e8e8, "teinte neutre claire", hex(geo[3]))

@@ -112,12 +112,12 @@ ZL = [
 ]
 (tmp / "z.json").write_text(json.dumps(ZL), encoding="utf-8")
 base = ["--shared-shell", "--zones", tmp / "z.json", "--no-sea", "--target", "0,0,0", "--presence-url", PURL, "--room", "t35", *vend]
-html(site / "sol.glb", "-o", site / "Portee.html", *base, "--zone-marker", "portee", "--register", site / "regions.json", "--region-name", "Test 35", "--map-page", "carte.html")
-html(site / "sol.glb", "-o", site / "Discret.html", *base)
+html(site / "sol.glb", "-o", site / "Portee.html", *base, "--zone-marker", "portee", "--zone-info-dist", "40", "--register", site / "regions.json", "--region-name", "Test 35", "--map-page", "carte.html")
+html(site / "sol.glb", "-o", site / "Discret.html", *base, "--zone-info-dist", "40")   # v37 : le défaut passe à 150 m ; ces tests gardent la géométrie de 40 m en la demandant
 html(site / "sol.glb", "-o", site / "NoFly.html", *base, "--no-fly")
 html(site / "sol.glb", "-o", site / "Court.html", *base, "--zone-info-dist", "10", "--zone-marker", "portee")
 html(site / "sol.glb", "-o", site / "Long.html", *base, "--zone-info-dist", "60", "--zone-marker", "portee")
-for nom, val in (("Haut", "500"), ("Bas", "1")):
+for nom, val in (("Haut", "900"), ("Bas", "1")):
     html(site / "sol.glb", "-o", site / f"Borne{nom}.html", *base, "--zone-info-dist", val)
 rapport(True, "pages générées (portée, discret, sans vol, distance 10, bornes)")
 
@@ -573,7 +573,7 @@ async def main():
             cfg_c = json.loads((site / "Court.config.json").read_text(encoding="utf-8"))
             cfg_h = json.loads((site / "BorneHaut.config.json").read_text(encoding="utf-8"))
             cfg_b = json.loads((site / "BorneBas.config.json").read_text(encoding="utf-8"))
-            rapport(cfg_d["zoneInfoDist"] == 40.0 and cfg_c["zoneInfoDist"] == 10.0 and cfg_h["zoneInfoDist"] == 200.0 and cfg_b["zoneInfoDist"] == 5.0, "config : zoneInfoDist 40 par défaut, 10 donné, bornes 5 et 200", (cfg_d["zoneInfoDist"], cfg_c["zoneInfoDist"], cfg_h["zoneInfoDist"], cfg_b["zoneInfoDist"]))
+            rapport(cfg_d["zoneInfoDist"] == 40.0 and cfg_c["zoneInfoDist"] == 10.0 and cfg_h["zoneInfoDist"] == 500.0 and cfg_b["zoneInfoDist"] == 5.0, "config : zoneInfoDist 40 donné (le défaut est 150 depuis la v37), 10 donné, bornes 5 et 500", (cfg_d["zoneInfoDist"], cfg_c["zoneInfoDist"], cfg_h["zoneInfoDist"], cfg_b["zoneInfoDist"]))
 
             async def survol_a(page_nom, dist):
                 o = await Onglet(br).ouvrir(base_url + page_nom)

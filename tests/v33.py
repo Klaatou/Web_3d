@@ -826,13 +826,11 @@ async def main():
                 const p = window.__viewer.getPresence().peers.find(q => q.name === 'Bob');
                 return { bold: getComputedStyle(d).fontWeight, txt: d.textContent, cite: d.dataset.cite, hidden: p.blinkHidden, visible: p.bubbleVisible, blinking: p.blinking, beeps: window.__beeps }; }""")
             rapport(int(r["bold"]) >= 700 and r["txt"].startswith("@ Bob : salut @alice") and r["cite"] == "1", "pseudo cité (@alice) : message en gras, précédé de « @ »", r)
-            rapport(r["hidden"] >= 1 and r["visible"] and not r["blinking"], "la bulle de l'auteur a clignoté (au moins un passage caché mesuré à la cadence de rendu logiciel), puis est restée visible", r)
-            seq = await A.ev("""() => { const v = window.__viewer, id = v.getPresence().peers.find(q => q.name === 'Bob').id, t = performance.now(), seq = [];
-                v.blinkBubble(id);
-                for (let k = 0; k <= 45; k++) { v.tickPresence(0.05, t + 2 + k * 50); seq.push(v.getPresence().peers.find(q => q.id === id).bubbleVisible ? 1 : 0); }
-                return seq; }""")
-            flips = sum(1 for a, b in zip(seq, seq[1:]) if a == 1 and b == 0)
-            rapport(flips == 6 and all(seq[36:]) and seq[0] == 1, "clignotement : exactement 6 passages cachés de 150 ms sur 300 ms (pas de présence simulé à 50 ms), puis visible", seq)
+            rapport(r["hidden"] >= 1 and r["blinking"], "v37 : l'étiquette et la bulle de l'auteur clignotent (au moins un passage caché mesuré) et continuent tant que je n'ai rien fait", r)
+            await A.pg.keyboard.press("Shift")
+            await asyncio.sleep(0.3)
+            r2 = await A.ev("""() => { const p = window.__viewer.getPresence().peers.find(q => q.name === 'Bob'); return { blinking: p.blinking, label: p.labelVisible, bubble: p.bubbleVisible || !p.bubble }; }""")
+            rapport(not r2["blinking"] and r2["label"] and r2["bubble"], "v37 : après une touche, le clignotement s'arrête et tout reste visible (remplace les 6 clignotements de 300 ms de la v33)", r2)
             rapport(r["beeps"] == 1, "bip de citation coché par défaut (v36) : un bip pour ce message (la page a déjà reçu une action : Entrée)", r["beeps"])
             for texte_msg, attendu in (("Alicex et xalice", False), ("ALICE, viens", True), ("coucou @Alice", True), ("alice's", True), ("Alicia", False), ("l'alice", True)):
                 await asyncio.sleep(0.8)

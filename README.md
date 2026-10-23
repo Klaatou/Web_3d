@@ -86,6 +86,12 @@ Une zone peut porter un champ `mesh` : le nom exact d'un élément du modèle. L
 - **Chat** : saisie persistante, enregistrement dans un fichier texte (côté navigateur), pseudo cité (gras, bulle qui clignote, bip), complétion `@pseudo`. **Couleur de l'avatar** choisie par le visiteur : **relancer `presence_server.py`**. `--log-ip raw` écrit l'adresse IP en clair (donnée personnelle : informer les visiteurs, limiter `--log-days`).
 - **Viewer en mode tuiles** : « Enregistrer les zones dans le dossier de la région » (Edge, Chrome) ; la page relit `X.zones.json` à chaque ouverture, F5 suffit.
 
+## Nouveautés de la v37 (détail : `MODE_EMPLOI.md` § 22)
+
+- **Page** : indicateur de course (« à pied · course »), **boussole** en haut (`--compass`, `--north`), repère de portail (cône) de **taille constante** avec la distance dans l'infobulle (`--zone-info-dist` : 150 m par défaut, jusqu'à 500), arrivée occupée mieux placée et tournée vers l'occupant, pseudo cité qui **clignote jusqu'à la première action**, fenêtres Aide et Informations **redimensionnables**, touche **O** pour les Réglages, paramètres du lien séparés par `&` ou `#`.
+- **Chat** : historique de 200 messages (`--history`), `--history-file` et `--history-days` côté serveur, panneau défilable, « Messages plus anciens », non lus dans le titre de l'onglet, « N messages vous citent ».
+- **Coquille** : région par défaut (`default.json`, `--default`, repli sur `regions.json`), `--lib-url` (dossier `lib` ailleurs), régions dans des **sous-dossiers** (`?region=a/b/nom`).
+
 ## Nouveautés de la v36 (détail : `MODE_EMPLOI.md` § 21)
 
 - **Touches** : **F** et **P** entrent en promenade et en sortent ; le vol se prend avec **Début**, le bouton de vol ou **Page Haut** maintenu ; **E** redevient la touche des zones (« clic ou E : … »). Clavier **AZERTY ou QWERTY** (réglage Auto, lettres réelles dans l'aide).

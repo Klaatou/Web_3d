@@ -235,7 +235,7 @@ function disposeObject(root) {
 
 function createViewer(container, cfg0, loader) {
   const cfg = Object.assign({}, cfg0);
-  let onMouse = null, onView = null, onFly = null, onCfg = null, onWalk = null, onPick = null, onPresence = null, onChat = null, onPeer = null, onName = null, spectateOn = false, pickOrbit = false, walking = false, linkLock = false;
+  let onMouse = null, onView = null, onFly = null, onCfg = null, onWalk = null, onPick = null, onPresence = null, onChat = null, onHistory = null, onBlink = null, onBlinkEnd = null, onPeer = null, onName = null, spectateOn = false, pickOrbit = false, walking = false, linkLock = false;
   const W = { pos: new THREE.Vector3(), spawn: new THREE.Vector3(), vy: 0, grounded: true, yaw: 0, pitch: 0, keys: new Set(), jumpReq: false, drag: false, mouseFree: false, saved: null, grid: null,
     fly: false, flyFloor: undefined, view: 'fps', cam: new THREE.Vector3(), cyaw: 0, cpitch: 0,
     tyaw: 0, tpitch: 0,   // v35 : caméra à la troisième personne (orbite propre) ; W.yaw reste l'orientation de l'avatar
@@ -866,6 +866,7 @@ function createViewer(container, cfg0, loader) {
     const k = W.keys, free = W.view === 'free', tps = W.view === 'tps';
     for (const c of W.run) if (!k.has(c)) W.run.delete(c);   // v35 : course par double appui (W, S, ↑, ↓) : tant que la touche reste enfoncée
     const run = k.has('ShiftLeft') || k.has('ShiftRight') || W.run.size > 0;
+    if (run !== !!W.runOn) { W.runOn = run; if (onView) onView(); }   // v37 : la ligne « Mode » de l'état affiche la course
     const turn = (k.has('ArrowLeft') ? 1 : 0) - (k.has('ArrowRight') ? 1 : 0);
     if (turn) { if (free) W.cyaw += 1.8 * dt * turn; else if (tps) W.tyaw += 1.8 * dt * turn; else W.yaw += 1.8 * dt * turn; }
     const f = (k.has('KeyW') || k.has('ArrowUp') ? 1 : 0) - (k.has('KeyS') || k.has('ArrowDown') ? 1 : 0);
@@ -994,25 +995,40 @@ function createViewer(container, cfg0, loader) {
     for (const q of P.peers.values()) if (q.g.visible && Math.hypot(q.tx - x, q.tz - z) < rh && Math.abs(q.ty - y) < rv) return true;
     return false;
   }
+  // v37 : le point libre le plus proche de l'OCCUPANT (anneaux de 1,5 puis 2,0 puis 3,0 m autour de lui, 16 candidats), le plus proche du point demandé dans l'anneau ;
+  // l'arrivant est ensuite tourné vers l'occupant le plus proche (avant = (-sin yaw, -cos yaw), comme getWalk().yaw)
   function dodgeSpot(x, y, z) {
     if (!peerNear(x, y, z, 1, 2)) return null;
     const G = W.grid; if (!G) return null;
-    for (const [r, n] of [[1.2, 12], [2.4, 16], [3.6, 24]]) {
-      const found = [];
+    let occ = null, od = 1e9;
+    for (const q of P.peers.values()) { if (!q.g.visible || Math.abs(q.ty - y) >= 2) continue; const d = Math.hypot(q.tx - x, q.tz - z); if (d < 1 && d < od) { od = d; occ = q; } }
+    if (!occ) return null;
+    const ox = occ.tx, oz = occ.tz, oy = occ.ty;
+    for (const r of [1.5, 2.0, 3.0]) {
+      const n = 16, found = [];
       for (let i = 0; i < n; i++) {
-        const a = i / n * Math.PI * 2, cx = x + Math.cos(a) * r, cz = z + Math.sin(a) * r;
+        const a = i / n * Math.PI * 2, cx = ox + Math.cos(a) * r, cz = oz + Math.sin(a) * r;
         if (G.tiled && G.pending(cx, cz)) continue;
         const g = G.ground(cx, cz, y + 1);
         if (g === null || Math.abs(g - y) > 1) continue;
-        if (G.wall(x, y + 0.9, z, Math.cos(a), Math.sin(a), r + 0.3)) continue;
+        if (G.wall(ox, oy + 0.9, oz, Math.cos(a), Math.sin(a), r + 0.3)) continue;
         if (peerNear(cx, g, cz, 1, 2)) continue;
-        found.push({ x: cx, y: g, z: cz, dy: Math.abs(g - y) });
+        found.push({ x: cx, y: g, z: cz, r, dp: Math.hypot(cx - x, cz - z), dy: Math.abs(g - y) });
       }
-      if (found.length) { found.sort((p, q) => p.dy - q.dy); return found[0]; }   // même distance au point demandé dans un anneau : le plus proche en hauteur
+      if (found.length) { found.sort((p, q) => (p.dp - q.dp) || (p.dy - q.dy)); return found[0]; }
     }
     return null;
   }
-  function dodgeNow() { const s = dodgeSpot(W.pos.x, W.pos.y, W.pos.z); if (s) { W.pos.set(s.x, s.y, s.z); W.spawn.copy(W.pos); } return !!s; }
+  function dodgeNow() {
+    const x0 = W.pos.x, z0 = W.pos.z, s = dodgeSpot(x0, W.pos.y, z0);
+    if (!s) return false;
+    W.pos.set(s.x, s.y, s.z); W.spawn.copy(W.pos);
+    let near = null, nd = 4;
+    for (const q of P.peers.values()) { if (!q.g.visible) continue; const d = Math.hypot(q.tx - s.x, q.tz - s.z); if (d < nd) { nd = d; near = q; } }
+    if (near) { W.yaw = W.tyaw = Math.atan2(-(near.tx - s.x), -(near.tz - s.z)); W.pitch = 0; }
+    console.log(tr('core.dodge.log', (Math.round(Math.hypot(s.x - x0, s.z - z0) * 10) / 10).toFixed(1), s.r.toFixed(1)));
+    return true;
+  }
   function dodgeApply() {
     DODGE.pending = null;
     if (!cfg.presenceUrl) return;
@@ -1037,7 +1053,7 @@ function createViewer(container, cfg0, loader) {
     W.saved = { pos: camera.position.clone(), target: controls.target.clone(), fov: camera.fov };
     const t = (opts && opts.pos) ? new THREE.Vector3().fromArray(opts.pos) : controls.target, fx = t.x - camera.position.x, fz = t.z - camera.position.z;
     W.yaw = (opts && Number.isFinite(opts.yaw)) ? opts.yaw : (Math.hypot(fx, fz) > 1e-3 ? Math.atan2(-fx, -fz) : 0);
-    W.pitch = 0; W.tyaw = W.yaw; W.tpitch = 0; W.run.clear(); W.upT = 0;
+    W.pitch = 0; W.tyaw = W.yaw; W.tpitch = 0; W.run.clear(); W.upT = 0; W.runOn = false;
     let g = W.grid.ground(t.x, t.z, t.y + 2);
     if (g === null) g = W.grid.ground(t.x, t.z, 1e6);
     W.pos.set(t.x, g === null ? t.y : g, t.z); W.spawn.copy(W.pos);
@@ -1388,14 +1404,17 @@ function createViewer(container, cfg0, loader) {
       P.serverColor = Number.isInteger(m.color) && m.color >= 0 && m.color <= 0xFFFFFF ? m.color : null;
       if (m.name) setMyName(m.name);
       if (m.role === 'spectator' && walking && P.ws) P.ws.send(JSON.stringify({ t: 'role', walker: true, name: P.name }));
-      if (onChat && cfg.chat !== false) (m.history || []).forEach(h => onChat({ id: h.id, name: cleanName(h.name) || '?', text: String(h.text || '').slice(0, 200), self: false, history: true }));
+      if (onChat && cfg.chat !== false) (m.history || []).forEach(h => onChat({ id: h.id, name: cleanName(h.name) || '?', text: String(h.text || '').slice(0, 200), self: false, history: true, n: Number.isFinite(h.n) ? h.n : undefined, ts: Number.isFinite(h.t) ? h.t : undefined }));
     }
     else if (m.t === 'join') { const had = P.peers.has(m.id) || m.id === P.id; addPeer(m); pStatus('online'); if (onChat && cfg.chat !== false) onChat({ system: true, text: tr('core.joined', cleanName(m.name) || '?') }); if (!had && onPeer) onPeer('join', cleanName(m.name) || '?'); }   // v36 : onPeer = visiteur EN PROMENADE qui arrive ou part (jamais moi, jamais la liste initiale)
     else if (m.t === 'leave') { const q = P.peers.get(m.id); removePeer(m.id); pStatus('online'); if (q && onChat && cfg.chat !== false) onChat({ system: true, text: tr('core.left', q.name) }); if (q && onPeer) onPeer('leave', q.name); }
     else if (m.t === 'chat' && cfg.chat !== false) {
       const text = String(m.text || '').slice(0, 200), q = P.peers.get(m.id);
       if (q) showBubble(q, text);
-      if (onChat) onChat({ id: m.id, name: cleanName(m.name) || (q && q.name) || '?', text, self: m.id === P.id, history: false });
+      if (onChat) onChat({ id: m.id, name: cleanName(m.name) || (q && q.name) || '?', text, self: m.id === P.id, history: false, n: Number.isFinite(m.n) ? m.n : undefined, ts: Number.isFinite(m.ts) ? m.ts : undefined });
+    }
+    else if (m.t === 'history') {   // v37 : page plus ancienne de l'historique du salon (réponse à requestHistory)
+      if (onHistory && cfg.chat !== false) onHistory({ more: m.more === true, msgs: (Array.isArray(m.msgs) ? m.msgs : []).slice(0, 100).map(h => ({ id: h.id, name: cleanName(h.name) || '?', text: String(h.text || '').slice(0, 200), self: false, history: true, n: Number.isFinite(h.n) ? h.n : undefined, ts: Number.isFinite(h.t) ? h.t : undefined })) });
     }
     else if (m.t === 'notice') { if (onChat && cfg.chat !== false) onChat({ system: true, text: String(m.text || '').slice(0, 120) }); }
     else if (m.t === 'pos') {
@@ -1456,22 +1475,52 @@ function createViewer(container, cfg0, loader) {
     if (ws) { try { ws.close(); } catch (_) {} }
     clearPeers(); if (P.state !== 'off') pStatus('off');
   }
+  // v37 : alerte « pseudo cité » : demi-seconde visible, demi-seconde cachée, SANS limite de durée, jusqu'à ma première action (touche, clic, mouvement de l'avatar, envoi) ;
+  // concerne l'étiquette du nom de l'auteur, sa bulle (si elle existe encore) et, côté page, la ligne du message (onBlink / onBlinkEnd). Plusieurs citations : toutes clignotent.
+  const BL = { on: false, t0: 0, vis: true, px: 0, pz: 0, yaw: 0 };
+  function blinkStop() {
+    if (!BL.on) return;
+    BL.on = false; BL.vis = true;
+    for (const q of P.peers.values()) {
+      if (!q.blink) continue;
+      q.blink = null;
+      const lab = q.g.children.find(o => o.isSprite && !o.userData.isBubble); if (lab) lab.visible = true;
+      if (q.bubble) q.bubble.visible = true;
+    }
+    dirty = true;
+    if (onBlinkEnd) onBlinkEnd();
+  }
+  function blinkStart(id) {
+    const q = id === undefined ? null : P.peers.get(id);
+    if (!BL.on) { BL.on = true; BL.t0 = performance.now(); BL.vis = true; BL.px = W.pos.x; BL.pz = W.pos.z; BL.yaw = W.yaw; }
+    if (q) { q.blink = { t0: BL.t0 }; q.blinkHidden = q.blinkHidden || 0; }
+    dirty = true;
+    return !!q;
+  }
+  function blinkTick(now) {
+    if (!BL.on) return;
+    if (walking && (Math.hypot(W.pos.x - BL.px, W.pos.z - BL.pz) > 0.05 || Math.abs(Math.atan2(Math.sin(W.yaw - BL.yaw), Math.cos(W.yaw - BL.yaw))) > 0.02)) { blinkStop(); return; }
+    const v = Math.floor((now - BL.t0) / 500) % 2 === 0;
+    if (v !== BL.vis) {
+      BL.vis = v; dirty = true;
+      if (!v) for (const q of P.peers.values()) if (q.blink) q.blinkHidden = (q.blinkHidden || 0) + 1;
+      if (onBlink) onBlink(v);
+    }
+  }
+  for (const ev of ['keydown', 'pointerdown']) window.addEventListener(ev, e => { if (BL.on) blinkStop(); }, true);
   function presenceTick(dt, now) {
+    blinkTick(now);
     if (P.peers.size) {
       const a = 1 - Math.exp(-dt * 10);
       for (const q of P.peers.values()) {
         if (q.bubble && now > q.bubbleUntil) removeBubble(q);
-        if (q.blink) {   // v33 : bulle d'un message qui me cite : 6 clignotements de 300 ms (visible 150 ms, cachée 150 ms), sans dépendre de la couleur
-          const n = Math.floor((now - q.blink.t0) / 300);
-          if (n >= 6 || !q.bubble) { if (q.bubble) q.bubble.visible = true; q.blink = null; }
-          else { const v = (now - q.blink.t0) % 300 < 150; if (q.bubble.visible !== v) { q.bubble.visible = v; if (!v) q.blinkHidden = (q.blinkHidden || 0) + 1; } }
-        }
         if (!q.g.visible) continue;
         q.g.position.x += (q.tx - q.g.position.x) * a; q.g.position.y += (q.ty - q.g.position.y) * a; q.g.position.z += (q.tz - q.g.position.z) * a;
         const d = Math.atan2(Math.sin(q.tyaw - q.g.rotation.y), Math.cos(q.tyaw - q.g.rotation.y));
         q.g.rotation.y += d * a;
         const dist = camera.position.distanceTo(q.g.position), k = Math.max(1, dist / 28);
         const lab = q.g.children.find(o => o.isSprite && !o.userData.isBubble), bc = q.g.userData.beacon;
+        if (q.blink) { if (lab) lab.visible = BL.vis; if (q.bubble) q.bubble.visible = BL.vis; }   // v37 : étiquette du nom et bulle clignotent ensemble
         const ks = Math.max(1, dist / 45), ly = 2.1 + 0.55 * (k - 1);
         if (lab) { lab.scale.set(1.6 * k, 0.4 * k, 1); lab.position.y = ly; }
         // pile de bas en haut : nom, bulle (si elle existe), losange, avec une marge entre chacun ; tailles réelles des sprites (scale.y)
@@ -1572,10 +1621,12 @@ function createViewer(container, cfg0, loader) {
       document.body.appendChild(tipEl);
     }
     const [t, sub] = zoneTipText(z);
-    if (tipEl.dataset.zone !== z.id) {
-      tipEl.dataset.zone = z.id; tipEl.textContent = '';
-      const b = document.createElement('b'); b.textContent = t; tipEl.appendChild(b);
-      if (sub) { tipEl.appendChild(document.createElement('br')); tipEl.appendChild(document.createTextNode(sub)); }
+    const ds = tipObj ? ' · ' + tr('core.tip.dist', coneDist(tipObj)) : '';   // v37 : distance au visiteur, mise à jour à chaque mouvement
+    const key = z.id + '|' + ds;
+    if (tipEl.dataset.zone !== key) {
+      tipEl.dataset.zone = key; tipEl.textContent = '';
+      const b = document.createElement('b'); b.textContent = sub ? t : t + ds; tipEl.appendChild(b);
+      if (sub) { tipEl.appendChild(document.createElement('br')); tipEl.appendChild(document.createTextNode(sub + ds)); }
     }
     tipEl.hidden = false;
     const w = tipEl.offsetWidth, h = tipEl.offsetHeight;
@@ -1628,10 +1679,25 @@ function createViewer(container, cfg0, loader) {
     m.rotation.x = Math.PI;   // pointe vers le bas
     if (box) m.position.set((box.min.x + box.max.x) / 2, box.max.y + 0.75, (box.min.z + box.max.z) / 2); else m.position.set(0, 2.25, 0);
     m.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: 0x111111, fog: false })));
-    m.userData.cone = true; m.userData.zone = z; m.visible = coneOn;
+    m.userData.cone = true; m.userData.zone = z; m.visible = coneOn; m.userData.base = m.position.clone();
     g.add(m); zoneLabs.push(m); zoneAll.push(m);
     if (z.type !== 'spawn') zoneHit.push(m);
     return true;
+  }
+  // v37 : taille apparente constante : l'échelle suit la distance à la caméra (distance / 12, entre 1 et 12), la pointe reste au même point
+  function coneScaleTick() {
+    for (const o of zoneLabs) {
+      if (!o.userData.cone || !o.visible || !o.parent) continue;
+      const b = o.userData.base, px = o.parent.position.x + b.x, py = o.parent.position.y + b.y, pz = o.parent.position.z + b.z;
+      const d = Math.hypot(camera.position.x - px, camera.position.y - py, camera.position.z - pz);
+      const k = Math.min(12, Math.max(1, d / 12));
+      if (Math.abs(o.scale.x - k) > 1e-3) { o.scale.setScalar(k); o.position.y = b.y - 0.25 + 0.25 * k; }
+    }
+  }
+  // distance affichée dans l'infobulle d'un cône : promeneur -> cône, sinon caméra -> cône (arrondie au mètre)
+  function coneDist(o) {
+    const b = o.userData.base, p = o.parent ? o.parent.position : { x: 0, y: 0, z: 0 }, ref = walking ? W.pos : camera.position;
+    return Math.round(Math.hypot(ref.x - (p.x + b.x), ref.y - (p.y + b.y), ref.z - (p.z + b.z)));
   }
   function setCones(on, quiet) {
     coneOn = !!on; try { localStorage.setItem('glb2html_cones', coneOn ? '1' : '0'); } catch (_) {}
@@ -1767,19 +1833,22 @@ function createViewer(container, cfg0, loader) {
     if (walking && P.ws && P.ws.readyState === 1 && P.id) P.ws.send(JSON.stringify({ t: 'zone', id: z.id, type: z.type, label: z.label }));
     if (onZone) onZone(z, how);
   }
-  // v35 : distance de survol et de clic des zones en promenade (config zoneInfoDist, 5 à 200 m, défaut 40) ; les noms affichés (showName) la suivent
-  const zoneInfoDist = () => Math.max(5, Math.min(200, Number(cfg.zoneInfoDist) || 40));
+  // v35 : distance de survol et de clic des zones en promenade (config zoneInfoDist, 5 à 500 m, défaut 150 depuis la v37) ; les noms affichés (showName) la suivent
+  const zoneInfoDist = () => Math.max(5, Math.min(500, Number(cfg.zoneInfoDist) || 150));
   let zoneLabs = [];
   function zoneLabelTick() {
     for (const o of zoneLabs) { let v = !walking || !o.parent || Math.hypot(W.pos.x - (o.parent.position.x + o.position.x), W.pos.z - (o.parent.position.z + o.position.z)) <= zoneInfoDist(); if (o.userData.cone) v = v && coneOn; if (o.visible !== v) { o.visible = v; dirty = true; } }
   }
+  let lastHitObj = null, tipObj = null;
   function zoneFromClick(nx, ny, maxDist, forClick) {
     if (!zoneHit.length) return null;
     camera.updateMatrixWorld(true);
     tpV.set(nx, ny); tpRay.setFromCamera(tpV, camera);
     // v36 : un cône masqué (T) ne répond pas ; le cône d'un portail « enter » seul n'a qu'une infobulle (pas de clic)
     const h = tpRay.intersectObjects(zoneHit, false).find(q => !(q.object.userData.cone && (!q.object.visible || !coneOn || (forClick && q.object.userData.zone.trigger === 'enter'))));
+    lastHitObj = null;
     if (!h || (maxDist && h.distance > maxDist)) return null;
+    lastHitObj = h.object;
     const z = zoneOf(h.object), link = z && zoneLink.get(z.id);
     if (model) {
       // un élément traversable (walkIgnore) ne bloque pas le clic, ni les autres morceaux de l'élément visé
@@ -1810,6 +1879,7 @@ function createViewer(container, cfg0, loader) {
     const now = performance.now(); if (now - hoverT < 50) return; hoverT = now;
     const r = dom.getBoundingClientRect();
     const zh = zoneFromClick((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1, walking ? zoneInfoDist() : 0);
+    tipObj = zh && lastHitObj && lastHitObj.userData.cone ? lastHitObj : null;
     setHover(zh, e.clientX, e.clientY);
   });
   dom.addEventListener('pointerleave', () => setHover(null));
@@ -1928,7 +1998,7 @@ function createViewer(container, cfg0, loader) {
     presenceTick(dt, performance.now());
     landingTick(performance.now());
     if (seaMat && seaMat.uniforms) { seaMat.uniforms.uTime.value = clock.elapsedTime; dirty = true; }
-    if (dirty || moved) { renderer.render(scene, camera); dirty = false; }
+    if (dirty || moved) { if (zoneLabs.length) coneScaleTick(); renderer.render(scene, camera); dirty = false; }
   });
 
   return {
@@ -1937,7 +2007,7 @@ function createViewer(container, cfg0, loader) {
     setZones, zoneSelect, zonePickAt, findMeshes,
     // v36 : repères de portail (cônes) : affichés ou non (T), rappel, état pour les tests
     setCones, get cones() { return coneOn; }, set onCones(f) { onCones = f; },
-    getCones() { const out = []; zoneGroup.traverse(o => { if (o.userData && o.userData.cone) { const p = o.getWorldPosition(new THREE.Vector3()); out.push({ id: o.userData.zone.id, visible: o.visible, pos: p.toArray() }); } }); return out; },
+    getCones() { const out = []; zoneGroup.traverse(o => { if (o.userData && o.userData.cone) { const p = o.getWorldPosition(new THREE.Vector3()); camera.updateMatrixWorld(true); const r = dom.getBoundingClientRect(), pr = p.clone().project(camera), d = camera.position.distanceTo(p); out.push({ id: o.userData.zone.id, visible: o.visible, pos: p.toArray(), scale: o.scale.x, dist: d, sx: r.left + (pr.x + 1) / 2 * r.width, sy: r.top + (1 - pr.y) / 2 * r.height, px: 0.35 * o.scale.x / (2 * d * Math.tan(camera.fov * Math.PI / 360)) * r.height }); } }); return out; },
     // mode tuiles (cfg.tiles) : voir loadTiles ; tilesState sert aux tests
     closeTiles, releaseAnchor, get seaCenter() { return [seaCx, seaCz]; },
     // v32 : le point visé (rayon THREE.Raycaster) sur la vue d'ensemble, hors tuiles chargées ; null si rien
@@ -1986,6 +2056,9 @@ function createViewer(container, cfg0, loader) {
     },
     getName() { return P.name; }, set onLanding(f) { onLanding = f; }, set onName(f) { onName = f; },
     spectate(on) { spectateOn = !!on; if (spectateOn) { if (cfg.presenceUrl && !P.ws) presenceConnect(); } else if (!walking) presenceDisconnect(); },
+    // v37 : demande les n messages précédant le message numéro `before` ; un ancien serveur ne répond pas (la page masque alors le bouton)
+    requestHistory(before, n) { if (!P.ws || P.ws.readyState !== 1 || !P.id || !Number.isFinite(before)) return false; P.ws.send(JSON.stringify({ t: 'history', before, n: n || 50 })); return true; },
+    set onHistory(f) { onHistory = f; },
     sendChat(text) {
       const t = String(text || '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, 200);
       if (!t || !P.ws || P.ws.readyState !== 1 || !P.id) return false;
@@ -1998,7 +2071,14 @@ function createViewer(container, cfg0, loader) {
     setHome(h) { home = h && Array.isArray(h.pos) && h.pos.length >= 3 && h.pos.every(Number.isFinite) ? { pos: h.pos.slice(0, 3), yaw: Number.isFinite(h.yaw) ? h.yaw : undefined, forF: !!h.forF } : null; },
     get home() { return home; }, goTo, returnHome, toggleFly, cycleView, setView,
     set onMouse(f) { onMouse = f; }, grabMouse, get mouseState() { return mouseState(); }, set onView(f) { onView = f; }, set onFly(f) { onFly = f; }, tickPresence(dt, now) { presenceTick(dt, now); },   // tickPresence : pas de présence à la main, pour les tests (bulle qui clignote)
-    get viewName() { return VIEW_NAMES[W.view]; }, get view() { return W.view; }, get flying() { return W.fly; },
+    get viewName() { return VIEW_NAMES[W.view]; }, get view() { return W.view; }, get flying() { return W.fly; }, getHeading() {   // v37 : cap en degrés (0 = nord, sens horaire). Nord d'OpenSim = -Z du modèle ; + rotation de la région + cfg.northDeg
+      let psi;
+      if (walking) psi = W.yaw;
+      else { const d = camera.getWorldDirection(new THREE.Vector3()); if (Math.hypot(d.x, d.z) < 1e-4) return null; psi = Math.atan2(-d.x, -d.z); }
+      const deg = rotDeg() - psi * 180 / Math.PI + (Number(cfg.northDeg) || 0);
+      return ((deg % 360) + 360) % 360;
+    },
+    get running() { return !!W.runOn && walking; },
     // v34 : la couleur choisie est envoyée au serveur aussitôt si la connexion est ouverte (sinon dans « hello ») ; l'avatar du visiteur la prend
     setMyColor(c) {
       P.myColor = Number.isInteger(c) && c >= 0 && c <= 0xFFFFFF ? c : null;
@@ -2013,9 +2093,9 @@ function createViewer(container, cfg0, loader) {
       if (P.ws) { const ws = P.ws; P.ws = null; P.id = null; try { ws.close(); } catch (_) {} clearPeers(); if (walking || spectateOn) presenceConnect(); }
       return true;
     },
-    blinkBubble(id) { const q = P.peers.get(id); if (q && q.bubble) { q.blink = { t0: performance.now() }; q.blinkHidden = 0; dirty = true; return true; } return false; },
+    blinkBubble: blinkStart, blinkStop, get blinking() { return BL.on; }, set onBlink(f) { onBlink = f; }, set onBlinkEnd(f) { onBlinkEnd = f; },
     setName(n) { P.name = cleanName(n); if (P.ws && P.ws.readyState === 1) P.ws.send(JSON.stringify({ t: 'name', name: P.name })); },
-    getPresence() { return { state: P.state, id: P.id, peers: [...P.peers.values()].map(q => ({ id: q.id, name: q.name, pos: q.g.position.toArray(), visible: q.g.visible, bubble: !!q.bubble, bubbleVisible: !!q.bubble && q.bubble.visible, blinking: !!q.blink, blinkHidden: q.blinkHidden || 0, color: q.color, stack: avatarStack(q) })) }; }, get walking() { return walking; },
+    getPresence() { return { state: P.state, id: P.id, peers: [...P.peers.values()].map(q => ({ id: q.id, name: q.name, pos: q.g.position.toArray(), visible: q.g.visible, bubble: !!q.bubble, bubbleVisible: !!q.bubble && q.bubble.visible, labelVisible: (q.g.children.find(o => o.isSprite && !o.userData.isBubble) || { visible: null }).visible, blinking: !!q.blink, blinkHidden: q.blinkHidden || 0, color: q.color, stack: avatarStack(q) })) }; }, get walking() { return walking; },
     walkTick(dt) { if (walking) walkStep(dt); },
     refreshCollision() { if (TL.on) { for (const t of TL.tiles) if (t.state === 'ready' && t.grp) { t.state = 'building'; t.grid = null; t.gen = collisionGridSteps(t.grp, 3, parseIgnore(cfg.walkIgnore)); t.qAt = performance.now(); t.qFirst = true; t.gridCpu = 0; TL.gridQ.push(t); } } else if (walking && model) W.grid = buildCollisionGrid(model, 3, parseIgnore(cfg.walkIgnore)); },
     teleportNdc(nx, ny) { return walkTeleport(nx, ny); },

@@ -51,6 +51,12 @@ For a huge model, `glb2tiles.py` writes the tiles, and `glb2html.py --tiles X.ti
 
 `regions.json` is the map: a list of regions (name, address, X, Y, arrival point, room, presence server, thumbnail). `--register` adds or updates the region being generated; `--map-page` writes a web page of the map with one link per region; `--map-url a.json,b.json` merges the maps of several owners each time the page opens.
 
+## What is new in v37 (details in French: `MODE_EMPLOI.md` § 22)
+
+- **Page**: run indicator ("on foot · running"), **compass** at the top (`--compass`, `--north`), portal marker (cone) with a **constant size on screen** and the distance in its tooltip (`--zone-info-dist`: 150 m by default, up to 500), better placed occupied arrival turned toward the occupant, a cited nickname that **blinks until your first action**, **resizable** Help and Information windows, **O** key for Settings, address parameters separated by `&` or `#`.
+- **Chat**: 200-message history (`--history`), `--history-file` and `--history-days` on the server, scrollable panel, "Older messages", unread count in the tab title, "N messages mention you".
+- **Shell**: default region (`default.json`, `--default`, fallback to `regions.json`), `--lib-url` (`lib` folder elsewhere), regions in **sub-folders** (`?region=a/b/name`).
+
 ## Walking: main keys (v36)
 
 | Key | Effect |
@@ -73,7 +79,7 @@ The keyboard layout (setting "Keyboard": Auto, AZERTY or QWERTY) only changes th
 
 ## Develop
 
-See `CLAUDE.md` (architecture, decisions, roadmap, in French) and `HISTORIQUE.md`. Tests: `python build.py`, then `tests/smoke.py`, `modulaire.py`, `portail_interne.py`, `tuiles.py`, `v23.py` to `v36.py`, `v36_lang.py`, `v36_viewer_lang.py`, `i18n.py`, `tools_lang.py`, `doc_options.py`, `glb2tiles.py`, `oar2glb.py`, `terrain.py` (browser tests need Playwright and Chromium; set `THREE_DIR` and `CHROMIUM`).
+See `CLAUDE.md` (architecture, decisions, roadmap, in French) and `HISTORIQUE.md`. Tests: `python build.py`, then `tests/smoke.py`, `modulaire.py`, `portail_interne.py`, `tuiles.py`, `v23.py` to `v37.py`, `v37_chat.py`, `v37_region.py`, `v36_lang.py`, `v36_viewer_lang.py`, `i18n.py`, `tools_lang.py`, `doc_options.py`, `glb2tiles.py`, `oar2glb.py`, `terrain.py` (browser tests need Playwright and Chromium; set `THREE_DIR` and `CHROMIUM`).
 
 ## Security
 

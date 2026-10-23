@@ -5,6 +5,8 @@
 const I18N = __I18N_DATA__;
 const I18N_LANGS = Object.keys(I18N).sort();
 const I18N_KEY = 'glb2html_lang';
+// v37 : paramètres après # ; le séparateur est & et # est accepté aussi (#name=A&lang=en = #name=A#lang=en). Fonction commune à tous les lecteurs du hash.
+const hashParams = h => new URLSearchParams(String(h === undefined ? location.hash : h).replace(/^#/, '').replace(/#/g, '&'));
 const i18nName = code => (I18N[code] && I18N[code]._name) || code;
 const i18nMatch = tag => { const c = String(tag || '').toLowerCase().split(/[-_]/)[0]; return I18N[c] ? c : null; };
 // choix de l'utilisateur : 'auto' ou un code de langue disponible. #lang=xx dans l'adresse est prioritaire et mémorisé.
@@ -12,7 +14,7 @@ const LANG_PREF = (() => {
   let pref = 'auto';
   try { const s = localStorage.getItem(I18N_KEY); if (s === 'auto' || I18N[s]) pref = s; } catch (_) {}
   try {
-    const h = new URLSearchParams(location.hash.slice(1)).get('lang');
+    const h = hashParams().get('lang');
     if (h !== null) { const v = h.toLowerCase() === 'auto' ? 'auto' : i18nMatch(h); if (v) { pref = v; try { localStorage.setItem(I18N_KEY, v); } catch (_) {} } }
   } catch (_) {}
   return pref;
@@ -51,6 +53,6 @@ const i18nChoices = () => [['auto', tr('common.auto')]].concat(I18N_LANGS.map(c 
 // change la langue : mémorise, retire #lang= de l'adresse (sinon il l'emporterait), recharge la page
 function setLangPref(v) {
   try { localStorage.setItem(I18N_KEY, v === 'auto' || I18N[v] ? v : 'auto'); } catch (_) {}
-  try { const u = new URL(location.href), hp = new URLSearchParams(u.hash.slice(1)); hp.delete('lang'); const hs = hp.toString(); history.replaceState(null, '', u.pathname + u.search + (hs ? '#' + hs : '')); } catch (_) {}
+  try { const u = new URL(location.href), hp = hashParams(u.hash); hp.delete('lang'); const hs = hp.toString(); history.replaceState(null, '', u.pathname + u.search + (hs ? '#' + hs : '')); } catch (_) {}
   location.reload();
 }

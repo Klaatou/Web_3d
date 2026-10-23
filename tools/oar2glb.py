@@ -1669,7 +1669,7 @@ def terrain_seul(glb, scan, out, mode, P, chunk=LECTURE):
 
 
 def main():
-    ap = argparse.ArgumentParser(description=_tr("py.oar2glb.desc"), epilog=_tr("py.oar2glb.epilog"), formatter_class=argparse.RawDescriptionHelpFormatter, add_help=False)
+    ap = argparse.ArgumentParser(description=_tr("py.oar2glb.desc", VERSION), epilog=_tr("py.oar2glb.epilog"), formatter_class=argparse.RawDescriptionHelpFormatter, add_help=False)
     i18n_add_common(ap)
     ap.add_argument("--version", action="version", version=f"oar2glb {VERSION}", help=_tr("py.common.version"))
     ap.add_argument("oar", help=_tr("py.oar2glb.help.oar"))

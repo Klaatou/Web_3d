@@ -87,7 +87,9 @@ ZONE_MARKER = "discret"
 SHOW_SPAWNS = False
 ZONE_CONE = True
 FLY_ENABLED = True
-ZONE_INFO_DIST = 40.0
+ZONE_INFO_DIST = 150.0
+COMPASS = True
+NORTH_DEG = 0.0
 TARGET_EXPLICIT = False
 # <</DEFAULTS>>
 
@@ -418,7 +420,7 @@ def settings_defaults(S):
                           ("sea", "sea_enabled", bool), ("retina", "retina", bool), ("walk", "walk", bool), ("eyeHeight", "eye_height", float),
                           ("walkSpeed", "walk_speed", float), ("walkIgnore", "walk_ignore", str), ("names", "names", bool), ("chat", "chat", bool),
                           ("chatFade", "chat_fade", float), ("presenceUrl", "presence_url", str), ("room", "room", str), ("spectate", "spectate", bool),
-                          ("panel", "panel", bool), ("mapUrl", "map_url", str), ("zoneMarker", "zone_marker", str), ("showSpawns", "show_spawns", bool), ("zoneCone", "zone_cone", bool), ("fly", "fly", bool), ("zoneInfoDist", "zone_info_dist", float)):
+                          ("panel", "panel", bool), ("mapUrl", "map_url", str), ("zoneMarker", "zone_marker", str), ("showSpawns", "show_spawns", bool), ("zoneCone", "zone_cone", bool), ("fly", "fly", bool), ("zoneInfoDist", "zone_info_dist", float), ("compass", "compass", bool), ("northDeg", "north", float), ("libUrl", "lib_url", str)):
         put(dest, c.get(k), conv)
     put("target_explicit", S.get("targetExplicit"), bool)
     put("zoom", cam.get("zoom"), float)
@@ -493,7 +495,7 @@ MESHOPT_JS = r"""__MESHOPT_JS__"""
 def build_cfg(name: str, *, rotate=ROTATE, hole=HOLE_RADIUS, hole_fade=HOLE_FADE, hole_x=HOLE_X, hole_z=HOLE_Z, wave=WAVE_AMP,
                sea_y=SEA_Y, zoom=ZOOM_RATIO, cam_dir=CAM_DIR, target=TARGET, sea_enabled=SEA_ENABLED,
                anim_enabled=ANIM_ENABLED, retina=RETINA_ENABLED, foliage_cutout=FOLIAGE_CUTOUT,
-               sea_color=SEA_COLOR, sky_color=SKY_COLOR, sea_segments=SEA_SEGMENTS, walk=WALK_ENABLED, eye_height=EYE_HEIGHT, walk_speed=WALK_SPEED, walk_ignore=WALK_IGNORE, names=NAMES_ENABLED, presence_url=PRESENCE_URL, room=ROOM, chat=CHAT_ENABLED, chat_fade=CHAT_FADE, zones=None, profile=PROFILE, spectate=SPECTATE, panel=PANEL, zones_live=ZONES_LIVE, map_entries=None, map_url=MAP_URL, modular=False, zone_marker=ZONE_MARKER, show_spawns=SHOW_SPAWNS, zone_cone=ZONE_CONE, fly=FLY_ENABLED, zone_info_dist=ZONE_INFO_DIST, target_explicit=TARGET_EXPLICIT, tiles=None, tile_radius=TILE_RADIUS, tile_margin=TILE_MARGIN, tile_max_mo=TILE_MAX_MO, tile_max_tri=TILE_MAX_TRI, tile_concurrency=TILE_CONCURRENCY) -> dict:
+               sea_color=SEA_COLOR, sky_color=SKY_COLOR, sea_segments=SEA_SEGMENTS, walk=WALK_ENABLED, eye_height=EYE_HEIGHT, walk_speed=WALK_SPEED, walk_ignore=WALK_IGNORE, names=NAMES_ENABLED, presence_url=PRESENCE_URL, room=ROOM, chat=CHAT_ENABLED, chat_fade=CHAT_FADE, zones=None, profile=PROFILE, spectate=SPECTATE, panel=PANEL, zones_live=ZONES_LIVE, map_entries=None, map_url=MAP_URL, modular=False, zone_marker=ZONE_MARKER, show_spawns=SHOW_SPAWNS, zone_cone=ZONE_CONE, fly=FLY_ENABLED, zone_info_dist=ZONE_INFO_DIST, compass=COMPASS, north=NORTH_DEG, lib_url="", make_default=False, target_explicit=TARGET_EXPLICIT, tiles=None, tile_radius=TILE_RADIUS, tile_margin=TILE_MARGIN, tile_max_mo=TILE_MAX_MO, tile_max_tri=TILE_MAX_TRI, tile_concurrency=TILE_CONCURRENCY) -> dict:
     """Le dictionnaire de réglages `cfg` : identique dans la page autonome et dans <page>.config.json (mode modulaire),
     sauf que le mode modulaire garde les zones hors de la config (fichier <page>.zones.json, relu à chaque ouverture)."""
     presence_url = fix_presence_url(presence_url)
@@ -508,7 +510,7 @@ def build_cfg(name: str, *, rotate=ROTATE, hole=HOLE_RADIUS, hole_fade=HOLE_FADE
         "map": clean_map(json.loads(MAP_JSON) if map_entries is None else map_entries), "mapUrl": str(map_url or "")[:1200], "spectate": bool(presence_url) if spectate is None else bool(spectate),
         "zones": clean_zones(json.loads(ZONES_JSON) if zones is None else zones, profile), "chatFade": float(chat_fade), "presenceUrl": str(presence_url), "room": str(room) or pathlib.Path(name).stem,
         "zoneMarker": zone_marker if zone_marker in ZONE_MARKERS else "discret", "showSpawns": bool(show_spawns), "zoneCone": bool(zone_cone), "fly": bool(fly), "targetExplicit": bool(target_explicit),
-        "zoneInfoDist": max(5.0, min(200.0, float(zone_info_dist))),
+        "zoneInfoDist": max(5.0, min(500.0, float(zone_info_dist))), "compass": bool(compass), "northDeg": float(north) % 360.0, "libUrl": str(lib_url or ""),
     }
     if modular:
         cfg["zones"], cfg["zonesLive"] = [], ""
@@ -527,29 +529,64 @@ if (location.protocol === 'file:') document.getElementById('msg').textContent = 
 </script>
 """
 # la coquille ne contient aucun nom : X.html charge X.config.json, X.glb, X.zones.json (puis zones.json) du même dossier
-SHELL_BOOT_NEW = """// fichiers frères : par défaut déduits du nom de la page (copier X.html en Y.html et ses frères en Y.* suffit) ;
+SHELL_BOOT_NEW = r"""// fichiers frères : par défaut déduits du nom de la page (copier X.html en Y.html et ses frères en Y.* suffit) ;
 // avec ?region=NOM, de NOM : une seule coquille peut servir plusieurs régions du même dossier
-const BOOT = (() => {
+const BOOT = await (async () => {
   const fail = raison => { document.getElementById('msg').textContent = tr('page.shell.error', raison); throw new Error(raison); };
+  // même règle que valid_region_name (gen_tpl.py), à garder identique : un nom simple = un seul nom de fichier ; dossier/nom ou a/b/nom = segments de lettres, chiffres,
+  // point (pas au début), tiret, souligné, espace et parenthèses ; jamais « .. », « : », « \ », « ? », « # », ni chemin commençant par « / »
+  const okRegion = nom => {
+    if (!nom || nom.length > 200) return false;
+    if (!nom.includes('/')) return !/[\/\\:?#\x00-\x1f]/.test(nom) && !nom.includes('..') && !nom.startsWith('.');
+    return nom.split('/').every(s => /^[\p{L}\p{N}_()\- ][\p{L}\p{N}_()\- .]*$/u.test(s) && s.trim() !== '' && !s.includes('..'));
+  };
+  const clean = s => String(s || '').replace(/\.html?$/i, '');
+  // fichiers de la région NOM (ou a/b/NOM) : tous relatifs au dossier de la région (dir) ; les zones se cherchent aussi dans zones.json de ce dossier
+  const mk = nom => {
+    const i = nom.lastIndexOf('/'), dir = i < 0 ? '' : nom.slice(0, i).split('/').map(encodeURIComponent).join('/') + '/', e = dir + encodeURIComponent(nom.slice(i + 1));
+    return { dir, config: e + '.config.json', glb: e + '.glb', zones: [e + '.zones.json', dir + 'zones.json'] };
+  };
   const q = new URLSearchParams(location.search);
-  let e;
   if (q.has('region')) {
-    // NOM doit être un seul nom de fichier du dossier : jamais d'adresse, de chemin ni de dossier parent (aucune requête avant ce contrôle)
-    const nom = (q.get('region') || '').replace(/\\.html?$/i, '');
-    if (!nom || /[\\/\\\\:?#\\x00-\\x1f]/.test(nom) || nom.includes('..') || nom.startsWith('.')) fail(tr('page.shell.badregion', nom));
-    e = encodeURIComponent(nom);
-  } else {
-    let f = location.pathname.split('/').pop() || '';
-    try { f = decodeURIComponent(f); } catch (x) {}
-    e = encodeURIComponent(f.replace(/\\.html?$/i, '') || 'index');
+    // NOM ne peut être ni une adresse ni un chemin vers un dossier parent (aucune requête avant ce contrôle)
+    const nom = clean(q.get('region'));
+    if (!okRegion(nom)) fail(tr('page.shell.badregion', nom));
+    return mk(nom);
   }
-  return { config: e + '.config.json', glb: e + '.glb', zones: [e + '.zones.json', 'zones.json'] };
+  // sans ?region= : (a) X.config.json du nom de la page ; (b) default.json {"region": "NOM"} ; (c) la première entrée de regions.json d'adresse relative ; (d) message
+  let f = location.pathname.split('/').pop() || '';
+  try { f = decodeURIComponent(f); } catch (x) {}
+  const own = mk(clean(f) || 'index');
+  const probe = async b => { try { const r = await fetch(b.config, { cache: 'no-store' }); if (r.ok) { b.res = r; return b; } } catch (x) {} return null; };
+  const relRegion = u => {
+    u = String(u || '');
+    if (/^[a-z][a-z0-9+.\-]*:/i.test(u) || /^[\/\\]/.test(u)) return null;
+    try { const nom = clean(new URL(u, 'http://x/').searchParams.get('region')); return okRegion(nom) ? nom : null; } catch (x) { return null; }
+  };
+  const a = await probe(own); if (a) return a;
+  try {
+    const r = await fetch('default.json', { cache: 'no-store' });
+    if (r.ok) { const d = await r.json(); const nom = clean(d && d.region); if (okRegion(nom)) { const b = await probe(mk(nom)); if (b) return b; } }
+  } catch (x) {}
+  try {
+    const r = await fetch('regions.json', { cache: 'no-store' });
+    if (r.ok) {
+      const d = await r.json(), liste = Array.isArray(d) ? d : (d && Array.isArray(d.regions) ? d.regions : []);
+      for (const e of liste) { const nom = relRegion(e && e.url); if (nom) { const b = await probe(mk(nom)); if (b) return b; } }
+    }
+  } catch (x) {}
+  document.getElementById('msg').textContent = tr('page.shell.noregion', own.config);
+  throw new Error('region');
 })();
 const C = await (async () => {
   const fail = (nom, raison) => { document.getElementById('msg').textContent = tr('page.shell.notfound', nom, raison); throw new Error(nom + ' : ' + raison); };
-  let r; try { r = await fetch(BOOT.config, { cache: 'no-store' }); } catch (e) { fail(BOOT.config, tr('page.shell.network')); }
-  if (!r.ok) fail(BOOT.config, 'HTTP ' + r.status);
+  let r = BOOT.res;
+  if (!r) {
+    try { r = await fetch(BOOT.config, { cache: 'no-store' }); } catch (e) { fail(BOOT.config, tr('page.shell.network')); }
+    if (!r.ok) fail(BOOT.config, 'HTTP ' + r.status);
+  }
   const cfg = await r.json();
+  if (cfg.tiles && BOOT.dir) cfg.tiles = BOOT.dir + cfg.tiles;   // région dans un sous-dossier : les chemins de la config sont relatifs à ce dossier
   // zones relues à chaque ouverture : X.zones.json, sinon zones.json du même dossier, sinon aucune
   cfg.zones = [];
   for (const nom of BOOT.zones) {
@@ -603,10 +640,12 @@ def write_atomic(path: pathlib.Path, data: bytes):
     tmp.replace(path)
 
 
-def write_modular_lib(out_dir: pathlib.Path, vendor_dir):
+def write_modular_lib(out_dir: pathlib.Path, vendor_dir, lib_url=None):
     """Écrit lib/three-X/ à côté des pages (partagé par toutes les pages du dossier) : modules à plat, imports réécrits,
-    Draco et Meshopt toujours présents (la coquille ne sait pas ce que contient le .glb)."""
-    lib = out_dir / LIB_REL
+    Draco et Meshopt toujours présents (la coquille ne sait pas ce que contient le .glb). v37 : lib_url déplace le dossier (rien n'est écrit pour une adresse complète)."""
+    lib = lib_dir_of(out_dir, lib_url)
+    if lib is None:
+        return
     for rel in SHELL_MODULES.values():
         write_atomic(lib / lib_name(rel), fix_imports(vendor_bytes(rel, vendor_dir)).encode("utf-8"))
     for rel in DRACO_LIBS.values():
@@ -627,29 +666,93 @@ DEFAULT_SHELL = "index.html"
 
 
 def valid_region_name(name) -> bool:
-    """Même règle que la coquille (?region=NOM) : un seul nom de fichier, sans / \\ : ? # ni .., sans point au début."""
+    """Même règle que la coquille (?region=NOM), à garder identique au JS (okRegion dans SHELL_BOOT_NEW). Un nom simple : un seul nom de fichier, sans / \\ : ? # ni ..,
+    sans point au début. v37, chemin descendant dossier/nom ou a/b/nom : chaque segment fait de lettres, chiffres, point (pas au début), tiret, souligné, espace et
+    parenthèses ; jamais « .. », « : », « \\ », « ? », « # », ni chemin commençant par « / »."""
     name = re.sub(r"\.html?$", "", str(name or ""), flags=re.I)
-    return bool(name) and not re.search(r"[/\\:?#\x00-\x1f]", name) and ".." not in name and not name.startswith(".")
+    if "/" not in name:
+        return bool(name) and not re.search(r"[/\\:?#\x00-\x1f]", name) and ".." not in name and not name.startswith(".")
+    return len(name) <= 200 and all(re.fullmatch(r"[\w()\- ][\w()\- .]*", seg) is not None and seg.strip() != "" and ".." not in seg for seg in name.split("/"))
 
 
 def shell_page_address(shell_name: str, region: str) -> str:
     """Adresse d'une région servie par une coquille commune : COQUILLE.html?region=NOM (le #spawn= s'ajoute après)."""
-    return f"{shell_name}?region={urllib.parse.quote(region, safe='')}"
+    return f"{shell_name}?region={urllib.parse.quote(region, safe='/')}"
 
 
-def lib_missing(out_dir: pathlib.Path):
+class ShellRef(str):
+    """Nom de la coquille commune (le texte), avec son dossier si --shared-shell a reçu un chemin (v37 : région dans un sous-dossier de la coquille)."""
+    dir = None
+
+
+def shell_file(shell, out_path: pathlib.Path) -> pathlib.Path:
+    """Fichier de la coquille : dans le dossier donné par l'option, sinon à côté de la région."""
+    return (shell.dir if getattr(shell, "dir", None) else out_path.parent) / str(shell)
+
+
+def shell_dir_of(shell, out_path: pathlib.Path) -> pathlib.Path:
+    return shell.dir if (shell is not None and getattr(shell, "dir", None)) else out_path.parent
+
+
+def region_of(shell, out_path: pathlib.Path):
+    """Nom de la région vu de la coquille : chemin de la page sans extension, relatif au dossier de la coquille (a/b/X) ; None si la page est ailleurs."""
+    base = shell_dir_of(shell, out_path)
+    try:
+        return out_path.resolve().with_suffix("").relative_to(base.resolve()).as_posix()
+    except ValueError:
+        return None
+
+
+def clean_lib_url(v):
+    """--lib-url : chemin relatif (../lib) ou adresse http(s) complète ; rend (texte normalisé, est_distant) ou lève ValueError."""
+    v = str(v or "").strip()
+    if not v:
+        return "", False
+    if re.search(r"[\\?#\x00-\x1f\"'<>`]", v):
+        raise ValueError(v)
+    if re.match(r"https?://", v, re.I):
+        return v.rstrip("/"), True
+    if re.match(r"[a-zA-Z][a-zA-Z0-9+.\-]*:", v) or v.startswith(("/", "//")):
+        raise ValueError(v)
+    v = v.rstrip("/")
+    return v, False
+
+
+def lib_prefix(lib_url) -> str:
+    """Début des adresses de la table d'import : ./lib par défaut (octet pour octet comme avant), ../lib, ./sous/lib, ou l'adresse complète."""
+    v, remote = clean_lib_url(lib_url)
+    v = urllib.parse.quote(v, safe="/:%@+=,()-._~")
+    if not v:
+        return "./lib"
+    if remote or v.startswith("./") or v.startswith("../") or v in (".", ".."):
+        return v
+    return "./" + v
+
+
+def lib_dir_of(shell_dir: pathlib.Path, lib_url):
+    """Dossier lib/three-X/ à écrire (None si lib_url est une adresse complète : rien n'est copié)."""
+    v, remote = clean_lib_url(lib_url)
+    if remote:
+        return None
+    return shell_dir / (v or "lib") / ("three-" + THREE_VERSION)
+
+
+def lib_missing(out_dir: pathlib.Path, lib_url=None):
     """Fichiers de lib/three-X/ absents (la coquille commune et les pages déjà publiées les partagent)."""
     mods, draco = shell_lib_files()
-    lib = out_dir / LIB_REL
+    lib = lib_dir_of(out_dir, lib_url)
+    if lib is None:
+        return []
     return [str(lib / n) for n in list(mods.values()) + ["draco/" + n for n in draco] if not (lib / n).is_file()]
 
 
-def build_shell() -> str:
+def build_shell(lib_url=None) -> str:
     """La coquille universelle du mode modulaire : même texte, octet pour octet, pour toutes les régions (le viewer en met
     une copie dans son .zip). Elle charge <nom de la page>.config.json / .glb / .zones.json du même dossier et lib/three-X/.
     Aucun nom, aucun titre, aucune couleur propre à une région n'y est écrit."""
-    importmap = {"imports": {spec: f"./{LIB_REL}/{lib_name(rel)}" for spec, rel in SHELL_MODULES.items()}}
-    decoders = [replace_once(DRACO_JS.replace("__DRACO_LIBS__", "{}"), DRACO_PATH_OLD, f"draco.setDecoderPath('./{LIB_REL}/draco/');"), MESHOPT_JS]
+    pre = lib_prefix(lib_url) + "/three-" + THREE_VERSION
+    importmap = {"imports": {spec: f"{pre}/{lib_name(rel)}" for spec, rel in SHELL_MODULES.items()}}
+    decoders = [replace_once(DRACO_JS.replace("__DRACO_LIBS__", "{}"), DRACO_PATH_OLD, f"draco.setDecoderPath('{pre}/draco/');"), MESHOPT_JS]
     tpl = HTML_TEMPLATE
     tpl = replace_once(tpl, SHELL_TITLE_OLD, "<title>Chargement…</title>")
     tpl = replace_once(tpl, SHELL_MSG_OLD, SHELL_MSG_NEW)
@@ -733,10 +836,19 @@ def write_modular_zones(zones_path: pathlib.Path, kw):
     print(_tr("py.glb2html.zones_0_zone_s_profil_1", len(zones), profile, zones_path))
 
 
+def write_default_json(shell_dir: pathlib.Path, region: str, force=False):
+    """v37 : default.json {"region": NOM} à côté de la coquille = région ouverte quand l'adresse n'a pas de ?region=. Écrit la première fois, ou avec --default."""
+    path = shell_dir / "default.json"
+    if path.is_file() and not force:
+        return
+    write_atomic(path, (json.dumps({"region": region}, ensure_ascii=False) + "\n").encode("utf-8"))
+    print(_tr("py.glb2html.default_json_ecrit", path, region))
+
+
 def write_shell_page(out_path: pathlib.Path, shell, page: str):
     """Écrit la coquille : X.html (modulaire simple) ou COQUILLE.html à côté de la région, jamais écrasée si elle existe et diffère."""
     if shell:
-        shell_path = out_path.with_name(shell)
+        shell_path = shell_file(shell, out_path)
         if not shell_path.is_file():
             write_atomic(shell_path, page.encode("utf-8"))
             print(_tr("py.glb2html.coquille_0_ecrite", shell_path))
@@ -752,10 +864,13 @@ def generate(glb_path: pathlib.Path, out_path: pathlib.Path, vendor_dir, modular
     """shell : nom de la coquille commune (COQUILLE.html). Alors out_path désigne la région (NOM = son nom sans extension) :
     seuls NOM.glb, NOM.config.json et NOM.zones.json sont écrits, plus la coquille et lib/ s'ils sont absents."""
     data = glb_path.read_bytes()
+    make_default = kw.pop("make_default", False)
+    rname = out_path.stem
     if shell:
         modular = True
-        if not valid_region_name(out_path.stem):
-            print(_tr("py.glb2html.erreur_nom_de_region_0_refuse", out_path.stem), file=sys.stderr)
+        rname = region_of(shell, out_path)
+        if rname is None or not valid_region_name(rname):
+            print(_tr("py.glb2html.erreur_nom_de_region_0_refuse", rname or out_path.stem), file=sys.stderr)
             return False
     if modular:
         if kw.get("title"):
@@ -767,27 +882,29 @@ def generate(glb_path: pathlib.Path, out_path: pathlib.Path, vendor_dir, modular
         kw = dict(kw, zones_live=live_zones_name(out_path, kw["zones_live"]))
     try:
         used = inspect_glb(data, glb_path.name)
-        page = build_shell() if modular else build_html(data, glb_path.name, vendor_dir, **kw)
+        page = build_shell(kw.get("lib_url")) if modular else build_html(data, glb_path.name, vendor_dir, **kw)
     except ValueError as e:
         print(_tr("py.glb2html.erreur_0", e), file=sys.stderr)
         return False
     out_path.parent.mkdir(parents=True, exist_ok=True)
     if modular:
         glb_out, cfg_out, zones_out = modular_names(out_path)
-        if not shell or lib_missing(out_path.parent):
-            write_modular_lib(out_path.parent, vendor_dir)
+        if not shell or lib_missing(shell_dir_of(shell, out_path), kw.get("lib_url")):
+            write_modular_lib(shell_dir_of(shell, out_path), vendor_dir, kw.get("lib_url"))
         write_atomic(glb_out, data)
         write_config(cfg_out, glb_path.name, kw)
         # sans source de zones, un X.zones.json existant (peut-être modifié à la main) n'est pas écrasé
         if zones_given(kw) or not zones_out.is_file():
             write_modular_zones(zones_out, kw)
     write_shell_page(out_path, shell, page)
+    if shell:
+        write_default_json(shell_dir_of(shell, out_path), rname, make_default)
     if not modular:
         write_live_zones(out_path, dict(kw, zones_live=kw.get("zones_live") or ""))
     if shell:
-        print(_tr("py.glb2html.ok_0_1_2_3_coquille", glb_path.name, glb_out.name, cfg_out.name, zones_out.name, shell, shell_page_address(shell, out_path.stem), VERSION))
+        print(_tr("py.glb2html.ok_0_1_2_3_coquille", glb_path.name, glb_out.name, cfg_out.name, zones_out.name, shell, shell_page_address(shell, rname), VERSION))
     elif modular:
-        print(_tr("py.glb2html.ok_0_1_modulaire_coquille_2", glb_path.name, out_path, len(page) / 1024, glb_out.name, len(data) / 2**20, cfg_out.name, zones_out.name, LIB_REL, VERSION))
+        print(_tr("py.glb2html.ok_0_1_modulaire_coquille_2", glb_path.name, out_path, len(page) / 1024, glb_out.name, len(data) / 2**20, cfg_out.name, zones_out.name, lib_prefix(kw.get("lib_url")).lstrip("./") + "/three-" + THREE_VERSION, VERSION))
     else:
         print(_tr("py.glb2html.ok_0_1_2_2f_mo", glb_path.name, out_path, len(data) / 2**20, len(page) / 2**20, VERSION))
     return True
@@ -868,32 +985,38 @@ def place_tiles(tiles_path: pathlib.Path, doc, page_dir: pathlib.Path):
 def generate_tiles(tiles_path: pathlib.Path, doc, out_path: pathlib.Path, vendor_dir, shell=None, **kw):
     """Région en tuiles : comme generate() en mode modulaire, mais sans .glb : écrit X.config.json (champ « tiles »), X.zones.json,
     la coquille et lib/ ; X.tiles.json et ses tuiles ne sont copiés que s'ils ne sont pas déjà à côté de la page."""
-    if shell and not valid_region_name(out_path.stem):
-        print(_tr("py.glb2html.erreur_nom_de_region_0_refuse", out_path.stem), file=sys.stderr)
-        return False
+    make_default = kw.pop("make_default", False)
+    rname = out_path.stem
+    if shell:
+        rname = region_of(shell, out_path)
+        if rname is None or not valid_region_name(rname):
+            print(_tr("py.glb2html.erreur_nom_de_region_0_refuse", rname or out_path.stem), file=sys.stderr)
+            return False
     if kw.get("title"):
         print(_tr("py.glb2html.avertissement_title_est_ignore_en_mode"), file=sys.stderr)
     if kw.get("zones_live"):
         print(_tr("py.glb2html.avertissement_zones_live_est_ignore_en"), file=sys.stderr)
     kw = dict(kw, zones_live="")
-    page = build_shell()
+    page = build_shell(kw.get("lib_url"))
     out_path.parent.mkdir(parents=True, exist_ok=True)
     kw["tiles"] = place_tiles(tiles_path, doc, out_path.parent)
     zones_keep = kw.pop("zones_keep", False)   # --zones désigne déjà X.zones.json de destination : jamais réécrit
     _, cfg_out, zones_out = modular_names(out_path)
-    if not shell or lib_missing(out_path.parent):
-        write_modular_lib(out_path.parent, vendor_dir)
+    if not shell or lib_missing(shell_dir_of(shell, out_path), kw.get("lib_url")):
+        write_modular_lib(shell_dir_of(shell, out_path), vendor_dir, kw.get("lib_url"))
     write_config(cfg_out, out_path.stem, kw)
     if (zones_given(kw) and not zones_keep) or not zones_out.is_file():
         write_modular_zones(zones_out, kw)
     write_shell_page(out_path, shell, page)
+    if shell:
+        write_default_json(shell_dir_of(shell, out_path), rname, make_default)
     n = len(doc["tiles"])
     if any(z.get("mesh") for z in clean_zones(json.loads(ZONES_JSON) if kw.get("zones") is None else kw["zones"], kw.get("profile", PROFILE))):
         if doc.get("nodeRefs"):
             print(_tr("py.glb2html.tuiles_des_zones_sont_liees_a"))
         else:
             print(_tr("py.glb2html.avertissement_des_zones_sont_liees_a", tiles_path.name), file=sys.stderr)
-    adr = shell_page_address(shell, out_path.stem) if shell else out_path.name
+    adr = shell_page_address(shell, rname) if shell else out_path.name
     print(_tr("py.glb2html.ok_0_tuile_s_1_2", n, cfg_out.name, zones_out.name) + (_tr("py.glb2html.coquille_commune_0_adresse_1", shell, adr) if shell else _tr("py.glb2html.shell_name", out_path.name)) + f" [glb2html {VERSION}]")
     return True
 
@@ -912,7 +1035,7 @@ MAJ_KEYS = {
     "sky_color": ("skyColor",), "sea_segments": ("seaSegments",), "walk": ("walk",), "eye_height": ("eyeHeight",), "walk_speed": ("walkSpeed",),
     "walk_ignore": ("walkIgnore",), "names": ("names",), "presence_url": ("presenceUrl",), "chat": ("chat",), "chat_fade": ("chatFade",), "profile": ("profile",),
     "spectate": ("spectate",), "panel": ("panel",), "map_url": ("mapUrl",), "room": ("room",), "sea_enabled": ("sea",), "anim_enabled": ("anim",), "retina": ("retina",),
-    "zone_marker": ("zoneMarker",), "show_spawns": ("showSpawns",), "zone_cone": ("zoneCone",), "fly": ("fly",), "zone_info_dist": ("zoneInfoDist",), "tile_radius": ("tileRadius",), "tile_margin": ("tileMargin",),
+    "zone_marker": ("zoneMarker",), "show_spawns": ("showSpawns",), "zone_cone": ("zoneCone",), "fly": ("fly",), "zone_info_dist": ("zoneInfoDist",), "compass": ("compass",), "north": ("northDeg",), "lib_url": ("libUrl",), "tile_radius": ("tileRadius",), "tile_margin": ("tileMargin",),
     "tile_max_mo": ("tileMaxMo",), "tile_max_tri": ("tileMaxTri",), "tile_concurrency": ("tileConcurrency",), "tiles": ("tiles",),
     "map": ("map",), "register": ("map",),
 }
@@ -989,19 +1112,25 @@ def run_maj(a, kw, explicit, S_reg):
             raise ValueError(_tr("py.glb2html.ce_n_est_pas_un_objet"))
     except (OSError, ValueError) as e:
         sys.exit(_tr("py.glb2html.erreur_0_illisible_1", cfg_out, e))
-    shell_path = out.with_name(a.shared_shell) if a.shared_shell else out
+    shell_path = shell_file(a.shared_shell, out) if a.shared_shell else out
+    rname = out.stem
     if not a.shared_shell and not out.is_file():
         sys.exit(_tr("py.glb2html.erreur_maj_0_introuvable_si_la", out, DEFAULT_SHELL))
-    if a.shared_shell and not valid_region_name(out.stem):
-        sys.exit(_tr("py.glb2html.erreur_nom_de_region_0_refuse_2", out.stem))
+    if a.shared_shell:
+        rname = region_of(a.shared_shell, out)
+        if rname is None or not valid_region_name(rname):
+            sys.exit(_tr("py.glb2html.erreur_nom_de_region_0_refuse_2", rname or out.stem))
+    kw.pop("make_default", None)
     if a.input and a.tiles:
         sys.exit(_tr("py.glb2html.erreur_tiles_remplace_le_glb_ne"))
-    explicit = set(explicit) - {"input", "output", "maj", "vendor", "shared_shell", "modular", "config_only", "zones_only", "zones_live", "title", "zones", "map_page", "thumb",
+    explicit = set(explicit) - {"input", "output", "maj", "vendor", "shared_shell", "modular", "config_only", "zones_only", "zones_live", "title", "zones", "map_page", "thumb", "default",
                                   "region_name", "region_url", "region_xy", "region_spawn"}
     kw.update(tile_radius=clamp(a.tile_radius, 10, 5000), tile_margin=clamp(a.tile_margin, 0, 5000), tile_max_mo=clamp(a.tile_max_mo, 1, 100000),
               tile_max_tri=int(clamp(a.tile_max_tri, 1000, 10**9)), tile_concurrency=int(clamp(a.tile_concurrency, 1, 16)))
     if "room" not in explicit:
         kw["room"] = str(old.get("room") or "")
+    if "lib_url" not in explicit:
+        kw["lib_url"] = str(old.get("libUrl") or "")   # v37 : le choix du dossier lib est retenu dans la config
     tdoc = None
     if a.tiles:
         tp = find_beside(a.tiles)
@@ -1060,12 +1189,17 @@ def run_maj(a, kw, explicit, S_reg):
             write_modular_zones(zones_out, kw)
     else:
         print(_tr("py.glb2html.maj_0_conserve_tel_quel", zones_out.name) + ("" if zones_out.is_file() else _tr("py.glb2html.absent_paren")))
-    print("[maj] " + renew_shell(shell_path, build_shell()))
-    if lib_missing(out.parent):
-        write_modular_lib(out.parent, a.vendor)
-        print(_tr("py.glb2html.maj_0_absent_ou_incomplet_ecrit", LIB_REL))
+    lib_url = kw.get("lib_url") or ""
+    libtxt = lib_prefix(lib_url).lstrip("./") + "/three-" + THREE_VERSION
+    print("[maj] " + renew_shell(shell_path, build_shell(lib_url)))
+    sdir = shell_dir_of(a.shared_shell, out) if a.shared_shell else out.parent
+    if lib_missing(sdir, lib_url):
+        write_modular_lib(sdir, a.vendor, lib_url)
+        print(_tr("py.glb2html.maj_0_absent_ou_incomplet_ecrit", libtxt))
     else:
-        print(_tr("py.glb2html.maj_0_present_conserve", LIB_REL))
+        print(_tr("py.glb2html.maj_0_present_conserve", libtxt))
+    if a.shared_shell and a.default:   # --maj n'écrase jamais default.json sans --default
+        write_default_json(sdir, rname, True)
     if a.map_page:
         entries = cfg.get("map") or []
         if clean_map(entries):
@@ -1075,7 +1209,7 @@ def run_maj(a, kw, explicit, S_reg):
             print(_tr("py.glb2html.avertissement_map_page_ignore_aucune_region"), file=sys.stderr)
     if a.register or a.map_page or a.thumb or a.map:
         print(_tr("py.glb2html.carte_avec_maj_les_chemins_relatifs", out.parent.resolve()))
-    adr = shell_page_address(a.shared_shell, out.stem) if a.shared_shell else out.name
+    adr = shell_page_address(a.shared_shell, rname) if a.shared_shell else out.name
     print(_tr("py.glb2html.ok_region_mise_a_jour_adresse", adr, VERSION))
     sys.exit(0)
 
@@ -1119,11 +1253,11 @@ def region_entry(a, S_reg, room, stem, page_name):
 
 def page_name_of(a, out):
     """Adresse relative de la région pour la carte : la page elle-même, ou COQUILLE.html?region=NOM avec une coquille commune."""
-    return shell_page_address(a.shared_shell, out.stem) if a.shared_shell else out.name
+    return shell_page_address(a.shared_shell, region_of(a.shared_shell, out) or out.stem) if a.shared_shell else out.name
 
 
 def main():
-    ap = argparse.ArgumentParser(description=_tr("py.glb2html.desc"), epilog=_tr("py.glb2html.epilog"), formatter_class=argparse.RawDescriptionHelpFormatter, add_help=False)
+    ap = argparse.ArgumentParser(description=_tr("py.glb2html.desc", VERSION), epilog=_tr("py.glb2html.epilog"), formatter_class=argparse.RawDescriptionHelpFormatter, add_help=False)
     i18n_add_common(ap)
     ap.add_argument("--version", action="version", version=f"glb2html {VERSION}", help=_tr("py.common.version"))
     ap.add_argument("input", nargs="?", help=_tr("py.glb2html.fichier_glb_ou_dossier_de_glb"))
@@ -1179,6 +1313,10 @@ def main():
     ap.add_argument("--zone-cone", action=argparse.BooleanOptionalAction, default=ZONE_CONE, help=_tr("py.glb2html.petit_cone_pointe_vers_le_bas"))
     ap.add_argument("--show-spawns", action=argparse.BooleanOptionalAction, default=SHOW_SPAWNS, help=_tr("py.glb2html.dessine_aussi_les_arrivees_dans_la"))
     ap.add_argument("--zone-info-dist", type=float, default=ZONE_INFO_DIST, metavar="M", help=_tr("py.glb2html.distance_5_a_200_m_defaut"))
+    ap.add_argument("--lib-url", default="", metavar="CHEMIN", help=_tr("py.glb2html.lib_url"))
+    ap.add_argument("--default", action="store_true", help=_tr("py.glb2html.default_region"))
+    ap.add_argument("--compass", action=argparse.BooleanOptionalAction, default=COMPASS, help=_tr("py.glb2html.compass"))
+    ap.add_argument("--north", type=float, default=NORTH_DEG, metavar="DEGRES", help=_tr("py.glb2html.north"))
     ap.add_argument("--fly", action=argparse.BooleanOptionalAction, default=FLY_ENABLED, help=_tr("py.glb2html.vol_en_promenade_touche_f_ou"))
     ap.add_argument("--maj", action="store_true", help=_tr("py.glb2html.met_a_jour_une_region_deja"))
     ap.add_argument("--room", default=ROOM, help=_tr("py.glb2html.salon_de_presence_defaut_nom_du"))
@@ -1219,9 +1357,20 @@ def main():
             a.input = keep_input
         print(_tr("py.glb2html.reglages_0_parametre_s_repris_de", len(defaults), sp))
     if a.shared_shell:
-        if "/" in a.shared_shell or "\\" in a.shared_shell or not a.shared_shell.lower().endswith((".html", ".htm")):
-            sys.exit(_tr("py.glb2html.erreur_shared_shell_attend_un_nom", a.shared_shell))
+        raw = str(a.shared_shell)
+        sp = pathlib.PurePath(raw.replace("\\", "/"))
+        if not sp.name.lower().endswith((".html", ".htm")):
+            sys.exit(_tr("py.glb2html.erreur_shared_shell_attend_un_nom", raw))
+        a.shared_shell = ShellRef(sp.name)
+        if "/" in raw.replace("\\", "/"):
+            a.shared_shell.dir = pathlib.Path(raw).parent   # v37 : --shared-shell DOSSIER/index.html, régions en sous-dossiers
         a.modular = True
+    try:
+        clean_lib_url(a.lib_url)
+    except ValueError:
+        sys.exit(_tr("py.glb2html.erreur_lib_url_refuse", a.lib_url))
+    if a.default and not a.shared_shell:
+        print(_tr("py.glb2html.avertissement_default_ignore_sans_shared_shell"), file=sys.stderr)
     S_reg = S.get("thisReg") if isinstance(S.get("thisReg"), dict) else {}
     S_cmd = S.get("cmd") if isinstance(S.get("cmd"), dict) else {}
     if S and not a.output and S_cmd.get("dest"):
@@ -1256,7 +1405,7 @@ def main():
               sea_y=clamp(a.sea_y, -150, 60), zoom=clamp(a.zoom, 0.05, 100), cam_dir=a.cam_dir, target=a.target,
               foliage_cutout=clamp(a.foliage_cutout, 0, 1), sea_color=a.sea_color, sky_color=a.sky_color, sea_segments=int(clamp(a.sea_segments, 8, 1000)), walk=a.walk, walk_ignore=a.walk_ignore, zones_live=a.zones_live or "", map_entries=map_arg, map_url=a.map_url, names=a.names, presence_url=a.presence_url, room=a.room, chat=a.chat, chat_fade=clamp(a.chat_fade, 0, 3600), zones=zones_arg, profile=a.profile, spectate=a.spectate, panel=a.panel, eye_height=clamp(a.eye_height, 0.3, 5), walk_speed=clamp(a.walk_speed, 0.5, 30),
               sea_enabled=a.sea_enabled, anim_enabled=a.anim_enabled, retina=a.retina, title=a.title,
-              zone_marker=a.zone_marker, show_spawns=a.show_spawns, zone_cone=a.zone_cone, fly=a.fly, zone_info_dist=clamp(a.zone_info_dist, 5, 200),
+              zone_marker=a.zone_marker, show_spawns=a.show_spawns, zone_cone=a.zone_cone, fly=a.fly, zone_info_dist=clamp(a.zone_info_dist, 5, 500), compass=a.compass, north=a.north, lib_url=clean_lib_url(a.lib_url)[0], make_default=a.default,
               target_explicit=bool(tuple(a.target) != tuple(TARGET) or TARGET_EXPLICIT or getattr(a, "target_explicit", False)))
 
     if a.maj:
@@ -1287,7 +1436,7 @@ def main():
             out = out.with_suffix(".html")
         glb_out, cfg_out, zones_out = modular_names(out)
         if a.shared_shell:
-            if not glb_out.is_file() or not out.with_name(a.shared_shell).is_file():
+            if not glb_out.is_file() or not shell_file(a.shared_shell, out).is_file():
                 sys.exit(_tr("py.glb2html.erreur_0_ou_1_introuvable_genere", a.shared_shell, glb_out.name))
         elif not out.is_file() or not glb_out.is_file():
             sys.exit(_tr("py.glb2html.erreur_0_ou_1_introuvable_genere_2", out, glb_out.name))
@@ -1335,8 +1484,8 @@ def main():
             print(_tr("py.glb2html.tuiles_hauteur_de_la_mer_par"))
         kw.update(tile_radius=clamp(a.tile_radius, 10, 5000), tile_margin=clamp(a.tile_margin, 0, 5000), tile_max_mo=clamp(a.tile_max_mo, 1, 100000),
                   tile_max_tri=int(clamp(a.tile_max_tri, 1000, 10**9)), tile_concurrency=int(clamp(a.tile_concurrency, 1, 16)))
-        if a.shared_shell and not valid_region_name(out.stem):
-            sys.exit(_tr("py.glb2html.erreur_nom_de_region_0_refuse_3", out.stem))
+        if a.shared_shell and not valid_region_name(region_of(a.shared_shell, out) or ""):
+            sys.exit(_tr("py.glb2html.erreur_nom_de_region_0_refuse_3", region_of(a.shared_shell, out) or out.stem))
         if a.register:
             entry = region_entry(a, S_reg, a.room or out.stem, out.stem, page_name_of(a, out))
             reg = data_path(a.register)
@@ -1406,8 +1555,8 @@ def main():
             out = out.with_suffix(".html")
     else:
         out = inp.with_name(inp.stem + (".html" if a.shared_shell else " - Offline.html"))
-    if a.shared_shell and not valid_region_name(out.stem):
-        sys.exit(_tr("py.glb2html.erreur_nom_de_region_0_refuse_3", out.stem))
+    if a.shared_shell and not valid_region_name(region_of(a.shared_shell, out) or ""):
+        sys.exit(_tr("py.glb2html.erreur_nom_de_region_0_refuse_3", region_of(a.shared_shell, out) or out.stem))
     if a.register:
         entry = region_entry(a, S_reg, a.room or inp.stem, inp.stem, page_name_of(a, out))
         reg = data_path(a.register)

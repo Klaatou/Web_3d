@@ -2,6 +2,26 @@
 
 Les dates sont au format jj/mm/aaaa.
 
+## v37 (23/10/2026)
+### Lot 1 : corrections et ajouts de la page
+- **Course** : la ligne « Mode » affiche « à pied · course » / « en vol · course » tant que la course est active.
+- **Cône de portail** : taille apparente constante (échelle = distance / 12 entre 1 et 12, pointe immobile), visible jusqu'à `zoneInfoDist` (**150 m par défaut**, plage 5 à 500), infobulle avec la distance (« Portail → château · 120 m »).
+- **Arrivée occupée** : le point libre le plus proche de l'occupant (anneaux 1,5 / 2,0 / 3,0 m autour de lui, 16 candidats), l'arrivant est tourné vers l'occupant, ligne console « arrivée occupée : décalé de X m (anneau R m) ».
+- **Pseudo cité** : étiquette du nom de l'auteur, bulle et ligne du chat clignotent (0,5 s / 0,5 s) **sans limite de durée**, jusqu'à ma première action (touche, clic, mouvement, envoi). Remplace les 6 x 300 ms de la v33.
+- **Hash** : `&` ou `#` séparent les paramètres (`hashParams`, une fonction pour la page, la coquille et la page carte).
+- **Boussole** : cap en haut au centre (« NE 45° »), nord d'OpenSim = -Z, `rotate` pris en compte, case dans les Réglages visiteur ; `--compass` / `--no-compass`, `--north DEGRES` (config `compass`, `northDeg`).
+- **`--help`** des quatre outils : première ligne « NOM vNN (jj/mm/aaaa) : fonction ».
+- **Fenêtres Aide et Informations** : largeur réglable (bord droit, 260 px à 70 %), mémorisée, hauteur qui suit le contenu, empilées et collées.
+- **Touche O** : ouvre / ferme la fenêtre Réglages (demande de JJ en cours de session ; R est déjà pris).
+### Lot 2 : historique du chat
+- Serveur : `--history` 200 par défaut, `--history-file`, `--history-days` (30 ; 0 = tout), message `history` (`before`, `n`, réponse `msgs`, `more`), numéros `n` et heures `t` sur les messages (anciens clients inchangés).
+- Page : panneau défilable, réglage « Messages d'historique affichés » (200, 20 à 2000), bouton « Messages plus anciens », non lus dans le titre de l'onglet, « N messages vous citent ».
+### Lot 3 : région par défaut, dossier lib, sous-dossiers
+- Sans `?region=` : `X.config.json` de la page, puis `default.json`, puis `regions.json` (première adresse relative valide), sinon un message. `glb2html.py` écrit `default.json` la première fois ; `--default` ; `--maj` ne l'écrase pas sans `--default`.
+- `--lib-url CHEMIN` (relatif ou `http(s)`), inscrit dans la table d'import de la coquille et retenu dans la config (`libUrl`) pour `--maj`.
+- `?region=a/b/nom` (sous-dossiers) ; `--shared-shell DOSSIER/index.html` accepte un chemin ; les chemins de la config sont relatifs au dossier de la région.
+- Tests : `tests/v37.py`, `tests/v37_chat.py`, `tests/v37_region.py`, `tests/h37.py` ; attentes adaptées dans `v33.py`, `v35.py`, `v36.py` (voir `CLAUDE.md`).
+
 ## v36 (23/10/2026)
 ### Lot A : touches, fenêtres, arrivées, repères, sons, copie de position
 - **Touches (décisions de JJ).** **F** et **P** entrent en promenade et en sortent (en vue globale comme en promenade) ; dans le viewer, P pose une zone en promenade, **F**, **Maj+P** ou le bouton sortent. **F ne fait plus basculer le vol** : voler / atterrir = **Début** ou le bouton « Voler / Atterrir », ou **Page Haut** maintenu plus de 0,4 s au sol. Monter en vol : **Page Haut** ou **Espace** maintenu ; descendre : **Page Bas** ou **C** (atterrissage automatique au sol) ; sauter au sol : **Espace** ou **Page Haut** en appui bref. **E redevient la touche d'action des zones** (déclenchement « clic » ou « both »), invite « clic ou E : … » ; E ne saute plus, ne monte plus et ne fait rien d'autre.

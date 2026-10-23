@@ -86,8 +86,9 @@ Les zones d'une région en tuiles s'écrivent dans le repère d'origine du modè
 ## 6. Serveur de présence (positions, chat, modération)
 
 1. **Installer** une fois : `pip install websockets`
-2. **Lancer** (le journal relatif est écrit dans le dossier du script ; `--log-ip raw` écrit les adresses IP en clair, `--log-days` limite la conservation) :
-   `python "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist\presence_server.py" --log presence.log --log-days 30 --log-ip raw`
+2. **Lancer** (le journal relatif est écrit dans le dossier du script ; `--log-ip raw` écrit les adresses IP en clair, `--log-days` limite la conservation, **`--log-days 0` conserve les journaux sans limite**) :
+   `python ".\presence_server.py" --log presence.log --log-ip raw --log-days 0`
+   Historique du chat (v37) : 200 derniers messages rejoués aux nouveaux arrivants (`--history`) ; `--history-file chat.jsonl` le garde entre deux relances (messages = données personnelles, jamais d'adresse IP dans ce fichier), `--history-days N` (30 ; 0 = tout conserver) limite la relecture au démarrage.
 3. **Ouvrir le port** (8765 par défaut, `--port` pour en changer) dans la box, vers la machine qui fait tourner le serveur.
 4. **Brancher la page** : `--presence-url "ws://ADRESSE:8765"` à la fabrication, ou la clé `presenceUrl` de `X.config.json`. Si la page est en https, l'adresse doit être en `wss://` (voir `--cert` et `--key`, ou un reverse proxy avec `--proxy-header`).
 5. **Modérer** dans la console du serveur : `liste` (visiteurs), `ejecter <n°|nom> [raison]`, `bannir <n°|nom> [minutes] [raison]` (0 = définitif), `bans`, `debannir <n° de bans>`, `aide`.
@@ -115,7 +116,7 @@ Avec une seule région, la carte n'apporte rien : elle sert à relier plusieurs 
 | Une valeur de réglage (mer, cible, présence) | modifier `X.config.json`, ou `--maj` avec l'option | F5 |
 | Les zones | enregistrer `X.zones.json` dans le dossier de la région | F5 |
 | Nouvelle version des outils | procédure 4 (`--maj`) | Ctrl+F5 |
-| Nouvelle version du serveur de présence (v36 : messages traduits) | arrêter et relancer `presence_server.py` | F5 |
+| Nouvelle version du serveur de présence (v37 : historique du chat ; v36 : messages traduits) | arrêter et relancer `presence_server.py` | F5 |
 | L'OAR a changé | reconvertir (1.1 ou 2.1), redécouper (2.3), puis `--maj` | Ctrl+F5 |
 | Les objets exclus du découpage | redécouper (2.3) avec un autre `--exclure` | Ctrl+F5 |
 | Rotation de la région (`--rotate`) | `--maj --rotate 180`, puis refaire la vignette de la carte | Ctrl+F5 |
@@ -148,5 +149,13 @@ Pour tout rapport de bug, colle le texte du panneau d'état et d'aide, et les me
 | Langue de la page | réglage « Langue / Language » (Auto, français, English), ou `#lang=en` dans l'adresse |
 | Langue des outils | `--lang fr` ou `--lang en` sur chaque outil, ou la variable d'environnement `WEB3D_LANG` ; sans rien, la langue du système. PowerShell, une session : `$env:WEB3D_LANG = "fr"` |
 | Copier ma position | bouton « Copier ma position » (liste URL / xyz) ; « Aller à » accepte l'URL `#pos=…` et `x, y, z` |
+| Ouvrir / fermer les Réglages | touche **O** (bascule, comme **H** et **I**) |
+| Boussole (cap en haut de la page) | case « Boussole » des Réglages ; `--no-compass` pour la retirer de la fabrication, `--north DEGRES` pour un GLB qui ne vient pas d'OpenSim |
+| Régler la largeur de l'aide et des informations | tirer leur bord droit (260 px à 70 % de la fenêtre), mémorisé |
+| Chat : messages plus anciens, non lus, citations | bouton « Messages plus anciens » (chat ouvert), titre de l'onglet « (3) Région », « N messages vous citent » ; réglage « Messages d'historique affichés » |
+| Région par défaut (adresse sans `?region=`) | `default.json` écrit à la première région d'un dossier, `--default` pour en changer ; sinon la première entrée relative de `regions.json` |
+| Mettre `lib/` ailleurs | `--lib-url ../lib` (ou une adresse `https://…/lib`) à la fabrication de la coquille ; retenu pour `--maj` |
+| Région dans un sous-dossier | `glb2html.py X.glb --shared-shell "P:\site\index.html" -o "P:\site\sous\dossier\X.html"` ; adresse `index.html?region=sous/dossier/X` |
+| Paramètres de l'adresse | séparés par `&` ; `#` est aussi accepté (`#name=Klaatou&lang=en` = `#name=Klaatou#lang=en`) |
 
-Détail : `MODE_EMPLOI.md` §§ 2 et 21.
+Détail : `MODE_EMPLOI.md` §§ 2, 21 et 22.

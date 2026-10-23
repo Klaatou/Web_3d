@@ -1916,7 +1916,7 @@ def lignes_taille_instances(plan):
 def main(argv=None, log_path=None):
     global LOG_PATH
     LOG_PATH = log_path
-    ap = argparse.ArgumentParser(description=_tr("py.glb2tiles.desc"), epilog=_tr("py.glb2tiles.epilog"), formatter_class=argparse.RawDescriptionHelpFormatter, add_help=False)
+    ap = argparse.ArgumentParser(description=_tr("py.glb2tiles.desc", VERSION), epilog=_tr("py.glb2tiles.epilog"), formatter_class=argparse.RawDescriptionHelpFormatter, add_help=False)
     i18n_add_common(ap)
     ap.add_argument("glb", help=_tr("py.glb2tiles.glb_d_entree"))
     ap.add_argument("--version", action="version", version=f"glb2tiles {VERSION}", help=_tr("py.common.version"))
