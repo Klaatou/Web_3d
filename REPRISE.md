@@ -1,6 +1,6 @@
 # Reprise du projet Web 3d
 
-*État au 23/10/2026, version v37. À lire après `REGLES.md` (qui est dans les fichiers du Projet, pas dans le dépôt). Ce fichier est mis à jour et commité à la fin de chaque lot. Il ne contient ni adresse IP ni nom d'hôte.*
+*État au 23/10/2026, version v38. À lire après `REGLES.md` (qui est dans les fichiers du Projet, pas dans le dépôt). Ce fichier est mis à jour et commité à la fin de chaque lot. Il ne contient ni adresse IP ni nom d'hôte.*
 
 ## 1. Ce qu'est ce projet
 
@@ -8,10 +8,11 @@ Une région OpenSim (sauvegarde `.oar`) devient une **page web 3D** où l'on se 
 
 ## 2. État du dépôt
 
-- **`main` = v37** (commit `cd01be1`, étiquette `v37`, fichier `VERSION` : `v37 (23/10/2026)`). Étiquettes `v14` à `v37`.
+- **`main` = v38** (étiquette `v38`, fichier `VERSION` : `v38 (23/10/2026)`). Étiquettes `v14` à `v38`.
 - Les sessions cloud sont **terminées** (crédit épuisé). Tout se fait désormais dans le chat, par patchs (voir `REGLES.md`).
+- **v38 (documentation, aucun changement de comportement)** : manuel, procédures et historique traduits en anglais (`docs/en/`), documents français déplacés dans `docs/fr/` (`MODE_EMPLOI.md` devenu `MANUEL.md`), `README.md` en anglais (page d'accueil GitHub) et `README.fr.md` en français, `verif_trad.py` (contrôle des traductions). Seule la chaîne de version change dans les outils fabriqués : après `python build.py`, `--maj` renouvelle la coquille des régions (ancienne copie gardée).
 - Région de référence de JJ : la « 4X4 » (`OAR-Free_House_Gallery_I(4X4)-terrain`), 1 024 x 1 024 m, 106 tuiles et une vue d'ensemble, publiée avec présence et chat. Options de sa page : mer à 18,5 m (`--sea-y 18.5`), cible de départ `--target 392,68,-373`, `default.json` posé avec `--maj --default`.
-- **Pas encore fait** : voir la section 6.
+- Fichiers locaux de JJ **hors dépôt** : `tools\glb-images-check.py`, `tools\glb-terrain-alt.py` (non suivis) : committer avec `git add -u` ou en nommant les fichiers, jamais `git add -A` sans vérifier.
 
 ## 3. Architecture (détail dans `CLAUDE.md`)
 
@@ -27,8 +28,9 @@ Une région OpenSim (sauvegarde `.oar`) devient une **page web 3D** où l'on se 
 | `src/i18n/fr.json`, `en.json`, `src/i18n.js`, `src/i18n_py.py` | tous les textes (page, viewer, outils) en français et en anglais |
 | `build.py` | assemble tout dans `dist/` (**jamais éditer `dist/`**) |
 | `gen_reference.py` | écrit `REFERENCE_OPTIONS.md` (bilingue) depuis les outils |
+| `verif_trad.py` | compare un document français et sa traduction (titres, tableaux, listes, code, liens, glossaire de l'interface) ; `python verif_trad.py docs\fr\MANUEL.md docs\en\MANUAL.md` |
 | `tests/` | une vingtaine de suites (Chromium sans tête, vrai `presence_server.py`) |
-| Documents | `MODE_EMPLOI.md`, `PROCEDURES.md`, `HISTORIQUE.md`, `CHANGELOG.md`, `CLAUDE.md`, `README.md`, `README.en.md`, `REFERENCE_OPTIONS.md` |
+| Documents | `docs/fr/` : `MANUEL.md`, `PROCEDURES.md`, `HISTORIQUE.md` ; `docs/en/` : `MANUAL.md`, `PROCEDURES.md`, `HISTORY.md` (tenus à jour ensemble, contrôlés par `verif_trad.py`) ; à la racine : `README.md` (anglais), `README.fr.md`, `CHANGELOG.md`, `CLAUDE.md`, `REFERENCE_OPTIONS.md`, `REPRISE.md` |
 
 Le dossier des outils fabriqués est `dist\` ; le dépôt local est `P:\_OpenSim\SL&OS\Web_3d\web_3d` ; les régions en tuiles sont dans `P:\_OpenSim\SL&OS\Web_3d\tuiles`.
 
@@ -77,19 +79,10 @@ Le dossier des outils fabriqués est `dist\` ; le dépôt local est `P:\_OpenSim
 
 ## 6. À faire (dans l'ordre)
 
-1. **`.gitignore`** : JJ ajoute à la main `REGLES.md` et `_bak/` (le fichier existe, il se termine par un saut de ligne). **Ne pas** ajouter `REPRISE.md`.
-2. **Réorganisation des documents** (un patch testé, avec `git mv`, qui met à jour les références, une dizaine de fichiers : `gen_reference.py`, `src/i18n.js`, `src/core.js`, `src/gen_tpl.py`, `tools/oar2glb.py`, `README`, `PROCEDURES`, `CLAUDE`, `CHANGELOG`, `fr.json`, `en.json`) :
-   - `README.md` devient la version anglaise (page d'accueil GitHub), `README.fr.md` la française, avec une ligne `English | Français` en tête de chacun ;
-   - `docs/fr/MANUEL.md` (ex `MODE_EMPLOI.md`), `docs/fr/PROCEDURES.md`, `docs/fr/HISTORIQUE.md` ; `docs/en/MANUAL.md`, `docs/en/PROCEDURES.md`, `docs/en/HISTORY.md` ;
-   - les messages de la page et des outils renvoient, selon la langue, au manuel français ou anglais ; `CHANGELOG.md`, `CLAUDE.md`, `REFERENCE_OPTIONS.md` (déjà bilingue), `REPRISE.md`, `LICENSE`, `THIRD-PARTY.md` restent à la racine.
-3. **Traductions anglaises** de `MODE_EMPLOI.md` (1 012 lignes, 120 000 caractères), `PROCEDURES.md` (152 lignes), `HISTORIQUE.md` (61 lignes) :
-   - dans une conversation neuve, par tranches de 150 à 200 lignes, assemblées par un script ; livrer un seul fichier final ;
-   - glossaire tiré de `src/i18n/en.json` (Arrival, Portal, Spawn, zone, Tiles…) pour que le manuel emploie les termes de l'interface ;
-   - **à écrire d'abord** : un script de contrôle qui compare original et traduction (même nombre de titres, de lignes de tableau, de blocs de code ; blocs de code identiques ; termes du glossaire respectés) ;
-   - essai prévu avec un petit modèle (Haiku) sur `PROCEDURES.md` : s'il passe le contrôle sans retouche, continuer avec lui, sinon Sonnet.
-4. **`CHANGELOG.md`** : chaque entrée à partir de la v38 en français puis en anglais. *(Fait le 23/10/2026 : README (licence MIT), manuel (compteur du titre, en-tête v37) et notes de « Releases » v35 à v37 en anglais dans `RELEASE_NOTES.en.md`, à coller dans GitHub ; ce fichier peut être supprimé ensuite.)*
-5. **Bouton « Copier le diagnostic »** dans la page (versions, état, tuiles chargées, durées) pour supprimer les demandes de F12.
-6. **Démo publique** : page statique sans chat d'une petite région (par exemple Ankh Island, 12 Mo) sur GitHub Pages, dans un dépôt séparé ; plus tard, serveur de présence sur un petit VPS avec `wss://` (Caddy et un nom de domaine) : écrire la procédure d'installation. Une idée plus lointaine : présence réécrite en Worker Cloudflare avec Durable Object (aucun serveur à gérer).
+1. **Bouton « Copier le diagnostic »** dans la page (versions, état, tuiles chargées, durées) pour supprimer les demandes de F12.
+2. **Démo publique** : page statique sans chat d'une petite région (par exemple Ankh Island, 12 Mo) sur GitHub Pages, dans un dépôt séparé ; plus tard, serveur de présence sur un petit VPS avec `wss://` (Caddy et un nom de domaine) : écrire la procédure d'installation. Idée plus lointaine : présence réécrite en Worker Cloudflare avec Durable Object (aucun serveur à gérer).
+3. **Idée notée** : un lien « Manuel » dans l'aide de la page et du viewer, vers `docs/fr/MANUEL.md` ou `docs/en/MANUAL.md` selon la langue (vérifié : aucun texte de `src/i18n/*.json` ne renvoie au manuel aujourd'hui).
+4. **Règles de documentation désormais** : toute modification du manuel, des procédures ou de l'historique se fait dans les deux langues, puis `verif_trad.py` sur le couple modifié (0 erreur exigée) ; chaque entrée de `CHANGELOG.md` en français puis en anglais.
 
 ## 7. Limites connues et pièges
 
@@ -99,3 +92,6 @@ Le dossier des outils fabriqués est `dist\` ; le dépôt local est `P:\_OpenSim
 - `--maj` ignore les options de la carte si on n'ajoute pas `--register` ; les chemins relatifs de `--register` et `--map-page` y sont relatifs à la page.
 - Copier-coller depuis une réponse mise en forme peut ajouter des accents graves (backticks) devant les options : en PowerShell, ils cassent la commande.
 - Les chemins contiennent `&` (`SL&OS`) : toujours des guillemets.
+- **Lignes PowerShell d'un patch** : ne jamais enchaîner `build` ou `Remove-Item` après un patch sans `if ($LASTEXITCODE -eq 0) { … }` (un patch arrêté a été effacé en v38). Un déplacement se fait avec `git mv` **avant** le patch ; un fichier effacé hors de git (` D` dans `git status`) se récupère avec `git restore`.
+- `verif_trad.py` reconnaît le français dans le code par des indices (accents, mots propres au français, espace avant le deux-points) : un faux négatif reste possible ; les valeurs réelles (options, identifiants, chemins d'exemple) doivent rester identiques dans la traduction.
+- Après un commit, vérifier que `git push` a abouti (`git log --oneline -2` montre `origin/main` sur le même commit).
