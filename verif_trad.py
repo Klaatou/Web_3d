@@ -55,7 +55,8 @@ GLOSSAIRE = {
 
 FR_MOTS = set("le la les des du une un et est sont pas dans avec pour cette ces depuis aux sur ou mais qui que "
               "rien carte nom taille sommets pieds dessous morceau retir lu fichier dossier sous raison tuile "
-              "de liste aide ejecter bannir debannir".split())
+              "de liste aide ejecter bannir debannir absente".split())
+FR_FORTS = FR_MOTS - set("le la les des du une un et est sont pas ou mais qui que de aux sur ces nom lu".split())   # un seul suffit
 ACCENTS = re.compile(r"[àâçéèêëîïôûùüÿœÀÂÇÉÈÊËÎÏÔÛÙÜŒ]")
 FENCE = re.compile(r"^\s*(```|~~~)")
 INLINE = re.compile(r"`([^`\n]+)`")
@@ -64,11 +65,11 @@ JETON = re.compile(r"--[A-Za-z][\w-]*|[\w./\\-]+\.(?:py|json|jsonl|html|glb|md|o
 
 
 def est_francais(t):
-    if ACCENTS.search(t):
+    if ACCENTS.search(t) or " : " in t:   # typographie française : espace avant le deux-points
         return True
     mots = re.findall(r"[a-zA-Z']+", t.lower())
     n = sum(1 for m in mots if m in FR_MOTS)
-    return n >= 2 or (len(mots) == 1 and n == 1)   # un mot seul : commande ou étiquette française ([tuile], liste)
+    return n >= 2 or any(m in FR_FORTS for m in mots) or (len(mots) == 1 and n == 1)
 
 
 def analyser(texte):
@@ -101,7 +102,7 @@ def analyser(texte):
             r["listes"] += 1
         r["inline"] += INLINE.findall(l)
         r["liens"] += LIEN.findall(l)
-        r["prose"].append((n, INLINE.sub("", l)))
+        r["prose"].append((n, INLINE.sub("C", l)))   # "C" : garde « `x`: » distinct de « x : »
     if dans_bloc:
         r["blocs"].append("\n".join(bloc))
     return r
@@ -110,7 +111,7 @@ def analyser(texte):
 def jetons(textes):
     c = Counter()
     for t in textes:
-        c.update(JETON.findall(t))
+        c.update(x.replace(",", ".") for x in JETON.findall(t))   # 0,5 = 0.5
     return c
 
 

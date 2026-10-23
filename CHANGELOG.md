@@ -6,6 +6,8 @@ Les dates sont au format jj/mm/aaaa.
 ### 23/10/2026 : traductions
 - **Traductions** : `verif_trad.py` compare un document français et sa traduction (titres, tableaux, listes, code, liens, glossaire de l'interface) ; code de sortie 1 en cas d'erreur. `docs/en/PROCEDURES.md` et `docs/en/HISTORY.md` : traductions de `PROCEDURES.md` et `HISTORIQUE.md`, contrôlées par ce script.
 - **Translations**: `verif_trad.py` compares a French document with its translation (headings, tables, lists, code, links, UI glossary); exit code 1 on error. `docs/en/PROCEDURES.md` and `docs/en/HISTORY.md`: translations of `PROCEDURES.md` and `HISTORIQUE.md`, checked by this script.
+- **Manuel** : `docs/en/MANUAL.md`, traduction de `MODE_EMPLOI.md` (1 066 lignes), contrôlée par `verif_trad.py` ; détection du français dans le code affinée (mots propres au français, espace avant le deux-points, virgule décimale).
+- **Manual**: `docs/en/MANUAL.md`, translation of `MODE_EMPLOI.md` (1,066 lines), checked by `verif_trad.py`; finer detection of French in code (French-only words, space before the colon, decimal comma).
 
 ## v37 (23/10/2026)
 ### Lot 1 : corrections et ajouts de la page
