@@ -1,0 +1,158 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""gen_reference.py : écrit REFERENCE_OPTIONS.md, la liste COMPLÈTE des options des quatre outils
+(glb2html, glb2tiles, oar2glb, presence_server), lue dans les outils eux-mêmes : rien ne peut manquer.
+
+Usage (depuis le dossier qui contient gen_reference.py ; le dossier des outils est dist\\) :
+    python gen_reference.py                       (outils dans .\\dist, sortie .\\REFERENCE_OPTIONS.md)
+    python gen_reference.py --outils "P:\\...\\dist" --sortie "P:\\...\\REFERENCE_OPTIONS.md"
+    python gen_reference.py --verifier MODE_EMPLOI.md    (liste les options absentes de ce fichier)
+
+presence_server.py demande « pip install websockets » pour être lu.
+"""
+import argparse, contextlib, io, os, pathlib, runpy, sys, time
+
+OUTILS = [
+    ("glb2html", "glb2html.py", "Fabrique la page web d'une région (GLB unique ou tuiles), met une région à jour, "
+     "enregistre une région dans la carte des mondes et génère la page carte."),
+    ("glb2tiles", "glb2tiles.py", "Découpe un GLB énorme en tuiles autonomes et fabrique la vue d'ensemble légère."),
+    ("oar2glb", "oar2glb.py", "Convertit une sauvegarde de région OpenSim (.oar) en GLB, refait le terrain complet."),
+    ("presence_server", "presence_server.py", "Serveur de présence : positions des visiteurs, chat, modération."),
+]
+
+
+def lire_parser(chemin: pathlib.Path):
+    """Exécute l'outil jusqu'à son parse_args, récupère le parser, n'exécute rien d'autre."""
+    pris = {}
+
+    def faux(self, *a, **k):
+        pris["p"] = self
+        raise SystemExit(0)
+
+    orig_pa, orig_pka = argparse.ArgumentParser.parse_args, argparse.ArgumentParser.parse_known_args
+    argparse.ArgumentParser.parse_args = faux
+    argparse.ArgumentParser.parse_known_args = faux
+    argv, path = sys.argv, list(sys.path)
+    sys.argv = [str(chemin), "--help"]
+    sys.path.insert(0, str(chemin.parent))
+    try:
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            try:
+                runpy.run_path(str(chemin), run_name="__main__")
+            except SystemExit:
+                pass
+    finally:
+        argparse.ArgumentParser.parse_args, argparse.ArgumentParser.parse_known_args = orig_pa, orig_pka
+        sys.argv, sys.path[:] = argv, path
+    return pris.get("p")
+
+
+# descriptions de secours pour les options sans texte d'aide dans l'outil (marquées « * »)
+SECOURS = {
+    "--sea": "affiche la mer (--no-sea : sans mer)",
+    "--anim": "anime la mer (vagues) ; --no-anim : mer fixe",
+    "oar": "fichier .oar (ou .tgz) de la région à convertir",
+    "--convoar": "chemin de convoar.exe si ce n'est pas celui par défaut",
+    "--host": "adresse d'écoute (0.0.0.0 = toutes les interfaces)",
+    "--port": "port d'écoute des visiteurs",
+    "--max-total": "connexions simultanées au total, tous salons",
+}
+
+
+def cellule(t):
+    return str(t).replace("|", "\\|").replace("\n", " ").strip()
+
+
+def lignes(parser):
+    """(options, valeur, défaut, effet) pour chaque argument, dans l'ordre de l'outil."""
+    sortie = []
+    vus = set()
+    for a in parser._actions:
+        if isinstance(a, argparse._HelpAction) or a.dest == "help":
+            continue
+        if id(a) in vus:
+            continue
+        vus.add(id(a))
+        opts = " / ".join(f"`{o}`" for o in a.option_strings) if a.option_strings else f"`{a.dest}` (obligatoire)" if a.nargs not in ("?", "*") else f"`{a.dest}` (facultatif)"
+        if a.option_strings and isinstance(a, argparse._VersionAction):
+            val, defaut = "", ""
+        elif isinstance(a, (argparse._StoreTrueAction, argparse._StoreFalseAction)) or getattr(a, "nargs", None) == 0:
+            val, defaut = "(aucune)", ""
+        else:
+            if a.choices:
+                val = " ou ".join(str(c) for c in a.choices)
+            elif a.metavar:
+                val = str(a.metavar if isinstance(a.metavar, str) else " ".join(a.metavar))
+            else:
+                val = a.dest.upper() if a.option_strings else ""
+            d = a.default
+            if isinstance(d, int) and not isinstance(d, bool) and "color" in a.dest:
+                d = f"{d:06x}"                                   # couleurs affichées en hexadécimal, comme dans l'aide
+            defaut = "" if d is None or d is argparse.SUPPRESS else (f"`{d}`" if d != "" else "(vide)")
+        aide = a.help if a.help and a.help is not argparse.SUPPRESS else ""
+        if not aide:
+            cle = a.option_strings[0] if a.option_strings else a.dest
+            aide = (SECOURS.get(cle, "") + " *") if cle in SECOURS else ""
+        sortie.append((opts, cellule(val), cellule(defaut), cellule(aide)))
+    return sortie
+
+
+def generer(dossier: pathlib.Path):
+    md = ["# Référence complète des options", "",
+          f"*Générée le {time.strftime('%d/%m/%Y')} par `gen_reference.py`, à partir des outils eux-mêmes : "
+          "toute option qui existe dans un outil figure ici. Ne la modifie pas à la main : relance le script. "
+          "Un * en fin de description signale un texte de secours du script, l'outil n'en ayant pas.*", ""]
+    tout = {}
+    for nom, fichier, resume in OUTILS:
+        chemin = dossier / fichier
+        md += [f"## {fichier}", "", resume, ""]
+        if not chemin.exists():
+            md += [f"*(fichier introuvable : {chemin})*", ""]
+            continue
+        try:
+            p = lire_parser(chemin)
+        except Exception as e:                                   # presence_server sans websockets, par exemple
+            p = None
+            md += [f"*(lecture impossible : {type(e).__name__} {e} ; installe les dépendances et relance)*", ""]
+            continue
+        if p is None:
+            md += ["*(aucun parseur d'arguments trouvé)*", ""]
+            continue
+        l = lignes(p)
+        tout[nom] = [x[0] for x in l]
+        md += ["| Option | Valeur | Défaut | Effet |", "|---|---|---|---|"]
+        md += [f"| {o} | {v} | {d} | {a} |" for o, v, d, a in l]
+        md.append("")
+    return "\n".join(md) + "\n", tout
+
+
+def main():
+    ap = argparse.ArgumentParser(description="Écrit REFERENCE_OPTIONS.md depuis les outils.")
+    ap.add_argument("--outils", default=None, help="dossier des outils (défaut : dist à côté du script)")
+    ap.add_argument("--sortie", default=None, help="fichier écrit (défaut : REFERENCE_OPTIONS.md à côté du script)")
+    ap.add_argument("--verifier", metavar="FICHIER.md", default=None, help="liste les options absentes de ce fichier (code retour 1 s'il en manque)")
+    a = ap.parse_args()
+    ici = pathlib.Path(__file__).resolve().parent
+    dossier = pathlib.Path(a.outils) if a.outils else ici / "dist"
+    texte, tout = generer(dossier)
+    sortie = pathlib.Path(a.sortie) if a.sortie else ici / "REFERENCE_OPTIONS.md"
+    sortie.write_text(texte, encoding="utf-8")
+    nb = sum(len(v) for v in tout.values())
+    print(f"[ok] {nb} arguments décrits -> {sortie}")
+    if a.verifier:
+        doc = pathlib.Path(a.verifier).read_text(encoding="utf-8")
+        manque = {}
+        for nom, liste in tout.items():
+            for cell in liste:
+                for o in [x.strip("` ") for x in cell.split(" / ")]:
+                    if o.startswith("--") and o != "--help" and o not in doc:
+                        manque.setdefault(nom, []).append(o)
+        for nom, l in manque.items():
+            print(f"[absentes de {a.verifier}] {nom} : {' '.join(l)}")
+        if not manque:
+            print(f"[ok] toutes les options figurent dans {a.verifier}")
+        sys.exit(1 if manque else 0)
+
+
+if __name__ == "__main__":
+    main()
