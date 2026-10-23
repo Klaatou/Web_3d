@@ -20,3 +20,7 @@ regions.json
 !src/*.html
 *.glb
 !tests/data/*.glb
+
+# notes de travail personnelles et sauvegardes de patchs : ne jamais committer
+REGLES.md
+_bak/
