@@ -2,6 +2,11 @@
 
 Les dates sont au format jj/mm/aaaa.
 
+## v38 (en cours)
+### 23/10/2026 : traductions
+- **Traductions** : `verif_trad.py` compare un document français et sa traduction (titres, tableaux, listes, code, liens, glossaire de l'interface) ; code de sortie 1 en cas d'erreur. `docs/en/PROCEDURES.md` et `docs/en/HISTORY.md` : traductions de `PROCEDURES.md` et `HISTORIQUE.md`, contrôlées par ce script.
+- **Translations**: `verif_trad.py` compares a French document with its translation (headings, tables, lists, code, links, UI glossary); exit code 1 on error. `docs/en/PROCEDURES.md` and `docs/en/HISTORY.md`: translations of `PROCEDURES.md` and `HISTORIQUE.md`, checked by this script.
+
 ## v37 (23/10/2026)
 ### Lot 1 : corrections et ajouts de la page
 - **Course** : la ligne « Mode » affiche « à pied · course » / « en vol · course » tant que la course est active.

@@ -54,7 +54,8 @@ GLOSSAIRE = {
 }
 
 FR_MOTS = set("le la les des du une un et est sont pas dans avec pour cette ces depuis aux sur ou mais qui que "
-              "rien carte nom taille sommets pieds dessous morceau retir lu fichier dossier".split())
+              "rien carte nom taille sommets pieds dessous morceau retir lu fichier dossier sous raison tuile "
+              "de liste aide ejecter bannir debannir".split())
 ACCENTS = re.compile(r"[àâçéèêëîïôûùüÿœÀÂÇÉÈÊËÎÏÔÛÙÜŒ]")
 FENCE = re.compile(r"^\s*(```|~~~)")
 INLINE = re.compile(r"`([^`\n]+)`")
@@ -66,7 +67,8 @@ def est_francais(t):
     if ACCENTS.search(t):
         return True
     mots = re.findall(r"[a-zA-Z']+", t.lower())
-    return sum(1 for m in mots if m in FR_MOTS) >= 2
+    n = sum(1 for m in mots if m in FR_MOTS)
+    return n >= 2 or (len(mots) == 1 and n == 1)   # un mot seul : commande ou étiquette française ([tuile], liste)
 
 
 def analyser(texte):
