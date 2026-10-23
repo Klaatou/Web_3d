@@ -149,7 +149,7 @@ function inspectGlb(buf, name = 'fichier') {
 // ---------- état
 const DEF = {
   rotate: 0, hole: 180, holeFade: 60, holeX: 0, holeZ: 0, guide: true, wave: 0.5, seaY: -50, zoom: 1, camDir: [0, 0.25, 1], target: [0, 15, 0],
-  sea: true, anim: false, retina: false, foliageCutout: 0.12, seaSize: 4000, seaSegments: 400, walk: true, eyeHeight: 1.7, walkSpeed: 3.5, walkIgnore: 'door, porte', ignoreViz: false, zones: [], profile: 'perso', spectate: true, panel: true, map: [], mapUrl: '', names: false, chat: true, chatFade: 0, presenceUrl: '', room: '', zoneMarker: 'discret', showSpawns: false, fly: true, zoneInfoDist: 40,
+  sea: true, anim: false, retina: false, foliageCutout: 0.12, seaSize: 4000, seaSegments: 400, walk: true, eyeHeight: 1.7, walkSpeed: 3.5, walkIgnore: 'door, porte', ignoreViz: false, zones: [], profile: 'perso', spectate: true, panel: true, map: [], mapUrl: '', names: false, chat: true, chatFade: 0, presenceUrl: '', room: '', zoneMarker: 'discret', showSpawns: false, zoneCone: true, fly: true, zoneInfoDist: 40,
   seaColor: 0x3A9AD9, skyColor: 0x87CEEB
 };
 const viewer = createViewer(document.getElementById('view'), DEF, makeLoader());
@@ -192,7 +192,7 @@ const ROWS = [
   ['rng', 'walkSpeed', 'Vitesse de marche (m/s)', 1, 10, 0.5, false],
   ['rng', 'zoneInfoDist', 'Distance des infobulles et des clics sur les zones (m) — --zone-info-dist', 5, 200, 5, false],
   ['chk', 'walk', 'Inclure la promenade dans l\'export (touche P)'],
-  ['chk', 'fly', 'Vol en promenade dans l\'export (touche F ou Début ; Page Haut / E monte, Page Bas / C descend) — --fly / --no-fly'],
+  ['chk', 'fly', 'Vol en promenade dans l\'export (touche Début ou bouton ; Page Haut / Espace maintenu monte, Page Bas / C descend) — --fly / --no-fly'],
   ['ignore'],
   ['sec', 'Partage'],
   ['chk', 'names', 'Afficher le nom de l\'élément au clic (dans l\'export)'],
@@ -207,6 +207,7 @@ const ROWS = [
   ['chatbox'],
   ['sec', 'Zones : panneaux, portails, liens, commandes'],
   ['zmark'],
+  ['chk', 'zoneCone', 'Repère en cône au-dessus des portails dans la page exportée (touche T pour le masquer) — --zone-cone'],
   ['chk', 'showSpawns', 'Dessiner les arrivées dans la page exportée (petit marqueur discret au sol) — --show-spawns'],
   ['zones'],
   ['sec', 'Carte des mondes'],
@@ -521,10 +522,10 @@ viewer.onPick = info => {
   const pe = $('picked'); if (pe) pe.textContent = info.text;
   setStatus('Visé : ' + (info.name || '(sans nom)') + (info.point ? ' • point ' + info.point.map(v => v.toFixed(2)).join(', ') : '') + ' • ' + (info.materials[0] ? 'matériau ' + info.materials[0] : 'sans matériau nommé'));
 };
-function walkLabel() { const b = $('bWalk'); if (b) b.textContent = viewer.walking ? 'Quitter la promenade (Maj+P)' : 'Entrer en mode promenade (P ou F)'; }
+function walkLabel() { const b = $('bWalk'); if (b) b.textContent = viewer.walking ? 'Quitter la promenade (F ou Maj+P)' : 'Entrer en mode promenade (P ou F)'; }
 viewer.onWalk = on => {
   walkLabel(); updateGuide();
-  setStatus(on ? 'Promenade : ZQSD/WASD/flèches marcher • Maj courir • Espace sauter • clic dans la vue puis souris • double-clic téléporter • F voler • P pose une zone • Maj+P quitter' : (baseName + ' • prêt'));
+  setStatus(on ? 'Promenade : ' + (() => { const K = KB.keys(); return K.fwd + K.left + K.back + K.right; })() + '/flèches marcher • Maj courir • Espace sauter • clic dans la vue puis souris • double-clic téléporter • Début voler • P pose une zone • F ou Maj+P quitter' : (baseName + ' • prêt'));
 };
 addEventListener('keydown', e => {
   const n = e.target && e.target.tagName;
@@ -537,7 +538,7 @@ addEventListener('keydown', e => {
     else addZone(type, r2(w.pos[0]), r2(w.pos[1]), r2(w.pos[2]), type === 'spawn' ? r2(w.yaw) : 0);
     return;
   }
-  if (e.code === 'KeyF' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && n !== 'INPUT' && n !== 'TEXTAREA' && n !== 'SELECT' && viewer.model) viewer.pressF();   // v35 : F bascule le vol en promenade, entre en promenade sinon
+  if (e.code === 'KeyF' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && n !== 'INPUT' && n !== 'TEXTAREA' && n !== 'SELECT' && viewer.model) viewer.toggleWalk();   // v36 : F entre ET sort de la promenade (la touche est libre dans le viewer) ; Maj+P et le bouton sortent aussi
 });
 function refreshEnabled() {
   const off = !(cfg.sea && cfg.anim);
@@ -886,7 +887,7 @@ coordInfo();
 
 $('bFrame').onclick = () => { viewer.frame(DEF.camDir, tilesMode ? tilesMode.target : DEF.target, 1); camInfo(); };
 $('bReset').onclick = () => {
-  const keep = ['zoneMarker', 'showSpawns', 'fly', 'zoneInfoDist', 'walk', 'names', 'chat', 'spectate', 'panel', 'chatFade', 'ignoreViz', 'presenceUrl', 'room', 'walkIgnore', 'eyeHeight', 'walkSpeed', 'hole', 'holeFade', 'holeX', 'holeZ', 'guide', 'wave', 'seaY', 'sea', 'anim', 'retina', 'foliageCutout', 'seaColor', 'skyColor'];
+  const keep = ['zoneMarker', 'showSpawns', 'zoneCone', 'fly', 'zoneInfoDist', 'walk', 'names', 'chat', 'spectate', 'panel', 'chatFade', 'ignoreViz', 'presenceUrl', 'room', 'walkIgnore', 'eyeHeight', 'walkSpeed', 'hole', 'holeFade', 'holeX', 'holeZ', 'guide', 'wave', 'seaY', 'sea', 'anim', 'retina', 'foliageCutout', 'seaColor', 'skyColor'];
   const patch = {}; keep.forEach(k => { patch[k] = DEF[k]; });
   viewer.setCfg(patch);
   buildRows(); refreshEnabled(); camInfo(); updateGuide();
@@ -1015,7 +1016,7 @@ async function saveZonesToDir() {
 }
 
 // ---------- mémorisation des réglages, fichier par fichier (nom + taille du .glb)
-const SKEYS = ['zoneMarker', 'showSpawns', 'fly', 'zoneInfoDist', 'rotate', 'hole', 'holeFade', 'holeX', 'holeZ', 'wave', 'seaY', 'seaSegments', 'seaColor', 'skyColor', 'foliageCutout', 'anim', 'sea', 'retina', 'walk', 'eyeHeight', 'walkSpeed', 'walkIgnore', 'names', 'chat', 'chatFade', 'presenceUrl', 'room', 'spectate', 'panel', 'mapUrl', 'guide', 'ignoreViz'];
+const SKEYS = ['zoneMarker', 'showSpawns', 'zoneCone', 'fly', 'zoneInfoDist', 'rotate', 'hole', 'holeFade', 'holeX', 'holeZ', 'wave', 'seaY', 'seaSegments', 'seaColor', 'skyColor', 'foliageCutout', 'anim', 'sea', 'retina', 'walk', 'eyeHeight', 'walkSpeed', 'walkIgnore', 'names', 'chat', 'chatFade', 'presenceUrl', 'room', 'spectate', 'panel', 'mapUrl', 'guide', 'ignoreViz'];
 let curFile = null, lastSaved = '', settingsReady = false;
 const fileKey = f => 'glb2html_set_' + f.name + '|' + f.size;
 function snapshot() {
@@ -1101,6 +1102,7 @@ function buildCommand() {
   if (cfg.walkIgnore !== DEF.walkIgnore) a.push('--walk-ignore ' + q(cfg.walkIgnore));
   sw('--names', '--no-names', cfg.names, DEF.names); sw('--panel', '--no-panel', cfg.panel, DEF.panel);
   if (cfg.zoneMarker !== DEF.zoneMarker) a.push('--zone-marker ' + cfg.zoneMarker);
+  sw('--zone-cone', '--no-zone-cone', cfg.zoneCone, DEF.zoneCone);
   sw('--show-spawns', '--no-show-spawns', cfg.showSpawns, DEF.showSpawns);
   if (cfg.presenceUrl) a.push('--presence-url ' + q(cfg.presenceUrl));
   if (cfg.room) a.push('--room ' + q(cfg.room));
@@ -1171,7 +1173,7 @@ function liveConfig() {
     zones: (cfg.zones || []).filter(z => $('profileSel').value === 'perso' || !z.private), profile: $('profileSel').value,
     walk: cfg.walk, eyeHeight: cfg.eyeHeight, walkSpeed: cfg.walkSpeed, walkIgnore: cfg.walkIgnore,
     names: cfg.names, chat: cfg.chat, chatFade: cfg.chatFade, presenceUrl: cfg.presenceUrl, room: cfg.room || baseName,
-    zoneMarker: cfg.zoneMarker || 'discret', showSpawns: !!cfg.showSpawns, fly: cfg.fly !== false, zoneInfoDist: Math.max(5, Math.min(200, Number(cfg.zoneInfoDist) || 40)), targetExplicit: targetExplicit()
+    zoneMarker: cfg.zoneMarker || 'discret', showSpawns: !!cfg.showSpawns, zoneCone: cfg.zoneCone !== false, fly: cfg.fly !== false, zoneInfoDist: Math.max(5, Math.min(200, Number(cfg.zoneInfoDist) || 40)), targetExplicit: targetExplicit()
   };
 }
 $('bHtml').onclick = () => {
@@ -1253,7 +1255,7 @@ $('bPy').onclick = () => {
     '\nZOOM_RATIO = ' + n(c.zoom) + '\nCAM_DIR = ' + t(c.camDir) + '\nTARGET = ' + t(c.target) +
     '\nSEA_ENABLED = ' + B(c.sea) + '\nANIM_ENABLED = ' + B(c.anim) + '\nRETINA_ENABLED = ' + B(c.retina) +
     '\nFOLIAGE_CUTOUT = ' + n(c.foliageCutout) + '\nSEA_COLOR = ' + col(c.seaColor) + '\nSKY_COLOR = ' + col(c.skyColor) + '\nSEA_SEGMENTS = ' + Math.round(c.seaSegments) + '\nWALK_ENABLED = ' + B(c.walk) + '\nEYE_HEIGHT = ' + n(c.eyeHeight) + '\nWALK_SPEED = ' + n(c.walkSpeed) + '\nWALK_IGNORE = ' + JSON.stringify(c.walkIgnore) + '\nNAMES_ENABLED = ' + B(c.names) + '\nCHAT_ENABLED = ' + B(c.chat) + '\nCHAT_FADE = ' + n(c.chatFade) + '\nSPECTATE = ' + B(c.spectate) + '\nPANEL = ' + B(c.panel) + '\nMAP_JSON = ' + JSON.stringify(JSON.stringify(cfg.map || [])) + '\nMAP_URL = ' + JSON.stringify(cfg.mapUrl || '') + '\nPROFILE = ' + JSON.stringify($('profileSel').value) + '\nZONES_JSON = ' + JSON.stringify(JSON.stringify(cfg.zones || [])) + '\nPRESENCE_URL = ' + JSON.stringify(c.presenceUrl) + '\nROOM = ' + JSON.stringify(cfg.room || '') +
-    '\nZONES_LIVE = ""' + '\nZONE_MARKER = ' + JSON.stringify(c.zoneMarker) + '\nSHOW_SPAWNS = ' + B(c.showSpawns) + '\nFLY_ENABLED = ' + B(c.fly) + '\nZONE_INFO_DIST = ' + n(c.zoneInfoDist) + '\nTARGET_EXPLICIT = ' + B(c.targetExplicit) +
+    '\nZONES_LIVE = ""' + '\nZONE_MARKER = ' + JSON.stringify(c.zoneMarker) + '\nSHOW_SPAWNS = ' + B(c.showSpawns) + '\nZONE_CONE = ' + B(c.zoneCone) + '\nFLY_ENABLED = ' + B(c.fly) + '\nZONE_INFO_DIST = ' + n(c.zoneInfoDist) + '\nTARGET_EXPLICIT = ' + B(c.targetExplicit) +
     '\n# <</DEFAULTS>>';
   const py = PY_SOURCE.replace(/# <<DEFAULTS>>[\s\S]*?# <<\/DEFAULTS>>/, () => block);
   download('glb2html.py', new Blob([py], { type: 'text/x-python' }));

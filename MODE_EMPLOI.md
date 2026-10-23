@@ -1,4 +1,4 @@
-# Mode d'emploi : zones, portails et points d'arrivée (v35)
+# Mode d'emploi : zones, portails et points d'arrivée (v36)
 
 ## 1. La règle qui explique 90 % des pannes
 
@@ -21,21 +21,24 @@ Exemple juste :
 
 | Touche | Effet |
 |---|---|
-| **F** (v35) | **en vue globale : entre en promenade** ; **en promenade : bascule le vol** (comme dans Firestorm). Pour sortir de la promenade, c'est **P**. **À la sortie (v31)**, le petit cercle d'atterrissage et la cible de la vue globale se posent **au sol, sous le dernier endroit où se trouvait l'avatar** ; la caméra revient à la **même distance et dans la même direction** de cette cible qu'avant l'entrée en promenade (elle ne revient plus à l'endroit exact d'où tu étais parti). En mode tuiles, les tuiles autour de l'avatar restent donc chargées. |
-| **P** (v35) | **entrer dans la promenade / en sortir** (le bouton « Promenade (P) » reste en vue globale ; il n'y a plus de bouton « Quitter la promenade »). Dans le **viewer**, P pose une zone en promenade : on y sort avec **Maj+P** ou le bouton |
-| **E** / **Page Haut** (v35) | **appui bref au sol = saut** (comme Espace) ; **maintenu plus de 0,4 s au sol = décoller** ; en vol, maintenu = monter. **E ne déclenche plus les zones** : elles se déclenchent au clic, ou à l'entrée dans leur rayon pour un portail « en marchant dedans » (§ 8). Le nom de la zone proche s'affiche en bas : « clic : … » |
-| **Début** (v33) | décoller ou atterrir (bascule, comme **F** en promenade). En vol : **E** / **Page Haut** monte, **C** / **Page Bas** descend, pas de gravité, les murs restent solides, jamais sous le sol. Retirable avec `--no-fly` (§ 18.4) |
-| **M** (v35) | **en promenade : bascule vue subjective / troisième personne** ; hors promenade : ouvre la carte des mondes (comme avant). **Ctrl+M ouvre la carte des mondes partout** |
+| **F** (v36) | **entre en promenade et en sort**, en vue globale comme en promenade (comme **P**) ; le vol se bascule avec **Début** (en v35, F basculait le vol). **À la sortie (v31)**, le petit cercle d'atterrissage et la cible de la vue globale se posent **au sol, sous le dernier endroit où se trouvait l'avatar** ; la caméra revient à la **même distance et dans la même direction** de cette cible qu'avant l'entrée en promenade (elle ne revient plus à l'endroit exact d'où tu étais parti). En mode tuiles, les tuiles autour de l'avatar restent donc chargées. |
+| **P** (v35) | **entrer dans la promenade / en sortir** (le bouton « Promenade (P) » reste en vue globale ; il n'y a plus de bouton « Quitter la promenade »). Dans le **viewer**, P pose une zone en promenade : on en sort avec **F**, **Maj+P** ou le bouton |
+| **E** (v36) | **déclenche la zone proche** (déclenchement « au clic » ou « les deux », comme avant la v35 ; un portail « en marchant dedans » part à l'entrée de son rayon, § 8). Le nom de la zone proche s'affiche en bas : « clic ou E : … ». **E ne fait rien d'autre** (il ne saute plus et ne monte plus) |
+| **Page Haut** (v35) | **appui bref au sol = saut** (comme Espace) ; **maintenu plus de 0,4 s au sol = décoller** ; en vol, maintenu = monter |
+| **Espace** (v36) | au sol : saut ; **en vol, maintenu : monter** |
+| **T** (v36) | affiche ou masque les **repères de portail** (petits cônes, § 21.4) ; le choix est mémorisé |
+| **Début** (v33) | décoller ou atterrir (bascule ; v36 : F ne bascule plus le vol). En vol : **Page Haut** ou **Espace** maintenu monte, **C** / **Page Bas** descend, pas de gravité, les murs restent solides, jamais sous le sol. Retirable avec `--no-fly` (§ 18.4) |
+| **M** (v35) | **en promenade : bascule vue subjective / troisième personne** ; hors promenade : ouvre la carte des mondes (comme avant). **Ctrl+M ouvre la carte des mondes partout**. **v36 : la touche est reconnue par la lettre imprimée « m »**, pas par sa place : sur un clavier AZERTY c'est la vraie touche M (avant, c'était la touche « , ») |
 | **Fin**, **Alt + clic** (v35) | remettre la caméra **derrière l'avatar** (troisième personne). **Alt + glisser** orbite la caméra (à la troisième personne la souris orbite déjà ; en vue subjective, Alt + glisser regarde autour comme la souris) |
 | **molette** (v35) | en promenade, la page ne défile pas. **Troisième personne** : règle la distance de la caméra (1 à 30 m, 4 m par défaut, mémorisée) ; **caméra libre** : avance / recule la caméra le long du regard ; vue subjective : rien (§ 20.9) |
 | **double appui** sur W, S, ↑ ou ↓ (v35) | **course** tant que la touche reste enfoncée (deux appuis à moins de 300 ms) ; **Maj** reste une course. Pas de course permanente (Ctrl+R recharge la page) |
 | **V** (v33) | changer de vue : subjective → troisième personne → caméra libre → subjective. La vue courante est écrite en texte dans le bloc d'état (« Vue : … », v34) |
 | **R** (v33) | **retour à l'arrivée** : en promenade, téléporte à l'arrivée `default` (à défaut, à la cible de départ) en attendant la tuile ; en vue globale, recadre la cible et la caméra sur ce point. Le bouton « Retour à l'arrivée (R) » fait la même chose |
 | **Entrée** (v33) | ouvrir la saisie du chat ; **Entrée envoie et garde la saisie ouverte**, **Échap** la ferme. Les flèches continuent à déplacer l'avatar (§ 18.5) |
-| **Page Haut** / **Page Bas** (v34) | en vol, monter / descendre (en plus de **E** / **C**) ; la page ne défile pas. **Descendre jusqu'au sol pose l'avatar** : le vol s'arrête tout seul. Bouton « Voler / Atterrir » dans la barre du bas pour qui n'a pas de touche Début (§ 19.3) |
+| **Page Haut** / **Page Bas** (v34) | en vol, monter / descendre (en plus de **Espace** maintenu / **C**, v36) ; la page ne défile pas. **Descendre jusqu'au sol pose l'avatar** : le vol s'arrête tout seul. Bouton « Voler / Atterrir » dans la barre du bas pour qui n'a pas de touche Début (§ 19.3) |
 | **Échap** (v34) | libère la souris en promenade. La souris reste alors **libre** (un clic ou un double-clic n'aspire plus le pointeur) jusqu'à **G** ou au bouton « Capturer la souris » (§ 19.4) |
 | **G** (v34) | recapturer la souris après Échap |
-| **I** (v34) | masquer / afficher le **bloc d'état** (vue, mode, souris, position, tuiles). **H** masque seulement l'aide (§ 19.1) |
+| **I** (v34) | la fenêtre **Informations / État** (v36 : ancien « bloc d'état » : vue, mode, souris, clavier, position, tuiles) : masquée → déployée ; réduite → déployée ; déployée → masquée. **H** fait de même pour l'aide seule (§ 19.1, § 21.3) |
 
 Les portails ne fonctionnent qu'en promenade.
 
@@ -781,8 +784,8 @@ Ils concernent les portails et les zones libres (lien web, commande). Réglage d
 
 ### 18.4 Vol, trois vues, « Aller à »
 
-- **Vol** (`--fly`, défaut ; `--no-fly` le retire de la page et de l'aide) : **Début** décolle ou atterrit. En vol, **E** monte et **C** descend (même vitesse que la marche, **Maj** accélère), pas de gravité, les murs bloquent comme au sol, l'avatar ne descend jamais sous le sol des tuiles chargées. Vers une tuile pas encore prête, l'avatar s'arrête au bord (« Chargement du sol… »), comme à pied. À l'atterrissage la gravité le ramène sur le sol (ou sur un toit). La présence transmet la hauteur normalement. En vol, E ne déclenche plus les zones : cliquer dessus.
-- **Vues** (**V**) : subjective (la vue d'avant) ; **troisième personne** (la caméra tourne autour de l'avatar, à 4 m, se rapproche si un mur est derrière lui, ne passe jamais sous le sol, la souris règle la hauteur) ; **caméra libre** (l'avatar reste sur place, les touches de déplacement et les flèches déplacent et tournent la caméra, **E** et **C** la montent et la descendent, elle ne traverse pas le sol). En caméra libre, **V** de nouveau ou **F** rend la main à l'avatar (un second **F** quitte la promenade). L'avatar est dessiné avec le même modèle que les autres visiteurs, avec le nom et la couleur du visiteur. La vue est écrite en texte dans le panneau d'aide (v34 : « Vue : troisième personne » et « Mode : à pied » dans le bloc d'état, § 19.1).
+- **Vol** (`--fly`, défaut ; `--no-fly` le retire de la page et de l'aide) : **Début** décolle ou atterrit. En vol, **Page Haut** (ou **Espace** maintenu, v36) monte et **C** descend (même vitesse que la marche, **Maj** accélère), pas de gravité, les murs bloquent comme au sol, l'avatar ne descend jamais sous le sol des tuiles chargées. Vers une tuile pas encore prête, l'avatar s'arrête au bord (« Chargement du sol… »), comme à pied. À l'atterrissage la gravité le ramène sur le sol (ou sur un toit). La présence transmet la hauteur normalement. En vol, E déclenche la zone proche comme au sol (v36).
+- **Vues** (**V**) : subjective (la vue d'avant) ; **troisième personne** (la caméra tourne autour de l'avatar, à 4 m, se rapproche si un mur est derrière lui, ne passe jamais sous le sol, la souris règle la hauteur) ; **caméra libre** (l'avatar reste sur place, les touches de déplacement et les flèches déplacent et tournent la caméra, **Page Haut** et **C** la montent et la descendent, elle ne traverse pas le sol). En caméra libre, **V** de nouveau rend la main à l'avatar (v36 : **F** quitte la promenade, comme **P**). L'avatar est dessiné avec le même modèle que les autres visiteurs, avec le nom et la couleur du visiteur. La vue est écrite en texte dans le panneau d'aide (v34 : « Vue : troisième personne » et « Mode : à pied » dans le bloc d'état, § 19.1).
 - **« Aller à x, y, z »** (panneau d'aide) : mètres, **repère du modèle d'origine en mode tuiles, repère de la page (modèle recentré) en mode GLB unique** (le panneau le dit). Formats : `68.2, 39, -823.3` ; `68.2 39 -823.3` ; `68,2 ; 39,0 ; -823,3` (virgule décimale avec points-virgules). En promenade : téléportation, avec l'attente de la tuile ; en vue globale : la cible se déplace.
 
 ### 18.5 Chat
@@ -846,7 +849,7 @@ La coquille (`index.html`), `core.js` et `X.config.json` changent ; **les tuiles
 
 ### 19.3 Vol
 
-**Page Haut** monte, **Page Bas** descend (en plus de **E** et **C**), sans défilement de la page. **Début** garde la bascule. Quand on descend jusqu'au sol, **l'avatar atterrit tout seul** (le vol s'arrête, la gravité reprend) ; il ne passe jamais sous le sol. Le bouton **« Voler / Atterrir »** de la barre du bas (visible en promenade, absent avec `--no-fly`) bascule le vol ; son état (`aria-pressed`) et la ligne « Mode : … » le disent en texte.
+**Page Haut** monte, **Page Bas** descend (en plus de **Espace** maintenu et **C**, v36), sans défilement de la page. **Début** garde la bascule. Quand on descend jusqu'au sol, **l'avatar atterrit tout seul** (le vol s'arrête, la gravité reprend) ; il ne passe jamais sous le sol. Le bouton **« Voler / Atterrir »** de la barre du bas (visible en promenade, absent avec `--no-fly`) bascule le vol ; son état (`aria-pressed`) et la ligne « Mode : … » le disent en texte.
 
 ### 19.4 Souris libre après Échap
 
@@ -884,14 +887,14 @@ Colonne de gauche : les défauts du visualiseur officiel d'après le wiki de Sec
 
 | Commande | Firestorm | Cette page |
 |---|---|---|
-| Marcher avant / arrière | W ou ↑ / S ou ↓ | W ou ↑ / S ou ↓ (ZQSD en AZERTY) |
+| Marcher avant / arrière | W ou ↑ / S ou ↓ | W ou ↑ / S ou ↓ (ZQSD en AZERTY ; v36 : l'aide affiche les lettres réelles) |
 | Pas de côté | A / D (ou Maj + flèches) | A / D (Q / D en AZERTY) |
 | Tourner | ← / → | ← / → (à la troisième personne : tourne la caméra) |
 | Courir | double appui sur W / S / ↑ / ↓ ; Ctrl+R bascule la course | **Maj**, ou **double appui** (moins de 300 ms) sur W, S, ↑ ou ↓, tant que la touche est maintenue. **Pas de course permanente** (Ctrl+R recharge la page du navigateur) |
-| Sauter | E ou Page Haut (appui bref) | **E**, **Page Haut** (appui bref) ou **Espace** |
-| Voler / atterrir | Début | **F** ou **Début** (en vue globale, F entre encore en promenade) |
-| Décoller | E ou Page Haut maintenu | **E** ou **Page Haut** maintenu **plus de 0,4 s** au sol : vol + montée |
-| Monter en vol | E ou Page Haut | **E** ou **Page Haut** maintenu |
+| Sauter | E ou Page Haut (appui bref) | **Page Haut** (appui bref) ou **Espace** (v36 : E ne saute plus) |
+| Voler / atterrir | Début | **Début** ou le bouton « Voler / Atterrir » (v36 : F ne bascule plus le vol) |
+| Décoller | E ou Page Haut maintenu | **Page Haut** maintenu **plus de 0,4 s** au sol : vol + montée |
+| Monter en vol | E ou Page Haut | **Page Haut** ou **Espace** maintenu |
 | Descendre en vol | C ou Page Bas | **C** ou **Page Bas** maintenu ; **atterrissage automatique** au sol |
 | Vue subjective | M | **M** bascule vue subjective / troisième personne ; **V** fait tourner les trois vues (dont la caméra libre) |
 | Orbiter la caméra | Alt + glisser | **Alt + glisser** (à la troisième personne, la souris orbite déjà autour de l'avatar sans le tourner) |
@@ -899,16 +902,16 @@ Colonne de gauche : les défauts du visualiseur officiel d'après le wiki de Sec
 | Zoom caméra | molette | **molette** (3e personne : distance de la caméra ; caméra libre : avance / recule) |
 | Carte du monde | Ctrl+M | **Ctrl+M** partout ; **M** seul l'ouvre aussi hors promenade |
 | Chat | Entrée | **Entrée** |
-| Entrer / sortir de la promenade | (n'existe pas) | **P** ; F entre aussi, en vue globale seulement |
-| Toucher un objet, une zone | clic | **clic** (E ne déclenche plus les zones) ; un portail « en marchant dedans » part à l'entrée de son rayon |
+| Entrer / sortir de la promenade | (n'existe pas) | **P** ou **F** (v36) |
+| Toucher un objet, une zone | clic | **clic** ou **E** (v36) ; un portail « en marchant dedans » part à l'entrée de son rayon |
 | Se téléporter | (carte, double-clic selon le réglage) | **double-clic** |
 
 Gardées telles quelles : ZQSD / WASD / flèches, Espace, Entrée, G, R, V, H, I, Maj.
 
 ### 20.3 Vol et saut
 
-- Au sol, **E** ou **Page Haut** : un appui bref fait **sauter** (comme Espace) ; **maintenu plus de 0,4 s**, l'avatar **décolle** et monte tant que la touche est tenue. Relâchée, il reste en vol, immobile en hauteur.
-- **F** et **Début** basculent le vol ; le bouton « Voler / Atterrir » reste. Descendre jusqu'au sol (C ou Page Bas) pose l'avatar : le vol s'arrête tout seul (v34). Avec `--no-fly`, rien de tout cela ne fait voler : E et Page Haut sautent seulement.
+- Au sol, **Page Haut** : un appui bref fait **sauter** (comme Espace) ; **maintenu plus de 0,4 s**, l'avatar **décolle** et monte tant que la touche est tenue. Relâchée, il reste en vol, immobile en hauteur.
+- **Début** bascule le vol (v36 : F ne le fait plus) ; le bouton « Voler / Atterrir » reste. Descendre jusqu'au sol (C ou Page Bas) pose l'avatar : le vol s'arrête tout seul (v34). Avec `--no-fly`, rien de tout cela ne fait voler : Page Haut saute seulement.
 
 ### 20.4 Troisième personne
 

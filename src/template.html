@@ -237,7 +237,7 @@ if ((C.zones || []).length || C.zonesLive) {
   };
   const pr = document.getElementById('zonePrompt');
   viewer.onNear = z => { nearNow = z; refreshNear(); };
-  refreshNear = () => { pr.hidden = !nearNow; if (nearNow) pr.textContent = 'clic : ' + (nearNow.label || nearNow.id); };   // v35 : E ne déclenche plus les zones
+  refreshNear = () => { pr.hidden = !nearNow; if (nearNow) pr.textContent = 'clic ou E : ' + (nearNow.label || nearNow.id); };   // v36 : E déclenche de nouveau la zone proche (comme avant la v35)
 }
 if ((C.map || []).length || C.mapUrl) {
   let MAP = (C.map || []).slice();
@@ -295,7 +295,8 @@ if ((C.map || []).length || C.mapUrl) {
   ov.addEventListener('click', e => { if (e.target === ov) close(); });
   addEventListener('keydown', e => {
     const n = e.target && e.target.tagName;
-    if (e.code === 'KeyM' && !e.repeat && n !== 'INPUT' && n !== 'TEXTAREA' && (!viewer.walking || e.ctrlKey || e.metaKey) && !e.altKey) { e.preventDefault(); (ov.hidden ? open() : close()); }   // v35 : en promenade M bascule la vue ; Ctrl+M ouvre la carte partout
+    if (keyChar(e) === 'm' && !e.repeat && n !== 'INPUT' && n !== 'TEXTAREA' && (!viewer.walking || e.ctrlKey || e.metaKey) && !e.altKey) {   // v36 : reconnue par la lettre imprimée
+      e.preventDefault(); (ov.hidden ? open() : close()); }   // v35 : en promenade M bascule la vue ; Ctrl+M ouvre la carte partout
     else if (e.code === 'Escape' && !ov.hidden) close();
   });
   if (C.mapUrl && /^https?:$/.test(location.protocol)) {
@@ -313,14 +314,52 @@ if ((C.map || []).length || C.mapUrl) {
     });
   }
 }
-// réglages visiteur mémorisés dans ce navigateur : couleur de l'avatar (null = tirée au hasard par le serveur), pseudo cité (gras, clignotement, bip)
+// réglages visiteur mémorisés dans ce navigateur : couleur de l'avatar (null = tirée au hasard par le serveur), pseudo cité (gras, clignotement),
+// sons (général, volume, citation, arrivée, départ), disposition du clavier. v36 : les anciens réglages du bip (clé « sound ») sont ignorés.
 const VIS = (() => {
-  const d = { color: null, bold: true, blink: true, sound: false };
-  try { const s = JSON.parse(localStorage.getItem('glb2html_visitor') || '{}'); if (Number.isInteger(s.color) && s.color >= 0 && s.color <= 0xFFFFFF) d.color = s.color; for (const k of ['bold', 'blink', 'sound']) if (typeof s[k] === 'boolean') d[k] = s[k]; } catch (e) {}
+  const d = { color: null, bold: true, blink: true, sounds: true, volume: 50, soundCite: true, soundJoin: true, soundLeave: true, layout: 'auto' };
+  try {
+    const s = JSON.parse(localStorage.getItem('glb2html_visitor') || '{}');
+    if (Number.isInteger(s.color) && s.color >= 0 && s.color <= 0xFFFFFF) d.color = s.color;
+    for (const k of ['bold', 'blink', 'sounds', 'soundCite', 'soundJoin', 'soundLeave']) if (typeof s[k] === 'boolean') d[k] = s[k];
+    if (Number.isFinite(s.volume)) d.volume = Math.max(0, Math.min(100, Math.round(s.volume)));
+    if (['auto', 'azerty', 'qwerty'].includes(s.layout)) d.layout = s.layout;
+  } catch (e) {}
   return d;
 })();
 const visSave = () => { try { localStorage.setItem('glb2html_visitor', JSON.stringify(VIS)); } catch (e) {} };
+KB.setPref(VIS.layout);
+// sons (Web Audio, sans fichier externe) : le contexte audio démarre à la première action de l'utilisateur sur la page ; au plus un son d'arrivée et un de départ toutes les 2 s
+const SND = (() => {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  let ctx = null, acted = false; const last = { join: -1e9, leave: -1e9 };
+  const ensure = () => {
+    if (!acted || !AC) return null;
+    try { if (!ctx) ctx = new AC(); if (ctx.state === 'suspended' && ctx.resume) ctx.resume(); } catch (e) { return null; }
+    return ctx;
+  };
+  for (const ev of ['pointerdown', 'keydown', 'touchstart']) addEventListener(ev, () => { acted = true; if (VIS.sounds) ensure(); }, true);
+  const play = notes => {
+    if (!VIS.sounds || VIS.volume <= 0) return false;
+    const c = ensure(); if (!c) return false;
+    try {
+      const peak = Math.max(0.0002, VIS.volume / 100 * 0.25);
+      let t = c.currentTime;
+      for (const [f, dur] of notes) {
+        const o = c.createOscillator(), g = c.createGain();
+        o.type = 'sine'; o.frequency.value = f;
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + dur + 0.02);
+        t += dur;
+      }
+      return true;
+    } catch (e) { return false; }
+  };
+  const limited = k => { const now = performance.now(); if (now - last[k] < 2000) return false; if (play(k === 'join' ? [[660, 0.08], [880, 0.08]] : [[880, 0.08], [660, 0.08]])) { last[k] = now; return true; } return false; };
+  return { cite: () => play([[880, 0.16]]), join: () => limited('join'), leave: () => limited('leave'), sample: () => play([[880, 0.16]]) };
+})();
 viewer.setMyColor(VIS.color);
+if (C.presenceUrl && C.walk) viewer.onPeer = kind => { if (kind === 'join' && VIS.soundJoin) SND.join(); else if (kind === 'leave' && VIS.soundLeave) SND.leave(); };
 if (C.panel !== false) {
   const ob = document.getElementById('optsBtn'), op = document.getElementById('optsPanel');
   const key = 'glb2html_opts_' + (C.room || 'x');
@@ -362,9 +401,32 @@ if (C.panel !== false) {
     showCol();
   }
   if (C.presenceUrl && C.walk && C.chat) {
-    for (const [k, t, id] of [['bold', 'Message qui cite mon pseudo : en gras, précédé de « @ »', 'visBold'], ['blink', 'Message qui cite mon pseudo : la bulle de l\'auteur clignote', 'visBlink'], ['sound', 'Message qui cite mon pseudo : bip sonore', 'visSound']]) {
+    for (const [k, t, id] of [['bold', 'Message qui cite mon pseudo : en gras, précédé de « @ »', 'visBold'], ['blink', 'Message qui cite mon pseudo : la bulle de l\'auteur clignote', 'visBlink']]) {
       const cb = mk('input', { type: 'checkbox', id }); cb.checked = VIS[k]; cb.onchange = () => { VIS[k] = cb.checked; visSave(); }; op.append(lab(t, cb));
     }
+  }
+  if (C.presenceUrl && C.walk) {
+    // v36 : sons. Case générale + volume, puis une case par événement
+    const cbS = mk('input', { type: 'checkbox', id: 'visSounds' }), rgV = mk('input', { type: 'range', min: 0, max: 100, step: 1, id: 'visVolume' }), vV = mk('span');
+    const subs = [];
+    const syncS = () => { cbS.checked = VIS.sounds; rgV.value = VIS.volume; vV.textContent = String(VIS.volume); rgV.disabled = !VIS.sounds; for (const c of subs) c.disabled = !VIS.sounds; };
+    cbS.onchange = () => { VIS.sounds = cbS.checked; visSave(); syncS(); };
+    rgV.oninput = () => { VIS.volume = parseInt(rgV.value, 10); vV.textContent = String(VIS.volume); visSave(); };
+    rgV.onchange = () => { SND.sample(); };
+    op.append(lab('Sons', cbS));
+    const wv = mk('label'); wv.append(rgV, mk('span', { textContent: 'Volume : ' }), vV); op.append(wv);
+    for (const [k, t, id, need] of [['soundCite', 'Bip quand un message cite mon pseudo', 'visSoundCite', C.chat], ['soundJoin', 'Son à l\'arrivée d\'un visiteur', 'visSoundJoin', true], ['soundLeave', 'Son au départ d\'un visiteur', 'visSoundLeave', true]]) {
+      if (!need) continue;
+      const cb = mk('input', { type: 'checkbox', id }); cb.checked = VIS[k]; cb.onchange = () => { VIS[k] = cb.checked; visSave(); }; subs.push(cb); op.append(lab(t, cb));
+    }
+    syncS();
+  }
+  if (C.walk) {
+    // v36 : disposition du clavier (les lettres de l'aide ; la marche reste sur les touches physiques)
+    const sel = mk('select', { id: 'visLayout' });
+    for (const [v, t] of [['auto', 'Auto'], ['azerty', 'AZERTY'], ['qwerty', 'QWERTY']]) sel.append(mk('option', { value: v, textContent: t }));
+    sel.value = VIS.layout; sel.onchange = () => { VIS.layout = sel.value; visSave(); KB.setPref(VIS.layout); };
+    const l = mk('label'); l.append(mk('span', { textContent: 'Disposition du clavier : ' }), sel); op.append(l);
   }
   const rst = mk('button', { textContent: 'Valeurs d\'origine' });
   rst.onclick = () => { Object.assign(st, base); apply(); };
@@ -381,20 +443,23 @@ if (C.walk) {
   // v35 : aide en groupes courts (une ligne par groupe, touches sans phrases)
   const hasZones = !!((C.zones && C.zones.length) || C.zonesLive), hasMap = !!((C.map || []).length || C.mapUrl);
   const grp = (t, items) => ({ t, items: items.filter(Boolean) });
-  const walkGroups = [
-    grp('Déplacement', ['ZQSD / WASD / flèches', 'Maj ou double appui W S ↑ ↓ : courir', 'Espace : sauter', 'double-clic : se téléporter', 'R : retour à l\'arrivée']),
-    fly ? grp('Vol', ['F ou Début : voler / atterrir', 'Page Haut ou E : monter (maintenu au sol : décoller)', 'Page Bas ou C : descendre']) : null,
+  const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+  const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+  const keyLabels = () => KB.keys();
+  const walkGroups = () => { const K = keyLabels(); return [
+    grp('Déplacement', [K.fwd + K.left + K.back + K.right + ' / flèches', 'Maj ou double appui ' + K.fwd + ' ' + K.back + ' ↑ ↓ : courir', 'Espace : sauter', 'double-clic : se téléporter', 'R : retour à l\'arrivée']),
+    fly ? grp('Vol', ['Début : voler / atterrir (ou le bouton)', 'Page Haut ou Espace maintenu : monter', 'Page Haut maintenu au sol : décoller', 'Page Bas ou C : descendre']) : null,
     grp('Vue', ['V : changer de vue', 'M : subjective / 3e personne', 'molette : distance de la caméra (3e personne) ou zoom (caméra libre)', 'Fin ou Alt + clic : caméra derrière l\'avatar', 'Alt + glisser : orbiter']),
     grp('Souris', ['clic dans la vue puis souris : regarder', 'Échap : libérer', 'G : reprendre']),
     (C.chat && on) ? grp('Chat', ['Entrée : écrire', 'Échap : fermer', 'flèches : se déplacer']) : null,
-    (hasZones || C.names) ? grp('Zones', [hasZones ? 'clic : panneaux et portails' : '', C.names ? 'clic : nom de l\'élément' : '']) : null,
-    grp('Page', ['P : quitter la promenade', 'H : aide', 'I : état', hasMap ? 'Ctrl+M : carte des mondes' : ''])
-  ].filter(Boolean);
-  const orbitGroups = [
+    (hasZones || C.names) ? grp('Zones', [hasZones ? 'clic ou E : panneaux et portails' : '', hasZones ? 'T : repères de portail' : '', C.names ? 'clic : nom de l\'élément' : '']) : null,
+    grp('Page', ['P ou F : quitter la promenade', 'H : aide', 'I : informations', hasMap ? 'Ctrl+M : carte des mondes' : ''])
+  ].filter(Boolean); };
+  const orbitGroups = () => [
     grp('Vue globale', ['glisser : tourner', 'molette : zoom', 'clic droit + glisser : déplacer', 'R : recadrer']),
     grp('Promenade', ['P ou F : entrer', 'double-clic : choisir le point d\'atterrissage']),
-    (hasZones || C.names) ? grp('Zones', [hasZones ? 'clic : panneaux et portails' : '', C.names ? 'clic : nom de l\'élément' : '']) : null,
-    grp('Page', ['H : aide', 'I : état', hasMap ? 'M : carte des mondes' : ''])
+    (hasZones || C.names) ? grp('Zones', [hasZones ? 'clic : panneaux et portails' : '', hasZones ? 'T : repères de portail' : '', C.names ? 'clic : nom de l\'élément' : '']) : null,
+    grp('Page', ['H : aide', 'I : informations', hasMap ? 'M : carte des mondes' : ''])
   ].filter(Boolean);
   const feat = 'Cette page — réglages visiteur : ' + (C.panel !== false ? 'oui (bouton en haut à droite)' : 'non') + ' · présence : ' + (on ? 'oui (salon ' + C.room + ')' : 'non (option --presence-url)') + ' · chat : ' + (on && C.chat ? 'oui' : 'non') + ' · vue globale : ' + (on && C.spectate ? 'oui' : 'non' + (on ? ' (option --spectate)' : '')) + ' · noms au clic : ' + (C.names ? 'oui' : 'non (option --names)') + ' · glb2html ' + (C.version || '?');
   const l1 = document.createElement('div'), l2 = document.createElement('div');
@@ -408,13 +473,14 @@ if (C.walk) {
   // v34 : bloc d'état (texte sélectionnable, distinct de l'aide) : vue, mode (à pied / en vol), souris, position, tuiles
   const sb = document.getElementById('stateInfo'), sbody = document.getElementById('stateBody'), shead = document.getElementById('stateHead');
   const mkLine = id => { const d = document.createElement('div'); d.id = id; sbody.append(d); return d; };
-  const lv = mkLine('viewInfo'), lm = mkLine('modeInfo'), lmo = mkLine('mouseInfo'), lp = mkLine('posInfo');
+  const lv = mkLine('viewInfo'), lm = mkLine('modeInfo'), lmo = mkLine('mouseInfo'), lp = mkLine('posInfo'), lkb = mkLine('kbInfo');
   const setTxt = (el, t) => { if (el.textContent !== t) el.textContent = t; };
   const fb = document.getElementById('flyBtn'), gb = document.getElementById('grabBtn');
   const MOUSE = { captured: 'capturée (Échap pour la libérer)', free: 'libre (G ou bouton « Capturer la souris » pour la reprendre)', idle: 'clic dans la vue pour la capturer' };
   const viewTick = () => {
     const w = viewer.walking;
     setTxt(lv, w ? 'Vue : ' + viewer.viewName : 'Vue : globale (orbite)');
+    { const K = KB.keys(); setTxt(lkb, 'Clavier : ' + KB.layout().toUpperCase() + ' (' + K.fwd + ' ' + K.left + ' ' + K.back + ' ' + K.right + ')' + (KB.pref === 'auto' ? ', automatique' : '')); }
     lm.hidden = lmo.hidden = !w;
     if (w) { setTxt(lm, 'Mode : ' + (viewer.flying ? 'en vol' : 'à pied')); setTxt(lmo, 'Souris : ' + MOUSE[viewer.mouseState]); }
     fb.setAttribute('aria-pressed', viewer.flying ? 'true' : 'false');
@@ -445,50 +511,64 @@ if (C.walk) {
   const gin = document.createElement('input'), gbt = document.createElement('button'), gms = document.createElement('span');
   gin.id = 'gotoIn'; gin.size = 22; gin.placeholder = '68.2, 39, -823.3'; gin.setAttribute('aria-label', 'Aller à x, y, z'); gbt.id = 'gotoBtn'; gbt.textContent = 'Aller'; gms.id = 'gotoMsg'; gms.style.marginLeft = '6px';
   gt.append('Aller à x, y, z (m, ' + (C.tiles ? 'repère du modèle d\'origine' : 'repère de cette page, modèle recentré') + ') : ', gin, ' ', gbt, gms);
+  // v36 : une adresse complète contenant #pos=x,y,z[,yaw] est acceptée (position et orientation)
+  const parsePosLink = txt => {
+    const m = /[#&?]pos=([^&\s]+)/.exec(String(txt || '')); if (!m) return null;
+    let raw; try { raw = decodeURIComponent(m[1]); } catch (e) { return null; }
+    const v = raw.split(',').map(x => (x.trim() === '' ? NaN : Number(x)));
+    return (v.length === 3 || v.length === 4) && v.every(Number.isFinite) && v.every(x => Math.abs(x) <= 1e5) ? v : null;
+  };
   const doGoto = () => {
-    const v = parseXYZ(gin.value);
-    if (!v) { gms.textContent = 'Trois nombres attendus : x, y, z (ex. 68.2, 39, -823.3)'; return; }
-    viewer.goTo(v); gms.textContent = viewer.walking ? 'Téléportation vers ' + v.join(', ') : 'Cible déplacée en ' + v.join(', ');
+    const link = parsePosLink(gin.value), v = link ? link.slice(0, 3) : parseXYZ(gin.value);
+    if (!v) { gms.textContent = 'Trois nombres attendus : x, y, z (ex. 68.2, 39, -823.3), ou une adresse contenant #pos=x,y,z,cap'; return; }
+    viewer.goTo(v, link && link.length > 3 ? link[3] : undefined); gms.textContent = viewer.walking ? 'Téléportation vers ' + v.join(', ') : 'Cible déplacée en ' + v.join(', ');
   };
   gbt.onclick = doGoto; gin.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') { e.preventDefault(); doGoto(); } });   // les touches du champ ne déclenchent ni le chat ni les raccourcis
-  // « Copier le lien de ma position » : adresse de la page + #pos=x,y,z,yaw (lue à l'ouverture comme une arrivée anonyme)
+  // « Copier ma position » : au choix (liste mémorisée) l'adresse de la page + #pos=x,y,z,cap (lue à l'ouverture comme une arrivée anonyme) ou la série « x, y, z » en mètres (une décimale, point décimal)
   const lk = document.createElement('div'); lk.style.cssText = 'margin-top:6px;font-size:11px';
-  const lbt = document.createElement('button'), lout = document.createElement('input'); lbt.id = 'linkBtn'; lbt.textContent = 'Copier le lien de ma position'; lout.id = 'linkOut'; lout.readOnly = true; lout.size = 28; lout.setAttribute('aria-label', 'Lien de ma position');
+  const lbt = document.createElement('button'), lout = document.createElement('input'), lfmt = document.createElement('select');
+  lbt.id = 'linkBtn'; lbt.textContent = 'Copier ma position'; lout.id = 'linkOut'; lout.readOnly = true; lout.size = 28; lout.setAttribute('aria-label', 'Ma position');
+  lfmt.id = 'linkFmt'; lfmt.setAttribute('aria-label', 'Format de la position copiée');
+  for (const [v, t] of [['url', 'URL'], ['xyz', 'xyz']]) lfmt.append(Object.assign(document.createElement('option'), { value: v, textContent: t }));
+  lfmt.value = lsGet('glb2html_copyfmt') === 'xyz' ? 'xyz' : 'url'; lfmt.onchange = () => lsSet('glb2html_copyfmt', lfmt.value);
   lbt.onclick = async () => {
     const w = viewer.walking ? viewer.getWalk() : null, tg = viewer.controls.target, cp = viewer.camera.position;
     const p = w ? w.pos : tg.toArray(), yaw = w ? w.yaw : Math.atan2(-(tg.x - cp.x), -(tg.z - cp.z));
-    const u = new URL(location.href); u.hash = 'pos=' + p.concat([yaw]).map(x => String(Math.round(x * 100) / 100)).join(',');
-    lout.value = u.href;
-    toast((await copyText(u.href, lout)) ? 'Copié' : 'Copie impossible : le texte est sélectionné, fais Ctrl+C');
+    let text;
+    if (lfmt.value === 'xyz') text = p.map(f1).join(', ');
+    else { const u = new URL(location.href); u.hash = 'pos=' + p.concat([yaw]).map(x => String(Math.round(x * 100) / 100)).join(','); text = u.href; }
+    lout.value = text;
+    toast((await copyText(text, lout)) ? 'Copié' : 'Copie impossible : le texte est sélectionné, fais Ctrl+C');
   };
-  lk.append(lbt, ' ', lout);
+  lk.append(lbt, ' ', lfmt, ' ', lout);
   hbody.append(gt, lk);
   const hm = document.getElementById('homeBtn'); hm.hidden = false;
   const goHome = () => { if (!viewer.returnHome()) toast('Pas de point de retour sur cette page'); };
   hm.onclick = goHome;
   addEventListener('keydown', e => { const n = e.target && e.target.tagName; if (e.code === 'KeyR' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && n !== 'INPUT' && n !== 'TEXTAREA' && n !== 'SELECT') goHome(); });
   const hb = document.getElementById('helpBtn');
-  let helpOpen = true; try { helpOpen = localStorage.getItem('glb2html_help') !== '0'; } catch (e) {}
-  let stateOpen = true; try { stateOpen = localStorage.getItem('glb2html_state') !== '0'; } catch (e) {}
-  const applyHelp = walking => { fillGroups(walking ? walkGroups : orbitGroups); viewTick(); sb.hidden = !stateOpen; hb.hidden = false; wh.hidden = !helpOpen; hb.textContent = helpOpen ? 'Masquer l\'aide (H)' : 'Aide (H)'; };
-  const toggleHelp = () => { helpOpen = !helpOpen; try { localStorage.setItem('glb2html_help', helpOpen ? '1' : '0'); } catch (e) {} applyHelp(viewer.walking); };
-  hb.onclick = toggleHelp;
-  // v35 : titre cliquable de l'aide et de l'état : replie / déplie le panneau (mémorisé dans le navigateur) ; H et I masquent tout le panneau
-  const foldKey = k => { try { return localStorage.getItem(k) === '1'; } catch (e) { return false; } };
-  const foldSave = (k, v) => { try { localStorage.setItem(k, v ? '1' : '0'); } catch (e) {} };
-  const mkFold = (head, body, title, key) => {
-    let folded = foldKey(key);
-    const apply = () => { body.hidden = folded; head.textContent = (folded ? '▸ ' : '▾ ') + title; head.setAttribute('aria-expanded', folded ? 'false' : 'true'); };
-    head.onclick = () => { folded = !folded; foldSave(key, folded); apply(); };
+  // v36 : H (aide) et I (informations) tournent en trois temps : masquée -> déployée ; réduite -> déployée ; déployée -> masquée. Réduit / déployé et masqué sont mémorisés.
+  const mkPanel = (wrap, head, body, title, openKey, foldKey) => {
+    let open = lsGet(openKey) !== '0', folded = lsGet(foldKey) === '1';
+    const apply = () => { wrap.hidden = !open; body.hidden = folded; head.textContent = (folded ? '▸ ' : '▾ ') + title; head.setAttribute('aria-expanded', folded ? 'false' : 'true'); };
+    const save = () => { lsSet(openKey, open ? '1' : '0'); lsSet(foldKey, folded ? '1' : '0'); };
+    head.onclick = () => { folded = !folded; save(); apply(); };
     head.onmousedown = e => e.preventDefault();
-    apply();
+    return {
+      apply, get open() { return open; }, get folded() { return folded; },
+      cycle() { if (!open) { open = true; folded = false; } else if (folded) folded = false; else open = false; save(); apply(); }
+    };
   };
-  mkFold(hhead, hbody, 'Aide', 'glb2html_helpFold'); mkFold(shead, sbody, 'État', 'glb2html_stateFold');
+  const helpP = mkPanel(wh, hhead, hbody, 'Aide', 'glb2html_help', 'glb2html_helpFold'), stateP = mkPanel(sb, shead, sbody, 'Informations / État', 'glb2html_state', 'glb2html_stateFold');
+  const applyHelp = walking => { fillGroups(walking ? walkGroups() : orbitGroups()); viewTick(); stateP.apply(); helpP.apply(); hb.hidden = false; hb.textContent = !helpP.open ? 'Aide (H)' : (helpP.folded ? 'Déployer l\'aide (H)' : 'Masquer l\'aide (H)'); };
+  const toggleHelp = () => { helpP.cycle(); applyHelp(viewer.walking); };
+  hb.onclick = toggleHelp;
+  KB.listeners.push(() => applyHelp(viewer.walking));
   applyHelp(false);
-  addEventListener('keydown', e => { const n = e.target && e.target.tagName; if (e.code === 'KeyH' && !e.repeat && n !== 'INPUT' && n !== 'TEXTAREA') toggleHelp(); });
-  addEventListener('keydown', e => {   // I : le bloc d'état (vue, mode, position, tuiles) se masque ou s'affiche, indépendamment de l'aide
+  addEventListener('keydown', e => { const n = e.target && e.target.tagName; if (e.code === 'KeyH' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && n !== 'INPUT' && n !== 'TEXTAREA' && n !== 'SELECT') toggleHelp(); });
+  addEventListener('keydown', e => {   // I : la fenêtre Informations / État (vue, mode, position, tuiles), indépendante de l'aide
     const n = e.target && e.target.tagName;
-    if (e.code === 'KeyI' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && n !== 'INPUT' && n !== 'TEXTAREA') { stateOpen = !stateOpen; try { localStorage.setItem('glb2html_state', stateOpen ? '1' : '0'); } catch (e2) {} sb.hidden = !stateOpen; }
+    if (e.code === 'KeyI' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && n !== 'INPUT' && n !== 'TEXTAREA' && n !== 'SELECT') stateP.cycle();
   });
   addEventListener('keydown', e => {
     const n = e.target && e.target.tagName;
@@ -497,9 +577,10 @@ if (C.walk) {
   wb.onclick = () => viewer.toggleWalk();
   addEventListener('keydown', e => {
     const n = e.target && e.target.tagName;
-    if (e.code === 'KeyF' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && n !== 'INPUT' && n !== 'TEXTAREA' && n !== 'SELECT') viewer.pressF();   // v35 : en promenade F bascule le vol ; en vue globale il entre en promenade
+    if (e.code === 'KeyF' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && n !== 'INPUT' && n !== 'TEXTAREA' && n !== 'SELECT') viewer.toggleWalk();   // v36 : F entre ET sort de la promenade, comme P ; le vol se bascule avec Début ou le bouton
     if (e.code === 'KeyP' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && n !== 'INPUT' && n !== 'TEXTAREA' && n !== 'SELECT') viewer.toggleWalk();
   });
+  viewer.onCones = on2 => toast(on2 ? 'Repères de portail affichés (T pour les masquer)' : 'Repères de portail masqués (T pour les afficher)');
   viewer.onLanding = () => toast('Point d\'atterrissage choisi : appuie sur P (ou F) pour t\'y poser');
   viewer.onWalk = on2 => { fb.hidden = !(on2 && fly); gb.hidden = !on2; wb.hidden = on2; applyHelp(on2); posTick(); { const mbn = document.getElementById('mapBtn'); if (mbn) mbn.textContent = on2 ? 'Carte (Ctrl+M)' : 'Carte (M)'; } document.getElementById('nameTag').hidden = true; };
 }
@@ -550,22 +631,6 @@ if (C.presenceUrl && C.walk && C.chat) {
     help.hidden = open;
     help.textContent = st === 'online' ? '↵ Entrée : écrire (la saisie reste ouverte, Échap la ferme)' : ({ connecting: 'Chat : connexion…', error: 'Chat hors ligne : nouvelle tentative…', full: 'Chat : salon complet' }[st] || 'Chat hors ligne');
   };
-  // bip court (Web Audio, sans fichier), seulement après une première interaction avec la page
-  let acted = false, actx = null;
-  for (const ev of ['pointerdown', 'keydown', 'touchstart']) addEventListener(ev, () => { acted = true; }, true);
-  const beep = () => {
-    if (!acted) return false;
-    try {
-      const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return false;
-      if (!actx) actx = new AC();
-      if (actx.state === 'suspended' && actx.resume) actx.resume();
-      const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime;
-      o.type = 'sine'; o.frequency.value = 880;
-      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.12, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
-      o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + 0.18);
-      return true;
-    } catch (e) { return false; }
-  };
   // pseudo cité : mot entier, sans tenir compte des majuscules, avec ou sans @ devant
   const cites = text => {
     const n = viewer.getName(); if (!n) return false;
@@ -579,7 +644,7 @@ if (C.presenceUrl && C.walk && C.chat) {
       if (hit && VIS.bold) { el.style.fontWeight = 'bold'; el.appendChild(document.createTextNode('@ ')); el.dataset.cite = '1'; }
       const b = document.createElement('b'); b.textContent = m.name + ' : '; el.appendChild(b); el.appendChild(document.createTextNode(m.text));
       if (!m.history) saved.push({ t: new Date(), name: m.name, text: m.text });
-      if (hit) { if (VIS.blink && m.id !== undefined) viewer.blinkBubble(m.id); if (VIS.sound) beep(); }
+      if (hit) { if (VIS.blink && m.id !== undefined) viewer.blinkBubble(m.id); if (VIS.soundCite) SND.cite(); }
     }
     msgs.push({ t: m.history ? 0 : Date.now(), el }); if (msgs.length > 50) msgs.shift();
     render();
@@ -646,7 +711,7 @@ if (C.presenceUrl && C.walk) {
   try { inp.value = localStorage.getItem('glb2html_name') || ''; } catch (e) {}
   viewer.setName(inp.value);
   inp.onchange = () => { viewer.setName(inp.value); try { localStorage.setItem('glb2html_name', inp.value.trim()); } catch (e) {} };
-  const T = { off: 'hors ligne (F : te connecter en promenade)', connecting: 'connexion…', error: 'serveur injoignable (' + C.presenceUrl + '), nouvelle tentative…', full: 'salon complet', kicked: 'éjecté du salon (recharge la page pour revenir)', banned: 'accès interdit' };
+  const T = { off: 'hors ligne (P ou F : te connecter en promenade)', connecting: 'connexion…', error: 'serveur injoignable (' + C.presenceUrl + '), nouvelle tentative…', full: 'salon complet', kicked: 'éjecté du salon (recharge la page pour revenir)', banned: 'accès interdit' };
   st.textContent = T.off;
   viewer.onPresence = s => {
     if (s.state === 'kicked' || s.state === 'banned') toast((s.state === 'banned' ? 'Accès interdit' : 'Éjecté par l\'hôte') + (s.reason ? ' : ' + s.reason : ''));
