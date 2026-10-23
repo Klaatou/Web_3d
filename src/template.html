@@ -73,21 +73,24 @@ __IMPORTMAP__
 </script>
 </head>
 <body>
+<script>
+__I18N__
+</script>
 <div id="view"></div>
-<div id="msg">Chargement…</div>
-<div id="opts"><button id="optsBtn" hidden>Réglages</button><div id="optsPanel" hidden></div></div>
-<div id="mapOverlay" hidden><div id="mapBox"><h2>Carte des mondes</h2><div id="mapGrid"></div><button id="mapClose">Fermer (Échap)</button></div></div>
+<div id="msg" data-i18n="page.loading">Chargement…</div>
+<div id="opts"><button id="optsBtn" hidden data-i18n="page.opts">Réglages</button><div id="optsPanel" hidden></div></div>
+<div id="mapOverlay" hidden><div id="mapBox"><h2 data-i18n="page.map.title">Carte des mondes</h2><div id="mapGrid"></div><button id="mapClose" data-i18n="page.map.close">Fermer (Échap)</button></div></div>
 <div id="nameTag" hidden></div>
 <div id="toast" hidden></div>
 <div id="zonePrompt" hidden></div>
-<div id="groundWait" role="status" aria-live="polite" hidden>Chargement du sol…</div>
+<div id="groundWait" role="status" aria-live="polite" hidden data-i18n="page.ground.loading">Chargement du sol…</div>
 <div id="tilesInfo" class="alone" hidden></div>
 <div id="fade"></div>
-<div id="modal" hidden><div><span id="modalText"></span><br><button class="ok" id="modalYes">Oui</button><button id="modalNo">Annuler</button></div></div>
-<div id="chat" hidden><div id="chatLog"></div><div id="chatHelp"></div><button id="chatSave" type="button" title="Enregistre dans un fichier texte les messages vus depuis ton arrivée">Enregistrer le chat</button><div id="chatComplete" role="listbox" aria-label="Pseudos" hidden></div><input id="chatInput" maxlength="200" placeholder="Message : Entrée pour envoyer (reste ouvert), Échap pour fermer" hidden></div>
-<div id="presence" hidden>Pseudo : <input id="presenceName" maxlength="24" placeholder="Visiteur"><div id="presenceStatus"></div></div>
+<div id="modal" hidden><div><span id="modalText"></span><br><button class="ok" id="modalYes" data-i18n="page.modal.yes">Oui</button><button id="modalNo" data-i18n="page.modal.no">Annuler</button></div></div>
+<div id="chat" hidden><div id="chatLog"></div><div id="chatHelp"></div><button id="chatSave" type="button" data-i18n-title="page.chat.save.title" title="Enregistre dans un fichier texte les messages vus depuis ton arrivée" data-i18n="page.chat.save">Enregistrer le chat</button><div id="chatComplete" role="listbox" aria-label="Pseudos" data-i18n-aria="page.chat.names" hidden></div><input id="chatInput" maxlength="200" placeholder="Message : Entrée pour envoyer (reste ouvert), Échap pour fermer" data-i18n-ph="page.chat.placeholder" hidden></div>
+<div id="presence" hidden><span data-i18n="page.presence.label">Pseudo : </span><input id="presenceName" maxlength="24" placeholder="Visiteur" data-i18n-ph="page.visitor"><div id="presenceStatus"></div></div>
 <div id="dock"><div id="hudL"><div id="walkHint" hidden><button type="button" id="helpHead" class="fold" aria-expanded="true">▾ Aide</button><div id="helpBody"></div></div><div id="stateInfo" hidden><button type="button" id="stateHead" class="fold" aria-expanded="true">▾ État</button><div id="stateBody"></div></div></div>
-<div id="bar"><button id="walkBtn" hidden></button><button id="flyBtn" hidden aria-pressed="false">Voler / Atterrir</button><button id="grabBtn" hidden>Capturer la souris</button><button id="homeBtn" hidden>Retour à l'arrivée (R)</button><button id="helpBtn" hidden></button><button id="mapBtn" hidden>Carte (M)</button></div></div>
+<div id="bar"><button id="walkBtn" hidden></button><button id="flyBtn" hidden aria-pressed="false" data-i18n="page.btn.fly">Voler / Atterrir</button><button id="grabBtn" hidden data-i18n="page.btn.grab">Capturer la souris</button><button id="homeBtn" hidden data-i18n="page.btn.home">Retour à l'arrivée (R)</button><button id="helpBtn" hidden></button><button id="mapBtn" hidden data-i18n="page.btn.map">Carte (M)</button></div></div>
 <script type="application/json" id="cfg">__CONFIG__</script>
 <script type="application/octet-stream" id="glb">__GLB_B64__</script>
 <script type="module">
@@ -96,6 +99,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 const C = JSON.parse(document.getElementById('cfg').textContent);
 const msg = document.getElementById('msg');
+applyI18n();
 
 __CORE__
 
@@ -120,7 +124,7 @@ const H = new URLSearchParams(location.hash.slice(1));
 const posArr = (() => {
   if (!H.has('pos')) return null;
   const v = (H.get('pos') || '').split(',').map(x => (x.trim() === '' ? NaN : Number(x)));
-  if ((v.length !== 3 && v.length !== 4) || !v.every(Number.isFinite) || v.some(x => Math.abs(x) > 1e5)) { console.warn('#pos= ignoré : x,y,z[,yaw] attendus (nombres)'); return null; }
+  if ((v.length !== 3 && v.length !== 4) || !v.every(Number.isFinite) || v.some(x => Math.abs(x) > 1e5)) { console.warn(tr('page.pos.invalid')); return null; }
   return v;
 })();
 const arrival = H.has('spawn') || !!posArr;
@@ -144,8 +148,8 @@ function defaultArrival() {
 const gw = document.getElementById('groundWait');
 const t0Boot = performance.now();
 let bootOn = false, bootTimer = 0, lastWait = null;
-const waitText = w => (C.tiles ? 'Chargement du sol…' : 'Chargement de la région…') + (w && w.total ? ' ' + w.ready + '/' + w.total + ' tuile' + (w.total > 1 ? 's' : '') + ' prête' + (w.total > 1 ? 's' : '') : '')
-  + (w ? ' · ' + w.secs + ' s' : '') + (w && w.secs >= 60 ? ' · attente longue (tuile lourde ou réseau lent)' : '');
+const waitText = w => (C.tiles ? tr('page.ground.loading') : tr('page.wait.region')) + (w && w.total ? ' ' + trn('page.wait.tiles', w.total, w.ready) : '')
+  + (w ? tr('page.wait.secs', w.secs) : '') + (w && w.secs >= 60 ? tr('page.wait.long') : '');
 if (arrival) {
   fade.classList.add('on'); bootOn = true;
   const bootRender = () => { gw.textContent = waitText(lastWait || { secs: Math.floor((performance.now() - t0Boot) / 1000) }); gw.hidden = false; };
@@ -156,9 +160,9 @@ if (H.has('key')) {   // la clé (secret) ne reste jamais dans l'adresse visible
   try { const hp = new URLSearchParams(location.hash.slice(1)); hp.delete('key'); const hs = hp.toString(); history.replaceState(null, '', location.pathname + location.search + (hs ? '#' + hs : '')); } catch (e) {}
   if (KEYH && uidStored !== KEYH) {
     const m = document.getElementById('modal');
-    document.getElementById('modalText').textContent = 'Ce lien personnel remplace l\'identité de ce navigateur (nom réservé, historique) par celle de son propriétaire. Remplacer ?';
+    document.getElementById('modalText').textContent = tr('page.key.modal');
     m.hidden = false;
-    document.getElementById('modalYes').onclick = () => { m.hidden = true; if (viewer.setUid(KEYH)) toast('Identité remplacée par celle du lien'); };
+    document.getElementById('modalYes').onclick = () => { m.hidden = true; if (viewer.setUid(KEYH)) toast(tr('page.key.done')); };
     document.getElementById('modalNo').onclick = () => { m.hidden = true; };
   }
 }
@@ -199,7 +203,7 @@ if ((C.zones || []).length || C.zonesLive) {
       .catch(() => {});
   }
   const okUrl = u => { try { const x = new URL(u, location.href); return (x.protocol === 'http:' || x.protocol === 'https:' || (location.protocol === 'file:' && x.protocol === 'file:')) ? x : null; } catch (e) { return null; } };
-  const visitor = () => viewer.getName() || 'Visiteur';
+  const visitor = () => viewer.getName() || tr('page.visitor');
   const cool = {};
   const askConfirm = (text, yes) => {
     const m = document.getElementById('modal'); document.getElementById('modalText').textContent = text; m.hidden = false;
@@ -210,7 +214,7 @@ if ((C.zones || []).length || C.zonesLive) {
   const haSend = z => {
     const now = Date.now(); if (cool[z.id] && now - cool[z.id] < 3000) return; cool[z.id] = now;
     fetch(z.target, { method: 'POST', mode: 'no-cors', body: new URLSearchParams({ zone: z.label || z.id, visitor: visitor() }) })
-      .then(() => toast('Commande envoyée : ' + (z.label || z.id))).catch(() => toast('Échec de l\'envoi : ' + (z.label || z.id)));
+      .then(() => toast(tr('page.zone.cmdsent', z.label || z.id))).catch(() => toast(tr('page.zone.cmdfail', z.label || z.id)));
   };
   viewer.onZone = z => {
     const label = z.label || z.id;
@@ -219,25 +223,25 @@ if ((C.zones || []).length || C.zonesLive) {
       const same = !String(z.target || '').trim() || (() => { const x = okUrl(z.target); if (!x) return false; x.hash = ''; const h = new URL(location.href); h.hash = ''; return x.href === h.href; })();
       if (same) {
         const id = z.spawn || 'default', s = ZS.find(q => q.type === 'spawn' && q.id === id);
-        if (!s) return toast('Point d\'arrivée « ' + id + ' » introuvable dans cette région');
+        if (!s) return toast(tr('page.zone.nospawn', id));
         fade.classList.add('on');
         setTimeout(() => { if (viewer.walking) viewer.teleportTo([s.x, s.y, s.z], s.yaw); setTimeout(() => fade.classList.remove('on'), 150); }, 480);
         return;
       }
-      const u = okUrl(z.target); if (!u) return toast('Portail sans destination valide : ' + label);
+      const u = okUrl(z.target); if (!u) return toast(tr('page.zone.noportal', label));
       u.hash = 'spawn=' + encodeURIComponent(z.spawn || '') + '&name=' + encodeURIComponent(visitor());
       fade.classList.add('on'); setTimeout(() => { location.href = u.href; }, 480);
     } else if (z.type === 'url') {
-      const u = okUrl(z.target); if (!u) return toast('Lien invalide : ' + label);
-      window.open(u.href, '_blank', 'noopener,noreferrer'); toast('Ouverture : ' + label);
+      const u = okUrl(z.target); if (!u) return toast(tr('page.zone.badlink', label));
+      window.open(u.href, '_blank', 'noopener,noreferrer'); toast(tr('page.zone.opening', label));
     } else if (z.type === 'ha') {
-      if (!okUrl(z.target)) return toast('Adresse de commande invalide : ' + label);
-      if (z.confirm) askConfirm('Envoyer la commande « ' + label + ' » ?', () => haSend(z)); else haSend(z);
+      if (!okUrl(z.target)) return toast(tr('page.zone.badcmd', label));
+      if (z.confirm) askConfirm(tr('page.zone.confirm', label), () => haSend(z)); else haSend(z);
     }
   };
   const pr = document.getElementById('zonePrompt');
   viewer.onNear = z => { nearNow = z; refreshNear(); };
-  refreshNear = () => { pr.hidden = !nearNow; if (nearNow) pr.textContent = 'clic ou E : ' + (nearNow.label || nearNow.id); };   // v36 : E déclenche de nouveau la zone proche (comme avant la v35)
+  refreshNear = () => { pr.hidden = !nearNow; if (nearNow) pr.textContent = tr('page.zone.prompt', nearNow.label || nearNow.id); };   // v36 : E déclenche de nouveau la zone proche (comme avant la v35)
 }
 if ((C.map || []).length || C.mapUrl) {
   let MAP = (C.map || []).slice();
@@ -250,8 +254,8 @@ if ((C.map || []).length || C.mapUrl) {
   const okMapUrl = u => { try { const x = new URL(u, location.href); return (x.protocol === 'http:' || x.protocol === 'https:' || (location.protocol === 'file:' && x.protocol === 'file:')) ? x : null; } catch (e) { return null; } };
   const safeThumb = t => typeof t === 'string' && (/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+$/.test(t) || (!/^[a-z][a-z0-9+.-]*:/i.test(t) || /^https?:/i.test(t)));
   const go = r => {
-    const u = okMapUrl(r.url); if (!u) return toast('Adresse invalide : ' + r.name);
-    u.hash = 'spawn=' + encodeURIComponent(r.spawn || 'default') + '&name=' + encodeURIComponent(viewer.getName() || 'Visiteur');
+    const u = okMapUrl(r.url); if (!u) return toast(tr('page.map.badurl', r.name));
+    u.hash = 'spawn=' + encodeURIComponent(r.spawn || 'default') + '&name=' + encodeURIComponent(viewer.getName() || tr('page.visitor'));
     close(); fade.classList.add('on'); setTimeout(() => { location.href = u.href; }, 480);
   };
   const draw = () => {
@@ -269,12 +273,12 @@ if ((C.map || []).length || C.mapUrl) {
       const b = document.createElement('b'); b.textContent = r.name; t.append(b);
       const s = document.createElement('span');
       const n = counts[srvOf(r) + '|' + (r.room || '')];
-      s.textContent = (here(r) ? '● vous êtes ici' : 'visiter →') + (known && r.room && srvOf(r) ? ' · ' + (n || 0) + ' en promenade' : '');
+      s.textContent = (here(r) ? tr('page.map.here') : tr('page.map.visit')) + (known && r.room && srvOf(r) ? ' · ' + trn('page.map.count', n || 0) : '');
       t.append(s);
       t.onclick = () => { if (here(r)) close(); else go(r); };
       grid.append(t);
     }
-    if (!list.length) grid.textContent = 'Aucune région dans la carte.';
+    if (!list.length) grid.textContent = tr('page.map.empty');
   };
   const queryServer = srv => {
     try {
@@ -376,10 +380,10 @@ if (C.panel !== false) {
   cbRetina.onchange = () => { st.retina = cbRetina.checked; apply(); };
   cbAnim.onchange = () => { st.anim = cbAnim.checked; apply(); };
   rgWave.oninput = () => { st.wave = parseFloat(rgWave.value); apply(); };
-  op.append(lab('Haute résolution (plus net, plus lourd)', cbRetina));
+  op.append(lab(tr('page.opt.retina'), cbRetina));
   if (C.sea) {
-    op.append(lab('Mer animée', cbAnim));
-    const w = mk('label'); w.append(rgWave, mk('span', { textContent: 'Vagues : ' }), vWave); op.append(w);
+    op.append(lab(tr('page.opt.anim'), cbAnim));
+    const w = mk('label'); w.append(rgWave, mk('span', { textContent: tr('page.opt.wave') }), vWave); op.append(w);
   }
   if (C.presenceUrl && C.walk) {
     // couleur de l'avatar : annoncée au serveur de présence à la connexion (le nom reste le repère principal)
@@ -387,21 +391,21 @@ if (C.panel !== false) {
     const showCol = () => { cbCol.checked = VIS.color !== null; inCol.disabled = VIS.color === null; inCol.value = '#' + (VIS.color === null ? 0x3366cc : VIS.color).toString(16).padStart(6, '0'); };
     const setCol = () => { VIS.color = cbCol.checked ? parseInt(inCol.value.slice(1), 16) : null; viewer.setMyColor(VIS.color); visSave(); showCol(); };
     cbCol.onchange = setCol; inCol.oninput = () => { if (cbCol.checked) setCol(); };
-    const lc = mk('label'); lc.append(cbCol, mk('span', { textContent: 'Choisir la couleur de mon avatar' }), inCol); op.append(lc);
-    op.append(mk('small', { textContent: 'La couleur change aussitôt pour les autres visiteurs (et pour ton avatar en troisième personne). Décochée : le serveur en a tiré une au hasard à la connexion.' }));
+    const lc = mk('label'); lc.append(cbCol, mk('span', { textContent: tr('page.opt.color') }), inCol); op.append(lc);
+    op.append(mk('small', { textContent: tr('page.opt.color.note') }));
     // lien personnel : #name=PSEUDO&key=CLE ; la clé est l'identité de ce navigateur (nom réservé)
-    const bl = mk('button', { id: 'visLinkBtn', type: 'button', textContent: 'Copier mon lien personnel' }), lo = mk('input', { id: 'visLinkOut', readOnly: true, size: 24 });
-    lo.setAttribute('aria-label', 'Lien personnel'); lo.hidden = true;
+    const bl = mk('button', { id: 'visLinkBtn', type: 'button', textContent: tr('page.opt.link') }), lo = mk('input', { id: 'visLinkOut', readOnly: true, size: 24 });
+    lo.setAttribute('aria-label', tr('page.opt.link.aria')); lo.hidden = true;
     bl.onclick = async () => {
-      const u = new URL(location.href); u.hash = 'name=' + encodeURIComponent(viewer.getName() || (() => { try { return localStorage.getItem('glb2html_name') || ''; } catch (e) { return ''; } })() || 'Visiteur') + '&key=' + viewer.getUid();
+      const u = new URL(location.href); u.hash = 'name=' + encodeURIComponent(viewer.getName() || (() => { try { return localStorage.getItem('glb2html_name') || ''; } catch (e) { return ''; } })() || tr('page.visitor')) + '&key=' + viewer.getUid();
       lo.value = u.href; lo.hidden = false;
-      toast((await copyText(u.href, lo)) ? 'Copié' : 'Copie impossible : le texte est sélectionné, fais Ctrl+C');
+      toast((await copyText(u.href, lo)) ? tr('page.toast.copied') : tr('page.toast.copyfail'));
     };
-    op.append(bl, lo, mk('small', { textContent: 'Ce lien est un secret : quiconque l\'ouvre prend ton identité (ton nom réservé). Ne le partage pas.' }));
+    op.append(bl, lo, mk('small', { textContent: tr('page.opt.link.note') }));
     showCol();
   }
   if (C.presenceUrl && C.walk && C.chat) {
-    for (const [k, t, id] of [['bold', 'Message qui cite mon pseudo : en gras, précédé de « @ »', 'visBold'], ['blink', 'Message qui cite mon pseudo : la bulle de l\'auteur clignote', 'visBlink']]) {
+    for (const [k, t, id] of [['bold', tr('page.opt.bold'), 'visBold'], ['blink', tr('page.opt.blink'), 'visBlink']]) {
       const cb = mk('input', { type: 'checkbox', id }); cb.checked = VIS[k]; cb.onchange = () => { VIS[k] = cb.checked; visSave(); }; op.append(lab(t, cb));
     }
   }
@@ -413,9 +417,9 @@ if (C.panel !== false) {
     cbS.onchange = () => { VIS.sounds = cbS.checked; visSave(); syncS(); };
     rgV.oninput = () => { VIS.volume = parseInt(rgV.value, 10); vV.textContent = String(VIS.volume); visSave(); };
     rgV.onchange = () => { SND.sample(); };
-    op.append(lab('Sons', cbS));
-    const wv = mk('label'); wv.append(rgV, mk('span', { textContent: 'Volume : ' }), vV); op.append(wv);
-    for (const [k, t, id, need] of [['soundCite', 'Bip quand un message cite mon pseudo', 'visSoundCite', C.chat], ['soundJoin', 'Son à l\'arrivée d\'un visiteur', 'visSoundJoin', true], ['soundLeave', 'Son au départ d\'un visiteur', 'visSoundLeave', true]]) {
+    op.append(lab(tr('page.opt.sounds'), cbS));
+    const wv = mk('label'); wv.append(rgV, mk('span', { textContent: tr('page.opt.volume') }), vV); op.append(wv);
+    for (const [k, t, id, need] of [['soundCite', tr('page.opt.sound.cite'), 'visSoundCite', C.chat], ['soundJoin', tr('page.opt.sound.join'), 'visSoundJoin', true], ['soundLeave', tr('page.opt.sound.leave'), 'visSoundLeave', true]]) {
       if (!need) continue;
       const cb = mk('input', { type: 'checkbox', id }); cb.checked = VIS[k]; cb.onchange = () => { VIS[k] = cb.checked; visSave(); }; subs.push(cb); op.append(lab(t, cb));
     }
@@ -424,20 +428,27 @@ if (C.panel !== false) {
   if (C.walk) {
     // v36 : disposition du clavier (les lettres de l'aide ; la marche reste sur les touches physiques)
     const sel = mk('select', { id: 'visLayout' });
-    for (const [v, t] of [['auto', 'Auto'], ['azerty', 'AZERTY'], ['qwerty', 'QWERTY']]) sel.append(mk('option', { value: v, textContent: t }));
+    for (const [v, t] of [['auto', tr('common.auto')], ['azerty', 'AZERTY'], ['qwerty', 'QWERTY']]) sel.append(mk('option', { value: v, textContent: t }));
     sel.value = VIS.layout; sel.onchange = () => { VIS.layout = sel.value; visSave(); KB.setPref(VIS.layout); };
-    const l = mk('label'); l.append(mk('span', { textContent: 'Disposition du clavier : ' }), sel); op.append(l);
+    const l = mk('label'); l.append(mk('span', { textContent: tr('page.opt.layout') }), sel); op.append(l);
   }
-  const rst = mk('button', { textContent: 'Valeurs d\'origine' });
+  {
+    // v36 : langue de la page (Auto = première langue du navigateur disponible, sinon l'anglais) ; changer recharge la page
+    const selL = mk('select', { id: 'visLang' });
+    for (const [v, tt] of i18nChoices()) selL.append(mk('option', { value: v, textContent: tt }));
+    selL.value = LANG_PREF; selL.onchange = () => setLangPref(selL.value);
+    const ll = mk('label'); ll.append(mk('span', { textContent: tr('page.opt.lang') }), selL); op.append(ll);
+  }
+  const rst = mk('button', { textContent: tr('page.opt.reset') });
   rst.onclick = () => { Object.assign(st, base); apply(); };
-  op.append(rst, mk('small', { textContent: 'En promenade, Échap libère la souris pour utiliser ce panneau. Tes choix sont mémorisés sur cet appareil.' }));
+  op.append(rst, mk('small', { textContent: tr('page.opt.note') }));
   sync(); ob.hidden = false;
   ob.onclick = () => { op.hidden = !op.hidden; };
   if (st.retina !== base.retina || st.anim !== base.anim || st.wave !== base.wave) viewer.setCfg({ retina: st.retina, anim: st.anim, wave: st.wave });
 }
 if (C.walk) {
   const wb = document.getElementById('walkBtn'), wh = document.getElementById('walkHint');
-  wb.hidden = false; wb.textContent = 'Promenade (P)';
+  wb.hidden = false; wb.textContent = tr('page.btn.walk');
   const on = !!C.presenceUrl;
   const fly = C.fly !== false;
   // v35 : aide en groupes courts (une ligne par groupe, touches sans phrases)
@@ -447,21 +458,22 @@ if (C.walk) {
   const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
   const keyLabels = () => KB.keys();
   const walkGroups = () => { const K = keyLabels(); return [
-    grp('Déplacement', [K.fwd + K.left + K.back + K.right + ' / flèches', 'Maj ou double appui ' + K.fwd + ' ' + K.back + ' ↑ ↓ : courir', 'Espace : sauter', 'double-clic : se téléporter', 'R : retour à l\'arrivée']),
-    fly ? grp('Vol', ['Début : voler / atterrir (ou le bouton)', 'Page Haut ou Espace maintenu : monter', 'Page Haut maintenu au sol : décoller', 'Page Bas ou C : descendre']) : null,
-    grp('Vue', ['V : changer de vue', 'M : subjective / 3e personne', 'molette : distance de la caméra (3e personne) ou zoom (caméra libre)', 'Fin ou Alt + clic : caméra derrière l\'avatar', 'Alt + glisser : orbiter']),
-    grp('Souris', ['clic dans la vue puis souris : regarder', 'Échap : libérer', 'G : reprendre']),
-    (C.chat && on) ? grp('Chat', ['Entrée : écrire', 'Échap : fermer', 'flèches : se déplacer']) : null,
-    (hasZones || C.names) ? grp('Zones', [hasZones ? 'clic ou E : panneaux et portails' : '', hasZones ? 'T : repères de portail' : '', C.names ? 'clic : nom de l\'élément' : '']) : null,
-    grp('Page', ['P ou F : quitter la promenade', 'H : aide', 'I : informations', hasMap ? 'Ctrl+M : carte des mondes' : ''])
+    grp(tr('page.help.g.move'), [tr('page.help.move', K.fwd + K.left + K.back + K.right), tr('page.help.run', K.fwd, K.back), tr('page.help.jump'), tr('page.help.tp'), tr('page.help.home')]),
+    fly ? grp(tr('page.help.g.fly'), [tr('page.help.fly'), tr('page.help.up'), tr('page.help.takeoff'), tr('page.help.down')]) : null,
+    grp(tr('page.help.g.view'), [tr('page.help.view'), tr('page.help.m'), tr('page.help.wheel'), tr('page.help.end'), tr('page.help.alt')]),
+    grp(tr('page.help.g.mouse'), [tr('page.help.mouse'), tr('page.help.esc'), tr('page.help.grab')]),
+    (C.chat && on) ? grp(tr('page.help.g.chat'), [tr('page.help.chat.enter'), tr('page.help.chat.esc'), tr('page.help.chat.arrows')]) : null,
+    (hasZones || C.names) ? grp(tr('page.help.g.zones'), [hasZones ? tr('page.help.zone.click') : '', hasZones ? tr('page.help.zone.cone') : '', C.names ? tr('page.help.zone.name') : '']) : null,
+    grp(tr('page.help.g.page'), [tr('page.help.quit'), tr('page.help.h'), tr('page.help.i'), hasMap ? tr('page.help.map.ctrl') : ''])
   ].filter(Boolean); };
   const orbitGroups = () => [
-    grp('Vue globale', ['glisser : tourner', 'molette : zoom', 'clic droit + glisser : déplacer', 'R : recadrer']),
-    grp('Promenade', ['P ou F : entrer', 'double-clic : choisir le point d\'atterrissage']),
-    (hasZones || C.names) ? grp('Zones', [hasZones ? 'clic : panneaux et portails' : '', hasZones ? 'T : repères de portail' : '', C.names ? 'clic : nom de l\'élément' : '']) : null,
-    grp('Page', ['H : aide', 'I : informations', hasMap ? 'M : carte des mondes' : ''])
+    grp(tr('page.help.g.orbit'), [tr('page.help.orbit.drag'), tr('page.help.orbit.wheel'), tr('page.help.orbit.pan'), tr('page.help.orbit.reframe')]),
+    grp(tr('page.help.g.walk'), [tr('page.help.enter'), tr('page.help.landing')]),
+    (hasZones || C.names) ? grp(tr('page.help.g.zones'), [hasZones ? tr('page.help.zone.click.orbit') : '', hasZones ? tr('page.help.zone.cone') : '', C.names ? tr('page.help.zone.name') : '']) : null,
+    grp(tr('page.help.g.page'), [tr('page.help.h'), tr('page.help.i'), hasMap ? tr('page.help.map') : ''])
   ].filter(Boolean);
-  const feat = 'Cette page — réglages visiteur : ' + (C.panel !== false ? 'oui (bouton en haut à droite)' : 'non') + ' · présence : ' + (on ? 'oui (salon ' + C.room + ')' : 'non (option --presence-url)') + ' · chat : ' + (on && C.chat ? 'oui' : 'non') + ' · vue globale : ' + (on && C.spectate ? 'oui' : 'non' + (on ? ' (option --spectate)' : '')) + ' · noms au clic : ' + (C.names ? 'oui' : 'non (option --names)') + ' · glb2html ' + (C.version || '?');
+  const feat = tr('page.feat', C.panel !== false ? tr('page.feat.panel.yes') : tr('common.no'), on ? tr('page.feat.presence.yes', C.room) : tr('page.feat.presence.no'), on && C.chat ? tr('common.yes') : tr('common.no'),
+    on && C.spectate ? tr('common.yes') : (on ? tr('page.feat.spectate.no') : tr('common.no')), C.names ? tr('common.yes') : tr('page.feat.names.no'), C.version || '?');
   const l1 = document.createElement('div'), l2 = document.createElement('div');
   l2.style.cssText = 'font-size:11px;margin-top:4px;opacity:.85'; l2.textContent = feat;
   const hbody = document.getElementById('helpBody'), hhead = document.getElementById('helpHead');
@@ -476,13 +488,13 @@ if (C.walk) {
   const lv = mkLine('viewInfo'), lm = mkLine('modeInfo'), lmo = mkLine('mouseInfo'), lp = mkLine('posInfo'), lkb = mkLine('kbInfo');
   const setTxt = (el, t) => { if (el.textContent !== t) el.textContent = t; };
   const fb = document.getElementById('flyBtn'), gb = document.getElementById('grabBtn');
-  const MOUSE = { captured: 'capturée (Échap pour la libérer)', free: 'libre (G ou bouton « Capturer la souris » pour la reprendre)', idle: 'clic dans la vue pour la capturer' };
+  const MOUSE = { captured: tr('page.mouse.captured'), free: tr('page.mouse.free'), idle: tr('page.mouse.idle') };
   const viewTick = () => {
     const w = viewer.walking;
-    setTxt(lv, w ? 'Vue : ' + viewer.viewName : 'Vue : globale (orbite)');
-    { const K = KB.keys(); setTxt(lkb, 'Clavier : ' + KB.layout().toUpperCase() + ' (' + K.fwd + ' ' + K.left + ' ' + K.back + ' ' + K.right + ')' + (KB.pref === 'auto' ? ', automatique' : '')); }
+    setTxt(lv, tr('page.state.view', w ? viewer.viewName : tr('page.state.view.global')));
+    { const K = KB.keys(); setTxt(lkb, tr(KB.pref === 'auto' ? 'page.state.kb.auto' : 'page.state.kb', KB.layout().toUpperCase(), K.fwd + ' ' + K.left + ' ' + K.back + ' ' + K.right)); }
     lm.hidden = lmo.hidden = !w;
-    if (w) { setTxt(lm, 'Mode : ' + (viewer.flying ? 'en vol' : 'à pied')); setTxt(lmo, 'Souris : ' + MOUSE[viewer.mouseState]); }
+    if (w) { setTxt(lm, tr('page.state.mode', viewer.flying ? tr('page.state.mode.fly') : tr('page.state.mode.walk'))); setTxt(lmo, tr('page.state.mouse', MOUSE[viewer.mouseState])); }
     fb.setAttribute('aria-pressed', viewer.flying ? 'true' : 'false');
   };
   viewer.onView = viewTick; viewer.onFly = () => { viewTick(); refreshNear(); }; viewer.onMouse = viewTick;
@@ -493,8 +505,7 @@ if (C.walk) {
   const f1 = v => (Math.round(v * 10) / 10).toFixed(1);
   const posTick = () => {
     const w = viewer.walking ? viewer.getWalk().pos : null, t = viewer.controls.target;
-    const txt = (w ? 'avatar' : 'cible (vue globale)') + ' : x ' + f1(w ? w[0] : t.x) + ' · y ' + f1(w ? w[1] : t.y) + ' · z ' + f1(w ? w[2] : t.z) + ' m';
-    setTxt(lp, 'Position ' + txt); viewTick();
+    setTxt(lp, tr(w ? 'page.state.pos.avatar' : 'page.state.pos.target', f1(w ? w[0] : t.x), f1(w ? w[1] : t.y), f1(w ? w[2] : t.z))); viewTick();
   };
   posTick(); setInterval(posTick, 250);
   // « Aller à x, y, z » : mètres, repère du modèle d'origine en mode tuiles, repère de la page (modèle recentré) en mode GLB unique ; décimale « . » ou « , » (avec « ; » entre les nombres)
@@ -509,8 +520,8 @@ if (C.walk) {
   };
   const gt = document.createElement('div'); gt.id = 'gotoRow'; gt.style.cssText = 'margin-top:6px;font-size:11px';
   const gin = document.createElement('input'), gbt = document.createElement('button'), gms = document.createElement('span');
-  gin.id = 'gotoIn'; gin.size = 22; gin.placeholder = '68.2, 39, -823.3'; gin.setAttribute('aria-label', 'Aller à x, y, z'); gbt.id = 'gotoBtn'; gbt.textContent = 'Aller'; gms.id = 'gotoMsg'; gms.style.marginLeft = '6px';
-  gt.append('Aller à x, y, z (m, ' + (C.tiles ? 'repère du modèle d\'origine' : 'repère de cette page, modèle recentré') + ') : ', gin, ' ', gbt, gms);
+  gin.id = 'gotoIn'; gin.size = 22; gin.placeholder = '68.2, 39, -823.3'; gin.setAttribute('aria-label', tr('page.goto.aria')); gbt.id = 'gotoBtn'; gbt.textContent = tr('page.goto.btn'); gms.id = 'gotoMsg'; gms.style.marginLeft = '6px';
+  gt.append(tr('page.goto.label', C.tiles ? tr('page.goto.frame.tiles') : tr('page.goto.frame.page')), gin, ' ', gbt, gms);
   // v36 : une adresse complète contenant #pos=x,y,z[,yaw] est acceptée (position et orientation)
   const parsePosLink = txt => {
     const m = /[#&?]pos=([^&\s]+)/.exec(String(txt || '')); if (!m) return null;
@@ -520,15 +531,15 @@ if (C.walk) {
   };
   const doGoto = () => {
     const link = parsePosLink(gin.value), v = link ? link.slice(0, 3) : parseXYZ(gin.value);
-    if (!v) { gms.textContent = 'Trois nombres attendus : x, y, z (ex. 68.2, 39, -823.3), ou une adresse contenant #pos=x,y,z,cap'; return; }
-    viewer.goTo(v, link && link.length > 3 ? link[3] : undefined); gms.textContent = viewer.walking ? 'Téléportation vers ' + v.join(', ') : 'Cible déplacée en ' + v.join(', ');
+    if (!v) { gms.textContent = tr('page.goto.bad'); return; }
+    viewer.goTo(v, link && link.length > 3 ? link[3] : undefined); gms.textContent = viewer.walking ? tr('page.goto.tp', v.join(', ')) : tr('page.goto.moved', v.join(', '));
   };
   gbt.onclick = doGoto; gin.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') { e.preventDefault(); doGoto(); } });   // les touches du champ ne déclenchent ni le chat ni les raccourcis
   // « Copier ma position » : au choix (liste mémorisée) l'adresse de la page + #pos=x,y,z,cap (lue à l'ouverture comme une arrivée anonyme) ou la série « x, y, z » en mètres (une décimale, point décimal)
   const lk = document.createElement('div'); lk.style.cssText = 'margin-top:6px;font-size:11px';
   const lbt = document.createElement('button'), lout = document.createElement('input'), lfmt = document.createElement('select');
-  lbt.id = 'linkBtn'; lbt.textContent = 'Copier ma position'; lout.id = 'linkOut'; lout.readOnly = true; lout.size = 28; lout.setAttribute('aria-label', 'Ma position');
-  lfmt.id = 'linkFmt'; lfmt.setAttribute('aria-label', 'Format de la position copiée');
+  lbt.id = 'linkBtn'; lbt.textContent = tr('page.copy.btn'); lout.id = 'linkOut'; lout.readOnly = true; lout.size = 28; lout.setAttribute('aria-label', tr('page.copy.aria'));
+  lfmt.id = 'linkFmt'; lfmt.setAttribute('aria-label', tr('page.copy.fmt.aria'));
   for (const [v, t] of [['url', 'URL'], ['xyz', 'xyz']]) lfmt.append(Object.assign(document.createElement('option'), { value: v, textContent: t }));
   lfmt.value = lsGet('glb2html_copyfmt') === 'xyz' ? 'xyz' : 'url'; lfmt.onchange = () => lsSet('glb2html_copyfmt', lfmt.value);
   lbt.onclick = async () => {
@@ -538,12 +549,12 @@ if (C.walk) {
     if (lfmt.value === 'xyz') text = p.map(f1).join(', ');
     else { const u = new URL(location.href); u.hash = 'pos=' + p.concat([yaw]).map(x => String(Math.round(x * 100) / 100)).join(','); text = u.href; }
     lout.value = text;
-    toast((await copyText(text, lout)) ? 'Copié' : 'Copie impossible : le texte est sélectionné, fais Ctrl+C');
+    toast((await copyText(text, lout)) ? tr('page.toast.copied') : tr('page.toast.copyfail'));
   };
   lk.append(lbt, ' ', lfmt, ' ', lout);
   hbody.append(gt, lk);
   const hm = document.getElementById('homeBtn'); hm.hidden = false;
-  const goHome = () => { if (!viewer.returnHome()) toast('Pas de point de retour sur cette page'); };
+  const goHome = () => { if (!viewer.returnHome()) toast(tr('page.home.none')); };
   hm.onclick = goHome;
   addEventListener('keydown', e => { const n = e.target && e.target.tagName; if (e.code === 'KeyR' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && n !== 'INPUT' && n !== 'TEXTAREA' && n !== 'SELECT') goHome(); });
   const hb = document.getElementById('helpBtn');
@@ -559,8 +570,8 @@ if (C.walk) {
       cycle() { if (!open) { open = true; folded = false; } else if (folded) folded = false; else open = false; save(); apply(); }
     };
   };
-  const helpP = mkPanel(wh, hhead, hbody, 'Aide', 'glb2html_help', 'glb2html_helpFold'), stateP = mkPanel(sb, shead, sbody, 'Informations / État', 'glb2html_state', 'glb2html_stateFold');
-  const applyHelp = walking => { fillGroups(walking ? walkGroups() : orbitGroups()); viewTick(); stateP.apply(); helpP.apply(); hb.hidden = false; hb.textContent = !helpP.open ? 'Aide (H)' : (helpP.folded ? 'Déployer l\'aide (H)' : 'Masquer l\'aide (H)'); };
+  const helpP = mkPanel(wh, hhead, hbody, tr('page.help.title'), 'glb2html_help', 'glb2html_helpFold'), stateP = mkPanel(sb, shead, sbody, tr('page.info.title'), 'glb2html_state', 'glb2html_stateFold');
+  const applyHelp = walking => { fillGroups(walking ? walkGroups() : orbitGroups()); viewTick(); stateP.apply(); helpP.apply(); hb.hidden = false; hb.textContent = !helpP.open ? tr('page.btn.help') : (helpP.folded ? tr('page.btn.help.expand') : tr('page.btn.help.hide')); };
   const toggleHelp = () => { helpP.cycle(); applyHelp(viewer.walking); };
   hb.onclick = toggleHelp;
   KB.listeners.push(() => applyHelp(viewer.walking));
@@ -572,7 +583,7 @@ if (C.walk) {
   });
   addEventListener('keydown', e => {
     const n = e.target && e.target.tagName;
-    if ((e.code === 'Enter' || e.code === 'NumpadEnter') && viewer.walking && !(on && C.chat) && n !== 'INPUT') toast('Chat non activé sur cette page : régénère-la avec --presence-url (et lance presence_server.py)');
+    if ((e.code === 'Enter' || e.code === 'NumpadEnter') && viewer.walking && !(on && C.chat) && n !== 'INPUT') toast(tr('page.chat.disabled'));
   });
   wb.onclick = () => viewer.toggleWalk();
   addEventListener('keydown', e => {
@@ -580,25 +591,25 @@ if (C.walk) {
     if (e.code === 'KeyF' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && n !== 'INPUT' && n !== 'TEXTAREA' && n !== 'SELECT') viewer.toggleWalk();   // v36 : F entre ET sort de la promenade, comme P ; le vol se bascule avec Début ou le bouton
     if (e.code === 'KeyP' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && n !== 'INPUT' && n !== 'TEXTAREA' && n !== 'SELECT') viewer.toggleWalk();
   });
-  viewer.onCones = on2 => toast(on2 ? 'Repères de portail affichés (T pour les masquer)' : 'Repères de portail masqués (T pour les afficher)');
-  viewer.onLanding = () => toast('Point d\'atterrissage choisi : appuie sur P (ou F) pour t\'y poser');
-  viewer.onWalk = on2 => { fb.hidden = !(on2 && fly); gb.hidden = !on2; wb.hidden = on2; applyHelp(on2); posTick(); { const mbn = document.getElementById('mapBtn'); if (mbn) mbn.textContent = on2 ? 'Carte (Ctrl+M)' : 'Carte (M)'; } document.getElementById('nameTag').hidden = true; };
+  viewer.onCones = on2 => toast(on2 ? tr('page.cones.on') : tr('page.cones.off'));
+  viewer.onLanding = () => toast(tr('page.landing.chosen'));
+  viewer.onWalk = on2 => { fb.hidden = !(on2 && fly); gb.hidden = !on2; wb.hidden = on2; applyHelp(on2); posTick(); { const mbn = document.getElementById('mapBtn'); if (mbn) mbn.textContent = on2 ? tr('page.btn.map.ctrl') : tr('page.btn.map'); } document.getElementById('nameTag').hidden = true; };
 }
 if (viewer.tiled) {
   // mode tuiles : ligne d'information (texte seul) dans le panneau d'aide s'il existe, indicateur « Chargement du sol… », message d'échec
   const info = document.getElementById('tilesInfo'), sb2 = document.getElementById('stateInfo');
   if (C.walk) { info.classList.remove('alone'); (document.getElementById('stateBody') || sb2).append(info); }
-  const fr = (n, d) => Number(n).toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d });
+  const nb = (n, d) => i18nNum(n, d), tri = v => (v >= 1e6 ? nb(v / 1e6, 2) + ' M' : nb(v / 1e3, 0) + ' k');
   viewer.onTiles = s => {
     info.hidden = false;
-    info.textContent = 'Tuiles : ' + s.loaded + ' chargée' + (s.loaded > 1 ? 's' : '') + ' / ' + s.total + ' · ' + fr(s.bytes / 1048576, 0) + ' Mo · ' + (s.tri >= 1e6 ? fr(s.tri / 1e6, 2) + ' M' : fr(s.tri / 1e3, 0) + ' k') + ' triangles'
-      + (s.loading ? ' · ' + s.loading + ' en cours' : '') + (s.failed ? ' · ' + s.failed + ' en échec (nouvelle tentative)' : '')
-      + (s.ov && s.ov.state === 'ready' ? ' · Vue d\'ensemble (à part) : ' + fr(s.ov.bytes / 1048576, 1) + ' Mo · ' + (s.ov.tri >= 1e6 ? fr(s.ov.tri / 1e6, 2) + ' M' : fr(s.ov.tri / 1e3, 0) + ' k') + ' triangles' : '')
-      + (s.ov && s.ov.state === 'failed' ? ' · Vue d\'ensemble indisponible' : '');
+    info.textContent = trn('page.tiles.main', s.loaded, s.total, nb(s.bytes / 1048576, 0), tri(s.tri))
+      + (s.loading ? ' · ' + tr('page.tiles.loading', s.loading) : '') + (s.failed ? ' · ' + tr('page.tiles.failed', s.failed) : '')
+      + (s.ov && s.ov.state === 'ready' ? ' · ' + tr('page.tiles.ov', nb(s.ov.bytes / 1048576, 1), tri(s.ov.tri)) : '')
+      + (s.ov && s.ov.state === 'failed' ? ' · ' + tr('page.tiles.ov.failed') : '');
     lastWait = s.wait;
     if (!bootOn) { gw.hidden = !s.waiting; if (s.waiting) gw.textContent = waitText(s.wait); }
   };
-  viewer.onTileError = (f, m) => toast('Tuile « ' + f + ' » : ' + m + ' (nouvelle tentative plus tard)');
+  viewer.onTileError = (f, m) => toast(tr('page.tiles.error', f, m));
 }
 if (C.names) {
   const tag = document.getElementById('nameTag'); let tm = 0;
@@ -607,8 +618,8 @@ if (C.names) {
     clearTimeout(tm);
     if (!info) { tag.hidden = true; return; }
     tag.textContent = '';
-    const b = document.createElement('b'); b.textContent = info.name || '(sans nom)'; tag.appendChild(b);
-    const extra = [info.parents[0] && info.parents[0] !== info.name ? 'parent : ' + info.parents[0] : '', info.materials.length ? 'matériau : ' + info.materials.join(', ') : ''].filter(Boolean).join(' · ');
+    const b = document.createElement('b'); b.textContent = info.name || tr('page.pick.noname'); tag.appendChild(b);
+    const extra = [info.parents[0] && info.parents[0] !== info.name ? tr('page.pick.parent', info.parents[0]) : '', info.materials.length ? tr('page.pick.material', info.materials.join(', ')) : ''].filter(Boolean).join(' · ');
     if (extra) { const d = document.createElement('div'); d.textContent = extra; tag.appendChild(d); }
     tag.hidden = false;
     tag.style.left = Math.max(8, Math.min(innerWidth - tag.offsetWidth - 8, cx + 12)) + 'px';
@@ -629,7 +640,7 @@ if (C.presenceUrl && C.walk && C.chat) {
     log.textContent = ''; show.forEach(x => log.appendChild(x.el));
     const st = viewer.getPresence().state;
     help.hidden = open;
-    help.textContent = st === 'online' ? '↵ Entrée : écrire (la saisie reste ouverte, Échap la ferme)' : ({ connecting: 'Chat : connexion…', error: 'Chat hors ligne : nouvelle tentative…', full: 'Chat : salon complet' }[st] || 'Chat hors ligne');
+    help.textContent = st === 'online' ? tr('page.chat.help') : ({ connecting: tr('page.chat.connecting'), error: tr('page.chat.error'), full: tr('page.chat.full') }[st] || tr('page.chat.offline'));
   };
   // pseudo cité : mot entier, sans tenir compte des majuscules, avec ou sans @ devant
   const cites = text => {
@@ -654,13 +665,13 @@ if (C.presenceUrl && C.walk && C.chat) {
   const fmtDate = d => p2(d.getDate()) + '/' + p2(d.getMonth() + 1) + '/' + d.getFullYear() + ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes()) + ':' + p2(d.getSeconds());
   saveBtn.onclick = () => {
     const now = new Date();
-    const lines = ['Chat de la région « ' + (C.room || '') + ' » — enregistré le ' + fmtDate(now), 'Messages reçus ou envoyés depuis ton arrivée (heure locale | nom | texte). Rien n\'est gardé côté serveur.', '']
+    const lines = [tr('page.chat.file.head', C.room || '', fmtDate(now)), tr('page.chat.file.note'), '']
       .concat(saved.map(x => fmtDate(x.t) + ' | ' + x.name + ' | ' + x.text));
     const blob = new Blob(['﻿' + lines.join('\r\n') + '\r\n'], { type: 'text/plain;charset=utf-8' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
     a.download = 'chat_' + String(C.room || 'region').replace(/[^\w-]+/g, '_') + '_' + p2(now.getDate()) + '-' + p2(now.getMonth() + 1) + '-' + now.getFullYear() + '_' + p2(now.getHours()) + p2(now.getMinutes()) + p2(now.getSeconds()) + '.txt';
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-    toast('Chat enregistré : ' + saved.length + ' message' + (saved.length > 1 ? 's' : ''));
+    toast(trn('page.chat.saved', saved.length));
   };
   // complétion « @pseudo » : jusqu'à 5 visiteurs en ligne dont le pseudo commence par les lettres tapées après @
   const AT = /@([\p{L}\p{N}_#.-]*)$/u;
@@ -684,7 +695,7 @@ if (C.presenceUrl && C.walk && C.chat) {
   addEventListener('keydown', e => {
     if ((e.code === 'Enter' || e.code === 'NumpadEnter') && viewer.walking && inp.hidden) {
       e.preventDefault();
-      if (viewer.getPresence().state !== 'online') { viewer.onChat({ system: true, text: 'Chat indisponible : hors ligne' }); return; }
+      if (viewer.getPresence().state !== 'online') { viewer.onChat({ system: true, text: tr('page.chat.offline.sys') }); return; }
       inp.hidden = false; viewer.releaseKeys(); inp.focus(); render();
     }
   });
@@ -711,15 +722,15 @@ if (C.presenceUrl && C.walk) {
   try { inp.value = localStorage.getItem('glb2html_name') || ''; } catch (e) {}
   viewer.setName(inp.value);
   inp.onchange = () => { viewer.setName(inp.value); try { localStorage.setItem('glb2html_name', inp.value.trim()); } catch (e) {} };
-  const T = { off: 'hors ligne (P ou F : te connecter en promenade)', connecting: 'connexion…', error: 'serveur injoignable (' + C.presenceUrl + '), nouvelle tentative…', full: 'salon complet', kicked: 'éjecté du salon (recharge la page pour revenir)', banned: 'accès interdit' };
+  const T = { off: tr('page.pres.off'), connecting: tr('page.pres.connecting'), error: tr('page.pres.error', C.presenceUrl), full: tr('page.pres.full'), kicked: tr('page.pres.kicked'), banned: tr('page.pres.banned') };
   st.textContent = T.off;
   viewer.onPresence = s => {
-    if (s.state === 'kicked' || s.state === 'banned') toast((s.state === 'banned' ? 'Accès interdit' : 'Éjecté par l\'hôte') + (s.reason ? ' : ' + s.reason : ''));
-    const n = s.count, pl = n > 1 ? 's' : '';
-    st.textContent = s.state === 'online' ? (s.spectator ? (n ? n + ' visiteur' + pl + ' en promenade' : 'personne en promenade') : n + ' visiteur' + pl + ' en ligne') : (T[s.state] || s.state);
+    if (s.state === 'kicked' || s.state === 'banned') toast((s.state === 'banned' ? tr('page.pres.toast.banned') : tr('page.pres.toast.kicked')) + (s.reason ? ' : ' + s.reason : ''));
+    const n = s.count;
+    st.textContent = s.state === 'online' ? (s.spectator ? (n ? trn('page.pres.walking', n) : tr('page.pres.nobody')) : trn('page.pres.count', n)) : (T[s.state] || s.state);
   };
   viewer.onName = n => {
-    if (inp.value && inp.value !== n) toast('Ce nom est déjà pris : tu es « ' + n + ' »');
+    if (inp.value && inp.value !== n) toast(tr('page.pres.nametaken', n));
     inp.value = n; try { localStorage.setItem('glb2html_name', n); } catch (e) {}
   };
   if (C.spectate) { st.textContent = T.connecting; viewer.spectate(true); }
@@ -732,7 +743,7 @@ try {
 } catch (e) {
   console.error(e);
   fade.classList.remove('on'); bootEnd(); gw.hidden = true;   // le message d'erreur ne reste jamais sous l'écran noir
-  msg.textContent = 'Erreur de chargement : ' + (e && e.message ? e.message : e);
+  msg.textContent = tr('page.err.load', e && e.message ? e.message : e);
 }
 </script>
 </body>

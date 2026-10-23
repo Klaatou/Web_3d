@@ -15,6 +15,7 @@ CDN = f"https://cdn.jsdelivr.net/npm/three@{THREE_VERSION}/"
 ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
 ap.add_argument("--vendor", type=pathlib.Path, help="racine d'un paquet npm three (sinon cache .cache/ + téléchargement)")
 ap.add_argument("--out", type=pathlib.Path, default=ROOT / "dist", help="dossier de sortie (défaut : dist/)")
+ap.add_argument("--i18n", type=pathlib.Path, default=SRC / "i18n", help="dossier des fichiers de langue <code>.json (défaut : src/i18n/) : ajouter une langue = ajouter un fichier")
 args = ap.parse_args()
 OUT = args.out
 OUT.mkdir(parents=True, exist_ok=True)
@@ -40,8 +41,26 @@ def vendor(rel):
     return p.read_bytes()
 
 
+# ---- langues (v36) : un fichier src/i18n/<code>.json par langue ; les clés « py.* » vont aux outils Python, les autres aux pages
+LANGS = {p.stem: json.loads(p.read_text(encoding="utf-8")) for p in sorted(args.i18n.glob("*.json"))}
+for need in ("fr", "en"):
+    if need not in LANGS:
+        sys.exit(f"[ERREUR] {args.i18n / (need + '.json')} manque (le français et l'anglais servent de repli)")
+for code, d in LANGS.items():
+    if not isinstance(d.get("_name"), str):
+        sys.exit(f"[ERREUR] {code}.json : la clé _name (nom de la langue dans sa langue) manque")
+
+
+def jsonjs(o):   # JSON sûr dans <script> et dans une chaîne Python r"""..."""
+    return json.dumps(o, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
+
+
+WEB_I18N = {c: {k: v for k, v in d.items() if not k.startswith("py.")} for c, d in LANGS.items()}
+PY_I18N = {c: {k: v for k, v in d.items() if k.startswith("py.") or k == "_name"} for c, d in LANGS.items()}
+I18N_RT = (SRC / "i18n.js").read_text(encoding="utf-8").replace("__I18N_DATA__", jsonjs(WEB_I18N))
+
 core = (SRC / "core.js").read_text(encoding="utf-8")
-template = (SRC / "template.html").read_text(encoding="utf-8").replace("__CORE__", core)
+template = (SRC / "template.html").read_text(encoding="utf-8").replace("__CORE__", core).replace("__I18N__", I18N_RT)
 draco_js = (SRC / "draco.js.txt").read_text(encoding="utf-8").rstrip("\n")
 meshopt_js = (SRC / "meshopt.js.txt").read_text(encoding="utf-8").rstrip("\n")
 for name, t in [("template", template), ("draco", draco_js), ("meshopt", meshopt_js)]:
@@ -75,7 +94,8 @@ libs = {
 
 py = (SRC / "gen_tpl.py").read_text(encoding="utf-8")
 py = py.replace("__HTML_TEMPLATE__", template).replace("__DRACO_JS__", draco_js).replace("__MESHOPT_JS__", meshopt_js)
-py = py.replace("__VERSION__", VERSION)
+py = py.replace("__I18N__", I18N_RT).replace("__VERSION__", VERSION)
+assert "__I18N" not in py
 (OUT / "glb2html.py").write_text(py, encoding="utf-8")
 # la coquille modulaire est fabriquée par glb2html.py lui-même (build_shell) : le viewer en met une copie identique dans son .zip
 gen = types.ModuleType("glb2html_build")
@@ -94,7 +114,7 @@ def jsq(s):  # littéral JS sûr dans <script>
 
 
 v = (SRC / "viewer_tpl.html").read_text(encoding="utf-8")
-v = v.replace("__CORE__", core)  # core avant le reste : pas de placeholder dedans
+v = v.replace("__CORE__", core).replace("__I18N__", I18N_RT)  # core avant le reste : pas de placeholder dedans
 v = v.replace("__TEMPLATE_JSON__", jsq(template)).replace("__PY_JSON__", jsq(py))
 v = v.replace("__DRACO_JS_JSON__", jsq(draco_js)).replace("__MESHOPT_JS_JSON__", jsq(meshopt_js))
 v = v.replace("__LIBS_JSON__", json.dumps(libs)).replace("__IMPORTMAP_JSON__", json.dumps(importmap))

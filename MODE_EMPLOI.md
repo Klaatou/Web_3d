@@ -955,3 +955,46 @@ Tous les boutons « copier » (lien personnel, lien de ma position, point visé,
 - **Troisième personne** : la **molette** règle la distance de la caméra (de **1 à 30 m**, **4 m par défaut**, mémorisée dans le navigateur, clé `glb2html_tpsDist`), avec le recul devant un mur et la protection du sol déjà en place. **Fin** remet la caméra derrière l'avatar à la distance par défaut.
 - **Caméra libre** : la molette **avance ou recule la caméra le long du regard**, d'un pas proportionnel à la distance caméra-avatar (15 %, au moins 0,5 m et au plus 20 m par cran), jamais sous le sol. La **vitesse des touches** est `max(vitesse de marche, 0,5 x distance caméra-avatar)` m/s, plafonnée à **60 m/s** ; **Maj la multiplie par 3**. **Alt + glisser** fait orbiter la caméra autour de l'avatar en gardant sa distance (lacet et tangage), le regard restant sur lui. **Fin** la remet derrière l'avatar, à 4 m.
 - **Vue subjective** : la molette ne fait rien. Dans tous les cas la page ne défile pas en promenade (sur la vue ; l'aide et l'état gardent leur défilement).
+
+## 21. Nouveautés de la v36 (23/10/2026)
+
+### 21.1 Touches : F et P, E, vol
+
+- **F** et **P** entrent en promenade et en sortent (vue globale comme promenade). Dans le **viewer**, P pose une zone en promenade ; on en sort avec **F**, **Maj+P** ou le bouton.
+- **F ne fait plus basculer le vol.** Voler / atterrir : **Début**, le bouton « Voler / Atterrir », ou **Page Haut** maintenu plus de 0,4 s au sol. Monter en vol : **Page Haut** ou **Espace** maintenu. Descendre : **Page Bas** ou **C** (atterrissage automatique au sol). Sauter au sol : **Espace**, ou **Page Haut** en appui bref.
+- **E** redevient la touche d'action des zones (déclenchement « au clic » ou « les deux ») : l'invite dit « clic ou E : … ». E ne fait rien d'autre (il ne saute plus, ne monte plus).
+
+### 21.2 Disposition du clavier : AZERTY ou QWERTY
+
+La marche garde les touches **physiques** (celles qui sont Z, Q, S, D sur un clavier AZERTY sont W, A, S, D sur un QWERTY) : rien ne change pour jouer. L'**aide** et la fenêtre **Informations / État** affichent les lettres **réelles** de ta disposition (« Z Q S D » ou « W A S D », jamais les deux à la fois). La disposition est détectée avec `navigator.keyboard.getLayoutMap()` quand le navigateur l'a (Chrome, Edge ; seulement en https ou sur localhost), sinon avec la langue du navigateur (fr, fr-FR et fr-BE : AZERTY ; le reste : QWERTY). Réglage visiteur **« Disposition du clavier : Auto / AZERTY / QWERTY »** (Réglages, mémorisé) ; même réglage dans le viewer. **M** (vue subjective / troisième personne en promenade, carte des mondes sinon ; Ctrl+M : carte partout) se reconnaît à la **lettre imprimée « m »**, pas à la place de la touche : sur un clavier AZERTY c'est la vraie touche M (avant la v36, c'était la touche « , »).
+
+### 21.3 Aide et informations : trois temps
+
+La fenêtre « État » s'appelle **Informations / État**. **H** (aide) et **I** (informations) font tourner la fenêtre : **masquée → affichée déployée** ; **réduite → déployée** ; **déployée → masquée**. Le clic sur la barre de titre réduit / déploie ; l'état (masqué, réduit, déployé) est mémorisé dans le navigateur.
+
+### 21.4 Repères de portail (cônes) : `--zone-cone`, touche T
+
+Au-dessus de chaque portail et de chaque zone « en marchant dedans » ou « les deux », la page dessine un petit **cône pointé vers le bas** (environ 0,35 m de large, 0,5 m de haut, sommet à 2 m au-dessus du centre de la zone ; teinte claire neutre, contour sombre : il se lit sans dépendre de la couleur). Il s'ajoute à `--zone-marker` (il ne le remplace pas). Visible jusqu'à `--zone-info-dist` (40 m par défaut) ; survoler le cône affiche la même infobulle que la zone. **T** affiche ou masque tous les cônes (choix mémorisé). `--no-zone-cone` les masque au départ (config `zoneCone`) ; les arrivées n'ont de cône qu'avec `--show-spawns`.
+
+### 21.5 Arrivée occupée
+
+Quand l'avatar est posé sur un point (ouverture, `#spawn=`, `#pos=`, arrivée par défaut, **R**, portail interne ou vers une autre région, « Aller à »), si un autre visiteur en promenade se trouve à moins de **1 m** (2 m en hauteur), le **nouvel arrivant** est décalé sur le point libre le plus proche : anneaux de 1,2, 2,4 puis 3,6 m, sol à moins de 1 m d'écart de hauteur, aucun mur entre les deux points, aucun visiteur à moins de 1 m. Si la présence n'est pas encore connectée, le contrôle est refait à la réception de la liste des visiteurs, seulement si l'avatar n'a pas bougé de plus de 0,3 m (on ne déplace jamais quelqu'un qui marche). Sans place libre à moins de 3,6 m, l'avatar est posé à l'endroit demandé. Les visiteurs en vue globale sont invisibles : ignorés.
+
+### 21.6 Sons
+
+Réglages visiteur : case générale **« Sons »** (cochée) avec un **volume** de 0 à 100 (50), puis trois cases cochées : « Bip quand un message cite mon pseudo », « Son à l'arrivée d'un visiteur » (deux notes montantes), « Son au départ d'un visiteur » (deux notes descendantes). Les sons sont synthétisés (Web Audio), sans fichier ; ils ne concernent que les visiteurs **en promenade** de ton salon (jamais les spectateurs, jamais toi, jamais ceux déjà présents quand tu arrives), au plus un son d'arrivée et un de départ toutes les 2 s. Le navigateur n'autorise le son qu'après une première action de ta part sur la page. Les anciens réglages du bip (clé `sound`) sont ignorés.
+
+### 21.7 Copier ma position, « Aller à »
+
+« **Copier ma position** » (panneau d'aide) copie, selon la liste à côté (mémorisée) : **URL** = l'adresse de la page avec `#pos=x,y,z,cap` ; **xyz** = `68.2, 39.0, -823.3` (mètres, point décimal, une décimale). Le champ « **Aller à** » accepte les deux, ainsi que les formats d'avant ; avec une adresse complète contenant `#pos=x,y,z,cap`, il reprend aussi l'orientation.
+
+### 21.8 Langue de la page
+
+Toute l'interface (aide, réglages, informations, invites, messages de chargement et d'erreur, chat, carte, page « carte des mondes », viewer) existe en **français** et en **anglais**. Réglage visiteur **« Langue / Language »** : **Auto** (la première langue de `navigator.languages` qui est disponible, sinon l'anglais), puis chaque langue disponible. Changer la langue recharge la page. Le paramètre **`#lang=en`** (ou `#lang=fr`, `#lang=auto`) dans l'adresse est prioritaire et mémorisé ; il se combine avec `#spawn=`, `#pos=`, `#name=`. Les textes que **tu** saisis (noms de zones, panneaux, pseudos) ne sont jamais traduits.
+
+### 21.9 Ajouter une langue (sans toucher au code)
+
+1. Copie `src/i18n/en.json` en `src/i18n/<code>.json` (le code est celui de `navigator.language` : `de`, `es`, `pt`…).
+2. Traduis les **valeurs** (jamais les clés). `_name` = le nom de la langue dans cette langue (« Deutsch »). `{0}`, `{1}`… sont des marqueurs à garder tels quels (ils peuvent changer de place) ; les clés qui finissent par `.one` / `.other` (pluriel) peuvent aussi avoir `.zero`, `.two`, `.few`, `.many` si ta langue le demande. Une clé absente est remplacée par l'anglais, puis le français, puis la clé elle-même : une traduction partielle fonctionne.
+3. Les clés commençant par `page.`, `core.`, `viewer.`, `map.` et `common.` sont celles des pages et du viewer ; celles qui commencent par `py.` sont celles des outils Python (`--lang`, § 21.11).
+4. Fabrique avec `python build.py` (le dossier de langue se choisit avec `--i18n DOSSIER`) : la liste « Langue / Language » propose la nouvelle langue, les pages et les outils de `dist\` l'embarquent. Aucun code à modifier. `python tests/i18n.py` vérifie les fichiers de langue (mêmes clés, mêmes marqueurs, aucune clé inutilisée).

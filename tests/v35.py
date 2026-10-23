@@ -136,7 +136,7 @@ class Onglet:
         self.br, self.errs = br, []
 
     async def ouvrir(self, url, init=STUB, ctx=None, viewer=True):
-        self.ctx = ctx or await self.br.new_context(viewport={"width": 1000, "height": 700})
+        self.ctx = ctx or await self.br.new_context(locale="fr-FR", viewport={"width": 1000, "height": 700})
         if init:
             await self.ctx.add_init_script(init)
         self.pg = await self.ctx.new_page()
@@ -690,7 +690,7 @@ async def main():
             rapport(len(cw) == 1 and "key=" in cw[0] and not ex and await lire_toast(o) == "Copié", "contexte sécurisé : navigator.clipboard.writeText utilisé, pas de repli", (cw, ex))
             await o.ctx.close()
             # le viewer
-            ctx = await br.new_context(viewport={"width": 1000, "height": 700})
+            ctx = await br.new_context(locale="fr-FR", viewport={"width": 1000, "height": 700})
             await ctx.add_init_script(NOCLIP)
             pg = await ctx.new_page()
             errs = []

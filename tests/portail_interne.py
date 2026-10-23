@@ -52,7 +52,7 @@ def page(name, target):
 
 
 async def essai(br, out, titre):
-    pg = await br.new_page(); errs = []
+    pg = await br.new_page(locale="fr-FR"); errs = []
     pg.on("pageerror", lambda e: errs.append(str(e)))
     await pg.goto(out.as_uri())
     await pg.wait_for_function("document.getElementById('msg') === null", timeout=60000)

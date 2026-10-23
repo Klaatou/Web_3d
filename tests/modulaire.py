@@ -155,7 +155,7 @@ async def main():
         pages = []
 
         async def ouvrir(url, attendre=True):
-            ctx = await br.new_context(viewport={"width": 900, "height": 600})
+            ctx = await br.new_context(locale="fr-FR", viewport={"width": 900, "height": 600})
             await ctx.add_init_script(STUB)
             pg = await ctx.new_page()
             pg.errs = []
@@ -339,7 +339,7 @@ async def test_coquille_commune(br):
     base = f"http://127.0.0.1:{port}/"
     try:
         async def ouvrir(url, attendre=True):
-            ctx = await br.new_context(viewport={"width": 900, "height": 600})
+            ctx = await br.new_context(locale="fr-FR", viewport={"width": 900, "height": 600})
             pg = await ctx.new_page()
             pg.ctx = ctx
             pg.errs, pg.reqs = [], []
@@ -459,7 +459,7 @@ async def test_coquille_commune(br):
 
 
 async def test_viewer(br, pages):
-    ctx = await br.new_context(viewport={"width": 1300, "height": 800}, accept_downloads=True)
+    ctx = await br.new_context(locale="fr-FR", viewport={"width": 1300, "height": 800}, accept_downloads=True)
     pg = await ctx.new_page()
     errs = []
     pg.on("pageerror", lambda e: errs.append(str(e)))
@@ -507,7 +507,7 @@ async def test_viewer(br, pages):
     dl = await d.value
     auto = tmp / "export_autonome.html"
     await dl.save_as(str(auto))
-    pa = await (await br.new_context(viewport={"width": 900, "height": 600})).new_page()
+    pa = await (await br.new_context(locale="fr-FR", viewport={"width": 900, "height": 600})).new_page()
     ea = []
     pa.on("pageerror", lambda e: ea.append(str(e)))
     await pa.goto(auto.as_uri())
@@ -537,7 +537,7 @@ async def test_viewer(br, pages):
         zf.extractall(out)
     proc, port = serveur(out)
     try:
-        pz = await (await br.new_context(viewport={"width": 900, "height": 600})).new_page()
+        pz = await (await br.new_context(locale="fr-FR", viewport={"width": 900, "height": 600})).new_page()
         ez = []
         pz.on("pageerror", lambda e: ez.append(str(e)))
         await pz.goto(f"http://127.0.0.1:{port}/index.html?region=boite")
@@ -565,7 +565,7 @@ async def test_liaison(br):
     la boîte et un sol géant : la boîte englobante doit être celle de la boîte (8 m), le mode est exclusif, un élément > 30 m est refusé."""
     make_glb(tmp / "decale.glb", [("sol", "sol", (-40, -0.2, -40, 40, 0, 40), 1.0), ("boite", "mur", (4, 0, -2, 8, 4, 2), 1.0),
                                   ("door_voile", "verre", (2, 0, 4, 10, 6, 4.05), 0.3)], racine=((500, 20, -300), 2.0))
-    ctx = await br.new_context(viewport={"width": 1300, "height": 800})
+    ctx = await br.new_context(locale="fr-FR", viewport={"width": 1300, "height": 800})
     pg = await ctx.new_page()
     errs = []
     pg.on("pageerror", lambda e: errs.append(str(e)))

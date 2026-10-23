@@ -120,7 +120,7 @@ class Onglet:
         self.br, self.errs = br, []
 
     async def ouvrir(self, url, init=STUB, ctx=None, viewer=True):
-        self.ctx = ctx or await self.br.new_context(viewport={"width": 1000, "height": 700})
+        self.ctx = ctx or await self.br.new_context(locale="fr-FR", viewport={"width": 1000, "height": 700})
         if init:
             await self.ctx.add_init_script(init)
         self.pg = await self.ctx.new_page()

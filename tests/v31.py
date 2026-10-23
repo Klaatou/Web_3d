@@ -379,7 +379,7 @@ async def main():
                 self.errs, self.warns, self.garde, self.faux = [], [], {}, {}
 
             async def ouvrir(self, url):
-                ctx = await br.new_context(viewport={"width": 700, "height": 500})
+                ctx = await br.new_context(locale="fr-FR", viewport={"width": 700, "height": 500})
                 self.pg = await ctx.new_page()
                 self.pg.on("pageerror", lambda e: self.errs.append(str(e)))
                 self.pg.on("console", lambda m: self.warns.append(m.text) if m.type in ("warning", "error") else None)

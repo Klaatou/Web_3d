@@ -51,7 +51,7 @@ async def main():
         if os.environ.get("CHROMIUM"):
             kw["executable_path"] = os.environ["CHROMIUM"]
         br = await p.chromium.launch(**kw)
-        ctx = await br.new_context(viewport={"width": 900, "height": 600})
+        ctx = await br.new_context(locale="fr-FR", viewport={"width": 900, "height": 600})
         await ctx.add_init_script(FAKE)
         pg = await ctx.new_page()
         errs = []

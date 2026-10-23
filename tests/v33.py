@@ -169,7 +169,7 @@ class Onglet:
         self.br, self.errs, self.logs, self.demandes, self.garde, self.retard = br, [], [], [], {}, {}
 
     async def ouvrir(self, url, cpu=1, init=None, viewport=(900, 600), downloads=False):
-        self.ctx = await self.br.new_context(viewport={"width": viewport[0], "height": viewport[1]}, accept_downloads=downloads)
+        self.ctx = await self.br.new_context(locale="fr-FR", viewport={"width": viewport[0], "height": viewport[1]}, accept_downloads=downloads)
         if init:
             await self.ctx.add_init_script(init)
         self.pg = await self.ctx.new_page()
@@ -973,7 +973,7 @@ async def main():
         PHRASE = "enregistre ce fichier dans le dossier de la région, sous le nom Syn.zones.json, en remplaçant l'ancien"
         try:
             async def viewer_page(init_js, downloads=True):
-                ctx = await br.new_context(viewport={"width": 1300, "height": 800}, accept_downloads=downloads)
+                ctx = await br.new_context(locale="fr-FR", viewport={"width": 1300, "height": 800}, accept_downloads=downloads)
                 await ctx.add_init_script(init_js)
                 pg = await ctx.new_page()
                 errs = []
@@ -1060,7 +1060,7 @@ async def main():
             rapport(d.suggested_filename == "Syn.zones.json" and [z["id"] for z in json.loads((tmp / "noapi.json").read_text(encoding="utf-8"))] == ["a", "b", "c"] and PHRASE in st, "sans l'API (Firefox, Safari) : téléchargement et phrase « enregistre ce fichier dans le dossier de la région… »", st)
             rapport(not errs, "viewer sans API : aucune erreur JavaScript", errs)
             await ctx.close()
-            ctx = await br.new_context(viewport={"width": 1300, "height": 800})
+            ctx = await br.new_context(locale="fr-FR", viewport={"width": 1300, "height": 800})
             pg = await ctx.new_page()
             await pg.goto((DIST / "glb-viewer.html").as_uri())
             await pg.wait_for_selector("#bZoneAdd", state="attached", timeout=15000)

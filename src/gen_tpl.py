@@ -238,17 +238,21 @@ footer{font-size:11px;opacity:.7}
 #who input{font:inherit;width:200px;border:2px solid #000;border-radius:6px;padding:4px 6px}
 </style>
 </head>
-<body><main>
-<h1>__TITLE__</h1>
-<div id="who"><label>Mon pseudo : <input id="pseudo" maxlength="24" placeholder="Visiteur" autocomplete="nickname"></label> <small>mémorisé dans ce navigateur ; transmis aux régions que tu visites</small></div>
+<body><script>
+__I18N__
+</script><main>
+<h1 __TITLE_ATTR__>__TITLE__</h1>
+<div id="who"><label><span data-i18n="map.pseudo">Mon pseudo : </span><input id="pseudo" maxlength="24" placeholder="Visiteur" data-i18n-ph="map.visitor" autocomplete="nickname"></label> <small data-i18n="map.pseudo.note">mémorisé dans ce navigateur ; transmis aux régions que tu visites</small></div>
 <div id="grid"></div>
-<footer>glb2html __VERSION__ : chaque carte est un lien qui emmène directement dans la région, à son point d'arrivée.</footer>
+<footer id="foot">glb2html __VERSION__</footer>
 </main>
 <script type="application/json" id="cfg">__CONFIG__</script>
 <script>
 (() => {
   const C = JSON.parse(document.getElementById('cfg').textContent);
   let MAP = C.map || [];
+  applyI18n(); document.getElementById('foot').textContent = tr('map.footer', '__VERSION__');
+  if (document.querySelector('h1[data-i18n]')) document.title = tr('map.title');
   const grid = document.getElementById('grid'), counts = {}; let known = false;
   // v34 : pseudo mémorisé (même clé que les régions) ; les liens des cartes reçoivent #name=PSEUDO
   const pin = document.getElementById('pseudo');
@@ -274,11 +278,11 @@ footer{font-size:11px;opacity:.7}
       if (r.thumb && safeThumb(r.thumb)) { const im = document.createElement('img'); im.src = r.thumb; im.alt = ''; im.referrerPolicy = 'no-referrer'; t.append(im); } else { const ph = document.createElement('div'); ph.className = 'ph'; t.append(ph); }
       const b = document.createElement('b'); b.textContent = r.name; t.append(b);
       const n = counts[srvOf(r) + '|' + (r.room || '')];
-      const s = document.createElement('span'); s.textContent = 'visiter →' + (known && r.room && srvOf(r) ? ' · ' + (n || 0) + ' en promenade' : ''); t.append(s);
-      const l = document.createElement('small'); l.textContent = u ? u.href : '(adresse invalide)'; t.append(l);
+      const s = document.createElement('span'); s.textContent = tr('map.visit') + (known && r.room && srvOf(r) ? ' · ' + tr('map.walking', n || 0) : ''); t.append(s);
+      const l = document.createElement('small'); l.textContent = u ? u.href : tr('map.badurl'); t.append(l);
       grid.append(t);
     }
-    if (!list.length) grid.textContent = 'Aucune région dans la carte.';
+    if (!list.length) grid.textContent = tr('map.empty');
   };
   const queryServer = srv => {
     try {
@@ -372,7 +376,7 @@ def register_region(path, entry):
 
 def write_map_page(path, entries, presence_url, map_url, title):
     cfg = {"map": clean_map(entries), "mapUrl": str(map_url or "")[:1200], "presenceUrl": fix_presence_url(presence_url)}
-    page = (MAP_PAGE_TEMPLATE.replace("__TITLE__", html.escape(title or "Carte des mondes")).replace("__VERSION__", VERSION)
+    page = (MAP_PAGE_TEMPLATE.replace("__TITLE_ATTR__", "" if title else 'data-i18n="map.title"').replace("__TITLE__", html.escape(title or "Carte des mondes")).replace("__VERSION__", VERSION)
             .replace("__CONFIG__", json.dumps(cfg, ensure_ascii=False).replace("</", "<\\/")))
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(page, encoding="utf-8")
@@ -502,23 +506,23 @@ def build_cfg(name: str, *, rotate=ROTATE, hole=HOLE_RADIUS, hole_fade=HOLE_FADE
 
 
 SHELL_BOOT_OLD = "const C = JSON.parse(document.getElementById('cfg').textContent);"
-SHELL_MSG_OLD = '<div id="msg">Chargement…</div>\n'
+SHELL_MSG_OLD = '<div id="msg" data-i18n="page.loading">Chargement…</div>\n'
 # script classique : depuis le disque, les modules sont bloqués par le navigateur et le module de la page ne s'exécute jamais
 SHELL_MSG_NEW = SHELL_MSG_OLD + """<script>
-if (location.protocol === 'file:') document.getElementById('msg').textContent = 'Cette page est en mode modulaire : elle doit être servie en http ou https, pas ouverte depuis le disque. Pour la tester : python -m http.server dans son dossier, puis http://localhost:8000/' + decodeURIComponent(location.pathname.split('/').pop()) + location.search;
+if (location.protocol === 'file:') document.getElementById('msg').textContent = tr('page.shell.file', decodeURIComponent(location.pathname.split('/').pop()) + location.search);
 </script>
 """
 # la coquille ne contient aucun nom : X.html charge X.config.json, X.glb, X.zones.json (puis zones.json) du même dossier
 SHELL_BOOT_NEW = """// fichiers frères : par défaut déduits du nom de la page (copier X.html en Y.html et ses frères en Y.* suffit) ;
 // avec ?region=NOM, de NOM : une seule coquille peut servir plusieurs régions du même dossier
 const BOOT = (() => {
-  const fail = raison => { document.getElementById('msg').textContent = 'Erreur : ' + raison; throw new Error(raison); };
+  const fail = raison => { document.getElementById('msg').textContent = tr('page.shell.error', raison); throw new Error(raison); };
   const q = new URLSearchParams(location.search);
   let e;
   if (q.has('region')) {
     // NOM doit être un seul nom de fichier du dossier : jamais d'adresse, de chemin ni de dossier parent (aucune requête avant ce contrôle)
     const nom = (q.get('region') || '').replace(/\\.html?$/i, '');
-    if (!nom || /[\\/\\\\:?#\\x00-\\x1f]/.test(nom) || nom.includes('..') || nom.startsWith('.')) fail('paramètre region refusé « ' + nom + ' » (un seul nom de fichier, sans / \\ : ? # ni .., sans point au début)');
+    if (!nom || /[\\/\\\\:?#\\x00-\\x1f]/.test(nom) || nom.includes('..') || nom.startsWith('.')) fail(tr('page.shell.badregion', nom));
     e = encodeURIComponent(nom);
   } else {
     let f = location.pathname.split('/').pop() || '';
@@ -528,8 +532,8 @@ const BOOT = (() => {
   return { config: e + '.config.json', glb: e + '.glb', zones: [e + '.zones.json', 'zones.json'] };
 })();
 const C = await (async () => {
-  const fail = (nom, raison) => { document.getElementById('msg').textContent = 'Erreur : ' + nom + ' introuvable (' + raison + ')'; throw new Error(nom + ' : ' + raison); };
-  let r; try { r = await fetch(BOOT.config, { cache: 'no-store' }); } catch (e) { fail(BOOT.config, 'réseau'); }
+  const fail = (nom, raison) => { document.getElementById('msg').textContent = tr('page.shell.notfound', nom, raison); throw new Error(nom + ' : ' + raison); };
+  let r; try { r = await fetch(BOOT.config, { cache: 'no-store' }); } catch (e) { fail(BOOT.config, tr('page.shell.network')); }
   if (!r.ok) fail(BOOT.config, 'HTTP ' + r.status);
   const cfg = await r.json();
   // zones relues à chaque ouverture : X.zones.json, sinon zones.json du même dossier, sinon aucune
