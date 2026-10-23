@@ -1,4 +1,6 @@
-# Mode d'emploi : zones, portails et points d'arrivée (v35)
+# Mode d'emploi : zones, portails et points d'arrivée (v36)
+
+> **Résumé (v36).** Ce fichier est le mode d'emploi détaillé ; il ne se lit pas d'un bout à l'autre. Pour **toutes les options** des outils, avec leur effet et leur défaut en français et en anglais : `REFERENCE_OPTIONS.md` (générée depuis les outils par `gen_reference.py`). Pour **faire une tâche pas à pas** (OAR vers page, région en tuiles, mise à jour, zones, serveur de présence, carte) : `PROCEDURES.md`. Ici : les zones et les portails (§§ 1 à 10), les touches (§ 2), les réglages et leurs fichiers (§§ 11 à 19) et les nouveautés version par version (§§ 19 à 21). Langue de la page et des outils : § 21.8 à 21.11.
 
 ## 1. La règle qui explique 90 % des pannes
 
@@ -21,21 +23,24 @@ Exemple juste :
 
 | Touche | Effet |
 |---|---|
-| **F** (v35) | **en vue globale : entre en promenade** ; **en promenade : bascule le vol** (comme dans Firestorm). Pour sortir de la promenade, c'est **P**. **À la sortie (v31)**, le petit cercle d'atterrissage et la cible de la vue globale se posent **au sol, sous le dernier endroit où se trouvait l'avatar** ; la caméra revient à la **même distance et dans la même direction** de cette cible qu'avant l'entrée en promenade (elle ne revient plus à l'endroit exact d'où tu étais parti). En mode tuiles, les tuiles autour de l'avatar restent donc chargées. |
-| **P** (v35) | **entrer dans la promenade / en sortir** (le bouton « Promenade (P) » reste en vue globale ; il n'y a plus de bouton « Quitter la promenade »). Dans le **viewer**, P pose une zone en promenade : on y sort avec **Maj+P** ou le bouton |
-| **E** / **Page Haut** (v35) | **appui bref au sol = saut** (comme Espace) ; **maintenu plus de 0,4 s au sol = décoller** ; en vol, maintenu = monter. **E ne déclenche plus les zones** : elles se déclenchent au clic, ou à l'entrée dans leur rayon pour un portail « en marchant dedans » (§ 8). Le nom de la zone proche s'affiche en bas : « clic : … » |
-| **Début** (v33) | décoller ou atterrir (bascule, comme **F** en promenade). En vol : **E** / **Page Haut** monte, **C** / **Page Bas** descend, pas de gravité, les murs restent solides, jamais sous le sol. Retirable avec `--no-fly` (§ 18.4) |
-| **M** (v35) | **en promenade : bascule vue subjective / troisième personne** ; hors promenade : ouvre la carte des mondes (comme avant). **Ctrl+M ouvre la carte des mondes partout** |
+| **F** (v36) | **entre en promenade et en sort**, en vue globale comme en promenade (comme **P**) ; le vol se bascule avec **Début** (en v35, F basculait le vol). **À la sortie (v31)**, le petit cercle d'atterrissage et la cible de la vue globale se posent **au sol, sous le dernier endroit où se trouvait l'avatar** ; la caméra revient à la **même distance et dans la même direction** de cette cible qu'avant l'entrée en promenade (elle ne revient plus à l'endroit exact d'où tu étais parti). En mode tuiles, les tuiles autour de l'avatar restent donc chargées. |
+| **P** (v35) | **entrer dans la promenade / en sortir** (le bouton « Promenade (P) » reste en vue globale ; il n'y a plus de bouton « Quitter la promenade »). Dans le **viewer**, P pose une zone en promenade : on en sort avec **F**, **Maj+P** ou le bouton |
+| **E** (v36) | **déclenche la zone proche** (déclenchement « au clic » ou « les deux », comme avant la v35 ; un portail « en marchant dedans » part à l'entrée de son rayon, § 8). Le nom de la zone proche s'affiche en bas : « clic ou E : … ». **E ne fait rien d'autre** (il ne saute plus et ne monte plus) |
+| **Page Haut** (v35) | **appui bref au sol = saut** (comme Espace) ; **maintenu plus de 0,4 s au sol = décoller** ; en vol, maintenu = monter |
+| **Espace** (v36) | au sol : saut ; **en vol, maintenu : monter** |
+| **T** (v36) | affiche ou masque les **repères de portail** (petits cônes, § 21.4) ; le choix est mémorisé |
+| **Début** (v33) | décoller ou atterrir (bascule ; v36 : F ne bascule plus le vol). En vol : **Page Haut** ou **Espace** maintenu monte, **C** / **Page Bas** descend, pas de gravité, les murs restent solides, jamais sous le sol. Retirable avec `--no-fly` (§ 18.4) |
+| **M** (v35) | **en promenade : bascule vue subjective / troisième personne** ; hors promenade : ouvre la carte des mondes (comme avant). **Ctrl+M ouvre la carte des mondes partout**. **v36 : la touche est reconnue par la lettre imprimée « m »**, pas par sa place : sur un clavier AZERTY c'est la vraie touche M (avant, c'était la touche « , ») |
 | **Fin**, **Alt + clic** (v35) | remettre la caméra **derrière l'avatar** (troisième personne). **Alt + glisser** orbite la caméra (à la troisième personne la souris orbite déjà ; en vue subjective, Alt + glisser regarde autour comme la souris) |
 | **molette** (v35) | en promenade, la page ne défile pas. **Troisième personne** : règle la distance de la caméra (1 à 30 m, 4 m par défaut, mémorisée) ; **caméra libre** : avance / recule la caméra le long du regard ; vue subjective : rien (§ 20.9) |
 | **double appui** sur W, S, ↑ ou ↓ (v35) | **course** tant que la touche reste enfoncée (deux appuis à moins de 300 ms) ; **Maj** reste une course. Pas de course permanente (Ctrl+R recharge la page) |
 | **V** (v33) | changer de vue : subjective → troisième personne → caméra libre → subjective. La vue courante est écrite en texte dans le bloc d'état (« Vue : … », v34) |
 | **R** (v33) | **retour à l'arrivée** : en promenade, téléporte à l'arrivée `default` (à défaut, à la cible de départ) en attendant la tuile ; en vue globale, recadre la cible et la caméra sur ce point. Le bouton « Retour à l'arrivée (R) » fait la même chose |
 | **Entrée** (v33) | ouvrir la saisie du chat ; **Entrée envoie et garde la saisie ouverte**, **Échap** la ferme. Les flèches continuent à déplacer l'avatar (§ 18.5) |
-| **Page Haut** / **Page Bas** (v34) | en vol, monter / descendre (en plus de **E** / **C**) ; la page ne défile pas. **Descendre jusqu'au sol pose l'avatar** : le vol s'arrête tout seul. Bouton « Voler / Atterrir » dans la barre du bas pour qui n'a pas de touche Début (§ 19.3) |
+| **Page Haut** / **Page Bas** (v34) | en vol, monter / descendre (en plus de **Espace** maintenu / **C**, v36) ; la page ne défile pas. **Descendre jusqu'au sol pose l'avatar** : le vol s'arrête tout seul. Bouton « Voler / Atterrir » dans la barre du bas pour qui n'a pas de touche Début (§ 19.3) |
 | **Échap** (v34) | libère la souris en promenade. La souris reste alors **libre** (un clic ou un double-clic n'aspire plus le pointeur) jusqu'à **G** ou au bouton « Capturer la souris » (§ 19.4) |
 | **G** (v34) | recapturer la souris après Échap |
-| **I** (v34) | masquer / afficher le **bloc d'état** (vue, mode, souris, position, tuiles). **H** masque seulement l'aide (§ 19.1) |
+| **I** (v34) | la fenêtre **Informations / État** (v36 : ancien « bloc d'état » : vue, mode, souris, clavier, position, tuiles) : masquée → déployée ; réduite → déployée ; déployée → masquée. **H** fait de même pour l'aide seule (§ 19.1, § 21.3) |
 
 Les portails ne fonctionnent qu'en promenade.
 
@@ -781,8 +786,8 @@ Ils concernent les portails et les zones libres (lien web, commande). Réglage d
 
 ### 18.4 Vol, trois vues, « Aller à »
 
-- **Vol** (`--fly`, défaut ; `--no-fly` le retire de la page et de l'aide) : **Début** décolle ou atterrit. En vol, **E** monte et **C** descend (même vitesse que la marche, **Maj** accélère), pas de gravité, les murs bloquent comme au sol, l'avatar ne descend jamais sous le sol des tuiles chargées. Vers une tuile pas encore prête, l'avatar s'arrête au bord (« Chargement du sol… »), comme à pied. À l'atterrissage la gravité le ramène sur le sol (ou sur un toit). La présence transmet la hauteur normalement. En vol, E ne déclenche plus les zones : cliquer dessus.
-- **Vues** (**V**) : subjective (la vue d'avant) ; **troisième personne** (la caméra tourne autour de l'avatar, à 4 m, se rapproche si un mur est derrière lui, ne passe jamais sous le sol, la souris règle la hauteur) ; **caméra libre** (l'avatar reste sur place, les touches de déplacement et les flèches déplacent et tournent la caméra, **E** et **C** la montent et la descendent, elle ne traverse pas le sol). En caméra libre, **V** de nouveau ou **F** rend la main à l'avatar (un second **F** quitte la promenade). L'avatar est dessiné avec le même modèle que les autres visiteurs, avec le nom et la couleur du visiteur. La vue est écrite en texte dans le panneau d'aide (v34 : « Vue : troisième personne » et « Mode : à pied » dans le bloc d'état, § 19.1).
+- **Vol** (`--fly`, défaut ; `--no-fly` le retire de la page et de l'aide) : **Début** décolle ou atterrit. En vol, **Page Haut** (ou **Espace** maintenu, v36) monte et **C** descend (même vitesse que la marche, **Maj** accélère), pas de gravité, les murs bloquent comme au sol, l'avatar ne descend jamais sous le sol des tuiles chargées. Vers une tuile pas encore prête, l'avatar s'arrête au bord (« Chargement du sol… »), comme à pied. À l'atterrissage la gravité le ramène sur le sol (ou sur un toit). La présence transmet la hauteur normalement. En vol, E déclenche la zone proche comme au sol (v36).
+- **Vues** (**V**) : subjective (la vue d'avant) ; **troisième personne** (la caméra tourne autour de l'avatar, à 4 m, se rapproche si un mur est derrière lui, ne passe jamais sous le sol, la souris règle la hauteur) ; **caméra libre** (l'avatar reste sur place, les touches de déplacement et les flèches déplacent et tournent la caméra, **Page Haut** et **C** la montent et la descendent, elle ne traverse pas le sol). En caméra libre, **V** de nouveau rend la main à l'avatar (v36 : **F** quitte la promenade, comme **P**). L'avatar est dessiné avec le même modèle que les autres visiteurs, avec le nom et la couleur du visiteur. La vue est écrite en texte dans le panneau d'aide (v34 : « Vue : troisième personne » et « Mode : à pied » dans le bloc d'état, § 19.1).
 - **« Aller à x, y, z »** (panneau d'aide) : mètres, **repère du modèle d'origine en mode tuiles, repère de la page (modèle recentré) en mode GLB unique** (le panneau le dit). Formats : `68.2, 39, -823.3` ; `68.2 39 -823.3` ; `68,2 ; 39,0 ; -823,3` (virgule décimale avec points-virgules). En promenade : téléportation, avec l'attente de la tuile ; en vue globale : la cible se déplace.
 
 ### 18.5 Chat
@@ -846,7 +851,7 @@ La coquille (`index.html`), `core.js` et `X.config.json` changent ; **les tuiles
 
 ### 19.3 Vol
 
-**Page Haut** monte, **Page Bas** descend (en plus de **E** et **C**), sans défilement de la page. **Début** garde la bascule. Quand on descend jusqu'au sol, **l'avatar atterrit tout seul** (le vol s'arrête, la gravité reprend) ; il ne passe jamais sous le sol. Le bouton **« Voler / Atterrir »** de la barre du bas (visible en promenade, absent avec `--no-fly`) bascule le vol ; son état (`aria-pressed`) et la ligne « Mode : … » le disent en texte.
+**Page Haut** monte, **Page Bas** descend (en plus de **Espace** maintenu et **C**, v36), sans défilement de la page. **Début** garde la bascule. Quand on descend jusqu'au sol, **l'avatar atterrit tout seul** (le vol s'arrête, la gravité reprend) ; il ne passe jamais sous le sol. Le bouton **« Voler / Atterrir »** de la barre du bas (visible en promenade, absent avec `--no-fly`) bascule le vol ; son état (`aria-pressed`) et la ligne « Mode : … » le disent en texte.
 
 ### 19.4 Souris libre après Échap
 
@@ -884,14 +889,14 @@ Colonne de gauche : les défauts du visualiseur officiel d'après le wiki de Sec
 
 | Commande | Firestorm | Cette page |
 |---|---|---|
-| Marcher avant / arrière | W ou ↑ / S ou ↓ | W ou ↑ / S ou ↓ (ZQSD en AZERTY) |
+| Marcher avant / arrière | W ou ↑ / S ou ↓ | W ou ↑ / S ou ↓ (ZQSD en AZERTY ; v36 : l'aide affiche les lettres réelles) |
 | Pas de côté | A / D (ou Maj + flèches) | A / D (Q / D en AZERTY) |
 | Tourner | ← / → | ← / → (à la troisième personne : tourne la caméra) |
 | Courir | double appui sur W / S / ↑ / ↓ ; Ctrl+R bascule la course | **Maj**, ou **double appui** (moins de 300 ms) sur W, S, ↑ ou ↓, tant que la touche est maintenue. **Pas de course permanente** (Ctrl+R recharge la page du navigateur) |
-| Sauter | E ou Page Haut (appui bref) | **E**, **Page Haut** (appui bref) ou **Espace** |
-| Voler / atterrir | Début | **F** ou **Début** (en vue globale, F entre encore en promenade) |
-| Décoller | E ou Page Haut maintenu | **E** ou **Page Haut** maintenu **plus de 0,4 s** au sol : vol + montée |
-| Monter en vol | E ou Page Haut | **E** ou **Page Haut** maintenu |
+| Sauter | E ou Page Haut (appui bref) | **Page Haut** (appui bref) ou **Espace** (v36 : E ne saute plus) |
+| Voler / atterrir | Début | **Début** ou le bouton « Voler / Atterrir » (v36 : F ne bascule plus le vol) |
+| Décoller | E ou Page Haut maintenu | **Page Haut** maintenu **plus de 0,4 s** au sol : vol + montée |
+| Monter en vol | E ou Page Haut | **Page Haut** ou **Espace** maintenu |
 | Descendre en vol | C ou Page Bas | **C** ou **Page Bas** maintenu ; **atterrissage automatique** au sol |
 | Vue subjective | M | **M** bascule vue subjective / troisième personne ; **V** fait tourner les trois vues (dont la caméra libre) |
 | Orbiter la caméra | Alt + glisser | **Alt + glisser** (à la troisième personne, la souris orbite déjà autour de l'avatar sans le tourner) |
@@ -899,16 +904,16 @@ Colonne de gauche : les défauts du visualiseur officiel d'après le wiki de Sec
 | Zoom caméra | molette | **molette** (3e personne : distance de la caméra ; caméra libre : avance / recule) |
 | Carte du monde | Ctrl+M | **Ctrl+M** partout ; **M** seul l'ouvre aussi hors promenade |
 | Chat | Entrée | **Entrée** |
-| Entrer / sortir de la promenade | (n'existe pas) | **P** ; F entre aussi, en vue globale seulement |
-| Toucher un objet, une zone | clic | **clic** (E ne déclenche plus les zones) ; un portail « en marchant dedans » part à l'entrée de son rayon |
+| Entrer / sortir de la promenade | (n'existe pas) | **P** ou **F** (v36) |
+| Toucher un objet, une zone | clic | **clic** ou **E** (v36) ; un portail « en marchant dedans » part à l'entrée de son rayon |
 | Se téléporter | (carte, double-clic selon le réglage) | **double-clic** |
 
 Gardées telles quelles : ZQSD / WASD / flèches, Espace, Entrée, G, R, V, H, I, Maj.
 
 ### 20.3 Vol et saut
 
-- Au sol, **E** ou **Page Haut** : un appui bref fait **sauter** (comme Espace) ; **maintenu plus de 0,4 s**, l'avatar **décolle** et monte tant que la touche est tenue. Relâchée, il reste en vol, immobile en hauteur.
-- **F** et **Début** basculent le vol ; le bouton « Voler / Atterrir » reste. Descendre jusqu'au sol (C ou Page Bas) pose l'avatar : le vol s'arrête tout seul (v34). Avec `--no-fly`, rien de tout cela ne fait voler : E et Page Haut sautent seulement.
+- Au sol, **Page Haut** : un appui bref fait **sauter** (comme Espace) ; **maintenu plus de 0,4 s**, l'avatar **décolle** et monte tant que la touche est tenue. Relâchée, il reste en vol, immobile en hauteur.
+- **Début** bascule le vol (v36 : F ne le fait plus) ; le bouton « Voler / Atterrir » reste. Descendre jusqu'au sol (C ou Page Bas) pose l'avatar : le vol s'arrête tout seul (v34). Avec `--no-fly`, rien de tout cela ne fait voler : Page Haut saute seulement.
 
 ### 20.4 Troisième personne
 
@@ -952,3 +957,56 @@ Tous les boutons « copier » (lien personnel, lien de ma position, point visé,
 - **Troisième personne** : la **molette** règle la distance de la caméra (de **1 à 30 m**, **4 m par défaut**, mémorisée dans le navigateur, clé `glb2html_tpsDist`), avec le recul devant un mur et la protection du sol déjà en place. **Fin** remet la caméra derrière l'avatar à la distance par défaut.
 - **Caméra libre** : la molette **avance ou recule la caméra le long du regard**, d'un pas proportionnel à la distance caméra-avatar (15 %, au moins 0,5 m et au plus 20 m par cran), jamais sous le sol. La **vitesse des touches** est `max(vitesse de marche, 0,5 x distance caméra-avatar)` m/s, plafonnée à **60 m/s** ; **Maj la multiplie par 3**. **Alt + glisser** fait orbiter la caméra autour de l'avatar en gardant sa distance (lacet et tangage), le regard restant sur lui. **Fin** la remet derrière l'avatar, à 4 m.
 - **Vue subjective** : la molette ne fait rien. Dans tous les cas la page ne défile pas en promenade (sur la vue ; l'aide et l'état gardent leur défilement).
+
+## 21. Nouveautés de la v36 (23/10/2026)
+
+### 21.1 Touches : F et P, E, vol
+
+- **F** et **P** entrent en promenade et en sortent (vue globale comme promenade). Dans le **viewer**, P pose une zone en promenade ; on en sort avec **F**, **Maj+P** ou le bouton.
+- **F ne fait plus basculer le vol.** Voler / atterrir : **Début**, le bouton « Voler / Atterrir », ou **Page Haut** maintenu plus de 0,4 s au sol. Monter en vol : **Page Haut** ou **Espace** maintenu. Descendre : **Page Bas** ou **C** (atterrissage automatique au sol). Sauter au sol : **Espace**, ou **Page Haut** en appui bref.
+- **E** redevient la touche d'action des zones (déclenchement « au clic » ou « les deux ») : l'invite dit « clic ou E : … ». E ne fait rien d'autre (il ne saute plus, ne monte plus).
+
+### 21.2 Disposition du clavier : AZERTY ou QWERTY
+
+La marche garde les touches **physiques** (celles qui sont Z, Q, S, D sur un clavier AZERTY sont W, A, S, D sur un QWERTY) : rien ne change pour jouer. L'**aide** et la fenêtre **Informations / État** affichent les lettres **réelles** de ta disposition (« Z Q S D » ou « W A S D », jamais les deux à la fois). La disposition est détectée avec `navigator.keyboard.getLayoutMap()` quand le navigateur l'a (Chrome, Edge ; seulement en https ou sur localhost), sinon avec la langue du navigateur (fr, fr-FR et fr-BE : AZERTY ; le reste : QWERTY). Réglage visiteur **« Disposition du clavier : Auto / AZERTY / QWERTY »** (Réglages, mémorisé) ; même réglage dans le viewer. **M** (vue subjective / troisième personne en promenade, carte des mondes sinon ; Ctrl+M : carte partout) se reconnaît à la **lettre imprimée « m »**, pas à la place de la touche : sur un clavier AZERTY c'est la vraie touche M (avant la v36, c'était la touche « , »).
+
+### 21.3 Aide et informations : trois temps
+
+La fenêtre « État » s'appelle **Informations / État**. **H** (aide) et **I** (informations) font tourner la fenêtre : **masquée → affichée déployée** ; **réduite → déployée** ; **déployée → masquée**. Le clic sur la barre de titre réduit / déploie ; l'état (masqué, réduit, déployé) est mémorisé dans le navigateur.
+
+### 21.4 Repères de portail (cônes) : `--zone-cone`, touche T
+
+Au-dessus de chaque portail et de chaque zone « en marchant dedans » ou « les deux », la page dessine un petit **cône pointé vers le bas** (environ 0,35 m de large, 0,5 m de haut, sommet à 2 m au-dessus du centre de la zone ; teinte claire neutre, contour sombre : il se lit sans dépendre de la couleur). Il s'ajoute à `--zone-marker` (il ne le remplace pas). Visible jusqu'à `--zone-info-dist` (40 m par défaut) ; survoler le cône affiche la même infobulle que la zone. **T** affiche ou masque tous les cônes (choix mémorisé). `--no-zone-cone` les masque au départ (config `zoneCone`) ; les arrivées n'ont de cône qu'avec `--show-spawns`.
+
+### 21.5 Arrivée occupée
+
+Quand l'avatar est posé sur un point (ouverture, `#spawn=`, `#pos=`, arrivée par défaut, **R**, portail interne ou vers une autre région, « Aller à »), si un autre visiteur en promenade se trouve à moins de **1 m** (2 m en hauteur), le **nouvel arrivant** est décalé sur le point libre le plus proche : anneaux de 1,2, 2,4 puis 3,6 m, sol à moins de 1 m d'écart de hauteur, aucun mur entre les deux points, aucun visiteur à moins de 1 m. Si la présence n'est pas encore connectée, le contrôle est refait à la réception de la liste des visiteurs, seulement si l'avatar n'a pas bougé de plus de 0,3 m (on ne déplace jamais quelqu'un qui marche). Sans place libre à moins de 3,6 m, l'avatar est posé à l'endroit demandé. Les visiteurs en vue globale sont invisibles : ignorés.
+
+### 21.6 Sons
+
+Réglages visiteur : case générale **« Sons »** (cochée) avec un **volume** de 0 à 100 (50), puis trois cases cochées : « Bip quand un message cite mon pseudo », « Son à l'arrivée d'un visiteur » (deux notes montantes), « Son au départ d'un visiteur » (deux notes descendantes). Les sons sont synthétisés (Web Audio), sans fichier ; ils ne concernent que les visiteurs **en promenade** de ton salon (jamais les spectateurs, jamais toi, jamais ceux déjà présents quand tu arrives), au plus un son d'arrivée et un de départ toutes les 2 s. Le navigateur n'autorise le son qu'après une première action de ta part sur la page. Les anciens réglages du bip (clé `sound`) sont ignorés.
+
+### 21.7 Copier ma position, « Aller à »
+
+« **Copier ma position** » (panneau d'aide) copie, selon la liste à côté (mémorisée) : **URL** = l'adresse de la page avec `#pos=x,y,z,cap` ; **xyz** = `68.2, 39.0, -823.3` (mètres, point décimal, une décimale). Le champ « **Aller à** » accepte les deux, ainsi que les formats d'avant ; avec une adresse complète contenant `#pos=x,y,z,cap`, il reprend aussi l'orientation.
+
+### 21.8 Langue de la page
+
+Toute l'interface (aide, réglages, informations, invites, messages de chargement et d'erreur, chat, carte, page « carte des mondes », viewer) existe en **français** et en **anglais**. Réglage visiteur **« Langue / Language »** : **Auto** (la première langue de `navigator.languages` qui est disponible, sinon l'anglais), puis chaque langue disponible. Changer la langue recharge la page. Le paramètre **`#lang=en`** (ou `#lang=fr`, `#lang=auto`) dans l'adresse est prioritaire et mémorisé ; il se combine avec `#spawn=`, `#pos=`, `#name=`. Les textes que **tu** saisis (noms de zones, panneaux, pseudos) ne sont jamais traduits.
+
+### 21.9 Ajouter une langue (sans toucher au code)
+
+1. Copie `src/i18n/en.json` en `src/i18n/<code>.json` (le code est celui de `navigator.language` : `de`, `es`, `pt`…).
+2. Traduis les **valeurs** (jamais les clés). `_name` = le nom de la langue dans cette langue (« Deutsch »). `{0}`, `{1}`… sont des marqueurs à garder tels quels (ils peuvent changer de place) ; les clés qui finissent par `.one` / `.other` (pluriel) peuvent aussi avoir `.zero`, `.two`, `.few`, `.many` si ta langue le demande. Une clé absente est remplacée par l'anglais, puis le français, puis la clé elle-même : une traduction partielle fonctionne.
+3. Les clés commençant par `page.`, `core.`, `viewer.`, `map.` et `common.` sont celles des pages et du viewer ; celles qui commencent par `py.` sont celles des outils Python (`--lang`, § 21.11).
+4. Fabrique avec `python build.py` (le dossier de langue se choisit avec `--i18n DOSSIER`) : la liste « Langue / Language » propose la nouvelle langue, les pages et les outils de `dist\` l'embarquent. Aucun code à modifier. `python tests/i18n.py` vérifie les fichiers de langue (mêmes clés, mêmes marqueurs, aucune clé inutilisée).
+
+### 21.10 Langue du viewer
+
+Le viewer (`glb-viewer.html`) a la même liste « **Langue / Language** » que les pages exportées (Auto, puis chaque langue disponible), le même repli (anglais, puis français, puis la clé) et le même paramètre `#lang=`. Tous ses textes sont traduits (réglages, boutons, messages, aide), y compris la section « Clavier » (Auto / AZERTY / QWERTY) et les commandes qu'il fabrique ; les noms de zones que tu saisis ne le sont jamais. Les pages que le viewer exporte (HTML autonome, `.zip` modulaire) contiennent la même coquille que `glb2html.py` : leur langue se règle sur la page exportée, pas dans le viewer.
+
+### 21.11 Langue des outils Python : `--lang`, `WEB3D_LANG`
+
+`glb2html.py`, `glb2tiles.py`, `oar2glb.py` et `presence_server.py` (et `glb-stats.py`, utilisé par `glb2tiles.py`) affichent leurs messages, leurs avertissements, leurs erreurs et leur aide (`--help`) en français ou en anglais. **Choix de la langue** : `--lang fr`, `--lang en` ou `--lang auto` (par défaut) ; sinon la variable d'environnement `WEB3D_LANG` ; sinon la langue du système ; sinon l'anglais. `--lang` l'emporte sur `WEB3D_LANG`. Les options elles-mêmes (`--budget`, `--exclure`…) et les commandes de modération du serveur (`liste`, `ejecter`, `bannir`, `bans`, `debannir`, `aide`) ne changent pas de langue. Les fichiers de sortie (JSON, journaux des outils) gardent leurs clés ; les journaux sont écrits dans la langue choisie.
+
+**Fichiers autonomes** : `build.py` intègre les textes de `src/i18n/*.json` (clés `py.*`) dans chaque outil de `dist\` : un outil copié seul sur une autre machine garde ses deux langues (c'est un choix de fabrication, documenté dans `CLAUDE.md`). Depuis les sources (`tools\`, `src\`), les outils lisent `i18n_py.py` et `i18n\` à côté d'eux ou dans `src\`. Ajouter une langue : § 21.9, aucun code à modifier. Une nouvelle option d'un outil doit avoir sa clé `py.*` dans **les deux** fichiers (`python tests/i18n.py` le vérifie) ; `python gen_reference.py` refait `REFERENCE_OPTIONS.md` (français puis anglais dans chaque case « Effet »), `python tests/doc_options.py` vérifie qu'aucune option n'y manque et qu'aucune description n'est vide.

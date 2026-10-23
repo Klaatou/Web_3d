@@ -9,6 +9,7 @@
 Prérequis : pip install playwright ; python build.py avant.
 Variables facultatives : THREE_DIR (paquet npm three, hors ligne), CHROMIUM (chemin de l'exécutable).
 """
+import os as _os_lang; _os_lang.environ["WEB3D_LANG"] = "fr"   # outils Python en français (v36)
 import asyncio, json, os, pathlib, socket, struct, subprocess, sys, tempfile, time
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -125,7 +126,7 @@ async def sur(pg, pos):
 
 
 async def verifier(br, url, etiquette):
-    ctx = await br.new_context(viewport={"width": 1000, "height": 700})
+    ctx = await br.new_context(locale="fr-FR", viewport={"width": 1000, "height": 700})
     await ctx.add_init_script(STUB)
     pg = await ctx.new_page()
     errs = []
@@ -181,7 +182,7 @@ async def verifier(br, url, etiquette):
 
 
 async def viewer_edition(br):
-    ctx = await br.new_context(viewport={"width": 1300, "height": 800})
+    ctx = await br.new_context(locale="fr-FR", viewport={"width": 1300, "height": 800})
     pg = await ctx.new_page()
     errs = []
     pg.on("pageerror", lambda e: errs.append(str(e)))

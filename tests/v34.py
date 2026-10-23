@@ -9,6 +9,7 @@ Prérequis : pip install playwright websockets ; python build.py avant.
 Variables facultatives : THREE_DIR (paquet npm three, hors ligne), CHROMIUM (chemin de l'exécutable).
 Lancer : python tests/v34.py
 """
+import os as _os_lang; _os_lang.environ["WEB3D_LANG"] = "fr"   # outils Python en français (v36)
 import asyncio, json, os, pathlib, re, shutil, socket, struct, subprocess, sys, tempfile, time
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -120,7 +121,7 @@ class Onglet:
         self.br, self.errs = br, []
 
     async def ouvrir(self, url, init=STUB, ctx=None, viewer=True):
-        self.ctx = ctx or await self.br.new_context(viewport={"width": 1000, "height": 700})
+        self.ctx = ctx or await self.br.new_context(locale="fr-FR", viewport={"width": 1000, "height": 700})
         if init:
             await self.ctx.add_init_script(init)
         self.pg = await self.ctx.new_page()
@@ -205,7 +206,7 @@ async def main():
             await o.pg.keyboard.press("i")
             await o.pg.keyboard.press("h")
             rapport(await o.ev("!document.getElementById('stateInfo').hidden && !document.getElementById('walkHint').hidden"), "I puis H les réaffichent")
-            rapport("I : état" in aide and "G : reprendre" in aide and "Page Haut" in aide and "Page Bas" in aide, "l'aide liste I, G, Page Haut / Page Bas (v35 : groupes courts, plus d'explication de la sélection)", aide[:900])
+            rapport("I : informations" in aide and "G : reprendre" in aide and "Page Haut" in aide and "Page Bas" in aide, "l'aide liste I, G, Page Haut / Page Bas (v35 : groupes courts, plus d'explication de la sélection)", aide[:900])
             rapport(not o.errs, "aucune erreur JavaScript", o.errs)
             await o.ctx.close()
 
@@ -248,8 +249,8 @@ async def main():
             await o.ev("document.getElementById('flyBtn').click()")
             w = await o.gw()
             rapport(w["flying"] and await o.txt("modeInfo") == "Mode : en vol" and await o.ev("document.getElementById('flyBtn').getAttribute('aria-pressed')") == "true", "bouton « Voler / Atterrir » : décolle")
-            m = await o.tenir(["KeyE"], 10)
-            rapport(m[-1]["pos"][1] - m[0]["pos"][1] > 2.5, "E monte toujours")
+            m = await o.tenir(["PageUp"], 10)
+            rapport(m[-1]["pos"][1] - m[0]["pos"][1] > 2.5, "Page Haut monte (v36 : E ne monte plus)")
             m = await o.tenir(["KeyC"], 40)
             rapport(not m[-1]["flying"] and abs(m[-1]["pos"][1] - 15) < 0.01, "C jusqu'au sol : atterrit aussi")
             await o.ev("document.getElementById('flyBtn').click()")

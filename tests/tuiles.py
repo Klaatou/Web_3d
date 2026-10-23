@@ -17,6 +17,7 @@ Prérequis : pip install playwright ; python build.py avant.
 Variables facultatives : THREE_DIR (paquet npm three, hors ligne), CHROMIUM (chemin de l'exécutable).
 Lancer : python tests/tuiles.py
 """
+import os as _os_lang; _os_lang.environ["WEB3D_LANG"] = "fr"   # outils Python en français (v36)
 import asyncio, json, math, os, pathlib, shutil, socket, struct, subprocess, sys, tempfile, time
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -248,7 +249,7 @@ async def main():
                 self.errs, self.warns, self.garde, self.faux, self.demandes = [], [], {}, {}, []
 
             async def ouvrir(self, url, port=None):
-                ctx = await br.new_context(viewport={"width": 700, "height": 500})
+                ctx = await br.new_context(locale="fr-FR", viewport={"width": 700, "height": 500})
                 self.pg = await ctx.new_page()
                 self.pg.on("pageerror", lambda e: self.errs.append(str(e)))
                 self.pg.on("console", lambda m: self.warns.append(m.text) if m.type == "warning" else None)

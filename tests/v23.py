@@ -12,6 +12,7 @@
 Prérequis : pip install playwright ; python build.py avant.
 Variables facultatives : THREE_DIR (paquet npm three, hors ligne), CHROMIUM (chemin de l'exécutable).
 """
+import os as _os_lang; _os_lang.environ["WEB3D_LANG"] = "fr"   # outils Python en français (v36)
 import asyncio, importlib.util, json, os, pathlib, re, socket, struct, subprocess, sys, tempfile, time, zipfile
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -108,7 +109,7 @@ async def main():
         if os.environ.get("CHROMIUM"):
             kw["executable_path"] = os.environ["CHROMIUM"]
         br = await p.chromium.launch(**kw)
-        ctx = await br.new_context(viewport={"width": 1300, "height": 800}, accept_downloads=True)
+        ctx = await br.new_context(locale="fr-FR", viewport={"width": 1300, "height": 800}, accept_downloads=True)
         pg = await ctx.new_page()
         errs = []
         pg.on("pageerror", lambda e: errs.append(str(e)))
@@ -257,7 +258,7 @@ async def main():
         rapport(set(zcfg) == set(zc), "mêmes clés de config entre le .zip du viewer et le script", sorted(set(zcfg) ^ set(zc)))
         proc, port = serveur(site)
         try:
-            ctx2 = await br.new_context(viewport={"width": 900, "height": 600})
+            ctx2 = await br.new_context(locale="fr-FR", viewport={"width": 900, "height": 600})
 
             async def patch(route):
                 resp = await route.fetch()

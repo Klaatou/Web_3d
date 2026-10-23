@@ -9,6 +9,27 @@ function nameHas(name, tokens) {
   const compact = words.join('');
   return tokens.some(t => t[0] === '=' ? low === t.slice(1) : (/[^a-z0-9\u00e0-\u00ff]/.test(t) ? low.includes(t) : (compact.startsWith(t) || words.some(w => w.startsWith(t)))));
 }
+// v36 : disposition du clavier. La marche garde les codes physiques (KeyW, KeyA, KeyS, KeyD : Z Q S D sur AZERTY, W A S D sur QWERTY) ;
+// l'aide affiche les lettres RÉELLES. Réglage 'auto' (navigator.keyboard.getLayoutMap() si présent, sinon la langue du navigateur), 'azerty' ou 'qwerty'.
+const KB = {
+  pref: 'auto', detected: null, listeners: [],
+  byLang() { const l = String((typeof navigator !== 'undefined' && (navigator.language || (navigator.languages || [])[0])) || ''); return /^fr(-(fr|be))?$/i.test(l) ? 'azerty' : 'qwerty'; },
+  layout() { return this.pref === 'azerty' || this.pref === 'qwerty' ? this.pref : (this.detected || this.byLang()); },
+  keys() { return this.layout() === 'azerty' ? { fwd: 'Z', left: 'Q', back: 'S', right: 'D' } : { fwd: 'W', left: 'A', back: 'S', right: 'D' }; },
+  setPref(v) { this.pref = v === 'azerty' || v === 'qwerty' ? v : 'auto'; for (const f of this.listeners) { try { f(); } catch (_) {} } },
+  detect() {
+    try {
+      if (typeof navigator !== 'undefined' && navigator.keyboard && navigator.keyboard.getLayoutMap) navigator.keyboard.getLayoutMap().then(m => {
+        const w = m.get('KeyW'), q = m.get('KeyQ');
+        const d = (w === 'z' || q === 'a') ? 'azerty' : ((w === 'w' && q === 'q') ? 'qwerty' : null);
+        if (d && d !== this.detected) { this.detected = d; for (const f of this.listeners) { try { f(); } catch (_) {} } }
+      }).catch(() => {});
+    } catch (_) {}
+  }
+};
+KB.detect();
+// la lettre imprimée par la touche (minuscule) : M, comme toute touche dont la place change d'une disposition à l'autre, se reconnaît à cette lettre et non au code physique
+const keyChar = e => (typeof e.key === 'string' && e.key.length === 1 ? e.key.toLowerCase() : '');
 function parseIgnore(s) { return String(s || '').toLowerCase().split(/[,;]+/).map(x => x.trim()).filter(Boolean); }
 
 function describeObject(o) {
@@ -18,14 +39,14 @@ function describeObject(o) {
   const token = o.name || parents[0] || mats[0] || '';
   return {
     name: token, mesh: o.name || '', parents, materials: mats, token, size: sz.toArray(),
-    text: 'mesh : ' + (o.name || '(sans nom)') + '\nparents : ' + (parents.slice(0, 3).join(' › ') || '(aucun)') + '\nmatériau : ' + (mats.join(', ') || '(sans nom)') + '\ntaille (m) : ' + sz.toArray().map(v => v.toFixed(2)).join(' × ')
+    text: tr('core.pick.mesh', o.name || tr('core.pick.noname')) + '\n' + tr('core.pick.parents', parents.slice(0, 3).join(' › ') || tr('core.pick.none')) + '\n' + tr('core.pick.material', mats.join(', ') || tr('core.pick.noname')) + '\n' + tr('core.pick.size', sz.toArray().map(v => v.toFixed(2)).join(' × '))
   };
 }
 
 // description d'un clic : nom de l'élément + point touché (x, y, z, 2 décimales)
 function describePick(o, point) {
   const d = describeObject(o);
-  if (point) { d.point = point; d.text += '\npoint (m) : ' + point.map(v => v.toFixed(2)).join(', '); }
+  if (point) { d.point = point; d.text += '\n' + tr('core.pick.point', point.map(v => v.toFixed(2)).join(', ')); }
   return d;
 }
 
@@ -214,7 +235,7 @@ function disposeObject(root) {
 
 function createViewer(container, cfg0, loader) {
   const cfg = Object.assign({}, cfg0);
-  let onMouse = null, onView = null, onFly = null, onCfg = null, onWalk = null, onPick = null, onPresence = null, onChat = null, onName = null, spectateOn = false, pickOrbit = false, walking = false, linkLock = false;
+  let onMouse = null, onView = null, onFly = null, onCfg = null, onWalk = null, onPick = null, onPresence = null, onChat = null, onPeer = null, onName = null, spectateOn = false, pickOrbit = false, walking = false, linkLock = false;
   const W = { pos: new THREE.Vector3(), spawn: new THREE.Vector3(), vy: 0, grounded: true, yaw: 0, pitch: 0, keys: new Set(), jumpReq: false, drag: false, mouseFree: false, saved: null, grid: null,
     fly: false, flyFloor: undefined, view: 'fps', cam: new THREE.Vector3(), cyaw: 0, cpitch: 0,
     tyaw: 0, tpitch: 0,   // v35 : caméra à la troisième personne (orbite propre) ; W.yaw reste l'orientation de l'avatar
@@ -518,10 +539,10 @@ function createViewer(container, cfg0, loader) {
   function tileFail(t, e) {
     t.state = 'failed'; t.fails = (t.fails || 0) + 1; t.retryAt = performance.now() + Math.min(30000, 3000 * Math.pow(2, t.fails - 1));
     const m = e && e.message ? e.message : String(e);
-    console.warn('tuile « ' + t.file + ' » : échec (' + m + '), nouvelle tentative plus tard');
+    console.warn(tr('core.tile.fail', t.file, m));
     const L = { file: t.file, ok: false, error: m, ms: Math.round(performance.now() - (t.tStart || performance.now())), at: Math.round(performance.now()) };
     TL.log.push(L); if (TL.log.length > 500) TL.log.shift();
-    console.log('[tuile] ' + t.file + ' : échec après ' + L.ms + ' ms (' + m + ')');
+    console.log(tr('core.tile.faillog', t.file, L.ms, m));
     if (TL.onError) TL.onError(t.file, m);
   }
   // v33 : une ligne par tuile qui devient prête (à coller dans le chat pour diagnostiquer un démarrage lent)
@@ -530,8 +551,7 @@ function createViewer(container, cfg0, loader) {
     const L = { file: t.file, ok: true, bytes: t.got || t.bytes, tri: t.tri, startWaitMs: Math.round(t.tStart - (t.tWant === undefined ? t.tStart : t.tWant)), downloadMs: Math.round(t.dlMs), parseMs: Math.round(t.parseMs),
       queueMs: Math.round(t.qWait || 0), gridMs: Math.round(t.gridCpu || 0), gridWallMs: Math.round(now - t.qAt), totalMs: Math.round(now - (t.tWant === undefined ? t.tStart : t.tWant)), startAt: Math.round(t.tStart), at: Math.round(now) };
     TL.log.push(L); if (TL.log.length > 500) TL.log.shift();
-    console.log('[tuile] ' + t.file + ' prête : ' + (L.bytes / 1048576).toFixed(1) + ' Mo · ' + L.tri + ' triangles · attente avant téléchargement ' + L.startWaitMs + ' ms · téléchargement ' + L.downloadMs + ' ms · analyse du GLB ' + L.parseMs
-      + ' ms · attente en file de grille ' + L.queueMs + ' ms · construction de la grille ' + L.gridMs + ' ms de travail (' + L.gridWallMs + ' ms écoulées) · total ' + L.totalMs + ' ms');
+    console.log(tr('core.tile.ready', t.file, (L.bytes / 1048576).toFixed(1), L.tri, L.startWaitMs, L.downloadMs, L.parseMs, L.queueMs, L.gridMs, L.gridWallMs, L.totalMs));
   }
   function tileUnload(t) {
     if (t.ac) { try { t.ac.abort(); } catch (e) {} t.ac = null; }
@@ -610,7 +630,7 @@ function createViewer(container, cfg0, loader) {
       }
       if (u.bytes + t.bytes > TL.maxBytes || u.tri + t.tri > TL.maxTri) {
         if (t.d > 0 && u.n > 0) continue;   // plus de place : on attend qu'une tuile plus lointaine parte
-        console.warn('tuile « ' + t.file + ' » : le budget (tileMaxMo / tileMaxTri) est dépassé par cette seule tuile, chargée quand même (l\'avatar est dessus)');
+        console.warn(tr('core.tile.budget', t.file));
       }
       tileStart(t);
     }
@@ -675,7 +695,7 @@ function createViewer(container, cfg0, loader) {
       dirty = true;
     } catch (e) {
       OV.state = 'failed';
-      console.warn('vue d\'ensemble « ' + ov.file + ' » indisponible (' + (e && e.message ? e.message : e) + ') : la région fonctionne sans elle');
+      console.warn(tr('core.ov.unavailable', ov.file, e && e.message ? e.message : e));
     }
   }
   // charge X.tiles.json puis les tuiles autour du point de départ ; rend la main quand les tuiles qui contiennent ce point sont prêtes
@@ -687,12 +707,12 @@ function createViewer(container, cfg0, loader) {
       if (model) { if (walking) walkStop(); scene.remove(model); disposeObject(model); model = null; }   // un GLB unique ouvert avant
       TL.on = true;
     }   // le viewer ouvre une région en tuiles sans champ « tiles » dans une configuration
-    if (!TL.on) throw new Error('mode tuiles non activé (champ tiles absent de la configuration)');
-    if (!safeRel(rel)) throw new Error('adresse de tuiles refusée « ' + rel + ' » (chemin relatif, sans .., sans « : », sans « ? » ni « # »)');
+    if (!TL.on) throw new Error(tr('core.tile.off'));
+    if (!safeRel(rel)) throw new Error(tr('core.tile.badpath', rel));
     // source des fichiers : adresses http relatives à la page (coquille, ou viewer avec ?tuiles=), ou fichiers choisis dans un dossier (viewer)
     TL.src = opts.source || urlSource();
     const doc = await TL.src.json(rel);
-    if (!doc || !Array.isArray(doc.tiles)) throw new Error(rel + ' : format inattendu (liste « tiles » absente)');
+    if (!doc || !Array.isArray(doc.tiles)) throw new Error(tr('core.tile.badformat', rel));
     const dir = rel.lastIndexOf('/') >= 0 ? rel.slice(0, rel.lastIndexOf('/') + 1) : '';
     TL.refs = !!doc.nodeRefs; TL.refsKnown = true; TL.refIndex.clear(); TL.linkSig = '';
     const num = (v, d, lo, hi) => { v = Number(v); return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d; };
@@ -708,7 +728,7 @@ function createViewer(container, cfg0, loader) {
     const v = new THREE.Vector3(), ext = new THREE.Box3();
     for (const d of doc.tiles) {
       const ok = d && safeRel(d.file) && /\.glb$/i.test(d.file) && Array.isArray(d.min) && Array.isArray(d.max) && d.min.length === 3 && d.max.length === 3 && d.min.concat(d.max).every(Number.isFinite);
-      if (!ok) { console.warn('tuile ignorée (entrée invalide dans ' + rel + ') :', d && d.file); continue; }
+      if (!ok) { console.warn(tr('core.tile.ignored', rel), d && d.file); continue; }
       const b = new THREE.Box3();
       for (let k = 0; k < 8; k++) b.expandByPoint(v.set(k & 1 ? d.max[0] : d.min[0], k & 2 ? d.max[1] : d.min[1], k & 4 ? d.max[2] : d.min[2]).applyQuaternion(root.quaternion));
       ext.union(b);
@@ -735,7 +755,7 @@ function createViewer(container, cfg0, loader) {
     }
     const ovd = doc.overview;
     if (ovd && typeof ovd === 'object' && safeRel(ovd.file) && /\.glb$/i.test(ovd.file)) await loadOverview(ovd, dir);
-    else if (ovd) console.warn('vue d\'ensemble ignorée (adresse refusée) :', ovd && ovd.file);
+    else if (ovd) console.warn(tr('core.ov.ignored'), ovd && ovd.file);
     const tanH = Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
     if (OV.state === 'ready' && !ext.isEmpty()) {
       // la vue d'ensemble montre toute la région : la caméra se cadre sur l'étendue entière (brouillard et plan lointain suivent)
@@ -812,7 +832,7 @@ function createViewer(container, cfg0, loader) {
   const STEP_UP = 0.6;
   // v33 : vol (touche Début : E monte, C descend, pas de gravité, murs solides, jamais sous le sol) et trois vues (V) :
   // 'fps' subjective, 'tps' à la troisième personne (la caméra tourne autour de l'avatar), 'free' caméra libre (l'avatar reste sur place)
-  const VIEWS = ['fps', 'tps', 'free'], VIEW_NAMES = { fps: 'subjective', tps: 'troisième personne', free: 'caméra libre' };
+  const VIEWS = ['fps', 'tps', 'free'], VIEW_NAMES = { fps: tr('core.view.fps'), tps: tr('core.view.tps'), free: tr('core.view.free') };
   let selfAv = null, selfKey = '';
   function updateSelf() {
     const show = walking && W.view !== 'fps';
@@ -850,7 +870,7 @@ function createViewer(container, cfg0, loader) {
     if (turn) { if (free) W.cyaw += 1.8 * dt * turn; else if (tps) W.tyaw += 1.8 * dt * turn; else W.yaw += 1.8 * dt * turn; }
     const f = (k.has('KeyW') || k.has('ArrowUp') ? 1 : 0) - (k.has('KeyS') || k.has('ArrowDown') ? 1 : 0);
     const s = (k.has('KeyD') ? 1 : 0) - (k.has('KeyA') ? 1 : 0);
-    const up = (k.has('KeyE') || k.has('PageUp') ? 1 : 0) - (k.has('KeyC') || k.has('PageDown') ? 1 : 0);
+    const up = (k.has('PageUp') || (W.fly && k.has('Space')) ? 1 : 0) - (k.has('KeyC') || k.has('PageDown') ? 1 : 0);   // v36 : monter = Page Haut ou Espace maintenu (en vol) ; E ne sert plus qu'aux zones
     const G = W.grid, hasGround = G && (G.count > 0 || G.tiled);
     let speed = cfg.walkSpeed * (run ? 2.2 : 1);
     if (free) {
@@ -889,11 +909,11 @@ function createViewer(container, cfg0, loader) {
         else if (W.fly || G.ground(W.pos.x + dx, W.pos.z + dz, W.pos.y + STEP_UP) !== null) { W.pos.x += dx; W.pos.z += dz; }
       } else { W.pos.x += dx; W.pos.z += dz; }
     }
-    // v35 : Page Haut ou E maintenu au sol plus de 0,4 s : décollage (vol + montée) ; un appui bref a déjà fait sauter l'avatar
-    if ((k.has('KeyE') || k.has('PageUp')) && !W.fly && !free && cfg.fly !== false) { W.upT += dt; if (W.upT > 0.4) startFly(); } else W.upT = 0;
+    // v36 : Page Haut maintenu au sol plus de 0,4 s : décollage (vol + montée) ; un appui bref a déjà fait sauter l'avatar
+    if (k.has('PageUp') && !W.fly && !free && cfg.fly !== false) { W.upT += dt; if (W.upT > 0.4) startFly(); } else W.upT = 0;
     if (W.fly) {
       // en vol : pas de gravité ; E monte, C descend ; jamais sous le sol des tuiles chargées (tuile dessous pas prête : on ne descend pas)
-      W.vy = 0; W.grounded = false;
+      W.vy = 0; W.grounded = false; W.jumpReq = false;
       const gF = hasGround ? G.ground(W.pos.x, W.pos.z, W.pos.y + STEP_UP) : null;
       if (gF !== null) W.flyFloor = gF;
       let ny = W.pos.y + (free ? 0 : up) * speed * dt;
@@ -965,6 +985,44 @@ function createViewer(container, cfg0, loader) {
     dirty = true;
     return W.fly;
   }
+  // v36 : arrivée occupée. À chaque pose de l'avatar sur un point (ouverture, arrivée par défaut, R, portail, « Aller à », #pos), si un autre visiteur EN PROMENADE
+  // est à moins de 1 m en horizontal (2 m en vertical), le NOUVEL ARRIVANT passe au point libre le plus proche : anneaux de 1,2, 2,4 puis 3,6 m (12, 16, 24 candidats),
+  // sol à moins de 1 m d'écart de hauteur, aucun mur entre le point demandé et le candidat, aucun visiteur à moins de 1 m. Sans place libre : pose à l'endroit demandé.
+  // Présence pas encore connectée (liste des visiteurs inconnue) : le contrôle est refait à la réception de la liste, seulement si l'avatar n'a pas bougé de plus de 0,3 m.
+  const DODGE = { pending: null };
+  function peerNear(x, y, z, rh, rv) {
+    for (const q of P.peers.values()) if (q.g.visible && Math.hypot(q.tx - x, q.tz - z) < rh && Math.abs(q.ty - y) < rv) return true;
+    return false;
+  }
+  function dodgeSpot(x, y, z) {
+    if (!peerNear(x, y, z, 1, 2)) return null;
+    const G = W.grid; if (!G) return null;
+    for (const [r, n] of [[1.2, 12], [2.4, 16], [3.6, 24]]) {
+      const found = [];
+      for (let i = 0; i < n; i++) {
+        const a = i / n * Math.PI * 2, cx = x + Math.cos(a) * r, cz = z + Math.sin(a) * r;
+        if (G.tiled && G.pending(cx, cz)) continue;
+        const g = G.ground(cx, cz, y + 1);
+        if (g === null || Math.abs(g - y) > 1) continue;
+        if (G.wall(x, y + 0.9, z, Math.cos(a), Math.sin(a), r + 0.3)) continue;
+        if (peerNear(cx, g, cz, 1, 2)) continue;
+        found.push({ x: cx, y: g, z: cz, dy: Math.abs(g - y) });
+      }
+      if (found.length) { found.sort((p, q) => p.dy - q.dy); return found[0]; }   // même distance au point demandé dans un anneau : le plus proche en hauteur
+    }
+    return null;
+  }
+  function dodgeNow() { const s = dodgeSpot(W.pos.x, W.pos.y, W.pos.z); if (s) { W.pos.set(s.x, s.y, s.z); W.spawn.copy(W.pos); } return !!s; }
+  function dodgeApply() {
+    DODGE.pending = null;
+    if (!cfg.presenceUrl) return;
+    if (P.ws && P.ws.readyState === 1 && P.id) dodgeNow();
+    else DODGE.pending = { x: W.pos.x, y: W.pos.y, z: W.pos.z, t: performance.now() };
+  }
+  function dodgeWelcome() {
+    const d = DODGE.pending; DODGE.pending = null;
+    if (d && walking && W.grid && performance.now() - d.t < 20000 && Math.hypot(W.pos.x - d.x, W.pos.y - d.y, W.pos.z - d.z) <= 0.3) { dodgeNow(); dirty = true; }
+  }
   function walkStart(opts) {
     if (!model || walking) return walking;
     // v33 : F sans point demandé démarre à l'arrivée « default » tant que la cible n'a pas bougé (sinon à la cible, comme avant)
@@ -983,6 +1041,7 @@ function createViewer(container, cfg0, loader) {
     let g = W.grid.ground(t.x, t.z, t.y + 2);
     if (g === null) g = W.grid.ground(t.x, t.z, 1e6);
     W.pos.set(t.x, g === null ? t.y : g, t.z); W.spawn.copy(W.pos);
+    dodgeApply();
     W.vy = 0; W.grounded = true; W.keys.clear(); W.drag = false; W.fly = false; W.flyFloor = undefined; W.view = 'fps'; W.mouseFree = false;
     controls.enabled = false;
     camera.fov = 70; camera.updateProjectionMatrix();
@@ -1001,12 +1060,8 @@ function createViewer(container, cfg0, loader) {
     if (TL.pending) { TL.pending = null; tilesInfo(); return false; }
     return walking ? walkStop() : walkStart();
   }
-  // v35 : F comme dans Firestorm bascule le vol ; hors promenade (vue globale), F entre encore en promenade ; en caméra libre il rend la main à l'avatar
-  function pressF() {
-    if (!walking || TL.pending) return toggleWalk();
-    if (W.view === 'free') { setView('fps'); return true; }
-    return toggleFly();
-  }
+  // v36 : F (comme P) entre en promenade et en sort, en vue globale comme en promenade, y compris pendant l'attente d'une tuile (annule) ; le vol se bascule avec Début ou le bouton
+  function pressF() { return toggleWalk(); }
   function walkStop() {
     if (!walking) return;
     walking = false; W.keys.clear(); W.drag = false; W.fly = false; W.view = 'fps'; updateSelf();
@@ -1024,6 +1079,7 @@ function createViewer(container, cfg0, loader) {
     landKey = '';
     W.grid = null; dirty = true;
     zoneInside.clear(); if (nearZone) { nearZone = null; if (onNear) onNear(null); }
+    DODGE.pending = null;
     presenceLeave();
     if (zoneLabs.length) zoneLabelTick();
     if (onWalk) onWalk(false);
@@ -1038,6 +1094,7 @@ function createViewer(container, cfg0, loader) {
     let g = W.grid.ground(x, z, y + 2);
     if (g === null) g = W.grid.ground(x, z, 1e6);
     W.pos.set(x, g === null ? y : g, z); W.spawn.copy(W.pos);
+    dodgeApply();
     if (Number.isFinite(yaw)) { W.yaw = yaw; W.tyaw = yaw; }
     W.pitch = 0; W.vy = 0; W.grounded = true;
     zoneInside.clear(); nearZone = null; if (onNear) onNear(null);
@@ -1073,7 +1130,7 @@ function createViewer(container, cfg0, loader) {
     if (onMouse) onMouse(mouseState());
   });
   const typing = e => { const n = e.target && e.target.tagName; return n === 'INPUT' || n === 'TEXTAREA' || n === 'SELECT'; };
-  const MOVE_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyE', 'KeyC', 'PageUp', 'PageDown', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'ShiftLeft', 'ShiftRight']);
+  const MOVE_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyC', 'PageUp', 'PageDown', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'ShiftLeft', 'ShiftRight']);
   const RUN_TAP = new Set(['KeyW', 'KeyS', 'ArrowUp', 'ArrowDown']);
   window.addEventListener('keydown', e => {
     if (!walking || typing(e)) return;
@@ -1083,16 +1140,16 @@ function createViewer(container, cfg0, loader) {
     if (e.code === 'Home' && cfg.fly !== false) { toggleFly(); e.preventDefault(); }
     else if (e.code === 'End' && !mod) { recenterCam(); e.preventDefault(); }
     else if (e.code === 'KeyV' && !mod) cycleView();
-    else if (e.code === 'KeyM' && !mod) setView(W.view === 'tps' ? 'fps' : 'tps');   // v35 : M bascule vue subjective / troisième personne (Ctrl+M : carte des mondes)
+    else if (keyChar(e) === 'm' && !mod) setView(W.view === 'tps' ? 'fps' : 'tps');   // v36 : reconnue par la lettre imprimée (« m »), pas par la place de la touche ; v35 : M bascule vue subjective / troisième personne (Ctrl+M : carte des mondes)
     else if (e.code === 'KeyG' && !mod) grabMouse();
   });
   window.addEventListener('keydown', e => { if (!walking || typing(e) || !MOVE_KEYS.has(e.code) || e.ctrlKey || e.metaKey || e.altKey) return;   // v34 : Ctrl+C copie (le texte de l'aide est sélectionnable)
     const c = e.code;
-    if (c === 'Space') W.jumpReq = true;
+    if (c === 'Space' && !W.fly) W.jumpReq = true;
     if (!e.repeat) {
       const now = performance.now();
       if (RUN_TAP.has(c)) { if (W.tap[c] !== undefined && now - W.tap[c] < 300) W.run.add(c); W.tap[c] = now; }   // v35 : double appui rapide = course
-      if ((c === 'KeyE' || c === 'PageUp') && !W.fly && W.view !== 'free') W.jumpReq = true;   // appui bref au sol = saut (maintenu plus de 0,4 s : décollage)
+      if (c === 'PageUp' && !W.fly && W.view !== 'free') W.jumpReq = true;   // appui bref au sol = saut (maintenu plus de 0,4 s : décollage)
     }
     W.keys.add(c); e.preventDefault(); });
   window.addEventListener('keyup', e => { W.keys.delete(e.code); W.run.delete(e.code); if (walking && (e.code === 'AltLeft' || e.code === 'AltRight')) e.preventDefault(); });
@@ -1202,7 +1259,7 @@ function createViewer(container, cfg0, loader) {
       const cnx = locked ? 0 : (e.clientX - rc.left) / rc.width * 2 - 1, cny = locked ? 0 : -((e.clientY - rc.top) / rc.height) * 2 + 1;
       const still = !!downPos && Math.hypot(e.clientX - downPos[0], e.clientY - downPos[1]) < 6;
       if (zones.length && onZone && (walking || (still && !zoneEditor))) {
-        const zc = zoneFromClick(cnx, cny, walking ? zoneInfoDist() : 0);
+        const zc = zoneFromClick(cnx, cny, walking ? zoneInfoDist() : 0, true);
         if (zc) { fireZone(zc, 'click'); return; }
       }
     }
@@ -1327,14 +1384,14 @@ function createViewer(container, cfg0, loader) {
   function presenceMsg(m) {
     if (!m || typeof m !== 'object') return;
     if (m.t === 'welcome') {
-      P.id = m.id; (m.peers || []).forEach(addPeer); pStatus('online');
+      P.id = m.id; (m.peers || []).forEach(addPeer); pStatus('online'); dodgeWelcome();
       P.serverColor = Number.isInteger(m.color) && m.color >= 0 && m.color <= 0xFFFFFF ? m.color : null;
       if (m.name) setMyName(m.name);
       if (m.role === 'spectator' && walking && P.ws) P.ws.send(JSON.stringify({ t: 'role', walker: true, name: P.name }));
       if (onChat && cfg.chat !== false) (m.history || []).forEach(h => onChat({ id: h.id, name: cleanName(h.name) || '?', text: String(h.text || '').slice(0, 200), self: false, history: true }));
     }
-    else if (m.t === 'join') { addPeer(m); pStatus('online'); if (onChat && cfg.chat !== false) onChat({ system: true, text: (cleanName(m.name) || '?') + ' a rejoint' }); }
-    else if (m.t === 'leave') { const q = P.peers.get(m.id); removePeer(m.id); pStatus('online'); if (q && onChat && cfg.chat !== false) onChat({ system: true, text: q.name + ' est parti' }); }
+    else if (m.t === 'join') { const had = P.peers.has(m.id) || m.id === P.id; addPeer(m); pStatus('online'); if (onChat && cfg.chat !== false) onChat({ system: true, text: tr('core.joined', cleanName(m.name) || '?') }); if (!had && onPeer) onPeer('join', cleanName(m.name) || '?'); }   // v36 : onPeer = visiteur EN PROMENADE qui arrive ou part (jamais moi, jamais la liste initiale)
+    else if (m.t === 'leave') { const q = P.peers.get(m.id); removePeer(m.id); pStatus('online'); if (q && onChat && cfg.chat !== false) onChat({ system: true, text: tr('core.left', q.name) }); if (q && onPeer) onPeer('leave', q.name); }
     else if (m.t === 'chat' && cfg.chat !== false) {
       const text = String(m.text || '').slice(0, 200), q = P.peers.get(m.id);
       if (q) showBubble(q, text);
@@ -1360,7 +1417,7 @@ function createViewer(container, cfg0, loader) {
     else if (m.t === 'kicked' || m.t === 'banned') {
       P.blocked = true;
       let r = String(m.reason || '').slice(0, 120);
-      if (m.t === 'banned' && m.until) r += ' (jusqu\'au ' + new Date(m.until * 1000).toLocaleString('fr-FR') + ')';
+      if (m.t === 'banned' && m.until) r += tr('core.ban.until', new Date(m.until * 1000).toLocaleString(i18nLocale));
       pStatus(m.t, r);
     }
     else if (m.t === 'full') { pStatus('full'); }
@@ -1481,9 +1538,9 @@ function createViewer(container, cfg0, loader) {
     for (const z of zones) {
       if (!z.mesh || z.type === 'spawn') continue;
       const meshes = findMeshes(z.mesh);
-      if (!meshes.length) { if (!TL.on) console.warn('zone « ' + z.id + ' » : élément « ' + z.mesh + ' » introuvable dans le modèle'); continue; }
+      if (!meshes.length) { if (!TL.on) console.warn(tr('core.zone.nomesh', z.id, z.mesh)); continue; }
       const box = refBox(z.mesh, meshes);
-      if (!box) { console.warn('zone « ' + z.id + ' » : élément « ' + z.mesh + ' » sans géométrie'); continue; }
+      if (!box) { console.warn(tr('core.zone.nogeom', z.id, z.mesh)); continue; }
       zoneLink.set(z.id, { meshes, box });
     }
     TL.linkSig = linkSignature();
@@ -1504,8 +1561,8 @@ function createViewer(container, cfg0, loader) {
   function zoneTipText(z) {
     const name = z.label || z.id;
     if (z.type === 'url') return [name, z.target];
-    if (z.type === 'ha') return [name, 'Commande : ' + name];
-    return [name, 'Région : ' + (String(z.target || '').trim() || 'cette région') + (z.spawn ? ' #' + z.spawn : '')];
+    if (z.type === 'ha') return [name, tr('core.tip.cmd', name)];
+    return [name, tr('core.tip.region', (String(z.target || '').trim() || tr('core.tip.thisregion')) + (z.spawn ? ' #' + z.spawn : ''))];
   }
   function tipShow(z, cx, cy) {
     if (!z) { if (tipEl) tipEl.hidden = true; return; }
@@ -1558,6 +1615,33 @@ function createViewer(container, cfg0, loader) {
     const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
     return tex;
   }
+  // v36 : repère de portail (page exportée seulement) : petit cône pointé vers le bas (0,35 m de large, 0,5 m de haut), sommet à 2,0 m au-dessus du centre de la zone,
+  // teinte claire neutre avec contour sombre (lisible sans dépendre de la couleur). Au-dessus de chaque portail et de chaque zone « enter » ou « both » ; les arrivées
+  // n'en ont qu'avec --show-spawns (cfg.showSpawns). Visible jusqu'à zoneInfoDist en promenade ; T affiche / masque tous les cônes (choix mémorisé, défaut cfg.zoneCone).
+  let coneOn = (() => { let v = cfg.zoneCone !== false; try { const s = localStorage.getItem('glb2html_cones'); if (s === '0' || s === '1') v = s === '1'; } catch (_) {} return v; })();
+  let onCones = null;
+  function coneFor(g, z, box) {
+    if (zoneEditor) return false;
+    if (!(z.type === 'spawn' ? cfg.showSpawns : (z.type === 'portal' || z.trigger !== 'click'))) return false;
+    const geo = new THREE.ConeGeometry(0.175, 0.5, 16);
+    const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0xe8e8e8, fog: false }));
+    m.rotation.x = Math.PI;   // pointe vers le bas
+    if (box) m.position.set((box.min.x + box.max.x) / 2, box.max.y + 0.75, (box.min.z + box.max.z) / 2); else m.position.set(0, 2.25, 0);
+    m.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: 0x111111, fog: false })));
+    m.userData.cone = true; m.userData.zone = z; m.visible = coneOn;
+    g.add(m); zoneLabs.push(m); zoneAll.push(m);
+    if (z.type !== 'spawn') zoneHit.push(m);
+    return true;
+  }
+  function setCones(on, quiet) {
+    coneOn = !!on; try { localStorage.setItem('glb2html_cones', coneOn ? '1' : '0'); } catch (_) {}
+    zoneLabelTick(); if (hoverZone) setHover(null); dirty = true;
+    if (onCones && !quiet) onCones(coneOn);
+    return coneOn;
+  }
+  window.addEventListener('keydown', e => {
+    if (e.code === 'KeyT' && !e.repeat && !typing(e) && !e.ctrlKey && !e.metaKey && !e.altKey && !zoneEditor && zones.length) setCones(!coneOn);
+  });
   function buildZones() {
     for (const c of [...zoneGroup.children]) {
       zoneGroup.remove(c);
@@ -1572,17 +1656,18 @@ function createViewer(container, cfg0, loader) {
       const link = zoneLink.get(z.id);
       const g = new THREE.Group(); g.userData.zoneId = z.id;
       if (!link) { g.position.set(z.x, z.y, z.z); g.rotation.y = z.yaw; }
-      const kind = { url: 'Lien web', ha: 'Commande', portal: 'Portail', spawn: 'Arrivée' }[z.type];
-      const priv = zoneEditor && z.private ? ' (privé)' : '';
+      const kind = { url: tr('core.kind.url'), ha: tr('core.kind.ha'), portal: tr('core.kind.portal'), spawn: tr('core.kind.spawn') }[z.type];
+      const priv = zoneEditor && z.private ? tr('core.private') : '';
       const clickable = z.type !== 'spawn' && z.trigger !== 'enter';
       let main = null;
       if (link) {
         // zone liée à un élément : l'élément est la zone (cliquable, E à moins de radius m). Aucun objet ajouté dans la page exportée.
         for (const m of link.meshes) if (!meshZone.has(m)) meshZone.set(m, z);
         zoneAll.push(...link.meshes); if (clickable) zoneHit.push(...link.meshes);
-        if (!zoneEditor && !z.showName) continue;
+        const hasCone = coneFor(g, z, link.box);
+        if (!zoneEditor && !z.showName && !hasCone) continue;
         if (zoneEditor) g.add(outlineOf(link.box));
-        const lab = makeLabel(zoneEditor ? (z.label || kind) + ' ⇢ ' + z.mesh + priv : (z.label || z.id)); lab.position.set((link.box.min.x + link.box.max.x) / 2, link.box.max.y + 0.9, (link.box.min.z + link.box.max.z) / 2); g.add(lab); if (!zoneEditor) zoneLabs.push(lab);
+        if (zoneEditor || z.showName) { const lab = makeLabel(zoneEditor ? (z.label || kind) + ' ⇢ ' + z.mesh + priv : (z.label || z.id)); lab.position.set((link.box.min.x + link.box.max.x) / 2, link.box.max.y + 0.9, (link.box.min.z + link.box.max.z) / 2); g.add(lab); if (!zoneEditor) zoneLabs.push(lab); }
         zoneGroup.add(g);
         continue;
       }
@@ -1593,16 +1678,17 @@ function createViewer(container, cfg0, loader) {
           const sm = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: MARK_OP, side: THREE.DoubleSide, depthWrite: false, fog: false });
           const sd = new THREE.Mesh(new THREE.CircleGeometry(0.15, 24), sm); sd.rotation.x = -Math.PI / 2; sd.position.y = 0.04; sd.userData.marker = 'spawn'; g.add(sd);
           const sr = new THREE.Mesh(new THREE.RingGeometry(0.15, 0.2, 24), sm.clone()); sr.material.color.set(0xffffff); sr.rotation.x = -Math.PI / 2; sr.position.y = 0.045; sr.userData.marker = 'spawn'; g.add(sr);
+          coneFor(g, z);
           zoneGroup.add(g);
           continue;
         }
         const cone = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.9, 12), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, depthTest: false, fog: false }));
         cone.rotation.x = -Math.PI / 2; cone.position.y = 0.6; g.add(cone); main = cone;
-        const l = makeLabel('arrivée : ' + z.id); l.position.y = 1.7; g.add(l);
+        const l = makeLabel(tr('core.spawn.label', z.id)); l.position.y = 1.7; g.add(l);
       } else if (zoneEditor) {
         // éditeur : le cylindre (portée de la zone) reste toujours visible, pour repérer et positionner ; le panneau s'y ajoute
         if (z.shape === 'board') {
-          const sub = kind + (clickable ? ' · clic' : '') + priv;
+          const sub = kind + (clickable ? tr('core.clickable') : '') + priv;
           const plane = new THREE.Mesh(new THREE.PlaneGeometry(z.w, z.h), new THREE.MeshBasicMaterial({ map: boardTex(z.label || kind, sub, z.w, z.h), side: THREE.DoubleSide, fog: false }));
           plane.position.y = 0.9 + z.h / 2; g.add(plane); main = plane;
           const post = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.92, 0.1), new THREE.MeshStandardMaterial({ color: 0x333333 })); post.position.y = 0.46; g.add(post);
@@ -1617,7 +1703,7 @@ function createViewer(container, cfg0, loader) {
         if (z.shape !== 'board') { const lab = makeLabel((z.label || kind) + priv); lab.position.y = 2.9; g.add(lab); }
       } else if (z.showName && z.shape === 'board') {
         // page exportée, « Toujours afficher le nom » : le panneau
-        const plane = new THREE.Mesh(new THREE.PlaneGeometry(z.w, z.h), new THREE.MeshBasicMaterial({ map: boardTex(z.label || kind, kind + (clickable ? ' · clic' : ''), z.w, z.h), side: THREE.DoubleSide, fog: false }));
+        const plane = new THREE.Mesh(new THREE.PlaneGeometry(z.w, z.h), new THREE.MeshBasicMaterial({ map: boardTex(z.label || kind, kind + (clickable ? tr('core.clickable') : ''), z.w, z.h), side: THREE.DoubleSide, fog: false }));
         plane.position.y = 0.9 + z.h / 2; g.add(plane); main = plane; zoneLabs.push(plane);
         const post = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.92, 0.1), new THREE.MeshStandardMaterial({ color: 0x333333 })); post.position.y = 0.46; g.add(post); zoneLabs.push(post);
       } else {
@@ -1646,12 +1732,13 @@ function createViewer(container, cfg0, loader) {
         }
         if (z.showName) { const lab = makeLabel(z.label || z.id); lab.position.y = 1.2; g.add(lab); zoneLabs.push(lab); }
       }
+      coneFor(g, z);
       if (main) { main.userData.zone = z; zoneAll.push(main); if (clickable) zoneHit.push(main); }
       zoneGroup.add(g);
     }
     dirty = true;
   }
-  const tilesNoRefs = z => 'zone « ' + z.id + ' » ignorée : liée à l\'élément « ' + z.mesh + ' », ce que ces tuiles ne savent pas résoudre (tuiles écrites sans références d\'objets : redécouper avec glb2tiles v32)';
+  const tilesNoRefs = z => tr('core.zone.norefs', z.id, z.mesh);
   function setZones(list, opts) {
     zoneEditor = !!(opts && opts.editor);
     const seen = new Set();
@@ -1684,13 +1771,14 @@ function createViewer(container, cfg0, loader) {
   const zoneInfoDist = () => Math.max(5, Math.min(200, Number(cfg.zoneInfoDist) || 40));
   let zoneLabs = [];
   function zoneLabelTick() {
-    for (const o of zoneLabs) { const v = !walking || !o.parent || Math.hypot(W.pos.x - (o.parent.position.x + o.position.x), W.pos.z - (o.parent.position.z + o.position.z)) <= zoneInfoDist(); if (o.visible !== v) { o.visible = v; dirty = true; } }
+    for (const o of zoneLabs) { let v = !walking || !o.parent || Math.hypot(W.pos.x - (o.parent.position.x + o.position.x), W.pos.z - (o.parent.position.z + o.position.z)) <= zoneInfoDist(); if (o.userData.cone) v = v && coneOn; if (o.visible !== v) { o.visible = v; dirty = true; } }
   }
-  function zoneFromClick(nx, ny, maxDist) {
+  function zoneFromClick(nx, ny, maxDist, forClick) {
     if (!zoneHit.length) return null;
     camera.updateMatrixWorld(true);
     tpV.set(nx, ny); tpRay.setFromCamera(tpV, camera);
-    const h = tpRay.intersectObjects(zoneHit, false)[0];
+    // v36 : un cône masqué (T) ne répond pas ; le cône d'un portail « enter » seul n'a qu'une infobulle (pas de clic)
+    const h = tpRay.intersectObjects(zoneHit, false).find(q => !(q.object.userData.cone && (!q.object.visible || !coneOn || (forClick && q.object.userData.zone.trigger === 'enter'))));
     if (!h || (maxDist && h.distance > maxDist)) return null;
     const z = zoneOf(h.object), link = z && zoneLink.get(z.id);
     if (model) {
@@ -1758,6 +1846,10 @@ function createViewer(container, cfg0, loader) {
     }
     if (best !== nearZone) { nearZone = best; if (onNear) onNear(best); }
   }
+  // v36 : E déclenche la zone proche (déclenchement « clic » ou « both »), comme avant la v35 ; E ne fait rien d'autre
+  window.addEventListener('keydown', e => {
+    if (e.code === 'KeyE' && !e.repeat && walking && !typing(e) && !e.ctrlKey && !e.metaKey && !e.altKey && nearZone && onZone) fireZone(nearZone, 'key');
+  });
   // ---- repère d'atterrissage : un cercle posé sur le sol, sous la cible de la vue globale (où F pose l'avatar)
   let onLanding = null, landY = null, landKey = '', landT = 0, landDirty = false;
   const UPV = new THREE.Vector3(0, 1, 0), landN = new THREE.Vector3(0, 1, 0);
@@ -1841,8 +1933,11 @@ function createViewer(container, cfg0, loader) {
 
   return {
     scene, camera, renderer, controls, cfg, setCfg, setModel, loadBuffer, frame, getCameraState, setZoom,
-    get model() { return model; }, get sea() { return sea; }, set onCfg(f) { onCfg = f; }, set onWalk(f) { onWalk = f; }, set onPick(f) { onPick = f; }, set pickOrbit(v) { pickOrbit = !!v; }, set onPresence(f) { onPresence = f; }, set onChat(f) { onChat = f; },
+    get model() { return model; }, get sea() { return sea; }, set onCfg(f) { onCfg = f; }, set onWalk(f) { onWalk = f; }, set onPick(f) { onPick = f; }, set pickOrbit(v) { pickOrbit = !!v; }, set onPresence(f) { onPresence = f; }, set onChat(f) { onChat = f; }, set onPeer(f) { onPeer = f; },
     setZones, zoneSelect, zonePickAt, findMeshes,
+    // v36 : repères de portail (cônes) : affichés ou non (T), rappel, état pour les tests
+    setCones, get cones() { return coneOn; }, set onCones(f) { onCones = f; },
+    getCones() { const out = []; zoneGroup.traverse(o => { if (o.userData && o.userData.cone) { const p = o.getWorldPosition(new THREE.Vector3()); out.push({ id: o.userData.zone.id, visible: o.visible, pos: p.toArray() }); } }); return out; },
     // mode tuiles (cfg.tiles) : voir loadTiles ; tilesState sert aux tests
     closeTiles, releaseAnchor, get seaCenter() { return [seaCx, seaCz]; },
     // v32 : le point visé (rayon THREE.Raycaster) sur la vue d'ensemble, hors tuiles chargées ; null si rien

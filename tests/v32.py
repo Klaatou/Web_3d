@@ -13,6 +13,7 @@ panneau d'aide. Anciennes tuiles : zones liées ignorées avec l'avertissement.
 
 Prérequis : pip install playwright ; python build.py avant. Variables facultatives : THREE_DIR, CHROMIUM. Lancer : python tests/v32.py
 """
+import os as _os_lang; _os_lang.environ["WEB3D_LANG"] = "fr"   # outils Python en français (v36)
 import asyncio, json, math, os, pathlib, shutil, socket, struct, subprocess, sys, tempfile, time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
@@ -141,7 +142,7 @@ async def main():
 
         # ---------- 3. viewer en mode tuiles : dossier choisi ----------
         print("--- 3. viewer : région en tuiles")
-        ctx = await br.new_context(viewport={"width": 1300, "height": 800}, accept_downloads=True)
+        ctx = await br.new_context(locale="fr-FR", viewport={"width": 1300, "height": 800}, accept_downloads=True)
         pg = await ctx.new_page()
         errs, warns = [], []
         pg.on("pageerror", lambda e: errs.append(str(e)))
@@ -366,7 +367,7 @@ async def main():
                 self.errs, self.warns, self.garde = [], [], {}
 
             async def ouvrir(self, url):
-                c = await br.new_context(viewport={"width": 800, "height": 560})
+                c = await br.new_context(locale="fr-FR", viewport={"width": 800, "height": 560})
                 self.pg = await c.new_page()
                 self.pg.on("pageerror", lambda e: self.errs.append(str(e)))
                 self.pg.on("console", lambda m: self.warns.append(m.text) if m.type in ("warning", "error") else None)

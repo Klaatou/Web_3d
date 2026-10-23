@@ -22,6 +22,23 @@ Sortie : MaRegion.glb à côté de l'OAR.
 import argparse, base64, io, json, math, os, re, shutil, struct, subprocess, sys, tarfile, time, traceback, uuid, zlib
 from pathlib import Path
 
+# <<I18N_PY>>
+def _i18n_boot():   # depuis les sources : charge src/i18n_py.py ; fabriqué par build.py (dist\) : ce bloc est remplacé par le texte de i18n_py.py avec les langues intégrées
+    import importlib.util, pathlib
+    here = pathlib.Path(__file__).resolve().parent
+    for p in (here / "i18n_py.py", here.parent / "src" / "i18n_py.py"):
+        if p.is_file():
+            spec = importlib.util.spec_from_file_location("i18n_py", p)
+            m = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(m)
+            return m
+    raise SystemExit("i18n_py.py not found / introuvable")
+
+
+_I18N = _i18n_boot()
+_tr, i18n_add_common = _I18N._tr, _I18N.i18n_add_common
+# <</I18N_PY>>
+
 VERSION = "__VERSION__"      # remplacé par build.py (fichier VERSION) dans dist/oar2glb.py
 DEFAULT_CONVOAR = r"P:\_OpenSim\SL&OS\MOSES\convoar-master\dist\convoar.exe"
 
@@ -69,11 +86,11 @@ def reencode_oar(src, dst):
     try:
         import PIL  # noqa: F401
     except ImportError:
-        sys.exit(f'[ERREUR] --reencode demande Pillow, absent de ce Python ({sys.executable}).\n  Installe-le dans ce Python précis : & "{sys.executable}" -m pip install pillow')
+        sys.exit(_tr("py.oar2glb.erreur_reencode_demande_pillow_absent_de", sys.executable, sys.executable))
     import time
     from concurrent.futures import ProcessPoolExecutor
     t0 = time.time()
-    print(f"[textures] lecture de {src.name}...")
+    print(_tr("py.oar2glb.textures_lecture_de_0", src.name))
     members = []
     with tarfile.open(src, "r:*") as tin:
         for m in tin:
@@ -87,9 +104,9 @@ def reencode_oar(src, dst):
     idx = [i for i, (m, d) in enumerate(members)
            if d is not None and m.name.startswith("assets/") and m.name.endswith("_texture.jp2")
            and m.name[7:43].lower() not in sculpts]
-    print(f"[textures] {len(sculpts)} sculpt maps laissées intactes")
+    print(_tr("py.oar2glb.textures_0_sculpt_maps_laissees_intactes", len(sculpts)))
     workers = max(1, min(8, (os.cpu_count() or 2) - 1))   # 8 au plus : chaque worker garde ses textures décodées en mémoire
-    print(f"[textures] {len(idx)} textures à réencoder sur {workers} cœurs ({time.time() - t0:.0f} s)")
+    print(_tr("py.oar2glb.textures_0_textures_a_reencoder_sur", len(idx), workers, time.time() - t0))
     ok = bad = k = 0
     grey, illisibles = neutral_texture(), []
     step = max(1, len(idx) // 20)
@@ -108,16 +125,16 @@ def reencode_oar(src, dst):
                 m.size = len(res)
                 members[i] = (m, res)
                 if k % step == 0 or k == len(idx):
-                    print(f"[textures] {k}/{len(idx)} ({100 * k // len(idx)} %) - {time.time() - t0:.0f} s", flush=True)
-    print(f"[textures] écriture de {dst.name}...")
+                    print(_tr("py.oar2glb.textures_0_1_2_3_0f", k, len(idx), 100 * k // len(idx), time.time() - t0), flush=True)
+    print(_tr("py.oar2glb.textures_ecriture_de_0", dst.name))
     with tarfile.open(dst, "w:gz", compresslevel=1) as tout:
         for m, d in members:
             tout.addfile(m, io.BytesIO(d) if d is not None else None)
     liste = dst.with_name(dst.stem + "-illisibles.txt")
     if illisibles:
         liste.write_text("\n".join(illisibles) + "\n", encoding="utf-8")
-    print(f"[textures] {ok} réencodées, {bad} illisibles remplacées par un gris neutre"
-          + (f" (liste : {liste.name})" if illisibles else "") + f" - {time.time() - t0:.0f} s")
+    print(_tr("py.oar2glb.textures_0_reencodees_1_illisibles_remplacee", ok, bad)
+          + (_tr("py.oar2glb.list_paren", liste.name) if illisibles else "") + f" - {time.time() - t0:.0f} s")
 
 
 # ---------- lecture de l'OAR : objets, blocs skin des meshes, terrain ----------
@@ -136,12 +153,12 @@ def llsd_bin(d, p=0):
         out = {}
         for _ in range(n):
             if d[p:p + 1] != b"k":
-                raise ValueError("clé LLSD attendue")
+                raise ValueError(_tr("py.oar2glb.cle_llsd_attendue"))
             ln = struct.unpack_from(">I", d, p + 1)[0]
             key = d[p + 5:p + 5 + ln].decode("utf-8", "replace")
             out[key], p = llsd_bin(d, p + 5 + ln)
         if d[p:p + 1] != b"}":
-            raise ValueError("fin de table LLSD attendue")
+            raise ValueError(_tr("py.oar2glb.fin_de_table_llsd_attendue"))
         return out, p + 1
     if t == b"[":
         n = struct.unpack_from(">I", d, p)[0]
@@ -151,7 +168,7 @@ def llsd_bin(d, p=0):
             v, p = llsd_bin(d, p)
             out.append(v)
         if d[p:p + 1] != b"]":
-            raise ValueError("fin de tableau LLSD attendue")
+            raise ValueError(_tr("py.oar2glb.fin_de_tableau_llsd_attendue"))
         return out, p + 1
     if t == b"!":
         return None, p
@@ -171,7 +188,7 @@ def llsd_bin(d, p=0):
         ln = struct.unpack_from(">I", d, p)[0]
         v = d[p + 4:p + 4 + ln]
         return (v if t == b"b" else v.decode("utf-8", "replace")), p + 4 + ln
-    raise ValueError(f"type LLSD inconnu {t!r}")
+    raise ValueError(_tr("py.oar2glb.type_llsd_inconnu_0_r", t))
 
 
 def llmesh_skin(data):
@@ -190,9 +207,9 @@ def llmesh_skin(data):
                     return skin, None
             except Exception:
                 continue
-        return None, "bloc skin présent mais illisible"
+        return None, _tr("py.oar2glb.bloc_skin_present_mais_illisible")
     except Exception as e:
-        return None, f"en-tête du mesh illisible ({e})"
+        return None, _tr("py.oar2glb.en_tete_du_mesh_illisible_0", e)
 
 
 def llmesh_domains(data, n=256):
@@ -345,10 +362,10 @@ def part_invisible(tex_entry):
 
 def tex_summary(tex_entry):
     if not tex_entry:
-        return "sans TextureEntry"
+        return _tr("py.oar2glb.sans_textureentry")
     tex, col = tex_entry
     n = len({f for f in list(tex) + list(col) if f is not None})
-    return f"texture {tex[None][:8]} alpha {col[None] / 255:.2f}" + (f" (+{n} face(s) à part)" if n else "")
+    return _tr("py.oar2glb.texture_0_alpha_1_2f", tex[None][:8], col[None] / 255) + (_tr("py.oar2glb.0_face_s_a_part", n) if n else "")
 
 
 def _txt(el, path):
@@ -415,7 +432,7 @@ def oar_scan(oar, terrain_seul=False):
                 try:
                     parts = parse_object(t.extractfile(m).read())
                 except Exception as e:
-                    print(f"[OAR] {m.name} illisible ({e})")
+                    print(_tr("py.oar2glb.oar_0_illisible_1", m.name, e))
                     continue
                 if parts and parts[0]["gpos"]:
                     groups.append({"file": m.name, "parts": parts})
@@ -455,12 +472,12 @@ def oar_info(scan):
     objs = [{"pos": g["parts"][0]["gpos"], "rot": g["parts"][0]["rot"], "name": g["parts"][0]["name"]}
             for g in scan["groups"]]
     size = scan["size"]
-    print(f"[OAR] région {size[0]:g} x {size[1]:g} m")
+    print(_tr("py.oar2glb.oar_region_0_g_x_1", size[0], size[1]))
     if objs:
         pts = [o["pos"] for o in objs]
         lo = [round(min(p[k] for p in pts), 1) for k in range(3)]
         hi = [round(max(p[k] for p in pts), 1) for k in range(3)]
-        print(f"[OAR] {len(objs)} objets de {lo} à {hi}  (X, Y, Z OpenSim, Z = hauteur)")
+        print(_tr("py.oar2glb.oar_0_objets_de_1_a", len(objs), lo, hi))
     return size, objs
 
 
@@ -520,7 +537,7 @@ def fix_positions(g, objs):
             else:
                 n["translation"] = new
             moved += 1
-    print(f"[var-region] {moved} objet(s) replacé(s) à leur vraie position, {len(used)} reconnu(s), {lost} non reconnu(s)")
+    print(_tr("py.oar2glb.var_region_0_objet_s_replace", moved, len(used), lost))
 
 
 # ---------- 2. lanceur culture invariante ----------
@@ -558,7 +575,7 @@ def ensure_config(convoar, launcher):
     dst = launcher.with_name("convoar_inv.exe.config")
     if not dst.exists() or dst.read_text(encoding="utf-8-sig") != txt:
         dst.write_text(txt, encoding="utf-8")
-        print(f"[lanceur] {dst.name} mis à jour (loadFromRemoteSources)")
+        print(_tr("py.oar2glb.lanceur_0_mis_a_jour_loadfromremotesources", dst.name))
 
 
 def ensure_launcher(convoar):
@@ -571,30 +588,30 @@ def ensure_launcher(convoar):
     csc = next((p for p in (Path(win, r"Microsoft.NET\Framework64\v4.0.30319\csc.exe"),
                             Path(win, r"Microsoft.NET\Framework\v4.0.30319\csc.exe")) if p.exists()), None)
     if not csc:
-        sys.exit("[ERREUR] csc.exe (.NET Framework 4) introuvable")
+        sys.exit(_tr("py.oar2glb.erreur_csc_exe_net_framework_4"))
     plat = pe_platform(convoar)
     src = convoar.with_name("convoar_inv.cs")
     src.write_text(LAUNCHER_CS, encoding="utf-8")
     r = subprocess.run([str(csc), "/nologo", "/target:exe", f"/platform:{plat}", f"/out:{launcher}", str(src)],
                        capture_output=True, text=True)
     if r.returncode:
-        sys.exit(f"[ERREUR] compilation du lanceur :\n{r.stdout}{r.stderr}")
+        sys.exit(_tr("py.oar2glb.erreur_compilation_du_lanceur_0_1", r.stdout, r.stderr))
     ensure_config(convoar, launcher)
-    print(f"[lanceur] {launcher} compilé ({plat})")
+    print(_tr("py.oar2glb.lanceur_0_compile_1", launcher, plat))
     return launcher
 
 
 def run_convoar(convoar, oar, outdir):
     exe = ensure_launcher(convoar) if os.name == "nt" else Path(convoar)
     args = [str(exe), "--outputdir", outdir.name, oar.name]   # options AVANT le fichier
-    print("[convoar]", " ".join(f'"{a}"' if " " in a else a for a in args))
+    print(_tr("py.oar2glb.convoar"), " ".join(f'"{a}"' if " " in a else a for a in args))
     enc = "oem" if os.name == "nt" else "utf-8"
     p = subprocess.Popen(args, cwd=oar.parent, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                          text=True, encoding=enc, errors="replace")
     for line in p.stdout:
         print(line.rstrip())
     p.wait()
-    print(f"[convoar] code retour {p.returncode}")
+    print(_tr("py.oar2glb.convoar_code_retour_0", p.returncode))
 
 
 # ---------- 3. lecture + contrôle ----------
@@ -618,7 +635,7 @@ def load_gltf(path):
         return json.loads(txt)
     except json.JSONDecodeError as e:
         line = txt.splitlines()[e.lineno - 1] if e.lineno <= len(txt.splitlines()) else ""
-        sys.exit(f"[ERREUR] .gltf invalide : {e}\n  ligne {e.lineno} : {line.strip()[:120]}")
+        sys.exit(_tr("py.oar2glb.erreur_gltf_invalide_0_ligne_1", e, e.lineno, line.strip()[:120]))
 
 
 def check(g):
@@ -633,7 +650,7 @@ def check(g):
             if k in a and len(a[k]) != tl.get(a["type"], len(a[k])):
                 errs.append(f"accessor {i} {k} = {a[k]}")
     if errs:
-        sys.exit(f"[ERREUR] {len(errs)} vecteurs de mauvaise taille : nombres écrits avec virgule décimale.\n  "
+        sys.exit(_tr("py.oar2glb.erreur_0_vecteurs_de_mauvaise_taille", len(errs))
                  + "\n  ".join(errs[:5]))
 
 
@@ -759,9 +776,9 @@ def match_nodes(g, scan):
         for p in grp["parts"]:
             cand, how = [], None
             if p["uuid"] in uu:
-                cand, how = uu[p["uuid"]], "UUID du prim"
+                cand, how = uu[p["uuid"]], _tr("py.oar2glb.uuid_du_prim")
             elif p["mesh"] and p["mesh"] in uu:
-                cand, how = uu[p["mesh"]], "UUID du mesh"
+                cand, how = uu[p["mesh"]], _tr("py.oar2glb.uuid_du_mesh")
             elif p["name"] in names:
                 cand, how = names[p["name"]], "nom + position"
             if not cand:
@@ -839,12 +856,12 @@ def remove_invisible(g, scan, match):
     for grp in scan["groups"]:
         for p in grp["parts"]:
             if p["uuid"] in match and (p["invisible"] or p["uuid"] in boxes):
-                victims.setdefault(match[p["uuid"]][0], "boîte racine d'animesh" if p["uuid"] in boxes and not p["invisible"] else "transparent (OAR)")
+                victims.setdefault(match[p["uuid"]][0], _tr("py.oar2glb.boite_racine_d_animesh") if p["uuid"] in boxes and not p["invisible"] else "transparent (OAR)")
     for i, n in enumerate(g.get("nodes", [])):
         if i not in victims and node_all_invisible(g, n, cache):
-            victims[i] = "matériaux transparents (GLB)"
+            victims[i] = _tr("py.oar2glb.materiaux_transparents_glb")
     for i in sorted(victims):
-        print(f"[invisible] node {i} '{g['nodes'][i].get('name', '?')}' retiré : {victims[i]}")
+        print(_tr("py.oar2glb.invisible_node_0_1_retire_2", i, g['nodes'][i].get('name', '?'), victims[i]))
         remove_node(g, i)
     return len(victims)
 
@@ -894,7 +911,7 @@ class ExtraBuffer:
 def read_vec3(g, base, cache, ai):
     a = g["accessors"][ai]
     if a.get("componentType") != 5126 or a.get("type") != "VEC3" or "sparse" in a or "bufferView" not in a:
-        raise ValueError(f"accesseur {ai} non géré (float VEC3 simple attendu)")
+        raise ValueError(_tr("py.oar2glb.accesseur_0_non_gere_float_vec3", ai))
     bv = g["bufferViews"][a["bufferView"]]
     bi = bv.get("buffer", 0)
     if bi not in cache:
@@ -919,8 +936,8 @@ def rigged_scale_mode(node, scale):
     if "matrix" in node:
         s = mat_trs(node["matrix"])[2]
     if s and any(abs(v - 1) > 1e-4 for v in s):
-        return "nœud"
-    return "cuite" if any(abs(v - 1) > 1e-4 for v in exp) else "aucune"
+        return _tr("py.oar2glb.nud")
+    return "cuite" if any(abs(v - 1) > 1e-4 for v in exp) else _tr("py.oar2glb.aucune")
 
 
 def union_domain(dom):
@@ -935,7 +952,7 @@ def union_domain(dom):
 def read_acc(g, base, cache, ai, n):
     a = g["accessors"][ai]
     if a.get("componentType") != 5126 or a.get("type") != f"VEC{n}" or "sparse" in a or "bufferView" not in a:
-        raise ValueError(f"accesseur {ai} non géré")
+        raise ValueError(_tr("py.oar2glb.accesseur_0_non_gere", ai))
     bv = g["bufferViews"][a["bufferView"]]
     bi = bv.get("buffer", 0)
     if bi not in cache:
@@ -952,15 +969,15 @@ def rig_mesh(g, base, cache, part, bsm, ni, raw):
     # Les matériaux viennent du nœud GLB (face i du mesh = primitive i). -> (mesh, points, "asset") ou message d'erreur
     node = g["nodes"][ni]
     if "mesh" not in node:
-        return "le nœud n'a pas de mesh"
+        return _tr("py.oar2glb.le_nud_n_a_pas_de")
     geo = llmesh_geometry(raw) if raw else None
     if not geo or not any(geo):
-        return "géométrie du .llmesh illisible"
+        return _tr("py.oar2glb.geometrie_du_llmesh_illisible")
     lin = [[bsm[0], bsm[4], bsm[8]], [bsm[1], bsm[5], bsm[9]], [bsm[2], bsm[6], bsm[10]]]
     t = bsm[12:15]
     li = inv3(lin)
     if li is None:
-        return "bind_shape_matrix non inversible"
+        return _tr("py.oar2glb.bind_shape_matrix_non_inversible")
     old = g["meshes"][node["mesh"]]
     oprims = old.get("primitives", [])
     prims, allp, nv = [], [], 0
@@ -1000,13 +1017,11 @@ def rig_mesh(g, base, cache, part, bsm, ni, raw):
         allp += pts
         nv += len(pts)
     if not allp:
-        return "aucune géométrie"
+        return _tr("py.oar2glb.aucune_geometrie")
     mesh = {k: v for k, v in old.items() if k != "primitives"}
     mesh["primitives"] = prims
     oldn = sum(g["accessors"][pr["attributes"]["POSITION"]]["count"] for pr in oprims if "POSITION" in pr.get("attributes", {}))
-    print(f"[riggé] '{part['name']}' reconstruit depuis l'OAR : {len(prims)} face(s), {nv} sommets, {sum(len(p['_idx']) for p in prims) // 3} triangles "
-          f"(convoar : {len(oprims)} primitive(s), {oldn} sommets), échelle du prim ignorée {fmt3(part['scale'] or [1, 1, 1])}, "
-          f"échelle de bind_shape {fmt3([math.sqrt(sum(bsm[c * 4 + r] ** 2 for r in range(3))) for c in range(3)])}")
+    print(_tr("py.oar2glb.rigge_0_reconstruit_depuis_l_oar", part['name'], len(prims), nv, sum(len(p['_idx']) for p in prims) // 3, len(oprims), oldn, fmt3(part['scale'] or [1, 1, 1]), fmt3([math.sqrt(sum(bsm[c * 4 + r] ** 2 for r in range(3))) for c in range(3)])))
     return mesh, allp, "asset"
 
 
@@ -1048,7 +1063,7 @@ def report_buried(g):
         inside = sorted(((math.prod(b[1][k] - b[0][k] for k in range(3)), i) for i, b in boxes.items()
                          if all(b[0][k] <= c[k] <= b[1][k] for k in range(3))))
         txt = ", ".join(f"'{g['nodes'][i].get('name', '?')[:30]}' (sommet {boxes[i][1][1]:.1f} m)" for _, i in inside[:3])
-        print(f"[contrôle] '{name}' pieds à {ground:.2f} m, centre {c[1]:.2f} m : " + (f"dans la boîte de {len(inside)} objet(s) : {txt}" if inside else "libre (aucune boîte d'objet ne le contient)"))
+        print(_tr("py.oar2glb.controle_0_pieds_a_1_2f", name, ground, c[1]) + (_tr("py.oar2glb.dans_la_boite_de_0_objet", len(inside), txt) if inside else _tr("py.oar2glb.libre_aucune_boite_d_objet_ne")))
 
 
 def add_beacons(g, ebuf):
@@ -1069,7 +1084,7 @@ def add_beacons(g, ebuf):
     for name, gx, gy, ground, ext in PLACED:
         g["nodes"].append({"name": f"REPERE {name} ({ext[0]:.1f} x {ext[2]:.1f} x {ext[1]:.1f} m)", "mesh": mi, "translation": [gx, ground, -gy]})
         g["scenes"][0]["nodes"].append(len(g["nodes"]) - 1)
-    print(f"[repères] {len(PLACED)} mât(s) rouge(s) de 15 m ajouté(s), un par animal posé")
+    print(_tr("py.oar2glb.reperes_0_mat_s_rouge_s", len(PLACED)))
 
 
 MAX_ANIMAL, MIN_ANIMAL = 12.0, 0.1       # garde-fou : un animal fait entre 10 cm et 12 m dans sa plus grande dimension
@@ -1083,7 +1098,7 @@ def place_rigged_group(g, base, cache, extra, tree, grp, items):
     for part, bsm, ni, raw in items:
         r = rig_mesh(g, base, cache, part, bsm, ni, raw)
         if isinstance(r, str):
-            print(f"[riggé] '{part['name']}' : {r}, non corrigé")
+            print(_tr("py.oar2glb.rigge_0_1_non_corrige", part['name'], r))
         else:
             built.append((part, ni) + r)
     if not built:
@@ -1094,8 +1109,7 @@ def place_rigged_group(g, base, cache, extra, tree, grp, items):
     root = grp["parts"][0]
     ext = [hi[k] - lo[k] for k in range(3)]
     if max(ext) > MAX_ANIMAL or max(ext) < MIN_ANIMAL:
-        print(f"[riggé] '{root['name']}' : taille obtenue {ext[0]:.2f} x {ext[2]:.2f} x {ext[1]:.2f} m implausible "
-              f"(hors de {MIN_ANIMAL:g} à {MAX_ANIMAL:g} m), laissé tel que convoar l'a produit")
+        print(_tr("py.oar2glb.rigge_0_taille_obtenue_1_2f", root['name'], ext[0], ext[2], ext[1], MIN_ANIMAL, MAX_ANIMAL))
         return 0
     cx, cz = (lo[0] + hi[0]) / 2, (lo[2] + hi[2]) / 2          # centré à l'horizontale sur la racine
     gx, gy, gz = root["gpos"]
@@ -1109,9 +1123,9 @@ def place_rigged_group(g, base, cache, extra, tree, grp, items):
     yoff = min(c[1] for c in corners)
     # sol : le dessous de la boîte racine (prim simple posé au sol) ; racine elle-même riggée : sa position
     if root["mesh"] is None and root["scale"]:
-        ground, src = gz - root["scale"][2] / 2, "dessous de la boîte racine"
+        ground, src = gz - root["scale"][2] / 2, _tr("py.oar2glb.dessous_de_la_boite_racine")
     else:
-        ground, src = gz, "altitude de la racine"
+        ground, src = gz, _tr("py.oar2glb.altitude_de_la_racine")
     for part, ni, mesh, pts, mode in built:
         for pr in mesh["primitives"]:
             if "_pts" in pr:
@@ -1138,8 +1152,7 @@ def place_rigged_group(g, base, cache, extra, tree, grp, items):
         tree._w.clear()
     ext = [hi[k] - lo[k] for k in range(3)]
     PLACED.append((root["name"], gx, gy, ground, ext))
-    print(f"[riggé] '{root['name']}' : {len(built)} morceau(x), échelle du prim {built[0][4]}, {ext[0]:.2f} x {ext[2]:.2f} x {ext[1]:.2f} m "
-          f"(L x l x h), centré en ({gx:.1f}, {gy:.1f}), pieds à {ground:.2f} m ({src})")
+    print(_tr("py.oar2glb.rigge_0_1_morceau_x_echelle", root['name'], len(built), built[0][4], ext[0], ext[2], ext[1], gx, gy, ground, src))
     return len(built)
 
 
@@ -1153,10 +1166,10 @@ def repair(g, base, scan, keep_invisible, reperes=False):
             sk = scan["skins"].get(p["mesh"]) if p["mesh"] else None
             if not sk or not sk["bsm"]:
                 if sk and sk["err"]:
-                    print(f"[riggé] '{p['name']}' : {sk['err']}, ignoré")
+                    print(_tr("py.oar2glb.rigge_0_1_ignore", p['name'], sk['err']))
                 continue
             if p["uuid"] not in match:
-                print(f"[riggé] '{p['name']}' ({p['uuid']}) : nœud GLB introuvable, non corrigé (voir --diag)")
+                print(_tr("py.oar2glb.rigge_0_1_nud_glb_introuvable", p['name'], p['uuid']))
                 continue
             items.append((p, sk["bsm"], match[p["uuid"]][0], sk.get("raw")))
         if items:
@@ -1168,7 +1181,7 @@ def repair(g, base, scan, keep_invisible, reperes=False):
         n_inv = remove_invisible(g, scan, match)
     if PLACED:
         report_buried(g)
-    print(f"[correctif] {n_rig} mesh(es) riggé(s) remis à l'échelle, {n_inv} prim(s) invisible(s) retiré(s)")
+    print(_tr("py.oar2glb.correctif_0_mesh_es_rigge_s", n_rig, n_inv))
     return n_rig, n_inv
 
 
@@ -1179,7 +1192,7 @@ def read_glb_json(path):
         return load_gltf(path)
     d = path.read_bytes()
     if d[:4] != b"glTF":
-        sys.exit(f"[ERREUR] {path} n'est pas un GLB")
+        sys.exit(_tr("py.oar2glb.erreur_0_n_est_pas_un", path))
     ln, kind = struct.unpack_from("<I4s", d, 12)
     return json.loads(d[20:20 + ln].decode("utf-8"))
 
@@ -1192,8 +1205,7 @@ def diag(scan, g, glb_label, base=None):
     match = match_nodes(g, scan) if g else {}
     tree = Tree(g) if g else None
     parts = [(grp, p) for grp in scan["groups"] for p in grp["parts"]]
-    print(f"[diag] {len(scan['groups'])} objet(s), {len(parts)} partie(s) ; terrain {'oui' if scan['terrain'] else 'non'} ; "
-          f"{'GLB ' + glb_label if g else 'pas de GLB : correspondance non évaluée (--glb)'}")
+    print(_tr("py.oar2glb.diag_0_objet_s_1_partie", len(scan['groups']), len(parts), 'oui' if scan['terrain'] else 'non', 'GLB ' + glb_label if g else _tr('py.oar2glb.pas_de_glb_correspondance_non_evaluee')))
     nr = ni = nm = 0
     boxes = rig_box_roots(scan)
     for k, (grp, p) in enumerate(parts, 1):
@@ -1201,9 +1213,9 @@ def diag(scan, g, glb_label, base=None):
         if sk and sk["bsm"]:
             rig, nr = "oui", nr + 1
         elif sk:
-            rig = "oui (" + (sk["err"] or "sans bind_shape_matrix") + ")"
+            rig = "oui (" + (sk["err"] or _tr("py.oar2glb.sans_bind_shape_matrix")) + ")"
         else:
-            rig = "non" if p["mesh"] else "non (pas un mesh)"
+            rig = "non" if p["mesh"] else _tr("py.oar2glb.non_pas_un_mesh")
         bsm = sk["bsm"] if sk and sk["bsm"] else None
         bs = fmt3([math.sqrt(sum(bsm[c * 4 + r] ** 2 for r in range(3))) for c in range(3)]) if bsm else "-"
         ni += p["invisible"]
@@ -1213,24 +1225,21 @@ def diag(scan, g, glb_label, base=None):
                 nm += 1
                 node = g["nodes"][n]
                 sc = node.get("scale") or (mat_trs(node["matrix"])[2] if "matrix" in node else None)
-                gl = f"nœud {n} '{node.get('name', '')}' [{how}] ; échelle du nœud {fmt3(sc) if sc else 'aucune'}" + (f" ; échelle du prim appliquée : {rigged_scale_mode(node, p['scale'] or [1, 1, 1])}" if bsm else "")
+                gl = _tr("py.oar2glb.nud_0_1_2_echelle_du", n, node.get('name', ''), how, fmt3(sc) if sc else 'aucune') + (_tr("py.oar2glb.echelle_du_prim_appliquee_0", rigged_scale_mode(node, p['scale'] or [1, 1, 1])) if bsm else "")
             else:
-                gl = "nœud introuvable"
+                gl = _tr("py.oar2glb.nud_introuvable")
         else:
             gl = "-"
         racine = "racine" if p is grp["parts"][0] else "enfant"
-        print(f"{k:5d} | {p['name'] or '(sans nom)'} | {p['uuid']} | {racine} | riggé : {rig} | échelle du prim {fmt3(p['scale'])} | "
-              f"échelle bind_shape {bs} | transparent : {'oui' if p['invisible'] else 'non'} | "
-              f"boîte racine d'animesh : {'oui' if p['uuid'] in boxes else 'non'} | GLB : {gl}")
+        print(_tr("py.oar2glb.0_5d_1_2_3_rigge", k, p['name'] or '(sans nom)', p['uuid'], racine, rig, fmt3(p['scale']), bs, 'oui' if p['invisible'] else 'non', 'oui' if p['uuid'] in boxes else 'non', gl))
         if bsm or p["uuid"] in boxes or p["invisible"]:
             gz = terrain_height(scan["terrain"], p["gpos"][0], p["gpos"][1])
-            print(f"      position {fmt3(p['gpos'])} ; terrain {'%.2f m' % gz if gz is not None else 'inconnu'} ; "
-                  f"{p['tex']}" + (f" ; translation bind_shape {fmt3(bsm[12:15])}" if bsm else ""))
+            print(_tr("py.oar2glb.diag_pos", fmt3(p['gpos']), ('%.2f m' % gz) if gz is not None else _tr("py.oar2glb.unknown"), p['tex']) + (_tr("py.oar2glb.translation_bind_shape_0", fmt3(bsm[12:15])) if bsm else ""))
             if bsm:
                 sk = scan["skins"][p["mesh"]]
-                print(f"      bind_shape_matrix : {[round(v, 4) for v in bsm]}")
+                print(_tr("py.oar2glb.bind_shape_matrix_0", [round(v, 4) for v in bsm]))
                 ud = union_domain(sk["dom"])
-                print(f"      domaine de position du mesh ({len(sk['dom'])} sous-maillage(s)) : " + (f"{fmt3(ud[0])} .. {fmt3(ud[1])}" if ud else "illisible"))
+                print(_tr("py.oar2glb.domaine_de_position_du_mesh_0", len(sk['dom'])) + (f"{fmt3(ud[0])} .. {fmt3(ud[1])}" if ud else _tr("py.oar2glb.unreadable")))
                 if g and base is not None and p["uuid"] in match and "mesh" in g["nodes"][match[p["uuid"]][0]]:
                     try:
                         pts, cc = [], {}
@@ -1242,11 +1251,10 @@ def diag(scan, g, glb_label, base=None):
                         ac = g["accessors"][pa]
                         bv = g["bufferViews"][ac["bufferView"]]
                         bf = g["buffers"][bv.get("buffer", 0)]
-                        print(f"      accesseur POSITION {ac} ; bufferView {bv} ; buffer {str(bf.get('uri'))[:60]} {bf.get('byteLength')} o ; 3 premiers sommets {pts[:3]}")
-                        print(f"      sommets du GLB (axes OpenSim x, y, z) : de {fmt3([lo_[0], -hi_[2], lo_[1]])} à {fmt3([hi_[0], -lo_[2], hi_[1]])} "
-                              f"soit {fmt3([hi_[0] - lo_[0], hi_[2] - lo_[2], hi_[1] - lo_[1]])} m, {len(pts)} sommets")
+                        print(_tr("py.oar2glb.accesseur_position_0_bufferview_1_buffer", ac, bv, str(bf.get('uri'))[:60], bf.get('byteLength'), pts[:3]))
+                        print(_tr("py.oar2glb.sommets_du_glb_axes_opensim_x", fmt3([lo_[0], -hi_[2], lo_[1]]), fmt3([hi_[0], -lo_[2], hi_[1]]), fmt3([hi_[0] - lo_[0], hi_[2] - lo_[2], hi_[1] - lo_[1]]), len(pts)))
                     except Exception as e:
-                        print(f"      sommets du GLB illisibles ({e})")
+                        print(_tr("py.oar2glb.sommets_du_glb_illisibles_0", e))
             if g and p["uuid"] in match:
                 node = g["nodes"][match[p["uuid"]][0]]
                 if "mesh" in node:
@@ -1258,18 +1266,16 @@ def diag(scan, g, glb_label, base=None):
                             src = g["textures"][ti].get("source")
                             if src is not None and src < len(g.get("images", [])):
                                 im = str(g["images"][src].get("uri") or g["images"][src].get("name") or "")[:60]
-                        print(f"      matériau GLB : {m.get('name')!r} couleur {(m.get('pbrMetallicRoughness') or {}).get('baseColorFactor')} "
-                              f"mode {m.get('alphaMode', 'OPAQUE')} image {im or '-'}")
-    print(f"[diag] riggés : {nr} ; transparents : {ni} ; boîtes racines d'animesh : {len(boxes)} ; nœuds GLB trouvés : {nm}/{len(parts)}")
+                        print(_tr("py.oar2glb.materiau_glb_0_r_couleur_1", m.get('name'), (m.get('pbrMetallicRoughness') or {}).get('baseColorFactor'), m.get('alphaMode', 'OPAQUE'), im or '-'))
+    print(_tr("py.oar2glb.diag_rigges_0_transparents_1_boites", nr, ni, len(boxes), nm, len(parts)))
     if g:
         cache, nv = {}, 0
         for n in g.get("nodes", []):
             nv += node_all_invisible(g, n, cache)
-        print(f"[diag] nœuds GLB dont tous les matériaux sont transparents : {nv}")
-        print(f"[diag] UUID lisibles dans les nœuds GLB : {len(node_uuids(g))} ; exemples de nœuds :")
+        print(_tr("py.oar2glb.diag_nuds_glb_dont_tous_les", nv))
+        print(_tr("py.oar2glb.diag_uuid_lisibles_dans_les_nuds", len(node_uuids(g))))
         for i, n in enumerate(g.get("nodes", [])[:6]):
-            print(f"       node {i} : nom={n.get('name')!r} extras={json.dumps(n.get('extras'))[:100]} "
-                  f"clés={sorted(k for k in n if k not in ('name', 'extras'))}")
+            print(_tr("py.oar2glb.node_0_nom_1_r_extras", i, n.get('name'), json.dumps(n.get('extras'))[:100], sorted(k for k in n if k not in ('name', 'extras'))))
 
 
 # ---------- 4. hors région ----------
@@ -1284,7 +1290,7 @@ def drop_far(g, vmax, size):
             if g["nodes"][i].get("extras", {}).get("terrain"):
                 keep.append(i)         # patches de terrain : jamais retirés
             elif not (-10 <= p[0] <= sx + 10 and -10 <= -p[2] <= sy + 10 and abs(p[1]) <= vmax):
-                print(f"[hors région] node {i} '{g['nodes'][i].get('name', '?')}' à {[round(c, 1) for c in p]} retiré")
+                print(_tr("py.oar2glb.hors_region_node_0_1_a", i, g['nodes'][i].get('name', '?'), [round(c, 1) for c in p]))
                 n += 1
             else:
                 keep.append(i)
@@ -1293,7 +1299,7 @@ def drop_far(g, vmax, size):
     if pts:
         lo = [round(min(p[k] for p in pts), 1) for k in range(3)]
         hi = [round(max(p[k] for p in pts), 1) for k in range(3)]
-        print(f"[étendue] {len(pts)} objets de {lo} à {hi}  (glTF : X, hauteur, -Y)")
+        print(_tr("py.oar2glb.etendue_0_objets_de_1_a", len(pts), lo, hi))
     return n
 
 
@@ -1327,16 +1333,16 @@ def read_uri(uri, base, image=False):
     hit = find_file(base, name)
     if hit:
         if hit.name != Path(name).name or hit.parent != (base / name).parent:
-            print(f"[GLB] {name} -> {hit.name}")
+            print(_tr("py.oar2glb.glb_0_1", name, hit.name))
         return hit.read_bytes()
     if image:
         MISSING.append(name)
         return GREY_PNG
     files = sorted(base.rglob("*"))
     bufs = [x for x in files if x.suffix.lower() == ".buf"]
-    sys.exit(f"[ERREUR] {name} introuvable (annoncé par le .gltf).\n  {base} contient {len(files)} fichier(s), dont {len(bufs)} .buf : "
+    sys.exit(_tr("py.oar2glb.erreur_0_introuvable_annonce_par_le", name, base, len(files), len(bufs))
              + ", ".join(f"{x.name} ({x.stat().st_size} o)" for x in bufs[:10])
-             + f"\n  Espace libre sur {base.anchor} : {shutil.disk_usage(base).free / 2**30:.1f} Go")
+             + _tr("py.oar2glb.espace_libre_sur_0_1_1f", base.anchor, shutil.disk_usage(base).free / 2**30))
 
 
 MISSING = []
@@ -1348,9 +1354,9 @@ def report_missing(base, total):
     from collections import Counter
     files = [f for f in Path(base).rglob("*") if f.is_file()]
     ext = Counter(f.suffix.lower() for f in files)
-    print(f"[GLB] {len(MISSING)} texture(s) absente(s) sur {total}, remplacée(s) par du gris. Exemples : " + ", ".join(MISSING[:3]))
-    print(f"[GLB] {base} contient {len(files)} fichier(s) : " + ", ".join(f"{k or '(sans extension)'} {v}" for k, v in ext.most_common(8)))
-    print("[GLB] fichiers images présents, exemples : " + ", ".join(f.name for f in files if f.suffix.lower() in (".jpg", ".png"))[:300])
+    print(_tr("py.oar2glb.glb_0_texture_s_absente_s", len(MISSING), total) + ", ".join(MISSING[:3]))
+    print(_tr("py.oar2glb.glb_0_contient_1_fichier_s", base, len(files)) + ", ".join(f"{k or _tr('py.oar2glb.sans_extension')} {v}" for k, v in ext.most_common(8)))
+    print(_tr("py.oar2glb.glb_fichiers_images_presents_exemples") + ", ".join(f.name for f in files if f.suffix.lower() in (".jpg", ".png"))[:300])
 
 
 def pad4(b, fill=b"\x00"):
@@ -1517,49 +1523,48 @@ def terrain_decision(g, terrain, mode):
     # (action, nœuds convoar à retirer, message) ; action : "ajouter" ou "rien"
     n = terrain[0]
     if any(x.get("name", "").startswith("Terrain ") and x.get("extras", {}).get("terrain") for x in g.get("nodes", [])):
-        return "rien", [], "les patches de terrain sont déjà dans ce GLB : inchangé"
+        return _tr("py.oar2glb.rien"), [], _tr("py.oar2glb.les_patches_de_terrain_sont_deja")
     tree = Tree(g)
     anciens = [i for i, x in enumerate(g.get("nodes", [])) if x.get("name") == "Terrain" and "mesh" in x]
     if mode == "oui":
-        return "ajouter", anciens, "forcé (--terrain oui)"
+        return "ajouter", anciens, _tr("py.oar2glb.force_terrain_oui")
     if not anciens:
-        return "rien", [], "pas de nœud « Terrain » de convoar : inchangé (--terrain oui pour ajouter les patches quand même)"
+        return _tr("py.oar2glb.rien"), [], _tr("py.oar2glb.pas_de_nud_terrain_de_convoar")
     surf, couvert = (n - 1.0) ** 2, 0.0
     for i in anciens:
         b = terrain_boite(g, tree, i)
         if b is None:
-            return "rien", [], "nœud « Terrain » sans min/max d'accesseur : couverture inconnue, inchangé (--terrain oui pour forcer)"
+            return _tr("py.oar2glb.rien"), [], _tr("py.oar2glb.nud_terrain_sans_min_max_d")
         (x0, _, z0), (x1, _, z1) = b
         couvert += max(0.0, min(x1, n - 1.0) - max(x0, 0.0)) * max(0.0, min(z1, 0.0) - max(z0, -(n - 1.0)))
     part = couvert / surf
     if part >= TERRAIN_COUVERT_MIN:
-        return "rien", [], f"terrain de convoar complet (couvre {part * 100:.1f} % de la carte) : inchangé"
-    return "ajouter", anciens, f"terrain de convoar incomplet (couvre {part * 100:.1f} % de la carte)"
+        return _tr("py.oar2glb.rien"), [], _tr("py.oar2glb.terrain_de_convoar_complet_couvre_0", part * 100)
+    return "ajouter", anciens, _tr("py.oar2glb.terrain_de_convoar_incomplet_couvre_0", part * 100)
 
 
 def terrain_eau(scan):
     w = scan.get("water")
-    return (w[0], "lu dans " + w[1]) if w else (EAU_DEFAUT, "défaut d'OpenSim, aucun WaterHeight dans settings/")
+    return (w[0], _tr("py.oar2glb.lu_dans") + w[1]) if w else (EAU_DEFAUT, _tr("py.oar2glb.defaut_d_opensim_aucun_waterheight_dans"))
 
 
 def terrain_resume(terrain, scan, P, td, t0):
     n = terrain[0]
     eau = terrain_eau(scan)
-    print(f"[terrain] carte {n} x {n} échantillons (1 m) ; niveau d'eau {eau[0]:g} m ({eau[1]}) ; "
-          f"{len(td['nodes'])} patch(es) de {P} m ; {td['vertices']} sommets ; {len(td['blob']) / 1048576:.1f} Mo ajoutés ; {time.time() - t0:.1f} s")
+    print(_tr("py.oar2glb.terrain_carte_0_x_1_echantillons", n, n, eau[0], eau[1], len(td['nodes']), P, td['vertices'], len(td['blob']) / 1048576, time.time() - t0))
 
 
 def terrain_prepare(scan, mode):
     # contrôles communs ; retourne la carte ou None (message déjà écrit)
     if mode == "non":
-        print("[terrain] désactivé (--terrain non)")
+        print(_tr("py.oar2glb.terrain_desactive_terrain_non"))
         return None
     t = scan.get("terrain")
     if not t or t[0] < 2:
-        print("[terrain] cet OAR n'a pas de carte de hauteurs (terrains/*.r32) : terrain non généré, rien n'est modifié")
+        print(_tr("py.oar2glb.terrain_cet_oar_n_a_pas"))
         return None
     if t[0] != scan["size"][0] or t[0] != scan["size"][1]:
-        print(f"[terrain] attention : carte de {t[0]} x {t[0]} échantillons pour une région de {scan['size'][0]:g} x {scan['size'][1]:g} m")
+        print(_tr("py.oar2glb.terrain_attention_carte_de_0_x", t[0], t[0], scan['size'][0], scan['size'][1]))
     return t
 
 
@@ -1570,7 +1575,7 @@ def terrain_pipeline(g, scan, mode, P):
     if not terrain:
         return
     action, anciens, msg = terrain_decision(g, terrain, mode)
-    print(f"[terrain] {msg}")
+    print(_tr("py.oar2glb.terrain_0", msg))
     if action == "rien":
         return
     td = terrain_donnees(terrain, terrain_eau(scan)[0], P)
@@ -1581,7 +1586,7 @@ def terrain_pipeline(g, scan, mode, P):
     g["buffers"].append({"byteLength": len(td["blob"]), "uri": "data:application/octet-stream;base64," + base64.b64encode(bytes(td["blob"])).decode()})
     terrain_resume(terrain, scan, P, td, t0)
     if anciens:
-        print(f"[terrain] {len(anciens)} nœud(s) « Terrain » de convoar retiré(s) de la scène")
+        print(_tr("py.oar2glb.terrain_0_nud_s_terrain_de", len(anciens)))
 
 
 def terrain_seul(glb, scan, out, mode, P, chunk=LECTURE):
@@ -1601,7 +1606,7 @@ def terrain_seul(glb, scan, out, mode, P, chunk=LECTURE):
         taille = os.fstat(f.fileno()).st_size
         mag, ver, _ = struct.unpack("<4sII", lire(12))
         if mag != b"glTF" or ver != 2:
-            sys.exit(f"[ERREUR] {glb} n'est pas un GLB version 2")
+            sys.exit(_tr("py.oar2glb.erreur_0_n_est_pas_un_2", glb))
         chunks, pos = [], 12
         while pos + 8 <= taille:
             f.seek(pos)
@@ -1609,13 +1614,13 @@ def terrain_seul(glb, scan, out, mode, P, chunk=LECTURE):
             chunks.append((kind, pos + 8, ln))
             pos += 8 + ln + (-ln % 4)
         if not chunks or chunks[0][0] != b"JSON":
-            sys.exit(f"[ERREUR] {glb} : le premier chunk n'est pas JSON")
+            sys.exit(_tr("py.oar2glb.erreur_0_le_premier_chunk_n", glb))
         f.seek(chunks[0][1])
         g = json.loads(lire(chunks[0][2]).decode("utf-8"))
         binc = next((c for c in chunks if c[0] == b"BIN\x00"), None)
         autres = [c for c in chunks[1:] if c is not binc]
         action, anciens, msg = terrain_decision(g, terrain, mode)
-        print(f"[terrain] {msg}")
+        print(_tr("py.oar2glb.terrain_0", msg))
         if action == "rien":
             return None
         td = terrain_donnees(terrain, terrain_eau(scan)[0], P)
@@ -1624,7 +1629,7 @@ def terrain_seul(glb, scan, out, mode, P, chunk=LECTURE):
         bin_len = binc[2] if binc else 0
         base = bin_len + (-bin_len % 4)
         if binc and (not g.get("buffers") or "uri" in g["buffers"][0]):
-            sys.exit(f"[ERREUR] {glb} : le tampon 0 n'est pas celui du chunk BIN")
+            sys.exit(_tr("py.oar2glb.erreur_0_le_tampon_0_n", glb))
         if not g.get("buffers"):
             g["buffers"] = [{"byteLength": 0}]
         terrain_ajouter(g, td, 0, base)
@@ -1643,7 +1648,7 @@ def terrain_seul(glb, scan, out, mode, P, chunk=LECTURE):
                     while longueur > 0:
                         d = lire(min(chunk, longueur))
                         if not d:
-                            sys.exit(f"[ERREUR] {glb} tronqué")
+                            sys.exit(_tr("py.oar2glb.erreur_0_tronque", glb))
                         o.write(d)
                         longueur -= len(d)
                 if binc:
@@ -1658,46 +1663,46 @@ def terrain_seul(glb, scan, out, mode, P, chunk=LECTURE):
         finally:
             part.unlink(missing_ok=True)
     terrain_resume(terrain, scan, P, td, t0)
-    print(f"[terrain] {len(anciens)} nœud(s) « Terrain » retiré(s) de la scène (leurs données restent dans le GLB, inutilisées) ; "
-          f"{mesures['lu'] / 1048576:.1f} Mo lus, par morceaux de {chunk // 1024} Ko au plus")
+    print(_tr("py.oar2glb.terrain_0_nud_s_terrain_retire", len(anciens), mesures['lu'] / 1048576, chunk // 1024))
     mesures.update(patches=len(td["nodes"]), sommets=td["vertices"], ajoutes=len(td["blob"]), retires=len(anciens))
     return mesures
 
 
 def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--version", action="version", version=f"oar2glb {VERSION}")
-    ap.add_argument("oar")
-    ap.add_argument("--reencode", action="store_true", help="réencoder les textures J2K avant convoar")
-    ap.add_argument("--max", type=float, default=600.0, help="hauteur max (m) d'un objet racine (skybox au-delà), défaut 600")
-    ap.add_argument("--convoar", default=shutil.which("convoar") or DEFAULT_CONVOAR)
-    ap.add_argument("--keep", action="store_true", help="garder les fichiers intermédiaires")
-    ap.add_argument("--keep-invisible", action="store_true", help="garder les prims entièrement transparents (retirés par défaut)")
-    ap.add_argument("--reperes", action="store_true", help="ajouter un mât rouge de 15 m à chaque animal riggé posé (pour le retrouver dans le viewer)")
-    ap.add_argument("--diag", action="store_true", help="ne rien modifier : lister les objets de l'OAR, leur skin et le nœud GLB correspondant")
-    ap.add_argument("--glb", help="avec --diag : GLB ou .gltf à comparer ; défaut : le .gltf du dossier <oar>-GLTF (conservé par --keep), sinon le .glb voisin")
-    ap.add_argument("--nopause", action="store_true", help="ne pas attendre Entrée à la fin")
+    ap = argparse.ArgumentParser(description=_tr("py.oar2glb.desc"), epilog=_tr("py.oar2glb.epilog"), formatter_class=argparse.RawDescriptionHelpFormatter, add_help=False)
+    i18n_add_common(ap)
+    ap.add_argument("--version", action="version", version=f"oar2glb {VERSION}", help=_tr("py.common.version"))
+    ap.add_argument("oar", help=_tr("py.oar2glb.help.oar"))
+    ap.add_argument("--reencode", action="store_true", help=_tr("py.oar2glb.reencoder_les_textures_j2k_avant_convoar"))
+    ap.add_argument("--max", type=float, default=600.0, help=_tr("py.oar2glb.hauteur_max_m_d_un_objet"))
+    ap.add_argument("--convoar", default=shutil.which("convoar") or DEFAULT_CONVOAR, help=_tr("py.oar2glb.help.convoar"))
+    ap.add_argument("--keep", action="store_true", help=_tr("py.oar2glb.garder_les_fichiers_intermediaires"))
+    ap.add_argument("--keep-invisible", action="store_true", help=_tr("py.oar2glb.garder_les_prims_entierement_transparents_re"))
+    ap.add_argument("--reperes", action="store_true", help=_tr("py.oar2glb.ajouter_un_mat_rouge_de_15"))
+    ap.add_argument("--diag", action="store_true", help=_tr("py.oar2glb.ne_rien_modifier_lister_les_objets"))
+    ap.add_argument("--glb", help=_tr("py.oar2glb.avec_diag_glb_ou_gltf_a"))
+    ap.add_argument("--nopause", action="store_true", help=_tr("py.oar2glb.ne_pas_attendre_entree_a_la"))
     ap.add_argument("--terrain", choices=("auto", "oui", "non"), default="auto",
-                    help="terrain complet depuis la carte de hauteurs : auto = remplace le terrain de convoar s'il couvre moins que la carte (défaut), oui = toujours, non = jamais")
-    ap.add_argument("--terrain-patch", type=int, default=TERRAIN_PATCH, help=f"côté d'un patch de terrain en mètres, 2 à 255 (défaut {TERRAIN_PATCH})")
-    ap.add_argument("--terrain-seul", metavar="GLB", help="ne pas lancer convoar : ajouter le terrain complet à ce GLB (écrit X-terrain.glb, l'original n'est jamais modifié)")
-    ap.add_argument("--sortie", help="avec --terrain-seul : fichier GLB de sortie (défaut : X-terrain.glb à côté de l'original)")
+                    help=_tr("py.oar2glb.terrain_complet_depuis_la_carte_de"))
+    ap.add_argument("--terrain-patch", type=int, default=TERRAIN_PATCH, help=_tr("py.oar2glb.cote_d_un_patch_de_terrain", TERRAIN_PATCH))
+    ap.add_argument("--terrain-seul", metavar="GLB", help=_tr("py.oar2glb.ne_pas_lancer_convoar_ajouter_le"))
+    ap.add_argument("--sortie", help=_tr("py.oar2glb.avec_terrain_seul_fichier_glb_de"))
     a = ap.parse_args()
     if not 2 <= a.terrain_patch <= 255:
-        sys.exit("[ERREUR] --terrain-patch doit être compris entre 2 et 255 (indices 16 bits : (côté + 1)² sommets au plus 65 536)")
+        sys.exit(_tr("py.oar2glb.erreur_terrain_patch_doit_etre_compris"))
 
     oar = Path(a.oar).resolve()
     if not oar.exists():
-        sys.exit(f"[ERREUR] {oar} introuvable")
+        sys.exit(_tr("py.oar2glb.erreur_0_introuvable", oar))
     if a.terrain_seul:
         glb = Path(a.terrain_seul).resolve()
         if not glb.is_file():
-            sys.exit(f"[ERREUR] {glb} introuvable")
+            sys.exit(_tr("py.oar2glb.erreur_0_introuvable", glb))
         out = Path(a.sortie).resolve() if a.sortie else glb.with_name(glb.stem + "-terrain.glb")
         if out == glb:
-            sys.exit("[ERREUR] la sortie ne peut pas être le GLB d'origine (jamais écrasé)")
+            sys.exit(_tr("py.oar2glb.erreur_la_sortie_ne_peut_pas"))
         r = terrain_seul(glb, oar_scan(oar, terrain_seul=True), out, a.terrain, a.terrain_patch)
-        print(f"[OK] {out}" if r else "[terrain] aucun fichier écrit")
+        print(f"[OK] {out}" if r else _tr("py.oar2glb.terrain_aucun_fichier_ecrit"))
         return
     if a.diag:
         scan = oar_scan(oar)
@@ -1706,7 +1711,7 @@ def main():
         diag(scan, read_glb_json(glb) if glb.exists() else None, glb.name, glb.parent if glb.suffix.lower() == ".gltf" else None)
         return
     if not Path(a.convoar).exists():
-        sys.exit(f"[ERREUR] convoar introuvable : {a.convoar} (utilise --convoar)")
+        sys.exit(_tr("py.oar2glb.erreur_convoar_introuvable_0_utilise_convoar", a.convoar))
     scan = oar_scan(oar)
     size, objs = oar_info(scan)
     src, tmp_oar = oar, None
@@ -1727,8 +1732,7 @@ def main():
         miss = missing_images(outdir)
         if not miss:
             break
-        print(f"[convoar] {len(miss)} image(s) annoncée(s) par le .gltf mais absente(s) du dossier (exemples : {', '.join(miss[:2])}) : "
-              f"nouvel essai {essai}/{MAX_RETRY}, les images déjà écrites sont conservées")
+        print(_tr("py.oar2glb.convoar_0_image_s_annoncee_s", len(miss), ', '.join(miss[:2]), essai, MAX_RETRY))
         old = outdir.with_name(outdir.name + f"-essai{essai}")
         shutil.rmtree(old, ignore_errors=True)
         outdir.rename(old)
@@ -1741,13 +1745,13 @@ def main():
                     dst.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copy2(f, dst)
                     n_rec += 1
-        print(f"[convoar] {n_rec} image(s) récupérée(s) de l'essai précédent")
+        print(_tr("py.oar2glb.convoar_0_image_s_recuperee_s", n_rec))
         if not a.keep:
             shutil.rmtree(old, ignore_errors=True)
 
     gltfs = sorted(outdir.glob("*.gltf"), key=lambda p: p.stat().st_mtime)
     if not gltfs:
-        sys.exit(f"[ERREUR] aucun .gltf produit dans {outdir}")
+        sys.exit(_tr("py.oar2glb.erreur_aucun_gltf_produit_dans_0", outdir))
     g = load_gltf(gltfs[-1])
     check(g)
     if objs and any(not (0 <= o["pos"][0] <= 256 and 0 <= o["pos"][1] <= 256) for o in objs):
@@ -1757,8 +1761,7 @@ def main():
     terrain_pipeline(g, scan, a.terrain, a.terrain_patch)      # après drop_far : les patches ne sont jamais retirés
     size = pack_glb(g, outdir, out)
     report_missing(outdir, len(g.get("images", [])))
-    print(f"[OK] {out}  ({size/1048576:.1f} Mo, {len(g.get('meshes', []))} meshes, "
-          f"{len(g.get('images', []))} textures, {n} objet(s) hors région retiré(s))")
+    print(_tr("py.oar2glb.ok_0_1_1f_mo_2", out, size/1048576, len(g.get('meshes', [])), len(g.get('images', [])), n))
     if not a.keep:
         shutil.rmtree(outdir, ignore_errors=True)
         if tmp_oar:
@@ -1777,13 +1780,13 @@ class Tee:
 
 if __name__ == "__main__":
     if "--version" in sys.argv[1:]:      # ni journal ni pause « Entrée »
-        print(f"oar2glb {VERSION}")
+        print(_tr("py.oar2glb.oar2glb_0_2", VERSION))
         sys.exit(0)
     log = Path(__file__).resolve().with_name("oar2glb.diag.log" if "--diag" in sys.argv else "oar2glb.log")
     lf = open(log, "w", encoding="utf-8")
     sys.stdout, sys.stderr = Tee(sys.__stdout__, lf), Tee(sys.__stderr__, lf)
-    print(f"[oar2glb] {VERSION}")
-    print("[args]", sys.argv[1:])
+    print(_tr("py.oar2glb.oar2glb_0", VERSION))
+    print(_tr("py.oar2glb.args"), sys.argv[1:])
     code = 0
     try:
         main()
@@ -1794,7 +1797,7 @@ if __name__ == "__main__":
     except Exception:
         traceback.print_exc()
         code = 1
-    print(f"[log] {log}")
+    print(_tr("py.oar2glb.log_0", log))
     if "--nopause" not in sys.argv and "--terrain-seul" not in sys.argv and sys.stdin and sys.stdin.isatty():
-        input("Entrée pour fermer...")
+        input(_tr("py.oar2glb.entree_pour_fermer"))
     sys.exit(code)

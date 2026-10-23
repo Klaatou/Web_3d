@@ -7,6 +7,7 @@ autonome, modification de <page>.config.json puis rechargement, et message clair
 Prérequis : pip install playwright && playwright install chromium ; python build.py avant.
 Variables facultatives : THREE_DIR (paquet npm three, hors ligne), CHROMIUM (chemin de l'exécutable).
 """
+import os as _os_lang; _os_lang.environ["WEB3D_LANG"] = "fr"   # outils Python en français (v36)
 import asyncio, json, os, pathlib, re, socket, subprocess, sys, tempfile, time
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -71,7 +72,7 @@ async def test_modulaire(br):
     base = f"http://127.0.0.1:{port}/"
 
     async def ouvrir(url):
-        pg = await (await br.new_context(viewport={"width": 900, "height": 600})).new_page()
+        pg = await (await br.new_context(locale="fr-FR", viewport={"width": 900, "height": 600})).new_page()
         errs = []
         pg.on("pageerror", lambda e: errs.append(str(e)))
         await pg.goto(url)
@@ -135,7 +136,7 @@ async def main():
         br = await p.chromium.launch(**kw)
         bad = 0
         for page_file in pages + [carte]:
-            pg = await (await br.new_context(viewport={"width": 900, "height": 600})).new_page()
+            pg = await (await br.new_context(locale="fr-FR", viewport={"width": 900, "height": 600})).new_page()
             errs = []
             pg.on("pageerror", lambda e: errs.append(str(e)))
             await pg.goto(page_file.as_uri())

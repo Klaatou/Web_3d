@@ -1,5 +1,9 @@
 # web_3d
 
+*English version: [README.en.md](README.en.md)*
+
+**web_3d** transforme une région d'un monde virtuel **OpenSim** (sauvegarde **OAR**) en une page web que l'on parcourt à pied, sans installation côté visiteur : l'OAR est convertie en modèle **glTF** (`.glb`), puis affichée avec **three.js** dans une page web « promenable » (avatar, collisions, visiteurs en temps réel, chat, zones et portails, carte des mondes). L'interface de la page, du viewer et des outils existe en **français et en anglais** (réglage « Langue / Language » ; `--lang fr|en|auto` pour les outils). Les touches et les procédures pas à pas : `MODE_EMPLOI.md`, `PROCEDURES.md` ; toutes les options : `REFERENCE_OPTIONS.md`.
+
 Outils pour mettre une région 3D sur le web : `glb2html` (générateur de pages), le viewer de réglages et le serveur de présence.
 
 Transforme une région 3D exportée en `.glb` (OpenSim, par exemple) en **page web autonome** : vue 3D, promenade avec avatar, visiteurs en temps réel, chat, zones et portails, carte des mondes.
@@ -82,6 +86,13 @@ Une zone peut porter un champ `mesh` : le nom exact d'un élément du modèle. L
 - **Chat** : saisie persistante, enregistrement dans un fichier texte (côté navigateur), pseudo cité (gras, bulle qui clignote, bip), complétion `@pseudo`. **Couleur de l'avatar** choisie par le visiteur : **relancer `presence_server.py`**. `--log-ip raw` écrit l'adresse IP en clair (donnée personnelle : informer les visiteurs, limiter `--log-days`).
 - **Viewer en mode tuiles** : « Enregistrer les zones dans le dossier de la région » (Edge, Chrome) ; la page relit `X.zones.json` à chaque ouverture, F5 suffit.
 
+## Nouveautés de la v36 (détail : `MODE_EMPLOI.md` § 21)
+
+- **Touches** : **F** et **P** entrent en promenade et en sortent ; le vol se prend avec **Début**, le bouton de vol ou **Page Haut** maintenu ; **E** redevient la touche des zones (« clic ou E : … »). Clavier **AZERTY ou QWERTY** (réglage Auto, lettres réelles dans l'aide).
+- **Arrivée occupée** (décalage si quelqu'un se tient au point d'arrivée), **repères de portail** en cône (`--zone-cone`, touche **T**), **sons** (général, volume, citation, arrivée, départ), « Copier ma position » (URL ou xyz) et « Aller à » qui accepte `#pos=`.
+- **Deux langues, français et anglais** : page exportée, viewer et outils Python. Réglage visiteur « Langue / Language » (Auto par défaut), `#lang=en` ; outils : `--lang fr|en|auto` ou variable `WEB3D_LANG`. Ajouter une langue = ajouter un fichier `src/i18n/<code>.json` (aucun code à modifier). **Relancer `presence_server.py`** (messages traduits).
+- `REFERENCE_OPTIONS.md` est bilingue (français puis anglais dans chaque case) et générée depuis les outils (`python gen_reference.py`).
+
 ## Nouveautés de la v35 (détail : `MODE_EMPLOI.md` § 20)
 
 - **Commandes à la Firestorm** : F / Début bascule le vol, **P** entre et sort de la promenade, E / Page Haut saute (maintenu : décolle), double appui sur W S ↑ ↓ pour courir, **M** bascule vue subjective / troisième personne, **Ctrl+M** carte des mondes, **Fin** ou Alt + clic caméra derrière l'avatar. **E ne déclenche plus les zones.** Tableau complet : § 20.2.
@@ -101,7 +112,7 @@ Une zone peut porter un champ `mesh` : le nom exact d'un élément du modèle. L
 
 ## Développer
 
-Voir `CLAUDE.md` (architecture, décisions, feuille de route) et `HISTORIQUE.md` (comment retrouver chaque version) `tests/smoke.py` (test de fumée dans Chromium sans tête) `tests/modulaire.py` (mode modulaire universel, zones liées, exports du viewer) et `tests/portail_interne.py` (portail dans la même région), `tests/tuiles.py` (région en tuiles chargée par la coquille : rayon, budget, sol continu, blocage, échecs), `tests/v31.py` (images invalides, vue d'ensemble, sortie de promenade), `tests/v32.py` (zones dans une région en tuiles : viewer, zones liées à un objet, position affichée), `tests/v33.py` (démarrage avec tuiles lourdes, arrivée par défaut, vol, vues, chat, couleur, marqueurs, zones dans le dossier), `tests/v34.py` (aide et état, survol, vol, souris libre, couleur en direct, lien personnel, page carte, `--maj`) et `tests/v23.py` (clic, liaison, rotation). Mode d'emploi des zones et portails : `MODE_EMPLOI.md`.
+Voir `CLAUDE.md` (architecture, décisions, feuille de route) et `HISTORIQUE.md` (comment retrouver chaque version) `tests/smoke.py` (test de fumée dans Chromium sans tête) `tests/modulaire.py` (mode modulaire universel, zones liées, exports du viewer) et `tests/portail_interne.py` (portail dans la même région), `tests/tuiles.py` (région en tuiles chargée par la coquille : rayon, budget, sol continu, blocage, échecs), `tests/v31.py` (images invalides, vue d'ensemble, sortie de promenade), `tests/v32.py` (zones dans une région en tuiles : viewer, zones liées à un objet, position affichée), `tests/v33.py` (démarrage avec tuiles lourdes, arrivée par défaut, vol, vues, chat, couleur, marqueurs, zones dans le dossier), `tests/v34.py` (aide et état, survol, vol, souris libre, couleur en direct, lien personnel, page carte, `--maj`) `tests/v35.py`, `tests/v36.py` (touches, clavier, cônes, sons, position), `tests/v36_lang.py` et `tests/v36_viewer_lang.py` (langue de la page et du viewer), `tests/i18n.py` (fichiers de langue), `tests/tools_lang.py` (langue des outils), `tests/doc_options.py` (référence des options) et `tests/v23.py` (clic, liaison, rotation). Mode d'emploi des zones et portails : `MODE_EMPLOI.md`.
 
 ## Sécurité
 

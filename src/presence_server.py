@@ -47,6 +47,23 @@ import unicodedata
 
 import websockets
 
+# <<I18N_PY>>
+def _i18n_boot():   # depuis les sources : charge src/i18n_py.py ; fabriqué par build.py (dist\) : ce bloc est remplacé par le texte de i18n_py.py avec les langues intégrées
+    import importlib.util, pathlib
+    here = pathlib.Path(__file__).resolve().parent
+    for p in (here / "i18n_py.py", here.parent / "src" / "i18n_py.py"):
+        if p.is_file():
+            spec = importlib.util.spec_from_file_location("i18n_py", p)
+            m = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(m)
+            return m
+    raise SystemExit("i18n_py.py not found / introuvable")
+
+
+_I18N = _i18n_boot()
+_tr, i18n_add_common = _I18N._tr, _I18N.i18n_add_common
+# <</I18N_PY>>
+
 ROOMS: dict[str, dict[int, "Peer"]] = {}
 HISTORY: dict[str, collections.deque] = {}
 PER_IP: dict[str, int] = {}
@@ -146,7 +163,7 @@ def ip_for_log(ip):
 
 
 def log(kind, room, who, extra=""):
-    line = f"{kind:<11} | salon={room} | {who}"
+    line = _tr("py.presence.log_line", kind, room, who)
     if extra:
         line += " | " + re.sub(r"[\r\n]+", " ", str(extra))
     LOG.info(line)
@@ -169,7 +186,7 @@ class Peer:
         return d
 
     def who(self):
-        return f"{self.name or '(spectateur)'} [id {self.id}, clé {self.uidh[:6]}, ip {ip_for_log(self.ip)}]"
+        return _tr("py.presence.0_id_1_cle_2_ip", self.name or '(spectateur)', self.id, self.uidh[:6], ip_for_log(self.ip))
 
 
 # ----------------------------------------------------------------- registre des noms
@@ -187,7 +204,7 @@ class Registry:
                 self.salt = d.get("salt") or self.salt
                 self.names, self.users = d.get("names", {}), d.get("users", {})
             except (OSError, ValueError):
-                print(f"[!] registre illisible ({path}) : démarrage à vide")
+                print(_tr("py.presence.registre_illisible_0_demarrage_a_vide", path))
         self.dirty = True
         self.save()
 
@@ -249,7 +266,7 @@ def bans_load():
             with open(OPTS.bans, encoding="utf-8") as f:
                 BANS.extend(json.load(f))
         except (OSError, ValueError):
-            print(f"[!] fichier de bannissements illisible ({OPTS.bans}) : ignoré")
+            print(_tr("py.presence.fichier_de_bannissements_illisible_0_ignore", OPTS.bans))
 
 
 def bans_save():
@@ -296,17 +313,10 @@ async def kick_peer(peer, reason, banned=False):
 
 
 def fmt_until(u):
-    return "définitif" if not u else time.strftime("%d/%m/%Y %H:%M", time.localtime(u))
+    return _tr("py.presence.definitif") if not u else time.strftime("%d/%m/%Y %H:%M", time.localtime(u))
 
 
-HELP = """commandes (tape-les ici, puis Entrée) :
-  liste                           visiteurs connectés (n°, nom, rôle, salon, durée, IP)
-  ejecter <n°|nom> [raison]       déconnecte le visiteur (il peut revenir)
-  bannir <n°|nom> [minutes] [raison]   éjecte et interdit sa clé et son IP (défaut 60 min ; 0 = définitif)
-  bans                            bannissements en cours
-  debannir <n° de bans>           lève un bannissement
-  aide                            ce message
-  (un nom contenant des espaces : utilise le n° de « liste »)"""
+HELP = _tr("py.presence.commandes_tape_les_ici_puis_entree")
 
 
 async def run_command(line):
@@ -317,25 +327,25 @@ async def run_command(line):
     cmd, rest = cmd.lower(), rest.strip()
     if cmd in ("aide", "help", "?"):
         print(HELP)
-    elif cmd in ("liste", "who", "l"):
+    elif cmd in ("liste", "list", "who", "l"):
         peers = sorted(all_peers(), key=lambda p: p.id)
         if not peers:
-            print("(personne)")
+            print(_tr("py.presence.nobody"))
         for p in peers:
             dur = int(time.monotonic() - p.t0)
-            print(f"  n°{p.id:<4} {(p.name or '(spectateur)'):<26} {'spectateur' if p.spectator else 'promeneur':<10} salon={p.room:<16} {dur // 60} min {dur % 60:02d} s   ip {p.ip}")
+            print(_tr("py.presence.list_line", p.id, p.name or _tr("py.presence.spectator_paren"), _tr("py.presence.role.spectator") if p.spectator else _tr("py.presence.role.walker"), p.room, dur // 60, dur % 60, p.ip))
     elif cmd in ("ejecter", "éjecter", "kick", "k", "bannir", "ban", "b"):
         ban = cmd in ("bannir", "ban", "b")
         target, _, tail = rest.partition(" ")
         if not target:
-            print("usage : " + ("bannir <n°|nom> [minutes] [raison]" if ban else "ejecter <n°|nom> [raison]"))
+            print(_tr("py.presence.usage_ban") if ban else _tr("py.presence.usage_kick"))
             return
         found = find_peers(target)
         if not found:
-            print(f"personne ne correspond à « {target} » (tape « liste »)")
+            print(_tr("py.presence.personne_ne_correspond_a_0_tape", target))
             return
         if len(found) > 1:
-            print("plusieurs visiteurs correspondent, utilise le n° :", ", ".join(f"n°{p.id}" for p in found))
+            print(_tr("py.presence.plusieurs_visiteurs_correspondent_utilise_le"), ", ".join(f"n°{p.id}" for p in found))
             return
         peer = found[0]
         minutes = 60.0
@@ -347,39 +357,39 @@ async def run_command(line):
                 tail = after.strip()
             except ValueError:
                 pass
-        reason = tail or ("comportement inapproprié" if ban else "éjecté par l'hôte")
+        reason = tail or (_tr("py.presence.comportement_inapproprie") if ban else _tr("py.presence.ejecte_par_l_hote"))
         if ban:
             until = 0 if minutes <= 0 else time.time() + minutes * 60
             BANS.append({"key": "" if peer.uidh.startswith("anon-") else peer.uidh, "ip": REG.hash("ip:" + peer.ip), "until": until,
-                         "name": peer.name or "(spectateur)", "reason": reason, "added": time.time()})
+                         "name": peer.name or _tr("py.presence.spectator_paren"), "reason": reason, "added": time.time()})
             bans_save()
-            log("bannissement", peer.room, peer.who(), f"{fmt_until(until)} : {reason}")
+            log(_tr("py.presence.ev.ban"), peer.room, peer.who(), f"{fmt_until(until)} : {reason}")
             asyncio.create_task(kick_peer(peer, reason, banned=True))
-            print(f"{peer.name or '(spectateur)'} banni ({'définitif' if not until else 'jusqu’au ' + fmt_until(until)})")
+            print(_tr("py.presence.banned_line", peer.name or _tr("py.presence.spectator_paren"), _tr("py.presence.definitif") if not until else _tr("py.presence.until_date", fmt_until(until))))
         else:
-            log("éjection", peer.room, peer.who(), reason)
+            log(_tr("py.presence.ev.kick"), peer.room, peer.who(), reason)
             asyncio.create_task(kick_peer(peer, reason))
-            print(f"{peer.name or '(spectateur)'} éjecté")
+            print(_tr("py.presence.0_ejecte", peer.name or _tr('py.presence.spectator_paren')))
     elif cmd == "bans":
         now = time.time()
         live = [e for e in BANS if not e.get("until") or e["until"] > now]
         if not live:
-            print("(aucun bannissement)")
+            print(_tr("py.presence.aucun_bannissement"))
         for i, e in enumerate(live, 1):
-            print(f"  {i}. {e.get('name', '?'):<20} jusqu'au {fmt_until(e.get('until', 0)):<17} {e.get('reason', '')}")
+            print(_tr("py.presence.0_1_20_jusqu_au_2", i, e.get('name', '?'), fmt_until(e.get('until', 0)), e.get('reason', '')))
     elif cmd in ("debannir", "unban"):
         now = time.time()
         live = [e for e in BANS if not e.get("until") or e["until"] > now]
         if not rest.isdigit() or not (1 <= int(rest) <= len(live)):
-            print("usage : debannir <n° de « bans »>")
+            print(_tr("py.presence.usage_unban"))
             return
         e = live[int(rest) - 1]
         BANS.remove(e)
         bans_save()
-        log("bannissement", "-", f"{e.get('name', '?')}", "levé")
-        print(f"bannissement de {e.get('name', '?')} levé")
+        log(_tr("py.presence.ev.ban"), "-", f"{e.get('name', '?')}", _tr("py.presence.leve"))
+        print(_tr("py.presence.bannissement_de_0_leve", e.get('name', '?')))
     else:
-        print(f"commande inconnue : {cmd} (tape « aide »)")
+        print(_tr("py.presence.commande_inconnue_0_tape_aide", cmd))
 
 
 async def console_loop():
@@ -404,7 +414,7 @@ async def console_loop():
         try:
             await run_command(line)
         except Exception as e:  # une commande ratée ne doit jamais arrêter le serveur
-            print(f"[erreur de commande] {e}")
+            print(_tr("py.presence.erreur_de_commande_0", e))
 
 
 # ----------------------------------------------------------------- réseau
@@ -456,11 +466,11 @@ async def handler(ws):
         eb = is_banned("", ip)
         if eb:
             await ws.send(json.dumps({"t": "banned", "reason": eb.get("reason", ""), "until": eb.get("until", 0)}))
-            log("refus", "-", f"ip {ip_for_log(ip)}", "banni (IP)")
+            log(_tr("py.presence.ev.refuse"), "-", f"ip {ip_for_log(ip)}", _tr("py.presence.ban_ip"))
             return
         if PER_IP.get(ip, 0) >= OPTS.max_per_ip:
             await ws.send(json.dumps({"t": "full"}))
-            log("refus", "-", f"ip {ip_for_log(ip)}", "limite de connexions par IP")
+            log(_tr("py.presence.ev.refuse"), "-", f"ip {ip_for_log(ip)}", _tr("py.presence.limite_de_connexions_par_ip"))
             return
         PER_IP[ip] = PER_IP.get(ip, 0) + 1
         counted = True
@@ -479,16 +489,16 @@ async def handler(ws):
         eb = is_banned(uidh, ip)
         if eb:
             await ws.send(json.dumps({"t": "banned", "reason": eb.get("reason", ""), "until": eb.get("until", 0)}))
-            log("refus", room, f"clé {uidh[:6]} ip {ip_for_log(ip)}", "banni")
+            log(_tr("py.presence.ev.refuse"), room, _tr("py.presence.cle_0_ip_1", uidh[:6], ip_for_log(ip)), _tr("py.presence.banned"))
             return
         if spectator:
             if sum(1 for r in ROOMS.values() for p in r.values() if p.spectator) >= OPTS.max_spectators:
                 await ws.send(json.dumps({"t": "full"}))
-                log("refus", room, f"ip {ip_for_log(ip)}", "trop de spectateurs")
+                log(_tr("py.presence.ev.refuse"), room, f"ip {ip_for_log(ip)}", _tr("py.presence.trop_de_spectateurs"))
                 return
         elif len(walkers(room)) >= OPTS.max_per_room or sum(len(r) for r in ROOMS.values()) >= OPTS.max_total:
             await ws.send(json.dumps({"t": "full"}))
-            log("refus", room, f"ip {ip_for_log(ip)}", "salon plein")
+            log(_tr("py.presence.ev.refuse"), room, f"ip {ip_for_log(ip)}", _tr("py.presence.salon_plein"))
             return
         pid, NEXT_ID = NEXT_ID, NEXT_ID + 1
         color = announced_color(msg.get("color"))
@@ -500,7 +510,7 @@ async def handler(ws):
         await ws.send(json.dumps({"t": "welcome", "id": pid, "name": peer.name, "color": peer.color, "peers": existing,
                                   "history": list(HISTORY.get(room, ())), "role": "spectator" if spectator else "walker"},
                                  separators=(",", ":")))
-        log("connexion", room, peer.who(), "spectateur" if spectator else f"promeneur ({len(walkers(room))} dans le salon)")
+        log(_tr("py.presence.ev.connect"), room, peer.who(), "spectateur" if spectator else _tr("py.presence.promeneur_0_dans_le_salon", len(walkers(room))))
         if not spectator:
             await broadcast(room, dict(peer.public(), t="join"), exclude=peer)
         async for raw in ws:
@@ -520,11 +530,11 @@ async def handler(ws):
                     await become_walker(peer, m.get("name"))
                     await send_safe(ws, json.dumps({"t": "you", "name": peer.name}))
                     await broadcast(room, dict(peer.public(), t="join"), exclude=peer)
-                    log("promenade", room, peer.who(), "début")
+                    log(_tr("py.presence.ev.walk"), room, peer.who(), _tr("py.presence.debut"))
                 elif not want_walker and not peer.spectator:
                     peer.spectator, peer.p = True, None
                     await broadcast(room, {"t": "leave", "id": pid}, exclude=peer)
-                    log("promenade", room, peer.who(), "fin")
+                    log(_tr("py.presence.ev.walk"), room, peer.who(), _tr("py.presence.ev.end"))
                     peer.name = ""
             elif t == "color":
                 # v34 : changement de couleur en cours de connexion ; valeur invalide ignorée sans bruit, au plus un changement toutes les 0,2 s
@@ -558,12 +568,12 @@ async def handler(ws):
                 if peer.chat_times and now - peer.chat_times[-1] < OPTS.chat_gap:
                     continue
                 if len(peer.chat_times) >= OPTS.chat_burst:
-                    await send_safe(ws, json.dumps({"t": "notice", "text": "Trop de messages, patiente quelques secondes."}))
+                    await send_safe(ws, json.dumps({"t": "notice", "text": _tr("py.presence.trop_de_messages_patiente_quelques_secondes")}))
                     continue
                 peer.chat_times.append(now)
                 if OPTS.history > 0:
                     HISTORY.setdefault(room, collections.deque(maxlen=OPTS.history)).append({"id": pid, "name": peer.name, "text": text})
-                log("chat", room, peer.who(), text)
+                log(_tr("py.presence.chat"), room, peer.who(), text)
                 await broadcast(room, {"t": "chat", "id": pid, "name": peer.name, "text": text})
             elif t == "name":
                 old = peer.name
@@ -571,13 +581,13 @@ async def handler(ws):
                 if peer.name != old:
                     await send_safe(ws, json.dumps({"t": "you", "name": peer.name}))
                     await broadcast(room, {"t": "name", "id": pid, "name": peer.name}, exclude=peer)
-                    log("nom", room, peer.who(), f"ancien : {old}")
+                    log(_tr("py.presence.ev.name"), room, peer.who(), _tr("py.presence.old_name", old))
             elif t == "zone":
                 now = time.monotonic()
                 if now - peer.zone_t < 0.5:
                     continue
                 peer.zone_t = now
-                log("zone", room, peer.who(), f"{clean_text(m.get('type'), 12)} « {clean_text(m.get('label') or m.get('id'), 60)} »")
+                log(_tr("py.presence.zone"), room, peer.who(), f"{clean_text(m.get('type'), 12)} « {clean_text(m.get('label') or m.get('id'), 60)} »")
     except (websockets.ConnectionClosed, asyncio.TimeoutError, ValueError):
         pass
     finally:
@@ -586,7 +596,7 @@ async def handler(ws):
             if not peer.spectator:
                 await broadcast(room, {"t": "leave", "id": peer.id})
             dur = int(time.monotonic() - peer.t0)
-            log("déconnexion", room, peer.who(), f"durée {dur // 60} min {dur % 60:02d} s")
+            log(_tr("py.presence.deconnexion"), room, peer.who(), _tr("py.presence.duree_0_min_1_02d_s", dur // 60, dur % 60))
             if not ROOMS[room]:
                 del ROOMS[room]
                 HISTORY.pop(room, None)
@@ -604,29 +614,30 @@ async def flush_loop():
 
 async def main():
     global OPTS, REG
-    ap = argparse.ArgumentParser(description="Serveur de présence glb2html (WebSocket)")
-    ap.add_argument("--version", action="version", version=f"presence_server {VERSION}")
-    ap.add_argument("--host", default="0.0.0.0")
-    ap.add_argument("--port", type=int, default=8765)
-    ap.add_argument("--max-per-room", type=int, default=50, help="promeneurs max par salon")
-    ap.add_argument("--max-spectators", type=int, default=100, help="spectateurs (vue globale) max, tous salons")
-    ap.add_argument("--max-total", type=int, default=500)
-    ap.add_argument("--max-per-ip", type=int, default=10, help="connexions simultanées par adresse IP")
-    ap.add_argument("--max-chat", type=int, default=200, help="longueur max d'un message de chat")
-    ap.add_argument("--chat-gap", type=float, default=0.7, help="délai mini entre deux messages d'un visiteur (s)")
-    ap.add_argument("--chat-burst", type=int, default=5, help="messages max par fenêtre de 10 s et par visiteur")
-    ap.add_argument("--history", type=int, default=20, help="derniers messages rejoués aux nouveaux arrivants (mémoire seulement, 0 = aucun)")
-    ap.add_argument("--identities", default="presence_identities.json", help="registre des noms réservés (vide = en mémoire seulement) ; chemin relatif = dossier du script")
-    ap.add_argument("--name-ttl-days", type=int, default=365, help="un nom non utilisé depuis ce nombre de jours est libéré")
-    ap.add_argument("--reserved", default="", help="noms interdits à la réservation, séparés par des virgules (ex. admin,moderateur)")
-    ap.add_argument("--log", help="fichier de journal (tourné chaque nuit) ; chemin relatif = dossier du script")
-    ap.add_argument("--log-days", type=int, default=30, help="jours de journal conservés")
-    ap.add_argument("--log-ip", choices=("hash", "raw", "none"), default="hash", help="adresses IP dans le journal : masquées (défaut), en clair, ou absentes")
-    ap.add_argument("--proxy-header", help="derrière un reverse proxy : en-tête portant l'IP réelle du visiteur (ex. X-Forwarded-For, CF-Connecting-IP) ; à n'activer que si le serveur n'est joignable que par ce proxy")
-    ap.add_argument("--bans", default="presence_bans.json", help="fichier des bannissements ; chemin relatif = dossier du script")
-    ap.add_argument("--origins", help="origines autorisées, séparées par des virgules (défaut : toutes)")
-    ap.add_argument("--cert", help="certificat TLS (wss://)")
-    ap.add_argument("--key", help="clé privée TLS")
+    ap = argparse.ArgumentParser(description=_tr("py.presence.serveur_de_presence_glb2html_websocket"), add_help=False)
+    i18n_add_common(ap)
+    ap.add_argument("--version", action="version", version=f"presence_server {VERSION}", help=_tr("py.common.version"))
+    ap.add_argument("--host", default="0.0.0.0", help=_tr("py.presence.help.host"))
+    ap.add_argument("--port", type=int, default=8765, help=_tr("py.presence.help.port"))
+    ap.add_argument("--max-per-room", type=int, default=50, help=_tr("py.presence.promeneurs_max_par_salon"))
+    ap.add_argument("--max-spectators", type=int, default=100, help=_tr("py.presence.spectateurs_vue_globale_max_tous_salons"))
+    ap.add_argument("--max-total", type=int, default=500, help=_tr("py.presence.help.maxtotal"))
+    ap.add_argument("--max-per-ip", type=int, default=10, help=_tr("py.presence.connexions_simultanees_par_adresse_ip"))
+    ap.add_argument("--max-chat", type=int, default=200, help=_tr("py.presence.longueur_max_d_un_message_de"))
+    ap.add_argument("--chat-gap", type=float, default=0.7, help=_tr("py.presence.delai_mini_entre_deux_messages_d"))
+    ap.add_argument("--chat-burst", type=int, default=5, help=_tr("py.presence.messages_max_par_fenetre_de_10"))
+    ap.add_argument("--history", type=int, default=20, help=_tr("py.presence.derniers_messages_rejoues_aux_nouveaux_arriv"))
+    ap.add_argument("--identities", default="presence_identities.json", help=_tr("py.presence.registre_des_noms_reserves_vide_en"))
+    ap.add_argument("--name-ttl-days", type=int, default=365, help=_tr("py.presence.un_nom_non_utilise_depuis_ce"))
+    ap.add_argument("--reserved", default="", help=_tr("py.presence.noms_interdits_a_la_reservation_separes"))
+    ap.add_argument("--log", help=_tr("py.presence.fichier_de_journal_tourne_chaque_nuit"))
+    ap.add_argument("--log-days", type=int, default=30, help=_tr("py.presence.jours_de_journal_conserves"))
+    ap.add_argument("--log-ip", choices=("hash", "raw", "none"), default="hash", help=_tr("py.presence.adresses_ip_dans_le_journal_masquees"))
+    ap.add_argument("--proxy-header", help=_tr("py.presence.derriere_un_reverse_proxy_en_tete"))
+    ap.add_argument("--bans", default="presence_bans.json", help=_tr("py.presence.fichier_des_bannissements_chemin_relatif_dos"))
+    ap.add_argument("--origins", help=_tr("py.presence.origines_autorisees_separees_par_des_virgule"))
+    ap.add_argument("--cert", help=_tr("py.presence.certificat_tls_wss"))
+    ap.add_argument("--key", help=_tr("py.presence.cle_privee_tls"))
     OPTS = ap.parse_args()
     try:
         sys.stdout.reconfigure(line_buffering=True)
@@ -653,15 +664,15 @@ async def main():
     try:
         async with websockets.serve(handler, OPTS.host, OPTS.port, max_size=4096, origins=origins, ssl=ctx):
             scheme = "wss" if ctx else "ws"
-            LOG.info(f"serveur | presence_server {VERSION} | écoute sur {OPTS.host}:{OPTS.port}  (Ctrl+C pour arrêter)")
+            LOG.info(_tr("py.presence.serveur_presence_server_0_ecoute_sur", VERSION, OPTS.host, OPTS.port))
             if OPTS.host in ("0.0.0.0", "::", ""):
                 ip = lan_ip()
-                LOG.info(f"serveur | adresses à donner à --presence-url : {scheme}://127.0.0.1:{OPTS.port} (cette machine)" + (f" · {scheme}://{ip}:{OPTS.port} (autres appareils du réseau)" if ip else ""))
-                LOG.info("serveur | n'utilise jamais 0.0.0.0 dans --presence-url : c'est une adresse d'écoute, pas une destination")
+                LOG.info(_tr("py.presence.serveur_adresses_a_donner_a_presence", scheme, OPTS.port) + (_tr("py.presence.0_1_2_autres_appareils_du", scheme, ip, OPTS.port) if ip else ""))
+                LOG.info(_tr("py.presence.serveur_n_utilise_jamais_0_0"))
             else:
-                LOG.info(f"serveur | adresse à donner à --presence-url : {scheme}://{OPTS.host}:{OPTS.port}")
-            LOG.info(f"serveur | journal : {OPTS.log or '(aucun : option --log)'} | registre des noms : {OPTS.identities or '(en mémoire)'}")
-            print("modération : tape « aide » pour la liste des commandes (liste, ejecter, bannir, bans, debannir)")
+                LOG.info(_tr("py.presence.serveur_adresse_a_donner_a_presence", scheme, OPTS.host, OPTS.port))
+            LOG.info(_tr("py.presence.serveur_journal_0_registre_des_noms", OPTS.log or '(aucun : option --log)', OPTS.identities or '(en mémoire)'))
+            print(_tr("py.presence.moderation_tape_aide_pour_la_liste"))
             await stop.wait()
     finally:
         flusher.cancel()

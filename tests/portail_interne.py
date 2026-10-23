@@ -5,6 +5,7 @@ pose l'avatar sur le point d'arrivée de la même région, sans recharger la pag
 Prérequis : pip install playwright && playwright install chromium ; python build.py avant.
 Variable facultative : THREE_DIR (paquet npm three, hors ligne).
 """
+import os as _os_lang; _os_lang.environ["WEB3D_LANG"] = "fr"   # outils Python en français (v36)
 import asyncio, json, os, pathlib, struct, subprocess, sys, tempfile
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -52,11 +53,11 @@ def page(name, target):
 
 
 async def essai(br, out, titre):
-    pg = await br.new_page(); errs = []
+    pg = await br.new_page(locale="fr-FR"); errs = []
     pg.on("pageerror", lambda e: errs.append(str(e)))
     await pg.goto(out.as_uri())
     await pg.wait_for_function("document.getElementById('msg') === null", timeout=60000)
-    # v35 : E ne déclenche plus les zones. L'avatar se place à 3 m du portail (vers le nord, il le regarde) et on clique sur le disque
+    # v36 : l'invite dit « clic ou E : … ». L'avatar se place à 3 m du portail (vers le nord, il le regarde) et on clique sur le disque
     await pg.evaluate("window.__v.walkStart({ pos: [0, 15, 3], yaw: 0 })"); await pg.wait_for_timeout(400)
     invite = await pg.evaluate("document.getElementById('zonePrompt').textContent")
     await pg.evaluate("window.__marque = 1")
@@ -69,7 +70,7 @@ async def essai(br, out, titre):
         pass
     w = await pg.evaluate("window.__v.getWalk()")
     pos = [round(v, 2) for v in w["pos"]]
-    rapport(invite == "clic : Vers loin", f"{titre} : le portail est proposé (clic)", invite)
+    rapport(invite == "clic ou E : Vers loin", f"{titre} : le portail est proposé (clic)", invite)
     rapport(pos == [12, 15, -12] and abs(w["yaw"] - 1.0) < 1e-6, f"{titre} : avatar posé sur l'arrivée, orienté comme elle", (pos, w["yaw"]))
     rapport(await pg.evaluate("window.__marque === 1 && window.__v.walking"), f"{titre} : sans rechargement, toujours en promenade")
     rapport(await pg.evaluate("document.getElementById('fade').className") == "", f"{titre} : fondu retiré")

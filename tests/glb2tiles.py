@@ -15,9 +15,16 @@
   - compteur d'octets lus : la lecture se fait par morceaux ; --version (source et dist/)
 Lancer : python tests/glb2tiles.py   (GLB2TILES_GARDER=1 garde les fichiers produits)
 """
+import os as _os_lang; _os_lang.environ["WEB3D_LANG"] = "fr"   # outils Python en français (v36)
 import contextlib, io, json, math, os, pathlib, shutil, struct, subprocess, sys, tempfile
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+def copie_i18n(dossier):
+    """les sources des outils (tools/, src/) cherchent i18n_py.py et i18n/ à côté ou dans src/ : on les copie avec la copie du script"""
+    shutil.copy(ROOT / "src" / "i18n_py.py", pathlib.Path(dossier) / "i18n_py.py")
+    shutil.copytree(ROOT / "src" / "i18n", pathlib.Path(dossier) / "i18n", dirs_exist_ok=True)
+
 TOOL = ROOT / "tools" / "glb2tiles.py"
 sys.path.insert(0, str(ROOT / "tools"))
 import glb2tiles as T  # noqa: E402
@@ -572,6 +579,7 @@ print("--- sans console")
 copie_p = tmp / "copie_pause"
 copie_p.mkdir()
 shutil.copy(TOOL, copie_p / "glb2tiles.py")
+copie_i18n(copie_p)
 shutil.copy(ROOT / "tools" / "glb-stats.py", copie_p / "glb-stats.py")
 r = subprocess.run([sys.executable, str(copie_p / "glb2tiles.py"), str(tmp / "leger" / "leger.glb"), "--analyse"], capture_output=True, text=True, cwd=tmp, timeout=60, stdin=subprocess.DEVNULL)
 rapport(r.returncode == 0 and "EOFError" not in r.stderr + r.stdout and "Traceback" not in r.stderr, "sans console (stdin fermé) et sans --nopause : pas d'EOFError, code 0", (r.returncode, r.stderr[-300:]))
@@ -602,12 +610,14 @@ else:
 copie = tmp / "copie_src"
 copie.mkdir()
 shutil.copy(TOOL, copie / "glb2tiles.py")
+copie_i18n(copie)
 shutil.copy(ROOT / "tools" / "glb-stats.py", copie / "glb-stats.py")
 r = subprocess.run([sys.executable, str(copie / "glb2tiles.py"), str(tmp / "leger" / "leger.glb"), "--analyse", "--nopause"], capture_output=True, text=True, cwd=tmp, timeout=60)
 rapport(r.returncode == 0 and (copie / "glb2tiles.log").read_text(encoding="utf-8").splitlines()[:1] == ["[glb2tiles] __VERSION__"], "source : le journal est écrit à côté du script, version en première ligne", (r.stdout[:200], r.stderr[-300:]))
 copie2 = tmp / "sans_stats"
 copie2.mkdir()
 shutil.copy(TOOL, copie2 / "glb2tiles.py")
+copie_i18n(copie2)
 r = subprocess.run([sys.executable, str(copie2 / "glb2tiles.py"), str(tmp / "leger" / "leger.glb"), "--analyse", "--nopause"], capture_output=True, text=True, cwd=tmp, timeout=60)
 rapport(r.returncode != 0 and "glb-stats.py introuvable" in r.stdout, "sans glb-stats.py à côté : message clair", (r.returncode, r.stdout[-300:]))
 

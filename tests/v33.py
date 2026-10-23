@@ -10,6 +10,7 @@ Prérequis : pip install playwright websockets ; python build.py avant.
 Variables facultatives : THREE_DIR (paquet npm three, hors ligne), CHROMIUM (chemin de l'exécutable).
 Lancer : python tests/v33.py
 """
+import os as _os_lang; _os_lang.environ["WEB3D_LANG"] = "fr"   # outils Python en français (v36)
 import asyncio, json, math, os, pathlib, re, shutil, socket, struct, subprocess, sys, tempfile, time
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -169,7 +170,7 @@ class Onglet:
         self.br, self.errs, self.logs, self.demandes, self.garde, self.retard = br, [], [], [], {}, {}
 
     async def ouvrir(self, url, cpu=1, init=None, viewport=(900, 600), downloads=False):
-        self.ctx = await self.br.new_context(viewport={"width": viewport[0], "height": viewport[1]}, accept_downloads=downloads)
+        self.ctx = await self.br.new_context(locale="fr-FR", viewport={"width": viewport[0], "height": viewport[1]}, accept_downloads=downloads)
         if init:
             await self.ctx.add_init_script(init)
         self.pg = await self.ctx.new_page()
@@ -500,9 +501,9 @@ async def main():
             await o.touche("Home")
             w = await o.walk()
             rapport(w["flying"] and "Mode : en vol" in await o.ev("document.getElementById('modeInfo').textContent") and await o.ev("document.getElementById('viewInfo').textContent") == "Vue : subjective", "touche Début : décollage, indiqué en texte dans le bloc d'état (« Mode : en vol »)")
-            m = await o.tenir(["KeyE"], 20)
+            m = await o.tenir(["PageUp"], 20)
             monte = m[-1]["pos"][1] - y0
-            rapport(6.5 <= monte <= 7.5, f"en vol, E monte (+{monte:.2f} m en 2 s à 3,5 m/s)", monte)
+            rapport(6.5 <= monte <= 7.5, f"en vol, Page Haut monte (+{monte:.2f} m en 2 s à 3,5 m/s)", monte)
             m = await o.tenir([], 30)
             rapport(abs(m[-1]["pos"][1] - m[0]["pos"][1]) < 1e-6 and not m[-1]["grounded"], "en vol, pas de gravité")
             await o.tenir(["KeyC"], 120)
@@ -517,11 +518,11 @@ async def main():
             await o.tp(120, hauteur(120, -240), -240, -math.pi / 2)
             await o.touche("Home")
             g0 = hauteur(120, -240)
-            await o.tenir(["KeyE"], 2)
+            await o.tenir(["PageUp"], 2)
             m = await o.tenir(["KeyW"], 120)
             xs = max(s["pos"][0] for s in m)
             rapport(120 < xs < 137.2, f"en vol bas (à {m[-1]['pos'][1] - hauteur(120, -240):.1f} m du sol) : le mur de la maison arrête l'avatar (x max {xs:.2f}, mur à 137)", xs)
-            await o.tenir(["KeyE"], 25)
+            await o.tenir(["PageUp"], 25)
             m = await o.tenir(["KeyW"], 120)
             rapport(m[-1]["pos"][0] > 150, f"en vol haut (au-dessus du toit) : l'avatar passe (x {m[-1]['pos'][0]:.1f})", m[-1]["pos"])
             await o.touche("Home")
@@ -554,9 +555,9 @@ async def main():
             await o.tenir(["KeyC"], 200)
             w = await o.walk()
             rapport(w["cam"][1] >= sol_lourde(w["cam"][0], w["cam"][2]) + 0.25, "caméra libre : ne traverse pas le sol", w["cam"])
-            await o.touche("KeyF")
+            await o.touche("KeyV")
             w = await o.walk()
-            rapport(w["view"] == "fps" and await o.ev("window.__viewer.walking"), "F en caméra libre : rend la main à l'avatar (reste en promenade)")
+            rapport(w["view"] == "fps" and await o.ev("window.__viewer.walking"), "V depuis la caméra libre : rend la main à l'avatar (reste en promenade ; v36 : F sort de la promenade)")
             for attendu in ("tps", "free", "fps"):
                 await o.touche("KeyV")
             rapport((await o.walk())["view"] == "fps", "V fait tourner subjective, troisième personne, caméra libre, subjective")
@@ -576,7 +577,7 @@ async def main():
             await o.ouvrir(base + "Lourde&rayon=30#spawn=default")
             await o.marcheur(90)
             await o.touche("Home")
-            await o.tenir(["KeyE"], 8)
+            await o.tenir(["PageUp"], 8)
             await o.ev("window.__viewer.releaseKeys()")
             await o.ev("([x, z, yaw]) => window.__viewer.teleportTo([x, 30, z], yaw)", [DFX + 40, DFZ, -math.pi / 2])
             m = await o.tenir(["KeyW"], 200)
@@ -718,12 +719,15 @@ async def main():
         base2 = f"http://127.0.0.1:{port2}/index.html?region="
         AUDIO = "window.__beeps = 0; window.AudioContext = class { constructor() { this.state = 'running'; this.currentTime = 0; this.destination = {}; } resume() {} createOscillator() { window.__beeps++; return { type: '', frequency: { value: 0 }, connect() {}, start() {}, stop() {} }; } createGain() { return { gain: { setValueAtTime() {}, exponentialRampToValueAtTime() {} }, connect() {} }; } };"
 
-        def init(nom, vis=None):
+        def init(nom, vis=None, plain=False):
+            # v36 : les sons d'arrivée et de départ sont cochés par défaut ; ce test compte les bips de citation, on les décoche (sauf plain=True : réglages par défaut)
+            if not plain:
+                vis = dict(vis or {}); vis.setdefault("soundJoin", False); vis.setdefault("soundLeave", False)
             return AUDIO + f" try {{ localStorage.setItem('glb2html_name', {json.dumps(nom)}); " + (f"localStorage.setItem('glb2html_visitor', {json.dumps(json.dumps(vis))});" if vis else "") + " } catch (e) {}"
 
-        async def visiteur(nom, x, vis=None, downloads=False):
+        async def visiteur(nom, x, vis=None, downloads=False, plain=False):
             v = Onglet(br)
-            await v.ouvrir(base2 + f"Chat#pos={x},13,-100,0", init=init(nom, vis), downloads=downloads)
+            await v.ouvrir(base2 + f"Chat#pos={x},13,-100,0", init=init(nom, vis, plain), downloads=downloads)
             await v.marcheur(90)
             await v.attendre("window.__viewer.getPresence().state === 'online'", 30)
             return v
@@ -829,7 +833,7 @@ async def main():
                 return seq; }""")
             flips = sum(1 for a, b in zip(seq, seq[1:]) if a == 1 and b == 0)
             rapport(flips == 6 and all(seq[36:]) and seq[0] == 1, "clignotement : exactement 6 passages cachés de 150 ms sur 300 ms (pas de présence simulé à 50 ms), puis visible", seq)
-            rapport(r["beeps"] == 0, "son décoché par défaut : aucun bip", r["beeps"])
+            rapport(r["beeps"] == 1, "bip de citation coché par défaut (v36) : un bip pour ce message (la page a déjà reçu une action : Entrée)", r["beeps"])
             for texte_msg, attendu in (("Alicex et xalice", False), ("ALICE, viens", True), ("coucou @Alice", True), ("alice's", True), ("Alicia", False), ("l'alice", True)):
                 await asyncio.sleep(0.8)
                 await B.ev("(t) => window.__viewer.sendChat(t)", texte_msg)
@@ -837,7 +841,7 @@ async def main():
                 gras = await A.ev("(t) => { const d = [...document.querySelectorAll('#chatLog div')].filter(x => x.textContent.includes(t)).pop(); return d.dataset.cite === '1'; }", texte_msg)
                 rapport(gras == attendu, f"pseudo cité en mot entier : « {texte_msg} » {'cité' if attendu else 'non cité'}", gras)
             # cases décochées : rien
-            A2 = await visiteur("Zoe", 512, vis={"color": None, "bold": False, "blink": False, "sound": False})
+            A2 = await visiteur("Zoe", 512, vis={"color": None, "bold": False, "blink": False, "soundCite": False})
             await A2.pg.wait_for_timeout(500)
             await asyncio.sleep(0.8)
             await B.ev("window.__viewer.sendChat('encore @Zoe')")
@@ -848,7 +852,7 @@ async def main():
             rapport(int(r["bold"]) < 700 and r["txt"].startswith("Bob : ") and r["hidden"] == 0 and r["beeps"] == 0, "trois cases décochées : ni gras ni « @ », ni clignotement, ni bip", r)
             await A2.fermer()
             # son : seulement après une première interaction
-            A3 = await visiteur("Yan", 516, vis={"color": None, "bold": True, "blink": True, "sound": True})
+            A3 = await visiteur("Yan", 516, vis={"color": None, "bold": True, "blink": True, "soundCite": True})
             await asyncio.sleep(0.8)
             await B.ev("window.__viewer.sendChat('premier @Yan')")
             await A3.attendre("document.getElementById('chatLog').textContent.includes('premier @Yan')", 15)
@@ -861,15 +865,15 @@ async def main():
             rapport(b0 == 0 and b1 == 1, "son coché : aucun bip avant la première interaction, un bip après", (b0, b1))
             # panneau de réglages visiteur
             await A3.ev("document.getElementById('optsBtn').click()")
-            et = await A3.ev("({ bold: document.getElementById('visBold').checked, blink: document.getElementById('visBlink').checked, sound: document.getElementById('visSound').checked, col: document.getElementById('visColorOn').checked })")
-            rapport(et == {"bold": True, "blink": True, "sound": True, "col": False}, "Réglages visiteur : trois cases (gras, clignotement, son) et la couleur reflètent le stockage", et)
+            et = await A3.ev("({ bold: document.getElementById('visBold').checked, blink: document.getElementById('visBlink').checked, sound: document.getElementById('visSoundCite').checked, col: document.getElementById('visColorOn').checked })")
+            rapport(et == {"bold": True, "blink": True, "sound": True, "col": False}, "Réglages visiteur : cases (gras, clignotement, bip de citation) et la couleur reflètent le stockage", et)
             await A3.ev("document.getElementById('visBlink').click()")
             mem = await A3.ev("JSON.parse(localStorage.getItem('glb2html_visitor'))")
-            rapport(mem["blink"] is False and mem["bold"] is True and mem["sound"] is True, "les réglages sont mémorisés dans le navigateur", mem)
+            rapport(mem["blink"] is False and mem["bold"] is True and mem["soundCite"] is True, "les réglages sont mémorisés dans le navigateur", mem)
             await A3.fermer()
-            # défauts des cases : tout coché sauf le son
-            et = await A.ev("document.getElementById('optsBtn').click() || ({ bold: document.getElementById('visBold').checked, blink: document.getElementById('visBlink').checked, sound: document.getElementById('visSound').checked })")
-            rapport(et == {"bold": True, "blink": True, "sound": False}, "défauts : gras et clignotement cochés, son décoché", et)
+            # défauts des cases (v36 : les sons sont cochés par défaut ; les cases arrivée / départ sont décochées par ce test seulement, voir init)
+            et = await A.ev("document.getElementById('optsBtn').click() || ({ bold: document.getElementById('visBold').checked, blink: document.getElementById('visBlink').checked, sound: document.getElementById('visSoundCite').checked, sons: document.getElementById('visSounds').checked })")
+            rapport(et == {"bold": True, "blink": True, "sound": True, "sons": True}, "défauts : gras, clignotement, bip de citation et « Sons » cochés", et)
             await A.ev("document.getElementById('optsBtn').click()")
 
             # complétion
@@ -970,7 +974,7 @@ async def main():
         PHRASE = "enregistre ce fichier dans le dossier de la région, sous le nom Syn.zones.json, en remplaçant l'ancien"
         try:
             async def viewer_page(init_js, downloads=True):
-                ctx = await br.new_context(viewport={"width": 1300, "height": 800}, accept_downloads=downloads)
+                ctx = await br.new_context(locale="fr-FR", viewport={"width": 1300, "height": 800}, accept_downloads=downloads)
                 await ctx.add_init_script(init_js)
                 pg = await ctx.new_page()
                 errs = []
@@ -1057,7 +1061,7 @@ async def main():
             rapport(d.suggested_filename == "Syn.zones.json" and [z["id"] for z in json.loads((tmp / "noapi.json").read_text(encoding="utf-8"))] == ["a", "b", "c"] and PHRASE in st, "sans l'API (Firefox, Safari) : téléchargement et phrase « enregistre ce fichier dans le dossier de la région… »", st)
             rapport(not errs, "viewer sans API : aucune erreur JavaScript", errs)
             await ctx.close()
-            ctx = await br.new_context(viewport={"width": 1300, "height": 800})
+            ctx = await br.new_context(locale="fr-FR", viewport={"width": 1300, "height": 800})
             pg = await ctx.new_page()
             await pg.goto((DIST / "glb-viewer.html").as_uri())
             await pg.wait_for_selector("#bZoneAdd", state="attached", timeout=15000)

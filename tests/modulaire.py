@@ -15,6 +15,7 @@
 Prérequis : pip install playwright ; python build.py avant.
 Variables facultatives : THREE_DIR (paquet npm three, hors ligne), CHROMIUM (chemin de l'exécutable).
 """
+import os as _os_lang; _os_lang.environ["WEB3D_LANG"] = "fr"   # outils Python en français (v36)
 import asyncio, hashlib, importlib.util, json, os, pathlib, shutil, socket, struct, subprocess, sys, tempfile, time, zipfile
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -155,7 +156,7 @@ async def main():
         pages = []
 
         async def ouvrir(url, attendre=True):
-            ctx = await br.new_context(viewport={"width": 900, "height": 600})
+            ctx = await br.new_context(locale="fr-FR", viewport={"width": 900, "height": 600})
             await ctx.add_init_script(STUB)
             pg = await ctx.new_page()
             pg.errs = []
@@ -270,7 +271,7 @@ async def main():
             await pg.evaluate("window.__opened.length = 0")
             await pg.keyboard.press("e")
             await pg.wait_for_timeout(300)
-            rapport(vis and "Boîte B" in txt and await pg.evaluate("window.__opened") == [], "touche E à 4 m de l'élément (radius 8) : invite « clic : … », E ne déclenche plus (v35)", (vis, txt))
+            rapport(vis and "Boîte B" in txt and txt.startswith("clic ou E :") and await pg.evaluate("window.__opened") == ["http://127.0.0.1/b"], "touche E à 4 m de l'élément (radius 8) : invite « clic ou E : … » et déclenchement (v36 : comme avant la v35)", (vis, txt))
             (site / "boite.zones.json").write_text(json.dumps([dict(ZB[0], radius=2)]), encoding="utf-8")
             await recharger(pg)
             vis, txt = await invite(pg)
@@ -339,7 +340,7 @@ async def test_coquille_commune(br):
     base = f"http://127.0.0.1:{port}/"
     try:
         async def ouvrir(url, attendre=True):
-            ctx = await br.new_context(viewport={"width": 900, "height": 600})
+            ctx = await br.new_context(locale="fr-FR", viewport={"width": 900, "height": 600})
             pg = await ctx.new_page()
             pg.ctx = ctx
             pg.errs, pg.reqs = [], []
@@ -459,7 +460,7 @@ async def test_coquille_commune(br):
 
 
 async def test_viewer(br, pages):
-    ctx = await br.new_context(viewport={"width": 1300, "height": 800}, accept_downloads=True)
+    ctx = await br.new_context(locale="fr-FR", viewport={"width": 1300, "height": 800}, accept_downloads=True)
     pg = await ctx.new_page()
     errs = []
     pg.on("pageerror", lambda e: errs.append(str(e)))
@@ -507,7 +508,7 @@ async def test_viewer(br, pages):
     dl = await d.value
     auto = tmp / "export_autonome.html"
     await dl.save_as(str(auto))
-    pa = await (await br.new_context(viewport={"width": 900, "height": 600})).new_page()
+    pa = await (await br.new_context(locale="fr-FR", viewport={"width": 900, "height": 600})).new_page()
     ea = []
     pa.on("pageerror", lambda e: ea.append(str(e)))
     await pa.goto(auto.as_uri())
@@ -537,7 +538,7 @@ async def test_viewer(br, pages):
         zf.extractall(out)
     proc, port = serveur(out)
     try:
-        pz = await (await br.new_context(viewport={"width": 900, "height": 600})).new_page()
+        pz = await (await br.new_context(locale="fr-FR", viewport={"width": 900, "height": 600})).new_page()
         ez = []
         pz.on("pageerror", lambda e: ez.append(str(e)))
         await pz.goto(f"http://127.0.0.1:{port}/index.html?region=boite")
@@ -565,7 +566,7 @@ async def test_liaison(br):
     la boîte et un sol géant : la boîte englobante doit être celle de la boîte (8 m), le mode est exclusif, un élément > 30 m est refusé."""
     make_glb(tmp / "decale.glb", [("sol", "sol", (-40, -0.2, -40, 40, 0, 40), 1.0), ("boite", "mur", (4, 0, -2, 8, 4, 2), 1.0),
                                   ("door_voile", "verre", (2, 0, 4, 10, 6, 4.05), 0.3)], racine=((500, 20, -300), 2.0))
-    ctx = await br.new_context(viewport={"width": 1300, "height": 800})
+    ctx = await br.new_context(locale="fr-FR", viewport={"width": 1300, "height": 800})
     pg = await ctx.new_page()
     errs = []
     pg.on("pageerror", lambda e: errs.append(str(e)))

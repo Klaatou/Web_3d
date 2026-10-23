@@ -9,6 +9,7 @@ Prérequis : pip install playwright websockets ; python build.py avant.
 Variables facultatives : THREE_DIR (paquet npm three, hors ligne), CHROMIUM (chemin de l'exécutable).
 Lancer : python tests/v35.py
 """
+import os as _os_lang; _os_lang.environ["WEB3D_LANG"] = "fr"   # outils Python en français (v36)
 import asyncio, json, math, os, pathlib, re, shutil, socket, struct, subprocess, sys, tempfile, time
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -136,7 +137,7 @@ class Onglet:
         self.br, self.errs = br, []
 
     async def ouvrir(self, url, init=STUB, ctx=None, viewer=True):
-        self.ctx = ctx or await self.br.new_context(viewport={"width": 1000, "height": 700})
+        self.ctx = ctx or await self.br.new_context(locale="fr-FR", viewport={"width": 1000, "height": 700})
         if init:
             await self.ctx.add_init_script(init)
         self.pg = await self.ctx.new_page()
@@ -208,7 +209,7 @@ async def main():
             rapport(titres[:4] == ["Déplacement", "Vol", "Vue", "Souris"] and "Chat" in titres and "Zones" in titres and titres[-1] == "Page", "promenade : groupes Déplacement, Vol, Vue, Souris, Chat, Zones, Page", titres)
             aide = await o.txt("helpBody")
             rapport("Ctrl+C" not in aide and "sélectionnable" not in aide and "Ctrl+C copie" not in aide, "plus de mention « Ctrl+C copie » ni d'explication de la sélection", aide[:500])
-            rapport(all(s in aide for s in ("F ou Début : voler / atterrir", "Page Haut ou E", "Page Bas ou C", "Maj ou double appui", "M : subjective / 3e personne", "Alt + glisser", "Fin ou Alt + clic", "P : quitter la promenade")), "l'aide donne les touches Firestorm", aide[:900])
+            rapport(all(s in aide for s in ("Début : voler / atterrir", "Page Haut ou Espace maintenu", "Page Bas ou C", "Maj ou double appui", "M : subjective / 3e personne", "Alt + glisser", "Fin ou Alt + clic", "P ou F : quitter la promenade")), "l'aide donne les touches Firestorm", aide[:900])
             rapport(await o.ev("document.getElementById('walkBtn').hidden"), "en promenade : plus de bouton « Quitter la promenade »")
             rapport("Quitter la promenade (F)" not in await o.ev("document.body.innerText"), "le texte « Quitter la promenade (F) » n'existe plus")
             r = await o.ev("() => { const e = document.querySelector('#helpBody .grp'), b = e.getBoundingClientRect(); return [b.left + 40, b.top + b.height / 2]; }")
@@ -253,22 +254,25 @@ async def main():
             rapport(await o.ev("window.__viewer.walking"), "P entre en promenade")
             rapport("Ctrl+M : carte des mondes" in await o.txt("helpBody"), "l'aide d'une page avec carte donne « Ctrl+M : carte des mondes »")
             await o.touche("KeyF")
-            w = await o.gw()
-            rapport(w["flying"] and await o.ev("window.__viewer.walking") and await o.txt("modeInfo") == "Mode : en vol", "en promenade : F bascule le vol", w)
+            rapport(not await o.ev("window.__viewer.walking"), "en promenade : F sort de la promenade (v36 : F ne fait plus basculer le vol)")
             await o.touche("KeyF")
-            rapport(not (await o.gw())["flying"] and await o.txt("modeInfo") == "Mode : à pied", "F de nouveau : atterrir")
+            rapport(await o.ev("window.__viewer.walking"), "F entre de nouveau")
+            await o.touche("Home")
+            w = await o.gw()
+            rapport(w["flying"] and await o.txt("modeInfo") == "Mode : en vol", "Début : vole", w)
+            await o.touche("Home")
+            rapport(not (await o.gw())["flying"] and await o.txt("modeInfo") == "Mode : à pied", "Début de nouveau : atterrir")
             await o.touche("Home")
             rapport((await o.gw())["flying"], "Début bascule aussi le vol")
             await o.touche("Home")
             rapport(not (await o.gw())["flying"], "Début de nouveau : atterrir")
-            rapport(await o.ev("window.__viewer.walking"), "F n'a jamais quitté la promenade")
             # F avec Ctrl : pas d'effet
             await o.touche("KeyF", ctrlKey=True)
             rapport(not (await o.gw())["flying"], "Ctrl+F n'est pas intercepté")
             await o.ev("window.__viewer.teleportTo([0, 0, 0], 0)")
             await o.ticks(20)
-            # appui bref sur E / Page Haut = saut, sans décollage
-            for code in ("KeyE", "PageUp"):
+            # appui bref sur Page Haut = saut, sans décollage (v36 : E ne saute plus)
+            for code in ("PageUp",):
                 await o.ticks(30, 0.05)
                 out = await o.tenir([code], 3, 0.1)
                 haut = max(s["pos"][1] for s in out)
@@ -276,7 +280,7 @@ async def main():
                 out2 = await o.tenir([], 30, 0.1)
                 rapport(out2[-1]["grounded"] and not out2[-1]["flying"] and abs(out2[-1]["pos"][1] - FLOOR) < 0.05, f"{code} bref : l'avatar retombe", out2[-1])
             # maintenu plus de 0,4 s au sol = décollage + montée
-            for code in ("PageUp", "KeyE"):
+            for code in ("PageUp",):
                 await o.ticks(30, 0.05)
                 out = await o.tenir([code], 14, 0.1)
                 rapport(out[-1]["flying"] and await o.txt("modeInfo") == "Mode : en vol", f"{code} maintenu 1,4 s au sol : décollage, « Mode : en vol »", out[-1])
@@ -294,8 +298,8 @@ async def main():
             await o2.walk()
             out = await o2.tenir(["PageUp"], 14, 0.1)
             rapport(not out[-1]["flying"] and await o2.ev("document.getElementById('flyBtn').hidden"), "--no-fly : Page Haut maintenu ne décolle pas, pas de bouton de vol")
-            await o2.touche("KeyF")
-            rapport(not (await o2.gw())["flying"], "--no-fly : F ne fait pas voler")
+            await o2.touche("Home")
+            rapport(not (await o2.gw())["flying"], "--no-fly : Début ne fait pas voler")
             await o2.ctx.close()
             # course par double appui
             await o.ev("window.__viewer.teleportTo([0, 0, 15], 0)")
@@ -337,40 +341,40 @@ async def main():
             sh = await o.tenir(["ShiftLeft", "KeyW"], 2, 0.1)
             rapport(sh[-1]["running"], "Maj reste une course")
             # M : bascule subjective / troisième personne ; Ctrl+M : carte
-            await o.touche("KeyM")
+            await o.touche("KeyM", key="m")
             rapport(await o.ev("window.__viewer.view") == "tps" and not await o.ev("document.getElementById('mapOverlay').hidden === false"), "en promenade : M passe à la troisième personne, sans ouvrir la carte")
-            await o.touche("KeyM")
+            await o.touche("KeyM", key="m")
             rapport(await o.ev("window.__viewer.view") == "fps", "M de nouveau : vue subjective")
             await o.touche("KeyV")
             rapport(await o.ev("window.__viewer.view") == "tps", "V fait toujours tourner les vues")
             await o.touche("KeyV"); await o.touche("KeyV")
             rapport(await o.ev("window.__viewer.view") == "fps", "V : subjective -> 3e personne -> libre -> subjective")
-            await o.touche("KeyM", ctrlKey=True)
+            await o.touche("KeyM", key="m", ctrlKey=True)
             rapport(not await o.ev("document.getElementById('mapOverlay').hidden"), "Ctrl+M ouvre la carte des mondes en promenade")
             rapport(await o.ev("window.__viewer.view") == "fps", "Ctrl+M ne change pas la vue")
-            await o.touche("KeyM", ctrlKey=True)
+            await o.touche("KeyM", key="m", ctrlKey=True)
             rapport(await o.ev("document.getElementById('mapOverlay').hidden"), "Ctrl+M la referme")
             await o.touche("KeyP")
             rapport(not await o.ev("window.__viewer.walking"), "P : retour en vue globale")
-            await o.touche("KeyM")
+            await o.touche("KeyM", key="m")
             rapport(not await o.ev("document.getElementById('mapOverlay').hidden"), "hors promenade : M ouvre la carte des mondes (comportement conservé)")
-            await o.touche("KeyM")
+            await o.touche("KeyM", key="m")
             rapport(await o.ev("document.getElementById('mapOverlay').hidden"), "M la referme")
-            await o.touche("KeyM", ctrlKey=True)
+            await o.touche("KeyM", key="m", ctrlKey=True)
             rapport(not await o.ev("document.getElementById('mapOverlay').hidden"), "hors promenade, Ctrl+M ouvre aussi la carte")
-            await o.touche("KeyM", ctrlKey=True)
+            await o.touche("KeyM", key="m", ctrlKey=True)
             rapport(await o.ev("document.getElementById('mapBtn').textContent") == "Carte (M)", "bouton « Carte (M) » hors promenade")
-            # E ne déclenche plus les zones ; l'entrée dans un portail « enter » les déclenche toujours
+            # v36 : E déclenche de nouveau la zone proche ; l'entrée dans un portail « enter » les déclenche toujours
             await o.walk((10, 0, 10), 0)
             await o.ticks(5)
             await o.ev("window.__open.length = 0")
             near = await o.ev("(() => { const e = document.getElementById('zonePrompt'); return e && !e.hidden ? e.textContent : null; })()")
-            rapport(near is not None and near.startswith("clic :") and "E :" not in near, "près d'une zone : l'invite dit « clic : … » (plus « E : »)", near)
+            rapport(near is not None and near.startswith("clic ou E :"), "près d'une zone : l'invite dit « clic ou E : … »", near)
             await o.touche("KeyE")
             await o.ticks(5)
             ouvert = await o.ev("window.__open.length")
             toast = await o.ev("(() => { const e = document.getElementById('toast'); return e && !e.hidden ? e.textContent : ''; })()")
-            rapport(ouvert == 0 and "Ouverture" not in toast, "E près d'une zone de lien : rien ne s'ouvre", (ouvert, toast))
+            rapport(ouvert == 1 and "Ouverture" in toast, "E près d'une zone de lien : le lien s'ouvre (v36)", (ouvert, toast))
             await o.ev("window.__viewer.teleportTo([-10, 0, 13.6], 0)")
             await o.ticks(5)
             await o.tenir(["KeyW"], 8, 0.1)   # on marche jusque dans le rayon du portail
@@ -383,7 +387,7 @@ async def main():
             print("--- 3. troisième personne : caméra qui orbite, avatar qui se tourne vers sa marche")
             o = await Onglet(br).ouvrir(base_url + "Discret")
             await o.walk((0, 0, 0), 0)
-            await o.touche("KeyM")
+            await o.touche("KeyM", key="m")
             w = await o.gw()
             rapport(w["view"] == "tps" and ecart(w["camYaw"], w["yaw"]) < 1e-6 and w["cam"][2] > 3, "3e personne : la caméra est derrière l'avatar", w)
             await o.pg.wait_for_timeout(500)
@@ -445,7 +449,7 @@ async def main():
             msgs = await o.ev("window.__sent.filter(m => m.t === 'pos')")
             rapport(any(ecart(m["yaw"], math.pi / 2) < 0.15 for m in msgs[avant:]), "marcher vers la gauche change l'orientation transmise", msgs[-3:])
             # vue subjective inchangée : la souris tourne la vue et l'avatar (même yaw)
-            await o.touche("KeyM")
+            await o.touche("KeyM", key="m")
             await o.souris(-200, 0)
             w = await o.gw()
             rapport(w["view"] == "fps" and ecart(w["camYaw"], w["yaw"]) < 1e-6, "vue subjective : la souris tourne la vue (inchangé)")
@@ -453,8 +457,8 @@ async def main():
             await o.touche("KeyV"); await o.touche("KeyV")
             w = await o.gw()
             rapport(w["view"] == "free", "V atteint la caméra libre")
-            await o.touche("KeyF")
-            rapport(await o.ev("window.__viewer.view") == "fps" and await o.ev("window.__viewer.walking"), "en caméra libre, F rend la main à l'avatar (comportement conservé)")
+            await o.touche("KeyV")
+            rapport(await o.ev("window.__viewer.view") == "fps" and await o.ev("window.__viewer.walking"), "en caméra libre, V rend la main à l'avatar (v36 : F sort de la promenade)")
             rapport(not o.errs, "aucune erreur JavaScript", o.errs)
             await o.ctx.close()
 
@@ -467,7 +471,7 @@ async def main():
             prev = await o.ev(WHEEL, 100)
             w = await o.gw()
             rapport(prev and w["view"] == "fps" and ecart(w["camYaw"], 0) < 1e-6, "vue subjective : la molette ne fait rien, mais la page ne défile pas (preventDefault)")
-            await o.touche("KeyM")
+            await o.touche("KeyM", key="m")
             w = await o.gw()
             rapport(abs(w["tpsDist"] - 4) < 1e-6 and abs(await o.ev(DIST_AV) - 4) < 0.05, "3e personne : distance par défaut 4 m", (w["tpsDist"], await o.ev(DIST_AV)))
             await o.ev(WHEEL, 100)
@@ -487,7 +491,7 @@ async def main():
             await o.pg.reload()
             await o.pg.wait_for_function("document.getElementById('msg') === null && window.__viewer", timeout=40000)
             await o.walk((0, 0, 0), 0)
-            await o.touche("KeyM")
+            await o.touche("KeyM", key="m")
             rapport(abs((await o.gw())["tpsDist"] - float(m)) < 1e-6, "elle est relue après rechargement")
             await o.touche("End")
             w = await o.gw()
@@ -574,7 +578,7 @@ async def main():
             async def survol_a(page_nom, dist):
                 o = await Onglet(br).ouvrir(base_url + page_nom)
                 await o.walk((0, 0, 0), 0)
-                await o.key("keydown", "KeyF"); await o.key("keyup", "KeyF")
+                await o.key("keydown", "Home"); await o.key("keyup", "Home")   # v36 : Début fait voler (F sort de la promenade)
                 delta = dist * math.sin(1.45)
                 y = FLOOR + 0.06 + delta - 1.7
                 await o.ev("""(yy) => { const v = window.__viewer; const k = (t, c) => window.dispatchEvent(new KeyboardEvent(t, { code: c }));
@@ -611,7 +615,7 @@ async def main():
             for dist, attendu_ouvert in ((35, 1), (45, 0)):
                 o = await Onglet(br).ouvrir(base_url + "Portee")
                 await o.walk((0, 0, 0), 0)
-                await o.key("keydown", "KeyF"); await o.key("keyup", "KeyF")
+                await o.key("keydown", "Home"); await o.key("keyup", "Home")   # v36 : Début fait voler (F sort de la promenade)
                 y = FLOOR + 0.06 + dist * math.sin(1.45) - 1.7
                 await o.ev("""(yy) => { const v = window.__viewer; const k = (t, c) => window.dispatchEvent(new KeyboardEvent(t, { code: c }));
                     k('keydown', 'PageUp'); for (let i = 0; i < 2000 && v.getWalk().pos[1] < yy; i++) v.walkTick(0.05); k('keyup', 'PageUp'); }""", y)
@@ -687,7 +691,7 @@ async def main():
             rapport(len(cw) == 1 and "key=" in cw[0] and not ex and await lire_toast(o) == "Copié", "contexte sécurisé : navigator.clipboard.writeText utilisé, pas de repli", (cw, ex))
             await o.ctx.close()
             # le viewer
-            ctx = await br.new_context(viewport={"width": 1000, "height": 700})
+            ctx = await br.new_context(locale="fr-FR", viewport={"width": 1000, "height": 700})
             await ctx.add_init_script(NOCLIP)
             pg = await ctx.new_page()
             errs = []
