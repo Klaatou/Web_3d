@@ -87,4 +87,4 @@ Never commit: Home Assistant addresses (`zones*.json`), `*.reglages.json`, `pres
 
 ## License
 
-To be chosen by the repository owner. three.js (MIT) and the embedded decoders: see `THIRD-PARTY.md`.
+MIT License (see the `LICENSE` file). three.js (MIT) and the embedded decoders: see `THIRD-PARTY.md`.

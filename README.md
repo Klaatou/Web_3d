@@ -126,4 +126,4 @@ Ne jamais committer : adresses Home Assistant (`zones*.json`), `*.reglages.json`
 
 ## Licence
 
-À choisir par le propriétaire du dépôt. three.js (MIT) et les décodeurs embarqués : voir `THIRD-PARTY.md`.
+Licence MIT (fichier `LICENSE`). three.js (MIT) et les décodeurs embarqués : voir `THIRD-PARTY.md`.

@@ -87,11 +87,9 @@ Le dossier des outils fabriqués est `dist\` ; le dépôt local est `P:\_OpenSim
    - glossaire tiré de `src/i18n/en.json` (Arrival, Portal, Spawn, zone, Tiles…) pour que le manuel emploie les termes de l'interface ;
    - **à écrire d'abord** : un script de contrôle qui compare original et traduction (même nombre de titres, de lignes de tableau, de blocs de code ; blocs de code identiques ; termes du glossaire respectés) ;
    - essai prévu avec un petit modèle (Haiku) sur `PROCEDURES.md` : s'il passe le contrôle sans retouche, continuer avec lui, sinon Sonnet.
-4. **Contenu à ajouter au manuel** : le compteur du titre se remet à zéro quand on ouvre le chat ; les nouveautés v35 à v37 non encore listées.
-5. **`CHANGELOG.md`** : chaque entrée à partir de la v38 en français puis en anglais ; rédiger en anglais les notes des « Releases » GitHub pour `v35`, `v36`, `v37`.
-6. **README** : vérifier que la section « Licence » annonce la MIT (elle disait « à choisir »), et qu'il n'y a ni IP ni nom d'hôte.
-7. **Bouton « Copier le diagnostic »** dans la page (versions, état, tuiles chargées, durées) pour supprimer les demandes de F12.
-8. **Démo publique** : page statique sans chat d'une petite région (par exemple Ankh Island, 12 Mo) sur GitHub Pages, dans un dépôt séparé ; plus tard, serveur de présence sur un petit VPS avec `wss://` (Caddy et un nom de domaine) : écrire la procédure d'installation. Une idée plus lointaine : présence réécrite en Worker Cloudflare avec Durable Object (aucun serveur à gérer).
+4. **`CHANGELOG.md`** : chaque entrée à partir de la v38 en français puis en anglais. *(Fait le 23/10/2026 : README (licence MIT), manuel (compteur du titre, en-tête v37) et notes de « Releases » v35 à v37 en anglais dans `RELEASE_NOTES.en.md`, à coller dans GitHub ; ce fichier peut être supprimé ensuite.)*
+5. **Bouton « Copier le diagnostic »** dans la page (versions, état, tuiles chargées, durées) pour supprimer les demandes de F12.
+6. **Démo publique** : page statique sans chat d'une petite région (par exemple Ankh Island, 12 Mo) sur GitHub Pages, dans un dépôt séparé ; plus tard, serveur de présence sur un petit VPS avec `wss://` (Caddy et un nom de domaine) : écrire la procédure d'installation. Une idée plus lointaine : présence réécrite en Worker Cloudflare avec Durable Object (aucun serveur à gérer).
 
 ## 7. Limites connues et pièges
 
