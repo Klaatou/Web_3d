@@ -3,7 +3,7 @@
 """verif_trad.py : compare un document Markdown français et sa traduction anglaise.
 
 Usage (depuis la racine du dépôt) :
-    python verif_trad.py PROCEDURES.md docs\\en\\PROCEDURES.md
+    python verif_trad.py docs\\fr\\MANUEL.md docs\\en\\MANUAL.md
     python verif_trad.py ORIGINAL TRADUCTION --glossaire termes.json   (ajoute ou remplace des termes {"français": "anglais"})
     python verif_trad.py ORIGINAL TRADUCTION --details                  (montre tous les avertissements, pas seulement les 15 premiers)
 
@@ -108,6 +108,15 @@ def analyser(texte):
     return r
 
 
+EQUIV = {"MANUAL.md": "MANUEL.md", "HISTORY.md": "HISTORIQUE.md"}   # noms des documents anglais -> français
+
+
+def equiv(x):
+    for en, fr in EQUIV.items():
+        x = x.replace(en, fr)
+    return x
+
+
 def jetons(textes):
     c = Counter()
     for t in textes:
@@ -131,6 +140,8 @@ def main():
         gl.update(json.loads(pathlib.Path(a.glossaire).read_text(encoding="utf-8")))
     o = analyser(pathlib.Path(a.original).read_text(encoding="utf-8"))
     t = analyser(pathlib.Path(a.traduction).read_text(encoding="utf-8"))
+    for cle in ("inline", "blocs", "liens"):   # MANUAL.md dans la traduction = MANUEL.md dans l'original
+        t[cle] = [equiv(x) for x in t[cle]]
     err, avert = [], []
 
     if o["titres"] != t["titres"]:

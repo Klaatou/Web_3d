@@ -1,129 +1,90 @@
 # web_3d
 
-*English version: [README.en.md](README.en.md)*
+English | [Français](README.fr.md)
 
-**web_3d** transforme une région d'un monde virtuel **OpenSim** (sauvegarde **OAR**) en une page web que l'on parcourt à pied, sans installation côté visiteur : l'OAR est convertie en modèle **glTF** (`.glb`), puis affichée avec **three.js** dans une page web « promenable » (avatar, collisions, visiteurs en temps réel, chat, zones et portails, carte des mondes). L'interface de la page, du viewer et des outils existe en **français et en anglais** (réglage « Langue / Language » ; `--lang fr|en|auto` pour les outils). Les touches et les procédures pas à pas : `MODE_EMPLOI.md`, `PROCEDURES.md` ; toutes les options : `REFERENCE_OPTIONS.md`.
+**web_3d** turns a region of an **OpenSim** virtual world (an **OAR** backup) into a web page that visitors can walk around, with nothing to install on their side. The OAR is converted to a **glTF** model (`.glb`), then displayed with **three.js** in a walkable web page: avatar, collisions, real-time visitors, chat, zones and portals, and a map of worlds. The interface of the page, of the viewer and of the Python tools is available in **English and French** (see "Language" below).
 
-Outils pour mettre une région 3D sur le web : `glb2html` (générateur de pages), le viewer de réglages et le serveur de présence.
+The manuals are in English in `docs/en/` (`MANUAL.md`, `PROCEDURES.md`, `HISTORY.md`) and in French in `docs/fr/`. All the options of every tool, in English and in French, are in [`REFERENCE_OPTIONS.md`](REFERENCE_OPTIONS.md); `python glb2html.py --lang en --help` (and the same for the other tools) prints them in English.
 
-Transforme une région 3D exportée en `.glb` (OpenSim, par exemple) en **page web autonome** : vue 3D, promenade avec avatar, visiteurs en temps réel, chat, zones et portails, carte des mondes.
+## Files built
 
-Outils :
-
-| Fichier fabriqué | Rôle |
+| Built file | Role |
 |---|---|
-| `glb-viewer.html` | Page de réglages et d'export : on charge un `.glb` (ou, depuis la v32, le dossier d'une région en tuiles), on règle la mer, le trou, la caméra, la promenade, les zones, la fiche de région, puis on exporte (zones et ligne de commande seulement pour une région en tuiles). |
-| `glb2html.py` | Script qui fait la même chose en ligne de commande (hors ligne, sans navigateur). |
-| `presence_server.py` | Serveur WebSocket de présence, chat, modération et compteurs de visiteurs. |
-| `oar2glb.py` | Convertit une sauvegarde OpenSim (`.oar`) en `.glb` (convoar + réparation) ; `--version` affiche sa version. `--terrain-seul` ajoute le terrain complet des régions de plus de 256 m à un GLB existant. Détail : `MODE_EMPLOI.md` § 15. |
-| `glb2tiles.py` (+ `glb-stats.py` à côté) | Découpe un GLB énorme en tuiles autonomes (`X.tiles/*.glb` + `X.tiles.json`) ; `--analyse` mesure et recommande sans rien écrire. `--exclure` écarte les « boîtes de livraison » d'un catalogue. La page charge ces tuiles autour de l'avatar (`glb2html.py --tiles`, v30). v31 : images vides ou tronquées remplacées par un gris, et vue d'ensemble légère `X.overview.glb` (toute la région, sans image) affichée au loin. v32 : références d'objets dans les tuiles (zones liées à un objet en mode tuiles). Détail : `MODE_EMPLOI.md` § 17 et § 17 bis. Poser des zones dans une région en tuiles avec le viewer : § 17 ter. |
+| `glb-viewer.html` | Settings and export page: load a `.glb` (or, since v32, the folder of a tiled region), adjust the sea, the hole, the camera, walking, the zones and the region card, then export (for a tiled region: zones and command line only). |
+| `glb2html.py` | The same job on the command line (offline, no browser). Single page, modular page or shared shell, tiled regions, `--maj` to update a published region. |
+| `presence_server.py` | WebSocket server for presence, chat, moderation and visitor counters. |
+| `oar2glb.py` | Converts an OpenSim backup (`.oar`) to `.glb` (convoar + repair); `--terrain-seul` adds the full terrain of regions over 256 m to an existing GLB. |
+| `glb2tiles.py` (+ `glb-stats.py` beside it) | Splits a huge GLB into self-contained tiles (`X.tiles/*.glb` + `X.tiles.json`) and builds a light overview `X.overview.glb`; `--analyse` measures and recommends without writing anything; `--exclure` drops catalogue "delivery boxes". |
 
-## Fabriquer les fichiers
+## Build
 
 ```
 python build.py
 ```
 
-Le résultat est dans `dist/`. Au premier lancement, three.js r160 est téléchargé dans `.cache/` (ou `python build.py --vendor DOSSIER` avec un paquet npm `three` déjà présent). Les fichiers de `dist/` ne sont pas versionnés : on les publie dans les « Releases » du dépôt.
+The result is in `dist/`. On first run three.js r160 is downloaded into `.cache/` (or use `python build.py --vendor FOLDER` with an npm `three` package already unpacked). The files of `dist/` are not versioned: publish them in the repository "Releases". The build embeds the language files (`src/i18n/*.json`) in the pages and in each Python tool, so every tool in `dist/` is a standalone file.
 
-## Utiliser
+## Use
 
-1. Ouvrir `dist/glb-viewer.html`, charger le `.glb`, régler, puis « Enregistrer dans un fichier » (section Réglages mémorisés) : on obtient `<nom>.reglages.json`.
-2. Générer la page avec les mêmes réglages (une seule ligne) :
-
-```
-python glb2html.py "Region-final.glb" --settings --register regions.json --map-page carte.html -o "Region.html"
-```
-
-3. Lancer le serveur de présence : `python presence_server.py --log presence.log`.
-
-`python glb2html.py --help` et `python presence_server.py --help` listent toutes les options.
-
-## Mode modulaire
-
-`--modular` produit, pour la page `Region.html` :
-
-| Fichier | Rôle |
-|---|---|
-| `Region.html` | Coquille (~85 Ko), **identique pour toutes les régions** : elle déduit ses fichiers de son propre nom. Titre de l'onglet = `room`, fond = `skyColor`. |
-| `Region.glb` | Le modèle, octets bruts. |
-| `Region.config.json` | Réglages de rendu de la page (mer, caméra, promenade, présence, carte), sans les zones. Relu à chaque rechargement (F5). Détail et comparaison avec `.reglages.json` : `MODE_EMPLOI.md` § 16. |
-| `Region.zones.json` | Les zones. Relu à chaque rechargement ; s'il est absent, `zones.json` du même dossier ; sinon aucune zone. |
-| `lib/three-0.160.0/` | three.js, Draco et Meshopt, partagés par toutes les pages du dossier. |
-
-Il faut servir le dossier en http/https (test local : `python -m http.server`). Copier une page sous un autre nom marche : renommer ses trois fichiers frères de la même façon.
+1. Open `dist/glb-viewer.html`, load the `.glb`, adjust, then "Save to a file" (remembered settings): you get `<name>.reglages.json`.
+2. Generate the page with the same settings (one line):
 
 ```
-python glb2html.py "Region-final.glb" --settings --modular -o "Region.html"
-python glb2html.py --settings "Region-final.glb" --config-only --wave 2 -o "Region.html"
-python glb2html.py -o "Region.html" --zones-only --zones zones.json
+python glb2html.py "Region-final.glb" --settings --register regions.json --map-page map.html -o "Region.html"
 ```
 
-`--config-only` ne réécrit que la config (les zones ne bougent que si `--zones` est donné) ; `--zones-only` ne réécrit que les zones. Les visiteurs rechargent la page.
+3. Start the presence server: `python presence_server.py --log presence.log`.
 
-Le viewer exporte la même structure : bouton « Exporter la structure modulaire (.zip) », à côté de « Exporter HTML autonome » (page unique qui s'ouvre depuis le disque, sans serveur). Le `.html` du zip est identique à celui de `glb2html.py --modular`.
+## Modular mode and shared shell
 
-### Coquille unique pour plusieurs régions
-
-Avec `--shared-shell`, une seule coquille (`index.html` par défaut) et un seul `lib/` servent plusieurs régions du même dossier ; chaque région n'ajoute que `NOM.glb`, `NOM.config.json` et `NOM.zones.json`, et s'ouvre à `index.html?region=NOM`. Sans paramètre `region`, la coquille se comporte comme avant (pages déjà publiées inchangées). NOM doit être un seul nom de fichier : `../x`, `https://…`, `a/b`, un nom vide ou commençant par un point sont refusés sans aucune requête réseau.
+`--modular` writes `Region.html` (a shell, identical for every region), `Region.glb`, `Region.config.json`, `Region.zones.json` and `lib/three-0.160.0/`. The folder must be served over http/https (local test: `python -m http.server`). With `--shared-shell`, one shell (`index.html` by default) and one `lib/` serve several regions of the same folder, opened at `index.html?region=NAME`. NAME must be a single file name: addresses, paths, an empty name or a name starting with a dot are refused without any network request.
 
 ```
 python glb2html.py "Ankh.glb" --settings --shared-shell --register regions.json -o "Ankh.html"
 ```
 
-`-o` désigne la région (`Ankh.html` n'est pas écrit) ; la coquille et `lib/` ne sont écrits que s'ils sont absents. `--register` enregistre l'adresse `index.html?region=Ankh`. Détail : `MODE_EMPLOI.md` § 16.
+## Tiled regions
 
-### Zones liées à un élément du modèle
+For a huge model, `glb2tiles.py` writes the tiles, and `glb2html.py --tiles X.tiles.json -o X.html --shared-shell` builds the page: the tiles around the avatar are loaded and unloaded as it walks, a light overview is always shown, and zones can be linked to objects of the tiles (v32).
 
-Une zone peut porter un champ `mesh` : le nom exact d'un élément du modèle. L'élément devient cliquable (curseur main, contour au survol), la touche E agit à moins de `radius` mètres de l'élément, et un portail se déclenche en s'approchant. Un élément traversable (`walkIgnore`) ne bloque pas le clic. Dans le viewer, section Zones : « Lier à un élément » (le clic ignore les éléments traversables) et « Délier ».
+## Map of worlds
 
-## Nouveautés de la v33 (détail : `MODE_EMPLOI.md` § 18)
+`regions.json` is the map: a list of regions (name, address, X, Y, arrival point, room, presence server, thumbnail). `--register` adds or updates the region being generated; `--map-page` writes a web page of the map with one link per region; `--map-url a.json,b.json` merges the maps of several owners each time the page opens.
 
-- **Démarrage avec une arrivée** (`#spawn=`, `#pos=`) dans une région en tuiles : l'arrivée est la référence du chargeur, ses tuiles se chargent d'abord, « Chargement du sol… n/m tuiles prêtes · N s » remplace l'écran noir muet (retiré après 15 s). Une ligne de console par tuile (`[tuile] …`) donne les temps de téléchargement, d'analyse et de grille de collision.
-- **Arrivée `default`** : sans lien, la page s'ouvre cadrée dessus et F y démarre (sauf `--target` explicite) ; **R** ou le bouton « Retour à l'arrivée » y ramène.
-- **Promenade** : vol (**Début**, `--no-fly` pour le retirer), trois vues (**V**), champ « Aller à x, y, z », « Copier le lien de ma position » (`#pos=x,y,z,yaw`).
-- **Marqueurs de zones** : `--zone-marker discret|portee|aucun`, `--show-spawns`.
-- **Chat** : saisie persistante, enregistrement dans un fichier texte (côté navigateur), pseudo cité (gras, bulle qui clignote, bip), complétion `@pseudo`. **Couleur de l'avatar** choisie par le visiteur : **relancer `presence_server.py`**. `--log-ip raw` écrit l'adresse IP en clair (donnée personnelle : informer les visiteurs, limiter `--log-days`).
-- **Viewer en mode tuiles** : « Enregistrer les zones dans le dossier de la région » (Edge, Chrome) ; la page relit `X.zones.json` à chaque ouverture, F5 suffit.
+## What is new in v37 (details: `docs/en/MANUAL.md` § 22)
 
-## Nouveautés de la v37 (détail : `MODE_EMPLOI.md` § 22)
+- **Page**: run indicator ("on foot · running"), **compass** at the top (`--compass`, `--north`), portal marker (cone) with a **constant size on screen** and the distance in its tooltip (`--zone-info-dist`: 150 m by default, up to 500), better placed occupied arrival turned toward the occupant, a cited nickname that **blinks until your first action**, **resizable** Help and Information windows, **O** key for Settings, address parameters separated by `&` or `#`.
+- **Chat**: 200-message history (`--history`), `--history-file` and `--history-days` on the server, scrollable panel, "Older messages", unread count in the tab title, "N messages mention you".
+- **Shell**: default region (`default.json`, `--default`, fallback to `regions.json`), `--lib-url` (`lib` folder elsewhere), regions in **sub-folders** (`?region=a/b/name`).
 
-- **Page** : indicateur de course (« à pied · course »), **boussole** en haut (`--compass`, `--north`), repère de portail (cône) de **taille constante** avec la distance dans l'infobulle (`--zone-info-dist` : 150 m par défaut, jusqu'à 500), arrivée occupée mieux placée et tournée vers l'occupant, pseudo cité qui **clignote jusqu'à la première action**, fenêtres Aide et Informations **redimensionnables**, touche **O** pour les Réglages, paramètres du lien séparés par `&` ou `#`.
-- **Chat** : historique de 200 messages (`--history`), `--history-file` et `--history-days` côté serveur, panneau défilable, « Messages plus anciens », non lus dans le titre de l'onglet, « N messages vous citent ».
-- **Coquille** : région par défaut (`default.json`, `--default`, repli sur `regions.json`), `--lib-url` (dossier `lib` ailleurs), régions dans des **sous-dossiers** (`?region=a/b/nom`).
+## Walking: main keys (v36)
 
-## Nouveautés de la v36 (détail : `MODE_EMPLOI.md` § 21)
+| Key | Effect |
+|---|---|
+| **F** or **P** | enter / leave the walk (in the viewer P places a zone: leave with **F**, **Shift+P** or the button) |
+| **E** or click | trigger the nearby zone |
+| **Home**, the fly button, or **Page Up** held > 0.4 s | take off / land; **Page Up** or **Space** held = climb, **Page Down** or **C** = descend |
+| **Space** / short **Page Up** | jump |
+| **T** | show or hide the portal markers (cones; `--no-zone-cone` removes them at build time) |
+| **H** / **I** | help / information windows |
+| **M** | first / third person while walking, map of worlds otherwise |
 
-- **Touches** : **F** et **P** entrent en promenade et en sortent ; le vol se prend avec **Début**, le bouton de vol ou **Page Haut** maintenu ; **E** redevient la touche des zones (« clic ou E : … »). Clavier **AZERTY ou QWERTY** (réglage Auto, lettres réelles dans l'aide).
-- **Arrivée occupée** (décalage si quelqu'un se tient au point d'arrivée), **repères de portail** en cône (`--zone-cone`, touche **T**), **sons** (général, volume, citation, arrivée, départ), « Copier ma position » (URL ou xyz) et « Aller à » qui accepte `#pos=`.
-- **Deux langues, français et anglais** : page exportée, viewer et outils Python. Réglage visiteur « Langue / Language » (Auto par défaut), `#lang=en` ; outils : `--lang fr|en|auto` ou variable `WEB3D_LANG`. Ajouter une langue = ajouter un fichier `src/i18n/<code>.json` (aucun code à modifier). **Relancer `presence_server.py`** (messages traduits).
-- `REFERENCE_OPTIONS.md` est bilingue (français puis anglais dans chaque case) et générée depuis les outils (`python gen_reference.py`).
+The keyboard layout (setting "Keyboard": Auto, AZERTY or QWERTY) only changes the letters shown in the help; the physical keys stay the same. The full table is in `docs/en/MANUAL.md` § 2.
 
-## Nouveautés de la v35 (détail : `MODE_EMPLOI.md` § 20)
+## Language
 
-- **Commandes à la Firestorm** : F / Début bascule le vol, **P** entre et sort de la promenade, E / Page Haut saute (maintenu : décolle), double appui sur W S ↑ ↓ pour courir, **M** bascule vue subjective / troisième personne, **Ctrl+M** carte des mondes, **Fin** ou Alt + clic caméra derrière l'avatar. **E ne déclenche plus les zones.** Tableau complet : § 20.2.
-- **Aide en groupes courts**, aide et état repliables par leur barre de titre ; **troisième personne** : la souris orbite la caméra sans tourner l'avatar, la molette règle sa distance ; **caméra libre** : molette, vitesse proportionnelle à la distance, Alt + glisser pour orbiter.
-- **Infobulles de zones à 40 m** (`--zone-info-dist`), **copie dans le presse-papiers** qui marche aussi en http, **`--maj` avec la carte des mondes** (`--register`, `--map-page`… relatifs au dossier de la page).
+- **Page and viewer**: setting "Language / Language" (Auto = the first language of the browser that is available, otherwise English); `#lang=en` or `#lang=fr` in the address overrides it. Texts you type yourself (zone names, signs, nicknames) are never translated.
+- **Python tools**: `--lang fr|en|auto` (default `auto`), otherwise the `WEB3D_LANG` environment variable, otherwise the system language, otherwise English. `--lang` wins over `WEB3D_LANG`. Option names and the presence server moderation commands (`liste`, `ejecter`, `bannir`, `bans`, `debannir`, `aide`) are not translated.
+- **Adding a language**: copy `src/i18n/en.json` to `src/i18n/<code>.json`, translate the values (never the keys), run `python build.py`. A missing key falls back to English, then French, then the key itself. `python tests/i18n.py` checks the files.
 
-## Nouveautés de la v34 (détail : `MODE_EMPLOI.md` § 19)
+## Develop
 
-- **Aide sélectionnable** (Ctrl+C copie) et **bloc d'état** séparé (vue, mode « à pied » / « en vol », souris, position, tuiles) ; **H** masque l'aide, **I** l'état.
-- **Vol** : Page Haut / Page Bas, atterrissage automatique en descendant jusqu'au sol, bouton « Voler / Atterrir ». **Souris libre après Échap** : **G** ou bouton « Capturer la souris ». Zone de survol des marqueurs au rayon de l'anneau (`--zone-marker portee`).
-- **Couleur en direct** (relancer `presence_server.py`), **lien personnel** `#name=PSEUDO&key=CLE` (secret), pseudo mémorisé sur la page carte.
-- **`glb2html.py --maj`** : met à jour une région sans rien ressaisir (n'applique que les options données, garde la config et les zones, renouvelle la coquille avec copie datée).
+See `CLAUDE.md` (architecture, decisions, roadmap, in French) and `docs/en/HISTORY.md`. Tests: `python build.py`, then `tests/smoke.py`, `modulaire.py`, `portail_interne.py`, `tuiles.py`, `v23.py` to `v37.py`, `v37_chat.py`, `v37_region.py`, `v36_lang.py`, `v36_viewer_lang.py`, `i18n.py`, `tools_lang.py`, `doc_options.py`, `glb2tiles.py`, `oar2glb.py`, `terrain.py` (browser tests need Playwright and Chromium; set `THREE_DIR` and `CHROMIUM`).
 
-## Carte des mondes
+## Security
 
-`regions.json` est la carte : une liste de régions (nom, adresse, X, Y, point d'arrivée, salon, serveur de présence, vignette). `--register` y ajoute ou met à jour la région en cours de génération ; `--map-page` génère une page web de la carte avec un lien cliquable par région ; `--map-url a.json,b.json` fusionne les cartes de plusieurs propriétaires à chaque ouverture de la page.
+Never commit: Home Assistant addresses (`zones*.json`), `*.reglages.json`, `presence_identities.json`, `presence_bans.json`, logs. The `.gitignore` excludes them. `--profile public` removes the private zones from published pages.
 
-## Développer
+## License
 
-Voir `CLAUDE.md` (architecture, décisions, feuille de route) et `HISTORIQUE.md` (comment retrouver chaque version) `tests/smoke.py` (test de fumée dans Chromium sans tête) `tests/modulaire.py` (mode modulaire universel, zones liées, exports du viewer) et `tests/portail_interne.py` (portail dans la même région), `tests/tuiles.py` (région en tuiles chargée par la coquille : rayon, budget, sol continu, blocage, échecs), `tests/v31.py` (images invalides, vue d'ensemble, sortie de promenade), `tests/v32.py` (zones dans une région en tuiles : viewer, zones liées à un objet, position affichée), `tests/v33.py` (démarrage avec tuiles lourdes, arrivée par défaut, vol, vues, chat, couleur, marqueurs, zones dans le dossier), `tests/v34.py` (aide et état, survol, vol, souris libre, couleur en direct, lien personnel, page carte, `--maj`) `tests/v35.py`, `tests/v36.py` (touches, clavier, cônes, sons, position), `tests/v36_lang.py` et `tests/v36_viewer_lang.py` (langue de la page et du viewer), `tests/i18n.py` (fichiers de langue), `tests/tools_lang.py` (langue des outils), `tests/doc_options.py` (référence des options) et `tests/v23.py` (clic, liaison, rotation). Mode d'emploi des zones et portails : `MODE_EMPLOI.md`.
-
-## Sécurité
-
-Ne jamais committer : adresses Home Assistant (`zones*.json`), `*.reglages.json`, `presence_identities.json`, `presence_bans.json`, journaux. Le `.gitignore` les exclut. Le profil `--profile public` retire les zones privées des pages publiées.
-
-## Licence
-
-Licence MIT (fichier `LICENSE`). three.js (MIT) et les décodeurs embarqués : voir `THIRD-PARTY.md`.
+MIT License (see the `LICENSE` file). three.js (MIT) and the embedded decoders: see `THIRD-PARTY.md`.

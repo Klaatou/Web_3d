@@ -1,6 +1,6 @@
 // ===== langue de la page (v36) =====
 // Les textes sont dans src/i18n/<code>.json (un fichier par langue, clés stables, texte pur) ; build.py les intègre ici.
-// Ajouter une langue = ajouter un fichier src/i18n/<code>.json (voir MODE_EMPLOI § « Ajouter une langue ») : aucun code à toucher.
+// Ajouter une langue = ajouter un fichier src/i18n/<code>.json (voir docs/fr/MANUEL.md § 21.9) : aucun code à toucher.
 // Texte manquant dans une langue : anglais, puis français, puis la clé elle-même.
 const I18N = __I18N_DATA__;
 const I18N_LANGS = Object.keys(I18N).sort();

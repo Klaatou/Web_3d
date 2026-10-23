@@ -1,6 +1,6 @@
 # How do I… (step-by-step procedures)
 
-*Written on 23/10/2026 for version v36. The commands are for PowerShell, on a single line, with the paths of your machine. The full list of options is in `REFERENCE_OPTIONS.md`; zones, keys and settings are described in detail in `MODE_EMPLOI.md`.*
+*Written on 23/10/2026 for version v36. The commands are for PowerShell, on a single line, with the paths of your machine. The full list of options is in `REFERENCE_OPTIONS.md`; zones, keys and settings are described in detail in `MANUAL.md`.*
 
 **What was tried here:** the `glb2html` and `glb2tiles` commands (including `--maj`, `--register`, `--map-page`) on test regions, as a single GLB and as tiles. **What was not:** converting an OAR with convoar (convoar is not available in the sandbox), and the PowerShell commands themselves (tried under Linux with equivalent paths).
 
@@ -30,13 +30,13 @@ Choose this when `glb2tiles --analyse` does not recommend splitting (roughly: GL
 4. **Serve and open.** The page must go through a web server, not a double-click.
    `cd "P:\_OpenSim\SL&OS\Web_3d\sites\MaRegion"; python -m http.server 8000`
    Then `http://localhost:8000/index.html?region=MaRegion`.
-5. **Place the zones** (portals, arrivals, signs) in `glb-viewer.html`: see `MODE_EMPLOI.md` §§ 3 to 12. When you are done, the viewer exports `MaRegion.zones.json`: copy it into the page's folder, then F5.
+5. **Place the zones** (portals, arrivals, signs) in `glb-viewer.html`: see `MANUAL.md` §§ 3 to 12. When you are done, the viewer exports `MaRegion.zones.json`: copy it into the page's folder, then F5.
 
 ## 2. From an OAR to a web page, heavy region (tiles)
 
 The case of the 4X4: a 1.2 GB GLB does not fit in one piece in the browser. Tiles load around the avatar and the rest is unloaded; the overview shows the whole region from afar.
 
-1. **Convert the OAR** as in 1.1. It can take several hours and several tens of GB of memory (4 h 20 and 45 GB for the 4X4). If convoar crashes while reading the JPEG 2000 textures, run it again with `--reencode` (see `MODE_EMPLOI.md` § 15: only as a last resort).
+1. **Convert the OAR** as in 1.1. It can take several hours and several tens of GB of memory (4 h 20 and 45 GB for the 4X4). If convoar crashes while reading the JPEG 2000 textures, run it again with `--reencode` (see `MANUAL.md` § 15: only as a last resort).
 2. **Analyse** (read-only):
    `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python glb2tiles.py "J:\...\OAR\X.glb" --analyse`
 3. **Split.** `--sortie` is the folder where `X.tiles\`, `X.tiles.json` and `X.overview.glb` are written. `--exclure` removes from the split the objects whose name matches (safeguards: at most 24 triangles and 1 mesh), for example the delivery boxes of catalogues.
@@ -75,11 +75,11 @@ Useful keys: `seaY` (sea level, in m), `target` (`[x, y, z]`), `presenceUrl`, `c
 
 | Need | Where |
 |---|---|
-| Place a portal, arrival, sign, link | viewer, `MODE_EMPLOI.md` §§ 3 to 8 |
+| Place a portal, arrival, sign, link | viewer, `MANUAL.md` §§ 3 to 8 |
 | Arrival used when the page is opened without a link | an arrival named `default` (§ 4); an explicit `--target` keeps the framing |
-| Portal to another region | `MODE_EMPLOI.md` § 6 |
-| Zone linked to an object of the model | `MODE_EMPLOI.md` § 9 (as tiles: § 17 ter) |
-| Private zone (visible only with the "perso" profile) | `MODE_EMPLOI.md` § 10 |
+| Portal to another region | `MANUAL.md` § 6 |
+| Zone linked to an object of the model | `MANUAL.md` § 9 (as tiles: § 17 ter) |
+| Private zone (visible only with the "perso" profile) | `MANUAL.md` § 10 |
 
 The zones of a tiled region are written in the model's original frame (no recentring). The viewer in tiles mode produces these coordinates directly; do not copy by hand coordinates from another GLB.
 
@@ -158,4 +158,4 @@ For any bug report, paste the text of the status and help panels, and the consol
 | Region in a subfolder | `glb2html.py X.glb --shared-shell "P:\site\index.html" -o "P:\site\sous\dossier\X.html"`; address `index.html?region=sous/dossier/X` |
 | Address parameters | separated by `&`; `#` is also accepted (`#name=Klaatou&lang=en` = `#name=Klaatou#lang=en`) |
 
-Details: `MODE_EMPLOI.md` §§ 2, 21 and 22.
+Details: `MANUAL.md` §§ 2, 21 and 22.

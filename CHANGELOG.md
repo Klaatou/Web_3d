@@ -8,6 +8,8 @@ Les dates sont au format jj/mm/aaaa.
 - **Translations**: `verif_trad.py` compares a French document with its translation (headings, tables, lists, code, links, UI glossary); exit code 1 on error. `docs/en/PROCEDURES.md` and `docs/en/HISTORY.md`: translations of `PROCEDURES.md` and `HISTORIQUE.md`, checked by this script.
 - **Manuel** : `docs/en/MANUAL.md`, traduction de `MODE_EMPLOI.md` (1 066 lignes), contrôlée par `verif_trad.py` ; détection du français dans le code affinée (mots propres au français, espace avant le deux-points, virgule décimale).
 - **Manual**: `docs/en/MANUAL.md`, translation of `MODE_EMPLOI.md` (1,066 lines), checked by `verif_trad.py`; finer detection of French in code (French-only words, space before the colon, decimal comma).
+- **Documents** : `MODE_EMPLOI.md` devient `docs/fr/MANUEL.md`, `PROCEDURES.md` et `HISTORIQUE.md` passent dans `docs/fr/` ; `README.md` est désormais en anglais (page d'accueil GitHub), `README.fr.md` en français, avec une ligne `English | Français` ; renvois mis à jour (documents, commentaires du code, `CLAUDE.md`) ; `verif_trad.py` tient `MANUAL.md` pour équivalent de `MANUEL.md`.
+- **Documents**: `MODE_EMPLOI.md` becomes `docs/fr/MANUEL.md`, `PROCEDURES.md` and `HISTORIQUE.md` move to `docs/fr/`; `README.md` is now in English (GitHub home page), `README.fr.md` in French, with an `English | Français` line; references updated (documents, code comments, `CLAUDE.md`); `verif_trad.py` treats `MANUAL.md` as equivalent to `MANUEL.md`.
 
 ## v37 (23/10/2026)
 ### Lot 1 : corrections et ajouts de la page

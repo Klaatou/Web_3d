@@ -604,7 +604,7 @@ SHELL_CFG_TAG = '<script type="application/json" id="cfg">__CONFIG__</script>\n'
 SHELL_GLB_TAG = '<script type="application/octet-stream" id="glb">__GLB_B64__</script>\n'
 SHELL_LOAD_OLD = "await viewer.loadBuffer(await b64ToBuffer(document.getElementById('glb').textContent.trim()));"
 SHELL_LOAD_NEW = """if (C.tiles) {
-    // région en tuiles (X.tiles.json, voir MODE_EMPLOI § 17 bis) : pas de X.glb ; ?rayon=NNN remplace tileRadius (essais).
+    // région en tuiles (X.tiles.json, voir docs/fr/MANUEL.md § 17 bis) : pas de X.glb ; ?rayon=NNN remplace tileRadius (essais).
     // Arrivée demandée (lien #spawn= ou #pos=) : cadrage et chargement d'abord sur ce point. Sans lien, arrivée « default » si la région en a une
     // (sauf --target explicite) ; sinon la cible de la configuration. La page continue après 15 s même si la tuile n'est pas prête.
     const rayon = Number(new URLSearchParams(location.search).get('rayon'));

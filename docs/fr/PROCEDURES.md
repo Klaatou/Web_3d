@@ -1,6 +1,6 @@
 # Que faire pour… (procédures pas à pas)
 
-*Écrit le 23/10/2026 pour la version v36. Les commandes sont en PowerShell, sur une seule ligne, avec les chemins de ta machine. La liste complète des options est dans `REFERENCE_OPTIONS.md` ; le détail des zones, touches et réglages est dans `MODE_EMPLOI.md`.*
+*Écrit le 23/10/2026 pour la version v36. Les commandes sont en PowerShell, sur une seule ligne, avec les chemins de ta machine. La liste complète des options est dans `REFERENCE_OPTIONS.md` ; le détail des zones, touches et réglages est dans `MANUEL.md`.*
 
 **Ce qui a été essayé ici :** les commandes de `glb2html`, `glb2tiles` (y compris `--maj`, `--register`, `--map-page`) sur des régions de test, un seul GLB et en tuiles. **Ce qui ne l'a pas été :** la conversion d'un OAR par convoar (convoar n'est pas disponible dans le bac à sable), et les commandes PowerShell elles-mêmes (essayées sous Linux avec des chemins équivalents).
 
@@ -30,13 +30,13 @@
 4. **Servir et ouvrir.** La page doit passer par un serveur web, pas par un double-clic.
    `cd "P:\_OpenSim\SL&OS\Web_3d\sites\MaRegion"; python -m http.server 8000`
    Puis `http://localhost:8000/index.html?region=MaRegion`.
-5. **Poser les zones** (portails, arrivées, panneaux) dans `glb-viewer.html` : voir `MODE_EMPLOI.md` §§ 3 à 12. En fin de travail, le viewer exporte `MaRegion.zones.json` : copie-le dans le dossier de la page, puis F5.
+5. **Poser les zones** (portails, arrivées, panneaux) dans `glb-viewer.html` : voir `MANUEL.md` §§ 3 à 12. En fin de travail, le viewer exporte `MaRegion.zones.json` : copie-le dans le dossier de la page, puis F5.
 
 ## 2. D'un OAR à une page web, région lourde (tuiles)
 
 Cas de la 4X4 : un GLB de 1,2 Go ne tient pas d'un bloc dans le navigateur. Les tuiles chargent autour de l'avatar et déchargent le reste ; la vue d'ensemble montre toute la région de loin.
 
-1. **Convertir l'OAR** comme au 1.1. Ça peut durer plusieurs heures et plusieurs dizaines de Go de mémoire (4 h 20 et 45 Go pour la 4X4). Si convoar plante dans la lecture des textures JPEG 2000, relance avec `--reencode` (voir `MODE_EMPLOI.md` § 15 : à n'utiliser qu'en dernier recours).
+1. **Convertir l'OAR** comme au 1.1. Ça peut durer plusieurs heures et plusieurs dizaines de Go de mémoire (4 h 20 et 45 Go pour la 4X4). Si convoar plante dans la lecture des textures JPEG 2000, relance avec `--reencode` (voir `MANUEL.md` § 15 : à n'utiliser qu'en dernier recours).
 2. **Analyser** (lecture seule) :
    `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python glb2tiles.py "J:\...\OAR\X.glb" --analyse`
 3. **Découper.** `--sortie` désigne le dossier où sont écrits `X.tiles\`, `X.tiles.json` et `X.overview.glb`. `--exclure` retire du découpage les objets dont le nom correspond (garde-fous : 24 triangles et 1 mesh au plus), par exemple les boîtes de livraison des catalogues.
@@ -75,11 +75,11 @@ Clés utiles : `seaY` (hauteur de la mer, en m), `target` (`[x, y, z]`), `presen
 
 | Besoin | Où |
 |---|---|
-| Poser portail, arrivée, panneau, lien | viewer, `MODE_EMPLOI.md` §§ 3 à 8 |
+| Poser portail, arrivée, panneau, lien | viewer, `MANUEL.md` §§ 3 à 8 |
 | Arrivée utilisée à l'ouverture sans lien | une arrivée nommée `default` (§ 4) ; `--target` explicite garde le cadrage |
-| Portail vers une autre région | `MODE_EMPLOI.md` § 6 |
-| Zone liée à un objet du modèle | `MODE_EMPLOI.md` § 9 (en tuiles : § 17 ter) |
-| Zone privée (visible seulement avec le profil « perso ») | `MODE_EMPLOI.md` § 10 |
+| Portail vers une autre région | `MANUEL.md` § 6 |
+| Zone liée à un objet du modèle | `MANUEL.md` § 9 (en tuiles : § 17 ter) |
+| Zone privée (visible seulement avec le profil « perso ») | `MANUEL.md` § 10 |
 
 Les zones d'une région en tuiles s'écrivent dans le repère d'origine du modèle (aucun recentrage). Le viewer en mode tuiles produit ces coordonnées directement ; ne reporte pas à la main des coordonnées d'un autre GLB.
 
@@ -158,4 +158,4 @@ Pour tout rapport de bug, colle le texte du panneau d'état et d'aide, et les me
 | Région dans un sous-dossier | `glb2html.py X.glb --shared-shell "P:\site\index.html" -o "P:\site\sous\dossier\X.html"` ; adresse `index.html?region=sous/dossier/X` |
 | Paramètres de l'adresse | séparés par `&` ; `#` est aussi accepté (`#name=Klaatou&lang=en` = `#name=Klaatou#lang=en`) |
 
-Détail : `MODE_EMPLOI.md` §§ 2, 21 et 22.
+Détail : `MANUEL.md` §§ 2, 21 et 22.

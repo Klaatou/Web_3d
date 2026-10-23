@@ -402,7 +402,7 @@ function createViewer(container, cfg0, loader) {
     return gltf;
   }
 
-  // ---- mode tuiles (champ cfg.tiles) : région découpée par tools/glb2tiles.py (X.tiles.json, MODE_EMPLOI § 17 bis)
+  // ---- mode tuiles (champ cfg.tiles) : région découpée par tools/glb2tiles.py (X.tiles.json, docs/fr/MANUEL.md § 17 bis)
   // Les tuiles dont la boîte est proche de l'avatar (en vue globale : de la cible) sont chargées, les lointaines déchargées. Repère = celui du
   // modèle d'origine (aucun recentrage) ; la rotation de la région est appliquée à la racine des tuiles. Une grille de collision par tuile.
   // Zones liées à un élément (champ mesh) : ignorées (la référence nom#index se calcule sur tout le modèle).

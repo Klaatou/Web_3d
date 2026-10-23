@@ -6,7 +6,7 @@
 Usage (depuis le dossier qui contient gen_reference.py ; le dossier des outils est dist\\) :
     python gen_reference.py                       (outils dans .\\dist, sortie .\\REFERENCE_OPTIONS.md)
     python gen_reference.py --outils "P:\\...\\dist" --sortie "P:\\...\\REFERENCE_OPTIONS.md"
-    python gen_reference.py --verifier MODE_EMPLOI.md    (liste les options absentes de ce fichier)
+    python gen_reference.py --verifier docs/fr/MANUEL.md    (liste les options absentes de ce fichier)
 
 presence_server.py demande « pip install websockets » pour être lu.
 """
