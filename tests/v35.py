@@ -220,6 +220,7 @@ async def main():
             for tete, corps, nom in (("helpHead", "helpBody", "aide"), ("stateHead", "stateBody", "état")):
                 rapport(await o.ev("(c) => !document.getElementById(c).hidden", corps), f"{nom} : dépliée au départ")
                 await o.pg.click("#" + tete)
+                await o.pg.wait_for_timeout(300)   # v41 : à la souris, le titre replie 250 ms après le clic (un double-clic ne replie pas)
                 rapport(await o.ev("([t, c]) => document.getElementById(c).hidden && document.getElementById(t).getAttribute('aria-expanded') === 'false' && document.getElementById(t).textContent.startsWith('▸')", [tete, corps]), f"{nom} : un clic sur le titre la replie (flèche et aria-expanded, pas de couleur)")
             rapport(await o.ev("!document.getElementById('walkHint').hidden && !document.getElementById('stateInfo').hidden"), "repliés, les panneaux restent là (seul le titre)")
             await o.pg.reload()
@@ -227,7 +228,9 @@ async def main():
             await o.walk()
             rapport(await o.ev("document.getElementById('helpBody').hidden && document.getElementById('stateBody').hidden"), "l'état replié est mémorisé après rechargement")
             await o.pg.click("#helpHead")
+            await o.pg.wait_for_timeout(300)   # v41 : à la souris, le titre replie 250 ms après le clic (un double-clic ne replie pas)
             await o.pg.click("#stateHead")
+            await o.pg.wait_for_timeout(300)   # v41 : à la souris, le titre replie 250 ms après le clic (un double-clic ne replie pas)
             rapport(await o.ev("!document.getElementById('helpBody').hidden && !document.getElementById('stateBody').hidden"), "un second clic les déplie")
             await o.pg.reload()
             await o.pg.wait_for_function("document.getElementById('msg') === null && window.__viewer", timeout=40000)

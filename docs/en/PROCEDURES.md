@@ -159,3 +159,44 @@ For any bug report, paste the text of the status and help panels, and the consol
 | Address parameters | separated by `&`; `#` is also accepted (`#name=Klaatou&lang=en` = `#name=Klaatou#lang=en`) |
 
 Details: `MANUAL.md` §§ 2, 21 and 22.
+
+---
+
+## 11. Making the presence server public without showing your IP address
+
+*Written on 24/10/2026. **Not tested**: neither Tailscale Funnel, nor Caddy, nor Cloudflare Tunnel could be tried in the design sandbox. The lines below follow the documentation of these tools; check the result with the control of the final step ("Checking the address seen by the server").*
+
+**Principle.** The pages are served over https, so the presence address must be `wss://NOM`. The visitor only connects to that `NOM`, never to your IP. A relay receives the `wss://` and passes it on as `ws://` to `presence_server.py`, which then only listens on `127.0.0.1` (hence without `--cert` or `--key`). Choose **one** of the three ways.
+
+### Way A: at home, Tailscale Funnel (no port to open on the router)
+1. Install Tailscale on the machine that runs the server and connect it to your account. In the Tailscale admin console, enable **HTTPS** (DNS) and allow **Funnel** for this machine (see the "Tailscale Funnel" documentation).
+2. Start the server on the local address only (PowerShell, one line): `python ".\presence_server.py" --host 127.0.0.1 --port 8765 --origins "https://TONSITE" --log presence.log --log-ip raw --log-days 0 --history-file chat.jsonl --history-days 0`
+3. Expose it: `tailscale funnel --bg 8765`. The public address is `https://MACHINE.TAILNET.ts.net`; the presence address is therefore `wss://MACHINE.TAILNET.ts.net`.
+4. Your IP does not appear; on the other hand, the name of your machine and the name of your Tailscale network are public.
+
+### Way B: small VPS, Caddy (automatic https certificate)
+You need a domain name with an `A` record pointing to the VPS, and root access **once**, for the installation (open ports 80 and 443 only).
+1. Install Python, `pip install websockets` and Caddy.
+2. `Caddyfile` file: a block `presence.TONDOMAINE.tld { reverse_proxy 127.0.0.1:8765 }`. Caddy handles WebSockets and sends the visitor's address in `X-Forwarded-For`.
+3. Start the server: `python3 presence_server.py --host 127.0.0.1 --port 8765 --proxy-header X-Forwarded-For --origins "https://TONSITE" --log presence.log --history-file chat.jsonl`
+4. Presence address: `wss://presence.TONDOMAINE.tld`. Here the IP of the VPS is public in the DNS; way C hides it.
+
+### Way C: Cloudflare Tunnel (IP hidden, no port open, at home or on a VPS)
+You need a domain name managed by Cloudflare (free account).
+1. Install `cloudflared`, then `cloudflared tunnel login` and `cloudflared tunnel create presence`.
+2. In the tunnel configuration file, route `presence.TONDOMAINE.tld` to `http://127.0.0.1:8765` (`cloudflared tunnel route dns presence presence.TONDOMAINE.tld`, then `cloudflared tunnel run presence`).
+3. Start the server: `python3 presence_server.py --host 127.0.0.1 --port 8765 --proxy-header CF-Connecting-IP --origins "https://TONSITE"`
+4. Presence address: `wss://presence.TONDOMAINE.tld`.
+
+### Connecting the pages (all three ways)
+One region at a time: `glb2html.py --maj -o "CHEMIN\X.html" --shared-shell --presence-url "wss://ADRESSE"` (the `--maj` line of section 4 plus `--presence-url`). Or the `presenceUrl` key of `X.config.json`.
+
+### Checking the address seen by the server (to do once, with `--log-ip raw`)
+Open a page from a phone on 4G (not from your network), then read `presence.log`: the address written must be the phone's. If you see `127.0.0.1` or the relay's address, the header given to `--proxy-header` is wrong or missing: **IP bans would not work**. The expected headers: `X-Forwarded-For` (Caddy, nginx), `CF-Connecting-IP` (Cloudflare); for Funnel, try `X-Forwarded-For` and say what the log shows.
+
+### To keep in mind
+- `--origins` restricts connections to the pages of your site; without it, any page can connect to your server. Several sites: a comma-separated list.
+- The existing limits stay active: `--max-per-ip` (10), `--max-per-room` (50), `--chat-burst`, messages of 4,096 bytes at most.
+- Hiding the IP protects the machine, not the service: abuse (messages, nicknames) is handled by moderation (section 6, step 5).
+- The relay (Tailscale, Cloudflare) sees the decrypted traffic. Messages and addresses remain personal data: inform the visitors.
+- Always restart the server after `python build.py` (section 6, step 6).

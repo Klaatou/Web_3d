@@ -1104,3 +1104,36 @@ The help window (**H**) ends with a **"Full manual (online)"** link to this manu
 ### 24.4 v40 tests
 
 `tests/v40.py`: list and order of the arrival points, L key, teleport on click (global view and walk mode), "Recenter the view" button (exact opening framing), region without an arrival point, help, manual link and diagnostics tooltip in French and in English, viewer.
+
+## 25. New in v41 (24/10/2026)
+
+### 25.1 Window tooltips
+
+On hovering the title, each window gives its role and its key: **Help** (H), **Information / Status** (I), **Arrivals** (L), then how to collapse it, move it and put it back in its stack. The **Settings** button has its tooltip too (O).
+
+### 25.2 Movable windows
+
+The **Help**, **Information / Status** and **Arrivals** windows move by **dragging their title**. There are two stacks:
+
+- **the left stack**, at the bottom of the screen: the original place of the three windows;
+- **the right stack**, below the **Settings** button: when Settings opens, it moves down by as much; when it closes, it moves back up.
+
+A window dropped on a stack docks to it, at the height where it is dropped. Dropped elsewhere, it stays **free**, exactly where it was put, above the view. A **double-click on the title** sends it back to the last stack it was docked to (the left one if it never knew another). If the browser window shrinks, a free window is brought back on screen; its remembered position does not change.
+
+A **click** on the title still collapses or expands the window, but **250 ms after the click** when made with the mouse: a double-click therefore does not collapse it. The right edge keeps its v37 role (drag to change the width); the width of the Arrivals window can be set too.
+
+### 25.3 Remembered layout and layout file
+
+The layout (stack or position of each window, order in the stacks) is remembered by the browser (key `glb2html_layout`), together with the open / collapsed states and the widths. It depends on the browser and on the page address.
+
+In **Settings**, **Window layout** section:
+
+- **"Save the layout"** downloads a `disposition.json` file (Downloads folder, or the location the browser asks for);
+- **"Load a layout"** opens the file picker and applies the chosen `.json` at once, without reloading the page. A file that is not a layout is refused and nothing changes;
+- **"Original layout"** puts the three windows back in the left stack and clears the widths.
+
+A web page cannot write on its own into a file chosen in advance: saving therefore goes through a download.
+
+### 25.4 v41 tests
+
+`tests/v41.py`: tooltips, drag to the view (free), to Settings (right stack pushed by Settings), reload, double-click back without collapsing, delayed click, save, original layout, load, refused file, free window kept on screen. `tests/v35.py` and `tests/v36.py` now wait 300 ms after a mouse click on a title.

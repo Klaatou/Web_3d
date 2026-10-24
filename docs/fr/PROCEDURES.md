@@ -159,3 +159,44 @@ Pour tout rapport de bug, colle le texte du panneau d'état et d'aide, et les me
 | Paramètres de l'adresse | séparés par `&` ; `#` est aussi accepté (`#name=Klaatou&lang=en` = `#name=Klaatou#lang=en`) |
 
 Détail : `MANUEL.md` §§ 2, 21 et 22.
+
+---
+
+## 11. Rendre le serveur de présence public sans montrer son adresse IP
+
+*Rédigé le 24/10/2026. **Non testé** : ni Tailscale Funnel, ni Caddy, ni Cloudflare Tunnel n'ont été essayés dans le bac à sable de conception. Les lignes ci-dessous suivent la documentation de ces outils ; vérifie le résultat avec le contrôle de l'étape finale (« Contrôler l'adresse vue par le serveur »).*
+
+**Principe.** Les pages sont en https, donc l'adresse de présence doit être en `wss://NOM`. Le visiteur ne se connecte qu'à ce `NOM`, jamais à ton IP. Un relais reçoit le `wss://` et le transmet en `ws://` à `presence_server.py`, qui n'écoute alors que sur `127.0.0.1` (donc sans `--cert` ni `--key`). Choisis **une** des trois voies.
+
+### Voie A : chez toi, Tailscale Funnel (aucun port à ouvrir dans la box)
+1. Installe Tailscale sur la machine qui fait tourner le serveur et connecte-la à ton compte. Dans la console d'administration Tailscale, active **HTTPS** (DNS) et autorise **Funnel** pour cette machine (voir la documentation « Tailscale Funnel »).
+2. Lance le serveur sur l'adresse locale seulement (PowerShell, une ligne) : `python ".\presence_server.py" --host 127.0.0.1 --port 8765 --origins "https://TONSITE" --log presence.log --log-ip raw --log-days 0 --history-file chat.jsonl --history-days 0`
+3. Expose-le : `tailscale funnel --bg 8765`. L'adresse publique est `https://MACHINE.TAILNET.ts.net` ; l'adresse de présence est donc `wss://MACHINE.TAILNET.ts.net`.
+4. Ton IP n'apparaît pas ; en revanche le nom de ta machine et celui de ton réseau Tailscale sont publics.
+
+### Voie B : petit VPS, Caddy (certificat https automatique)
+Il faut un nom de domaine dont un enregistrement `A` pointe vers le VPS, et l'accès root **une seule fois**, pour l'installation (ouvrir les ports 80 et 443 uniquement).
+1. Installe Python, `pip install websockets` et Caddy.
+2. Fichier `Caddyfile` : un bloc `presence.TONDOMAINE.tld { reverse_proxy 127.0.0.1:8765 }`. Caddy gère les WebSocket et envoie l'adresse du visiteur dans `X-Forwarded-For`.
+3. Lance le serveur : `python3 presence_server.py --host 127.0.0.1 --port 8765 --proxy-header X-Forwarded-For --origins "https://TONSITE" --log presence.log --history-file chat.jsonl`
+4. Adresse de présence : `wss://presence.TONDOMAINE.tld`. Ici l'IP du VPS est publique dans le DNS ; c'est la voie C qui la cache.
+
+### Voie C : Cloudflare Tunnel (IP cachée, aucun port ouvert, chez toi ou sur un VPS)
+Il faut un nom de domaine géré par Cloudflare (compte gratuit).
+1. Installe `cloudflared`, puis `cloudflared tunnel login` et `cloudflared tunnel create presence`.
+2. Dans le fichier de configuration du tunnel, route `presence.TONDOMAINE.tld` vers `http://127.0.0.1:8765` (`cloudflared tunnel route dns presence presence.TONDOMAINE.tld`, puis `cloudflared tunnel run presence`).
+3. Lance le serveur : `python3 presence_server.py --host 127.0.0.1 --port 8765 --proxy-header CF-Connecting-IP --origins "https://TONSITE"`
+4. Adresse de présence : `wss://presence.TONDOMAINE.tld`.
+
+### Brancher les pages (les trois voies)
+Une région à la fois : `glb2html.py --maj -o "CHEMIN\X.html" --shared-shell --presence-url "wss://ADRESSE"` (la ligne `--maj` de la section 4 plus `--presence-url`). Ou la clé `presenceUrl` de `X.config.json`.
+
+### Contrôler l'adresse vue par le serveur (à faire une fois, avec `--log-ip raw`)
+Ouvre une page depuis un téléphone en 4G (pas depuis ton réseau), puis lis `presence.log` : l'adresse écrite doit être celle du téléphone. Si tu vois `127.0.0.1` ou l'adresse du relais, l'en-tête donné à `--proxy-header` est mauvais ou absent : **les bannissements par IP ne marcheraient pas**. Les en-têtes attendus : `X-Forwarded-For` (Caddy, nginx), `CF-Connecting-IP` (Cloudflare) ; pour Funnel, essaie `X-Forwarded-For` et dis-moi ce que montre le journal.
+
+### À garder en tête
+- `--origins` limite les connexions aux pages de ton site ; sans lui, n'importe quelle page peut se brancher sur ton serveur. Plusieurs sites : une liste séparée par des virgules.
+- Les limites existantes restent actives : `--max-per-ip` (10), `--max-per-room` (50), `--chat-burst`, message de 4 096 octets au plus.
+- Cacher l'IP protège la machine, pas le service : un abus (messages, pseudos) se traite par la modération (section 6, étape 5).
+- Le relais (Tailscale, Cloudflare) voit le trafic déchiffré. Les messages et les adresses restent des données personnelles : informe les visiteurs.
+- Relance toujours le serveur après `python build.py` (section 6, étape 6).

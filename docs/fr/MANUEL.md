@@ -1104,3 +1104,36 @@ La fenêtre d'aide (**H**) se termine par un lien **« Manuel complet (en ligne)
 ### 24.4 Tests de la v40
 
 `tests/v40.py` : liste et ordre des arrivées, touche L, téléportation au clic (vue globale et promenade), bouton « Recentrer la vue » (cadrage d'ouverture exact), région sans arrivée, aide, lien du manuel et bulle du diagnostic en français et en anglais, viewer.
+
+## 25. Nouveautés de la v41 (24/10/2026)
+
+### 25.1 Bulles des fenêtres
+
+Au survol du titre, chaque fenêtre dit son rôle et sa touche : **Aide** (H), **Informations / État** (I), **Arrivées** (L), puis comment la réduire, la déplacer et la remettre dans sa pile. Le bouton **Réglages** a aussi sa bulle (O).
+
+### 25.2 Fenêtres déplaçables
+
+Les fenêtres **Aide**, **Informations / État** et **Arrivées** se déplacent en **glissant leur titre**. Il y a deux piles :
+
+- **la pile de gauche**, en bas de l'écran : la place d'origine des trois fenêtres ;
+- **la pile de droite**, sous le bouton **Réglages** : quand Réglages s'ouvre, elle descend d'autant ; quand il se ferme, elle remonte.
+
+Une fenêtre lâchée sur une pile s'y accroche, à la hauteur où on la lâche. Lâchée ailleurs, elle reste **libre**, exactement où on l'a posée, au-dessus de la vue. Un **double-clic sur le titre** la renvoie à la dernière pile où elle était accrochée (la gauche si elle n'en a jamais connu d'autre). Si la fenêtre du navigateur rétrécit, une fenêtre libre est ramenée dans l'écran ; sa position retenue ne change pas.
+
+Un **clic** sur le titre réduit ou déplie toujours la fenêtre, mais **250 ms après le clic** quand il est fait à la souris : un double-clic ne la replie donc pas. Le bord droit garde son rôle de la v37 (tirer pour changer la largeur) ; la largeur de la fenêtre Arrivées se règle aussi.
+
+### 25.3 Disposition retenue et fichier de disposition
+
+La disposition (pile ou position de chaque fenêtre, ordre dans les piles) est retenue par le navigateur (clé `glb2html_layout`), avec les états ouvert / réduit et les largeurs. Elle dépend du navigateur et de l'adresse de la page.
+
+Dans **Réglages**, rubrique **Disposition des fenêtres** :
+
+- **« Enregistrer la disposition »** télécharge un fichier `disposition.json` (dossier Téléchargements, ou l'emplacement que le navigateur demande) ;
+- **« Charger une disposition »** ouvre le choix de fichier et applique le `.json` choisi aussitôt, sans recharger la page. Un fichier qui n'est pas une disposition est refusé et rien ne change ;
+- **« Disposition d'origine »** remet les trois fenêtres dans la pile de gauche et efface les largeurs.
+
+Une page web ne peut pas écrire d'elle-même dans un fichier choisi à l'avance : l'enregistrement passe donc par un téléchargement.
+
+### 25.4 Tests de la v41
+
+`tests/v41.py` : bulles, glisser vers la vue (libre), vers Réglages (pile de droite poussée par Réglages), rechargement, double-clic de retour sans replier, clic retardé, enregistrer, disposition d'origine, charger, fichier refusé, fenêtre libre gardée dans l'écran. `tests/v35.py` et `tests/v36.py` attendent maintenant 300 ms après un clic de souris sur un titre.

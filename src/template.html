@@ -66,6 +66,9 @@ canvas{display:block;touch-action:none}
 #walkHint,#stateInfo{user-select:text;-webkit-user-select:text;cursor:text}
 #stateInfo{font-size:11px;padding:5px 9px}
 #stateInfo div{margin:0}
+#hudR{display:flex;flex-direction:column;align-items:flex-end;gap:6px;margin-top:6px;text-align:left}   /* v41 : pile de droite, sous Réglages (poussée quand Réglages s'ouvre) */
+#walkHint.winFree,#stateInfo.winFree,#spawnInfo.winFree{position:fixed;z-index:15;margin:0}   /* v41 : fenêtre libre, posée à la souris */
+.winDrag{opacity:.85;box-shadow:0 2px 10px #0006}
 #spawnInfo{font-size:11px;padding:5px 9px;max-height:30vh;overflow:auto}   /* v40 : fenêtre Arrivées (touche L) */
 #spawnBody button{display:block;width:100%;text-align:left;font:inherit;background:#fff;color:#000;border:1px solid #000;border-radius:4px;padding:1px 6px;margin:2px 0;cursor:pointer;text-decoration:underline}
 .fold{display:block;width:100%;text-align:left;font:inherit;font-weight:bold;background:#ececec;color:#000;border:1px solid #000;border-radius:4px;padding:1px 6px;margin:0 0 4px;cursor:pointer}
@@ -86,7 +89,7 @@ __I18N__
 </script>
 <div id="view"></div>
 <div id="msg" data-i18n="page.loading">Chargement…</div>
-<div id="opts"><button id="optsBtn" hidden data-i18n="page.opts">Réglages</button><div id="optsPanel" hidden></div></div>
+<div id="opts"><button id="optsBtn" hidden data-i18n="page.opts">Réglages</button><div id="optsPanel" hidden></div><div id="hudR"></div></div>
 <div id="mapOverlay" hidden><div id="mapBox"><h2 data-i18n="page.map.title">Carte des mondes</h2><div id="mapGrid"></div><button id="mapClose" data-i18n="page.map.close">Fermer (Échap)</button></div></div>
 <div id="nameTag" hidden></div>
 <div id="toast" hidden></div>
@@ -395,6 +398,7 @@ function compassTick() {
 if (C.compass !== false) setInterval(compassTick, 100);
 if (C.panel !== false) {
   const ob = document.getElementById('optsBtn'), op = document.getElementById('optsPanel');
+  ob.title = tr('page.win.o.tip');   // v41 : bulle (rôle et touche)
   const key = 'glb2html_opts_' + (C.room || 'x');
   const base = { retina: !!C.retina, anim: !!C.anim, wave: Number(C.wave) };
   const st = Object.assign({}, base);
@@ -572,7 +576,7 @@ if (C.walk) {
     el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
     return apply;
   };
-  mkResize(wh, 'glb2html_helpW'); mkResize(sb, 'glb2html_stateW');
+  const rzH = mkResize(wh, 'glb2html_helpW'), rzI = mkResize(sb, 'glb2html_stateW');
   for (const b of [fb, gb]) b.onmousedown = e => e.preventDefault();   // le bouton ne prend pas le focus (Espace saute, il ne clique pas)
   fb.onclick = () => { viewer.toggleFly(); viewTick(); };
   gb.onclick = () => { viewer.grabMouse(); viewTick(); };
@@ -642,7 +646,8 @@ if (C.walk) {
     head.onmousedown = e => e.preventDefault();
     return {
       apply, get open() { return open; }, get folded() { return folded; },
-      cycle() { if (!open) { open = true; folded = false; } else if (folded) folded = false; else open = false; save(); apply(); }
+      cycle() { if (!open) { open = true; folded = false; } else if (folded) folded = false; else open = false; save(); apply(); },
+      reload() { open = lsGet(openKey) !== '0'; folded = lsGet(foldKey) === '1'; apply(); }   // v41 : après chargement d'une disposition
     };
   };
   const helpP = mkPanel(wh, hhead, hbody, tr('page.help.title'), 'glb2html_help', 'glb2html_helpFold'), stateP = mkPanel(sb, shead, sbody, tr('page.info.title'), 'glb2html_state', 'glb2html_stateFold');
@@ -652,7 +657,7 @@ if (C.walk) {
   spi.title = tr('page.spawn.tip');
   const spawnP = mkPanel(spi, sph, spb, tr('page.spawn.title'), 'glb2html_spawn', 'glb2html_spawnFold');
   // la hauteur de la fenêtre est retirée de celle de l'aide (variable --spawnH) : la colonne de gauche ne sort pas de l'écran
-  const spawnH = () => document.documentElement.style.setProperty('--spawnH', (spi.hidden ? 0 : spi.offsetHeight + 6) + 'px');
+  const spawnH = () => document.documentElement.style.setProperty('--spawnH', (spi.hidden || spi.parentElement !== document.getElementById('hudL') ? 0 : spi.offsetHeight + 6) + 'px');
   if (window.ResizeObserver) new ResizeObserver(spawnH).observe(spi);
   let spawnCount = 0;
   const applySpawn = () => { spawnP.apply(); if (!spawnCount) spi.hidden = true; spawnH(); };
@@ -677,6 +682,145 @@ if (C.walk) {
     if (!spawnCount) return toast(tr('page.spawn.none'));
     spawnP.cycle(); applySpawn();
   });
+  // v41 : fenêtres H, I, L déplaçables par leur titre. Deux piles : gauche (en bas, d'origine) et droite (sous Réglages : poussée quand Réglages s'ouvre).
+  // Lâchée près d'une pile : elle s'y accroche (à la hauteur du lâcher) ; ailleurs : libre, à l'endroit exact. Double-clic sur le titre : retour à la
+  // dernière pile où elle était accrochée. Disposition retenue par le navigateur (glb2html_layout) ; Réglages : enregistrer / charger un fichier .json.
+  const rzL = mkResize(spi, 'glb2html_spawnW');
+  const hudL = document.getElementById('hudL'), hudR = document.getElementById('hudR');
+  const WINS = { H: [wh, hhead, 'page.win.h.tip', rzH, 'glb2html_helpW'], I: [sb, shead, 'page.win.i.tip', rzI, 'glb2html_stateW'], L: [spi, sph, 'page.win.l.tip', rzL, 'glb2html_spawnW'] };
+  const ORDER = ['H', 'I', 'L'];
+  const LKEYS = ['glb2html_help', 'glb2html_helpFold', 'glb2html_state', 'glb2html_stateFold', 'glb2html_spawn', 'glb2html_spawnFold', 'glb2html_helpW', 'glb2html_stateW', 'glb2html_spawnW'];
+  const layDefault = () => ({ wins: { H: { pile: 'L', home: 'L' }, I: { pile: 'L', home: 'L' }, L: { pile: 'L', home: 'L' } }, order: { L: ORDER.slice(), R: [] } });
+  const layNorm = o => {   // disposition lue (navigateur ou fichier) : remise en forme, ou null si elle n'en est pas une
+    if (!o || typeof o !== 'object' || !o.wins || typeof o.wins !== 'object') return null;
+    const out = { wins: {}, order: { L: [], R: [] } };
+    for (const k of ORDER) {
+      const w = o.wins[k] || {}, pile = ['L', 'R', 'F'].includes(w.pile) ? w.pile : 'L', home = w.home === 'R' ? 'R' : 'L';
+      out.wins[k] = pile === 'F' ? { pile, home, x: Number.isFinite(w.x) ? Math.round(w.x) : 100, y: Number.isFinite(w.y) ? Math.round(w.y) : 100 } : { pile, home };
+    }
+    for (const p of ['L', 'R']) {
+      const given = (o.order && Array.isArray(o.order[p]) ? o.order[p] : []).filter(k => ORDER.includes(k) && out.wins[k].pile === p);
+      out.order[p] = [...new Set(given.concat(ORDER.filter(k => out.wins[k].pile === p)))];
+    }
+    return out;
+  };
+  let lay = null;
+  try { lay = layNorm(JSON.parse(lsGet('glb2html_layout') || 'null')); } catch (e) {}
+  if (!lay) lay = layDefault();
+  const laySave = () => lsSet('glb2html_layout', JSON.stringify(lay));
+  const clampFree = () => {   // une fenêtre libre reste dans l'écran (titre atteignable) ; la position retenue ne change pas
+    for (const k of ORDER) {
+      const w = lay.wins[k]; if (w.pile !== 'F') continue;
+      const el = WINS[k][0], r = el.getBoundingClientRect(), W = Math.min(r.width || 200, innerWidth);
+      el.style.left = Math.max(0, Math.min(innerWidth - W, w.x)) + 'px'; el.style.top = Math.max(0, Math.min(innerHeight - 30, w.y)) + 'px';
+    }
+  };
+  const place = () => {
+    for (const p of ['L', 'R']) for (const k of lay.order[p]) { const el = WINS[k][0]; el.classList.remove('winFree'); el.style.left = el.style.top = ''; (p === 'L' ? hudL : hudR).append(el); }
+    for (const k of ORDER) if (lay.wins[k].pile === 'F') { const el = WINS[k][0]; el.classList.add('winFree'); document.body.append(el); }
+    clampFree(); spawnH();
+  };
+  const toPile = (k, p, y) => {   // accroche k à la pile p : à la hauteur y du lâcher, sinon à sa place d'origine (ordre H, I, L)
+    for (const q of ['L', 'R']) lay.order[q] = lay.order[q].filter(x => x !== k);
+    const list = lay.order[p];
+    const idx = y === undefined ? list.filter(q => ORDER.indexOf(q) < ORDER.indexOf(k)).length
+      : list.filter(q => { const r = WINS[q][0].getBoundingClientRect(); return r.height && r.top + r.height / 2 < y; }).length;
+    list.splice(idx, 0, k);
+    lay.wins[k] = { pile: p, home: p };
+    laySave(); place();
+  };
+  const inside = (z, x, y) => x >= z.l && x <= z.r && y >= z.t && y <= z.b;
+  const drop = (k, x, y, r) => {
+    const oR = document.getElementById('opts').getBoundingClientRect(), hR = hudR.getBoundingClientRect();
+    const lR = hudL.getBoundingClientRect(), barT = document.getElementById('bar').getBoundingClientRect().top;
+    const zR = { l: Math.min(oR.left, innerWidth - 320) - 40, r: innerWidth, t: 0, b: Math.max(oR.bottom, hR.bottom) + 60 };
+    const zL = { l: 0, r: Math.max(lR.right, 200) + 60, t: Math.min(lR.height ? lR.top : barT, barT - 40) - 60, b: innerHeight };
+    if (inside(zR, x, y)) return toPile(k, 'R', y);
+    if (inside(zL, x, y)) return toPile(k, 'L', y);
+    for (const q of ['L', 'R']) lay.order[q] = lay.order[q].filter(x2 => x2 !== k);
+    lay.wins[k] = { pile: 'F', home: lay.wins[k].home, x: Math.round(r.left), y: Math.round(r.top) };
+    laySave(); place();
+  };
+  for (const k of ORDER) {
+    const [el, head, tipKey] = WINS[k];
+    head.title = tr(tipKey) + '\n' + tr('page.win.move');
+    let d = null, moved = false;
+    // le glisser se suit sur la fenêtre du navigateur : déplacer la fenêtre dans la page fait perdre la capture du pointeur au titre
+    const mv = e => {
+      if (!d || e.pointerId !== d.id) return;
+      if (!moved) {
+        if (Math.hypot(e.clientX - d.x, e.clientY - d.y) < 5) return;
+        moved = true;
+        el.style.width = el.style.width || Math.round(d.r.width) + 'px';   // garde sa largeur en quittant la pile
+        el.classList.add('winFree', 'winDrag'); document.body.append(el); spawnH();
+      }
+      el.style.left = (d.r.left + e.clientX - d.x) + 'px'; el.style.top = (d.r.top + e.clientY - d.y) + 'px';
+    };
+    const end = e => {
+      if (!d || e.pointerId !== d.id) return;
+      removeEventListener('pointermove', mv); removeEventListener('pointerup', end); removeEventListener('pointercancel', end);
+      const was = moved; d = null; el.classList.remove('winDrag');
+      if (!was) return;
+      head.dataset.noClick = '1'; setTimeout(() => { delete head.dataset.noClick; }, 0);   // le clic qui suit un glisser ne replie pas la fenêtre
+      drop(k, e.clientX, e.clientY, el.getBoundingClientRect());
+    };
+    head.addEventListener('pointerdown', e => {
+      if (e.button !== 0) return;
+      const r = el.getBoundingClientRect();
+      if (e.clientX >= r.right - 12) return;   // bord droit : réservé à la largeur (v37)
+      d = { x: e.clientX, y: e.clientY, r, id: e.pointerId }; moved = false;
+      addEventListener('pointermove', mv); addEventListener('pointerup', end); addEventListener('pointercancel', end);
+    });
+    // clic sur le titre : réduire / déplier, 250 ms plus tard à la souris pour qu'un double-clic ne replie pas (le titre bougerait sous la souris).
+    // Clic au clavier ou par programme (detail 0) : immédiat. Clic qui termine un glisser : ignoré.
+    const tog = head.onclick; let tm = 0;
+    head.addEventListener('click', e => {
+      e.stopImmediatePropagation(); e.preventDefault();
+      if (head.dataset.noClick) return;
+      clearTimeout(tm);
+      if (!e.detail) return tog && tog.call(head, e);
+      if (e.detail === 1) tm = setTimeout(() => tog && tog.call(head, e), 250);
+    }, true);
+    head.addEventListener('dblclick', e => { e.preventDefault(); toPile(k, lay.wins[k].home); });
+  }
+  addEventListener('resize', clampFree);
+  place();
+  // Réglages : enregistrer la disposition dans un fichier, la recharger, revenir à la disposition d'origine
+  const opn = document.getElementById('optsPanel');
+  if (C.panel !== false && opn) {
+    const mkb = (id, key) => Object.assign(document.createElement('button'), { id, type: 'button', textContent: tr(key) });
+    const lt = document.createElement('small'); lt.textContent = tr('page.layout.title');
+    const bS = mkb('laySave', 'page.layout.save'), bL = mkb('layLoad', 'page.layout.load'), bR = mkb('layReset', 'page.layout.reset');
+    const fi = Object.assign(document.createElement('input'), { type: 'file', accept: '.json,application/json', hidden: true, id: 'layFile' });
+    const applyAll = () => {   // relit états et largeurs (navigateur), puis replace les fenêtres
+      for (const k of ORDER) { const [el, , , rz, wk] = WINS[k]; const v = parseInt(lsGet(wk), 10); if (v > 0) rz(v); else { el.style.width = ''; el.style.maxWidth = ''; } }
+      helpP.reload(); stateP.reload(); spawnP.reload(); applyHelp(viewer.walking); place();
+    };
+    bS.onclick = () => {
+      const ls = {}; for (const key of LKEYS) { const v = lsGet(key); if (v !== null) ls[key] = v; }
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([JSON.stringify({ app: 'web3d-layout', v: 1, layout: lay, ls }, null, 1)], { type: 'application/json' }));
+      a.download = 'disposition.json'; document.body.append(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+      toast(tr('page.layout.saved'));
+    };
+    bL.onclick = () => fi.click();
+    fi.onchange = async () => {
+      const f = fi.files && fi.files[0]; fi.value = '';
+      if (!f) return;
+      let o = null; try { o = JSON.parse(await f.text()); } catch (e) {}
+      const nl = o && o.app === 'web3d-layout' ? layNorm(o.layout) : null;
+      if (!nl) return toast(tr('page.layout.bad'));
+      for (const key of LKEYS) { const v = o.ls && o.ls[key]; if (typeof v === 'string') lsSet(key, v); else try { localStorage.removeItem(key); } catch (e) {} }
+      lay = nl; laySave(); applyAll(); toast(tr('page.layout.loaded'));
+    };
+    bR.onclick = () => {
+      for (const key of ['glb2html_helpW', 'glb2html_stateW', 'glb2html_spawnW']) try { localStorage.removeItem(key); } catch (e) {}
+      lay = layDefault(); laySave(); applyAll(); toast(tr('page.layout.reset.done'));
+    };
+    for (const b of [bS, bL, bR]) b.onmousedown = e => e.preventDefault();
+    opn.append(lt, bS, ' ', bL, ' ', bR, fi);
+  }
   const applyHelp = walking => { fillGroups(walking ? walkGroups() : orbitGroups()); viewTick(); stateP.apply(); applySpawn(); helpP.apply(); hb.hidden = false; hb.textContent = !helpP.open ? tr('page.btn.help') : (helpP.folded ? tr('page.btn.help.expand') : tr('page.btn.help.hide')); };
   const toggleHelp = () => { helpP.cycle(); applyHelp(viewer.walking); };
   hb.onclick = toggleHelp;
