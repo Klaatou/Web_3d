@@ -3,8 +3,8 @@
 <title>Essai table d'import / Import map test</title>
 <style>body{font:16px/1.5 sans-serif;margin:24px;max-width:46em}pre{white-space:pre-wrap;border:2px solid #000;padding:12px}</style>
 <h1>Essai table d'import / Import map test</h1>
-<p>FR : ce fichier vérifie que votre navigateur accepte une table d'import construite par un script, comme la coquille de la v46. Ouvrez-le (double-clic, ou par un serveur) et lisez le résultat ci-dessous, écrit en toutes lettres.</p>
-<p>EN: this file checks that your browser accepts an import map built by a script, as the v46 shell does. Open it (double-click, or through a server) and read the result below, written in plain words.</p>
+<p>FR : ce fichier vérifie que votre navigateur accepte une table d'import construite par un script, comme la coquille de la v45. Ouvrez-le (double-clic, ou par un serveur) et lisez le résultat ci-dessous, écrit en toutes lettres.</p>
+<p>EN: this file checks that your browser accepts an import map built by a script, as the v45 shell does. Open it (double-click, or through a server) and read the result below, written in plain words.</p>
 <pre id="r">Essai en cours… / Running…</pre>
 <script>
 // la table d'import est ajoutee par un script classique, avant tout module (comme la coquille)
@@ -25,6 +25,6 @@ document.getElementById('r').textContent = (ok
 <script>
 setTimeout(function () {
   const r = document.getElementById('r');
-  if (r.textContent.indexOf('Essai en cours') === 0) r.textContent = 'RÉSULTAT : ÉCHEC / RESULT: FAILED\nLe navigateur a refusé la table d\'import construite par script : la coquille v46 ne démarrerait pas ici.\nThe browser refused the script-built import map: the v46 shell would not start here.\n\n' + navigator.userAgent;
+  if (r.textContent.indexOf('Essai en cours') === 0) r.textContent = 'RÉSULTAT : ÉCHEC / RESULT: FAILED\nLe navigateur a refusé la table d\'import construite par script : la coquille v45 ne démarrerait pas ici.\nThe browser refused the script-built import map: the v45 shell would not start here.\n\n' + navigator.userAgent;
 }, 3000);
 </script>

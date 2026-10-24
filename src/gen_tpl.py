@@ -634,7 +634,7 @@ SHELL_LOAD_NEW = """if (C.tiles) {
 SHELL_TITLE_OLD = "<title>__TITLE__</title>"
 LIB_REL = "lib/three-" + THREE_VERSION
 DRACO_PATH_OLD = "draco.setDecoderPath('');"
-# v46 : la table d'import de la coquille est construite par un script classique (avant tout module) a partir d'UNE ligne, const LIB, modifiable a la main
+# v45 : la table d'import de la coquille est construite par un script classique (avant tout module) a partir d'UNE ligne, const LIB, modifiable a la main
 SHELL_IMPORTMAP_OLD = '<script type="importmap">\n__IMPORTMAP__\n</script>'
 SHELL_IMPORTMAP_NEW = """<script>
 // LIB : dossier de lib (seule ligne a modifier) / folder of lib (the only line to edit)
@@ -768,8 +768,8 @@ def lib_dir_of(shell_dir: pathlib.Path, lib_url):
 
 
 def lib_from_shell(shell_path: pathlib.Path):
-    """v46 : valeur de la ligne `const LIB = '...';` d'une coquille existante (texte tel qu'ecrit), ou None si le fichier est absent, sans cette ligne
-    (coquille d'avant la v46) ou si la valeur est refusee par clean_lib_url."""
+    """v45 : valeur de la ligne `const LIB = '...';` d'une coquille existante (texte tel qu'ecrit), ou None si le fichier est absent, sans cette ligne
+    (coquille d'avant la v45) ou si la valeur est refusee par clean_lib_url."""
     try:
         m = LIB_LINE_RE.search(pathlib.Path(shell_path).read_bytes().decode("utf-8"))
     except (OSError, UnicodeDecodeError):
@@ -784,7 +784,7 @@ def lib_from_shell(shell_path: pathlib.Path):
 
 
 def effective_lib_url(shell_path: pathlib.Path, lib_url, explicit):
-    """v46 : dossier lib a utiliser. Ordre : --lib-url donne (explicit) ; la ligne const LIB d'une coquille existante si elle n'est pas le defaut ./lib ;
+    """v45 : dossier lib a utiliser. Ordre : --lib-url donne (explicit) ; la ligne const LIB d'une coquille existante si elle n'est pas le defaut ./lib ;
     lib_url (la config pour --update) ; sinon vide (= ./lib). Ainsi une coquille modifiee a la main garde son dossier."""
     if explicit:
         return lib_url
@@ -1194,7 +1194,7 @@ def run_maj(a, kw, explicit, S_reg):
     if "lib_url" not in explicit:
         kw["lib_url"] = str(old.get("libUrl") or "")   # v37 : le choix du dossier lib est retenu dans la config
     cfg_lib = kw["lib_url"]
-    kw["lib_url"] = effective_lib_url(shell_path, cfg_lib, "lib_url" in explicit)   # v46 : la ligne const LIB de la coquille existante (modifiee a la main) l'emporte sur la config
+    kw["lib_url"] = effective_lib_url(shell_path, cfg_lib, "lib_url" in explicit)   # v45 : la ligne const LIB de la coquille existante (modifiee a la main) l'emporte sur la config
     if kw["lib_url"] != cfg_lib:
         explicit.add("lib_url")
         print(_tr("py.glb2html.maj_lib_repris", kw["lib_url"]))

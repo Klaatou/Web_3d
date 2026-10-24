@@ -67,7 +67,7 @@ app = site / "app"
 gen(app, "Ile", "ile", "--shared-shell", "--lib-url", "../lib")
 rapport((site / "lib" / "three-0.160.0").is_dir() and not (app / "lib").exists(), "lib/ créé à ../lib, pas à côté de la coquille")
 shell = (app / "index.html").read_text(encoding="utf-8")
-rapport("\nconst LIB = '../lib';\n" in shell, "ligne const LIB de la coquille : ../lib")   # v46 : la table d'import est construite a partir de cette ligne
+rapport("\nconst LIB = '../lib';\n" in shell, "ligne const LIB de la coquille : ../lib")   # v45 : la table d'import est construite a partir de cette ligne
 rapport("setDecoderPath(LIB + '/three-0.160.0/draco/')" in shell, "chemin Draco suivi aussi (il utilise LIB)")
 rapport(lire(app / "Ile.config.json")["libUrl"] == "../lib", "libUrl retenu dans la config")
 avant = (app / "index.html").read_bytes()

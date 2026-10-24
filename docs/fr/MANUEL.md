@@ -1048,7 +1048,7 @@ Quand l'adresse de la coquille n'a pas de paramètre `region`, elle essaie dans 
 
 ### 22.8 Dossier lib : `--lib-url`
 
-`--lib-url CHEMIN` : chemin relatif (par exemple `../lib`) ou adresse `http(s)` complète où trouver three.js et ses modules. Il est écrit dans la ligne `const LIB = './lib';` au début de la coquille (§ 29.1) quand la coquille est écrite, et retenu dans la config (`libUrl`) pour que `--update` le retrouve. Chemin relatif : `lib/three-X/` est créé à cet endroit s'il est absent ; adresse complète : rien n'est copié. Une coquille existante n'est jamais écrasée : pour changer le dossier d'une coquille déjà en place, modifie à la main la ligne `const LIB` (§ 29.1) ou utilise `--update --lib-url CHEMIN` (copie datée de l'ancienne). Valeurs refusées : `?`, `#`, `\`, guillemets, autres schémas (`javascript:`), chemins commençant par `/`.
+`--lib-url CHEMIN` : chemin relatif (par exemple `../lib`) ou adresse `http(s)` complète où trouver three.js et ses modules. Il est écrit dans la ligne `const LIB = './lib';` au début de la coquille (§ 28.4) quand la coquille est écrite, et retenu dans la config (`libUrl`) pour que `--update` le retrouve. Chemin relatif : `lib/three-X/` est créé à cet endroit s'il est absent ; adresse complète : rien n'est copié. Une coquille existante n'est jamais écrasée : pour changer le dossier d'une coquille déjà en place, modifie à la main la ligne `const LIB` (§ 28.4) ou utilise `--update --lib-url CHEMIN` (copie datée de l'ancienne). Valeurs refusées : `?`, `#`, `\`, guillemets, autres schémas (`javascript:`), chemins commençant par `/`.
 
 ### 22.9 Régions dans des sous-dossiers
 
@@ -1255,7 +1255,7 @@ Les positions sont en mètres, dans le repère de la page : x vers l'est, y vers
 | `foliageCutout` | nombre | `0.12` | seuil de transparence des feuillages (de 0 à 0.5) : plus haut, les bords des feuilles sont plus découpés | `--foliage-cutout` |
 | `names` | oui / non | `false` | affiche le nom de l'élément cliqué | `--names`, `--no-names` |
 | `panel` | oui / non | `true` | bouton Réglages pour les visiteurs | `--panel`, `--no-panel` |
-| `libUrl` | texte | `""` | dossier ou adresse de `lib` (three.js) quand il n'est pas à côté de la page ; `--update` l'aligne sur la ligne `const LIB` de la coquille (§ 29.2) | `--lib-url` |
+| `libUrl` | texte | `""` | dossier ou adresse de `lib` (three.js) quand il n'est pas à côté de la page ; `--update` l'aligne sur la ligne `const LIB` de la coquille (§ 28.5) | `--lib-url` |
 | `version` | texte | version de l'outil | version de `glb2html.py` qui a écrit le fichier ; `--update` la remplace | — |
 
 **Promenade**
@@ -1516,28 +1516,26 @@ Limite : le navigateur ne donne jamais la cause d'une connexion qui ne s'ouvre p
 
 « Copier le diagnostic » ajoute la ligne « Connexion de présence » : la connexion s'est-elle ouverte (oui ou non), dernier code de fermeture et dernière raison. Les adresses restent remplacées par `ADRESSE`.
 
-### 28.3 Test
+### 28.3 Test de la présence
 
 `tests/v45.py` : serveur absent, serveur qui ferme avec un code et une raison, constructeur refusé par le navigateur, anglais, viewer.
 
-## 29. Nouveautés de la v46 (24/10/2026)
-
-### 29.1 Une seule ligne pour le dossier `lib`
+### 28.4 Une seule ligne pour le dossier `lib`
 
 La coquille (le fichier `index.html` commun à toutes les régions d'un dossier) commence par une ligne `const LIB = './lib';` : c'est **la seule ligne à modifier** pour mettre le dossier `lib` ailleurs (par exemple `'../lib'`, ou une adresse `https://…/lib`). La table d'import de three.js et le chemin des décodeurs Draco sont construits à partir de cette ligne par un petit script exécuté avant tout module. Valeurs acceptées : les mêmes que `--lib-url` (§ 22.8) ; une valeur refusée est ignorée.
 
-### 29.2 `--update` garde la ligne
+### 28.5 `--update` garde la ligne
 
 Ordre de priorité du dossier `lib` : l'option `--lib-url` si elle est donnée ; la ligne `const LIB` d'une coquille existante si elle n'est pas `./lib` ; la clé `libUrl` de `NOM.config.json` ; sinon `./lib`. Quand la ligne de la coquille l'emporte, `--update` l'écrit dans son compte rendu et aligne `libUrl`. Une coquille enregistrée avec des fins de ligne Windows (CRLF) est reconnue identique. Une nouvelle région créée dans un dossier dont la coquille a été modifiée à la main garde le même dossier `lib`, sans avertissement.
 
-### 29.3 `dist\index.html`
+### 28.6 `dist\index.html`
 
 `python build.py` dépose maintenant la coquille prête dans `dist\index.html` (dossier `lib` : `./lib`), identique octet pour octet à celle que `glb2html.py` écrit. Elle peut être copiée dans un dossier de régions à la place de `--update` ; si le dossier `lib` est ailleurs, il faut reporter la ligne `const LIB`. `--update` reste nécessaire pour mettre à jour la configuration d'une région.
 
-### 29.4 Navigateurs
+### 28.7 Navigateurs
 
-Essayé dans Chromium (`tests/v46.py`). **Non essayé : Firefox et Safari.** Le fichier `tests/essai_importmap.html` (à ouvrir dans le navigateur ; résultat écrit en toutes lettres) vérifie qu'un navigateur accepte une table d'import construite par un script ; si l'essai échoue dans un navigateur, la coquille ne démarre pas dedans.
+Essayé dans Chromium (`tests/v45_lib.py`). **Non essayé : Firefox et Safari.** Le fichier `tests/essai_importmap.html` (à ouvrir dans le navigateur ; résultat écrit en toutes lettres) vérifie qu'un navigateur accepte une table d'import construite par un script ; si l'essai échoue dans un navigateur, la coquille ne démarre pas dedans.
 
-### 29.5 Test
+### 28.8 Test de la coquille
 
-`tests/v46.py` : ligne unique, plus de balise d'import dans la coquille, `dist\index.html` identique, page autonome inchangée, démarrage dans Chromium avec `./lib` puis avec `../lib` (une ligne changée), `--update` qui garde la ligne (message, config alignée, aucune copie datée), CRLF, valeur refusée, `--lib-url` prioritaire, nouvelle région, page d'essai.
+`tests/v45_lib.py` : ligne unique, plus de balise d'import dans la coquille, `dist\index.html` identique, page autonome inchangée, démarrage dans Chromium avec `./lib` puis avec `../lib` (une ligne changée), `--update` qui garde la ligne (message, config alignée, aucune copie datée), CRLF, valeur refusée, `--lib-url` prioritaire, nouvelle région, page d'essai.

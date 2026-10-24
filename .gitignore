@@ -25,3 +25,4 @@ regions.json
 # notes de travail personnelles et sauvegardes de patchs : ne jamais committer
 REGLES.md
 _bak/
+patch_*.py

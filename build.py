@@ -116,7 +116,7 @@ assert "__I18N" not in py
 gen = types.ModuleType("glb2html_build")
 exec(compile(py, "glb2html.py", "exec"), gen.__dict__)
 shell = gen.build_shell()
-(OUT / "index.html").write_bytes(shell.encode("utf-8"))   # v46 : la coquille prête (dossier lib : ./lib), identique octet pour octet à celle de glb2html.py ; à copier à la place de --update (la ligne « const LIB » est à reporter si le dossier lib est ailleurs)
+(OUT / "index.html").write_bytes(shell.encode("utf-8"))   # v45 : la coquille prête (dossier lib : ./lib), identique octet pour octet à celle de glb2html.py ; à copier à la place de --update (la ligne « const LIB » est à reporter si le dossier lib est ailleurs)
 shell_modules, shell_draco = gen.shell_lib_files()
 shell_lib = {"dir": gen.LIB_REL, "modules": shell_modules, "draco": shell_draco}
 (OUT / "presence_server.py").write_text(inline_i18n_py((SRC / "presence_server.py").read_text(encoding="utf-8")).replace("__VERSION__", VERSION), encoding="utf-8")

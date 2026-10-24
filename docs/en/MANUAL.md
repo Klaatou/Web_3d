@@ -1048,7 +1048,7 @@ When the address of the shell has no `region` parameter, it tries in this order:
 
 ### 22.8 lib folder: `--lib-url`
 
-`--lib-url CHEMIN`: relative path (for example `../lib`) or full `http(s)` address where three.js and its modules are found. It is written into the `const LIB = './lib';` line at the start of the shell (§ 29.1) when the shell is written, and kept in the config (`libUrl`) so that `--update` finds it again. Relative path: `lib/three-X/` is created there if it is missing; full address: nothing is copied. An existing shell is never overwritten: to change the folder of a shell already in place, edit the `const LIB` line by hand (§ 29.1) or use `--update --lib-url CHEMIN` (dated copy of the old one). Refused values: `?`, `#`, `\`, quotes, other schemes (`javascript:`), paths starting with `/`.
+`--lib-url CHEMIN`: relative path (for example `../lib`) or full `http(s)` address where three.js and its modules are found. It is written into the `const LIB = './lib';` line at the start of the shell (§ 28.4) when the shell is written, and kept in the config (`libUrl`) so that `--update` finds it again. Relative path: `lib/three-X/` is created there if it is missing; full address: nothing is copied. An existing shell is never overwritten: to change the folder of a shell already in place, edit the `const LIB` line by hand (§ 28.4) or use `--update --lib-url CHEMIN` (dated copy of the old one). Refused values: `?`, `#`, `\`, quotes, other schemes (`javascript:`), paths starting with `/`.
 
 ### 22.9 Regions in subfolders
 
@@ -1255,7 +1255,7 @@ Positions are in meters, in the page's frame: x towards the east, y upwards, z t
 | `foliageCutout` | number | `0.12` | transparency threshold of foliage (from 0 to 0.5): higher, the leaf edges are cut more | `--foliage-cutout` |
 | `names` | yes / no | `false` | shows the name of the clicked element | `--names`, `--no-names` |
 | `panel` | yes / no | `true` | Settings button for visitors | `--panel`, `--no-panel` |
-| `libUrl` | text | `""` | folder or address of `lib` (three.js) when it is not next to the page; `--update` aligns it with the `const LIB` line of the shell (§ 29.2) | `--lib-url` |
+| `libUrl` | text | `""` | folder or address of `lib` (three.js) when it is not next to the page; `--update` aligns it with the `const LIB` line of the shell (§ 28.5) | `--lib-url` |
 | `version` | text | version of the tool | version of `glb2html.py` that wrote the file; `--update` replaces it | — |
 
 **Walk mode**
@@ -1516,28 +1516,26 @@ Limit: the browser never gives the cause of a connection that does not open (cod
 
 "Copy diagnostics" adds the "Presence connection" line: whether the connection opened (yes or no), last closing code and last reason. Addresses stay replaced by `ADRESSE`.
 
-### 28.3 Test
+### 28.3 Presence test
 
 `tests/v45.py`: absent server, server that closes with a code and a reason, constructor refused by the browser, English, viewer.
 
-## 29. New in v46 (24/10/2026)
-
-### 29.1 One line for the `lib` folder
+### 28.4 One line for the `lib` folder
 
 The shell (the `index.html` file shared by all the regions of a folder) starts with a `const LIB = './lib';` line: it is **the only line to edit** to put the `lib` folder elsewhere (for example `'../lib'`, or an `https://…/lib` address). The three.js import map and the path of the Draco decoders are built from that line by a small script run before any module. Accepted values: the same as `--lib-url` (§ 22.8); a refused value is ignored.
 
-### 29.2 `--update` keeps the line
+### 28.5 `--update` keeps the line
 
 Priority of the `lib` folder: the `--lib-url` option if given; the `const LIB` line of an existing shell if it is not `./lib`; the `libUrl` key of `NOM.config.json`; otherwise `./lib`. When the shell's line wins, `--update` says so in its report and aligns `libUrl`. A shell saved with Windows line endings (CRLF) is recognised as identical. A new region created in a folder whose shell was edited by hand keeps the same `lib` folder, without any warning.
 
-### 29.3 `dist\index.html`
+### 28.6 `dist\index.html`
 
 `python build.py` now puts the ready-made shell in `dist\index.html` (`lib` folder: `./lib`), byte for byte the same as the one `glb2html.py` writes. It can be copied into a folder of regions instead of running `--update`; if the `lib` folder is elsewhere, the `const LIB` line has to be carried over. `--update` is still needed to update a region's configuration.
 
-### 29.4 Browsers
+### 28.7 Browsers
 
-Tried in Chromium (`tests/v46.py`). **Not tried: Firefox and Safari.** The `tests/essai_importmap.html` file (open it in the browser; the result is written in plain words) checks that a browser accepts an import map built by a script; if the test fails in a browser, the shell does not start in it.
+Tried in Chromium (`tests/v45_lib.py`). **Not tried: Firefox and Safari.** The `tests/essai_importmap.html` file (open it in the browser; the result is written in plain words) checks that a browser accepts an import map built by a script; if the test fails in a browser, the shell does not start in it.
 
-### 29.5 Test
+### 28.8 Shell test
 
-`tests/v46.py`: single line, no import map tag left in the shell, identical `dist\index.html`, unchanged standalone page, start-up in Chromium with `./lib` then with `../lib` (one line changed), `--update` keeping the line (message, aligned config, no dated copy), CRLF, refused value, `--lib-url` priority, new region, test page.
+`tests/v45_lib.py`: single line, no import map tag left in the shell, identical `dist\index.html`, unchanged standalone page, start-up in Chromium with `./lib` then with `../lib` (one line changed), `--update` keeping the line (message, aligned config, no dated copy), CRLF, refused value, `--lib-url` priority, new region, test page.

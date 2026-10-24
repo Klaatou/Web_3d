@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Tests v46 : la coquille se règle par UNE ligne (const LIB), construite par un script classique avant tout module.
+"""Tests v45 (coquille, dossier lib) : la coquille se règle par UNE ligne (const LIB), construite par un script classique avant tout module.
 
 Vérifie : ligne const LIB unique et pas de balise importmap dans la coquille, dist/index.html = build_shell() = coquille écrite, page autonome inchangée,
 démarrage dans Chromium avec ./lib puis avec ../lib (une seule ligne changée à la main, lib déplacé), --update qui garde la ligne modifiée à la main
 (message, config alignée, aucune copie datée, rien créé à côté), fins de ligne CRLF acceptées, valeur refusée, --lib-url explicite prioritaire,
 nouvelle région créée dans un dossier dont la coquille a été modifiée à la main, page d'essai tests/essai_importmap.html (à ouvrir aussi dans Firefox et Safari).
 
-Prérequis : pip install playwright websockets ; python build.py avant. Variables facultatives : THREE_DIR, CHROMIUM. Lancer : python tests/v46.py
+Prérequis : pip install playwright websockets ; python build.py avant. Variables facultatives : THREE_DIR, CHROMIUM. Lancer : python tests/v45_lib.py
 """
 import asyncio, importlib.util, json, os, shutil, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))

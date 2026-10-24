@@ -60,8 +60,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 24/10/2026 |  | v42 | v42: light rendering (box and "Fine settings…": resolution, frames per second, overview only, tile radius, antialiasing; `--light`), narrower Settings, `tests/v42.py` |
 | 24/10/2026 |  | v43 | v43: manual § 27 "JSON file reference", samples in `docs/samples/`, `tests/samples.py`, English names (options, values, keys, addresses; old names accepted), `gen_reference.py` without pause |
 | 24/10/2026 |  | v44 | v44: last names in English (`gen_reference.py`, `verif_trad.py`, `[update]` messages, example names in the help, viewer "Marker of portals and free zones" menu), automatic check of old names in `tests/samples.py`, history completed (v38 to v44) |
-| 24/10/2026 |  | v45 | v45: the page says why the presence connection closed (`tests/v45.py`, manual § 28), "Presence connection" diagnostics line, procedures § 11 completed (Tailscale Funnel tried, way D Linux VM + Funnel + Apache, case of another service already published) |
-| 24/10/2026 |  | v46 | v46: the shell's `lib` folder is set by a single line (`const LIB`), `--update` keeps it, `dist/index.html` built by `build.py`, test page `tests/essai_importmap.html` (manual § 29, `tests/v46.py`) |
+| 24/10/2026 |  | v45 | v45: the page says why the presence connection closed (`tests/v45.py`, manual § 28), "Presence connection" diagnostics line; procedures § 11 completed (Tailscale Funnel tried, way D Linux VM + Funnel + Apache, case of another service already published); the shell's `lib` folder is set by a single line (`const LIB`), `--update` keeps it, `dist/index.html` built by `build.py`, test page `tests/essai_importmap.html` (`tests/v45_lib.py`) |
 
 ## Useful commands
 
