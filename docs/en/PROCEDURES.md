@@ -164,39 +164,100 @@ Details: `MANUAL.md` §§ 2, 21 and 22.
 
 ## 11. Making the presence server public without showing your IP address
 
-*Written on 24/10/2026. **Not tested**: neither Tailscale Funnel, nor Caddy, nor Cloudflare Tunnel could be tried in the design sandbox. The lines below follow the documentation of these tools; check the result with the control of the final step ("Checking the address seen by the server").*
+*Written on 24/10/2026, completed on 24/10/2026 (v45). **Tried on 24/10/2026**: Tailscale Funnel (way A), with a page served over `http` and a visitor outside the network. **Not tried**: Caddy (way B), Cloudflare Tunnel (way C), Tailscale inside a VM (way D: Apache, service and configuration lines tried in the design sandbox, but not Tailscale) and the commands of the case "another service is already published". Always check the result with the control of the final step ("Checking the address seen by the server").*
 
-**Principle.** The pages are served over https, so the presence address must be `wss://NOM`. The visitor only connects to that `NOM`, never to your IP. A relay receives the `wss://` and passes it on as `ws://` to `presence_server.py`, which then only listens on `127.0.0.1` (hence without `--cert` or `--key`). Choose **one** of the three ways.
+**Principle.** A browser refuses a `ws://` connection from an https page: an https page therefore needs a presence address in `wss://NOM`. The visitor only connects to that `NOM`, never to your IP. A relay receives the `wss://` and passes it on as `ws://` to `presence_server.py`, which then only listens on `127.0.0.1` (hence without `--cert` or `--key`). Choose **one** of the four ways.
+
+**Rule learned on 24/10/2026: the presence must be in the same place as the page**: same name, or an https page also published by Funnel. On a device where Tailscale is active, the browser blocks the presence connection when the page comes from another address (the `.ts.net` name gives a private 100.x address there); with Tailscale switched off on the phone, the same page connects.
 
 ### Way A: at home, Tailscale Funnel (no port to open on the router)
 1. Install Tailscale on the machine that runs the server and connect it to your account. In the Tailscale admin console, enable **HTTPS** (DNS) and allow **Funnel** for this machine (see the "Tailscale Funnel" documentation).
-2. Start the server on the local address only (PowerShell, one line): `python ".\presence_server.py" --host 127.0.0.1 --port 8765 --origins "https://TONSITE" --log presence.log --log-ip raw --log-days 0 --history-file chat.jsonl --history-days 0`
-3. Expose it: `tailscale funnel --bg 8765`. The public address is `https://MACHINE.TAILNET.ts.net`; the presence address is therefore `wss://MACHINE.TAILNET.ts.net`.
-4. Your IP does not appear; on the other hand, the name of your machine and the name of your Tailscale network are public.
+2. Before publishing, look at what is already published: `tailscale serve status` and `tailscale funnel status`. **`tailscale funnel` takes the root of the port and replaces what `tailscale serve` was publishing there** (observed: the service that was there was overwritten). If a service is already published, go to the case "another service is already published" below. Only use `tailscale funnel reset` to erase everything.
+3. Start the server on the local address only (PowerShell, one line): `python ".\presence_server.py" --host 127.0.0.1 --port 8765 --proxy-header X-Forwarded-For --origins "https://TONSITE" --log presence.log --log-ip raw --log-days 0 --history-file chat.jsonl --history-days 0`
+4. Expose it: `tailscale funnel --bg 8765`. The public address is `https://MACHINE.TAILNET.ts.net`; the presence address is therefore `wss://MACHINE.TAILNET.ts.net`.
+5. Your IP does not appear; on the other hand, the name of your machine and the name of your Tailscale network are public.
+
+Results of the 24/10/2026 test:
+- the WebSocket goes through Funnel (response 101);
+- with `--proxy-header X-Forwarded-For`, the log shows the visitor's real IP;
+- a visitor outside the network walked around through Funnel;
+- on devices where Tailscale is active, the connection is blocked if the page comes from another address (see the rule above);
+- a detour through the machine's `hosts` file did not work.
 
 ### Way B: small VPS, Caddy (automatic https certificate)
-You need a domain name with an `A` record pointing to the VPS, and root access **once**, for the installation (open ports 80 and 443 only).
+You need a domain name with an `A` record pointing to the VPS, and root access **only once**, for the installation (open ports 80 and 443 only).
 1. Install Python, `pip install websockets` and Caddy.
-2. `Caddyfile` file: a block `presence.TONDOMAINE.tld { reverse_proxy 127.0.0.1:8765 }`. Caddy handles WebSockets and sends the visitor's address in `X-Forwarded-For`.
+2. `Caddyfile`: a block `presence.TONDOMAINE.tld { reverse_proxy 127.0.0.1:8765 }`. Caddy handles WebSockets and sends the visitor's address in `X-Forwarded-For`.
 3. Start the server: `python3 presence_server.py --host 127.0.0.1 --port 8765 --proxy-header X-Forwarded-For --origins "https://TONSITE" --log presence.log --history-file chat.jsonl`
-4. Presence address: `wss://presence.TONDOMAINE.tld`. Here the IP of the VPS is public in the DNS; way C hides it.
+4. Presence address: `wss://presence.TONDOMAINE.tld`. Here the VPS's IP is public in the DNS; way C hides it.
 
 ### Way C: Cloudflare Tunnel (IP hidden, no port open, at home or on a VPS)
 You need a domain name managed by Cloudflare (free account).
 1. Install `cloudflared`, then `cloudflared tunnel login` and `cloudflared tunnel create presence`.
-2. In the tunnel configuration file, route `presence.TONDOMAINE.tld` to `http://127.0.0.1:8765` (`cloudflared tunnel route dns presence presence.TONDOMAINE.tld`, then `cloudflared tunnel run presence`).
+2. In the tunnel's configuration file, route `presence.TONDOMAINE.tld` to `http://127.0.0.1:8765` (`cloudflared tunnel route dns presence presence.TONDOMAINE.tld`, then `cloudflared tunnel run presence`).
 3. Start the server: `python3 presence_server.py --host 127.0.0.1 --port 8765 --proxy-header CF-Connecting-IP --origins "https://TONSITE"`
 4. Presence address: `wss://presence.TONDOMAINE.tld`.
 
-### Connecting the pages (all three ways)
-One region at a time: `glb2html.py --update -o "CHEMIN\X.html" --shared-shell --presence-url "wss://ADRESSE"` (the `--update` line of section 4 plus `--presence-url`). Or the `presenceUrl` key of `X.config.json`.
+### Way D: Linux VM, Tailscale Funnel and Apache (page and presence under the same name)
+For a page served by Apache on a Linux VM. A single public name (`https://MACHINE.TAILNET.ts.net`) serves the page at the root and the presence under `/presence`: the page and the presence are in the same place. Apache and the presence only listen on `127.0.0.1`; no port is opened on the router.
+1. **Tailscale inside the VM**: install it, connect the VM, enable **HTTPS** and allow **Funnel** (as in step 1 of way A).
+2. **Apache on `127.0.0.1` only** (Debian or Ubuntu; tried with Apache 2.4.58 on Ubuntu 24.04). In `/etc/apache2/ports.conf`, replace `Listen 80` with `Listen 127.0.0.1:80`. File `/etc/apache2/sites-available/web3d.conf`:
+
+```
+<VirtualHost 127.0.0.1:80>
+    DocumentRoot /var/www/web3d
+    <Directory /var/www/web3d>
+        Require all granted
+    </Directory>
+    RemoteIPHeader X-Forwarded-For
+    RemoteIPInternalProxy 127.0.0.1
+    ErrorLog ${APACHE_LOG_DIR}/web3d-error.log
+    CustomLog ${APACHE_LOG_DIR}/web3d-access.log combined
+</VirtualHost>
+```
+
+   Then `a2enmod remoteip`, `a2dissite 000-default`, `a2ensite web3d`, `apache2ctl configtest` (expected message: `Syntax OK`), and reload Apache. The two `RemoteIP` lines make Apache's log show the visitor's IP instead of `127.0.0.1` (tried here with a simulated header; behind Funnel: to be checked). The page files go in `/var/www/web3d`.
+3. **Presence as a system service.** Account and Python environment (tried): `useradd --system --home /opt/web3d --shell /usr/sbin/nologin web3d`, then `mkdir -p /opt/web3d`, `python3 -m venv /opt/web3d/venv` and `/opt/web3d/venv/bin/pip install websockets`. Copy `presence_server.py` (the file from `dist\`) into `/opt/web3d/`. File `/etc/systemd/system/web3d-presence.service`:
+
+```
+[Unit]
+Description=Web 3d presence server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=web3d
+StateDirectory=web3d
+ExecStart=/opt/web3d/venv/bin/python /opt/web3d/presence_server.py --host 127.0.0.1 --port 8765 --proxy-header X-Forwarded-For --origins https://MACHINE.TAILNET.ts.net --log /var/lib/web3d/presence.log --log-ip raw --identities /var/lib/web3d/presence_identities.json --bans /var/lib/web3d/presence_bans.json --log-days 0 --history-file /var/lib/web3d/chat.jsonl --history-days 0
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+```
+
+   Then `systemctl daemon-reload` and `systemctl enable --now web3d-presence`. **Tried here**: the file passes `systemd-analyze verify`; the `ExecStart` line started by hand under the `web3d` account starts, accepts the origin given to `--origins`, refuses another origin (HTTP 403) and writes into the log the IP sent in `X-Forwarded-For`. **Not tried here**: the start by systemd itself (no active systemd in the sandbox). The server's files are in `/var/lib/web3d/`: without the `--identities` and `--bans` options, the server writes next to the script, a folder the service account cannot modify (start-up error observed).
+4. **Funnel** (syntax from the Tailscale documentation; not tried here, as root if needed): `tailscale funnel --bg --set-path=/presence http://127.0.0.1:8765` then `tailscale funnel --bg http://127.0.0.1:80`. The presence server accepts any path (tried with `/`, `/presence` and `/x/y`).
+5. **Connect the page**: `--presence-url "wss://MACHINE.TAILNET.ts.net/presence"` (section "Connecting the pages"). The page is at `https://MACHINE.TAILNET.ts.net/`.
+6. **Check**: `tailscale funnel status` lists both paths; open the page from a phone where Tailscale is switched off; read `presence.log` (control of the final step) and Apache's log.
+
+### Case: another service is already published (example: an LLM published by `tailscale serve` on port 443)
+Do not run `tailscale funnel` on port 443: it would replace that service. Funnel also accepts ports 8443 and 10000 (Tailscale documentation): publish the page and the presence under the same name on port 8443, and the existing service keeps 443. **Proposed commands, not tried** (`PORT_PAGE` is the local port of the server that serves the page):
+- `tailscale funnel --bg --https=8443 --set-path=/presence http://127.0.0.1:8765`
+- `tailscale funnel --bg --https=8443 http://127.0.0.1:PORT_PAGE`
+- presence started with `--host 127.0.0.1 --proxy-header X-Forwarded-For --origins "https://MACHINE.TAILNET.ts.net:8443"`
+- presence address: `wss://MACHINE.TAILNET.ts.net:8443/presence`; page address: `https://MACHINE.TAILNET.ts.net:8443/`.
+
+Before running anything: `tailscale serve status` and `tailscale funnel status`, then the same check afterwards.
+
+### Connecting the pages (all four ways)
+One region at a time: `glb2html.py --update -o "CHEMIN\X.html" --shared-shell --presence-url "wss://ADRESSE"` (the `--update` line of section 4 plus `--presence-url`). Or the `presenceUrl` key of `X.config.json`. The page's shell is not updated by `build.py`: redo `--update` for each region after a new version.
 
 ### Checking the address seen by the server (to do once, with `--log-ip raw`)
-Open a page from a phone on 4G (not from your network), then read `presence.log`: the address written must be the phone's. If you see `127.0.0.1` or the relay's address, the header given to `--proxy-header` is wrong or missing: **IP bans would not work**. The expected headers: `X-Forwarded-For` (Caddy, nginx), `CF-Connecting-IP` (Cloudflare); for Funnel, try `X-Forwarded-For` and say what the log shows.
+Open a page from a phone on 4G (not from your network, and with Tailscale switched off), then read `presence.log`: the address written must be the phone's. If you see `127.0.0.1` or the relay's address, the header given to `--proxy-header` is wrong or missing: **IP bans would not work**. The expected headers: `X-Forwarded-For` (Caddy, nginx, Tailscale Funnel: checked on 24/10/2026), `CF-Connecting-IP` (Cloudflare).
 
 ### To keep in mind
 - `--origins` restricts connections to the pages of your site; without it, any page can connect to your server. Several sites: a comma-separated list.
 - The existing limits stay active: `--max-per-ip` (10), `--max-per-room` (50), `--chat-burst`, messages of 4,096 bytes at most.
-- Hiding the IP protects the machine, not the service: abuse (messages, nicknames) is handled by moderation (section 6, step 5).
+- Hiding the IP protects the machine, not the service: abuse (messages, nicknames) is handled by moderation (section 6, step 5). Run as a system service, the server has no keyboard: how to moderate in that case has not been tried.
 - The relay (Tailscale, Cloudflare) sees the decrypted traffic. Messages and addresses remain personal data: inform the visitors.
 - Always restart the server after `python build.py` (section 6, step 6).

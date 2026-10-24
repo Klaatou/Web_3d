@@ -164,15 +164,25 @@ Détail : `MANUEL.md` §§ 2, 21 et 22.
 
 ## 11. Rendre le serveur de présence public sans montrer son adresse IP
 
-*Rédigé le 24/10/2026. **Non testé** : ni Tailscale Funnel, ni Caddy, ni Cloudflare Tunnel n'ont été essayés dans le bac à sable de conception. Les lignes ci-dessous suivent la documentation de ces outils ; vérifie le résultat avec le contrôle de l'étape finale (« Contrôler l'adresse vue par le serveur »).*
+*Rédigé le 24/10/2026, complété le 24/10/2026 (v45). **Essayé le 24/10/2026** : Tailscale Funnel (voie A), avec une page servie en `http` et un visiteur extérieur au réseau. **Non essayé** : Caddy (voie B), Cloudflare Tunnel (voie C), Tailscale dans une VM (voie D : Apache, service et lignes de configuration essayés dans le bac à sable de conception, mais pas Tailscale) et les commandes du cas « un autre service est déjà publié ». Vérifie toujours le résultat avec le contrôle de l'étape finale (« Contrôler l'adresse vue par le serveur »).*
 
-**Principe.** Les pages sont en https, donc l'adresse de présence doit être en `wss://NOM`. Le visiteur ne se connecte qu'à ce `NOM`, jamais à ton IP. Un relais reçoit le `wss://` et le transmet en `ws://` à `presence_server.py`, qui n'écoute alors que sur `127.0.0.1` (donc sans `--cert` ni `--key`). Choisis **une** des trois voies.
+**Principe.** Un navigateur refuse une connexion `ws://` depuis une page en https : une page https demande donc une adresse de présence en `wss://NOM`. Le visiteur ne se connecte qu'à ce `NOM`, jamais à ton IP. Un relais reçoit le `wss://` et le transmet en `ws://` à `presence_server.py`, qui n'écoute alors que sur `127.0.0.1` (donc sans `--cert` ni `--key`). Choisis **une** des quatre voies.
+
+**Règle apprise le 24/10/2026 : la présence doit être au même endroit que la page** : même nom, ou page en https publiée elle aussi par Funnel. Sur un appareil où Tailscale est actif, le navigateur bloque la connexion de présence quand la page vient d'une autre adresse (le nom `.ts.net` y donne une adresse privée en 100.x) ; avec Tailscale coupé sur le téléphone, la même page se connecte.
 
 ### Voie A : chez toi, Tailscale Funnel (aucun port à ouvrir dans la box)
 1. Installe Tailscale sur la machine qui fait tourner le serveur et connecte-la à ton compte. Dans la console d'administration Tailscale, active **HTTPS** (DNS) et autorise **Funnel** pour cette machine (voir la documentation « Tailscale Funnel »).
-2. Lance le serveur sur l'adresse locale seulement (PowerShell, une ligne) : `python ".\presence_server.py" --host 127.0.0.1 --port 8765 --origins "https://TONSITE" --log presence.log --log-ip raw --log-days 0 --history-file chat.jsonl --history-days 0`
-3. Expose-le : `tailscale funnel --bg 8765`. L'adresse publique est `https://MACHINE.TAILNET.ts.net` ; l'adresse de présence est donc `wss://MACHINE.TAILNET.ts.net`.
-4. Ton IP n'apparaît pas ; en revanche le nom de ta machine et celui de ton réseau Tailscale sont publics.
+2. Avant de publier, regarde ce qui l'est déjà : `tailscale serve status` et `tailscale funnel status`. **`tailscale funnel` prend la racine du port et remplace ce que `tailscale serve` y publiait** (constaté : le service qui y était a été écrasé). Si un service est déjà publié, passe au cas « un autre service est déjà publié » plus bas. N'utilise `tailscale funnel reset` que pour tout effacer.
+3. Lance le serveur sur l'adresse locale seulement (PowerShell, une ligne) : `python ".\presence_server.py" --host 127.0.0.1 --port 8765 --proxy-header X-Forwarded-For --origins "https://TONSITE" --log presence.log --log-ip raw --log-days 0 --history-file chat.jsonl --history-days 0`
+4. Expose-le : `tailscale funnel --bg 8765`. L'adresse publique est `https://MACHINE.TAILNET.ts.net` ; l'adresse de présence est donc `wss://MACHINE.TAILNET.ts.net`.
+5. Ton IP n'apparaît pas ; en revanche le nom de ta machine et celui de ton réseau Tailscale sont publics.
+
+Résultats de l'essai du 24/10/2026 :
+- le WebSocket traverse Funnel (réponse 101) ;
+- avec `--proxy-header X-Forwarded-For`, le journal montre la vraie IP du visiteur ;
+- un visiteur extérieur au réseau s'est promené par Funnel ;
+- sur les appareils où Tailscale est actif, la connexion est bloquée si la page vient d'une autre adresse (voir la règle plus haut) ;
+- un détour par le fichier `hosts` de la machine n'a pas marché.
 
 ### Voie B : petit VPS, Caddy (certificat https automatique)
 Il faut un nom de domaine dont un enregistrement `A` pointe vers le VPS, et l'accès root **une seule fois**, pour l'installation (ouvrir les ports 80 et 443 uniquement).
@@ -188,15 +198,66 @@ Il faut un nom de domaine géré par Cloudflare (compte gratuit).
 3. Lance le serveur : `python3 presence_server.py --host 127.0.0.1 --port 8765 --proxy-header CF-Connecting-IP --origins "https://TONSITE"`
 4. Adresse de présence : `wss://presence.TONDOMAINE.tld`.
 
-### Brancher les pages (les trois voies)
-Une région à la fois : `glb2html.py --update -o "CHEMIN\X.html" --shared-shell --presence-url "wss://ADRESSE"` (la ligne `--update` de la section 4 plus `--presence-url`). Ou la clé `presenceUrl` de `X.config.json`.
+### Voie D : VM Linux, Tailscale Funnel et Apache (page et présence sous le même nom)
+Pour une page servie par Apache sur une VM Linux. Un seul nom public (`https://MACHINE.TAILNET.ts.net`) sert la page à la racine et la présence sous `/presence` : la page et la présence sont au même endroit. Apache et la présence n'écoutent que sur `127.0.0.1` ; aucun port n'est ouvert dans la box.
+1. **Tailscale dans la VM** : installe-le, connecte la VM, active **HTTPS** et autorise **Funnel** (comme à l'étape 1 de la voie A).
+2. **Apache sur `127.0.0.1` seulement** (Debian ou Ubuntu ; essayé avec Apache 2.4.58 sous Ubuntu 24.04). Dans `/etc/apache2/ports.conf`, remplace `Listen 80` par `Listen 127.0.0.1:80`. Fichier `/etc/apache2/sites-available/web3d.conf` :
+
+```
+<VirtualHost 127.0.0.1:80>
+    DocumentRoot /var/www/web3d
+    <Directory /var/www/web3d>
+        Require all granted
+    </Directory>
+    RemoteIPHeader X-Forwarded-For
+    RemoteIPInternalProxy 127.0.0.1
+    ErrorLog ${APACHE_LOG_DIR}/web3d-error.log
+    CustomLog ${APACHE_LOG_DIR}/web3d-access.log combined
+</VirtualHost>
+```
+
+   Puis `a2enmod remoteip`, `a2dissite 000-default`, `a2ensite web3d`, `apache2ctl configtest` (message attendu : `Syntax OK`), et recharge Apache. Les deux lignes `RemoteIP` font écrire dans le journal d'Apache l'IP du visiteur au lieu de `127.0.0.1` (essayé ici avec un en-tête simulé ; derrière Funnel : à contrôler). Les fichiers de la page vont dans `/var/www/web3d`.
+3. **Présence en service système.** Compte et environnement Python (essayés) : `useradd --system --home /opt/web3d --shell /usr/sbin/nologin web3d`, puis `mkdir -p /opt/web3d`, `python3 -m venv /opt/web3d/venv` et `/opt/web3d/venv/bin/pip install websockets`. Copie `presence_server.py` (le fichier de `dist\`) dans `/opt/web3d/`. Fichier `/etc/systemd/system/web3d-presence.service` :
+
+```
+[Unit]
+Description=Web 3d presence server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=web3d
+StateDirectory=web3d
+ExecStart=/opt/web3d/venv/bin/python /opt/web3d/presence_server.py --host 127.0.0.1 --port 8765 --proxy-header X-Forwarded-For --origins https://MACHINE.TAILNET.ts.net --log /var/lib/web3d/presence.log --log-ip raw --identities /var/lib/web3d/presence_identities.json --bans /var/lib/web3d/presence_bans.json --log-days 0 --history-file /var/lib/web3d/chat.jsonl --history-days 0
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+```
+
+   Puis `systemctl daemon-reload` et `systemctl enable --now web3d-presence`. **Essayé ici** : le fichier passe `systemd-analyze verify` ; la ligne `ExecStart` lancée à la main par le compte `web3d` démarre, accepte l'origine donnée à `--origins`, refuse une autre origine (HTTP 403) et écrit dans le journal l'IP envoyée dans `X-Forwarded-For`. **Non essayé ici** : le démarrage par systemd lui-même (pas de systemd actif dans le bac à sable). Les fichiers du serveur sont dans `/var/lib/web3d/` : sans les options `--identities` et `--bans`, le serveur écrit à côté du script, dossier que le compte du service ne peut pas modifier (erreur de démarrage constatée).
+4. **Funnel** (syntaxe de la documentation Tailscale ; non essayé ici, en root si nécessaire) : `tailscale funnel --bg --set-path=/presence http://127.0.0.1:8765` puis `tailscale funnel --bg http://127.0.0.1:80`. Le serveur de présence accepte n'importe quel chemin (essayé avec `/`, `/presence` et `/x/y`).
+5. **Brancher la page** : `--presence-url "wss://MACHINE.TAILNET.ts.net/presence"` (section « Brancher les pages »). La page est à `https://MACHINE.TAILNET.ts.net/`.
+6. **Vérifier** : `tailscale funnel status` liste les deux chemins ; ouvre la page depuis un téléphone où Tailscale est coupé ; lis `presence.log` (contrôle de l'étape finale) et le journal d'Apache.
+
+### Cas : un autre service est déjà publié (exemple : un LLM publié par `tailscale serve` sur le port 443)
+Ne lance pas `tailscale funnel` sur le port 443 : il remplacerait ce service. Funnel accepte aussi les ports 8443 et 10000 (documentation Tailscale) : publie la page et la présence sous le même nom sur le port 8443, le service existant garde le 443. **Commandes proposées, non essayées** (`PORT_PAGE` est le port local du serveur qui sert la page) :
+- `tailscale funnel --bg --https=8443 --set-path=/presence http://127.0.0.1:8765`
+- `tailscale funnel --bg --https=8443 http://127.0.0.1:PORT_PAGE`
+- présence lancée avec `--host 127.0.0.1 --proxy-header X-Forwarded-For --origins "https://MACHINE.TAILNET.ts.net:8443"`
+- adresse de présence : `wss://MACHINE.TAILNET.ts.net:8443/presence` ; adresse de la page : `https://MACHINE.TAILNET.ts.net:8443/`.
+
+Avant de lancer quoi que ce soit : `tailscale serve status` et `tailscale funnel status`, puis la même vérification après.
+
+### Brancher les pages (les quatre voies)
+Une région à la fois : `glb2html.py --update -o "CHEMIN\X.html" --shared-shell --presence-url "wss://ADRESSE"` (la ligne `--update` de la section 4 plus `--presence-url`). Ou la clé `presenceUrl` de `X.config.json`. La coquille de la page n'est pas mise à jour par `build.py` : refais `--update` pour chaque région après une nouvelle version.
 
 ### Contrôler l'adresse vue par le serveur (à faire une fois, avec `--log-ip raw`)
-Ouvre une page depuis un téléphone en 4G (pas depuis ton réseau), puis lis `presence.log` : l'adresse écrite doit être celle du téléphone. Si tu vois `127.0.0.1` ou l'adresse du relais, l'en-tête donné à `--proxy-header` est mauvais ou absent : **les bannissements par IP ne marcheraient pas**. Les en-têtes attendus : `X-Forwarded-For` (Caddy, nginx), `CF-Connecting-IP` (Cloudflare) ; pour Funnel, essaie `X-Forwarded-For` et dis-moi ce que montre le journal.
+Ouvre une page depuis un téléphone en 4G (pas depuis ton réseau, et avec Tailscale coupé), puis lis `presence.log` : l'adresse écrite doit être celle du téléphone. Si tu vois `127.0.0.1` ou l'adresse du relais, l'en-tête donné à `--proxy-header` est mauvais ou absent : **les bannissements par IP ne marcheraient pas**. Les en-têtes attendus : `X-Forwarded-For` (Caddy, nginx, Tailscale Funnel : vérifié le 24/10/2026), `CF-Connecting-IP` (Cloudflare).
 
 ### À garder en tête
 - `--origins` limite les connexions aux pages de ton site ; sans lui, n'importe quelle page peut se brancher sur ton serveur. Plusieurs sites : une liste séparée par des virgules.
 - Les limites existantes restent actives : `--max-per-ip` (10), `--max-per-room` (50), `--chat-burst`, message de 4 096 octets au plus.
-- Cacher l'IP protège la machine, pas le service : un abus (messages, pseudos) se traite par la modération (section 6, étape 5).
+- Cacher l'IP protège la machine, pas le service : un abus (messages, pseudos) se traite par la modération (section 6, étape 5). Lancé comme service système, le serveur n'a pas de clavier : comment modérer dans ce cas n'a pas été essayé.
 - Le relais (Tailscale, Cloudflare) voit le trafic déchiffré. Les messages et les adresses restent des données personnelles : informe les visiteurs.
 - Relance toujours le serveur après `python build.py` (section 6, étape 6).
