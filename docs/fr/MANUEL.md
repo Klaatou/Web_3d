@@ -1137,3 +1137,47 @@ Une page web ne peut pas écrire d'elle-même dans un fichier choisi à l'avance
 ### 25.4 Tests de la v41
 
 `tests/v41.py` : bulles, glisser vers la vue (libre), vers Réglages (pile de droite poussée par Réglages), rechargement, double-clic de retour sans replier, clic retardé, enregistrer, disposition d'origine, charger, fichier refusé, fenêtre libre gardée dans l'écran. `tests/v35.py` et `tests/v36.py` attendent maintenant 300 ms après un clic de souris sur un titre.
+
+## 26. Nouveautés de la v42 (24/10/2026)
+
+### 26.1 Rendu léger
+
+Sans carte graphique (rendu logiciel, par exemple « Microsoft Basic Render Driver » dans Edge), ou sur une très grosse région, chaque image coûte cher et la page répond lentement. Le **rendu léger** allège l'image : moins de pixels calculés, moins d'images par seconde et, en vue globale, la vue d'ensemble seule.
+
+Dans **Réglages**, la case **« Rendu léger »** se trouve sous **« Haute résolution »**. La cocher applique les valeurs préconisées ; la décocher rend les valeurs normales de la page. Le choix est retenu par ce navigateur, pour cette région.
+
+### 26.2 Réglages fins
+
+Le bouton **« Réglages fins… »**, à côté de la case, ouvre une petite fenêtre à gauche de Réglages ; elle se cache quand Réglages se ferme. Chaque réglage s'applique aussitôt, que la case soit cochée ou non :
+
+| Réglage | Normal | Préconisé | Effet |
+|---|---|---|---|
+| Résolution du rendu | 100 % | 50 % | moins de pixels calculés ; le navigateur agrandit l'image, plus floue |
+| Images par seconde (au plus) | sans limite | 15 | laisse du temps au navigateur entre deux images (fenêtres, clavier) |
+| Vue globale : vue d'ensemble seule | non | oui | hors de la promenade, aucune tuile détaillée n'est chargée |
+| Rayon des tuiles détaillées | celui de la page (`--tile-radius`, 150 m) | 80 m | moins de tuiles autour de l'avatar |
+| Anticrénelage | oui | non | bords lissés ; pris au prochain chargement de la page |
+
+Les deux réglages de tuiles n'apparaissent que sur une région en tuiles. **« Valeurs préconisées »** remet les cinq valeurs de la colonne « Préconisé ». **« Valeurs d'origine »**, en bas de Réglages, remet aussi le rendu léger aux valeurs de la page. Les valeurs préconisées sont une estimation : elles n'ont pas été mesurées sur Edge en rendu logiciel.
+
+Avec la vue d'ensemble seule, les tuiles détaillées se chargent quand on entre en promenade et repartent quand on en sort. Les zones liées à un objet d'une tuile ne sont donc visibles qu'en promenade.
+
+### 26.3 Proposition automatique
+
+Quand la page voit un rendu sans carte graphique (« Basic Render Driver », « SwiftShader », « llvmpipe »), un message en bas de l'écran, au-dessus des boutons, propose d'activer le rendu léger : **Oui** applique les valeurs préconisées, **Non** garde le rendu normal. La question n'est posée qu'une fois ; on change d'avis dans Réglages.
+
+### 26.4 Option `--light`
+
+`glb2html.py --light` : la page s'ouvre en rendu léger tant que le visiteur n'a rien choisi ; `--no-light` revient au rendu normal (par défaut). L'option est reprise par `--maj`. Dans le viewer, la case « Page exportée ouverte en rendu léger (--light) » fait de même pour les pages exportées ; trois lignes de la rubrique du rendu (résolution, images par seconde, vue d'ensemble seule) règlent le viewer lui-même.
+
+### 26.5 Fenêtre Réglages plus étroite
+
+Réglages fait au plus 420 px de large : les longs libellés passent à la ligne, et la fenêtre défile si elle dépasse la hauteur de l'écran. La note sur la couleur de l'avatar tient sur deux lignes. **Disposition des fenêtres** devient une vraie section (titre en gras, filet au-dessus, trois boutons alignés), et la note « En promenade, Échap libère la souris… » est désormais tout en bas de la fenêtre.
+
+### 26.6 Diagnostic
+
+« Copier le diagnostic » ajoute deux lignes : les réglages du rendu léger en cours, et le nombre d'images rendues par seconde sur les 5 dernières secondes, avec ce qui force le rendu continu (mer animée, autres visiteurs, promenade, tuiles en chargement ; « rien » quand la page ne redessine qu'à la demande).
+
+### 26.7 Tests de la v42
+
+`tests/v42.py` : proposition en rendu logiciel, Oui, choix retenu, anticrénelage coupé au chargement, case et sous-fenêtre, réglages en direct, valeurs préconisées, plafond d'images par seconde, diagnostic, valeurs d'origine, page `--light`, `--maj`, vue d'ensemble seule sur une région en tuiles (déchargement, promenade, retour), rayon en direct, lignes du viewer, note de couleur sur deux lignes, largeur de Réglages, section Disposition, note en bas.

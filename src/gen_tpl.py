@@ -63,6 +63,7 @@ TARGET = (0.0, 15.0, 0.0)
 SEA_ENABLED = True
 ANIM_ENABLED = False
 RETINA_ENABLED = False
+LIGHT_ENABLED = False
 FOLIAGE_CUTOUT = 0.12
 SEA_COLOR = 0x3A9AD9
 SKY_COLOR = 0x87CEEB
@@ -417,7 +418,7 @@ def settings_defaults(S):
     for k, dest, conv in (("rotate", "rotate", int), ("hole", "hole", float), ("holeFade", "hole_fade", float), ("holeX", "hole_x", float), ("holeZ", "hole_z", float),
                           ("wave", "wave", float), ("seaY", "sea_y", float), ("seaSegments", "sea_segments", int), ("seaColor", "sea_color", int),
                           ("skyColor", "sky_color", int), ("foliageCutout", "foliage_cutout", float), ("anim", "anim_enabled", bool),
-                          ("sea", "sea_enabled", bool), ("retina", "retina", bool), ("walk", "walk", bool), ("eyeHeight", "eye_height", float),
+                          ("sea", "sea_enabled", bool), ("retina", "retina", bool), ("light", "light", bool), ("walk", "walk", bool), ("eyeHeight", "eye_height", float),
                           ("walkSpeed", "walk_speed", float), ("walkIgnore", "walk_ignore", str), ("names", "names", bool), ("chat", "chat", bool),
                           ("chatFade", "chat_fade", float), ("presenceUrl", "presence_url", str), ("room", "room", str), ("spectate", "spectate", bool),
                           ("panel", "panel", bool), ("mapUrl", "map_url", str), ("zoneMarker", "zone_marker", str), ("showSpawns", "show_spawns", bool), ("zoneCone", "zone_cone", bool), ("fly", "fly", bool), ("zoneInfoDist", "zone_info_dist", float), ("compass", "compass", bool), ("northDeg", "north", float), ("libUrl", "lib_url", str)):
@@ -494,7 +495,7 @@ MESHOPT_JS = r"""__MESHOPT_JS__"""
 
 def build_cfg(name: str, *, rotate=ROTATE, hole=HOLE_RADIUS, hole_fade=HOLE_FADE, hole_x=HOLE_X, hole_z=HOLE_Z, wave=WAVE_AMP,
                sea_y=SEA_Y, zoom=ZOOM_RATIO, cam_dir=CAM_DIR, target=TARGET, sea_enabled=SEA_ENABLED,
-               anim_enabled=ANIM_ENABLED, retina=RETINA_ENABLED, foliage_cutout=FOLIAGE_CUTOUT,
+               anim_enabled=ANIM_ENABLED, retina=RETINA_ENABLED, light=LIGHT_ENABLED, foliage_cutout=FOLIAGE_CUTOUT,
                sea_color=SEA_COLOR, sky_color=SKY_COLOR, sea_segments=SEA_SEGMENTS, walk=WALK_ENABLED, eye_height=EYE_HEIGHT, walk_speed=WALK_SPEED, walk_ignore=WALK_IGNORE, names=NAMES_ENABLED, presence_url=PRESENCE_URL, room=ROOM, chat=CHAT_ENABLED, chat_fade=CHAT_FADE, zones=None, profile=PROFILE, spectate=SPECTATE, panel=PANEL, zones_live=ZONES_LIVE, map_entries=None, map_url=MAP_URL, modular=False, zone_marker=ZONE_MARKER, show_spawns=SHOW_SPAWNS, zone_cone=ZONE_CONE, fly=FLY_ENABLED, zone_info_dist=ZONE_INFO_DIST, compass=COMPASS, north=NORTH_DEG, lib_url="", make_default=False, target_explicit=TARGET_EXPLICIT, tiles=None, tile_radius=TILE_RADIUS, tile_margin=TILE_MARGIN, tile_max_mo=TILE_MAX_MO, tile_max_tri=TILE_MAX_TRI, tile_concurrency=TILE_CONCURRENCY) -> dict:
     """Le dictionnaire de réglages `cfg` : identique dans la page autonome et dans <page>.config.json (mode modulaire),
     sauf que le mode modulaire garde les zones hors de la config (fichier <page>.zones.json, relu à chaque ouverture)."""
@@ -502,7 +503,7 @@ def build_cfg(name: str, *, rotate=ROTATE, hole=HOLE_RADIUS, hole_fade=HOLE_FADE
     cfg = {
         "rotate": clean_rotate(rotate), "hole": float(hole), "holeFade": float(hole_fade), "holeX": float(hole_x), "holeZ": float(hole_z), "wave": float(wave), "seaY": float(sea_y),
         "zoom": float(zoom), "camDir": list(map(float, cam_dir)), "target": list(map(float, target)),
-        "sea": bool(sea_enabled), "anim": bool(anim_enabled), "retina": bool(retina),
+        "sea": bool(sea_enabled), "anim": bool(anim_enabled), "retina": bool(retina), "light": bool(light),
         "foliageCutout": float(foliage_cutout), "seaSize": SEA_SIZE, "seaSegments": int(sea_segments),
         "seaColor": int(sea_color), "skyColor": int(sky_color),
         "walk": bool(walk), "eyeHeight": float(eye_height), "walkSpeed": float(walk_speed), "walkIgnore": str(walk_ignore),
@@ -1034,7 +1035,7 @@ MAJ_KEYS = {
     "zoom": ("zoom",), "cam_dir": ("camDir",), "target": ("target", "targetExplicit"), "foliage_cutout": ("foliageCutout",), "sea_color": ("seaColor",),
     "sky_color": ("skyColor",), "sea_segments": ("seaSegments",), "walk": ("walk",), "eye_height": ("eyeHeight",), "walk_speed": ("walkSpeed",),
     "walk_ignore": ("walkIgnore",), "names": ("names",), "presence_url": ("presenceUrl",), "chat": ("chat",), "chat_fade": ("chatFade",), "profile": ("profile",),
-    "spectate": ("spectate",), "panel": ("panel",), "map_url": ("mapUrl",), "room": ("room",), "sea_enabled": ("sea",), "anim_enabled": ("anim",), "retina": ("retina",),
+    "spectate": ("spectate",), "panel": ("panel",), "map_url": ("mapUrl",), "room": ("room",), "sea_enabled": ("sea",), "anim_enabled": ("anim",), "retina": ("retina",), "light": ("light",),
     "zone_marker": ("zoneMarker",), "show_spawns": ("showSpawns",), "zone_cone": ("zoneCone",), "fly": ("fly",), "zone_info_dist": ("zoneInfoDist",), "compass": ("compass",), "north": ("northDeg",), "lib_url": ("libUrl",), "tile_radius": ("tileRadius",), "tile_margin": ("tileMargin",),
     "tile_max_mo": ("tileMaxMo",), "tile_max_tri": ("tileMaxTri",), "tile_concurrency": ("tileConcurrency",), "tiles": ("tiles",),
     "map": ("map",), "register": ("map",),
@@ -1323,6 +1324,7 @@ def main():
     ap.add_argument("--sea", dest="sea_enabled", action=argparse.BooleanOptionalAction, default=SEA_ENABLED, help=_tr("py.glb2html.help.sea"))
     ap.add_argument("--anim", dest="anim_enabled", action=argparse.BooleanOptionalAction, default=ANIM_ENABLED, help=_tr("py.glb2html.help.anim"))
     ap.add_argument("--retina", action=argparse.BooleanOptionalAction, default=RETINA_ENABLED, help=_tr("py.glb2html.haute_resolution_rendu_x2_minimum_supersampl"))
+    ap.add_argument("--light", action=argparse.BooleanOptionalAction, default=LIGHT_ENABLED, help=_tr("py.glb2html.help.light"))
     ap.add_argument("--title", help=_tr("py.glb2html.titre_de_la_page"))
     ap.add_argument("--vendor", type=pathlib.Path, help=_tr("py.glb2html.racine_d_un_paquet_npm_three"))
     a = ap.parse_args()
@@ -1404,7 +1406,7 @@ def main():
     kw = dict(rotate=a.rotate, hole=clamp(a.hole, 30, 600), hole_fade=max(0.0, a.hole_fade), hole_x=a.hole_x, hole_z=a.hole_z, wave=clamp(a.wave, 0, 10),
               sea_y=clamp(a.sea_y, -150, 60), zoom=clamp(a.zoom, 0.05, 100), cam_dir=a.cam_dir, target=a.target,
               foliage_cutout=clamp(a.foliage_cutout, 0, 1), sea_color=a.sea_color, sky_color=a.sky_color, sea_segments=int(clamp(a.sea_segments, 8, 1000)), walk=a.walk, walk_ignore=a.walk_ignore, zones_live=a.zones_live or "", map_entries=map_arg, map_url=a.map_url, names=a.names, presence_url=a.presence_url, room=a.room, chat=a.chat, chat_fade=clamp(a.chat_fade, 0, 3600), zones=zones_arg, profile=a.profile, spectate=a.spectate, panel=a.panel, eye_height=clamp(a.eye_height, 0.3, 5), walk_speed=clamp(a.walk_speed, 0.5, 30),
-              sea_enabled=a.sea_enabled, anim_enabled=a.anim_enabled, retina=a.retina, title=a.title,
+              sea_enabled=a.sea_enabled, anim_enabled=a.anim_enabled, retina=a.retina, light=a.light, title=a.title,
               zone_marker=a.zone_marker, show_spawns=a.show_spawns, zone_cone=a.zone_cone, fly=a.fly, zone_info_dist=clamp(a.zone_info_dist, 5, 500), compass=a.compass, north=a.north, lib_url=clean_lib_url(a.lib_url)[0], make_default=a.default,
               target_explicit=bool(tuple(a.target) != tuple(TARGET) or TARGET_EXPLICIT or getattr(a, "target_explicit", False)))
 

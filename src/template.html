@@ -50,7 +50,24 @@ canvas{display:block;touch-action:none}
 #optsPanel label{display:flex;gap:8px;align-items:center;margin:6px 0}
 #optsPanel input[type=range]{width:150px}
 #optsPanel button{font:inherit;margin-top:4px;padding:4px 10px;border:1px solid #000;border-radius:6px;background:#fff;cursor:pointer}
-#optsPanel small{display:block;margin-top:6px;opacity:.8}
+#optsPanel small{display:block;margin-top:6px;opacity:.8;contain:inline-size}
+#optsPanel small.two{white-space:pre-line}
+#optsPanel .sec{margin-top:10px;padding-top:8px;border-top:1px solid #000}
+#optsPanel .secT{font-weight:bold}
+#optsPanel .btnrow{display:flex;flex-wrap:wrap;gap:6px}
+#optsNote{border-top:1px solid #0006;padding-top:6px}
+#optsPanel{box-sizing:border-box;max-width:min(420px,calc(100vw - 24px));max-height:calc(100vh - 60px);overflow-y:auto}
+#optsPanel .lrow{display:flex;gap:8px;align-items:center}
+#optsPanel .lrow button{margin-top:0}
+#lightPanel{position:absolute;right:calc(100% + 8px);top:34px;width:max-content;max-width:min(380px,calc(100vw - 100% - 32px));box-sizing:border-box;background:#fffffff0;border:1px solid #000;border-radius:6px;padding:8px 12px;text-align:left}
+#optsPanel[hidden]~#lightPanel{display:none}
+#lightHead{display:flex;justify-content:space-between;align-items:center;gap:12px;font-weight:bold}
+#lightPanel label{display:flex;gap:8px;align-items:center;margin:6px 0}
+#lightPanel input[type=range]{width:130px}
+#lightPanel button{font:inherit;padding:2px 8px;border:1px solid #000;border-radius:6px;background:#fff;cursor:pointer}
+#lightPanel small{display:block;margin-top:6px;opacity:.8;contain:inline-size}
+#lightAsk{position:fixed;bottom:56px;left:50%;transform:translateX(-50%);z-index:41;font:13px/1.4 ui-monospace,Consolas,monospace;background:#fff;color:#000;border:2px solid #000;border-radius:6px;padding:8px 12px;width:max-content;max-width:min(340px,90vw);box-sizing:border-box}
+#lightAsk button{font:inherit;margin-left:8px;padding:2px 10px;border:1px solid #000;border-radius:6px;background:#fff;cursor:pointer}
 #toast{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:40;font:13px/1.4 ui-monospace,Consolas,monospace;background:#000;color:#fff;border-radius:6px;padding:8px 14px;max-width:90%}
 #zonePrompt{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);z-index:30;font:13px/1.4 ui-monospace,Consolas,monospace;background:#000;color:#fff;border-radius:6px;padding:6px 12px}
 #fade{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .45s;z-index:50}
@@ -89,7 +106,7 @@ __I18N__
 </script>
 <div id="view"></div>
 <div id="msg" data-i18n="page.loading">Chargement…</div>
-<div id="opts"><button id="optsBtn" hidden data-i18n="page.opts">Réglages</button><div id="optsPanel" hidden></div><div id="hudR"></div></div>
+<div id="opts"><button id="optsBtn" hidden data-i18n="page.opts">Réglages</button><div id="optsPanel" hidden></div><div id="lightPanel" hidden></div><div id="hudR"></div></div>
 <div id="mapOverlay" hidden><div id="mapBox"><h2 data-i18n="page.map.title">Carte des mondes</h2><div id="mapGrid"></div><button id="mapClose" data-i18n="page.map.close">Fermer (Échap)</button></div></div>
 <div id="nameTag" hidden></div>
 <div id="toast" hidden></div>
@@ -130,7 +147,36 @@ __DECODERS__
 const KEYH = (() => { const k = hashParams().get('key'); return k && /^[0-9a-f]{32}$/.test(k) ? k : null; })();
 let uidStored = ''; try { uidStored = localStorage.getItem('glb2html_uid') || ''; } catch (e) {}
 if (KEYH && !uidStored) { try { localStorage.setItem('glb2html_uid', KEYH); uidStored = KEYH; } catch (e) {} }
+// v42 : rendu léger. Réglages fins du visiteur, retenus par ce navigateur ; « normal » = valeurs de la page, « préconisé » = mode léger ;
+// --light : la page s'ouvre en mode léger tant que le visiteur n'a rien choisi. L'anticrénelage est fixé à la création du contexte WebGL.
+const LIGHT = (() => {
+  const key = 'glb2html_light_' + (C.room || 'x'), radius = Number(C.tileRadius) > 0 ? Number(C.tileRadius) : 150;
+  const normal = { on: false, scale: 1, fps: 0, ovOnly: false, radius, aa: true };
+  const preset = { on: true, scale: 0.5, fps: 15, ovOnly: true, radius: Math.min(radius, 80), aa: false };
+  const base = () => Object.assign({}, C.light ? preset : normal), st = base();
+  let asked = false;
+  try {
+    const s = JSON.parse(localStorage.getItem(key) || 'null');
+    if (s && typeof s === 'object') {
+      if (typeof s.on === 'boolean') st.on = s.on;
+      if (Number.isFinite(s.scale)) st.scale = Math.min(1, Math.max(0.25, s.scale));
+      if (Number.isFinite(s.fps)) st.fps = Math.min(60, Math.max(0, Math.round(s.fps)));
+      if (typeof s.ovOnly === 'boolean') st.ovOnly = s.ovOnly;
+      if (Number.isFinite(s.radius)) st.radius = Math.min(5000, Math.max(10, s.radius));
+      if (typeof s.aa === 'boolean') st.aa = s.aa;
+      asked = !!s.asked;
+    }
+  } catch (e) {}
+  const store = v => { try { localStorage.setItem(key, JSON.stringify(v)); } catch (e) {} };
+  return { key, normal, preset, base, st, store, get asked() { return asked; }, set asked(v) { asked = !!v; },
+    save() { asked = true; store(Object.assign({ asked: true }, st)); },
+    cfg() { return { pixelScale: st.scale, fpsMax: st.fps, ovOnly: st.ovOnly, tileRadius: st.radius }; } };
+})();
+Object.assign(C, LIGHT.cfg(), { antialias: LIGHT.st.aa });
 const viewer = createViewer(document.getElementById('view'), C, loader);
+let lightSync = null;   // v42 : remet les commandes de la sous-fenêtre aux valeurs en cours (Réglages)
+function lightApply(v) { Object.assign(LIGHT.st, v || {}); LIGHT.save(); viewer.setCfg(LIGHT.cfg()); if (lightSync) lightSync(); }
+function lightReset() { Object.assign(LIGHT.st, LIGHT.base()); LIGHT.asked = true; LIGHT.store({ asked: true }); viewer.setCfg(LIGHT.cfg()); if (lightSync) lightSync(); }
 const H = hashParams();
 // #pos=x,y,z[,yaw] : arrivée anonyme à ce point (nombres seulement, repère de la page : modèle d'origine en mode tuiles) ; une valeur invalide est ignorée
 const posArr = (() => {
@@ -414,6 +460,43 @@ if (C.panel !== false) {
   cbAnim.onchange = () => { st.anim = cbAnim.checked; apply(); };
   rgWave.oninput = () => { st.wave = parseFloat(rgWave.value); apply(); };
   op.append(lab(tr('page.opt.retina'), cbRetina));
+  {
+    // v42 : case « Rendu léger » (préréglage) et ses réglages fins, dans une sous-fenêtre à gauche de Réglages, modifiables en direct
+    const cbL = mk('input', { type: 'checkbox', id: 'lightOn' }), bFine = mk('button', { type: 'button', id: 'lightFineBtn', textContent: tr('page.opt.light.fine') });
+    const row = mk('div', { className: 'lrow' }); row.append(lab(tr('page.opt.light'), cbL), bFine); op.append(row);
+    cbL.onchange = () => lightApply(cbL.checked ? LIGHT.preset : LIGHT.normal);
+    const lp = document.getElementById('lightPanel'), head = mk('div', { id: 'lightHead' });
+    const bX = mk('button', { type: 'button', id: 'lightClose', textContent: '\u00d7', title: tr('page.light.close') });
+    bX.setAttribute('aria-label', tr('page.light.close'));
+    head.append(mk('span', { textContent: tr('page.light.title') }), bX); lp.append(head);
+    bFine.onclick = () => { lp.hidden = !lp.hidden; };
+    bX.onclick = () => { lp.hidden = true; };
+    const rng = (id, min, max, step) => mk('input', { type: 'range', id, min, max, step });
+    const line = (input, text, out) => { const l = mk('label'); l.append(input, mk('span', { textContent: text })); if (out) l.append(out); lp.append(l); };
+    const rgS = rng('lightScale', 25, 100, 5), vS = mk('span', { id: 'lightScaleV' });
+    const rgF = rng('lightFps', 5, 65, 5), vF = mk('span', { id: 'lightFpsV' });   // 65 = sans limite
+    const cbO = mk('input', { type: 'checkbox', id: 'lightOv' }), rgR = rng('lightRadius', 20, Math.max(500, LIGHT.normal.radius), 10), vR = mk('span', { id: 'lightRadiusV' });
+    const cbA = mk('input', { type: 'checkbox', id: 'lightAa' });
+    line(rgS, tr('page.light.scale'), vS);
+    line(rgF, tr('page.light.fps'), vF);
+    if (C.tiles) { line(cbO, tr('page.light.ovonly')); line(rgR, tr('page.light.radius'), vR); }
+    line(cbA, tr('page.light.aa'));
+    const bP = mk('button', { type: 'button', id: 'lightPreset', textContent: tr('page.light.preset') });
+    lp.append(bP, mk('small', { textContent: tr('page.light.note') }));
+    bP.onclick = () => lightApply(LIGHT.preset);
+    rgS.oninput = () => lightApply({ scale: Number(rgS.value) / 100 });
+    rgF.oninput = () => lightApply({ fps: Number(rgF.value) > 60 ? 0 : Number(rgF.value) });
+    cbO.onchange = () => lightApply({ ovOnly: cbO.checked });
+    rgR.oninput = () => lightApply({ radius: Number(rgR.value) });
+    cbA.onchange = () => lightApply({ aa: cbA.checked });
+    lightSync = () => {
+      const s = LIGHT.st; cbL.checked = s.on;
+      rgS.value = Math.round(s.scale * 100); vS.textContent = tr('page.light.pct', Math.round(s.scale * 100));
+      rgF.value = s.fps > 0 ? s.fps : 65; vF.textContent = s.fps > 0 ? String(s.fps) : tr('page.light.nolimit');
+      cbO.checked = s.ovOnly; rgR.value = s.radius; vR.textContent = tr('page.light.m', Math.round(s.radius)); cbA.checked = s.aa;
+    };
+    lightSync();
+  }
   if (C.sea) {
     op.append(lab(tr('page.opt.anim'), cbAnim));
     const w = mk('label'); w.append(rgWave, mk('span', { textContent: tr('page.opt.wave') }), vWave); op.append(w);
@@ -425,7 +508,7 @@ if (C.panel !== false) {
     const setCol = () => { VIS.color = cbCol.checked ? parseInt(inCol.value.slice(1), 16) : null; viewer.setMyColor(VIS.color); visSave(); showCol(); };
     cbCol.onchange = setCol; inCol.oninput = () => { if (cbCol.checked) setCol(); };
     const lc = mk('label'); lc.append(cbCol, mk('span', { textContent: tr('page.opt.color') }), inCol); op.append(lc);
-    op.append(mk('small', { textContent: tr('page.opt.color.note') }));
+    op.append(mk('small', { className: 'two', textContent: tr('page.opt.color.note') }));   // v42 : deux lignes courtes
     // lien personnel : #name=PSEUDO&key=CLE ; la clé est l'identité de ce navigateur (nom réservé)
     const bl = mk('button', { id: 'visLinkBtn', type: 'button', textContent: tr('page.opt.link') }), lo = mk('input', { id: 'visLinkOut', readOnly: true, size: 24 });
     lo.setAttribute('aria-label', tr('page.opt.link.aria')); lo.hidden = true;
@@ -479,13 +562,23 @@ if (C.panel !== false) {
     const ll = mk('label'); ll.append(mk('span', { textContent: tr('page.opt.lang') }), selL); op.append(ll);
   }
   const rst = mk('button', { textContent: tr('page.opt.reset') });
-  rst.onclick = () => { Object.assign(st, base); apply(); };
-  op.append(rst, mk('small', { textContent: tr('page.opt.note') }));
+  rst.onclick = () => { Object.assign(st, base); apply(); lightReset(); };   // v42 : le rendu léger revient aussi aux valeurs de la page
+  op.append(rst, mk('small', { id: 'optsNote', textContent: tr('page.opt.note') }));   // v42 : la note reste tout en bas (la section Disposition s'insère avant)
   sync(); ob.hidden = false;
   ob.onclick = () => { op.hidden = !op.hidden; };
   // v37 : O ouvre / ferme la fenêtre Réglages (bascule, comme H et I) ; R est déjà pris (retour à l'arrivée)
   addEventListener('keydown', e => { const n = e.target && e.target.tagName; if (e.code === 'KeyO' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && n !== 'INPUT' && n !== 'TEXTAREA' && n !== 'SELECT') op.hidden = !op.hidden; });
   if (st.retina !== base.retina || st.anim !== base.anim || st.wave !== base.wave) viewer.setCfg({ retina: st.retina, anim: st.anim, wave: st.wave });
+}
+// v42 : rendu sans carte graphique : proposer le rendu léger, une seule fois (la réponse est retenue ; Réglages permet de changer d'avis)
+if (!LIGHT.asked && !LIGHT.st.on && softGpu(viewer.renderer)) {
+  const box = document.createElement('div'); box.id = 'lightAsk';
+  const yes = Object.assign(document.createElement('button'), { type: 'button', id: 'lightAskYes', textContent: tr('page.modal.yes') });
+  const no = Object.assign(document.createElement('button'), { type: 'button', id: 'lightAskNo', textContent: tr('page.light.no') });
+  box.append(Object.assign(document.createElement('span'), { textContent: tr('page.light.ask') }), yes, no);
+  yes.onclick = () => { box.remove(); lightApply(LIGHT.preset); toast(tr('page.light.done')); };
+  no.onclick = () => { box.remove(); LIGHT.save(); };
+  document.body.append(box);
 }
 if (C.walk) {
   const wb = document.getElementById('walkBtn'), wh = document.getElementById('walkHint');
@@ -789,7 +882,8 @@ if (C.walk) {
   const opn = document.getElementById('optsPanel');
   if (C.panel !== false && opn) {
     const mkb = (id, key) => Object.assign(document.createElement('button'), { id, type: 'button', textContent: tr(key) });
-    const lt = document.createElement('small'); lt.textContent = tr('page.layout.title');
+    const sec = document.createElement('div'), lt = document.createElement('div'), row = document.createElement('div');   // v42 : vraie section (titre, filet, boutons)
+    sec.className = 'sec'; sec.id = 'laySec'; lt.className = 'secT'; lt.textContent = tr('page.layout.title'); row.className = 'btnrow';
     const bS = mkb('laySave', 'page.layout.save'), bL = mkb('layLoad', 'page.layout.load'), bR = mkb('layReset', 'page.layout.reset');
     const fi = Object.assign(document.createElement('input'), { type: 'file', accept: '.json,application/json', hidden: true, id: 'layFile' });
     const applyAll = () => {   // relit états et largeurs (navigateur), puis replace les fenêtres
@@ -819,7 +913,8 @@ if (C.walk) {
       lay = layDefault(); laySave(); applyAll(); toast(tr('page.layout.reset.done'));
     };
     for (const b of [bS, bL, bR]) b.onmousedown = e => e.preventDefault();
-    opn.append(lt, bS, ' ', bL, ' ', bR, fi);
+    row.append(bS, bL, bR); sec.append(lt, row, fi);
+    const note = document.getElementById('optsNote'); if (note && note.parentNode === opn) opn.insertBefore(sec, note); else opn.append(sec);
   }
   const applyHelp = walking => { fillGroups(walking ? walkGroups() : orbitGroups()); viewTick(); stateP.apply(); applySpawn(); helpP.apply(); hb.hidden = false; hb.textContent = !helpP.open ? tr('page.btn.help') : (helpP.folded ? tr('page.btn.help.expand') : tr('page.btn.help.hide')); };
   const toggleHelp = () => { helpP.cycle(); applyHelp(viewer.walking); };

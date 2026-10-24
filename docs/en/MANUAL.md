@@ -1137,3 +1137,47 @@ A web page cannot write on its own into a file chosen in advance: saving therefo
 ### 25.4 v41 tests
 
 `tests/v41.py`: tooltips, drag to the view (free), to Settings (right stack pushed by Settings), reload, double-click back without collapsing, delayed click, save, original layout, load, refused file, free window kept on screen. `tests/v35.py` and `tests/v36.py` now wait 300 ms after a mouse click on a title.
+
+## 26. New in v42 (24/10/2026)
+
+### 26.1 Light rendering
+
+Without a graphics card (software rendering, for example "Microsoft Basic Render Driver" in Edge), or on a very large region, every frame is expensive and the page responds slowly. **Light rendering** makes the image lighter: fewer pixels computed, fewer frames per second and, in global view, the overview only.
+
+In **Settings**, the **"Light rendering"** box sits below **"High resolution"**. Checking it applies the recommended values; unchecking it restores the page's normal values. The choice is remembered by this browser, for this region.
+
+### 26.2 Fine settings
+
+The **"Fine settings…"** button, next to the box, opens a small window to the left of Settings; it hides when Settings closes. Each setting applies at once, whether the box is checked or not:
+
+| Setting | Normal | Recommended | Effect |
+|---|---|---|---|
+| Render resolution | 100% | 50% | fewer pixels computed; the browser enlarges the image, blurrier |
+| Frames per second (at most) | no limit | 15 | leaves the browser time between two frames (windows, keyboard) |
+| Global view: overview only | no | yes | outside walk mode, no detailed tile is loaded |
+| Detailed tile radius | the page's (`--tile-radius`, 150 m) | 80 m | fewer tiles around the avatar |
+| Antialiasing | yes | no | smoothed edges; applied on the next page load |
+
+The two tile settings only appear on a region split into tiles. **"Recommended values"** restores the five values of the "Recommended" column. **"Default values"**, at the bottom of Settings, also returns light rendering to the page's values. The recommended values are an estimate: they have not been measured on Edge in software rendering.
+
+With the overview only, detailed tiles load when entering walk mode and go away when leaving it. Zones linked to an object of a tile are therefore only visible in walk mode.
+
+### 26.3 Automatic offer
+
+When the page sees rendering without a graphics card ("Basic Render Driver", "SwiftShader", "llvmpipe"), a message at the bottom of the screen, above the buttons, offers to turn on light rendering: **Yes** applies the recommended values, **No** keeps normal rendering. The question is asked only once; you change your mind in Settings.
+
+### 26.4 `--light` option
+
+`glb2html.py --light`: the page opens in light rendering until the visitor chooses otherwise; `--no-light` returns to normal rendering (default). The option is carried over by `--maj`. In the viewer, the "Exported page opens in light rendering (--light)" box does the same for exported pages; three lines of the rendering section (resolution, frames per second, overview only) set the viewer itself.
+
+### 26.5 Narrower Settings window
+
+Settings is at most 420 px wide: long labels wrap, and the window scrolls if it is taller than the screen. The note about the avatar color fits on two lines. **Window layout** becomes a real section (bold title, line above, three buttons in a row), and the note "While walking, Esc releases the mouse…" is now at the very bottom of the window.
+
+### 26.6 Diagnostics
+
+"Copy diagnostics" adds two lines: the current light rendering settings, and the number of frames rendered per second over the last 5 seconds, with what forces continuous rendering (animated sea, other visitors, walk mode, tiles loading; "nothing" when the page only redraws on demand).
+
+### 26.7 v42 tests
+
+`tests/v42.py`: offer in software rendering, Yes, choice remembered, antialiasing off at load, box and sub-window, live settings, recommended values, frames per second cap, diagnostics, default values, `--light` page, `--maj`, overview only on a region split into tiles (unloading, walk mode, return), live radius, viewer lines, color note on two lines, Settings width, Layout section, note at the bottom.

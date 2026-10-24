@@ -1,6 +1,6 @@
 # Reprise du projet Web 3d
 
-*État au 24/10/2026, version v41. À lire après `REGLES.md` (qui est dans les fichiers du Projet, pas dans le dépôt). Ce fichier est mis à jour et commité à la fin de chaque lot. Il ne contient ni adresse IP ni nom d'hôte.*
+*État au 24/10/2026, version v42. À lire après `REGLES.md` (qui est dans les fichiers du Projet, pas dans le dépôt). Ce fichier est mis à jour et commité à la fin de chaque lot. Il ne contient ni adresse IP ni nom d'hôte.*
 
 ## 1. Ce qu'est ce projet
 
@@ -8,7 +8,8 @@ Une région OpenSim (sauvegarde `.oar`) devient une **page web 3D** où l'on se 
 
 ## 2. État du dépôt
 
-- **`main` = v41** (étiquette `v41`, fichier `VERSION` : `v41 (24/10/2026)`). Étiquettes `v14` à `v41`.
+- **`main` = v42** (étiquette `v42`, fichier `VERSION` : `v42 (24/10/2026)`). Étiquettes `v14` à `v42`.
+- **v42** : rendu léger. Case « Rendu léger » dans Réglages (sous « Haute résolution ») et sous-fenêtre « Réglages fins… » (à gauche de Réglages, cachée quand Réglages se ferme), réglages en direct retenus par le navigateur (clé `glb2html_light_SALON`) : résolution (50 % préconisé), images/s au plus (15), vue d'ensemble seule en vue globale (aucune tuile détaillée hors promenade), rayon des tuiles (80 m), anticrénelage (non, au rechargement) ; bouton « Valeurs préconisées » ; « Valeurs d'origine » remet aussi le rendu léger. Proposition unique quand le rendu est logiciel (`softGpu` dans `src/core.js`). Option `--light` (reprise par `--maj`), lignes dans le viewer. Diagnostic : réglages du rendu léger, images rendues/s sur 5 s et causes du rendu continu. Réglages : 420 px de large au plus, défilement, note de couleur sur deux lignes, section « Disposition des fenêtres » mise en forme (titre en gras, filet), note « En promenade, Échap… » tout en bas (`#optsNote`). Proposition affichée en bas de l'écran, au-dessus des boutons. Manuel § 26, `tests/v42.py`.
 - **v41** : bulles des fenêtres H, I, L et de Réglages ; fenêtres déplaçables par le titre (pile de gauche, pile de droite sous Réglages poussée par Réglages, ou libres), double-clic = retour à la dernière pile, clic de souris sur un titre retardé de 250 ms ; disposition retenue (`glb2html_layout`) et fichier `disposition.json` (Réglages : enregistrer, charger, disposition d'origine). Manuel § 25, `tests/v41.py`.
 - **v40** : fenêtre « Arrivées » (touche L, clic = téléportation ou entrée en promenade), bouton « Recentrer la vue » (hors promenade, cadrage d'ouverture), lien « Manuel complet » (aide de la page, viewer), bulle du bouton « Copier le diagnostic ». Manuel § 24, `tests/v40.py`.
 - **v39** : bouton « Copier le diagnostic » (fenêtre Informations / État de la page, panneau du viewer) : version, carte graphique, rendu, tuiles et durées, état, présence, 10 dernières erreurs ; adresses remplacées par `ADRESSE`, partie `#` jamais copiée. Code commun `DIAG` / `diagText` dans `src/core.js`, manuel § 23, `tests/v39.py`. Pas de bouton sur une page `--no-walk` (pas de fenêtre d'état).
@@ -83,6 +84,7 @@ Le dossier des outils fabriqués est `dist\` ; le dépôt local est `P:\_OpenSim
 
 ## 6. À faire (dans l'ordre)
 
+0. **Rendu léger chez JJ (v42)** : JJ essaie sous Edge (rendu logiciel) sur la 4X4 ; si le délai des fenêtres reste, lire les lignes « Rendu léger » et « Images rendues par seconde » de « Copier le diagnostic » pour trouver la cause avant tout autre correctif. Idée suivante possible : alléger encore la fenêtre Réglages (autres sous-fenêtres), si JJ le demande.
 1. **Démo publique** (JJ n'est pas prêt : ne pas la lancer sans sa demande) : page statique sans chat d'une petite région (par exemple Ankh Island, 12 Mo) sur GitHub Pages, dans un dépôt séparé ; plus tard, serveur de présence sur un petit VPS avec `wss://` (Caddy et un nom de domaine) : procédure écrite le 24/10/2026 dans `docs/fr/PROCEDURES.md` § 11 et `docs/en/PROCEDURES.md` § 11 (Tailscale Funnel, Caddy, Cloudflare Tunnel), **non testée** : vérifier l'adresse IP vue derrière Funnel, Caddy ou Cloudflare Tunnel (contrôle en 4G décrit au § 11) avant de la tenir pour acquise ; pour Funnel, l'en-tête à donner à `--proxy-header` est inconnu (essayer `X-Forwarded-For`). Idée plus lointaine : présence réécrite en Worker Cloudflare avec Durable Object (aucun serveur à gérer).
 2. **Règles de documentation désormais** : toute modification du manuel, des procédures ou de l'historique se fait dans les deux langues, puis `verif_trad.py` sur le couple modifié (0 erreur exigée) ; chaque entrée de `CHANGELOG.md` en français puis en anglais.
 
@@ -90,8 +92,8 @@ Le dossier des outils fabriqués est `dist\` ; le dépôt local est `P:\_OpenSim
 
 - **Non testé ici** : Windows, Edge, carte graphique réelle, la vraie capture de souris d'Échap, une région en tuiles dans un sous-dossier, la conversion par convoar, les lignes PowerShell elles-mêmes (essayées sous Linux avec des chemins équivalents).
 - Les tests de navigateur durent de 1 à 2,5 min chacun (rendu logiciel) et un processus lancé en arrière-plan ne survit pas d'une réponse à l'autre : les lancer au premier plan, un ou deux par commande.
-- **Edge de JJ en rendu logiciel, volontairement** (« Microsoft Basic Render Driver » dans le diagnostic) : sa carte graphique est réservée à son LLM. La lenteur des tuiles chez lui est donc attendue : ce n'est pas un bug à chercher.
-- Le test `tests/v33.py` sur le clignotement de bulle dépend du rendu logiciel de Chromium : il a déjà échoué une fois sans lien avec le code.
+- **Edge de JJ en rendu logiciel, volontairement** (« Microsoft Basic Render Driver » dans le diagnostic) : sa carte graphique est réservée à son LLM. La lenteur des tuiles chez lui est donc attendue : ce n'est pas un bug à chercher. Le rendu léger (v42) vise ce cas ; ses valeurs préconisées n'ont pas été mesurées sur Edge. Constat de JJ avant la v42 : 2 s de délai à l'ouverture des fenêtres en vue globale, moins en promenade. Mesuré dans Chromium (SwiftShader) : au repos en vue globale, 0 rendu par seconde, et l'ouverture d'une fenêtre ne déclenche aucun rendu ; seuls la mer animée (`core.js`, boucle de rendu) et la présence d'autres visiteurs (`presenceTick`) forcent un rendu continu. La cause exacte chez JJ reste à lire dans la ligne « Images rendues par seconde » du diagnostic.
+- Le test `tests/v33.py` sur le clignotement de bulle dépend du rendu logiciel de Chromium : il a déjà échoué une fois sans lien avec le code. Le 24/10/2026, dans le bac à sable, `tests/v33.py` (attente de 60 s à l'étape 1, processeur ralenti x6) et `tests/v24.py` (2 échecs « survol du marqueur por ») échouent de la même façon en v41 et en v42 : antérieurs, cause non cherchée.
 - Un ancien `presence_server.py` ignore les nouveautés (couleur, historique) : toujours relancer celui de `dist\` après `python build.py`.
 - `--maj` ignore les options de la carte si on n'ajoute pas `--register` ; les chemins relatifs de `--register` et `--map-page` y sont relatifs à la page.
 - Copier-coller depuis une réponse mise en forme peut ajouter des accents graves (backticks) devant les options : en PowerShell, ils cassent la commande.

@@ -157,7 +157,7 @@ function inspectGlb(buf, name = tr('viewer.glb.defname')) {
 // ---------- état
 const DEF = {
   rotate: 0, hole: 180, holeFade: 60, holeX: 0, holeZ: 0, guide: true, wave: 0.5, seaY: -50, zoom: 1, camDir: [0, 0.25, 1], target: [0, 15, 0],
-  sea: true, anim: false, retina: false, foliageCutout: 0.12, seaSize: 4000, seaSegments: 400, walk: true, eyeHeight: 1.7, walkSpeed: 3.5, walkIgnore: 'door, porte', ignoreViz: false, zones: [], profile: 'perso', spectate: true, panel: true, map: [], mapUrl: '', names: false, chat: true, chatFade: 0, presenceUrl: '', room: '', zoneMarker: 'discret', showSpawns: false, zoneCone: true, fly: true, zoneInfoDist: 150, compass: true, northDeg: 0,
+  sea: true, anim: false, retina: false, light: false, pixelScale: 1, fpsMax: 0, ovOnly: false, foliageCutout: 0.12, seaSize: 4000, seaSegments: 400, walk: true, eyeHeight: 1.7, walkSpeed: 3.5, walkIgnore: 'door, porte', ignoreViz: false, zones: [], profile: 'perso', spectate: true, panel: true, map: [], mapUrl: '', names: false, chat: true, chatFade: 0, presenceUrl: '', room: '', zoneMarker: 'discret', showSpawns: false, zoneCone: true, fly: true, zoneInfoDist: 150, compass: true, northDeg: 0,
   seaColor: 0x3A9AD9, skyColor: 0x87CEEB
 };
 const viewer = createViewer(document.getElementById('view'), DEF, makeLoader());
@@ -203,6 +203,10 @@ const ROWS = [
   ['col', 'skyColor', tr('viewer.row.skyColor')],
   ['sec', tr('viewer.sec.render')],
   ['chk', 'retina', tr('viewer.row.retina', Math.min(Math.max(window.devicePixelRatio || 1, 2), 3), (window.devicePixelRatio || 1).toFixed(2))],
+  ['rng', 'pixelScale', tr('viewer.row.pixelScale'), 0.25, 1, 0.05, false],
+  ['rng', 'fpsMax', tr('viewer.row.fpsMax'), 0, 60, 5, false],
+  ['chk', 'ovOnly', tr('viewer.row.ovOnly')],
+  ['chk', 'light', tr('viewer.row.light')],
   ['rng', 'foliageCutout', tr('viewer.row.foliage'), 0, 0.5, 0.01, false],
   ['sec', tr('viewer.sec.camera')],
   ['zoom'],
@@ -915,7 +919,7 @@ coordInfo();
 
 $('bFrame').onclick = () => { viewer.frame(DEF.camDir, tilesMode ? tilesMode.target : DEF.target, 1); camInfo(); };
 $('bReset').onclick = () => {
-  const keep = ['zoneMarker', 'showSpawns', 'zoneCone', 'fly', 'zoneInfoDist', 'compass', 'northDeg', 'walk', 'names', 'chat', 'spectate', 'panel', 'chatFade', 'ignoreViz', 'presenceUrl', 'room', 'walkIgnore', 'eyeHeight', 'walkSpeed', 'hole', 'holeFade', 'holeX', 'holeZ', 'guide', 'wave', 'seaY', 'sea', 'anim', 'retina', 'foliageCutout', 'seaColor', 'skyColor'];
+  const keep = ['zoneMarker', 'showSpawns', 'zoneCone', 'fly', 'zoneInfoDist', 'compass', 'northDeg', 'walk', 'names', 'chat', 'spectate', 'panel', 'chatFade', 'ignoreViz', 'presenceUrl', 'room', 'walkIgnore', 'eyeHeight', 'walkSpeed', 'hole', 'holeFade', 'holeX', 'holeZ', 'guide', 'wave', 'seaY', 'sea', 'anim', 'retina', 'light', 'pixelScale', 'fpsMax', 'ovOnly', 'foliageCutout', 'seaColor', 'skyColor'];
   const patch = {}; keep.forEach(k => { patch[k] = DEF[k]; });
   viewer.setCfg(patch);
   buildRows(); refreshEnabled(); camInfo(); updateGuide();
@@ -1044,7 +1048,7 @@ async function saveZonesToDir() {
 }
 
 // ---------- mémorisation des réglages, fichier par fichier (nom + taille du .glb)
-const SKEYS = ['zoneMarker', 'showSpawns', 'zoneCone', 'fly', 'zoneInfoDist', 'compass', 'northDeg', 'rotate', 'hole', 'holeFade', 'holeX', 'holeZ', 'wave', 'seaY', 'seaSegments', 'seaColor', 'skyColor', 'foliageCutout', 'anim', 'sea', 'retina', 'walk', 'eyeHeight', 'walkSpeed', 'walkIgnore', 'names', 'chat', 'chatFade', 'presenceUrl', 'room', 'spectate', 'panel', 'mapUrl', 'guide', 'ignoreViz'];
+const SKEYS = ['zoneMarker', 'showSpawns', 'zoneCone', 'fly', 'zoneInfoDist', 'compass', 'northDeg', 'rotate', 'hole', 'holeFade', 'holeX', 'holeZ', 'wave', 'seaY', 'seaSegments', 'seaColor', 'skyColor', 'foliageCutout', 'anim', 'sea', 'retina', 'light', 'pixelScale', 'fpsMax', 'ovOnly', 'walk', 'eyeHeight', 'walkSpeed', 'walkIgnore', 'names', 'chat', 'chatFade', 'presenceUrl', 'room', 'spectate', 'panel', 'mapUrl', 'guide', 'ignoreViz'];
 let curFile = null, lastSaved = '', settingsReady = false;
 const fileKey = f => 'glb2html_set_' + f.name + '|' + f.size;
 function snapshot() {
@@ -1117,7 +1121,7 @@ function buildCommand() {
   const num = (flag, v, d) => { if (Math.abs(v - d) > 1e-9) a.push(flag + ' ' + n4(v)); };
   const sw = (on, off, v, d) => { if (v !== d) a.push(v ? on : off); };
   if (rotNorm(cfg.rotate)) a.push('--rotate ' + rotNorm(cfg.rotate));
-  sw('--sea', '--no-sea', cfg.sea, DEF.sea); sw('--anim', '--no-anim', cfg.anim, DEF.anim); sw('--retina', '--no-retina', cfg.retina, DEF.retina);
+  sw('--sea', '--no-sea', cfg.sea, DEF.sea); sw('--anim', '--no-anim', cfg.anim, DEF.anim); sw('--retina', '--no-retina', cfg.retina, DEF.retina); sw('--light', '--no-light', cfg.light, DEF.light);
   num('--hole', cfg.hole, DEF.hole); num('--hole-fade', cfg.holeFade, DEF.holeFade); num('--hole-x', cfg.holeX, DEF.holeX); num('--hole-z', cfg.holeZ, DEF.holeZ);
   num('--wave', cfg.wave, DEF.wave); num('--sea-y', cfg.seaY, tilesMode ? 20 : DEF.seaY); num('--sea-segments', cfg.seaSegments, DEF.seaSegments);
   if (cfg.seaColor !== DEF.seaColor) a.push('--sea-color ' + hexc(cfg.seaColor));
@@ -1193,7 +1197,7 @@ function liveConfig() {
   return {
     rotate: rotNorm(cfg.rotate), hole: cfg.hole, holeFade: cfg.holeFade, holeX: cfg.holeX, holeZ: cfg.holeZ, wave: cfg.wave, seaY: cfg.seaY,
     zoom: r6(cam.zoom), camDir: cam.camDir.map(r6), target: cam.target.map(r6),
-    sea: cfg.sea, anim: cfg.anim, retina: cfg.retina, foliageCutout: cfg.foliageCutout,
+    sea: cfg.sea, anim: cfg.anim, retina: cfg.retina, light: cfg.light, foliageCutout: cfg.foliageCutout,
     seaSize: cfg.seaSize, seaSegments: cfg.seaSegments, seaColor: cfg.seaColor, skyColor: cfg.skyColor,
     spectate: cfg.spectate, panel: cfg.panel,
     version: '__VERSION__',
@@ -1281,7 +1285,7 @@ $('bPy').onclick = () => {
   const block = '# <<DEFAULTS>>\n' +
     'ROTATE = ' + c.rotate + '\n' + 'HOLE_RADIUS = ' + n(c.hole) + '\nHOLE_FADE = ' + n(c.holeFade) + '\nHOLE_X = ' + n(c.holeX) + '\nHOLE_Z = ' + n(c.holeZ) + '\nWAVE_AMP = ' + n(c.wave) + '\nSEA_Y = ' + n(c.seaY) +
     '\nZOOM_RATIO = ' + n(c.zoom) + '\nCAM_DIR = ' + t(c.camDir) + '\nTARGET = ' + t(c.target) +
-    '\nSEA_ENABLED = ' + B(c.sea) + '\nANIM_ENABLED = ' + B(c.anim) + '\nRETINA_ENABLED = ' + B(c.retina) +
+    '\nSEA_ENABLED = ' + B(c.sea) + '\nANIM_ENABLED = ' + B(c.anim) + '\nRETINA_ENABLED = ' + B(c.retina) + '\nLIGHT_ENABLED = ' + B(c.light) +
     '\nFOLIAGE_CUTOUT = ' + n(c.foliageCutout) + '\nSEA_COLOR = ' + col(c.seaColor) + '\nSKY_COLOR = ' + col(c.skyColor) + '\nSEA_SEGMENTS = ' + Math.round(c.seaSegments) + '\nWALK_ENABLED = ' + B(c.walk) + '\nEYE_HEIGHT = ' + n(c.eyeHeight) + '\nWALK_SPEED = ' + n(c.walkSpeed) + '\nWALK_IGNORE = ' + JSON.stringify(c.walkIgnore) + '\nNAMES_ENABLED = ' + B(c.names) + '\nCHAT_ENABLED = ' + B(c.chat) + '\nCHAT_FADE = ' + n(c.chatFade) + '\nSPECTATE = ' + B(c.spectate) + '\nPANEL = ' + B(c.panel) + '\nMAP_JSON = ' + JSON.stringify(JSON.stringify(cfg.map || [])) + '\nMAP_URL = ' + JSON.stringify(cfg.mapUrl || '') + '\nPROFILE = ' + JSON.stringify($('profileSel').value) + '\nZONES_JSON = ' + JSON.stringify(JSON.stringify(cfg.zones || [])) + '\nPRESENCE_URL = ' + JSON.stringify(c.presenceUrl) + '\nROOM = ' + JSON.stringify(cfg.room || '') +
     '\nZONES_LIVE = ""' + '\nZONE_MARKER = ' + JSON.stringify(c.zoneMarker) + '\nSHOW_SPAWNS = ' + B(c.showSpawns) + '\nZONE_CONE = ' + B(c.zoneCone) + '\nFLY_ENABLED = ' + B(c.fly) + '\nZONE_INFO_DIST = ' + n(c.zoneInfoDist) + '\nCOMPASS = ' + B(c.compass) + '\nNORTH_DEG = ' + n(c.northDeg) + '\nTARGET_EXPLICIT = ' + B(c.targetExplicit) +
     '\n# <</DEFAULTS>>';

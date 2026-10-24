@@ -59,6 +59,17 @@ if (typeof window !== 'undefined' && !window.__web3dDiag) {
 }
 // v40 : manuel complet sur GitHub, dans la langue de la page (français, sinon anglais)
 const manualUrl = () => 'https://github.com/Klaatou/Web_3d/blob/main/docs/' + (LANG === 'fr' ? 'fr/MANUEL.md' : 'en/MANUAL.md');
+// nom du moteur de rendu WebGL (carte graphique, ou moteur logiciel)
+function gpuName(r) {
+  let gpu = '?';
+  try {
+    const gl = r.getContext(); gpu = String(gl.getParameter(gl.RENDERER) || '?');
+    if (/^WebKit WebGL$|^Mozilla$/i.test(gpu)) { const ext = gl.getExtension('WEBGL_debug_renderer_info'); if (ext) gpu = String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)); }
+  } catch (_) {}
+  return gpu;
+}
+// v42 : rendu sans carte graphique (moteur logiciel) : la page propose le rendu léger
+const softGpu = r => /Basic Render|SwiftShader|llvmpipe|softpipe|Software/i.test(gpuName(r));
 // texte du diagnostic ; extra = { cfgVersion, lines } : version de la configuration de la région, lignes d'état propres à la page ou au viewer
 function diagText(viewer, extra) {
   const x = extra || {}, L = (k, v) => tr('core.diag.line', k, v), out = [tr('core.diag.title')];
@@ -71,14 +82,18 @@ function diagText(viewer, extra) {
   const r = viewer && viewer.renderer;
   out.push(L(tr('core.diag.screen'), tr('core.diag.screen.v', innerWidth, innerHeight, nb(devicePixelRatio, 2), r ? nb(r.getPixelRatio(), 2) : '?')));
   if (r) {
-    let gpu = '?';
-    try {
-      const gl = r.getContext(); gpu = String(gl.getParameter(gl.RENDERER) || '?');
-      if (/^WebKit WebGL$|^Mozilla$/i.test(gpu)) { const ext = gl.getExtension('WEBGL_debug_renderer_info'); if (ext) gpu = String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)); }
-    } catch (_) {}
+    const gpu = gpuName(r);
     out.push(L(tr('core.diag.gpu'), tr('core.diag.gpu.v', gpu, r.capabilities && r.capabilities.isWebGL2 ? 2 : 1, r.capabilities ? r.capabilities.maxTextureSize : '?')));
     const i = r.info || {}, ri = i.render || {}, mi = i.memory || {};
     out.push(L(tr('core.diag.render'), tr('core.diag.render.v', ri.triangles, ri.calls, mi.geometries, mi.textures, (i.programs || []).length)));
+  }
+  if (viewer && viewer.cfg && viewer.renderStats) {
+    // v42 : réglages du rendu léger en cours, images rendues sur les 5 dernières secondes et ce qui force le rendu continu
+    const c = viewer.cfg, s = viewer.renderStats(), yn = v => (v ? tr('common.yes') : tr('common.no'));
+    const rad = viewer.tiled && viewer.tilesState ? nb(viewer.tilesState().radius) + ' m' : '\u2014';
+    out.push(L(tr('core.diag.light'), tr('core.diag.light.v', nb(Math.round((Number(c.pixelScale) > 0 ? Number(c.pixelScale) : 1) * 100)), Number(c.fpsMax) > 0 ? nb(Number(c.fpsMax)) : tr('core.diag.light.nolimit'), yn(!!c.ovOnly), rad, yn(c.antialias !== false))));
+    const why = { sea: tr('core.diag.cause.sea'), peers: tr('core.diag.cause.peers'), walk: tr('core.diag.cause.walk'), tiles: tr('core.diag.cause.tiles') };
+    out.push(L(tr('core.diag.fps'), tr('core.diag.fps.v', nb(s.rate, 1), s.causes.length ? s.causes.map(k => why[k]).join(', ') : tr('core.diag.cause.none'))));
   }
   const pm = performance.memory;
   out.push(L(tr('core.diag.mem'), pm && pm.usedJSHeapSize ? tr('core.diag.mem.v', nb(pm.usedJSHeapSize / 1048576), nb(pm.jsHeapSizeLimit / 1048576)) : tr('core.diag.na')));
@@ -321,7 +336,7 @@ function createViewer(container, cfg0, loader) {
   const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 5000);
   camera.position.set(0, 22, 45);
 
-  const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+  const renderer = new THREE.WebGLRenderer({ antialias: cfg.antialias !== false, powerPreference: 'high-performance' });   // v42 : anticrénelage fixé à la création du contexte (rendu léger : pris au chargement)
   renderer.sortObjects = false;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.NoToneMapping;
@@ -345,7 +360,8 @@ function createViewer(container, cfg0, loader) {
 
   function resize() {
     const w = container.clientWidth || innerWidth, h = container.clientHeight || innerHeight;
-    renderer.setPixelRatio(cfg.retina ? Math.min(Math.max(window.devicePixelRatio || 1, 2), 3) : 1);
+    const ps = Number(cfg.pixelScale), k = ps > 0 ? Math.min(1, Math.max(0.25, ps)) : 1;   // v42 : résolution du rendu (rendu léger) ; le navigateur agrandit l'image
+    renderer.setPixelRatio((cfg.retina ? Math.min(Math.max(window.devicePixelRatio || 1, 2), 3) : 1) * k);
     renderer.setSize(w, h);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
@@ -682,6 +698,12 @@ function createViewer(container, cfg0, loader) {
     TL.lastUpd = now;
     // l'ancre (arrivée demandée) est lâchée dès que la cible de la vue globale a bougé : l'utilisateur regarde ailleurs
     if (TL.anchor && Math.hypot(controls.target.x - TL.anchor.tx, controls.target.z - TL.anchor.tz) > 1) TL.anchor = null;
+    // v42 : rendu léger, « vue d'ensemble seule » : hors promenade (et sans promenade ni téléport en attente), aucune tuile détaillée
+    if (cfg.ovOnly && (OV.state === 'ready' || OV.state === 'loading') && !walking && !TL.pending) {
+      releaseAnchor(); TL.forced = null;
+      for (const t of TL.tiles) if (t.state !== 'idle' && t.state !== 'failed') tileUnload(t);
+      tilesInfo(); return;
+    }
     const f = tilesFocus(now);
     for (const t of TL.tiles) t.d = tileDist(t, f);
     for (const t of TL.tiles) if (t.state !== 'idle' && t.state !== 'failed' && t.d > TL.radius + TL.margin) tileUnload(t);
@@ -864,7 +886,10 @@ function createViewer(container, cfg0, loader) {
   function setCfg(p) {
     Object.assign(cfg, p);
     if ('skyColor' in p) { scene.background.set(cfg.skyColor); scene.fog.color.set(cfg.skyColor); hemi.color.set(cfg.skyColor); }
-    if ('retina' in p) resize();
+    if ('retina' in p || 'pixelScale' in p) resize();
+    // v42 : rayon des tuiles et vue d'ensemble seule, pris en compte au prochain tour de choix des tuiles (250 ms au plus)
+    if ('tileRadius' in p && TL.on && Number(cfg.tileRadius) > 0) { TL.radius = Math.min(5000, Math.max(10, Number(cfg.tileRadius))); TL.lastUpd = 0; }
+    if ('ovOnly' in p && TL.on) TL.lastUpd = 0;
     if ('rotate' in p) applyRotation();
     if ('sea' in p || 'anim' in p || 'seaSegments' in p) buildSea();
     else if (seaMat) {
@@ -2060,6 +2085,15 @@ function createViewer(container, cfg0, loader) {
   }
 
   const clock = new THREE.Clock();
+  const RS = { times: [], last: 0 };   // v42 : instants des derniers rendus (diagnostic), plafond d'images par seconde (cfg.fpsMax, 0 = sans limite)
+  function renderStats() {
+    const now = performance.now(), causes = [];
+    if (seaMat && seaMat.uniforms) causes.push('sea');
+    if (P.peers.size) causes.push('peers');
+    if (walking) causes.push('walk');
+    if (TL.on && (TL.inflight > 0 || TL.gridQ.length)) causes.push('tiles');
+    return { rate: RS.times.filter(t => now - t <= 5000).length / 5, causes };
+  }
   renderer.setAnimationLoop(() => {
     const dt = Math.min(clock.getDelta(), 0.1);
     let moved = false;
@@ -2068,11 +2102,16 @@ function createViewer(container, cfg0, loader) {
     presenceTick(dt, performance.now());
     landingTick(performance.now());
     if (seaMat && seaMat.uniforms) { seaMat.uniforms.uTime.value = clock.elapsedTime; dirty = true; }
-    if (dirty || moved) { if (zoneLabs.length) coneScaleTick(); renderer.render(scene, camera); dirty = false; }
+    if (dirty || moved) {
+      const now = performance.now(), fm = Number(cfg.fpsMax);
+      if (fm > 0 && now - RS.last < 1000 / fm - 2) { dirty = true; return; }   // plafond atteint : l'image attend le tour suivant
+      RS.last = now; RS.times.push(now); if (RS.times.length > 400) RS.times.splice(0, RS.times.length - 400);
+      if (zoneLabs.length) coneScaleTick(); renderer.render(scene, camera); dirty = false;
+    }
   });
 
   return {
-    scene, camera, renderer, controls, cfg, setCfg, setModel, loadBuffer, frame, getCameraState, setZoom,
+    scene, camera, renderer, controls, cfg, setCfg, setModel, loadBuffer, frame, getCameraState, setZoom, renderStats,
     get model() { return model; }, get sea() { return sea; }, set onCfg(f) { onCfg = f; }, set onWalk(f) { onWalk = f; }, set onPick(f) { onPick = f; }, set pickOrbit(v) { pickOrbit = !!v; }, set onPresence(f) { onPresence = f; }, set onChat(f) { onChat = f; }, set onPeer(f) { onPeer = f; },
     setZones, zoneSelect, zonePickAt, findMeshes,
     // v36 : repères de portail (cônes) : affichés ou non (T), rappel, état pour les tests
