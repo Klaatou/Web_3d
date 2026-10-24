@@ -1499,3 +1499,23 @@ Pour que tous les noms soient dans la même langue, la v43 a mis en anglais les 
 | adresse du viewer | `?tuiles=` | `?tiles=` |
 
 Les deux outils de développement (`gen_reference.py`, `verif_trad.py`) ont suivi en v44, et les messages de `--update` commencent par `[update]`. Restent tels quels : `--analyse` (aussi de l'anglais britannique) et les valeurs qui sont des noms d'objets, comme `door, porte`. Dans l'aide des outils, les noms d'exemple des valeurs sont aussi en anglais (`FILE`, `PATH`, `NAME`, `DEGREES`, `SHELL.html`). L'historique (`CHANGELOG.md`, `HISTORIQUE.md`) garde les noms de l'époque.
+
+## 28. Nouveautés de la v45 (24/10/2026)
+
+### 28.1 La page dit pourquoi la présence s'est coupée
+
+Quand la connexion au serveur de présence se ferme, la ligne de présence (fenêtre Informations / État, panneau du viewer) ne dit plus toujours « serveur injoignable » : elle donne ce que le navigateur sait.
+
+- **la connexion ne s'est jamais ouverte** : « connexion jamais établie (adresse, port ou pare-feu à vérifier) » ;
+- **la connexion s'était ouverte, puis le serveur ou le réseau l'a coupée** : « connexion ouverte puis fermée (code N) », suivi de la raison envoyée par le serveur quand il en donne une ;
+- **le navigateur a refusé de créer la connexion** (page en https avec une adresse `ws://`, ou port interdit) : « refusé par le navigateur ».
+
+Limite : le navigateur ne donne jamais la cause d'une connexion qui ne s'ouvre pas (code 1006, sans raison). La page ne peut donc pas distinguer un nom introuvable, un port fermé, un pare-feu ou un blocage du navigateur ; seul un serveur qui coupe une connexion déjà ouverte fournit un code et une raison.
+
+### 28.2 Diagnostic
+
+« Copier le diagnostic » ajoute la ligne « Connexion de présence » : la connexion s'est-elle ouverte (oui ou non), dernier code de fermeture et dernière raison. Les adresses restent remplacées par `ADRESSE`.
+
+### 28.3 Test
+
+`tests/v45.py` : serveur absent, serveur qui ferme avec un code et une raison, constructeur refusé par le navigateur, anglais, viewer.

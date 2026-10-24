@@ -636,7 +636,8 @@ if (C.walk) {
     bd.onmousedown = e => e.preventDefault();   // le bouton ne garde pas le focus : Espace et Entrée restent à la promenade et au chat
     bd.onclick = async () => {
       const lines = [...sbody.children].filter(e => !e.hidden && e.textContent).map(e => e.textContent);
-      if (C.presenceUrl) { const ps = document.getElementById('presenceStatus'); lines.push(tr('core.diag.line', tr('core.diag.presence'), String(C.presenceUrl).split(':')[0] + ' · ' + (ps && ps.textContent ? ps.textContent : '?'))); }
+      if (C.presenceUrl) { const ps = document.getElementById('presenceStatus'); lines.push(tr('core.diag.line', tr('core.diag.presence'), String(C.presenceUrl).split(':')[0] + ' · ' + (ps && ps.textContent ? ps.textContent : '?')));
+        const pr = viewer.getPresence(); if (pr.state !== 'off' || pr.opened || pr.closeCode !== null) lines.push(tr('core.diag.line', tr('core.diag.presence.conn'), tr('core.diag.presence.conn.v', pr.opened ? tr('common.yes') : tr('common.no'), pr.closeCode === null ? '\u2014' : pr.closeCode, pr.closeReason || '\u2014'))); }
       const t = diagText(viewer, { cfgVersion: C.version, lines });
       dout.value = t;
       toast((await copyText(t, dout)) ? tr('core.diag.copied') : tr('page.toast.copyfail'));
@@ -1120,7 +1121,7 @@ if (C.presenceUrl && C.walk) {
   viewer.onPresence = s => {
     if (s.state === 'kicked' || s.state === 'banned') toast((s.state === 'banned' ? tr('page.pres.toast.banned') : tr('page.pres.toast.kicked')) + (s.reason ? ' : ' + s.reason : ''));
     const n = s.count;
-    st.textContent = s.state === 'online' ? (s.spectator ? (n ? trn('page.pres.walking', n) : tr('page.pres.nobody')) : trn('page.pres.count', n)) : (T[s.state] || s.state);
+    st.textContent = s.state === 'online' ? (s.spectator ? (n ? trn('page.pres.walking', n) : tr('page.pres.nobody')) : trn('page.pres.count', n)) : (s.state === 'error' && s.reason ? tr('page.pres.error.why', C.presenceUrl, s.reason) : (T[s.state] || s.state));
   };
   viewer.onName = n => {
     if (inp.value && inp.value !== n) toast(tr('page.pres.nametaken', n));

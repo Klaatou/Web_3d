@@ -1499,3 +1499,23 @@ So that all names are in the same language, v43 put the last French names into E
 | address of the viewer | `?tuiles=` | `?tiles=` |
 
 The two development tools (`gen_reference.py`, `verif_trad.py`) followed in v44, and the `--update` messages start with `[update]`. Unchanged: `--analyse` (also British English) and the values that are object names, such as `door, porte`. In the tools' help, the example names of the values are also in English (`FILE`, `PATH`, `NAME`, `DEGREES`, `SHELL.html`). The history (`CHANGELOG.md`, `HISTORY.md`) keeps the names of the time.
+
+## 28. New in v45 (24/10/2026)
+
+### 28.1 The page says why presence was cut
+
+When the connection to the presence server closes, the presence line (Information / Status window, viewer panel) no longer always says "server unreachable": it gives what the browser knows.
+
+- **the connection never opened**: "connection never established (check address, port or firewall)";
+- **the connection had opened, then the server or the network cut it**: "connection opened then closed (code N)", followed by the reason sent by the server when it gives one;
+- **the browser refused to create the connection** (https page with a `ws://` address, or forbidden port): "refused by the browser".
+
+Limit: the browser never gives the cause of a connection that does not open (code 1006, no reason). The page therefore cannot tell an unknown name, a closed port, a firewall or a browser block apart; only a server that cuts an already open connection supplies a code and a reason.
+
+### 28.2 Diagnostics
+
+"Copy diagnostics" adds the "Presence connection" line: whether the connection opened (yes or no), last closing code and last reason. Addresses stay replaced by `ADRESSE`.
+
+### 28.3 Test
+
+`tests/v45.py`: absent server, server that closes with a code and a reason, constructor refused by the browser, English, viewer.

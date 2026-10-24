@@ -2,6 +2,13 @@
 
 Les dates sont au format jj/mm/aaaa.
 
+## v45 (24/10/2026)
+### 24/10/2026 : la page dit pourquoi la connexion de présence s'est fermée
+- **Présence** : la ligne de présence (page et viewer) donne la cause au lieu de toujours « serveur injoignable » : connexion jamais établie, ouverte puis fermée (code et raison du serveur), ou refusée par le navigateur (`SecurityError`). Le navigateur ne donne jamais la cause d'une connexion qui ne s'ouvre pas (code 1006) : la page ne distingue donc pas un nom introuvable, un port fermé ou un blocage.
+- **Diagnostic** : nouvelle ligne « Connexion de présence » (s'est ouverte, dernier code, dernière raison). `getPresence()` expose `opened`, `closeCode`, `closeReason`. `tests/v45.py`, manuel § 28.
+- **Presence**: the presence line (page and viewer) gives the cause instead of always "server unreachable": connection never established, opened then closed (server code and reason), or refused by the browser (`SecurityError`). The browser never gives the cause of a connection that does not open (code 1006): the page cannot tell an unknown name, a closed port or a block apart.
+- **Diagnostics**: new "Presence connection" line (was opened, last code, last reason). `getPresence()` exposes `opened`, `closeCode`, `closeReason`. `tests/v45.py`, manual § 28.
+
 ## v44 (24/10/2026)
 ### 24/10/2026 : derniers noms en anglais, historique complété
 - **Noms en anglais (suite de la v43)** : `gen_reference.py` `--tools`, `--output`, `--check` (anciens `--outils`, `--sortie`, `--verifier` acceptés) ; `verif_trad.py` `--glossary` (ancien `--glossaire` accepté) ; messages de `--update` en français commencent par `[update]` (et non plus `[maj]`) ; noms d'exemple des textes d'aide alignés sur l'aide (`FILE`, `FOLDER`, `SHELL.html`, `NAME`) ; menu du viewer « Point (dot) » et « Portée (range) » en français, « Dot » en anglais ; `CLAUDE.md`, `README.fr.md` et les procédures citaient encore `discret` / `portee` : corrigés. Manuel § 27.11 complété.
