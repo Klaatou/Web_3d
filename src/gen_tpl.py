@@ -1207,7 +1207,7 @@ def run_maj(a, kw, explicit, S_reg):
         print(_tr("py.glb2html.maj_0_conserve_tel_quel", zones_out.name) + ("" if zones_out.is_file() else _tr("py.glb2html.absent_paren")))
     lib_url = kw.get("lib_url") or ""
     libtxt = lib_prefix(lib_url).lstrip("./") + "/three-" + THREE_VERSION
-    print("[maj] " + renew_shell(shell_path, build_shell(lib_url)))
+    print("[update] " + renew_shell(shell_path, build_shell(lib_url)))
     sdir = shell_dir_of(a.shared_shell, out) if a.shared_shell else out.parent
     if lib_missing(sdir, lib_url):
         write_modular_lib(sdir, a.vendor, lib_url)

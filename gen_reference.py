@@ -5,8 +5,9 @@
 
 Usage (depuis le dossier qui contient gen_reference.py ; le dossier des outils est dist\\) :
     python gen_reference.py                       (outils dans .\\dist, sortie .\\REFERENCE_OPTIONS.md)
-    python gen_reference.py --outils "P:\\...\\dist" --sortie "P:\\...\\REFERENCE_OPTIONS.md"
-    python gen_reference.py --verifier docs/fr/MANUEL.md    (liste les options absentes de ce fichier)
+    python gen_reference.py --tools "P:\\...\\dist" --output "P:\\...\\REFERENCE_OPTIONS.md"
+    python gen_reference.py --check docs/fr/MANUEL.md    (liste les options absentes de ce fichier)
+Anciens noms (avant la v44), toujours acceptés : --outils, --sortie, --verifier.
 
 presence_server.py demande « pip install websockets » pour être lu.
 """
@@ -135,10 +136,13 @@ def generer(dossier: pathlib.Path):
 
 def main():
     ap = argparse.ArgumentParser(description="Écrit REFERENCE_OPTIONS.md depuis les outils.")
-    ap.add_argument("--outils", default=None, help="dossier des outils (défaut : dist à côté du script)")
-    ap.add_argument("--sortie", default=None, help="fichier écrit (défaut : REFERENCE_OPTIONS.md à côté du script)")
-    ap.add_argument("--verifier", metavar="FICHIER.md", default=None, help="liste les options absentes de ce fichier (code retour 1 s'il en manque)")
-    a = ap.parse_args()
+    ap.add_argument("--tools", dest="outils", metavar="FOLDER", default=None, help="dossier des outils (défaut : dist à côté du script)")
+    ap.add_argument("--output", dest="sortie", metavar="FILE", default=None, help="fichier écrit (défaut : REFERENCE_OPTIONS.md à côté du script)")
+    ap.add_argument("--check", dest="verifier", metavar="FILE.md", default=None, help="liste les options absentes de ce fichier (code retour 1 s'il en manque)")
+    # v44 : anciens noms français toujours acceptés
+    old = {"--outils": "--tools", "--sortie": "--output", "--verifier": "--check"}
+    argv = [old.get(x.partition("=")[0], x.partition("=")[0]) + x.partition("=")[1] + x.partition("=")[2] if x.startswith("--") else x for x in sys.argv[1:]]
+    a = ap.parse_args(argv)
     ici = pathlib.Path(__file__).resolve().parent
     dossier = pathlib.Path(a.outils) if a.outils else ici / "dist"
     texte, tout, manques = generer(dossier)

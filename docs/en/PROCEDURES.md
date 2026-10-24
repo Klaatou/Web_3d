@@ -128,7 +128,7 @@ With a single region, the map brings nothing: it is used to link several regions
 |---|---|---|
 | Black page with `#spawn=…` | the arrival's tile is loading | since v33, a "Loading the ground…" text should appear; otherwise, console (F12) and `[tile] …` lines |
 | "Loading the ground…" that lasts | large tile | wait; note the `[tile] …` lines of the console |
-| The zones do not appear | zone file elsewhere than in the page's folder, private zone, discreet marker | check `X.zones.json` in the served folder, F5 in a private window, `--zone-marker portee` |
+| The zones do not appear | zone file elsewhere than in the page's folder, private zone, discreet marker | check `X.zones.json` in the served folder, F5 in a private window, `--zone-marker range` |
 | The settings do not change | old shell, cache | `--update`, then Ctrl+F5 |
 | "Couldn't load texture" errors | 0-byte images in tiles from before v31 | split again with glb2tiles v31 or later |
 | No chat | page built without `--presence-url` or without `--chat` | add the options with `--update`, restart the server |

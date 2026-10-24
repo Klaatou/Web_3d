@@ -128,7 +128,7 @@ Avec une seule région, la carte n'apporte rien : elle sert à relier plusieurs 
 |---|---|---|
 | Page noire avec `#spawn=…` | la tuile de l'arrivée se charge | depuis la v33, un texte « Chargement du sol… » doit s'afficher ; sinon, console (F12) et lignes `[tuile] …` |
 | « Chargement du sol… » qui dure | grosse tuile | patienter ; relever les lignes `[tuile] …` de la console |
-| Les zones n'apparaissent pas | fichier de zones ailleurs que dans le dossier de la page, zone privée, marqueur discret | vérifier `X.zones.json` dans le dossier servi, F5 en fenêtre privée, `--zone-marker portee` |
+| Les zones n'apparaissent pas | fichier de zones ailleurs que dans le dossier de la page, zone privée, marqueur discret | vérifier `X.zones.json` dans le dossier servi, F5 en fenêtre privée, `--zone-marker range` |
 | Les réglages ne changent pas | coquille ancienne, cache | `--update`, puis Ctrl+F5 |
 | Erreurs « Couldn't load texture » | images de 0 octet dans des tuiles d'avant la v31 | redécouper avec glb2tiles v31 ou plus |
 | Pas de chat | page fabriquée sans `--presence-url` ou sans `--chat` | ajouter les options avec `--update`, relancer le serveur |

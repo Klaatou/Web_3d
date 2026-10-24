@@ -108,7 +108,7 @@ Une zone peut porter un champ `mesh` : le nom exact d'un élément du modèle. L
 ## Nouveautés de la v34 (détail : `docs/fr/MANUEL.md` § 19)
 
 - **Aide sélectionnable** (Ctrl+C copie) et **bloc d'état** séparé (vue, mode « à pied » / « en vol », souris, position, tuiles) ; **H** masque l'aide, **I** l'état.
-- **Vol** : Page Haut / Page Bas, atterrissage automatique en descendant jusqu'au sol, bouton « Voler / Atterrir ». **Souris libre après Échap** : **G** ou bouton « Capturer la souris ». Zone de survol des marqueurs au rayon de l'anneau (`--zone-marker portee`).
+- **Vol** : Page Haut / Page Bas, atterrissage automatique en descendant jusqu'au sol, bouton « Voler / Atterrir ». **Souris libre après Échap** : **G** ou bouton « Capturer la souris ». Zone de survol des marqueurs au rayon de l'anneau (`--zone-marker range`).
 - **Couleur en direct** (relancer `presence_server.py`), **lien personnel** `#name=PSEUDO&key=CLE` (secret), pseudo mémorisé sur la page carte.
 - **`glb2html.py --update`** : met à jour une région sans rien ressaisir (n'applique que les options données, garde la config et les zones, renouvelle la coquille avec copie datée).
 

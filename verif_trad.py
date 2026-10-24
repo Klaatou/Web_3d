@@ -4,8 +4,8 @@
 
 Usage (depuis la racine du dépôt) :
     python verif_trad.py docs\\fr\\MANUEL.md docs\\en\\MANUAL.md
-    python verif_trad.py ORIGINAL TRADUCTION --glossaire termes.json   (ajoute ou remplace des termes {"français": "anglais"})
-    python verif_trad.py ORIGINAL TRADUCTION --details                  (montre tous les avertissements, pas seulement les 15 premiers)
+    python verif_trad.py ORIGINAL TRANSLATION --glossary termes.json   (ajoute ou remplace des termes {"français": "anglais"} ; ancien nom --glossaire accepté)
+    python verif_trad.py ORIGINAL TRANSLATION --details                  (montre tous les avertissements, pas seulement les 15 premiers)
 
 ERREUR (code de sortie 1) :
   - titres : même suite de niveaux (#, ##, ###...) ;
@@ -130,9 +130,9 @@ def main():
     except Exception:
         pass
     ap = argparse.ArgumentParser(description="Compare un document français et sa traduction anglaise.")
-    ap.add_argument("original")
-    ap.add_argument("traduction")
-    ap.add_argument("--glossaire", help="fichier JSON {\"regex française\": \"regex anglaise\"} ajouté au glossaire intégré")
+    ap.add_argument("original", metavar="ORIGINAL")
+    ap.add_argument("traduction", metavar="TRANSLATION")
+    ap.add_argument("--glossary", "--glossaire", dest="glossaire", metavar="FILE", help="fichier JSON {\"regex française\": \"regex anglaise\"} ajouté au glossaire intégré")
     ap.add_argument("--details", action="store_true", help="tous les avertissements")
     a = ap.parse_args()
     gl = dict(GLOSSAIRE)

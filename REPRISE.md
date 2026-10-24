@@ -1,6 +1,6 @@
 # Reprise du projet Web 3d
 
-*État au 24/10/2026, version v43. À lire après `REGLES.md` (qui est dans les fichiers du Projet, pas dans le dépôt). Ce fichier est mis à jour et commité à la fin de chaque lot. Il ne contient ni adresse IP ni nom d'hôte.*
+*État au 24/10/2026, version v44. À lire après `REGLES.md` (qui est dans les fichiers du Projet, pas dans le dépôt). Ce fichier est mis à jour et commité à la fin de chaque lot. Il ne contient ni adresse IP ni nom d'hôte.*
 
 ## 1. Ce qu'est ce projet
 
@@ -8,7 +8,8 @@ Une région OpenSim (sauvegarde `.oar`) devient une **page web 3D** où l'on se 
 
 ## 2. État du dépôt
 
-- **`main` = v43** (étiquette `v43`, fichier `VERSION` : `v43 (24/10/2026)`). Étiquettes `v14` à `v43`.
+- **`main` = v44** (étiquette `v44`, fichier `VERSION` : `v44 (24/10/2026)`). Étiquettes `v14` à `v44`.
+- **v44** : fin du passage à l'anglais : `gen_reference.py` (`--tools`, `--output`, `--check`), `verif_trad.py` (`--glossary`), anciens noms acceptés ; messages `[update]` ; noms d'exemple de l'aide (`FILE`, `FOLDER`, `SHELL.html`, `NAME`) ; menu Marqueur du viewer « Point (dot) » / « Dot ». `tests/samples.py` (partie 0) cherche les anciens noms dans l'aide, les messages et les documents : un oubli fait échouer le test. Historique complété de la v38 à la v44.
 - **v43** : manuel § 27 « Référence des fichiers JSON » (FR et EN) : chaque fichier JSON, champ par champ (type, défaut, rôle, option) ; le § 16 y renvoie. `docs/samples/` : un exemple valide de chaque fichier (`region.config`, `region.zones` avec 8 zones, `default`, `regions`, `region.tiles`, `region.reglages`, `disposition`, `presence_identities`, `presence_bans`, `chat_history.sample.jsonl`), vérifiés par `tests/samples.py` contre le vrai code. **Tous les noms en anglais** (options, valeurs, clés, adresses), anciens noms toujours acceptés et convertis (fonction `old_options` dans chaque outil, `ZONE_MARKER_OLD`, `PROFILE_OLD` dans `src/gen_tpl.py`, `zmNorm` dans `src/core.js`) ; tableau complet au § 27.11. Correction : `--zone-marker none` (outils en anglais) n'était pas compris par la page. `gen_reference.py` passe `--nopause`.
 - **v42** : rendu léger. Case « Rendu léger » dans Réglages (sous « Haute résolution ») et sous-fenêtre « Réglages fins… » (à gauche de Réglages, cachée quand Réglages se ferme), réglages en direct retenus par le navigateur (clé `glb2html_light_SALON`) : résolution (50 % préconisé), images/s au plus (15), vue d'ensemble seule en vue globale (aucune tuile détaillée hors promenade), rayon des tuiles (80 m), anticrénelage (non, au rechargement) ; bouton « Valeurs préconisées » ; « Valeurs d'origine » remet aussi le rendu léger. Proposition unique quand le rendu est logiciel (`softGpu` dans `src/core.js`). Option `--light` (reprise par `--maj`), lignes dans le viewer. Diagnostic : réglages du rendu léger, images rendues/s sur 5 s et causes du rendu continu. Réglages : 420 px de large au plus, défilement, note de couleur sur deux lignes, section « Disposition des fenêtres » mise en forme (titre en gras, filet), note « En promenade, Échap… » tout en bas (`#optsNote`). Proposition affichée en bas de l'écran, au-dessus des boutons. Manuel § 26, `tests/v42.py`.
 - **v41** : bulles des fenêtres H, I, L et de Réglages ; fenêtres déplaçables par le titre (pile de gauche, pile de droite sous Réglages poussée par Réglages, ou libres), double-clic = retour à la dernière pile, clic de souris sur un titre retardé de 250 ms ; disposition retenue (`glb2html_layout`) et fichier `disposition.json` (Réglages : enregistrer, charger, disposition d'origine). Manuel § 25, `tests/v41.py`.
@@ -83,13 +84,15 @@ Le dossier des outils fabriqués est `dist\` ; le dépôt local est `P:\_OpenSim
 - **Options de fabrication** : `--update` ne ressaisit rien et garde config et zones ; `--default` écrit `default.json` ; `--lib-url` place `lib` ailleurs ; `--zone-info-dist` (150 m par défaut) règle la distance des infobulles et des cônes.
 - **Interface** : jamais d'information portée par la seule couleur.
 - **Noms (v43)** : options, valeurs et clés JSON, paramètres d'adresse et noms d'exemple de l'aide sont **en anglais** ; un nom renommé garde l'ancien en alias (jamais de rupture pour JJ). Les textes visibles restent traduits par `src/i18n`. L'historique (`CHANGELOG.md`, `HISTORIQUE.md`) garde les noms de l'époque.
+- **Contrôle des noms (v44)** : tout nouveau renommage ajoute l'ancien nom à l'expression `ANCIENS` de `tests/samples.py` et au tableau du manuel § 27.11.
+- **Historique** : chaque lot ajoute sa ligne à `docs/fr/HISTORIQUE.md` et `docs/en/HISTORY.md`.
 - **Fichiers JSON (v43)** : tout champ ajouté ou changé dans un fichier JSON se reporte dans le manuel § 27 (FR et EN) et dans l'exemple de `docs/samples/` ; `tests/samples.py` échoue si la config d'exemple n'a pas exactement les clés écrites par `build_cfg`.
 
 ## 6. À faire (dans l'ordre)
 
 0. **Rendu léger chez JJ (v42)** : JJ essaie sous Edge (rendu logiciel) sur la 4X4 ; si le délai des fenêtres reste, lire les lignes « Rendu léger » et « Images rendues par seconde » de « Copier le diagnostic » pour trouver la cause avant tout autre correctif. Idée suivante possible : alléger encore la fenêtre Réglages (autres sous-fenêtres), si JJ le demande.
 1. **Démo publique** (JJ n'est pas prêt : ne pas la lancer sans sa demande) : page statique sans chat d'une petite région (par exemple Ankh Island, 12 Mo) sur GitHub Pages, dans un dépôt séparé ; plus tard, serveur de présence sur un petit VPS avec `wss://` (Caddy et un nom de domaine) : procédure écrite le 24/10/2026 dans `docs/fr/PROCEDURES.md` § 11 et `docs/en/PROCEDURES.md` § 11 (Tailscale Funnel, Caddy, Cloudflare Tunnel), **non testée** : vérifier l'adresse IP vue derrière Funnel, Caddy ou Cloudflare Tunnel (contrôle en 4G décrit au § 11) avant de la tenir pour acquise ; pour Funnel, l'en-tête à donner à `--proxy-header` est inconnu (essayer `X-Forwarded-For`). Idée plus lointaine : présence réécrite en Worker Cloudflare avec Durable Object (aucun serveur à gérer).
-2. **À vérifier chez JJ (v43)** : ses commandes habituelles avec les anciens noms (`--maj`, options de `glb2tiles.py` et `oar2glb.py`) doivent marcher sans changement ; `gen_reference.py` ne doit plus demander « Entrée pour fermer ». Non testé ici : Windows, PowerShell.
+2. **À vérifier chez JJ (v43, v44)** : ses commandes habituelles avec les anciens noms (`--maj`, options de `glb2tiles.py` et `oar2glb.py`) doivent marcher sans changement ; `gen_reference.py` ne doit plus demander « Entrée pour fermer ». Non testé ici : Windows, PowerShell.
 3. **Règles de documentation désormais** : toute modification du manuel, des procédures ou de l'historique se fait dans les deux langues, puis `verif_trad.py` sur le couple modifié (0 erreur exigée) ; chaque entrée de `CHANGELOG.md` en français puis en anglais.
 
 ## 7. Limites connues et pièges

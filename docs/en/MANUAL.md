@@ -1489,6 +1489,8 @@ So that all names are in the same language, v43 put the last French names into E
 | `oar2glb.py` | `--reperes`, `--terrain-seul`, `--sortie` | `--markers`, `--terrain-only`, `--output` |
 | `oar2glb.py` | `--terrain oui`, `--terrain non` | `--terrain yes`, `--terrain no` |
 | `glb-stats.py` | `--bloc`, `--sortie` | `--block`, `--output` |
+| `gen_reference.py` (v44) | `--outils`, `--sortie`, `--verifier` | `--tools`, `--output`, `--check` |
+| `verif_trad.py` (v44) | `--glossaire` | `--glossary` |
 | `NOM.config.json` | `tileMaxMo`, `tileMaxTri` | `tileMaxMB`, `tileMaxTriangles` |
 | `NOM.config.json`, `NOM.reglages.json` | `zoneMarker`: `discret`, `portee`, `aucun` | `dot`, `range`, `none` |
 | `NOM.config.json`, `NOM.reglages.json` | `profile`: `perso` | `private` |
@@ -1496,4 +1498,4 @@ So that all names are in the same language, v43 put the last French names into E
 | address of the page | `?rayon=` | `?radius=` |
 | address of the viewer | `?tuiles=` | `?tiles=` |
 
-Unchanged: `--analyse` (also British English) and the values that are object names, such as `door, porte`. In the tools' help, the example names of the values are also in English (`FILE`, `PATH`, `NAME`, `DEGREES`, `SHELL.html`). The history (`CHANGELOG.md`, `HISTORY.md`) keeps the names of the time.
+The two development tools (`gen_reference.py`, `verif_trad.py`) followed in v44, and the `--update` messages start with `[update]`. Unchanged: `--analyse` (also British English) and the values that are object names, such as `door, porte`. In the tools' help, the example names of the values are also in English (`FILE`, `PATH`, `NAME`, `DEGREES`, `SHELL.html`). The history (`CHANGELOG.md`, `HISTORY.md`) keeps the names of the time.

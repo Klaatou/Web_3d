@@ -1489,6 +1489,8 @@ Pour que tous les noms soient dans la même langue, la v43 a mis en anglais les 
 | `oar2glb.py` | `--reperes`, `--terrain-seul`, `--sortie` | `--markers`, `--terrain-only`, `--output` |
 | `oar2glb.py` | `--terrain oui`, `--terrain non` | `--terrain yes`, `--terrain no` |
 | `glb-stats.py` | `--bloc`, `--sortie` | `--block`, `--output` |
+| `gen_reference.py` (v44) | `--outils`, `--sortie`, `--verifier` | `--tools`, `--output`, `--check` |
+| `verif_trad.py` (v44) | `--glossaire` | `--glossary` |
 | `NOM.config.json` | `tileMaxMo`, `tileMaxTri` | `tileMaxMB`, `tileMaxTriangles` |
 | `NOM.config.json`, `NOM.reglages.json` | `zoneMarker` : `discret`, `portee`, `aucun` | `dot`, `range`, `none` |
 | `NOM.config.json`, `NOM.reglages.json` | `profile` : `perso` | `private` |
@@ -1496,4 +1498,4 @@ Pour que tous les noms soient dans la même langue, la v43 a mis en anglais les 
 | adresse de la page | `?rayon=` | `?radius=` |
 | adresse du viewer | `?tuiles=` | `?tiles=` |
 
-Restent tels quels : `--analyse` (aussi de l'anglais britannique) et les valeurs qui sont des noms d'objets, comme `door, porte`. Dans l'aide des outils, les noms d'exemple des valeurs sont aussi en anglais (`FILE`, `PATH`, `NAME`, `DEGREES`, `SHELL.html`). L'historique (`CHANGELOG.md`, `HISTORIQUE.md`) garde les noms de l'époque.
+Les deux outils de développement (`gen_reference.py`, `verif_trad.py`) ont suivi en v44, et les messages de `--update` commencent par `[update]`. Restent tels quels : `--analyse` (aussi de l'anglais britannique) et les valeurs qui sont des noms d'objets, comme `door, porte`. Dans l'aide des outils, les noms d'exemple des valeurs sont aussi en anglais (`FILE`, `PATH`, `NAME`, `DEGREES`, `SHELL.html`). L'historique (`CHANGELOG.md`, `HISTORIQUE.md`) garde les noms de l'époque.

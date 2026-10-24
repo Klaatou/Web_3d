@@ -15,6 +15,25 @@ FR = json.loads((ROOT / "src" / "i18n" / "fr.json").read_text(encoding="utf-8"))
 avant = lambda cle: FR[cle].split("{")[0]
 lire = lambda nom: json.loads((SAMPLES / nom).read_text(encoding="utf-8"))
 
+print("--- 0. aucun ancien nom (avant v43 / v44) dans l'aide, les messages et les documents")
+import re
+ANCIENS = re.compile(r"(?<![\w-])--(maj|tile-max-mo|tile-max-tri|budget-tri|entier-poids|entier-etendue|seuil|seuil-tri|aberrant|bloc|exclure|exclure-max-tri|"
+                     r"exclure-max-meshes|sans-references|sans-vue-ensemble|vue-ensemble-seule|ov-budget-tri|ov-seuil|ov-seuil-max|ov-terrain-pas|forcer|sortie|reperes|"
+                     r"terrain-seul|outils|verifier|glossaire)(?![\w-])|\btileMaxMo\b|\btileMaxTri\b|\bbudgetMo\b|\bwholeWeightMo\b|\bthresholdMo\b|\?tuiles=|\?rayon=|"
+                     r"--terrain (oui|non)\b|--zone-marker (discret|portee|aucun)\b|--profile perso\b|\[maj\]")
+EXCEPTION = re.compile(r"avant la v4[34]|before v4[34]|ancien|old value|old name|accept")
+trouves = []
+for nom in ("src/i18n/fr.json", "src/i18n/en.json"):
+    for k, v in json.loads((ROOT / nom).read_text(encoding="utf-8")).items():
+        if isinstance(v, str) and ANCIENS.search(v) and not EXCEPTION.search(v):
+            trouves.append(nom + " " + k)
+for nom in ("REFERENCE_OPTIONS.md", "README.md", "README.fr.md", "CLAUDE.md", "docs/fr/MANUEL.md", "docs/en/MANUAL.md", "docs/fr/PROCEDURES.md", "docs/en/PROCEDURES.md"):
+    texte = re.sub(r"### 27\.11.*?(?=\n## |\Z)", "", (ROOT / nom).read_text(encoding="utf-8"), flags=re.S)   # tableau des anciens noms
+    for i, ligne in enumerate(texte.splitlines(), 1):
+        if ANCIENS.search(ligne) and not EXCEPTION.search(ligne):
+            trouves.append(f"{nom} : {ligne[:90]}")
+rapport(not trouves, "aide, messages et documents : seulement les nouveaux noms (anciens cités uniquement comme anciens)", trouves[:10])
+
 print("--- 1. les fichiers se lisent")
 noms = sorted(p.name for p in SAMPLES.iterdir())
 attendus = ["chat_history.sample.jsonl", "default.sample.json", "disposition.sample.json", "presence_bans.sample.json", "presence_identities.sample.json",

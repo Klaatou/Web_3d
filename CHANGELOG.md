@@ -2,6 +2,15 @@
 
 Les dates sont au format jj/mm/aaaa.
 
+## v44 (24/10/2026)
+### 24/10/2026 : derniers noms en anglais, historique complété
+- **Noms en anglais (suite de la v43)** : `gen_reference.py` `--tools`, `--output`, `--check` (anciens `--outils`, `--sortie`, `--verifier` acceptés) ; `verif_trad.py` `--glossary` (ancien `--glossaire` accepté) ; messages de `--update` en français commencent par `[update]` (et non plus `[maj]`) ; noms d'exemple des textes d'aide alignés sur l'aide (`FILE`, `FOLDER`, `SHELL.html`, `NAME`) ; menu du viewer « Point (dot) » et « Portée (range) » en français, « Dot » en anglais ; `CLAUDE.md`, `README.fr.md` et les procédures citaient encore `discret` / `portee` : corrigés. Manuel § 27.11 complété.
+- **Contrôle** : `tests/samples.py` cherche les anciens noms dans les textes d'aide et les messages (`src/i18n`), `REFERENCE_OPTIONS.md`, les README, `CLAUDE.md`, le manuel et les procédures ; un ancien nom n'y est permis que présenté comme ancien.
+- **Historique** : `docs/fr/HISTORIQUE.md` et `docs/en/HISTORY.md` complétés de la v38 à la v44.
+- **English names (continuation of v43)**: `gen_reference.py` `--tools`, `--output`, `--check` (old `--outils`, `--sortie`, `--verifier` accepted); `verif_trad.py` `--glossary` (old `--glossaire` accepted); French `--update` messages start with `[update]` (no longer `[maj]`); example names in the help texts aligned with the help (`FILE`, `FOLDER`, `SHELL.html`, `NAME`); viewer menu "Point (dot)" and "Portée (range)" in French, "Dot" in English; `CLAUDE.md`, `README.fr.md` and the procedures still cited `discret` / `portee`: fixed. Manual § 27.11 completed.
+- **Check**: `tests/samples.py` looks for the old names in the help texts and messages (`src/i18n`), `REFERENCE_OPTIONS.md`, the READMEs, `CLAUDE.md`, the manual and the procedures; an old name is only allowed there when presented as old.
+- **History**: `docs/fr/HISTORIQUE.md` and `docs/en/HISTORY.md` completed from v38 to v44.
+
 ## v43 (24/10/2026)
 ### 24/10/2026 : référence des fichiers JSON, fichiers d'exemple, noms en anglais
 - **Fichiers JSON** : manuel § 27 « Référence des fichiers JSON » (français et anglais) : chaque fichier (`NOM.config.json`, `NOM.zones.json`, `default.json`, `regions.json`, `NOM.tiles.json`, `NOM.reglages.json`, `disposition.json`, `presence_identities.json`, `presence_bans.json`, historique du chat), chaque champ avec son type, sa valeur par défaut, son rôle et l'option qui le règle ; le § 16 y renvoie. Dossier `docs/samples/` : un exemple complet et valide de chaque fichier (zones : deux arrivées, portail dans la région, portail vers une autre région, lien, commande privée, zone liée à un objet, nom affiché). `tests/samples.py` vérifie que chaque exemple est accepté par le vrai code (outils, page, viewer, serveur de présence).

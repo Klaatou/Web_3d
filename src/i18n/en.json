@@ -1188,7 +1188,7 @@
  "viewer.zf.y": "Position Y",
  "viewer.zf.yaw": "Heading (degrees)",
  "viewer.zf.z": "Position Z",
- "viewer.zm.discret": "Discreet: 0.4 m disc and thin ring (default)",
+ "viewer.zm.discret": "Dot: 0.4 m disc and thin ring (default)",
  "viewer.zm.label": "Marker of portals and free zones in the exported page (--zone-marker)",
  "viewer.zm.none": "No marker",
  "viewer.zm.portee": "Range: thin sharp ring at the real radius of the zone, visible from afar",
