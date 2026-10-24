@@ -4,7 +4,7 @@
 Lit uniquement l'en-tête JSON du fichier (jamais les données binaires ni les textures) : quelques secondes
 et très peu de mémoire, même pour un GLB de plusieurs Go.
 
-Usage : python glb-stats.py "Region.glb" [--bloc 256] [--sortie rapport.txt]
+Usage : python glb-stats.py "Region.glb" [--block 256] [--output rapport.txt]
 
 Donne : poids par catégorie, instances de meshes, étendue de la région, objets plus grands qu'un bloc,
 et la répartition par blocs carrés (nœuds, triangles, Mo de textures, Mo de géométrie) pour juger d'un
@@ -276,8 +276,8 @@ def main():
     ap = argparse.ArgumentParser(description=_tr("py.stats.desc"), add_help=False)
     i18n_add_common(ap)
     ap.add_argument("glb", help=_tr("py.stats.help.glb"))
-    ap.add_argument("--bloc", type=float, default=256.0, help=_tr("py.stats.cote_des_blocs_en_metres_defaut"))
-    ap.add_argument("--sortie", help=_tr("py.stats.ecrit_aussi_le_rapport_dans_ce"))
+    ap.add_argument("--block", metavar="BLOCK", dest="bloc", type=float, default=256.0, help=_tr("py.stats.cote_des_blocs_en_metres_defaut"))
+    ap.add_argument("--output", metavar="OUTPUT", dest="sortie", help=_tr("py.stats.ecrit_aussi_le_rapport_dans_ce"))
     a = ap.parse_args()
     try:
         sys.stdout.reconfigure(encoding="utf-8")
@@ -290,5 +290,19 @@ def main():
             f.write(texte + "\n")
 
 
+# v43 : anciens noms d'options (avant la v43), toujours acceptés
+OLD_OPTIONS = {"--bloc": "--block", "--sortie": "--output"}
+
+
+def old_options(argv):
+    """Remplace les anciens noms d'options par les nouveaux (« --nom=valeur » compris)."""
+    out = []
+    for x in argv:
+        k, eq, v = str(x).partition("=")
+        out.append(OLD_OPTIONS.get(k, k) + eq + v if k.startswith("--") else x)
+    return out
+
+
 if __name__ == "__main__":
+    sys.argv = old_options(sys.argv)
     main()

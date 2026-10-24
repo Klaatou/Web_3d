@@ -533,7 +533,7 @@ rapport("Box trente triangles - RAKis Freebies" in noms, "objet de même nom ave
 rapport({"Maison simple", "Autre Box - FOURNISSEUR Gratuit"} <= noms, "les autres objets ne changent pas")
 rapport(tri == tri_orig - 24, "somme des triangles des tuiles = GLB d'origine moins les exclus", (tri, tri_orig - 24))
 rapport(doc["excluded"]["count"] == 2 and doc["excluded"]["triangles"] == 24 and doc["excluded"]["bytesSaved"] > 0 and "excluded" in doc, "tiles.json : décompte, triangles et octets gagnés", doc.get("excluded"))
-rapport("Objets exclus (--exclure" in txt and ": 2 |" in txt and "RAKis Freebies 2019" in txt and "2 objet(s) au nom correspondant conservé(s)" in txt, "rapport final : décompte, noms, garde-fous", txt[-700:])
+rapport("Objets exclus (--exclude" in txt and ": 2 |" in txt and "RAKis Freebies 2019" in txt and "2 objet(s) au nom correspondant conservé(s)" in txt, "rapport final : décompte, noms, garde-fous", txt[-700:])
 # le poids des exclus n'entre pas dans les calculs : tuiles et poids du plan
 glb = T.Glb(d / "exclure.glb")
 try:
@@ -555,7 +555,7 @@ r, txt = tout(["--analyse", "--exclure", "(freebies"], d / "exclure.glb")
 rapport(isinstance(r, T.ErreurGlb) and "Expression régulière invalide" in str(r) and "(freebies" in str(r), "expression invalide : message clair", r)
 # --analyse : décompte des exclus
 r, txt = tout(["--analyse", "--exclure", "freebies", "--exclure", "fournisseur"], d / "exclure.glb")
-rapport(r == 0 and "Objets exclus (--exclure" in txt and "3 | triangles retirés : 36" in txt and "octets gagnés" in txt and "1 x « City Stores - Box - RAKis Freebies 2019 »" in txt, "--analyse : nombre d'exclus, récapitulatif par nom, octets gagnés", txt[-900:])
+rapport(r == 0 and "Objets exclus (--exclude" in txt and "3 | triangles retirés : 36" in txt and "octets gagnés" in txt and "1 x « City Stores - Box - RAKis Freebies 2019 »" in txt, "--analyse : nombre d'exclus, récapitulatif par nom, octets gagnés", txt[-900:])
 r, txt = tout(["--analyse"], d / "exclure.glb")
 rapport(r == 0 and "Objets exclus" not in txt, "sans --exclure : aucune ligne d'exclusion")
 # géométrie des exclus partagée avec un objet conservé (même cube commun) : 0 octet gagné, expliqué, octets partagés comptés

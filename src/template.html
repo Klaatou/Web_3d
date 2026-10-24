@@ -265,7 +265,7 @@ if ((C.zones || []).length || C.zonesLive) {
   if (C.zonesLive && /^https?:$/.test(location.protocol)) {
     liveReady = fetch(new URL(C.zonesLive, location.href).href, { cache: 'no-store' })
       .then(r => r.ok ? r.json() : Promise.reject(new Error('http ' + r.status)))
-      .then(list => { if (!Array.isArray(list)) throw new Error('format'); ZS = viewer.setZones(list.filter(z => z && (C.profile === 'perso' || !z.private)), { editor: false }); })
+      .then(list => { if (!Array.isArray(list)) throw new Error('format'); ZS = viewer.setZones(list.filter(z => z && (C.profile === 'private' || C.profile === 'perso' || !z.private)), { editor: false }); })
       .catch(() => {});
   }
   const okUrl = u => { try { const x = new URL(u, location.href); return (x.protocol === 'http:' || x.protocol === 'https:' || (location.protocol === 'file:' && x.protocol === 'file:')) ? x : null; } catch (e) { return null; } };

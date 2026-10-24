@@ -482,7 +482,7 @@ async def test_viewer(br, pages):
     # zones importées, profil perso
     zi = [{"id": "z1", "type": "url", "label": "Boîte", "target": "http://127.0.0.1/x", "radius": 3}]
     (tmp / "zv.json").write_text(json.dumps(zi), encoding="utf-8")
-    await pg.select_option("#profileSel", "perso")
+    await pg.select_option("#profileSel", "private")
     await pg.set_input_files("#fZones", str(tmp / "zv.json"))
     await pg.wait_for_timeout(300)
 
@@ -521,7 +521,7 @@ async def test_viewer(br, pages):
     pa.on("pageerror", lambda e: ea.append(str(e)))
     await pa.goto(auto.as_uri())
     await pa.wait_for_function("document.getElementById('msg') === null", timeout=30000)
-    rapport(await pa.evaluate("document.getElementById('msg') === null") and not ea and dl.suggested_filename.endswith("Offline perso.html"), "export HTML autonome : s'ouvre depuis le disque, sans erreur", (ea, dl.suggested_filename))
+    rapport(await pa.evaluate("document.getElementById('msg') === null") and not ea and dl.suggested_filename.endswith("Offline private.html"), "export HTML autonome : s'ouvre depuis le disque, sans erreur", (ea, dl.suggested_filename))
     rapport("<script type=\"application/octet-stream\" id=\"glb\">" in auto.read_text(encoding="utf-8") and "lib/three" not in auto.read_text(encoding="utf-8"), "export HTML autonome : toujours un fichier unique (glb et three.js intégrés)")
 
     # export modulaire
@@ -582,7 +582,7 @@ async def test_liaison(br):
     await pg.set_input_files("#fGlb", str(tmp / "decale.glb"))
     await pg.wait_for_function("!document.getElementById('bZip').disabled", timeout=20000)
     await pg.wait_for_timeout(800)
-    await pg.select_option("#profileSel", "perso")
+    await pg.select_option("#profileSel", "private")
     await pg.set_input_files("#fZones", str(tmp / "zv.json"))
     await pg.wait_for_timeout(300)
     proj = """(([nom, f]) => { const v = window.__viewer, i = v.meshInfo(nom); const P = v.camera.position.constructor;

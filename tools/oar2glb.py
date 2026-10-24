@@ -3,7 +3,7 @@
 oar2glb.py - OAR OpenSim -> GLB unique (convoar + réparation + empaquetage)
 
 Usage :  python oar2glb.py --version
-         python oar2glb.py "P:\\chemin\\MaRegion.oar" [--reencode] [--max 600] [--convoar chemin\\convoar.exe] [--keep] [--keep-invisible] [--reperes]
+         python oar2glb.py "P:\\chemin\\MaRegion.oar" [--reencode] [--max 600] [--convoar chemin\\convoar.exe] [--keep] [--keep-invisible] [--markers]
          python oar2glb.py "P:\\chemin\\MaRegion.oar" --diag [--glb MaRegion.glb]     (ne modifie rien, ne lance pas convoar)
 
 Étapes :
@@ -1067,7 +1067,7 @@ def report_buried(g):
 
 
 def add_beacons(g, ebuf):
-    # option --reperes : un mât rouge de 15 m à chaque animal posé, pour le retrouver dans le viewer
+    # option --markers : un mât rouge de 15 m à chaque animal posé, pour le retrouver dans le viewer
     g.setdefault("materials", []).append({"name": "repere", "pbrMetallicRoughness": {"baseColorFactor": [1, 0, 0, 1], "metallicFactor": 0},
                                           "emissiveFactor": [1, 0, 0], "doubleSided": True})
     mat = len(g["materials"]) - 1
@@ -1397,7 +1397,7 @@ def pack_glb(g, base, out):
 TERRAIN_PATCH = 64            # côté d'un patch en mètres (--terrain-patch)
 TERRAIN_COUVERT_MIN = 0.95    # le terrain de convoar est gardé s'il couvre au moins cette part de la carte
 EAU_DEFAUT = 20.0             # WaterHeight par défaut d'OpenSim
-LECTURE = 8 * 1024 * 1024     # taille des lectures du GLB en mode --terrain-seul
+LECTURE = 8 * 1024 * 1024     # taille des lectures du GLB en mode --terrain-only
 PENTE_ROCHE = (32.0, 38.0)    # degrés : la roche apparaît à 32, pleine à 38 (environ 35)
 # palette (rouge, vert, bleu) : documentée dans docs/fr/MANUEL.md § 15
 SABLE_SEC, SABLE_HUMIDE = (214, 196, 142), (166, 150, 104)
@@ -1526,7 +1526,7 @@ def terrain_decision(g, terrain, mode):
         return _tr("py.oar2glb.rien"), [], _tr("py.oar2glb.les_patches_de_terrain_sont_deja")
     tree = Tree(g)
     anciens = [i for i, x in enumerate(g.get("nodes", [])) if x.get("name") == "Terrain" and "mesh" in x]
-    if mode == "oui":
+    if mode == "yes":
         return "ajouter", anciens, _tr("py.oar2glb.force_terrain_oui")
     if not anciens:
         return _tr("py.oar2glb.rien"), [], _tr("py.oar2glb.pas_de_nud_terrain_de_convoar")
@@ -1556,7 +1556,7 @@ def terrain_resume(terrain, scan, P, td, t0):
 
 def terrain_prepare(scan, mode):
     # contrôles communs ; retourne la carte ou None (message déjà écrit)
-    if mode == "non":
+    if mode == "no":
         print(_tr("py.oar2glb.terrain_desactive_terrain_non"))
         return None
     t = scan.get("terrain")
@@ -1678,15 +1678,15 @@ def main():
     ap.add_argument("--convoar", default=shutil.which("convoar") or DEFAULT_CONVOAR, help=_tr("py.oar2glb.help.convoar"))
     ap.add_argument("--keep", action="store_true", help=_tr("py.oar2glb.garder_les_fichiers_intermediaires"))
     ap.add_argument("--keep-invisible", action="store_true", help=_tr("py.oar2glb.garder_les_prims_entierement_transparents_re"))
-    ap.add_argument("--reperes", action="store_true", help=_tr("py.oar2glb.ajouter_un_mat_rouge_de_15"))
+    ap.add_argument("--markers", dest="reperes", action="store_true", help=_tr("py.oar2glb.ajouter_un_mat_rouge_de_15"))
     ap.add_argument("--diag", action="store_true", help=_tr("py.oar2glb.ne_rien_modifier_lister_les_objets"))
     ap.add_argument("--glb", help=_tr("py.oar2glb.avec_diag_glb_ou_gltf_a"))
     ap.add_argument("--nopause", action="store_true", help=_tr("py.oar2glb.ne_pas_attendre_entree_a_la"))
-    ap.add_argument("--terrain", choices=("auto", "oui", "non"), default="auto",
+    ap.add_argument("--terrain", type=lambda v: {"oui": "yes", "non": "no"}.get(v, v), choices=("auto", "yes", "no"), default="auto",
                     help=_tr("py.oar2glb.terrain_complet_depuis_la_carte_de"))
     ap.add_argument("--terrain-patch", type=int, default=TERRAIN_PATCH, help=_tr("py.oar2glb.cote_d_un_patch_de_terrain", TERRAIN_PATCH))
-    ap.add_argument("--terrain-seul", metavar="GLB", help=_tr("py.oar2glb.ne_pas_lancer_convoar_ajouter_le"))
-    ap.add_argument("--sortie", help=_tr("py.oar2glb.avec_terrain_seul_fichier_glb_de"))
+    ap.add_argument("--terrain-only", dest="terrain_seul", metavar="GLB", help=_tr("py.oar2glb.ne_pas_lancer_convoar_ajouter_le"))
+    ap.add_argument("--output", metavar="OUTPUT", dest="sortie", help=_tr("py.oar2glb.avec_terrain_seul_fichier_glb_de"))
     a = ap.parse_args()
     if not 2 <= a.terrain_patch <= 255:
         sys.exit(_tr("py.oar2glb.erreur_terrain_patch_doit_etre_compris"))
@@ -1778,7 +1778,21 @@ class Tee:
             t.flush()
 
 
+# v43 : anciens noms d'options (avant la v43), toujours acceptés : remplacés avant la lecture de la ligne de commande
+OLD_OPTIONS = {"--reperes": "--markers", "--terrain-seul": "--terrain-only", "--sortie": "--output"}
+
+
+def old_options(argv):
+    """Remplace les anciens noms d'options par les nouveaux (« --nom=valeur » compris)."""
+    out = []
+    for x in argv:
+        k, eq, v = str(x).partition("=")
+        out.append(OLD_OPTIONS.get(k, k) + eq + v if k.startswith("--") else x)
+    return out
+
+
 if __name__ == "__main__":
+    sys.argv = old_options(sys.argv)
     if "--version" in sys.argv[1:]:      # ni journal ni pause « Entrée »
         print(_tr("py.oar2glb.oar2glb_0_2", VERSION))
         sys.exit(0)
@@ -1798,6 +1812,6 @@ if __name__ == "__main__":
         traceback.print_exc()
         code = 1
     print(_tr("py.oar2glb.log_0", log))
-    if "--nopause" not in sys.argv and "--terrain-seul" not in sys.argv and sys.stdin and sys.stdin.isatty():
+    if "--nopause" not in sys.argv and "--terrain-only" not in sys.argv and sys.stdin and sys.stdin.isatty():
         input(_tr("py.oar2glb.entree_pour_fermer"))
     sys.exit(code)

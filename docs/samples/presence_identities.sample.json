@@ -1,0 +1,21 @@
+{
+ "salt": "3f9a1c7e5b2d8a40",
+ "names": {
+  "jj": "d446321cd1db9b8f032d3aa3878506804a78fd476960f013c7de6488057c6c4e",
+  "alice": "5078f3284c3badf7f1be1b12a129d4ead6c1450ee720b0b2a8a278f0512dcded"
+ },
+ "users": {
+  "d446321cd1db9b8f032d3aa3878506804a78fd476960f013c7de6488057c6c4e": {
+   "name": "JJ",
+   "key": "jj",
+   "first": 1790838000.0,
+   "last": 1792836000.0
+  },
+  "5078f3284c3badf7f1be1b12a129d4ead6c1450ee720b0b2a8a278f0512dcded": {
+   "name": "Alice",
+   "key": "alice",
+   "first": 1789488000.0,
+   "last": 1792835400.0
+  }
+ }
+}

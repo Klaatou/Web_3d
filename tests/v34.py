@@ -525,7 +525,7 @@ cfg4 = json.loads(cfgp.read_text(encoding="utf-8"))
 rapport(cfg4["presenceUrl"] == "ws://ADRESSE:10" and cfg4["room"] == "autre" and cfg4["spectate"] is True and cfg4["hole"] == 99.0, "--maj --presence-url / --room : appliqués")
 # sans config : échec avec la commande sans --maj
 r = html("--maj", "-o", mj / "Inconnue.html", "--shared-shell", "--tiles", src / "Syn.tiles.json", ok=False)
-rapport(r.returncode != 0 and "sans --maj" in r.stderr and "--tiles" in r.stderr and not (mj / "Inconnue.config.json").exists(), "sans X.config.json : échec, message qui propose la commande sans --maj", r.stderr)
+rapport(r.returncode != 0 and "sans --update" in r.stderr and "--tiles" in r.stderr and not (mj / "Inconnue.config.json").exists(), "sans X.config.json : échec, message qui propose la commande sans --update", r.stderr)
 r = html("--maj", ok=False)
 rapport(r.returncode != 0 and "-o" in r.stderr, "--maj sans -o : refusé", r.stderr)
 r = html("--maj", "--settings", "x.json", "-o", mj / "Syn.html", ok=False)

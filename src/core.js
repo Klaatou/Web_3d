@@ -318,8 +318,12 @@ function disposeObject(root) {
   });
 }
 
+// v43 : valeurs du repère des zones en anglais (dot, range, none) ; les anciennes (discret, portee, aucun) restent lues
+const ZM_OLD = { discret: 'dot', portee: 'range', aucun: 'none' };
+const zmNorm = v => ZM_OLD[v] || v;
 function createViewer(container, cfg0, loader) {
   const cfg = Object.assign({}, cfg0);
+  if (cfg.zoneMarker) cfg.zoneMarker = zmNorm(cfg.zoneMarker);
   let onMouse = null, onView = null, onFly = null, onCfg = null, onWalk = null, onPick = null, onPresence = null, onChat = null, onHistory = null, onBlink = null, onBlinkEnd = null, onPeer = null, onName = null, spectateOn = false, pickOrbit = false, walking = false, linkLock = false;
   const W = { pos: new THREE.Vector3(), spawn: new THREE.Vector3(), vy: 0, grounded: true, yaw: 0, pitch: 0, keys: new Set(), jumpReq: false, drag: false, mouseFree: false, saved: null, grid: null,
     fly: false, flyFloor: undefined, view: 'fps', cam: new THREE.Vector3(), cyaw: 0, cpitch: 0,
@@ -504,7 +508,7 @@ function createViewer(container, cfg0, loader) {
   const TILE_M = 0.5;   // tolérance (m) des tests « le point est dans la boîte de la tuile »
   const safeRel = p => typeof p === 'string' && p !== '' && p.length < 400 && !/^[\/\\]/.test(p) && !/[\\:?#\u0000-\u001f]/.test(p) && !p.split('/').some(s => s === '' || s === '..');
   const relUrl = (p, base) => new URL(p.split('/').map(encodeURIComponent).join('/'), base);
-  // source des fichiers d'une région en tuiles : http relatif à la page (coquille, viewer avec ?tuiles=) ; le viewer en fournit une autre pour un dossier choisi
+  // source des fichiers d'une région en tuiles : http relatif à la page (coquille, viewer avec ?tiles=) ; le viewer en fournit une autre pour un dossier choisi
   const urlSource = () => ({
     async json(rel) { const r = await fetch(relUrl(rel, location.href).href, { cache: 'no-store' }); if (!r.ok) throw new Error(rel + ' : HTTP ' + r.status); return r.json(); },
     async buf(rel, signal) { const r = await fetch(relUrl(rel, location.href).href, signal ? { signal } : {}); if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); }
@@ -791,7 +795,7 @@ function createViewer(container, cfg0, loader) {
     }
   }
   // charge X.tiles.json puis les tuiles autour du point de départ ; rend la main quand les tuiles qui contiennent ce point sont prêtes
-  // (ou en échec). opts : spawn (id d'arrivée du lien, sinon « default »), radius (?rayon=)
+  // (ou en échec). opts : spawn (id d'arrivée du lien, sinon « default »), radius (?radius=)
   async function loadTiles(rel, opts) {
     opts = opts || {};
     if (opts.force) {
@@ -801,7 +805,7 @@ function createViewer(container, cfg0, loader) {
     }   // le viewer ouvre une région en tuiles sans champ « tiles » dans une configuration
     if (!TL.on) throw new Error(tr('core.tile.off'));
     if (!safeRel(rel)) throw new Error(tr('core.tile.badpath', rel));
-    // source des fichiers : adresses http relatives à la page (coquille, ou viewer avec ?tuiles=), ou fichiers choisis dans un dossier (viewer)
+    // source des fichiers : adresses http relatives à la page (coquille, ou viewer avec ?tiles=), ou fichiers choisis dans un dossier (viewer)
     TL.src = opts.source || urlSource();
     const doc = await TL.src.json(rel);
     if (!doc || !Array.isArray(doc.tiles)) throw new Error(tr('core.tile.badformat', rel));
@@ -810,8 +814,8 @@ function createViewer(container, cfg0, loader) {
     const num = (v, d, lo, hi) => { v = Number(v); return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d; };
     TL.radius = num(opts.radius, num(cfg.tileRadius, 150, 10, 5000), 10, 5000);
     TL.margin = num(cfg.tileMargin, 60, 0, 5000);
-    TL.maxBytes = num(cfg.tileMaxMo, 200, 1, 1e5) * 1048576;
-    TL.maxTri = num(cfg.tileMaxTri, 8e6, 1e3, 1e9);
+    TL.maxBytes = num(cfg.tileMaxMB !== undefined ? cfg.tileMaxMB : cfg.tileMaxMo, 200, 1, 1e5) * 1048576;
+    TL.maxTri = num(cfg.tileMaxTriangles !== undefined ? cfg.tileMaxTriangles : cfg.tileMaxTri, 8e6, 1e3, 1e9);
     TL.conc = Math.round(num(cfg.tileConcurrency, 4, 1, 16));
     modelRot = rotDeg();
     const root = new THREE.Group(); root.name = 'tiles';
@@ -885,6 +889,7 @@ function createViewer(container, cfg0, loader) {
 
   function setCfg(p) {
     Object.assign(cfg, p);
+    if ('zoneMarker' in p) cfg.zoneMarker = zmNorm(cfg.zoneMarker);
     if ('skyColor' in p) { scene.background.set(cfg.skyColor); scene.fog.color.set(cfg.skyColor); hemi.color.set(cfg.skyColor); }
     if ('retina' in p || 'pixelScale' in p) resize();
     // v42 : rayon des tuiles et vue d'ensemble seule, pris en compte au prochain tour de choix des tuiles (250 ms au plus)
@@ -1868,15 +1873,15 @@ function createViewer(container, cfg0, loader) {
         plane.position.y = 0.9 + z.h / 2; g.add(plane); main = plane; zoneLabs.push(plane);
         const post = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.92, 0.1), new THREE.MeshStandardMaterial({ color: 0x333333 })); post.position.y = 0.46; g.add(post); zoneLabs.push(post);
       } else {
-        // page exportée, selon cfg.zoneMarker : « discret » (défaut) disque plat 0,4 m + anneau fin ; « portee » anneau fin et net au rayon réel de la zone
-        // (visible de loin, sans cylindre) ; « aucun » rien. La zone de visée plus large et invisible reste dans les trois cas.
-        const mkind = cfg.zoneMarker === 'portee' || cfg.zoneMarker === 'aucun' ? cfg.zoneMarker : 'discret';
-        if (mkind === 'discret') {
+        // page exportée, selon cfg.zoneMarker : « dot » (défaut) disque plat 0,4 m + anneau fin ; « range » anneau fin et net au rayon réel de la zone
+        // (visible de loin, sans cylindre) ; « none » rien. La zone de visée plus large et invisible reste dans les trois cas.
+        const mkind = cfg.zoneMarker === 'range' || cfg.zoneMarker === 'none' ? cfg.zoneMarker : 'dot';
+        if (mkind === 'dot') {
           const mat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: MARK_OP, side: THREE.DoubleSide, depthWrite: false, fog: false });
           const disc = new THREE.Mesh(new THREE.CircleGeometry(0.2, 32), mat); disc.rotation.x = -Math.PI / 2; disc.position.y = 0.04; disc.userData.marker = 'disc'; g.add(disc);
           const ring = new THREE.Mesh(new THREE.RingGeometry(0.2, 0.26, 32), mat.clone()); ring.material.color.set(0xffffff); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.045; ring.userData.marker = 'ring'; g.add(ring);
           markerMat.set(z.id, [mat, ring.material]);
-        } else if (mkind === 'portee') {
+        } else if (mkind === 'range') {
           const rad = z.shape === 'board' ? Math.max(z.radius, 2) : z.radius;
           const rb = new THREE.Mesh(new THREE.RingGeometry(Math.max(0.02, rad - 0.1), rad, 96), new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide, fog: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
           rb.rotation.x = -Math.PI / 2; rb.position.y = 0.05; rb.userData.marker = 'range'; rb.userData.radius = rad; g.add(rb);
@@ -1886,8 +1891,8 @@ function createViewer(container, cfg0, loader) {
           const ln = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0x000000, fog: false })); ln.userData.marker = 'range'; g.add(ln);   // trait d'un pixel : reste visible de très loin
         }
         if (clickable) {
-          // v34 : zone de survol et de clic = l'anneau visible avec « portee » (rayon réel de la zone) ; avec « discret » un peu plus large qu'avant (0,6 m au moins, 1 m au plus)
-          const hr = mkind === 'portee' ? (z.shape === 'board' ? Math.max(z.radius, 2) : z.radius) : (mkind === 'discret' ? Math.max(0.6, Math.min(z.radius, 1)) : 0.6);
+          // v34 : zone de survol et de clic = l'anneau visible avec « range » (rayon réel de la zone) ; avec « dot » un peu plus large qu'avant (0,6 m au moins, 1 m au plus)
+          const hr = mkind === 'range' ? (z.shape === 'board' ? Math.max(z.radius, 2) : z.radius) : (mkind === 'dot' ? Math.max(0.6, Math.min(z.radius, 1)) : 0.6);
           const hit = new THREE.Mesh(new THREE.CircleGeometry(hr, hr > 1 ? 48 : 16), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide })); hit.visible = false;
           hit.rotation.x = -Math.PI / 2; hit.position.y = 0.06; g.add(hit); main = hit;
         }

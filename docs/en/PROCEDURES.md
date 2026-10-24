@@ -2,7 +2,7 @@
 
 *Written on 23/10/2026 for version v36. The commands are for PowerShell, on a single line, with the paths of your machine. The full list of options is in `REFERENCE_OPTIONS.md`; zones, keys and settings are described in detail in `MANUAL.md`.*
 
-**What was tried here:** the `glb2html` and `glb2tiles` commands (including `--maj`, `--register`, `--map-page`) on test regions, as a single GLB and as tiles. **What was not:** converting an OAR with convoar (convoar is not available in the sandbox), and the PowerShell commands themselves (tried under Linux with equivalent paths).
+**What was tried here:** the `glb2html` and `glb2tiles` commands (including `--update`, `--register`, `--map-page`) on test regions, as a single GLB and as tiles. **What was not:** converting an OAR with convoar (convoar is not available in the sandbox), and the PowerShell commands themselves (tried under Linux with equivalent paths).
 
 **The three reference folders**
 
@@ -12,7 +12,7 @@
 | Source OAR and GLB | `J:\Download\Com\Chat\_Monde virtuel en ligne_\_OpenSim_\_Contenu_\OAR` |
 | Regions published as tiles | `P:\_OpenSim\SL&OS\Web_3d\tuiles` |
 
-**Golden rule:** always run the tools from the tools folder (`cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"`). Give **full paths** for every file written, except with `--maj` (relative paths are then relative to the page's folder).
+**Golden rule:** always run the tools from the tools folder (`cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"`). Give **full paths** for every file written, except with `--update` (relative paths are then relative to the page's folder).
 
 ---
 
@@ -39,8 +39,8 @@ The case of the 4X4: a 1.2 GB GLB does not fit in one piece in the browser. Tile
 1. **Convert the OAR** as in 1.1. It can take several hours and several tens of GB of memory (4 h 20 and 45 GB for the 4X4). If convoar crashes while reading the JPEG 2000 textures, run it again with `--reencode` (see `MANUAL.md` § 15: only as a last resort).
 2. **Analyse** (read-only):
    `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python glb2tiles.py "J:\...\OAR\X.glb" --analyse`
-3. **Split.** `--sortie` is the folder where `X.tiles\`, `X.tiles.json` and `X.overview.glb` are written. `--exclure` removes from the split the objects whose name matches (safeguards: at most 24 triangles and 1 mesh), for example the delivery boxes of catalogues.
-   `python glb2tiles.py "J:\...\OAR\X.glb" --sortie "P:\_OpenSim\SL&OS\Web_3d\tuiles" --exclure "RAKis Freebies"`
+3. **Split.** `--output` is the folder where `X.tiles\`, `X.tiles.json` and `X.overview.glb` are written. `--exclude` removes from the split the objects whose name matches (safeguards: at most 24 triangles and 1 mesh), for example the delivery boxes of catalogues.
+   `python glb2tiles.py "J:\...\OAR\X.glb" --output "P:\_OpenSim\SL&OS\Web_3d\tuiles" --exclude "RAKis Freebies"`
 4. **Build the page.** Replace `ADRESSE` with your public address and `--target` with an open spot (coordinates read in the viewer), or place an arrival named `default` and remove `--target`.
    `python glb2html.py --shared-shell -o "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.html" --tiles "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.tiles.json" --sea-y 18.5 --presence-url "ws://ADRESSE:8765" --chat --target 392,68,-373`
 5. **Serve and open**:
@@ -54,10 +54,10 @@ To link a zone to an object of the tiled region, the tiles must have been split 
 
 **One value: edit the config file and reload.** The page reads `X.config.json` again at each opening, without cache.
 `notepad "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.config.json"`
-Useful keys: `seaY` (sea level, in m), `target` (`[x, y, z]`), `presenceUrl`, `chat` (`true` or `false`), `zoneInfoDist`, `tileRadius`, `tileMaxMo`, `tileMaxTri`. The JSON is strict: keep the commas and the quotes. **Colours are stored there as decimal numbers** (`seaColor` 3840729 is `3a9ad9`): to change them, use `--maj` instead.
+Useful keys: `seaY` (sea level, in m), `target` (`[x, y, z]`), `presenceUrl`, `chat` (`true` or `false`), `zoneInfoDist`, `tileRadius`, `tileMaxMB`, `tileMaxTriangles`. The JSON is strict: keep the commas and the quotes. **Colours are stored there as decimal numbers** (`seaColor` 3840729 is `3a9ad9`): to change them, use `--update` instead.
 
-**Several values, or a colour: `--maj`.** It applies only the options you write, and keeps the rest of the config and the zone file.
-`cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python glb2html.py --maj --shared-shell -o "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.html" --sea-y 10`
+**Several values, or a colour: `--update`.** It applies only the options you write, and keeps the rest of the config and the zone file.
+`cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python glb2html.py --update --shared-shell -o "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.html" --sea-y 10`
 
 **Never run the full build command again (procedure 2.4) to change a detail**: it rewrites the whole config from the options on the line alone, and erases what you had set by hand.
 
@@ -65,8 +65,8 @@ Useful keys: `seaY` (sea level, in m), `target` (`[x, y, z]`), `presenceUrl`, `c
 
 1. Merge the session's branch, build, push, tag (the session gives the exact line):
    `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d"; git checkout main; git pull; git fetch; git merge origin/NOM -m "Fusion vNN"; python build.py; git push; git tag vNN HASH; git push origin vNN`
-2. Update each region with `--maj`. The `index.html` shell is renewed if it is older (the old one is kept under a dated name); the config and the zones are kept.
-   `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python glb2html.py --maj --shared-shell -o "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.html"`
+2. Update each region with `--update`. The `index.html` shell is renewed if it is older (the old one is kept under a dated name); the config and the zones are kept.
+   `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python glb2html.py --update --shared-shell -o "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.html"`
 3. Reload the page with Ctrl+F5. The bottom line of the help panel gives the version displayed (for example "glb2html v36"): if it is old, the update did not happen.
 4. Restart the presence server: **yes for v36** (its messages and its help are translated; an old copy keeps working but stays in French). Procedure 6.
 5. The tile split only needs to be redone if the session says so, for example for new information in the tiles.
@@ -79,7 +79,7 @@ Useful keys: `seaY` (sea level, in m), `target` (`[x, y, z]`), `presenceUrl`, `c
 | Arrival used when the page is opened without a link | an arrival named `default` (§ 4); an explicit `--target` keeps the framing |
 | Portal to another region | `MANUAL.md` § 6 |
 | Zone linked to an object of the model | `MANUAL.md` § 9 (as tiles: § 17 ter) |
-| Private zone (visible only with the "perso" profile) | `MANUAL.md` § 10 |
+| Private zone (visible only with the "private" profile) | `MANUAL.md` § 10 |
 
 The zones of a tiled region are written in the model's original frame (no recentring). The viewer in tiles mode produces these coordinates directly; do not copy by hand coordinates from another GLB.
 
@@ -98,13 +98,13 @@ IP addresses and chat messages are personal data: inform your visitors and limit
 
 ## 7. World map
 
-Two steps, with `--maj` (relative paths are then relative to the page's folder).
+Two steps, with `--update` (relative paths are then relative to the page's folder).
 
 1. **Register each region** in `regions.json`:
-   `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python glb2html.py --maj -o "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.html" --shared-shell --register "P:\_OpenSim\SL&OS\Web_3d\tuiles\regions.json" --region-name "Display name"`
+   `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python glb2html.py --update -o "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.html" --shared-shell --register "P:\_OpenSim\SL&OS\Web_3d\tuiles\regions.json" --region-name "Display name"`
    For another region, same command with its page and its name (`--region-xy x,y` gives its place on the map).
 2. **Generate the map page** (after each registration):
-   `python glb2html.py --maj -o "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.html" --shared-shell --map-page "P:\_OpenSim\SL&OS\Web_3d\tuiles\carte.html"`
+   `python glb2html.py --update -o "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.html" --shared-shell --map-page "P:\_OpenSim\SL&OS\Web_3d\tuiles\carte.html"`
 3. Open `carte.html` through the web server. A "My nickname" field at the top adds `name=` to the region links.
 
 With a single region, the map brings nothing: it is used to link several regions together.
@@ -113,13 +113,13 @@ With a single region, the map brings nothing: it is used to link several regions
 
 | What changed | What to do | Page reload |
 |---|---|---|
-| A setting value (sea, target, presence) | edit `X.config.json`, or `--maj` with the option | F5 |
+| A setting value (sea, target, presence) | edit `X.config.json`, or `--update` with the option | F5 |
 | The zones | save `X.zones.json` in the region's folder | F5 |
-| New version of the tools | procedure 4 (`--maj`) | Ctrl+F5 |
+| New version of the tools | procedure 4 (`--update`) | Ctrl+F5 |
 | New version of the presence server (v37: chat history; v36: translated messages) | stop and restart `presence_server.py` | F5 |
-| The OAR changed | convert again (1.1 or 2.1), split again (2.3), then `--maj` | Ctrl+F5 |
-| The objects excluded from the split | split again (2.3) with another `--exclure` | Ctrl+F5 |
-| Rotation of the region (`--rotate`) | `--maj --rotate 180`, then redo the map thumbnail | Ctrl+F5 |
+| The OAR changed | convert again (1.1 or 2.1), split again (2.3), then `--update` | Ctrl+F5 |
+| The objects excluded from the split | split again (2.3) with another `--exclude` | Ctrl+F5 |
+| Rotation of the region (`--rotate`) | `--update --rotate 180`, then redo the map thumbnail | Ctrl+F5 |
 | First publication of a region | procedure 1 or 2 (full command) | — |
 
 ## 9. When it does not work
@@ -129,9 +129,9 @@ With a single region, the map brings nothing: it is used to link several regions
 | Black page with `#spawn=…` | the arrival's tile is loading | since v33, a "Loading the ground…" text should appear; otherwise, console (F12) and `[tile] …` lines |
 | "Loading the ground…" that lasts | large tile | wait; note the `[tile] …` lines of the console |
 | The zones do not appear | zone file elsewhere than in the page's folder, private zone, discreet marker | check `X.zones.json` in the served folder, F5 in a private window, `--zone-marker portee` |
-| The settings do not change | old shell, cache | `--maj`, then Ctrl+F5 |
+| The settings do not change | old shell, cache | `--update`, then Ctrl+F5 |
 | "Couldn't load texture" errors | 0-byte images in tiles from before v31 | split again with glb2tiles v31 or later |
-| No chat | page built without `--presence-url` or without `--chat` | add the options with `--maj`, restart the server |
+| No chat | page built without `--presence-url` or without `--chat` | add the options with `--update`, restart the server |
 | The avatar colour does not change | old presence server | restart the `presence_server.py` of the `dist` folder |
 | Copy the help text | — | select with the mouse, Ctrl+C; otherwise, in the console: `copy(document.body.innerText)` |
 
@@ -154,7 +154,7 @@ For any bug report, paste the text of the status and help panels, and the consol
 | Adjust the width of the help and information windows | drag their right edge (260 px to 70 % of the window), remembered |
 | Chat: older messages, unread, mentions | "Older messages" button (chat open), tab title "(3) Region", "N messages mention you"; "History messages kept in the chat" setting |
 | Default region (address without `?region=`) | `default.json` written for the first region of a folder, `--default` to change it; otherwise the first relative entry of `regions.json` |
-| Put `lib/` elsewhere | `--lib-url ../lib` (or an `https://…/lib` address) when building the shell; remembered for `--maj` |
+| Put `lib/` elsewhere | `--lib-url ../lib` (or an `https://…/lib` address) when building the shell; remembered for `--update` |
 | Region in a subfolder | `glb2html.py X.glb --shared-shell "P:\site\index.html" -o "P:\site\sous\dossier\X.html"`; address `index.html?region=sous/dossier/X` |
 | Address parameters | separated by `&`; `#` is also accepted (`#name=Klaatou&lang=en` = `#name=Klaatou#lang=en`) |
 
@@ -189,7 +189,7 @@ You need a domain name managed by Cloudflare (free account).
 4. Presence address: `wss://presence.TONDOMAINE.tld`.
 
 ### Connecting the pages (all three ways)
-One region at a time: `glb2html.py --maj -o "CHEMIN\X.html" --shared-shell --presence-url "wss://ADRESSE"` (the `--maj` line of section 4 plus `--presence-url`). Or the `presenceUrl` key of `X.config.json`.
+One region at a time: `glb2html.py --update -o "CHEMIN\X.html" --shared-shell --presence-url "wss://ADRESSE"` (the `--update` line of section 4 plus `--presence-url`). Or the `presenceUrl` key of `X.config.json`.
 
 ### Checking the address seen by the server (to do once, with `--log-ip raw`)
 Open a page from a phone on 4G (not from your network), then read `presence.log`: the address written must be the phone's. If you see `127.0.0.1` or the relay's address, the header given to `--proxy-header` is wrong or missing: **IP bans would not work**. The expected headers: `X-Forwarded-For` (Caddy, nginx), `CF-Connecting-IP` (Cloudflare); for Funnel, try `X-Forwarded-For` and say what the log shows.

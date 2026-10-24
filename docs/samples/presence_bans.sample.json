@@ -1,0 +1,18 @@
+[
+ {
+  "key": "23e334889be5f173d272625665ff335d36b9478ab8a77e6ba984617f90086b49",
+  "ip": "9bf92ec4d882cdb2ae4c045359d0b827cc30a6739a8de092cb704d079f5448fc",
+  "until": 0,
+  "name": "Troll",
+  "reason": "spam",
+  "added": 1792837800.0
+ },
+ {
+  "key": "",
+  "ip": "c0114eb64e16ef2a63ca7e095c6f8641eccce1497df5f0a42832d6059c34566f",
+  "until": 4102444800,
+  "name": "Visitor#ABCD",
+  "reason": "insults",
+  "added": 1792838400.0
+ }
+]

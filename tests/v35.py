@@ -775,7 +775,7 @@ def test_maj():
     sol_glb(tmp / "s.glb")
     r = html(tmp / "s.glb", "-o", page2 / "S.html", "--register", "rel.json", "--no-sea", cwd=tmp)
     ecrit = json.loads((tmp / "rel.json").read_text(encoding="utf-8"))
-    rapport(len(ecrit) == 1 and not (page2 / "rel.json").exists() and "n'est pas à côté de la page" in r.stdout and "--maj" in r.stdout, "sans --maj : comportement d'avant conservé et une ligne dit où regions.json est écrit", r.stdout)
+    rapport(len(ecrit) == 1 and not (page2 / "rel.json").exists() and "n'est pas à côté de la page" in r.stdout and "--update" in r.stdout, "sans --update : comportement d'avant conservé et une ligne dit où regions.json est écrit", r.stdout)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,24 @@
+[
+ {
+  "id": "region",
+  "name": "My region",
+  "url": "index.html?region=Region",
+  "x": 0,
+  "y": 0,
+  "spawn": "default",
+  "presence": "",
+  "room": "Region",
+  "thumb": ""
+ },
+ {
+  "id": "other",
+  "name": "Other region",
+  "url": "https://ADRESSE/web3d/index.html?region=Other",
+  "x": 1,
+  "y": 0,
+  "spawn": "default",
+  "presence": "wss://ADRESSE/presence",
+  "room": "Other",
+  "thumb": "thumbs/other.jpg"
+ }
+]

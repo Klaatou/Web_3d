@@ -1,0 +1,176 @@
+{
+ "version": 1,
+ "generator": "glb2tiles v43 (24/10/2026)",
+ "source": "Region.glb",
+ "extent": {
+  "min": [
+   -512.0,
+   -12.0,
+   -512.0
+  ],
+  "max": [
+   512.0,
+   96.0,
+   512.0
+  ]
+ },
+ "params": {
+  "budgetMB": 32.0,
+  "budgetTriangles": 1500000,
+  "minCell": 16.0,
+  "wholeWeightMB": 16.0,
+  "wholeExtent": 256.0,
+  "thresholdMB": 150.0,
+  "thresholdTriangles": 3000000,
+  "outlier": 1000.0
+ },
+ "warnings": [],
+ "roots": {
+  "whole": 1180,
+  "split": 6
+ },
+ "duplication": 1.042,
+ "nodeRefs": 1,
+ "replacedImages": {
+  "distinct": 2,
+  "occurrences": 3,
+  "grey": true
+ },
+ "tiles": [
+  {
+   "file": "Region.tiles/T_1_0_0.glb",
+   "level": 1,
+   "i": 0,
+   "j": 0,
+   "min": [
+    -512.0,
+    -12.0,
+    -512.0
+   ],
+   "max": [
+    0.0,
+    80.0,
+    0.0
+   ],
+   "instances": 410,
+   "triangles": 812345,
+   "bytes": 25165824,
+   "geometryBytes": 9437184,
+   "imageBytes": 15728640,
+   "replacedImages": 1
+  },
+  {
+   "file": "Region.tiles/T_1_1_0.glb",
+   "level": 1,
+   "i": 1,
+   "j": 0,
+   "min": [
+    0.0,
+    -12.0,
+    -512.0
+   ],
+   "max": [
+    512.0,
+    96.0,
+    0.0
+   ],
+   "instances": 388,
+   "triangles": 1203456,
+   "bytes": 30408704,
+   "geometryBytes": 13631488,
+   "imageBytes": 16777216,
+   "replacedImages": 2
+  },
+  {
+   "file": "Region.tiles/T_1_0_1.glb",
+   "level": 1,
+   "i": 0,
+   "j": 1,
+   "min": [
+    -512.0,
+    -12.0,
+    0.0
+   ],
+   "max": [
+    0.0,
+    64.0,
+    512.0
+   ],
+   "instances": 205,
+   "triangles": 402311,
+   "bytes": 12582912,
+   "geometryBytes": 4194304,
+   "imageBytes": 8388608,
+   "replacedImages": 0
+  },
+  {
+   "file": "Region.tiles/T_1_1_1.glb",
+   "level": 1,
+   "i": 1,
+   "j": 1,
+   "min": [
+    0.0,
+    -12.0,
+    0.0
+   ],
+   "max": [
+    512.0,
+    72.0,
+    512.0
+   ],
+   "instances": 251,
+   "triangles": 655789,
+   "bytes": 18874368,
+   "geometryBytes": 6291456,
+   "imageBytes": 12582912,
+   "replacedImages": 0
+  }
+ ],
+ "excluded": {
+  "patterns": [
+   "^Grass"
+  ],
+  "maxTriangles": 24,
+  "maxMeshes": 1,
+  "count": 1520,
+  "triangles": 18240,
+  "bytesSaved": 2097152,
+  "bytesShared": 65536,
+  "names": {
+   "Grass tuft": 1500,
+   "Grass patch": 20
+  }
+ },
+ "overview": {
+  "file": "Region.overview.glb",
+  "bytes": 6291456,
+  "triangles": 480000,
+  "terrainTriangles": 131072,
+  "objects": 950,
+  "candidates": 1254,
+  "omitted": {
+   "small": 280,
+   "skinned": 4,
+   "translucentPrimitives": 12,
+   "budget": 8
+  },
+  "effectiveMinExtent": 3.0,
+  "resolution": 64,
+  "effectiveTerrainStep": 4.0,
+  "seconds": 41.7,
+  "colors": {
+   "textureAverages": 812,
+   "unreadable": 3,
+   "withoutPillow": 0,
+   "pillow": true
+  },
+  "params": {
+   "budgetMB": 25.0,
+   "budgetTriangles": 1500000,
+   "minExtent": 3.0,
+   "maxExtent": 24.0,
+   "resolution": 64,
+   "terrainStep": 4.0
+  }
+ }
+}

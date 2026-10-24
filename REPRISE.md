@@ -1,6 +1,6 @@
 # Reprise du projet Web 3d
 
-*État au 24/10/2026, version v42. À lire après `REGLES.md` (qui est dans les fichiers du Projet, pas dans le dépôt). Ce fichier est mis à jour et commité à la fin de chaque lot. Il ne contient ni adresse IP ni nom d'hôte.*
+*État au 24/10/2026, version v43. À lire après `REGLES.md` (qui est dans les fichiers du Projet, pas dans le dépôt). Ce fichier est mis à jour et commité à la fin de chaque lot. Il ne contient ni adresse IP ni nom d'hôte.*
 
 ## 1. Ce qu'est ce projet
 
@@ -8,14 +8,15 @@ Une région OpenSim (sauvegarde `.oar`) devient une **page web 3D** où l'on se 
 
 ## 2. État du dépôt
 
-- **`main` = v42** (étiquette `v42`, fichier `VERSION` : `v42 (24/10/2026)`). Étiquettes `v14` à `v42`.
+- **`main` = v43** (étiquette `v43`, fichier `VERSION` : `v43 (24/10/2026)`). Étiquettes `v14` à `v43`.
+- **v43** : manuel § 27 « Référence des fichiers JSON » (FR et EN) : chaque fichier JSON, champ par champ (type, défaut, rôle, option) ; le § 16 y renvoie. `docs/samples/` : un exemple valide de chaque fichier (`region.config`, `region.zones` avec 8 zones, `default`, `regions`, `region.tiles`, `region.reglages`, `disposition`, `presence_identities`, `presence_bans`, `chat_history.sample.jsonl`), vérifiés par `tests/samples.py` contre le vrai code. **Tous les noms en anglais** (options, valeurs, clés, adresses), anciens noms toujours acceptés et convertis (fonction `old_options` dans chaque outil, `ZONE_MARKER_OLD`, `PROFILE_OLD` dans `src/gen_tpl.py`, `zmNorm` dans `src/core.js`) ; tableau complet au § 27.11. Correction : `--zone-marker none` (outils en anglais) n'était pas compris par la page. `gen_reference.py` passe `--nopause`.
 - **v42** : rendu léger. Case « Rendu léger » dans Réglages (sous « Haute résolution ») et sous-fenêtre « Réglages fins… » (à gauche de Réglages, cachée quand Réglages se ferme), réglages en direct retenus par le navigateur (clé `glb2html_light_SALON`) : résolution (50 % préconisé), images/s au plus (15), vue d'ensemble seule en vue globale (aucune tuile détaillée hors promenade), rayon des tuiles (80 m), anticrénelage (non, au rechargement) ; bouton « Valeurs préconisées » ; « Valeurs d'origine » remet aussi le rendu léger. Proposition unique quand le rendu est logiciel (`softGpu` dans `src/core.js`). Option `--light` (reprise par `--maj`), lignes dans le viewer. Diagnostic : réglages du rendu léger, images rendues/s sur 5 s et causes du rendu continu. Réglages : 420 px de large au plus, défilement, note de couleur sur deux lignes, section « Disposition des fenêtres » mise en forme (titre en gras, filet), note « En promenade, Échap… » tout en bas (`#optsNote`). Proposition affichée en bas de l'écran, au-dessus des boutons. Manuel § 26, `tests/v42.py`.
 - **v41** : bulles des fenêtres H, I, L et de Réglages ; fenêtres déplaçables par le titre (pile de gauche, pile de droite sous Réglages poussée par Réglages, ou libres), double-clic = retour à la dernière pile, clic de souris sur un titre retardé de 250 ms ; disposition retenue (`glb2html_layout`) et fichier `disposition.json` (Réglages : enregistrer, charger, disposition d'origine). Manuel § 25, `tests/v41.py`.
 - **v40** : fenêtre « Arrivées » (touche L, clic = téléportation ou entrée en promenade), bouton « Recentrer la vue » (hors promenade, cadrage d'ouverture), lien « Manuel complet » (aide de la page, viewer), bulle du bouton « Copier le diagnostic ». Manuel § 24, `tests/v40.py`.
 - **v39** : bouton « Copier le diagnostic » (fenêtre Informations / État de la page, panneau du viewer) : version, carte graphique, rendu, tuiles et durées, état, présence, 10 dernières erreurs ; adresses remplacées par `ADRESSE`, partie `#` jamais copiée. Code commun `DIAG` / `diagText` dans `src/core.js`, manuel § 23, `tests/v39.py`. Pas de bouton sur une page `--no-walk` (pas de fenêtre d'état).
 - Les sessions cloud sont **terminées** (crédit épuisé). Tout se fait désormais dans le chat, par patchs (voir `REGLES.md`).
 - **v38 (documentation, aucun changement de comportement)** : manuel, procédures et historique traduits en anglais (`docs/en/`), documents français déplacés dans `docs/fr/` (`MODE_EMPLOI.md` devenu `MANUEL.md`), `README.md` en anglais (page d'accueil GitHub) et `README.fr.md` en français, `verif_trad.py` (contrôle des traductions). Seule la chaîne de version change dans les outils fabriqués : après `python build.py`, `--maj` renouvelle la coquille des régions (ancienne copie gardée).
-- Région de référence de JJ : la « 4X4 » (`OAR-Free_House_Gallery_I(4X4)-terrain`), 1 024 x 1 024 m, 106 tuiles et une vue d'ensemble, publiée avec présence et chat. Options de sa page : mer à 18,5 m (`--sea-y 18.5`), cible de départ `--target 392,68,-373`, `default.json` posé avec `--maj --default`.
+- Région de référence de JJ : la « 4X4 » (`OAR-Free_House_Gallery_I(4X4)-terrain`), 1 024 x 1 024 m, 106 tuiles et une vue d'ensemble, publiée avec présence et chat. Options de sa page : mer à 18,5 m (`--sea-y 18.5`), cible de départ `--target 392,68,-373`, `default.json` posé avec `--update --default`.
 - Fichiers locaux de JJ **hors dépôt** : `tools\glb-images-check.py`, `tools\glb-terrain-alt.py` (non suivis) : committer avec `git add -u` ou en nommant les fichiers, jamais `git add -A` sans vérifier.
 
 ## 3. Architecture (détail dans `CLAUDE.md`)
@@ -25,7 +26,7 @@ Une région OpenSim (sauvegarde `.oar`) devient une **page web 3D** où l'on se 
 | `src/core.js` | noyau JavaScript commun : collisions, promenade, avatars, zones, carte, chat |
 | `src/template.html` | page exportée (aide, état, réglages, chat) |
 | `src/viewer_tpl.html` | viewer / éditeur de zones (`glb-viewer.html`) |
-| `src/gen_tpl.py` | devient `dist/glb2html.py` : fabrique la page, `--maj`, `--register`, `--map-page` |
+| `src/gen_tpl.py` | devient `dist/glb2html.py` : fabrique la page, `--update`, `--register`, `--map-page` |
 | `src/presence_server.py` | serveur WebSocket de présence et de chat (dépendance `websockets`) |
 | `tools/glb2tiles.py` | découpe un GLB énorme en tuiles + `X.overview.glb` |
 | `tools/oar2glb.py` | convertit un OAR en GLB, refait le terrain complet |
@@ -41,7 +42,7 @@ Le dossier des outils fabriqués est `dist\` ; le dépôt local est `P:\_OpenSim
 ## 4. Commandes de tous les jours (PowerShell, une ligne)
 
 - Fabriquer : `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d"; python build.py`
-- Mettre à jour une région après une nouvelle version (garde config et zones) : `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python .\glb2html.py --maj -o "P:\_OpenSim\SL&OS\Web_3d\tuiles\OAR-Free_House_Gallery_I(4X4)-terrain.html" --shared-shell`
+- Mettre à jour une région après une nouvelle version (garde config et zones ; `--update`, anciennement `--maj`, toujours accepté) : `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python .\glb2html.py --update -o "P:\_OpenSim\SL&OS\Web_3d\tuiles\OAR-Free_House_Gallery_I(4X4)-terrain.html" --shared-shell`
 - Serveur de présence de JJ (journaux jamais effacés) : `python ".\presence_server.py" --log presence.log --log-ip raw --log-days 0 --history-file chat.jsonl --history-days 0`
 - Servir une région pour l'essayer : `cd "P:\_OpenSim\SL&OS\Web_3d\tuiles"; python -m http.server 8000`, puis `http://localhost:8000/index.html?region=NOM`.
 - Fusion d'une branche et étiquette : `git checkout main; git pull; git fetch; git merge origin/BRANCHE -m "Fusion vNN"; python build.py; git push; git tag vNN HASH; git push origin vNN`
@@ -79,23 +80,28 @@ Le dossier des outils fabriqués est `dist\` ; le dépôt local est `P:\_OpenSim
 - **Sons** : réglage général (volume), citation, arrivée, départ ; les promeneurs seulement, jamais la liste initiale.
 - **Boussole** : le nord est la direction -Z du modèle (z = -y d'OpenSim), décalée par `rotate` et `--north` ; case dans les réglages.
 - **Chat et serveur** : historique de 200 messages par défaut, `--history-file` conserve entre deux relances (jamais d'adresse IP), `--log-days 0` ne supprime aucun journal.
-- **Options de fabrication** : `--maj` ne ressaisit rien et garde config et zones ; `--default` écrit `default.json` ; `--lib-url` place `lib` ailleurs ; `--zone-info-dist` (150 m par défaut) règle la distance des infobulles et des cônes.
+- **Options de fabrication** : `--update` ne ressaisit rien et garde config et zones ; `--default` écrit `default.json` ; `--lib-url` place `lib` ailleurs ; `--zone-info-dist` (150 m par défaut) règle la distance des infobulles et des cônes.
 - **Interface** : jamais d'information portée par la seule couleur.
+- **Noms (v43)** : options, valeurs et clés JSON, paramètres d'adresse et noms d'exemple de l'aide sont **en anglais** ; un nom renommé garde l'ancien en alias (jamais de rupture pour JJ). Les textes visibles restent traduits par `src/i18n`. L'historique (`CHANGELOG.md`, `HISTORIQUE.md`) garde les noms de l'époque.
+- **Fichiers JSON (v43)** : tout champ ajouté ou changé dans un fichier JSON se reporte dans le manuel § 27 (FR et EN) et dans l'exemple de `docs/samples/` ; `tests/samples.py` échoue si la config d'exemple n'a pas exactement les clés écrites par `build_cfg`.
 
 ## 6. À faire (dans l'ordre)
 
 0. **Rendu léger chez JJ (v42)** : JJ essaie sous Edge (rendu logiciel) sur la 4X4 ; si le délai des fenêtres reste, lire les lignes « Rendu léger » et « Images rendues par seconde » de « Copier le diagnostic » pour trouver la cause avant tout autre correctif. Idée suivante possible : alléger encore la fenêtre Réglages (autres sous-fenêtres), si JJ le demande.
 1. **Démo publique** (JJ n'est pas prêt : ne pas la lancer sans sa demande) : page statique sans chat d'une petite région (par exemple Ankh Island, 12 Mo) sur GitHub Pages, dans un dépôt séparé ; plus tard, serveur de présence sur un petit VPS avec `wss://` (Caddy et un nom de domaine) : procédure écrite le 24/10/2026 dans `docs/fr/PROCEDURES.md` § 11 et `docs/en/PROCEDURES.md` § 11 (Tailscale Funnel, Caddy, Cloudflare Tunnel), **non testée** : vérifier l'adresse IP vue derrière Funnel, Caddy ou Cloudflare Tunnel (contrôle en 4G décrit au § 11) avant de la tenir pour acquise ; pour Funnel, l'en-tête à donner à `--proxy-header` est inconnu (essayer `X-Forwarded-For`). Idée plus lointaine : présence réécrite en Worker Cloudflare avec Durable Object (aucun serveur à gérer).
-2. **Règles de documentation désormais** : toute modification du manuel, des procédures ou de l'historique se fait dans les deux langues, puis `verif_trad.py` sur le couple modifié (0 erreur exigée) ; chaque entrée de `CHANGELOG.md` en français puis en anglais.
+2. **À vérifier chez JJ (v43)** : ses commandes habituelles avec les anciens noms (`--maj`, options de `glb2tiles.py` et `oar2glb.py`) doivent marcher sans changement ; `gen_reference.py` ne doit plus demander « Entrée pour fermer ». Non testé ici : Windows, PowerShell.
+3. **Règles de documentation désormais** : toute modification du manuel, des procédures ou de l'historique se fait dans les deux langues, puis `verif_trad.py` sur le couple modifié (0 erreur exigée) ; chaque entrée de `CHANGELOG.md` en français puis en anglais.
 
 ## 7. Limites connues et pièges
 
 - **Non testé ici** : Windows, Edge, carte graphique réelle, la vraie capture de souris d'Échap, une région en tuiles dans un sous-dossier, la conversion par convoar, les lignes PowerShell elles-mêmes (essayées sous Linux avec des chemins équivalents).
 - Les tests de navigateur durent de 1 à 2,5 min chacun (rendu logiciel) et un processus lancé en arrière-plan ne survit pas d'une réponse à l'autre : les lancer au premier plan, un ou deux par commande.
 - **Edge de JJ en rendu logiciel, volontairement** (« Microsoft Basic Render Driver » dans le diagnostic) : sa carte graphique est réservée à son LLM. La lenteur des tuiles chez lui est donc attendue : ce n'est pas un bug à chercher. Le rendu léger (v42) vise ce cas ; ses valeurs préconisées n'ont pas été mesurées sur Edge. Constat de JJ avant la v42 : 2 s de délai à l'ouverture des fenêtres en vue globale, moins en promenade. Mesuré dans Chromium (SwiftShader) : au repos en vue globale, 0 rendu par seconde, et l'ouverture d'une fenêtre ne déclenche aucun rendu ; seuls la mer animée (`core.js`, boucle de rendu) et la présence d'autres visiteurs (`presenceTick`) forcent un rendu continu. La cause exacte chez JJ reste à lire dans la ligne « Images rendues par seconde » du diagnostic.
+- **Tests de navigateur : un seul à la fois.** Le 24/10/2026, `tests/v32.py` lancé en même temps qu'un autre a échoué 4 fois (2 fois en v42 aussi), puis est passé entier seul : les échecs venaient de la charge. Les « 2 échecs anciens » de `tests/v32.py` notés plus tôt étaient de cette nature.
+- `tests/v33.py` s'arrête à l'étape 1 (attente de 60 s, processeur ralenti x6) en v42 comme en v43 : la suite du test (repères des zones, récapitulatif du viewer) **ne tourne donc jamais ici** ; ses attentes ont été mises aux nouveaux noms (`dot`, `range`) sans pouvoir les essayer.
 - Le test `tests/v33.py` sur le clignotement de bulle dépend du rendu logiciel de Chromium : il a déjà échoué une fois sans lien avec le code. Le 24/10/2026, dans le bac à sable, `tests/v33.py` (attente de 60 s à l'étape 1, processeur ralenti x6) et `tests/v24.py` (2 échecs « survol du marqueur por ») échouent de la même façon en v41 et en v42 : antérieurs, cause non cherchée.
 - Un ancien `presence_server.py` ignore les nouveautés (couleur, historique) : toujours relancer celui de `dist\` après `python build.py`.
-- `--maj` ignore les options de la carte si on n'ajoute pas `--register` ; les chemins relatifs de `--register` et `--map-page` y sont relatifs à la page.
+- `--update` ignore les options de la carte si on n'ajoute pas `--register` ; les chemins relatifs de `--register` et `--map-page` y sont relatifs à la page.
 - Copier-coller depuis une réponse mise en forme peut ajouter des accents graves (backticks) devant les options : en PowerShell, ils cassent la commande.
 - Les chemins contiennent `&` (`SL&OS`) : toujours des guillemets.
 - **Lignes PowerShell d'un patch** : ne jamais enchaîner `build` ou `Remove-Item` après un patch sans `if ($LASTEXITCODE -eq 0) { … }` (un patch arrêté a été effacé en v38). Un déplacement se fait avec `git mv` **avant** le patch ; un fichier effacé hors de git (` D` dans `git status`) se récupère avec `git restore`.

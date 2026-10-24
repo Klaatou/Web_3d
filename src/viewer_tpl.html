@@ -80,7 +80,7 @@ __I18N__
     <input id="copyField" readonly hidden aria-label="Texte à copier" data-i18n-aria="viewer.copy.aria" style="width:100%;font:12px ui-monospace,Consolas,monospace">
     <div id="rows"></div>
     <h2 data-i18n="viewer.export.title">Export</h2>
-    <div class="row"><label for="profileSel" data-i18n="viewer.export.profile">Profil d'export</label><select id="profileSel" style="grid-column:1/-1;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;width:100%"><option value="public" data-i18n="viewer.export.public">public : sans les zones privées</option><option value="perso" data-i18n="viewer.export.perso">perso : toutes les zones</option></select></div>
+    <div class="row"><label for="profileSel" data-i18n="viewer.export.profile">Profil d'export</label><select id="profileSel" style="grid-column:1/-1;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;width:100%"><option value="public" data-i18n="viewer.export.public">public : sans les zones privées</option><option value="private" data-i18n="viewer.export.perso">private : toutes les zones</option></select></div>
     <div class="btns">
       <button id="bHtml" class="main" disabled data-i18n="viewer.export.html">Exporter HTML autonome</button>
       <button id="bZip" class="main" disabled data-i18n="viewer.export.zip">Exporter la structure modulaire (.zip)</button>
@@ -157,7 +157,7 @@ function inspectGlb(buf, name = tr('viewer.glb.defname')) {
 // ---------- état
 const DEF = {
   rotate: 0, hole: 180, holeFade: 60, holeX: 0, holeZ: 0, guide: true, wave: 0.5, seaY: -50, zoom: 1, camDir: [0, 0.25, 1], target: [0, 15, 0],
-  sea: true, anim: false, retina: false, light: false, pixelScale: 1, fpsMax: 0, ovOnly: false, foliageCutout: 0.12, seaSize: 4000, seaSegments: 400, walk: true, eyeHeight: 1.7, walkSpeed: 3.5, walkIgnore: 'door, porte', ignoreViz: false, zones: [], profile: 'perso', spectate: true, panel: true, map: [], mapUrl: '', names: false, chat: true, chatFade: 0, presenceUrl: '', room: '', zoneMarker: 'discret', showSpawns: false, zoneCone: true, fly: true, zoneInfoDist: 150, compass: true, northDeg: 0,
+  sea: true, anim: false, retina: false, light: false, pixelScale: 1, fpsMax: 0, ovOnly: false, foliageCutout: 0.12, seaSize: 4000, seaSegments: 400, walk: true, eyeHeight: 1.7, walkSpeed: 3.5, walkIgnore: 'door, porte', ignoreViz: false, zones: [], profile: 'private', spectate: true, panel: true, map: [], mapUrl: '', names: false, chat: true, chatFade: 0, presenceUrl: '', room: '', zoneMarker: 'dot', showSpawns: false, zoneCone: true, fly: true, zoneInfoDist: 150, compass: true, northDeg: 0,
   seaColor: 0x3A9AD9, skyColor: 0x87CEEB
 };
 const viewer = createViewer(document.getElementById('view'), DEF, makeLoader());
@@ -335,8 +335,8 @@ for (const r of ROWS) {
     continue;
   }
   if (r[0] === 'zmark') {
-    const e = add('<div class="row"><label>' + tr('viewer.zm.label') + '</label><select id="selZMark" style="grid-column:1/-1;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;width:100%"><option value="discret">' + tr('viewer.zm.discret') + '</option><option value="portee">' + tr('viewer.zm.portee') + '</option><option value="aucun">' + tr('viewer.zm.none') + '</option></select></div>');
-    const sel = e.querySelector('select'); sel.value = cfg.zoneMarker || 'discret';
+    const e = add('<div class="row"><label>' + tr('viewer.zm.label') + '</label><select id="selZMark" style="grid-column:1/-1;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;width:100%"><option value="dot">' + tr('viewer.zm.discret') + '</option><option value="range">' + tr('viewer.zm.portee') + '</option><option value="none">' + tr('viewer.zm.none') + '</option></select></div>');
+    const sel = e.querySelector('select'); sel.value = cfg.zoneMarker || 'dot';
     sel.onchange = () => viewer.setCfg({ zoneMarker: sel.value });
     continue;
   }
@@ -651,7 +651,7 @@ async function openFiles(list) {
   if (gltf) return openGltf(gltf, files);
   setStatus(tr('viewer.nogltf'));
 }
-// ---------- région en tuiles : dossier choisi ou glissé (fichiers lus à la demande, jamais tous en mémoire), ou adresse http relative (?tuiles=)
+// ---------- région en tuiles : dossier choisi ou glissé (fichiers lus à la demande, jamais tous en mémoire), ou adresse http relative (?tiles=)
 const safeRelV = p => typeof p === 'string' && p !== '' && p.length < 400 && !/^[\/\\]/.test(p) && !/[\\:?#\u0000-\u001f]/.test(p) && !p.split('/').some(s => s === '' || s === '..');
 const fileSource = map => ({
   async json(rel) { const f = map.get(rel); if (!f) throw new Error(tr('viewer.tiles.notinfolder', rel)); return JSON.parse(await f.text()); },
@@ -1066,7 +1066,7 @@ function applySnapshot(s) {
   const patch = {}; for (const k of SKEYS) if (k in s.cfg) patch[k] = s.cfg[k];
   viewer.setCfg(patch);
   zonesSync(Array.isArray(s.zones) ? s.zones : [], false);
-  if (s.profile) $('profileSel').value = s.profile;
+  if (s.profile) $('profileSel').value = s.profile === 'perso' ? 'private' : s.profile;   // v43 : ancienne valeur « perso »
   if (s.thisReg) Object.assign(thisReg, s.thisReg);
   if (s.cmd) { if (s.cmd.script) $('cmdScript').value = s.cmd.script; if (s.cmd.glb) $('cmdGlb').value = s.cmd.glb; if (s.cmd.dest !== undefined) $('cmdDest').value = s.cmd.dest; if (s.cmd.mapPage !== undefined) $('cmdMapPage').value = s.cmd.mapPage; }
   buildRows(); refreshEnabled();
@@ -1149,7 +1149,7 @@ function buildCommand() {
   if ($('cmdMapPage').value.trim()) a.push('--map-page ' + q($('cmdMapPage').value.trim()));
   if (cfg.mapUrl) a.push('--map-url ' + q(cfg.mapUrl));
   const hasZones = (cfg.zones || []).length > 0;
-  if (hasZones) { a.push('--zones ' + q(tilesMode ? baseName + '.zones.json' : 'zones.json')); if ($('profileSel').value === 'perso') a.push('--profile perso'); }
+  if (hasZones) { a.push('--zones ' + q(tilesMode ? baseName + '.zones.json' : 'zones.json')); if ($('profileSel').value === 'private') a.push('--profile private'); }
   const script = $('cmdScript').value.trim() || 'glb2html.py', glb = $('cmdGlb').value.trim() || (tilesMode ? baseName + '.tiles.json' : loadedName) || 'fichier.glb';
   const dest = $('cmdDest').value.trim();
   if (tilesMode) { a.unshift('-o ' + q(dest || baseName + '.html')); a.push('--tiles ' + q(glb)); }
@@ -1173,7 +1173,7 @@ function buildCommand() {
   if (regOk) notes.push(tr('viewer.cmd.n.map', thisReg.thumb ? tr('viewer.cmd.n.map.thumb', baseName) : tr('viewer.cmd.n.map.nothumb')));
   else if ((cfg.map || []).length) notes.push(tr('viewer.cmd.n.mapexp'));
   if (tilesMode) notes.push(tr('viewer.cmd.n.tiles', glb));
-  if (hasZones) notes.push(tr('viewer.cmd.n.zones', tilesMode ? baseName + '.zones.json' : 'zones.json', $('profileSel').value === 'perso' ? '' : tr('viewer.cmd.n.zones.pub')));
+  if (hasZones) notes.push(tr('viewer.cmd.n.zones', tilesMode ? baseName + '.zones.json' : 'zones.json', $('profileSel').value === 'private' ? '' : tr('viewer.cmd.n.zones.pub')));
   if (shared) notes.push(SHARED_NOTE);
   if (modular) notes.push(tr('viewer.cmd.n.modular'));
   if (!a.length) notes.push(tr('viewer.cmd.n.nodiff'));
@@ -1202,10 +1202,10 @@ function liveConfig() {
     spectate: cfg.spectate, panel: cfg.panel,
     version: '__VERSION__',
     map: cfg.map || [], mapUrl: cfg.mapUrl || '',
-    zones: (cfg.zones || []).filter(z => $('profileSel').value === 'perso' || !z.private), profile: $('profileSel').value,
+    zones: (cfg.zones || []).filter(z => $('profileSel').value === 'private' || !z.private), profile: $('profileSel').value,
     walk: cfg.walk, eyeHeight: cfg.eyeHeight, walkSpeed: cfg.walkSpeed, walkIgnore: cfg.walkIgnore,
     names: cfg.names, chat: cfg.chat, chatFade: cfg.chatFade, presenceUrl: cfg.presenceUrl, room: cfg.room || baseName,
-    zoneMarker: cfg.zoneMarker || 'discret', showSpawns: !!cfg.showSpawns, zoneCone: cfg.zoneCone !== false, fly: cfg.fly !== false, zoneInfoDist: Math.max(5, Math.min(500, Number(cfg.zoneInfoDist) || 150)), compass: cfg.compass !== false, northDeg: (((Number(cfg.northDeg) || 0) % 360) + 360) % 360, libUrl: '', targetExplicit: targetExplicit()
+    zoneMarker: cfg.zoneMarker || 'dot', showSpawns: !!cfg.showSpawns, zoneCone: cfg.zoneCone !== false, fly: cfg.fly !== false, zoneInfoDist: Math.max(5, Math.min(500, Number(cfg.zoneInfoDist) || 150)), compass: cfg.compass !== false, northDeg: (((Number(cfg.northDeg) || 0) % 360) + 360) % 360, libUrl: '', targetExplicit: targetExplicit()
   };
 }
 $('bHtml').onclick = () => {
@@ -1226,7 +1226,7 @@ $('bHtml').onclick = () => {
     out = rep(out, '__CONFIG__', JSON.stringify(c).replace(/<\//g, '<\\/'));
     out = rep(out, '__DECODERS__', dec.join('\n'));
     out = rep(out, '__GLB_B64__', b64(glbBytes));
-    download(baseName + ($('profileSel').value === 'perso' ? ' - Offline perso.html' : ' - Offline.html'), new Blob([out], { type: 'text/html' }));
+    download(baseName + ($('profileSel').value === 'private' ? ' - Offline private.html' : ' - Offline.html'), new Blob([out], { type: 'text/html' }));
     setStatus(tr('viewer.export.htmlok', (out.length / 2 ** 20).toFixed(2)));
   } catch (e) { console.error(e); setStatus(tr('viewer.export.err', e.message || e)); }
 };
@@ -1293,9 +1293,9 @@ $('bPy').onclick = () => {
   download('glb2html.py', new Blob([py], { type: 'text/x-python' }));
   setStatus(tr('viewer.export.pyok'));
 };
-// ouverture par adresse (viewer servi en http) : glb-viewer.html?tuiles=Region.tiles.json (chemin relatif à cette page, sans .. ni « : »)
+// ouverture par adresse (viewer servi en http) : glb-viewer.html?tiles=Region.tiles.json (chemin relatif à cette page, sans .. ni « : »)
 {
-  const t = new URLSearchParams(location.search).get('tuiles');
+  const t = new URLSearchParams(location.search).get('tiles') || new URLSearchParams(location.search).get('tuiles');   // v43 : ?tiles= ; l'ancien ?tuiles= reste lu
   if (t) { if (safeRelV(t)) openTiles(t, null, t.split('/').pop(), 0); else setStatus(tr('viewer.tilesurl.refused')); }
 }
 </script>

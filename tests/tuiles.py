@@ -9,7 +9,7 @@ Les réponses des tuiles sont retenues, retardées ou remplacées avec page.rout
 Vérifie : génération (config, rien de copié si les tuiles sont à côté de la page, copie sinon, noms refusés) ; au démarrage seules les
 tuiles proches sont chargées ; marcher sur 300 m charge les suivantes et décharge les lointaines (groupes, renderer.info.memory) ;
 hauteur du sol continue aux frontières, jamais sous le sol ; déplacement bloqué tant que la tuile n'est pas prête, puis repris ;
-F attend la tuile ; téléportation vers une zone non chargée ; budget tileMaxTri ; tuile en 404 ou corrompue sans plantage puis nouvelle
+F attend la tuile ; téléportation vers une zone non chargée ; budget tileMaxTriangles ; tuile en 404 ou corrompue sans plantage puis nouvelle
 tentative ; ?rayon= ; rotation ; ?region=NOM avec une autre région sans tuiles dans le même dossier ; zones libres oui, zones liées ignorées ;
 aucune erreur JavaScript ; sans « tiles » la config ne change pas.
 
@@ -163,7 +163,7 @@ rapport((site / "Tuilee.tiles.json").is_file() and (site / TILES[0]["file"]).is_
 r = html("-o", site / "Tuilee.html", "--shared-shell", "--tiles", src / "Tuilee.tiles.json")
 rapport(f"0 copiée(s) ({0.0:.1f} Mo), {len(TILES)} déjà présente(s)" in r.stdout, "relancer ne recopie pas", r.stdout)
 cfg = json.loads((site / "Tuilee.config.json").read_text(encoding="utf-8"))
-rapport(cfg["tiles"] == "Tuilee.tiles.json" and cfg["tileRadius"] == 150 and cfg["tileMargin"] == 60 and cfg["tileMaxMo"] == 200 and cfg["tileMaxTri"] == 8000000 and cfg["tileConcurrency"] == 4 and cfg["zones"] == [], "config : champ tiles et valeurs par défaut", cfg)
+rapport(cfg["tiles"] == "Tuilee.tiles.json" and cfg["tileRadius"] == 150 and cfg["tileMargin"] == 60 and cfg["tileMaxMB"] == 200 and cfg["tileMaxTriangles"] == 8000000 and cfg["tileConcurrency"] == 4 and cfg["zones"] == [], "config : champ tiles et valeurs par défaut", cfg)
 rapport(not (site / "Tuilee.glb").exists() and (site / "index.html").is_file() and (site / "lib").is_dir(), "pas de X.glb ; coquille et lib/ écrites")
 # 2. tuiles déjà à côté de la page : rien n'est copié
 r = html("-o", src / "Tuilee.html", "--shared-shell", "--tiles", src / "Tuilee.tiles.json")
@@ -534,7 +534,7 @@ async def main():
             rapport((await o.etat())["radius"] == 100, "tileRadius lu dans X.config.json", (await o.etat())["radius"])
             await o.pg.close()
 
-            # ---------- I. budget tileMaxTri ----------
+            # ---------- I. budget tileMaxTriangles ----------
             proc2, port2 = serveur(VAR_BUD)
             try:
                 o = Onglet()
@@ -553,7 +553,7 @@ async def main():
                 await o.pg.wait_for_timeout(800)
                 s = await o.etat()
                 pos = await o.pos()
-                rapport(ev_budget == int(max_tri * 4.5) and maxi <= ev_budget and mx >= 2, f"budget tileMaxTri respecté ({maxi} <= {ev_budget}, {mx} tuiles au plus)", (maxi, ev_budget, mx))
+                rapport(ev_budget == int(max_tri * 4.5) and maxi <= ev_budget and mx >= 2, f"budget tileMaxTriangles respecté ({maxi} <= {ev_budget}, {mx} tuiles au plus)", (maxi, ev_budget, mx))
                 dans_rayon = [t for t in TILES if boite_dist(t, pos[0], pos[2]) <= 120]
                 rapport(len(s["ready"]) < len(dans_rayon), f"le budget a bien retenu des tuiles du rayon ({len(s['ready'])} chargées sur {len(dans_rayon)} dans le rayon)", (len(s["ready"]), len(dans_rayon)))
                 touche = [t for t in TILES if boite_dist(t, pos[0], pos[2]) < 0.5]

@@ -200,9 +200,9 @@ Le visiteur déclenche alors la zone en cliquant sur l'objet, ou avec E quand il
 
 ## 10. Zones privées
 
-**Privé (absent de l'export public)** coché : la zone reste dans tes exports « perso », mais disparaît des exports « public ». Le choix se fait dans **Profil d'export** :
+**Privé (absent de l'export public)** coché : la zone reste dans tes exports « private », mais disparaît des exports « public ». Le choix se fait dans **Profil d'export** :
 
-- **perso : toutes les zones**
+- **private : toutes les zones** (appelé « perso » avant la v43)
 - **public : sans les zones privées**
 
 Une arrivée privée disparaît aussi de l'export public : un portail public qui la vise tombera sur `default`.
@@ -279,12 +279,12 @@ Se placer d'abord dans le dossier du script : `cd "P:\_OpenSim\SL&OS\Web_3d"`.
 |---|---|
 | Conversion normale | `python oar2glb.py "J:\...\X.oar"` |
 | Conversion qui garde les dossiers intermédiaires (nécessaire pour `--diag`) | `python oar2glb.py "J:\...\X.oar" --keep` |
-| Retrouver les animaux dans le viewer (mât rouge de 15 m à chacun) | `python oar2glb.py "J:\...\X.oar" --keep --reperes` |
+| Retrouver les animaux dans le viewer (mât rouge de 15 m à chacun) | `python oar2glb.py "J:\...\X.oar" --keep --markers` |
 | Garder les prims invisibles | `python oar2glb.py "J:\...\X.oar" --keep-invisible` |
 | Vérifier ce que le script voit, sans rien modifier | `python oar2glb.py "J:\...\X.oar" --diag` |
 | Idem, en désignant le GLB ou le `.gltf` à comparer | `python oar2glb.py "J:\...\X.oar" --diag --glb "J:\...\X-GLTF\fichier.gltf"` |
 | Ne pas attendre « Entrée » à la fin | ajouter `--nopause` |
-| Ajouter le terrain complet à un GLB existant, sans relancer convoar | `python oar2glb.py "J:\...\X.oar" --terrain-seul "J:\...\X.glb"` (écrit `X-terrain.glb`) |
+| Ajouter le terrain complet à un GLB existant, sans relancer convoar | `python oar2glb.py "J:\...\X.oar" --terrain-only "J:\...\X.glb"` (écrit `X-terrain.glb`) |
 
 Avant de refaire une conversion, supprimer l'ancien dossier intermédiaire : `Remove-Item -Recurse -Force "J:\...\X-GLTF*"`.
 
@@ -294,17 +294,17 @@ Avant de refaire une conversion, supprimer l'ancien dossier intermédiaire : `Re
 |---|---|
 | `--keep` | garde le dossier `X-GLTF` (images, tampons, `.gltf`) ; indispensable pour lancer ensuite `--diag` |
 | `--keep-invisible` | garde les prims entièrement transparents (retirés par défaut) |
-| `--reperes` | ajoute un mât rouge de 15 m à chaque animal riggé posé ; le nom du nœud donne l'animal et sa taille ; à retirer en relançant sans l'option |
+| `--markers` | ajoute un mât rouge de 15 m à chaque animal riggé posé ; le nom du nœud donne l'animal et sa taille ; à retirer en relançant sans l'option |
 | `--diag` | ne modifie rien et ne lance pas convoar : liste chaque partie de l'OAR (voir plus bas) |
 | `--glb CHEMIN` | avec `--diag` : GLB ou `.gltf` à comparer ; par défaut le `.gltf` du dossier `X-GLTF`, sinon le `X.glb` voisin |
 | `--max N` | hauteur maximale (m) d'un objet racine ; au-delà (skybox) il est retiré ; défaut 600 |
 | `--convoar CHEMIN` | chemin de `convoar.exe` si ce n'est pas celui par défaut |
 | `--reencode` | **à éviter** : réencode les textures avant convoar ; sur Jungle_Isle il faisait manquer environ 150 textures sur 353 (textures grises). À n'utiliser que si convoar affiche beaucoup d'erreurs « unhandled number of components » ou plante dans `OpenJPEG.DotNetDecode64` (code retour 3221225477). Les textures que Pillow ne sait pas lire sont remplacées par un gris 4x4 (liste dans `X-reenc-illisibles.txt`, à côté de l'OAR) pour ne pas les laisser au décodeur de convoar ; les sculpt maps restent intactes ; 8 cœurs au plus et envoi par lots de 512 pour limiter la mémoire |
-| `--nopause` | ne pas attendre « Entrée » à la fin (la pause est aussi supprimée quand il n'y a pas de console, et avec `--terrain-seul`) |
-| `--terrain auto\|oui\|non` | terrain complet depuis la carte de hauteurs (voir plus bas) ; `auto` par défaut |
+| `--nopause` | ne pas attendre « Entrée » à la fin (la pause est aussi supprimée quand il n'y a pas de console, et avec `--terrain-only`) |
+| `--terrain auto\|yes\|no` | terrain complet depuis la carte de hauteurs (voir plus bas) ; `auto` par défaut |
 | `--terrain-patch N` | côté d'un patch de terrain en mètres, de 2 à 255 ; défaut 64 |
-| `--terrain-seul GLB` | ne lance pas convoar : ajoute le terrain complet à ce GLB et écrit `X-terrain.glb` à côté (l'original n'est jamais modifié) |
-| `--sortie FICHIER` | avec `--terrain-seul` : fichier de sortie à la place de `X-terrain.glb` (jamais l'original) |
+| `--terrain-only GLB` | ne lance pas convoar : ajoute le terrain complet à ce GLB et écrit `X-terrain.glb` à côté (l'original n'est jamais modifié) |
+| `--output FICHIER` | avec `--terrain-only` : fichier de sortie à la place de `X-terrain.glb` (jamais l'original) |
 
 ### Terrain complet des régions de plus de 256 m (v29)
 
@@ -323,8 +323,8 @@ convoar ne produit qu'**un** nœud « Terrain » dont l'étendue plafonne (par e
 | pente de 32 à 38 degrés | passage progressif vers la roche grise (122, 120, 116) ; au-delà de 38 degrés : roche |
 
 - **Niveau d'eau.** `WaterHeight` lu dans `settings/*.xml` de l'OAR, sinon 20 m (défaut d'OpenSim). Le journal dit quelle valeur est utilisée et d'où elle vient.
-- **Quand remplacer.** `--terrain auto` (défaut) : si le nœud « Terrain » de convoar existe et couvre moins de 95 % de la carte (boîtes comparées en repère monde), il est retiré de la scène et les patches sont ajoutés. Sinon (région de 256 m, terrain déjà complet, pas de nœud « Terrain ») le GLB n'est **pas modifié** : il est identique à celui de `--terrain non`. `--terrain oui` ajoute toujours les patches (et retire le « Terrain » de convoar s'il existe) ; `--terrain non` ne fait rien. Un GLB qui contient déjà des patches n'en reçoit pas d'autres. Le filtre des objets hors région ne retire jamais les patches.
-- **`--terrain-seul GLB`** (sans relancer convoar, pour un GLB de plusieurs Go) : le GLB n'est **pas chargé en entier**. L'en-tête JSON est réécrit, le chunk binaire est recopié par morceaux de 8 Mo, les nouveaux tampons sont ajoutés à la fin. Sortie `X-terrain.glb` à côté de l'original (ou `--sortie`) ; l'original n'est jamais écrasé, et rien n'est écrit si le terrain de convoar est déjà complet. Les données de l'ancien « Terrain » restent dans le fichier, inutilisées (quelques Mo). Aucune pause « Entrée » à la fin.
+- **Quand remplacer.** `--terrain auto` (défaut) : si le nœud « Terrain » de convoar existe et couvre moins de 95 % de la carte (boîtes comparées en repère monde), il est retiré de la scène et les patches sont ajoutés. Sinon (région de 256 m, terrain déjà complet, pas de nœud « Terrain ») le GLB n'est **pas modifié** : il est identique à celui de `--terrain no`. `--terrain yes` ajoute toujours les patches (et retire le « Terrain » de convoar s'il existe) ; `--terrain no` ne fait rien. Un GLB qui contient déjà des patches n'en reçoit pas d'autres. Le filtre des objets hors région ne retire jamais les patches.
+- **`--terrain-only GLB`** (sans relancer convoar, pour un GLB de plusieurs Go) : le GLB n'est **pas chargé en entier**. L'en-tête JSON est réécrit, le chunk binaire est recopié par morceaux de 8 Mo, les nouveaux tampons sont ajoutés à la fin. Sortie `X-terrain.glb` à côté de l'original (ou `--output`) ; l'original n'est jamais écrasé, et rien n'est écrit si le terrain de convoar est déjà complet. Les données de l'ancien « Terrain » restent dans le fichier, inutilisées (quelques Mo). Aucune pause « Entrée » à la fin.
 - **Journal.** Ligne `[terrain] carte N x N échantillons (1 m) ; niveau d'eau E m (origine) ; K patch(es) de P m ; V sommets ; B Mo ajoutés ; durée`. Un OAR sans carte de hauteurs donne `cet OAR n'a pas de carte de hauteurs ... rien n'est modifié` (code de retour 0, aucune erreur).
 - **Hors lot** : textures de terrain d'OpenSim (les quatre textures mélangées selon l'altitude), niveau de détail du terrain pour la vue d'ensemble.
 
@@ -361,7 +361,7 @@ Test : `python tests/terrain.py` (OAR et GLB synthétiques).
 | Symptôme | Cause probable | Remède |
 |---|---|---|
 | Beaucoup de textures grises | `--reencode`, ou images non écrites par convoar | relancer sans `--reencode` ; lire `[GLB] N texture(s) absente(s)` |
-| Un animal invisible ou à la mauvaise place | nœud non retrouvé, ou animal caché | `--keep --reperes`, puis `--diag` ; envoyer `oar2glb.log` et `oar2glb.diag.log` |
+| Un animal invisible ou à la mauvaise place | nœud non retrouvé, ou animal caché | `--keep --markers`, puis `--diag` ; envoyer `oar2glb.log` et `oar2glb.diag.log` |
 | Un animal avec la mauvaise texture | l'ordre des faces du mesh ne suit pas celui des matériaux de convoar | signaler l'animal avec son journal |
 | Des prims transparents qu'on voulait garder | retirés par défaut | `--keep-invisible` |
 | « convoar introuvable » | chemin différent | `--convoar "P:\...\convoar.exe"` |
@@ -403,7 +403,7 @@ dossier/
 | Autre nom de coquille | `--shared-shell monde.html` (adresse `monde.html?region=Ankh`) |
 | Changer un réglage | `python glb2html.py --settings "Ankh.glb" --config-only --shared-shell --wave 2 -o "Ankh.html"` |
 | Changer les zones seules | `python glb2html.py -o "Ankh.html" --zones-only --zones zones.json` |
-| Mettre à jour une région (v34) | `python glb2html.py --maj -o "Ankh.html" --shared-shell --sea-y 12` : applique **seulement** les options données, garde le reste de la config et les zones (§ 19.6) |
+| Mettre à jour une région (v34) | `python glb2html.py --update -o "Ankh.html" --shared-shell --sea-y 12` : applique **seulement** les options données, garde le reste de la config et les zones (§ 19.6) |
 
 Règles :
 
@@ -424,19 +424,11 @@ Dans l'ordre, et on s'arrête au premier qui donne une liste JSON valide :
 
 Il n'y a **pas de fusion** : dès que `Region.zones.json` est lu, `zones.json` est ignoré. Un `zones.json` posé à côté d'une région qui a déjà son `.zones.json` n'a donc aucun effet.
 
-Les zones marquées **privées** sont retirées à la lecture, dans l'un comme dans l'autre fichier, sauf si `profile` vaut `perso` dans `Region.config.json`.
+Les zones marquées **privées** sont retirées à la lecture, dans l'un comme dans l'autre fichier, sauf si `profile` vaut `private` dans `Region.config.json`.
 
 ### Region.config.json : le rendu de la page, pas le viewer
 
-C'est le dictionnaire de réglages que la page lit au démarrage (le même que celui intégré dans une page autonome). Il est **à plat** :
-
-- mer, trou, vagues, ciel, rotation de la région ;
-- caméra de départ : `camDir`, `target`, `zoom` ;
-- promenade : `walk`, `eyeHeight`, `walkSpeed`, `walkIgnore` ;
-- `names`, `panel`, `retina`, `anim`, `foliageCutout` ;
-- présence : `presenceUrl`, `room`, `chat`, `chatFade`, `spectate` ;
-- carte des mondes : `map` (carte résolue) et `mapUrl` ;
-- `profile` (`public` ou `perso`), `version`, `seaSize`.
+C'est le dictionnaire de réglages que la page lit au démarrage (le même que celui intégré dans une page autonome). Il est **à plat**. La liste complète de ses champs, avec leur type, leur valeur par défaut, leur rôle et l'option qui les règle, est au **§ 27.3** ; un exemple complet est dans `docs/samples/region.config.sample.json`.
 
 `zones` y est **toujours vide** (`[]`) et `zonesLive` toujours vide : en modulaire, les zones sont uniquement dans `Region.zones.json`.
 
@@ -491,7 +483,7 @@ python glb2html.py --settings "Region-final.glb" --config-only --wave 2 -o "Regi
 
 Les options de la ligne de commande l'emportent sur le `.reglages.json`. Les visiteurs voient le changement à leur prochain rechargement.
 
-## 17. Découper un GLB énorme en tuiles (`tools/glb2tiles.py`, v28 ; `--exclure` et pause en v29 ; images invalides et vue d'ensemble en v31)
+## 17. Découper un GLB énorme en tuiles (`tools/glb2tiles.py`, v28 ; `--exclude` et pause en v29 ; images invalides et vue d'ensemble en v31)
 
 `glb2tiles.py` découpe un GLB trop lourd en **tuiles autonomes** : chacune est un GLB valide (ouvrable seul dans `glb-viewer.html`), avec ses propres nœuds, meshes, matériaux et images, aux coordonnées d'origine (aucun recentrage). Cet outil **écrit les tuiles, leur liste et (v31) une vue d'ensemble légère de toute la région** ; c'est la coquille qui les charge autour de l'avatar (v30, voir § 17 bis). Python standard seulement. Le GLB d'entrée n'est jamais chargé en entier : l'en-tête JSON est lu, puis les indices, positions et images par morceaux.
 
@@ -504,57 +496,57 @@ Les options de la ligne de commande l'emportent sur le `.reglages.json`. Les vis
 | Voir la version | `python glb2tiles.py --version` |
 | Mesurer et obtenir une recommandation, sans rien écrire | `python glb2tiles.py "P:\...\Region.glb" --analyse` |
 | Découper (recommandation « découper ») | `python glb2tiles.py "P:\...\Region.glb"` |
-| Découper même si la recommandation est « pas de découpage » | `python glb2tiles.py "P:\...\Region.glb" --forcer` |
-| Écrire ailleurs qu'à côté du GLB | `python glb2tiles.py "P:\...\Region.glb" --sortie "P:\...\tuiles"` |
-| Découper sans la vue d'ensemble | `python glb2tiles.py "P:\...\Region.glb" --sans-vue-ensemble` |
-| Refaire **seulement** la vue d'ensemble (tuiles intactes) | `python glb2tiles.py "P:\...\Region.glb" --vue-ensemble-seule` avec **les mêmes options de découpage** (`--sortie`, `--budget`, `--exclure`…) que la première fois |
-| Écarter les « boîtes de livraison » d'un fournisseur | `python glb2tiles.py "P:\...\Region.glb" --analyse --exclure "Freebies 20"` puis la même commande sans `--analyse` |
+| Découper même si la recommandation est « pas de découpage » | `python glb2tiles.py "P:\...\Region.glb" --force` |
+| Écrire ailleurs qu'à côté du GLB | `python glb2tiles.py "P:\...\Region.glb" --output "P:\...\tuiles"` |
+| Découper sans la vue d'ensemble | `python glb2tiles.py "P:\...\Region.glb" --no-overview` |
+| Refaire **seulement** la vue d'ensemble (tuiles intactes) | `python glb2tiles.py "P:\...\Region.glb" --overview-only` avec **les mêmes options de découpage** (`--output`, `--budget`, `--exclude`…) que la première fois |
+| Écarter les « boîtes de livraison » d'un fournisseur | `python glb2tiles.py "P:\...\Region.glb" --analyse --exclude "Freebies 20"` puis la même commande sans `--analyse` |
 
-Commencer par `--analyse` : elle donne les mesures de `glb-stats.py`, les 10 meshes les plus lourds (octets compactés, étendue en mètres), les 10 instances les plus éloignées du centre médian (valeurs aberrantes), le nombre de tuiles prévu avec les paramètres choisis, le facteur de duplication prévu, le nombre d'objets racine gardés entiers ou répartis, et une phrase de recommandation : « pas de découpage nécessaire » ou « découper : budget N Mo, T tuiles, duplication F ». Un GLB léger répond « pas de découpage nécessaire » et rien n'est écrit (même sans `--analyse`, sauf avec `--forcer`).
+Commencer par `--analyse` : elle donne les mesures de `glb-stats.py`, les 10 meshes les plus lourds (octets compactés, étendue en mètres), les 10 instances les plus éloignées du centre médian (valeurs aberrantes), le nombre de tuiles prévu avec les paramètres choisis, le facteur de duplication prévu, le nombre d'objets racine gardés entiers ou répartis, et une phrase de recommandation : « pas de découpage nécessaire » ou « découper : budget N Mo, T tuiles, duplication F ». Un GLB léger répond « pas de découpage nécessaire » et rien n'est écrit (même sans `--analyse`, sauf avec `--force`).
 
 ### Les paramètres
 
 | Option | Défaut | Sens |
 |---|---|---|
 | `--budget` | 32 | Mo par tuile (poids autonome : primitives distinctes compactées + images distinctes) |
-| `--budget-tri` | 1500000 | triangles par tuile (le poids en Mo ne suffit pas : un bloc peut avoir 5 M de triangles pour 70 Mo) |
+| `--budget-triangles` | 1500000 | triangles par tuile (le poids en Mo ne suffit pas : un bloc peut avoir 5 M de triangles pour 70 Mo) |
 | `--min` | 16 | côté minimal d'une cellule, en m : on ne subdivise plus en dessous |
-| `--entier-poids` | 16 | Mo : un objet racine plus léger que cela peut rester entier |
-| `--entier-etendue` | 256 | m : …et plus petit que cela (les deux conditions ensemble ; l'étendue seule ne décide pas) |
-| `--seuil`, `--seuil-tri` | 150, 3000000 | sous ces deux valeurs : « pas de découpage nécessaire » |
-| `--aberrant` | 1000 | m : une instance plus loin que cela du centre médian, ou plus grande, est signalée |
-| `--bloc` | 256 | côté des blocs de la partie `glb-stats` de `--analyse` |
-| `--sortie` | à côté du GLB | dossier de sortie |
-| `--forcer` | | découper même sous les seuils |
-| `--exclure REGEX` | | retire du découpage les objets racine dont le nom correspond (insensible à la casse, répétable ; voir ci-dessous) |
-| `--exclure-max-tri` | 24 | triangles au plus dans l'objet racine, tous meshes compris, pour être exclu |
-| `--exclure-max-meshes` | 1 | meshes au plus dans l'objet racine pour être exclu |
-| `--sans-references` | | ne pas écrire `extras.ref` / `extras.box` dans les nœuds des tuiles (format de la v31 : zones liées à un objet impossibles en mode tuiles) |
-| `--sans-vue-ensemble` | | ne pas écrire `X.overview.glb` |
-| `--vue-ensemble-seule` | | n'écrire que `X.overview.glb` et sa mention dans `X.tiles.json` ; le découpage recalculé doit retrouver exactement les tuiles de `X.tiles.json` (sinon : erreur « ne correspond pas », utiliser les mêmes options) |
-| `--ov-budget`, `--ov-budget-tri` | 25, 1500000 | Mo et triangles de toute la vue d'ensemble |
-| `--ov-seuil` | 3 | m : les objets dont la plus grande dimension est plus petite sont omis (le budget peut relever ce seuil) |
-| `--ov-seuil-max` | 24 | m : si le budget oblige à omettre des objets plus grands que cela, la résolution baisse |
+| `--whole-weight` | 16 | Mo : un objet racine plus léger que cela peut rester entier |
+| `--whole-extent` | 256 | m : …et plus petit que cela (les deux conditions ensemble ; l'étendue seule ne décide pas) |
+| `--threshold`, `--threshold-triangles` | 150, 3000000 | sous ces deux valeurs : « pas de découpage nécessaire » |
+| `--outlier` | 1000 | m : une instance plus loin que cela du centre médian, ou plus grande, est signalée |
+| `--block` | 256 | côté des blocs de la partie `glb-stats` de `--analyse` |
+| `--output` | à côté du GLB | dossier de sortie |
+| `--force` | | découper même sous les seuils |
+| `--exclude REGEX` | | retire du découpage les objets racine dont le nom correspond (insensible à la casse, répétable ; voir ci-dessous) |
+| `--exclude-max-triangles` | 24 | triangles au plus dans l'objet racine, tous meshes compris, pour être exclu |
+| `--exclude-max-meshes` | 1 | meshes au plus dans l'objet racine pour être exclu |
+| `--no-refs` | | ne pas écrire `extras.ref` / `extras.box` dans les nœuds des tuiles (format de la v31 : zones liées à un objet impossibles en mode tuiles) |
+| `--no-overview` | | ne pas écrire `X.overview.glb` |
+| `--overview-only` | | n'écrire que `X.overview.glb` et sa mention dans `X.tiles.json` ; le découpage recalculé doit retrouver exactement les tuiles de `X.tiles.json` (sinon : erreur « ne correspond pas », utiliser les mêmes options) |
+| `--ov-budget`, `--ov-budget-triangles` | 25, 1500000 | Mo et triangles de toute la vue d'ensemble |
+| `--ov-threshold` | 3 | m : les objets dont la plus grande dimension est plus petite sont omis (le budget peut relever ce seuil) |
+| `--ov-threshold-max` | 24 | m : si le budget oblige à omettre des objets plus grands que cela, la résolution baisse |
 | `--ov-resolution` | 10 | cellules sur la plus grande dimension d'une primitive pour le regroupement de sommets (plus grand = plus fin et plus lourd) |
-| `--ov-terrain-pas` | 4 | m : pas du réseau du terrain dans la vue d'ensemble |
+| `--ov-terrain-step` | 4 | m : pas du réseau du terrain dans la vue d'ensemble |
 | `--nopause` | | ne pas attendre Entrée à la fin (la pause est aussi supprimée quand il n'y a pas de console : script, tâche planifiée) |
 
-### Exclure des objets (`--exclure`, v29)
+### Exclure des objets (`--exclude`, v29)
 
-Certains catalogues posent à côté de chaque bâtiment une « boîte de livraison » (cube texturé de 12 triangles, un seul mesh) dont le nom se termine par celui du fournisseur, par exemple « City Stores - Box - RAKis Freebies 2019 ». `--exclure "Freebies"` les retire, **à condition** que l'objet racine ait aussi au plus `--exclure-max-tri` triangles (tous meshes compris) **et** au plus `--exclure-max-meshes` meshes. Sans ces garde-fous le nom du fournisseur retirerait aussi de vrais bâtiments (« Jewel Box House V17 with Stairs - RAKis Freebies 2 » : 143 meshes, conservé). La décision ne dépend **jamais de l'étendue** : la boîte englobante d'un petit mesh qui partage un tampon de sommets avec d'autres est gonflée, jusqu'à plusieurs dizaines de mètres pour un cube de 12 triangles.
+Certains catalogues posent à côté de chaque bâtiment une « boîte de livraison » (cube texturé de 12 triangles, un seul mesh) dont le nom se termine par celui du fournisseur, par exemple « City Stores - Box - RAKis Freebies 2019 ». `--exclude "Freebies"` les retire, **à condition** que l'objet racine ait aussi au plus `--exclude-max-triangles` triangles (tous meshes compris) **et** au plus `--exclude-max-meshes` meshes. Sans ces garde-fous le nom du fournisseur retirerait aussi de vrais bâtiments (« Jewel Box House V17 with Stairs - RAKis Freebies 2 » : 143 meshes, conservé). La décision ne dépend **jamais de l'étendue** : la boîte englobante d'un petit mesh qui partage un tampon de sommets avec d'autres est gonflée, jusqu'à plusieurs dizaines de mètres pour un cube de 12 triangles.
 
-- Plusieurs `--exclure` s'additionnent. Une expression invalide donne un message clair (`Expression régulière invalide pour --exclure`) et rien n'est lu.
+- Plusieurs `--exclude` s'additionnent. Une expression invalide donne un message clair (`Expression régulière invalide pour --exclude`) et rien n'est lu.
 - Les nœuds retirés sont l'objet racine et tous ses descendants ; aucun autre objet ne change. Les exclus n'entrent ni dans les tuiles ni dans les calculs de poids, de triangles et de budget (la recommandation « pas de découpage » retire aussi leurs octets de la taille du GLB). Le GLB d'origine n'est pas modifié ; la partie `glb-stats` de `--analyse` décrit le fichier d'origine.
-- `--analyse` et le rapport final donnent : le nombre d'objets exclus, les triangles retirés, les octets gagnés (géométrie et images qu'aucun objet conservé n'utilise ; **0** quand tous les exclus partagent leurs primitives ou leurs images avec des objets conservés, par exemple un cube commun : le rapport le dit alors, et chiffre les octets partagés non gagnés), le nombre d'objets au nom correspondant mais conservés par les garde-fous, et les 20 noms les plus fréquents avec leur nombre. `X.tiles.json` reçoit une clé `excluded` (motifs, garde-fous, `count`, `triangles`, `bytesSaved`, `bytesShared`, `names`) seulement quand `--exclure` est utilisé.
+- `--analyse` et le rapport final donnent : le nombre d'objets exclus, les triangles retirés, les octets gagnés (géométrie et images qu'aucun objet conservé n'utilise ; **0** quand tous les exclus partagent leurs primitives ou leurs images avec des objets conservés, par exemple un cube commun : le rapport le dit alors, et chiffre les octets partagés non gagnés), le nombre d'objets au nom correspondant mais conservés par les garde-fous, et les 20 noms les plus fréquents avec leur nombre. `X.tiles.json` reçoit une clé `excluded` (motifs, garde-fous, `count`, `triangles`, `bytesSaved`, `bytesShared`, `names`) seulement quand `--exclude` est utilisé.
 
 ### Références d'objets (v32) : lier une zone à un objet en mode tuiles
 
 Chaque nœud copié dans une tuile reçoit dans ses `extras` : **`ref`**, sa référence stable dans le modèle d'origine, et **`box`**, la boîte (monde, 6 nombres en m) de **l'objet entier**, même quand il est réparti sur plusieurs tuiles (chaque morceau porte la même boîte). `X.tiles.json` porte `"nodeRefs": 1`.
 
-- **Règle de la référence** (celle de `nom#index` du mode GLB unique, calculée sur le GLB entier) : le **nom** du nœud (à défaut le nom de son mesh) s'il est unique dans tout le modèle ; sinon **`nom#index`**, index = rang du nœud parmi les nœuds de ce nom, dans l'ordre de parcours (pré-ordre, enfants dans l'ordre du fichier). Les objets retirés par `--exclure` comptent dans les rangs (une référence ne change pas quand on exclut autre chose). Un nœud sans nom n'a pas de référence ; une référence de plus de 200 caractères n'est pas écrite.
+- **Règle de la référence** (celle de `nom#index` du mode GLB unique, calculée sur le GLB entier) : le **nom** du nœud (à défaut le nom de son mesh) s'il est unique dans tout le modèle ; sinon **`nom#index`**, index = rang du nœud parmi les nœuds de ce nom, dans l'ordre de parcours (pré-ordre, enfants dans l'ordre du fichier). Les objets retirés par `--exclude` comptent dans les rangs (une référence ne change pas quand on exclut autre chose). Un nœud sans nom n'a pas de référence ; une référence de plus de 200 caractères n'est pas écrite.
 - Ces références sont celles des **noms du GLB**, pas celles que verrait le viewer en ouvrant le même GLB entier (le chargeur de three.js renomme les doublons) : une zone liée écrite en mode tuiles s'utilise en mode tuiles.
 - **Coût mesuré** (GLB synthétique de 40 000 nœuds) : +0,5 s sur 8 s, +3 Mo sur 230 Mo de tuiles.
-- Des tuiles écrites **avant la v32** n'ont pas ces extras : les zones liées y restent ignorées. `glb2tiles.py --analyse` (et `--vue-ensemble-seule`) le signalent quand `X.tiles.json` existe déjà sans `nodeRefs` ; `glb2html.py --tiles` aussi, s'il y a des zones liées. Il faut **refaire le découpage** (sans `--vue-ensemble-seule`).
+- Des tuiles écrites **avant la v32** n'ont pas ces extras : les zones liées y restent ignorées. `glb2tiles.py --analyse` (et `--overview-only`) le signalent quand `X.tiles.json` existe déjà sans `nodeRefs` ; `glb2html.py --tiles` aussi, s'il y a des zones liées. Il faut **refaire le découpage** (sans `--overview-only`).
 
 ### Images vides ou invalides (v31)
 
@@ -568,20 +560,20 @@ Une image embarquée **de 0 octet**, d'un **autre format** que PNG, JPEG ou WebP
 
 But : en vue globale, voir **toute** la région ; en promenade, voir **au loin** au-delà des tuiles chargées. Les tuiles détaillées restent la seule source des collisions et du sol.
 
-- **Écrite avec les tuiles** (ou seule avec `--vue-ensemble-seule`), à côté de `X.tiles.json`, et référencée dans `X.tiles.json` (clé `overview` : `file`, `bytes`, `triangles`, `terrainTriangles`, `objects`, `candidates`, `omitted`, `effectiveMinExtent`, `effectiveTerrainStep`, `resolution`, `seconds`, `colors`, `params`).
+- **Écrite avec les tuiles** (ou seule avec `--overview-only`), à côté de `X.tiles.json`, et référencée dans `X.tiles.json` (clé `overview` : `file`, `bytes`, `triangles`, `terrainTriangles`, `objects`, `candidates`, `omitted`, `effectiveMinExtent`, `effectiveTerrainStep`, `resolution`, `seconds`, `colors`, `params`).
 - **Un nœud par fichier de tuile**, nommé comme la tuile (`X.tiles/T_3_2_5.glb`, et `extras.tile`) : la page masque la cellule dès que la tuile détaillée est **affichée** et la réaffiche quand la tuile est déchargée ou en échec. Les objets d'une cellule sont exactement ceux de la tuile : pas de double affichage, pas de trou pendant le chargement.
 - **Aucune image.** Un seul matériau ; les couleurs sont des **couleurs de sommets**. Chaque matériau devient une couleur unie : la **couleur moyenne de sa texture** si Pillow est installé (moyenne en espace linéaire, pondérée par l'opacité), sinon sa **couleur de base**. Les couleurs de sommets du terrain sont conservées. Sans normales : la page affiche la vue d'ensemble en ombrage plat. Les primitives translucides (`alphaMode` BLEND : verre, effets) et les objets à squelette sont omis.
 - **Chaque primitive UNIQUE est simplifiée une seule fois**, puis recopiée avec la matrice de chacune de ses instances (jamais simplifiée par instance). Méthode : regroupement de sommets sur une grille de côté (plus grande dimension de la primitive) / `--ov-resolution` ; un sommet par cellule (moyenne), triangles dégénérés et doublons retirés. Python standard seulement ; Pillow est facultatif (couleurs moyennes).
-- **Terrain simplifié à part.** Les pièces marquées `extras.terrain` (patches d'`oar2glb.py`) sont rééchantillonnées sur un **réseau régulier commun** de pas `--ov-terrain-pas` : hauteur et couleur interpolées dans les triangles d'origine, une case appartient à une seule pièce (donc à une seule tuile). Un point du réseau sur un bord commun reçoit la même hauteur des deux côtés : **aucune fente entre les patches** (testé). Le terrain prend au plus la moitié des budgets ; sinon son pas grossit (× 1,5) jusqu'à ce qu'il tienne (dit dans le journal).
-- **Objets omis.** Ceux dont la plus grande dimension est sous `--ov-seuil` (3 m par défaut : à 600 m, distance à laquelle la vue d'ensemble fait l'essentiel de l'image, 3 m couvrent environ 8 pixels sur un écran de 1 080 pixels de haut avec le champ de vision de 38 degrés ; à 210 m, limite du rayon de chargement, 22 pixels). Ce choix vient d'un calcul de taille à l'écran, **pas d'une mesure sur ta région** : `--analyse` imprime le nombre d'instances et de triangles au-dessus de 1, 2, 3, 4, 8, 16, 32 et 64 m pour décider sur tes données. Si le budget est atteint, les **plus grands objets sont gardés d'abord** et le seuil effectif monte (`effectiveMinExtent`) ; au-delà de `--ov-seuil-max` la résolution baisse et le calcul est refait.
-- **Budgets** : 25 Mo et 1 500 000 triangles pour toute la région (`--ov-budget`, `--ov-budget-tri`). Le rapport donne le poids, les triangles (dont le terrain), les objets gardés sur candidats, les objets omis (trop petits / par le budget / à squelette), les primitives translucides omises, les couleurs (moyennes de texture, illisibles, Pillow absent) et le temps.
+- **Terrain simplifié à part.** Les pièces marquées `extras.terrain` (patches d'`oar2glb.py`) sont rééchantillonnées sur un **réseau régulier commun** de pas `--ov-terrain-step` : hauteur et couleur interpolées dans les triangles d'origine, une case appartient à une seule pièce (donc à une seule tuile). Un point du réseau sur un bord commun reçoit la même hauteur des deux côtés : **aucune fente entre les patches** (testé). Le terrain prend au plus la moitié des budgets ; sinon son pas grossit (× 1,5) jusqu'à ce qu'il tienne (dit dans le journal).
+- **Objets omis.** Ceux dont la plus grande dimension est sous `--ov-threshold` (3 m par défaut : à 600 m, distance à laquelle la vue d'ensemble fait l'essentiel de l'image, 3 m couvrent environ 8 pixels sur un écran de 1 080 pixels de haut avec le champ de vision de 38 degrés ; à 210 m, limite du rayon de chargement, 22 pixels). Ce choix vient d'un calcul de taille à l'écran, **pas d'une mesure sur ta région** : `--analyse` imprime le nombre d'instances et de triangles au-dessus de 1, 2, 3, 4, 8, 16, 32 et 64 m pour décider sur tes données. Si le budget est atteint, les **plus grands objets sont gardés d'abord** et le seuil effectif monte (`effectiveMinExtent`) ; au-delà de `--ov-threshold-max` la résolution baisse et le calcul est refait.
+- **Budgets** : 25 Mo et 1 500 000 triangles pour toute la région (`--ov-budget`, `--ov-budget-triangles`). Le rapport donne le poids, les triangles (dont le terrain), les objets gardés sur candidats, les objets omis (trop petits / par le budget / à squelette), les primitives translucides omises, les couleurs (moyennes de texture, illisibles, Pillow absent) et le temps.
 - **Le GLB n'est jamais chargé en entier** (même lecture par morceaux de 4 Mo au plus que pour les tuiles), avec une progression (« [vue d'ensemble : primitives] … ») ; les pièces de terrain sont lues une à une.
 - **Durée.** Débit mesuré sur des GLB synthétiques de taille croissante (0,5 ; 2 ; 8 ; 24 millions de triangles uniques) : environ 1,8 million de triangles uniques par seconde, linéaire (0,3 ; 1,2 ; 4,5 ; 13 s), soit 14 à 680 Mo de GLB pour 25 à 164 Mo de mémoire ; 20 000 petits meshes (4 millions de triangles, 40 000 instances) : 15 s, 377 Mo ; terrain de 1 024 m en 256 patches de 4 225 sommets : 3,6 s, 57 Mo. L'estimation pour la région de 1,3 Go est donnée dans `CHANGELOG.md` (v31).
 
 ### Comment le découpage se décide
 
-- Quadtree adaptatif sur le plan X,Z (Y est la hauteur), uniquement sur les cellules non vides. Une cellule est subdivisée tant que son poids autonome dépasse `--budget` **ou** ses triangles dépassent `--budget-tri`, et que son côté dépasse `--min`.
-- Un **objet racine** (nœud de premier niveau de la scène) reste **entier**, dans la cellule du centre de sa boîte, si son poids autonome ≤ `--entier-poids` **et** son étendue ≤ `--entier-etendue`. Sinon il est **réparti instance par instance** : chaque instance va dans la cellule de son propre centre, et les nœuds parents sont recopiés (sans mesh) avec leurs transformations d'origine.
+- Quadtree adaptatif sur le plan X,Z (Y est la hauteur), uniquement sur les cellules non vides. Une cellule est subdivisée tant que son poids autonome dépasse `--budget` **ou** ses triangles dépassent `--budget-triangles`, et que son côté dépasse `--min`.
+- Un **objet racine** (nœud de premier niveau de la scène) reste **entier**, dans la cellule du centre de sa boîte, si son poids autonome ≤ `--whole-weight` **et** son étendue ≤ `--whole-extent`. Sinon il est **réparti instance par instance** : chaque instance va dans la cellule de son propre centre, et les nœuds parents sont recopiés (sans mesh) avec leurs transformations d'origine.
 - Un objet qui porte un **skin** n'est jamais réparti : son objet racine entier va dans la tuile du centre de sa boîte, avec le skin, les nœuds de joints (même s'ils sont hors de l'objet) et les `inverseBindMatrices`.
 - Les meshes partagés entre tuiles sont **dupliqués** dans chaque tuile qui les utilise (tuiles autonomes). La duplication réelle est écrite dans le rapport.
 - Les sommets de chaque primitive sont **compactés** : seuls les sommets indexés sont gardés et renumérotés, avec le plus petit type d'indices (16 bits si possible). Les triangles sont identiques.
@@ -598,12 +590,12 @@ But : en vue globale, voir **toute** la région ; en promenade, voir **au loin**
  "generator": "glb2tiles v28 (21/10/2026)",
  "source": "X.glb",
  "extent": {"min": [x,y,z], "max": [x,y,z]},     étendue globale du contenu
- "params": {"budgetMo": 32, "budgetTriangles": 1500000, "minCell": 16, "wholeWeightMo": 16, "wholeExtent": 256,
-            "thresholdMo": 150, "thresholdTriangles": 3000000, "outlier": 1000},
+ "params": {"budgetMB": 32, "budgetTriangles": 1500000, "minCell": 16, "wholeWeightMB": 16, "wholeExtent": 256,
+            "thresholdMB": 150, "thresholdTriangles": 3000000, "outlier": 1000},
  "warnings": ["..."],               tuiles hors budget, valeurs aberrantes, extensions non recopiées
  "roots": {"whole": 1700, "split": 125},         objets racine gardés entiers / répartis
  "duplication": 1.8,                somme des octets de géométrie des tuiles / géométrie unique du GLB
- "nodeRefs": 1,                     extras.ref / extras.box dans les nœuds des tuiles (v32 ; 0 avec --sans-references)
+ "nodeRefs": 1,                     extras.ref / extras.box dans les nœuds des tuiles (v32 ; 0 avec --no-refs)
  "replacedImages": {"distinct": 778, "occurrences": 1200, "grey": 128},    images vides ou invalides remplacées (v31)
  "overview": {"file": "X.overview.glb", "bytes": 23000000, "triangles": 1400000, "terrainTriangles": 131072,
               "objects": 21000, "candidates": 30000, "omitted": {"small": 9000, "skinned": 12, "translucentPrimitives": 800, "budget": 0},
@@ -615,7 +607,7 @@ But : en vue globale, voir **toute** la région ; en promenade, voir **au loin**
 }
 ```
 
-Relancer réécrit les `T_*_*_*.glb` du dossier `X.tiles/` ; **ensuite** (v31), les `T_*_*_*.glb` d'une exécution précédente qui ne figurent plus dans le nouvel index sont **supprimés** et le rapport en donne le nombre (les autres fichiers du dossier ne sont pas touchés). `--vue-ensemble-seule` ne touche à aucune tuile.
+Relancer réécrit les `T_*_*_*.glb` du dossier `X.tiles/` ; **ensuite** (v31), les `T_*_*_*.glb` d'une exécution précédente qui ne figurent plus dans le nouvel index sont **supprimés** et le rapport en donne le nombre (les autres fichiers du dossier ne sont pas touchés). `--overview-only` ne touche à aucune tuile.
 
 ### Lire le journal (`glb2tiles.log`, à côté du script)
 
@@ -632,9 +624,9 @@ Dans `--analyse`, la ligne « Lecture » indique les octets lus. Les positions n
 | « Tuile … hors budget » | un mesh unique (terrain, mer) dépasse le budget, ou la cellule minimale est atteinte | normal à ce stade : voir la feuille de route (découpage par triangles) |
 | Beaucoup de tuiles pour un petit GLB | `--budget` trop petit ou duplication forte | relancer `--analyse` avec d'autres valeurs |
 | « THREE.GLTFLoader: Couldn't load texture » sur une tuile faite avant la v31 | image de 0 octet ou tronquée dans le GLB | refaire le découpage avec la v31 (images remplacées par un gris) |
-| « Le découpage recalculé … ne correspond pas à X.tiles.json » | `--vue-ensemble-seule` lancé avec d'autres options de découpage | reprendre exactement les options du découpage d'origine |
-| « Pillow absent » dans le rapport | la vue d'ensemble utilise la couleur de base des matériaux (souvent blanche pour un matériau texturé) | `pip install pillow` puis `--vue-ensemble-seule` |
-| Vue d'ensemble trop lourde ou objets manquants | budget atteint, `effectiveMinExtent` monté | `--ov-budget` / `--ov-budget-tri` plus grands, ou `--ov-seuil` plus haut ; lire les lignes « objets omis » |
+| « Le découpage recalculé … ne correspond pas à X.tiles.json » | `--overview-only` lancé avec d'autres options de découpage | reprendre exactement les options du découpage d'origine |
+| « Pillow absent » dans le rapport | la vue d'ensemble utilise la couleur de base des matériaux (souvent blanche pour un matériau texturé) | `pip install pillow` puis `--overview-only` |
+| Vue d'ensemble trop lourde ou objets manquants | budget atteint, `effectiveMinExtent` monté | `--ov-budget` / `--ov-budget-triangles` plus grands, ou `--ov-threshold` plus haut ; lire les lignes « objets omis » |
 | Instance à 3 000 m signalée | un prim géant ou un objet égaré | l'outil la garde ; la corriger dans le modèle si c'est une erreur |
 
 Test : `python tests/glb2tiles.py` (GLB synthétiques, sans navigateur ni réseau) ; `python tests/v31.py` (images invalides, vue d'ensemble, sortie de promenade).
@@ -647,10 +639,10 @@ Une région de plusieurs centaines de Mo ou de plusieurs Go ne tient pas dans un
 
 | Pour | Commande |
 |---|---|
-| Découper | `python glb2tiles.py "P:\regions\4X4.glb" --exclure "Freebies"` (écrit `4X4.tiles.json` et `4X4.tiles\` à côté du GLB) |
+| Découper | `python glb2tiles.py "P:\regions\4X4.glb" --exclude "Freebies"` (écrit `4X4.tiles.json` et `4X4.tiles\` à côté du GLB) |
 | Mettre la région dans le site | `python glb2html.py --shared-shell -o "P:\site\4X4.html" --tiles "P:\regions\4X4.tiles.json"` |
 | Ouvrir | `http://…/index.html?region=4X4` (la coquille commune, comme § 16) |
-| Essayer un autre rayon | `index.html?region=4X4&rayon=300` |
+| Essayer un autre rayon | `index.html?region=4X4&radius=300` |
 | Changer un réglage | relancer la même commande avec l'option : rien de lourd n'est recopié |
 
 `-o` désigne la région (son nom sans extension). Pas de `.glb` en entrée. `--tiles` seul (sans `--shared-shell`) donne une coquille propre `4X4.html`. Sont écrits : `4X4.config.json` (champ `tiles`), `4X4.zones.json` (si absent ou si une source de zones est donnée), la coquille et `lib/` s'ils manquent. **`4X4.tiles.json` et le dossier des tuiles ne sont copiés que s'ils ne sont pas déjà à côté de la page** : mettre `-o` dans le dossier des tuiles évite toute copie (« tuiles déjà à côté de la page : rien n'est copié ») ; sinon le script copie ce qui manque ou a une autre taille, fichier par fichier, et dit combien. Il n'y a pas de `4X4.glb`. Comme tout mode modulaire, la page demande http/https.
@@ -661,22 +653,22 @@ Une région de plusieurs centaines de Mo ou de plusieurs Go ne tient pas dans un
 |---|---|---|
 | `tileRadius` / `--tile-radius` | 150 | m : charger les tuiles dont la **boîte** (min / max de `X.tiles.json`) est à moins de ce rayon de l'avatar, en plan X,Z (distance 0 = l'avatar est dans la boîte) |
 | `tileMargin` / `--tile-margin` | 60 | m : décharger au-delà de rayon + marge (hystérésis : pas de va-et-vient à la limite) |
-| `tileMaxMo` / `--tile-max-mo` | 200 | Mo de tuiles chargées en même temps (poids des fichiers `.glb`) |
-| `tileMaxTri` / `--tile-max-tri` | 8 000 000 | triangles de tuiles chargées en même temps |
+| `tileMaxMB` / `--tile-max-mb` | 200 | Mo de tuiles chargées en même temps (poids des fichiers `.glb`) |
+| `tileMaxTriangles` / `--tile-max-triangles` | 8 000 000 | triangles de tuiles chargées en même temps |
 | `tileConcurrency` / `--tile-concurrency` | 4 | téléchargements simultanés |
 
-`?rayon=NNN` dans l'adresse remplace `tileRadius` pour cette ouverture (10 à 5 000). Ces clés n'existent dans la config que pour une région en tuiles.
+`?radius=NNN` dans l'adresse remplace `tileRadius` pour cette ouverture (10 à 5 000). Ces clés n'existent dans la config que pour une région en tuiles.
 
 ### Ce que fait la page
 
 - **Départ.** Les tuiles autour du point de départ se chargent d'abord, les plus proches en premier : l'arrivée du lien (`#spawn=…`, sinon l'arrivée `default`) si la page est ouverte par un portail, sinon la cible de la caméra. « Chargement… » reste affiché jusqu'à ce que les tuiles qui contiennent ce point soient prêtes (ou en échec) ; les autres arrivent ensuite. Un sol partiel est normal tant que tout n'est pas là : une tuile ne contient que ses patches de terrain et ses objets.
-- **Pendant la visite.** Le point de référence est l'avatar en promenade, ou la cible (le cercle d'atterrissage) en vue globale. Toutes les 250 ms : déchargement des tuiles au-delà de rayon + marge, chargement de celles du rayon. Si `tileMaxMo` ou `tileMaxTri` serait dépassé, les tuiles **chargées les plus lointaines** (plus lointaines que celle à charger) partent d'abord ; une tuile qui contient l'avatar est chargée même si elle dépasse seule le budget (avertissement en console).
-- **Mémoire.** Une tuile déchargée libère ses géométries, matériaux, textures et images décodées. Le budget compte le **poids des fichiers** : des textures décodées pèsent bien plus en mémoire graphique que leur fichier compressé ; en cas de page lourde, baisser `tileMaxMo` ou `tileRadius`. La grille de collision de chaque tuile coûte environ 36 octets par triangle de sol et de mur, plus l'index : à 8 millions de triangles, compter plusieurs centaines de Mo.
+- **Pendant la visite.** Le point de référence est l'avatar en promenade, ou la cible (le cercle d'atterrissage) en vue globale. Toutes les 250 ms : déchargement des tuiles au-delà de rayon + marge, chargement de celles du rayon. Si `tileMaxMB` ou `tileMaxTriangles` serait dépassé, les tuiles **chargées les plus lointaines** (plus lointaines que celle à charger) partent d'abord ; une tuile qui contient l'avatar est chargée même si elle dépasse seule le budget (avertissement en console).
+- **Mémoire.** Une tuile déchargée libère ses géométries, matériaux, textures et images décodées. Le budget compte le **poids des fichiers** : des textures décodées pèsent bien plus en mémoire graphique que leur fichier compressé ; en cas de page lourde, baisser `tileMaxMB` ou `tileRadius`. La grille de collision de chaque tuile coûte environ 36 octets par triangle de sol et de mur, plus l'index : à 8 millions de triangles, compter plusieurs centaines de Mo.
 - **Promenade et collisions.** Une grille de collision est construite par tuile, par tranches pour ne pas figer l'image, et supprimée avec la tuile. Sol et murs ne viennent que des tuiles prêtes. L'avatar **n'avance jamais vers un point dont une tuile n'est pas prête** : il reste sur place, le texte « Chargement du sol… » s'affiche, et il repart dès que la tuile est prête (jamais de chute). **F** attend la tuile sous l'avatar avant de démarrer la promenade (F de nouveau : annuler) ; un portail interne ou un double-clic vers une zone non chargée attend de même. Les patches de terrain ont des bords communs : le sol se prolonge d'une tuile à l'autre sans marche.
 - **Tuile en échec** (fichier absent, HTTP 404, GLB illisible) : message en haut de la page et dans la ligne d'information, avertissement en console, nouvelle tentative 3 s, 6 s, 12 s… jusqu'à 30 s après. Les autres tuiles ne sont pas retardées. Un avatar ne traverse pas la boîte d'une tuile en échec (même règle que « pas prête »).
 - **Ligne d'information** (texte seul), dans le panneau d'aide en bas à gauche (masquable avec H), sinon dans un petit cadre : « Tuiles : 7 chargées / 106 · 74 Mo · 2,10 M triangles », avec « · 2 en cours » et « · 1 en échec (nouvelle tentative) » quand il y en a, puis (v31) « · Vue d'ensemble (à part) : 23,1 Mo · 1,40 M triangles » : la vue d'ensemble est comptée à part, hors des 200 Mo / 8 M triangles du budget.
-- **Vue d'ensemble (v31).** Si `X.tiles.json` mentionne `overview`, la page la charge **en premier** (avant toute tuile), avec les mêmes règles de sécurité de chemin que les tuiles. Elle montre toute la région en géométrie légère, sans image. Chaque cellule (un nœud par fichier de tuile) est **masquée dès que la tuile détaillée correspondante est affichée** et réaffichée quand la tuile est déchargée ou en échec : jamais les deux, jamais de trou pendant un chargement. Elle ne sert **ni aux collisions, ni au sol, ni à « Chargement du sol… »** (la promenade attend toujours la tuile), et n'entre pas dans le budget `tileMaxMo` / `tileMaxTri`. Un **double-clic** dessus en vue globale place la cible sur le point lointain ; le sol réel est repris quand sa tuile est prête. Si elle est introuvable ou illisible : avertissement en console, « Vue d'ensemble indisponible » dans la ligne d'information, la région fonctionne comme en v30.
-- **Vue globale.** Avec la vue d'ensemble, la caméra se cadre sur **toute la région** (distance maximale, brouillard et plan lointain suivent l'étendue). Sans elle (ancien `X.tiles.json` ou `--sans-vue-ensemble`), comme en v30 : seules les tuiles chargées autour de la cible, et la caméra se cadre sur le rayon de chargement.
+- **Vue d'ensemble (v31).** Si `X.tiles.json` mentionne `overview`, la page la charge **en premier** (avant toute tuile), avec les mêmes règles de sécurité de chemin que les tuiles. Elle montre toute la région en géométrie légère, sans image. Chaque cellule (un nœud par fichier de tuile) est **masquée dès que la tuile détaillée correspondante est affichée** et réaffichée quand la tuile est déchargée ou en échec : jamais les deux, jamais de trou pendant un chargement. Elle ne sert **ni aux collisions, ni au sol, ni à « Chargement du sol… »** (la promenade attend toujours la tuile), et n'entre pas dans le budget `tileMaxMB` / `tileMaxTriangles`. Un **double-clic** dessus en vue globale place la cible sur le point lointain ; le sol réel est repris quand sa tuile est prête. Si elle est introuvable ou illisible : avertissement en console, « Vue d'ensemble indisponible » dans la ligne d'information, la région fonctionne comme en v30.
+- **Vue globale.** Avec la vue d'ensemble, la caméra se cadre sur **toute la région** (distance maximale, brouillard et plan lointain suivent l'étendue). Sans elle (ancien `X.tiles.json` ou `--no-overview`), comme en v30 : seules les tuiles chargées autour de la cible, et la caméra se cadre sur le rayon de chargement.
 - **Sortie de promenade (v31).** F pour sortir place la cible de la vue globale au sol sous l'avatar et garde le décalage de caméra d'avant l'entrée en promenade ; le chargeur suit cette cible, donc les tuiles autour de l'avatar ne sont pas déchargées.
 
 ### Repère, rotation, mer, zones
@@ -688,7 +680,7 @@ Une région de plusieurs centaines de Mo ou de plusieurs Go ne tient pas dans un
 
 ### Limites de cette version
 
-- La vue d'ensemble est grossière : les petits objets (sous `--ov-seuil`), le verre et les objets à squelette n'y figurent pas, les couleurs sont unies, le terrain est au pas de 4 m ; à la limite d'une tuile chargée, la hauteur du sol peut différer de quelques décimètres entre la tuile (1 m) et la vue d'ensemble (4 m).
+- La vue d'ensemble est grossière : les petits objets (sous `--ov-threshold`), le verre et les objets à squelette n'y figurent pas, les couleurs sont unies, le terrain est au pas de 4 m ; à la limite d'une tuile chargée, la hauteur du sol peut différer de quelques décimètres entre la tuile (1 m) et la vue d'ensemble (4 m).
 - Les meshes partagés entre tuiles sont dupliqués dans chaque tuile qui les utilise (tuiles autonomes) : plus de Mo téléchargés.
 - Un mesh unique plus lourd que le budget de `glb2tiles.py` reste dans une seule tuile (pas de découpage par triangles).
 - Une tuile très lourde en triangles reste coûteuse à analyser : la construction de sa grille de collision est découpée, pas supprimée.
@@ -700,12 +692,12 @@ Une région de plusieurs centaines de Mo ou de plusieurs Go ne tient pas dans un
 |---|---|---|
 | « Erreur de chargement : … X.tiles.json : HTTP 404 » | `X.tiles.json` n'est pas à côté de la page, ou le champ `tiles` de la config est faux | relancer `glb2html.py --tiles` ; vérifier le dossier |
 | « adresse de tuiles refusée » | le champ `tiles` contient `..`, `:`, `?`, `#` ou commence par `/` | un chemin relatif simple (`X.tiles.json`) |
-| Sol partiel, trous | tuiles hors du rayon, ou en échec | monter `tileRadius` (ou `?rayon=`), voir la ligne d'information et la console |
+| Sol partiel, trous | tuiles hors du rayon, ou en échec | monter `tileRadius` (ou `?radius=`), voir la ligne d'information et la console |
 | « Chargement du sol… » qui reste | une tuile en échec devant l'avatar | corriger le fichier ; la page réessaie seule |
-| Au loin, rien ou un trou | pas de vue d'ensemble (région découpée avant la v31, ou `--sans-vue-ensemble`) | `glb2tiles.py … --vue-ensemble-seule` avec les options d'origine, puis relancer `glb2html.py --tiles` (copie le fichier avec les tuiles) |
+| Au loin, rien ou un trou | pas de vue d'ensemble (région découpée avant la v31, ou `--no-overview`) | `glb2tiles.py … --overview-only` avec les options d'origine, puis relancer `glb2html.py --tiles` (copie le fichier avec les tuiles) |
 | « Vue d'ensemble indisponible » | `X.overview.glb` absent à côté de la page, ou illisible | le copier à côté de `X.tiles.json` ; relancer `glb2html.py --tiles` |
-| Page lourde, ralentie | trop de textures chargées | baisser `tileMaxMo`, `tileMaxTri` ou `tileRadius` |
-| Les zones liées n'apparaissent pas | la tuile de l'objet n'est pas chargée (elles n'existent que tuile chargée), ou les tuiles datent d'avant la v32 (ignorées, avertissement en console) | s'approcher / `?rayon=` ; sinon refaire le découpage avec `glb2tiles.py` v32 (§ 17), ou utiliser des zones libres à coordonnées |
+| Page lourde, ralentie | trop de textures chargées | baisser `tileMaxMB`, `tileMaxTriangles` ou `tileRadius` |
+| Les zones liées n'apparaissent pas | la tuile de l'objet n'est pas chargée (elles n'existent que tuile chargée), ou les tuiles datent d'avant la v32 (ignorées, avertissement en console) | s'approcher / `?radius=` ; sinon refaire le découpage avec `glb2tiles.py` v32 (§ 17), ou utiliser des zones libres à coordonnées |
 | Les zones sont décalées | elles viennent du viewer (repère recentré) | les écrire dans le repère du modèle d'origine |
 
 Test : `python tests/tuiles.py` (région synthétique de 16 tuiles, Chromium sans tête) et `python tests/v31.py` (vue d'ensemble dans la coquille, sortie de promenade).
@@ -726,7 +718,7 @@ Le viewer (`glb-viewer.html`) ouvre une région découpée en tuiles et la montr
 8. **Exporter les zones** : « Exporter zones (.json) » écrit **`X.zones.json`** (X = nom de la région) dans ton dossier de téléchargements. Pour **compléter** une région déjà faite : ouvre la région, « Importer zones (.json) » avec le `X.zones.json` existant, ajoute les nouvelles zones, exporte de nouveau.
 9. **Régénérer la page** : renseigne « Chemin de glb2html.py » et clique sur **« Générer la ligne de commande PowerShell »** : le viewer écrit la commande complète (`--tiles`, `--zones`, `-o`, coquille commune, hauteur de la mer, présence, chat…). Lance-la depuis le dossier de `glb2html.py`, en corrigeant le chemin de `X.zones.json` s'il n'est pas à côté. Si la page existe déjà et que la coquille `index.html` a changé de version, supprime-la d'abord (une coquille existante différente n'est jamais écrasée : l'avertissement le dit).
 
-Autre façon d'ouvrir : par adresse, si le viewer est servi en http (par exemple `python -m http.server` lancé dans un dossier qui contient `glb-viewer.html` et, en dessous, la région) : `http://localhost:8000/glb-viewer.html?tuiles=region/X.tiles.json`. Le chemin est relatif à la page, sans `..`, sans `:`, `?` ni `#`.
+Autre façon d'ouvrir : par adresse, si le viewer est servi en http (par exemple `python -m http.server` lancé dans un dossier qui contient `glb-viewer.html` et, en dessous, la région) : `http://localhost:8000/glb-viewer.html?tiles=region/X.tiles.json`. Le chemin est relatif à la page, sans `..`, sans `:`, `?` ni `#`.
 
 **Ce qui est différent du mode GLB unique** : pas d'export HTML autonome ni de `.zip` (il n'y a pas de GLB unique ; les boutons sont désactivés) ; pas de rotation de la région (repère d'origine ; avec `glb2html.py --tiles --rotate`, les zones doivent déjà être dans le repère tourné) ; le trou de la mer est relatif au **centre de la région** (comme dans la page) ; la mer est à 20 m par défaut (`--sea-y` pour la changer, la commande l'écrit) ; le filaire des éléments traversables ne montre que les tuiles déjà chargées ; le texte d'une fiche de zone liée (« tuile non chargée ») ne se met à jour qu'au prochain changement de la liste (modifier ou ajouter une zone, cliquer une zone dans la scène), pas au moment où la tuile arrive ; la zone, elle, apparaît aussitôt dans la scène.
 
@@ -779,9 +771,9 @@ Le viewer écrit `targetExplicit` à vrai quand la cible de sa caméra n'est pas
 
 | Option | Valeur | Effet |
 |---|---|---|
-| `--zone-marker` | `discret` (défaut) | comportement d'avant : disque plat de 0,4 m semi-transparent et anneau fin |
-| | `portee` | **anneau fin et net au rayon réel de la zone**, sans cylindre ; un trait d'un pixel est ajouté à l'anneau plat pour qu'il reste tracé de loin |
-| | `aucun` | aucun marqueur ; la zone reste cliquable et se déclenche comme avant |
+| `--zone-marker` | `dot` (défaut ; `discret` avant la v43) | comportement d'avant : disque plat de 0,4 m semi-transparent et anneau fin |
+| | `range` (`portee` avant la v43) | **anneau fin et net au rayon réel de la zone**, sans cylindre ; un trait d'un pixel est ajouté à l'anneau plat pour qu'il reste tracé de loin |
+| | `none` (`aucun` avant la v43) | aucun marqueur ; la zone reste cliquable et se déclenche comme avant |
 | `--show-spawns` | (aucune) | dessine aussi les **arrivées** : petit disque de 0,3 m et anneau fin au sol. Sans cette option, les arrivées ne sont **jamais** dessinées dans la page exportée (seulement dans l'éditeur) |
 
 Ils concernent les portails et les zones libres (lien web, commande). Réglage dans le viewer : section « Zones » (menu « Marqueur des portails et zones libres », case « Dessiner les arrivées ») ; il figure dans le récapitulatif de la ligne de commande. Config : `zoneMarker`, `showSpawns`.
@@ -849,9 +841,9 @@ La coquille (`index.html`), `core.js` et `X.config.json` changent ; **les tuiles
 
 | Option | Rayon de la zone de survol / de clic (disque invisible au sol) |
 |---|---|
-| `--zone-marker portee` | **le rayon de l'anneau visible** (rayon réel de la zone ; 2 m au moins pour un panneau) : l'infobulle apparaît en survolant l'anneau ou son intérieur |
-| `--zone-marker discret` (défaut) | le rayon de la zone borné entre **0,6 m** (comme avant) et **1 m** |
-| `--zone-marker aucun` | 0,6 m, comme avant |
+| `--zone-marker range` | **le rayon de l'anneau visible** (rayon réel de la zone ; 2 m au moins pour un panneau) : l'infobulle apparaît en survolant l'anneau ou son intérieur |
+| `--zone-marker dot` (défaut) | le rayon de la zone borné entre **0,6 m** (comme avant) et **1 m** |
+| `--zone-marker none` | 0,6 m, comme avant |
 
 ### 19.3 Vol
 
@@ -865,13 +857,13 @@ En promenade, quand le pointeur est libéré (Échap, ou perte du focus), la pag
 
 Changer la couleur dans les Réglages pendant la connexion envoie `{"t":"color","color":N}` (au plus toutes les 300 ms, la dernière valeur part toujours). `presence_server.py` accepte un **entier de 0 à 0xFFFFFF** (sinon ignoré sans rien dire), ignore deux changements à moins de 0,2 s, met le visiteur à jour et diffuse `{"t":"color","id":…,"color":N}` aux autres ; un visiteur qui arrive ensuite reçoit la couleur à jour. L'avatar du visiteur lui-même (vue à la troisième personne) la prend aussi. Compatible : un ancien serveur ignore le message, un ancien client n'en envoie pas. **Relancer `presence_server.py`** pour en profiter.
 
-### 19.6 `glb2html.py --maj` : mettre à jour une région sans rien ressaisir
+### 19.6 `glb2html.py --update` : mettre à jour une région sans rien ressaisir
 
 | Option | Effet |
 |---|---|
-| `--maj` | lit `X.config.json` existant, **n'applique que les options explicitement données** (une valeur égale à la valeur par défaut, mais donnée, est appliquée), garde tout le reste (clés inconnues comprises) et `X.zones.json` (réécrit seulement avec `--zones`), écrit la version courante, **renouvelle la coquille** si elle diffère de celle de cette version (ancienne copie gardée sous `index.avant-AAAAMMJJ-HHMMSS.html`) et écrit `lib/` s'il manque. Sans `X.config.json`, échoue en proposant la commande sans `--maj`. Exclut `--settings` |
+| `--update` | lit `X.config.json` existant, **n'applique que les options explicitement données** (une valeur égale à la valeur par défaut, mais donnée, est appliquée), garde tout le reste (clés inconnues comprises) et `X.zones.json` (réécrit seulement avec `--zones`), écrit la version courante, **renouvelle la coquille** si elle diffère de celle de cette version (ancienne copie gardée sous `index.avant-AAAAMMJJ-HHMMSS.html`) et écrit `lib/` s'il manque. Sans `X.config.json`, échoue en proposant la commande sans `--update`. Exclut `--settings` |
 
-Forme : `python glb2html.py --maj -o "X.html" [--shared-shell [COQUILLE.html]] [--tiles "X.tiles.json" | "X.glb"] [options]`. Sans `--shared-shell`, la page `X.html` doit exister. La coquille est **partagée par les autres régions du dossier** : elles gardent leur comportement (les anciennes configurations restent comprises ; aucune clé de config n'est nouvelle en v34). Le compte rendu liste les clés changées. Le profil (`--profile`) ne filtre les zones qu'à l'écriture de la liste : ajouter `--zones` pour la réécrire.
+Forme : `python glb2html.py --update -o "X.html" [--shared-shell [COQUILLE.html]] [--tiles "X.tiles.json" | "X.glb"] [options]`. Sans `--shared-shell`, la page `X.html` doit exister. La coquille est **partagée par les autres régions du dossier** : elles gardent leur comportement (les anciennes configurations restent comprises ; aucune clé de config n'est nouvelle en v34). Le compte rendu liste les clés changées. Le profil (`--profile`) ne filtre les zones qu'à l'écriture de la liste : ajouter `--zones` pour la réécrire.
 
 ### 19.7 Pseudo, lien personnel, page de lancement
 
@@ -931,28 +923,28 @@ Gardées telles quelles : ZQSD / WASD / flèches, Espace, Entrée, G, R, V, H, I
 |---|---|---|
 | `--zone-info-dist M` | `zoneInfoDist` | distance, **en promenade**, jusqu'à laquelle l'infobulle, le clic et le **nom affiché** (« Toujours afficher le nom ») des zones fonctionnent. **150 m par défaut depuis la v37** (40 m en v35 et v36), de **5 à 500** (hors bornes : ramené à la borne). Réglable dans le viewer (section « Promenade »), repris dans la ligne de commande. Un nom plus loin que cette distance est masqué en promenade et réapparaît en vue globale |
 
-`glb2html.py --maj --zone-info-dist 60` suffit à l'appliquer à une région déjà publiée (§ 20.7).
+`glb2html.py --update --zone-info-dist 60` suffit à l'appliquer à une région déjà publiée (§ 20.7).
 
 ### 20.6 Copier dans le presse-papiers
 
 Tous les boutons « copier » (lien personnel, lien de ma position, point visé, cible, commande) utilisent `navigator.clipboard.writeText` dans un **contexte sécurisé** (https, localhost), et sinon, **en http sur une adresse publique**, un repli : champ temporaire hors écran, sélection, `document.execCommand('copy')`, suppression. La page affiche **« Copié »** quelques secondes. Si tout échoue, le champ du lien reste **affiché et sélectionné**, avec « Copie impossible : le texte est sélectionné, fais Ctrl+C ».
 
-### 20.7 `--maj` et la carte des mondes
+### 20.7 `--update` et la carte des mondes
 
-`glb2html.py --maj` accepte maintenant aussi `--register FICHIER`, `--region-name`, `--region-xy`, `--region-url`, `--region-spawn`, `--thumb`, `--map`, `--map-url` et `--map-page FICHIER.html` : il applique ce qui est donné et garde tout le reste (config et zones, comme avant). Le salon et la présence de la fiche viennent de la config existante quand tu ne les redonnes pas.
+`glb2html.py --update` accepte maintenant aussi `--register FICHIER`, `--region-name`, `--region-xy`, `--region-url`, `--region-spawn`, `--thumb`, `--map`, `--map-url` et `--map-page FICHIER.html` : il applique ce qui est donné et garde tout le reste (config et zones, comme avant). Le salon et la présence de la fiche viennent de la config existante quand tu ne les redonnes pas.
 
-**Avec `--maj`, les chemins relatifs de `--register`, `--map`, `--map-page` et `--thumb` sont relatifs au dossier de la page (celui de `-o`)**, et non au dossier des outils ni au dossier de lancement ; le message de fin le rappelle avec le dossier. Un chemin absolu est respecté. `--region-name`, `--region-url`, `--region-xy`, `--region-spawn` et `--thumb` sans `--register` sont ignorés avec un avertissement.
+**Avec `--update`, les chemins relatifs de `--register`, `--map`, `--map-page` et `--thumb` sont relatifs au dossier de la page (celui de `-o`)**, et non au dossier des outils ni au dossier de lancement ; le message de fin le rappelle avec le dossier. Un chemin absolu est respecté. `--region-name`, `--region-url`, `--region-xy`, `--region-spawn` et `--thumb` sans `--register` sont ignorés avec un avertissement.
 
-**Sans `--maj`**, l'ancien comportement est conservé (un chemin relatif de `--register` est cherché dans le dossier de lancement, sinon dans le dossier des outils, où il est créé) ; quand le fichier n'est pas à côté de la page `-o`, une ligne dit où `regions.json` est écrit et propose `--maj` ou un chemin complet.
+**Sans `--update`**, l'ancien comportement est conservé (un chemin relatif de `--register` est cherché dans le dossier de lancement, sinon dans le dossier des outils, où il est créé) ; quand le fichier n'est pas à côté de la page `-o`, une ligne dit où `regions.json` est écrit et propose `--update` ou un chemin complet.
 
 ### 20.8 Créer la carte des mondes
 
-1. **Chaque région est enregistrée dans un même `regions.json`**, à côté des pages (un seul dossier de pages, une coquille commune). Pour chaque région déjà générée, une commande `--maj --register`, **une seule ligne PowerShell** (nom, position sur la grille OpenSim, vignette facultative de 140 Ko au plus à côté de la page) :
+1. **Chaque région est enregistrée dans un même `regions.json`**, à côté des pages (un seul dossier de pages, une coquille commune). Pour chaque région déjà générée, une commande `--update --register`, **une seule ligne PowerShell** (nom, position sur la grille OpenSim, vignette facultative de 140 Ko au plus à côté de la page) :
 
-   `python glb2html.py --maj -o "X.html" --shared-shell --register regions.json --region-name "Nom affiché" --region-xy 1000,1001 --thumb vignette.png`
+   `python glb2html.py --update -o "X.html" --shared-shell --register regions.json --region-name "Nom affiché" --region-xy 1000,1001 --thumb vignette.png`
 
    La fiche reçoit l'adresse `index.html?region=X`, le salon et le serveur de présence de la config de la région. Redonner la commande met la fiche à jour (identifiée par le salon), sans doublon.
-2. **Générer la page web de la carte** : `python glb2html.py --maj -o "X.html" --shared-shell --map-page carte.html` (elle lit les régions de `regions.json` enregistrées dans la config de la région `X`). Pour qu'elle contienne toutes les régions, exécute-la **après** les enregistrements, ou donne `--map regions.json --map-page carte.html`.
+2. **Générer la page web de la carte** : `python glb2html.py --update -o "X.html" --shared-shell --map-page carte.html` (elle lit les régions de `regions.json` enregistrées dans la config de la région `X`). Pour qu'elle contienne toutes les régions, exécute-la **après** les enregistrements, ou donne `--map regions.json --map-page carte.html`.
 3. **L'ouvrir par le serveur web**, pas depuis le disque : le dossier contenant `carte.html`, `index.html`, `lib/` et les régions est servi en http(s) (`python -m http.server` pour un essai, ou `presence_server.py --serve-dir` quand il hébergera les pages), puis ouvre `http://ADRESSE/carte.html`. Chaque lien de la carte ouvre la région à son point d'arrivée, avec le pseudo saisi en haut de la page.
 4. **Les pages des régions** affichent la carte avec la touche **M** (**Ctrl+M** en promenade) : `--map-url http://ADRESSE/regions.json` (plusieurs adresses séparées par des virgules, fusionnées) les fait relire `regions.json` à chaque ouverture, sans régénérer les pages.
 
@@ -1011,7 +1003,7 @@ Le viewer (`glb-viewer.html`) a la même liste « **Langue / Language** » que l
 
 ### 21.11 Langue des outils Python : `--lang`, `WEB3D_LANG`
 
-`glb2html.py`, `glb2tiles.py`, `oar2glb.py` et `presence_server.py` (et `glb-stats.py`, utilisé par `glb2tiles.py`) affichent leurs messages, leurs avertissements, leurs erreurs et leur aide (`--help`) en français ou en anglais. **Choix de la langue** : `--lang fr`, `--lang en` ou `--lang auto` (par défaut) ; sinon la variable d'environnement `WEB3D_LANG` ; sinon la langue du système ; sinon l'anglais. `--lang` l'emporte sur `WEB3D_LANG`. Les options elles-mêmes (`--budget`, `--exclure`…) et les commandes de modération du serveur (`liste`, `ejecter`, `bannir`, `bans`, `debannir`, `aide`) ne changent pas de langue. Les fichiers de sortie (JSON, journaux des outils) gardent leurs clés ; les journaux sont écrits dans la langue choisie.
+`glb2html.py`, `glb2tiles.py`, `oar2glb.py` et `presence_server.py` (et `glb-stats.py`, utilisé par `glb2tiles.py`) affichent leurs messages, leurs avertissements, leurs erreurs et leur aide (`--help`) en français ou en anglais. **Choix de la langue** : `--lang fr`, `--lang en` ou `--lang auto` (par défaut) ; sinon la variable d'environnement `WEB3D_LANG` ; sinon la langue du système ; sinon l'anglais. `--lang` l'emporte sur `WEB3D_LANG`. Les options elles-mêmes (`--budget`, `--exclude`…) et les commandes de modération du serveur (`liste`, `ejecter`, `bannir`, `bans`, `debannir`, `aide`) ne changent pas de langue. Les fichiers de sortie (JSON, journaux des outils) gardent leurs clés ; les journaux sont écrits dans la langue choisie.
 
 **Fichiers autonomes** : `build.py` intègre les textes de `src/i18n/*.json` (clés `py.*`) dans chaque outil de `dist\` : un outil copié seul sur une autre machine garde ses deux langues (c'est un choix de fabrication, documenté dans `CLAUDE.md`). Depuis les sources (`tools\`, `src\`), les outils lisent `i18n_py.py` et `i18n\` à côté d'eux ou dans `src\`. Ajouter une langue : § 21.9, aucun code à modifier. Une nouvelle option d'un outil doit avoir sa clé `py.*` dans **les deux** fichiers (`python tests/i18n.py` le vérifie) ; `python gen_reference.py` refait `REFERENCE_OPTIONS.md` (français puis anglais dans chaque case « Effet »), `python tests/doc_options.py` vérifie qu'aucune option n'y manque et qu'aucune description n'est vide.
 
@@ -1020,7 +1012,7 @@ Le viewer (`glb-viewer.html`) a la même liste « **Langue / Language** » que l
 ### 22.1 Indicateur de course, boussole, fenêtres redimensionnables, touche O
 
 - La ligne **Mode** de la fenêtre Informations / État affiche **« à pied · course »** ou **« en vol · course »** tant que la course est active (touche **Maj** tenue, ou double appui rapide en cours), puis revient à « à pied » ou « en vol ».
-- **Boussole** : en haut de la page, au centre, le cap en texte, point cardinal puis degrés (« NE 45° »). C'est l'orientation de l'**avatar** en promenade, de la **caméra** en vue globale. Convention OpenSim : le nord est la direction **-Z** du modèle (z = -y d'OpenSim) ; la rotation de la région (`rotate`) est prise en compte. Lettres : français N, NE, E, SE, S, SO, O, NO ; anglais N, NE, E, SE, S, SW, W, NW. Case **« Boussole »** dans les Réglages visiteur (cochée par défaut, mémorisée). Options de `glb2html.py` : `--compass` / `--no-compass` (config `compass`, défaut activée) et `--north DEGRES` (config `northDeg`, défaut 0) pour un GLB qui ne vient pas d'OpenSim : le décalage est **ajouté** au cap affiché (180 : face à -Z, la boussole indique S). `--maj` les applique.
+- **Boussole** : en haut de la page, au centre, le cap en texte, point cardinal puis degrés (« NE 45° »). C'est l'orientation de l'**avatar** en promenade, de la **caméra** en vue globale. Convention OpenSim : le nord est la direction **-Z** du modèle (z = -y d'OpenSim) ; la rotation de la région (`rotate`) est prise en compte. Lettres : français N, NE, E, SE, S, SO, O, NO ; anglais N, NE, E, SE, S, SW, W, NW. Case **« Boussole »** dans les Réglages visiteur (cochée par défaut, mémorisée). Options de `glb2html.py` : `--compass` / `--no-compass` (config `compass`, défaut activée) et `--north DEGRES` (config `northDeg`, défaut 0) pour un GLB qui ne vient pas d'OpenSim : le décalage est **ajouté** au cap affiché (180 : face à -Z, la boussole indique S). `--update` les applique.
 - **Fenêtres Aide et Informations** : un **bord droit à tirer** (curseur de redimensionnement, double trait sur le bord) règle la largeur de chacune, de **260 px** à **70 %** de la fenêtre du navigateur ; la largeur est **mémorisée** dans le navigateur. Le texte se reflue et la **hauteur suit le contenu** (la barre de défilement de l'aide n'apparaît que si la fenêtre du navigateur est trop basse : à 260 px de large l'aide demande environ 730 px de hauteur). Les deux fenêtres restent empilées en bas à gauche : quand l'aide perd de la hauteur, elle descend pour rester collée aux informations. Les 440 px / 45 % de la v34 sont les valeurs par défaut.
 - Touche **O** : ouvre / ferme la fenêtre **Réglages** (R est déjà pris).
 
@@ -1052,11 +1044,11 @@ Le séparateur est **`&`** ; **`#` est aussi accepté** : `#name=Klaatou&lang=en
 
 ### 22.7 Région par défaut (`default.json`)
 
-Quand l'adresse de la coquille n'a pas de paramètre `region`, elle essaie dans l'ordre : (a) `X.config.json` du nom de la page (comportement d'avant) ; (b) **`default.json`** du dossier, de la forme `{"region": "NOM"}` ; (c) la **première entrée de `regions.json`** dont l'adresse est relative et dont le paramètre `?region=NOM` est valide ; (d) sinon un message d'une phrase qui dit quoi faire. Le nom suit les mêmes contrôles de sécurité que `?region=`. `glb2html.py --shared-shell` écrit `default.json` la **première fois** qu'il fabrique une région dans un dossier où il n'existe pas ; **`--default`** fait de la région fabriquée la région par défaut même si `default.json` existe. `--maj` ne l'écrase jamais, sauf avec `--default`.
+Quand l'adresse de la coquille n'a pas de paramètre `region`, elle essaie dans l'ordre : (a) `X.config.json` du nom de la page (comportement d'avant) ; (b) **`default.json`** du dossier, de la forme `{"region": "NOM"}` ; (c) la **première entrée de `regions.json`** dont l'adresse est relative et dont le paramètre `?region=NOM` est valide ; (d) sinon un message d'une phrase qui dit quoi faire. Le nom suit les mêmes contrôles de sécurité que `?region=`. `glb2html.py --shared-shell` écrit `default.json` la **première fois** qu'il fabrique une région dans un dossier où il n'existe pas ; **`--default`** fait de la région fabriquée la région par défaut même si `default.json` existe. `--update` ne l'écrase jamais, sauf avec `--default`.
 
 ### 22.8 Dossier lib : `--lib-url`
 
-`--lib-url CHEMIN` : chemin relatif (par exemple `../lib`) ou adresse `http(s)` complète où trouver three.js et ses modules. Il est inscrit dans la **table d'import de la coquille** (qui doit exister avant tout script) quand la coquille est écrite, et retenu dans la config (`libUrl`) pour que `--maj` le retrouve. Chemin relatif : `lib/three-X/` est créé à cet endroit s'il est absent ; adresse complète : rien n'est copié. Une coquille existante n'est jamais écrasée : pour changer le dossier d'une coquille déjà en place, supprime-la ou utilise `--maj` (copie datée de l'ancienne). Valeurs refusées : `?`, `#`, `\`, guillemets, autres schémas (`javascript:`), chemins commençant par `/`.
+`--lib-url CHEMIN` : chemin relatif (par exemple `../lib`) ou adresse `http(s)` complète où trouver three.js et ses modules. Il est inscrit dans la **table d'import de la coquille** (qui doit exister avant tout script) quand la coquille est écrite, et retenu dans la config (`libUrl`) pour que `--update` le retrouve. Chemin relatif : `lib/three-X/` est créé à cet endroit s'il est absent ; adresse complète : rien n'est copié. Une coquille existante n'est jamais écrasée : pour changer le dossier d'une coquille déjà en place, supprime-la ou utilise `--update` (copie datée de l'ancienne). Valeurs refusées : `?`, `#`, `\`, guillemets, autres schémas (`javascript:`), chemins commençant par `/`.
 
 ### 22.9 Régions dans des sous-dossiers
 
@@ -1168,7 +1160,7 @@ Quand la page voit un rendu sans carte graphique (« Basic Render Driver », « 
 
 ### 26.4 Option `--light`
 
-`glb2html.py --light` : la page s'ouvre en rendu léger tant que le visiteur n'a rien choisi ; `--no-light` revient au rendu normal (par défaut). L'option est reprise par `--maj`. Dans le viewer, la case « Page exportée ouverte en rendu léger (--light) » fait de même pour les pages exportées ; trois lignes de la rubrique du rendu (résolution, images par seconde, vue d'ensemble seule) règlent le viewer lui-même.
+`glb2html.py --light` : la page s'ouvre en rendu léger tant que le visiteur n'a rien choisi ; `--no-light` revient au rendu normal (par défaut). L'option est reprise par `--update`. Dans le viewer, la case « Page exportée ouverte en rendu léger (--light) » fait de même pour les pages exportées ; trois lignes de la rubrique du rendu (résolution, images par seconde, vue d'ensemble seule) règlent le viewer lui-même.
 
 ### 26.5 Fenêtre Réglages plus étroite
 
@@ -1180,4 +1172,328 @@ Réglages fait au plus 420 px de large : les longs libellés passent à la ligne
 
 ### 26.7 Tests de la v42
 
-`tests/v42.py` : proposition en rendu logiciel, Oui, choix retenu, anticrénelage coupé au chargement, case et sous-fenêtre, réglages en direct, valeurs préconisées, plafond d'images par seconde, diagnostic, valeurs d'origine, page `--light`, `--maj`, vue d'ensemble seule sur une région en tuiles (déchargement, promenade, retour), rayon en direct, lignes du viewer, note de couleur sur deux lignes, largeur de Réglages, section Disposition, note en bas.
+`tests/v42.py` : proposition en rendu logiciel, Oui, choix retenu, anticrénelage coupé au chargement, case et sous-fenêtre, réglages en direct, valeurs préconisées, plafond d'images par seconde, diagnostic, valeurs d'origine, page `--light`, `--update`, vue d'ensemble seule sur une région en tuiles (déchargement, promenade, retour), rayon en direct, lignes du viewer, note de couleur sur deux lignes, largeur de Réglages, section Disposition, note en bas.
+
+## 27. Référence des fichiers JSON (v43)
+
+Cette section décrit **chaque fichier JSON du projet, champ par champ**, comme le font `opensim.sample.ini` et `robust.sample.ini` pour OpenSim.
+
+Un fichier JSON n'accepte pas de commentaires. Les explications sont donc ici, et les exemples sont à part, dans le dossier `docs/samples/` : ce sont de **vrais fichiers, complets et valides**. Pour s'en servir, on copie l'exemple, on le renomme et on change les valeurs. Le test `tests/samples.py` vérifie que chaque exemple est accepté par le vrai code qui lit ce fichier : la page, le viewer, les outils et le serveur de présence. Les exemples restent donc justes quand le code change.
+
+### 27.1 Les fichiers et leurs exemples
+
+| Fichier réel | Exemple dans `docs/samples/` | Écrit par | Lu par |
+|---|---|---|---|
+| `NOM.config.json` | `region.config.sample.json` | `glb2html.py` | la page |
+| `NOM.zones.json` | `region.zones.sample.json` | le viewer, `glb2html.py --zones`, à la main | la page, le viewer, `glb2html.py --zones` |
+| `default.json` | `default.sample.json` | `glb2html.py --default` | la coquille |
+| `regions.json` | `regions.sample.json` | `glb2html.py --register`, le viewer | la page (`mapUrl`), la coquille, `glb2html.py --map` |
+| `NOM.tiles.json` | `region.tiles.sample.json` | `glb2tiles.py` | la page, le viewer, `glb2html.py --tiles` |
+| `NOM.reglages.json` | `region.reglages.sample.json` | le viewer (« Enregistrer dans un fichier ») | le viewer, `glb2html.py --settings` |
+| `disposition.json` | `disposition.sample.json` | la page (Réglages, « Enregistrer ») | la page (Réglages, « Charger ») |
+| `presence_identities.json` | `presence_identities.sample.json` | `presence_server.py` | `presence_server.py` |
+| `presence_bans.json` | `presence_bans.sample.json` | `presence_server.py` (commande `bannir`) | `presence_server.py` |
+| fichier de `--history-file` (par exemple `chat.jsonl`) | `chat_history.sample.jsonl` | `presence_server.py` | `presence_server.py` |
+
+Deux autres fichiers ont **exactement le format** de `NOM.zones.json` :
+
+- `zones.json`, les zones communes aux régions d'un dossier, lu quand une région n'a pas son propre `NOM.zones.json` (§ 16) ;
+- `NOM.zones.bak.json`, la copie de sécurité que le viewer laisse quand il enregistre les zones dans le dossier de la région.
+
+Dans les exemples, la région s'appelle `Region`. Pour une région « Ankh », on renomme `region.config.sample.json` en `Ankh.config.json` et on remplace `Region` par `Ankh` dans les valeurs qui le contiennent (`room`, `tiles`, les adresses). Les adresses des exemples sont écrites `ADRESSE` : il faut y mettre la sienne.
+
+### 27.2 Comment lire les tableaux
+
+- **Texte** : une valeur entre guillemets, par exemple `"door, porte"`.
+- **Nombre** : sans guillemets, avec un point pour les décimales, par exemple `18.5`.
+- **Oui / non** : `true` (oui) ou `false` (non), sans guillemets.
+- **Liste** : des valeurs entre crochets, par exemple `[392, 68, -373]` pour une position x, y, z.
+- **Objet** : des champs entre accolades, comme une fiche dans la fiche.
+- **Couleur** : un nombre entier, qui est le code couleur habituel écrit en base 10. Le bleu de la mer `#3A9AD9` s'écrit `3840729`. Pour convertir dans PowerShell, taper `0x3A9AD9` donne `3840729`, et `'{0:X6}' -f 3840729` redonne `3A9AD9`. Les options `--sea-color` et `--sky-color` acceptent directement le code `3a9ad9`.
+- **Option** : l'option de `glb2html.py` qui écrit ce champ. Un tiret « — » veut dire qu'aucune option ne le règle.
+
+Les positions sont en mètres, dans le repère de la page : x vers l'est, y vers le haut, z vers le sud (le nord est la direction -z). Les angles (`yaw`) sont en radians : 1.57 fait un quart de tour, 3.14 un demi-tour.
+
+### 27.3 `NOM.config.json` : les réglages de la page
+
+`glb2html.py` l'écrit ; la page le relit à chaque ouverture, donc **F5 suffit** après une modification. On le change de préférence avec `glb2html.py --update -o NOM.html --shared-shell` suivi des options voulues : seuls les champs des options données changent, le reste est gardé, y compris un champ ajouté à la main. On peut aussi le modifier à la main ; une erreur de syntaxe (virgule oubliée, guillemet manquant) empêche alors la page de s'ouvrir.
+
+**Mer et ciel**
+
+| Champ | Type | Défaut | Ce qu'il fait | Option |
+|---|---|---|---|---|
+| `sea` | oui / non | `true` | affiche la mer | `--sea`, `--no-sea` |
+| `seaY` | nombre | `-50` | hauteur de la mer en mètres (de -150 à 60) | `--sea-y` |
+| `seaColor` | couleur | `3840729` | couleur de la mer (`#3A9AD9`) | `--sea-color` |
+| `skyColor` | couleur | `8900331` | couleur du ciel et du brouillard (`#87CEEB`) | `--sky-color` |
+| `anim` | oui / non | `false` | vagues animées ; sinon la mer est fixe | `--anim`, `--no-anim` |
+| `wave` | nombre | `0.5` | hauteur des vagues (de 0 à 10) | `--wave` |
+| `seaSegments` | nombre entier | `400` | finesse de la surface de la mer (de 8 à 1000) ; ne compte qu'avec les vagues animées | `--sea-segments` |
+| `seaSize` | nombre | `4000` | largeur de la mer en mètres | — |
+| `hole` | nombre | `180` | rayon en mètres de la **zone calme** autour de l'île, où les vagues s'effacent (de 30 à 600) | `--hole` |
+| `holeFade` | nombre | `60` | largeur de la transition entre la zone calme et les vagues | `--hole-fade` |
+| `holeX`, `holeZ` | nombre | `0` | centre de la zone calme | `--hole-x`, `--hole-z` |
+
+**Région et caméra de départ**
+
+| Champ | Type | Défaut | Ce qu'il fait | Option |
+|---|---|---|---|---|
+| `rotate` | nombre entier | `0` | rotation de la région : 0, 90, 180 ou 270 degrés | `--rotate` |
+| `target` | liste de 3 nombres | `[0, 15, 0]` | point regardé par la caméra à l'ouverture | `--target` |
+| `targetExplicit` | oui / non | `false` | `true` quand `--target` a été donné : la page garde ce cadrage au lieu de partir de l'arrivée `default` | `--target` |
+| `camDir` | liste de 3 nombres | `[0, 0.25, 1]` | direction d'où regarde la caméra | `--cam-dir` |
+| `zoom` | nombre | `1` | recul de la caméra (1 = cadrage automatique, 2 = deux fois plus loin) | `--zoom` |
+| `compass` | oui / non | `true` | boussole en haut de la page | `--compass`, `--no-compass` |
+| `northDeg` | nombre | `0` | décalage en degrés de la boussole, pour un modèle qui ne vient pas d'OpenSim | `--north` |
+
+**Affichage**
+
+| Champ | Type | Défaut | Ce qu'il fait | Option |
+|---|---|---|---|---|
+| `retina` | oui / non | `false` | haute résolution (plus net, environ quatre fois plus lourd) | `--retina`, `--no-retina` |
+| `light` | oui / non | `false` | la page s'ouvre en rendu léger tant que le visiteur n'a rien choisi (§ 26) | `--light`, `--no-light` |
+| `foliageCutout` | nombre | `0.12` | seuil de transparence des feuillages (de 0 à 0.5) : plus haut, les bords des feuilles sont plus découpés | `--foliage-cutout` |
+| `names` | oui / non | `false` | affiche le nom de l'élément cliqué | `--names`, `--no-names` |
+| `panel` | oui / non | `true` | bouton Réglages pour les visiteurs | `--panel`, `--no-panel` |
+| `libUrl` | texte | `""` | dossier ou adresse de `lib` (three.js) quand il n'est pas à côté de la page | `--lib-url` |
+| `version` | texte | version de l'outil | version de `glb2html.py` qui a écrit le fichier ; `--update` la remplace | — |
+
+**Promenade**
+
+| Champ | Type | Défaut | Ce qu'il fait | Option |
+|---|---|---|---|---|
+| `walk` | oui / non | `true` | mode promenade (touche F) | `--walk`, `--no-walk` |
+| `fly` | oui / non | `true` | vol en promenade | `--fly`, `--no-fly` |
+| `eyeHeight` | nombre | `1.7` | hauteur des yeux en mètres | `--eye-height` |
+| `walkSpeed` | nombre | `3.5` | vitesse de marche en mètres par seconde (en courant : 2,2 fois plus) | `--walk-speed` |
+| `walkIgnore` | texte | `"door, porte"` | objets que l'on traverse, séparés par des virgules : `door` = tout nom qui commence par ce mot, `=mesh_346_5` = ce nom exact, `""` = aucun | `--walk-ignore` |
+
+**Visiteurs et chat**
+
+| Champ | Type | Défaut | Ce qu'il fait | Option |
+|---|---|---|---|---|
+| `presenceUrl` | texte | `""` | adresse du serveur de présence (`ws://...` ou `wss://...`) ; vide = seul, sans avatars ni chat | `--presence-url` |
+| `room` | texte | nom de la page | salon de présence : les visiteurs d'un même salon se voient | `--room` |
+| `spectate` | oui / non | `true` si `presenceUrl` est rempli | voir les promeneurs depuis la vue globale | `--spectate`, `--no-spectate` |
+| `chat` | oui / non | `true` | chat entre visiteurs (il faut un serveur de présence) | `--chat`, `--no-chat` |
+| `chatFade` | nombre | `0` | secondes avant que les messages et bulles disparaissent ; 0 = ils restent | `--chat-fade` |
+
+**Zones**
+
+| Champ | Type | Défaut | Ce qu'il fait | Option |
+|---|---|---|---|---|
+| `profile` | texte | `"public"` | `"public"` : les zones privées ne sont pas affichées ; `"private"` : toutes les zones le sont | `--profile` |
+| `zones` | liste | `[]` | toujours vide dans ce fichier : les zones sont dans `NOM.zones.json` | — |
+| `zonesLive` | texte | `""` | toujours vide dans ce fichier (sert aux pages autonomes, `--zones-live`) | `--zones-live` |
+| `zoneMarker` | texte | `"dot"` | repère des portails et zones libres : `"dot"` petit disque, `"range"` anneau au rayon réel de la zone, `"none"` rien | `--zone-marker` |
+| `zoneCone` | oui / non | `true` | petit cône au-dessus des portails (touche T) | `--zone-cone`, `--no-zone-cone` |
+| `showSpawns` | oui / non | `false` | dessine aussi les arrivées | `--show-spawns`, `--no-show-spawns` |
+| `zoneInfoDist` | nombre | `150` | distance en mètres (de 5 à 500) jusqu'où les zones répondent au survol et au clic en promenade | `--zone-info-dist` |
+
+**Carte des mondes**
+
+| Champ | Type | Défaut | Ce qu'il fait | Option |
+|---|---|---|---|---|
+| `map` | liste | `[]` | carte intégrée à la page : mêmes fiches que `regions.json` (§ 27.6) | `--map`, `--register` |
+| `mapUrl` | texte | `""` | adresse(s) de `regions.json` relues à chaque ouverture, séparées par des virgules | `--map-url` |
+
+**Région en tuiles** : ces six champs n'existent que pour une région découpée par `glb2tiles.py`. Pour une région faite d'un seul fichier `.glb`, il faut les **retirer** de l'exemple, sinon la page cherche des tuiles.
+
+| Champ | Type | Défaut | Ce qu'il fait | Option |
+|---|---|---|---|---|
+| `tiles` | texte | — | nom de l'index des tuiles, par exemple `"Region.tiles.json"` | `--tiles` |
+| `tileRadius` | nombre | `150` | rayon en mètres autour de l'avatar dans lequel les tuiles sont chargées | `--tile-radius` |
+| `tileMargin` | nombre | `60` | marge en mètres au-delà de ce rayon avant qu'une tuile soit retirée | `--tile-margin` |
+| `tileMaxMB` | nombre | `200` | mégaoctets de tuiles chargées en même temps, au plus | `--tile-max-mb` |
+| `tileMaxTriangles` | nombre entier | `8000000` | triangles de tuiles chargées en même temps, au plus | `--tile-max-triangles` |
+| `tileConcurrency` | nombre entier | `4` | téléchargements de tuiles en même temps | `--tile-concurrency` |
+
+Les réglages du rendu léger choisis par un visiteur (résolution, images par seconde, vue d'ensemble seule, anticrénelage) sont gardés **par son navigateur**, pas dans ce fichier : la page ignore `pixelScale`, `fpsMax`, `ovOnly` ou `antialias` écrits ici.
+
+### 27.4 `NOM.zones.json` : les zones
+
+Une **liste** de zones, relue à chaque ouverture de la page. Chaque zone a les champs ci-dessous ; un champ absent prend sa valeur par défaut, et une valeur hors des limites est ramenée dans les limites.
+
+Il existe **quatre sortes** de zones (champ `type`) : `"spawn"` (arrivée), `"portal"` (portail), `"url"` (lien web) et `"ha"` (commande). « Privée », « liée à un objet » et « nom affiché » ne sont pas des sortes : ce sont des cases (`private`, `mesh`, `showName`) valables pour toutes les sortes.
+
+| Champ | Type | Défaut | Ce qu'il fait |
+|---|---|---|---|
+| `id` | texte | `z1`, `z2`... | nom court et unique : lettres minuscules, chiffres, `-` et `_`, 40 caractères au plus. L'arrivée `default` est le point d'entrée de la région |
+| `type` | texte | `"portal"` | `"spawn"`, `"portal"`, `"url"` ou `"ha"` |
+| `label` | texte | `""` | nom affiché (infobulle, panneau), 60 caractères au plus |
+| `x`, `y`, `z` | nombre | `0` | position en mètres |
+| `yaw` | nombre | `0` | orientation en radians : sens du regard à l'arrivée, ou face du panneau |
+| `shape` | texte | `"ring"` | `"ring"` (anneau au sol) ou `"board"` (panneau sur un poteau) |
+| `trigger` | texte | `"click"` | portails seulement : `"click"` (clic ou E), `"enter"` (en marchant dedans) ou `"both"` (les deux). Les autres sortes sont toujours `"click"` |
+| `radius` | nombre | `2` | rayon de la zone en mètres (de 0.5 à 50) |
+| `w`, `h` | nombre | `2.4`, `1.2` | largeur et hauteur du panneau en mètres |
+| `target` | texte | `""` | portail : adresse de la région d'arrivée, ou vide pour un point de la même région ; lien : adresse de la page web ; commande : adresse appelée |
+| `spawn` | texte | `""` | portail : `id` de l'arrivée visée (vide = `default`) |
+| `confirm` | oui / non | `false` | demande une confirmation avant d'agir |
+| `private` | oui / non | `false` | zone privée : absente des pages publiques (profil `public`) |
+| `showName` | oui / non | `false` | écrit le `label` au-dessus de la zone en promenade |
+| `mesh` | texte | `""` | zone **liée à un objet** du modèle : son nom, ou `nom#numéro` quand plusieurs objets portent ce nom ; l'objet devient cliquable. Jamais pour une arrivée |
+
+L'exemple contient huit zones, une de chaque cas :
+
+| `id` | Sorte | Ce qu'elle montre |
+|---|---|---|
+| `default` | arrivée | point d'entrée de la région |
+| `gallery` | arrivée | seconde arrivée, visée par un portail |
+| `to-gallery` | portail | vers un autre point de la même région (`target` vide, `spawn` = `gallery`), en marchant dedans |
+| `to-other-region` | portail | vers une autre région, panneau, clic ou marche, avec confirmation |
+| `website` | lien | ouvre une page web, panneau |
+| `light-on` | commande | appel d'une adresse (par exemple un webhook Home Assistant), privée, avec confirmation |
+| `door-info` | lien | liée à l'objet `Door#2` du modèle |
+| `back-home` | portail | nom affiché au-dessus de la zone (`showName`) |
+
+Dans une région en tuiles, une zone liée retrouve son objet grâce à l'étiquette `extras.ref` que `glb2tiles.py` écrit dans les objets des tuiles. Cette étiquette est dans les fichiers `.glb` des tuiles, **pas** dans `NOM.zones.json`.
+
+### 27.5 `default.json` : la région par défaut
+
+| Champ | Type | Défaut | Ce qu'il fait | Option |
+|---|---|---|---|---|
+| `region` | texte | — | région ouverte quand l'adresse n'a pas de `?region=` (§ 16) | `--default` |
+
+### 27.6 `regions.json` : la carte des mondes
+
+Une **liste** de régions (une liste simple, sans rien autour). Une fiche sans `name` ou sans `url` est ignorée.
+
+| Champ | Type | Défaut | Ce qu'il fait | Option |
+|---|---|---|---|---|
+| `id` | texte | tiré du nom | identifiant court, unique dans la carte | — |
+| `name` | texte | — | nom affiché, 60 caractères au plus | `--region-name` |
+| `url` | texte | — | adresse de la page : complète (`https://...`) ou relative (`index.html?region=Region`) | `--region-url` |
+| `x`, `y` | nombre entier | `0` | place sur la grille, comme dans OpenSim (x vers l'est, y vers le nord) | `--region-xy` |
+| `spawn` | texte | `""` | arrivée utilisée en venant de la carte (vide = `default`) | `--region-spawn` |
+| `presence` | texte | `""` | serveur de présence de cette région, s'il n'est pas celui de la page (pour compter les visiteurs) | — |
+| `room` | texte | `""` | salon de présence de cette région | `--room` |
+| `thumb` | texte | `""` | vignette : image intégrée (`data:image/...`) ou adresse d'une image | `--thumb` |
+
+### 27.7 `NOM.tiles.json` : l'index des tuiles
+
+`glb2tiles.py` l'écrit ; il ne se modifie **pas à la main**. La page n'en lit que quelques champs : `tiles` (pour chaque tuile `file`, `min`, `max`, `bytes`, `triangles`), `nodeRefs` et `overview.file`. Les autres servent au compte rendu.
+
+| Champ | Type | Ce qu'il contient |
+|---|---|---|
+| `version` | nombre entier | version du format (1) |
+| `generator` | texte | outil et version qui ont écrit le fichier |
+| `source` | texte | nom du `.glb` découpé |
+| `extent` | objet | boîte de toute la région : `min` et `max`, chacun x, y, z |
+| `params` | objet | réglages du découpage : `budgetMB`, `budgetTriangles`, `minCell`, `wholeWeightMB`, `wholeExtent`, `thresholdMB`, `thresholdTriangles`, `outlier` (options `--budget`, `--budget-triangles`, `--min`, `--whole-weight`, `--whole-extent`, `--threshold`, `--threshold-triangles`, `--outlier`) |
+| `warnings` | liste de textes | avertissements du découpage |
+| `roots` | objet | objets gardés entiers (`whole`) et répartis (`split`) |
+| `duplication` | nombre | géométrie de toutes les tuiles divisée par celle du modèle (1 = rien en double) |
+| `nodeRefs` | nombre | 1 si les objets portent `extras.ref` (zones liées possibles), 0 avec `--no-refs` |
+| `replacedImages` | objet | images illisibles remplacées par du gris : `distinct`, `occurrences`, `grey` |
+| `tiles` | liste | une fiche par tuile (ci-dessous) |
+| `excluded` | objet | seulement avec `--exclude` : motifs, limites, nombre d'objets retirés, triangles et octets gagnés, noms les plus fréquents |
+| `overview` | objet | seulement avec la vue d'ensemble : `file` (le `.glb`), poids, triangles, objets gardés et omis, durée, `params` (`budgetMB`, `budgetTriangles`, `minExtent`, `maxExtent`, `resolution`, `terrainStep`) |
+
+Chaque fiche de `tiles` :
+
+| Champ | Type | Ce qu'il contient |
+|---|---|---|
+| `file` | texte | chemin du `.glb` de la tuile, relatif à l'index |
+| `level`, `i`, `j` | nombre entier | niveau et place de la tuile dans la grille |
+| `min`, `max` | liste de 3 nombres | boîte de la tuile |
+| `instances` | nombre entier | nombre d'objets dans la tuile |
+| `triangles` | nombre entier | triangles de la tuile |
+| `bytes` | nombre entier | poids du fichier |
+| `geometryBytes`, `imageBytes` | nombre entier | dont géométrie, dont images |
+| `replacedImages` | nombre entier | images remplacées par du gris dans cette tuile |
+
+### 27.8 `NOM.reglages.json` : l'état de travail du viewer
+
+Écrit par le bouton « Enregistrer dans un fichier » du viewer, relu par « Charger un fichier » et par `glb2html.py --settings`. Contrairement à `NOM.config.json`, il est **imbriqué** (§ 16).
+
+| Champ | Type | Ce qu'il contient |
+|---|---|---|
+| `v` | nombre entier | version du format : toujours `1` |
+| `file` | texte | nom du `.glb` ouvert dans le viewer |
+| `saved` | texte | date et heure de l'enregistrement |
+| `cfg` | objet | les réglages : mêmes noms et même sens que dans `NOM.config.json` (§ 27.3), plus cinq réglages propres au viewer (ci-dessous) |
+| `zones` | liste | toutes les zones, privées comprises (format du § 27.4) |
+| `camera` | objet | `camDir`, `target`, `zoom` : le cadrage choisi dans le viewer |
+| `profile` | texte | `"public"` ou `"private"` (menu « Profil d'export ») |
+| `thisReg` | objet | fiche de cette région pour la carte : `name`, `url`, `x`, `y`, `spawn`, `thumb` (§ 27.6) |
+| `cmd` | objet | champs du récapitulatif de commande : `script`, `glb`, `dest`, `mapPage` |
+| `targetExplicit` | oui / non | la cible de la caméra a été déplacée à la main |
+
+Les cinq réglages de `cfg` propres au viewer : `pixelScale`, `fpsMax` et `ovOnly` (rendu léger, essais dans le viewer), `guide` (guide de la zone calme affiché dans le viewer) et `ignoreViz` (objets traversés montrés en fil de fer). `--settings` ne les reprend pas.
+
+### 27.9 `disposition.json` : la place des fenêtres
+
+Écrit par Réglages, « Enregistrer » (section « Disposition des fenêtres »), relu par « Charger » (§ 25).
+
+| Champ | Type | Ce qu'il contient |
+|---|---|---|
+| `app` | texte | toujours `"web3d-layout"` : un autre fichier est refusé |
+| `v` | nombre entier | version du format : `1` |
+| `layout` | objet | `wins` : pour chaque fenêtre (`H` aide, `I` informations / état, `L` arrivées), `pile` (`"L"` pile de gauche, `"R"` pile de droite, `"F"` libre), `home` (`"L"` ou `"R"`, la pile où la fenêtre revient au double-clic), et pour une fenêtre libre `x`, `y` en pixels ; `order` : ordre des fenêtres dans chaque pile |
+| `ls` | objet | état des fenêtres : `glb2html_help`, `glb2html_state`, `glb2html_spawn` (`"1"` affichée, `"0"` masquée), `glb2html_helpFold`, `glb2html_stateFold`, `glb2html_spawnFold` (`"1"` repliée), `glb2html_helpW`, `glb2html_stateW`, `glb2html_spawnW` (largeur en pixels) |
+
+### 27.10 Fichiers du serveur de présence
+
+Le serveur les écrit lui-même ; on ne les modifie à la main que serveur arrêté. Les valeurs « hachées » sont des empreintes : on ne peut pas retrouver la clé ou l'adresse IP d'origine, ce qui protège les visiteurs. Les empreintes des exemples sont fabriquées et ne correspondent à personne.
+
+**`presence_identities.json`** (option `--identities`) : les pseudos réservés.
+
+| Champ | Type | Ce qu'il contient |
+|---|---|---|
+| `salt` | texte | « sel » secret tiré au hasard au premier démarrage, mélangé aux clés avant de les hacher. Le changer libère tous les pseudos |
+| `names` | objet | pour chaque pseudo simplifié (minuscules, sans accents ni espaces), l'empreinte de la clé du navigateur qui le possède |
+| `users` | objet | pour chaque empreinte : `name` (pseudo tel qu'écrit), `key` (pseudo simplifié), `first` et `last` (première et dernière venue, en secondes depuis 1970). Un pseudo inutilisé depuis `--name-ttl-days` jours (365) est libéré |
+
+**`presence_bans.json`** (option `--bans`) : une liste de bannissements.
+
+| Champ | Type | Ce qu'il contient |
+|---|---|---|
+| `key` | texte | empreinte de la clé du navigateur banni (vide pour un visiteur sans clé) |
+| `ip` | texte | empreinte de son adresse IP |
+| `until` | nombre | fin du bannissement en secondes depuis 1970 ; `0` = définitif. Un bannissement terminé est retiré du fichier à la vérification suivante |
+| `name` | texte | pseudo au moment du bannissement |
+| `reason` | texte | raison donnée |
+| `added` | nombre | date du bannissement en secondes depuis 1970 |
+
+**Historique du chat** (option `--history-file`) : ce n'est pas un fichier JSON d'un seul bloc, mais **un message par ligne**, chaque ligne étant un petit JSON. Jamais d'adresse IP.
+
+| Champ | Type | Ce qu'il contient |
+|---|---|---|
+| `n` | nombre entier | numéro du message |
+| `t` | nombre entier | heure en secondes depuis 1970 (c'est elle qui compte pour `--history-days`) |
+| `d` | texte | la même heure lisible (jj/mm/aaaa hh:mm:ss) |
+| `room` | texte | salon |
+| `name` | texte | pseudo |
+| `text` | texte | message |
+
+Les messages plus vieux que `--history-days` jours (30 par défaut) sont retirés au démarrage ; avec `--history-days 0`, rien n'est retiré.
+
+### 27.11 Noms en anglais depuis la v43
+
+Pour que tous les noms soient dans la même langue, la v43 a mis en anglais les derniers noms français : options des outils, valeurs dans les fichiers JSON et paramètres d'adresse. **Les anciens noms restent acceptés** : les commandes, les fichiers et les liens déjà écrits continuent de marcher. Un ancien nom est remplacé par le nouveau à la lecture ; quand un outil réécrit un fichier, il écrit le nouveau. `--update` garde tel quel un champ que l'on ne change pas : un ancien `tileMaxMo` reste donc dans `NOM.config.json`, et la page le lit toujours.
+
+| Où | Ancien nom | Nouveau nom |
+|---|---|---|
+| `glb2html.py` | `--maj` | `--update` |
+| `glb2html.py` | `--tile-max-mo`, `--tile-max-tri` | `--tile-max-mb`, `--tile-max-triangles` |
+| `glb2html.py` | `--zone-marker discret`, `portee`, `aucun` | `--zone-marker dot`, `range`, `none` |
+| `glb2html.py` | `--profile perso` | `--profile private` |
+| `glb2tiles.py` | `--budget-tri`, `--ov-budget-tri` | `--budget-triangles`, `--ov-budget-triangles` |
+| `glb2tiles.py` | `--entier-poids`, `--entier-etendue` | `--whole-weight`, `--whole-extent` |
+| `glb2tiles.py` | `--seuil`, `--seuil-tri`, `--aberrant` | `--threshold`, `--threshold-triangles`, `--outlier` |
+| `glb2tiles.py` | `--exclure`, `--exclure-max-tri`, `--exclure-max-meshes` | `--exclude`, `--exclude-max-triangles`, `--exclude-max-meshes` |
+| `glb2tiles.py` | `--sans-references`, `--sans-vue-ensemble`, `--vue-ensemble-seule` | `--no-refs`, `--no-overview`, `--overview-only` |
+| `glb2tiles.py` | `--ov-seuil`, `--ov-seuil-max`, `--ov-terrain-pas` | `--ov-threshold`, `--ov-threshold-max`, `--ov-terrain-step` |
+| `glb2tiles.py` | `--bloc`, `--forcer`, `--sortie` | `--block`, `--force`, `--output` |
+| `oar2glb.py` | `--reperes`, `--terrain-seul`, `--sortie` | `--markers`, `--terrain-only`, `--output` |
+| `oar2glb.py` | `--terrain oui`, `--terrain non` | `--terrain yes`, `--terrain no` |
+| `glb-stats.py` | `--bloc`, `--sortie` | `--block`, `--output` |
+| `NOM.config.json` | `tileMaxMo`, `tileMaxTri` | `tileMaxMB`, `tileMaxTriangles` |
+| `NOM.config.json`, `NOM.reglages.json` | `zoneMarker` : `discret`, `portee`, `aucun` | `dot`, `range`, `none` |
+| `NOM.config.json`, `NOM.reglages.json` | `profile` : `perso` | `private` |
+| `NOM.tiles.json` | `budgetMo`, `wholeWeightMo`, `thresholdMo` | `budgetMB`, `wholeWeightMB`, `thresholdMB` |
+| adresse de la page | `?rayon=` | `?radius=` |
+| adresse du viewer | `?tuiles=` | `?tiles=` |
+
+Restent tels quels : `--analyse` (aussi de l'anglais britannique) et les valeurs qui sont des noms d'objets, comme `door, porte`. Dans l'aide des outils, les noms d'exemple des valeurs sont aussi en anglais (`FILE`, `PATH`, `NAME`, `DEGREES`, `SHELL.html`). L'historique (`CHANGELOG.md`, `HISTORIQUE.md`) garde les noms de l'époque.

@@ -11,10 +11,10 @@ The manuals are in English in `docs/en/` (`MANUAL.md`, `PROCEDURES.md`, `HISTORY
 | Built file | Role |
 |---|---|
 | `glb-viewer.html` | Settings and export page: load a `.glb` (or, since v32, the folder of a tiled region), adjust the sea, the hole, the camera, walking, the zones and the region card, then export (for a tiled region: zones and command line only). |
-| `glb2html.py` | The same job on the command line (offline, no browser). Single page, modular page or shared shell, tiled regions, `--maj` to update a published region. |
+| `glb2html.py` | The same job on the command line (offline, no browser). Single page, modular page or shared shell, tiled regions, `--update` to update a published region. |
 | `presence_server.py` | WebSocket server for presence, chat, moderation and visitor counters. |
-| `oar2glb.py` | Converts an OpenSim backup (`.oar`) to `.glb` (convoar + repair); `--terrain-seul` adds the full terrain of regions over 256 m to an existing GLB. |
-| `glb2tiles.py` (+ `glb-stats.py` beside it) | Splits a huge GLB into self-contained tiles (`X.tiles/*.glb` + `X.tiles.json`) and builds a light overview `X.overview.glb`; `--analyse` measures and recommends without writing anything; `--exclure` drops catalogue "delivery boxes". |
+| `oar2glb.py` | Converts an OpenSim backup (`.oar`) to `.glb` (convoar + repair); `--terrain-only` adds the full terrain of regions over 256 m to an existing GLB. |
+| `glb2tiles.py` (+ `glb-stats.py` beside it) | Splits a huge GLB into self-contained tiles (`X.tiles/*.glb` + `X.tiles.json`) and builds a light overview `X.overview.glb`; `--analyse` measures and recommends without writing anything; `--exclude` drops catalogue "delivery boxes". |
 
 ## Build
 

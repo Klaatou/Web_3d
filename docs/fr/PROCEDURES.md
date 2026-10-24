@@ -2,7 +2,7 @@
 
 *Écrit le 23/10/2026 pour la version v36. Les commandes sont en PowerShell, sur une seule ligne, avec les chemins de ta machine. La liste complète des options est dans `REFERENCE_OPTIONS.md` ; le détail des zones, touches et réglages est dans `MANUEL.md`.*
 
-**Ce qui a été essayé ici :** les commandes de `glb2html`, `glb2tiles` (y compris `--maj`, `--register`, `--map-page`) sur des régions de test, un seul GLB et en tuiles. **Ce qui ne l'a pas été :** la conversion d'un OAR par convoar (convoar n'est pas disponible dans le bac à sable), et les commandes PowerShell elles-mêmes (essayées sous Linux avec des chemins équivalents).
+**Ce qui a été essayé ici :** les commandes de `glb2html`, `glb2tiles` (y compris `--update`, `--register`, `--map-page`) sur des régions de test, un seul GLB et en tuiles. **Ce qui ne l'a pas été :** la conversion d'un OAR par convoar (convoar n'est pas disponible dans le bac à sable), et les commandes PowerShell elles-mêmes (essayées sous Linux avec des chemins équivalents).
 
 **Les trois dossiers de référence**
 
@@ -12,7 +12,7 @@
 | OAR et GLB source | `J:\Download\Com\Chat\_Monde virtuel en ligne_\_OpenSim_\_Contenu_\OAR` |
 | Régions publiées en tuiles | `P:\_OpenSim\SL&OS\Web_3d\tuiles` |
 
-**Règle d'or :** lance toujours les outils depuis le dossier des outils (`cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"`). Donne des **chemins complets** pour tout fichier écrit, sauf avec `--maj` (les chemins relatifs y sont relatifs au dossier de la page).
+**Règle d'or :** lance toujours les outils depuis le dossier des outils (`cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"`). Donne des **chemins complets** pour tout fichier écrit, sauf avec `--update` (les chemins relatifs y sont relatifs au dossier de la page).
 
 ---
 
@@ -39,8 +39,8 @@ Cas de la 4X4 : un GLB de 1,2 Go ne tient pas d'un bloc dans le navigateur. Les 
 1. **Convertir l'OAR** comme au 1.1. Ça peut durer plusieurs heures et plusieurs dizaines de Go de mémoire (4 h 20 et 45 Go pour la 4X4). Si convoar plante dans la lecture des textures JPEG 2000, relance avec `--reencode` (voir `MANUEL.md` § 15 : à n'utiliser qu'en dernier recours).
 2. **Analyser** (lecture seule) :
    `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python glb2tiles.py "J:\...\OAR\X.glb" --analyse`
-3. **Découper.** `--sortie` désigne le dossier où sont écrits `X.tiles\`, `X.tiles.json` et `X.overview.glb`. `--exclure` retire du découpage les objets dont le nom correspond (garde-fous : 24 triangles et 1 mesh au plus), par exemple les boîtes de livraison des catalogues.
-   `python glb2tiles.py "J:\...\OAR\X.glb" --sortie "P:\_OpenSim\SL&OS\Web_3d\tuiles" --exclure "RAKis Freebies"`
+3. **Découper.** `--output` désigne le dossier où sont écrits `X.tiles\`, `X.tiles.json` et `X.overview.glb`. `--exclude` retire du découpage les objets dont le nom correspond (garde-fous : 24 triangles et 1 mesh au plus), par exemple les boîtes de livraison des catalogues.
+   `python glb2tiles.py "J:\...\OAR\X.glb" --output "P:\_OpenSim\SL&OS\Web_3d\tuiles" --exclude "RAKis Freebies"`
 4. **Fabriquer la page.** Remplace `ADRESSE` par ton adresse publique et `--target` par un endroit dégagé (coordonnées relevées dans le viewer), ou pose une arrivée nommée `default` et retire `--target`.
    `python glb2html.py --shared-shell -o "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.html" --tiles "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.tiles.json" --sea-y 18.5 --presence-url "ws://ADRESSE:8765" --chat --target 392,68,-373`
 5. **Servir et ouvrir** :
@@ -54,10 +54,10 @@ Pour lier une zone à un objet de la région en tuiles, les tuiles doivent avoir
 
 **Une valeur : modifier le fichier de config et recharger.** La page relit `X.config.json` à chaque ouverture, sans cache.
 `notepad "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.config.json"`
-Clés utiles : `seaY` (hauteur de la mer, en m), `target` (`[x, y, z]`), `presenceUrl`, `chat` (`true` ou `false`), `zoneInfoDist`, `tileRadius`, `tileMaxMo`, `tileMaxTri`. Le JSON est strict : garde les virgules et les guillemets. **Les couleurs y sont des nombres décimaux** (`seaColor` 3840729 vaut `3a9ad9`) : pour les changer, passe plutôt par `--maj`.
+Clés utiles : `seaY` (hauteur de la mer, en m), `target` (`[x, y, z]`), `presenceUrl`, `chat` (`true` ou `false`), `zoneInfoDist`, `tileRadius`, `tileMaxMB`, `tileMaxTriangles`. Le JSON est strict : garde les virgules et les guillemets. **Les couleurs y sont des nombres décimaux** (`seaColor` 3840729 vaut `3a9ad9`) : pour les changer, passe plutôt par `--update`.
 
-**Plusieurs valeurs, ou une couleur : `--maj`.** Il applique seulement les options que tu écris, garde tout le reste de la config et le fichier de zones.
-`cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python glb2html.py --maj --shared-shell -o "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.html" --sea-y 10`
+**Plusieurs valeurs, ou une couleur : `--update`.** Il applique seulement les options que tu écris, garde tout le reste de la config et le fichier de zones.
+`cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python glb2html.py --update --shared-shell -o "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.html" --sea-y 10`
 
 **Ne relance jamais la commande complète de fabrication (procédure 2.4) pour changer un détail** : elle réécrit toute la config à partir des seules options de la ligne, et efface ce que tu avais réglé à la main.
 
@@ -65,8 +65,8 @@ Clés utiles : `seaY` (hauteur de la mer, en m), `target` (`[x, y, z]`), `presen
 
 1. Fusionner la branche de la session, fabriquer, pousser, étiqueter (la session donne la ligne exacte) :
    `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d"; git checkout main; git pull; git fetch; git merge origin/NOM -m "Fusion vNN"; python build.py; git push; git tag vNN HASH; git push origin vNN`
-2. Mettre à jour chaque région avec `--maj`. La coquille `index.html` est renouvelée si elle est plus ancienne (l'ancienne est gardée sous un nom daté), la config et les zones sont gardées.
-   `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python glb2html.py --maj --shared-shell -o "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.html"`
+2. Mettre à jour chaque région avec `--update`. La coquille `index.html` est renouvelée si elle est plus ancienne (l'ancienne est gardée sous un nom daté), la config et les zones sont gardées.
+   `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python glb2html.py --update --shared-shell -o "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.html"`
 3. Recharger la page avec Ctrl+F5. La ligne du bas du panneau d'aide donne la version affichée (par exemple « glb2html v36 ») : si elle est ancienne, la mise à jour n'a pas eu lieu.
 4. Relancer le serveur de présence : **oui pour la v36** (ses messages et son aide sont traduits ; un ancien exemplaire continue de marcher mais reste en français). Procédure 6.
 5. Le découpage en tuiles n'est à refaire que si la session le dit, par exemple pour de nouvelles informations dans les tuiles.
@@ -79,7 +79,7 @@ Clés utiles : `seaY` (hauteur de la mer, en m), `target` (`[x, y, z]`), `presen
 | Arrivée utilisée à l'ouverture sans lien | une arrivée nommée `default` (§ 4) ; `--target` explicite garde le cadrage |
 | Portail vers une autre région | `MANUEL.md` § 6 |
 | Zone liée à un objet du modèle | `MANUEL.md` § 9 (en tuiles : § 17 ter) |
-| Zone privée (visible seulement avec le profil « perso ») | `MANUEL.md` § 10 |
+| Zone privée (visible seulement avec le profil « private ») | `MANUEL.md` § 10 |
 
 Les zones d'une région en tuiles s'écrivent dans le repère d'origine du modèle (aucun recentrage). Le viewer en mode tuiles produit ces coordonnées directement ; ne reporte pas à la main des coordonnées d'un autre GLB.
 
@@ -98,13 +98,13 @@ Les adresses IP et les messages du chat sont des données personnelles : informe
 
 ## 7. Carte des mondes
 
-Deux étapes, avec `--maj` (les chemins relatifs y sont relatifs au dossier de la page).
+Deux étapes, avec `--update` (les chemins relatifs y sont relatifs au dossier de la page).
 
 1. **Enregistrer chaque région** dans `regions.json` :
-   `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python glb2html.py --maj -o "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.html" --shared-shell --register "P:\_OpenSim\SL&OS\Web_3d\tuiles\regions.json" --region-name "Nom affiché"`
+   `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python glb2html.py --update -o "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.html" --shared-shell --register "P:\_OpenSim\SL&OS\Web_3d\tuiles\regions.json" --region-name "Nom affiché"`
    Pour une autre région, même commande avec sa page et son nom (`--region-xy x,y` donne sa place sur la carte).
 2. **Générer la page carte** (après chaque enregistrement) :
-   `python glb2html.py --maj -o "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.html" --shared-shell --map-page "P:\_OpenSim\SL&OS\Web_3d\tuiles\carte.html"`
+   `python glb2html.py --update -o "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.html" --shared-shell --map-page "P:\_OpenSim\SL&OS\Web_3d\tuiles\carte.html"`
 3. Ouvre `carte.html` par le serveur web. Un champ « Mon pseudo » en haut ajoute `name=` aux liens des régions.
 
 Avec une seule région, la carte n'apporte rien : elle sert à relier plusieurs régions entre elles.
@@ -113,13 +113,13 @@ Avec une seule région, la carte n'apporte rien : elle sert à relier plusieurs 
 
 | Ce qui a changé | À faire | Page à recharger |
 |---|---|---|
-| Une valeur de réglage (mer, cible, présence) | modifier `X.config.json`, ou `--maj` avec l'option | F5 |
+| Une valeur de réglage (mer, cible, présence) | modifier `X.config.json`, ou `--update` avec l'option | F5 |
 | Les zones | enregistrer `X.zones.json` dans le dossier de la région | F5 |
-| Nouvelle version des outils | procédure 4 (`--maj`) | Ctrl+F5 |
+| Nouvelle version des outils | procédure 4 (`--update`) | Ctrl+F5 |
 | Nouvelle version du serveur de présence (v37 : historique du chat ; v36 : messages traduits) | arrêter et relancer `presence_server.py` | F5 |
-| L'OAR a changé | reconvertir (1.1 ou 2.1), redécouper (2.3), puis `--maj` | Ctrl+F5 |
-| Les objets exclus du découpage | redécouper (2.3) avec un autre `--exclure` | Ctrl+F5 |
-| Rotation de la région (`--rotate`) | `--maj --rotate 180`, puis refaire la vignette de la carte | Ctrl+F5 |
+| L'OAR a changé | reconvertir (1.1 ou 2.1), redécouper (2.3), puis `--update` | Ctrl+F5 |
+| Les objets exclus du découpage | redécouper (2.3) avec un autre `--exclude` | Ctrl+F5 |
+| Rotation de la région (`--rotate`) | `--update --rotate 180`, puis refaire la vignette de la carte | Ctrl+F5 |
 | Première mise en ligne d'une région | procédure 1 ou 2 (commande complète) | — |
 
 ## 9. Quand ça ne marche pas
@@ -129,9 +129,9 @@ Avec une seule région, la carte n'apporte rien : elle sert à relier plusieurs 
 | Page noire avec `#spawn=…` | la tuile de l'arrivée se charge | depuis la v33, un texte « Chargement du sol… » doit s'afficher ; sinon, console (F12) et lignes `[tuile] …` |
 | « Chargement du sol… » qui dure | grosse tuile | patienter ; relever les lignes `[tuile] …` de la console |
 | Les zones n'apparaissent pas | fichier de zones ailleurs que dans le dossier de la page, zone privée, marqueur discret | vérifier `X.zones.json` dans le dossier servi, F5 en fenêtre privée, `--zone-marker portee` |
-| Les réglages ne changent pas | coquille ancienne, cache | `--maj`, puis Ctrl+F5 |
+| Les réglages ne changent pas | coquille ancienne, cache | `--update`, puis Ctrl+F5 |
 | Erreurs « Couldn't load texture » | images de 0 octet dans des tuiles d'avant la v31 | redécouper avec glb2tiles v31 ou plus |
-| Pas de chat | page fabriquée sans `--presence-url` ou sans `--chat` | ajouter les options avec `--maj`, relancer le serveur |
+| Pas de chat | page fabriquée sans `--presence-url` ou sans `--chat` | ajouter les options avec `--update`, relancer le serveur |
 | La couleur d'avatar ne change pas | serveur de présence ancien | relancer le `presence_server.py` du dossier `dist` |
 | Copier le texte de l'aide | — | sélectionner à la souris, Ctrl+C ; sinon, dans la console : `copy(document.body.innerText)` |
 
@@ -154,7 +154,7 @@ Pour tout rapport de bug, colle le texte du panneau d'état et d'aide, et les me
 | Régler la largeur de l'aide et des informations | tirer leur bord droit (260 px à 70 % de la fenêtre), mémorisé |
 | Chat : messages plus anciens, non lus, citations | bouton « Messages plus anciens » (chat ouvert), titre de l'onglet « (3) Région », « N messages vous citent » ; réglage « Messages d'historique affichés » |
 | Région par défaut (adresse sans `?region=`) | `default.json` écrit à la première région d'un dossier, `--default` pour en changer ; sinon la première entrée relative de `regions.json` |
-| Mettre `lib/` ailleurs | `--lib-url ../lib` (ou une adresse `https://…/lib`) à la fabrication de la coquille ; retenu pour `--maj` |
+| Mettre `lib/` ailleurs | `--lib-url ../lib` (ou une adresse `https://…/lib`) à la fabrication de la coquille ; retenu pour `--update` |
 | Région dans un sous-dossier | `glb2html.py X.glb --shared-shell "P:\site\index.html" -o "P:\site\sous\dossier\X.html"` ; adresse `index.html?region=sous/dossier/X` |
 | Paramètres de l'adresse | séparés par `&` ; `#` est aussi accepté (`#name=Klaatou&lang=en` = `#name=Klaatou#lang=en`) |
 
@@ -189,7 +189,7 @@ Il faut un nom de domaine géré par Cloudflare (compte gratuit).
 4. Adresse de présence : `wss://presence.TONDOMAINE.tld`.
 
 ### Brancher les pages (les trois voies)
-Une région à la fois : `glb2html.py --maj -o "CHEMIN\X.html" --shared-shell --presence-url "wss://ADRESSE"` (la ligne `--maj` de la section 4 plus `--presence-url`). Ou la clé `presenceUrl` de `X.config.json`.
+Une région à la fois : `glb2html.py --update -o "CHEMIN\X.html" --shared-shell --presence-url "wss://ADRESSE"` (la ligne `--update` de la section 4 plus `--presence-url`). Ou la clé `presenceUrl` de `X.config.json`.
 
 ### Contrôler l'adresse vue par le serveur (à faire une fois, avec `--log-ip raw`)
 Ouvre une page depuis un téléphone en 4G (pas depuis ton réseau), puis lis `presence.log` : l'adresse écrite doit être celle du téléphone. Si tu vois `127.0.0.1` ou l'adresse du relais, l'en-tête donné à `--proxy-header` est mauvais ou absent : **les bannissements par IP ne marcheraient pas**. Les en-têtes attendus : `X-Forwarded-For` (Caddy, nginx), `CF-Connecting-IP` (Cloudflare) ; pour Funnel, essaie `X-Forwarded-For` et dis-moi ce que montre le journal.

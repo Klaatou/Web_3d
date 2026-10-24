@@ -1,0 +1,41 @@
+{
+ "app": "web3d-layout",
+ "v": 1,
+ "layout": {
+  "wins": {
+   "H": {
+    "pile": "L",
+    "home": "L"
+   },
+   "I": {
+    "pile": "R",
+    "home": "L"
+   },
+   "L": {
+    "pile": "F",
+    "home": "R",
+    "x": 600,
+    "y": 120
+   }
+  },
+  "order": {
+   "L": [
+    "H"
+   ],
+   "R": [
+    "I"
+   ]
+  }
+ },
+ "ls": {
+  "glb2html_help": "1",
+  "glb2html_helpFold": "0",
+  "glb2html_state": "1",
+  "glb2html_stateFold": "1",
+  "glb2html_spawn": "1",
+  "glb2html_spawnFold": "0",
+  "glb2html_helpW": "360",
+  "glb2html_stateW": "320",
+  "glb2html_spawnW": "280"
+ }
+}

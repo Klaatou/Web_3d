@@ -260,11 +260,11 @@ async def main():
         EXPORT["zones"] = json.loads(pathlib.Path(await d_.path()).read_text(encoding="utf-8"))
         zl_ = EXPORT["zones"]
         rapport(len(zl_) == 5 and [z["type"] for z in zl_] == ["url", "portal", "spawn", "url", "url"] and zl_[3]["mesh"] == "Statue" and zl_[4]["mesh"] == "Banc#1", "zones exportées : libre, portail, arrivée, deux zones liées", [(z["type"], z["mesh"]) for z in zl_])
-        await pg.select_option("#profileSel", "perso")
+        await pg.select_option("#profileSel", "private")
         await pg.fill("#cmdScript", "glb2html.py")
         await pg.click("#bCmd")
         cmd = await pg.input_value("#cmdOut")
-        rapport("--tiles 'Syn.tiles.json'" in cmd and "--zones 'Syn.zones.json'" in cmd and "-o 'Syn.html'" in cmd and "--shared-shell" in cmd and "--profile perso" in cmd and "'Syn.glb'" not in cmd and "--rotate" not in cmd, "récapitulatif de commande : --tiles, --zones X.zones.json, -o, coquille commune", cmd)
+        rapport("--tiles 'Syn.tiles.json'" in cmd and "--zones 'Syn.zones.json'" in cmd and "-o 'Syn.html'" in cmd and "--shared-shell" in cmd and "--profile private" in cmd and "'Syn.glb'" not in cmd and "--rotate" not in cmd, "récapitulatif de commande : --tiles, --zones X.zones.json, -o, coquille commune", cmd)
         notes = await pg.inner_text("#cmdNote")
         rapport("Région en tuiles" in notes, "notes de la commande en mode tuiles", notes[:200])
         rapport(not errs, "aucune erreur JavaScript", errs)

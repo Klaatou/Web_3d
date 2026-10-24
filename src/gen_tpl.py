@@ -84,7 +84,7 @@ PANEL = True
 ZONES_LIVE = ""
 MAP_JSON = "[]"
 MAP_URL = ""
-ZONE_MARKER = "discret"
+ZONE_MARKER = "dot"
 SHOW_SPAWNS = False
 ZONE_CONE = True
 FLY_ENABLED = True
@@ -120,7 +120,22 @@ MESHOPT_FILES = {"three/addons/libs/meshopt_decoder.module.js": "examples/jsm/li
 
 
 ZONE_TYPES = ("url", "ha", "portal", "spawn")
-ZONE_MARKERS = ("discret", "portee", _tr("py.glb2html.aucun"))
+ZONE_MARKERS = ("dot", "range", "none")
+# v43 : anciennes valeurs (avant v43), toujours acceptées et converties
+ZONE_MARKER_OLD = {"discret": "dot", "portee": "range", "aucun": "none"}
+# v43 : profil « perso » renommé « private » (ancienne valeur acceptée et convertie)
+PROFILE_OLD = {"perso": "private"}
+# v43 : anciens noms d'options (avant la v43), toujours acceptés : remplacés avant la lecture de la ligne de commande
+OLD_OPTIONS = {"--maj": "--update", "--tile-max-mo": "--tile-max-mb", "--tile-max-tri": "--tile-max-triangles"}
+
+
+def old_options(argv):
+    """Remplace les anciens noms d'options par les nouveaux (« --nom=valeur » compris)."""
+    out = []
+    for x in argv:
+        k, eq, v = str(x).partition("=")
+        out.append(OLD_OPTIONS.get(k, k) + eq + v if k.startswith("--") else x)
+    return out
 
 
 def _slug(s):
@@ -139,7 +154,7 @@ def clean_zones(zones, profile):
     for i, z in enumerate(zones if isinstance(zones, list) else []):
         if not isinstance(z, dict):
             continue
-        if z.get("private") and profile != "perso":
+        if z.get("private") and profile not in ("private", "perso"):
             continue
         t = z.get("type") if z.get("type") in ZONE_TYPES else "portal"
         out.append({
@@ -346,13 +361,13 @@ def data_path(arg):
 
 
 def page_path(arg, base):
-    """--maj : chemin relatif d'un fichier de carte -> relatif au dossier de la page (-o), jamais au dossier de lancement ni à celui des outils."""
+    """--update : chemin relatif d'un fichier de carte -> relatif au dossier de la page (-o), jamais au dossier de lancement ni à celui des outils."""
     p = pathlib.Path(arg).expanduser()
     return p if p.is_absolute() else pathlib.Path(base) / p
 
 
 def where_note(reg, out):
-    """Hors --maj : une ligne qui dit où le fichier de carte est écrit quand ce n'est pas à côté de la page (-o)."""
+    """Hors --update : une ligne qui dit où le fichier de carte est écrit quand ce n'est pas à côté de la page (-o)."""
     if out and pathlib.Path(reg).resolve().parent != pathlib.Path(out).resolve().parent:
         print(_tr("py.glb2html.carte_0_n_est_pas_a", reg, out))
 
@@ -427,8 +442,8 @@ def settings_defaults(S):
     put("zoom", cam.get("zoom"), float)
     put("cam_dir", cam.get("camDir"), vec)
     put("target", cam.get("target"), vec)
-    if S.get("profile") in ("public", "perso"):
-        d["profile"] = S["profile"]
+    if S.get("profile") in ("public", "private", "perso"):
+        d["profile"] = PROFILE_OLD.get(S["profile"], S["profile"])
     return d
 
 
@@ -507,18 +522,18 @@ def build_cfg(name: str, *, rotate=ROTATE, hole=HOLE_RADIUS, hole_fade=HOLE_FADE
         "foliageCutout": float(foliage_cutout), "seaSize": SEA_SIZE, "seaSegments": int(sea_segments),
         "seaColor": int(sea_color), "skyColor": int(sky_color),
         "walk": bool(walk), "eyeHeight": float(eye_height), "walkSpeed": float(walk_speed), "walkIgnore": str(walk_ignore),
-        "names": bool(names), "chat": bool(chat), "profile": profile, "version": VERSION, "panel": bool(panel), "zonesLive": str(zones_live or ""),
+        "names": bool(names), "chat": bool(chat), "profile": PROFILE_OLD.get(profile, profile), "version": VERSION, "panel": bool(panel), "zonesLive": str(zones_live or ""),
         "map": clean_map(json.loads(MAP_JSON) if map_entries is None else map_entries), "mapUrl": str(map_url or "")[:1200], "spectate": bool(presence_url) if spectate is None else bool(spectate),
         "zones": clean_zones(json.loads(ZONES_JSON) if zones is None else zones, profile), "chatFade": float(chat_fade), "presenceUrl": str(presence_url), "room": str(room) or pathlib.Path(name).stem,
-        "zoneMarker": zone_marker if zone_marker in ZONE_MARKERS else "discret", "showSpawns": bool(show_spawns), "zoneCone": bool(zone_cone), "fly": bool(fly), "targetExplicit": bool(target_explicit),
+        "zoneMarker": ZONE_MARKER_OLD.get(zone_marker, zone_marker) if ZONE_MARKER_OLD.get(zone_marker, zone_marker) in ZONE_MARKERS else "dot", "showSpawns": bool(show_spawns), "zoneCone": bool(zone_cone), "fly": bool(fly), "targetExplicit": bool(target_explicit),
         "zoneInfoDist": max(5.0, min(500.0, float(zone_info_dist))), "compass": bool(compass), "northDeg": float(north) % 360.0, "libUrl": str(lib_url or ""),
     }
     if modular:
         cfg["zones"], cfg["zonesLive"] = [], ""
     if tiles:
         # mode tuiles : clés présentes seulement dans ce cas (sans « tiles », la config est celle d'avant)
-        cfg.update({"tiles": str(tiles), "tileRadius": float(tile_radius), "tileMargin": float(tile_margin), "tileMaxMo": float(tile_max_mo),
-                    "tileMaxTri": int(tile_max_tri), "tileConcurrency": int(tile_concurrency)})
+        cfg.update({"tiles": str(tiles), "tileRadius": float(tile_radius), "tileMargin": float(tile_margin), "tileMaxMB": float(tile_max_mo),
+                    "tileMaxTriangles": int(tile_max_tri), "tileConcurrency": int(tile_concurrency)})
     return cfg
 
 
@@ -594,7 +609,7 @@ const C = await (async () => {
     try {
       const rz = await fetch(nom, { cache: 'no-store' }); if (!rz.ok) continue;
       const liste = await rz.json(); if (!Array.isArray(liste)) continue;
-      cfg.zones = liste.filter(z => z && (cfg.profile === 'perso' || !z.private)); break;
+      cfg.zones = liste.filter(z => z && (cfg.profile === 'private' || cfg.profile === 'perso' || !z.private)); break;
     } catch (e) {}
   }
   return cfg;
@@ -605,10 +620,10 @@ SHELL_CFG_TAG = '<script type="application/json" id="cfg">__CONFIG__</script>\n'
 SHELL_GLB_TAG = '<script type="application/octet-stream" id="glb">__GLB_B64__</script>\n'
 SHELL_LOAD_OLD = "await viewer.loadBuffer(await b64ToBuffer(document.getElementById('glb').textContent.trim()));"
 SHELL_LOAD_NEW = """if (C.tiles) {
-    // région en tuiles (X.tiles.json, voir docs/fr/MANUEL.md § 17 bis) : pas de X.glb ; ?rayon=NNN remplace tileRadius (essais).
+    // région en tuiles (X.tiles.json, voir docs/fr/MANUEL.md § 17 bis) : pas de X.glb ; ?radius=NNN remplace tileRadius (essais).
     // Arrivée demandée (lien #spawn= ou #pos=) : cadrage et chargement d'abord sur ce point. Sans lien, arrivée « default » si la région en a une
     // (sauf --target explicite) ; sinon la cible de la configuration. La page continue après 15 s même si la tuile n'est pas prête.
-    const rayon = Number(new URLSearchParams(location.search).get('rayon'));
+    const rayon = Number(new URLSearchParams(location.search).get('radius') || new URLSearchParams(location.search).get('rayon'));   // v43 : ?radius= ; l'ancien ?radius= reste lu
     const A = startPoint(), D = A ? null : defaultArrival(), at = A || (D && !keepTarget ? D : null);
     await viewer.loadTiles(C.tiles, { anchor: at ? at.pos : undefined, target: at ? at.pos : undefined, radius: rayon > 0 ? rayon : undefined });
   } else {
@@ -1029,7 +1044,7 @@ def write_config(cfg_path: pathlib.Path, name: str, kw):
     return cfg
 
 
-# --maj : option de la ligne de commande (dest argparse) -> clés de la config qu'elle remplace. Les autres clés de la config existante sont gardées telles quelles.
+# --update : option de la ligne de commande (dest argparse) -> clés de la config qu'elle remplace. Les autres clés de la config existante sont gardées telles quelles.
 MAJ_KEYS = {
     "rotate": ("rotate",), "hole": ("hole",), "hole_fade": ("holeFade",), "hole_x": ("holeX",), "hole_z": ("holeZ",), "wave": ("wave",), "sea_y": ("seaY",),
     "zoom": ("zoom",), "cam_dir": ("camDir",), "target": ("target", "targetExplicit"), "foliage_cutout": ("foliageCutout",), "sea_color": ("seaColor",),
@@ -1037,7 +1052,7 @@ MAJ_KEYS = {
     "walk_ignore": ("walkIgnore",), "names": ("names",), "presence_url": ("presenceUrl",), "chat": ("chat",), "chat_fade": ("chatFade",), "profile": ("profile",),
     "spectate": ("spectate",), "panel": ("panel",), "map_url": ("mapUrl",), "room": ("room",), "sea_enabled": ("sea",), "anim_enabled": ("anim",), "retina": ("retina",), "light": ("light",),
     "zone_marker": ("zoneMarker",), "show_spawns": ("showSpawns",), "zone_cone": ("zoneCone",), "fly": ("fly",), "zone_info_dist": ("zoneInfoDist",), "compass": ("compass",), "north": ("northDeg",), "lib_url": ("libUrl",), "tile_radius": ("tileRadius",), "tile_margin": ("tileMargin",),
-    "tile_max_mo": ("tileMaxMo",), "tile_max_tri": ("tileMaxTri",), "tile_concurrency": ("tileConcurrency",), "tiles": ("tiles",),
+    "tile_max_mo": ("tileMaxMB",), "tile_max_tri": ("tileMaxTriangles",), "tile_concurrency": ("tileConcurrency",), "tiles": ("tiles",),
     "map": ("map",), "register": ("map",),
 }
 
@@ -1079,7 +1094,7 @@ def merge_maj_cfg(old: dict, new: dict, explicit) -> tuple:
 
 
 def renew_shell(shell_path: pathlib.Path, page: str):
-    """--maj : écrit la coquille de cette version si elle est absente ou différente (l'ancienne est gardée sous un nom daté). Rend un texte pour le compte rendu."""
+    """--update : écrit la coquille de cette version si elle est absente ou différente (l'ancienne est gardée sous un nom daté). Rend un texte pour le compte rendu."""
     new = page.encode("utf-8")
     if not shell_path.is_file():
         write_atomic(shell_path, new)
@@ -1094,7 +1109,7 @@ def renew_shell(shell_path: pathlib.Path, page: str):
 
 
 def run_maj(a, kw, explicit, S_reg):
-    """glb2html.py --maj : met à jour une région déjà générée en mode modulaire. N'applique que les options données, garde le reste de X.config.json
+    """glb2html.py --update : met à jour une région déjà générée en mode modulaire. N'applique que les options données, garde le reste de X.config.json
     et X.zones.json (réécrit seulement avec --zones), écrit la version courante et renouvelle la coquille si elle est plus ancienne."""
     if not a.output:
         sys.exit(_tr("py.glb2html.erreur_maj_demande_o_region_html"))
@@ -1199,7 +1214,7 @@ def run_maj(a, kw, explicit, S_reg):
         print(_tr("py.glb2html.maj_0_absent_ou_incomplet_ecrit", libtxt))
     else:
         print(_tr("py.glb2html.maj_0_present_conserve", libtxt))
-    if a.shared_shell and a.default:   # --maj n'écrase jamais default.json sans --default
+    if a.shared_shell and a.default:   # --update n'écrase jamais default.json sans --default
         write_default_json(sdir, rname, True)
     if a.map_page:
         entries = cfg.get("map") or []
@@ -1262,7 +1277,7 @@ def main():
     i18n_add_common(ap)
     ap.add_argument("--version", action="version", version=f"glb2html {VERSION}", help=_tr("py.common.version"))
     ap.add_argument("input", nargs="?", help=_tr("py.glb2html.fichier_glb_ou_dossier_de_glb"))
-    ap.add_argument("--zones-live", nargs="?", const="auto", default=(ZONES_LIVE or None), metavar="NOM", help=_tr("py.glb2html.la_page_recharge_ses_zones_a"))
+    ap.add_argument("--zones-live", nargs="?", const="auto", default=(ZONES_LIVE or None), metavar="NAME", help=_tr("py.glb2html.la_page_recharge_ses_zones_a"))
     ap.add_argument("--zones-only", action="store_true", help=_tr("py.glb2html.reecrit_seulement_les_zones_sans_regenerer"))
     ap.add_argument("-o", "--output", help=_tr("py.glb2html.sortie_fichier_html_ou_dossier_cree"))
     ap.add_argument("--rotate", type=int, choices=(0, 90, 180, 270), default=ROTATE, help=_tr("py.glb2html.rotation_de_la_region_autour_de"))
@@ -1288,7 +1303,7 @@ def main():
     ap.add_argument("--chat", action=argparse.BooleanOptionalAction, default=CHAT_ENABLED, help=_tr("py.glb2html.chat_entre_visiteurs_necessite_presence_url"))
     ap.add_argument("--chat-fade", type=float, default=CHAT_FADE, help=_tr("py.glb2html.secondes_avant_disparition_des_messages_et"))
     ap.add_argument("--zones", type=pathlib.Path, help=_tr("py.glb2html.fichier_json_de_zones_exporte_par"))
-    ap.add_argument("--profile", choices=("public", "perso"), default=PROFILE, help=_tr("py.glb2html.public_retire_les_zones_privees_ex"))
+    ap.add_argument("--profile", type=lambda v: PROFILE_OLD.get(v, v), choices=("public", "private"), default=PROFILE, help=_tr("py.glb2html.public_retire_les_zones_privees_ex"))
     ap.add_argument("--spectate", action=argparse.BooleanOptionalAction, default=SPECTATE, help=_tr("py.glb2html.voir_les_visiteurs_en_promenade_depuis"))
     ap.add_argument("--panel", action=argparse.BooleanOptionalAction, default=PANEL, help=_tr("py.glb2html.panneau_de_reglages_pour_les_visiteurs"))
     ap.add_argument("--map", type=pathlib.Path, help=_tr("py.glb2html.fichier_regions_json_carte_des_mondes"))
@@ -1299,30 +1314,30 @@ def main():
     ap.add_argument("--region-xy", metavar="X,Y", help=_tr("py.glb2html.position_sur_la_grille_comme_opensim"))
     ap.add_argument("--region-spawn", help=_tr("py.glb2html.identifiant_du_point_d_arrivee_des"))
     ap.add_argument("--thumb", help=_tr("py.glb2html.vignette_de_la_region_fichier_jpg"))
-    ap.add_argument("--map-page", metavar="FICHIER.html", help=_tr("py.glb2html.genere_aussi_une_page_web_carte"))
-    ap.add_argument("--settings", nargs="?", const="auto", default=None, metavar="FICHIER", help=_tr("py.glb2html.reprend_tous_les_reglages_enregistres_par"))
+    ap.add_argument("--map-page", metavar="FILE.html", help=_tr("py.glb2html.genere_aussi_une_page_web_carte"))
+    ap.add_argument("--settings", nargs="?", const="auto", default=None, metavar="FILE", help=_tr("py.glb2html.reprend_tous_les_reglages_enregistres_par"))
     ap.add_argument("--modular", action="store_true", help=_tr("py.glb2html.mode_modulaire_ecrit_une_coquille_page"))
-    ap.add_argument("--shared-shell", nargs="?", const=DEFAULT_SHELL, default=None, metavar="COQUILLE.html", help=_tr("py.glb2html.mode_modulaire_a_coquille_commune_une", DEFAULT_SHELL))
+    ap.add_argument("--shared-shell", nargs="?", const=DEFAULT_SHELL, default=None, metavar="SHELL.html", help=_tr("py.glb2html.mode_modulaire_a_coquille_commune_une", DEFAULT_SHELL))
     ap.add_argument("--tiles", type=pathlib.Path, metavar="X.tiles.json", help=_tr("py.glb2html.region_decoupee_en_tuiles_par_glb2tiles"))
     ap.add_argument("--tile-radius", type=float, default=TILE_RADIUS, help=_tr("py.glb2html.m_charger_les_tuiles_dont_la"))
     ap.add_argument("--tile-margin", type=float, default=TILE_MARGIN, help=_tr("py.glb2html.m_decharger_les_tuiles_au_dela"))
-    ap.add_argument("--tile-max-mo", type=float, default=TILE_MAX_MO, help=_tr("py.glb2html.mo_de_tuiles_chargees_en_meme"))
-    ap.add_argument("--tile-max-tri", type=int, default=TILE_MAX_TRI, help=_tr("py.glb2html.triangles_de_tuiles_chargees_en_meme"))
+    ap.add_argument("--tile-max-mb", metavar="TILE_MAX_MB", dest="tile_max_mo", type=float, default=TILE_MAX_MO, help=_tr("py.glb2html.mo_de_tuiles_chargees_en_meme"))
+    ap.add_argument("--tile-max-triangles", metavar="TILE_MAX_TRIANGLES", dest="tile_max_tri", type=int, default=TILE_MAX_TRI, help=_tr("py.glb2html.triangles_de_tuiles_chargees_en_meme"))
     ap.add_argument("--tile-concurrency", type=int, default=TILE_CONCURRENCY, help=_tr("py.glb2html.telechargements_simultanes_defaut_default_d"))
     ap.add_argument("--config-only", action="store_true", help=_tr("py.glb2html.reecrit_seulement_page_config_json_d"))
-    ap.add_argument("--zone-marker", choices=ZONE_MARKERS, default=ZONE_MARKER, help=_tr("py.glb2html.marqueur_des_portails_et_zones_libres"))
+    ap.add_argument("--zone-marker", type=lambda v: ZONE_MARKER_OLD.get(v, v), choices=ZONE_MARKERS, default=ZONE_MARKER, help=_tr("py.glb2html.marqueur_des_portails_et_zones_libres"))
     ap.add_argument("--zone-cone", action=argparse.BooleanOptionalAction, default=ZONE_CONE, help=_tr("py.glb2html.petit_cone_pointe_vers_le_bas"))
     ap.add_argument("--show-spawns", action=argparse.BooleanOptionalAction, default=SHOW_SPAWNS, help=_tr("py.glb2html.dessine_aussi_les_arrivees_dans_la"))
     ap.add_argument("--zone-info-dist", type=float, default=ZONE_INFO_DIST, metavar="M", help=_tr("py.glb2html.distance_5_a_200_m_defaut"))
-    ap.add_argument("--lib-url", default="", metavar="CHEMIN", help=_tr("py.glb2html.lib_url"))
+    ap.add_argument("--lib-url", default="", metavar="PATH", help=_tr("py.glb2html.lib_url"))
     ap.add_argument("--default", action="store_true", help=_tr("py.glb2html.default_region"))
     ap.add_argument("--compass", action=argparse.BooleanOptionalAction, default=COMPASS, help=_tr("py.glb2html.compass"))
-    ap.add_argument("--north", type=float, default=NORTH_DEG, metavar="DEGRES", help=_tr("py.glb2html.north"))
+    ap.add_argument("--north", type=float, default=NORTH_DEG, metavar="DEGREES", help=_tr("py.glb2html.north"))
     ap.add_argument("--fly", action=argparse.BooleanOptionalAction, default=FLY_ENABLED, help=_tr("py.glb2html.vol_en_promenade_touche_f_ou"))
-    ap.add_argument("--maj", action="store_true", help=_tr("py.glb2html.met_a_jour_une_region_deja"))
+    ap.add_argument("--update", dest="maj", action="store_true", help=_tr("py.glb2html.met_a_jour_une_region_deja"))
     ap.add_argument("--room", default=ROOM, help=_tr("py.glb2html.salon_de_presence_defaut_nom_du"))
-    ap.add_argument("--sea", dest="sea_enabled", action=argparse.BooleanOptionalAction, default=SEA_ENABLED, help=_tr("py.glb2html.help.sea"))
-    ap.add_argument("--anim", dest="anim_enabled", action=argparse.BooleanOptionalAction, default=ANIM_ENABLED, help=_tr("py.glb2html.help.anim"))
+    ap.add_argument("--sea", metavar="SEA", dest="sea_enabled", action=argparse.BooleanOptionalAction, default=SEA_ENABLED, help=_tr("py.glb2html.help.sea"))
+    ap.add_argument("--anim", metavar="ANIM", dest="anim_enabled", action=argparse.BooleanOptionalAction, default=ANIM_ENABLED, help=_tr("py.glb2html.help.anim"))
     ap.add_argument("--retina", action=argparse.BooleanOptionalAction, default=RETINA_ENABLED, help=_tr("py.glb2html.haute_resolution_rendu_x2_minimum_supersampl"))
     ap.add_argument("--light", action=argparse.BooleanOptionalAction, default=LIGHT_ENABLED, help=_tr("py.glb2html.help.light"))
     ap.add_argument("--title", help=_tr("py.glb2html.titre_de_la_page"))
@@ -1382,7 +1397,7 @@ def main():
 
     map_arg = None
     if a.map and a.maj and a.output and not pathlib.Path(a.map).is_absolute() and page_path(a.map, pathlib.Path(a.output).parent).is_file():
-        a.map = str(page_path(a.map, pathlib.Path(a.output).parent))   # --maj : chemin relatif = relatif au dossier de la page
+        a.map = str(page_path(a.map, pathlib.Path(a.output).parent))   # --update : chemin relatif = relatif au dossier de la page
     if a.map:
         mf = find_beside(a.map)
         if mf is None:
@@ -1577,4 +1592,5 @@ def main():
 
 
 if __name__ == "__main__":
+    sys.argv = old_options(sys.argv)
     main()

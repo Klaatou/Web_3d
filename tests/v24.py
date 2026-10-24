@@ -189,7 +189,7 @@ async def viewer_edition(br):
     await pg.goto((DIST / "glb-viewer.html").as_uri())
     await pg.set_input_files("#fGlb", str(tmp / "boite.glb"))
     await pg.wait_for_function("!document.getElementById('bZip').disabled", timeout=20000)
-    await pg.select_option("#profileSel", "perso")
+    await pg.select_option("#profileSel", "private")
     await pg.set_input_files("#fZones", str(tmp / "z.json"))
     await pg.wait_for_timeout(500)
     sc = await pg.evaluate(SCAN)

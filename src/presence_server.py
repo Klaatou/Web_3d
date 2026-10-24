@@ -699,7 +699,7 @@ async def main():
     ap.add_argument("--name-ttl-days", type=int, default=365, help=_tr("py.presence.un_nom_non_utilise_depuis_ce"))
     ap.add_argument("--reserved", default="", help=_tr("py.presence.noms_interdits_a_la_reservation_separes"))
     ap.add_argument("--log", help=_tr("py.presence.fichier_de_journal_tourne_chaque_nuit"))
-    ap.add_argument("--history-file", default="", metavar="FICHIER", help=_tr("py.presence.history_file"))
+    ap.add_argument("--history-file", default="", metavar="FILE", help=_tr("py.presence.history_file"))
     ap.add_argument("--history-days", type=int, default=30, metavar="N", help=_tr("py.presence.history_days"))
     ap.add_argument("--log-days", type=int, default=30, help=_tr("py.presence.jours_de_journal_conserves"))
     ap.add_argument("--log-ip", choices=("hash", "raw", "none"), default="hash", help=_tr("py.presence.adresses_ip_dans_le_journal_masquees"))

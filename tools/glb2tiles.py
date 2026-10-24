@@ -3,20 +3,20 @@
 
 Usage :  python glb2tiles.py --version
          python glb2tiles.py "Region.glb" --analyse
-         python glb2tiles.py "Region.glb" [--budget 32] [--budget-tri 1500000] [--min 16] [--sortie DOSSIER] [--sans-vue-ensemble]
-         python glb2tiles.py "Region.glb" --vue-ensemble-seule [mêmes options de découpage] [--ov-budget 25] [--ov-seuil 3]
+         python glb2tiles.py "Region.glb" [--budget 32] [--budget-triangles 1500000] [--min 16] [--output DOSSIER] [--no-overview]
+         python glb2tiles.py "Region.glb" --overview-only [mêmes options de découpage] [--ov-budget 25] [--ov-threshold 3]
 
 Python standard seulement. Le GLB d'entrée n'est jamais chargé en entier : l'en-tête JSON est lu, puis les accessors
 et les images sont lus par seek/read, par morceaux, à la demande. Chaque tuile (quelques dizaines de Mo) est
 assemblée en mémoire puis écrite.
 
-Sorties (à côté du GLB, ou dans --sortie) : X.tiles/T_<niveau>_<i>_<j>.glb, X.tiles.json et (v31) X.overview.glb.
+Sorties (à côté du GLB, ou dans --output) : X.tiles/T_<niveau>_<i>_<j>.glb, X.tiles.json et (v31) X.overview.glb.
 Le journal est glb2tiles.log, écrit à côté du script (sa première ligne donne la version).
 
 Principe : quadtree adaptatif sur le plan X,Z (glTF : Y vers le haut), uniquement sur les cellules non vides. Une cellule
-est subdivisée tant que son poids autonome dépasse --budget (Mo) ou ses triangles --budget-tri, et que son côté dépasse
---min (m). Un objet racine (nœud de premier niveau) reste entier si son poids autonome ne dépasse pas --entier-poids (Mo)
-ET si son étendue ne dépasse pas --entier-etendue (m) ; sinon il est réparti instance par instance. Un objet portant un
+est subdivisée tant que son poids autonome dépasse --budget (Mo) ou ses triangles --budget-triangles, et que son côté dépasse
+--min (m). Un objet racine (nœud de premier niveau) reste entier si son poids autonome ne dépasse pas --whole-weight (Mo)
+ET si son étendue ne dépasse pas --whole-extent (m) ; sinon il est réparti instance par instance. Un objet portant un
 skin n'est jamais réparti. Les meshes partagés entre tuiles sont dupliqués dans chaque tuile qui les utilise.
 Les sommets de chaque primitive sont compactés (seuls les sommets indexés sont gardés). Coordonnées inchangées.
 
@@ -25,7 +25,7 @@ dans le navigateur ; elle est remplacée par un petit PNG gris (un seul par tuil
 
 Vue d'ensemble (v31, X.overview.glb) : toute la région en géométrie légère, sans image, un nœud par fichier de tuile ; chaque primitive
 unique est simplifiée une seule fois (regroupement de sommets), le terrain est rééchantillonné sur un réseau commun. Écrite avec les
-tuiles (--sans-vue-ensemble pour s'en passer) ou seule (--vue-ensemble-seule, mêmes options de découpage). Options --ov-*.
+tuiles (--no-overview pour s'en passer) ou seule (--overview-only, mêmes options de découpage). Options --ov-*.
 
 Hors lot : découpage par triangles d'un mesh unique plus grand qu'une cellule (terrain, mer), compression des tuiles.
 Les GLB compressés (Draco, meshopt) sont refusés.
@@ -433,7 +433,7 @@ class Tuile:
 
 
 def compiler_exclusions(motifs):
-    """Expressions de --exclure compilées (insensibles à la casse) ; message clair si l'une est invalide."""
+    """Expressions de --exclude compilées (insensibles à la casse) ; message clair si l'une est invalide."""
     res = []
     for m in motifs:
         try:
@@ -462,9 +462,9 @@ class Params:
         self.references = references                    # v32 : extras.ref / extras.box sur chaque nœud copié (zones liées en mode tuiles)
 
     def dict(self):
-        return {"budgetMo": self.budget_mo, "budgetTriangles": self.budget_tri, "minCell": self.cote_min,
-                "wholeWeightMo": self.entier_poids_mo, "wholeExtent": self.entier_etendue,
-                "thresholdMo": self.seuil_mo, "thresholdTriangles": self.seuil_tri, "outlier": self.aberrant}
+        return {"budgetMB": self.budget_mo, "budgetTriangles": self.budget_tri, "minCell": self.cote_min,
+                "wholeWeightMB": self.entier_poids_mo, "wholeExtent": self.entier_etendue,
+                "thresholdMB": self.seuil_mo, "thresholdTriangles": self.seuil_tri, "outlier": self.aberrant}
 
 
 class Plan:
@@ -664,8 +664,8 @@ class Plan:
         S = stats()
         self.racines = []
         self.insts = []
-        self.exclus = []        # objets racine retirés par --exclure : {"nom", "tri", "meshes", "cles", "imgs"}
-        self.gardes = 0         # noms qui correspondent à --exclure mais conservés par les garde-fous
+        self.exclus = []        # objets racine retirés par --exclude : {"nom", "tri", "meshes", "cles", "imgs"}
+        self.gardes = 0         # noms qui correspondent à --exclude mais conservés par les garde-fous
         for r in self.racines_ids:
             rac = Racine()
             rac.id, rac.nodes = r, self.noeuds_racine[r]
@@ -739,7 +739,7 @@ class Plan:
     def calculer_references(self):
         """Référence stable de chaque nœud dans le GLB ENTIER (v32), même règle que resolveMeshRef de core.js : le nom s'il est unique, sinon
         « nom#index », index = rang du nœud parmi les nœuds de ce nom dans l'ordre de parcours (pré-ordre, enfants dans l'ordre du fichier).
-        Les nœuds exclus par --exclure comptent (la référence ne dépend pas de ce qu'on retire). Boîte (monde) de l'objet entier : union des
+        Les nœuds exclus par --exclude comptent (la référence ne dépend pas de ce qu'on retire). Boîte (monde) de l'objet entier : union des
         boîtes de toutes les instances de ses descendants, y compris celles qui sont dans d'autres tuiles."""
         self.ref_de, self.box_de = {}, {}
         if not self.P.references:
@@ -1255,7 +1255,7 @@ def recommandation(glb, plan, tuiles):
 
 
 def lignes_exclusions(plan):
-    """Récapitulatif de --exclure : nombre, 20 noms les plus fréquents, octets gagnés ; liste vide sans option."""
+    """Récapitulatif de --exclude : nombre, 20 noms les plus fréquents, octets gagnés ; liste vide sans option."""
     P = plan.P
     if not P.exclure:
         return []
@@ -1336,7 +1336,7 @@ def rapport_analyse(glb, plan, tuiles):
 
 
 def signalements(plan):
-    """Valeurs aberrantes (distance au centre médian ou étendue au-delà de --aberrant)."""
+    """Valeurs aberrantes (distance au centre médian ou étendue au-delà de --outlier)."""
     lst, _ = plan.aberrantes()
     seuil = plan.P.aberrant
     mauvais = sorted([t for t in lst if t[0] > seuil or t[1] > seuil], key=lambda t: -max(t[0], t[1]))
@@ -1372,7 +1372,7 @@ class ParamsOv:
         self.pas_terrain = max(0.25, float(pas_terrain))
 
     def dict(self):
-        return {"budgetMo": self.budget_mo, "budgetTriangles": self.budget_tri, "minExtent": self.seuil, "maxExtent": self.seuil_max,
+        return {"budgetMB": self.budget_mo, "budgetTriangles": self.budget_tri, "minExtent": self.seuil, "maxExtent": self.seuil_max,
                 "resolution": self.resolution, "terrainStep": self.pas_terrain}
 
 
@@ -1900,7 +1900,7 @@ def ecrire_tout(glb, plan, tuiles, sortie, nom):
 
 
 def lignes_taille_instances(plan):
-    """Répartition des instances par étendue (plus grande dimension) : aide à choisir --ov-seuil de la vue d'ensemble."""
+    """Répartition des instances par étendue (plus grande dimension) : aide à choisir --ov-threshold de la vue d'ensemble."""
     out = [_tr("py.glb2tiles.etendue_des_instances_plus_grande_dimension")]
     tot_i, tot_t = len(plan.insts), sum(i.tri for i in plan.insts)
     for sv in (1, 2, 3, 4, 8, 16, 32, 64):
@@ -1913,6 +1913,24 @@ def lignes_taille_instances(plan):
     return out
 
 
+# v43 : anciens noms d'options (avant la v43), toujours acceptés : remplacés avant la lecture de la ligne de commande
+OLD_OPTIONS = {"--budget-tri": "--budget-triangles", "--entier-poids": "--whole-weight", "--entier-etendue": "--whole-extent", "--seuil": "--threshold",
+               "--seuil-tri": "--threshold-triangles", "--aberrant": "--outlier", "--bloc": "--block", "--exclure": "--exclude",
+               "--exclure-max-tri": "--exclude-max-triangles", "--exclure-max-meshes": "--exclude-max-meshes", "--sans-references": "--no-refs",
+               "--sans-vue-ensemble": "--no-overview", "--vue-ensemble-seule": "--overview-only", "--ov-budget-tri": "--ov-budget-triangles",
+               "--ov-seuil": "--ov-threshold", "--ov-seuil-max": "--ov-threshold-max", "--ov-terrain-pas": "--ov-terrain-step", "--forcer": "--force",
+               "--sortie": "--output"}
+
+
+def old_options(argv):
+    """Remplace les anciens noms d'options par les nouveaux (« --nom=valeur » compris)."""
+    out = []
+    for x in argv:
+        k, eq, v = str(x).partition("=")
+        out.append(OLD_OPTIONS.get(k, k) + eq + v if k.startswith("--") else x)
+    return out
+
+
 def main(argv=None, log_path=None):
     global LOG_PATH
     LOG_PATH = log_path
@@ -1922,31 +1940,31 @@ def main(argv=None, log_path=None):
     ap.add_argument("--version", action="version", version=f"glb2tiles {VERSION}", help=_tr("py.common.version"))
     ap.add_argument("--analyse", action="store_true", help=_tr("py.glb2tiles.lecture_seule_mesures_decoupage_prevu_recomm"))
     ap.add_argument("--budget", type=float, default=32.0, help=_tr("py.glb2tiles.mo_par_tuile_defaut_32"))
-    ap.add_argument("--budget-tri", type=int, default=1500000, help=_tr("py.glb2tiles.triangles_par_tuile_defaut_1500000"))
-    ap.add_argument("--min", type=float, default=16.0, dest="cote_min", help=_tr("py.glb2tiles.cote_minimal_d_une_cellule_en"))
-    ap.add_argument("--entier-poids", type=float, default=16.0, help=_tr("py.glb2tiles.mo_un_objet_racine_plus_leger"))
-    ap.add_argument("--entier-etendue", type=float, default=256.0, help=_tr("py.glb2tiles.m_etendue_maximale_d_un_objet"))
-    ap.add_argument("--seuil", type=float, default=150.0, help=_tr("py.glb2tiles.mo_sous_ce_poids_et_sous"))
-    ap.add_argument("--seuil-tri", type=int, default=3000000, help=_tr("py.glb2tiles.triangles_pour_la_recommandation_pas_de"))
-    ap.add_argument("--aberrant", type=float, default=1000.0, help=_tr("py.glb2tiles.m_distance_ou_etendue_au_dela"))
-    ap.add_argument("--bloc", type=float, default=256.0, help=_tr("py.glb2tiles.cote_des_blocs_de_la_section"))
-    ap.add_argument("--exclure", action="append", default=[], metavar="REGEX",
+    ap.add_argument("--budget-triangles", metavar="BUDGET_TRIANGLES", dest="budget_tri", type=int, default=1500000, help=_tr("py.glb2tiles.triangles_par_tuile_defaut_1500000"))
+    ap.add_argument("--min", metavar="MIN", type=float, default=16.0, dest="cote_min", help=_tr("py.glb2tiles.cote_minimal_d_une_cellule_en"))
+    ap.add_argument("--whole-weight", metavar="WHOLE_WEIGHT", dest="entier_poids", type=float, default=16.0, help=_tr("py.glb2tiles.mo_un_objet_racine_plus_leger"))
+    ap.add_argument("--whole-extent", metavar="WHOLE_EXTENT", dest="entier_etendue", type=float, default=256.0, help=_tr("py.glb2tiles.m_etendue_maximale_d_un_objet"))
+    ap.add_argument("--threshold", metavar="THRESHOLD", dest="seuil", type=float, default=150.0, help=_tr("py.glb2tiles.mo_sous_ce_poids_et_sous"))
+    ap.add_argument("--threshold-triangles", metavar="THRESHOLD_TRIANGLES", dest="seuil_tri", type=int, default=3000000, help=_tr("py.glb2tiles.triangles_pour_la_recommandation_pas_de"))
+    ap.add_argument("--outlier", metavar="OUTLIER", dest="aberrant", type=float, default=1000.0, help=_tr("py.glb2tiles.m_distance_ou_etendue_au_dela"))
+    ap.add_argument("--block", metavar="BLOCK", dest="bloc", type=float, default=256.0, help=_tr("py.glb2tiles.cote_des_blocs_de_la_section"))
+    ap.add_argument("--exclude", dest="exclure", action="append", default=[], metavar="REGEX",
                     help=_tr("py.glb2tiles.retire_du_decoupage_les_objets_racine"))
-    ap.add_argument("--exclure-max-tri", type=int, default=24, help=_tr("py.glb2tiles.avec_exclure_triangles_au_plus_dans"))
-    ap.add_argument("--exclure-max-meshes", type=int, default=1, help=_tr("py.glb2tiles.avec_exclure_meshes_au_plus_dans"))
-    ap.add_argument("--sans-references", action="store_true", help=_tr("py.glb2tiles.ne_pas_ecrire_extras_ref_extras"))
-    ap.add_argument("--sans-vue-ensemble", action="store_true", help=_tr("py.glb2tiles.ne_pas_ecrire_x_overview_glb"))
-    ap.add_argument("--vue-ensemble-seule", action="store_true", help=_tr("py.glb2tiles.n_ecrire_que_x_overview_glb"))
+    ap.add_argument("--exclude-max-triangles", metavar="EXCLUDE_MAX_TRIANGLES", dest="exclure_max_tri", type=int, default=24, help=_tr("py.glb2tiles.avec_exclure_triangles_au_plus_dans"))
+    ap.add_argument("--exclude-max-meshes", metavar="EXCLUDE_MAX_MESHES", dest="exclure_max_meshes", type=int, default=1, help=_tr("py.glb2tiles.avec_exclure_meshes_au_plus_dans"))
+    ap.add_argument("--no-refs", dest="sans_references", action="store_true", help=_tr("py.glb2tiles.ne_pas_ecrire_extras_ref_extras"))
+    ap.add_argument("--no-overview", dest="sans_vue_ensemble", action="store_true", help=_tr("py.glb2tiles.ne_pas_ecrire_x_overview_glb"))
+    ap.add_argument("--overview-only", dest="vue_ensemble_seule", action="store_true", help=_tr("py.glb2tiles.n_ecrire_que_x_overview_glb"))
     ap.add_argument("--ov-budget", type=float, default=OV_BUDGET_MO, help=_tr("py.glb2tiles.mo_poids_maximal_de_la_vue"))
-    ap.add_argument("--ov-budget-tri", type=int, default=OV_BUDGET_TRI, help=_tr("py.glb2tiles.triangles_de_la_vue_d_ensemble"))
-    ap.add_argument("--ov-seuil", type=float, default=OV_SEUIL, help=_tr("py.glb2tiles.m_les_objets_dont_la_plus"))
-    ap.add_argument("--ov-seuil-max", type=float, default=OV_SEUIL_MAX, help=_tr("py.glb2tiles.m_si_le_budget_oblige_a"))
+    ap.add_argument("--ov-budget-triangles", metavar="OV_BUDGET_TRIANGLES", dest="ov_budget_tri", type=int, default=OV_BUDGET_TRI, help=_tr("py.glb2tiles.triangles_de_la_vue_d_ensemble"))
+    ap.add_argument("--ov-threshold", metavar="OV_THRESHOLD", dest="ov_seuil", type=float, default=OV_SEUIL, help=_tr("py.glb2tiles.m_les_objets_dont_la_plus"))
+    ap.add_argument("--ov-threshold-max", metavar="OV_THRESHOLD_MAX", dest="ov_seuil_max", type=float, default=OV_SEUIL_MAX, help=_tr("py.glb2tiles.m_si_le_budget_oblige_a"))
     ap.add_argument("--ov-resolution", type=int, default=OV_RESOLUTION, help=_tr("py.glb2tiles.cellules_sur_la_plus_grande_dimension"))
-    ap.add_argument("--ov-terrain-pas", type=float, default=OV_PAS_TERRAIN, help=_tr("py.glb2tiles.m_pas_du_reseau_du_terrain"))
-    ap.add_argument("--forcer", action="store_true", help=_tr("py.glb2tiles.decouper_meme_si_la_recommandation_est"))
-    ap.add_argument("--sortie", help=_tr("py.glb2tiles.dossier_de_sortie_defaut_a_cote"))
+    ap.add_argument("--ov-terrain-step", metavar="OV_TERRAIN_STEP", dest="ov_terrain_pas", type=float, default=OV_PAS_TERRAIN, help=_tr("py.glb2tiles.m_pas_du_reseau_du_terrain"))
+    ap.add_argument("--force", dest="forcer", action="store_true", help=_tr("py.glb2tiles.decouper_meme_si_la_recommandation_est"))
+    ap.add_argument("--output", metavar="OUTPUT", dest="sortie", help=_tr("py.glb2tiles.dossier_de_sortie_defaut_a_cote"))
     ap.add_argument("--nopause", action="store_true", help=_tr("py.glb2tiles.ne_pas_attendre_entree_a_la"))
-    a = ap.parse_args(argv)
+    a = ap.parse_args(old_options(sys.argv[1:] if argv is None else list(argv)))
     P = Params(a.budget, a.budget_tri, a.cote_min, a.entier_poids, a.entier_etendue, a.seuil, a.seuil_tri, a.aberrant, a.bloc,
                a.exclure, a.exclure_max_tri, a.exclure_max_meshes, not a.sans_references)
     OP = ParamsOv(a.ov_budget, a.ov_budget_tri, a.ov_seuil, a.ov_seuil_max, a.ov_resolution, a.ov_terrain_pas)
@@ -2061,7 +2079,7 @@ def lignes_vue_ensemble(ov):
 
 
 def vue_ensemble_seule(glb, plan, tuiles, sortie, nom, OP, t0):
-    """--vue-ensemble-seule : les tuiles et X.tiles.json existent ; le découpage recalculé doit correspondre à l'index (mêmes fichiers)."""
+    """--overview-only : les tuiles et X.tiles.json existent ; le découpage recalculé doit correspondre à l'index (mêmes fichiers)."""
     idx = Path(sortie) / f"{nom}.tiles.json"
     if not idx.is_file():
         raise ErreurGlb(_tr("py.glb2tiles.0_introuvable_vue_ensemble_seule_suppose", idx, sortie))
@@ -2090,6 +2108,7 @@ def vue_ensemble_seule(glb, plan, tuiles, sortie, nom, OP, t0):
 
 
 if __name__ == "__main__":
+    sys.argv = old_options(sys.argv)
     if "--version" in sys.argv[1:]:      # ni journal ni pause « Entrée »
         print(_tr("py.glb2tiles.glb2tiles_0_2", VERSION))
         sys.exit(0)

@@ -43,7 +43,7 @@ def lire_parser(chemin: pathlib.Path, langue=None):
     env_avant = os.environ.get("WEB3D_LANG")
     if langue:
         os.environ["WEB3D_LANG"] = langue
-    sys.argv = [str(chemin), "--help"]
+    sys.argv = [str(chemin), "--help", "--nopause"]   # v43 : oar2glb ne demande plus « Entrée pour fermer »
     sys.path.insert(0, str(chemin.parent))
     try:
         with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):

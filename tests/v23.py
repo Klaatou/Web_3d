@@ -117,7 +117,7 @@ async def main():
         await pg.set_input_files("#fGlb", str(tmp / "ile.glb"))
         await pg.wait_for_function("!document.getElementById('bZip').disabled", timeout=20000)
         await pg.wait_for_timeout(800)
-        await pg.select_option("#profileSel", "perso")
+        await pg.select_option("#profileSel", "private")
         await pg.set_input_files("#fZones", str(tmp / "zones.json"))
         await pg.wait_for_timeout(300)
         ev = pg.evaluate
