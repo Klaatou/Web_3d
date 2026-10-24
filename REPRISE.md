@@ -1,6 +1,6 @@
 # Reprise du projet Web 3d
 
-*État au 24/10/2026, version v45. À lire après `REGLES.md` (qui est dans les fichiers du Projet, pas dans le dépôt). Ce fichier est mis à jour et commité à la fin de chaque lot. Il ne contient ni adresse IP ni nom d'hôte.*
+*État au 24/10/2026, version v46. À lire après `REGLES.md` (qui est dans les fichiers du Projet, pas dans le dépôt). Ce fichier est mis à jour et commité à la fin de chaque lot. Il ne contient ni adresse IP ni nom d'hôte.*
 
 ## 1. Ce qu'est ce projet
 
@@ -8,7 +8,8 @@ Une région OpenSim (sauvegarde `.oar`) devient une **page web 3D** où l'on se 
 
 ## 2. État du dépôt
 
-- **`main` = v45** (étiquette `v45`, fichier `VERSION` : `v45 (24/10/2026)`). Étiquettes `v14` à `v45`.
+- **`main` = v46** (étiquette `v46`, fichier `VERSION` : `v46 (24/10/2026)`). Étiquettes `v14` à `v46`.
+- **v46** : la coquille commence par `const LIB = './lib';` (seule ligne à modifier pour le dossier `lib`) ; la table d'import et le chemin Draco sont construits par un script classique avant tout module (`SHELL_IMPORTMAP_NEW`, `LIB_LINE_RE` dans `src/gen_tpl.py`) ; `--update` et la création gardent la ligne modifiée à la main (`lib_from_shell`, `effective_lib_url` : `--lib-url`, puis ligne de la coquille si elle n'est pas `./lib`, puis `libUrl`, puis `./lib`) ; `same_shell` ignore CRLF ; `build.py` écrit `dist/index.html`. Manuel § 29, `tests/v46.py`, `tests/essai_importmap.html`. **Firefox et Safari : non essayés** (JJ doit ouvrir `tests/essai_importmap.html` dedans).
 - **v45** : **(1b)** la page dit pourquoi la connexion de présence s'est fermée : `src/core.js` (`presenceConnect`, `onclose` lit `ev.code` et `ev.reason`, indicateur `P.opened`, `getPresence()` expose `opened`, `closeCode`, `closeReason`), textes `core.pres.never`, `core.pres.closed`, `core.pres.secerr`, `page.pres.error.why`, `viewer.pres.error.why`, ligne « Connexion de présence » du diagnostic ; `tests/v45.py`, manuel § 28. Le navigateur ne donne jamais la cause d'une connexion qui ne s'ouvre pas (code 1006, sans raison). **(1c)** `docs/*/PROCEDURES.md` § 11 : Funnel essayé, règle « la présence au même endroit que la page », voie D (VM Linux + Funnel + Apache), cas d'un autre service déjà publié. Le serveur de présence n'a pas changé.
 - **v44** : fin du passage à l'anglais : `gen_reference.py` (`--tools`, `--output`, `--check`), `verif_trad.py` (`--glossary`), anciens noms acceptés ; messages `[update]` ; noms d'exemple de l'aide (`FILE`, `FOLDER`, `SHELL.html`, `NAME`) ; menu Marqueur du viewer « Point (dot) » / « Dot ». `tests/samples.py` (partie 0) cherche les anciens noms dans l'aide, les messages et les documents : un oubli fait échouer le test. Historique complété de la v38 à la v44.
 - **v43** : manuel § 27 « Référence des fichiers JSON » (FR et EN) : chaque fichier JSON, champ par champ (type, défaut, rôle, option) ; le § 16 y renvoie. `docs/samples/` : un exemple valide de chaque fichier (`region.config`, `region.zones` avec 8 zones, `default`, `regions`, `region.tiles`, `region.reglages`, `disposition`, `presence_identities`, `presence_bans`, `chat_history.sample.jsonl`), vérifiés par `tests/samples.py` contre le vrai code. **Tous les noms en anglais** (options, valeurs, clés, adresses), anciens noms toujours acceptés et convertis (fonction `old_options` dans chaque outil, `ZONE_MARKER_OLD`, `PROFILE_OLD` dans `src/gen_tpl.py`, `zmNorm` dans `src/core.js`) ; tableau complet au § 27.11. Correction : `--zone-marker none` (outils en anglais) n'était pas compris par la page. `gen_reference.py` passe `--nopause`.
@@ -43,7 +44,7 @@ Le dossier des outils fabriqués est `dist\` ; le dépôt local est `P:\_OpenSim
 
 ## 4. Commandes de tous les jours (PowerShell, une ligne)
 
-- Fabriquer : `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d"; python build.py`
+- Fabriquer : `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d"; python build.py` (écrit aussi `dist\index.html`, la coquille prête : à copier à la place de `--update` ; reporter la ligne `const LIB` si le dossier `lib` est ailleurs)
 - Mettre à jour une région après une nouvelle version (garde config et zones ; `--update`, anciennement `--maj`, toujours accepté) : `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python .\glb2html.py --update -o "P:\_OpenSim\SL&OS\Web_3d\tuiles\OAR-Free_House_Gallery_I(4X4)-terrain.html" --shared-shell`
 - Serveur de présence de JJ (journaux jamais effacés) : `python ".\presence_server.py" --log presence.log --log-ip raw --log-days 0 --history-file chat.jsonl --history-days 0`
 - Servir une région pour l'essayer : `cd "P:\_OpenSim\SL&OS\Web_3d\tuiles"; python -m http.server 8000`, puis `http://localhost:8000/index.html?region=NOM`.
@@ -91,7 +92,7 @@ Le dossier des outils fabriqués est `dist\` ; le dépôt local est `P:\_OpenSim
 
 ## 6. À faire (dans l'ordre)
 
-*Demandes de JJ du 24/10/2026. **Lot 1 (v45) : 1b et 1c faits ; 1a et 1d restent à étudier** (rapport dans le chat avant tout code). Les points 2 à 9 attendent.*
+*Demandes de JJ du 24/10/2026. **Lot court : 1b et 1c faits en v45, 1a fait en v46 (reste l'essai Firefox et Safari chez JJ) ; 1d reste à étudier** (rapport dans le chat avant tout code). Les points 2 à 9 attendent.*
 
 ### État vérifié chez JJ le 24/10/2026
 - Région Hobbit (simple, sans zones, coquille commune et `default.json`) : la présence marche en `ws://` avec l'IP ou le nom et le port 8765 ; serveur lancé depuis `dist\`, sans `--host` ni `--proxy-header`.
@@ -105,8 +106,8 @@ Le dossier des outils fabriqués est `dist\` ; le dépôt local est `P:\_OpenSim
 Avant de proposer une configuration réseau, **demander où la page est hébergée et ce qui tourne déjà sur la machine**. Sur la machine du LLM (publié par `tailscale serve` vers `127.0.0.1:3080`) : ne jamais lancer `tailscale funnel` sans `--https=8443`, ne jamais lancer `tailscale funnel reset`. JJ laisse volontairement Edge en rendu logiciel pour garder sa carte graphique à son LLM : ne pas lui suggérer l'accélération matérielle.
 
 ### Demandes
-1. **Lot court (v45 en cours)**
-   - **a) Coquille : À ÉTUDIER.** `build.py` dépose la coquille prête dans `dist\` (copiable à la place de `--update`). Étudier une seule ligne à éditer pour le dossier `lib` : `const LIB` en tête de coquille, importmap et chemin Draco construits par un script classique exécuté avant tout module. Aujourd'hui le chemin `./lib/three-X` est écrit à 7 endroits (6 lignes d'importmap vers la ligne 100, 1 ligne `draco.setDecoderPath` vers la ligne 2500) ; un « remplacer tout » à la main marche, mais `--update` remet `./lib` si `libUrl` du `config.json` est vide (`gen_tpl.py:1148-1149`), donc il faut y mettre le même dossier. Essai Chromium 141 du 24/10/2026 : un importmap écrit par script avant tout module fonctionne ; écrit après un module, il est refusé avec un avertissement. À tester : Firefox et Safari (non testés), et le démarrage réel de la coquille (le code du cœur y est en module : voir comment le charger après l'importmap). Si OK : coquille identique pour toutes les régions, plus d'exception `--lib-url`.
+1. **Lot court (v45 et v46)**
+   - **a) FAIT en v46** : `build.py` dépose la coquille prête dans `dist\index.html` ; une seule ligne à éditer pour le dossier `lib` (`const LIB` en tête de coquille, table d'import et chemin Draco construits par un script classique avant tout module) ; `--update` et la création gardent la ligne modifiée à la main. Essai Chromium (Playwright) : démarre avec `./lib` et avec `../lib` (une ligne changée) ; un importmap écrit après un module est refusé (essai de JJ, Chromium 141). **Non essayés : Firefox et Safari** : JJ ouvre `tests/essai_importmap.html` dans ces navigateurs (résultat écrit en toutes lettres) ; si l'essai échoue quelque part, la coquille ne démarre pas dedans et il faut revoir ce choix. `--lib-url` reste accepté.
    - **b) FAIT en v45** : la page dit pourquoi la connexion de présence s'est fermée (code et raison du serveur) ; le diagnostic dit si la connexion s'était ouverte.
    - **c) FAIT en v45** : `PROCEDURES.md` § 11 (FR et EN) : résultats Funnel, règle « la présence au même endroit que la page », avertissement sur la racine du port, voie D (VM Linux + Tailscale Funnel + Apache), cas « un autre service est déjà publié » (commandes `--https=8443`, **non essayées** ; `PORT_PAGE` à confirmer par JJ).
    - **d) À ÉTUDIER** : `presenceUrl` avec deux adresses (la page essaie la seconde si la première échoue), par exemple « `wss://nom.ts.net, ws://127.0.0.1:8765` ».

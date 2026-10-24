@@ -18,6 +18,7 @@ regions.json
 # pages et modèles générés
 *.html
 !src/*.html
+!tests/essai_importmap.html
 *.glb
 !tests/data/*.glb
 

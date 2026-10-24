@@ -154,7 +154,7 @@ Pour tout rapport de bug, colle le texte du panneau d'état et d'aide, et les me
 | Régler la largeur de l'aide et des informations | tirer leur bord droit (260 px à 70 % de la fenêtre), mémorisé |
 | Chat : messages plus anciens, non lus, citations | bouton « Messages plus anciens » (chat ouvert), titre de l'onglet « (3) Région », « N messages vous citent » ; réglage « Messages d'historique affichés » |
 | Région par défaut (adresse sans `?region=`) | `default.json` écrit à la première région d'un dossier, `--default` pour en changer ; sinon la première entrée relative de `regions.json` |
-| Mettre `lib/` ailleurs | `--lib-url ../lib` (ou une adresse `https://…/lib`) à la fabrication de la coquille ; retenu pour `--update` |
+| Mettre `lib/` ailleurs | `--lib-url ../lib` (ou une adresse `https://…/lib`) à la fabrication de la coquille, ou modifier à la main la ligne `const LIB = './lib';` au début de `index.html` ; `--update` la garde |
 | Région dans un sous-dossier | `glb2html.py X.glb --shared-shell "P:\site\index.html" -o "P:\site\sous\dossier\X.html"` ; adresse `index.html?region=sous/dossier/X` |
 | Paramètres de l'adresse | séparés par `&` ; `#` est aussi accepté (`#name=Klaatou&lang=en` = `#name=Klaatou#lang=en`) |
 

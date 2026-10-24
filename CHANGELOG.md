@@ -2,6 +2,17 @@
 
 Les dates sont au format jj/mm/aaaa.
 
+## v46 (24/10/2026)
+### 24/10/2026 : le dossier `lib` de la coquille se règle par une seule ligne
+- **Coquille** : elle commence par `const LIB = './lib';`, seule ligne à modifier pour mettre `lib` ailleurs ; la table d'import de three.js et le chemin Draco sont construits à partir de cette ligne par un script classique, avant tout module (`SHELL_IMPORTMAP_NEW` dans `src/gen_tpl.py`). La page autonome ne change pas.
+- **`--update`** garde la ligne modifiée à la main : ordre `--lib-url` donné, ligne `const LIB` de la coquille si elle n'est pas `./lib`, `libUrl` de la config, `./lib` (`lib_from_shell`, `effective_lib_url`) ; `libUrl` est aligné, message `[update]` ; une nouvelle région créée dans un tel dossier garde le même `lib` ; les fins de ligne CRLF sont reconnues identiques (`same_shell`).
+- **`build.py`** écrit `dist/index.html` : la coquille prête, identique octet pour octet à celle de `glb2html.py`, à copier à la place de `--update`.
+- **Documents et tests** : manuel § 29 (et § 22.8, § 27), procédures § 4, `REFERENCE_OPTIONS.md` régénéré, `tests/v46.py`, `tests/essai_importmap.html` (Firefox et Safari : non essayés ici), `tests/v37_region.py` suivi.
+- **Shell**: it starts with `const LIB = './lib';`, the only line to edit to put `lib` elsewhere; the three.js import map and the Draco path are built from that line by a classic script, before any module (`SHELL_IMPORTMAP_NEW` in `src/gen_tpl.py`). The standalone page does not change.
+- **`--update`** keeps the line edited by hand: order `--lib-url` given, `const LIB` line of the shell if it is not `./lib`, `libUrl` of the config, `./lib` (`lib_from_shell`, `effective_lib_url`); `libUrl` is aligned, `[update]` message; a new region created in such a folder keeps the same `lib`; CRLF line endings are recognised as identical (`same_shell`).
+- **`build.py`** writes `dist/index.html`: the ready-made shell, byte for byte the same as `glb2html.py`'s, to copy instead of `--update`.
+- **Documents and tests**: manual § 29 (and § 22.8, § 27), procedures § 4, `REFERENCE_OPTIONS.md` regenerated, `tests/v46.py`, `tests/essai_importmap.html` (Firefox and Safari: not tried here), `tests/v37_region.py` followed.
+
 ## v45 (24/10/2026)
 ### 24/10/2026 : la page dit pourquoi la connexion de présence s'est fermée
 - **Présence** : la ligne de présence (page et viewer) donne la cause au lieu de toujours « serveur injoignable » : connexion jamais établie, ouverte puis fermée (code et raison du serveur), ou refusée par le navigateur (`SecurityError`). Le navigateur ne donne jamais la cause d'une connexion qui ne s'ouvre pas (code 1006) : la page ne distingue donc pas un nom introuvable, un port fermé ou un blocage.

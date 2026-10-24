@@ -634,6 +634,20 @@ SHELL_LOAD_NEW = """if (C.tiles) {
 SHELL_TITLE_OLD = "<title>__TITLE__</title>"
 LIB_REL = "lib/three-" + THREE_VERSION
 DRACO_PATH_OLD = "draco.setDecoderPath('');"
+# v46 : la table d'import de la coquille est construite par un script classique (avant tout module) a partir d'UNE ligne, const LIB, modifiable a la main
+SHELL_IMPORTMAP_OLD = '<script type="importmap">\n__IMPORTMAP__\n</script>'
+SHELL_IMPORTMAP_NEW = """<script>
+// LIB : dossier de lib (seule ligne a modifier) / folder of lib (the only line to edit)
+const LIB = '__LIB__';
+(function () {
+  const F = __FILES__;
+  const im = {};
+  for (const k in F) im[k] = LIB + '/three-__THREE__/' + F[k];
+  const s = document.createElement('script'); s.type = 'importmap'; s.textContent = JSON.stringify({ imports: im });
+  document.head.appendChild(s);
+})();
+</script>"""
+LIB_LINE_RE = re.compile(r"^const LIB = '([^'\r\n]*)';\r?$", re.M)
 SHELL_SKY = "87ceeb"   # fond provisoire, remplacé par skyColor dès que la config est lue
 # la coquille connaît tous les modules (Draco et Meshopt compris) : elle ne dépend d'aucun .glb
 SHELL_MODULES = {**CORE_FILES, **DRACO_FILES, **MESHOPT_FILES}
@@ -753,6 +767,38 @@ def lib_dir_of(shell_dir: pathlib.Path, lib_url):
     return shell_dir / (v or "lib") / ("three-" + THREE_VERSION)
 
 
+def lib_from_shell(shell_path: pathlib.Path):
+    """v46 : valeur de la ligne `const LIB = '...';` d'une coquille existante (texte tel qu'ecrit), ou None si le fichier est absent, sans cette ligne
+    (coquille d'avant la v46) ou si la valeur est refusee par clean_lib_url."""
+    try:
+        m = LIB_LINE_RE.search(pathlib.Path(shell_path).read_bytes().decode("utf-8"))
+    except (OSError, UnicodeDecodeError):
+        return None
+    if not m:
+        return None
+    try:
+        clean_lib_url(m.group(1))
+    except ValueError:
+        return None
+    return m.group(1)
+
+
+def effective_lib_url(shell_path: pathlib.Path, lib_url, explicit):
+    """v46 : dossier lib a utiliser. Ordre : --lib-url donne (explicit) ; la ligne const LIB d'une coquille existante si elle n'est pas le defaut ./lib ;
+    lib_url (la config pour --update) ; sinon vide (= ./lib). Ainsi une coquille modifiee a la main garde son dossier."""
+    if explicit:
+        return lib_url
+    cur = lib_from_shell(shell_path)
+    if cur is not None and lib_prefix(cur) != "./lib":
+        return cur
+    return lib_url
+
+
+def same_shell(existing: bytes, new: bytes) -> bool:
+    """Meme coquille, a la fin de ligne pres (un editeur Windows peut enregistrer en CRLF)."""
+    return existing.replace(b"\r\n", b"\n") == new
+
+
 def lib_missing(out_dir: pathlib.Path, lib_url=None):
     """Fichiers de lib/three-X/ absents (la coquille commune et les pages déjà publiées les partagent)."""
     mods, draco = shell_lib_files()
@@ -766,18 +812,17 @@ def build_shell(lib_url=None) -> str:
     """La coquille universelle du mode modulaire : même texte, octet pour octet, pour toutes les régions (le viewer en met
     une copie dans son .zip). Elle charge <nom de la page>.config.json / .glb / .zones.json du même dossier et lib/three-X/.
     Aucun nom, aucun titre, aucune couleur propre à une région n'y est écrit."""
-    pre = lib_prefix(lib_url) + "/three-" + THREE_VERSION
-    importmap = {"imports": {spec: f"{pre}/{lib_name(rel)}" for spec, rel in SHELL_MODULES.items()}}
-    decoders = [replace_once(DRACO_JS.replace("__DRACO_LIBS__", "{}"), DRACO_PATH_OLD, f"draco.setDecoderPath('{pre}/draco/');"), MESHOPT_JS]
+    files = {spec: lib_name(rel) for spec, rel in SHELL_MODULES.items()}
+    decoders = [replace_once(DRACO_JS.replace("__DRACO_LIBS__", "{}"), DRACO_PATH_OLD, "draco.setDecoderPath(LIB + '/three-" + THREE_VERSION + "/draco/');"), MESHOPT_JS]
     tpl = HTML_TEMPLATE
+    tpl = replace_once(tpl, SHELL_IMPORTMAP_OLD, SHELL_IMPORTMAP_NEW.replace("__LIB__", lib_prefix(lib_url)).replace("__FILES__", json.dumps(files, indent=1)).replace("__THREE__", THREE_VERSION))
     tpl = replace_once(tpl, SHELL_TITLE_OLD, "<title>Chargement…</title>")
     tpl = replace_once(tpl, SHELL_MSG_OLD, SHELL_MSG_NEW)
     tpl = replace_once(tpl, SHELL_CFG_TAG, "")
     tpl = replace_once(tpl, SHELL_GLB_TAG, "")
     tpl = replace_once(tpl, SHELL_BOOT_OLD, SHELL_BOOT_NEW)
     tpl = replace_once(tpl, SHELL_LOAD_OLD, SHELL_LOAD_NEW)
-    out = (tpl.replace("__SKY_HEX__", SHELL_SKY).replace("__IMPORTMAP__", json.dumps(importmap, indent=1))
-           .replace("__DECODERS__", "\n".join(decoders)))
+    out = tpl.replace("__SKY_HEX__", SHELL_SKY).replace("__DECODERS__", "\n".join(decoders))
     left = re.findall(r"__(?:TITLE|SKY_HEX|IMPORTMAP|CONFIG|DECODERS|GLB_B64|CORE)__", out)
     if left:
         raise RuntimeError(_tr("py.glb2html.coquille_modulaire_marqueur_s_non_remplace", sorted(set(left))))
@@ -868,7 +913,7 @@ def write_shell_page(out_path: pathlib.Path, shell, page: str):
         if not shell_path.is_file():
             write_atomic(shell_path, page.encode("utf-8"))
             print(_tr("py.glb2html.coquille_0_ecrite", shell_path))
-        elif shell_path.read_bytes() == page.encode("utf-8"):
+        elif same_shell(shell_path.read_bytes(), page.encode("utf-8")):
             print(_tr("py.glb2html.coquille_0_deja_presente_et_identique", shell_path))
         else:
             print(_tr("py.glb2html.avertissement_0_existe_et_differe_de", shell_path), file=sys.stderr)
@@ -894,6 +939,7 @@ def generate(glb_path: pathlib.Path, out_path: pathlib.Path, vendor_dir, modular
         if kw.get("zones_live"):
             print(_tr("py.glb2html.avertissement_zones_live_est_ignore_en"), file=sys.stderr)
         kw = dict(kw, zones_live="")
+        kw = dict(kw, lib_url=effective_lib_url(shell_file(shell, out_path) if shell else out_path, kw.get("lib_url") or "", bool(kw.get("lib_url"))))
     elif kw.get("zones_live"):
         kw = dict(kw, zones_live=live_zones_name(out_path, kw["zones_live"]))
     try:
@@ -1099,7 +1145,7 @@ def renew_shell(shell_path: pathlib.Path, page: str):
     if not shell_path.is_file():
         write_atomic(shell_path, new)
         return _tr("py.glb2html.coquille_0_absente_ecrite", shell_path.name)
-    if shell_path.read_bytes() == new:
+    if same_shell(shell_path.read_bytes(), new):
         return _tr("py.glb2html.coquille_0_deja_a_jour_identique", shell_path.name, VERSION)
     stamp = time.strftime("%Y%m%d-%H%M%S")
     bak = shell_path.with_name(f"{shell_path.stem}.avant-{stamp}{shell_path.suffix}")
@@ -1147,6 +1193,11 @@ def run_maj(a, kw, explicit, S_reg):
         kw["room"] = str(old.get("room") or "")
     if "lib_url" not in explicit:
         kw["lib_url"] = str(old.get("libUrl") or "")   # v37 : le choix du dossier lib est retenu dans la config
+    cfg_lib = kw["lib_url"]
+    kw["lib_url"] = effective_lib_url(shell_path, cfg_lib, "lib_url" in explicit)   # v46 : la ligne const LIB de la coquille existante (modifiee a la main) l'emporte sur la config
+    if kw["lib_url"] != cfg_lib:
+        explicit.add("lib_url")
+        print(_tr("py.glb2html.maj_lib_repris", kw["lib_url"]))
     tdoc = None
     if a.tiles:
         tp = find_beside(a.tiles)

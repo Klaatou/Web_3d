@@ -67,8 +67,8 @@ app = site / "app"
 gen(app, "Ile", "ile", "--shared-shell", "--lib-url", "../lib")
 rapport((site / "lib" / "three-0.160.0").is_dir() and not (app / "lib").exists(), "lib/ créé à ../lib, pas à côté de la coquille")
 shell = (app / "index.html").read_text(encoding="utf-8")
-rapport('"three": "../lib/three-0.160.0/' in shell.replace("\n", " ").replace('  ', ' ') or "../lib/three-0.160.0/three.module.js" in shell, "table d'import de la coquille : ../lib/three-0.160.0/…")
-rapport("setDecoderPath('../lib/three-0.160.0/draco/')" in shell, "chemin Draco suivi aussi")
+rapport("\nconst LIB = '../lib';\n" in shell, "ligne const LIB de la coquille : ../lib")   # v46 : la table d'import est construite a partir de cette ligne
+rapport("setDecoderPath(LIB + '/three-0.160.0/draco/')" in shell, "chemin Draco suivi aussi (il utilise LIB)")
 rapport(lire(app / "Ile.config.json")["libUrl"] == "../lib", "libUrl retenu dans la config")
 avant = (app / "index.html").read_bytes()
 html("-o", app / "Ile.html", "--shared-shell", "--maj", "--wave", "1.5")
@@ -145,7 +145,7 @@ async def main():
             # adresse complète (même origine : pas de CORS à gérer) : on regénère la coquille avec l'adresse du lib de ../lib
             (ab / "index.html").unlink()   # une coquille existante différente n'est jamais écrasée : on la retire pour la refaire avec l'adresse du serveur de test
             html(site / "sol.glb", "-o", ab / "Ile.html", "--room", "ile", *BASE, "--shared-shell", "--lib-url", f"http://127.0.0.1:{port}/lib")
-            rapport(not (ab / "lib").exists() and f"http://127.0.0.1:{port}/lib/three-0.160.0/three.module.js" in (ab / "index.html").read_text(encoding="utf-8").replace("\\/", "/"), "adresse complète : table d'import sur cette adresse, rien de copié")
+            rapport(not (ab / "lib").exists() and f"\nconst LIB = 'http://127.0.0.1:{port}/lib';\n" in (ab / "index.html").read_text(encoding="utf-8"), "adresse complète : ligne const LIB sur cette adresse, rien de copié")
             reqs = []
             o = Onglet(br)
             o.ctx = await br.new_context(locale=LOC)

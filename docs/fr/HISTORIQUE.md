@@ -61,6 +61,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 24/10/2026 |  | v43 | v43 : manuel § 27 « Référence des fichiers JSON », exemples dans `docs/samples/`, `tests/samples.py`, noms en anglais (options, valeurs, clés, adresses ; anciens noms acceptés), `gen_reference.py` sans pause |
 | 24/10/2026 |  | v44 | v44 : derniers noms en anglais (`gen_reference.py`, `verif_trad.py`, messages `[update]`, noms d'exemple de l'aide, menu « Marqueur des portails et zones libres » du viewer), contrôle automatique des anciens noms dans `tests/samples.py`, historique complété (v38 à v44) |
 | 24/10/2026 |  | v45 | v45 : la page dit pourquoi la connexion de présence s'est fermée (`tests/v45.py`, manuel § 28), diagnostic « Connexion de présence », procédures § 11 complétées (Tailscale Funnel essayé, voie D VM Linux + Funnel + Apache, cas d'un autre service déjà publié) |
+| 24/10/2026 |  | v46 | v46 : le dossier `lib` de la coquille se règle par une seule ligne (`const LIB`), `--update` la garde, `dist/index.html` fabriqué par `build.py`, page d'essai `tests/essai_importmap.html` (manuel § 29, `tests/v46.py`) |
 
 ## Commandes utiles
 

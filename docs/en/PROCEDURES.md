@@ -154,7 +154,7 @@ For any bug report, paste the text of the status and help panels, and the consol
 | Adjust the width of the help and information windows | drag their right edge (260 px to 70 % of the window), remembered |
 | Chat: older messages, unread, mentions | "Older messages" button (chat open), tab title "(3) Region", "N messages mention you"; "History messages kept in the chat" setting |
 | Default region (address without `?region=`) | `default.json` written for the first region of a folder, `--default` to change it; otherwise the first relative entry of `regions.json` |
-| Put `lib/` elsewhere | `--lib-url ../lib` (or an `https://…/lib` address) when building the shell; remembered for `--update` |
+| Put `lib/` elsewhere | `--lib-url ../lib` (or an `https://…/lib` address) when building the shell, or edit by hand the `const LIB = './lib';` line at the start of `index.html`; `--update` keeps it |
 | Region in a subfolder | `glb2html.py X.glb --shared-shell "P:\site\index.html" -o "P:\site\sous\dossier\X.html"`; address `index.html?region=sous/dossier/X` |
 | Address parameters | separated by `&`; `#` is also accepted (`#name=Klaatou&lang=en` = `#name=Klaatou#lang=en`) |
 
