@@ -42,6 +42,7 @@ Correct example:
 | **G** (v34) | capture the mouse again after Esc |
 | **O** (v37) | opens / closes the **Settings** window (toggle, like **H** and **I**); **R** is already taken by the return to the arrival point |
 | **I** (v34) | the **Information / Status** window (v36: formerly the "status block": view, mode, mouse, keyboard, position, tiles): hidden → expanded; collapsed → expanded; expanded → hidden. **H** does the same for the help alone (§ 19.1, § 21.3) |
+| **L** (v40) | the **Arrivals** window: list of the region's teleport points; clicking a name teleports there (in walk mode) or enters walk mode there (in global view). Same cycle as **H** and **I**; absent if the region has no arrival point |
 
 Portals only work in walk mode.
 
@@ -1080,3 +1081,26 @@ If the browser refuses to copy (page over `http://` other than `localhost`), the
 ### 23.2 v39 tests
 
 `tests/v39.py`: button present in the page and in the viewer, in French and in English, addresses masked, errors captured, timings of a region split into tiles.
+
+## 24. New in v40 (24/10/2026)
+
+### 24.1 "Arrivals" window (L key)
+
+Below the **Information / Status** window, the **Arrivals** window lists the region's arrival points (`default` first, then by name; the label replaces the identifier when there is one). On hover, a tooltip recalls its role: list of available teleport points (TP).
+
+- **In walk mode**, clicking a name teleports to that arrival point.
+- **In global view**, clicking a name enters walk mode at that arrival point.
+- **L** cycles the window like **H** and **I**: hidden → expanded; collapsed → expanded; expanded → hidden. The "▾ Arrivals" title collapses or expands it. The states are remembered in the browser (keys `glb2html_spawn` and `glb2html_spawnFold`).
+- A region without an arrival point has no such window; **L** says so with a message, and the help does not mention **L**.
+
+### 24.2 "Recenter the view" button
+
+In the bottom bar, outside walk mode only: the **"Recenter the view"** button restores the region's opening framing (same center, same angle, same distance as at the end of loading). **R** stays the return to the arrival point: in global view, it centers the view on the arrival point while keeping the angle and distance.
+
+### 24.3 "Full manual" link and diagnostics tooltip
+
+The help window (**H**) ends with a **"Full manual (online)"** link to this manual on GitHub, in French if the page is in French, in English otherwise (an Internet connection is needed). The viewer has the same link under the "Copy diagnostics" button. That button now has a tooltip explaining what it copies and what it never copies.
+
+### 24.4 v40 tests
+
+`tests/v40.py`: list and order of the arrival points, L key, teleport on click (global view and walk mode), "Recenter the view" button (exact opening framing), region without an arrival point, help, manual link and diagnostics tooltip in French and in English, viewer.

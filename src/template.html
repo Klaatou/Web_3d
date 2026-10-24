@@ -9,12 +9,12 @@
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#__SKY_HEX__}
 #view{position:fixed;inset:0}
 canvas{display:block;touch-action:none}
-#walkBtn,#helpBtn,#mapBtn,#homeBtn,#flyBtn,#grabBtn,#walkHint,#stateInfo{font:12px/1.4 ui-monospace,Consolas,monospace;background:#fffffff0;color:#000;border:1px solid #000;border-radius:6px;padding:7px 10px}
-#walkBtn,#helpBtn,#mapBtn,#homeBtn,#flyBtn,#grabBtn{cursor:pointer}
+#walkBtn,#helpBtn,#mapBtn,#homeBtn,#centerBtn,#flyBtn,#grabBtn,#walkHint,#stateInfo,#spawnInfo{font:12px/1.4 ui-monospace,Consolas,monospace;background:#fffffff0;color:#000;border:1px solid #000;border-radius:6px;padding:7px 10px}
+#walkBtn,#helpBtn,#mapBtn,#homeBtn,#centerBtn,#flyBtn,#grabBtn{cursor:pointer}
 #dock{position:fixed;left:12px;bottom:12px;display:flex;flex-direction:column;align-items:flex-start;gap:8px}
 #bar{display:flex;flex-wrap:wrap;gap:8px;max-width:max(260px,calc(100vw - 430px))}
 #dock,#hudL,#bar{pointer-events:none}
-#walkHint,#stateInfo,#bar button{pointer-events:auto}   /* seuls l'aide, l'état et les boutons reçoivent la souris : l'espace vide entre eux laisse passer les clics et le survol */
+#walkHint,#stateInfo,#spawnInfo,#bar button{pointer-events:auto}   /* seuls l'aide, l'état et les boutons reçoivent la souris : l'espace vide entre eux laisse passer les clics et le survol */
 #presence,#nameTag{position:fixed;font:12px/1.4 ui-monospace,Consolas,monospace;background:#fffffff0;color:#000;border:1px solid #000;border-radius:6px;padding:7px 10px}
 #presence{left:12px;top:12px}
 #presence input{font:inherit;width:130px;border:1px solid #000;border-radius:4px;padding:2px 4px}
@@ -61,11 +61,13 @@ canvas{display:block;touch-action:none}
 #modal button.ok{background:#000;color:#fff}
 #nameTag div{font-size:11px}
 #hudL{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
-#walkHint,#stateInfo{box-sizing:border-box;max-width:min(440px,45vw);position:relative;border-right:5px double #000}   /* v37 : largeurs par défaut ; le bord droit se tire (voir mkResize), la hauteur suit le contenu */
-#walkHint{max-height:calc(100vh - 230px);overflow:auto}
+#walkHint,#stateInfo,#spawnInfo{box-sizing:border-box;max-width:min(440px,45vw);position:relative;border-right:5px double #000}   /* v37 : largeurs par défaut ; le bord droit se tire (voir mkResize), la hauteur suit le contenu */
+#walkHint{max-height:calc(100vh - 230px - var(--spawnH, 0px));overflow:auto}   /* v40 : moins la hauteur de la fenêtre Arrivées, pour que la colonne tienne dans l'écran */
 #walkHint,#stateInfo{user-select:text;-webkit-user-select:text;cursor:text}
 #stateInfo{font-size:11px;padding:5px 9px}
 #stateInfo div{margin:0}
+#spawnInfo{font-size:11px;padding:5px 9px;max-height:30vh;overflow:auto}   /* v40 : fenêtre Arrivées (touche L) */
+#spawnBody button{display:block;width:100%;text-align:left;font:inherit;background:#fff;color:#000;border:1px solid #000;border-radius:4px;padding:1px 6px;margin:2px 0;cursor:pointer;text-decoration:underline}
 .fold{display:block;width:100%;text-align:left;font:inherit;font-weight:bold;background:#ececec;color:#000;border:1px solid #000;border-radius:4px;padding:1px 6px;margin:0 0 4px;cursor:pointer}
 .grp{margin:2px 0}.grp b{margin-right:8px}
 #tilesInfo{font:11px/1.4 ui-monospace,Consolas,monospace;color:#000}
@@ -96,8 +98,8 @@ __I18N__
 <div id="modal" hidden><div><span id="modalText"></span><br><button class="ok" id="modalYes" data-i18n="page.modal.yes">Oui</button><button id="modalNo" data-i18n="page.modal.no">Annuler</button></div></div>
 <div id="chat" hidden><div id="chatMentions" hidden><span id="mentCount"></span> <button id="mentGo" type="button" data-i18n="page.chat.mentions.go">Aller au premier</button></div><button id="chatOlder" type="button" hidden data-i18n="page.chat.older">Messages plus anciens</button><div id="chatLog"></div><div id="chatHelp"></div><button id="chatSave" type="button" data-i18n-title="page.chat.save.title" title="Enregistre dans un fichier texte les messages vus depuis ton arrivée" data-i18n="page.chat.save">Enregistrer le chat</button><div id="chatComplete" role="listbox" aria-label="Pseudos" data-i18n-aria="page.chat.names" hidden></div><input id="chatInput" maxlength="200" placeholder="Message : Entrée pour envoyer (reste ouvert), Échap pour fermer" data-i18n-ph="page.chat.placeholder" hidden></div>
 <div id="presence" hidden><span data-i18n="page.presence.label">Pseudo : </span><input id="presenceName" maxlength="24" placeholder="Visiteur" data-i18n-ph="page.visitor"><div id="presenceStatus"></div></div>
-<div id="dock"><div id="hudL"><div id="walkHint" hidden><button type="button" id="helpHead" class="fold" aria-expanded="true">▾ Aide</button><div id="helpBody"></div></div><div id="stateInfo" hidden><button type="button" id="stateHead" class="fold" aria-expanded="true">▾ État</button><div id="stateBody"></div></div></div>
-<div id="bar"><button id="walkBtn" hidden></button><button id="flyBtn" hidden aria-pressed="false" data-i18n="page.btn.fly">Voler / Atterrir</button><button id="grabBtn" hidden data-i18n="page.btn.grab">Capturer la souris</button><button id="homeBtn" hidden data-i18n="page.btn.home">Retour à l'arrivée (R)</button><button id="helpBtn" hidden></button><button id="mapBtn" hidden data-i18n="page.btn.map">Carte (M)</button></div></div>
+<div id="dock"><div id="hudL"><div id="walkHint" hidden><button type="button" id="helpHead" class="fold" aria-expanded="true">▾ Aide</button><div id="helpBody"></div></div><div id="stateInfo" hidden><button type="button" id="stateHead" class="fold" aria-expanded="true">▾ État</button><div id="stateBody"></div></div><div id="spawnInfo" hidden><button type="button" id="spawnHead" class="fold" aria-expanded="true">▾ Arrivées</button><div id="spawnBody"></div></div></div>
+<div id="bar"><button id="walkBtn" hidden></button><button id="flyBtn" hidden aria-pressed="false" data-i18n="page.btn.fly">Voler / Atterrir</button><button id="grabBtn" hidden data-i18n="page.btn.grab">Capturer la souris</button><button id="homeBtn" hidden data-i18n="page.btn.home">Retour à l'arrivée (R)</button><button id="centerBtn" type="button" hidden data-i18n="page.btn.center" data-i18n-title="page.btn.center.tip">Recentrer la vue</button><button id="helpBtn" hidden></button><button id="mapBtn" hidden data-i18n="page.btn.map">Carte (M)</button></div></div>
 <script type="application/json" id="cfg">__CONFIG__</script>
 <script type="application/octet-stream" id="glb">__GLB_B64__</script>
 <script type="module">
@@ -176,12 +178,20 @@ if (H.has('key')) {   // la clé (secret) ne reste jamais dans l'adresse visible
 if (H.get('name')) { try { localStorage.setItem('glb2html_name', H.get('name').slice(0, 24)); } catch (e) {} viewer.setName(H.get('name')); }
 let liveReady = Promise.resolve();
 let nearNow = null, refreshNear = () => {};
+let refreshSpawns = () => {}, openView = null;   // v40 : liste des arrivées (fenêtre L, remplie à la fin du chargement) ; cadrage d'ouverture (bouton « Recentrer la vue »)
+// v40 : bouton « Recentrer la vue » (caché en promenade) : revient au cadrage d'ouverture de la région, mémorisé à la fin du chargement (openView)
+{
+  const cb = document.getElementById('centerBtn'); cb.hidden = false;
+  cb.onmousedown = e => e.preventDefault();
+  cb.onclick = () => { if (openView) viewer.frame(openView.camDir, openView.target, openView.zoom); else viewer.frame(); };
+}
 // fin du chargement : cadrage sur l'arrivée « default », point de retour, promenade à l'arrivée demandée
 let arrive = async () => {
   await Promise.race([liveReady, new Promise(r => setTimeout(r, 3000))]);
   const A = startPoint(), D = defaultArrival();
   if (!C.tiles && !A && D && !keepTarget) viewer.frame(viewer.cfg.camDir, D.pos, viewer.cfg.zoom);   // GLB unique : cadré sur l'arrivée par défaut
   viewer.setHome(D ? { pos: D.pos, yaw: D.yaw, forF: !keepTarget } : { pos: viewer.controls.target.toArray(), forF: false });
+  openView = viewer.getCameraState(); refreshSpawns();
   if (arrival && C.walk) viewer.walkStart(A ? { pos: A.pos, yaw: A.yaw } : undefined);
   else viewer.releaseAnchor();
   setTimeout(() => fade.classList.remove('on'), 150);
@@ -484,6 +494,8 @@ if (C.walk) {
   const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
   const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
   const keyLabels = () => KB.keys();
+  // v40 : arrivées de la région (« default » d'abord, puis par nom)
+  const spawnList = () => viewer.getZones().filter(z => z.type === 'spawn').sort((a, b) => (b.id === 'default') - (a.id === 'default') || String(a.label || a.id).localeCompare(String(b.label || b.id), LANG));
   const walkGroups = () => { const K = keyLabels(); return [
     grp(tr('page.help.g.move'), [tr('page.help.move', K.fwd + K.left + K.back + K.right), tr('page.help.run', K.fwd, K.back), tr('page.help.jump'), tr('page.help.tp'), tr('page.help.home')]),
     fly ? grp(tr('page.help.g.fly'), [tr('page.help.fly'), tr('page.help.up'), tr('page.help.takeoff'), tr('page.help.down')]) : null,
@@ -491,20 +503,23 @@ if (C.walk) {
     grp(tr('page.help.g.mouse'), [tr('page.help.mouse'), tr('page.help.esc'), tr('page.help.grab')]),
     (C.chat && on) ? grp(tr('page.help.g.chat'), [tr('page.help.chat.enter'), tr('page.help.chat.esc'), tr('page.help.chat.arrows')]) : null,
     (hasZones || C.names) ? grp(tr('page.help.g.zones'), [hasZones ? tr('page.help.zone.click') : '', hasZones ? tr('page.help.zone.cone') : '', C.names ? tr('page.help.zone.name') : '']) : null,
-    grp(tr('page.help.g.page'), [tr('page.help.quit'), tr('page.help.h'), tr('page.help.i'), tr('page.help.o'), hasMap ? tr('page.help.map.ctrl') : ''])
+    grp(tr('page.help.g.page'), [tr('page.help.quit'), tr('page.help.h'), tr('page.help.i'), spawnList().length ? tr('page.help.l') : '', tr('page.help.o'), hasMap ? tr('page.help.map.ctrl') : ''])
   ].filter(Boolean); };
   const orbitGroups = () => [
     grp(tr('page.help.g.orbit'), [tr('page.help.orbit.drag'), tr('page.help.orbit.wheel'), tr('page.help.orbit.pan'), tr('page.help.orbit.reframe')]),
     grp(tr('page.help.g.walk'), [tr('page.help.enter'), tr('page.help.landing')]),
     (hasZones || C.names) ? grp(tr('page.help.g.zones'), [hasZones ? tr('page.help.zone.click.orbit') : '', hasZones ? tr('page.help.zone.cone') : '', C.names ? tr('page.help.zone.name') : '']) : null,
-    grp(tr('page.help.g.page'), [tr('page.help.h'), tr('page.help.i'), tr('page.help.o'), hasMap ? tr('page.help.map') : ''])
+    grp(tr('page.help.g.page'), [tr('page.help.h'), tr('page.help.i'), spawnList().length ? tr('page.help.l') : '', tr('page.help.o'), hasMap ? tr('page.help.map') : '', tr('page.help.center')])
   ].filter(Boolean);
   const feat = tr('page.feat', C.panel !== false ? tr('page.feat.panel.yes') : tr('common.no'), on ? tr('page.feat.presence.yes', C.room) : tr('page.feat.presence.no'), on && C.chat ? tr('common.yes') : tr('common.no'),
     on && C.spectate ? tr('common.yes') : (on ? tr('page.feat.spectate.no') : tr('common.no')), C.names ? tr('common.yes') : tr('page.feat.names.no'), C.version || '?');
   const l1 = document.createElement('div'), l2 = document.createElement('div');
   l2.style.cssText = 'font-size:11px;margin-top:4px;opacity:.85'; l2.textContent = feat;
   const hbody = document.getElementById('helpBody'), hhead = document.getElementById('helpHead');
-  hbody.append(l1, l2);
+  // v40 : lien vers le manuel complet sur GitHub (français si la page est en français, anglais sinon)
+  const l3 = document.createElement('div'), man = document.createElement('a');
+  l3.style.cssText = 'font-size:11px;margin-top:4px'; man.id = 'manualLink'; man.href = manualUrl(); man.target = '_blank'; man.rel = 'noopener'; man.textContent = tr('core.manual'); l3.append(man);
+  hbody.append(l1, l2, l3);
   const fillGroups = groups => {
     l1.textContent = '';
     for (const g of groups) { const d = document.createElement('div'); d.className = 'grp'; const b = document.createElement('b'); b.textContent = g.t; d.append(b, g.items.join(' · ')); l1.append(d); }
@@ -517,7 +532,7 @@ if (C.walk) {
   // si le navigateur refuse la copie, le texte s'affiche sélectionné dessous (Ctrl+C)
   {
     const row = document.createElement('div'), bd = document.createElement('button'), dout = document.createElement('textarea');
-    row.id = 'diagRow'; bd.type = 'button'; bd.id = 'diagBtn'; bd.textContent = tr('core.diag.btn');
+    row.id = 'diagRow'; bd.type = 'button'; bd.id = 'diagBtn'; bd.textContent = tr('core.diag.btn'); bd.title = tr('core.diag.tip');
     bd.style.cssText = 'font:inherit;margin-top:4px;padding:2px 8px;border:1px solid #000;border-radius:4px;background:#fff;color:#000;cursor:pointer';
     dout.id = 'diagOut'; dout.readOnly = true; dout.rows = 8; dout.hidden = true; dout.setAttribute('aria-label', tr('core.diag.btn'));
     dout.style.cssText = 'display:block;width:100%;box-sizing:border-box;font:inherit;margin-top:4px';
@@ -631,7 +646,38 @@ if (C.walk) {
     };
   };
   const helpP = mkPanel(wh, hhead, hbody, tr('page.help.title'), 'glb2html_help', 'glb2html_helpFold'), stateP = mkPanel(sb, shead, sbody, tr('page.info.title'), 'glb2html_state', 'glb2html_stateFold');
-  const applyHelp = walking => { fillGroups(walking ? walkGroups() : orbitGroups()); viewTick(); stateP.apply(); helpP.apply(); hb.hidden = false; hb.textContent = !helpP.open ? tr('page.btn.help') : (helpP.folded ? tr('page.btn.help.expand') : tr('page.btn.help.hide')); };
+  // v40 : fenêtre « Arrivées » (touche L, même cycle que H et I) : un clic sur un nom téléporte à l'arrivée en promenade, ou y entre en promenade depuis la vue globale.
+  // Masquée tant que la région n'a aucune arrivée.
+  const spi = document.getElementById('spawnInfo'), spb = document.getElementById('spawnBody'), sph = document.getElementById('spawnHead');
+  spi.title = tr('page.spawn.tip');
+  const spawnP = mkPanel(spi, sph, spb, tr('page.spawn.title'), 'glb2html_spawn', 'glb2html_spawnFold');
+  // la hauteur de la fenêtre est retirée de celle de l'aide (variable --spawnH) : la colonne de gauche ne sort pas de l'écran
+  const spawnH = () => document.documentElement.style.setProperty('--spawnH', (spi.hidden ? 0 : spi.offsetHeight + 6) + 'px');
+  if (window.ResizeObserver) new ResizeObserver(spawnH).observe(spi);
+  let spawnCount = 0;
+  const applySpawn = () => { spawnP.apply(); if (!spawnCount) spi.hidden = true; spawnH(); };
+  refreshSpawns = () => {
+    const list = spawnList(); spawnCount = list.length; spb.textContent = '';
+    for (const s of list) {
+      const b = document.createElement('button'), name = s.label || s.id;
+      b.type = 'button'; b.textContent = name;
+      b.onmousedown = e => e.preventDefault();   // pas de focus : Espace et Entrée restent à la promenade et au chat
+      b.onclick = () => {
+        const p = [s.x, s.y, s.z];
+        if (viewer.walking) viewer.goTo(p, s.yaw); else viewer.walkStart({ pos: p, yaw: s.yaw });
+        toast(tr('page.spawn.done', name));
+      };
+      spb.append(b);
+    }
+    applySpawn(); applyHelp(viewer.walking);
+  };
+  addEventListener('keydown', e => {
+    const n = e.target && e.target.tagName;
+    if (e.code !== 'KeyL' || e.repeat || e.ctrlKey || e.metaKey || e.altKey || n === 'INPUT' || n === 'TEXTAREA' || n === 'SELECT') return;
+    if (!spawnCount) return toast(tr('page.spawn.none'));
+    spawnP.cycle(); applySpawn();
+  });
+  const applyHelp = walking => { fillGroups(walking ? walkGroups() : orbitGroups()); viewTick(); stateP.apply(); applySpawn(); helpP.apply(); hb.hidden = false; hb.textContent = !helpP.open ? tr('page.btn.help') : (helpP.folded ? tr('page.btn.help.expand') : tr('page.btn.help.hide')); };
   const toggleHelp = () => { helpP.cycle(); applyHelp(viewer.walking); };
   hb.onclick = toggleHelp;
   KB.listeners.push(() => applyHelp(viewer.walking));
@@ -653,7 +699,7 @@ if (C.walk) {
   });
   viewer.onCones = on2 => toast(on2 ? tr('page.cones.on') : tr('page.cones.off'));
   viewer.onLanding = () => toast(tr('page.landing.chosen'));
-  viewer.onWalk = on2 => { fb.hidden = !(on2 && fly); gb.hidden = !on2; wb.hidden = on2; applyHelp(on2); posTick(); { const mbn = document.getElementById('mapBtn'); if (mbn) mbn.textContent = on2 ? tr('page.btn.map.ctrl') : tr('page.btn.map'); } document.getElementById('nameTag').hidden = true; };
+  viewer.onWalk = on2 => { document.getElementById('centerBtn').hidden = on2; fb.hidden = !(on2 && fly); gb.hidden = !on2; wb.hidden = on2; applyHelp(on2); posTick(); { const mbn = document.getElementById('mapBtn'); if (mbn) mbn.textContent = on2 ? tr('page.btn.map.ctrl') : tr('page.btn.map'); } document.getElementById('nameTag').hidden = true; };
 }
 if (viewer.tiled) {
   // mode tuiles : ligne d'information (texte seul) dans le panneau d'aide s'il existe, indicateur « Chargement du sol… », message d'échec

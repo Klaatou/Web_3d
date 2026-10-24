@@ -53,7 +53,8 @@ __I18N__
   </div>
   <aside id="panel">
     <small style="margin:0 0 6px">glb-viewer __VERSION__</small>
-    <div class="btns"><button id="bDiag" class="wide" data-i18n="core.diag.btn">Copier le diagnostic</button></div>
+    <div class="btns"><button id="bDiag" class="wide" data-i18n="core.diag.btn" data-i18n-title="core.diag.tip">Copier le diagnostic</button></div>
+    <div style="margin:0 0 6px"><a id="manualLink" target="_blank" rel="noopener" data-i18n="core.manual">Manuel complet (en ligne)</a></div>
     <textarea id="diagOut" readonly hidden rows="8" aria-label="Copier le diagnostic" data-i18n-aria="core.diag.btn" style="width:100%;box-sizing:border-box;font:12px ui-monospace,Consolas,monospace"></textarea>
     <div class="row"><label for="langSel" data-i18n="viewer.lang">Langue / Language</label><select id="langSel" style="grid-column:1/-1;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;width:100%"></select></div>
     <div class="row"><label for="kbSel" data-i18n="viewer.kb">Disposition du clavier (aide de la promenade)</label><select id="kbSel" style="grid-column:1/-1;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;width:100%"></select></div>
@@ -836,6 +837,7 @@ async function copyText(t, okKey) {
 $('bCopyPick').onclick = () => { if (!lastPick || !lastPick.point) return setStatus(tr('viewer.copy.first')); copyText(lastPick.point.map(f1v).join(', '), 'viewer.copy.ok.pick'); };
 $('bCopyTarget').onclick = () => { const t = viewer.controls.target; copyText([t.x, t.y, t.z].map(f1v).join(', '), 'viewer.copy.ok.target'); };
 // v39 : diagnostic à copier (diagText dans core.js) + état du viewer (message, fichier, tuiles) ; copie refusée : texte sélectionné dans diagOut
+$('manualLink').href = manualUrl();   // v40 : manuel sur GitHub dans la langue de la page
 $('bDiag').onclick = async () => {
   const lines = ['stat', 'setInfo', 'tilesInfoV', 'tilesLoad'].map($).filter(e => e && !e.hidden && e.textContent.trim()).map(e => e.textContent.trim());
   const t = diagText(viewer, { lines });

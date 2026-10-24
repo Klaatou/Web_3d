@@ -2,6 +2,11 @@
 
 Les dates sont au format jj/mm/aaaa.
 
+## v40 (24/10/2026)
+### 24/10/2026 : fenêtre Arrivées, Recentrer la vue, lien Manuel, bulle du diagnostic
+- **Arrivées** : fenêtre « Arrivées » (touche **L**, même cycle que H et I, bulle « Liste des points de téléportation disponibles (TP) ») sous la fenêtre Informations / État ; un clic sur un nom téléporte (promenade) ou entre en promenade (vue globale) ; absente sans arrivée. **Recentrer la vue** : bouton hors promenade, rend le cadrage d'ouverture. **Manuel** : lien « Manuel complet (en ligne) » vers GitHub dans l'aide de la page et dans le viewer, selon la langue. **Diagnostic** : bulle sur le bouton (page et viewer). Aide : L, bouton Recentrer, « R : centrer sur l'arrivée » en vue globale. Manuel § 24 et tableau des touches, `tests/v40.py`.
+- **Arrivals**: "Arrivals" window (**L** key, same cycle as H and I, tooltip "List of available teleport points (TP)") below the Information / Status window; clicking a name teleports (walk mode) or enters walk mode (global view); absent without arrival points. **Recenter the view**: button outside walk mode, restores the opening framing. **Manual**: "Full manual (online)" link to GitHub in the page help and in the viewer, by language. **Diagnostics**: tooltip on the button (page and viewer). Help: L, Recenter button, "R: center on the arrival point" in global view. Manual § 24 and key table, `tests/v40.py`.
+
 ## v39 (23/10/2026)
 ### 23/10/2026 : bouton « Copier le diagnostic »
 - **Diagnostic** : bouton « Copier le diagnostic » en bas de la fenêtre Informations / État de la page et en haut du panneau du viewer ; il copie la version, la date, la page (hôte masqué), la langue, le clavier, le navigateur, la fenêtre, la carte graphique, le rendu, la mémoire, les tuiles et leurs durées, les lignes d'état, la présence et les 10 dernières erreurs et avertissements (adresses remplacées par `ADRESSE`, partie `#` de l'adresse jamais copiée) ; copie refusée : texte affiché sélectionné. Code commun dans `src/core.js` (`DIAG`, `diagText`), textes `core.diag.*` en français et en anglais, manuel § 23, `tests/v39.py`.

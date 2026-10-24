@@ -42,6 +42,7 @@ Exemple juste :
 | **G** (v34) | recapturer la souris après Échap |
 | **O** (v37) | ouvre / ferme la fenêtre **Réglages** (bascule, comme **H** et **I**) ; **R** est déjà pris par le retour à l'arrivée |
 | **I** (v34) | la fenêtre **Informations / État** (v36 : ancien « bloc d'état » : vue, mode, souris, clavier, position, tuiles) : masquée → déployée ; réduite → déployée ; déployée → masquée. **H** fait de même pour l'aide seule (§ 19.1, § 21.3) |
+| **L** (v40) | la fenêtre **Arrivées** : liste des points de téléportation de la région ; un clic sur un nom y téléporte (en promenade) ou y fait entrer en promenade (en vue globale). Même cycle que **H** et **I** ; absente si la région n'a aucune arrivée |
 
 Les portails ne fonctionnent qu'en promenade.
 
@@ -1080,3 +1081,26 @@ Si le navigateur refuse la copie (page en `http://` hors `localhost`), le texte 
 ### 23.2 Tests de la v39
 
 `tests/v39.py` : bouton présent dans la page et dans le viewer, en français et en anglais, adresses masquées, erreurs capturées, durées d'une région en tuiles.
+
+## 24. Nouveautés de la v40 (24/10/2026)
+
+### 24.1 Fenêtre « Arrivées » (touche L)
+
+Sous la fenêtre **Informations / État**, la fenêtre **Arrivées** liste les points d'arrivée de la région (`default` d'abord, puis par nom ; l'étiquette remplace l'identifiant quand elle existe). Au survol, une bulle rappelle son rôle : liste des points de téléportation disponibles (TP).
+
+- **En promenade**, un clic sur un nom téléporte à cette arrivée.
+- **En vue globale**, un clic sur un nom fait entrer en promenade à cette arrivée.
+- **L** fait tourner la fenêtre comme **H** et **I** : masquée → déployée ; réduite → déployée ; déployée → masquée. Le titre « ▾ Arrivées » la réduit ou la déplie. Les états sont mémorisés dans le navigateur (clés `glb2html_spawn` et `glb2html_spawnFold`).
+- Une région sans arrivée n'a pas cette fenêtre ; **L** le dit par un message, et l'aide ne cite pas **L**.
+
+### 24.2 Bouton « Recentrer la vue »
+
+Dans la barre du bas, hors promenade seulement : le bouton **« Recentrer la vue »** remet le cadrage d'ouverture de la région (même centre, même angle, même distance qu'à la fin du chargement). **R** reste le retour à l'arrivée : en vue globale, il centre la vue sur l'arrivée en gardant l'angle et la distance.
+
+### 24.3 Lien « Manuel complet » et bulle du diagnostic
+
+La fenêtre d'aide (**H**) se termine par un lien **« Manuel complet (en ligne) »** vers ce manuel sur GitHub, en français si la page est en français, en anglais sinon (il faut une connexion Internet). Le viewer a le même lien sous le bouton « Copier le diagnostic ». Ce bouton a maintenant une bulle qui explique ce qu'il copie et ce qu'il ne copie jamais.
+
+### 24.4 Tests de la v40
+
+`tests/v40.py` : liste et ordre des arrivées, touche L, téléportation au clic (vue globale et promenade), bouton « Recentrer la vue » (cadrage d'ouverture exact), région sans arrivée, aide, lien du manuel et bulle du diagnostic en français et en anglais, viewer.

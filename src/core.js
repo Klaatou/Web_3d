@@ -57,6 +57,8 @@ if (typeof window !== 'undefined' && !window.__web3dDiag) {
   addEventListener('unhandledrejection', e => DIAG.note('promise', e.reason));
   for (const k of ['error', 'warn']) { const f = console[k]; console[k] = function (...a) { DIAG.note(k, ...a); return f.apply(this, a); }; }
 }
+// v40 : manuel complet sur GitHub, dans la langue de la page (français, sinon anglais)
+const manualUrl = () => 'https://github.com/Klaatou/Web_3d/blob/main/docs/' + (LANG === 'fr' ? 'fr/MANUEL.md' : 'en/MANUAL.md');
 // texte du diagnostic ; extra = { cfgVersion, lines } : version de la configuration de la région, lignes d'état propres à la page ou au viewer
 function diagText(viewer, extra) {
   const x = extra || {}, L = (k, v) => tr('core.diag.line', k, v), out = [tr('core.diag.title')];
