@@ -14,7 +14,7 @@ Une région OpenSim (sauvegarde `.oar`) devient une **page web 3D** où l'on se 
 
 ## 2. Ce qui a été essayé, et ce qui ne l'a pas été
 
-- **Essayé** : Chromium (tests automatiques), Edge et le téléphone de JJ (« un peu encombré sur un petit écran, mais ça marche »), la région de référence de 1 024 x 1 024 m en 106 tuiles.
+- **Essayé** : Chromium (tests automatiques), Edge et le téléphone de Klaatou (« un peu encombré sur un petit écran, mais ça marche »), la région de référence de 1 024 x 1 024 m en 106 tuiles.
 - **Non essayé** : Firefox et Safari ; la voie D (VM Linux, Tailscale Funnel, Apache) ; `wss://` derrière Funnel ; un créateur depuis une autre origine ; le son réel (les tests le simulent) ; un onglet de `carte.html` gardé longtemps en arrière-plan.
 
 ## 3. Ce qui reste à faire

@@ -1777,7 +1777,7 @@ Caractéristiques conseillées : **image carrée de 320 x 320 pixels**, JPEG de 
 
 ### 32.5 Non testé
 
-Windows, les chemins de JJ, les lignes PowerShell elles-mêmes.
+Windows, les chemins de Klaatou, les lignes PowerShell elles-mêmes.
 
 ## 33. Nouveautés de la v50 (25/10/2026) : la carte des mondes dans le viewer
 
@@ -1856,7 +1856,7 @@ Une connexion ouverte sur le port du serveur de présence puis refermée sans ri
 
 Une adresse de présence peut s'écrire avec une étoile à la place du nom : `ws://*:8765`. La page remplace l'étoile par le nom avec lequel elle a été ouverte : ouverte par `http://localhost:8096`, elle vise `ws://localhost:8765` ; ouverte par l'adresse réseau ou le nom public de la machine, elle vise cette même adresse. Une page ouverte depuis le disque, et le viewer, visent `127.0.0.1`. La règle « la présence au même endroit que la page » (procédures § 11) est ainsi tenue d'office.
 
-Pourquoi : chaque config ou fiche portait une seule adresse (adresse réseau, adresse IP publique ou nom public), juste pour un seul des chemins d'accès. Une page ouverte par le nom public qui vise une adresse du réseau local est coupée par Edge avant l'envoi de la requête : la carte reste sans compteur et le serveur note une connexion « vide » à chaque interrogation (toutes les 10 s pour `carte.html`, toutes les 8 s pour la fenêtre Carte). Ce blocage est déduit des constats de JJ ; il n'est pas reproduit ici et n'a pas été essayé sous Edge.
+Pourquoi : chaque config ou fiche portait une seule adresse (adresse réseau, adresse IP publique ou nom public), juste pour un seul des chemins d'accès. Une page ouverte par le nom public qui vise une adresse du réseau local est coupée par Edge avant l'envoi de la requête : la carte reste sans compteur et le serveur note une connexion « vide » à chaque interrogation (toutes les 10 s pour `carte.html`, toutes les 8 s pour la fenêtre Carte). Ce blocage est déduit des constats de Klaatou ; il n'est pas reproduit ici et n'a pas été essayé sous Edge.
 
 L'étoile vaut partout : `--presence-url`, `presenceUrl` de `NOM.config.json`, champ `presence` de `regions.json`, champ de présence du viewer. Le serveur rappelle cette forme au démarrage. Limite : pour un visiteur venu d'Internet, le port du serveur de présence doit être joignable sous le même nom que la page (redirection de la box, ou Funnel, procédures § 11).
 
@@ -1893,7 +1893,7 @@ Avec `websockets` 14 et 15, une requête HTTP ordinaire sur le port du serveur (
 
 ### 35.6 Région en tuiles renommée
 
-`NOM.overview.glb` garde dans chaque nœud le chemin de sa tuile tel qu'il était au découpage (`NOM.tiles/T_3_0_0.glb`). Jusqu'à la v51, renommer à la main les dossiers et les chemins de l'index laissait la vue d'ensemble **visible sous les tuiles détaillées** : surfaces superposées, moirures et plaques sombres sur le terrain et les rochers (cas de JJ, région Houses, 25/10/2026). Depuis la v52, la page retrouve la cellule par le **nom du fichier de la tuile** quand le chemin complet ne correspond pas (nom unique dans une région ; sinon la cellule reste visible, jamais de trou). Pour renommer une région en tuiles : renommer `NOM.tiles`, `NOM.overview.glb`, `NOM.tiles.json`, `NOM.config.json` et `NOM.zones.json`, corriger dans l'index les chemins `file` des tuiles et `overview.file`, corriger le champ `tiles` de la config, puis copier la coquille `index.html` de la v52. Il n'y a pas à régénérer la vue d'ensemble.
+`NOM.overview.glb` garde dans chaque nœud le chemin de sa tuile tel qu'il était au découpage (`NOM.tiles/T_3_0_0.glb`). Jusqu'à la v51, renommer à la main les dossiers et les chemins de l'index laissait la vue d'ensemble **visible sous les tuiles détaillées** : surfaces superposées, moirures et plaques sombres sur le terrain et les rochers (cas de Klaatou, région Houses, 25/10/2026). Depuis la v52, la page retrouve la cellule par le **nom du fichier de la tuile** quand le chemin complet ne correspond pas (nom unique dans une région ; sinon la cellule reste visible, jamais de trou). Pour renommer une région en tuiles : renommer `NOM.tiles`, `NOM.overview.glb`, `NOM.tiles.json`, `NOM.config.json` et `NOM.zones.json`, corriger dans l'index les chemins `file` des tuiles et `overview.file`, corriger le champ `tiles` de la config, puis copier la coquille `index.html` de la v52. Il n'y a pas à régénérer la vue d'ensemble.
 
 ### 35.7 Tests de la v52
 
@@ -1901,4 +1901,4 @@ Avec `websockets` 14 et 15, une requête HTTP ordinaire sur le port du serveur (
 
 ### 35.8 Non testé
 
-Le son réel (le test remplace `AudioContext`), Edge, Windows, un vrai téléphone, un onglet gardé longtemps en arrière-plan (le navigateur peut ralentir ses minuteries : non mesuré), la charge du serveur à 5 s. Le renommage de § 35.6 a été confirmé par JJ sur sa région Houses (25/10/2026).
+Le son réel (le test remplace `AudioContext`), Edge, Windows, un vrai téléphone, un onglet gardé longtemps en arrière-plan (le navigateur peut ralentir ses minuteries : non mesuré), la charge du serveur à 5 s. Le renommage de § 35.6 a été confirmé par Klaatou sur sa région Houses (25/10/2026).

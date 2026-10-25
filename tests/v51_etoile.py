@@ -7,7 +7,7 @@ pour une fiche en ws://*:PORT ; le journal des visites joint le serveur (clé re
 le message d'erreur montre l'adresse résolue ; le viewer ouvert depuis le disque vise 127.0.0.1 ; ws://0.0.0.0 toujours corrigé.
 
 Non reproduit ici : le blocage par Edge d'une page à adresse publique qui vise une adresse du réseau local (cause des connexions vides
-constatées par JJ) ; Chromium 141, même avec les contrôles de réseau local activés, ne le montre pas.
+constatées par Klaatou) ; Chromium 141, même avec les contrôles de réseau local activés, ne le montre pas.
 
 Prérequis : pip install playwright websockets ; python build.py avant. Variables facultatives : THREE_DIR, CHROMIUM. Lancer : python tests/v51_etoile.py
 """

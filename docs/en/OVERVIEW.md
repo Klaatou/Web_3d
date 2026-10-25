@@ -14,7 +14,7 @@ An OpenSim region (`.oar` backup) becomes a **3D web page** you can walk around 
 
 ## 2. What has been tried, and what has not
 
-- **Tried**: Chromium (automatic tests), Edge and JJ's phone ("a bit crowded on a small screen, but it works"), the reference region of 1,024 x 1,024 m in 106 tiles.
+- **Tried**: Chromium (automatic tests), Edge and Klaatou's phone ("a bit crowded on a small screen, but it works"), the reference region of 1,024 x 1,024 m in 106 tiles.
 - **Not tried**: Firefox and Safari; route D (Linux VM, Tailscale Funnel, Apache); `wss://` behind Funnel; a creator from another origin; the real sound (the tests simulate it); a `carte.html` tab kept in the background for a long time.
 
 ## 3. What is left to do

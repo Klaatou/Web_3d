@@ -4,7 +4,7 @@
 Région synthétique (tests/glbfab.py : terrain 6 x 6 patches, maisons, objet « Village » réparti sur 4 tuiles, « Statue », deux « Banc »)
 découpée par glb2tiles (16 tuiles). Hors navigateur : extras.ref / extras.box dans les tuiles (nom unique = nom, nom partagé = nom#index,
 boîte de l'objet ENTIER dans chaque morceau), `nodeRefs` dans X.tiles.json, --sans-references, avertissements pour d'anciennes tuiles.
-Chromium sans tête : glb-viewer.html ouvert depuis le disque, dossier de la région choisi (c'est ce que fera JJ) ou ?tuiles= en http ;
+Chromium sans tête : glb-viewer.html ouvert depuis le disque, dossier de la région choisi (c'est ce que fera Klaatou) ou ?tuiles= en http ;
 création d'une zone libre, d'un portail, d'une arrivée et de zones liées (« Statue », « Banc » partagé) par clics sur les tuiles chargées ; clic hors
 tuile chargée = message et chargement ; coordonnées du point visé et de la cible, copie ; export de X.zones.json et de la commande ; réimport ;
 puis glb2html.py --tiles avec ce fichier et contrôle dans la coquille : chaque zone à la bonne position (0,05 m), la zone liée n'apparaît qu'au

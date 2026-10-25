@@ -137,7 +137,7 @@ async def visites_exemple():
 vr = asyncio.run(visites_exemple())
 pp.kill()
 rapport(vr.get("ok") is True and vr.get("visits") == 3 and vr.get("visitors") == 3 and vr.get("keep") == 0 and vr.get("names") is True,
-        "visites d'exemple : clé acceptée, 3 visites (deux lignes de JJ fusionnées), 3 visiteurs", vr)
+        "visites d'exemple : clé acceptée, 3 visites (deux lignes de Klaatou fusionnées), 3 visiteurs", vr)
 rapport(sum(d["visits"] for d in vr.get("days", [])) == 3 and sum(d["walked"] for d in vr.get("days", [])) == 1, "visites d'exemple : total par jour, une avec promenade", vr.get("days"))
 rapport(len(vis.read_text(encoding="utf-8").splitlines()) == 5, "visites d'exemple : fichier gardé tel quel (5 lignes)")
 # v51 : créateurs d'exemple (manuel § 27.12 et § 34) : 3 lus, alice accueillie dans alice.gallery, bob suspendu, hôte sans préfixe

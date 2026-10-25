@@ -2,8 +2,8 @@
 
 > Ce fichier servait aux sessions Claude Code, jusqu'à la v37. Depuis le 23/10/2026, le travail se fait dans le chat, par patchs. **L'état du dépôt, les décisions récentes (v38 et suivantes) et ce qui reste à faire sont dans `REPRISE.md`** ; le détail de chaque version dans `CHANGELOG.md` et `docs/fr/HISTORIQUE.md` ; l'usage dans `docs/fr/MANUEL.md`. Ce qui suit reste valable comme description de l'architecture et des décisions jusqu'à la v37.
 
-## Façon de travailler avec le propriétaire (JJ)
-Les règles de travail sont dans `REGLES.md`, fichier du Projet claude.ai (hors dépôt). L'essentiel : réponses en français, directes et techniques ; vérifier dans le code avant d'affirmer ; diagnostic avant correctif, un seul à la fois ; aucune livraison sans l'accord de JJ ; modifications par texte avant / après ou par `patch_NOM.py`, jamais de fichier complet pour du code existant ; commandes PowerShell sur une seule ligne ; dates jj/mm/aaaa ; aucune information portée par la seule couleur ; aucune adresse IP ni nom d'hôte réel dans le dépôt (`ADRESSE`).
+## Façon de travailler avec le propriétaire (Klaatou)
+Les règles de travail sont dans `REGLES.md`, fichier du Projet claude.ai (hors dépôt). L'essentiel : réponses en français, directes et techniques ; vérifier dans le code avant d'affirmer ; diagnostic avant correctif, un seul à la fois ; aucune livraison sans l'accord de Klaatou ; modifications par texte avant / après ou par `patch_NOM.py`, jamais de fichier complet pour du code existant ; commandes PowerShell sur une seule ligne ; dates jj/mm/aaaa ; aucune information portée par la seule couleur ; aucune adresse IP ni nom d'hôte réel dans le dépôt (`ADRESSE`).
 
 ## Architecture
 - `src/core.js` : noyau JS partagé (collisions, promenade, avatars, zones, carte, chat). Inséré dans `template.html` ET dans `viewer_tpl.html`.
@@ -32,8 +32,8 @@ Les règles de travail sont dans `REGLES.md`, fichier du Projet claude.ai (hors 
 ## Décisions de la session du 18/10/2026 (à respecter)
 - La carte vit dans `regions.json` (un fichier), alimenté par `--register` à chaque génération ; page web de la carte par `--map-page`.
 - Fédération : `--map-url` accepte plusieurs adresses (fusion) ; chaque région peut avoir son serveur de présence (champ `presence`).
-- **JJ veut un mode modulaire** : la page région est déjà énorme (GLB en base64, plus de 17 Mo) et grossira ; carte, zones et paramètres ne doivent pas y être figés. Le mode autonome actuel reste disponible (ouverture depuis le disque).
-- **La fédération de la carte doit pouvoir tourner sur l'hébergement du `presence_server.py`.** JJ a 3 régions, un collègue 2, un autre 2 : le souci n'est pas le poids mais la logistique (qui envoie quoi à qui, regénération des pages).
+- **Klaatou veut un mode modulaire** : la page région est déjà énorme (GLB en base64, plus de 17 Mo) et grossira ; carte, zones et paramètres ne doivent pas y être figés. Le mode autonome actuel reste disponible (ouverture depuis le disque).
+- **La fédération de la carte doit pouvoir tourner sur l'hébergement du `presence_server.py`.** Klaatou a 3 régions, un collègue 2, un autre 2 : le souci n'est pas le poids mais la logistique (qui envoie quoi à qui, regénération des pages).
 
 ## Décisions de la v23 (19/10/2026)
 - Clic simple = information seule (nom + point) ; seul le double-clic déplace cible et atterrissage.

@@ -1087,7 +1087,7 @@ async def main():
         zz = json.loads(dest.read_text(encoding="utf-8"))
         rapport("zones déjà en place" not in r.stdout and not any(z["id"] == "secret" for z in zz), "un autre fichier : copié comme avant (profil public : la zone privée est retirée)", r.stdout[-200:])
 
-        # ================= 11. la commande de JJ : nom de région avec parenthèses, dossier avec « & », coquille à renouveler, zones conservées =================
+        # ================= 11. la commande de Klaatou : nom de région avec parenthèses, dossier avec « & », coquille à renouveler, zones conservées =================
         print("--- 11. région « OAR-Free_House_Gallery_I(4X4)-terrain » dans un dossier « SL&OS » : coquille renouvelée, zones existantes conservées")
         nom = "OAR-Free_House_Gallery_I(4X4)-terrain"
         jj = tmp / "SL&OS" / "tuiles"

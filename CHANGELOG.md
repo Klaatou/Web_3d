@@ -3,6 +3,10 @@
 Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la v52)
+### 25/10/2026 : dépôt sans initiales
+- **Documents, exemples, tests** : les initiales de l'auteur sont remplacées par son nom public sur GitHub (« Klaatou ») dans `REPRISE.md`, `CHANGELOG.md`, `CLAUDE.md`, le manuel, la vue d'ensemble, les exemples de `docs/samples/` et quelques commentaires de tests. Les motifs de date (`AAAAMMJJ`) restent. L'historique git garde les anciens textes.
+- **Documents, samples, tests**: the author's initials are replaced by his public GitHub name ("Klaatou") in `REPRISE.md`, `CHANGELOG.md`, `CLAUDE.md`, the manual, the overview, the `docs/samples/` examples and a few test comments. Date patterns (`AAAAMMJJ`) stay. The git history keeps the old texts.
+
 ### 25/10/2026 : vue d'ensemble en une page
 - **Documents** : `docs/fr/VUE_ENSEMBLE.md` et `docs/en/OVERVIEW.md` : ce qui marche, ce qui a été essayé ou non, ce qui reste à faire (essai depuis la VM, note pour les créateurs, souris, démo publique, numérotation, release), où lire quoi. Aucun changement de code ni de numéro de version.
 - **Documents**: `docs/fr/VUE_ENSEMBLE.md` and `docs/en/OVERVIEW.md`: what works, what has been tried or not, what is left to do (test from the VM, note for creators, mouse, public demo, numbering, release), where to read what. No code change, no version number change.
@@ -56,8 +60,8 @@ Les dates sont au format jj/mm/aaaa.
 
 ## v49 (25/10/2026)
 ### 25/10/2026 : documents de la v49
-- **Manuel § 32** (FR et EN) : `--scan-sites`, vignettes (320 x 320 conseillé), `REPRISE.md` (créateurs sur le serveur de JJ : conception notée, à faire).
-- **Manual § 32** (FR and EN): `--scan-sites`, thumbnails (320 x 320 recommended), `REPRISE.md` (creators on JJ's server: design noted, to do).
+- **Manuel § 32** (FR et EN) : `--scan-sites`, vignettes (320 x 320 conseillé), `REPRISE.md` (créateurs sur le serveur de Klaatou : conception notée, à faire).
+- **Manual § 32** (FR and EN): `--scan-sites`, thumbnails (320 x 320 recommended), `REPRISE.md` (creators on Klaatou's server: design noted, to do).
 
 ### 25/10/2026 : mise à jour de regions.json depuis le dossier des sites
 - **`glb2html.py --scan-sites DOSSIER`** (et `--dry-run`) : une fiche par `NOM.config.json` (adresse `index.html?region=dossier/NOM`, salon, serveur), vignette `NOM.jpg`, `.png` ou `.webp` à côté ; fiche reconnue par son salon puis son adresse ; nom, place, arrivée, en-tête et fiches externes gardés ; nouvelle région sur une case libre ; rien n'est supprimé (orphelines signalées). `tests/v49.py`, `REFERENCE_OPTIONS.md`.
@@ -200,7 +204,7 @@ Les dates sont au format jj/mm/aaaa.
 - **Boussole** : cap en haut au centre (« NE 45° »), nord d'OpenSim = -Z, `rotate` pris en compte, case dans les Réglages visiteur ; `--compass` / `--no-compass`, `--north DEGRES` (config `compass`, `northDeg`).
 - **`--help`** des quatre outils : première ligne « NOM vNN (jj/mm/aaaa) : fonction ».
 - **Fenêtres Aide et Informations** : largeur réglable (bord droit, 260 px à 70 %), mémorisée, hauteur qui suit le contenu, empilées et collées.
-- **Touche O** : ouvre / ferme la fenêtre Réglages (demande de JJ en cours de session ; R est déjà pris).
+- **Touche O** : ouvre / ferme la fenêtre Réglages (demande de Klaatou en cours de session ; R est déjà pris).
 ### Lot 2 : historique du chat
 - Serveur : `--history` 200 par défaut, `--history-file`, `--history-days` (30 ; 0 = tout), message `history` (`before`, `n`, réponse `msgs`, `more`), numéros `n` et heures `t` sur les messages (anciens clients inchangés).
 - Page : panneau défilable, réglage « Messages d'historique affichés » (200, 20 à 2000), bouton « Messages plus anciens », non lus dans le titre de l'onglet, « N messages vous citent ».
@@ -212,7 +216,7 @@ Les dates sont au format jj/mm/aaaa.
 
 ## v36 (23/10/2026)
 ### Lot A : touches, fenêtres, arrivées, repères, sons, copie de position
-- **Touches (décisions de JJ).** **F** et **P** entrent en promenade et en sortent (en vue globale comme en promenade) ; dans le viewer, P pose une zone en promenade, **F**, **Maj+P** ou le bouton sortent. **F ne fait plus basculer le vol** : voler / atterrir = **Début** ou le bouton « Voler / Atterrir », ou **Page Haut** maintenu plus de 0,4 s au sol. Monter en vol : **Page Haut** ou **Espace** maintenu ; descendre : **Page Bas** ou **C** (atterrissage automatique au sol) ; sauter au sol : **Espace** ou **Page Haut** en appui bref. **E redevient la touche d'action des zones** (déclenchement « clic » ou « both »), invite « clic ou E : … » ; E ne saute plus, ne monte plus et ne fait rien d'autre.
+- **Touches (décisions de Klaatou).** **F** et **P** entrent en promenade et en sortent (en vue globale comme en promenade) ; dans le viewer, P pose une zone en promenade, **F**, **Maj+P** ou le bouton sortent. **F ne fait plus basculer le vol** : voler / atterrir = **Début** ou le bouton « Voler / Atterrir », ou **Page Haut** maintenu plus de 0,4 s au sol. Monter en vol : **Page Haut** ou **Espace** maintenu ; descendre : **Page Bas** ou **C** (atterrissage automatique au sol) ; sauter au sol : **Espace** ou **Page Haut** en appui bref. **E redevient la touche d'action des zones** (déclenchement « clic » ou « both »), invite « clic ou E : … » ; E ne saute plus, ne monte plus et ne fait rien d'autre.
 - **Disposition du clavier (AZERTY / QWERTY).** La marche garde les codes physiques ; l'aide et la fenêtre Informations / État affichent les **lettres réelles** (Z Q S D ou W A S D, jamais les deux). Détection : `navigator.keyboard.getLayoutMap()` si présent (Chrome, Edge), sinon la langue du navigateur (fr, fr-FR, fr-BE : AZERTY ; le reste : QWERTY). Réglage visiteur « Disposition du clavier : Auto / AZERTY / QWERTY », mémorisé ; même règle dans le viewer. **M** est reconnue par la lettre imprimée (`e.key` = « m »), plus par le code physique : sur AZERTY c'était la touche « , ».
 - **Aide et informations en trois temps.** La fenêtre « État » s'appelle **Informations / État**. **H** (aide) et **I** (informations) : masquée → déployée ; réduite → déployée ; déployée → masquée. Réduit / déployé et masqué sont mémorisés.
 - **Arrivée occupée.** À chaque pose de l'avatar (ouverture, `#spawn=`, `#pos=`, arrivée par défaut, R, portail interne ou vers une autre région, « Aller à »), si un visiteur en promenade est à moins de 1 m (2 m en vertical), le nouvel arrivant passe au point libre le plus proche (anneaux de 1,2 / 2,4 / 3,6 m, sol à moins de 1 m d'écart, aucun mur, aucun visiteur à moins de 1 m). Présence pas encore connectée : contrôle refait à la réception de la liste (`welcome`), seulement si l'avatar n'a pas bougé de plus de 0,3 m. Sans place libre : pose à l'endroit demandé.
