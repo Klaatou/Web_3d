@@ -3,6 +3,9 @@
 Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la v52)
+### 25/10/2026 : crédits dans les README
+- **README** : section « Crédits » (français et anglais).
+- **README**: "Credits" section (French and English).
 
 ### 25/10/2026 : vue d'ensemble en une page
 - **Documents** : `docs/fr/VUE_ENSEMBLE.md` et `docs/en/OVERVIEW.md` : ce qui marche, ce qui a été essayé ou non, ce qui reste à faire (essai depuis la VM, note pour les créateurs, souris, démo publique, numérotation, release), où lire quoi. Aucun changement de code ni de numéro de version.

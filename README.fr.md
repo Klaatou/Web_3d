@@ -108,3 +108,7 @@ Ne jamais committer : adresses Home Assistant (`zones*.json`), `*.reglages.json`
 ## Licence
 
 Licence MIT (fichier `LICENSE`). three.js (MIT) et les décodeurs embarqués : voir `THIRD-PARTY.md`.
+
+## Crédits
+
+Conçu, dirigé et testé par Klaatou ; le code et les documents ont été écrits en grande partie avec Claude (Anthropic), un assistant d'IA.

@@ -108,3 +108,7 @@ Never commit: Home Assistant addresses (`zones*.json`), `*.reglages.json`, `regi
 ## License
 
 MIT License (see the `LICENSE` file). three.js (MIT) and the embedded decoders: see `THIRD-PARTY.md`.
+
+## Credits
+
+Designed, directed and tested by Klaatou; most of the code and documentation was written with Claude (Anthropic), an AI assistant.
