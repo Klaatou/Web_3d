@@ -2,6 +2,25 @@
 
 Les dates sont au format jj/mm/aaaa.
 
+## v46 (25/10/2026)
+### 25/10/2026 : pas de côté sur le pavé de promenade
+- **Flèches de promenade** : pas de côté à gauche et à droite (Q et D en AZERTY, A et D en QWERTY) au milieu du pavé ; tourner passe aux coins du haut, monter et descendre (en vol) aux coins du bas, comme le pavé de la vue globale. `tests/v46.py` complété.
+- **Walking arrows**: step left and right (Q and D on AZERTY, A and D on QWERTY) in the middle of the pad; turning moves to the top corners, up and down (while flying) to the bottom corners, like the overview pad. `tests/v46.py` extended.
+
+### 25/10/2026 : commandes à l'écran (code)
+- **Ligne d'état** toujours visible (en bas au centre ; en haut sous la boussole sur un écran étroit ou tactile) : mode en toutes lettres (Promenade, Vue globale), allure, vue, position ou cible.
+- **Flèches à l'écran** (pavé 3 x 3) : en promenade avancer, reculer, tourner, Courir (un clic l'allume, un clic l'éteint), et en vol monter, descendre ; en vue globale déplacer, tourner, rapprocher, éloigner, et Recentrer au centre (le bouton « Recentrer la vue » ne revient que si les flèches sont cachées). Appui maintenu = touche tenue. Escamotables : touche K, bouton « Flèches (K) », case de Réglages (retenu par le navigateur).
+- **Mode tactile** (écran tactile détecté, ou réglage « Commandes tactiles » Auto / Oui / Non) : colonne de boutons (Promenade ou Sortir, Sauter, Voler, Vue, Chat, Flèches, Menu), menu (Aide, Informations, Arrivées, Carte, Retour à l'arrivée, Recentrer, Plein écran si le navigateur le permet), fenêtres réduites à l'ouverture avec un ✕, glisser du doigt pour regarder en promenade, vrai champ de chat avec Envoyer et Fermer, bulle par appui long ; écran tourné à l'horizontale pris en charge. « Capturer la souris » caché.
+- **Bulles** sur tous les boutons de la barre et les flèches ; aide : K ; diagnostic : ligne « Commandes tactiles ».
+- **Correction** : la hauteur de l'aide se règle sur la hauteur mesurée du reste de la colonne de gauche (le titre sortait de l'écran quand la barre passait sur plus de rangées).
+- `src/core.js` : `lookBy` (souris et doigt), `padKey`, `padJump`, `runLatch`, `globalMove`, `globalTurn`, `globalZoom`. `tests/v46.py` ; `tests/v34.py` et `tests/v40.py` adaptés.
+- **Status line** always visible (bottom centre; top, under the compass, on a narrow or touch screen): mode spelled out (Walking, Overview), gait, view, position or target.
+- **On-screen arrows** (3 x 3 pad): while walking forward, back, turn, Run (one click on, one click off), and while flying up, down; in the overview move, turn, zoom in, zoom out, and Recenter in the middle (the "Recenter the view" button only comes back when the arrows are hidden). Press and hold = key held. Can be hidden: K key, "Arrows (K)" button, Settings checkbox (remembered by the browser).
+- **Touch mode** (touch screen detected, or "Touch controls" setting Auto / Yes / No): column of buttons (Walk or Exit, Jump, Fly, View, Chat, Arrows, Menu), menu (Help, Information, Arrivals, Map, Back to arrival, Recenter, Full screen when the browser allows it), windows folded on opening with a ✕, drag a finger to look around while walking, real chat field with Send and Close, tooltip on long press; landscape orientation supported. "Capture the mouse" hidden.
+- **Tooltips** on all bar buttons and arrows; help: K; diagnostics: "Touch controls" line.
+- **Fix**: the help height follows the measured height of the rest of the left column (its title went off screen when the bar wrapped onto more rows).
+- `src/core.js`: `lookBy` (mouse and finger), `padKey`, `padJump`, `runLatch`, `globalMove`, `globalTurn`, `globalZoom`. `tests/v46.py`; `tests/v34.py` and `tests/v40.py` adapted.
+
 ## v45 (24/10/2026)
 ### 24/10/2026 : la page dit pourquoi la connexion de présence s'est fermée
 - **Présence** : la ligne de présence (page et viewer) donne la cause au lieu de toujours « serveur injoignable » : connexion jamais établie, ouverte puis fermée (code et raison du serveur), ou refusée par le navigateur (`SecurityError`). Le navigateur ne donne jamais la cause d'une connexion qui ne s'ouvre pas (code 1006) : la page ne distingue donc pas un nom introuvable, un port fermé ou un blocage.

@@ -279,6 +279,7 @@ async def main():
             await o.pg.wait_for_timeout(500)
             rapport(await o.ev("window.__plCalls") == n0, "souris libre : un clic simple ne redemande pas le verrouillage")
             # zone « Lien test » en (0, 0, -8) : clic sur la zone
+            await o.ev("(b => b && b.click())(document.getElementById('lightAskNo'))")   # v46 : la proposition de rendu léger (rendu logiciel ici) est remontée au-dessus des flèches : on y répond d'abord
             pt = await o.pg.evaluate(PROJ, [0, 15.06, -8])
             await o.pg.mouse.click(*pt)
             await o.pg.wait_for_timeout(200)

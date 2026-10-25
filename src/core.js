@@ -965,7 +965,7 @@ function createViewer(container, cfg0, loader) {
   function walkStep(dt) {
     const k = W.keys, free = W.view === 'free', tps = W.view === 'tps';
     for (const c of W.run) if (!k.has(c)) W.run.delete(c);   // v35 : course par double appui (W, S, ↑, ↓) : tant que la touche reste enfoncée
-    const run = k.has('ShiftLeft') || k.has('ShiftRight') || W.run.size > 0;
+    const run = k.has('ShiftLeft') || k.has('ShiftRight') || W.run.size > 0 || !!W.runLatch;   // v46 : bouton « Courir » des flèches à l'écran (un clic l'allume, un clic l'éteint)
     if (run !== !!W.runOn) { W.runOn = run; if (onView) onView(); }   // v37 : la ligne « Mode » de l'état affiche la course
     const turn = (k.has('ArrowLeft') ? 1 : 0) - (k.has('ArrowRight') ? 1 : 0);
     if (turn) { if (free) W.cyaw += 1.8 * dt * turn; else if (tps) W.tyaw += 1.8 * dt * turn; else W.yaw += 1.8 * dt * turn; }
@@ -1180,7 +1180,7 @@ function createViewer(container, cfg0, loader) {
   function pressF() { return toggleWalk(); }
   function walkStop() {
     if (!walking) return;
-    walking = false; W.keys.clear(); W.drag = false; W.fly = false; W.view = 'fps'; updateSelf();
+    walking = false; W.keys.clear(); W.drag = false; W.fly = false; W.view = 'fps'; W.runLatch = false; updateSelf();
     if (document.pointerLockElement === dom && document.exitPointerLock) document.exitPointerLock();
     camera.rotation.order = 'XYZ';
     camera.fov = W.saved.fov; camera.updateProjectionMatrix();
@@ -1216,6 +1216,31 @@ function createViewer(container, cfg0, loader) {
     zoneInside.clear(); nearZone = null; if (onNear) onNear(null);
     for (const q of zones) if (q.type === 'portal' && q.trigger !== 'click' && !zoneOff(q) && zoneDist(q).d <= q.radius) zoneInside.add(q.id);
     walkStep(0); dirty = true;
+    return true;
+  }
+  // v46 : vue globale pas à pas (flèches à l'écran) : fwd, side, dir dans [-1, 1], dt en secondes. Le pas suit la distance de la caméra à la cible
+  // (60 % de cette distance par seconde, 2 m au moins) ; tourner : 1,2 rad/s autour de la cible (gauche = sens inverse des aiguilles vu d'en haut) ;
+  // rapprocher / éloigner : facteur e^(1,2 dt), dans les bornes d'OrbitControls. Sans effet en promenade.
+  function globalMove(fwd, side, dt) {
+    if (walking || !Number.isFinite(dt) || dt <= 0) return false;
+    const off = camera.position.clone().sub(controls.target), d = off.length();
+    const f = new THREE.Vector3(-off.x, 0, -off.z); if (f.lengthSq() < 1e-9) f.set(0, 0, -1); f.normalize();
+    const r = new THREE.Vector3(-f.z, 0, f.x), step = Math.max(2, d) * 0.6 * Math.min(dt, 0.25);
+    const m = f.multiplyScalar((fwd || 0) * step).add(r.multiplyScalar((side || 0) * step));
+    camera.position.add(m); controls.target.add(m); controls.update(); landKey = ''; dirty = true;
+    return true;
+  }
+  function globalTurn(dir, dt) {
+    if (walking || !Number.isFinite(dt) || dt <= 0) return false;
+    const off = camera.position.clone().sub(controls.target).applyAxisAngle(new THREE.Vector3(0, 1, 0), (dir || 0) * 1.2 * Math.min(dt, 0.25));
+    camera.position.copy(controls.target).add(off); controls.update(); dirty = true;
+    return true;
+  }
+  function globalZoom(dir, dt) {
+    if (walking || !Number.isFinite(dt) || dt <= 0) return false;
+    const off = camera.position.clone().sub(controls.target), d = off.length() || 1;
+    const nd = Math.max(controls.minDistance, Math.min(controls.maxDistance, d * Math.exp((dir || 0) * 1.2 * Math.min(dt, 0.25))));
+    camera.position.copy(controls.target).add(off.multiplyScalar(nd / d)); controls.update(); dirty = true;
     return true;
   }
   // v33 : aller à un point (champ « Aller à », retour à l'arrivée) : en promenade, téléportation (attend la tuile, « Chargement du sol… ») ;
@@ -1286,19 +1311,34 @@ function createViewer(container, cfg0, loader) {
       walkStep(0); dirty = true;
       return;
     }
+    lookBy(e.movementX || 0, e.movementY || 0);
+  });
+  // v46 : regard (souris, doigt) : mx, my en pixels de déplacement de la souris ; caméra libre, troisième personne (orbite autour de l'avatar), subjective
+  function lookBy(mx, my) {
     if (W.view === 'free') {
-      W.cyaw -= (e.movementX || 0) * 0.0022;
-      W.cpitch = Math.max(-1.45, Math.min(1.45, W.cpitch - (e.movementY || 0) * 0.0022));
+      W.cyaw -= mx * 0.0022;
+      W.cpitch = Math.max(-1.45, Math.min(1.45, W.cpitch - my * 0.0022));
       return;
     }
     if (W.view === 'tps') {   // v35 : la souris fait orbiter la caméra autour de l'avatar sans le tourner
-      W.tyaw -= (e.movementX || 0) * 0.0022;
-      W.tpitch = Math.max(-1.45, Math.min(1.45, W.tpitch - (e.movementY || 0) * 0.0022));
+      W.tyaw -= mx * 0.0022;
+      W.tpitch = Math.max(-1.45, Math.min(1.45, W.tpitch - my * 0.0022));
       return;
     }
-    W.yaw -= (e.movementX || 0) * 0.0022;
-    W.pitch = Math.max(-1.45, Math.min(1.45, W.pitch - (e.movementY || 0) * 0.0022));
+    W.yaw -= mx * 0.0022;
+    W.pitch = Math.max(-1.45, Math.min(1.45, W.pitch - my * 0.0022));
+  }
+  // v46 : écran tactile en promenade : un doigt qui glisse sur la scène fait regarder (on tire le décor : doigt vers la droite, regard vers la gauche) ;
+  // un seul doigt suivi ; les gestes de la vue globale restent ceux d'OrbitControls
+  let touchLook = null;
+  dom.addEventListener('pointerdown', e => { if (e.pointerType === 'touch' && walking && !touchLook) touchLook = { id: e.pointerId, x: e.clientX, y: e.clientY }; });
+  dom.addEventListener('pointermove', e => {
+    if (!touchLook || e.pointerId !== touchLook.id) return;
+    if (!walking) { touchLook = null; return; }
+    const dx = e.clientX - touchLook.x, dy = e.clientY - touchLook.y; touchLook.x = e.clientX; touchLook.y = e.clientY;
+    if (dx || dy) { W.moved = true; lookBy(-dx * 1.6, -dy * 1.6); dirty = true; }
   });
+  for (const ev of ['pointerup', 'pointercancel']) dom.addEventListener(ev, e => { if (touchLook && e.pointerId === touchLook.id) touchLook = null; });
   // v35 : molette en promenade. Caméra libre : avance / recule la caméra le long du regard (pas = 15 % de la distance à l'avatar, 0,5 à 20 m) ;
   // troisième personne : règle la distance de la caméra (1 à 30 m) ; vue subjective : rien. La page ne défile pas.
   window.addEventListener('wheel', e => {
@@ -2183,6 +2223,11 @@ function createViewer(container, cfg0, loader) {
     releaseKeys() { W.keys.clear(); },
     // v33 : touches fléchées tenues depuis la saisie du chat (les lettres vont dans le texte, les flèches déplacent l'avatar)
     holdKey(code, on) { if (!walking || !code.startsWith('Arrow')) return; if (on) W.keys.add(code); else W.keys.delete(code); },
+    // v46 : flèches à l'écran : touche tenue (avancer, reculer, tourner, monter, descendre), saut, course allumée par un clic, vue globale pas à pas
+    padKey(code, on) { if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyA', 'KeyD', 'PageUp', 'PageDown'].includes(code)) return false; if (!walking) { W.keys.delete(code); return false; } if (on) W.keys.add(code); else W.keys.delete(code); return true; },
+    padJump() { if (!walking || W.fly || W.view === 'free') return false; W.jumpReq = true; return true; },
+    get runLatch() { return !!W.runLatch && walking; }, set runLatch(v) { W.runLatch = !!v && walking; if (onView) onView(); },
+    globalMove, globalTurn, globalZoom,
     // v33 : point de retour ({ pos, yaw, forF }), aller à, retour, vol, vues, couleur choisie, clignotement de bulle
     setHome(h) { home = h && Array.isArray(h.pos) && h.pos.length >= 3 && h.pos.every(Number.isFinite) ? { pos: h.pos.slice(0, 3), yaw: Number.isFinite(h.yaw) ? h.yaw : undefined, forF: !!h.forF } : null; },
     get home() { return home; }, goTo, returnHome, toggleFly, cycleView, setView,
@@ -2216,6 +2261,6 @@ function createViewer(container, cfg0, loader) {
     refreshCollision() { if (TL.on) { for (const t of TL.tiles) if (t.state === 'ready' && t.grp) { t.state = 'building'; t.grid = null; t.gen = collisionGridSteps(t.grp, 3, parseIgnore(cfg.walkIgnore)); t.qAt = performance.now(); t.qFirst = true; t.gridCpu = 0; TL.gridQ.push(t); } } else if (walking && model) W.grid = buildCollisionGrid(model, 3, parseIgnore(cfg.walkIgnore)); },
     teleportNdc(nx, ny) { return walkTeleport(nx, ny); },
     toggleWalk, pressF, recenterCam, startFly, walkStart, walkStop, teleportTo,
-    getWalk() { return { pos: W.pos.toArray(), yaw: W.yaw, pitch: W.pitch, grounded: W.grounded, tris: W.grid ? W.grid.count : 0, flying: W.fly, view: W.view, camYaw: W.view === 'tps' ? W.tyaw : (W.view === 'free' ? W.cyaw : W.yaw), tpsDist: W.tdist, camPitch: W.view === 'tps' ? W.tpitch : (W.view === 'free' ? W.cpitch : W.pitch), running: W.run.size > 0 || W.keys.has('ShiftLeft') || W.keys.has('ShiftRight'), cam: camera.position.toArray(), selfVisible: !!(selfAv && selfAv.visible) }; }, get fit() { return fit; }, requestRender() { dirty = true; }
+    getWalk() { return { pos: W.pos.toArray(), yaw: W.yaw, pitch: W.pitch, grounded: W.grounded, tris: W.grid ? W.grid.count : 0, flying: W.fly, view: W.view, camYaw: W.view === 'tps' ? W.tyaw : (W.view === 'free' ? W.cyaw : W.yaw), tpsDist: W.tdist, camPitch: W.view === 'tps' ? W.tpitch : (W.view === 'free' ? W.cpitch : W.pitch), running: W.run.size > 0 || W.keys.has('ShiftLeft') || W.keys.has('ShiftRight') || !!W.runLatch, cam: camera.position.toArray(), selfVisible: !!(selfAv && selfAv.visible) }; }, get fit() { return fit; }, requestRender() { dirty = true; }
   };
 }

@@ -66,7 +66,11 @@ async def main():
         print("--- 2. Recentrer la vue")
         await o.touche("KeyF")
         await o.attendre("!window.__viewer.walking", 10)
-        rapport(await o.ev("!document.getElementById('centerBtn').hidden && document.getElementById('centerBtn').title === \"Revenir au cadrage d'ouverture de la région (vue globale)\""), "bouton visible hors promenade, avec sa bulle")
+        # v46 : flèches à l'écran affichées (par défaut) : le centre du pavé recentre et le bouton est caché ; flèches cachées (K) : le bouton revient
+        rapport(await o.ev("document.getElementById('centerBtn').hidden && !document.getElementById('padCenter').hidden"), "flèches affichées : le centre du pavé remplace le bouton")
+        await o.touche("KeyK")
+        rapport(await o.ev("!document.getElementById('centerBtn').hidden && document.getElementById('centerBtn').title === \"Revenir au cadrage d'ouverture de la région (vue globale)\""), "flèches cachées : bouton visible hors promenade, avec sa bulle")
+        await o.touche("KeyK")
         await o.ev("window.__viewer.frame([1, 0.2, 0], [30, 15, 30], 0.3)")
         await o.ev("document.getElementById('centerBtn').click()")
         apres = await o.ev("window.__viewer.getCameraState()")

@@ -9,10 +9,12 @@
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#__SKY_HEX__}
 #view{position:fixed;inset:0}
 canvas{display:block;touch-action:none}
-#walkBtn,#helpBtn,#mapBtn,#homeBtn,#centerBtn,#flyBtn,#grabBtn,#walkHint,#stateInfo,#spawnInfo{font:12px/1.4 ui-monospace,Consolas,monospace;background:#fffffff0;color:#000;border:1px solid #000;border-radius:6px;padding:7px 10px}
-#walkBtn,#helpBtn,#mapBtn,#homeBtn,#centerBtn,#flyBtn,#grabBtn{cursor:pointer}
+#walkBtn,#helpBtn,#mapBtn,#homeBtn,#centerBtn,#flyBtn,#grabBtn,#padBtn,#walkHint,#stateInfo,#spawnInfo{font:12px/1.4 ui-monospace,Consolas,monospace;background:#fffffff0;color:#000;border:1px solid #000;border-radius:6px;padding:7px 10px}
+#walkBtn,#helpBtn,#mapBtn,#homeBtn,#centerBtn,#flyBtn,#grabBtn,#padBtn{cursor:pointer}
 #dock{position:fixed;left:12px;bottom:12px;display:flex;flex-direction:column;align-items:flex-start;gap:8px}
 #bar{display:flex;flex-wrap:wrap;gap:8px;max-width:max(260px,calc(100vw - 430px))}
+body.padOn #bar{max-width:max(200px,calc(50vw - 90px))}   /* v46 : la barre passe à la ligne avant le pavé de flèches */
+@media (min-width:1361px){#bar{max-width:calc(50vw - 300px)!important}}   /* v46 : et avant la ligne d'état, en bas au centre */
 #dock,#hudL,#bar{pointer-events:none}
 #walkHint,#stateInfo,#spawnInfo,#bar button{pointer-events:auto}   /* seuls l'aide, l'état et les boutons reçoivent la souris : l'espace vide entre eux laisse passer les clics et le survol */
 #presence,#nameTag{position:fixed;font:12px/1.4 ui-monospace,Consolas,monospace;background:#fffffff0;color:#000;border:1px solid #000;border-radius:6px;padding:7px 10px}
@@ -79,7 +81,7 @@ canvas{display:block;touch-action:none}
 #nameTag div{font-size:11px}
 #hudL{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
 #walkHint,#stateInfo,#spawnInfo{box-sizing:border-box;max-width:min(440px,45vw);position:relative;border-right:5px double #000}   /* v37 : largeurs par défaut ; le bord droit se tire (voir mkResize), la hauteur suit le contenu */
-#walkHint{max-height:calc(100vh - 230px - var(--spawnH, 0px));overflow:auto}   /* v40 : moins la hauteur de la fenêtre Arrivées, pour que la colonne tienne dans l'écran */
+#walkHint{max-height:calc(100vh - 24px - var(--dockRest, calc(206px + var(--spawnH, 0px))));overflow:auto}   /* v40 : moins la hauteur de la fenêtre Arrivées, pour que la colonne tienne dans l'écran */
 #walkHint,#stateInfo{user-select:text;-webkit-user-select:text;cursor:text}
 #stateInfo{font-size:11px;padding:5px 9px}
 #stateInfo div{margin:0}
@@ -94,6 +96,51 @@ canvas{display:block;touch-action:none}
 #tilesInfo.alone{position:fixed;left:12px;bottom:54px;background:#fffffff0;border:1px solid #000;border-radius:6px;padding:5px 9px}
 #groundWait{position:fixed;left:50%;top:38%;transform:translateX(-50%);z-index:55;max-width:90%;text-align:center;font:14px/1.4 ui-monospace,Consolas,monospace;background:#000;color:#fff;border:2px solid #fff;border-radius:6px;padding:8px 16px}
 #compass{position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:30;pointer-events:none;font:bold 13px/1.3 ui-monospace,Consolas,monospace;background:#fffffff0;color:#000;border:1px solid #000;border-radius:6px;padding:2px 10px}
+/* v46 : commandes à l'écran. Ligne d'état (toujours visible), pavé de flèches 3 x 3, mode tactile (colonne de boutons, menu, gestes) */
+#statusLine{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);z-index:12;pointer-events:none;box-sizing:border-box;max-width:calc(100vw - 24px);font:12px/1.4 ui-monospace,Consolas,monospace;background:#fffffff0;color:#000;border:1px solid #000;border-radius:6px;padding:3px 12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#pad{position:fixed;left:50%;bottom:44px;transform:translateX(-50%);z-index:12;pointer-events:none;display:grid;grid-template-columns:repeat(3,var(--pb,44px));gap:var(--pg,4px)}
+#pad>div{display:contents}
+#pad>div[hidden]{display:none!important}
+#pad button,#pad .gap{width:var(--pb,44px);height:var(--pb,44px)}
+body:not(.touch) #padRun{font-size:10px;letter-spacing:-.3px}
+#pad button{pointer-events:auto;display:grid;place-items:center;padding:0;font:11px/1.1 ui-monospace,Consolas,monospace;background:#fffffff0;color:#000;border:1px solid #000;border-radius:6px;cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+#pad button.held,#pad button[aria-pressed=true]{border-width:3px;font-weight:bold}
+#pad svg{width:55%;height:55%;pointer-events:none}
+@media (max-width:1360px){body:not(.touch) #statusLine{top:40px;bottom:auto}body:not(.touch) #pad{bottom:12px}}
+body.padOn:not(.touch) #lightAsk{bottom:192px}
+body.padOn:not(.touch) #zonePrompt{bottom:220px}
+#tcol{position:fixed;right:12px;bottom:20px;z-index:12;pointer-events:none;display:flex;flex-direction:column;gap:8px}
+#tcol button,#tmenu button{pointer-events:auto;min-width:76px;min-height:48px;font:bold 12px/1.2 ui-monospace,Consolas,monospace;background:#fffffff0;color:#000;border:2px solid #000;border-radius:10px;padding:4px 6px;cursor:pointer;touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+#tcol button[aria-pressed=true],#tcol button[aria-expanded=true]{border-width:4px}
+#tmenu{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:46;display:flex;flex-direction:column;gap:6px;min-width:220px;max-height:calc(100vh - 40px);overflow-y:auto;background:#fff;border:2px solid #000;border-radius:10px;padding:10px}
+#tmenu button{text-align:left;font-weight:normal;border-width:1px;min-height:44px}
+#tmenu button.close{font-weight:bold}
+#tipBox{position:fixed;z-index:60;pointer-events:none;max-width:min(300px,80vw);background:#000;color:#fff;border-radius:6px;padding:5px 9px;font:12px/1.3 ui-monospace,Consolas,monospace;white-space:pre-line}
+#walkHint .winX,#stateInfo .winX,#spawnInfo .winX{display:none;position:absolute;top:4px;right:14px;z-index:1;width:40px;height:40px;padding:0;font:bold 18px/1 ui-monospace,Consolas,monospace;background:#fff;color:#000;border:2px solid #000;border-radius:6px;cursor:pointer}
+#chatTouch{display:flex;gap:6px;justify-content:flex-end;margin-top:6px}
+#chatTouch button{font:bold 13px/1.2 ui-monospace,Consolas,monospace;min-height:44px;padding:4px 12px;background:#fff;color:#000;border:2px solid #000;border-radius:8px;cursor:pointer}
+body.touch #walkHint .winX,body.touch #stateInfo .winX,body.touch #spawnInfo .winX{display:block}
+body.touch .fold{min-width:200px}
+body.touch #presence{max-width:calc(50vw - 50px);box-sizing:border-box}
+body.touch #walkHint .fold,body.touch #stateInfo .fold,body.touch #spawnInfo .fold{min-height:44px;padding-right:56px}
+body.touch #bar{display:none}
+body.touch #dock{top:var(--ttop,140px);bottom:auto}
+body.touch #walkHint,body.touch #stateInfo,body.touch #spawnInfo{max-width:min(440px,55vw)}
+body.touch #walkHint{max-height:max(64px,calc(100vh - var(--ttop, 140px) - 220px - var(--dockRest, var(--spawnH, 0px))))}
+body.touch #statusLine{top:var(--tstat,70px);bottom:auto;white-space:normal;text-align:center;max-width:calc(100vw - 20px)}
+body.touch #pad{left:12px;bottom:20px;transform:none;--pb:56px;--pg:6px}
+body.touch #pad button{border-width:2px;border-radius:10px;font-size:12px}
+body.touch #pad button.held,body.touch #pad button[aria-pressed=true]{border-width:4px}
+body.touch #zonePrompt{bottom:auto;top:var(--ttop,140px)}
+body.touch #lightAsk{bottom:auto;top:var(--ttop,140px)}
+body.touch #chat{top:var(--ttop,140px);bottom:auto;width:min(380px,42vw)}
+body.touch #chatLog:not(.open){max-height:25vh;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end}
+body.touch.chatOpen #chat{left:8px;right:8px;width:auto;top:auto;bottom:8px}
+body.touch.chatOpen #chatLog.open{max-height:35vh}
+body.touch.chatOpen #pad,body.touch.chatOpen #tcol{display:none}
+body.touch #chatInput{font-size:16px}
+@media (orientation:landscape){#tcol{display:grid;grid-template-columns:repeat(2,auto)}}
+@media (orientation:landscape) and (max-height:500px){#tcol{grid-template-columns:repeat(3,auto)}body.touch #pad{--pb:44px;--pg:4px;bottom:12px}#tcol{bottom:12px}#tcol button{min-height:42px}}
 #msg{position:fixed;inset:0;display:grid;place-items:center;font:14px ui-monospace,monospace;color:#123;pointer-events:none}
 </style>
 <script type="importmap">
@@ -111,6 +158,7 @@ __I18N__
 <div id="nameTag" hidden></div>
 <div id="toast" hidden></div>
 <div id="compass" role="status" hidden></div>
+<div id="statusLine" role="status" aria-live="off" hidden><b id="statusMode"></b> <span id="statusRest"></span></div><div id="pad" role="group" hidden></div><div id="tcol" role="group" hidden></div><div id="tmenu" role="menu" hidden></div><div id="tipBox" role="tooltip" hidden></div>
 <div id="zonePrompt" hidden></div>
 <div id="groundWait" role="status" aria-live="polite" hidden data-i18n="page.ground.loading">Chargement du sol…</div>
 <div id="tilesInfo" class="alone" hidden></div>
@@ -119,7 +167,7 @@ __I18N__
 <div id="chat" hidden><div id="chatMentions" hidden><span id="mentCount"></span> <button id="mentGo" type="button" data-i18n="page.chat.mentions.go">Aller au premier</button></div><button id="chatOlder" type="button" hidden data-i18n="page.chat.older">Messages plus anciens</button><div id="chatLog"></div><div id="chatHelp"></div><button id="chatSave" type="button" data-i18n-title="page.chat.save.title" title="Enregistre dans un fichier texte les messages vus depuis ton arrivée" data-i18n="page.chat.save">Enregistrer le chat</button><div id="chatComplete" role="listbox" aria-label="Pseudos" data-i18n-aria="page.chat.names" hidden></div><input id="chatInput" maxlength="200" placeholder="Message : Entrée pour envoyer (reste ouvert), Échap pour fermer" data-i18n-ph="page.chat.placeholder" hidden></div>
 <div id="presence" hidden><span data-i18n="page.presence.label">Pseudo : </span><input id="presenceName" maxlength="24" placeholder="Visiteur" data-i18n-ph="page.visitor"><div id="presenceStatus"></div></div>
 <div id="dock"><div id="hudL"><div id="walkHint" hidden><button type="button" id="helpHead" class="fold" aria-expanded="true">▾ Aide</button><div id="helpBody"></div></div><div id="stateInfo" hidden><button type="button" id="stateHead" class="fold" aria-expanded="true">▾ État</button><div id="stateBody"></div></div><div id="spawnInfo" hidden><button type="button" id="spawnHead" class="fold" aria-expanded="true">▾ Arrivées</button><div id="spawnBody"></div></div></div>
-<div id="bar"><button id="walkBtn" hidden></button><button id="flyBtn" hidden aria-pressed="false" data-i18n="page.btn.fly">Voler / Atterrir</button><button id="grabBtn" hidden data-i18n="page.btn.grab">Capturer la souris</button><button id="homeBtn" hidden data-i18n="page.btn.home">Retour à l'arrivée (R)</button><button id="centerBtn" type="button" hidden data-i18n="page.btn.center" data-i18n-title="page.btn.center.tip">Recentrer la vue</button><button id="helpBtn" hidden></button><button id="mapBtn" hidden data-i18n="page.btn.map">Carte (M)</button></div></div>
+<div id="bar"><button id="walkBtn" hidden></button><button id="flyBtn" hidden aria-pressed="false" data-i18n="page.btn.fly">Voler / Atterrir</button><button id="grabBtn" hidden data-i18n="page.btn.grab">Capturer la souris</button><button id="homeBtn" hidden data-i18n="page.btn.home">Retour à l'arrivée (R)</button><button id="centerBtn" type="button" hidden data-i18n="page.btn.center" data-i18n-title="page.btn.center.tip">Recentrer la vue</button><button id="helpBtn" hidden></button><button id="mapBtn" hidden data-i18n="page.btn.map">Carte (M)</button><button id="padBtn" type="button" hidden></button></div></div>
 <script type="application/json" id="cfg">__CONFIG__</script>
 <script type="application/octet-stream" id="glb">__GLB_B64__</script>
 <script type="module">
@@ -387,11 +435,12 @@ if ((C.map || []).length || C.mapUrl) {
 // réglages visiteur mémorisés dans ce navigateur : couleur de l'avatar (null = tirée au hasard par le serveur), pseudo cité (gras, clignotement),
 // sons (général, volume, citation, arrivée, départ), disposition du clavier. v36 : les anciens réglages du bip (clé « sound ») sont ignorés.
 const VIS = (() => {
-  const d = { color: null, compass: true, histMax: 200, bold: true, blink: true, sounds: true, volume: 50, soundCite: true, soundJoin: true, soundLeave: true, layout: 'auto' };
+  const d = { color: null, compass: true, histMax: 200, bold: true, blink: true, sounds: true, volume: 50, soundCite: true, soundJoin: true, soundLeave: true, layout: 'auto', pad: true, touch: 'auto' };
   try {
     const s = JSON.parse(localStorage.getItem('glb2html_visitor') || '{}');
     if (Number.isInteger(s.color) && s.color >= 0 && s.color <= 0xFFFFFF) d.color = s.color;
-    for (const k of ['compass', 'bold', 'blink', 'sounds', 'soundCite', 'soundJoin', 'soundLeave']) if (typeof s[k] === 'boolean') d[k] = s[k];
+    for (const k of ['compass', 'bold', 'blink', 'sounds', 'soundCite', 'soundJoin', 'soundLeave', 'pad']) if (typeof s[k] === 'boolean') d[k] = s[k];
+    if (['auto', 'on', 'off'].includes(s.touch)) d.touch = s.touch;   // v46 : commandes tactiles (auto = écran tactile détecté)
     if (Number.isFinite(s.histMax)) d.histMax = Math.max(20, Math.min(2000, Math.round(s.histMax)));
     if (Number.isFinite(s.volume)) d.volume = Math.max(0, Math.min(100, Math.round(s.volume)));
     if (['auto', 'azerty', 'qwerty'].includes(s.layout)) d.layout = s.layout;
@@ -400,6 +449,8 @@ const VIS = (() => {
 })();
 let chatTrim = () => {};   // v37 : rempli par le chat (réduit la liste quand le réglage « Messages d'historique affichés » baisse)
 const visSave = () => { try { localStorage.setItem('glb2html_visitor', JSON.stringify(VIS)); } catch (e) {} };
+// v46 : commandes à l'écran (remplies par le bloc promenade) ; Réglages et chat les appellent
+const CTL = { apply() {}, tick() {}, sync() {}, chat: null, touch: false };
 KB.setPref(VIS.layout);
 // sons (Web Audio, sans fichier externe) : le contexte audio démarre à la première action de l'utilisateur sur la page ; au plus un son d'arrivée et un de départ toutes les 2 s
 const SND = (() => {
@@ -553,6 +604,15 @@ if (C.panel !== false) {
     for (const [v, t] of [['auto', tr('common.auto')], ['azerty', 'AZERTY'], ['qwerty', 'QWERTY']]) sel.append(mk('option', { value: v, textContent: t }));
     sel.value = VIS.layout; sel.onchange = () => { VIS.layout = sel.value; visSave(); KB.setPref(VIS.layout); };
     const l = mk('label'); l.append(mk('span', { textContent: tr('page.opt.layout') }), sel); op.append(l);
+    // v46 : flèches à l'écran (aussi : touche K, bouton « Flèches (K) ») et commandes tactiles (Auto : écran tactile détecté)
+    const cbPad = mk('input', { type: 'checkbox', id: 'visPad' }); cbPad.checked = VIS.pad;
+    cbPad.onchange = () => { VIS.pad = cbPad.checked; visSave(); CTL.apply(); };
+    op.append(lab(tr('page.opt.pad'), cbPad));
+    const selT = mk('select', { id: 'visTouch' });
+    for (const [v, t] of [['auto', tr('common.auto')], ['on', tr('page.opt.touch.on')], ['off', tr('page.opt.touch.off')]]) selT.append(mk('option', { value: v, textContent: t }));
+    selT.value = VIS.touch; selT.onchange = () => { VIS.touch = selT.value; visSave(); CTL.apply(); };
+    const lt = mk('label'); lt.append(mk('span', { textContent: tr('page.opt.touch') }), selT); op.append(lt);
+    CTL.sync = () => { cbPad.checked = VIS.pad; selT.value = VIS.touch; };
   }
   {
     // v36 : langue de la page (Auto = première langue du navigateur disponible, sinon l'anglais) ; changer recharge la page
@@ -600,13 +660,13 @@ if (C.walk) {
     grp(tr('page.help.g.mouse'), [tr('page.help.mouse'), tr('page.help.esc'), tr('page.help.grab')]),
     (C.chat && on) ? grp(tr('page.help.g.chat'), [tr('page.help.chat.enter'), tr('page.help.chat.esc'), tr('page.help.chat.arrows')]) : null,
     (hasZones || C.names) ? grp(tr('page.help.g.zones'), [hasZones ? tr('page.help.zone.click') : '', hasZones ? tr('page.help.zone.cone') : '', C.names ? tr('page.help.zone.name') : '']) : null,
-    grp(tr('page.help.g.page'), [tr('page.help.quit'), tr('page.help.h'), tr('page.help.i'), spawnList().length ? tr('page.help.l') : '', tr('page.help.o'), hasMap ? tr('page.help.map.ctrl') : ''])
+    grp(tr('page.help.g.page'), [tr('page.help.quit'), tr('page.help.h'), tr('page.help.i'), spawnList().length ? tr('page.help.l') : '', tr('page.help.o'), hasMap ? tr('page.help.map.ctrl') : '', tr('page.help.k')])
   ].filter(Boolean); };
   const orbitGroups = () => [
     grp(tr('page.help.g.orbit'), [tr('page.help.orbit.drag'), tr('page.help.orbit.wheel'), tr('page.help.orbit.pan'), tr('page.help.orbit.reframe')]),
     grp(tr('page.help.g.walk'), [tr('page.help.enter'), tr('page.help.landing')]),
     (hasZones || C.names) ? grp(tr('page.help.g.zones'), [hasZones ? tr('page.help.zone.click.orbit') : '', hasZones ? tr('page.help.zone.cone') : '', C.names ? tr('page.help.zone.name') : '']) : null,
-    grp(tr('page.help.g.page'), [tr('page.help.h'), tr('page.help.i'), spawnList().length ? tr('page.help.l') : '', tr('page.help.o'), hasMap ? tr('page.help.map') : '', tr('page.help.center')])
+    grp(tr('page.help.g.page'), [tr('page.help.h'), tr('page.help.i'), spawnList().length ? tr('page.help.l') : '', tr('page.help.o'), hasMap ? tr('page.help.map') : '', tr('page.help.center'), tr('page.help.k')])
   ].filter(Boolean);
   const feat = tr('page.feat', C.panel !== false ? tr('page.feat.panel.yes') : tr('common.no'), on ? tr('page.feat.presence.yes', C.room) : tr('page.feat.presence.no'), on && C.chat ? tr('common.yes') : tr('common.no'),
     on && C.spectate ? tr('common.yes') : (on ? tr('page.feat.spectate.no') : tr('common.no')), C.names ? tr('common.yes') : tr('page.feat.names.no'), C.version || '?');
@@ -638,6 +698,8 @@ if (C.walk) {
       const lines = [...sbody.children].filter(e => !e.hidden && e.textContent).map(e => e.textContent);
       if (C.presenceUrl) { const ps = document.getElementById('presenceStatus'); lines.push(tr('core.diag.line', tr('core.diag.presence'), String(C.presenceUrl).split(':')[0] + ' · ' + (ps && ps.textContent ? ps.textContent : '?')));
         const pr = viewer.getPresence(); if (pr.state !== 'off' || pr.opened || pr.closeCode !== null) lines.push(tr('core.diag.line', tr('core.diag.presence.conn'), tr('core.diag.presence.conn.v', pr.opened ? tr('common.yes') : tr('common.no'), pr.closeCode === null ? '\u2014' : pr.closeCode, pr.closeReason || '\u2014'))); }
+      { const co = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);   // v46 : commandes tactiles
+        lines.push(tr('core.diag.line', tr('page.diag.touch'), tr('page.diag.touch.v', CTL.touch ? tr('common.yes') : tr('common.no'), VIS.touch, co ? tr('common.yes') : tr('common.no'), navigator.maxTouchPoints || 0))); }
       const t = diagText(viewer, { cfgVersion: C.version, lines });
       dout.value = t;
       toast((await copyText(t, dout)) ? tr('core.diag.copied') : tr('page.toast.copyfail'));
@@ -654,6 +716,7 @@ if (C.walk) {
     lm.hidden = lmo.hidden = !w;
     if (w) { setTxt(lm, tr('page.state.mode', (viewer.flying ? tr('page.state.mode.fly') : tr('page.state.mode.walk')) + (viewer.running ? tr('page.state.run') : ''))); setTxt(lmo, tr('page.state.mouse', MOUSE[viewer.mouseState])); }
     fb.setAttribute('aria-pressed', viewer.flying ? 'true' : 'false');
+    CTL.tick();
   };
   viewer.onView = viewTick; viewer.onFly = () => { viewTick(); refreshNear(); }; viewer.onMouse = viewTick;
   // v37 : largeur réglable (bord droit à tirer) pour l'aide et pour les informations : 260 px au moins, 70 % de la fenêtre au plus, mémorisée ; la hauteur suit le contenu.
@@ -741,7 +804,9 @@ if (C.walk) {
     return {
       apply, get open() { return open; }, get folded() { return folded; },
       cycle() { if (!open) { open = true; folded = false; } else if (folded) folded = false; else open = false; save(); apply(); },
-      reload() { open = lsGet(openKey) !== '0'; folded = lsGet(foldKey) === '1'; apply(); }   // v41 : après chargement d'une disposition
+      reload() { open = lsGet(openKey) !== '0'; folded = lsGet(foldKey) === '1'; apply(); },   // v41 : après chargement d'une disposition
+      hide() { open = false; save(); apply(); },   // v46 : bouton ✕ (écran tactile)
+      foldTmp() { if (open && !folded) { folded = true; apply(); } }   // v46 : réduite à l'ouverture sur écran tactile, sans changer le réglage retenu
     };
   };
   const helpP = mkPanel(wh, hhead, hbody, tr('page.help.title'), 'glb2html_help', 'glb2html_helpFold'), stateP = mkPanel(sb, shead, sbody, tr('page.info.title'), 'glb2html_state', 'glb2html_stateFold');
@@ -939,7 +1004,203 @@ if (C.walk) {
   });
   viewer.onCones = on2 => toast(on2 ? tr('page.cones.on') : tr('page.cones.off'));
   viewer.onLanding = () => toast(tr('page.landing.chosen'));
-  viewer.onWalk = on2 => { document.getElementById('centerBtn').hidden = on2; fb.hidden = !(on2 && fly); gb.hidden = !on2; wb.hidden = on2; applyHelp(on2); posTick(); { const mbn = document.getElementById('mapBtn'); if (mbn) mbn.textContent = on2 ? tr('page.btn.map.ctrl') : tr('page.btn.map'); } document.getElementById('nameTag').hidden = true; };
+  viewer.onWalk = on2 => { document.getElementById('centerBtn').hidden = on2; fb.hidden = !(on2 && fly); gb.hidden = !on2; wb.hidden = on2; applyHelp(on2); posTick(); { const mbn = document.getElementById('mapBtn'); if (mbn) mbn.textContent = on2 ? tr('page.btn.map.ctrl') : tr('page.btn.map'); } document.getElementById('nameTag').hidden = true; CTL.apply(); };
+  // v46 : commandes à l'écran. Ligne d'état (mode, allure, vue, position) toujours visible ; pavé de flèches 3 x 3 (promenade : avancer, reculer,
+  // tourner, courir, et en vol monter, descendre ; vue globale : déplacer, tourner, rapprocher, éloigner, recentrer au centre), escamotable
+  // (K, bouton « Flèches (K) », Réglages) ; appui maintenu = touche tenue. Mode tactile (écran tactile détecté, ou réglage) : colonne de boutons,
+  // menu, fenêtres réduites à l'ouverture avec un ✕, glisser du doigt pour regarder (core.js), bulle par appui long.
+  {
+    const body = document.body, stl = document.getElementById('statusLine'), stM = document.getElementById('statusMode'), stR = document.getElementById('statusRest');
+    const pad = document.getElementById('pad'), tcol = document.getElementById('tcol'), tmenu = document.getElementById('tmenu'), tip = document.getElementById('tipBox');
+    const pb = document.getElementById('padBtn'), cbn = document.getElementById('centerBtn'), mbn = document.getElementById('mapBtn');
+    const coarse = window.matchMedia ? matchMedia('(pointer: coarse)') : null;
+    const isTouch = () => VIS.touch === 'on' || (VIS.touch === 'auto' && !!(coarse && coarse.matches));
+    const P = { up: 'M12 19V5M5 12l7-7 7 7', down: 'M12 5v14M5 12l7 7 7-7', left: 'M19 12H5M12 5l-7 7 7 7', right: 'M5 12h14M12 5l7 7-7 7',
+      tl: 'M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5', tr: 'M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5', plus: 'M12 5v14M5 12h14', minus: 'M5 12h14',
+      center: 'M12 4a8 8 0 1 0 0 16a8 8 0 1 0 0-16M12 10a2 2 0 1 0 0 4a2 2 0 1 0 0-4', fup: 'M6 15l6-6 6 6M6 21l6-6 6 6', fdown: 'M6 3l6 6 6-6M6 9l6 6 6-6' };
+    const mkB = (id, cls) => { const b = document.createElement('button'); b.type = 'button'; if (id) b.id = id; if (cls) b.className = cls; b.onmousedown = e => e.preventDefault(); return b; };
+    const ico = (b, d) => { b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + d + '"></path></svg>'; };
+    const gap = () => { const d = document.createElement('span'); d.className = 'gap'; return d; };
+    const setTip = (b, t) => { b.title = t; b.setAttribute('aria-label', t.split('\n')[0]); };
+    // bulle par appui long (écran tactile) : 0,5 s ; sur un bouton à action unique, l'appui long montre la bulle sans déclencher l'action
+    let tipT = 0;
+    const showTip = b => {
+      const t = b.title; if (!t) return;
+      tip.textContent = t; tip.hidden = false;
+      const r = b.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight;
+      tip.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.left + r.width / 2 - w / 2)) + 'px';
+      tip.style.top = (r.top - h - 8 >= 8 ? r.top - h - 8 : Math.min(innerHeight - h - 8, r.bottom + 8)) + 'px';
+      clearTimeout(tipT); tipT = setTimeout(() => { tip.hidden = true; }, 2500);
+    };
+    const longPress = (b, keepAction) => {
+      let tm = 0;
+      b.addEventListener('pointerdown', e => { if (e.pointerType !== 'touch') return; clearTimeout(tm); tm = setTimeout(() => { showTip(b); if (!keepAction) b.dataset.lp = '1'; }, 500); });
+      for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) b.addEventListener(ev, () => clearTimeout(tm));
+      b.addEventListener('click', e => { if (b.dataset.lp) { delete b.dataset.lp; e.preventDefault(); e.stopImmediatePropagation(); } }, true);
+      b.addEventListener('contextmenu', e => e.preventDefault());
+    };
+    // appui maintenu : start() à l'appui, stop() au relâcher (le pointeur est capturé : glisser hors du bouton ne relâche pas)
+    const hold = (b, start, stop) => {
+      let on = false;
+      const end = () => { if (!on) return; on = false; b.classList.remove('held'); stop(); };
+      b.addEventListener('pointerdown', e => { if (e.button !== 0) return; e.preventDefault(); if (on) return; on = true; b.classList.add('held'); try { b.setPointerCapture(e.pointerId); } catch (x) {} start(); });
+      for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) b.addEventListener(ev, end);
+      longPress(b, true);
+      return end;
+    };
+    const ends = [];
+    const holdKey = (b, code) => { ends.push(hold(b, () => viewer.padKey(code, true), () => viewer.padKey(code, false))); };
+    const holdRep = (b, fn) => {   // vue globale : répétition tant que le bouton est tenu (pas proportionnel au temps écoulé)
+      let tm = 0, t = 0;
+      ends.push(hold(b, () => { t = performance.now(); fn(0.05); tm = setInterval(() => { const n = performance.now(); fn((n - t) / 1000); t = n; }, 30); }, () => { clearInterval(tm); }));
+    };
+    const holdTxt = '\n' + tr('page.pad.hold');
+    // pavé de la promenade
+    const pw = document.createElement('div'), pg = document.createElement('div'); pw.id = 'padWalk'; pg.id = 'padGlobal';
+    const K = () => KB.keys();
+    const bSl = mkB('padSideL'), bSr = mkB('padSideR');   // pas de côté (Q / D en AZERTY, A / D en QWERTY : codes physiques KeyA, KeyD)
+    const bUp = mkB('padUp'), bDn = mkB('padDown'), bL = mkB('padLeft'), bR = mkB('padRight'), bRun = mkB('padRun'), bFu = mkB('padFlyUp'), bFd = mkB('padFlyDown');
+    ico(bUp, P.up); ico(bDn, P.down); ico(bL, P.tl); ico(bR, P.tr); ico(bFu, P.fup); ico(bFd, P.fdown); ico(bSl, P.left); ico(bSr, P.right);
+    holdKey(bSl, 'KeyA'); holdKey(bSr, 'KeyD');
+    bRun.textContent = tr('page.pad.run'); bRun.setAttribute('aria-pressed', 'false');
+    holdKey(bUp, 'ArrowUp'); holdKey(bDn, 'ArrowDown'); holdKey(bL, 'ArrowLeft'); holdKey(bR, 'ArrowRight'); holdKey(bFu, 'PageUp'); holdKey(bFd, 'PageDown');
+    bRun.onclick = () => { viewer.runLatch = !viewer.runLatch; tick(); }; longPress(bRun);
+    // rangé comme le pavé de la vue globale : tourner aux coins du haut, pas de côté au milieu, monter et descendre (en vol) aux coins du bas
+    pw.append(bL, bUp, bR, bSl, bRun, bSr, bFu, bDn, bFd);
+    // pavé de la vue globale
+    const gTl = mkB('padTurnL'), gF = mkB('padFwd'), gTr = mkB('padTurnR'), gL = mkB('padPanL'), gC = mkB('padCenter'), gR = mkB('padPanR'), gO = mkB('padOut'), gB = mkB('padBack'), gI = mkB('padIn');
+    ico(gTl, P.tl); ico(gF, P.up); ico(gTr, P.tr); ico(gL, P.left); ico(gC, P.center); ico(gR, P.right); ico(gO, P.minus); ico(gB, P.down); ico(gI, P.plus);
+    holdRep(gF, dt => viewer.globalMove(1, 0, dt)); holdRep(gB, dt => viewer.globalMove(-1, 0, dt));
+    holdRep(gL, dt => viewer.globalMove(0, -1, dt)); holdRep(gR, dt => viewer.globalMove(0, 1, dt));
+    holdRep(gTl, dt => viewer.globalTurn(1, dt)); holdRep(gTr, dt => viewer.globalTurn(-1, dt));
+    holdRep(gO, dt => viewer.globalZoom(1, dt)); holdRep(gI, dt => viewer.globalZoom(-1, dt));
+    gC.onclick = () => cbn.click(); longPress(gC);
+    pg.append(gTl, gF, gTr, gL, gC, gR, gO, gB, gI);
+    pad.setAttribute('aria-label', tr('page.pad.label')); pad.append(pw, pg);
+    const padTips = () => {
+      const k = K();
+      setTip(bUp, tr('page.pad.fwd', k.fwd) + holdTxt); setTip(bDn, tr('page.pad.back', k.back) + holdTxt);
+      setTip(bL, tr('page.pad.left') + holdTxt); setTip(bR, tr('page.pad.right') + holdTxt);
+      setTip(bSl, tr('page.pad.side.l', k.left) + holdTxt); setTip(bSr, tr('page.pad.side.r', k.right) + holdTxt);
+      setTip(bRun, tr('page.pad.run.tip')); setTip(bFu, tr('page.pad.up') + holdTxt); setTip(bFd, tr('page.pad.down') + holdTxt);
+      setTip(gF, tr('page.pad.g.fwd') + holdTxt); setTip(gB, tr('page.pad.g.back') + holdTxt); setTip(gL, tr('page.pad.g.left') + holdTxt); setTip(gR, tr('page.pad.g.right') + holdTxt);
+      setTip(gTl, tr('page.pad.g.tl') + holdTxt); setTip(gTr, tr('page.pad.g.tr') + holdTxt); setTip(gO, tr('page.pad.g.out') + holdTxt); setTip(gI, tr('page.pad.g.in') + holdTxt);
+      setTip(gC, tr('page.btn.center') + '\n' + tr('page.btn.center.tip'));
+    };
+    padTips(); KB.listeners.push(padTips);
+    // bulles des boutons de la barre
+    wb.title = tr('page.btn.walk.tip'); fb.title = tr('page.btn.fly.tip'); gb.title = tr('page.btn.grab.tip'); hm.title = tr('page.btn.home.tip'); hb.title = tr('page.btn.help.tip');
+    mbn.title = tr('page.btn.map.tip'); cbn.title = tr('page.btn.center.tip'); pb.title = tr('page.btn.pad.tip');
+    const togglePad = () => { VIS.pad = !VIS.pad; visSave(); CTL.sync(); apply(); };
+    pb.onmousedown = e => e.preventDefault(); pb.onclick = togglePad;
+    addEventListener('keydown', e => { const n = e.target && e.target.tagName; if (e.code === 'KeyK' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && n !== 'INPUT' && n !== 'TEXTAREA' && n !== 'SELECT') togglePad(); });
+    // colonne de boutons (mode tactile)
+    const tWalk = mkB('tWalk'), tJump = mkB('tJump'), tFly = mkB('tFly'), tView = mkB('tView'), tChat = mkB('tChat'), tPad = mkB('tPad'), tMenu = mkB('tMenu');
+    tWalk.onclick = () => viewer.toggleWalk();
+    tJump.onclick = () => viewer.padJump(); tJump.textContent = tr('page.t.jump'); setTip(tJump, tr('page.t.jump.tip'));
+    tFly.onclick = () => { viewer.toggleFly(); viewTick(); }; setTip(tFly, tr('page.btn.fly.tip'));
+    tView.onclick = () => { viewer.cycleView(); viewTick(); }; tView.textContent = tr('page.t.view'); setTip(tView, tr('page.t.view.tip'));
+    tChat.onclick = () => { if (CTL.chat) CTL.chat.open(); tick(); }; setTip(tChat, tr('page.t.chat.tip'));
+    tPad.onclick = togglePad; tPad.textContent = tr('page.t.pad'); setTip(tPad, tr('page.btn.pad.tip'));
+    tMenu.textContent = tr('page.t.menu'); setTip(tMenu, tr('page.t.menu.tip')); tMenu.setAttribute('aria-expanded', 'false');
+    tcol.setAttribute('aria-label', tr('page.t.label'));
+    for (const b of [tWalk, tJump, tFly, tView, tChat, tPad, tMenu]) { longPress(b); tcol.append(b); }
+    // menu (mode tactile) : fenêtres, carte, retour, recentrer (quand les flèches sont cachées), plein écran (si le navigateur le permet)
+    const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement || null;
+    const fsOK = !!(document.fullscreenEnabled || document.webkitFullscreenEnabled);
+    const fsToggle = () => {
+      try {
+        if (fsEl()) { const x = document.exitFullscreen || document.webkitExitFullscreen; if (x) x.call(document); return; }
+        const r = document.documentElement, f = r.requestFullscreen || r.webkitRequestFullscreen;
+        const q = f ? f.call(r) : null; if (q && q.catch) q.catch(() => toast(tr('page.menu.full.fail')));
+      } catch (e) { toast(tr('page.menu.full.fail')); }
+    };
+    const menuItems = [
+      ['mHelp', () => tr('page.menu.help'), () => true, () => toggleHelp()],
+      ['mInfo', () => tr('page.menu.info'), () => true, () => { stateP.cycle(); }],
+      ['mSpawn', () => tr('page.menu.spawn'), () => spawnCount > 0, () => { spawnP.cycle(); applySpawn(); }],
+      ['mMap', () => tr('page.menu.map'), () => !mbn.hidden, () => mbn.click()],
+      ['mHome', () => tr('page.menu.home'), () => viewer.walking && !hm.hidden, () => hm.click()],
+      ['mCenter', () => tr('page.menu.center'), () => !viewer.walking && !VIS.pad, () => cbn.click()],
+      ['mFull', () => (fsEl() ? tr('page.menu.fullexit') : tr('page.menu.full')), () => fsOK, fsToggle]
+    ].map(([id, label, when, act]) => { const b = mkB(id); b.setAttribute('role', 'menuitem'); b.onclick = () => { closeMenu(); act(); }; tmenu.append(b); return { b, label, when }; });
+    const mClose = mkB('mClose', 'close'); mClose.textContent = tr('page.menu.close'); mClose.onclick = () => closeMenu(); tmenu.append(mClose);
+    const closeMenu = () => { tmenu.hidden = true; tMenu.setAttribute('aria-expanded', 'false'); };
+    const openMenu = () => { for (const m of menuItems) { m.b.hidden = !m.when(); m.b.textContent = m.label(); } tmenu.hidden = false; tMenu.setAttribute('aria-expanded', 'true'); };
+    tMenu.onclick = () => (tmenu.hidden ? openMenu() : closeMenu());
+    addEventListener('keydown', e => { if (e.key === 'Escape' && !tmenu.hidden) closeMenu(); });
+    // fenêtres H, I, L : bouton ✕ (visible en mode tactile seulement)
+    for (const [wrap, pn] of [[wh, helpP], [sb, stateP], [spi, spawnP]]) {
+      const x = mkB('', 'winX'); x.textContent = '\u2715'; setTip(x, tr('page.win.close'));
+      x.onclick = () => { pn.hide(); applySpawn(); applyHelp(viewer.walking); };
+      wrap.append(x);
+    }
+    // ligne d'état : mode en gras (mot écrit, jamais une couleur), puis allure, vue et position ; en vue globale, la cible
+    const statusTick = () => {
+      const w = viewer.walking;
+      if (w) {
+        const g = viewer.getWalk().pos;
+        setTxt(stM, tr('page.status.walk'));
+        setTxt(stR, '\u00b7 ' + (viewer.flying ? tr('page.state.mode.fly') : tr('page.state.mode.walk')) + (viewer.running ? tr('page.state.run') : '') + ' \u00b7 ' + viewer.viewName + ' \u00b7 ' + tr('page.status.pos', f1(g[0]), f1(g[1]), f1(g[2])));
+      } else {
+        const t = viewer.controls.target;
+        setTxt(stM, tr('page.status.global')); setTxt(stR, '\u00b7 ' + tr('page.status.target', f1(t.x), f1(t.y), f1(t.z)));
+      }
+    };
+    let touchOn = null, folded0 = false, hint = false;
+    const topsEls = ['presence', 'compass', 'optsBtn'].map(i => document.getElementById(i)).filter(Boolean), rootSt = document.documentElement.style;
+    const setVar = (k, v) => { const t = Math.round(v) + 'px'; if (rootSt.getPropertyValue(k) !== t) rootSt.setProperty(k, t); };
+    const touchTops = () => {   // mode tactile : la ligne d'état passe sous le bloc du pseudo, la boussole et Réglages ; fenêtres, chat et invites dessous
+      let y = 12; for (const el of topsEls) if (!el.hidden && el.getClientRects().length) y = Math.max(y, el.getBoundingClientRect().bottom);   // éléments fixes : offsetParent est toujours null
+      setVar('--tstat', y + 6); setVar('--ttop', stl.getBoundingClientRect().bottom + 8);
+    };
+    const tick = () => {
+      statusTick();
+      const w = viewer.walking, fl = w && viewer.flying, t = !!touchOn;
+      bFu.style.visibility = bFd.style.visibility = fl ? '' : 'hidden';
+      bRun.setAttribute('aria-pressed', viewer.runLatch ? 'true' : 'false');
+      if (t) {
+        const tw = w ? tr('page.t.exit') : tr('page.t.walk');
+        if (tWalk.textContent !== tw) { tWalk.textContent = tw; setTip(tWalk, w ? tr('page.t.exit.tip') : tr('page.btn.walk.tip')); }
+        tJump.hidden = !w || fl || viewer.view === 'free';
+        tFly.hidden = !(w && fly); setTxt(tFly, fl ? tr('page.t.land') : tr('page.t.fly')); tFly.setAttribute('aria-pressed', fl ? 'true' : 'false');
+        tView.hidden = !w;
+        const ch = CTL.chat; tChat.hidden = !(w && ch);
+        if (ch) setTxt(tChat, ch.unread ? tr('page.t.chat.n', ch.unread) : tr('page.t.chat'));
+        tPad.setAttribute('aria-pressed', VIS.pad ? 'true' : 'false');
+        body.classList.toggle('chatOpen', !!(w && ch && ch.isOpen));
+        if (w && !hint) { hint = true; toast(tr('page.touch.look')); }
+        touchTops();
+      } else body.classList.remove('chatOpen');
+    };
+    const apply = () => {
+      const t = isTouch();
+      if (t !== touchOn) {
+        touchOn = t; CTL.touch = t; body.classList.toggle('touch', t);
+        if (t && !folded0) { folded0 = true; for (const pn of [helpP, stateP, spawnP]) pn.foldTmp(); applySpawn(); applyHelp(viewer.walking); }
+        if (!t) closeMenu();
+      }
+      const w = viewer.walking, show = !!VIS.pad;
+      if (!show) for (const f of ends) f();
+      body.classList.toggle('padOn', show);
+      pad.hidden = !show; pw.hidden = !w; pg.hidden = w; stl.hidden = false;
+      pb.hidden = t; pb.textContent = show ? tr('page.btn.pad') : tr('page.btn.pad.off'); pb.setAttribute('aria-pressed', show ? 'true' : 'false');
+      cbn.hidden = w || show;   // vue globale : le centre du pavé recentre ; le bouton ne revient que si les flèches sont cachées
+      tcol.hidden = !t;
+      tick();
+    };
+    // la colonne de gauche tient dans l'écran : la hauteur de l'aide est limitée par la hauteur MESURÉE du reste de la colonne (Informations,
+    // Arrivées, barre de boutons, qui passe sur plus de rangées quand les flèches sont affichées) ; aide hors de la colonne : ancienne règle
+    const dockEl = document.getElementById('dock'), hudLc = document.getElementById('hudL');
+    const dockRest = () => {
+      if (wh.hidden || wh.parentElement !== hudLc) { if (rootSt.getPropertyValue('--dockRest')) rootSt.removeProperty('--dockRest'); return; }
+      setVar('--dockRest', Math.max(0, dockEl.getBoundingClientRect().height - wh.getBoundingClientRect().height));
+    };
+    if (window.ResizeObserver) { const ro = new ResizeObserver(dockRest); ro.observe(dockEl); ro.observe(wh); }
+    CTL.apply = apply; CTL.tick = () => { tick(); dockRest(); };
+    if (coarse) { const f = () => apply(); if (coarse.addEventListener) coarse.addEventListener('change', f); else if (coarse.addListener) coarse.addListener(f); }
+    apply();
+  }
 }
 if (viewer.tiled) {
   // mode tuiles : ligne d'information (texte seul) dans le panneau d'aide s'il existe, indicateur « Chargement du sol… », message d'échec
@@ -994,6 +1255,8 @@ if (C.presenceUrl && C.walk && C.chat) {
     if (ments.length) document.getElementById('mentCount').textContent = trn('page.chat.mentions', ments.length);
     const st = viewer.getPresence().state;
     help.hidden = open;
+    { const ct = document.getElementById('chatTouch'); if (ct) ct.hidden = !open || !document.body.classList.contains('touch'); }   // v46 : Envoyer et Fermer (écran tactile)
+    CTL.tick();
     help.textContent = st === 'online' ? tr('page.chat.help') : ({ connecting: tr('page.chat.connecting'), error: tr('page.chat.error'), full: tr('page.chat.full') }[st] || tr('page.chat.offline'));
   };
   const olderBtn = document.getElementById('chatOlder'), mentBar = document.getElementById('chatMentions');
@@ -1108,6 +1371,17 @@ if (C.presenceUrl && C.walk && C.chat) {
   inp.addEventListener('keyup', e => { if (e.key.startsWith('Arrow')) viewer.holdKey(e.code, false); });
   inp.addEventListener('input', () => { cDismissed = null; cUpdate(); });
   inp.addEventListener('blur', () => { ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].forEach(c => viewer.holdKey(c, false)); });
+  // v46 : écran tactile : le bouton « Chat » de la colonne ouvre la saisie (le clavier du téléphone s'ouvre) ; « Envoyer » et « Fermer » sous le champ
+  {
+    const ct = document.createElement('div'), bs = document.createElement('button'), bc = document.createElement('button');
+    ct.id = 'chatTouch'; ct.hidden = true; bs.type = bc.type = 'button'; bs.id = 'chatSend'; bc.id = 'chatClose';
+    bs.textContent = tr('page.chat.send'); bs.title = tr('page.chat.send.tip'); bc.textContent = tr('page.chat.close'); bc.title = tr('page.chat.close.tip');
+    bs.onmousedown = e => e.preventDefault();   // le champ garde le focus (le clavier du téléphone reste ouvert)
+    bs.onclick = () => { const v = inp.value.trim(); if (v) viewer.sendChat(v); inp.value = ''; cHide(); cDismissed = null; inp.focus(); };
+    bc.onclick = () => close();
+    ct.append(bs, bc); chat.append(ct);
+  }
+  CTL.chat = { open: () => !!(openChat && openChat()), get isOpen() { return !inp.hidden; }, get unread() { return unread; } };
   setInterval(render, 1000);
 }
 if (C.presenceUrl && C.walk) {
