@@ -1048,6 +1048,7 @@
  "viewer.map.here": "  ● cette région",
  "viewer.map.imp": "Importer regions.json",
  "viewer.map.imported": "Carte importée : {0} région(s)",
+ "viewer.map.badfile": "fichier de carte attendu : liste de régions, ou objet {\"regions\": [...]}",
  "viewer.map.intro": "Chaque page peut afficher la carte des régions (touche M). Remplis la fiche de CETTE région, capture sa vignette, ajoute-la, puis exporte regions.json pour les autres pages.",
  "viewer.map.loadfirst": "Charge d'abord un modèle",
  "viewer.map.name": "Nom de cette région",

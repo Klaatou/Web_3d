@@ -164,6 +164,9 @@ const viewer = createViewer(document.getElementById('view'), DEF, makeLoader());
 const cfg = viewer.cfg;
 cfg.zones = viewer.setZones([], { editor: true });
 try { const m = JSON.parse(localStorage.getItem('glb2html_map_v1') || '[]'); if (Array.isArray(m)) cfg.map = m; } catch (e) {}
+// v50 : en-tête du regions.json importé (showUrl...), rendu tel quel à l'export ; null = le fichier était une liste simple
+let mapHead = null;
+try { const h = JSON.parse(localStorage.getItem('glb2html_maphead_v1') || 'null'); if (h && typeof h === 'object' && !Array.isArray(h)) mapHead = h; } catch (e) {}
 window.__viewer = viewer;
 let glbBytes = null, baseName = 'scene';
 const $ = id => document.getElementById(id);
@@ -745,8 +748,13 @@ $('fZones').onchange = async e => {
 $('fMap').onchange = async e => {
   const f = e.target.files[0]; e.target.value = ''; if (!f) return;
   try {
-    const list = JSON.parse(await f.text()); if (!Array.isArray(list)) throw new Error(tr('viewer.arrayexpected'));
-    cfg.map = list.filter(r => r && typeof r.name === 'string' && typeof r.url === 'string').map(r => ({ id: String(r.id || ''), name: r.name, url: r.url, x: parseInt(r.x, 10) || 0, y: parseInt(r.y, 10) || 0, spawn: String(r.spawn || ''), room: String(r.room || ''), thumb: typeof r.thumb === 'string' ? r.thumb : '' }));
+    // v50 : liste simple ou objet {"showUrl": ..., "regions": [...]} (v47) ; l'en-tête et tous les champs des fiches (presence...) sont gardés
+    const raw = JSON.parse(await f.text());
+    const list = Array.isArray(raw) ? raw : (raw && typeof raw === 'object' && Array.isArray(raw.regions) ? raw.regions : null);
+    if (!list) throw new Error(tr('viewer.map.badfile'));
+    mapHead = Array.isArray(raw) ? null : Object.fromEntries(Object.entries(raw).filter(([k]) => k !== 'regions'));
+    try { localStorage.setItem('glb2html_maphead_v1', JSON.stringify(mapHead)); } catch (e) {}
+    cfg.map = list.filter(r => r && typeof r.name === 'string' && typeof r.url === 'string').map(r => Object.assign({}, r, { id: String(r.id || ''), name: r.name, url: r.url, x: parseInt(r.x, 10) || 0, y: parseInt(r.y, 10) || 0, spawn: String(r.spawn || ''), room: String(r.room || ''), thumb: typeof r.thumb === 'string' ? r.thumb : '' }));
     renderMapUi(); setStatus(tr('viewer.map.imported', cfg.map.length));
   } catch (err) { setStatus(tr('viewer.import.fail', err.message)); }
 };
@@ -971,7 +979,10 @@ function renderMapUi() {
   add.onclick = () => {
     if (!thisReg.name || !thisReg.url) return setStatus(tr('viewer.map.needs'));
     const room = cfg.room || baseName, e = { id: room.toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '') || 'region', name: thisReg.name, url: thisReg.url, x: thisReg.x, y: thisReg.y, spawn: thisReg.spawn, room, thumb: thisReg.thumb };
-    const list = (cfg.map || []).filter(r => r.room !== room); list.push(e); cfg.map = list; setStatus(tr('viewer.map.count', list.length)); renderMapUi();
+    // v50 : comme --register, la fiche du même salon est mise à jour sur place ; un champ vide n'efface pas l'ancien, les autres champs (presence...) restent
+    const list = (cfg.map || []).slice(), i = list.findIndex(r => r.room === room);
+    if (i < 0) list.push(e); else list[i] = Object.assign({}, list[i], Object.fromEntries(Object.entries(e).filter(([, v]) => v !== '' && v != null)));
+    cfg.map = list; setStatus(tr('viewer.map.count', list.length)); renderMapUi();
   };
   const svt = mk('button', { textContent: tr('viewer.map.savethumb') });
   svt.onclick = async () => { if (!thisReg.thumb) return setStatus(tr('viewer.map.capfirst')); const b = await (await fetch(thisReg.thumb)).blob(); download(baseName + '.vignette.jpg', b); setStatus(tr('viewer.map.thumbsaved', baseName)); };
@@ -992,7 +1003,7 @@ function renderMapUi() {
   });
   if (!(cfg.map || []).length) host.append(mk('small', { textContent: tr('viewer.map.none') }));
   const b2 = mk('div', { className: 'btns' });
-  const exp = mk('button', { textContent: tr('viewer.map.exp') }); exp.onclick = () => download('regions.json', new Blob([JSON.stringify(cfg.map || [], null, 1)], { type: 'application/json' }));
+  const exp = mk('button', { textContent: tr('viewer.map.exp') }); exp.onclick = () => { const m = cfg.map || []; download('regions.json', new Blob([JSON.stringify(mapHead ? Object.assign({}, mapHead, { regions: m }) : m, null, 1)], { type: 'application/json' })); };
   const imp = mk('button', { textContent: tr('viewer.map.imp') }); imp.onclick = () => $('fMap').click();
   b2.append(exp, imp); host.append(b2);
 }

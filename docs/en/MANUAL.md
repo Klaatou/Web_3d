@@ -1369,7 +1369,7 @@ A **list** of regions (plain form), or, since v47, an **object** with a header: 
 | `showUrl` | boolean | `false` | shows the address under each tile of the map page; the checkbox on the map page, once ticked or unticked by the visitor, wins (choice kept by their browser) | — |
 | `regions` | list | — | the region cards (next table) | — |
 
-`--register` keeps the header and the shape of the file (list or object). The viewer's "regions.json" export writes a plain list: put the header back by hand.
+`--register` and `--scan-sites` keep the header and the shape of the file (list or object). So does the viewer since v50: "Import regions.json" accepts both shapes, "Export regions.json" gives back the imported shape with its header, and every card keeps all its fields (§ 33).
 
 | Field | Type | Default | What it does | Option |
 |---|---|---|---|---|
@@ -1763,3 +1763,26 @@ Recommended: a **square image of 320 x 320 pixels**, medium-quality JPEG (a few 
 ### 32.5 Not tested
 
 Windows, JJ's paths, the PowerShell lines themselves.
+
+## 33. What is new in v50 (25/10/2026): the world map in the viewer
+
+### 33.1 Importing and exporting `regions.json`
+
+"World map" section of the viewer:
+
+- **Import regions.json** accepts the plain list as well as the object with a header (`{"showUrl": ..., "regions": [...]}`, § 27.6). Before v50, the object shape was refused ("array expected"): it is the one `--scan-sites` writes when it creates the file.
+- **Export regions.json** gives back the imported shape: an object with the same header, or a list. The header is remembered by the browser, like the list of regions. Without an import, the export is a plain list.
+- Every card keeps all its fields, including `presence` (presence server of an external region), which used to be lost on import.
+- A file without regions is refused with the message "map file expected: list of regions, or object {"regions": [...]}".
+
+### 33.2 Adding or updating this region
+
+The **Add / update this region in the map** button updates the card of the same room in place, like `--register`: its position in the list no longer changes, an empty field (a thumbnail not captured, for instance) does not erase the old one, and the fields the viewer does not show (`presence`...) stay. The name, address, place and arrival come from the viewer's fields.
+
+### 33.3 v50 tests
+
+`tests/v50.py` (Chromium): import of the object shape, identical export (header and unknown fields kept), viewer reload, in-place "Add", plain list exported as a list, refused file (French and English).
+
+### 33.4 Not tested
+
+Edge, Windows.

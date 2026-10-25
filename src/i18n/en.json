@@ -1048,6 +1048,7 @@
  "viewer.map.here": "  ● this region",
  "viewer.map.imp": "Import regions.json",
  "viewer.map.imported": "Map imported: {0} region(s)",
+ "viewer.map.badfile": "map file expected: list of regions, or object {\"regions\": [...]}",
  "viewer.map.intro": "Each page can show the map of the regions (M key). Fill in the card of THIS region, capture its thumbnail, add it, then export regions.json for the other pages.",
  "viewer.map.loadfirst": "Load a model first",
  "viewer.map.name": "Name of this region",

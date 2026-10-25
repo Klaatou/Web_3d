@@ -1369,7 +1369,7 @@ Une **liste** de régions (forme simple), ou, depuis la v47, un **objet** avec u
 | `showUrl` | booléen | `false` | affiche l'adresse sous chaque tuile de la page carte ; la case de la page carte, une fois cochée ou décochée par le visiteur, l'emporte (choix retenu par son navigateur) | — |
 | `regions` | liste | — | les fiches de régions (tableau suivant) | — |
 
-`--register` garde l'en-tête et la forme du fichier (liste ou objet). L'export « regions.json » du viewer écrit une liste simple : l'en-tête est à remettre à la main.
+`--register` et `--scan-sites` gardent l'en-tête et la forme du fichier (liste ou objet). Le viewer aussi depuis la v50 : « Importer regions.json » accepte les deux formes, « Exporter regions.json » rend la forme importée avec son en-tête, et chaque fiche garde tous ses champs (§ 33).
 
 | Champ | Type | Défaut | Ce qu'il fait | Option |
 |---|---|---|---|---|
@@ -1764,3 +1764,26 @@ Caractéristiques conseillées : **image carrée de 320 x 320 pixels**, JPEG de 
 ### 32.5 Non testé
 
 Windows, les chemins de JJ, les lignes PowerShell elles-mêmes.
+
+## 33. Nouveautés de la v50 (25/10/2026) : la carte des mondes dans le viewer
+
+### 33.1 Importer et exporter `regions.json`
+
+Section « Carte des mondes » du viewer :
+
+- **Importer regions.json** accepte la liste simple comme l'objet avec en-tête (`{"showUrl": ..., "regions": [...]}`, § 27.6). Avant la v50, la forme objet était refusée (« tableau attendu ») : c'est celle qu'écrit `--scan-sites` quand il crée le fichier.
+- **Exporter regions.json** rend la forme importée : objet avec le même en-tête, ou liste. L'en-tête est retenu par le navigateur, comme la liste des régions. Sans import, l'export est une liste simple.
+- Chaque fiche garde tous ses champs, dont `presence` (serveur de présence d'une région externe), qui était perdu à l'import.
+- Un fichier sans régions est refusé avec le message « fichier de carte attendu : liste de régions, ou objet {"regions": [...]} ».
+
+### 33.2 Ajouter ou mettre à jour cette région
+
+Le bouton **Ajouter / mettre à jour cette région dans la carte** met à jour sur place la fiche du même salon, comme `--register` : sa place dans la liste ne change plus, un champ vide (la vignette non capturée, par exemple) n'efface pas l'ancien, et les champs que le viewer n'affiche pas (`presence`...) restent. Le nom, l'adresse, la place et l'arrivée viennent des champs du viewer.
+
+### 33.3 Tests de la v50
+
+`tests/v50.py` (Chromium) : import de la forme objet, export identique (en-tête et champs inconnus gardés), rechargement du viewer, « Ajouter » sur place, liste simple exportée en liste, fichier refusé (français et anglais).
+
+### 33.4 Non testé
+
+Edge, Windows.

@@ -67,6 +67,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 
 ## Useful commands
 | 25/10/2026 |  | v49 | v49: `glb2html.py --scan-sites` updates `regions.json` from the sites folder (cards, `NAME.jpg` thumbnails, nothing deleted), manual § 32; `tests/v49.py` |
+| 25/10/2026 |  | v50 | v50: viewer, world map: import and export of `regions.json` with a header, card fields kept, in-place "Add" (manual § 33); `tests/v50.py` |
 
 - See the history: `git log --oneline --decorate`
 - See what changed in a version: `git show v16 --stat`

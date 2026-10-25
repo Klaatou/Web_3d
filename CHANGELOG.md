@@ -2,6 +2,11 @@
 
 Les dates sont au format jj/mm/aaaa.
 
+## v50 (25/10/2026)
+### 25/10/2026 : carte des mondes du viewer (import, export, ajout)
+- **Viewer, section Carte des mondes** : « Importer regions.json » accepte la forme objet avec en-tête (v47, celle que crée `--scan-sites`) au lieu de répondre « tableau attendu » ; « Exporter regions.json » rend la forme importée avec son en-tête (retenu par le navigateur) ; chaque fiche garde tous ses champs (`presence` était perdu) ; « Ajouter / mettre à jour cette région » met à jour sur place la fiche du même salon sans effacer un champ par un vide, comme `--register`. `tests/v50.py`, manuel § 27.6 et § 33.
+- **Viewer, World map section**: "Import regions.json" accepts the object shape with a header (v47, the one `--scan-sites` creates) instead of answering "array expected"; "Export regions.json" gives back the imported shape with its header (remembered by the browser); every card keeps all its fields (`presence` was lost); "Add / update this region" updates the card of the same room in place without erasing a field with an empty one, like `--register`. `tests/v50.py`, manual § 27.6 and § 33.
+
 ## v49 (25/10/2026)
 ### 25/10/2026 : documents de la v49
 - **Manuel § 32** (FR et EN) : `--scan-sites`, vignettes (320 x 320 conseillé), `REPRISE.md` (créateurs sur le serveur de JJ : conception notée, à faire).
