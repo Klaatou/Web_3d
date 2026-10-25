@@ -3,9 +3,6 @@
 Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la v52)
-### 25/10/2026 : dépôt sans initiales
-- **Documents, exemples, tests** : les initiales de l'auteur sont remplacées par son nom public sur GitHub (« Klaatou ») dans `REPRISE.md`, `CHANGELOG.md`, `CLAUDE.md`, le manuel, la vue d'ensemble, les exemples de `docs/samples/` et quelques commentaires de tests. Les motifs de date (`AAAAMMJJ`) restent. L'historique git garde les anciens textes.
-- **Documents, samples, tests**: the author's initials are replaced by his public GitHub name ("Klaatou") in `REPRISE.md`, `CHANGELOG.md`, `CLAUDE.md`, the manual, the overview, the `docs/samples/` examples and a few test comments. Date patterns (`AAAAMMJJ`) stay. The git history keeps the old texts.
 
 ### 25/10/2026 : vue d'ensemble en une page
 - **Documents** : `docs/fr/VUE_ENSEMBLE.md` et `docs/en/OVERVIEW.md` : ce qui marche, ce qui a été essayé ou non, ce qui reste à faire (essai depuis la VM, note pour les créateurs, souris, démo publique, numérotation, release), où lire quoi. Aucun changement de code ni de numéro de version.
