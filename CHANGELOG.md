@@ -2,6 +2,11 @@
 
 Les dates sont au format jj/mm/aaaa.
 
+## Non publié (après la v52)
+### 25/10/2026 : vue d'ensemble en une page
+- **Documents** : `docs/fr/VUE_ENSEMBLE.md` et `docs/en/OVERVIEW.md` : ce qui marche, ce qui a été essayé ou non, ce qui reste à faire (essai depuis la VM, note pour les créateurs, souris, démo publique, numérotation, release), où lire quoi. Aucun changement de code ni de numéro de version.
+- **Documents**: `docs/fr/VUE_ENSEMBLE.md` and `docs/en/OVERVIEW.md`: what works, what has been tried or not, what is left to do (test from the VM, note for creators, mouse, public demo, numbering, release), where to read what. No code change, no version number change.
+
 ## v52 (25/10/2026)
 ### 25/10/2026 : région en tuiles renommée, vue d'ensemble reliée aux tuiles
 - **Page et viewer (`core.js`, `loadOverview`)** : le fichier `X.overview.glb` porte dans chaque nœud le chemin de sa tuile tel qu'il était au découpage (`extras.tile`, « X.tiles/T_3_0_0.glb »). Après un renommage des dossiers et des chemins de l'index (le binaire restant intact), plus aucune cellule n'était reliée à sa tuile : la vue d'ensemble restait visible sous les tuiles détaillées et les surfaces se recouvraient (moirures, plaques sombres, surtout sur le terrain et les rochers). La cellule est maintenant retrouvée par le nom du fichier de la tuile quand le chemin complet ne correspond pas (nom unique dans une région ; sinon la cellule reste visible, jamais de trou). On peut renommer une région à la main sans régénérer la vue d'ensemble. `tests/v52_renom.py`.
