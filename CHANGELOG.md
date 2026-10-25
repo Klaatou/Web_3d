@@ -2,6 +2,15 @@
 
 Les dates sont au format jj/mm/aaaa.
 
+## v47 (25/10/2026)
+### 25/10/2026 : documents de la v47
+- **Manuel § 30** (FR et EN) : tuile de la carte, adresse facultative, `regions.json` avec en-tête (§ 27.6), deux façons de faire la carte, serveur de présence ; procédures § 4 ; exemple `docs/samples/regions.sample.json` en forme objet ; `REPRISE.md`.
+- **Manual § 30** (FR and EN): map tile, optional address, `regions.json` with a header (§ 27.6), two ways to make the map, presence server; procedures § 4; sample `docs/samples/regions.sample.json` in object form; `REPRISE.md`.
+
+### 25/10/2026 : carte des mondes (visiteurs, adresse facultative, carte.html universelle)
+- **Tuile** (page carte et carte ouverte par M) : « N visiteurs · N en promenade » ou « aucun visiteur » à la place de « visiter → », bulle au survol. **Adresse** masquée par défaut : `showUrl` dans l'en-tête de `regions.json` et case « Afficher les adresses » (choix du visiteur mémorisé, prioritaire). **`regions.json`** en liste ou en objet `{"showUrl", "regions"}` ; `--register` garde l'en-tête et la forme (il effaçait un fichier qui n'était pas une liste). **Serveur** : `rooms` reçoit `visitors` par salon. **`build.py`** écrit `dist/carte.html`, la page de carte universelle (lit `regions.json` à côté d'elle ; messages distincts si le fichier manque ou si elle est ouverte depuis le disque). `tests/v47.py` ; `tests/v36_lang.py`, `tests/modulaire.py`, `tests/samples.py` adaptés.
+- **Map tile** (map page and map opened with M): "N visitors · N walking" or "no visitors" instead of "visit →", tooltip on hover. **Address** hidden by default: `showUrl` in the `regions.json` header and an "Show addresses" checkbox (visitor's choice kept, takes priority). **`regions.json`** as a list or an object `{"showUrl", "regions"}`; `--register` keeps the header and the shape (it used to wipe a file that was not a list). **Server**: `rooms` gets `visitors` per room. **`build.py`** writes `dist/carte.html`, the universal map page (reads the `regions.json` next to it; distinct messages when the file is missing or when it is opened from disk). `tests/v47.py`; `tests/v36_lang.py`, `tests/modulaire.py`, `tests/samples.py` adapted.
+
 ## v46 (25/10/2026)
 ### 25/10/2026 : documents de la v46
 - **Manuel § 29** (FR et EN) : ligne d'état, flèches (promenade et vue globale, déplacer et rapprocher), K, écran tactile, bulles, compteur du chat (remise à zéro à l'ouverture, comportement voulu), diagnostic, une coquille pour tout un site (`--update -o … --shared-shell CHEMIN_DE_LA_COQUILLE`). Tableau des touches (§ 20.2), procédures §§ 4 et 10, historique.

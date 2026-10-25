@@ -109,6 +109,8 @@ Two steps, with `--update` (relative paths are then relative to the page's folde
    `python glb2html.py --update -o "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.html" --shared-shell --map-page "P:\_OpenSim\SL&OS\Web_3d\tuiles\carte.html"`
 3. Open `carte.html` through the web server. A "My nickname" field at the top adds `name=` to the region links.
 
+Without regenerating (v47): copy `dist\carte.html` once next to `index.html`; it re-reads `regions.json` at every opening (manual § 30.4).
+
 With a single region, the map brings nothing: it is used to link several regions together.
 
 ## 8. What to restart when

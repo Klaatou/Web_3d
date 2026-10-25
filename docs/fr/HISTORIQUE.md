@@ -64,6 +64,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 25/10/2026 |  | v46 | v46 : commandes à l'écran (manuel § 29) : ligne d'état toujours visible, flèches 3 x 3 en promenade (avancer, reculer, tourner, pas de côté, Courir, monter et descendre en vol) et en vue globale (déplacer, tourner, rapprocher, recentrer), touche K et bouton « Flèches (K) » ; mode tactile (colonne de boutons, menu, plein écran, fenêtres réduites avec ✕, glisser du doigt pour regarder, chat tactile, écran à l'horizontale, bulle par appui long) ; bulles sur tous les boutons ; une coquille pour tout un site (§ 29.8) ; `tests/v46.py` |
 
 ## Commandes utiles
+| 25/10/2026 |  | v47 | v47 : carte des mondes (manuel § 30) : tuile « N visiteurs · N en promenade » et bulle au survol, adresse facultative (`showUrl`, case « Afficher les adresses »), `regions.json` avec en-tête conservé par `--register`, `visitors` dans la réponse du serveur de présence, `dist/carte.html` universelle ; `tests/v47.py` |
 
 - Voir l'historique : `git log --oneline --decorate`
 - Voir ce qui a changé dans une version : `git show v16 --stat`

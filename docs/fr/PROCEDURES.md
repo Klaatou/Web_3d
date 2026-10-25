@@ -109,6 +109,8 @@ Deux étapes, avec `--update` (les chemins relatifs y sont relatifs au dossier d
    `python glb2html.py --update -o "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.html" --shared-shell --map-page "P:\_OpenSim\SL&OS\Web_3d\tuiles\carte.html"`
 3. Ouvre `carte.html` par le serveur web. Un champ « Mon pseudo » en haut ajoute `name=` aux liens des régions.
 
+Sans régénérer (v47) : copie une fois `dist\carte.html` à côté de `index.html` ; elle relit `regions.json` à chaque ouverture (manuel § 30.4).
+
 Avec une seule région, la carte n'apporte rien : elle sert à relier plusieurs régions entre elles.
 
 ## 8. Quand relancer quoi

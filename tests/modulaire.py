@@ -419,7 +419,7 @@ async def test_coquille_commune(br):
         await pa.wait_for_timeout(400)
         cartes = await pa.evaluate("[...document.querySelectorAll('#mapGrid > *')].map(e => e.innerText)")
         ici = [c for c in cartes if "vous êtes ici" in c]
-        rapport(len(cartes) == 2 and len(ici) == 1 and "Boîte" in ici[0] and any("visiter" in c and "Marche" in c for c in cartes), "carte : « vous êtes ici » sur la région courante seulement (même coquille, autre ?region=)", cartes)
+        rapport(len(cartes) == 2 and len(ici) == 1 and "Boîte" in ici[0] and any("Marche" in c for c in cartes), "carte : « vous êtes ici » sur la région courante seulement (même coquille, autre ?region=)", cartes)
         await pa.locator("#mapGrid > *", has_text="Marche").click()
         try:
             await pa.wait_for_function("location.search === '?region=walk3'", timeout=8000)

@@ -949,6 +949,8 @@ Tous les boutons « copier » (lien personnel, lien de ma position, point visé,
 3. **L'ouvrir par le serveur web**, pas depuis le disque : le dossier contenant `carte.html`, `index.html`, `lib/` et les régions est servi en http(s) (`python -m http.server` pour un essai, ou `presence_server.py --serve-dir` quand il hébergera les pages), puis ouvre `http://ADRESSE/carte.html`. Chaque lien de la carte ouvre la région à son point d'arrivée, avec le pseudo saisi en haut de la page.
 4. **Les pages des régions** affichent la carte avec la touche **M** (**Ctrl+M** en promenade) : `--map-url http://ADRESSE/regions.json` (plusieurs adresses séparées par des virgules, fusionnées) les fait relire `regions.json` à chaque ouverture, sans régénérer les pages.
 
+**Depuis la v47** : la page carte peut aussi être une `carte.html` universelle, sans région dedans, qui relit `regions.json` à chaque ouverture (§ 30.4).
+
 ### 20.9 Caméra libre et molette
 
 - **Troisième personne** : la **molette** règle la distance de la caméra (de **1 à 30 m**, **4 m par défaut**, mémorisée dans le navigateur, clé `glb2html_tpsDist`), avec le recul devant un mur et la protection du sol déjà en place. **Fin** remet la caméra derrière l'avatar à la distance par défaut.
@@ -1358,7 +1360,14 @@ Dans une région en tuiles, une zone liée retrouve son objet grâce à l'étiqu
 
 ### 27.6 `regions.json` : la carte des mondes
 
-Une **liste** de régions (une liste simple, sans rien autour). Une fiche sans `name` ou sans `url` est ignorée.
+Une **liste** de régions (forme simple), ou, depuis la v47, un **objet** avec un en-tête : `{"showUrl": false, "regions": [ ... ]}`. Les deux formes sont lues partout (carte `carte.html`, carte autonome, carte ouverte par M, coquille). Une fiche sans `name` ou sans `url` est ignorée.
+
+| Champ de l'en-tête | Type | Défaut | Ce qu'il fait | Option |
+|---|---|---|---|---|
+| `showUrl` | booléen | `false` | affiche l'adresse sous chaque tuile de la page carte ; la case de la page carte, une fois cochée ou décochée par le visiteur, l'emporte (choix retenu par son navigateur) | — |
+| `regions` | liste | — | les fiches de régions (tableau suivant) | — |
+
+`--register` garde l'en-tête et la forme du fichier (liste ou objet). L'export « regions.json » du viewer écrit une liste simple : l'en-tête est à remettre à la main.
 
 | Champ | Type | Défaut | Ce qu'il fait | Option |
 |---|---|---|---|---|
@@ -1619,3 +1628,37 @@ Avec `--shared-shell` sans chemin, la coquille et un dossier `lib` sont écrits 
 ### 29.10 Non testé
 
 Un vrai téléphone, une vraie tablette, iPhone et iPad, Edge, Windows, le plein écran réel.
+
+
+## 30. Nouveautés de la v47 (25/10/2026)
+
+### 30.1 La tuile de la carte
+
+Sous le nom, une ligne de texte (jamais de couleur seule) : « 3 visiteurs · 1 en promenade », ou « aucun visiteur ». Les visiteurs comptent les promeneurs **et** les spectateurs (pages ouvertes en vue globale) ; les promeneurs ne sont indiqués que s'il y en a. La ligne n'apparaît que si la fiche a un salon (`room`) et un serveur de présence (`presence`, ou celui de la page). Le mot « visiter → » a disparu : une **bulle** au survol dit ce que fait le clic (« Cliquer pour entrer dans la région (arrivée : default) »). La région où l'on se trouve garde « ● vous êtes ici ». Au doigt, il n'y a pas de survol, donc pas de bulle. Même affichage sur la page carte et dans la carte ouverte par M.
+
+### 30.2 Adresse facultative
+
+L'adresse sous chaque tuile est **masquée par défaut**. Elle s'affiche si `showUrl` vaut `true` dans l'en-tête de `regions.json` (§ 27.6), ou si le visiteur coche la case « Afficher les adresses » en haut de la page carte (à côté du pseudo). Le choix du visiteur est retenu par son navigateur et l'emporte sur le fichier. Une adresse invalide garde son message « (adresse invalide) ».
+
+### 30.3 `regions.json` avec en-tête
+
+Deux formes, la liste simple et l'objet `{"showUrl": ..., "regions": [...]}` (§ 27.6). `--register` lit et réécrit le fichier en gardant l'en-tête et la forme. Un ancien `glb2html.py` efface une liste qui n'en est pas une : ne pas l'utiliser sur un fichier avec en-tête.
+
+### 30.4 Deux façons de faire la carte
+
+- **Mode autonome** : `--map-page` écrit une page avec la liste des régions dedans. Elle s'ouvre depuis le disque et se régénère quand la liste change (sauf avec `--map-url`, qui la fait relire `regions.json`). Le `showUrl` de l'en-tête y est repris.
+- **Mode hébergé** : `python build.py` écrit `dist\carte.html`, une page identique pour tous les sites, **sans région dedans**. Elle lit `regions.json` à côté d'elle à chaque ouverture, comme `index.html` lit les `NOM.config.json`. On la copie une seule fois à côté de `index.html` : `Copy-Item "P:\site\web_3d\dist\carte.html" "P:\site\carte.html"`. Plus rien à régénérer quand `regions.json` change. Elle demande un serveur web : ouverte depuis le disque, elle le dit ; sans `regions.json`, elle dit « Impossible de lire regions.json ».
+
+Les deux modes cohabitent.
+
+### 30.5 Serveur de présence
+
+La réponse à une demande `rooms` ajoute `visitors` (promeneurs et spectateurs, par salon) à `rooms` (promeneurs) et `spectators` (total). Avec un ancien serveur, la carte n'affiche que les promeneurs : relancer le `presence_server.py` de `dist\` après `python build.py`.
+
+### 30.6 Tests de la v47
+
+`tests/v47.py` (Chromium, vrai serveur de présence) : `visitors` par salon, `carte.html` universelle, liste simple et en-tête, case à cocher (départ, choix retenu, priorité), anglais, `--register` qui garde l'en-tête, ancien serveur, `regions.json` absent, ouverture depuis le disque, carte ouverte par M.
+
+### 30.7 Non testé
+
+Un vrai téléphone (pas de bulle au doigt), Edge, Windows, les lignes PowerShell elles-mêmes.

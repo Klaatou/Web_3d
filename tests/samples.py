@@ -65,7 +65,7 @@ rapport(sorted({z["type"] for z in zones}) == sorted(G["ZONE_TYPES"]), "zones : 
 rapport(any(z["mesh"] for z in zones) and any(z["showName"] for z in zones) and any(z["confirm"] for z in zones), "zones : liée à un objet, nom affiché, confirmation")
 rapport(G["clean_zones"](zones, "perso") == zones, "ancien profil « perso » : compris comme private")
 regions = lire("regions.sample.json")
-rapport(G["clean_map"](regions) == regions, "regions : déjà propres (rien à corriger)")
+rapport(isinstance(regions, dict) and regions.get("showUrl") is False and G["clean_map"](regions) == regions["regions"], "regions : en-tête showUrl et fiches déjà propres (rien à corriger)")
 S = lire("region.reglages.sample.json")
 d = G["settings_defaults"](S)
 rapport(d.get("sea_y") == 18.5 and d.get("profile") == "private" and d.get("target") == (392.0, 68.0, -373.0) and d.get("zone_marker") == "dot"

@@ -208,6 +208,13 @@ def fix_presence_url(u):
     return fixed
 
 
+def map_regions(data):
+    """Contenu d'un fichier de carte (v47) : liste simple, ou objet {"showUrl": ..., "regions": [...]} ; toujours la liste des régions."""
+    if isinstance(data, dict):
+        data = data.get("regions")
+    return data if isinstance(data, list) else []
+
+
 def clean_map(entries):
     """Valide les régions de la carte des mondes (adresses http/https ou relatives uniquement, vignettes d'image uniquement)."""
     def ival(v, lo=-1000000, hi=1000000):
@@ -219,7 +226,7 @@ def clean_map(entries):
         u = str(u or "").strip()[:600]
         return u if u and (re.match(r"^https?://", u, re.I) or not re.match(r"^[a-z][a-z0-9+.\-]*:", u, re.I)) else ""
     out, seen = [], set()
-    for i, r in enumerate(entries if isinstance(entries, list) else []):
+    for i, r in enumerate(map_regions(entries)):
         if not isinstance(r, dict):
             continue
         name = str(r.get("name") or "").strip()[:60]
@@ -271,13 +278,16 @@ a.tile:hover{background:#eee}
 footer{font-size:11px;opacity:.7}
 #who{margin:8px 0}
 #who input{font:inherit;width:200px;border:2px solid #000;border-radius:6px;padding:4px 6px}
+#who label.chk{display:inline-block;margin-left:12px}
+#who label.chk input{width:auto}
+.tile span{font-size:12px}
 </style>
 </head>
 <body><script>
 __I18N__
 </script><main>
 <h1 __TITLE_ATTR__>__TITLE__</h1>
-<div id="who"><label><span data-i18n="map.pseudo">Mon pseudo : </span><input id="pseudo" maxlength="24" placeholder="Visiteur" data-i18n-ph="map.visitor" autocomplete="nickname"></label> <small data-i18n="map.pseudo.note">mémorisé dans ce navigateur ; transmis aux régions que tu visites</small></div>
+<div id="who"><label><span data-i18n="map.pseudo">Mon pseudo : </span><input id="pseudo" maxlength="24" placeholder="Visiteur" data-i18n-ph="map.visitor" autocomplete="nickname"></label> <small data-i18n="map.pseudo.note">mémorisé dans ce navigateur ; transmis aux régions que tu visites</small> <label class="chk"><input type="checkbox" id="showurl"> <span data-i18n="map.showurl">Afficher les adresses</span></label></div>
 <div id="grid"></div>
 <footer id="foot">glb2html __VERSION__</footer>
 </main>
@@ -288,13 +298,19 @@ __I18N__
   let MAP = C.map || [];
   applyI18n(); document.getElementById('foot').textContent = tr('map.footer', '__VERSION__');
   if (document.querySelector('h1[data-i18n]')) document.title = tr('map.title');
-  const grid = document.getElementById('grid'), counts = {}; let known = false;
+  const grid = document.getElementById('grid'), counts = {}, vis = {}, answered = {}, hasVis = {}; let loadErr = '';
   // v34 : pseudo mémorisé (même clé que les régions) ; les liens des cartes reçoivent #name=PSEUDO
   const pin = document.getElementById('pseudo');
   const pseudo = () => pin.value.replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 24);
   try { pin.value = localStorage.getItem('glb2html_name') || ''; } catch (e) {}
   pin.addEventListener('input', () => { try { localStorage.setItem('glb2html_name', pseudo()); } catch (e) {} draw(); });
   const srvOf = r => (r.presence || C.presenceUrl || '');
+  // v47 : adresses des cartes masquées par défaut ; showUrl de l'en-tête de regions.json, puis la case (choix mémorisé dans ce navigateur) l'emporte
+  const urlOn = () => { let v = null; try { v = localStorage.getItem('glb2html_map_showurl'); } catch (e) {} return v === null ? !!C.showUrl : v === '1'; };
+  const su = document.getElementById('showurl'); su.checked = urlOn();
+  su.addEventListener('change', () => { try { localStorage.setItem('glb2html_map_showurl', su.checked ? '1' : '0'); } catch (e) {} draw(); });
+  const regionsOf = v => Array.isArray(v) ? v : (v && Array.isArray(v.regions) ? v.regions : null);
+  const emptyText = () => loadErr || (C.mapUrl && !/^https?:$/.test(location.protocol) ? tr('map.needserver') : tr('map.empty'));
   const okUrl = u => { try { const x = new URL(u, location.href); return (x.protocol === 'http:' || x.protocol === 'https:' || (location.protocol === 'file:' && x.protocol === 'file:')) ? x : null; } catch (e) { return null; } };
   const safeThumb = t => typeof t === 'string' && (/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+$/.test(t) || (!/^[a-z][a-z0-9+.-]*:/i.test(t) || /^https?:/i.test(t)));
   const remap = vals => { const u = [...new Set(vals)].sort((a, b) => a - b), m = new Map(); let pos = 0; u.forEach((v, i) => { if (i) pos += Math.min(v - u[i - 1], 2); m.set(v, pos); }); return m; };
@@ -307,24 +323,29 @@ __I18N__
     grid.style.gridTemplateColumns = placed ? 'repeat(' + cols + ', 170px)' : 'repeat(auto-fill, 170px)';
     for (const r of list) {
       const u = okUrl(r.url); if (u) u.hash = 'spawn=' + encodeURIComponent(r.spawn || 'default') + (pseudo() ? '&name=' + encodeURIComponent(pseudo()) : '');
-      const t = document.createElement(u ? 'a' : 'div'); t.className = 'tile';
+      const t = document.createElement(u ? 'a' : 'div'); t.className = 'tile'; t.title = u ? tr('map.tip', r.spawn || 'default') : tr('map.badurl');
       if (u) { t.href = u.href; t.rel = 'noopener'; }
       if (placed) { t.style.gridColumn = String(mx.get(r.x | 0) + 1); t.style.gridRow = String(rows - my.get(r.y | 0)); }
       if (r.thumb && safeThumb(r.thumb)) { const im = document.createElement('img'); im.src = r.thumb; im.alt = ''; im.referrerPolicy = 'no-referrer'; t.append(im); } else { const ph = document.createElement('div'); ph.className = 'ph'; t.append(ph); }
       const b = document.createElement('b'); b.textContent = r.name; t.append(b);
-      const n = counts[srvOf(r) + '|' + (r.room || '')];
-      const s = document.createElement('span'); s.textContent = tr('map.visit') + (known && r.room && srvOf(r) ? ' · ' + tr('map.walking', n || 0) : ''); t.append(s);
-      const l = document.createElement('small'); l.textContent = u ? u.href : tr('map.badurl'); t.append(l);
+      const srv = srvOf(r), k = srv + '|' + (r.room || '');
+      if (answered[srv] && r.room) {   // v47 : visiteurs (promeneurs et spectateurs) et promeneurs, en texte ; un ancien serveur ne donne que les promeneurs
+        const w = counts[k] || 0, v = hasVis[srv] ? Math.max(vis[k] || 0, w) : -1;
+        const s = document.createElement('span');
+        s.textContent = v < 0 ? trn('map.walking', w) : (v ? trn('map.visitors', v) + (w ? ' · ' + trn('map.walking', w) : '') : tr('map.novisitor'));
+        t.append(s);
+      }
+      if (!u || urlOn()) { const l = document.createElement('small'); l.textContent = u ? u.href : tr('map.badurl'); t.append(l); }
       grid.append(t);
     }
-    if (!list.length) grid.textContent = tr('map.empty');
+    if (!list.length) grid.textContent = emptyText();
   };
   const queryServer = srv => {
     try {
       const ws = new WebSocket(srv), to = setTimeout(() => { try { ws.close(); } catch (e) {} }, 4000);
       ws.onopen = () => ws.send(JSON.stringify({ t: 'rooms' }));
       ws.onmessage = ev => {
-        try { const m = JSON.parse(ev.data); if (m.t === 'rooms') { for (const k of Object.keys(counts)) if (k.startsWith(srv + '|')) delete counts[k]; for (const [room, n] of Object.entries(m.rooms || {})) counts[srv + '|' + room] = n; known = true; draw(); } } catch (e) {}
+        try { const m = JSON.parse(ev.data); if (m.t === 'rooms') { for (const o of [counts, vis]) for (const k of Object.keys(o)) if (k.startsWith(srv + '|')) delete o[k]; for (const [room, n] of Object.entries(m.rooms || {})) counts[srv + '|' + room] = n; hasVis[srv] = !!(m.visitors && typeof m.visitors === 'object'); if (hasVis[srv]) for (const [room, n] of Object.entries(m.visitors)) vis[srv + '|' + room] = n; answered[srv] = true; draw(); } } catch (e) {}
         try { ws.close(); } catch (e) {}
       };
       ws.onclose = () => clearTimeout(to); ws.onerror = () => {};
@@ -335,13 +356,18 @@ __I18N__
   if (C.mapUrl && /^https?:$/.test(location.protocol)) {
     const urls = String(C.mapUrl).split(',').map(s => s.trim()).filter(Boolean);
     Promise.allSettled(urls.map(u => fetch(new URL(u, location.href).href, { cache: 'no-store' }).then(r => r.ok ? r.json() : Promise.reject(new Error('http ' + r.status))))).then(res => {
-      const merged = [], seen = new Set();
-      for (const x of res) if (x.status === 'fulfilled' && Array.isArray(x.value)) for (const r of x.value) {
+      const merged = [], seen = new Set(); let hdr = null, got = false;
+      for (const x of res) { const arr = x.status === 'fulfilled' ? regionsOf(x.value) : null; if (!arr) continue; got = true; if (hdr === null && typeof x.value.showUrl === 'boolean') hdr = x.value.showUrl;
+       for (const r of arr) {
         if (!r || typeof r.name !== 'string' || typeof r.url !== 'string') continue;
         const e = { name: r.name.slice(0, 60), url: r.url.slice(0, 600), x: Number(r.x) | 0, y: Number(r.y) | 0, spawn: String(r.spawn || '').slice(0, 40), room: String(r.room || '').slice(0, 64), presence: /^wss?:\/\//i.test(String(r.presence || '')) ? String(r.presence).slice(0, 300) : '', thumb: safeThumb(r.thumb) ? String(r.thumb).slice(0, 200000) : '' };
         const k = e.url + '|' + e.room; if (!seen.has(k)) { seen.add(k); merged.push(e); }
+       }
       }
-      if (merged.length) { MAP = merged; draw(); fetchCounts(); }
+      if (hdr !== null) C.showUrl = hdr;
+      su.checked = urlOn();
+      if (merged.length) { MAP = merged; loadErr = ''; } else if (!got) loadErr = tr('map.nofile', urls.join(', '));
+      draw(); if (merged.length) fetchCounts();
     });
   }
 })();
@@ -389,13 +415,14 @@ def thumb_data_url(arg):
 
 def register_region(path, entry):
     """Ajoute ou met à jour (par salon) une région dans le fichier de carte ; les champs non fournis gardent leur valeur."""
-    data = []
+    raw = []
     if path.is_file():
         try:
-            data = json.loads(path.read_text(encoding="utf-8"))
+            raw = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, ValueError) as e:
             sys.exit(_tr("py.glb2html.erreur_0_illisible_1", path, e))
-    data = [r for r in data if isinstance(r, dict)] if isinstance(data, list) else []
+    head = {k: v for k, v in raw.items() if k != "regions"} if isinstance(raw, dict) else None   # v47 : l'en-tête (showUrl...) est gardé
+    data = [r for r in map_regions(raw) if isinstance(r, dict)]
     i = next((k for k, r in enumerate(data) if (r.get("room") and r.get("room") == entry["room"]) or r.get("id") == entry["id"]), None)
     if i is None:
         data.append({"id": entry["id"], "name": entry["name"], "url": entry["url"], "x": 0, "y": 0, "spawn": "", "room": entry["room"], "thumb": ""})
@@ -403,15 +430,26 @@ def register_region(path, entry):
     for k, v in entry.items():
         if v is not None and v != "":
             data[i][k] = v
+    out = dict(head, regions=data) if head is not None else data
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
-    return data
+    path.write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
+    return out
+
+
+def map_page_html(cfg, title):
+    return (MAP_PAGE_TEMPLATE.replace("__TITLE_ATTR__", "" if title else 'data-i18n="map.title"').replace("__TITLE__", html.escape(title or "Carte des mondes")).replace("__VERSION__", VERSION)
+            .replace("__CONFIG__", json.dumps(cfg, ensure_ascii=False).replace("</", "<\\/")))
+
+
+def build_map_shell():
+    """v47 : la page de carte universelle (dist/carte.html) : même texte, octet pour octet, pour tous les sites ; aucune région dedans, elle lit
+    regions.json (à côté d'elle) à chaque ouverture. Titre traduit par la page elle-même ; demande un serveur web (http)."""
+    return map_page_html({"map": [], "mapUrl": "regions.json", "presenceUrl": "", "showUrl": False}, None)
 
 
 def write_map_page(path, entries, presence_url, map_url, title):
-    cfg = {"map": clean_map(entries), "mapUrl": str(map_url or "")[:1200], "presenceUrl": fix_presence_url(presence_url)}
-    page = (MAP_PAGE_TEMPLATE.replace("__TITLE_ATTR__", "" if title else 'data-i18n="map.title"').replace("__TITLE__", html.escape(title or _tr("py.glb2html.carte_des_mondes"))).replace("__VERSION__", VERSION)
-            .replace("__CONFIG__", json.dumps(cfg, ensure_ascii=False).replace("</", "<\\/")))
+    cfg = {"map": clean_map(entries), "mapUrl": str(map_url or "")[:1200], "presenceUrl": fix_presence_url(presence_url), "showUrl": bool(entries.get("showUrl")) if isinstance(entries, dict) else False}
+    page = map_page_html(cfg, title)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(page, encoding="utf-8")
     print(_tr("py.glb2html.carte_page_carte_0_region_s", len(cfg['map']), path))
@@ -1214,7 +1252,7 @@ def run_maj(a, kw, explicit, S_reg):
         entry = region_entry(a2, S_reg, kw["room"] or out.stem, out.stem, page_name_of(a, out))
         reg = page_path(a.register, out.parent)
         kw["map_entries"] = register_region(reg, entry)
-        print(_tr("py.glb2html.carte_0_ajoutee_ou_mise_a", entry['name'], reg, len(kw['map_entries'])))
+        print(_tr("py.glb2html.carte_0_ajoutee_ou_mise_a", entry['name'], reg, len(map_regions(kw['map_entries']))))
         explicit.add("register")
     elif a.map:
         explicit.add("map")
@@ -1518,7 +1556,7 @@ def main():
             entry = region_entry(a, S_reg, kw["room"] or pathlib.Path(name).stem, pathlib.Path(name).stem, page_name_of(a, out))
             reg = data_path(a.register)
             kw["map_entries"] = register_region(reg, entry)
-            print(_tr("py.glb2html.carte_0_ajoutee_ou_mise_a", entry['name'], reg, len(kw['map_entries'])))
+            print(_tr("py.glb2html.carte_0_ajoutee_ou_mise_a", entry['name'], reg, len(map_regions(kw['map_entries']))))
             where_note(reg, a.output)
         write_config(cfg_out, name, kw)
         print(_tr("py.glb2html.ok_reglages_0_coquille_et_glb", cfg_out, VERSION))
@@ -1558,7 +1596,7 @@ def main():
             entry = region_entry(a, S_reg, a.room or out.stem, out.stem, page_name_of(a, out))
             reg = data_path(a.register)
             kw["map_entries"] = register_region(reg, entry)
-            print(_tr("py.glb2html.carte_0_ajoutee_ou_mise_a", entry['name'], reg, len(kw['map_entries'])))
+            print(_tr("py.glb2html.carte_0_ajoutee_ou_mise_a", entry['name'], reg, len(map_regions(kw['map_entries']))))
             where_note(reg, a.output)
         if a.zones and zf is not None:
             zdest = modular_names(out)[2]
@@ -1588,7 +1626,7 @@ def main():
                 sys.exit(_tr("py.glb2html.erreur_region_xy_attend_deux_nombres"))
         reg = data_path(a.register)
         data = register_region(reg, entry)
-        print(_tr("py.glb2html.carte_0_ajoutee_ou_mise_a", entry['name'], reg, len(data)))
+        print(_tr("py.glb2html.carte_0_ajoutee_ou_mise_a", entry['name'], reg, len(map_regions(data))))
         if a.map_page:
             write_map_page(pathlib.Path(a.map_page), data, a.presence_url, a.map_url, a.title or _tr("py.glb2html.carte_des_mondes"))
         sys.exit(0)
@@ -1629,7 +1667,7 @@ def main():
         entry = region_entry(a, S_reg, a.room or inp.stem, inp.stem, page_name_of(a, out))
         reg = data_path(a.register)
         kw["map_entries"] = register_region(reg, entry)
-        print(_tr("py.glb2html.carte_0_ajoutee_ou_mise_a", entry['name'], reg, len(kw['map_entries'])))
+        print(_tr("py.glb2html.carte_0_ajoutee_ou_mise_a", entry['name'], reg, len(map_regions(kw['map_entries']))))
         where_note(reg, a.output)
     ok = generate(inp, out, a.vendor, modular=a.modular, shell=a.shared_shell, **kw)
     if ok and a.map_page:

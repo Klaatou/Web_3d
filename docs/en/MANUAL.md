@@ -949,6 +949,8 @@ All the "copy" buttons (personal link, link to my position, targeted point, targ
 3. **Open it through the web server**, not from the disk: the folder containing `carte.html`, `index.html`, `lib/` and the regions is served over http(s) (`python -m http.server` for a test, or `presence_server.py --serve-dir` when it hosts the pages), then open `http://ADRESSE/carte.html`. Each link of the map opens the region at its arrival point, with the nickname typed at the top of the page.
 4. **The region pages** show the map with the **M** key (**Ctrl+M** in walk mode): `--map-url http://ADRESSE/regions.json` (several addresses separated by commas, merged) makes them read `regions.json` again at each opening, without generating the pages again.
 
+**Since v47**: the map page can also be a universal `carte.html`, with no region inside, that re-reads `regions.json` at every opening (§ 30.4).
+
 ### 20.9 Free camera and wheel
 
 - **Third person**: the **wheel** sets the camera distance (from **1 to 30 m**, **4 m by default**, remembered in the browser, key `glb2html_tpsDist`), with the pull-back in front of a wall and the ground protection already in place. **End** puts the camera back behind the avatar at the default distance.
@@ -1358,7 +1360,14 @@ In a tiled region, a linked zone finds its object thanks to the `extras.ref` tag
 
 ### 27.6 `regions.json`: the world map
 
-A **list** of regions (a plain list, with nothing around it). A card without `name` or without `url` is ignored.
+A **list** of regions (plain form), or, since v47, an **object** with a header: `{"showUrl": false, "regions": [ ... ]}`. Both forms are read everywhere (`carte.html` map, standalone map, map opened with M, shell). A card without `name` or without `url` is ignored.
+
+| Header field | Type | Default | What it does | Option |
+|---|---|---|---|---|
+| `showUrl` | boolean | `false` | shows the address under each tile of the map page; the checkbox on the map page, once ticked or unticked by the visitor, wins (choice kept by their browser) | — |
+| `regions` | list | — | the region cards (next table) | — |
+
+`--register` keeps the header and the shape of the file (list or object). The viewer's "regions.json" export writes a plain list: put the header back by hand.
 
 | Field | Type | Default | What it does | Option |
 |---|---|---|---|---|
@@ -1619,3 +1628,36 @@ With `--shared-shell` and no path, the shell and a `lib` folder are written **in
 ### 29.10 Not tested
 
 A real phone, a real tablet, iPhone and iPad, Edge, Windows, real full screen.
+
+## 30. New in v47 (25/10/2026)
+
+### 30.1 The map tile
+
+Under the name, one line of text (never colour alone): "3 visitors · 1 walking", or "no visitors". Visitors count the walkers **and** the spectators (pages open in the overview); walkers are only shown when there are some. The line only appears if the card has a room (`room`) and a presence server (`presence`, or the page's own). The word "visit →" is gone: a **tooltip** on hover says what the click does ("Click to enter the region (arrival: default)"). The region you are in keeps "● you are here". A finger has no hover, so no tooltip. Same display on the map page and in the map opened with M.
+
+### 30.2 Optional address
+
+The address under each tile is **hidden by default**. It is shown if `showUrl` is `true` in the header of `regions.json` (§ 27.6), or if the visitor ticks the "Show addresses" checkbox at the top of the map page (next to the nickname). The visitor's choice is kept by their browser and wins over the file. An invalid address keeps its "(invalid address)" message.
+
+### 30.3 `regions.json` with a header
+
+Two forms, the plain list and the object `{"showUrl": ..., "regions": [...]}` (§ 27.6). `--register` reads and rewrites the file keeping the header and the shape. An older `glb2html.py` wipes a file that is not a list: do not use it on a file with a header.
+
+### 30.4 Two ways to make the map
+
+- **Standalone mode**: `--map-page` writes a page with the list of regions inside. It opens from disk and is regenerated when the list changes (except with `--map-url`, which makes it re-read `regions.json`). The header's `showUrl` is taken over.
+- **Hosted mode**: `python build.py` writes `dist\carte.html`, one page identical for every site, **with no region inside**. It reads the `regions.json` next to it at every opening, like `index.html` reads the `NOM.config.json` files. Copy it once next to `index.html`: `Copy-Item "P:\site\web_3d\dist\carte.html" "P:\site\carte.html"`. Nothing to regenerate when `regions.json` changes. It needs a web server: opened from disk, it says so; without `regions.json`, it says "Cannot read regions.json".
+
+The two modes live side by side.
+
+### 30.5 Presence server
+
+The reply to a `rooms` request adds `visitors` (walkers and spectators, per room) to `rooms` (walkers) and `spectators` (total). With an older server, the map only shows the walkers: restart the `presence_server.py` from `dist\` after `python build.py`.
+
+### 30.6 v47 tests
+
+`tests/v47.py` (Chromium, real presence server): `visitors` per room, universal `carte.html`, plain list and header, checkbox (start, kept choice, priority), English, `--register` keeping the header, older server, missing `regions.json`, opening from disk, map opened with M.
+
+### 30.7 Not tested
+
+A real phone (no tooltip with a finger), Edge, Windows, the PowerShell lines themselves.

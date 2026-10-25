@@ -360,7 +360,7 @@ if ((C.zones || []).length || C.zonesLive) {
 if ((C.map || []).length || C.mapUrl) {
   let MAP = (C.map || []).slice();
   const ov = document.getElementById('mapOverlay'), grid = document.getElementById('mapGrid'), mb = document.getElementById('mapBtn');
-  const counts = {}; let known = false, tm = 0;
+  const counts = {}, vis = {}, answered = {}, hasVis = {}; let tm = 0;
   const srvOf = r => (r.presence || C.presenceUrl || '');
   const fixWs = u => String(u).replace(/^(wss?:\/\/)0\.0\.0\.0(?=[:/]|$)/i, (m, p) => p + '127.0.0.1');
   const norm = u => { try { const x = new URL(u, location.href); x.hash = ''; return x.href; } catch (e) { return ''; } };
@@ -385,10 +385,14 @@ if ((C.map || []).length || C.mapUrl) {
       if (placed) { t.style.gridColumn = String(mx.get(r.x | 0) + 1); t.style.gridRow = String(rows - my.get(r.y | 0)); }
       if (r.thumb && safeThumb(r.thumb)) { const im = document.createElement('img'); im.src = r.thumb; im.alt = ''; im.referrerPolicy = 'no-referrer'; t.append(im); } else { const ph = document.createElement('div'); ph.className = 'ph'; t.append(ph); }
       const b = document.createElement('b'); b.textContent = r.name; t.append(b);
-      const s = document.createElement('span');
-      const n = counts[srvOf(r) + '|' + (r.room || '')];
-      s.textContent = (here(r) ? tr('page.map.here') : tr('page.map.visit')) + (known && r.room && srvOf(r) ? ' · ' + trn('page.map.count', n || 0) : '');
-      t.append(s);
+      t.title = here(r) ? tr('page.map.tiphere') : tr('page.map.tip', r.spawn || 'default');   // v47 : bulle au survol
+      const parts = [], srv = srvOf(r), k = srv + '|' + (r.room || '');
+      if (here(r)) parts.push(tr('page.map.here'));
+      if (answered[srv] && r.room) {   // v47 : visiteurs (promeneurs et spectateurs) et promeneurs, en texte ; un ancien serveur ne donne que les promeneurs
+        const w = counts[k] || 0, v = hasVis[srv] ? Math.max(vis[k] || 0, w) : -1;
+        parts.push(v < 0 ? trn('page.map.count', w) : (v ? trn('page.map.visitors', v) + (w ? ' · ' + trn('page.map.count', w) : '') : tr('page.map.novisitor')));
+      }
+      if (parts.length) { const s = document.createElement('span'); s.textContent = parts.join(' · '); t.append(s); }
       t.onclick = () => { if (here(r)) close(); else go(r); };
       grid.append(t);
     }
@@ -399,7 +403,7 @@ if ((C.map || []).length || C.mapUrl) {
       const ws = new WebSocket(fixWs(srv)); const to = setTimeout(() => { try { ws.close(); } catch (e) {} }, 4000);
       ws.onopen = () => ws.send(JSON.stringify({ t: 'rooms' }));
       ws.onmessage = ev => {
-        try { const m = JSON.parse(ev.data); if (m.t === 'rooms') { for (const k of Object.keys(counts)) if (k.startsWith(srv + '|')) delete counts[k]; for (const [room, n] of Object.entries(m.rooms || {})) counts[srv + '|' + room] = n; known = true; draw(); } } catch (e) {}
+        try { const m = JSON.parse(ev.data); if (m.t === 'rooms') { for (const o of [counts, vis]) for (const k of Object.keys(o)) if (k.startsWith(srv + '|')) delete o[k]; for (const [room, n] of Object.entries(m.rooms || {})) counts[srv + '|' + room] = n; hasVis[srv] = !!(m.visitors && typeof m.visitors === 'object'); if (hasVis[srv]) for (const [room, n] of Object.entries(m.visitors)) vis[srv + '|' + room] = n; answered[srv] = true; draw(); } } catch (e) {}
         try { ws.close(); } catch (e) {}
       };
       ws.onclose = () => clearTimeout(to); ws.onerror = () => {};
@@ -421,7 +425,7 @@ if ((C.map || []).length || C.mapUrl) {
     const urls = String(C.mapUrl).split(',').map(s => s.trim()).filter(Boolean);
     Promise.allSettled(urls.map(u => fetch(new URL(u, location.href).href, { cache: 'no-store' }).then(r => r.ok ? r.json() : Promise.reject(new Error('http ' + r.status))))).then(res => {
       const merged = [], seen = new Set(), embedded = (C.map || []).slice();
-      for (const x of res) if (x.status === 'fulfilled' && Array.isArray(x.value)) for (const r of x.value) {
+      for (const x of res) for (const r of (x.status === 'fulfilled' ? (Array.isArray(x.value) ? x.value : (x.value && Array.isArray(x.value.regions) ? x.value.regions : [])) : [])) {   // v47 : liste simple ou {"showUrl": ..., "regions": [...]}
         if (!r || typeof r.name !== 'string' || typeof r.url !== 'string') continue;
         const e = { id: String(r.id || '').slice(0, 40), name: r.name.slice(0, 60), url: r.url.slice(0, 600), x: Number(r.x) | 0, y: Number(r.y) | 0, spawn: String(r.spawn || '').slice(0, 40), room: String(r.room || '').slice(0, 64), presence: /^wss?:\/\//i.test(String(r.presence || '')) ? String(r.presence).slice(0, 300) : '', thumb: safeThumb(r.thumb) ? String(r.thumb).slice(0, 200000) : '' };
         const k = e.url + '|' + e.room; if (!seen.has(k)) { seen.add(k); merged.push(e); }

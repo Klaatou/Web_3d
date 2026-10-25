@@ -533,6 +533,7 @@ async def handler(ws):
         msg = json.loads(await asyncio.wait_for(ws.recv(), 10))
         if isinstance(msg, dict) and msg.get("t") == "rooms":
             await ws.send(json.dumps({"t": "rooms", "rooms": {name: len(walkers(name)) for name in ROOMS if walkers(name)},
+                                      "visitors": {name: len(peers_in) for name, peers_in in ROOMS.items() if peers_in},   # v47 : promeneurs et spectateurs, par salon
                                       "spectators": sum(1 for p in all_peers() if p.spectator)}, separators=(",", ":")))
             return
         if not isinstance(msg, dict) or msg.get("t") != "hello":
