@@ -76,3 +76,6 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 - See what changed in a version: `git show v16 --stat`
 - Get the sources of a version: `git switch --detach v14` (then `git switch main` to go back)
 - Compare two versions: `git diff v16 v17 --stat`
+| 25/10/2026 |  | v52 | v52: `carte.html` (region count, total, arrival alert with sound and marker, thumbnail enlarged to 400 px, visitors and walkers on two lines in French), "walker", "Show the sea" checkbox (manual § 35.1 to 35.4); `tests/v52.py` |
+| 25/10/2026 |  | v52 | v52 (continued): presence server, an ordinary HTTP request gives an "http request" line instead of a trace (manual § 35.5); `tests/v52_http.py` |
+| 25/10/2026 |  | v52 | v52 (continued): renamed tiled region, the overview stays linked to the tiles by file name (manual § 35.6); `tests/v52_renom.py` |

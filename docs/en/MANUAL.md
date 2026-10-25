@@ -1,6 +1,6 @@
-# User manual: zones, portals and arrival points (v51)
+# User manual: zones, portals and arrival points (v52)
 
-> **Summary (v51).** This file is the detailed user manual; it is not meant to be read from end to end. For **all the options** of the tools, with their effect and their default, in French and English: `REFERENCE_OPTIONS.md` (generated from the tools by `gen_reference.py`). To **do a task step by step** (OAR to page, tiled region, update, zones, presence server, map): `PROCEDURES.md`. Here: zones and portals (§§ 1 to 10), keys (§ 2), settings and their files (§§ 11 to 19) and the new features version by version (§§ 18 to 34; § 27 is the JSON file reference). Language of the page and of the tools: § 21.8 to 21.11.
+> **Summary (v52).** This file is the detailed user manual; it is not meant to be read from end to end. For **all the options** of the tools, with their effect and their default, in French and English: `REFERENCE_OPTIONS.md` (generated from the tools by `gen_reference.py`). To **do a task step by step** (OAR to page, tiled region, update, zones, presence server, map): `PROCEDURES.md`. Here: zones and portals (§§ 1 to 10), keys (§ 2), settings and their files (§§ 11 to 19) and the new features version by version (§§ 18 to 34; § 27 is the JSON file reference). Language of the page and of the tools: § 21.8 to 21.11.
 
 ## 1. The rule that explains 90 % of failures
 
@@ -1668,7 +1668,7 @@ A real phone, a real tablet, iPhone and iPad, Edge, Windows, real full screen.
 
 ### 30.1 The map tile
 
-Under the name, one line of text (never colour alone): "3 visitors · 1 walking", or "no visitors". Visitors count the walkers **and** the spectators (pages open in the overview); walkers are only shown when there are some. The line only appears if the card has a room (`room`) and a presence server (`presence`, or the page's own). The word "visit →" is gone: a **tooltip** on hover says what the click does ("Click to enter the region (arrival: default)"). The region you are in keeps "● you are here". A finger has no hover, so no tooltip. Same display on the map page and in the map opened with M.
+Under the name, one line of text (never colour alone): "3 visitors · 1 walker" on one line (v52; in French "3 visiteurs" then "1 promeneur" on two lines), or "no visitors". Visitors count the walkers **and** the spectators (pages open in the overview); walkers are only shown when there are some. The line only appears if the card has a room (`room`) and a presence server (`presence`, or the page's own). The word "visit →" is gone: a **tooltip** on hover says what the click does ("Click to enter the region (arrival: default)"). The region you are in keeps "● you are here". A finger has no hover, so no tooltip. Same display on the map page and in the map opened with M.
 
 ### 30.2 Optional address
 
@@ -1860,3 +1860,44 @@ Why: each config or card carried a single address (network address, public IP ad
 The star works everywhere: `--presence-url`, `presenceUrl` of `NOM.config.json`, `presence` field of `regions.json`, presence field of the viewer. The server recalls this form at start-up. Limit: for a visitor coming from the Internet, the presence server port must be reachable under the same name as the page (box port forwarding, or Funnel, procedures § 11).
 
 `tests/v51_etoile.py` (Chromium): page opened through `127.0.0.1` then `localhost`, Map window, `carte.html`, visit log, viewer opened from the disk, `ws://0.0.0.0` still corrected, error message with the resolved address. Not tested: Windows, Edge.
+
+## 35. What's new in v52 (25/10/2026)
+
+### 35.1 `carte.html`: count, total, two lines
+
+Above the grid: "12 regions · Total: 3 visitors · 2 walkers". Each room is counted once; with an old server that does not answer `visitors`, only the walkers are counted (no invented visitors). In the cards, visitors and walkers go on two lines in French ("2 visiteurs", then "1 promeneur") and stay on one line in English ("2 visitors · 1 walker"): this is the language key `map.sep` (`page.map.sep` for the map opened with M), a line break in French and " · " in English; a new language chooses its own. The total stays on one line.
+
+### 35.2 Arrival alert (sound and marker)
+
+A checkbox at the top of `carte.html`, "Arrival alert (sound and marker)", remembered in this browser (key `glb2html_map_alert`). When ticked:
+
+- A **rise in the visitor count** of a room on the map between two polls is an arrival: two rising notes (660 then 880 Hz, like a walker arriving in the page), at most one beep every 2 s, and the **region's card is marked**: dashed outline that blinks, yellow background and the text "● arrival hh:mm" (never colour alone; no blinking if the system asks for reduced motion). The marker stays until the card is hovered; unticking the box clears it. The status line says "last arrival: region, hh:mm".
+- A server's **first poll** never sounds (it is the baseline). An arrival and a departure within the same poll interval cancel out: no beep.
+- The browser forbids any sound before a click or a key press on the page: after a reload, the ticked box shows "sound starts at the first click on the page". Ticking the box is already a click.
+- **Delays**: at the top of the `carte.html` script (in the repository, `MAP_PAGE_TEMPLATE` of `src/gen_tpl.py`), `const POLL_MS = 10000;` (normal poll) and `const POLL_ALERT_MS = 5000;` (box ticked), in milliseconds. The delay is re-read at each round and as soon as the box changes. Each poll opens one short connection per presence server: raising these values lightens the server (load not measured).
+
+The alert only concerns `carte.html` (and the standalone `--map-page`); the map opened with M keeps the page's sounds (§ 21.6).
+
+### 35.3 Thumbnail enlarged on hover
+
+Hovering a card that has a thumbnail, **with a mouse only** (not with a finger), shows the thumbnail large, 400 px at most, moved to stay inside the window. It is the same code in `carte.html` and in the map opened with M. The recommended thumbnails are 320 x 320 px (§ 32.3): the image is enlarged, not improved. A card without a thumbnail has nothing to enlarge.
+
+### 35.4 "Show the sea" checkbox
+
+In Settings, before "Animated sea", only if the page has a sea (not made with `--no-sea`). Unticked: the sea disappears from the scene, "Animated sea" and "Waves" are greyed out. The choice is kept with the other settings (key `glb2html_opts_SALON`); "Default values" restores the page's own. Useful for a region without water made without `--no-sea` (the sea is on by default). The sea height is only used to place the water plane: hiding the sea changes no collision. A page made with `--no-sea` ignores an old remembered choice.
+
+### 35.5 Presence server: ordinary HTTP requests
+
+With `websockets` 14 and 15, an ordinary HTTP request on the server port (a browser opening its address, a robot, a test) wrote a full trace ("opening handshake failed", `InvalidUpgrade`, "invalid Connection header: keep-alive"), although the client does get "426 Upgrade Required". The log now writes an `http request` line instead: address, path, host, agent and reason, at most one per minute and per address. It says who came. Malformed requests and other errors are still shown in full. **Restart the presence server** from `dist\`. Recent versions of `websockets` (17.3 tried) do not write this trace: nothing to filter.
+
+### 35.6 Renamed tiled region
+
+`NOM.overview.glb` keeps in each node the path of its tile as it was when the region was split (`NOM.tiles/T_3_0_0.glb`). Up to v51, renaming the folders and the index paths by hand left the overview **visible under the detailed tiles**: overlapping surfaces, moire and dark patches on the terrain and the rocks (JJ's case, Houses region, 25/10/2026). Since v52, the page finds the cell by the **tile's file name** when the full path does not match (unique in a region; otherwise the cell stays visible, never a hole). To rename a tiled region: rename `NOM.tiles`, `NOM.overview.glb`, `NOM.tiles.json`, `NOM.config.json` and `NOM.zones.json`, fix in the index the tiles' `file` paths and `overview.file`, fix the `tiles` field of the config, then copy the v52 `index.html` shell. There is no need to regenerate the overview.
+
+### 35.7 Tests of v52
+
+`tests/v52.py` (Chromium, real presence server, fake `AudioContext`): `carte.html` ("walker", total and count, no sound on the first poll or with the box unticked, two notes 660 and 880 Hz on an arrival, visual marker and its disappearance on hover, delay re-read when the box is ticked, constants `POLL_MS` and `POLL_ALERT_MS`), enlarged thumbnail (map and M map), old server, English, "Show the sea" checkbox; `tests/v52_http.py` (real server, installed `websockets` then `WS_OLD` and `WS_OLD2`); `tests/v52_renom.py` (split region, copied under two other names); `tests/i18n.py` accepts a blank value for keys ending in `.sep`; `tests/v47.py` adapted to the "walker" text.
+
+### 35.8 Not tested
+
+The real sound (the test replaces `AudioContext`), Edge, Windows, a real phone, a tab kept in the background for a long time (the browser may slow its timers: not measured), the server load at 5 s. The renaming of § 35.6 was confirmed by JJ on his Houses region (25/10/2026).

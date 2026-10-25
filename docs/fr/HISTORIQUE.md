@@ -76,3 +76,6 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 - Voir ce qui a changé dans une version : `git show v16 --stat`
 - Retrouver les sources d'une version : `git switch --detach v14` (puis `git switch main` pour revenir)
 - Comparer deux versions : `git diff v16 v17 --stat`
+| 25/10/2026 |  | v52 | v52 : `carte.html` (décompte des régions, total, surveillance des arrivées avec son et repère, vignette agrandie à 400 px, visiteurs et promeneurs sur deux lignes en français), « promeneur », case « Afficher la mer » (manuel § 35.1 à 35.4) ; `tests/v52.py` |
+| 25/10/2026 |  | v52 | v52 (suite) : serveur de présence, une requête HTTP ordinaire donne une ligne « requête http » au lieu d'une trace (manuel § 35.5) ; `tests/v52_http.py` |
+| 25/10/2026 |  | v52 | v52 (suite) : région en tuiles renommée, la vue d'ensemble reste reliée aux tuiles par le nom de fichier (manuel § 35.6) ; `tests/v52_renom.py` |

@@ -1,6 +1,6 @@
-# Mode d'emploi : zones, portails et points d'arrivée (v51)
+# Mode d'emploi : zones, portails et points d'arrivée (v52)
 
-> **Résumé (v51).** Ce fichier est le mode d'emploi détaillé ; il ne se lit pas d'un bout à l'autre. Pour **toutes les options** des outils, avec leur effet et leur défaut en français et en anglais : `REFERENCE_OPTIONS.md` (générée depuis les outils par `gen_reference.py`). Pour **faire une tâche pas à pas** (OAR vers page, région en tuiles, mise à jour, zones, serveur de présence, carte) : `PROCEDURES.md`. Ici : les zones et les portails (§§ 1 à 10), les touches (§ 2), les réglages et leurs fichiers (§§ 11 à 19) et les nouveautés version par version (§§ 18 à 34 ; le § 27 est la référence des fichiers JSON). Langue de la page et des outils : § 21.8 à 21.11.
+> **Résumé (v52).** Ce fichier est le mode d'emploi détaillé ; il ne se lit pas d'un bout à l'autre. Pour **toutes les options** des outils, avec leur effet et leur défaut en français et en anglais : `REFERENCE_OPTIONS.md` (générée depuis les outils par `gen_reference.py`). Pour **faire une tâche pas à pas** (OAR vers page, région en tuiles, mise à jour, zones, serveur de présence, carte) : `PROCEDURES.md`. Ici : les zones et les portails (§§ 1 à 10), les touches (§ 2), les réglages et leurs fichiers (§§ 11 à 19) et les nouveautés version par version (§§ 18 à 34 ; le § 27 est la référence des fichiers JSON). Langue de la page et des outils : § 21.8 à 21.11.
 
 ## 1. La règle qui explique 90 % des pannes
 
@@ -1669,7 +1669,7 @@ Un vrai téléphone, une vraie tablette, iPhone et iPad, Edge, Windows, le plein
 
 ### 30.1 La tuile de la carte
 
-Sous le nom, une ligne de texte (jamais de couleur seule) : « 3 visiteurs · 1 en promenade », ou « aucun visiteur ». Les visiteurs comptent les promeneurs **et** les spectateurs (pages ouvertes en vue globale) ; les promeneurs ne sont indiqués que s'il y en a. La ligne n'apparaît que si la fiche a un salon (`room`) et un serveur de présence (`presence`, ou celui de la page). Le mot « visiter → » a disparu : une **bulle** au survol dit ce que fait le clic (« Cliquer pour entrer dans la région (arrivée : default) »). La région où l'on se trouve garde « ● vous êtes ici ». Au doigt, il n'y a pas de survol, donc pas de bulle. Même affichage sur la page carte et dans la carte ouverte par M.
+Sous le nom, une ligne de texte (jamais de couleur seule) : « 3 visiteurs » puis « 1 promeneur » sur deux lignes (v52 ; en anglais « 3 visitors · 1 walker » sur une ligne), ou « aucun visiteur ». Les visiteurs comptent les promeneurs **et** les spectateurs (pages ouvertes en vue globale) ; les promeneurs ne sont indiqués que s'il y en a. La ligne n'apparaît que si la fiche a un salon (`room`) et un serveur de présence (`presence`, ou celui de la page). Le mot « visiter → » a disparu : une **bulle** au survol dit ce que fait le clic (« Cliquer pour entrer dans la région (arrivée : default) »). La région où l'on se trouve garde « ● vous êtes ici ». Au doigt, il n'y a pas de survol, donc pas de bulle. Même affichage sur la page carte et dans la carte ouverte par M.
 
 ### 30.2 Adresse facultative
 
@@ -1861,3 +1861,44 @@ Pourquoi : chaque config ou fiche portait une seule adresse (adresse réseau, ad
 L'étoile vaut partout : `--presence-url`, `presenceUrl` de `NOM.config.json`, champ `presence` de `regions.json`, champ de présence du viewer. Le serveur rappelle cette forme au démarrage. Limite : pour un visiteur venu d'Internet, le port du serveur de présence doit être joignable sous le même nom que la page (redirection de la box, ou Funnel, procédures § 11).
 
 `tests/v51_etoile.py` (Chromium) : page ouverte par `127.0.0.1` puis par `localhost`, fenêtre Carte, `carte.html`, journal des visites, viewer ouvert depuis le disque, `ws://0.0.0.0` toujours corrigé, message d'erreur avec l'adresse résolue. Non testé : Windows, Edge.
+
+## 35. Nouveautés de la v52 (25/10/2026)
+
+### 35.1 `carte.html` : décompte, total, deux lignes
+
+Au-dessus de la grille : « 12 régions · Total : 3 visiteurs · 2 promeneurs ». Chaque salon est compté une fois ; avec un ancien serveur qui ne répond pas `visitors`, seuls les promeneurs sont comptés (pas de visiteurs inventés). Dans les tuiles, les visiteurs et les promeneurs passent sur deux lignes en français (« 2 visiteurs », puis « 1 promeneur ») et restent sur une ligne en anglais (« 2 visitors · 1 walker ») : c'est la clé de langue `map.sep` (`page.map.sep` pour la carte ouverte par M), un saut de ligne en français et « · » en anglais ; une nouvelle langue choisit la sienne. Le total reste sur une ligne.
+
+### 35.2 Surveillance des arrivées (son et repère)
+
+Une case en haut de `carte.html`, « Surveillance des arrivées (son et repère) », mémorisée dans ce navigateur (clé `glb2html_map_alert`). Cochée :
+
+- Une **hausse du nombre de visiteurs** d'un salon de la carte entre deux relevés est une arrivée : deux notes montantes (660 puis 880 Hz, comme l'arrivée d'un promeneur dans la page), au plus un bip toutes les 2 s, et la **tuile de la région est marquée** : contour en pointillés qui clignote, fond jaune et texte « ● arrivée hh:mm » (jamais la couleur seule ; pas de clignotement si le système demande de réduire les animations). Le repère reste jusqu'au survol de la tuile ; décocher la case l'efface. La ligne d'état dit « dernière arrivée : région, hh:mm ».
+- Le **premier relevé** d'un serveur ne sonne jamais (il sert de base). Une arrivée et un départ dans le même intervalle de relevé s'annulent : pas de bip.
+- Le navigateur interdit tout son avant un clic ou une touche dans la page : après un rechargement, la case cochée affiche « le son démarre au premier clic dans la page ». Cocher la case est déjà un clic.
+- **Délais** : en tête du script de `carte.html` (dans le dépôt, `MAP_PAGE_TEMPLATE` de `src/gen_tpl.py`), `const POLL_MS = 10000;` (relevé normal) et `const POLL_ALERT_MS = 5000;` (case cochée), en millisecondes. Le délai est relu à chaque tour et dès que la case change. Chaque relevé ouvre une connexion brève par serveur de présence : augmenter ces valeurs allège le serveur (charge non mesurée).
+
+La surveillance ne concerne que `carte.html` (et la carte autonome `--map-page`) ; la carte ouverte par M garde les sons de la page (§ 21.6).
+
+### 35.3 Vignette agrandie au survol
+
+Au survol d'une tuile qui a une vignette, **à la souris seulement** (pas au doigt), la vignette s'affiche en grand, 400 px au plus, replacée pour rester dans la fenêtre. C'est le même code dans `carte.html` et dans la carte ouverte par M. Les vignettes conseillées font 320 x 320 px (§ 32.3) : l'image est agrandie, pas améliorée. Une tuile sans vignette n'a rien à agrandir.
+
+### 35.4 Case « Afficher la mer »
+
+Dans Réglages, avant « Mer animée », seulement si la page a une mer (pas faite avec `--no-sea`). Décochée : la mer disparaît de la scène, « Mer animée » et « Vagues » sont grisés. Le choix est retenu avec les autres réglages (clé `glb2html_opts_SALON`) ; « Valeurs d'origine » remet celui de la page. Utile pour une région sans eau faite sans `--no-sea` (la mer est active par défaut). La hauteur de la mer ne sert qu'à poser le plan d'eau : masquer la mer ne change aucune collision. Une page faite avec `--no-sea` ignore un ancien choix retenu.
+
+### 35.5 Serveur de présence : requêtes HTTP ordinaires
+
+Avec `websockets` 14 et 15, une requête HTTP ordinaire sur le port du serveur (navigateur qui ouvre son adresse, robot, test) écrivait une trace complète (« opening handshake failed », `InvalidUpgrade`, « invalid Connection header: keep-alive »), alors que le client reçoit bien « 426 Upgrade Required ». Le journal écrit à la place une ligne `requête http` : adresse, chemin, hôte, agent et raison, au plus une par minute et par adresse. Elle dit qui est venu. Les requêtes mal formées et les autres erreurs restent affichées en entier. **Relancer le serveur de présence** depuis `dist\`. Les versions récentes de `websockets` (17.3 essayée) n'écrivent pas cette trace : rien à filtrer.
+
+### 35.6 Région en tuiles renommée
+
+`NOM.overview.glb` garde dans chaque nœud le chemin de sa tuile tel qu'il était au découpage (`NOM.tiles/T_3_0_0.glb`). Jusqu'à la v51, renommer à la main les dossiers et les chemins de l'index laissait la vue d'ensemble **visible sous les tuiles détaillées** : surfaces superposées, moirures et plaques sombres sur le terrain et les rochers (cas de JJ, région Houses, 25/10/2026). Depuis la v52, la page retrouve la cellule par le **nom du fichier de la tuile** quand le chemin complet ne correspond pas (nom unique dans une région ; sinon la cellule reste visible, jamais de trou). Pour renommer une région en tuiles : renommer `NOM.tiles`, `NOM.overview.glb`, `NOM.tiles.json`, `NOM.config.json` et `NOM.zones.json`, corriger dans l'index les chemins `file` des tuiles et `overview.file`, corriger le champ `tiles` de la config, puis copier la coquille `index.html` de la v52. Il n'y a pas à régénérer la vue d'ensemble.
+
+### 35.7 Tests de la v52
+
+`tests/v52.py` (Chromium, vrai serveur de présence, faux `AudioContext`) : `carte.html` (« promeneur », total et décompte, aucun son au premier relevé ni case décochée, deux notes 660 et 880 Hz sur une arrivée, repère visuel et sa disparition au survol, délai relu à la case cochée, constantes `POLL_MS` et `POLL_ALERT_MS`), vignette agrandie (carte et carte M), ancien serveur, anglais, case « Afficher la mer » ; `tests/v52_http.py` (vrai serveur, `websockets` installé puis `WS_OLD` et `WS_OLD2`) ; `tests/v52_renom.py` (région découpée, copiée sous deux autres noms) ; `tests/i18n.py` accepte une valeur blanche pour les clés en `.sep` ; `tests/v47.py` adapté au texte « promeneur ».
+
+### 35.8 Non testé
+
+Le son réel (le test remplace `AudioContext`), Edge, Windows, un vrai téléphone, un onglet gardé longtemps en arrière-plan (le navigateur peut ralentir ses minuteries : non mesuré), la charge du serveur à 5 s. Le renommage de § 35.6 a été confirmé par JJ sur sa région Houses (25/10/2026).
