@@ -67,7 +67,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 
 ## Commandes utiles
 | 25/10/2026 |  | v49 | v49 : `glb2html.py --scan-sites` met à jour `regions.json` depuis le dossier des sites (fiches, vignettes `NOM.jpg`, rien supprimé), manuel § 32 ; `tests/v49.py` |
-| 25/10/2026 |  | v50 | v50 : viewer, carte des mondes : import et export de `regions.json` avec en-tête, champs des fiches gardés, « Ajouter » sur place (manuel § 33) ; `tests/v50.py` |
+| 25/10/2026 |  | v50 | v50 : viewer, carte des mondes : import et export de `regions.json` avec en-tête, champs des fiches gardés, « Ajouter » sur place (manuel § 33) ; `tests/v50.py` ; README, procédures § 4 et § 7, `CLAUDE.md` mis à jour |
 
 - Voir l'historique : `git log --oneline --decorate`
 - Voir ce qui a changé dans une version : `git show v16 --stat`

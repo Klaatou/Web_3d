@@ -63,15 +63,17 @@ Clés utiles : `seaY` (hauteur de la mer, en m), `target` (`[x, y, z]`), `presen
 
 ## 4. Après une nouvelle version des outils
 
-1. Fusionner la branche de la session, fabriquer, pousser, étiqueter (la session donne la ligne exacte) :
-   `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d"; git checkout main; git pull; git fetch; git merge origin/NOM -m "Fusion vNN"; python build.py; git push; git tag vNN HASH; git push origin vNN`
-2. Mettre à jour chaque région avec `--update`. La coquille `index.html` est renouvelée si elle est plus ancienne (l'ancienne est gardée sous un nom daté), la config et les zones sont gardées.
-   `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python glb2html.py --update --shared-shell -o "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.html"`
-   Site avec une coquille à la racine et un dossier par région (v46, `MANUEL.md` § 29.8) : donner le chemin de la coquille, sinon une coquille et un `lib` inutiles sont écrits dans le dossier de la région :
-   `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python glb2html.py --update -o "P:\site\dossier\X.html" --shared-shell "P:\site\index.html"`
-3. Recharger la page avec Ctrl+F5. La ligne du bas du panneau d'aide donne la version affichée (par exemple « glb2html v36 ») : si elle est ancienne, la mise à jour n'a pas eu lieu.
-4. Relancer le serveur de présence : **oui pour la v36** (ses messages et son aide sont traduits ; un ancien exemplaire continue de marcher mais reste en français). Procédure 6.
-5. Le découpage en tuiles n'est à refaire que si la session le dit, par exemple pour de nouvelles informations dans les tuiles.
+1. **Appliquer le patch et fabriquer** (la conversation donne les lignes exactes, chacune sur une ligne) :
+   `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d"; git pull; python .\patch_NOM.py; if ($LASTEXITCODE -eq 0) { python build.py }`
+   puis la ligne `git add …; git commit …; git push` livrée avec le patch, et, à la fin d'un lot, `git tag vNN; git push origin vNN`.
+2. **Copier la coquille et la carte** à la racine du site (organisation `Sites\`, `MANUEL.md` § 29.8) ; la ligne `const LIB` de la coquille reste `./lib` :
+   `Copy-Item "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist\index.html" "P:\_OpenSim\SL&OS\Web_3d\Sites\index.html"; Copy-Item "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist\carte.html" "P:\_OpenSim\SL&OS\Web_3d\Sites\carte.html"`
+3. **Mettre à jour chaque région** avec `--update` (la config et les zones sont gardées). Donner le chemin de la coquille de la racine, sinon une coquille et un `lib` inutiles sont écrits dans le dossier de la région :
+   `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python .\glb2html.py --update -o "P:\_OpenSim\SL&OS\Web_3d\Sites\houses\NOM.html" --shared-shell "P:\_OpenSim\SL&OS\Web_3d\Sites\index.html"`
+   Région seule dans son dossier (coquille à côté d'elle) : `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python .\glb2html.py --update --shared-shell -o "P:\dossier\X.html"`. La coquille `index.html` est renouvelée si elle est plus ancienne (l'ancienne est gardée sous un nom daté).
+4. Recharger la page avec Ctrl+F5. La ligne du bas du panneau d'aide donne la version affichée (par exemple « glb2html v50 ») : si elle est ancienne, la mise à jour n'a pas eu lieu.
+5. **Relancer le serveur de présence** depuis `dist\` (procédure 6) après chaque nouvelle version : un ancien exemplaire continue de marcher mais n'a pas les nouveautés (v47 : compteurs de la carte ; v48 : journal des visites).
+6. Le découpage en tuiles n'est à refaire que si la conversation le dit, par exemple pour de nouvelles informations dans les tuiles.
 
 ## 5. Poser et modifier des zones
 
@@ -101,16 +103,15 @@ Les adresses IP et les messages du chat sont des données personnelles : informe
 
 ## 7. Carte des mondes
 
-Deux étapes, avec `--update` (les chemins relatifs y sont relatifs au dossier de la page).
+Avec l'organisation `Sites\` (une coquille à la racine, un dossier par région, `MANUEL.md` § 29.8) :
 
-1. **Enregistrer chaque région** dans `regions.json` :
-   `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python glb2html.py --update -o "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.html" --shared-shell --register "P:\_OpenSim\SL&OS\Web_3d\tuiles\regions.json" --region-name "Nom affiché"`
-   Pour une autre région, même commande avec sa page et son nom (`--region-xy x,y` donne sa place sur la carte).
-2. **Générer la page carte** (après chaque enregistrement) :
-   `python glb2html.py --update -o "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.html" --shared-shell --map-page "P:\_OpenSim\SL&OS\Web_3d\tuiles\carte.html"`
-3. Ouvre `carte.html` par le serveur web. Un champ « Mon pseudo » en haut ajoute `name=` aux liens des régions.
+1. **Mettre à jour `regions.json` depuis le dossier** (v49) :
+   `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python .\glb2html.py --scan-sites "P:\_OpenSim\SL&OS\Web_3d\Sites" --dry-run`
+   puis la même ligne sans `--dry-run`. Une fiche par région trouvée, avec sa vignette `NOM.jpg` à côté de `NOM.config.json` (carré de 320 pixels conseillé) ; les noms, places et arrivées déjà notés sont gardés ; rien n'est supprimé (`MANUEL.md` § 32).
+2. **Nommer et placer les régions** une fois : `name`, `x`, `y` et `spawn` dans `Sites\regions.json`, à la main ou avec le viewer (« Importer regions.json », modifier, « Exporter regions.json » : l'en-tête et tous les champs sont gardés depuis la v50). Les parcours suivants les gardent.
+3. **Afficher la carte** : `carte.html` (copiée à la racine, procédure 4) relit `regions.json` à chaque ouverture, rien à régénérer (`MANUEL.md` § 30.4). L'ouvrir par le serveur web, par exemple `http://localhost:8000/carte.html` après `cd "P:\_OpenSim\SL&OS\Web_3d\Sites"; python -m http.server 8000`. Un champ « Mon pseudo » en haut ajoute `name=` aux liens des régions.
 
-Sans régénérer (v47) : copie une fois `dist\carte.html` à côté de `index.html` ; elle relit `regions.json` à chaque ouverture (manuel § 30.4).
+Sans dossier de site : `--register regions.json` ajoute la région à chaque génération (`--region-name`, `--region-xy x,y`), et `--map-page carte.html` écrit une page autonome qui contient la liste (`MANUEL.md` § 30.4).
 
 Avec une seule région, la carte n'apporte rien : elle sert à relier plusieurs régions entre elles.
 
@@ -121,7 +122,7 @@ Avec une seule région, la carte n'apporte rien : elle sert à relier plusieurs 
 | Une valeur de réglage (mer, cible, présence) | modifier `X.config.json`, ou `--update` avec l'option | F5 |
 | Les zones | enregistrer `X.zones.json` dans le dossier de la région | F5 |
 | Nouvelle version des outils | procédure 4 (`--update`) | Ctrl+F5 |
-| Nouvelle version du serveur de présence (v37 : historique du chat ; v36 : messages traduits) | arrêter et relancer `presence_server.py` | F5 |
+| Nouvelle version du serveur de présence (v48 : journal des visites ; v47 : compteurs de la carte ; v37 : historique du chat) | arrêter et relancer `presence_server.py` | F5 |
 | L'OAR a changé | reconvertir (1.1 ou 2.1), redécouper (2.3), puis `--update` | Ctrl+F5 |
 | Les objets exclus du découpage | redécouper (2.3) avec un autre `--exclude` | Ctrl+F5 |
 | Rotation de la région (`--rotate`) | `--update --rotate 180`, puis refaire la vignette de la carte | Ctrl+F5 |

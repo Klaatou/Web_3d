@@ -1,6 +1,6 @@
-# User manual: zones, portals and arrival points (v37)
+# User manual: zones, portals and arrival points (v50)
 
-> **Summary (v37).** This file is the detailed user manual; it is not meant to be read from end to end. For **all the options** of the tools, with their effect and their default, in French and English: `REFERENCE_OPTIONS.md` (generated from the tools by `gen_reference.py`). To **do a task step by step** (OAR to page, tiled region, update, zones, presence server, map): `PROCEDURES.md`. Here: zones and portals (§§ 1 to 10), keys (§ 2), settings and their files (§§ 11 to 19) and the new features version by version (§§ 19 to 21). Language of the page and of the tools: § 21.8 to 21.11.
+> **Summary (v50).** This file is the detailed user manual; it is not meant to be read from end to end. For **all the options** of the tools, with their effect and their default, in French and English: `REFERENCE_OPTIONS.md` (generated from the tools by `gen_reference.py`). To **do a task step by step** (OAR to page, tiled region, update, zones, presence server, map): `PROCEDURES.md`. Here: zones and portals (§§ 1 to 10), keys (§ 2), settings and their files (§§ 11 to 19) and the new features version by version (§§ 18 to 33; § 27 is the JSON file reference). Language of the page and of the tools: § 21.8 to 21.11.
 
 ## 1. The rule that explains 90 % of failures
 
@@ -42,6 +42,7 @@ Correct example:
 | **G** (v34) | capture the mouse again after Esc |
 | **O** (v37) | opens / closes the **Settings** window (toggle, like **H** and **I**); **R** is already taken by the return to the arrival point |
 | **I** (v34) | the **Information / Status** window (v36: formerly the "status block": view, mode, mouse, keyboard, position, tiles): hidden → expanded; collapsed → expanded; expanded → hidden. **H** does the same for the help alone (§ 19.1, § 21.3) |
+| **K** (v46) | shows or hides the **on-screen arrows** (like the "Arrows (K)" button and the Settings checkbox; remembered by the browser; same place on AZERTY and QWERTY, § 29.3) |
 | **L** (v40) | the **Arrivals** window: list of the region's teleport points; clicking a name teleports there (in walk mode) or enters walk mode there (in global view). Same cycle as **H** and **I**; absent if the region has no arrival point |
 
 Portals only work in walk mode.

@@ -847,7 +847,7 @@
  "py.presence.log_line": "{0:<11} | room={1} | {2}",
  "py.presence.longueur_max_d_un_message_de": "maximum length of a chat message",
  "py.presence.messages_max_par_fenetre_de_10": "maximum messages per 10 s window and per visitor",
- "py.presence.moderation_tape_aide_pour_la_liste": "moderation: type \"aide\" for the list of commands (liste, ejecter, bannir, bans, debannir)",
+ "py.presence.moderation_tape_aide_pour_la_liste": "moderation: type \"aide\" for the list of commands (liste, ejecter, bannir, bans, debannir, rooms, visits-key)",
  "py.presence.nobody": "(nobody)",
  "py.presence.noms_interdits_a_la_reservation_separes": "names forbidden for reservation, comma-separated (e.g. admin,moderator)",
  "py.presence.old_name": "previous: {0}",

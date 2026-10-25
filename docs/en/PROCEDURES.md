@@ -63,15 +63,17 @@ Useful keys: `seaY` (sea level, in m), `target` (`[x, y, z]`), `presenceUrl`, `c
 
 ## 4. After a new version of the tools
 
-1. Merge the session's branch, build, push, tag (the session gives the exact line):
-   `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d"; git checkout main; git pull; git fetch; git merge origin/NOM -m "Fusion vNN"; python build.py; git push; git tag vNN HASH; git push origin vNN`
-2. Update each region with `--update`. The `index.html` shell is renewed if it is older (the old one is kept under a dated name); the config and the zones are kept.
-   `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python glb2html.py --update --shared-shell -o "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.html"`
-   Site with one shell at the root and one folder per region (v46, `MANUAL.md` § 29.8): give the shell path, otherwise a useless shell and `lib` are written in the region folder:
-   `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python glb2html.py --update -o "P:\site\dossier\X.html" --shared-shell "P:\site\index.html"`
-3. Reload the page with Ctrl+F5. The bottom line of the help panel gives the version displayed (for example "glb2html v36"): if it is old, the update did not happen.
-4. Restart the presence server: **yes for v36** (its messages and its help are translated; an old copy keeps working but stays in French). Procedure 6.
-5. The tile split only needs to be redone if the session says so, for example for new information in the tiles.
+1. **Apply the patch and build** (the conversation gives the exact lines, each on one line):
+   `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d"; git pull; python .\patch_NOM.py; if ($LASTEXITCODE -eq 0) { python build.py }`
+   then the `git add …; git commit …; git push` line delivered with the patch, and, at the end of a batch, `git tag vNN; git push origin vNN`.
+2. **Copy the shell and the map** to the root of the site (`Sites\` layout, `MANUAL.md` § 29.8); the shell's `const LIB` line stays `./lib`:
+   `Copy-Item "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist\index.html" "P:\_OpenSim\SL&OS\Web_3d\Sites\index.html"; Copy-Item "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist\carte.html" "P:\_OpenSim\SL&OS\Web_3d\Sites\carte.html"`
+3. **Update each region** with `--update` (the config and the zones are kept). Give the path of the root shell, otherwise a useless shell and `lib` are written in the region's folder:
+   `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python .\glb2html.py --update -o "P:\_OpenSim\SL&OS\Web_3d\Sites\houses\NOM.html" --shared-shell "P:\_OpenSim\SL&OS\Web_3d\Sites\index.html"`
+   Region alone in its folder (shell next to it): `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python .\glb2html.py --update --shared-shell -o "P:\dossier\X.html"`. The `index.html` shell is renewed if it is older (the old one is kept under a dated name).
+4. Reload the page with Ctrl+F5. The bottom line of the help panel gives the version displayed (for example "glb2html v50"): if it is old, the update did not happen.
+5. **Restart the presence server** from `dist\` (procedure 6) after each new version: an old copy keeps working but lacks the new features (v47: map counters; v48: visit log).
+6. The tile split only needs to be redone if the conversation says so, for example for new information in the tiles.
 
 ## 5. Place and edit zones
 
@@ -101,16 +103,15 @@ IP addresses and chat messages are personal data: inform your visitors and limit
 
 ## 7. World map
 
-Two steps, with `--update` (relative paths are then relative to the page's folder).
+With the `Sites\` layout (one shell at the root, one folder per region, `MANUAL.md` § 29.8):
 
-1. **Register each region** in `regions.json`:
-   `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python glb2html.py --update -o "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.html" --shared-shell --register "P:\_OpenSim\SL&OS\Web_3d\tuiles\regions.json" --region-name "Display name"`
-   For another region, same command with its page and its name (`--region-xy x,y` gives its place on the map).
-2. **Generate the map page** (after each registration):
-   `python glb2html.py --update -o "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.html" --shared-shell --map-page "P:\_OpenSim\SL&OS\Web_3d\tuiles\carte.html"`
-3. Open `carte.html` through the web server. A "My nickname" field at the top adds `name=` to the region links.
+1. **Update `regions.json` from the folder** (v49):
+   `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python .\glb2html.py --scan-sites "P:\_OpenSim\SL&OS\Web_3d\Sites" --dry-run`
+   then the same line without `--dry-run`. One card per region found, with its `NOM.jpg` thumbnail next to `NOM.config.json` (a 320-pixel square is recommended); the names, places and arrivals already recorded are kept; nothing is deleted (`MANUAL.md` § 32).
+2. **Name and place the regions** once: `name`, `x`, `y` and `spawn` in `Sites\regions.json`, by hand or with the viewer ("Import regions.json", edit, "Export regions.json": the header and every field are kept since v50). The next scans keep them.
+3. **Show the map**: `carte.html` (copied to the root, procedure 4) reads `regions.json` again each time it opens, nothing to regenerate (`MANUAL.md` § 30.4). Open it through the web server, for example `http://localhost:8000/carte.html` after `cd "P:\_OpenSim\SL&OS\Web_3d\Sites"; python -m http.server 8000`. A "My nickname" field at the top adds `name=` to the region links.
 
-Without regenerating (v47): copy `dist\carte.html` once next to `index.html`; it re-reads `regions.json` at every opening (manual § 30.4).
+Without a site folder: `--register regions.json` adds the region at each generation (`--region-name`, `--region-xy x,y`), and `--map-page carte.html` writes a standalone page that contains the list (`MANUAL.md` § 30.4).
 
 With a single region, the map brings nothing: it is used to link several regions together.
 
@@ -121,7 +122,7 @@ With a single region, the map brings nothing: it is used to link several regions
 | A setting value (sea, target, presence) | edit `X.config.json`, or `--update` with the option | F5 |
 | The zones | save `X.zones.json` in the region's folder | F5 |
 | New version of the tools | procedure 4 (`--update`) | Ctrl+F5 |
-| New version of the presence server (v37: chat history; v36: translated messages) | stop and restart `presence_server.py` | F5 |
+| New version of the presence server (v48: visit log; v47: map counters; v37: chat history) | stop and restart `presence_server.py` | F5 |
 | The OAR changed | convert again (1.1 or 2.1), split again (2.3), then `--update` | Ctrl+F5 |
 | The objects excluded from the split | split again (2.3) with another `--exclude` | Ctrl+F5 |
 | Rotation of the region (`--rotate`) | `--update --rotate 180`, then redo the map thumbnail | Ctrl+F5 |
