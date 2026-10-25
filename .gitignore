@@ -8,6 +8,7 @@ __pycache__/
 presence_identities.json
 presence_bans.json
 presence_visits_keys.json
+presence_creators.json
 presence.log*
 *.log
 zones*.json

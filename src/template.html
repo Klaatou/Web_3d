@@ -1495,7 +1495,7 @@ if (C.presenceUrl && C.walk) {
   viewer.onPresence = s => {
     if (s.state === 'kicked' || s.state === 'banned') toast((s.state === 'banned' ? tr('page.pres.toast.banned') : tr('page.pres.toast.kicked')) + (s.reason ? ' : ' + s.reason : ''));
     const n = s.count;
-    st.textContent = s.state === 'online' ? (s.spectator ? (n ? trn('page.pres.walking', n) : tr('page.pres.nobody')) : trn('page.pres.count', n)) : (s.state === 'error' && s.reason ? tr('page.pres.error.why', C.presenceUrl, s.reason) : (T[s.state] || s.state));
+    st.textContent = s.state === 'online' ? (s.spectator ? (n ? trn('page.pres.walking', n) : tr('page.pres.nobody')) : trn('page.pres.count', n)) : (s.state === 'error' && s.reason ? tr('page.pres.error.why', C.presenceUrl, s.reason) : s.state === 'refused' ? tr('page.pres.refused', s.reason) : (T[s.state] || s.state));
   };
   viewer.onName = n => {
     if (inp.value && inp.value !== n) toast(tr('page.pres.nametaken', n));

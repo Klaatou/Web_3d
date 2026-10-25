@@ -536,7 +536,7 @@ function presUpdate() {
   const e = $('presInfo'); if (!e) return;
   const T = { off: tr('viewer.pres.off'), connecting: tr('viewer.pres.connecting'), error: tr('viewer.pres.error'), full: tr('viewer.pres.full'), kicked: tr('viewer.pres.kicked'), banned: tr('viewer.pres.banned') };
   const names = viewer.getPresence().peers.map(p => p.name).join(', ');
-  e.textContent = tr('viewer.pres.line', presLast.state === 'online' ? tr('viewer.pres.online', presLast.count, names ? tr('viewer.pres.with', names) : '') : (presLast.state === 'error' && presLast.reason ? tr('viewer.pres.error.why', presLast.reason) : (T[presLast.state] || presLast.state)));
+  e.textContent = tr('viewer.pres.line', presLast.state === 'online' ? tr('viewer.pres.online', presLast.count, names ? tr('viewer.pres.with', names) : '') : (presLast.state === 'error' && presLast.reason ? tr('viewer.pres.error.why', presLast.reason) : presLast.state === 'refused' ? tr('viewer.pres.refused', presLast.reason) : (T[presLast.state] || presLast.state)));
 }
 viewer.onPresence = s => { presLast = s; presUpdate(); };
 viewer.onName = n => { myName = n; const i = document.querySelector('input[data-myname]'); if (i) i.value = n; setStatus(tr('viewer.name.given', n)); };

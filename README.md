@@ -89,7 +89,7 @@ The "Keyboard" setting (Auto, AZERTY or QWERTY) only changes the letters shown i
 
 ## Presence server
 
-Positions, chat (history `--history-file`), moderation from its console (`liste`, `ejecter`, `bannir`, `bans`, `debannir`, `rooms`, `visits-key`, `aide`; English aliases `list`, `kick`, `ban`, `unban`, `help`), visitor counters for the map, a visit log without IP addresses (`--visits`, v48) that the creator reads with `#visits` and their key. Making it public without showing its IP address: procedures § 11. Details: manual § 31.
+Positions, chat (history `--history-file`), moderation from its console (`liste`, `ejecter`, `bannir`, `bans`, `debannir`, `rooms`, `visits-key`, `creators`, `aide`; English aliases `list`, `kick`, `ban`, `unban`, `help`), visitor counters for the map, a visit log without IP addresses (`--visits`, v48) that the creator reads with `#visits` and their key, hosting of other creators (`--creators`, v51: declared pages, rooms reserved by a prefix, manual § 34). Making it public without showing its IP address: procedures § 11. Details: manual § 31.
 
 ## Language
 
@@ -99,11 +99,11 @@ Positions, chat (history `--history-file`), moderation from its console (`liste`
 
 ## Develop
 
-`REPRISE.md` (at the root, in French) gives the state of the repository, the decisions and what is left to do; `CHANGELOG.md` and `HISTORY.md` the details of each version. Tests: `python build.py`, then the scripts of `tests/`: `smoke.py`, `i18n.py`, `samples.py`, `doc_options.py`, `tools_lang.py`, `modulaire.py`, `tuiles.py`, `glb2tiles.py`, `oar2glb.py`, `terrain.py` and one file per version (`v23.py` to `v50.py`). Browser tests need Playwright and Chromium; variables `THREE_DIR` (npm `three` package, offline) and `CHROMIUM` (executable).
+`REPRISE.md` (at the root, in French) gives the state of the repository, the decisions and what is left to do; `CHANGELOG.md` and `HISTORY.md` the details of each version. Tests: `python build.py`, then the scripts of `tests/`: `smoke.py`, `i18n.py`, `samples.py`, `doc_options.py`, `tools_lang.py`, `modulaire.py`, `tuiles.py`, `glb2tiles.py`, `oar2glb.py`, `terrain.py` and one file per version (`v23.py` to `v51.py`). Browser tests need Playwright and Chromium; variables `THREE_DIR` (npm `three` package, offline) and `CHROMIUM` (executable).
 
 ## Security
 
-Never commit: Home Assistant addresses (`zones*.json`), `*.reglages.json`, `regions.json`, `presence_identities.json`, `presence_bans.json`, logs, the visit log and `presence_visits_keys.json`. The `.gitignore` excludes the usual ones. `--profile public` removes the private zones from published pages.
+Never commit: Home Assistant addresses (`zones*.json`), `*.reglages.json`, `regions.json`, `presence_identities.json`, `presence_bans.json`, logs, the visit log, `presence_visits_keys.json` and `presence_creators.json`. The `.gitignore` excludes the usual ones. `--profile public` removes the private zones from published pages.
 
 ## License
 

@@ -1579,6 +1579,11 @@ function createViewer(container, cfg0, loader) {
       if (m.t === 'banned' && m.until) r += tr('core.ban.until', new Date(m.until * 1000).toLocaleString(i18nLocale));
       pStatus(m.t, r);
     }
+    else if (m.t === 'refused') {   // v51 : refus d'un serveur à créateurs (origine non déclarée, créateur suspendu, salon hors préfixe, trop de salons) : pas de nouvelle tentative
+      P.blocked = true;
+      const RF = { origin: tr('core.pres.refused.origin'), off: tr('core.pres.refused.off'), room: tr('core.pres.refused.room'), rooms: tr('core.pres.refused.rooms') };
+      pStatus('refused', RF[m.why] || tr('core.pres.refused.unknown'));
+    }
     else if (m.t === 'full') { pStatus('full'); }
     dirty = true;
   }

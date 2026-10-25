@@ -22,6 +22,10 @@ et limite la durée de conservation (données personnelles).
 Journal des visites (--visits, v48) : une ligne JSON par visite (salon, arrivée, durée, temps de promenade, empreinte du
 navigateur ; pseudo seulement avec --visits-names ; jamais d'IP). Le créateur d'une région le consulte depuis sa page
 (adresse suivie de #visits) avec la clé donnée par la commande de console « visits-key ROOM ».
+
+Créateurs (--creators, v51) : fichier JSON relu à chaud ; chaque créateur déclare les origines de ses pages (adresses
+https://nom.exemple) et un préfixe de salon (« alice. ») ; une page d'une autre origine, ou un salon hors du préfixe,
+est refusée avec une raison que la page affiche. Sans --creators, tout le monde est accepté comme avant.
 """
 from __future__ import annotations
 
@@ -326,6 +330,144 @@ class Registry:
             self.save()
             return base, True
         return base[:18] + suffix, False
+
+
+# ----------------------------------------------------------------- créateurs (v51)
+CREATORS = None          # None : sans --creators (tout le monde est accepté) ; sinon la liste des créateurs valides du fichier
+CR_STAT = {"mtime": None, "checked": 0.0}
+CR_ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,32}$")
+
+
+def origin_norm(o):
+    return str(o or "").strip().rstrip("/").lower()[:200]
+
+
+def cr_int(v):
+    return int(v) if isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v) and v > 0 else 0
+
+
+def creators_parse(d):
+    """créateurs valides du fichier ; une entrée invalide est signalée dans la console et ignorée"""
+    items = d.get("creators") if isinstance(d, dict) else None
+    if not isinstance(items, list):
+        raise ValueError("creators")
+    out, ids, pres, owner = [], set(), set(), {}
+    for i, e in enumerate(items, 1):
+        if not isinstance(e, dict) or not CR_ID_RE.match(str(e.get("id") or "")):
+            print(_tr("py.presence.cr.bad", i))
+            continue
+        cid = e["id"]
+        pre = e.get("prefix", cid)
+        pre = "" if pre is None else str(pre)
+        if pre and (clean_room(pre) != pre or "." in pre):
+            print(_tr("py.presence.cr.badprefix", i, pre))
+            continue
+        if cid.lower() in ids or pre.lower() in pres:
+            print(_tr("py.presence.cr.dup", i, cid if cid.lower() in ids else pre or '""'))
+            continue
+        ids.add(cid.lower())
+        pres.add(pre.lower())
+        origins = []
+        for o in e.get("origins") if isinstance(e.get("origins"), list) else []:
+            o = origin_norm(o)
+            if not o or o in origins:
+                continue
+            if o in owner:
+                print(_tr("py.presence.cr.origindup", o, owner[o], cid))
+                continue
+            owner[o] = cid
+            origins.append(o)
+        out.append({"id": cid, "prefix": pre, "plow": pre.lower(), "origins": origins, "maxWalkers": cr_int(e.get("maxWalkers")),
+                    "maxRooms": cr_int(e.get("maxRooms")), "off": e.get("off") is True, "note": str(e.get("note") or "")})
+    return out
+
+
+def creators_reload(force=False):
+    """relit le fichier des créateurs s'il a changé (au plus une fois toutes les 2 s, à l'arrivée d'une connexion) ;
+    fichier absent : toute connexion refusée ; fichier illisible : la liste précédente est gardée"""
+    global CREATORS
+    if not OPTS.creators:
+        return
+    now = time.monotonic()
+    if not force and now - CR_STAT["checked"] < 2:
+        return
+    CR_STAT["checked"] = now
+    try:
+        mt = os.path.getmtime(OPTS.creators)
+    except OSError:
+        if CR_STAT["mtime"] != "missing" or force:
+            print(_tr("py.presence.cr.missing", OPTS.creators))
+        CR_STAT["mtime"], CREATORS = "missing", []
+        return
+    if mt == CR_STAT["mtime"] and not force:
+        return
+    CR_STAT["mtime"] = mt
+    try:
+        with open(OPTS.creators, encoding="utf-8") as f:
+            lst = creators_parse(json.load(f))
+    except (OSError, ValueError) as e:
+        if CREATORS is None:
+            CREATORS = []
+        print(_tr("py.presence.cr.unreadable", OPTS.creators, e))
+        return
+    CREATORS = lst
+    print(_tr("py.presence.cr.loaded", len(lst), OPTS.creators))
+
+
+def creator_by_origin(origin):
+    o = origin_norm(origin)
+    return next((c for c in CREATORS or () if o and o in c["origins"]), None)
+
+
+def creator_of_room(room):
+    """créateur à qui appartient un salon : celui dont le préfixe suivi d'un point commence le nom (sans tenir compte de la casse),
+    sinon celui qui n'a pas de préfixe (l'hôte du serveur), sinon personne"""
+    low, free = str(room).lower(), None
+    for c in CREATORS or ():
+        if c["prefix"] and low.startswith(c["plow"] + "."):
+            return c
+        if not c["prefix"] and free is None:
+            free = c
+    return free
+
+
+def creator_rooms(cid):
+    return [r for r, ps in ROOMS.items() if ps and (creator_of_room(r) or {}).get("id") == cid]
+
+
+def creator_full(cr):
+    """vrai si le créateur a atteint son nombre de promeneurs (valeur du fichier relu, tous ses salons)"""
+    if cr is None:
+        return False
+    cur = next((c for c in CREATORS or () if c["id"] == cr["id"]), cr)
+    return bool(cur["maxWalkers"]) and sum(len(walkers(r)) for r in creator_rooms(cur["id"])) >= cur["maxWalkers"]
+
+
+def creators_command():
+    """creators : créateurs du fichier (relu), préfixe, état, salons ouverts, promeneurs, origines"""
+    if not OPTS.creators:
+        print(_tr("py.presence.cr.off"))
+        return
+    creators_reload(force=True)
+    if not CREATORS:
+        print(_tr("py.presence.cr.none", OPTS.creators))
+    for c in CREATORS or ():
+        rooms = creator_rooms(c["id"])
+        print(_tr("py.presence.cr.line", c["id"], c["prefix"] + "." if c["prefix"] else _tr("py.presence.cr.noprefix"),
+                  _tr("py.presence.cr.suspended") if c["off"] else _tr("py.presence.cr.active"),
+                  len(rooms), _tr("py.presence.cr.max", c["maxRooms"]) if c["maxRooms"] else "",
+                  sum(len(walkers(r)) for r in rooms), _tr("py.presence.cr.max", c["maxWalkers"]) if c["maxWalkers"] else ""))
+        print(_tr("py.presence.cr.origins", ", ".join(c["origins"]) or "-"))
+
+
+async def refuse(ws, why, room, ip, detail):
+    """v51 : refus d'un créateur (origine, suspendu, salon, salons) : message à la page, journal, fermeture 4003"""
+    await send_safe(ws, json.dumps({"t": "refused", "why": why}))
+    log(_tr("py.presence.ev.refuse"), room or "-", f"ip {ip_for_log(ip)}", detail)
+    try:
+        await ws.close(code=4003, reason=why)
+    except Exception:
+        pass
 
 
 # ----------------------------------------------------------------- journal des visites (v48)
@@ -652,6 +794,8 @@ async def run_command(line):
             print(_tr("py.presence.0_ejecte", peer.name or _tr('py.presence.spectator_paren')))
     elif cmd in ("rooms", "salons"):
         rooms_command()
+    elif cmd in ("creators", "createurs", "créateurs"):
+        creators_command()
     elif cmd in ("visits-key", "cle-visites"):
         vkey_command(rest)
     elif cmd == "bans":
@@ -720,6 +864,16 @@ def walkers(room):
     return [p for p in ROOMS.get(room, {}).values() if not p.spectator]
 
 
+def ws_origin(ws):
+    """en-tête Origin de la connexion (donné par le navigateur ; « null » pour une page ouverte depuis le disque)"""
+    try:
+        req = getattr(ws, "request", None)
+        headers = getattr(req, "headers", None) or getattr(ws, "request_headers", None)
+        return str(headers.get("Origin") or "")[:200] if headers is not None else ""
+    except Exception:
+        return ""
+
+
 def remote_ip(ws):
     if OPTS is not None and OPTS.proxy_header:
         try:
@@ -758,6 +912,15 @@ async def handler(ws):
             return
         PER_IP[ip] = PER_IP.get(ip, 0) + 1
         counted = True
+        cr = None
+        if OPTS.creators:      # v51 : la page doit venir d'une origine déclarée par un créateur actif
+            creators_reload()
+            org = ws_origin(ws)
+            cr = creator_by_origin(org)
+            if cr is None or cr["off"]:
+                await refuse(ws, "origin" if cr is None else "off", "-", ip,
+                             _tr("py.presence.cr.refuse.origin", org or _tr("py.presence.cr.noorigin")) if cr is None else _tr("py.presence.cr.refuse.off", cr["id"]))
+                return
         msg = json.loads(await asyncio.wait_for(ws.recv(), 10))
         if isinstance(msg, dict) and msg.get("t") == "visits":     # v48 : journal des visites, demandé par la page avec #visits
             await ws.send(json.dumps(visits_answer(ip, msg), ensure_ascii=False, separators=(",", ":")))
@@ -770,7 +933,13 @@ async def handler(ws):
         if not isinstance(msg, dict) or msg.get("t") != "hello":
             return
         room = clean_room(msg.get("room"))
-        peers = ROOMS.setdefault(room, {})
+        if cr is not None:     # v51 : seulement un salon du créateur, et pas plus de salons ouverts que permis
+            if (creator_of_room(room) or {}).get("id") != cr["id"]:
+                await refuse(ws, "room", room, ip, _tr("py.presence.cr.refuse.room", room, cr["id"]))
+                return
+            if cr["maxRooms"] and not ROOMS.get(room) and len(creator_rooms(cr["id"])) >= cr["maxRooms"]:
+                await refuse(ws, "rooms", room, ip, _tr("py.presence.cr.refuse.rooms", cr["id"], cr["maxRooms"]))
+                return
         uid = str(msg.get("uid") or "")[:128]
         uidh = REG.hash(uid) if len(uid) >= 16 else "anon-" + secrets.token_hex(8)
         spectator = bool(msg.get("spectator"))
@@ -784,7 +953,7 @@ async def handler(ws):
                 await ws.send(json.dumps({"t": "full"}))
                 log(_tr("py.presence.ev.refuse"), room, f"ip {ip_for_log(ip)}", _tr("py.presence.trop_de_spectateurs"))
                 return
-        elif len(walkers(room)) >= OPTS.max_per_room or sum(len(r) for r in ROOMS.values()) >= OPTS.max_total:
+        elif len(walkers(room)) >= OPTS.max_per_room or sum(len(r) for r in ROOMS.values()) >= OPTS.max_total or creator_full(cr):
             await ws.send(json.dumps({"t": "full"}))
             log(_tr("py.presence.ev.refuse"), room, f"ip {ip_for_log(ip)}", _tr("py.presence.salon_plein"))
             return
@@ -795,6 +964,7 @@ async def handler(ws):
             peer.name, _ = REG.resolve(uidh, msg.get("name"), persistent=not uidh.startswith("anon-"))
             peer.vname = peer.name
         existing = [p.public() for p in walkers(room)]
+        peers = ROOMS.setdefault(room, {})      # v51 : créé ici seulement (un refus plus haut ne laisse plus de salon vide)
         peers[pid] = peer
         await ws.send(json.dumps({"t": "welcome", "id": pid, "name": peer.name, "color": peer.color, "peers": existing,
                                   "history": list(HISTORY.get(room, ()))[-OPTS.history:] if OPTS.history > 0 else [], "role": "spectator" if spectator else "walker"},
@@ -813,7 +983,7 @@ async def handler(ws):
             if t == "role":
                 want_walker = bool(m.get("walker"))
                 if want_walker and peer.spectator:
-                    if len(walkers(room)) >= OPTS.max_per_room:
+                    if len(walkers(room)) >= OPTS.max_per_room or creator_full(cr):
                         await send_safe(ws, json.dumps({"t": "full"}))
                         continue
                     await become_walker(peer, m.get("name"))
@@ -954,6 +1124,7 @@ async def main():
     ap.add_argument("--visits-days", type=int, default=365, metavar="N", help=_tr("py.presence.help.visits_days"))
     ap.add_argument("--visits-names", action="store_true", help=_tr("py.presence.help.visits_names"))
     ap.add_argument("--visits-keys", default="presence_visits_keys.json", metavar="FILE", help=_tr("py.presence.help.visits_keys"))
+    ap.add_argument("--creators", default="", metavar="FILE", help=_tr("py.presence.help.creators"))
     ap.add_argument("--cert", help=_tr("py.presence.certificat_tls_wss"))
     ap.add_argument("--key", help=_tr("py.presence.cle_privee_tls"))
     OPTS = ap.parse_args()
@@ -967,11 +1138,13 @@ async def main():
     OPTS.history_file = here(OPTS.history_file) if OPTS.history_file else ""
     OPTS.visits = here(OPTS.visits) if OPTS.visits else ""
     OPTS.visits_keys = here(OPTS.visits_keys) if OPTS.visits_keys else ""
+    OPTS.creators = here(OPTS.creators) if OPTS.creators else ""
     REG = Registry(OPTS.identities or None, OPTS.name_ttl_days, [x for x in OPTS.reserved.split(",")])
     setup_log()
     bans_load()
     hist_load()
     vkeys_load()
+    creators_reload(force=True)
     if OPTS.visits:
         try:
             visits_purge()
@@ -1002,6 +1175,8 @@ async def main():
             LOG.info(_tr("py.presence.serveur_journal_0_registre_des_noms", OPTS.log or '(aucun : option --log)', OPTS.identities or '(en mémoire)'))
             if OPTS.visits:
                 LOG.info(_tr("py.presence.visits_on", OPTS.visits, OPTS.visits_days, _tr("py.presence.visits.yes") if OPTS.visits_names else _tr("py.presence.visits.no")))
+            if OPTS.creators:
+                LOG.info(_tr("py.presence.cr.on", OPTS.creators, len(CREATORS or ())))
             print(_tr("py.presence.moderation_tape_aide_pour_la_liste"))
             await stop.wait()
     finally:

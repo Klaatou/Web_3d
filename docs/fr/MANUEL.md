@@ -1,6 +1,6 @@
-# Mode d'emploi : zones, portails et points d'arrivée (v50)
+# Mode d'emploi : zones, portails et points d'arrivée (v51)
 
-> **Résumé (v50).** Ce fichier est le mode d'emploi détaillé ; il ne se lit pas d'un bout à l'autre. Pour **toutes les options** des outils, avec leur effet et leur défaut en français et en anglais : `REFERENCE_OPTIONS.md` (générée depuis les outils par `gen_reference.py`). Pour **faire une tâche pas à pas** (OAR vers page, région en tuiles, mise à jour, zones, serveur de présence, carte) : `PROCEDURES.md`. Ici : les zones et les portails (§§ 1 à 10), les touches (§ 2), les réglages et leurs fichiers (§§ 11 à 19) et les nouveautés version par version (§§ 18 à 33 ; le § 27 est la référence des fichiers JSON). Langue de la page et des outils : § 21.8 à 21.11.
+> **Résumé (v51).** Ce fichier est le mode d'emploi détaillé ; il ne se lit pas d'un bout à l'autre. Pour **toutes les options** des outils, avec leur effet et leur défaut en français et en anglais : `REFERENCE_OPTIONS.md` (générée depuis les outils par `gen_reference.py`). Pour **faire une tâche pas à pas** (OAR vers page, région en tuiles, mise à jour, zones, serveur de présence, carte) : `PROCEDURES.md`. Ici : les zones et les portails (§§ 1 à 10), les touches (§ 2), les réglages et leurs fichiers (§§ 11 à 19) et les nouveautés version par version (§§ 18 à 34 ; le § 27 est la référence des fichiers JSON). Langue de la page et des outils : § 21.8 à 21.11.
 
 ## 1. La règle qui explique 90 % des pannes
 
@@ -1200,6 +1200,7 @@ Un fichier JSON n'accepte pas de commentaires. Les explications sont donc ici, e
 | fichier de `--history-file` (par exemple `chat.jsonl`) | `chat_history.sample.jsonl` | `presence_server.py` | `presence_server.py` |
 | fichier de `--visits` (par exemple `visits.jsonl`) | `visits.sample.jsonl` | `presence_server.py` | `presence_server.py` |
 | `presence_visits_keys.json` | `presence_visits_keys.sample.json` | `presence_server.py` (commande `visits-key`) | `presence_server.py` |
+| `presence_creators.json` | `presence_creators.sample.json` | à la main (§ 34) | `presence_server.py` (`--creators`) |
 
 Deux autres fichiers ont **exactement le format** de `NOM.zones.json` :
 
@@ -1501,6 +1502,18 @@ Les visites plus vieilles que `--visits-days` jours (365 par défaut) sont retir
 |---|---|---|
 | `rooms` | objet | pour chaque salon : `salt` (sel tiré au hasard), `hash` (empreinte SHA-256 du sel suivi de la clé en majuscules, sans tirets ni espaces), `added` (création, en secondes depuis 1970). La clé elle-même n'est jamais écrite |
 
+**`presence_creators.json`** (option `--creators`, v51) : les créateurs accueillis, écrit à la main et relu sans relancer le serveur (§ 34). Un objet `{"creators": [...]}` ; pour chaque créateur :
+
+| Champ | Type | Ce qu'il contient |
+|---|---|---|
+| `id` | texte | identifiant unique : lettres, chiffres, `-` et `_`, 32 au plus |
+| `prefix` | texte | préfixe de ses salons, sans point ; absent = `id` ; `""` = l'hôte, qui garde tous les salons n'appartenant à aucun créateur (une seule entrée) |
+| `origins` | liste de textes | origines de ses pages (`https://alice.example`, `null` pour une page ouverte depuis le disque et pour le viewer) ; une origine n'appartient qu'à un créateur |
+| `maxWalkers` | nombre entier | promeneurs au plus sur tous ses salons ; `0` ou absent = seulement les limites générales |
+| `maxRooms` | nombre entier | salons ouverts en même temps au plus ; `0` ou absent = sans limite propre |
+| `off` | booléen | `true` : suspendu, ses nouvelles connexions sont refusées |
+| `note` | texte | note libre de l'hôte, ignorée par le serveur |
+
 ### 27.11 Noms en anglais depuis la v43
 
 Pour que tous les noms soient dans la même langue, la v43 a mis en anglais les derniers noms français : options des outils, valeurs dans les fichiers JSON et paramètres d'adresse. **Les anciens noms restent acceptés** : les commandes, les fichiers et les liens déjà écrits continuent de marcher. Un ancien nom est remplacé par le nouveau à la lecture ; quand un outil réécrit un fichier, il écrit le nouveau. `--update` garde tel quel un champ que l'on ne change pas : un ancien `tileMaxMo` reste donc dans `NOM.config.json`, et la page le lit toujours.
@@ -1788,3 +1801,47 @@ Le bouton **Ajouter / mettre à jour cette région dans la carte** met à jour s
 ### 33.4 Non testé
 
 Edge, Windows.
+
+## 34. Nouveautés de la v51 (25/10/2026) : créateurs sur le serveur de présence
+
+### 34.1 À quoi ça sert
+
+L'hôte d'un serveur de présence accueille les régions d'autres créateurs, hébergées où ils veulent. Sans précaution, toute page qui connaît l'adresse du serveur peut s'y brancher et prendre le salon d'un autre, et ajouter une origine (`--origins`) demande de relancer le serveur. Avec `--creators`, le serveur n'accepte que les pages déclarées, chacune dans ses propres salons. Sans `--creators`, rien ne change.
+
+### 34.2 Le fichier des créateurs
+
+Lancement : ajouter `--creators presence_creators.json` à la ligne du serveur (chemin relatif au dossier du script). Le fichier s'écrit à la main, à partir de `docs/samples/presence_creators.sample.json` (champs au § 27.10). Il est relu sans relancer le serveur : une modification compte pour les connexions suivantes (vérification au plus toutes les 2 s) ; les connexions déjà ouvertes restent (pour en couper une : `ejecter`).
+
+- **Origine** : le début de l'adresse de la page, sans chemin : `https://alice.example`, avec le port s'il n'est pas le port habituel (`http://localhost:8000`). Une page ouverte depuis le disque et le viewer ont l'origine `null`.
+- **Préfixe** : le créateur `alice` n'ouvre que des salons `alice.NAME` (casse du préfixe ignorée) ; la valeur `room` de sa config doit donc commencer par `alice.`. Une seule entrée peut avoir `"prefix": ""` : l'hôte, qui garde tous les salons n'appartenant à aucun créateur (ses salons actuels ne changent pas de nom).
+- **Limites** : `maxWalkers` (promeneurs au plus sur tous ses salons ; au-delà, « salon complet », aussi au passage en promenade), `maxRooms` (salons ouverts en même temps). Les limites générales (`--max-per-room`, `--max-total`, `--max-per-ip`) s'appliquent toujours.
+- **`"off": true`** suspend le créateur.
+- Fichier absent : toute connexion est refusée. Fichier illisible (par exemple pendant qu'on l'écrit) : la liste précédente est gardée. Entrée invalide : signalée dans la console et ignorée.
+
+### 34.3 Ce que voit le visiteur
+
+La page affiche « présence refusée : » suivi de la raison, et ne réessaie pas (recharger la page une fois corrigé) : page non déclarée sur ce serveur, créateur suspendu, salon qui n'appartient pas au créateur, trop de salons ouverts. Le viewer affiche la même raison. Le serveur ferme la connexion avec le code 4003, que montre « Copier le diagnostic ».
+
+### 34.4 Console et journal
+
+- `creators` (alias `createurs`) relit le fichier et liste chaque créateur : préfixe, actif ou suspendu, salons ouverts, promeneurs, origines.
+- Chaque refus est noté « refus » dans `presence.log` avec sa raison ; une connexion acceptée se reconnaît au préfixe de son salon.
+- Les clés du journal des visites restent par salon : `visits-key alice.galerie`.
+
+### 34.5 Accueillir un créateur
+
+Procédures § 6, point 7.
+
+### 34.6 Limites
+
+- L'origine est annoncée par le navigateur : elle empêche une autre page web de prendre un salon, pas un programme écrit exprès qui annoncerait une fausse origine. Contre lui restent `--max-per-ip`, `ejecter` et `bannir`.
+- Une page en https ne peut joindre qu'un serveur en `wss://` (procédures § 11).
+- Les compteurs de la carte des mondes (requête des salons) suivent la même règle d'origine.
+
+### 34.7 Tests de la v51
+
+`tests/v51.py` (vrai serveur, puis Chromium) : sans fichier, tout est accepté ; refus par origine, suspension, préfixe, nombre de salons ; promeneurs au plus à l'arrivée et au passage en promenade ; hôte sans préfixe ; relecture à chaud ; console ; journal ; refus affiché par la page (français, anglais) et par le viewer. `tests/samples.py` lit l'exemple.
+
+### 34.8 Non testé
+
+Windows, Edge, `wss://` derrière Funnel, page d'un créateur sur un autre domaine.

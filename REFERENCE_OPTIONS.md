@@ -170,6 +170,7 @@ Serveur de présence : positions des visiteurs, chat, modération.<br>Presence s
 | `--visits-days` | N | `365` | jours de visites conservés dans ce journal (0 = tous)<br>days of visits kept in this log (0 = all) |
 | `--visits-names` | (aucune) / (none) |  | note aussi le pseudo des promeneurs dans le journal des visites<br>also record walkers' nicknames in the visit log |
 | `--visits-keys` | FILE | `presence_visits_keys.json` | fichier des clés d'accès au journal des visites (empreintes seulement, chemin relatif au dossier du script)<br>file of the visit log access keys (fingerprints only, path relative to the script's folder) |
+| `--creators` | FILE | (vide) / (empty) | fichier des créateurs autorisés (origines de leurs pages, préfixe de salon, limites ; relu à chaud, chemin relatif au dossier du script) ; absent : tout le monde est accepté<br>file of allowed creators (origins of their pages, room prefix, limits; re-read on change, path relative to the script's folder); absent: everyone is accepted |
 | `--cert` | CERT |  | certificat TLS (wss://)<br>TLS certificate (wss://) |
 | `--key` | KEY |  | clé privée TLS<br>TLS private key |
 

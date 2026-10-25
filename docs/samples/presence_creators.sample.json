@@ -1,0 +1,7 @@
+{
+ "creators": [
+  {"id": "host", "prefix": "", "origins": ["https://ADRESSE", "http://localhost:8000", "null"], "note": "the server owner: every room that belongs to no creator"},
+  {"id": "alice", "origins": ["https://alice.example"], "maxWalkers": 20, "maxRooms": 3, "off": false, "note": "rooms alice.*, added 25/10/2026"},
+  {"id": "bob", "prefix": "bob", "origins": ["https://bob.example", "https://www.bob.example"], "off": true, "note": "suspended"}
+ ]
+}

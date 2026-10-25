@@ -36,10 +36,10 @@ rapport(not trouves, "aide, messages et documents : seulement les nouveaux noms 
 
 print("--- 1. les fichiers se lisent")
 noms = sorted(p.name for p in SAMPLES.iterdir())
-attendus = ["chat_history.sample.jsonl", "default.sample.json", "disposition.sample.json", "presence_bans.sample.json", "presence_identities.sample.json",
-            "presence_visits_keys.sample.json", "region.config.sample.json", "region.reglages.sample.json", "region.tiles.sample.json", "region.zones.sample.json",
+attendus = ["chat_history.sample.jsonl", "default.sample.json", "disposition.sample.json", "presence_bans.sample.json", "presence_creators.sample.json",
+            "presence_identities.sample.json", "presence_visits_keys.sample.json", "region.config.sample.json", "region.reglages.sample.json", "region.tiles.sample.json", "region.zones.sample.json",
             "regions.sample.json", "visits.sample.jsonl"]
-rapport(noms == attendus, "docs/samples/ contient les 12 exemples", noms)
+rapport(noms == attendus, "docs/samples/ contient les 13 exemples", noms)
 for n in noms:
     try:
         if n.endswith(".jsonl"):
@@ -140,6 +140,28 @@ rapport(vr.get("ok") is True and vr.get("visits") == 3 and vr.get("visitors") ==
         "visites d'exemple : clé acceptée, 3 visites (deux lignes de JJ fusionnées), 3 visiteurs", vr)
 rapport(sum(d["visits"] for d in vr.get("days", [])) == 3 and sum(d["walked"] for d in vr.get("days", [])) == 1, "visites d'exemple : total par jour, une avec promenade", vr.get("days"))
 rapport(len(vis.read_text(encoding="utf-8").splitlines()) == 5, "visites d'exemple : fichier gardé tel quel (5 lignes)")
+# v51 : créateurs d'exemple (manuel § 27.12 et § 34) : 3 lus, alice accueillie dans alice.gallery, bob suspendu, hôte sans préfixe
+crf = tmp / "creators.json"
+shutil.copy(SAMPLES / "presence_creators.sample.json", crf)
+pp, pport = lancer_presence("--creators", crf)
+
+
+async def createurs_exemple():
+    import websockets
+    out = []
+    for origine, salon in (("https://alice.example", "alice.gallery"), ("https://bob.example", "bob.gallery"), ("http://localhost:8000", "Region"), ("https://alice.example", "Region")):
+        async with websockets.connect(f"ws://127.0.0.1:{pport}", origin=origine) as ws:
+            try:
+                await ws.send(json.dumps({"t": "hello", "room": salon, "name": "T", "uid": "0123456789abcdef0123", "spectator": True}))
+            except websockets.ConnectionClosed:      # refus : le serveur a déjà répondu et fermé
+                pass
+            out.append(json.loads(await ws.recv()).get("t"))
+    return out
+cr = asyncio.run(createurs_exemple())
+pp.kill()
+sortie = pp.communicate()[0]
+rapport(FR["py.presence.cr.loaded"].replace("{0}", "3").split("{")[0] in sortie and "ignor" not in sortie, "créateurs d'exemple : 3 lus, aucune entrée ignorée", sortie[-600:])
+rapport(cr == ["welcome", "refused", "welcome", "refused"], "créateurs d'exemple : alice accueillie, bob suspendu, hôte accueilli, alice hors de ses salons refusée", cr)
 
 http, hport = serveur(site)
 BASE = f"http://127.0.0.1:{hport}/"

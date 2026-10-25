@@ -1,6 +1,6 @@
-# User manual: zones, portals and arrival points (v50)
+# User manual: zones, portals and arrival points (v51)
 
-> **Summary (v50).** This file is the detailed user manual; it is not meant to be read from end to end. For **all the options** of the tools, with their effect and their default, in French and English: `REFERENCE_OPTIONS.md` (generated from the tools by `gen_reference.py`). To **do a task step by step** (OAR to page, tiled region, update, zones, presence server, map): `PROCEDURES.md`. Here: zones and portals (§§ 1 to 10), keys (§ 2), settings and their files (§§ 11 to 19) and the new features version by version (§§ 18 to 33; § 27 is the JSON file reference). Language of the page and of the tools: § 21.8 to 21.11.
+> **Summary (v51).** This file is the detailed user manual; it is not meant to be read from end to end. For **all the options** of the tools, with their effect and their default, in French and English: `REFERENCE_OPTIONS.md` (generated from the tools by `gen_reference.py`). To **do a task step by step** (OAR to page, tiled region, update, zones, presence server, map): `PROCEDURES.md`. Here: zones and portals (§§ 1 to 10), keys (§ 2), settings and their files (§§ 11 to 19) and the new features version by version (§§ 18 to 34; § 27 is the JSON file reference). Language of the page and of the tools: § 21.8 to 21.11.
 
 ## 1. The rule that explains 90 % of failures
 
@@ -1200,6 +1200,7 @@ A JSON file does not accept comments. The explanations are therefore here, and t
 | `--history-file` file (for example `chat.jsonl`) | `chat_history.sample.jsonl` | `presence_server.py` | `presence_server.py` |
 | `--visits` file (for example `visits.jsonl`) | `visits.sample.jsonl` | `presence_server.py` | `presence_server.py` |
 | `presence_visits_keys.json` | `presence_visits_keys.sample.json` | `presence_server.py` (`visits-key` command) | `presence_server.py` |
+| `presence_creators.json` | `presence_creators.sample.json` | by hand (§ 34) | `presence_server.py` (`--creators`) |
 
 Two other files have **exactly the format** of `NOM.zones.json`:
 
@@ -1501,6 +1502,18 @@ Visits older than `--visits-days` days (365 by default) are removed at startup a
 |---|---|---|
 | `rooms` | object | for each room: `salt` (random salt), `hash` (SHA-256 fingerprint of the salt followed by the key in upper case, without dashes or spaces), `added` (creation, in seconds since 1970). The key itself is never written |
 
+**`presence_creators.json`** (`--creators` option, v51): the hosted creators, written by hand and re-read without restarting the server (§ 34). An object `{"creators": [...]}`; for each creator:
+
+| Field | Type | What it contains |
+|---|---|---|
+| `id` | text | unique identifier: letters, digits, `-` and `_`, 32 at most |
+| `prefix` | text | prefix of their rooms, without a dot; absent = `id`; `""` = the host, who keeps every room that belongs to no creator (a single entry) |
+| `origins` | list of texts | origins of their pages (`https://alice.example`, `null` for a page opened from the disk and for the viewer); an origin belongs to one creator only |
+| `maxWalkers` | integer | walkers at most over all their rooms; `0` or absent = only the general limits |
+| `maxRooms` | integer | rooms open at the same time at most; `0` or absent = no limit of their own |
+| `off` | boolean | `true`: suspended, their new connections are refused |
+| `note` | text | free note of the host, ignored by the server |
+
 ### 27.11 English names since v43
 
 So that all names are in the same language, v43 put the last French names into English: tool options, values in the JSON files and address parameters. **The old names are still accepted**: commands, files and links already written keep working. An old name is replaced by the new one when read; when a tool rewrites a file, it writes the new one. `--update` keeps a field you do not change as it is: an old `tileMaxMo` therefore stays in `NOM.config.json`, and the page still reads it.
@@ -1787,3 +1800,47 @@ The **Add / update this region in the map** button updates the card of the same 
 ### 33.4 Not tested
 
 Edge, Windows.
+
+## 34. What's new in v51 (25/10/2026): creators on the presence server
+
+### 34.1 What it is for
+
+The host of a presence server welcomes the regions of other creators, hosted wherever they like. Without care, any page that knows the server address can connect to it and take someone else's room, and adding an origin (`--origins`) means restarting the server. With `--creators`, the server only accepts declared pages, each in its own rooms. Without `--creators`, nothing changes.
+
+### 34.2 The creators file
+
+Start: add `--creators presence_creators.json` to the server line (path relative to the script's folder). The file is written by hand, from `docs/samples/presence_creators.sample.json` (fields in § 27.10). It is re-read without restarting the server: a change applies to the next connections (checked at most every 2 s); connections already open stay (to cut one: `ejecter`).
+
+- **Origin**: the beginning of the page address, without a path: `https://alice.example`, with the port if it is not the usual one (`http://localhost:8000`). A page opened from the disk and the viewer have the origin `null`.
+- **Prefix**: creator `alice` only opens `alice.NAME` rooms (case of the prefix ignored); the `room` value of their config must therefore start with `alice.`. Only one entry may have `"prefix": ""`: the host, who keeps every room that belongs to no creator (their current rooms keep their names).
+- **Limits**: `maxWalkers` (walkers at most over all their rooms; beyond it, "room full", also when switching to walking), `maxRooms` (rooms open at the same time). The general limits (`--max-per-room`, `--max-total`, `--max-per-ip`) still apply.
+- **`"off": true`** suspends the creator.
+- Missing file: every connection is refused. Unreadable file (for example while it is being written): the previous list is kept. Invalid entry: reported in the console and ignored.
+
+### 34.3 What the visitor sees
+
+The page shows "presence refused:" followed by the reason, and does not retry (reload the page once fixed): page not declared on this server, creator suspended, room that does not belong to the creator, too many open rooms. The viewer shows the same reason. The server closes the connection with code 4003, which "Copy diagnostics" shows.
+
+### 34.4 Console and log
+
+- `creators` (alias `createurs`) re-reads the file and lists each creator: prefix, active or suspended, open rooms, walkers, origins.
+- Each refusal is logged as "refusal" in `presence.log` with its reason; an accepted connection is recognised by the prefix of its room.
+- Visit log keys remain per room: `visits-key alice.galerie`.
+
+### 34.5 Welcoming a creator
+
+Procedures § 6, item 7.
+
+### 34.6 Limits
+
+- The origin is announced by the browser: it stops another web page from taking a room, not a program written on purpose that would announce a false origin. Against it remain `--max-per-ip`, `ejecter` and `bannir`.
+- An https page can only reach a `wss://` server (procedures § 11).
+- The world map counters (room request) follow the same origin rule.
+
+### 34.7 v51 tests
+
+`tests/v51.py` (real server, then Chromium): without a file, everything is accepted; refusal by origin, suspension, prefix, number of rooms; walkers at most on arrival and when switching to walking; host without prefix; re-reading on change; console; log; refusal shown by the page (French, English) and by the viewer. `tests/samples.py` reads the sample.
+
+### 34.8 Not tested
+
+Windows, Edge, `wss://` behind Funnel, a creator's page on another domain.
