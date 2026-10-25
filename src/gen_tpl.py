@@ -282,6 +282,12 @@ footer{font-size:11px;opacity:.7}
 #who label.chk{display:inline-block;margin-left:12px}
 #who label.chk input{width:auto}
 .tile span{font-size:12px}
+#tools{margin:8px 0}
+#tools small{margin-left:8px}
+#total{font-weight:bold;margin:4px 0}
+#zoom{position:fixed;z-index:60;pointer-events:none;box-sizing:border-box;padding:4px;border:2px solid #000;border-radius:6px;background:#fff;box-shadow:0 4px 16px #0007}
+#zoom img{display:block;max-width:min(320px,70vw);max-height:min(320px,70vh)}
+#zoom[hidden]{display:none}
 </style>
 </head>
 <body><script>
@@ -289,12 +295,17 @@ __I18N__
 </script><main>
 <h1 __TITLE_ATTR__>__TITLE__</h1>
 <div id="who"><label><span data-i18n="map.pseudo">Mon pseudo : </span><input id="pseudo" maxlength="24" placeholder="Visiteur" data-i18n-ph="map.visitor" autocomplete="nickname"></label> <small data-i18n="map.pseudo.note">mémorisé dans ce navigateur ; transmis aux régions que tu visites</small> <label class="chk"><input type="checkbox" id="showurl"> <span data-i18n="map.showurl">Afficher les adresses</span></label></div>
+<div id="tools"><label class="chk"><input type="checkbox" id="alert"> <span data-i18n="map.alert">Surveillance sonore</span></label> <small id="alertState"></small></div>
+<div id="total"></div>
 <div id="grid"></div>
 <footer id="foot">glb2html __VERSION__</footer>
 </main>
 <script type="application/json" id="cfg">__CONFIG__</script>
 <script>
 (() => {
+  // v52 : delais d'interrogation des serveurs de presence (ms) : a modifier ici si la charge du serveur est trop forte
+  const POLL_MS = 10000;        // normal
+  const POLL_ALERT_MS = 5000;   // quand « Surveillance sonore » est cochee
   const C = JSON.parse(document.getElementById('cfg').textContent);
   let MAP = C.map || [];
   applyI18n(); document.getElementById('foot').textContent = tr('map.footer', '__VERSION__');
@@ -315,7 +326,48 @@ __I18N__
   const okUrl = u => { try { const x = new URL(u, location.href); return (x.protocol === 'http:' || x.protocol === 'https:' || (location.protocol === 'file:' && x.protocol === 'file:')) ? x : null; } catch (e) { return null; } };
   const safeThumb = t => typeof t === 'string' && (/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+$/.test(t) || (!/^[a-z][a-z0-9+.-]*:/i.test(t) || /^https?:/i.test(t)));
   const remap = vals => { const u = [...new Set(vals)].sort((a, b) => a - b), m = new Map(); let pos = 0; u.forEach((v, i) => { if (i) pos += Math.min(v - u[i - 1], 2); m.set(v, pos); }); return m; };
+  // v52 : agrandissement de la vignette au survol (souris seulement ; une tuile sans vignette n'en a pas)
+  const zoom = document.createElement('div'), zim = document.createElement('img'); let zpt = { x: 0, y: 0 };
+  zoom.id = 'zoom'; zoom.hidden = true; zim.alt = ''; zoom.append(zim); document.body.append(zoom);
+  const hideZoom = () => { zoom.hidden = true; };
+  const placeZoom = () => { const w = zoom.offsetWidth, h = zoom.offsetHeight; let x = zpt.x + 16, y = zpt.y + 16; if (x + w > innerWidth - 4) x = zpt.x - w - 16; if (y + h > innerHeight - 4) y = innerHeight - h - 4; zoom.style.left = Math.max(4, x) + 'px'; zoom.style.top = Math.max(4, y) + 'px'; };
+  const showZoom = src => { if (zim.getAttribute('src') !== src) zim.src = src; zoom.hidden = false; placeZoom(); };
+  zim.onload = () => { if (!zoom.hidden) placeZoom(); };
+  const zoomOn = (t, im) => {
+    t.addEventListener('pointerenter', e => { if (e.pointerType !== 'mouse') return; zpt = { x: e.clientX, y: e.clientY }; showZoom(im.src); });
+    t.addEventListener('pointermove', e => { if (e.pointerType !== 'mouse' || zoom.hidden) return; zpt = { x: e.clientX, y: e.clientY }; placeZoom(); });
+    t.addEventListener('pointerleave', hideZoom);
+  };
+  const reZoom = () => { const el = document.elementFromPoint(zpt.x, zpt.y), t = el && el.closest ? el.closest('.tile') : null, im = t && t.querySelector('img'); if (im) showZoom(im.src); };
+  // v52 : total des visiteurs, surveillance sonore des arrivees
+  const al = document.getElementById('alert'), alState = document.getElementById('alertState'), tot = document.getElementById('total');
+  const AC = window.AudioContext || window.webkitAudioContext, watched = {}; let actx = null, acted = false, lastBeep = -1e9, lastArr = null;
+  try { al.checked = localStorage.getItem('glb2html_map_alert') === '1'; } catch (e) {}
+  const ensure = () => { if (!acted || !AC) return null; try { if (!actx) actx = new AC(); if (actx.state === 'suspended' && actx.resume) actx.resume(); } catch (e) { return null; } return actx; };
+  const beep = () => {   // les deux notes montantes de l'arrivee d'un promeneur dans la page, au plus un bip toutes les 2 s
+    const now = performance.now(); if (now - lastBeep < 2000) return; const c = ensure(); if (!c) return;
+    try { let t = c.currentTime; for (const [f, d] of [[660, 0.08], [880, 0.08]]) { const o = c.createOscillator(), g = c.createGain(); o.type = 'sine'; o.frequency.value = f; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.2, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + d); o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + d + 0.02); t += d; } lastBeep = now; } catch (e) {}
+  };
+  const hm = d => String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  const showAlert = () => {
+    let s = '';
+    if (al.checked) { s = !AC ? tr('map.alert.nosound') : (!acted ? tr('map.alert.wait') : tr('map.alert.on', POLL_ALERT_MS / 1000)); if (lastArr) s += ' · ' + tr('map.alert.last', lastArr.name, lastArr.t); }
+    alState.textContent = s;
+  };
+  for (const ev of ['pointerdown', 'keydown', 'touchstart']) addEventListener(ev, () => { if (!acted) { acted = true; if (al.checked) ensure(); showAlert(); } }, true);
+  al.addEventListener('change', () => { try { localStorage.setItem('glb2html_map_alert', al.checked ? '1' : '0'); } catch (e) {} showAlert(); if (al.checked) fetchCounts(); });
+  const vcount = (srv, room) => { const k = srv + '|' + room, w = counts[k] || 0; return hasVis[srv] ? Math.max(vis[k] || 0, w) : w; };
+  const beforeOf = srv => { if (!watched[srv]) return null; const b = {}; for (const r of MAP) if (r && r.room && srvOf(r) === srv) b[r.room] = vcount(srv, r.room); return b; };
+  const arrivals = (srv, before) => {   // une hausse du nombre de visiteurs d'un salon de la carte entre deux releves = une arrivee ; le premier releve d'un serveur sert de base
+    watched[srv] = true; if (!before) return;
+    const done = new Set();
+    for (const r of MAP) { if (!r || !r.room || srvOf(r) !== srv || done.has(r.room)) continue; done.add(r.room); const b0 = before[r.room]; if (b0 !== undefined && vcount(srv, r.room) > b0) { lastArr = { name: r.name, t: hm(new Date()) }; if (al.checked) beep(); } }
+    showAlert();
+  };
+  const countText = (v, w) => v < 0 ? trn('map.walking', w) : (v ? trn('map.visitors', v) + (w ? ' · ' + trn('map.walking', w) : '') : tr('map.novisitor'));
   const draw = () => {
+    const zoomWas = !zoom.hidden; hideZoom();
+    let totV = 0, totW = 0, totOld = false, totGot = false; const totSeen = new Set();
     grid.textContent = '';
     const list = MAP.filter(r => r && r.name);
     const mx = remap(list.map(r => r.x | 0)), my = remap(list.map(r => r.y | 0));
@@ -327,19 +379,22 @@ __I18N__
       const t = document.createElement(u ? 'a' : 'div'); t.className = 'tile'; t.title = u ? tr('map.tip', r.spawn || 'default') : tr('map.badurl');
       if (u) { t.href = u.href; t.rel = 'noopener'; }
       if (placed) { t.style.gridColumn = String(mx.get(r.x | 0) + 1); t.style.gridRow = String(rows - my.get(r.y | 0)); }
-      if (r.thumb && safeThumb(r.thumb)) { const im = document.createElement('img'); im.src = r.thumb; im.alt = ''; im.referrerPolicy = 'no-referrer'; t.append(im); } else { const ph = document.createElement('div'); ph.className = 'ph'; t.append(ph); }
+      if (r.thumb && safeThumb(r.thumb)) { const im = document.createElement('img'); im.src = r.thumb; im.alt = ''; im.referrerPolicy = 'no-referrer'; t.append(im); zoomOn(t, im); } else { const ph = document.createElement('div'); ph.className = 'ph'; t.append(ph); }
       const b = document.createElement('b'); b.textContent = r.name; t.append(b);
       const srv = srvOf(r), k = srv + '|' + (r.room || '');
       if (answered[srv] && r.room) {   // v47 : visiteurs (promeneurs et spectateurs) et promeneurs, en texte ; un ancien serveur ne donne que les promeneurs
         const w = counts[k] || 0, v = hasVis[srv] ? Math.max(vis[k] || 0, w) : -1;
         const s = document.createElement('span');
-        s.textContent = v < 0 ? trn('map.walking', w) : (v ? trn('map.visitors', v) + (w ? ' · ' + trn('map.walking', w) : '') : tr('map.novisitor'));
+        s.textContent = countText(v, w);
+        if (!totSeen.has(k)) { totSeen.add(k); totGot = true; totW += w; if (v < 0) totOld = true; else totV += v; }
         t.append(s);
       }
       if (!u || urlOn()) { const l = document.createElement('small'); l.textContent = u ? u.href : tr('map.badurl'); t.append(l); }
       grid.append(t);
     }
     if (!list.length) grid.textContent = emptyText();
+    tot.textContent = totGot ? tr('map.total', countText(totOld ? -1 : totV, totW)) : '';
+    if (zoomWas) reZoom();
   };
   // v51 : « * » à la place du nom = le même nom que la page (même règle que presUrl de core.js)
   const presUrl = u => String(u || '').trim().replace(/^(wss?:\/\/)(\*|0\.0\.0\.0)(?=[:/]|$)/i, (m, p, h) => p + (h === '*' ? (location.hostname || '127.0.0.1') : '127.0.0.1'));
@@ -348,14 +403,16 @@ __I18N__
       const ws = new WebSocket(presUrl(srv)), to = setTimeout(() => { try { ws.close(); } catch (e) {} }, 4000);
       ws.onopen = () => ws.send(JSON.stringify({ t: 'rooms' }));
       ws.onmessage = ev => {
-        try { const m = JSON.parse(ev.data); if (m.t === 'rooms') { for (const o of [counts, vis]) for (const k of Object.keys(o)) if (k.startsWith(srv + '|')) delete o[k]; for (const [room, n] of Object.entries(m.rooms || {})) counts[srv + '|' + room] = n; hasVis[srv] = !!(m.visitors && typeof m.visitors === 'object'); if (hasVis[srv]) for (const [room, n] of Object.entries(m.visitors)) vis[srv + '|' + room] = n; answered[srv] = true; draw(); } } catch (e) {}
+        try { const m = JSON.parse(ev.data); if (m.t === 'rooms') { const before = beforeOf(srv); for (const o of [counts, vis]) for (const k of Object.keys(o)) if (k.startsWith(srv + '|')) delete o[k]; for (const [room, n] of Object.entries(m.rooms || {})) counts[srv + '|' + room] = n; hasVis[srv] = !!(m.visitors && typeof m.visitors === 'object'); if (hasVis[srv]) for (const [room, n] of Object.entries(m.visitors)) vis[srv + '|' + room] = n; answered[srv] = true; arrivals(srv, before); draw(); } } catch (e) {}
         try { ws.close(); } catch (e) {}
       };
       ws.onclose = () => clearTimeout(to); ws.onerror = () => {};
     } catch (e) {}
   };
   const fetchCounts = () => { for (const srv of new Set(MAP.map(srvOf).filter(Boolean))) queryServer(srv); };
-  draw(); fetchCounts(); setInterval(fetchCounts, 10000);
+  draw(); fetchCounts(); showAlert();
+  const tick = () => setTimeout(() => { fetchCounts(); tick(); }, al.checked ? POLL_ALERT_MS : POLL_MS);   // v52 : delai lu a chaque tour
+  tick();
   if (C.mapUrl && /^https?:$/.test(location.protocol)) {
     const urls = String(C.mapUrl).split(',').map(s => s.trim()).filter(Boolean);
     Promise.allSettled(urls.map(u => fetch(new URL(u, location.href).href, { cache: 'no-store' }).then(r => r.ok ? r.json() : Promise.reject(new Error('http ' + r.status))))).then(res => {

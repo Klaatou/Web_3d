@@ -45,6 +45,9 @@ body.padOn #bar{max-width:max(200px,calc(50vw - 90px))}   /* v46 : la barre pass
 .mapTile.here{border-width:5px;cursor:default}
 .mapTile img,.mapTile .ph{width:100%;aspect-ratio:1;object-fit:cover;background:#ccc;border:1px solid #000;display:block}
 .mapTile b{word-break:break-word}
+#zoom{position:fixed;z-index:60;pointer-events:none;box-sizing:border-box;padding:4px;border:2px solid #000;border-radius:6px;background:#fff;box-shadow:0 4px 16px #0007}
+#zoom img{display:block;max-width:min(320px,70vw);max-height:min(320px,70vh)}
+#zoom[hidden]{display:none}
 #mapClose{font:inherit;padding:6px 14px;border:2px solid #000;border-radius:6px;background:#fff;cursor:pointer}
 #visitsOverlay{position:fixed;inset:0;z-index:46;background:#000c;display:grid;place-items:center}   /* v48 : journal des visites (#visits) */
 #visitsBox{box-sizing:border-box;background:#fff;color:#000;border:2px solid #000;border-radius:10px;padding:14px 16px;width:min(760px,96%);max-height:92%;overflow:auto;font:13px/1.4 ui-monospace,Consolas,monospace}
@@ -387,7 +390,21 @@ if ((C.map || []).length || C.mapUrl) {
     u.hash = 'spawn=' + encodeURIComponent(r.spawn || 'default') + '&name=' + encodeURIComponent(viewer.getName() || tr('page.visitor'));
     close(); fade.classList.add('on'); setTimeout(() => { location.href = u.href; }, 480);
   };
+  // v52 : agrandissement de la vignette au survol (souris seulement ; une tuile sans vignette n'en a pas)
+  const zoom = document.createElement('div'), zim = document.createElement('img'); let zpt = { x: 0, y: 0 };
+  zoom.id = 'zoom'; zoom.hidden = true; zim.alt = ''; zoom.append(zim); document.body.append(zoom);
+  const hideZoom = () => { zoom.hidden = true; };
+  const placeZoom = () => { const w = zoom.offsetWidth, h = zoom.offsetHeight; let x = zpt.x + 16, y = zpt.y + 16; if (x + w > innerWidth - 4) x = zpt.x - w - 16; if (y + h > innerHeight - 4) y = innerHeight - h - 4; zoom.style.left = Math.max(4, x) + 'px'; zoom.style.top = Math.max(4, y) + 'px'; };
+  const showZoom = src => { if (zim.getAttribute('src') !== src) zim.src = src; zoom.hidden = false; placeZoom(); };
+  zim.onload = () => { if (!zoom.hidden) placeZoom(); };
+  const zoomOn = (t, im) => {
+    t.addEventListener('pointerenter', e => { if (e.pointerType !== 'mouse') return; zpt = { x: e.clientX, y: e.clientY }; showZoom(im.src); });
+    t.addEventListener('pointermove', e => { if (e.pointerType !== 'mouse' || zoom.hidden) return; zpt = { x: e.clientX, y: e.clientY }; placeZoom(); });
+    t.addEventListener('pointerleave', hideZoom);
+  };
+  const reZoom = () => { const el = document.elementFromPoint(zpt.x, zpt.y), t = el && el.closest ? el.closest('.mapTile') : null, im = t && t.querySelector('img'); if (im) showZoom(im.src); };
   const draw = () => {
+    const zoomWas = !zoom.hidden; hideZoom();
     grid.textContent = '';
     const list = MAP.filter(r => r && r.name);
     const remap = vals => { const u = [...new Set(vals)].sort((a, b) => a - b), m = new Map(); let pos = 0; u.forEach((v, i) => { if (i) pos += Math.min(v - u[i - 1], 2); m.set(v, pos); }); return m; };
@@ -398,7 +415,7 @@ if ((C.map || []).length || C.mapUrl) {
     for (const r of list) {
       const t = document.createElement('button'); t.className = 'mapTile' + (here(r) ? ' here' : '');
       if (placed) { t.style.gridColumn = String(mx.get(r.x | 0) + 1); t.style.gridRow = String(rows - my.get(r.y | 0)); }
-      if (r.thumb && safeThumb(r.thumb)) { const im = document.createElement('img'); im.src = r.thumb; im.alt = ''; im.referrerPolicy = 'no-referrer'; t.append(im); } else { const ph = document.createElement('div'); ph.className = 'ph'; t.append(ph); }
+      if (r.thumb && safeThumb(r.thumb)) { const im = document.createElement('img'); im.src = r.thumb; im.alt = ''; im.referrerPolicy = 'no-referrer'; t.append(im); zoomOn(t, im); } else { const ph = document.createElement('div'); ph.className = 'ph'; t.append(ph); }
       const b = document.createElement('b'); b.textContent = r.name; t.append(b);
       t.title = here(r) ? tr('page.map.tiphere') : tr('page.map.tip', r.spawn || 'default');   // v47 : bulle au survol
       const parts = [], srv = srvOf(r), k = srv + '|' + (r.room || '');
@@ -412,6 +429,7 @@ if ((C.map || []).length || C.mapUrl) {
       grid.append(t);
     }
     if (!list.length) grid.textContent = tr('page.map.empty');
+    if (zoomWas) reZoom();
   };
   const queryServer = srv => {
     try {
@@ -589,17 +607,18 @@ if (C.panel !== false) {
   const ob = document.getElementById('optsBtn'), op = document.getElementById('optsPanel');
   ob.title = tr('page.win.o.tip');   // v41 : bulle (rôle et touche)
   const key = 'glb2html_opts_' + (C.room || 'x');
-  const base = { retina: !!C.retina, anim: !!C.anim, wave: Number(C.wave) };
+  const base = { retina: !!C.retina, sea: !!C.sea, anim: !!C.anim, wave: Number(C.wave) };
   const st = Object.assign({}, base);
-  try { const s = JSON.parse(localStorage.getItem(key) || '{}'); if (typeof s.retina === 'boolean') st.retina = s.retina; if (typeof s.anim === 'boolean') st.anim = s.anim; if (Number.isFinite(s.wave)) st.wave = Math.min(10, Math.max(0, s.wave)); } catch (e) {}
+  try { const s = JSON.parse(localStorage.getItem(key) || '{}'); if (typeof s.retina === 'boolean') st.retina = s.retina; if (C.sea && typeof s.sea === 'boolean') st.sea = s.sea; if (typeof s.anim === 'boolean') st.anim = s.anim; if (Number.isFinite(s.wave)) st.wave = Math.min(10, Math.max(0, s.wave)); } catch (e) {}
   const mk = (tag, props) => Object.assign(document.createElement(tag), props || {});
   const lab = (text, input) => { const l = mk('label'); l.append(input, mk('span', { textContent: text })); return l; };
-  const cbRetina = mk('input', { type: 'checkbox' }), cbAnim = mk('input', { type: 'checkbox' });
+  const cbRetina = mk('input', { type: 'checkbox' }), cbAnim = mk('input', { type: 'checkbox' }), cbSea = mk('input', { type: 'checkbox' });
   const rgWave = mk('input', { type: 'range', min: 0, max: 10, step: 0.1 }), vWave = mk('span');
   const save = () => { try { localStorage.setItem(key, JSON.stringify(st)); } catch (e) {} };
-  const sync = () => { cbRetina.checked = st.retina; cbAnim.checked = st.anim; rgWave.value = st.wave; vWave.textContent = Number(st.wave).toFixed(1); rgWave.disabled = !st.anim; };
-  const apply = () => { viewer.setCfg({ retina: st.retina, anim: st.anim, wave: st.wave }); sync(); save(); };
+  const sync = () => { cbRetina.checked = st.retina; cbSea.checked = st.sea; cbAnim.checked = st.anim; cbAnim.disabled = !st.sea; rgWave.value = st.wave; vWave.textContent = Number(st.wave).toFixed(1); rgWave.disabled = !st.anim || !st.sea; };
+  const apply = () => { viewer.setCfg({ retina: st.retina, sea: st.sea, anim: st.anim, wave: st.wave }); sync(); save(); };
   cbRetina.onchange = () => { st.retina = cbRetina.checked; apply(); };
+  cbSea.onchange = () => { st.sea = cbSea.checked; apply(); };   // v52 : afficher / masquer la mer
   cbAnim.onchange = () => { st.anim = cbAnim.checked; apply(); };
   rgWave.oninput = () => { st.wave = parseFloat(rgWave.value); apply(); };
   op.append(lab(tr('page.opt.retina'), cbRetina));
@@ -641,6 +660,7 @@ if (C.panel !== false) {
     lightSync();
   }
   if (C.sea) {
+    op.append(lab(tr('page.opt.sea'), cbSea));
     op.append(lab(tr('page.opt.anim'), cbAnim));
     const w = mk('label'); w.append(rgWave, mk('span', { textContent: tr('page.opt.wave') }), vWave); op.append(w);
   }
@@ -720,7 +740,7 @@ if (C.panel !== false) {
   ob.onclick = () => { op.hidden = !op.hidden; };
   // v37 : O ouvre / ferme la fenêtre Réglages (bascule, comme H et I) ; R est déjà pris (retour à l'arrivée)
   addEventListener('keydown', e => { const n = e.target && e.target.tagName; if (e.code === 'KeyO' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && n !== 'INPUT' && n !== 'TEXTAREA' && n !== 'SELECT') op.hidden = !op.hidden; });
-  if (st.retina !== base.retina || st.anim !== base.anim || st.wave !== base.wave) viewer.setCfg({ retina: st.retina, anim: st.anim, wave: st.wave });
+  if (st.retina !== base.retina || st.sea !== base.sea || st.anim !== base.anim || st.wave !== base.wave) viewer.setCfg({ retina: st.retina, sea: st.sea, anim: st.anim, wave: st.wave });
 }
 // v42 : rendu sans carte graphique : proposer le rendu léger, une seule fois (la réponse est retenue ; Réglages permet de changer d'avis)
 if (!LIGHT.asked && !LIGHT.st.on && softGpu(viewer.renderer)) {

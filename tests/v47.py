@@ -3,7 +3,7 @@
 
 Vérifie : le serveur de présence répond « visitors » par salon (promeneurs et spectateurs) en plus de « rooms » (promeneurs) ; regions.json en liste simple
 ou en objet {"showUrl", "regions"} (carte universelle, carte autonome, carte ouverte par M dans une région) ; --register garde l'en-tête et la forme du
-fichier ; tuile : nom, « N visiteurs · N en promenade » ou « aucun visiteur », bulle au survol, aucune adresse par défaut ; case « Afficher les
+fichier ; tuile : nom, « N visiteurs · N promeneurs » ou « aucun visiteur », bulle au survol, aucune adresse par défaut ; case « Afficher les
 adresses » (état de départ = showUrl, choix du visiteur mémorisé et prioritaire) ; ancien serveur (sans « visitors ») : promeneurs seulement ;
 regions.json absent : message précis ; ouverture depuis le disque : « serveur web » ; anglais. Un vrai téléphone, Edge et Windows : non testés ici.
 
@@ -93,7 +93,7 @@ async def main():
         o = await Onglet(br).ouvrir(BASE + "carte.html", locale="fr-FR", viewer=False)
         t = await tuiles(o, "document.querySelector('.tile span')")
         rapport(set(t) == {"Alpha", "Beta", "Gamma"}, "trois tuiles lues dans regions.json (objet avec en-tête)", list(t))
-        rapport(t["Alpha"]["ligne"] == "2 visiteurs · 1 en promenade", "Alpha : « 2 visiteurs · 1 en promenade »", t["Alpha"]["ligne"])
+        rapport(t["Alpha"]["ligne"] == "2 visiteurs · 1 promeneur", "Alpha : « 2 visiteurs · 1 promeneur »", t["Alpha"]["ligne"])
         rapport(t["Beta"]["ligne"] == "aucun visiteur", "Beta : « aucun visiteur »", t["Beta"]["ligne"])
         corps = await o.ev("document.body.innerText")
         rapport("visiter" not in corps, "plus de mot « visiter → » sur les tuiles")
@@ -128,7 +128,7 @@ async def main():
         o = await Onglet(br).ouvrir(BASE + "carte.html", locale="en-US", viewer=False)
         t = await tuiles(o)
         corps = await o.ev("document.body.innerText")
-        rapport(t["Alpha"]["ligne"] == "2 visitors · 1 walking" and t["Beta"]["ligne"] == "no visitors" and "Show addresses" in corps, "anglais : « 2 visitors · 1 walking », « no visitors », « Show addresses »", (t["Alpha"]["ligne"], t["Beta"]["ligne"]))
+        rapport(t["Alpha"]["ligne"] == "2 visitors · 1 walker" and t["Beta"]["ligne"] == "no visitors" and "Show addresses" in corps, "anglais : « 2 visitors · 1 walker », « no visitors », « Show addresses »", (t["Alpha"]["ligne"], t["Beta"]["ligne"]))
         rapport("Click to enter the region" in t["Alpha"]["bulle"], "bulle en anglais", t["Alpha"]["bulle"])
         await o.ctx.close()
 
@@ -166,7 +166,7 @@ async def main():
         http4, hport4 = serveur(site4)
         o = await Onglet(br).ouvrir(f"http://127.0.0.1:{hport4}/carte.html", locale="fr-FR", viewer=False)
         t = await tuiles(o)
-        rapport(t["Alpha"]["ligne"] == "2 en promenade" and t["Beta"]["ligne"] == "0 en promenade", "ancien serveur : « 2 en promenade », « 0 en promenade » (pas de visiteurs inventés)", (t["Alpha"]["ligne"], t["Beta"]["ligne"]))
+        rapport(t["Alpha"]["ligne"] == "2 promeneurs" and t["Beta"]["ligne"] == "0 promeneur", "ancien serveur : « 2 promeneurs », « 0 promeneur » (pas de visiteurs inventés)", (t["Alpha"]["ligne"], t["Beta"]["ligne"]))
         await o.ctx.close()
         http4.kill(); srv.close()
 
@@ -177,7 +177,7 @@ async def main():
         await o.attendre("document.querySelectorAll('#mapGrid .mapTile').length === 3", 20)
         await o.attendre("[...document.querySelectorAll('#mapGrid .mapTile')].some(b => b.textContent.includes('2 visiteurs'))", 20)
         tl = {b["nom"]: b for b in await o.ev("() => [...document.querySelectorAll('#mapGrid .mapTile')].map(b => ({ nom: b.querySelector('b').textContent, ligne: (b.querySelector('span') || {}).textContent || '', bulle: b.title }))")}
-        rapport(tl["Alpha"]["ligne"] == "2 visiteurs · 1 en promenade" and tl["Beta"]["ligne"] == "aucun visiteur", "carte de la région : visiteurs et promeneurs en texte", (tl["Alpha"]["ligne"], tl["Beta"]["ligne"]))
+        rapport(tl["Alpha"]["ligne"] == "2 visiteurs · 1 promeneur" and tl["Beta"]["ligne"] == "aucun visiteur", "carte de la région : visiteurs et promeneurs en texte", (tl["Alpha"]["ligne"], tl["Beta"]["ligne"]))
         rapport(tl["Gamma"]["ligne"].startswith("● vous êtes ici") and "un clic ferme la carte" in tl["Gamma"]["bulle"], "région courante : « ● vous êtes ici » et sa bulle", tl["Gamma"])
         rapport("Cliquer pour entrer dans la région" in tl["Alpha"]["bulle"] and "visiter" not in await o.ev("document.getElementById('mapGrid').innerText"), "bulle au survol, plus de « visiter → »")
         rapport(not o.errs, "aucune erreur de page", o.errs)
