@@ -235,6 +235,37 @@ def caused_by_eof(exc):
     return False
 
 
+def caused_by_header(exc):
+    """v52 : requete HTTP bien formee mais qui n'ouvre pas de WebSocket (InvalidUpgrade, « invalid Connection header: keep-alive », ...) : InvalidHeader et ses sous-classes"""
+    try:
+        from websockets.exceptions import InvalidHeader
+    except Exception:
+        return False
+    for _ in range(10):
+        if exc is None:
+            return False
+        if isinstance(exc, InvalidHeader):
+            return True
+        exc = exc.__cause__ or exc.__context__
+    return False
+
+
+def conn_request():
+    """v52 : (chemin, hote, agent) de la requete recue, lus dans la pile d'appels de websockets (variable connection) ; None si introuvable"""
+    f = sys._getframe(1)
+    while f is not None:
+        c = f.f_locals.get("connection")
+        rq = getattr(c, "request", None) if c is not None else None
+        if rq is not None:
+            try:
+                h = rq.headers
+                return tuple(str(v).replace("|", "/")[:n] for v, n in ((rq.path, 80), (h.get("Host", "?"), 80), (h.get("User-Agent", "-"), 100)))
+            except Exception:
+                pass
+        f = f.f_back
+    return None
+
+
 def empty_conn_ip():
     """adresse de l'appelant, lue dans la pile d'appels de websockets (variable connection) ; « ? » si introuvable"""
     f = sys._getframe(1)
@@ -253,16 +284,24 @@ def empty_conn_ip():
 class EmptyConnFilter(logging.Filter):
     def filter(self, record):
         ei = record.exc_info
-        if not ei or not caused_by_eof(ei[1]):
+        if not ei:
+            return True
+        eof = caused_by_eof(ei[1])
+        if not eof and not caused_by_header(ei[1]):
             return True              # toute autre erreur de websockets reste affichée en entier
         try:
             ip, now = empty_conn_ip(), time.monotonic()
             if len(EMPTY) > 1000:
                 EMPTY.clear()
-            e = EMPTY.setdefault(ip, [-1e9, 0])
+            e = EMPTY.setdefault(ip if eof else "http|" + ip, [-1e9, 0])
             e[1] += 1
             if now - e[0] >= 60:
-                log(_tr("py.presence.ev.empty"), "-", f"ip {ip_for_log(ip) if ip != '?' else '?'}", _tr("py.presence.empty", e[1]))
+                ipl = f"ip {ip_for_log(ip) if ip != '?' else '?'}"
+                if eof:
+                    log(_tr("py.presence.ev.empty"), "-", ipl, _tr("py.presence.empty", e[1]))
+                else:   # v52 : requete HTTP ordinaire (navigateur qui ouvre l'adresse du serveur, robot, test) : la ligne dit laquelle
+                    rq = conn_request() or ("?", "?", "-")
+                    log(_tr("py.presence.ev.http"), "-", ipl, _tr("py.presence.http", e[1], rq[0], rq[1], rq[2], str(ei[1])[:100]))
                 e[0], e[1] = now, 0
         except Exception:
             pass
