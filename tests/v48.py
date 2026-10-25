@@ -106,6 +106,13 @@ async def partie_serveur():
         rapport(r.get("why") == "rate", "après 5 refus en une minute : trop d'essais, même avec la bonne clé", r)
         _, out = console(proc, "visits-key", r"galerie")
         rapport("galerie" in out and cle not in out, "visits-key seul : liste des salons sans la clé", out[-200:])
+        m, out = console(proc, "visits-key Galerie", r"attention|warning")
+        rapport(m is not None and "autre casse : galerie." in out, "visits-key Galerie : avertissement, salon connu « galerie » (la casse compte)", out[-300:])
+        n0 = len(proc.lu)
+        m, out = console(proc, "visits-key hobbit", r"([A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4})")
+        time.sleep(0.5)
+        apres = "".join(proc.lu[n0:])
+        rapport(m is not None and "attention" not in apres, "salon neuf sans autre casse : pas d'avertissement", apres)
         m, out = console(proc, "visits-key galerie off", r"retir|removed")
         rapport(m is not None and "galerie" not in json.loads((d / "keys.json").read_text(encoding="utf-8"))["rooms"], "visits-key galerie off : clé retirée", out[-200:])
         # arrêt propre : la visite en cours est écrite

@@ -1357,5 +1357,6 @@
  "page.visits.no": "no",
  "page.visits.d.h": "{0} h {1} min",
  "page.visits.d.m": "{0} min {1} s",
- "page.visits.file": "visits"
+ "page.visits.file": "visits",
+ "py.presence.vkey.case": "warning: no visit and no visitor for room \"{0}\"; room known with a different case: {1}. Case matters: run visits-key again with the exact name (this key stays valid for \"{0}\")."
 }

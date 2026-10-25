@@ -3,6 +3,10 @@
 Les dates sont au format jj/mm/aaaa.
 
 ## v48 (25/10/2026)
+### 25/10/2026 : visits-key et la casse du salon
+- **`visits-key ROOM`** : la casse du nom du salon compte partout dans le serveur ; si le nom tapé n'existe qu'avec une autre casse (salons connectés et fichier des visites), la console le signale (la clé est quand même créée). `tests/v48.py`, manuel § 31.2.
+- **`visits-key ROOM`**: case matters in the room name throughout the server; if the typed name only exists with a different case (connected rooms and visit file), the console says so (the key is still created). `tests/v48.py`, manual § 31.2.
+
 ### 25/10/2026 : documents de la v48
 - **Manuel § 31** (FR et EN) : journal des visites, côté hôte et côté créateur, ce qui est compté, données personnelles ; § 27.1 et § 27.10 (fichier des visites, `presence_visits_keys.json`) ; procédures § 6 ; exemples `docs/samples/visits.sample.jsonl` et `docs/samples/presence_visits_keys.sample.json` (lus par `tests/samples.py`) ; `REFERENCE_OPTIONS.md` régénéré ; historique (la ligne v47 était sous « Commandes utiles » : remise dans le tableau) ; `REPRISE.md`.
 - **Manual § 31** (FR and EN): visit log, host side and creator side, what is counted, personal data; § 27.1 and § 27.10 (visit file, `presence_visits_keys.json`); procedures § 6; samples `docs/samples/visits.sample.jsonl` and `docs/samples/presence_visits_keys.sample.json` (read by `tests/samples.py`); `REFERENCE_OPTIONS.md` regenerated; history (the v47 line was under "Useful commands": moved back into the table); `REPRISE.md`.

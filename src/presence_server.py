@@ -501,6 +501,12 @@ def vkey_command(rest):
     print(_tr("py.presence.vkey.new", room, key))
     if not OPTS.visits:
         print(_tr("py.presence.vkey.inactive"))
+    # la casse du salon compte partout (clean_room la garde) : prévenir si ce nom n'existe qu'avec une autre casse
+    known = set(ROOMS) | {d.get("room") for d in visits_read()}
+    if room not in known:
+        near = sorted(r for r in known if isinstance(r, str) and r != room and r.lower() == room.lower())
+        if near:
+            print(_tr("py.presence.vkey.case", room, ", ".join(near)))
 
 
 # ----------------------------------------------------------------- modération (console du serveur)

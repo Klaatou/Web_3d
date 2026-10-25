@@ -1357,5 +1357,6 @@
  "page.visits.no": "non",
  "page.visits.d.h": "{0} h {1} min",
  "page.visits.d.m": "{0} min {1} s",
- "page.visits.file": "visites"
+ "page.visits.file": "visites",
+ "py.presence.vkey.case": "attention : aucune visite ni aucun visiteur pour le salon « {0} » ; salon connu avec une autre casse : {1}. La casse compte : refais visits-key avec le nom exact (cette clé reste valable pour « {0} »)."
 }
