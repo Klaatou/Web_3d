@@ -835,6 +835,8 @@
  "py.presence.ev.kick": "kick",
  "py.presence.ev.name": "name",
  "py.presence.ev.refuse": "refusal",
+ "py.presence.ev.empty": "empty",
+ "py.presence.empty": "connection opened then closed without a request ({0} since the last line for this address; browser preconnection, port test or robot: harmless)",
  "py.presence.ev.walk": "walk",
  "py.presence.fichier_de_bannissements_illisible_0_ignore": "[!] ban file unreadable ({0}): ignored",
  "py.presence.fichier_de_journal_tourne_chaque_nuit": "log file (rotated every night); relative path = script folder",

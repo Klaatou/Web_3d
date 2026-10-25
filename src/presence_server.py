@@ -217,6 +217,56 @@ def setup_log():
     for h in handlers:
         h.setFormatter(FrFormatter())
         LOG.addHandler(h)
+    logging.getLogger("websockets.server").addFilter(EmptyConnFilter())
+
+
+# v52 : connexion TCP ouverte puis fermée sans requête (préconnexion d'un navigateur, test de port, robot) : websockets 14 et 15
+# l'écrivent en trace complète (« opening handshake failed », EOFError) ; une ligne courte au journal, au plus une par minute et par adresse
+EMPTY: dict = {}         # IP -> [instant de la dernière ligne écrite, connexions vides depuis]
+
+
+def caused_by_eof(exc):
+    for _ in range(10):
+        if exc is None:
+            return False
+        if isinstance(exc, EOFError):
+            return True
+        exc = exc.__cause__ or exc.__context__
+    return False
+
+
+def empty_conn_ip():
+    """adresse de l'appelant, lue dans la pile d'appels de websockets (variable connection) ; « ? » si introuvable"""
+    f = sys._getframe(1)
+    while f is not None:
+        c = f.f_locals.get("connection")
+        try:
+            ra = getattr(c, "remote_address", None) if c is not None else None
+            if ra:
+                return str(ra[0])[:64]
+        except Exception:
+            pass
+        f = f.f_back
+    return "?"
+
+
+class EmptyConnFilter(logging.Filter):
+    def filter(self, record):
+        ei = record.exc_info
+        if not ei or not caused_by_eof(ei[1]):
+            return True              # toute autre erreur de websockets reste affichée en entier
+        try:
+            ip, now = empty_conn_ip(), time.monotonic()
+            if len(EMPTY) > 1000:
+                EMPTY.clear()
+            e = EMPTY.setdefault(ip, [-1e9, 0])
+            e[1] += 1
+            if now - e[0] >= 60:
+                log(_tr("py.presence.ev.empty"), "-", f"ip {ip_for_log(ip) if ip != '?' else '?'}", _tr("py.presence.empty", e[1]))
+                e[0], e[1] = now, 0
+        except Exception:
+            pass
+        return False
 
 
 def ip_for_log(ip):

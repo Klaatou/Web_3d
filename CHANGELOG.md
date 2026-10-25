@@ -2,6 +2,11 @@
 
 Les dates sont au format jj/mm/aaaa.
 
+## v52 (25/10/2026)
+### 25/10/2026 : connexions vides du serveur de présence
+- **Serveur de présence** : avec `websockets` 14 et 15, chaque connexion TCP fermée sans requête (préconnexion d'un navigateur, test de port, robot) écrivait une trace complète « opening handshake failed » (EOFError) dans la console. Un filtre sur le journal `websockets.server` la remplace par une ligne « vide » (console et `presence.log`) avec l'adresse de l'appelant, masquée selon `--log-ip`, au plus une par minute et par adresse ; les autres erreurs restent affichées. Manuel § 35 (FR, EN), historique, README, `tests/v52.py` (variable `WS_OLD` pour une ancienne version de `websockets`).
+- **Presence server**: with `websockets` 14 and 15, each TCP connection closed without a request (browser preconnection, port test, robot) wrote a full "opening handshake failed" trace (EOFError) to the console. A filter on the `websockets.server` log replaces it with an "empty" line (console and `presence.log`) with the caller's address, masked according to `--log-ip`, at most one per minute and per address; other errors are still shown. Manual § 35 (FR, EN), history, README, `tests/v52.py` (`WS_OLD` variable for an old `websockets` version).
+
 ## v51 (25/10/2026)
 ### 25/10/2026 : documents des créateurs
 - **Manuel** (FR et EN) : § 34 (créateurs sur le serveur de présence : fichier, origine, préfixe, limites, ce que voit le visiteur, console, limites de la méthode), § 27.1 et § 27.10 (`presence_creators.json` champ par champ), titre et résumé (v51). **Procédures** § 6, point 7 : accueillir un créateur. **Historique** et **README** (FR et EN) : v51, commande `creators`, `presence_creators.json` à ne jamais committer.

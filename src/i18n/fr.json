@@ -835,6 +835,8 @@
  "py.presence.ev.kick": "éjection",
  "py.presence.ev.name": "nom",
  "py.presence.ev.refuse": "refus",
+ "py.presence.ev.empty": "vide",
+ "py.presence.empty": "connexion ouverte puis fermée sans requête ({0} depuis la dernière ligne de cette adresse ; préconnexion d'un navigateur, test de port ou robot : sans danger)",
  "py.presence.ev.walk": "promenade",
  "py.presence.fichier_de_bannissements_illisible_0_ignore": "[!] fichier de bannissements illisible ({0}) : ignoré",
  "py.presence.fichier_de_journal_tourne_chaque_nuit": "fichier de journal (tourné chaque nuit) ; chemin relatif = dossier du script",
