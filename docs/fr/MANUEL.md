@@ -1,6 +1,6 @@
-# Mode d'emploi : zones, portails et points d'arrivée (v52)
+# Mode d'emploi : zones, portails et points d'arrivée (v51)
 
-> **Résumé (v52).** Ce fichier est le mode d'emploi détaillé ; il ne se lit pas d'un bout à l'autre. Pour **toutes les options** des outils, avec leur effet et leur défaut en français et en anglais : `REFERENCE_OPTIONS.md` (générée depuis les outils par `gen_reference.py`). Pour **faire une tâche pas à pas** (OAR vers page, région en tuiles, mise à jour, zones, serveur de présence, carte) : `PROCEDURES.md`. Ici : les zones et les portails (§§ 1 à 10), les touches (§ 2), les réglages et leurs fichiers (§§ 11 à 19) et les nouveautés version par version (§§ 18 à 35 ; le § 27 est la référence des fichiers JSON). Langue de la page et des outils : § 21.8 à 21.11.
+> **Résumé (v51).** Ce fichier est le mode d'emploi détaillé ; il ne se lit pas d'un bout à l'autre. Pour **toutes les options** des outils, avec leur effet et leur défaut en français et en anglais : `REFERENCE_OPTIONS.md` (générée depuis les outils par `gen_reference.py`). Pour **faire une tâche pas à pas** (OAR vers page, région en tuiles, mise à jour, zones, serveur de présence, carte) : `PROCEDURES.md`. Ici : les zones et les portails (§§ 1 à 10), les touches (§ 2), les réglages et leurs fichiers (§§ 11 à 19) et les nouveautés version par version (§§ 18 à 34 ; le § 27 est la référence des fichiers JSON). Langue de la page et des outils : § 21.8 à 21.11.
 
 ## 1. La règle qui explique 90 % des pannes
 
@@ -1846,8 +1846,18 @@ Procédures § 6, point 7.
 
 Windows, Edge, `wss://` derrière Funnel, page d'un créateur sur un autre domaine.
 
-## 35. Nouveautés de la v52 (25/10/2026) : connexions vides
+### 34.9 Connexions vides
 
-Une connexion ouverte sur le port du serveur de présence puis refermée sans rien envoyer (préconnexion d'un navigateur, test de port, robot) remplissait la console d'une longue trace « opening handshake failed » avec les versions 14 et 15 de `websockets`. Depuis la v52, elle donne une ligne courte « vide » dans la console et dans `presence.log`, avec l'adresse de l'appelant (masquée selon `--log-ip`) et le nombre de connexions vides, au plus une ligne par minute et par adresse. C'est sans danger ; les autres erreurs de `websockets` restent affichées en entier.
+Une connexion ouverte sur le port du serveur de présence puis refermée sans rien envoyer (préconnexion d'un navigateur, test de port, robot) remplissait la console d'une longue trace « opening handshake failed » avec les versions 14 et 15 de `websockets`. Depuis la v51, elle donne une ligne courte « vide » dans la console et dans `presence.log`, avec l'adresse de l'appelant (masquée selon `--log-ip`) et le nombre de connexions vides, au plus une ligne par minute et par adresse. C'est sans danger ; les autres erreurs de `websockets` restent affichées en entier.
 
-`tests/v52.py` : avec la version installée, puis avec une ancienne version donnée par la variable `WS_OLD` (essayé ici avec 13.1, 14.2 et 15.0.1). Non testé : Windows, Edge.
+`tests/v51_vides.py` : avec la version installée, puis avec une ancienne version donnée par la variable `WS_OLD` (essayé ici avec 13.1, 14.2 et 15.0.1). Non testé : Windows, Edge.
+
+### 34.10 Adresse de présence « même nom que la page »
+
+Une adresse de présence peut s'écrire avec une étoile à la place du nom : `ws://*:8765`. La page remplace l'étoile par le nom avec lequel elle a été ouverte : ouverte par `http://localhost:8096`, elle vise `ws://localhost:8765` ; ouverte par l'adresse réseau ou le nom public de la machine, elle vise cette même adresse. Une page ouverte depuis le disque, et le viewer, visent `127.0.0.1`. La règle « la présence au même endroit que la page » (procédures § 11) est ainsi tenue d'office.
+
+Pourquoi : chaque config ou fiche portait une seule adresse (adresse réseau, adresse IP publique ou nom public), juste pour un seul des chemins d'accès. Une page ouverte par le nom public qui vise une adresse du réseau local est coupée par Edge avant l'envoi de la requête : la carte reste sans compteur et le serveur note une connexion « vide » à chaque interrogation (toutes les 10 s pour `carte.html`, toutes les 8 s pour la fenêtre Carte). Ce blocage est déduit des constats de JJ ; il n'est pas reproduit ici et n'a pas été essayé sous Edge.
+
+L'étoile vaut partout : `--presence-url`, `presenceUrl` de `NOM.config.json`, champ `presence` de `regions.json`, champ de présence du viewer. Le serveur rappelle cette forme au démarrage. Limite : pour un visiteur venu d'Internet, le port du serveur de présence doit être joignable sous le même nom que la page (redirection de la box, ou Funnel, procédures § 11).
+
+`tests/v51_etoile.py` (Chromium) : page ouverte par `127.0.0.1` puis par `localhost`, fenêtre Carte, `carte.html`, journal des visites, viewer ouvert depuis le disque, `ws://0.0.0.0` toujours corrigé, message d'erreur avec l'adresse résolue. Non testé : Windows, Edge.

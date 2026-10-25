@@ -341,9 +341,11 @@ __I18N__
     }
     if (!list.length) grid.textContent = emptyText();
   };
+  // v51 : « * » à la place du nom = le même nom que la page (même règle que presUrl de core.js)
+  const presUrl = u => String(u || '').trim().replace(/^(wss?:\/\/)(\*|0\.0\.0\.0)(?=[:/]|$)/i, (m, p, h) => p + (h === '*' ? (location.hostname || '127.0.0.1') : '127.0.0.1'));
   const queryServer = srv => {
     try {
-      const ws = new WebSocket(srv), to = setTimeout(() => { try { ws.close(); } catch (e) {} }, 4000);
+      const ws = new WebSocket(presUrl(srv)), to = setTimeout(() => { try { ws.close(); } catch (e) {} }, 4000);
       ws.onopen = () => ws.send(JSON.stringify({ t: 'rooms' }));
       ws.onmessage = ev => {
         try { const m = JSON.parse(ev.data); if (m.t === 'rooms') { for (const o of [counts, vis]) for (const k of Object.keys(o)) if (k.startsWith(srv + '|')) delete o[k]; for (const [room, n] of Object.entries(m.rooms || {})) counts[srv + '|' + room] = n; hasVis[srv] = !!(m.visitors && typeof m.visitors === 'object'); if (hasVis[srv]) for (const [room, n] of Object.entries(m.visitors)) vis[srv + '|' + room] = n; answered[srv] = true; draw(); } } catch (e) {}

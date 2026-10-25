@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tests v52 : connexions ouvertes puis fermées sans requête (vrai presence_server.py).
+"""Tests v51 (suite, livrée d'abord en v52) : connexions ouvertes puis fermées sans requête (vrai presence_server.py).
 
 websockets 14 et 15 écrivaient une trace complète (« opening handshake failed », EOFError) pour chaque connexion TCP fermée sans requête
 (préconnexion d'un navigateur, test de port, robot). Vérifie : aucune trace ; une seule ligne « vide » avec l'adresse pour 5 connexions
@@ -7,7 +7,7 @@ websockets 14 et 15 écrivaient une trace complète (« opening handshake failed
 Avec la version de websockets installée, puis, si la variable WS_OLD donne un dossier contenant websockets 14 ou 15
 (pip install --target DOSSIER "websockets==14.2"), avec cette version.
 
-Prérequis : pip install websockets ; python build.py avant. Lancer : python tests/v52.py
+Prérequis : pip install websockets ; python build.py avant. Lancer : python tests/v51_vides.py
 """
 import asyncio, json, os, socket, subprocess, sys, time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))

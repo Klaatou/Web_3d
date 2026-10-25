@@ -69,7 +69,8 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 25/10/2026 |  | v49 | v49 : `glb2html.py --scan-sites` met à jour `regions.json` depuis le dossier des sites (fiches, vignettes `NOM.jpg`, rien supprimé), manuel § 32 ; `tests/v49.py` |
 | 25/10/2026 |  | v50 | v50 : viewer, carte des mondes : import et export de `regions.json` avec en-tête, champs des fiches gardés, « Ajouter » sur place (manuel § 33) ; `tests/v50.py` ; README, procédures § 4 et § 7, `CLAUDE.md` mis à jour |
 | 25/10/2026 |  | v51 | v51 : créateurs sur le serveur de présence (manuel § 34) : `--creators` (`presence_creators.json` relu à chaud : origines, préfixe de salon, limites, suspension), refus affiché par la page et le viewer, commande `creators` ; `tests/v51.py` |
-| 25/10/2026 |  | v52 | v52 : serveur de présence, une connexion fermée sans requête donne une ligne « vide » avec l'adresse au lieu d'une trace (manuel § 35) ; `tests/v52.py` |
+| 25/10/2026 |  | v51 | v51 (suite, livrée d'abord en v52) : serveur de présence, une connexion fermée sans requête donne une ligne « vide » avec l'adresse au lieu d'une trace (manuel § 34.9) ; `tests/v51_vides.py` |
+| 25/10/2026 |  | v51 | v51 (suite) : adresse de présence `ws://*:PORT` (l'étoile prend le nom de la page) pour la page, la fenêtre Carte, `carte.html`, le journal des visites et le viewer (manuel § 34.10) ; `tests/v51_etoile.py` |
 
 - Voir l'historique : `git log --oneline --decorate`
 - Voir ce qui a changé dans une version : `git show v16 --stat`

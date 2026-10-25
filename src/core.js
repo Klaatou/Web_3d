@@ -1587,12 +1587,14 @@ function createViewer(container, cfg0, loader) {
     else if (m.t === 'full') { pStatus('full'); }
     dirty = true;
   }
+  // v51 : adresse de présence ; « * » à la place du nom = le même nom que la page (la présence au même endroit que la page ; disque et viewer : 127.0.0.1) ; 0.0.0.0 -> 127.0.0.1
+  function presUrl(u) { return String(u || '').trim().replace(/^(wss?:\/\/)(\*|0\.0\.0\.0)(?=[:/]|$)/i, (m, p, h) => p + (h === '*' ? (location.hostname || '127.0.0.1') : '127.0.0.1')); }
   function presenceConnect() {
     if (!cfg.presenceUrl || P.ws) return;
     P.blocked = false; P.opened = false; P.closeCode = null; P.closeReason = '';
     pStatus('connecting');
     let ws;
-    try { ws = new WebSocket(String(cfg.presenceUrl).trim().replace(/^(wss?:\/\/)0\.0\.0\.0(?=[:/]|$)/i, (m, p) => p + '127.0.0.1')); } catch (e) { pStatus('error', e && e.name === 'SecurityError' ? tr('core.pres.secerr') : tr('core.pres.never')); return; }
+    try { ws = new WebSocket(presUrl(cfg.presenceUrl)); } catch (e) { pStatus('error', e && e.name === 'SecurityError' ? tr('core.pres.secerr') : tr('core.pres.never')); return; }
     P.ws = ws;
     ws.onopen = () => { P.retry = 0; P.opened = true; { const h = { t: 'hello', room: cfg.room || cfg.roomDefault || '', name: P.name, uid, spectator: !walking }; if (P.myColor !== null) h.color = P.myColor; ws.send(JSON.stringify(h)); } };
     ws.onmessage = ev => { let m; try { m = JSON.parse(ev.data); } catch (_) { return; } presenceMsg(m); };

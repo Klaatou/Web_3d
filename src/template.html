@@ -189,6 +189,8 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 const C = JSON.parse(document.getElementById('cfg').textContent);
+// v51 : adresse de présence ; « * » à la place du nom = le même nom que la page (même règle que presUrl de core.js) ; 0.0.0.0 -> 127.0.0.1
+const presUrl = u => String(u || '').trim().replace(/^(wss?:\/\/)(\*|0\.0\.0\.0)(?=[:/]|$)/i, (m, p, h) => p + (h === '*' ? (location.hostname || '127.0.0.1') : '127.0.0.1'));
 const msg = document.getElementById('msg');
 applyI18n();
 
@@ -376,7 +378,6 @@ if ((C.map || []).length || C.mapUrl) {
   const ov = document.getElementById('mapOverlay'), grid = document.getElementById('mapGrid'), mb = document.getElementById('mapBtn');
   const counts = {}, vis = {}, answered = {}, hasVis = {}; let tm = 0;
   const srvOf = r => (r.presence || C.presenceUrl || '');
-  const fixWs = u => String(u).replace(/^(wss?:\/\/)0\.0\.0\.0(?=[:/]|$)/i, (m, p) => p + '127.0.0.1');
   const norm = u => { try { const x = new URL(u, location.href); x.hash = ''; return x.href; } catch (e) { return ''; } };
   const here = r => (r.room && r.room === C.room) || (r.url && norm(r.url) === norm(location.href));
   const okMapUrl = u => { try { const x = new URL(u, location.href); return (x.protocol === 'http:' || x.protocol === 'https:' || (location.protocol === 'file:' && x.protocol === 'file:')) ? x : null; } catch (e) { return null; } };
@@ -414,7 +415,7 @@ if ((C.map || []).length || C.mapUrl) {
   };
   const queryServer = srv => {
     try {
-      const ws = new WebSocket(fixWs(srv)); const to = setTimeout(() => { try { ws.close(); } catch (e) {} }, 4000);
+      const ws = new WebSocket(presUrl(srv)); const to = setTimeout(() => { try { ws.close(); } catch (e) {} }, 4000);
       ws.onopen = () => ws.send(JSON.stringify({ t: 'rooms' }));
       ws.onmessage = ev => {
         try { const m = JSON.parse(ev.data); if (m.t === 'rooms') { for (const o of [counts, vis]) for (const k of Object.keys(o)) if (k.startsWith(srv + '|')) delete o[k]; for (const [room, n] of Object.entries(m.rooms || {})) counts[srv + '|' + room] = n; hasVis[srv] = !!(m.visitors && typeof m.visitors === 'object'); if (hasVis[srv]) for (const [room, n] of Object.entries(m.visitors)) vis[srv + '|' + room] = n; answered[srv] = true; draw(); } } catch (e) {}
@@ -465,7 +466,7 @@ const VISITS = (() => {   // v48 : aussi ouvert par le bouton « Journal des vis
   const ask = key => new Promise(res => {
     let ws, opened = false, done = false, to = 0;
     const end = r => { if (done) return; done = true; clearTimeout(to); try { ws.close(); } catch (e) {} res(r); };
-    try { ws = new WebSocket(String(C.presenceUrl).trim().replace(/^(wss?:\/\/)0\.0\.0\.0(?=[:/]|$)/i, (m, p) => p + '127.0.0.1')); } catch (e) { return res({ why: 'net' }); }
+    try { ws = new WebSocket(presUrl(C.presenceUrl)); } catch (e) { return res({ why: 'net' }); }
     to = setTimeout(() => end({ why: opened ? 'old' : 'net' }), 10000);
     ws.onopen = () => { opened = true; ws.send(JSON.stringify({ t: 'visits', room, key })); };
     ws.onmessage = ev => { let m = null; try { m = JSON.parse(ev.data); } catch (e) {} if (m && m.t === 'visits') end(m); else if (m && (m.t === 'full' || m.t === 'banned')) end({ why: 'net' }); };
@@ -1490,12 +1491,12 @@ if (C.presenceUrl && C.walk) {
   try { inp.value = localStorage.getItem('glb2html_name') || ''; } catch (e) {}
   viewer.setName(inp.value);
   inp.onchange = () => { viewer.setName(inp.value); try { localStorage.setItem('glb2html_name', inp.value.trim()); } catch (e) {} };
-  const T = { off: tr('page.pres.off'), connecting: tr('page.pres.connecting'), error: tr('page.pres.error', C.presenceUrl), full: tr('page.pres.full'), kicked: tr('page.pres.kicked'), banned: tr('page.pres.banned') };
+  const T = { off: tr('page.pres.off'), connecting: tr('page.pres.connecting'), error: tr('page.pres.error', presUrl(C.presenceUrl)), full: tr('page.pres.full'), kicked: tr('page.pres.kicked'), banned: tr('page.pres.banned') };
   st.textContent = T.off;
   viewer.onPresence = s => {
     if (s.state === 'kicked' || s.state === 'banned') toast((s.state === 'banned' ? tr('page.pres.toast.banned') : tr('page.pres.toast.kicked')) + (s.reason ? ' : ' + s.reason : ''));
     const n = s.count;
-    st.textContent = s.state === 'online' ? (s.spectator ? (n ? trn('page.pres.walking', n) : tr('page.pres.nobody')) : trn('page.pres.count', n)) : (s.state === 'error' && s.reason ? tr('page.pres.error.why', C.presenceUrl, s.reason) : s.state === 'refused' ? tr('page.pres.refused', s.reason) : (T[s.state] || s.state));
+    st.textContent = s.state === 'online' ? (s.spectator ? (n ? trn('page.pres.walking', n) : tr('page.pres.nobody')) : trn('page.pres.count', n)) : (s.state === 'error' && s.reason ? tr('page.pres.error.why', presUrl(C.presenceUrl), s.reason) : s.state === 'refused' ? tr('page.pres.refused', s.reason) : (T[s.state] || s.state));
   };
   viewer.onName = n => {
     if (inp.value && inp.value !== n) toast(tr('page.pres.nametaken', n));

@@ -220,7 +220,7 @@ def setup_log():
     logging.getLogger("websockets.server").addFilter(EmptyConnFilter())
 
 
-# v52 : connexion TCP ouverte puis fermée sans requête (préconnexion d'un navigateur, test de port, robot) : websockets 14 et 15
+# v51 : connexion TCP ouverte puis fermée sans requête (préconnexion d'un navigateur, test de port, robot) : websockets 14 et 15
 # l'écrivent en trace complète (« opening handshake failed », EOFError) ; une ligne courte au journal, au plus une par minute et par adresse
 EMPTY: dict = {}         # IP -> [instant de la dernière ligne écrite, connexions vides depuis]
 
@@ -1220,6 +1220,7 @@ async def main():
                 ip = lan_ip()
                 LOG.info(_tr("py.presence.serveur_adresses_a_donner_a_presence", scheme, OPTS.port) + (_tr("py.presence.0_1_2_autres_appareils_du", scheme, ip, OPTS.port) if ip else ""))
                 LOG.info(_tr("py.presence.serveur_n_utilise_jamais_0_0"))
+                LOG.info(_tr("py.presence.star_hint", scheme, OPTS.port))     # v51 : « * » = le même nom que la page
             else:
                 LOG.info(_tr("py.presence.serveur_adresse_a_donner_a_presence", scheme, OPTS.host, OPTS.port))
             LOG.info(_tr("py.presence.serveur_journal_0_registre_des_noms", OPTS.log or '(aucun : option --log)', OPTS.identities or '(en mémoire)'))

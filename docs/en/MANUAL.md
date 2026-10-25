@@ -1,6 +1,6 @@
-# User manual: zones, portals and arrival points (v52)
+# User manual: zones, portals and arrival points (v51)
 
-> **Summary (v52).** This file is the detailed user manual; it is not meant to be read from end to end. For **all the options** of the tools, with their effect and their default, in French and English: `REFERENCE_OPTIONS.md` (generated from the tools by `gen_reference.py`). To **do a task step by step** (OAR to page, tiled region, update, zones, presence server, map): `PROCEDURES.md`. Here: zones and portals (§§ 1 to 10), keys (§ 2), settings and their files (§§ 11 to 19) and the new features version by version (§§ 18 to 35; § 27 is the JSON file reference). Language of the page and of the tools: § 21.8 to 21.11.
+> **Summary (v51).** This file is the detailed user manual; it is not meant to be read from end to end. For **all the options** of the tools, with their effect and their default, in French and English: `REFERENCE_OPTIONS.md` (generated from the tools by `gen_reference.py`). To **do a task step by step** (OAR to page, tiled region, update, zones, presence server, map): `PROCEDURES.md`. Here: zones and portals (§§ 1 to 10), keys (§ 2), settings and their files (§§ 11 to 19) and the new features version by version (§§ 18 to 34; § 27 is the JSON file reference). Language of the page and of the tools: § 21.8 to 21.11.
 
 ## 1. The rule that explains 90 % of failures
 
@@ -1845,8 +1845,18 @@ Procedures § 6, item 7.
 
 Windows, Edge, `wss://` behind Funnel, a creator's page on another domain.
 
-## 35. What's new in v52 (25/10/2026): empty connections
+### 34.9 Empty connections
 
-A connection opened on the presence server port then closed without sending anything (browser preconnection, port test, robot) filled the console with a long "opening handshake failed" trace with versions 14 and 15 of `websockets`. Since v52, it gives a short "empty" line in the console and in `presence.log`, with the caller's address (masked according to `--log-ip`) and the number of empty connections, at most one line per minute and per address. It is harmless; other `websockets` errors are still shown in full.
+A connection opened on the presence server port then closed without sending anything (browser preconnection, port test, robot) filled the console with a long "opening handshake failed" trace with versions 14 and 15 of `websockets`. Since v51, it gives a short "empty" line in the console and in `presence.log`, with the caller's address (masked according to `--log-ip`) and the number of empty connections, at most one line per minute and per address. It is harmless; other `websockets` errors are still shown in full.
 
-`tests/v52.py`: with the installed version, then with an old version given by the `WS_OLD` variable (tried here with 13.1, 14.2 and 15.0.1). Not tested: Windows, Edge.
+`tests/v51_vides.py`: with the installed version, then with an old version given by the `WS_OLD` variable (tried here with 13.1, 14.2 and 15.0.1). Not tested: Windows, Edge.
+
+### 34.10 Presence address "same name as the page"
+
+A presence address can be written with a star instead of the name: `ws://*:8765`. The page replaces the star with the name it was opened with: opened through `http://localhost:8096`, it targets `ws://localhost:8765`; opened through the network address or the public name of the machine, it targets that same address. A page opened from the disk, and the viewer, target `127.0.0.1`. The rule "presence at the same place as the page" (procedures § 11) is thus kept automatically.
+
+Why: each config or card carried a single address (network address, public IP address or public name), right for only one of the access paths. A page opened through the public name that targets a local network address is cut by Edge before the request is sent: the map stays without counters and the server logs an "empty" connection at each query (every 10 s for `carte.html`, every 8 s for the Map window). This blocking is deduced from JJ's observations; it is not reproduced here and was not tried under Edge.
+
+The star works everywhere: `--presence-url`, `presenceUrl` of `NOM.config.json`, `presence` field of `regions.json`, presence field of the viewer. The server recalls this form at start-up. Limit: for a visitor coming from the Internet, the presence server port must be reachable under the same name as the page (box port forwarding, or Funnel, procedures § 11).
+
+`tests/v51_etoile.py` (Chromium): page opened through `127.0.0.1` then `localhost`, Map window, `carte.html`, visit log, viewer opened from the disk, `ws://0.0.0.0` still corrected, error message with the resolved address. Not tested: Windows, Edge.
