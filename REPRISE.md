@@ -92,6 +92,7 @@ Le dossier des outils fabriqués est `dist\` ; le dépôt local est `P:\_OpenSim
 - Servir les sites pour les essayer : `cd "P:\_OpenSim\SL&OS\Web_3d\Sites"; python -m http.server 8000`, puis `http://localhost:8000/index.html?region=houses/NOM` ou `http://localhost:8000/carte.html`.
 - Appliquer un patch : `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d"; git pull; python .\patch_NOM.py; if ($LASTEXITCODE -eq 0) { python build.py }` ; étiquette en fin de lot : `git tag vNN; git push origin vNN`
 - Tests dans le bac à sable : `npm pack three@0.160.0` (jsDelivr est refusé), extraire, `python build.py --vendor DOSSIER_package`, puis `THREE_DIR=DOSSIER_package`, `CHROMIUM=` l'exécutable si besoin, `WEB3D_LANG=fr` et locale `fr-FR` pour les tests de navigateur ; `pip install playwright websockets`. Les procédures complètes sont dans `PROCEDURES.md`, la liste de toutes les options dans `REFERENCE_OPTIONS.md`.
+- écrire “Klaatou”, jamais les initiales (motifs de date AAAAMMJJ exceptés)
 
 ## 5. Décisions de conception arrêtées (ne pas rediscuter sans demande de Klaatou)
 
