@@ -2,6 +2,15 @@
 
 Les dates sont au format jj/mm/aaaa.
 
+## v49 (25/10/2026)
+### 25/10/2026 : documents de la v49
+- **Manuel § 32** (FR et EN) : `--scan-sites`, vignettes (320 x 320 conseillé), `REPRISE.md` (créateurs sur le serveur de JJ : conception notée, à faire).
+- **Manual § 32** (FR and EN): `--scan-sites`, thumbnails (320 x 320 recommended), `REPRISE.md` (creators on JJ's server: design noted, to do).
+
+### 25/10/2026 : mise à jour de regions.json depuis le dossier des sites
+- **`glb2html.py --scan-sites DOSSIER`** (et `--dry-run`) : une fiche par `NOM.config.json` (adresse `index.html?region=dossier/NOM`, salon, serveur), vignette `NOM.jpg`, `.png` ou `.webp` à côté ; fiche reconnue par son salon puis son adresse ; nom, place, arrivée, en-tête et fiches externes gardés ; nouvelle région sur une case libre ; rien n'est supprimé (orphelines signalées). `tests/v49.py`, `REFERENCE_OPTIONS.md`.
+- **`glb2html.py --scan-sites FOLDER`** (and `--dry-run`): one card per `NOM.config.json` (address `index.html?region=folder/NAME`, room, server), thumbnail `NAME.jpg`, `.png` or `.webp` next to it; card recognised by its room then its address; name, place, arrival, header and external cards kept; new region on a free cell; nothing is deleted (orphans reported). `tests/v49.py`, `REFERENCE_OPTIONS.md`.
+
 ## v48 (25/10/2026)
 ### 25/10/2026 : bouton « Journal des visites… »
 - **Page** : bouton « Journal des visites… » dans la fenêtre Informations (I), à côté de « Copier le diagnostic », seulement si la page a un serveur de présence ; il ouvre la même fenêtre que `#visits` (fermée puis rouverte, le résumé reste). `tests/v48.py`, manuel § 31.3.

@@ -66,6 +66,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 25/10/2026 |  | v48 | v48 : journal des visites (manuel § 31) : le serveur de présence note chaque visite dans un fichier à part (`--visits`, sans IP ; `--visits-days`, `--visits-names`), commande `visits-key ROOM` ; le créateur ouvre sa page avec `#visits` et la clé : résumé par jour, visites des 30 derniers jours, CSV ; `tests/v48.py` |
 
 ## Commandes utiles
+| 25/10/2026 |  | v49 | v49 : `glb2html.py --scan-sites` met à jour `regions.json` depuis le dossier des sites (fiches, vignettes `NOM.jpg`, rien supprimé), manuel § 32 ; `tests/v49.py` |
 
 - Voir l'historique : `git log --oneline --decorate`
 - Voir ce qui a changé dans une version : `git show v16 --stat`

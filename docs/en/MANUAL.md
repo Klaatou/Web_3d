@@ -1732,3 +1732,34 @@ Format of the visit file and of `presence_visits_keys.json`: § 27.10. Samples: 
 ### 31.8 Not tested
 
 Windows (Ctrl+C in the Windows console), Edge, a real phone, Tailscale Funnel, the PowerShell lines themselves.
+
+## 32. New in v49 (25/10/2026): updating `regions.json` from the sites folder
+
+### 32.1 The command
+
+`cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python .\glb2html.py --scan-sites "P:\_OpenSim\SL&OS\Web_3d\Sites" --dry-run`
+
+`--dry-run` shows what would change without writing anything; the same line without `--dry-run` writes `Sites\regions.json`. The folder given is the one of the shared shell (`index.html` at the root); without `index.html`, a warning says so.
+
+### 32.2 What the scan does
+
+- One card per `NOM.config.json` file found in the folder and its subfolders (the `lib` and `_bak` folders and those starting with a dot are skipped, as is a file without a `room` field).
+- Card address: `index.html?region=dossier/NOM`; room and presence server: those of the config (`room`, `presenceUrl`).
+- An existing card is recognised by its room, otherwise by its address. Its name, place (`x`, `y`), arrival (`spawn`) and `id` are kept: only the address, room, server and thumbnail are updated. The name of a new card is the file name: change it once in `regions.json`, it is kept afterwards.
+- A new region gets the first free cell of the `y = 0` row (never a place already taken: two cards at the same place make the map fall back to a plain list).
+- The creators' cards (full address in `http` or `https`) are never touched. The header (`showUrl`) and the shape of the file (object or list) are kept. Without `regions.json`, the file is created with the header.
+- Nothing is deleted: a local card whose region is no longer in the folder is reported as an "orphan" and kept.
+
+### 32.3 Thumbnails
+
+An image `NOM.jpg` (or `.jpeg`, `.png`, `.webp`) next to `NOM.config.json` becomes the card's thumbnail, through a relative path (`houses/NOM.jpg`): `regions.json` stays light, and the path works from `carte.html` as from the map opened with M, both at the root. Without an image, the thumbnail already recorded is kept.
+
+Recommended: a **square image of 320 x 320 pixels**, medium-quality JPEG (a few tens of KB, estimate). The tile shows it as a square about 155 pixels wide (`aspect-ratio: 1`); 320 pixels stay sharp on high-density screens. An image that is not square is cropped in the centre (`object-fit: cover`).
+
+### 32.4 v49 tests
+
+`tests/v49.py` (no browser): cards created and updated, thumbnails (encoded path), name, place and arrival kept, header kept, external card untouched, orphan kept, no duplicate places, skipped folders, `--dry-run`, second run without change, plain list, missing folder, missing `index.html`, English.
+
+### 32.5 Not tested
+
+Windows, JJ's paths, the PowerShell lines themselves.

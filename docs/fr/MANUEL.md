@@ -1733,3 +1733,34 @@ Format du fichier des visites et de `presence_visits_keys.json` : § 27.10. Exem
 ### 31.8 Non testé
 
 Windows (Ctrl+C dans la console Windows), Edge, un vrai téléphone, Tailscale Funnel, les lignes PowerShell elles-mêmes.
+
+## 32. Nouveautés de la v49 (25/10/2026) : mise à jour de `regions.json` depuis le dossier des sites
+
+### 32.1 La commande
+
+`cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python .\glb2html.py --scan-sites "P:\_OpenSim\SL&OS\Web_3d\Sites" --dry-run`
+
+`--dry-run` affiche ce qui changerait sans rien écrire ; la même ligne sans `--dry-run` écrit `Sites\regions.json`. Le dossier donné est celui de la coquille commune (`index.html` à la racine) ; sans `index.html`, un avertissement le signale.
+
+### 32.2 Ce que fait le parcours
+
+- Une fiche par fichier `NOM.config.json` trouvé dans le dossier et ses sous-dossiers (les dossiers `lib`, `_bak` et ceux qui commencent par un point sont ignorés, ainsi qu'un fichier sans champ `room`).
+- Adresse de la fiche : `index.html?region=dossier/NOM` ; salon et serveur de présence : ceux de la config (`room`, `presenceUrl`).
+- Une fiche existante est reconnue par son salon, sinon par son adresse. Son nom, sa place (`x`, `y`), son arrivée (`spawn`) et son `id` sont gardés : seuls l'adresse, le salon, le serveur et la vignette sont mis à jour. Le nom d'une nouvelle fiche est celui du fichier : à changer une fois dans `regions.json`, il est gardé ensuite.
+- Une nouvelle région reçoit la première case libre de la ligne `y = 0` (jamais une place déjà prise : deux fiches à la même place font passer la carte en simple liste).
+- Les fiches des créateurs (adresse complète en `http` ou `https`) ne sont jamais touchées. L'en-tête (`showUrl`) et la forme du fichier (objet ou liste) sont gardés. Sans `regions.json`, le fichier est créé avec l'en-tête.
+- Rien n'est supprimé : une fiche locale dont la région n'est plus dans le dossier est signalée « orpheline » et gardée.
+
+### 32.3 Les vignettes
+
+Une image `NOM.jpg` (ou `.jpeg`, `.png`, `.webp`) à côté de `NOM.config.json` devient la vignette de la fiche, par un chemin relatif (`houses/NOM.jpg`) : `regions.json` reste léger, et le chemin marche depuis `carte.html` comme depuis la carte ouverte par M, toutes deux à la racine. Sans image, la vignette déjà notée est gardée.
+
+Caractéristiques conseillées : **image carrée de 320 x 320 pixels**, JPEG de qualité moyenne (quelques dizaines de Ko, estimation). La tuile l'affiche en carré d'environ 155 pixels de côté (`aspect-ratio: 1`) ; 320 pixels restent nets sur les écrans à haute densité. Une image qui n'est pas carrée est recadrée au centre (`object-fit: cover`).
+
+### 32.4 Tests de la v49
+
+`tests/v49.py` (hors navigateur) : fiches créées et mises à jour, vignettes (chemin encodé), nom, place et arrivée gardés, en-tête gardé, fiche externe intacte, orpheline gardée, places sans doublon, dossiers ignorés, `--dry-run`, deuxième passage sans changement, liste simple, dossier absent, absence de `index.html`, anglais.
+
+### 32.5 Non testé
+
+Windows, les chemins de JJ, les lignes PowerShell elles-mêmes.

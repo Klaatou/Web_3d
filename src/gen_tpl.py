@@ -30,6 +30,7 @@ import struct
 import time
 import sys
 import urllib.parse
+import urllib.parse
 import urllib.request
 
 # <<I18N_PY>>
@@ -445,6 +446,91 @@ def build_map_shell():
     """v47 : la page de carte universelle (dist/carte.html) : même texte, octet pour octet, pour tous les sites ; aucune région dedans, elle lit
     regions.json (à côté d'elle) à chaque ouverture. Titre traduit par la page elle-même ; demande un serveur web (http)."""
     return map_page_html({"map": [], "mapUrl": "regions.json", "presenceUrl": "", "showUrl": False}, None)
+
+
+SCAN_SKIP = {"lib", "_bak", "node_modules"}
+SCAN_IMG = (".jpg", ".jpeg", ".png", ".webp")
+
+
+def scan_sites(root, dry):
+    """v49 : parcourt le dossier des sites (coquille commune à la racine) et met à jour root/regions.json : une fiche par NOM.config.json
+    (adresse index.html?region=dossier/NOM, salon, serveur de présence, vignette NOM.jpg/.png/.webp à côté). Reconnaît une fiche par son salon,
+    sinon par son adresse ; garde le nom, la place, l'arrivée et l'en-tête ; ne touche pas aux fiches externes ; ne supprime rien."""
+    root = pathlib.Path(root).expanduser()
+    if not root.is_dir():
+        sys.exit(_tr("py.glb2html.scan.nofolder", root))
+    if not (root / "index.html").is_file():
+        print(_tr("py.glb2html.scan.noshell", root), file=sys.stderr)
+    reg = root / "regions.json"
+    raw = {"showUrl": False, "regions": []}
+    if reg.is_file():
+        try:
+            raw = json.loads(reg.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as e:
+            sys.exit(_tr("py.glb2html.erreur_0_illisible_1", reg, e))
+    head = {k: v for k, v in raw.items() if k != "regions"} if isinstance(raw, dict) else None
+    data = [r for r in map_regions(raw) if isinstance(r, dict)]
+    local = lambda u: bool(u) and not re.match(r"^[a-z][a-z0-9+.\-]*:", str(u), re.I)
+    found = []
+    for cf in sorted(root.rglob("*.config.json")):
+        rel = cf.relative_to(root)
+        if any(p in SCAN_SKIP or p.startswith(".") for p in rel.parts[:-1]):
+            continue
+        try:
+            c = json.loads(cf.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as e:
+            print(_tr("py.glb2html.scan.badcfg", cf, e), file=sys.stderr)
+            continue
+        if not isinstance(c, dict) or "room" not in c:
+            continue
+        stem = cf.name[:-len(".config.json")]
+        name = "/".join(rel.parts[:-1] + (stem,))
+        img = next((cf.with_name(stem + e) for e in SCAN_IMG if cf.with_name(stem + e).is_file()), None)
+        found.append({"name": stem, "url": "index.html?region=" + name, "room": str(c.get("room") or "").strip()[:64],
+                      "presence": str(c.get("presenceUrl") or ""), "thumb": urllib.parse.quote(img.relative_to(root).as_posix()) if img else ""})
+    used = {(int(r.get("x") or 0), int(r.get("y") or 0)) for r in data}
+    ids = {str(r.get("id") or "") for r in data}
+    added = updated = same = 0
+    seen = set()
+    for f in found:
+        i = next((k for k, r in enumerate(data) if f["room"] and r.get("room") == f["room"]), None)
+        if i is None:
+            i = next((k for k, r in enumerate(data) if r.get("url") == f["url"]), None)
+        if i is None:
+            x = 0
+            while (x, 0) in used:
+                x += 1
+            used.add((x, 0))
+            rid = _slug(f["room"] or f["name"]) or "region"
+            while rid in ids:
+                rid += "-2"
+            ids.add(rid)
+            data.append({"id": rid, "name": f["name"], "url": f["url"], "x": x, "y": 0, "spawn": "", "room": f["room"], "thumb": f["thumb"], "presence": f["presence"]})
+            seen.add(len(data) - 1)
+            added += 1
+            print(_tr("py.glb2html.scan.add", f["name"], f["url"], x, 0))
+            continue
+        seen.add(i)
+        r, ch = data[i], []
+        for k in ("url", "room", "presence", "thumb"):
+            if f[k] and r.get(k) != f[k]:
+                r[k] = f[k]
+                ch.append(k)
+        if ch:
+            updated += 1
+            print(_tr("py.glb2html.scan.upd", r.get("name"), ", ".join(ch)))
+        else:
+            same += 1
+    ext = sum(1 for r in data if not local(r.get("url")))
+    orph = [r for k, r in enumerate(data) if k not in seen and local(r.get("url"))]
+    for r in orph:
+        print(_tr("py.glb2html.scan.orphan", r.get("name"), r.get("url")))
+    print(_tr("py.glb2html.scan.summary", added, updated, same, ext, len(orph), reg))
+    if dry:
+        print(_tr("py.glb2html.scan.dry"))
+        return
+    out = dict(head, regions=data) if head is not None else data
+    reg.write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
 
 
 def write_map_page(path, entries, presence_url, map_url, title):
@@ -1398,6 +1484,8 @@ def main():
     ap.add_argument("--map", type=pathlib.Path, help=_tr("py.glb2html.fichier_regions_json_carte_des_mondes"))
     ap.add_argument("--map-url", default=MAP_URL, help=_tr("py.glb2html.adresse_s_de_regions_json_partage"))
     ap.add_argument("--register", help=_tr("py.glb2html.fichier_regions_json_a_mettre_a"))
+    ap.add_argument("--scan-sites", metavar="FOLDER", help=_tr("py.glb2html.scan.help"))
+    ap.add_argument("--dry-run", action="store_true", help=_tr("py.glb2html.scan.dryhelp"))
     ap.add_argument("--region-name", help=_tr("py.glb2html.nom_affiche_dans_la_carte_defaut"))
     ap.add_argument("--region-url", help=_tr("py.glb2html.adresse_de_la_page_de_cette"))
     ap.add_argument("--region-xy", metavar="X,Y", help=_tr("py.glb2html.position_sur_la_grille_comme_opensim"))
@@ -1612,6 +1700,9 @@ def main():
             else:
                 print(_tr("py.glb2html.avertissement_map_page_ignore_aucune_region_2"), file=sys.stderr)
         sys.exit(0 if ok else 1)
+    if a.scan_sites and not a.input:   # v49 : mise à jour de regions.json depuis le dossier des sites
+        scan_sites(a.scan_sites, a.dry_run)
+        sys.exit(0)
     if a.register and not a.input:
         if not (a.region_name and a.region_url and a.room):
             sys.exit(_tr("py.glb2html.erreur_enregistrer_une_region_sans_glb"))
