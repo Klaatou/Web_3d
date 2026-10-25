@@ -28,7 +28,7 @@ for code, d in langs.items():
     manque = sorted(ref - set(d)); en_plus = sorted(set(d) - ref)
     rapport(not manque and not en_plus, f"{code} : mêmes clés que fr ({len(d)})", {"manquantes": manque[:10], "en plus": en_plus[:10]})
     rapport(isinstance(d.get("_name"), str) and d["_name"].strip(), f"{code} : _name (nom de la langue dans sa langue)")
-    vides = [k for k, v in d.items() if not isinstance(v, str) or not v.strip()]
+    vides = [k for k, v in d.items() if not isinstance(v, str) or not (v if k.endswith('.sep') else v.strip())]   # v52 : un separateur (cle en .sep) peut etre un saut de ligne
     rapport(not vides, f"{code} : aucune valeur vide ou non textuelle", vides[:10])
 fr, en = langs["fr"], langs["en"]
 ph = lambda s: sorted(set(re.findall(r"\{(\d+)(?::[^}]*)?\}", s)))

@@ -45,8 +45,9 @@ body.padOn #bar{max-width:max(200px,calc(50vw - 90px))}   /* v46 : la barre pass
 .mapTile.here{border-width:5px;cursor:default}
 .mapTile img,.mapTile .ph{width:100%;aspect-ratio:1;object-fit:cover;background:#ccc;border:1px solid #000;display:block}
 .mapTile b{word-break:break-word}
+.mapTile span{white-space:pre-line}
 #zoom{position:fixed;z-index:60;pointer-events:none;box-sizing:border-box;padding:4px;border:2px solid #000;border-radius:6px;background:#fff;box-shadow:0 4px 16px #0007}
-#zoom img{display:block;max-width:min(320px,70vw);max-height:min(320px,70vh)}
+#zoom img{display:block;max-width:min(400px,80vw);max-height:min(400px,80vh)}
 #zoom[hidden]{display:none}
 #mapClose{font:inherit;padding:6px 14px;border:2px solid #000;border-radius:6px;background:#fff;cursor:pointer}
 #visitsOverlay{position:fixed;inset:0;z-index:46;background:#000c;display:grid;place-items:center}   /* v48 : journal des visites (#visits) */
@@ -422,9 +423,9 @@ if ((C.map || []).length || C.mapUrl) {
       if (here(r)) parts.push(tr('page.map.here'));
       if (answered[srv] && r.room) {   // v47 : visiteurs (promeneurs et spectateurs) et promeneurs, en texte ; un ancien serveur ne donne que les promeneurs
         const w = counts[k] || 0, v = hasVis[srv] ? Math.max(vis[k] || 0, w) : -1;
-        parts.push(v < 0 ? trn('page.map.count', w) : (v ? trn('page.map.visitors', v) + (w ? ' · ' + trn('page.map.count', w) : '') : tr('page.map.novisitor')));
+        parts.push(v < 0 ? trn('page.map.count', w) : (v ? trn('page.map.visitors', v) + (w ? tr('page.map.sep') + trn('page.map.count', w) : '') : tr('page.map.novisitor')));
       }
-      if (parts.length) { const s = document.createElement('span'); s.textContent = parts.join(' · '); t.append(s); }
+      if (parts.length) { const s = document.createElement('span'); s.textContent = parts.join(tr('page.map.sep')); t.append(s); }
       t.onclick = () => { if (here(r)) close(); else go(r); };
       grid.append(t);
     }

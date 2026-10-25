@@ -281,12 +281,16 @@ footer{font-size:11px;opacity:.7}
 #who input{font:inherit;width:200px;border:2px solid #000;border-radius:6px;padding:4px 6px}
 #who label.chk{display:inline-block;margin-left:12px}
 #who label.chk input{width:auto}
-.tile span{font-size:12px}
+.tile span{font-size:12px;white-space:pre-line}
 #tools{margin:8px 0}
 #tools small{margin-left:8px}
 #total{font-weight:bold;margin:4px 0}
+.tile.arr{outline:5px dashed #000;outline-offset:2px;background:#ffe9a8;animation:arrblink .9s steps(1,end) infinite}
+@keyframes arrblink{0%{outline-width:5px}50%{outline-width:0}}
+.tile .arrb{font-weight:bold}
+@media (prefers-reduced-motion:reduce){.tile.arr{animation:none}}
 #zoom{position:fixed;z-index:60;pointer-events:none;box-sizing:border-box;padding:4px;border:2px solid #000;border-radius:6px;background:#fff;box-shadow:0 4px 16px #0007}
-#zoom img{display:block;max-width:min(320px,70vw);max-height:min(320px,70vh)}
+#zoom img{display:block;max-width:min(400px,80vw);max-height:min(400px,80vh)}
 #zoom[hidden]{display:none}
 </style>
 </head>
@@ -295,7 +299,7 @@ __I18N__
 </script><main>
 <h1 __TITLE_ATTR__>__TITLE__</h1>
 <div id="who"><label><span data-i18n="map.pseudo">Mon pseudo : </span><input id="pseudo" maxlength="24" placeholder="Visiteur" data-i18n-ph="map.visitor" autocomplete="nickname"></label> <small data-i18n="map.pseudo.note">mémorisé dans ce navigateur ; transmis aux régions que tu visites</small> <label class="chk"><input type="checkbox" id="showurl"> <span data-i18n="map.showurl">Afficher les adresses</span></label></div>
-<div id="tools"><label class="chk"><input type="checkbox" id="alert"> <span data-i18n="map.alert">Surveillance sonore</span></label> <small id="alertState"></small></div>
+<div id="tools"><label class="chk"><input type="checkbox" id="alert"> <span data-i18n="map.alert">Surveillance des arrivées (son et repère)</span></label> <small id="alertState"></small></div>
 <div id="total"></div>
 <div id="grid"></div>
 <footer id="foot">glb2html __VERSION__</footer>
@@ -341,7 +345,7 @@ __I18N__
   const reZoom = () => { const el = document.elementFromPoint(zpt.x, zpt.y), t = el && el.closest ? el.closest('.tile') : null, im = t && t.querySelector('img'); if (im) showZoom(im.src); };
   // v52 : total des visiteurs, surveillance sonore des arrivees
   const al = document.getElementById('alert'), alState = document.getElementById('alertState'), tot = document.getElementById('total');
-  const AC = window.AudioContext || window.webkitAudioContext, watched = {}; let actx = null, acted = false, lastBeep = -1e9, lastArr = null;
+  const AC = window.AudioContext || window.webkitAudioContext, watched = {}, arrMark = {}; let actx = null, acted = false, lastBeep = -1e9, lastArr = null;
   try { al.checked = localStorage.getItem('glb2html_map_alert') === '1'; } catch (e) {}
   const ensure = () => { if (!acted || !AC) return null; try { if (!actx) actx = new AC(); if (actx.state === 'suspended' && actx.resume) actx.resume(); } catch (e) { return null; } return actx; };
   const beep = () => {   // les deux notes montantes de l'arrivee d'un promeneur dans la page, au plus un bip toutes les 2 s
@@ -355,16 +359,16 @@ __I18N__
     alState.textContent = s;
   };
   for (const ev of ['pointerdown', 'keydown', 'touchstart']) addEventListener(ev, () => { if (!acted) { acted = true; if (al.checked) ensure(); showAlert(); } }, true);
-  al.addEventListener('change', () => { try { localStorage.setItem('glb2html_map_alert', al.checked ? '1' : '0'); } catch (e) {} showAlert(); if (al.checked) fetchCounts(); });
+  al.addEventListener('change', () => { try { localStorage.setItem('glb2html_map_alert', al.checked ? '1' : '0'); } catch (e) {} if (!al.checked) for (const k of Object.keys(arrMark)) delete arrMark[k]; showAlert(); if (al.checked) fetchCounts(); else draw(); tick(); });
   const vcount = (srv, room) => { const k = srv + '|' + room, w = counts[k] || 0; return hasVis[srv] ? Math.max(vis[k] || 0, w) : w; };
   const beforeOf = srv => { if (!watched[srv]) return null; const b = {}; for (const r of MAP) if (r && r.room && srvOf(r) === srv) b[r.room] = vcount(srv, r.room); return b; };
   const arrivals = (srv, before) => {   // une hausse du nombre de visiteurs d'un salon de la carte entre deux releves = une arrivee ; le premier releve d'un serveur sert de base
     watched[srv] = true; if (!before) return;
     const done = new Set();
-    for (const r of MAP) { if (!r || !r.room || srvOf(r) !== srv || done.has(r.room)) continue; done.add(r.room); const b0 = before[r.room]; if (b0 !== undefined && vcount(srv, r.room) > b0) { lastArr = { name: r.name, t: hm(new Date()) }; if (al.checked) beep(); } }
+    for (const r of MAP) { if (!r || !r.room || srvOf(r) !== srv || done.has(r.room)) continue; done.add(r.room); const b0 = before[r.room]; if (b0 !== undefined && vcount(srv, r.room) > b0) { lastArr = { name: r.name, t: hm(new Date()) }; if (al.checked) { beep(); arrMark[srv + '|' + r.room] = lastArr.t; } } }
     showAlert();
   };
-  const countText = (v, w) => v < 0 ? trn('map.walking', w) : (v ? trn('map.visitors', v) + (w ? ' · ' + trn('map.walking', w) : '') : tr('map.novisitor'));
+  const countText = (v, w, sep) => v < 0 ? trn('map.walking', w) : (v ? trn('map.visitors', v) + (w ? (sep || ' · ') + trn('map.walking', w) : '') : tr('map.novisitor'));   // sep : saut de ligne en francais sur les tuiles (cle map.sep)
   const draw = () => {
     const zoomWas = !zoom.hidden; hideZoom();
     let totV = 0, totW = 0, totOld = false, totGot = false; const totSeen = new Set();
@@ -385,15 +389,19 @@ __I18N__
       if (answered[srv] && r.room) {   // v47 : visiteurs (promeneurs et spectateurs) et promeneurs, en texte ; un ancien serveur ne donne que les promeneurs
         const w = counts[k] || 0, v = hasVis[srv] ? Math.max(vis[k] || 0, w) : -1;
         const s = document.createElement('span');
-        s.textContent = countText(v, w);
+        s.textContent = countText(v, w, tr('map.sep'));
         if (!totSeen.has(k)) { totSeen.add(k); totGot = true; totW += w; if (v < 0) totOld = true; else totV += v; }
         t.append(s);
+      }
+      if (al.checked && arrMark[k]) {   // v52 : repere de la region ou quelqu'un vient d'arriver (bordure clignotante ET texte), jusqu'au survol de la tuile
+        t.classList.add('arr'); const a = document.createElement('span'); a.className = 'arrb'; a.textContent = tr('map.arrived', arrMark[k]); t.append(a);
+        t.addEventListener('pointerenter', () => { delete arrMark[k]; t.classList.remove('arr'); a.remove(); }, { once: true });
       }
       if (!u || urlOn()) { const l = document.createElement('small'); l.textContent = u ? u.href : tr('map.badurl'); t.append(l); }
       grid.append(t);
     }
     if (!list.length) grid.textContent = emptyText();
-    tot.textContent = totGot ? tr('map.total', countText(totOld ? -1 : totV, totW)) : '';
+    tot.textContent = list.length ? trn('map.regions', list.length) + (totGot ? ' · ' + tr('map.total', countText(totOld ? -1 : totV, totW)) : '') : '';   // decompte des regions, puis le total
     if (zoomWas) reZoom();
   };
   // v51 : « * » à la place du nom = le même nom que la page (même règle que presUrl de core.js)
@@ -411,7 +419,8 @@ __I18N__
   };
   const fetchCounts = () => { for (const srv of new Set(MAP.map(srvOf).filter(Boolean))) queryServer(srv); };
   draw(); fetchCounts(); showAlert();
-  const tick = () => setTimeout(() => { fetchCounts(); tick(); }, al.checked ? POLL_ALERT_MS : POLL_MS);   // v52 : delai lu a chaque tour
+  let tmr = 0;
+  const tick = () => { clearTimeout(tmr); tmr = setTimeout(() => { fetchCounts(); tick(); }, al.checked ? POLL_ALERT_MS : POLL_MS); };   // v52 : delai relu a chaque tour et des que la case change
   tick();
   if (C.mapUrl && /^https?:$/.test(location.protocol)) {
     const urls = String(C.mapUrl).split(',').map(s => s.trim()).filter(Boolean);
