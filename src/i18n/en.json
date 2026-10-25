@@ -801,7 +801,7 @@
  "py.presence.cle_0_ip_1": "key {0} ip {1}",
  "py.presence.cle_privee_tls": "TLS private key",
  "py.presence.commande_inconnue_0_tape_aide": "unknown command: {0} (type \"aide\")",
- "py.presence.commandes_tape_les_ici_puis_entree": "commands (type them here, then Enter):\n  liste                           connected visitors (no., name, role, room, duration, IP)\n  ejecter <no.|name> [reason]       disconnects the visitor (they can come back)\n  bannir <no.|name> [minutes] [reason]   ejects and bans their key and IP (default 60 min; 0 = permanent)\n  bans                            current bans\n  debannir <ban no.>           lifts a ban\n  visits-key <room> [off]         visit log key of a room (new key, or off to remove it; alone: list)\n  aide                            this message\n  (a name containing spaces: use the no. from \"liste\")",
+ "py.presence.commandes_tape_les_ici_puis_entree": "commands (type them here, then Enter):\n  liste                           connected visitors (no., name, role, room, duration, IP)\n  ejecter <no.|name> [reason]       disconnects the visitor (they can come back)\n  bannir <no.|name> [minutes] [reason]   ejects and bans their key and IP (default 60 min; 0 = permanent)\n  bans                            current bans\n  debannir <ban no.>           lifts a ban\n  rooms                           known rooms: connected, visits, key (exact case)\n  visits-key <room> [off]         visit log key of a room (new key, or off to remove it; alone: list)\n  aide                            this message\n  (a name containing spaces: use the no. from \"liste\")",
  "py.presence.comportement_inapproprie": "inappropriate behavior",
  "py.presence.connexions_simultanees_par_adresse_ip": "simultaneous connections per IP address",
  "py.presence.debut": "start",
@@ -1358,5 +1358,10 @@
  "page.visits.d.h": "{0} h {1} min",
  "page.visits.d.m": "{0} min {1} s",
  "page.visits.file": "visits",
- "py.presence.vkey.case": "warning: no visit and no visitor for room \"{0}\"; room known with a different case: {1}. Case matters: run visits-key again with the exact name (this key stays valid for \"{0}\")."
+ "py.presence.vkey.case": "warning: no visit and no visitor for room \"{0}\"; room known with a different case: {1}. Case matters: run visits-key again with the exact name (this key stays valid for \"{0}\").",
+ "py.presence.rooms.none": "no known room (no connected visitor, no recorded visit, no key)",
+ "py.presence.rooms.line": "  {0:<24} connected: {1} ({2} walking)   visits: {3}{4}   key: {5}",
+ "py.presence.rooms.last": ", last on {0}",
+ "py.presence.rooms.novisits": "  (visit log off: start the server with --visits FILE to count visits)",
+ "py.presence.rooms.note": "  (exact case; a room never visited and without a key is not shown: its name is the room value of NAME.config.json, the page name by default)"
 }

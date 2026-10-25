@@ -94,7 +94,7 @@ The zones of a tiled region are written in the model's original frame (no recent
 3. **Open the port** (8765 by default, `--port` to change it) on the router, towards the machine running the server.
 4. **Connect the page**: `--presence-url "ws://ADRESSE:8765"` when building, or the `presenceUrl` key of `X.config.json`. If the page is served over https, the address must use `wss://` (see `--cert` and `--key`, or a reverse proxy with `--proxy-header`).
 5. **Moderate** in the server console: `list` (visitors), `kick <no.|name> [reason]`, `ban <no.|name> [minutes] [reason]` (0 = permanent), `bans`, `unban <no. in bans>`, `help`.
-6. **Visit log** (v48): add `--visits visits.jsonl` to the start line; in the console, `visits-key ROOM` gives a room's key (shown only once). Send the creator their page address followed by `#visits` and the key (manual § 31).
+6. **Visit log** (v48): add `--visits visits.jsonl` to the start line; in the console, `rooms` lists the known rooms (exact case) and `visits-key ROOM` gives a room's key (shown only once). Send the creator their page address followed by `#visits` and the key (manual § 31).
 7. **Update**: stop the server (Ctrl+C) and run it again from the `presence_server.py` of the `dist` folder after `python build.py`. An old copy ignores new features (for example the chosen colour).
 
 IP addresses and chat messages are personal data: inform your visitors and limit how long they are kept. The visit log never contains an IP address.

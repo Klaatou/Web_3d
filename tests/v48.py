@@ -106,6 +106,10 @@ async def partie_serveur():
         rapport(r.get("why") == "rate", "après 5 refus en une minute : trop d'essais, même avec la bonne clé", r)
         _, out = console(proc, "visits-key", r"galerie")
         rapport("galerie" in out and cle not in out, "visits-key seul : liste des salons sans la clé", out[-200:])
+        m, out = console(proc, "rooms", r"casse exacte")
+        lg = [x for x in out.splitlines() if x.strip().startswith("galerie")]
+        rapport(m is not None and len(lg) == 1 and "connectés : 0 (0 en promenade)" in lg[0] and "visites : 3, dernière le " in lg[0] and "clé : oui" in lg[0],
+                "rooms : galerie, 0 connecté, 3 visites (reconnexion fusionnée), dernière date, clé oui", out[-400:])
         m, out = console(proc, "visits-key Galerie", r"attention|warning")
         rapport(m is not None and "autre casse : galerie." in out, "visits-key Galerie : avertissement, salon connu « galerie » (la casse compte)", out[-300:])
         n0 = len(proc.lu)

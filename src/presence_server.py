@@ -424,10 +424,10 @@ def visits_purge():
         os.replace(tmp, OPTS.visits)
 
 
-def visits_summary(room):
-    """résumé d'un salon : visites fusionnées (reconnexions), par jour, et liste des 30 derniers jours"""
+def visits_merge(rows):
+    """visites d'UN salon, reconnexions du même navigateur (moins de VISIT_GAP s) fusionnées"""
     merged, last = [], {}
-    for d in sorted(visits_read(room), key=lambda x: x["start"]):
+    for d in sorted(rows, key=lambda x: x["start"]):
         m = last.get(d["v"])
         if m is not None and d["start"] <= m["end"] + VISIT_GAP:
             m["end"] = max(m["end"], d["start"] + d["dur"])
@@ -437,6 +437,12 @@ def visits_summary(room):
         m = {"start": d["start"], "end": d["start"] + d["dur"], "walk": d["walk"], "v": d["v"], "name": d.get("name") or ""}
         merged.append(m)
         last[d["v"]] = m
+    return merged
+
+
+def visits_summary(room):
+    """résumé d'un salon : visites fusionnées (reconnexions), par jour, et liste des 30 derniers jours"""
+    merged = visits_merge(visits_read(room))
     days = collections.OrderedDict()
     for m in merged:
         m["dur"] = m["end"] - m["start"]
@@ -475,6 +481,26 @@ def visits_answer(ip, msg):
         return {"t": "visits", "ok": False, "why": "key"}
     log(_tr("py.presence.ev.visits"), room, f"ip {ip_for_log(ip)}", _tr("py.presence.visits.granted"))
     return visits_summary(room)
+
+
+def rooms_command():
+    """rooms : salons connus (connectés, fichier des visites, clés), casse exacte ; un salon jamais visité et sans clé n'y est pas"""
+    per = {}
+    for d in visits_read():
+        if isinstance(d.get("room"), str):
+            per.setdefault(d["room"], []).append(d)
+    names = sorted(set(ROOMS) | set(per) | set(VKEYS), key=lambda r: (r.lower(), r))
+    if not names:
+        print(_tr("py.presence.rooms.none"))
+    for r in names:
+        peers = list(ROOMS.get(r, {}).values())
+        merged = visits_merge(per.get(r, []))
+        seen = _tr("py.presence.rooms.last", time.strftime("%d/%m/%Y", time.localtime(merged[-1]["start"]))) if merged else ""
+        print(_tr("py.presence.rooms.line", r, len(peers), sum(1 for p in peers if not p.spectator), len(merged), seen,
+                  _tr("py.presence.visits.yes") if r in VKEYS else _tr("py.presence.visits.no")))
+    if not OPTS.visits:
+        print(_tr("py.presence.rooms.novisits"))
+    print(_tr("py.presence.rooms.note"))
 
 
 def vkey_command(rest):
@@ -624,6 +650,8 @@ async def run_command(line):
             log(_tr("py.presence.ev.kick"), peer.room, peer.who(), reason)
             asyncio.create_task(kick_peer(peer, reason))
             print(_tr("py.presence.0_ejecte", peer.name or _tr('py.presence.spectator_paren')))
+    elif cmd in ("rooms", "salons"):
+        rooms_command()
     elif cmd in ("visits-key", "cle-visites"):
         vkey_command(rest)
     elif cmd == "bans":

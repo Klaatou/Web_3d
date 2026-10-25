@@ -3,6 +3,10 @@
 Les dates sont au format jj/mm/aaaa.
 
 ## v48 (25/10/2026)
+### 25/10/2026 : commande rooms
+- **Console du serveur de présence** : `rooms` (alias `salons`) liste les salons connus avec leur casse exacte : connectés (dont promeneurs), visites (reconnexions fusionnées) et date de la dernière, clé ou non. `tests/v48.py`, manuel § 31.2, procédures § 6.
+- **Presence server console**: `rooms` (alias `salons`) lists the known rooms with their exact case: connected (walkers among them), visits (reconnections merged) and date of the last one, key or not. `tests/v48.py`, manual § 31.2, procedures § 6.
+
 ### 25/10/2026 : visits-key et la casse du salon
 - **`visits-key ROOM`** : la casse du nom du salon compte partout dans le serveur ; si le nom tapé n'existe qu'avec une autre casse (salons connectés et fichier des visites), la console le signale (la clé est quand même créée). `tests/v48.py`, manuel § 31.2.
 - **`visits-key ROOM`**: case matters in the room name throughout the server; if the typed name only exists with a different case (connected rooms and visit file), the console says so (the key is still created). `tests/v48.py`, manual § 31.2.

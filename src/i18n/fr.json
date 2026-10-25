@@ -801,7 +801,7 @@
  "py.presence.cle_0_ip_1": "clé {0} ip {1}",
  "py.presence.cle_privee_tls": "clé privée TLS",
  "py.presence.commande_inconnue_0_tape_aide": "commande inconnue : {0} (tape « aide »)",
- "py.presence.commandes_tape_les_ici_puis_entree": "commandes (tape-les ici, puis Entrée) :\n  liste                           visiteurs connectés (n°, nom, rôle, salon, durée, IP)\n  ejecter <n°|nom> [raison]       déconnecte le visiteur (il peut revenir)\n  bannir <n°|nom> [minutes] [raison]   éjecte et interdit sa clé et son IP (défaut 60 min ; 0 = définitif)\n  bans                            bannissements en cours\n  debannir <n° de bans>           lève un bannissement\n  visits-key <salon> [off]        clé du journal des visites d'un salon (nouvelle clé, ou off pour la retirer ; seul : liste)\n  aide                            ce message\n  (un nom contenant des espaces : utilise le n° de « liste »)",
+ "py.presence.commandes_tape_les_ici_puis_entree": "commandes (tape-les ici, puis Entrée) :\n  liste                           visiteurs connectés (n°, nom, rôle, salon, durée, IP)\n  ejecter <n°|nom> [raison]       déconnecte le visiteur (il peut revenir)\n  bannir <n°|nom> [minutes] [raison]   éjecte et interdit sa clé et son IP (défaut 60 min ; 0 = définitif)\n  bans                            bannissements en cours\n  debannir <n° de bans>           lève un bannissement\n  rooms                           salons connus : connectés, visites, clé (casse exacte)\n  visits-key <salon> [off]        clé du journal des visites d'un salon (nouvelle clé, ou off pour la retirer ; seul : liste)\n  aide                            ce message\n  (un nom contenant des espaces : utilise le n° de « liste »)",
  "py.presence.comportement_inapproprie": "comportement inapproprié",
  "py.presence.connexions_simultanees_par_adresse_ip": "connexions simultanées par adresse IP",
  "py.presence.debut": "début",
@@ -1358,5 +1358,10 @@
  "page.visits.d.h": "{0} h {1} min",
  "page.visits.d.m": "{0} min {1} s",
  "page.visits.file": "visites",
- "py.presence.vkey.case": "attention : aucune visite ni aucun visiteur pour le salon « {0} » ; salon connu avec une autre casse : {1}. La casse compte : refais visits-key avec le nom exact (cette clé reste valable pour « {0} »)."
+ "py.presence.vkey.case": "attention : aucune visite ni aucun visiteur pour le salon « {0} » ; salon connu avec une autre casse : {1}. La casse compte : refais visits-key avec le nom exact (cette clé reste valable pour « {0} »).",
+ "py.presence.rooms.none": "aucun salon connu (ni visiteur connecté, ni visite enregistrée, ni clé)",
+ "py.presence.rooms.line": "  {0:<24} connectés : {1} ({2} en promenade)   visites : {3}{4}   clé : {5}",
+ "py.presence.rooms.last": ", dernière le {0}",
+ "py.presence.rooms.novisits": "  (journal des visites inactif : lance le serveur avec --visits FICHIER pour compter les visites)",
+ "py.presence.rooms.note": "  (casse exacte ; un salon jamais visité et sans clé n'apparaît pas : son nom est la valeur room de NOM.config.json, par défaut le nom de la page)"
 }
