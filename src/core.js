@@ -777,10 +777,15 @@ function createViewer(container, cfg0, loader) {
       const g = gltf.scene; g.name = 'overview';
       g.quaternion.copy(TL.root.quaternion);
       const byFile = new Map(TL.tiles.map(t => [t.file, t]));
+      // v52 : le chemin ecrit dans le .overview.glb (extras.tile) est celui du decoupage ; apres un renommage des dossiers et de l'index il ne correspond plus :
+      // repli sur le nom du fichier de la tuile (T_niveau_i_j.glb), unique dans une region (sinon pas de repli : la cellule reste visible)
+      const baseOf = p => String(p || '').split('/').pop(), byBase = new Map(), dupBase = new Set();
+      for (const t of TL.tiles) { const b = baseOf(t.file); if (byBase.has(b)) dupBase.add(b); else byBase.set(b, t); }
       let tri = 0, cells = 0;
       for (const c of g.children) {
         c.traverse(o => { if (o.isMesh) { o.matrixAutoUpdate = false; o.castShadow = o.receiveShadow = false; const gm = o.geometry; tri += gm.index ? gm.index.count / 3 : gm.attributes.position.count / 3; } });
-        const t = byFile.get(c.userData && c.userData.tile);   // extras.tile : GLTFLoader retire « / », « . » et les espaces des noms de nœuds
+        const tn = c.userData && c.userData.tile;
+        const t = byFile.get(tn) || (dupBase.has(baseOf(tn)) ? undefined : byBase.get(baseOf(tn)));   // extras.tile : GLTFLoader retire « / », « . » et les espaces des noms de nœuds
         if (t) { t.ov = c; c.name = t.file; cells++; }
       }
       g.updateMatrixWorld(true);
