@@ -1699,7 +1699,7 @@ Le créateur d'une région (par exemple un artiste qui présente sa galerie) voi
 
 ### 31.3 Côté créateur : la fenêtre « Journal des visites »
 
-Il ouvre ce lien, depuis n'importe quel appareil, sans rien installer. La région s'ouvre avec la fenêtre « Journal des visites ». Il tape la clé (majuscules ou minuscules, tirets ou espaces : peu importe), puis « Afficher » ou Entrée :
+Il ouvre ce lien, depuis n'importe quel appareil, sans rien installer. La région s'ouvre avec la fenêtre « Journal des visites ». Sans `#visits`, le bouton « Journal des visites… » de la fenêtre Informations (I), à côté de « Copier le diagnostic », ouvre la même fenêtre ; il n'existe que sur une page qui a un serveur de présence. Il tape la clé (majuscules ou minuscules, tirets ou espaces : peu importe), puis « Afficher » ou Entrée :
 
 - tableau « Par jour » : Date, Visites, Visiteurs distincts, Durée totale, Durée médiane, Avec promenade ;
 - tableau « Visites des 30 derniers jours » : Arrivée, Durée, Promenade (oui ou non), et Pseudo si le serveur a `--visits-names` (1000 visites au plus) ;

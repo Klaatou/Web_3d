@@ -1363,5 +1363,7 @@
  "py.presence.rooms.line": "  {0:<24} connectés : {1} ({2} en promenade)   visites : {3}{4}   clé : {5}",
  "py.presence.rooms.last": ", dernière le {0}",
  "py.presence.rooms.novisits": "  (journal des visites inactif : lance le serveur avec --visits FICHIER pour compter les visites)",
- "py.presence.rooms.note": "  (casse exacte ; un salon jamais visité et sans clé n'apparaît pas : son nom est la valeur room de NOM.config.json, par défaut le nom de la page)"
+ "py.presence.rooms.note": "  (casse exacte ; un salon jamais visité et sans clé n'apparaît pas : son nom est la valeur room de NOM.config.json, par défaut le nom de la page)",
+ "page.visits.open": "Journal des visites…",
+ "page.visits.open.tip": "Pour le créateur de la région : résumé des visites, avec la clé donnée par l'hôte du serveur de présence"
 }

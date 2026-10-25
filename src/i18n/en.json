@@ -1363,5 +1363,7 @@
  "py.presence.rooms.line": "  {0:<24} connected: {1} ({2} walking)   visits: {3}{4}   key: {5}",
  "py.presence.rooms.last": ", last on {0}",
  "py.presence.rooms.novisits": "  (visit log off: start the server with --visits FILE to count visits)",
- "py.presence.rooms.note": "  (exact case; a room never visited and without a key is not shown: its name is the room value of NAME.config.json, the page name by default)"
+ "py.presence.rooms.note": "  (exact case; a room never visited and without a key is not shown: its name is the room value of NAME.config.json, the page name by default)",
+ "page.visits.open": "Visit log…",
+ "page.visits.open.tip": "For the region's creator: summary of the visits, with the key given by the presence server host"
 }

@@ -3,6 +3,10 @@
 Les dates sont au format jj/mm/aaaa.
 
 ## v48 (25/10/2026)
+### 25/10/2026 : bouton « Journal des visites… »
+- **Page** : bouton « Journal des visites… » dans la fenêtre Informations (I), à côté de « Copier le diagnostic », seulement si la page a un serveur de présence ; il ouvre la même fenêtre que `#visits` (fermée puis rouverte, le résumé reste). `tests/v48.py`, manuel § 31.3.
+- **Page**: "Visit log…" button in the Information window (I), next to "Copy diagnostics", only when the page has a presence server; it opens the same window as `#visits` (closed then reopened, the summary stays). `tests/v48.py`, manual § 31.3.
+
 ### 25/10/2026 : commande rooms
 - **Console du serveur de présence** : `rooms` (alias `salons`) liste les salons connus avec leur casse exacte : connectés (dont promeneurs), visites (reconnexions fusionnées) et date de la dernière, clé ou non. `tests/v48.py`, manuel § 31.2, procédures § 6.
 - **Presence server console**: `rooms` (alias `salons`) lists the known rooms with their exact case: connected (walkers among them), visits (reconnections merged) and date of the last one, key or not. `tests/v48.py`, manual § 31.2, procedures § 6.

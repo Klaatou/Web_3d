@@ -249,6 +249,20 @@ async def partie_page():
 
             o = await Onglet(br).ouvrir(BASE + "Galerie")
             rapport(await o.ev("document.getElementById('visitsOverlay').hidden"), "sans #visits : fenêtre cachée")
+            b = await o.ev("(() => { const b = document.getElementById('visitsBtn'); return b ? [b.textContent, b.title, !!b.closest('#stateInfo')] : null; })()")
+            rapport(b and b[0] == "Journal des visites…" and "créateur" in b[1] and b[2], "bouton « Journal des visites… » dans la fenêtre Informations, avec sa bulle", b)
+            await o.ev("document.getElementById('visitsBtn').click()")
+            rapport(await o.ev("!document.getElementById('visitsOverlay').hidden && document.activeElement && document.activeElement.id === 'visitsKey'"), "le bouton ouvre la fenêtre, curseur dans la clé")
+            await o.pg.fill("#visitsKey", cle)
+            await o.pg.press("#visitsKey", "Enter")
+            await o.attendre("document.querySelectorAll('#visitsOut table').length === 2", 15)
+            await o.pg.keyboard.press("Escape")
+            await o.ev("document.getElementById('visitsBtn').click()")
+            rapport(await o.ev("!document.getElementById('visitsOverlay').hidden && document.querySelectorAll('#visitsOut table').length === 2"), "fermée puis rouverte : le résumé est toujours là")
+            rapport(not o.errs, "aucune erreur de page (bouton)", o.errs)
+            await o.ctx.close()
+            o = await Onglet(br).ouvrir(BASE + "Sans")
+            rapport(await o.ev("document.getElementById('visitsBtn') === null"), "page sans présence : pas de bouton")
             await o.ctx.close()
 
             print("--- 5. page : anglais")
@@ -258,6 +272,7 @@ async def partie_page():
             await o.pg.press("#visitsKey", "Enter")
             await o.attendre("document.querySelectorAll('#visitsOut table').length === 2", 15)
             st, t = await o.txt("visitsStatus"), await o.txt("visitsOut")
+            rapport(await o.ev("document.getElementById('visitsBtn').textContent") == "Visit log…", "bouton en anglais")
             rapport('Room "galerie"' in st and "Per day" in t and "Distinct visitors" in t and "yes" in t, "textes anglais", st + " / " + t[:200])
             async with o.pg.expect_download() as dl:
                 await o.ev("document.getElementById('visitsCsv').click()")

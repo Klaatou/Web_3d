@@ -1698,7 +1698,7 @@ The creator of a region (for example an artist showing their gallery) sees how m
 
 ### 31.3 Creator side: the "Visit log" window
 
-They open this link, from any device, with nothing to install. The region opens with the "Visit log" window. They type the key (upper or lower case, dashes or spaces: it does not matter), then "Show" or Enter:
+They open this link, from any device, with nothing to install. The region opens with the "Visit log" window. Without `#visits`, the "Visit log…" button of the Information window (I), next to "Copy diagnostics", opens the same window; it only exists on a page that has a presence server. They type the key (upper or lower case, dashes or spaces: it does not matter), then "Show" or Enter:
 
 - "Per day" table: Date, Visits, Distinct visitors, Total duration, Median duration, With walk;
 - "Visits of the last 30 days" table: Arrival, Duration, Walk (yes or no), and Nickname if the server has `--visits-names` (1000 visits at most);

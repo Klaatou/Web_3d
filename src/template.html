@@ -452,7 +452,7 @@ if ((C.map || []).length || C.mapUrl) {
 }
 // v48 : journal des visites. L'adresse de la page suivie de #visits ouvre cette fenêtre ; la clé (commande « visits-key SALON » du serveur
 // de présence) est envoyée au serveur de la page par une connexion brève, qui renvoie le résumé du salon. La clé acceptée est retenue par ce navigateur.
-if (H.has('visits')) {
+const VISITS = (() => {   // v48 : aussi ouvert par le bouton « Journal des visites… » de la fenêtre Informations (VISITS.open)
   const $v = id => document.getElementById(id);
   const ov = $v('visitsOverlay'), inp = $v('visitsKey'), st = $v('visitsStatus'), out = $v('visitsOut'), csvB = $v('visitsCsv'), fgB = $v('visitsForget');
   const room = String(C.room || ''), SK = 'glb2html_visits_' + room;
@@ -513,10 +513,16 @@ if (H.has('visits')) {
   csvB.onclick = csv;
   $v('visitsClose').onclick = close;
   addEventListener('keydown', e => { if (e.key === 'Escape' && !ov.hidden) { e.preventDefault(); close(); } });
-  ov.hidden = false;
-  if (!C.presenceUrl) { $v('visitsForm').hidden = true; st.textContent = tr('page.visits.nopres'); }
-  else { const k = stored(); fgB.hidden = !k; if (k) { inp.value = k; run(k); } else inp.focus(); }
-}
+  const open = () => {
+    if (document.pointerLockElement && document.exitPointerLock) document.exitPointerLock();
+    ov.hidden = false;
+    if (!C.presenceUrl) { $v('visitsForm').hidden = true; st.textContent = tr('page.visits.nopres'); return; }
+    if (last) return;
+    const k = stored(); fgB.hidden = !k; if (k) { inp.value = k; run(k); } else inp.focus();
+  };
+  if (H.has('visits')) open();
+  return { open };
+})();
 // réglages visiteur mémorisés dans ce navigateur : couleur de l'avatar (null = tirée au hasard par le serveur), pseudo cité (gras, clignotement),
 // sons (général, volume, citation, arrivée, départ), disposition du clavier. v36 : les anciens réglages du bip (clé « sound ») sont ignorés.
 const VIS = (() => {
@@ -789,7 +795,16 @@ if (C.walk) {
       dout.value = t;
       toast((await copyText(t, dout)) ? tr('core.diag.copied') : tr('page.toast.copyfail'));
     };
-    row.append(bd, dout); sb.append(row);
+    row.append(bd);
+    if (C.presenceUrl) {   // v48 : journal des visites, pour le créateur de la région (la clé reste nécessaire)
+      const bv = document.createElement('button');
+      bv.type = 'button'; bv.id = 'visitsBtn'; bv.textContent = tr('page.visits.open'); bv.title = tr('page.visits.open.tip');
+      bv.style.cssText = bd.style.cssText + ';margin-left:6px';
+      bv.onmousedown = e => e.preventDefault();
+      bv.onclick = () => VISITS.open();
+      row.append(bv);
+    }
+    row.append(dout); sb.append(row);
   }
   const setTxt = (el, t) => { if (el.textContent !== t) el.textContent = t; };
   const fb = document.getElementById('flyBtn'), gb = document.getElementById('grabBtn');
