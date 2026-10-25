@@ -94,9 +94,10 @@ Les zones d'une région en tuiles s'écrivent dans le repère d'origine du modè
 3. **Ouvrir le port** (8765 par défaut, `--port` pour en changer) dans la box, vers la machine qui fait tourner le serveur.
 4. **Brancher la page** : `--presence-url "ws://ADRESSE:8765"` à la fabrication, ou la clé `presenceUrl` de `X.config.json`. Si la page est en https, l'adresse doit être en `wss://` (voir `--cert` et `--key`, ou un reverse proxy avec `--proxy-header`).
 5. **Modérer** dans la console du serveur : `liste` (visiteurs), `ejecter <n°|nom> [raison]`, `bannir <n°|nom> [minutes] [raison]` (0 = définitif), `bans`, `debannir <n° de bans>`, `aide`.
-6. **Mettre à jour** : arrête le serveur (Ctrl+C) et relance-le depuis le `presence_server.py` du dossier `dist` après `python build.py`. Un ancien exemplaire ignore les nouveautés (par exemple la couleur choisie).
+6. **Journal des visites** (v48) : ajoute `--visits visits.jsonl` à la ligne de lancement ; dans la console, `visits-key ROOM` donne la clé d'un salon (affichée une seule fois). Envoie au créateur l'adresse de sa page suivie de `#visits` et la clé (manuel § 31).
+7. **Mettre à jour** : arrête le serveur (Ctrl+C) et relance-le depuis le `presence_server.py` du dossier `dist` après `python build.py`. Un ancien exemplaire ignore les nouveautés (par exemple la couleur choisie).
 
-Les adresses IP et les messages du chat sont des données personnelles : informe tes visiteurs et limite la durée de conservation.
+Les adresses IP et les messages du chat sont des données personnelles : informe tes visiteurs et limite la durée de conservation. Le journal des visites ne contient jamais d'adresse IP.
 
 ## 7. Carte des mondes
 

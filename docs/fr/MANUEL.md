@@ -1197,6 +1197,8 @@ Un fichier JSON n'accepte pas de commentaires. Les explications sont donc ici, e
 | `presence_identities.json` | `presence_identities.sample.json` | `presence_server.py` | `presence_server.py` |
 | `presence_bans.json` | `presence_bans.sample.json` | `presence_server.py` (commande `bannir`) | `presence_server.py` |
 | fichier de `--history-file` (par exemple `chat.jsonl`) | `chat_history.sample.jsonl` | `presence_server.py` | `presence_server.py` |
+| fichier de `--visits` (par exemple `visits.jsonl`) | `visits.sample.jsonl` | `presence_server.py` | `presence_server.py` |
+| `presence_visits_keys.json` | `presence_visits_keys.sample.json` | `presence_server.py` (commande `visits-key`) | `presence_server.py` |
 
 Deux autres fichiers ont **exactement le format** de `NOM.zones.json` :
 
@@ -1479,6 +1481,25 @@ Le serveur les écrit lui-même ; on ne les modifie à la main que serveur arrê
 
 Les messages plus vieux que `--history-days` jours (30 par défaut) sont retirés au démarrage ; avec `--history-days 0`, rien n'est retiré.
 
+**Journal des visites** (option `--visits`, v48) : comme l'historique, **une visite par ligne**, chaque ligne étant un petit JSON. Jamais d'adresse IP.
+
+| Champ | Type | Ce qu'il contient |
+|---|---|---|
+| `room` | texte | salon |
+| `start` | nombre entier | arrivée en secondes depuis 1970 (c'est elle qui compte pour `--visits-days`) |
+| `dur` | nombre entier | durée de la connexion en secondes |
+| `walk` | nombre entier | secondes passées en promenade |
+| `v` | texte | empreinte du navigateur (10 caractères), différente de la clé du journal `presence.log` : sert à compter les visiteurs distincts et à fusionner les reconnexions |
+| `name` | texte | pseudo du promeneur, seulement avec `--visits-names` |
+
+Les visites plus vieilles que `--visits-days` jours (365 par défaut) sont retirées au démarrage puis toutes les 6 heures, avec les lignes illisibles ; avec `--visits-days 0`, rien n'est retiré.
+
+**`presence_visits_keys.json`** (option `--visits-keys`, v48) : les clés du journal des visites, écrites par la commande `visits-key`.
+
+| Champ | Type | Ce qu'il contient |
+|---|---|---|
+| `rooms` | objet | pour chaque salon : `salt` (sel tiré au hasard), `hash` (empreinte SHA-256 du sel suivi de la clé en majuscules, sans tirets ni espaces), `added` (création, en secondes depuis 1970). La clé elle-même n'est jamais écrite |
+
 ### 27.11 Noms en anglais depuis la v43
 
 Pour que tous les noms soient dans la même langue, la v43 a mis en anglais les derniers noms français : options des outils, valeurs dans les fichiers JSON et paramètres d'adresse. **Les anciens noms restent acceptés** : les commandes, les fichiers et les liens déjà écrits continuent de marcher. Un ancien nom est remplacé par le nouveau à la lecture ; quand un outil réécrit un fichier, il écrit le nouveau. `--update` garde tel quel un champ que l'on ne change pas : un ancien `tileMaxMo` reste donc dans `NOM.config.json`, et la page le lit toujours.
@@ -1662,3 +1683,53 @@ La réponse à une demande `rooms` ajoute `visitors` (promeneurs et spectateurs,
 ### 30.7 Non testé
 
 Un vrai téléphone (pas de bulle au doigt), Edge, Windows, les lignes PowerShell elles-mêmes.
+
+## 31. Nouveautés de la v48 (25/10/2026) : journal des visites
+
+### 31.1 À quoi il sert
+
+Le créateur d'une région (par exemple un artiste qui présente sa galerie) voit combien de personnes l'ont visitée, quand et combien de temps, même s'il n'était pas là. Les visites sont notées par le serveur de présence dans un fichier à part ; le créateur les consulte depuis la page de sa région, avec une clé. Il ne reçoit qu'un résumé, jamais le fichier.
+
+### 31.2 Côté hôte : le serveur de présence
+
+1. Lancer le serveur avec `--visits visits.jsonl` (un chemin relatif désigne le dossier du script, comme `--log`). `--visits-days N` règle la conservation (365 jours par défaut ; `0` = tout garder). `--visits-names` note aussi le pseudo des promeneurs (désactivé par défaut) :
+   `python ".\presence_server.py" --log presence.log --log-ip raw --log-days 0 --history-file chat.jsonl --history-days 0 --visits visits.jsonl`
+2. Dans la console du serveur, taper `visits-key ROOM`, où ROOM est le salon : la valeur `room` de la config de la page (par défaut, le nom de la page). La clé s'affiche **une seule fois**, par exemple `K7QF-29MD-XR4P` ; seule son empreinte est gardée, dans `presence_visits_keys.json` (option `--visits-keys`). Refaire la commande donne une nouvelle clé : l'ancienne ne marche plus. `visits-key ROOM off` retire la clé ; `visits-key` seul liste les salons qui ont une clé. `cle-visites` est accepté à la place de `visits-key`.
+3. Envoyer au créateur l'adresse de sa page suivie de `#visits`, et la clé : `https://ADRESSE/index.html?region=galerie#visits`.
+
+### 31.3 Côté créateur : la fenêtre « Journal des visites »
+
+Il ouvre ce lien, depuis n'importe quel appareil, sans rien installer. La région s'ouvre avec la fenêtre « Journal des visites ». Il tape la clé (majuscules ou minuscules, tirets ou espaces : peu importe), puis « Afficher » ou Entrée :
+
+- tableau « Par jour » : Date, Visites, Visiteurs distincts, Durée totale, Durée médiane, Avec promenade ;
+- tableau « Visites des 30 derniers jours » : Arrivée, Durée, Promenade (oui ou non), et Pseudo si le serveur a `--visits-names` (1000 visites au plus) ;
+- bouton « Télécharger (CSV) » : les deux tableaux pour un tableur, durées en secondes, séparateur `;` en français et `,` en anglais.
+
+La clé acceptée est retenue par le navigateur : la fois suivante, le résumé s'affiche directement. « Oublier la clé » l'efface (à faire sur un ordinateur partagé). Échap ou « Fermer (Échap) » ferme la fenêtre ; la région reste utilisable derrière.
+
+Messages possibles : clé refusée ; trop d'essais (5 clés refusées par minute et par adresse IP, puis une minute d'attente) ; serveur lancé sans `--visits` ; serveur trop ancien (avant la v48) ; serveur qui ne répond pas ; page sans serveur de présence.
+
+### 31.4 Ce qui est compté
+
+- **Une visite** est une connexion au serveur de présence : une page ouverte (spectateur, quand `spectate` est actif, ce qui est le cas par défaut avec une adresse de présence) ou une promenade. Le temps passé en promenade est noté à part (colonne « Avec promenade »).
+- **Reconnexions** : un rechargement de page, une coupure du réseau ou un passage entre promenade et vue globale moins de 2 minutes après la fin compte comme la même visite (même navigateur, même salon).
+- **Visiteurs distincts** : comptés par l'empreinte du navigateur. Un même visiteur sur deux appareils compte deux fois ; un navigateur qui efface ses données compte comme un nouveau visiteur.
+- **Ne sont pas comptés** : les pages sans serveur de présence, les visiteurs dont la connexion échoue (pare-feu, page https avec une adresse `ws://`), les pages fabriquées avec `--no-spectate` tant qu'on ne se promène pas. La consultation du journal compte elle-même comme une visite (la page est ouverte). Le nombre de pages servies se lit dans le journal du serveur web (Apache).
+- Les jours suivent l'horloge de la machine du serveur.
+- Une visite est écrite quand elle se termine. Arrêt propre du serveur (Ctrl+C) : les visites en cours sont écrites. Arrêt brutal du serveur ou de la machine : elles sont perdues.
+
+### 31.5 Données personnelles
+
+Le fichier des visites ne contient **jamais d'adresse IP**. L'empreinte du navigateur est une donnée pseudonyme, le pseudo (avec `--visits-names`) une donnée personnelle : informer les visiteurs et garder une durée raisonnable (`--visits-days`). Le journal `presence.log` ne change pas. Sur une adresse `ws://`, la clé circule en clair : pour un accès depuis l'extérieur, page et présence en https et `wss://` (procédures § 11).
+
+### 31.6 Fichiers
+
+Format du fichier des visites et de `presence_visits_keys.json` : § 27.10. Exemples : `docs/samples/visits.sample.jsonl` et `docs/samples/presence_visits_keys.sample.json` (clé d'exemple `ABCD-EFGH-JKMN`, à ne jamais utiliser).
+
+### 31.7 Tests de la v48
+
+`tests/v48.py` (vrai serveur de présence, Chromium) : écriture des visites sans IP ni pseudo, fusion des reconnexions, temps de promenade, empreinte de la clé seulement, clé en minuscules acceptée, mauvaise clé, limite de 5 essais, `visits-key ROOM off`, purge, pseudos avec `--visits-names`, arrêt propre, fenêtre de la page (clé refusée, résumé, CSV, clé retenue puis oubliée, Échap), page sans présence, serveur sans `--visits`, ancien serveur, serveur absent, anglais. `tests/samples.py` lit les deux nouveaux exemples.
+
+### 31.8 Non testé
+
+Windows (Ctrl+C dans la console Windows), Edge, un vrai téléphone, Tailscale Funnel, les lignes PowerShell elles-mêmes.

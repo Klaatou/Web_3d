@@ -1197,6 +1197,8 @@ A JSON file does not accept comments. The explanations are therefore here, and t
 | `presence_identities.json` | `presence_identities.sample.json` | `presence_server.py` | `presence_server.py` |
 | `presence_bans.json` | `presence_bans.sample.json` | `presence_server.py` (`bannir` command) | `presence_server.py` |
 | `--history-file` file (for example `chat.jsonl`) | `chat_history.sample.jsonl` | `presence_server.py` | `presence_server.py` |
+| `--visits` file (for example `visits.jsonl`) | `visits.sample.jsonl` | `presence_server.py` | `presence_server.py` |
+| `presence_visits_keys.json` | `presence_visits_keys.sample.json` | `presence_server.py` (`visits-key` command) | `presence_server.py` |
 
 Two other files have **exactly the format** of `NOM.zones.json`:
 
@@ -1479,6 +1481,25 @@ The server writes them itself; edit them by hand only with the server stopped. "
 
 Messages older than `--history-days` days (30 by default) are removed at startup; with `--history-days 0`, nothing is removed.
 
+**Visit log** (`--visits` option, v48): like the history, **one visit per line**, each line being a small JSON. Never an IP address.
+
+| Field | Type | What it contains |
+|---|---|---|
+| `room` | text | room |
+| `start` | whole number | arrival in seconds since 1970 (this is what counts for `--visits-days`) |
+| `dur` | whole number | duration of the connection in seconds |
+| `walk` | whole number | seconds spent walking |
+| `v` | text | browser fingerprint (10 characters), different from the key in the `presence.log` log: used to count distinct visitors and to merge reconnections |
+| `name` | text | walker's nickname, only with `--visits-names` |
+
+Visits older than `--visits-days` days (365 by default) are removed at startup and then every 6 hours, together with unreadable lines; with `--visits-days 0`, nothing is removed.
+
+**`presence_visits_keys.json`** (`--visits-keys` option, v48): the visit log keys, written by the `visits-key` command.
+
+| Field | Type | What it contains |
+|---|---|---|
+| `rooms` | object | for each room: `salt` (random salt), `hash` (SHA-256 fingerprint of the salt followed by the key in upper case, without dashes or spaces), `added` (creation, in seconds since 1970). The key itself is never written |
+
 ### 27.11 English names since v43
 
 So that all names are in the same language, v43 put the last French names into English: tool options, values in the JSON files and address parameters. **The old names are still accepted**: commands, files and links already written keep working. An old name is replaced by the new one when read; when a tool rewrites a file, it writes the new one. `--update` keeps a field you do not change as it is: an old `tileMaxMo` therefore stays in `NOM.config.json`, and the page still reads it.
@@ -1661,3 +1682,53 @@ The reply to a `rooms` request adds `visitors` (walkers and spectators, per room
 ### 30.7 Not tested
 
 A real phone (no tooltip with a finger), Edge, Windows, the PowerShell lines themselves.
+
+## 31. New in v48 (25/10/2026): visit log
+
+### 31.1 What it is for
+
+The creator of a region (for example an artist showing their gallery) sees how many people visited it, when and for how long, even when they were not there. Visits are recorded by the presence server in a separate file; the creator reads them from their region's page, with a key. They only get a summary, never the file.
+
+### 31.2 Host side: the presence server
+
+1. Run the server with `--visits visits.jsonl` (a relative path means the script's folder, like `--log`). `--visits-days N` sets how long visits are kept (365 days by default; `0` = keep everything). `--visits-names` also records walkers' nicknames (off by default):
+   `python ".\presence_server.py" --log presence.log --log-ip raw --log-days 0 --history-file chat.jsonl --history-days 0 --visits visits.jsonl`
+2. In the server console, type `visits-key ROOM`. The room is the `room` value of the page's config (by default, the page name). The key is shown **only once**, for example `K7QF-29MD-XR4P`; only its fingerprint is kept, in `presence_visits_keys.json` (`--visits-keys` option). Running the command again gives a new key: the old one stops working. `visits-key ROOM off` removes the key; `visits-key` alone lists the rooms that have a key. `cle-visites` is accepted instead of `visits-key`.
+3. Send the creator their page address followed by `#visits`, and the key: `https://ADRESSE/index.html?region=galerie#visits`.
+
+### 31.3 Creator side: the "Visit log" window
+
+They open this link, from any device, with nothing to install. The region opens with the "Visit log" window. They type the key (upper or lower case, dashes or spaces: it does not matter), then "Show" or Enter:
+
+- "Per day" table: Date, Visits, Distinct visitors, Total duration, Median duration, With walk;
+- "Visits of the last 30 days" table: Arrival, Duration, Walk (yes or no), and Nickname if the server has `--visits-names` (1000 visits at most);
+- "Download (CSV)" button: both tables for a spreadsheet, durations in seconds, separator `;` in French and `,` in English.
+
+The accepted key is kept by the browser: next time, the summary is shown at once. "Forget the key" erases it (do it on a shared computer). Esc or "Close (Esc)" closes the window; the region stays usable behind it.
+
+Possible messages: key refused; too many attempts (5 refused keys per minute and per IP address, then a minute's wait); server started without `--visits`; server too old (before v48); server not answering; page without a presence server.
+
+### 31.4 What is counted
+
+- **A visit** is a connection to the presence server: an open page (spectator, when `spectate` is on, which is the default with a presence address) or a walk. Time spent walking is recorded separately ("With walk" column).
+- **Reconnections**: a page reload, a network drop or a switch between walking and overview less than 2 minutes after the end counts as the same visit (same browser, same room).
+- **Distinct visitors**: counted by the browser fingerprint. The same visitor on two devices counts twice; a browser that clears its data counts as a new visitor.
+- **Not counted**: pages without a presence server, visitors whose connection fails (firewall, https page with a `ws://` address), pages built with `--no-spectate` as long as nobody walks. Reading the log itself counts as a visit (the page is open). The number of pages served is read in the web server's log (Apache).
+- Days follow the clock of the server machine.
+- A visit is written when it ends. Clean server stop (Ctrl+C): visits in progress are written. Sudden stop of the server or the machine: they are lost.
+
+### 31.5 Personal data
+
+The visit file **never contains an IP address**. The browser fingerprint is pseudonymous data, the nickname (with `--visits-names`) personal data: inform visitors and keep a reasonable duration (`--visits-days`). The `presence.log` log does not change. On a `ws://` address, the key travels in clear: for access from outside, page and presence over https and `wss://` (procedures § 11).
+
+### 31.6 Files
+
+Format of the visit file and of `presence_visits_keys.json`: § 27.10. Samples: `docs/samples/visits.sample.jsonl` and `docs/samples/presence_visits_keys.sample.json` (sample key `ABCD-EFGH-JKMN`, never to be used).
+
+### 31.7 v48 tests
+
+`tests/v48.py` (real presence server, Chromium): visits written without IP or nickname, reconnections merged, walking time, key fingerprint only, lower-case key accepted, wrong key, 5-attempt limit, `visits-key ROOM off`, purge, nicknames with `--visits-names`, clean stop, page window (key refused, summary, CSV, key kept then forgotten, Esc), page without presence, server without `--visits`, older server, missing server, English. `tests/samples.py` reads the two new samples.
+
+### 31.8 Not tested
+
+Windows (Ctrl+C in the Windows console), Edge, a real phone, Tailscale Funnel, the PowerShell lines themselves.

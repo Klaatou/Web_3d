@@ -37,8 +37,9 @@ rapport(not trouves, "aide, messages et documents : seulement les nouveaux noms 
 print("--- 1. les fichiers se lisent")
 noms = sorted(p.name for p in SAMPLES.iterdir())
 attendus = ["chat_history.sample.jsonl", "default.sample.json", "disposition.sample.json", "presence_bans.sample.json", "presence_identities.sample.json",
-            "region.config.sample.json", "region.reglages.sample.json", "region.tiles.sample.json", "region.zones.sample.json", "regions.sample.json"]
-rapport(noms == attendus, "docs/samples/ contient les 10 exemples", noms)
+            "presence_visits_keys.sample.json", "region.config.sample.json", "region.reglages.sample.json", "region.tiles.sample.json", "region.zones.sample.json",
+            "regions.sample.json", "visits.sample.jsonl"]
+rapport(noms == attendus, "docs/samples/ contient les 12 exemples", noms)
 for n in noms:
     try:
         if n.endswith(".jsonl"):
@@ -121,6 +122,24 @@ rapport(FR["py.presence.history_loaded"].replace("{0}", "3").replace("{1}", "0")
 idoc = json.loads(ids.read_text(encoding="utf-8"))
 rapport(idoc["salt"] == lire("presence_identities.sample.json")["salt"] and set(idoc["names"]) == {"jj", "alice"}, "identités : gardées telles quelles")
 rapport(len(json.loads(bans.read_text(encoding="utf-8"))) == 2, "bannissements : gardés (aucun n'est expiré)")
+# v48 : journal des visites et clé d'exemple (clé ABCD-EFGH-JKMN, documentée au manuel § 27) ; --visits-days 0 : rien n'est purgé
+vis, vkeys = tmp / "visits.jsonl", tmp / "vkeys.json"
+shutil.copy(SAMPLES / "visits.sample.jsonl", vis)
+shutil.copy(SAMPLES / "presence_visits_keys.sample.json", vkeys)
+pp, pport = lancer_presence("--identities", ids, "--bans", bans, "--visits", vis, "--visits-keys", vkeys, "--visits-days", "0", "--visits-names")
+
+
+async def visites_exemple():
+    import websockets
+    async with websockets.connect(f"ws://127.0.0.1:{pport}") as ws:
+        await ws.send(json.dumps({"t": "visits", "room": "Region", "key": "abcd efgh jkmn"}))
+        return json.loads(await ws.recv())
+vr = asyncio.run(visites_exemple())
+pp.kill()
+rapport(vr.get("ok") is True and vr.get("visits") == 3 and vr.get("visitors") == 3 and vr.get("keep") == 0 and vr.get("names") is True,
+        "visites d'exemple : clé acceptée, 3 visites (deux lignes de JJ fusionnées), 3 visiteurs", vr)
+rapport(sum(d["visits"] for d in vr.get("days", [])) == 3 and sum(d["walked"] for d in vr.get("days", [])) == 1, "visites d'exemple : total par jour, une avec promenade", vr.get("days"))
+rapport(len(vis.read_text(encoding="utf-8").splitlines()) == 5, "visites d'exemple : fichier gardé tel quel (5 lignes)")
 
 http, hport = serveur(site)
 BASE = f"http://127.0.0.1:{hport}/"

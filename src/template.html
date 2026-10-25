@@ -46,6 +46,19 @@ body.padOn #bar{max-width:max(200px,calc(50vw - 90px))}   /* v46 : la barre pass
 .mapTile img,.mapTile .ph{width:100%;aspect-ratio:1;object-fit:cover;background:#ccc;border:1px solid #000;display:block}
 .mapTile b{word-break:break-word}
 #mapClose{font:inherit;padding:6px 14px;border:2px solid #000;border-radius:6px;background:#fff;cursor:pointer}
+#visitsOverlay{position:fixed;inset:0;z-index:46;background:#000c;display:grid;place-items:center}   /* v48 : journal des visites (#visits) */
+#visitsBox{box-sizing:border-box;background:#fff;color:#000;border:2px solid #000;border-radius:10px;padding:14px 16px;width:min(760px,96%);max-height:92%;overflow:auto;font:13px/1.4 ui-monospace,Consolas,monospace}
+#visitsBox h2{margin:0 0 8px;font-size:15px}
+#visitsBox h3{margin:12px 0 4px;font-size:13px}
+#visitsBox p{margin:0 0 8px}
+#visitsBox button{font:inherit;padding:5px 12px;margin:4px 6px 4px 0;border:2px solid #000;border-radius:6px;background:#fff;color:#000;cursor:pointer}
+#visitsKey{font:inherit;padding:5px;border:2px solid #000;border-radius:6px;width:16em;max-width:100%}
+#visitsStatus{margin:6px 0;font-weight:bold}
+#visitsOut table{border-collapse:collapse;margin-bottom:6px}
+#visitsOut th,#visitsOut td{border:1px solid #000;padding:2px 8px;text-align:right;white-space:nowrap}
+#visitsOut th{background:#eee}
+#visitsOut td:first-child,#visitsOut th:first-child{text-align:left}
+.visitsScroll{overflow-x:auto;max-width:100%}
 #opts{position:fixed;top:12px;right:12px;z-index:20;font:12px/1.4 ui-monospace,Consolas,monospace;color:#000;text-align:right}
 #optsBtn{font:inherit;background:#fffffff0;border:1px solid #000;border-radius:6px;padding:6px 10px;cursor:pointer}
 #optsPanel{margin-top:6px;background:#fffffff0;border:1px solid #000;border-radius:6px;padding:8px 12px;text-align:left}
@@ -155,6 +168,7 @@ __I18N__
 <div id="msg" data-i18n="page.loading">Chargement…</div>
 <div id="opts"><button id="optsBtn" hidden data-i18n="page.opts">Réglages</button><div id="optsPanel" hidden></div><div id="lightPanel" hidden></div><div id="hudR"></div></div>
 <div id="mapOverlay" hidden><div id="mapBox"><h2 data-i18n="page.map.title">Carte des mondes</h2><div id="mapGrid"></div><button id="mapClose" data-i18n="page.map.close">Fermer (Échap)</button></div></div>
+<div id="visitsOverlay" hidden><div id="visitsBox" role="dialog" aria-labelledby="visitsTitle"><h2 id="visitsTitle" data-i18n="page.visits.title">Journal des visites</h2><p data-i18n="page.visits.intro">Résumé des visites de cette région, pour son créateur. Entre la clé que l'hôte du serveur de présence t'a donnée.</p><div id="visitsForm"><label for="visitsKey" data-i18n="page.visits.key">Clé : </label><input id="visitsKey" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="40"> <button id="visitsGo" type="button" data-i18n="page.visits.show">Afficher</button><button id="visitsForget" type="button" hidden data-i18n="page.visits.forget">Oublier la clé</button></div><div id="visitsStatus" role="status" aria-live="polite"></div><div id="visitsOut"></div><button id="visitsCsv" type="button" hidden data-i18n="page.visits.csv">Télécharger (CSV)</button><button id="visitsClose" type="button" data-i18n="page.visits.close">Fermer (Échap)</button></div></div>
 <div id="nameTag" hidden></div>
 <div id="toast" hidden></div>
 <div id="compass" role="status" hidden></div>
@@ -435,6 +449,73 @@ if ((C.map || []).length || C.mapUrl) {
       MAP = merged; if (!ov.hidden) { draw(); fetchCounts(); }
     });
   }
+}
+// v48 : journal des visites. L'adresse de la page suivie de #visits ouvre cette fenêtre ; la clé (commande « visits-key SALON » du serveur
+// de présence) est envoyée au serveur de la page par une connexion brève, qui renvoie le résumé du salon. La clé acceptée est retenue par ce navigateur.
+if (H.has('visits')) {
+  const $v = id => document.getElementById(id);
+  const ov = $v('visitsOverlay'), inp = $v('visitsKey'), st = $v('visitsStatus'), out = $v('visitsOut'), csvB = $v('visitsCsv'), fgB = $v('visitsForget');
+  const room = String(C.room || ''), SK = 'glb2html_visits_' + room;
+  let last = null;
+  const esc = x => String(x).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const dur = n => { n = Math.max(0, n | 0); const h = Math.floor(n / 3600), m = Math.floor(n / 60) % 60, s = n % 60; return h ? tr('page.visits.d.h', h, String(m).padStart(2, '0')) : tr('page.visits.d.m', m, String(s).padStart(2, '0')); };
+  const stored = () => { try { return localStorage.getItem(SK) || ''; } catch (e) { return ''; } };
+  const store = k => { try { if (k) localStorage.setItem(SK, k); else localStorage.removeItem(SK); } catch (e) {} fgB.hidden = !k; };
+  const close = () => { ov.hidden = true; };
+  const ask = key => new Promise(res => {
+    let ws, opened = false, done = false, to = 0;
+    const end = r => { if (done) return; done = true; clearTimeout(to); try { ws.close(); } catch (e) {} res(r); };
+    try { ws = new WebSocket(String(C.presenceUrl).trim().replace(/^(wss?:\/\/)0\.0\.0\.0(?=[:/]|$)/i, (m, p) => p + '127.0.0.1')); } catch (e) { return res({ why: 'net' }); }
+    to = setTimeout(() => end({ why: opened ? 'old' : 'net' }), 10000);
+    ws.onopen = () => { opened = true; ws.send(JSON.stringify({ t: 'visits', room, key })); };
+    ws.onmessage = ev => { let m = null; try { m = JSON.parse(ev.data); } catch (e) {} if (m && m.t === 'visits') end(m); else if (m && (m.t === 'full' || m.t === 'banned')) end({ why: 'net' }); };
+    ws.onclose = () => end({ why: opened ? 'old' : 'net' });
+    ws.onerror = () => {};
+  });
+  const table = (head, rows) => '<div class="visitsScroll"><table><tr>' + head.map(h => '<th scope="col">' + esc(h) + '</th>').join('') + '</tr>'
+    + rows.map(r => '<tr>' + r.map(c => '<td>' + esc(c) + '</td>').join('') + '</tr>').join('') + '</table></div>';
+  const yn = b => tr(b ? 'page.visits.yes' : 'page.visits.no');
+  const show = m => {
+    last = m;
+    st.textContent = (m.keep > 0 ? tr('page.visits.summary', room, m.visits, m.visitors, m.keep) : tr('page.visits.summary.all', room, m.visits, m.visitors));
+    if (!m.visits) { out.innerHTML = '<p>' + esc(tr('page.visits.none')) + '</p>'; csvB.hidden = true; return; }
+    const dh = ['page.visits.c.date', 'page.visits.c.visits', 'page.visits.c.visitors', 'page.visits.c.total', 'page.visits.c.median', 'page.visits.c.walked'].map(k => tr(k));
+    const rh = ['page.visits.c.start', 'page.visits.c.dur', 'page.visits.c.walk'].map(k => tr(k)).concat(m.names ? [tr('page.visits.c.name')] : []);
+    out.innerHTML = '<h3>' + esc(tr('page.visits.days')) + '</h3>' + table(dh, (m.days || []).map(d => [d.date, d.visits, d.visitors, dur(d.total), dur(d.median), d.walked]))
+      + '<h3>' + esc(tr('page.visits.recent')) + (m.recentAll > (m.recent || []).length ? ' ' + esc(tr('page.visits.recent.cut', (m.recent || []).length)) : '') + '</h3>'
+      + ((m.recent || []).length ? table(rh, m.recent.map(r => [r.start, dur(r.dur), yn(r.walk)].concat(m.names ? [r.name || ''] : []))) : '<p>' + esc(tr('page.visits.recent.none')) + '</p>');
+    csvB.hidden = false;
+  };
+  const run = async key => {
+    key = String(key || '').trim();
+    if (!key) { st.textContent = tr('page.visits.err.empty'); inp.focus(); return; }
+    st.textContent = tr('page.visits.wait'); out.innerHTML = ''; csvB.hidden = true;
+    const m = await ask(key);
+    if (m.ok) { store(key); show(m); return; }
+    if (m.why === 'key' && stored() === key) store('');
+    st.textContent = tr('page.visits.err.' + (['key', 'rate', 'off', 'old'].includes(m.why) ? m.why : 'net'));
+  };
+  const csv = () => {
+    if (!last) return;
+    const sep = (document.documentElement.lang || '').startsWith('fr') ? ';' : ',', q = v => '"' + String(v).replace(/"/g, '""') + '"', sec = k => tr(k) + ' (s)';
+    const lines = [[tr('page.visits.days')], ['page.visits.c.date', 'page.visits.c.visits', 'page.visits.c.visitors'].map(k => tr(k)).concat([sec('page.visits.c.total'), sec('page.visits.c.median'), tr('page.visits.c.walked')])];
+    for (const d of last.days || []) lines.push([d.date, d.visits, d.visitors, d.total, d.median, d.walked]);
+    lines.push([], [tr('page.visits.recent')], [tr('page.visits.c.start'), sec('page.visits.c.dur'), tr('page.visits.c.walk')].concat(last.names ? [tr('page.visits.c.name')] : []));
+    for (const r of last.recent || []) lines.push([r.start, r.dur, yn(r.walk)].concat(last.names ? [r.name || ''] : []));
+    const blob = new Blob(['\ufeff' + lines.map(l => l.map(q).join(sep)).join('\r\n') + '\r\n'], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a'), d = new Date(), p2 = n => String(n).padStart(2, '0');
+    a.href = URL.createObjectURL(blob); a.download = tr('page.visits.file') + '_' + (room || 'room') + '_' + d.getFullYear() + p2(d.getMonth() + 1) + p2(d.getDate()) + '.csv';
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  };
+  $v('visitsGo').onclick = () => run(inp.value);
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); run(inp.value); } });
+  fgB.onclick = () => { store(''); inp.value = ''; last = null; out.innerHTML = ''; csvB.hidden = true; st.textContent = tr('page.visits.forgotten'); inp.focus(); };
+  csvB.onclick = csv;
+  $v('visitsClose').onclick = close;
+  addEventListener('keydown', e => { if (e.key === 'Escape' && !ov.hidden) { e.preventDefault(); close(); } });
+  ov.hidden = false;
+  if (!C.presenceUrl) { $v('visitsForm').hidden = true; st.textContent = tr('page.visits.nopres'); }
+  else { const k = stored(); fgB.hidden = !k; if (k) { inp.value = k; run(k); } else inp.focus(); }
 }
 // réglages visiteur mémorisés dans ce navigateur : couleur de l'avatar (null = tirée au hasard par le serveur), pseudo cité (gras, clignotement),
 // sons (général, volume, citation, arrivée, départ), disposition du clavier. v36 : les anciens réglages du bip (clé « sound ») sont ignorés.

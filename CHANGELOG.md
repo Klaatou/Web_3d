@@ -2,6 +2,17 @@
 
 Les dates sont au format jj/mm/aaaa.
 
+## v48 (25/10/2026)
+### 25/10/2026 : documents de la v48
+- **Manuel § 31** (FR et EN) : journal des visites, côté hôte et côté créateur, ce qui est compté, données personnelles ; § 27.1 et § 27.10 (fichier des visites, `presence_visits_keys.json`) ; procédures § 6 ; exemples `docs/samples/visits.sample.jsonl` et `docs/samples/presence_visits_keys.sample.json` (lus par `tests/samples.py`) ; `REFERENCE_OPTIONS.md` régénéré ; historique (la ligne v47 était sous « Commandes utiles » : remise dans le tableau) ; `REPRISE.md`.
+- **Manual § 31** (FR and EN): visit log, host side and creator side, what is counted, personal data; § 27.1 and § 27.10 (visit file, `presence_visits_keys.json`); procedures § 6; samples `docs/samples/visits.sample.jsonl` and `docs/samples/presence_visits_keys.sample.json` (read by `tests/samples.py`); `REFERENCE_OPTIONS.md` regenerated; history (the v47 line was under "Useful commands": moved back into the table); `REPRISE.md`.
+
+### 25/10/2026 : journal des visites (code)
+- **Serveur de présence** : `--visits FICHIER` note chaque visite à sa fin, une ligne JSON (`room`, `start`, `dur`, `walk`, `v` empreinte du navigateur ; `name` seulement avec `--visits-names`), jamais d'adresse IP ; `--visits-days N` (365, 0 = tout garder) purge au démarrage et toutes les 6 h ; arrêt propre : les visites en cours sont écrites. Commande de console `visits-key ROOM` (clé affichée une seule fois, seule son empreinte gardée dans `--visits-keys`, par défaut `presence_visits_keys.json`), `visits-key ROOM off`, `visits-key` seul. Message `visits` (avant `hello`) : résumé par jour et visites des 30 derniers jours, reconnexions de moins de 2 min fusionnées, 5 clés refusées par minute et par IP au plus. `presence.log` inchangé.
+- **Page** : l'adresse suivie de `#visits` ouvre la fenêtre « Journal des visites » (clé, Afficher, Oublier la clé, Télécharger (CSV), Fermer (Échap)) ; clé acceptée retenue par le navigateur ; messages clé refusée, trop d'essais, serveur sans `--visits`, serveur trop ancien, serveur absent, page sans présence. Textes dans `src/i18n`. `tests/v48.py`.
+- **Presence server**: `--visits FILE` records each visit when it ends, one JSON line (`room`, `start`, `dur`, `walk`, `v` browser fingerprint; `name` only with `--visits-names`), never an IP address; `--visits-days N` (365, 0 = keep everything) purges at startup and every 6 h; clean stop: visits in progress are written. Console command `visits-key ROOM` (key shown only once, only its fingerprint kept in `--visits-keys`, `presence_visits_keys.json` by default), `visits-key ROOM off`, `visits-key` alone. `visits` message (before `hello`): summary per day and visits of the last 30 days, reconnections within 2 min merged, at most 5 refused keys per minute and per IP. `presence.log` unchanged.
+- **Page**: the address followed by `#visits` opens the "Visit log" window (key, Show, Forget the key, Download (CSV), Close (Esc)); accepted key kept by the browser; messages key refused, too many attempts, server without `--visits`, server too old, missing server, page without presence. Texts in `src/i18n`. `tests/v48.py`.
+
 ## v47 (25/10/2026)
 ### 25/10/2026 : documents de la v47
 - **Manuel § 30** (FR et EN) : tuile de la carte, adresse facultative, `regions.json` avec en-tête (§ 27.6), deux façons de faire la carte, serveur de présence ; procédures § 4 ; exemple `docs/samples/regions.sample.json` en forme objet ; `REPRISE.md`.

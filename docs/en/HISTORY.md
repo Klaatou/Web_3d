@@ -62,9 +62,10 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 24/10/2026 |  | v44 | v44: last names in English (`gen_reference.py`, `verif_trad.py`, `[update]` messages, example names in the help, viewer "Marker of portals and free zones" menu), automatic check of old names in `tests/samples.py`, history completed (v38 to v44) |
 | 24/10/2026 |  | v45 | v45: the page says why the presence connection closed (`tests/v45.py`, manual § 28), "Presence connection" diagnostics line; procedures § 11 completed (Tailscale Funnel tried, way D Linux VM + Funnel + Apache, case of another service already published); the shell's `lib` folder is set by a single line (`const LIB`), `--update` keeps it, `dist/index.html` built by `build.py`, test page `tests/essai_importmap.html` (`tests/v45_lib.py`) |
 | 25/10/2026 |  | v46 | v46: on-screen controls (manual § 29): always visible status line, 3 x 3 arrows while walking (forward, back, turn, step, Run, up and down while flying) and in the overview (move, turn, zoom, recenter), K key and "Arrows (K)" button; touch mode (column of buttons, menu, full screen, folded windows with ✕, drag a finger to look around, touch chat, landscape orientation, tooltip on long press); tooltips on all buttons; one shell for a whole site (§ 29.8); `tests/v46.py` |
+| 25/10/2026 |  | v47 | v47: world map (manual § 30): tile "N visitors · N walking" and tooltip on hover, optional address (`showUrl`, "Show addresses" checkbox), `regions.json` with a header kept by `--register`, `visitors` in the presence server reply, universal `dist/carte.html`; `tests/v47.py` |
+| 25/10/2026 |  | v48 | v48: visit log (manual § 31): the presence server records each visit in a separate file (`--visits`, no IP; `--visits-days`, `--visits-names`), `visits-key ROOM` command; the creator opens their page with `#visits` and the key: summary per day, visits of the last 30 days, CSV; `tests/v48.py` |
 
 ## Useful commands
-| 25/10/2026 |  | v47 | v47: world map (manual § 30): tile "N visitors · N walking" and tooltip on hover, optional address (`showUrl`, "Show addresses" checkbox), `regions.json` with a header kept by `--register`, `visitors` in the presence server reply, universal `dist/carte.html`; `tests/v47.py` |
 
 - See the history: `git log --oneline --decorate`
 - See what changed in a version: `git show v16 --stat`

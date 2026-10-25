@@ -18,6 +18,10 @@ Lancement    :  python presence_server.py
 Journal (--log) : une ligne par évènement, dates JJ/MM/AAAA, fichier tourné chaque nuit (--log-days jours conservés).
 Les adresses IP y sont masquées par défaut (--log-ip hash) ; chat et pseudos y figurent : informe tes visiteurs
 et limite la durée de conservation (données personnelles).
+
+Journal des visites (--visits, v48) : une ligne JSON par visite (salon, arrivée, durée, temps de promenade, empreinte du
+navigateur ; pseudo seulement avec --visits-names ; jamais d'IP). Le créateur d'une région le consulte depuis sa page
+(adresse suivie de #visits) avec la clé donnée par la commande de console « visits-key ROOM ».
 """
 from __future__ import annotations
 
@@ -29,6 +33,7 @@ import base64
 import collections
 import colorsys
 import hashlib
+import hmac
 import json
 import logging
 import logging.handlers
@@ -226,7 +231,8 @@ def log(kind, room, who, extra=""):
 
 
 class Peer:
-    __slots__ = ("id", "ws", "name", "color", "p", "yaw", "last", "ip", "chat_times", "spectator", "uidh", "t0", "zone_t", "room", "color_t", "hist_t")
+    __slots__ = ("id", "ws", "name", "color", "p", "yaw", "last", "ip", "chat_times", "spectator", "uidh", "t0", "zone_t", "room", "color_t", "hist_t",
+                 "wall0", "walk_s", "walk0", "vname")
 
     def __init__(self, pid, ws, name, color, ip, spectator, uidh, room):
         self.id, self.ws, self.name, self.color, self.ip = pid, ws, name, color, ip
@@ -234,6 +240,17 @@ class Peer:
         self.p, self.yaw, self.last, self.zone_t, self.color_t, self.hist_t = None, 0.0, 0.0, 0.0, 0.0, 0.0
         self.chat_times = []
         self.t0 = time.monotonic()
+        self.wall0, self.walk_s, self.vname = time.time(), 0.0, ""      # v48 : journal des visites
+        self.walk0 = None if spectator else self.t0
+
+    def walk_mark(self, walking):
+        """v48 : début ou fin de promenade (temps de promenade du journal des visites)"""
+        now = time.monotonic()
+        if walking and self.walk0 is None:
+            self.walk0 = now
+        elif not walking and self.walk0 is not None:
+            self.walk_s += now - self.walk0
+            self.walk0 = None
 
     def public(self):
         d = {"id": self.id, "name": self.name, "color": self.color}
@@ -309,6 +326,181 @@ class Registry:
             self.save()
             return base, True
         return base[:18] + suffix, False
+
+
+# ----------------------------------------------------------------- journal des visites (v48)
+VKEYS: dict = {}         # salon -> {"salt", "hash", "added"} : empreinte de la clé d'accès, jamais la clé
+VTRY: dict = {}          # IP -> instants des derniers essais de clé refusés (5 par minute au plus)
+VISIT_GAP = 120          # s : une reconnexion du même navigateur dans le même salon moins de 2 min après la fin = même visite
+VISIT_RECENT_DAYS, VISIT_RECENT_MAX = 30, 1000
+VKEY_ALPHA = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
+
+
+def vkey_norm(k):
+    return re.sub(r"[^A-Z0-9]", "", str(k or "").upper())[:32]
+
+
+def vkey_hash(salt, key):
+    return hashlib.sha256((salt + vkey_norm(key)).encode()).hexdigest()
+
+
+def vkeys_load():
+    VKEYS.clear()
+    if OPTS.visits_keys and os.path.exists(OPTS.visits_keys):
+        try:
+            with open(OPTS.visits_keys, encoding="utf-8") as f:
+                d = json.load(f)
+            for room, e in (d.get("rooms") or {}).items():
+                if isinstance(e, dict) and e.get("salt") and e.get("hash"):
+                    VKEYS[clean_room(room)] = {"salt": str(e["salt"]), "hash": str(e["hash"]), "added": e.get("added", 0)}
+        except (OSError, ValueError, AttributeError):
+            print(_tr("py.presence.vkey.unreadable", OPTS.visits_keys))
+
+
+def vkeys_save():
+    if not OPTS.visits_keys:
+        return
+    d = os.path.dirname(os.path.abspath(OPTS.visits_keys))
+    fd, tmp = tempfile.mkstemp(dir=d, suffix=".tmp")
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        json.dump({"rooms": VKEYS}, f, ensure_ascii=False, indent=1)
+    os.replace(tmp, OPTS.visits_keys)
+
+
+def visit_write(peer):
+    """écrit la visite qui se termine (appelé à la déconnexion) ; jamais d'IP, pseudo seulement avec --visits-names"""
+    if not OPTS.visits:
+        return
+    peer.walk_mark(False)
+    d = {"room": peer.room, "start": int(peer.wall0), "dur": int(time.monotonic() - peer.t0), "walk": int(peer.walk_s),
+         "v": hashlib.sha256(("visit:" + peer.uidh).encode()).hexdigest()[:10]}
+    if OPTS.visits_names and peer.vname:
+        d["name"] = peer.vname
+    try:
+        with open(OPTS.visits, "a", encoding="utf-8") as f:
+            f.write(json.dumps(d, ensure_ascii=False, separators=(",", ":")) + "\n")
+    except OSError as e:
+        print(_tr("py.presence.visits_write_err", OPTS.visits, e))
+
+
+def visits_read(room=None):
+    out = []
+    if not OPTS.visits or not os.path.exists(OPTS.visits):
+        return out
+    limit = time.time() - OPTS.visits_days * 86400 if OPTS.visits_days > 0 else 0
+    with open(OPTS.visits, encoding="utf-8", errors="replace") as f:
+        for line in f:
+            try:
+                d = json.loads(line)
+                if not isinstance(d, dict) or (room is not None and d.get("room") != room):
+                    continue
+                d["start"], d["dur"], d["walk"] = int(d["start"]), max(0, int(d.get("dur", 0))), max(0, int(d.get("walk", 0)))
+            except (ValueError, TypeError, KeyError):
+                continue
+            if d["start"] >= limit:
+                out.append(d)
+    return out
+
+
+def visits_purge():
+    """retire les visites plus anciennes que --visits-days (au démarrage, puis toutes les 6 h)"""
+    if not OPTS.visits or OPTS.visits_days <= 0 or not os.path.exists(OPTS.visits):
+        return
+    limit = time.time() - OPTS.visits_days * 86400
+    with open(OPTS.visits, encoding="utf-8", errors="replace") as f:
+        lines = f.readlines()
+    keep = []
+    for line in lines:
+        try:
+            if int(json.loads(line)["start"]) >= limit:
+                keep.append(line)
+        except (ValueError, TypeError, KeyError):
+            continue
+    if len(keep) != len(lines):
+        d = os.path.dirname(os.path.abspath(OPTS.visits))
+        fd, tmp = tempfile.mkstemp(dir=d, suffix=".tmp")
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.writelines(keep)
+        os.replace(tmp, OPTS.visits)
+
+
+def visits_summary(room):
+    """résumé d'un salon : visites fusionnées (reconnexions), par jour, et liste des 30 derniers jours"""
+    merged, last = [], {}
+    for d in sorted(visits_read(room), key=lambda x: x["start"]):
+        m = last.get(d["v"])
+        if m is not None and d["start"] <= m["end"] + VISIT_GAP:
+            m["end"] = max(m["end"], d["start"] + d["dur"])
+            m["walk"] += d["walk"]
+            m["name"] = d.get("name") or m["name"]
+            continue
+        m = {"start": d["start"], "end": d["start"] + d["dur"], "walk": d["walk"], "v": d["v"], "name": d.get("name") or ""}
+        merged.append(m)
+        last[d["v"]] = m
+    days = collections.OrderedDict()
+    for m in merged:
+        m["dur"] = m["end"] - m["start"]
+        days.setdefault(time.strftime("%d/%m/%Y", time.localtime(m["start"])), []).append(m)
+    rows = []
+    for day, ms in reversed(days.items()):
+        durs = sorted(x["dur"] for x in ms)
+        n = len(durs)
+        med = durs[n // 2] if n % 2 else (durs[n // 2 - 1] + durs[n // 2]) // 2
+        rows.append({"date": day, "visits": n, "visitors": len({x["v"] for x in ms}), "total": sum(durs), "median": med,
+                     "walked": sum(1 for x in ms if x["walk"] > 0)})
+    since = time.time() - VISIT_RECENT_DAYS * 86400
+    recent = [{"start": time.strftime("%d/%m/%Y %H:%M", time.localtime(m["start"])), "dur": m["dur"], "walk": m["walk"] > 0,
+               **({"name": m["name"]} if OPTS.visits_names and m["name"] else {})}
+              for m in reversed(merged) if m["start"] >= since]
+    return {"t": "visits", "ok": True, "room": room, "visits": len(merged), "visitors": len({m["v"] for m in merged}),
+            "keep": OPTS.visits_days, "names": bool(OPTS.visits_names), "days": rows,
+            "recent": recent[:VISIT_RECENT_MAX], "recentAll": len(recent)}
+
+
+def visits_answer(ip, msg):
+    """réponse à {"t": "visits", "room", "key"} : le résumé si la clé du salon est juste ; 5 clés refusées par minute et par IP au plus"""
+    room = clean_room(msg.get("room"))
+    if not OPTS.visits:
+        return {"t": "visits", "ok": False, "why": "off"}
+    now = time.time()
+    tries = [x for x in VTRY.get(ip, []) if now - x < 60]
+    VTRY[ip] = tries
+    if len(tries) >= 5:
+        log(_tr("py.presence.ev.visits"), room, f"ip {ip_for_log(ip)}", _tr("py.presence.visits.rate"))
+        return {"t": "visits", "ok": False, "why": "rate"}
+    e = VKEYS.get(room)
+    if not e or not hmac.compare_digest(e["hash"], vkey_hash(e["salt"], msg.get("key"))):
+        tries.append(now)
+        log(_tr("py.presence.ev.visits"), room, f"ip {ip_for_log(ip)}", _tr("py.presence.visits.badkey"))
+        return {"t": "visits", "ok": False, "why": "key"}
+    log(_tr("py.presence.ev.visits"), room, f"ip {ip_for_log(ip)}", _tr("py.presence.visits.granted"))
+    return visits_summary(room)
+
+
+def vkey_command(rest):
+    """visits-key SALON : nouvelle clé (remplace l'ancienne) ; visits-key SALON off : la retire ; visits-key : liste"""
+    parts = rest.split()
+    if not parts:
+        if not VKEYS:
+            print(_tr("py.presence.vkey.none"))
+        for room, e in sorted(VKEYS.items()):
+            print(_tr("py.presence.vkey.line", room, time.strftime("%d/%m/%Y", time.localtime(e.get("added") or 0))))
+        return
+    room = clean_room(parts[0])
+    if len(parts) > 1 and parts[1].lower() in ("off", "non", "retirer", "remove"):
+        if VKEYS.pop(room, None) is None:
+            print(_tr("py.presence.vkey.unknown", room))
+            return
+        vkeys_save()
+        print(_tr("py.presence.vkey.off", room))
+        return
+    key = "-".join("".join(secrets.choice(VKEY_ALPHA) for _ in range(4)) for _ in range(3))
+    salt = secrets.token_hex(8)
+    VKEYS[room] = {"salt": salt, "hash": vkey_hash(salt, key), "added": time.time()}
+    vkeys_save()
+    print(_tr("py.presence.vkey.new", room, key))
+    if not OPTS.visits:
+        print(_tr("py.presence.vkey.inactive"))
 
 
 # ----------------------------------------------------------------- modération (console du serveur)
@@ -426,6 +618,8 @@ async def run_command(line):
             log(_tr("py.presence.ev.kick"), peer.room, peer.who(), reason)
             asyncio.create_task(kick_peer(peer, reason))
             print(_tr("py.presence.0_ejecte", peer.name or _tr('py.presence.spectator_paren')))
+    elif cmd in ("visits-key", "cle-visites"):
+        vkey_command(rest)
     elif cmd == "bans":
         now = time.time()
         live = [e for e in BANS if not e.get("until") or e["until"] > now]
@@ -531,6 +725,9 @@ async def handler(ws):
         PER_IP[ip] = PER_IP.get(ip, 0) + 1
         counted = True
         msg = json.loads(await asyncio.wait_for(ws.recv(), 10))
+        if isinstance(msg, dict) and msg.get("t") == "visits":     # v48 : journal des visites, demandé par la page avec #visits
+            await ws.send(json.dumps(visits_answer(ip, msg), ensure_ascii=False, separators=(",", ":")))
+            return
         if isinstance(msg, dict) and msg.get("t") == "rooms":
             await ws.send(json.dumps({"t": "rooms", "rooms": {name: len(walkers(name)) for name in ROOMS if walkers(name)},
                                       "visitors": {name: len(peers_in) for name, peers_in in ROOMS.items() if peers_in},   # v47 : promeneurs et spectateurs, par salon
@@ -562,6 +759,7 @@ async def handler(ws):
         peer = Peer(pid, ws, "", random_color() if color is None else color, ip, spectator, uidh, room)
         if not spectator:
             peer.name, _ = REG.resolve(uidh, msg.get("name"), persistent=not uidh.startswith("anon-"))
+            peer.vname = peer.name
         existing = [p.public() for p in walkers(room)]
         peers[pid] = peer
         await ws.send(json.dumps({"t": "welcome", "id": pid, "name": peer.name, "color": peer.color, "peers": existing,
@@ -585,11 +783,14 @@ async def handler(ws):
                         await send_safe(ws, json.dumps({"t": "full"}))
                         continue
                     await become_walker(peer, m.get("name"))
+                    peer.walk_mark(True)
+                    peer.vname = peer.name
                     await send_safe(ws, json.dumps({"t": "you", "name": peer.name}))
                     await broadcast(room, dict(peer.public(), t="join"), exclude=peer)
                     log(_tr("py.presence.ev.walk"), room, peer.who(), _tr("py.presence.debut"))
                 elif not want_walker and not peer.spectator:
                     peer.spectator, peer.p = True, None
+                    peer.walk_mark(False)
                     await broadcast(room, {"t": "leave", "id": pid}, exclude=peer)
                     log(_tr("py.presence.ev.walk"), room, peer.who(), _tr("py.presence.ev.end"))
                     peer.name = ""
@@ -665,6 +866,7 @@ async def handler(ws):
                 await broadcast(room, {"t": "leave", "id": peer.id})
             dur = int(time.monotonic() - peer.t0)
             log(_tr("py.presence.deconnexion"), room, peer.who(), _tr("py.presence.duree_0_min_1_02d_s", dur // 60, dur % 60))
+            visit_write(peer)
             if not ROOMS[room]:
                 del ROOMS[room]
                 if not OPTS.history_file:
@@ -676,9 +878,16 @@ async def handler(ws):
 
 
 async def flush_loop():
+    n = 0
     while True:
         await asyncio.sleep(20)
         REG.save()
+        n += 1
+        if n % 1080 == 0:     # v48 : toutes les 6 h
+            try:
+                visits_purge()
+            except OSError:
+                pass
 
 
 async def main():
@@ -707,6 +916,10 @@ async def main():
     ap.add_argument("--proxy-header", help=_tr("py.presence.derriere_un_reverse_proxy_en_tete"))
     ap.add_argument("--bans", default="presence_bans.json", help=_tr("py.presence.fichier_des_bannissements_chemin_relatif_dos"))
     ap.add_argument("--origins", help=_tr("py.presence.origines_autorisees_separees_par_des_virgule"))
+    ap.add_argument("--visits", default="", metavar="FILE", help=_tr("py.presence.help.visits"))
+    ap.add_argument("--visits-days", type=int, default=365, metavar="N", help=_tr("py.presence.help.visits_days"))
+    ap.add_argument("--visits-names", action="store_true", help=_tr("py.presence.help.visits_names"))
+    ap.add_argument("--visits-keys", default="presence_visits_keys.json", metavar="FILE", help=_tr("py.presence.help.visits_keys"))
     ap.add_argument("--cert", help=_tr("py.presence.certificat_tls_wss"))
     ap.add_argument("--key", help=_tr("py.presence.cle_privee_tls"))
     OPTS = ap.parse_args()
@@ -718,10 +931,18 @@ async def main():
     OPTS.identities = here(OPTS.identities)
     OPTS.bans = here(OPTS.bans)
     OPTS.history_file = here(OPTS.history_file) if OPTS.history_file else ""
+    OPTS.visits = here(OPTS.visits) if OPTS.visits else ""
+    OPTS.visits_keys = here(OPTS.visits_keys) if OPTS.visits_keys else ""
     REG = Registry(OPTS.identities or None, OPTS.name_ttl_days, [x for x in OPTS.reserved.split(",")])
     setup_log()
     bans_load()
     hist_load()
+    vkeys_load()
+    if OPTS.visits:
+        try:
+            visits_purge()
+        except OSError:
+            pass
     ctx = None
     if OPTS.cert:
         ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
@@ -745,6 +966,8 @@ async def main():
             else:
                 LOG.info(_tr("py.presence.serveur_adresse_a_donner_a_presence", scheme, OPTS.host, OPTS.port))
             LOG.info(_tr("py.presence.serveur_journal_0_registre_des_noms", OPTS.log or '(aucun : option --log)', OPTS.identities or '(en mémoire)'))
+            if OPTS.visits:
+                LOG.info(_tr("py.presence.visits_on", OPTS.visits, OPTS.visits_days, _tr("py.presence.visits.yes") if OPTS.visits_names else _tr("py.presence.visits.no")))
             print(_tr("py.presence.moderation_tape_aide_pour_la_liste"))
             await stop.wait()
     finally:
