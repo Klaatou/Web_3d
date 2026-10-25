@@ -903,6 +903,7 @@ Left column: the defaults of the official viewer according to the Second Life wi
 | Enter / leave walk mode | (does not exist) | **P** or **F** (v36) |
 | Touch an object, a zone | click | **click** or **E** (v36); a "walking into it" portal fires when entering its radius |
 | Teleport | (map, double-click depending on the setting) | **double-click** |
+| On-screen arrows | (does not exist) | **K** or the "Arrows (K)" button hides or shows them (v46, § 29) |
 
 Kept as they are: ZQSD / WASD / arrows, Space, Enter, G, R, V, H, I, Shift.
 
@@ -1539,3 +1540,82 @@ Tried in Chromium (`tests/v45_lib.py`). **Not tried: Firefox and Safari.** The `
 ### 28.8 Shell test
 
 `tests/v45_lib.py`: single line, no import map tag left in the shell, identical `dist\index.html`, unchanged standalone page, start-up in Chromium with `./lib` then with `../lib` (one line changed), `--update` keeping the line (message, aligned config, no dated copy), CRLF, refused value, `--lib-url` priority, new region, test page.
+
+## 29. New in v46 (25/10/2026)
+
+### 29.1 Status line
+
+An always visible line gives, without opening the Information window: the **mode** in bold ("Walking" or "Overview"), then while walking the gait (on foot, flying, running), the view (first person, third person, free camera) and the `x y z` position; in the overview, the target. It sits at the bottom centre; on a screen narrower than 1361 px, and on a touch screen, it moves to the top, under the compass (and under the name box). No information in it is carried by a colour.
+
+### 29.2 On-screen arrows
+
+A pad of 3 x 3 buttons, above the status line, is clicked with the mouse or touched with a finger. **Press and hold = key held**: the movement lasts as long as the button is pressed.
+
+While walking (the arrows reuse the keyboard keys: walking does not change):
+
+| Row | Left | Middle | Right |
+|---|---|---|---|
+| top | turn left (←) | forward (Z or W, ↑) | turn right (→) |
+| middle | step left (Q or A) | **Run**: one click turns it on, another turns it off (Shift) | step right (D) |
+| bottom | up, while flying only (Page Up) | back (S, ↓) | down, while flying only (Page Down or C) |
+
+In the overview:
+
+| Row | Left | Middle | Right |
+|---|---|---|---|
+| top | turn the view left | move the view forward | turn the view right |
+| middle | move the view left | **recenter the view** (opening framing) | move the view right |
+| bottom | zoom out (−) | move the view back | zoom in (+) |
+
+Moving and zooming do different things: **move** slides the camera and the target together, at constant height and distance (the landscape scrolls, tiles load around the new point); **zoom in / out** keeps the target and only changes the camera distance, like the wheel.
+
+The middle of the pad replaces the "Recenter the view" button: that button only comes back in the bar when the arrows are hidden. While walking, a captured mouse (after a click in the view) cannot click the arrows: **Esc** frees it, **G** or the "Capture the mouse" button takes it back.
+
+The zone prompt and the light rendering offer move up above the pad.
+
+### 29.3 Hiding or showing the arrows
+
+Three ways, which do the same thing and are remembered by the browser: the **K** key (same place on AZERTY and QWERTY), the "Arrows (K)" button of the bar ("Arrows (K): hidden" when they are; on a touch screen, the "Arrows" button of the column), and the "On-screen arrows (K)" checkbox in Settings. The arrows are shown by default.
+
+### 29.4 Touch screen (phone, tablet)
+
+The page switches to touch mode when the browser reports a touch screen as the main pointer ("Touch controls" setting: Auto; Yes forces touch mode, No refuses it, for example on a computer with a touch screen). In touch mode:
+
+- the button bar is replaced by a **column of buttons** at the bottom right: "Walk" ("Exit" while walking), "Jump", "Fly" ("Land" while flying), "View", "Chat" (with the number of unread messages), "Arrows", "Menu"; the active button has a thick border;
+- the **menu** offers: Help, Information, Arrivals, World map, Back to arrival (while walking), Recenter the view (when the arrows are hidden) and **Full screen** when the browser allows it (not on iPhone, where Safari only grants it to videos);
+- the Help, Information and Arrivals windows are **folded on opening** (without changing the remembered setting) and have a **✕** button to close them;
+- the arrows are large (56 px), at the bottom left;
+- while walking, **dragging a finger** on the scene looks around: you pull the scenery (finger to the right, gaze to the left); a tooltip explains it on the first walk. In the overview, the gestures are the same as before (one finger: turn; two fingers: move and zoom);
+- "Chat" opens a real input field (the phone keyboard opens) with "Send" and "✕ Close"; arrows and column hide while typing;
+- landscape orientation is supported: the column switches to two or three columns;
+- "Capture the mouse" does not exist (nothing to capture with a finger).
+
+On a small phone screen, the page remains busy: windows and chat can be closed to clear the view.
+
+### 29.5 Tooltips
+
+Every button of the bar and every arrow has a tooltip: its role and its key (the letter follows the keyboard layout). On a touch screen, **a long press** (half a second) shows the tooltip; on a single-action button, the long press does not trigger the action.
+
+### 29.6 Chat counter
+
+The number in brackets in the tab title ("(3) Region") and on the "Chat" button counts the messages from other visitors received while the chat is closed or the tab hidden (the history replayed on arrival is not counted); it goes back to zero **when the chat is opened**, even without reading the messages (intended behaviour).
+
+### 29.7 Diagnostics
+
+"Copy diagnostics" adds the "Touch controls" line: touch mode yes or no, setting, touch screen detected, number of touch points.
+
+### 29.8 One shell for a whole site
+
+Recommended layout: at the root of the site, a single `index.html` shell, the `lib` folder, `regions.json` and `default.json`; one folder per region. Address of a region: `index.html?region=dossier/NOM`. To update a region **and** the root shell, give the shell path to `--shared-shell`:
+
+`python glb2html.py --update -o "P:\site\dossier\NOM.html" --shared-shell "P:\site\index.html"`
+
+With `--shared-shell` and no path, the shell and a `lib` folder are written **in the region folder**, where they are of no use with this layout. Another way after `python build.py`: copy `dist\index.html` over `index.html` (the `const LIB` line stays `./lib`). `--update` compares the shell with the one it contains itself: run the `glb2html.py` of `dist`, built last (an older copy elsewhere writes its older shell). A shell edited by hand is renewed, the old one kept under a dated name (`index.avant-AAAAMMJJ-HHMMSS.html`).
+
+### 29.9 Tests of v46
+
+`tests/v46.py` (Chromium, touch screen simulated with real touch events): status line, placement of the elements (nothing overlaps, at 1440 x 900, 390 x 844, 844 x 390 and 1180 x 820), arrows held with the mouse and the finger (forward, step, turn, up, overview), Run, K and "Arrows (K)" button, Recenter, tooltips, long press, menu, touch chat, ✕, settings, diagnostics, English.
+
+### 29.10 Not tested
+
+A real phone, a real tablet, iPhone and iPad, Edge, Windows, real full screen.

@@ -67,6 +67,8 @@ Clés utiles : `seaY` (hauteur de la mer, en m), `target` (`[x, y, z]`), `presen
    `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d"; git checkout main; git pull; git fetch; git merge origin/NOM -m "Fusion vNN"; python build.py; git push; git tag vNN HASH; git push origin vNN`
 2. Mettre à jour chaque région avec `--update`. La coquille `index.html` est renouvelée si elle est plus ancienne (l'ancienne est gardée sous un nom daté), la config et les zones sont gardées.
    `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python glb2html.py --update --shared-shell -o "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.html"`
+   Site avec une coquille à la racine et un dossier par région (v46, `MANUEL.md` § 29.8) : donner le chemin de la coquille, sinon une coquille et un `lib` inutiles sont écrits dans le dossier de la région :
+   `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python glb2html.py --update -o "P:\site\dossier\X.html" --shared-shell "P:\site\index.html"`
 3. Recharger la page avec Ctrl+F5. La ligne du bas du panneau d'aide donne la version affichée (par exemple « glb2html v36 ») : si elle est ancienne, la mise à jour n'a pas eu lieu.
 4. Relancer le serveur de présence : **oui pour la v36** (ses messages et son aide sont traduits ; un ancien exemplaire continue de marcher mais reste en français). Procédure 6.
 5. Le découpage en tuiles n'est à refaire que si la session le dit, par exemple pour de nouvelles informations dans les tuiles.
@@ -156,6 +158,8 @@ Pour tout rapport de bug, colle le texte du panneau d'état et d'aide, et les me
 | Région par défaut (adresse sans `?region=`) | `default.json` écrit à la première région d'un dossier, `--default` pour en changer ; sinon la première entrée relative de `regions.json` |
 | Mettre `lib/` ailleurs | `--lib-url ../lib` (ou une adresse `https://…/lib`) à la fabrication de la coquille, ou modifier à la main la ligne `const LIB = './lib';` au début de `index.html` ; `--update` la garde |
 | Région dans un sous-dossier | `glb2html.py X.glb --shared-shell "P:\site\index.html" -o "P:\site\sous\dossier\X.html"` ; adresse `index.html?region=sous/dossier/X` |
+| Flèches à l'écran (v46) | **K**, bouton « Flèches (K) » ou case « Flèches à l'écran (K) » des Réglages ; appui maintenu = touche tenue |
+| Téléphone, tablette (v46) | mode tactile automatique (réglage « Commandes tactiles ») : colonne de boutons, « Menu », glisser du doigt pour regarder, appui long = bulle |
 | Paramètres de l'adresse | séparés par `&` ; `#` est aussi accepté (`#name=Klaatou&lang=en` = `#name=Klaatou#lang=en`) |
 
 Détail : `MANUEL.md` §§ 2, 21 et 22.

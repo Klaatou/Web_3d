@@ -3,6 +3,10 @@
 Les dates sont au format jj/mm/aaaa.
 
 ## v46 (25/10/2026)
+### 25/10/2026 : documents de la v46
+- **Manuel § 29** (FR et EN) : ligne d'état, flèches (promenade et vue globale, déplacer et rapprocher), K, écran tactile, bulles, compteur du chat (remise à zéro à l'ouverture, comportement voulu), diagnostic, une coquille pour tout un site (`--update -o … --shared-shell CHEMIN_DE_LA_COQUILLE`). Tableau des touches (§ 20.2), procédures §§ 4 et 10, historique.
+- **Manual § 29** (FR and EN): status line, arrows (walking and overview, move and zoom), K, touch screen, tooltips, chat counter (reset when opened, intended behaviour), diagnostics, one shell for a whole site (`--update -o … --shared-shell SHELL_PATH`). Key table (§ 20.2), procedures §§ 4 and 10, history.
+
 ### 25/10/2026 : pas de côté sur le pavé de promenade
 - **Flèches de promenade** : pas de côté à gauche et à droite (Q et D en AZERTY, A et D en QWERTY) au milieu du pavé ; tourner passe aux coins du haut, monter et descendre (en vol) aux coins du bas, comme le pavé de la vue globale. `tests/v46.py` complété.
 - **Walking arrows**: step left and right (Q and D on AZERTY, A and D on QWERTY) in the middle of the pad; turning moves to the top corners, up and down (while flying) to the bottom corners, like the overview pad. `tests/v46.py` extended.

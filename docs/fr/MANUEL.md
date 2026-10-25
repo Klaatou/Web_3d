@@ -903,6 +903,7 @@ Colonne de gauche : les défauts du visualiseur officiel d'après le wiki de Sec
 | Entrer / sortir de la promenade | (n'existe pas) | **P** ou **F** (v36) |
 | Toucher un objet, une zone | clic | **clic** ou **E** (v36) ; un portail « en marchant dedans » part à l'entrée de son rayon |
 | Se téléporter | (carte, double-clic selon le réglage) | **double-clic** |
+| Flèches à l'écran | (n'existe pas) | **K** ou le bouton « Flèches (K) » les cache ou les montre (v46, § 29) |
 
 Gardées telles quelles : ZQSD / WASD / flèches, Espace, Entrée, G, R, V, H, I, Maj.
 
@@ -1539,3 +1540,82 @@ Essayé dans Chromium (`tests/v45_lib.py`). **Non essayé : Firefox et Safari.**
 ### 28.8 Test de la coquille
 
 `tests/v45_lib.py` : ligne unique, plus de balise d'import dans la coquille, `dist\index.html` identique, page autonome inchangée, démarrage dans Chromium avec `./lib` puis avec `../lib` (une ligne changée), `--update` qui garde la ligne (message, config alignée, aucune copie datée), CRLF, valeur refusée, `--lib-url` prioritaire, nouvelle région, page d'essai.
+
+## 29. Nouveautés de la v46 (25/10/2026)
+
+### 29.1 Ligne d'état
+
+Une ligne toujours visible donne, sans ouvrir la fenêtre Informations : le **mode** écrit en gras (« Promenade » ou « Vue globale »), puis en promenade l'allure (à pied, en vol, course), la vue (subjective, troisième personne, caméra libre) et la position `x y z` ; en vue globale, la cible. Elle est en bas au centre ; sur un écran de moins de 1361 px de large, et sur un écran tactile, elle passe en haut, sous la boussole (et sous le bloc du pseudo). Aucune information n'y est portée par une couleur.
+
+### 29.2 Flèches à l'écran
+
+Un pavé de 3 x 3 boutons, au-dessus de la ligne d'état, se clique à la souris ou se touche du doigt. **Appui maintenu = touche tenue** : le mouvement dure tant que le bouton est enfoncé.
+
+En promenade (les flèches reprennent les touches du clavier : la marche ne change pas) :
+
+| Rangée | Gauche | Milieu | Droite |
+|---|---|---|---|
+| haut | tourner à gauche (←) | avancer (Z ou W, ↑) | tourner à droite (→) |
+| milieu | pas de côté à gauche (Q ou A) | **Courir** : un clic l'allume, un clic l'éteint (Maj) | pas de côté à droite (D) |
+| bas | monter, en vol seulement (Page Haut) | reculer (S, ↓) | descendre, en vol seulement (Page Bas ou C) |
+
+En vue globale :
+
+| Rangée | Gauche | Milieu | Droite |
+|---|---|---|---|
+| haut | tourner la vue à gauche | déplacer la vue en avant | tourner la vue à droite |
+| milieu | déplacer la vue à gauche | **recentrer la vue** (cadrage d'ouverture) | déplacer la vue à droite |
+| bas | éloigner (−) | déplacer la vue en arrière | rapprocher (+) |
+
+Déplacer et rapprocher ne font pas la même chose : **déplacer** fait glisser la caméra et le point visé ensemble, à hauteur et distance constantes (le paysage défile, les tuiles se chargent autour du nouveau point) ; **rapprocher / éloigner** garde le point visé et change seulement la distance de la caméra, comme la molette.
+
+Le centre du pavé remplace le bouton « Recentrer la vue » : ce bouton ne revient dans la barre que si les flèches sont cachées. En promenade, la souris capturée (après un clic dans la vue) ne peut pas cliquer les flèches : **Échap** la libère, **G** ou le bouton « Capturer la souris » la reprend.
+
+L'invite de zone et la proposition de rendu léger remontent au-dessus du pavé.
+
+### 29.3 Cacher ou montrer les flèches
+
+Trois moyens, qui font la même chose et sont retenus par le navigateur : la touche **K** (même place en AZERTY et en QWERTY), le bouton « Flèches (K) » de la barre (« Flèches (K) : cachées » quand elles le sont ; sur écran tactile, le bouton « Flèches » de la colonne), et la case « Flèches à l'écran (K) » des Réglages. Les flèches sont affichées par défaut.
+
+### 29.4 Écran tactile (téléphone, tablette)
+
+La page passe en mode tactile quand le navigateur annonce un écran tactile comme pointeur principal (réglage « Commandes tactiles » : Auto ; Oui force le mode tactile, Non le refuse, par exemple sur un ordinateur à écran tactile). En mode tactile :
+
+- la barre de boutons est remplacée par une **colonne de boutons** en bas à droite : « Promenade » (« Sortir » en promenade), « Sauter », « Voler » (« Atterrir » en vol), « Vue », « Chat » (avec le nombre de messages non lus), « Flèches », « Menu » ; le bouton actif a un bord épais ;
+- le **menu** donne : Aide, Informations, Arrivées, Carte des mondes, Retour à l'arrivée (en promenade), Recentrer la vue (quand les flèches sont cachées) et **Plein écran** quand le navigateur le permet (pas sur iPhone, où Safari ne l'accorde qu'aux vidéos) ;
+- les fenêtres Aide, Informations et Arrivées sont **réduites à l'ouverture** (sans changer le réglage retenu) et ont un bouton **✕** pour les fermer ;
+- les flèches sont grandes (56 px), en bas à gauche ;
+- en promenade, **glisser le doigt** sur la scène fait regarder autour de soi : on tire le décor (doigt vers la droite, regard vers la gauche) ; une bulle l'explique à la première promenade. En vue globale, les gestes restent ceux d'avant (un doigt : tourner ; deux doigts : déplacer et zoomer) ;
+- « Chat » ouvre un vrai champ de saisie (le clavier du téléphone s'ouvre) avec « Envoyer » et « ✕ Fermer » ; flèches et colonne se cachent pendant la saisie ;
+- l'écran tourné à l'horizontale est pris en charge : la colonne passe sur deux ou trois colonnes ;
+- « Capturer la souris » n'existe pas (rien à capturer au doigt).
+
+Sur un petit écran de téléphone, la page reste chargée : fenêtres et chat peuvent se refermer pour dégager la vue.
+
+### 29.5 Bulles
+
+Chaque bouton de la barre et chaque flèche a une bulle : son rôle et sa touche (la lettre suit la disposition du clavier). Sur écran tactile, **un appui long** (une demi-seconde) montre la bulle ; sur un bouton à action unique, l'appui long ne déclenche pas l'action.
+
+### 29.6 Compteur du chat
+
+Le nombre entre parenthèses du titre de l'onglet (« (3) Région ») et du bouton « Chat » compte les messages des autres visiteurs reçus pendant que le chat est fermé ou l'onglet caché (l'historique rejoué à l'arrivée n'est pas compté) ; il revient à zéro **à l'ouverture du chat**, même sans lire les messages (comportement voulu).
+
+### 29.7 Diagnostic
+
+« Copier le diagnostic » ajoute la ligne « Commandes tactiles » : mode tactile oui ou non, réglage, écran tactile détecté, nombre de points de contact.
+
+### 29.8 Une coquille pour tout un site
+
+Organisation conseillée : à la racine du site, une seule coquille `index.html`, le dossier `lib`, `regions.json` et `default.json` ; un dossier par région. Adresse d'une région : `index.html?region=dossier/NOM`. Pour mettre une région à jour **et** la coquille de la racine, donner le chemin de la coquille à `--shared-shell` :
+
+`python glb2html.py --update -o "P:\site\dossier\NOM.html" --shared-shell "P:\site\index.html"`
+
+Avec `--shared-shell` sans chemin, la coquille et un dossier `lib` sont écrits **dans le dossier de la région**, où ils ne servent pas avec cette organisation. Autre moyen après `python build.py` : copier `dist\index.html` à la place de `index.html` (la ligne `const LIB` reste `./lib`). `--update` compare la coquille au contenu de celle qu'il contient lui-même : il faut lancer le `glb2html.py` de `dist`, fabriqué en dernier (une copie plus ancienne ailleurs écrit son ancienne coquille). Une coquille modifiée à la main est renouvelée, l'ancienne gardée sous un nom daté (`index.avant-AAAAMMJJ-HHMMSS.html`).
+
+### 29.9 Tests de la v46
+
+`tests/v46.py` (Chromium, écran tactile simulé par de vrais évènements tactiles) : ligne d'état, place des éléments (rien ne se chevauche, à 1440 x 900, 390 x 844, 844 x 390 et 1180 x 820), flèches tenues à la souris et au doigt (avancer, pas de côté, tourner, monter, vue globale), Courir, K et bouton « Flèches (K) », Recentrer, bulles, appui long, menu, chat tactile, ✕, réglages, diagnostic, anglais.
+
+### 29.10 Non testé
+
+Un vrai téléphone, une vraie tablette, iPhone et iPad, Edge, Windows, le plein écran réel.

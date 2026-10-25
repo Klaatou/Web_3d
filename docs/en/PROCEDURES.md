@@ -67,6 +67,8 @@ Useful keys: `seaY` (sea level, in m), `target` (`[x, y, z]`), `presenceUrl`, `c
    `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d"; git checkout main; git pull; git fetch; git merge origin/NOM -m "Fusion vNN"; python build.py; git push; git tag vNN HASH; git push origin vNN`
 2. Update each region with `--update`. The `index.html` shell is renewed if it is older (the old one is kept under a dated name); the config and the zones are kept.
    `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python glb2html.py --update --shared-shell -o "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.html"`
+   Site with one shell at the root and one folder per region (v46, `MANUAL.md` § 29.8): give the shell path, otherwise a useless shell and `lib` are written in the region folder:
+   `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python glb2html.py --update -o "P:\site\dossier\X.html" --shared-shell "P:\site\index.html"`
 3. Reload the page with Ctrl+F5. The bottom line of the help panel gives the version displayed (for example "glb2html v36"): if it is old, the update did not happen.
 4. Restart the presence server: **yes for v36** (its messages and its help are translated; an old copy keeps working but stays in French). Procedure 6.
 5. The tile split only needs to be redone if the session says so, for example for new information in the tiles.
@@ -156,6 +158,8 @@ For any bug report, paste the text of the status and help panels, and the consol
 | Default region (address without `?region=`) | `default.json` written for the first region of a folder, `--default` to change it; otherwise the first relative entry of `regions.json` |
 | Put `lib/` elsewhere | `--lib-url ../lib` (or an `https://…/lib` address) when building the shell, or edit by hand the `const LIB = './lib';` line at the start of `index.html`; `--update` keeps it |
 | Region in a subfolder | `glb2html.py X.glb --shared-shell "P:\site\index.html" -o "P:\site\sous\dossier\X.html"`; address `index.html?region=sous/dossier/X` |
+| On-screen arrows (v46) | **K**, "Arrows (K)" button or "On-screen arrows (K)" checkbox in Settings; press and hold = key held |
+| Phone, tablet (v46) | automatic touch mode ("Touch controls" setting): column of buttons, "Menu", drag a finger to look around, long press = tooltip |
 | Address parameters | separated by `&`; `#` is also accepted (`#name=Klaatou&lang=en` = `#name=Klaatou#lang=en`) |
 
 Details: `MANUAL.md` §§ 2, 21 and 22.
