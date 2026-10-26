@@ -6,10 +6,10 @@
 
 Chaque zone a deux noms :
 
-| Champ | À quoi il sert | Qui le lit |
-|---|---|---|
-| **Identifiant** | le nom technique de la zone | les portails, la carte des mondes, les liens `#spawn=` |
-| **Nom affiché** | le texte vu par le visiteur (« E : Empereur ») | uniquement l'écran |
+| Champ           | À quoi il sert                                 | Qui le lit                                             |
+| --------------- | ---------------------------------------------- | ------------------------------------------------------ |
+| **Identifiant** | le nom technique de la zone                    | les portails, la carte des mondes, les liens `#spawn=` |
+| **Nom affiché** | le texte vu par le visiteur (« E : Empereur ») | uniquement l'écran                                     |
 
 **Un portail désigne toujours une arrivée par son Identifiant, jamais par son Nom affiché.**
 L'identifiant est automatiquement mis en minuscules, et tout caractère autre que lettre non accentuée, chiffre, `-` ou `_` y devient un tiret (`Salle du Trône` devient `salle-du-tr-ne`). Écris-le directement en minuscules, sans accent ni espace, pour éviter les surprises.
@@ -21,37 +21,37 @@ Exemple juste :
 
 ## 2. Les touches
 
-| Touche | Effet |
-|---|---|
-| **F** (v36) | **entre en promenade et en sort**, en vue globale comme en promenade (comme **P**) ; le vol se bascule avec **Début** (en v35, F basculait le vol). **À la sortie (v31)**, le petit cercle d'atterrissage et la cible de la vue globale se posent **au sol, sous le dernier endroit où se trouvait l'avatar** ; la caméra revient à la **même distance et dans la même direction** de cette cible qu'avant l'entrée en promenade (elle ne revient plus à l'endroit exact d'où tu étais parti). En mode tuiles, les tuiles autour de l'avatar restent donc chargées. |
-| **P** (v35) | **entrer dans la promenade / en sortir** (le bouton « Promenade (P) » reste en vue globale ; il n'y a plus de bouton « Quitter la promenade »). Dans le **viewer**, P pose une zone en promenade : on en sort avec **F**, **Maj+P** ou le bouton |
-| **E** (v36) | **déclenche la zone proche** (déclenchement « au clic » ou « les deux », comme avant la v35 ; un portail « en marchant dedans » part à l'entrée de son rayon, § 8). Le nom de la zone proche s'affiche en bas : « clic ou E : … ». **E ne fait rien d'autre** (il ne saute plus et ne monte plus) |
-| **Page Haut** (v35) | **appui bref au sol = saut** (comme Espace) ; **maintenu plus de 0,4 s au sol = décoller** ; en vol, maintenu = monter |
-| **Espace** (v36) | au sol : saut ; **en vol, maintenu : monter** |
-| **T** (v36) | affiche ou masque les **repères de portail** (petits cônes, § 21.4) ; le choix est mémorisé |
-| **Début** (v33) | décoller ou atterrir (bascule ; v36 : F ne bascule plus le vol). En vol : **Page Haut** ou **Espace** maintenu monte, **C** / **Page Bas** descend, pas de gravité, les murs restent solides, jamais sous le sol. Retirable avec `--no-fly` (§ 18.4) |
-| **M** (v35) | **en promenade : bascule vue subjective / troisième personne** ; hors promenade : ouvre la carte des mondes (comme avant). **Ctrl+M ouvre la carte des mondes partout**. **v36 : la touche est reconnue par la lettre imprimée « m »**, pas par sa place : sur un clavier AZERTY c'est la vraie touche M (avant, c'était la touche « , ») |
-| **Fin**, **Alt + clic** (v35) | remettre la caméra **derrière l'avatar** (troisième personne). **Alt + glisser** orbite la caméra (à la troisième personne la souris orbite déjà ; en vue subjective, Alt + glisser regarde autour comme la souris) |
-| **molette** (v35) | en promenade, la page ne défile pas. **Troisième personne** : règle la distance de la caméra (1 à 30 m, 4 m par défaut, mémorisée) ; **caméra libre** : avance / recule la caméra le long du regard ; vue subjective : rien (§ 20.9) |
-| **double appui** sur W, S, ↑ ou ↓ (v35) | **course** tant que la touche reste enfoncée (deux appuis à moins de 300 ms) ; **Maj** reste une course. Pas de course permanente (Ctrl+R recharge la page) |
-| **V** (v33) | changer de vue : subjective → troisième personne → caméra libre → subjective. La vue courante est écrite en texte dans le bloc d'état (« Vue : … », v34) |
-| **R** (v33) | **retour à l'arrivée** : en promenade, téléporte à l'arrivée `default` (à défaut, à la cible de départ) en attendant la tuile ; en vue globale, recadre la cible et la caméra sur ce point. Le bouton « Retour à l'arrivée (R) » fait la même chose |
-| **Entrée** (v33) | ouvrir la saisie du chat ; **Entrée envoie et garde la saisie ouverte**, **Échap** la ferme. Les flèches continuent à déplacer l'avatar (§ 18.5) |
-| **Page Haut** / **Page Bas** (v34) | en vol, monter / descendre (en plus de **Espace** maintenu / **C**, v36) ; la page ne défile pas. **Descendre jusqu'au sol pose l'avatar** : le vol s'arrête tout seul. Bouton « Voler / Atterrir » dans la barre du bas pour qui n'a pas de touche Début (§ 19.3) |
-| **Échap** (v34) | libère la souris en promenade. La souris reste alors **libre** (un clic ou un double-clic n'aspire plus le pointeur) jusqu'à **G** ou au bouton « Capturer la souris » (§ 19.4) |
-| **G** (v34) | recapturer la souris après Échap |
-| **O** (v37) | ouvre / ferme la fenêtre **Réglages** (bascule, comme **H** et **I**) ; **R** est déjà pris par le retour à l'arrivée |
-| **I** (v34) | la fenêtre **Informations / État** (v36 : ancien « bloc d'état » : vue, mode, souris, clavier, position, tuiles) : masquée → déployée ; réduite → déployée ; déployée → masquée. **H** fait de même pour l'aide seule (§ 19.1, § 21.3) |
-| **K** (v46) | affiche ou masque les **flèches à l'écran** (comme le bouton « Flèches (K) » et la case des Réglages ; choix retenu par le navigateur ; même place en AZERTY et en QWERTY, § 29.3) |
-| **L** (v40) | la fenêtre **Arrivées** : liste des points de téléportation de la région ; un clic sur un nom y téléporte (en promenade) ou y fait entrer en promenade (en vue globale). Même cycle que **H** et **I** ; absente si la région n'a aucune arrivée |
+| Touche                                  | Effet                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **F** (v36)                             | **entre en promenade et en sort**, en vue globale comme en promenade (comme **P**) ; le vol se bascule avec **Début** (en v35, F basculait le vol). **À la sortie (v31)**, le petit cercle d'atterrissage et la cible de la vue globale se posent **au sol, sous le dernier endroit où se trouvait l'avatar** ; la caméra revient à la **même distance et dans la même direction** de cette cible qu'avant l'entrée en promenade (elle ne revient plus à l'endroit exact d'où tu étais parti). En mode tuiles, les tuiles autour de l'avatar restent donc chargées. |
+| **P** (v35)                             | **entrer dans la promenade / en sortir** (le bouton « Promenade (P) » reste en vue globale ; il n'y a plus de bouton « Quitter la promenade »). Dans le **viewer**, P pose une zone en promenade : on en sort avec **F**, **Maj+P** ou le bouton                                                                                                                                                                                                                                                                                                                    |
+| **E** (v36)                             | **déclenche la zone proche** (déclenchement « au clic » ou « les deux », comme avant la v35 ; un portail « en marchant dedans » part à l'entrée de son rayon, § 8). Le nom de la zone proche s'affiche en bas : « clic ou E : … ». **E ne fait rien d'autre** (il ne saute plus et ne monte plus)                                                                                                                                                                                                                                                                   |
+| **Page Haut** (v35)                     | **appui bref au sol = saut** (comme Espace) ; **maintenu plus de 0,4 s au sol = décoller** ; en vol, maintenu = monter                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| **Espace** (v36)                        | au sol : saut ; **en vol, maintenu : monter**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| **T** (v36)                             | affiche ou masque les **repères de portail** (petits cônes, § 21.4) ; le choix est mémorisé                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| **Début** (v33)                         | décoller ou atterrir (bascule ; v36 : F ne bascule plus le vol). En vol : **Page Haut** ou **Espace** maintenu monte, **C** / **Page Bas** descend, pas de gravité, les murs restent solides, jamais sous le sol. Retirable avec `--no-fly` (§ 18.4)                                                                                                                                                                                                                                                                                                                |
+| **M** (v35)                             | **en promenade : bascule vue subjective / troisième personne** ; hors promenade : ouvre la carte des mondes (comme avant). **Ctrl+M ouvre la carte des mondes partout**. **v36 : la touche est reconnue par la lettre imprimée « m »**, pas par sa place : sur un clavier AZERTY c'est la vraie touche M (avant, c'était la touche « , »)                                                                                                                                                                                                                           |
+| **Fin**, **Alt + clic** (v35)           | remettre la caméra **derrière l'avatar** (troisième personne). **Alt + glisser** orbite la caméra (à la troisième personne la souris orbite déjà ; en vue subjective, Alt + glisser regarde autour comme la souris)                                                                                                                                                                                                                                                                                                                                                 |
+| **molette** (v35)                       | en promenade, la page ne défile pas. **Troisième personne** : règle la distance de la caméra (1 à 30 m, 4 m par défaut, mémorisée) ; **caméra libre** : avance / recule la caméra le long du regard ; vue subjective : rien (§ 20.9)                                                                                                                                                                                                                                                                                                                                |
+| **double appui** sur W, S, ↑ ou ↓ (v35) | **course** tant que la touche reste enfoncée (deux appuis à moins de 300 ms) ; **Maj** reste une course. Pas de course permanente (Ctrl+R recharge la page)                                                                                                                                                                                                                                                                                                                                                                                                         |
+| **V** (v33)                             | changer de vue : subjective → troisième personne → caméra libre → subjective. La vue courante est écrite en texte dans le bloc d'état (« Vue : … », v34)                                                                                                                                                                                                                                                                                                                                                                                                            |
+| **R** (v33)                             | **retour à l'arrivée** : en promenade, téléporte à l'arrivée `default` (à défaut, à la cible de départ) en attendant la tuile ; en vue globale, recadre la cible et la caméra sur ce point. Le bouton « Retour à l'arrivée (R) » fait la même chose                                                                                                                                                                                                                                                                                                                 |
+| **Entrée** (v33)                        | ouvrir la saisie du chat ; **Entrée envoie et garde la saisie ouverte**, **Échap** la ferme. Les flèches continuent à déplacer l'avatar (§ 18.5)                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| **Page Haut** / **Page Bas** (v34)      | en vol, monter / descendre (en plus de **Espace** maintenu / **C**, v36) ; la page ne défile pas. **Descendre jusqu'au sol pose l'avatar** : le vol s'arrête tout seul. Bouton « Voler / Atterrir » dans la barre du bas pour qui n'a pas de touche Début (§ 19.3)                                                                                                                                                                                                                                                                                                  |
+| **Échap** (v34)                         | libère la souris en promenade. La souris reste alors **libre** (un clic ou un double-clic n'aspire plus le pointeur) jusqu'à **G** ou au bouton « Capturer la souris » (§ 19.4)                                                                                                                                                                                                                                                                                                                                                                                     |
+| **G** (v34)                             | recapturer la souris après Échap                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| **O** (v37)                             | ouvre / ferme la fenêtre **Réglages** (bascule, comme **H** et **I**) ; **R** est déjà pris par le retour à l'arrivée                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| **I** (v34)                             | la fenêtre **Informations / État** (v36 : ancien « bloc d'état » : vue, mode, souris, clavier, position, tuiles) : masquée → déployée ; réduite → déployée ; déployée → masquée. **H** fait de même pour l'aide seule (§ 19.1, § 21.3)                                                                                                                                                                                                                                                                                                                              |
+| **K** (v46)                             | affiche ou masque les **flèches à l'écran** (comme le bouton « Flèches (K) » et la case des Réglages ; choix retenu par le navigateur ; même place en AZERTY et en QWERTY, § 29.3)                                                                                                                                                                                                                                                                                                                                                                                  |
+| **L** (v40)                             | la fenêtre **Arrivées** : liste des points de téléportation de la région ; un clic sur un nom y téléporte (en promenade) ou y fait entrer en promenade (en vue globale). Même cycle que **H** et **I** ; absente si la région n'a aucune arrivée                                                                                                                                                                                                                                                                                                                    |
 
 Les portails ne fonctionnent qu'en promenade.
 
 ### Clic et double-clic (vue globale du viewer)
 
-| Geste | Effet |
-|---|---|
-| **clic simple** sur le modèle | affiche, dans le bloc « picked » et la barre d'état, le **nom de l'élément** et les **coordonnées du point touché** (x, y, z, 2 décimales). Rien ne bouge : ni la cible, ni le cercle d'atterrissage. |
+| Geste                         | Effet                                                                                                                                                                                                                                                   |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **clic simple** sur le modèle | affiche, dans le bloc « picked » et la barre d'état, le **nom de l'élément** et les **coordonnées du point touché** (x, y, z, 2 décimales). Rien ne bouge : ni la cible, ni le cercle d'atterrissage.                                                   |
 | **double-clic** sur le modèle | choisit la **cible** de la vue et le **point d'atterrissage** (comme dans la page exportée). En mode tuiles (§ 17 bis), le double-clic fonctionne aussi sur la **vue d'ensemble** : la cible se place sur le point lointain et les tuiles s'y chargent. |
 
 Deux cercles à ne pas confondre :
@@ -65,10 +65,10 @@ Dans le **viewer** (édition), chaque zone non liée garde son **cylindre transl
 
 Dans la **page exportée** (autonome ou modulaire), il n'y a **aucun cylindre** pour les zones lien web, commande Home Assistant et portail :
 
-| Zone | Ce qui est ajouté dans la scène | Au survol |
-|---|---|---|
-| **liée à un élément** | **rien** | le curseur devient une **main**, l'élément reçoit un léger **contour**, une **infobulle** affiche le nom et la destination |
-| **non liée** | un **marqueur discret au sol** (petit disque plat de 0,4 m, semi-transparent, avec un anneau fin) | même chose : main, infobulle, le marqueur s'éclaircit |
+| Zone                  | Ce qui est ajouté dans la scène                                                                   | Au survol                                                                                                                  |
+| --------------------- | ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| **liée à un élément** | **rien**                                                                                          | le curseur devient une **main**, l'élément reçoit un léger **contour**, une **infobulle** affiche le nom et la destination |
+| **non liée**          | un **marqueur discret au sol** (petit disque plat de 0,4 m, semi-transparent, avec un anneau fin) | même chose : main, infobulle, le marqueur s'éclaircit                                                                      |
 
 L'infobulle donne le **nom** puis la **destination** : l'adresse web pour un lien, « Région : adresse (#arrivée) » pour un portail (« cette région » si la destination est vide), « Commande : nom » pour une commande Home Assistant (l'adresse du webhook n'est **jamais** affichée). Un **clic** suit le lien. Un portail réglé « en marchant dedans » reste sans survol (il se déclenche seul).
 
@@ -94,12 +94,12 @@ Dans le viewer, section **Zones : panneaux, portails, liens, commandes** :
 
 C'est l'endroit où un visiteur apparaît.
 
-| Champ | Réglage |
-|---|---|
-| Identifiant | le nom que les portails utiliseront (`empereur`, `temple`, `default`…) |
-| Nom affiché | libre |
-| Position X / Y / Z | Y est la hauteur |
-| Orientation (degrés) | la direction dans laquelle le visiteur regarde en arrivant |
+| Champ                | Réglage                                                                |
+| -------------------- | ---------------------------------------------------------------------- |
+| Identifiant          | le nom que les portails utiliseront (`empereur`, `temple`, `default`…) |
+| Nom affiché          | libre                                                                  |
+| Position X / Y / Z   | Y est la hauteur                                                       |
+| Orientation (degrés) | la direction dans laquelle le visiteur regarde en arrivant             |
 
 Pose-le en promenade avec **P**, en regardant dans la direction voulue : position et orientation sont prises d'un coup.
 
@@ -109,11 +109,11 @@ L'arrivée d'identifiant **`default`** est spéciale : c'est là qu'arrive un vi
 
 ## 5. Portail vers un autre endroit de la même région
 
-| Champ | Réglage |
-|---|---|
-| Page de destination | **vide** (le nom de la page elle-même marche aussi) |
-| Point d'arrivée dans cette page | l'**Identifiant** de l'arrivée visée |
-| Déclenchement | voir § 8 |
+| Champ                           | Réglage                                             |
+| ------------------------------- | --------------------------------------------------- |
+| Page de destination             | **vide** (le nom de la page elle-même marche aussi) |
+| Point d'arrivée dans cette page | l'**Identifiant** de l'arrivée visée                |
+| Déclenchement                   | voir § 8                                            |
 
 Effet : fondu au noir, puis le visiteur est posé sur l'arrivée, orienté comme elle. La page n'est pas rechargée : il reste connecté à la présence et au chat.
 
@@ -121,10 +121,10 @@ Si l'arrivée n'existe pas, un message « Point d'arrivée … introuvable dans 
 
 ## 6. Portail vers une autre région
 
-| Champ | Réglage |
-|---|---|
-| Page de destination | l'autre page : `autre-region.html` si elle est dans le même dossier, sinon son adresse complète `https://…/autre-region.html`. Avec une coquille commune (§ 16) : `index.html?region=AutreRegion` (le `#spawn=` s'ajoute après) |
-| Point d'arrivée dans cette page | l'**Identifiant** d'une arrivée **de l'autre page** (vide = `default`) |
+| Champ                           | Réglage                                                                                                                                                                                                                         |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Page de destination             | l'autre page : `autre-region.html` si elle est dans le même dossier, sinon son adresse complète `https://…/autre-region.html`. Avec une coquille commune (§ 16) : `index.html?region=AutreRegion` (le `#spawn=` s'ajoute après) |
+| Point d'arrivée dans cette page | l'**Identifiant** d'une arrivée **de l'autre page** (vide = `default`)                                                                                                                                                          |
 
 Effet : fondu, chargement de l'autre page, le visiteur y arrive directement en promenade, avec son pseudo.
 
@@ -138,28 +138,28 @@ Effet : fondu, chargement de l'autre page, le visiteur y arrive directement en p
 
 ### Lien web
 
-| Champ | Réglage |
-|---|---|
+| Champ       | Réglage     |
+| ----------- | ----------- |
 | Adresse web | `https://…` |
 
 Approche-toi et appuie sur **E** (ou clique) : la page s'ouvre dans un nouvel onglet.
 
 Formats acceptés pour l'adresse (aussi pour la page de destination d'un portail) :
 
-| Format | Exemple | Remarque |
-|---|---|---|
-| adresse web | `https://monsite.fr/ile.html` | marche partout |
-| fichier `.html` relatif | `autre-ile.html` | relatif à la page qui contient la zone |
-| fichier local | `file:///P:/web/autre-ile.html` | **sans guillemets** ; ne marche que si la page elle-même est ouverte depuis le disque |
+| Format                  | Exemple                         | Remarque                                                                              |
+| ----------------------- | ------------------------------- | ------------------------------------------------------------------------------------- |
+| adresse web             | `https://monsite.fr/ile.html`   | marche partout                                                                        |
+| fichier `.html` relatif | `autre-ile.html`                | relatif à la page qui contient la zone                                                |
+| fichier local           | `file:///P:/web/autre-ile.html` | **sans guillemets** ; ne marche que si la page elle-même est ouverte depuis le disque |
 
 Les espaces s'écrivent `%20` (`file:///P:/mes%20pages/ile.html`). Toute autre forme (`javascript:`, `ftp:`…) est refusée.
 
 ### Commande Home Assistant
 
-| Champ | Réglage |
-|---|---|
-| Adresse du webhook Home Assistant | l'adresse du webhook de ton automatisation |
-| Demander confirmation | coché : le visiteur doit valider avant l'envoi |
+| Champ                             | Réglage                                        |
+| --------------------------------- | ---------------------------------------------- |
+| Adresse du webhook Home Assistant | l'adresse du webhook de ton automatisation     |
+| Demander confirmation             | coché : le visiteur doit valider avant l'envoi |
 
 Effet : envoi d'une requête POST au webhook avec deux valeurs, `zone` (le nom affiché) et `visitor` (le pseudo). Une même commande ne peut pas repartir avant 3 s. La page ne reçoit pas la réponse de Home Assistant : « Commande envoyée » veut dire envoyée, pas exécutée.
 
@@ -167,20 +167,20 @@ Effet : envoi d'une requête POST au webhook avec deux valeurs, `zone` (le nom a
 
 **Déclenchement** (portails) :
 
-| Choix | Effet |
-|---|---|
-| en marchant dedans | le portail part dès qu'on entre dans le cercle |
-| au clic | il faut cliquer dessus (v35 : la touche E ne déclenche plus les zones) |
-| les deux | l'un ou l'autre |
+| Choix              | Effet                                                                  |
+| ------------------ | ---------------------------------------------------------------------- |
+| en marchant dedans | le portail part dès qu'on entre dans le cercle                         |
+| au clic            | il faut cliquer dessus (v35 : la touche E ne déclenche plus les zones) |
+| les deux           | l'un ou l'autre                                                        |
 
 Un portail « en marchant dedans » sur lequel on arrive ne se déclenche pas tout de suite : il faut en sortir puis y rentrer. Deux portails qui se renvoient l'un vers l'autre ne font donc pas de ping-pong.
 
 **Forme** :
 
-| Choix | Réglage de taille |
-|---|---|
-| cercle au sol | Rayon (m) |
-| panneau | Largeur, Hauteur, et Portée d'approche pour l'invite « clic » (m) |
+| Choix         | Réglage de taille                                                 |
+| ------------- | ----------------------------------------------------------------- |
+| cercle au sol | Rayon (m)                                                         |
+| panneau       | Largeur, Hauteur, et Portée d'approche pour l'invite « clic » (m) |
 
 ## 9. Lier une zone à un élément du modèle
 
@@ -231,9 +231,9 @@ La rotation est mémorisée comme les autres réglages, et reprise dans la comma
 
 Les zones se règlent dans le viewer, mais une page déjà publiée ne les voit qu'après publication :
 
-| Ta page est… | Que faire après avoir modifié les zones |
-|---|---|
-| **autonome** (un seul .html) | **Exporter HTML autonome**, puis remplacer l'ancienne page |
+| Ta page est…                            | Que faire après avoir modifié les zones                                                                         |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| **autonome** (un seul .html)            | **Exporter HTML autonome**, puis remplacer l'ancienne page                                                      |
 | **modulaire** (coquille + .glb + .json) | **Exporter zones (.json)**, renommer en `<nom de la page>.zones.json`, remplacer l'ancien, puis F5 dans la page |
 
 Les zones peuvent aussi être sauvées et rechargées avec **Exporter zones (.json)** / **Importer zones (.json)**, par exemple pour les copier d'une région à l'autre.
@@ -242,21 +242,21 @@ Les zones peuvent aussi être sauvées et rechargées avec **Exporter zones (.js
 
 ## 13. Dépannage
 
-| Symptôme | Cause probable | Remède |
-|---|---|---|
-| Rien ne se passe en entrant dans un portail | pas en promenade | appuie sur P (ou F en vue globale) |
-| | déclenchement réglé « au clic » | clique sur le portail (v35 : E ne le déclenche plus), ou passe en « en marchant dedans » |
-| | tu étais déjà dans le cercle en arrivant | sors du cercle puis rentre |
-| « Point d'arrivée … introuvable » | le portail contient le **Nom affiché** au lieu de l'**Identifiant** | recopie l'Identifiant exact de l'arrivée (§ 1) |
-| Arrivée au mauvais endroit dans une autre région | l'arrivée visée n'existe pas dans l'**autre** page, ou elle est privée et la page est publique | crée-la dans l'autre page, ou décoche Privé |
-| Écran noir après un portail interne | page générée avant la v22 | régénère la page |
-| « Portail sans destination valide » | adresse mal écrite, ou protocole non accepté | `https://…` ou nom de fichier `.html` |
-| La zone marche dans le viewer, pas dans la page | page pas republiée | voir § 12 |
-| Commande HA « envoyée » mais rien ne bouge | webhook faux, ou automatisation désactivée | teste le webhook directement depuis Home Assistant |
-| Une zone supprimée revient après rechargement | le viewer restaure les réglages mémorisés pour ce fichier, ou l'ancien `.reglages.json` / `zones.json` a été rechargé | supprime-la (**Supprimer**), attends 2 s (mémorisation automatique), ou **Oublier les réglages de ce fichier** (§ 14) ; vérifie aussi `zones.json` / `<page>.zones.json` |
-| La liaison prend un objet de 30 m | (avant v23) l'objet est fusionné avec un bâtiment dans l'OAR ; la limite était de 30 m | v23 : limite de 10 m et message explicite ; délie l'objet dans OpenSim (Unlink) ou pose une zone cercle (§ 9) |
-| Le cercle d'atterrissage « saute » | (avant v23) chaque clic simple déplaçait la cible | v23 : seul le **double-clic** le déplace ; le clic simple affiche nom et coordonnées |
-| L'île est inversée nord-sud sur la carte | l'OAR est exporté dans l'autre orientation | **Rotation de la région** : 180° (§ 11), puis recapturer la vignette, mettre à jour la région dans la carte et réexporter `regions.json` |
+| Symptôme                                         | Cause probable                                                                                                        | Remède                                                                                                                                                                   |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Rien ne se passe en entrant dans un portail      | pas en promenade                                                                                                      | appuie sur P (ou F en vue globale)                                                                                                                                       |
+|                                                  | déclenchement réglé « au clic »                                                                                       | clique sur le portail (v35 : E ne le déclenche plus), ou passe en « en marchant dedans »                                                                                 |
+|                                                  | tu étais déjà dans le cercle en arrivant                                                                              | sors du cercle puis rentre                                                                                                                                               |
+| « Point d'arrivée … introuvable »                | le portail contient le **Nom affiché** au lieu de l'**Identifiant**                                                   | recopie l'Identifiant exact de l'arrivée (§ 1)                                                                                                                           |
+| Arrivée au mauvais endroit dans une autre région | l'arrivée visée n'existe pas dans l'**autre** page, ou elle est privée et la page est publique                        | crée-la dans l'autre page, ou décoche Privé                                                                                                                              |
+| Écran noir après un portail interne              | page générée avant la v22                                                                                             | régénère la page                                                                                                                                                         |
+| « Portail sans destination valide »              | adresse mal écrite, ou protocole non accepté                                                                          | `https://…` ou nom de fichier `.html`                                                                                                                                    |
+| La zone marche dans le viewer, pas dans la page  | page pas republiée                                                                                                    | voir § 12                                                                                                                                                                |
+| Commande HA « envoyée » mais rien ne bouge       | webhook faux, ou automatisation désactivée                                                                            | teste le webhook directement depuis Home Assistant                                                                                                                       |
+| Une zone supprimée revient après rechargement    | le viewer restaure les réglages mémorisés pour ce fichier, ou l'ancien `.reglages.json` / `zones.json` a été rechargé | supprime-la (**Supprimer**), attends 2 s (mémorisation automatique), ou **Oublier les réglages de ce fichier** (§ 14) ; vérifie aussi `zones.json` / `<page>.zones.json` |
+| La liaison prend un objet de 30 m                | (avant v23) l'objet est fusionné avec un bâtiment dans l'OAR ; la limite était de 30 m                                | v23 : limite de 10 m et message explicite ; délie l'objet dans OpenSim (Unlink) ou pose une zone cercle (§ 9)                                                            |
+| Le cercle d'atterrissage « saute »               | (avant v23) chaque clic simple déplaçait la cible                                                                     | v23 : seul le **double-clic** le déplace ; le clic simple affiche nom et coordonnées                                                                                     |
+| L'île est inversée nord-sud sur la carte         | l'OAR est exporté dans l'autre orientation                                                                            | **Rotation de la région** : 180° (§ 11), puis recapturer la vignette, mettre à jour la région dans la carte et réexporter `regions.json`                                 |
 
 ## 14. Réglages mémorisés
 
@@ -270,42 +270,46 @@ Conséquences :
 
 ## 15. Convertir un OAR en GLB (`tools/oar2glb.py`)
 
-`oar2glb.py` transforme une sauvegarde de région OpenSim (`.oar`) en un seul fichier `.glb` prêt pour le viewer et pour `glb2html.py`. Il lance convoar, répare sa sortie et assemble le tout. La sortie est écrite à côté de l'OAR : `X.oar` donne `X.glb`.
+`oar2glb.py` transforme une sauvegarde de région OpenSim (`.oar`) en un seul fichier `.glb` prêt pour le viewer et pour `glb2html.py`. Il lance convoar¹, répare sa sortie et assemble le tout. La sortie est écrite à côté de l'OAR : `X.oar` donne `X.glb`.
+
+¹ **Prérequis** :  **oar2glb.py** s'appuie sur le convertisseur externe **convoar.exe**
+  Téléchargement : https://github.com/Misterblue/convoar/tree/master/bin
+  Sans convoar.exe, oar2glb.py ne peut pas effectuer la conversion OAR → GLB.
 
 ### Les commandes (PowerShell, une seule ligne)
 
 Se placer d'abord dans le dossier du script : `cd "P:\_OpenSim\SL&OS\Web_3d"`.
 
-| Besoin | Commande |
-|---|---|
-| Conversion normale | `python oar2glb.py "J:\...\X.oar"` |
-| Conversion qui garde les dossiers intermédiaires (nécessaire pour `--diag`) | `python oar2glb.py "J:\...\X.oar" --keep` |
-| Retrouver les animaux dans le viewer (mât rouge de 15 m à chacun) | `python oar2glb.py "J:\...\X.oar" --keep --markers` |
-| Garder les prims invisibles | `python oar2glb.py "J:\...\X.oar" --keep-invisible` |
-| Vérifier ce que le script voit, sans rien modifier | `python oar2glb.py "J:\...\X.oar" --diag` |
-| Idem, en désignant le GLB ou le `.gltf` à comparer | `python oar2glb.py "J:\...\X.oar" --diag --glb "J:\...\X-GLTF\fichier.gltf"` |
-| Ne pas attendre « Entrée » à la fin | ajouter `--nopause` |
-| Ajouter le terrain complet à un GLB existant, sans relancer convoar | `python oar2glb.py "J:\...\X.oar" --terrain-only "J:\...\X.glb"` (écrit `X-terrain.glb`) |
+| Besoin                                                                      | Commande                                                                                 |
+| --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Conversion normale                                                          | `python oar2glb.py "J:\...\X.oar"`                                                       |
+| Conversion qui garde les dossiers intermédiaires (nécessaire pour `--diag`) | `python oar2glb.py "J:\...\X.oar" --keep`                                                |
+| Retrouver les animaux dans le viewer (mât rouge de 15 m à chacun)           | `python oar2glb.py "J:\...\X.oar" --keep --markers`                                      |
+| Garder les prims invisibles                                                 | `python oar2glb.py "J:\...\X.oar" --keep-invisible`                                      |
+| Vérifier ce que le script voit, sans rien modifier                          | `python oar2glb.py "J:\...\X.oar" --diag`                                                |
+| Idem, en désignant le GLB ou le `.gltf` à comparer                          | `python oar2glb.py "J:\...\X.oar" --diag --glb "J:\...\X-GLTF\fichier.gltf"`             |
+| Ne pas attendre « Entrée » à la fin                                         | ajouter `--nopause`                                                                      |
+| Ajouter le terrain complet à un GLB existant, sans relancer convoar         | `python oar2glb.py "J:\...\X.oar" --terrain-only "J:\...\X.glb"` (écrit `X-terrain.glb`) |
 
 Avant de refaire une conversion, supprimer l'ancien dossier intermédiaire : `Remove-Item -Recurse -Force "J:\...\X-GLTF*"`.
 
 ### Les options
 
-| Option | Effet |
-|---|---|
-| `--keep` | garde le dossier `X-GLTF` (images, tampons, `.gltf`) ; indispensable pour lancer ensuite `--diag` |
-| `--keep-invisible` | garde les prims entièrement transparents (retirés par défaut) |
-| `--markers` | ajoute un mât rouge de 15 m à chaque animal riggé posé ; le nom du nœud donne l'animal et sa taille ; à retirer en relançant sans l'option |
-| `--diag` | ne modifie rien et ne lance pas convoar : liste chaque partie de l'OAR (voir plus bas) |
-| `--glb CHEMIN` | avec `--diag` : GLB ou `.gltf` à comparer ; par défaut le `.gltf` du dossier `X-GLTF`, sinon le `X.glb` voisin |
-| `--max N` | hauteur maximale (m) d'un objet racine ; au-delà (skybox) il est retiré ; défaut 600 |
-| `--convoar CHEMIN` | chemin de `convoar.exe` si ce n'est pas celui par défaut |
-| `--reencode` | **à éviter** : réencode les textures avant convoar ; sur Jungle_Isle il faisait manquer environ 150 textures sur 353 (textures grises). À n'utiliser que si convoar affiche beaucoup d'erreurs « unhandled number of components » ou plante dans `OpenJPEG.DotNetDecode64` (code retour 3221225477). Les textures que Pillow ne sait pas lire sont remplacées par un gris 4x4 (liste dans `X-reenc-illisibles.txt`, à côté de l'OAR) pour ne pas les laisser au décodeur de convoar ; les sculpt maps restent intactes ; 8 cœurs au plus et envoi par lots de 512 pour limiter la mémoire |
-| `--nopause` | ne pas attendre « Entrée » à la fin (la pause est aussi supprimée quand il n'y a pas de console, et avec `--terrain-only`) |
-| `--terrain auto\|yes\|no` | terrain complet depuis la carte de hauteurs (voir plus bas) ; `auto` par défaut |
-| `--terrain-patch N` | côté d'un patch de terrain en mètres, de 2 à 255 ; défaut 64 |
-| `--terrain-only GLB` | ne lance pas convoar : ajoute le terrain complet à ce GLB et écrit `X-terrain.glb` à côté (l'original n'est jamais modifié) |
-| `--output FICHIER` | avec `--terrain-only` : fichier de sortie à la place de `X-terrain.glb` (jamais l'original) |
+| Option                    | Effet                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--keep`                  | garde le dossier `X-GLTF` (images, tampons, `.gltf`) ; indispensable pour lancer ensuite `--diag`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `--keep-invisible`        | garde les prims entièrement transparents (retirés par défaut)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `--markers`               | ajoute un mât rouge de 15 m à chaque animal riggé posé ; le nom du nœud donne l'animal et sa taille ; à retirer en relançant sans l'option                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `--diag`                  | ne modifie rien et ne lance pas convoar : liste chaque partie de l'OAR (voir plus bas)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `--glb CHEMIN`            | avec `--diag` : GLB ou `.gltf` à comparer ; par défaut le `.gltf` du dossier `X-GLTF`, sinon le `X.glb` voisin                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `--max N`                 | hauteur maximale (m) d'un objet racine ; au-delà (skybox) il est retiré ; défaut 600                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `--convoar CHEMIN`        | chemin de `convoar.exe` si ce n'est pas celui par défaut                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `--reencode`              | **à éviter** : réencode les textures avant convoar ; sur Jungle_Isle il faisait manquer environ 150 textures sur 353 (textures grises). À n'utiliser que si convoar affiche beaucoup d'erreurs « unhandled number of components » ou plante dans `OpenJPEG.DotNetDecode64` (code retour 3221225477). Les textures que Pillow ne sait pas lire sont remplacées par un gris 4x4 (liste dans `X-reenc-illisibles.txt`, à côté de l'OAR) pour ne pas les laisser au décodeur de convoar ; les sculpt maps restent intactes ; 8 cœurs au plus et envoi par lots de 512 pour limiter la mémoire |
+| `--nopause`               | ne pas attendre « Entrée » à la fin (la pause est aussi supprimée quand il n'y a pas de console, et avec `--terrain-only`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `--terrain auto\|yes\|no` | terrain complet depuis la carte de hauteurs (voir plus bas) ; `auto` par défaut                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `--terrain-patch N`       | côté d'un patch de terrain en mètres, de 2 à 255 ; défaut 64                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `--terrain-only GLB`      | ne lance pas convoar : ajoute le terrain complet à ce GLB et écrit `X-terrain.glb` à côté (l'original n'est jamais modifié)                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `--output FICHIER`        | avec `--terrain-only` : fichier de sortie à la place de `X-terrain.glb` (jamais l'original)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 
 ### Terrain complet des régions de plus de 256 m (v29)
 
@@ -315,12 +319,12 @@ convoar ne produit qu'**un** nœud « Terrain » dont l'étendue plafonne (par e
 - **Normales** par différences centrées sur toute la carte (une seule différence aux bords de la carte).
 - **Couleur par sommet** d'après l'altitude `a` au-dessus du niveau d'eau et la pente :
 
-| Situation | Couleur (rouge, vert, bleu) |
-|---|---|
-| `a` ≤ 0 (sous l'eau) | sable humide (166, 150, 104) |
-| 0 < `a` ≤ 1 m | sable sec (214, 196, 142) |
-| 1 à 4 m | passage progressif du sable sec à l'herbe |
-| `a` ≥ 4 m | herbe, dégradé léger de (98, 146, 66) à `a` = 4 m vers (132, 140, 78) à `a` = 80 m |
+| Situation               | Couleur (rouge, vert, bleu)                                                           |
+| ----------------------- | ------------------------------------------------------------------------------------- |
+| `a` ≤ 0 (sous l'eau)    | sable humide (166, 150, 104)                                                          |
+| 0 < `a` ≤ 1 m           | sable sec (214, 196, 142)                                                             |
+| 1 à 4 m                 | passage progressif du sable sec à l'herbe                                             |
+| `a` ≥ 4 m               | herbe, dégradé léger de (98, 146, 66) à `a` = 4 m vers (132, 140, 78) à `a` = 80 m    |
 | pente de 32 à 38 degrés | passage progressif vers la roche grise (122, 120, 116) ; au-delà de 38 degrés : roche |
 
 - **Niveau d'eau.** `WaterHeight` lu dans `settings/*.xml` de l'OAR, sinon 20 m (défaut d'OpenSim). Le journal dit quelle valeur est utilisée et d'où elle vient.
@@ -340,18 +344,18 @@ Test : `python tests/terrain.py` (OAR et GLB synthétiques).
 
 ### Lire le journal (`oar2glb.log`, à côté du script)
 
-| Ligne | Sens |
-|---|---|
-| `[riggé] 'Nom' reconstruit depuis l'OAR : N face(s), M sommets...` | un morceau d'animal a été reconstruit ; les chiffres « convoar » à côté montrent ce que convoar avait écrit |
-| `[riggé] 'Nom' : 5 morceau(x)... pieds à 27.11 m (dessous de la boîte racine)` | animal posé ; taille L x l x h et altitude des pieds |
-| `[riggé] ... nœud GLB introuvable` | le morceau n'a pas été retrouvé dans le GLB ; lancer `--diag` |
-| `[riggé] ... taille obtenue ... implausible` | garde-fou : l'animal est laissé tel que convoar l'a produit |
-| `[invisible] node N 'Nom' retiré : ...` | prim retiré, avec la raison |
-| `[correctif] N mesh(es) riggé(s) remis à l'échelle, M prim(s) invisible(s) retiré(s)` | récapitulatif |
-| `[contrôle] 'Nom' pieds à ... : dans la boîte de N objet(s)` | objets dont la boîte englobante contient le centre de l'animal (indice si un animal est dans un rocher) |
-| `[GLB] N texture(s) absente(s) sur M` | images manquantes, remplacées par du gris |
-| `[terrain] ...` | décision (couverture du terrain de convoar) puis résumé des patches ajoutés |
-| `[OK] ...glb (taille, meshes, textures)` | fin normale |
+| Ligne                                                                                 | Sens                                                                                                        |
+| ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `[riggé] 'Nom' reconstruit depuis l'OAR : N face(s), M sommets...`                    | un morceau d'animal a été reconstruit ; les chiffres « convoar » à côté montrent ce que convoar avait écrit |
+| `[riggé] 'Nom' : 5 morceau(x)... pieds à 27.11 m (dessous de la boîte racine)`        | animal posé ; taille L x l x h et altitude des pieds                                                        |
+| `[riggé] ... nœud GLB introuvable`                                                    | le morceau n'a pas été retrouvé dans le GLB ; lancer `--diag`                                               |
+| `[riggé] ... taille obtenue ... implausible`                                          | garde-fou : l'animal est laissé tel que convoar l'a produit                                                 |
+| `[invisible] node N 'Nom' retiré : ...`                                               | prim retiré, avec la raison                                                                                 |
+| `[correctif] N mesh(es) riggé(s) remis à l'échelle, M prim(s) invisible(s) retiré(s)` | récapitulatif                                                                                               |
+| `[contrôle] 'Nom' pieds à ... : dans la boîte de N objet(s)`                          | objets dont la boîte englobante contient le centre de l'animal (indice si un animal est dans un rocher)     |
+| `[GLB] N texture(s) absente(s) sur M`                                                 | images manquantes, remplacées par du gris                                                                   |
+| `[terrain] ...`                                                                       | décision (couverture du terrain de convoar) puis résumé des patches ajoutés                                 |
+| `[OK] ...glb (taille, meshes, textures)`                                              | fin normale                                                                                                 |
 
 ### Diagnostic : `--diag`
 
@@ -359,13 +363,13 @@ Test : `python tests/terrain.py` (OAR et GLB synthétiques).
 
 ### Si quelque chose ne va pas
 
-| Symptôme | Cause probable | Remède |
-|---|---|---|
-| Beaucoup de textures grises | `--reencode`, ou images non écrites par convoar | relancer sans `--reencode` ; lire `[GLB] N texture(s) absente(s)` |
-| Un animal invisible ou à la mauvaise place | nœud non retrouvé, ou animal caché | `--keep --markers`, puis `--diag` ; envoyer `oar2glb.log` et `oar2glb.diag.log` |
-| Un animal avec la mauvaise texture | l'ordre des faces du mesh ne suit pas celui des matériaux de convoar | signaler l'animal avec son journal |
-| Des prims transparents qu'on voulait garder | retirés par défaut | `--keep-invisible` |
-| « convoar introuvable » | chemin différent | `--convoar "P:\...\convoar.exe"` |
+| Symptôme                                    | Cause probable                                                       | Remède                                                                          |
+| ------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Beaucoup de textures grises                 | `--reencode`, ou images non écrites par convoar                      | relancer sans `--reencode` ; lire `[GLB] N texture(s) absente(s)`               |
+| Un animal invisible ou à la mauvaise place  | nœud non retrouvé, ou animal caché                                   | `--keep --markers`, puis `--diag` ; envoyer `oar2glb.log` et `oar2glb.diag.log` |
+| Un animal avec la mauvaise texture          | l'ordre des faces du mesh ne suit pas celui des matériaux de convoar | signaler l'animal avec son journal                                              |
+| Des prims transparents qu'on voulait garder | retirés par défaut                                                   | `--keep-invisible`                                                              |
+| « convoar introuvable »                     | chemin différent                                                     | `--convoar "P:\...\convoar.exe"`                                                |
 
 `python oar2glb.py --version` affiche la version (`oar2glb v29 (22/10/2026)`) sans rien lancer ; la première ligne du journal (`oar2glb.log`, `oar2glb.diag.log`) la rappelle : `[oar2glb] v29 (22/10/2026)`. Joindre ce journal à tout signalement donne donc la version utilisée. Le fichier est fabriqué dans `dist/` par `python build.py`.
 
@@ -377,14 +381,14 @@ Pour une page `Region.html` produite par `--modular` (ou par « Exporter la stru
 
 Ces fichiers sont ceux d'une région à coquille propre (`--modular`). Pour plusieurs régions dans un même dossier avec **une seule** coquille, voir « Coquille unique pour plusieurs régions » plus bas.
 
-| Fichier              | Rôle                                                                                   | Relu à chaque F5 |
-|----------------------|----------------------------------------------------------------------------------------|------------------|
-| `Region.html`        | coquille identique pour toutes les régions, elle déduit ses fichiers de son nom        | non              |
-| `Region.glb`         | le modèle                                                                              | non              |
-| `Region.config.json` | réglages de **rendu de la page** (voir plus bas)                                       | oui              |
-| `Region.zones.json`  | zones, portails, arrivées                                                              | oui              |
+| Fichier              | Rôle                                                                                    | Relu à chaque F5 |
+| -------------------- | --------------------------------------------------------------------------------------- | ---------------- |
+| `Region.html`        | coquille identique pour toutes les régions, elle déduit ses fichiers de son nom         | non              |
+| `Region.glb`         | le modèle                                                                               | non              |
+| `Region.config.json` | réglages de **rendu de la page** (voir plus bas)                                        | oui              |
+| `Region.zones.json`  | zones, portails, arrivées                                                               | oui              |
 | `zones.json`         | zones de secours, communes aux pages du dossier qui n'ont pas leur propre `.zones.json` | oui              |
-| `lib/three-0.160.0/` | three.js, Draco, Meshopt, partagés par toutes les pages du dossier                     | non              |
+| `lib/three-0.160.0/` | three.js, Draco, Meshopt, partagés par toutes les pages du dossier                      | non              |
 
 ### Coquille unique pour plusieurs régions (`--shared-shell`, v26)
 
@@ -398,12 +402,12 @@ dossier/
   Jungle.glb Jungle.config.json Jungle.zones.json
 ```
 
-| Besoin | Commande (PowerShell, une seule ligne) |
-|---|---|
-| Générer une région | `python glb2html.py "Ankh.glb" --settings --shared-shell --register regions.json -o "Ankh.html"` |
-| Autre nom de coquille | `--shared-shell monde.html` (adresse `monde.html?region=Ankh`) |
-| Changer un réglage | `python glb2html.py --settings "Ankh.glb" --config-only --shared-shell --wave 2 -o "Ankh.html"` |
-| Changer les zones seules | `python glb2html.py -o "Ankh.html" --zones-only --zones zones.json` |
+| Besoin                         | Commande (PowerShell, une seule ligne)                                                                                                                                 |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Générer une région             | `python glb2html.py "Ankh.glb" --settings --shared-shell --register regions.json -o "Ankh.html"`                                                                       |
+| Autre nom de coquille          | `--shared-shell monde.html` (adresse `monde.html?region=Ankh`)                                                                                                         |
+| Changer un réglage             | `python glb2html.py --settings "Ankh.glb" --config-only --shared-shell --wave 2 -o "Ankh.html"`                                                                        |
+| Changer les zones seules       | `python glb2html.py -o "Ankh.html" --zones-only --zones zones.json`                                                                                                    |
 | Mettre à jour une région (v34) | `python glb2html.py --update -o "Ankh.html" --shared-shell --sea-y 12` : applique **seulement** les options données, garde le reste de la config et les zones (§ 19.6) |
 
 Règles :
@@ -448,15 +452,15 @@ Le viewer ne lit jamais ce fichier : il travaille avec son propre fichier de ré
   cmd:     { script, glb, dest, mapPage } }
 ```
 
-| | `<nom>.reglages.json` (viewer) | `<page>.config.json` (page) |
-|---|---|---|
-| Structure | imbriquée (`cfg`, `camera`, ...) | à plat |
-| Caméra | sous-objet `camera` | à la racine (`camDir`, `target`, `zoom`) |
-| Zones | toutes, privées comprises | toujours vide |
-| Carte | seulement la fiche de cette région (`thisReg`) | carte complète résolue (`map`) |
-| Propre à lui | `guide`, `ignoreViz`, `cmd`, `thisReg` | `seaSize`, `version` |
-| Écrit par | le viewer | `glb2html.py` |
-| Lu par | le viewer, `glb2html.py --settings` | la page exportée |
+|              | `<nom>.reglages.json` (viewer)                 | `<page>.config.json` (page)              |
+| ------------ | ---------------------------------------------- | ---------------------------------------- |
+| Structure    | imbriquée (`cfg`, `camera`, ...)               | à plat                                   |
+| Caméra       | sous-objet `camera`                            | à la racine (`camDir`, `target`, `zoom`) |
+| Zones        | toutes, privées comprises                      | toujours vide                            |
+| Carte        | seulement la fiche de cette région (`thisReg`) | carte complète résolue (`map`)           |
+| Propre à lui | `guide`, `ignoreViz`, `cmd`, `thisReg`         | `seaSize`, `version`                     |
+| Écrit par    | le viewer                                      | `glb2html.py`                            |
+| Lu par       | le viewer, `glb2html.py --settings`            | la page exportée                         |
 
 La conversion ne va que dans un sens :
 
@@ -468,11 +472,11 @@ Un `.config.json` ne peut pas être donné à `--settings` (le script cherche la
 
 ### Quel fichier modifier, et ce qui l'écrase
 
-| Je veux changer...                    | Je modifie / je lance                                                    | Ce qui peut l'écraser ensuite                                              |
-|---------------------------------------|--------------------------------------------------------------------------|----------------------------------------------------------------------------|
-| un réglage de rendu (vagues, ciel...) | `--config-only` (voir ci-dessous), ou `Region.config.json` à la main     | tout nouveau `--modular` ou `--config-only` réécrit `Region.config.json`   |
-| une zone                              | `Region.zones.json` à la main, ou **Exporter zones (.json)** (§ 12)      | `--modular` avec `--zones` ou `--settings` ; `--config-only` avec `--zones` |
-| l'état de travail du viewer           | **Enregistrer dans un fichier**                                          | rien (c'est la source)                                                     |
+| Je veux changer...                    | Je modifie / je lance                                                | Ce qui peut l'écraser ensuite                                               |
+| ------------------------------------- | -------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| un réglage de rendu (vagues, ciel...) | `--config-only` (voir ci-dessous), ou `Region.config.json` à la main | tout nouveau `--modular` ou `--config-only` réécrit `Region.config.json`    |
+| une zone                              | `Region.zones.json` à la main, ou **Exporter zones (.json)** (§ 12)  | `--modular` avec `--zones` ou `--settings` ; `--config-only` avec `--zones` |
+| l'état de travail du viewer           | **Enregistrer dans un fichier**                                      | rien (c'est la source)                                                      |
 
 Sans `--zones` ni `--settings`, un `Region.zones.json` déjà présent (modifié à la main, par exemple) n'est pas écrasé. Dès qu'une source de zones est donnée, il est réécrit.
 
@@ -492,45 +496,45 @@ Les options de la ligne de commande l'emportent sur le `.reglages.json`. Les vis
 
 ### Les commandes (PowerShell, une seule ligne)
 
-| Pour | Commande |
-|---|---|
-| Voir la version | `python glb2tiles.py --version` |
-| Mesurer et obtenir une recommandation, sans rien écrire | `python glb2tiles.py "P:\...\Region.glb" --analyse` |
-| Découper (recommandation « découper ») | `python glb2tiles.py "P:\...\Region.glb"` |
-| Découper même si la recommandation est « pas de découpage » | `python glb2tiles.py "P:\...\Region.glb" --force` |
-| Écrire ailleurs qu'à côté du GLB | `python glb2tiles.py "P:\...\Region.glb" --output "P:\...\tuiles"` |
-| Découper sans la vue d'ensemble | `python glb2tiles.py "P:\...\Region.glb" --no-overview` |
-| Refaire **seulement** la vue d'ensemble (tuiles intactes) | `python glb2tiles.py "P:\...\Region.glb" --overview-only` avec **les mêmes options de découpage** (`--output`, `--budget`, `--exclude`…) que la première fois |
-| Écarter les « boîtes de livraison » d'un fournisseur | `python glb2tiles.py "P:\...\Region.glb" --analyse --exclude "Freebies 20"` puis la même commande sans `--analyse` |
+| Pour                                                        | Commande                                                                                                                                                      |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Voir la version                                             | `python glb2tiles.py --version`                                                                                                                               |
+| Mesurer et obtenir une recommandation, sans rien écrire     | `python glb2tiles.py "P:\...\Region.glb" --analyse`                                                                                                           |
+| Découper (recommandation « découper »)                      | `python glb2tiles.py "P:\...\Region.glb"`                                                                                                                     |
+| Découper même si la recommandation est « pas de découpage » | `python glb2tiles.py "P:\...\Region.glb" --force`                                                                                                             |
+| Écrire ailleurs qu'à côté du GLB                            | `python glb2tiles.py "P:\...\Region.glb" --output "P:\...\tuiles"`                                                                                            |
+| Découper sans la vue d'ensemble                             | `python glb2tiles.py "P:\...\Region.glb" --no-overview`                                                                                                       |
+| Refaire **seulement** la vue d'ensemble (tuiles intactes)   | `python glb2tiles.py "P:\...\Region.glb" --overview-only` avec **les mêmes options de découpage** (`--output`, `--budget`, `--exclude`…) que la première fois |
+| Écarter les « boîtes de livraison » d'un fournisseur        | `python glb2tiles.py "P:\...\Region.glb" --analyse --exclude "Freebies 20"` puis la même commande sans `--analyse`                                            |
 
 Commencer par `--analyse` : elle donne les mesures de `glb-stats.py`, les 10 meshes les plus lourds (octets compactés, étendue en mètres), les 10 instances les plus éloignées du centre médian (valeurs aberrantes), le nombre de tuiles prévu avec les paramètres choisis, le facteur de duplication prévu, le nombre d'objets racine gardés entiers ou répartis, et une phrase de recommandation : « pas de découpage nécessaire » ou « découper : budget N Mo, T tuiles, duplication F ». Un GLB léger répond « pas de découpage nécessaire » et rien n'est écrit (même sans `--analyse`, sauf avec `--force`).
 
 ### Les paramètres
 
-| Option | Défaut | Sens |
-|---|---|---|
-| `--budget` | 32 | Mo par tuile (poids autonome : primitives distinctes compactées + images distinctes) |
-| `--budget-triangles` | 1500000 | triangles par tuile (le poids en Mo ne suffit pas : un bloc peut avoir 5 M de triangles pour 70 Mo) |
-| `--min` | 16 | côté minimal d'une cellule, en m : on ne subdivise plus en dessous |
-| `--whole-weight` | 16 | Mo : un objet racine plus léger que cela peut rester entier |
-| `--whole-extent` | 256 | m : …et plus petit que cela (les deux conditions ensemble ; l'étendue seule ne décide pas) |
-| `--threshold`, `--threshold-triangles` | 150, 3000000 | sous ces deux valeurs : « pas de découpage nécessaire » |
-| `--outlier` | 1000 | m : une instance plus loin que cela du centre médian, ou plus grande, est signalée |
-| `--block` | 256 | côté des blocs de la partie `glb-stats` de `--analyse` |
-| `--output` | à côté du GLB | dossier de sortie |
-| `--force` | | découper même sous les seuils |
-| `--exclude REGEX` | | retire du découpage les objets racine dont le nom correspond (insensible à la casse, répétable ; voir ci-dessous) |
-| `--exclude-max-triangles` | 24 | triangles au plus dans l'objet racine, tous meshes compris, pour être exclu |
-| `--exclude-max-meshes` | 1 | meshes au plus dans l'objet racine pour être exclu |
-| `--no-refs` | | ne pas écrire `extras.ref` / `extras.box` dans les nœuds des tuiles (format de la v31 : zones liées à un objet impossibles en mode tuiles) |
-| `--no-overview` | | ne pas écrire `X.overview.glb` |
-| `--overview-only` | | n'écrire que `X.overview.glb` et sa mention dans `X.tiles.json` ; le découpage recalculé doit retrouver exactement les tuiles de `X.tiles.json` (sinon : erreur « ne correspond pas », utiliser les mêmes options) |
-| `--ov-budget`, `--ov-budget-triangles` | 25, 1500000 | Mo et triangles de toute la vue d'ensemble |
-| `--ov-threshold` | 3 | m : les objets dont la plus grande dimension est plus petite sont omis (le budget peut relever ce seuil) |
-| `--ov-threshold-max` | 24 | m : si le budget oblige à omettre des objets plus grands que cela, la résolution baisse |
-| `--ov-resolution` | 10 | cellules sur la plus grande dimension d'une primitive pour le regroupement de sommets (plus grand = plus fin et plus lourd) |
-| `--ov-terrain-step` | 4 | m : pas du réseau du terrain dans la vue d'ensemble |
-| `--nopause` | | ne pas attendre Entrée à la fin (la pause est aussi supprimée quand il n'y a pas de console : script, tâche planifiée) |
+| Option                                 | Défaut        | Sens                                                                                                                                                                                                               |
+| -------------------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `--budget`                             | 32            | Mo par tuile (poids autonome : primitives distinctes compactées + images distinctes)                                                                                                                               |
+| `--budget-triangles`                   | 1500000       | triangles par tuile (le poids en Mo ne suffit pas : un bloc peut avoir 5 M de triangles pour 70 Mo)                                                                                                                |
+| `--min`                                | 16            | côté minimal d'une cellule, en m : on ne subdivise plus en dessous                                                                                                                                                 |
+| `--whole-weight`                       | 16            | Mo : un objet racine plus léger que cela peut rester entier                                                                                                                                                        |
+| `--whole-extent`                       | 256           | m : …et plus petit que cela (les deux conditions ensemble ; l'étendue seule ne décide pas)                                                                                                                         |
+| `--threshold`, `--threshold-triangles` | 150, 3000000  | sous ces deux valeurs : « pas de découpage nécessaire »                                                                                                                                                            |
+| `--outlier`                            | 1000          | m : une instance plus loin que cela du centre médian, ou plus grande, est signalée                                                                                                                                 |
+| `--block`                              | 256           | côté des blocs de la partie `glb-stats` de `--analyse`                                                                                                                                                             |
+| `--output`                             | à côté du GLB | dossier de sortie                                                                                                                                                                                                  |
+| `--force`                              |               | découper même sous les seuils                                                                                                                                                                                      |
+| `--exclude REGEX`                      |               | retire du découpage les objets racine dont le nom correspond (insensible à la casse, répétable ; voir ci-dessous)                                                                                                  |
+| `--exclude-max-triangles`              | 24            | triangles au plus dans l'objet racine, tous meshes compris, pour être exclu                                                                                                                                        |
+| `--exclude-max-meshes`                 | 1             | meshes au plus dans l'objet racine pour être exclu                                                                                                                                                                 |
+| `--no-refs`                            |               | ne pas écrire `extras.ref` / `extras.box` dans les nœuds des tuiles (format de la v31 : zones liées à un objet impossibles en mode tuiles)                                                                         |
+| `--no-overview`                        |               | ne pas écrire `X.overview.glb`                                                                                                                                                                                     |
+| `--overview-only`                      |               | n'écrire que `X.overview.glb` et sa mention dans `X.tiles.json` ; le découpage recalculé doit retrouver exactement les tuiles de `X.tiles.json` (sinon : erreur « ne correspond pas », utiliser les mêmes options) |
+| `--ov-budget`, `--ov-budget-triangles` | 25, 1500000   | Mo et triangles de toute la vue d'ensemble                                                                                                                                                                         |
+| `--ov-threshold`                       | 3             | m : les objets dont la plus grande dimension est plus petite sont omis (le budget peut relever ce seuil)                                                                                                           |
+| `--ov-threshold-max`                   | 24            | m : si le budget oblige à omettre des objets plus grands que cela, la résolution baisse                                                                                                                            |
+| `--ov-resolution`                      | 10            | cellules sur la plus grande dimension d'une primitive pour le regroupement de sommets (plus grand = plus fin et plus lourd)                                                                                        |
+| `--ov-terrain-step`                    | 4             | m : pas du réseau du terrain dans la vue d'ensemble                                                                                                                                                                |
+| `--nopause`                            |               | ne pas attendre Entrée à la fin (la pause est aussi supprimée quand il n'y a pas de console : script, tâche planifiée)                                                                                             |
 
 ### Exclure des objets (`--exclude`, v29)
 
@@ -618,17 +622,17 @@ Dans `--analyse`, la ligne « Lecture » indique les octets lus. Les positions n
 
 ### Si quelque chose ne va pas
 
-| Symptôme | Cause probable | Que faire |
-|---|---|---|
-| « GLB compressé » | le GLB utilise Draco ou meshopt | décompresser le GLB d'abord (hors de ce lot) |
-| « glb-stats.py introuvable » | le script est seul dans son dossier | copier `glb-stats.py` à côté |
-| « Tuile … hors budget » | un mesh unique (terrain, mer) dépasse le budget, ou la cellule minimale est atteinte | normal à ce stade : voir la feuille de route (découpage par triangles) |
-| Beaucoup de tuiles pour un petit GLB | `--budget` trop petit ou duplication forte | relancer `--analyse` avec d'autres valeurs |
-| « THREE.GLTFLoader: Couldn't load texture » sur une tuile faite avant la v31 | image de 0 octet ou tronquée dans le GLB | refaire le découpage avec la v31 (images remplacées par un gris) |
-| « Le découpage recalculé … ne correspond pas à X.tiles.json » | `--overview-only` lancé avec d'autres options de découpage | reprendre exactement les options du découpage d'origine |
-| « Pillow absent » dans le rapport | la vue d'ensemble utilise la couleur de base des matériaux (souvent blanche pour un matériau texturé) | `pip install pillow` puis `--overview-only` |
-| Vue d'ensemble trop lourde ou objets manquants | budget atteint, `effectiveMinExtent` monté | `--ov-budget` / `--ov-budget-triangles` plus grands, ou `--ov-threshold` plus haut ; lire les lignes « objets omis » |
-| Instance à 3 000 m signalée | un prim géant ou un objet égaré | l'outil la garde ; la corriger dans le modèle si c'est une erreur |
+| Symptôme                                                                     | Cause probable                                                                                        | Que faire                                                                                                            |
+| ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| « GLB compressé »                                                            | le GLB utilise Draco ou meshopt                                                                       | décompresser le GLB d'abord (hors de ce lot)                                                                         |
+| « glb-stats.py introuvable »                                                 | le script est seul dans son dossier                                                                   | copier `glb-stats.py` à côté                                                                                         |
+| « Tuile … hors budget »                                                      | un mesh unique (terrain, mer) dépasse le budget, ou la cellule minimale est atteinte                  | normal à ce stade : voir la feuille de route (découpage par triangles)                                               |
+| Beaucoup de tuiles pour un petit GLB                                         | `--budget` trop petit ou duplication forte                                                            | relancer `--analyse` avec d'autres valeurs                                                                           |
+| « THREE.GLTFLoader: Couldn't load texture » sur une tuile faite avant la v31 | image de 0 octet ou tronquée dans le GLB                                                              | refaire le découpage avec la v31 (images remplacées par un gris)                                                     |
+| « Le découpage recalculé … ne correspond pas à X.tiles.json »                | `--overview-only` lancé avec d'autres options de découpage                                            | reprendre exactement les options du découpage d'origine                                                              |
+| « Pillow absent » dans le rapport                                            | la vue d'ensemble utilise la couleur de base des matériaux (souvent blanche pour un matériau texturé) | `pip install pillow` puis `--overview-only`                                                                          |
+| Vue d'ensemble trop lourde ou objets manquants                               | budget atteint, `effectiveMinExtent` monté                                                            | `--ov-budget` / `--ov-budget-triangles` plus grands, ou `--ov-threshold` plus haut ; lire les lignes « objets omis » |
+| Instance à 3 000 m signalée                                                  | un prim géant ou un objet égaré                                                                       | l'outil la garde ; la corriger dans le modèle si c'est une erreur                                                    |
 
 Test : `python tests/glb2tiles.py` (GLB synthétiques, sans navigateur ni réseau) ; `python tests/v31.py` (images invalides, vue d'ensemble, sortie de promenade).
 
@@ -638,25 +642,25 @@ Une région de plusieurs centaines de Mo ou de plusieurs Go ne tient pas dans un
 
 ### Les commandes (PowerShell, une seule ligne)
 
-| Pour | Commande |
-|---|---|
-| Découper | `python glb2tiles.py "P:\regions\4X4.glb" --exclude "Freebies"` (écrit `4X4.tiles.json` et `4X4.tiles\` à côté du GLB) |
-| Mettre la région dans le site | `python glb2html.py --shared-shell -o "P:\site\4X4.html" --tiles "P:\regions\4X4.tiles.json"` |
-| Ouvrir | `http://…/index.html?region=4X4` (la coquille commune, comme § 16) |
-| Essayer un autre rayon | `index.html?region=4X4&radius=300` |
-| Changer un réglage | relancer la même commande avec l'option : rien de lourd n'est recopié |
+| Pour                          | Commande                                                                                                               |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Découper                      | `python glb2tiles.py "P:\regions\4X4.glb" --exclude "Freebies"` (écrit `4X4.tiles.json` et `4X4.tiles\` à côté du GLB) |
+| Mettre la région dans le site | `python glb2html.py --shared-shell -o "P:\site\4X4.html" --tiles "P:\regions\4X4.tiles.json"`                          |
+| Ouvrir                        | `http://…/index.html?region=4X4` (la coquille commune, comme § 16)                                                     |
+| Essayer un autre rayon        | `index.html?region=4X4&radius=300`                                                                                     |
+| Changer un réglage            | relancer la même commande avec l'option : rien de lourd n'est recopié                                                  |
 
 `-o` désigne la région (son nom sans extension). Pas de `.glb` en entrée. `--tiles` seul (sans `--shared-shell`) donne une coquille propre `4X4.html`. Sont écrits : `4X4.config.json` (champ `tiles`), `4X4.zones.json` (si absent ou si une source de zones est donnée), la coquille et `lib/` s'ils manquent. **`4X4.tiles.json` et le dossier des tuiles ne sont copiés que s'ils ne sont pas déjà à côté de la page** : mettre `-o` dans le dossier des tuiles évite toute copie (« tuiles déjà à côté de la page : rien n'est copié ») ; sinon le script copie ce qui manque ou a une autre taille, fichier par fichier, et dit combien. Il n'y a pas de `4X4.glb`. Comme tout mode modulaire, la page demande http/https.
 
 ### Les paramètres (dans `X.config.json`, avec leurs options)
 
-| Clé / option | Défaut | Sens |
-|---|---|---|
-| `tileRadius` / `--tile-radius` | 150 | m : charger les tuiles dont la **boîte** (min / max de `X.tiles.json`) est à moins de ce rayon de l'avatar, en plan X,Z (distance 0 = l'avatar est dans la boîte) |
-| `tileMargin` / `--tile-margin` | 60 | m : décharger au-delà de rayon + marge (hystérésis : pas de va-et-vient à la limite) |
-| `tileMaxMB` / `--tile-max-mb` | 200 | Mo de tuiles chargées en même temps (poids des fichiers `.glb`) |
-| `tileMaxTriangles` / `--tile-max-triangles` | 8 000 000 | triangles de tuiles chargées en même temps |
-| `tileConcurrency` / `--tile-concurrency` | 4 | téléchargements simultanés |
+| Clé / option                                | Défaut    | Sens                                                                                                                                                              |
+| ------------------------------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tileRadius` / `--tile-radius`              | 150       | m : charger les tuiles dont la **boîte** (min / max de `X.tiles.json`) est à moins de ce rayon de l'avatar, en plan X,Z (distance 0 = l'avatar est dans la boîte) |
+| `tileMargin` / `--tile-margin`              | 60        | m : décharger au-delà de rayon + marge (hystérésis : pas de va-et-vient à la limite)                                                                              |
+| `tileMaxMB` / `--tile-max-mb`               | 200       | Mo de tuiles chargées en même temps (poids des fichiers `.glb`)                                                                                                   |
+| `tileMaxTriangles` / `--tile-max-triangles` | 8 000 000 | triangles de tuiles chargées en même temps                                                                                                                        |
+| `tileConcurrency` / `--tile-concurrency`    | 4         | téléchargements simultanés                                                                                                                                        |
 
 `?radius=NNN` dans l'adresse remplace `tileRadius` pour cette ouverture (10 à 5 000). Ces clés n'existent dans la config que pour une région en tuiles.
 
@@ -689,17 +693,17 @@ Une région de plusieurs centaines de Mo ou de plusieurs Go ne tient pas dans un
 
 ### Si quelque chose ne va pas
 
-| Symptôme | Cause probable | Que faire |
-|---|---|---|
-| « Erreur de chargement : … X.tiles.json : HTTP 404 » | `X.tiles.json` n'est pas à côté de la page, ou le champ `tiles` de la config est faux | relancer `glb2html.py --tiles` ; vérifier le dossier |
-| « adresse de tuiles refusée » | le champ `tiles` contient `..`, `:`, `?`, `#` ou commence par `/` | un chemin relatif simple (`X.tiles.json`) |
-| Sol partiel, trous | tuiles hors du rayon, ou en échec | monter `tileRadius` (ou `?radius=`), voir la ligne d'information et la console |
-| « Chargement du sol… » qui reste | une tuile en échec devant l'avatar | corriger le fichier ; la page réessaie seule |
-| Au loin, rien ou un trou | pas de vue d'ensemble (région découpée avant la v31, ou `--no-overview`) | `glb2tiles.py … --overview-only` avec les options d'origine, puis relancer `glb2html.py --tiles` (copie le fichier avec les tuiles) |
-| « Vue d'ensemble indisponible » | `X.overview.glb` absent à côté de la page, ou illisible | le copier à côté de `X.tiles.json` ; relancer `glb2html.py --tiles` |
-| Page lourde, ralentie | trop de textures chargées | baisser `tileMaxMB`, `tileMaxTriangles` ou `tileRadius` |
-| Les zones liées n'apparaissent pas | la tuile de l'objet n'est pas chargée (elles n'existent que tuile chargée), ou les tuiles datent d'avant la v32 (ignorées, avertissement en console) | s'approcher / `?radius=` ; sinon refaire le découpage avec `glb2tiles.py` v32 (§ 17), ou utiliser des zones libres à coordonnées |
-| Les zones sont décalées | elles viennent du viewer (repère recentré) | les écrire dans le repère du modèle d'origine |
+| Symptôme                                             | Cause probable                                                                                                                                       | Que faire                                                                                                                           |
+| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| « Erreur de chargement : … X.tiles.json : HTTP 404 » | `X.tiles.json` n'est pas à côté de la page, ou le champ `tiles` de la config est faux                                                                | relancer `glb2html.py --tiles` ; vérifier le dossier                                                                                |
+| « adresse de tuiles refusée »                        | le champ `tiles` contient `..`, `:`, `?`, `#` ou commence par `/`                                                                                    | un chemin relatif simple (`X.tiles.json`)                                                                                           |
+| Sol partiel, trous                                   | tuiles hors du rayon, ou en échec                                                                                                                    | monter `tileRadius` (ou `?radius=`), voir la ligne d'information et la console                                                      |
+| « Chargement du sol… » qui reste                     | une tuile en échec devant l'avatar                                                                                                                   | corriger le fichier ; la page réessaie seule                                                                                        |
+| Au loin, rien ou un trou                             | pas de vue d'ensemble (région découpée avant la v31, ou `--no-overview`)                                                                             | `glb2tiles.py … --overview-only` avec les options d'origine, puis relancer `glb2html.py --tiles` (copie le fichier avec les tuiles) |
+| « Vue d'ensemble indisponible »                      | `X.overview.glb` absent à côté de la page, ou illisible                                                                                              | le copier à côté de `X.tiles.json` ; relancer `glb2html.py --tiles`                                                                 |
+| Page lourde, ralentie                                | trop de textures chargées                                                                                                                            | baisser `tileMaxMB`, `tileMaxTriangles` ou `tileRadius`                                                                             |
+| Les zones liées n'apparaissent pas                   | la tuile de l'objet n'est pas chargée (elles n'existent que tuile chargée), ou les tuiles datent d'avant la v32 (ignorées, avertissement en console) | s'approcher / `?radius=` ; sinon refaire le découpage avec `glb2tiles.py` v32 (§ 17), ou utiliser des zones libres à coordonnées    |
+| Les zones sont décalées                              | elles viennent du viewer (repère recentré)                                                                                                           | les écrire dans le repère du modèle d'origine                                                                                       |
 
 Test : `python tests/tuiles.py` (région synthétique de 16 tuiles, Chromium sans tête) et `python tests/v31.py` (vue d'ensemble dans la coquille, sortie de promenade).
 
@@ -724,7 +728,6 @@ Autre façon d'ouvrir : par adresse, si le viewer est servi en http (par exemple
 **Ce qui est différent du mode GLB unique** : pas d'export HTML autonome ni de `.zip` (il n'y a pas de GLB unique ; les boutons sont désactivés) ; pas de rotation de la région (repère d'origine ; avec `glb2html.py --tiles --rotate`, les zones doivent déjà être dans le repère tourné) ; le trou de la mer est relatif au **centre de la région** (comme dans la page) ; la mer est à 20 m par défaut (`--sea-y` pour la changer, la commande l'écrit) ; le filaire des éléments traversables ne montre que les tuiles déjà chargées ; le texte d'une fiche de zone liée (« tuile non chargée ») ne se met à jour qu'au prochain changement de la liste (modifier ou ajouter une zone, cliquer une zone dans la scène), pas au moment où la tuile arrive ; la zone, elle, apparaît aussitôt dans la scène.
 
 Test : `python tests/v32.py` (région synthétique de 16 tuiles : zones libre, portail, arrivée et liées posées dans le viewer, export, puis page générée).
-
 
 ## 18. Nouveautés de la v33 (22/10/2026)
 
@@ -755,12 +758,12 @@ Test : `python tests/v32.py` (région synthétique de 16 tuiles : zones libre, p
 
 Règle exacte, **sans lien** (ni `#spawn=` ni `#pos=`) :
 
-| Situation | Cadrage de départ (cible de la caméra) | Touche F (sans avoir déplacé la cible) |
-|---|---|---|
-| la région a une arrivée `default`, pas de `--target` | **la position de cette arrivée** | **son point et son orientation** |
-| la région a une arrivée `default`, `--target` donné | la cible donnée | la cible (comme avant) |
-| pas d'arrivée `default` | la cible (celle de la configuration, ou le centre de l'étendue en mode tuiles) | la cible (comme avant) |
-| configuration écrite avant la v33 (sans la clé `targetExplicit`) | la cible (comme avant) | la cible (comme avant) |
+| Situation                                                        | Cadrage de départ (cible de la caméra)                                         | Touche F (sans avoir déplacé la cible) |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------ | -------------------------------------- |
+| la région a une arrivée `default`, pas de `--target`             | **la position de cette arrivée**                                               | **son point et son orientation**       |
+| la région a une arrivée `default`, `--target` donné              | la cible donnée                                                                | la cible (comme avant)                 |
+| pas d'arrivée `default`                                          | la cible (celle de la configuration, ou le centre de l'étendue en mode tuiles) | la cible (comme avant)                 |
+| configuration écrite avant la v33 (sans la clé `targetExplicit`) | la cible (comme avant)                                                         | la cible (comme avant)                 |
 
 Avec un lien (`#spawn=`, `#pos=`), le cadrage et la promenade se font à l'arrivée demandée. En mode tuiles, c'est ce point qui sert de référence de chargement au départ.
 
@@ -770,12 +773,12 @@ Le viewer écrit `targetExplicit` à vrai quand la cible de sa caméra n'est pas
 
 ### 18.3 Marqueurs de zones dans la page exportée
 
-| Option | Valeur | Effet |
-|---|---|---|
-| `--zone-marker` | `dot` (défaut ; `discret` avant la v43) | comportement d'avant : disque plat de 0,4 m semi-transparent et anneau fin |
-| | `range` (`portee` avant la v43) | **anneau fin et net au rayon réel de la zone**, sans cylindre ; un trait d'un pixel est ajouté à l'anneau plat pour qu'il reste tracé de loin |
-| | `none` (`aucun` avant la v43) | aucun marqueur ; la zone reste cliquable et se déclenche comme avant |
-| `--show-spawns` | (aucune) | dessine aussi les **arrivées** : petit disque de 0,3 m et anneau fin au sol. Sans cette option, les arrivées ne sont **jamais** dessinées dans la page exportée (seulement dans l'éditeur) |
+| Option          | Valeur                                  | Effet                                                                                                                                                                                      |
+| --------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `--zone-marker` | `dot` (défaut ; `discret` avant la v43) | comportement d'avant : disque plat de 0,4 m semi-transparent et anneau fin                                                                                                                 |
+|                 | `range` (`portee` avant la v43)         | **anneau fin et net au rayon réel de la zone**, sans cylindre ; un trait d'un pixel est ajouté à l'anneau plat pour qu'il reste tracé de loin                                              |
+|                 | `none` (`aucun` avant la v43)           | aucun marqueur ; la zone reste cliquable et se déclenche comme avant                                                                                                                       |
+| `--show-spawns` | (aucune)                                | dessine aussi les **arrivées** : petit disque de 0,3 m et anneau fin au sol. Sans cette option, les arrivées ne sont **jamais** dessinées dans la page exportée (seulement dans l'éditeur) |
 
 Ils concernent les portails et les zones libres (lien web, commande). Réglage dans le viewer : section « Zones » (menu « Marqueur des portails et zones libres », case « Dessiner les arrivées ») ; il figure dans le récapitulatif de la ligne de commande. Config : `zoneMarker`, `showSpawns`.
 
@@ -840,11 +843,11 @@ La coquille (`index.html`), `core.js` et `X.config.json` changent ; **les tuiles
 
 ### 19.2 Zone de survol et de clic des marqueurs
 
-| Option | Rayon de la zone de survol / de clic (disque invisible au sol) |
-|---|---|
-| `--zone-marker range` | **le rayon de l'anneau visible** (rayon réel de la zone ; 2 m au moins pour un panneau) : l'infobulle apparaît en survolant l'anneau ou son intérieur |
-| `--zone-marker dot` (défaut) | le rayon de la zone borné entre **0,6 m** (comme avant) et **1 m** |
-| `--zone-marker none` | 0,6 m, comme avant |
+| Option                       | Rayon de la zone de survol / de clic (disque invisible au sol)                                                                                        |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--zone-marker range`        | **le rayon de l'anneau visible** (rayon réel de la zone ; 2 m au moins pour un panneau) : l'infobulle apparaît en survolant l'anneau ou son intérieur |
+| `--zone-marker dot` (défaut) | le rayon de la zone borné entre **0,6 m** (comme avant) et **1 m**                                                                                    |
+| `--zone-marker none`         | 0,6 m, comme avant                                                                                                                                    |
 
 ### 19.3 Vol
 
@@ -860,8 +863,8 @@ Changer la couleur dans les Réglages pendant la connexion envoie `{"t":"color",
 
 ### 19.6 `glb2html.py --update` : mettre à jour une région sans rien ressaisir
 
-| Option | Effet |
-|---|---|
+| Option     | Effet                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `--update` | lit `X.config.json` existant, **n'applique que les options explicitement données** (une valeur égale à la valeur par défaut, mais donnée, est appliquée), garde tout le reste (clés inconnues comprises) et `X.zones.json` (réécrit seulement avec `--zones`), écrit la version courante, **renouvelle la coquille** si elle diffère de celle de cette version (ancienne copie gardée sous `index.avant-AAAAMMJJ-HHMMSS.html`) et écrit `lib/` s'il manque. Sans `X.config.json`, échoue en proposant la commande sans `--update`. Exclut `--settings` |
 
 Forme : `python glb2html.py --update -o "X.html" [--shared-shell [COQUILLE.html]] [--tiles "X.tiles.json" | "X.glb"] [options]`. Sans `--shared-shell`, la page `X.html` doit exister. La coquille est **partagée par les autres régions du dossier** : elles gardent leur comportement (les anciennes configurations restent comprises ; aucune clé de config n'est nouvelle en v34). Le compte rendu liste les clés changées. Le profil (`--profile`) ne filtre les zones qu'à l'écriture de la liste : ajouter `--zones` pour la réécrire.
@@ -884,27 +887,27 @@ Forme : `python glb2html.py --update -o "X.html" [--shared-shell [COQUILLE.html]
 
 Colonne de gauche : les défauts du visualiseur officiel d'après le wiki de Second Life (Quick Start Guide, « Keyboard Shortcuts »), que Firestorm reprend à ma connaissance ; ils n'ont pas été comparés ici à une installation de Firestorm.
 
-| Commande | Firestorm | Cette page |
-|---|---|---|
-| Marcher avant / arrière | W ou ↑ / S ou ↓ | W ou ↑ / S ou ↓ (ZQSD en AZERTY ; v36 : l'aide affiche les lettres réelles) |
-| Pas de côté | A / D (ou Maj + flèches) | A / D (Q / D en AZERTY) |
-| Tourner | ← / → | ← / → (à la troisième personne : tourne la caméra) |
-| Courir | double appui sur W / S / ↑ / ↓ ; Ctrl+R bascule la course | **Maj**, ou **double appui** (moins de 300 ms) sur W, S, ↑ ou ↓, tant que la touche est maintenue. **Pas de course permanente** (Ctrl+R recharge la page du navigateur) |
-| Sauter | E ou Page Haut (appui bref) | **Page Haut** (appui bref) ou **Espace** (v36 : E ne saute plus) |
-| Voler / atterrir | Début | **Début** ou le bouton « Voler / Atterrir » (v36 : F ne bascule plus le vol) |
-| Décoller | E ou Page Haut maintenu | **Page Haut** maintenu **plus de 0,4 s** au sol : vol + montée |
-| Monter en vol | E ou Page Haut | **Page Haut** ou **Espace** maintenu |
-| Descendre en vol | C ou Page Bas | **C** ou **Page Bas** maintenu ; **atterrissage automatique** au sol |
-| Vue subjective | M | **M** bascule vue subjective / troisième personne ; **V** fait tourner les trois vues (dont la caméra libre) |
-| Orbiter la caméra | Alt + glisser | **Alt + glisser** (à la troisième personne, la souris orbite déjà autour de l'avatar sans le tourner) |
-| Caméra derrière l'avatar | Échap | **Fin** ou **Alt + clic** (Échap est réservé au navigateur : il libère la souris) |
-| Zoom caméra | molette | **molette** (3e personne : distance de la caméra ; caméra libre : avance / recule) |
-| Carte du monde | Ctrl+M | **Ctrl+M** partout ; **M** seul l'ouvre aussi hors promenade |
-| Chat | Entrée | **Entrée** |
-| Entrer / sortir de la promenade | (n'existe pas) | **P** ou **F** (v36) |
-| Toucher un objet, une zone | clic | **clic** ou **E** (v36) ; un portail « en marchant dedans » part à l'entrée de son rayon |
-| Se téléporter | (carte, double-clic selon le réglage) | **double-clic** |
-| Flèches à l'écran | (n'existe pas) | **K** ou le bouton « Flèches (K) » les cache ou les montre (v46, § 29) |
+| Commande                        | Firestorm                                                 | Cette page                                                                                                                                                              |
+| ------------------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Marcher avant / arrière         | W ou ↑ / S ou ↓                                           | W ou ↑ / S ou ↓ (ZQSD en AZERTY ; v36 : l'aide affiche les lettres réelles)                                                                                             |
+| Pas de côté                     | A / D (ou Maj + flèches)                                  | A / D (Q / D en AZERTY)                                                                                                                                                 |
+| Tourner                         | ← / →                                                     | ← / → (à la troisième personne : tourne la caméra)                                                                                                                      |
+| Courir                          | double appui sur W / S / ↑ / ↓ ; Ctrl+R bascule la course | **Maj**, ou **double appui** (moins de 300 ms) sur W, S, ↑ ou ↓, tant que la touche est maintenue. **Pas de course permanente** (Ctrl+R recharge la page du navigateur) |
+| Sauter                          | E ou Page Haut (appui bref)                               | **Page Haut** (appui bref) ou **Espace** (v36 : E ne saute plus)                                                                                                        |
+| Voler / atterrir                | Début                                                     | **Début** ou le bouton « Voler / Atterrir » (v36 : F ne bascule plus le vol)                                                                                            |
+| Décoller                        | E ou Page Haut maintenu                                   | **Page Haut** maintenu **plus de 0,4 s** au sol : vol + montée                                                                                                          |
+| Monter en vol                   | E ou Page Haut                                            | **Page Haut** ou **Espace** maintenu                                                                                                                                    |
+| Descendre en vol                | C ou Page Bas                                             | **C** ou **Page Bas** maintenu ; **atterrissage automatique** au sol                                                                                                    |
+| Vue subjective                  | M                                                         | **M** bascule vue subjective / troisième personne ; **V** fait tourner les trois vues (dont la caméra libre)                                                            |
+| Orbiter la caméra               | Alt + glisser                                             | **Alt + glisser** (à la troisième personne, la souris orbite déjà autour de l'avatar sans le tourner)                                                                   |
+| Caméra derrière l'avatar        | Échap                                                     | **Fin** ou **Alt + clic** (Échap est réservé au navigateur : il libère la souris)                                                                                       |
+| Zoom caméra                     | molette                                                   | **molette** (3e personne : distance de la caméra ; caméra libre : avance / recule)                                                                                      |
+| Carte du monde                  | Ctrl+M                                                    | **Ctrl+M** partout ; **M** seul l'ouvre aussi hors promenade                                                                                                            |
+| Chat                            | Entrée                                                    | **Entrée**                                                                                                                                                              |
+| Entrer / sortir de la promenade | (n'existe pas)                                            | **P** ou **F** (v36)                                                                                                                                                    |
+| Toucher un objet, une zone      | clic                                                      | **clic** ou **E** (v36) ; un portail « en marchant dedans » part à l'entrée de son rayon                                                                                |
+| Se téléporter                   | (carte, double-clic selon le réglage)                     | **double-clic**                                                                                                                                                         |
+| Flèches à l'écran               | (n'existe pas)                                            | **K** ou le bouton « Flèches (K) » les cache ou les montre (v46, § 29)                                                                                                  |
 
 Gardées telles quelles : ZQSD / WASD / flèches, Espace, Entrée, G, R, V, H, I, Maj.
 
@@ -921,8 +924,8 @@ Gardées telles quelles : ZQSD / WASD / flèches, Espace, Entrée, G, R, V, H, I
 
 ### 20.5 Infobulle et clic des zones : `--zone-info-dist`
 
-| Option | Config | Effet |
-|---|---|---|
+| Option               | Config         | Effet                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| -------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `--zone-info-dist M` | `zoneInfoDist` | distance, **en promenade**, jusqu'à laquelle l'infobulle, le clic et le **nom affiché** (« Toujours afficher le nom ») des zones fonctionnent. **150 m par défaut depuis la v37** (40 m en v35 et v36), de **5 à 500** (hors bornes : ramené à la borne). Réglable dans le viewer (section « Promenade »), repris dans la ligne de commande. Un nom plus loin que cette distance est masqué en promenade et réapparaît en vue globale |
 
 `glb2html.py --update --zone-info-dist 60` suffit à l'appliquer à une région déjà publiée (§ 20.7).
@@ -942,12 +945,15 @@ Tous les boutons « copier » (lien personnel, lien de ma position, point visé,
 ### 20.8 Créer la carte des mondes
 
 1. **Chaque région est enregistrée dans un même `regions.json`**, à côté des pages (un seul dossier de pages, une coquille commune). Pour chaque région déjà générée, une commande `--update --register`, **une seule ligne PowerShell** (nom, position sur la grille OpenSim, vignette facultative de 140 Ko au plus à côté de la page) :
-
+   
    `python glb2html.py --update -o "X.html" --shared-shell --register regions.json --region-name "Nom affiché" --region-xy 1000,1001 --thumb vignette.png`
-
+   
    La fiche reçoit l'adresse `index.html?region=X`, le salon et le serveur de présence de la config de la région. Redonner la commande met la fiche à jour (identifiée par le salon), sans doublon.
+
 2. **Générer la page web de la carte** : `python glb2html.py --update -o "X.html" --shared-shell --map-page carte.html` (elle lit les régions de `regions.json` enregistrées dans la config de la région `X`). Pour qu'elle contienne toutes les régions, exécute-la **après** les enregistrements, ou donne `--map regions.json --map-page carte.html`.
+
 3. **L'ouvrir par le serveur web**, pas depuis le disque : le dossier contenant `carte.html`, `index.html`, `lib/` et les régions est servi en http(s) (`python -m http.server` pour un essai, ou `presence_server.py --serve-dir` quand il hébergera les pages), puis ouvre `http://ADRESSE/carte.html`. Chaque lien de la carte ouvre la région à son point d'arrivée, avec le pseudo saisi en haut de la page.
+
 4. **Les pages des régions** affichent la carte avec la touche **M** (**Ctrl+M** en promenade) : `--map-url http://ADRESSE/regions.json` (plusieurs adresses séparées par des virgules, fusionnées) les fait relire `regions.json` à chaque ouverture, sans régénérer les pages.
 
 **Depuis la v47** : la page carte peut aussi être une `carte.html` universelle, sans région dedans, qui relit `regions.json` à chaque ouverture (§ 30.4).
@@ -1146,13 +1152,13 @@ Dans **Réglages**, la case **« Rendu léger »** se trouve sous **« Haute ré
 
 Le bouton **« Réglages fins… »**, à côté de la case, ouvre une petite fenêtre à gauche de Réglages ; elle se cache quand Réglages se ferme. Chaque réglage s'applique aussitôt, que la case soit cochée ou non :
 
-| Réglage | Normal | Préconisé | Effet |
-|---|---|---|---|
-| Résolution du rendu | 100 % | 50 % | moins de pixels calculés ; le navigateur agrandit l'image, plus floue |
-| Images par seconde (au plus) | sans limite | 15 | laisse du temps au navigateur entre deux images (fenêtres, clavier) |
-| Vue globale : vue d'ensemble seule | non | oui | hors de la promenade, aucune tuile détaillée n'est chargée |
-| Rayon des tuiles détaillées | celui de la page (`--tile-radius`, 150 m) | 80 m | moins de tuiles autour de l'avatar |
-| Anticrénelage | oui | non | bords lissés ; pris au prochain chargement de la page |
+| Réglage                            | Normal                                    | Préconisé | Effet                                                                 |
+| ---------------------------------- | ----------------------------------------- | --------- | --------------------------------------------------------------------- |
+| Résolution du rendu                | 100 %                                     | 50 %      | moins de pixels calculés ; le navigateur agrandit l'image, plus floue |
+| Images par seconde (au plus)       | sans limite                               | 15        | laisse du temps au navigateur entre deux images (fenêtres, clavier)   |
+| Vue globale : vue d'ensemble seule | non                                       | oui       | hors de la promenade, aucune tuile détaillée n'est chargée            |
+| Rayon des tuiles détaillées        | celui de la page (`--tile-radius`, 150 m) | 80 m      | moins de tuiles autour de l'avatar                                    |
+| Anticrénelage                      | oui                                       | non       | bords lissés ; pris au prochain chargement de la page                 |
 
 Les deux réglages de tuiles n'apparaissent que sur une région en tuiles. **« Valeurs préconisées »** remet les cinq valeurs de la colonne « Préconisé ». **« Valeurs d'origine »**, en bas de Réglages, remet aussi le rendu léger aux valeurs de la page. Les valeurs préconisées sont une estimation : elles n'ont pas été mesurées sur Edge en rendu logiciel.
 
@@ -1186,21 +1192,21 @@ Un fichier JSON n'accepte pas de commentaires. Les explications sont donc ici, e
 
 ### 27.1 Les fichiers et leurs exemples
 
-| Fichier réel | Exemple dans `docs/samples/` | Écrit par | Lu par |
-|---|---|---|---|
-| `NOM.config.json` | `region.config.sample.json` | `glb2html.py` | la page |
-| `NOM.zones.json` | `region.zones.sample.json` | le viewer, `glb2html.py --zones`, à la main | la page, le viewer, `glb2html.py --zones` |
-| `default.json` | `default.sample.json` | `glb2html.py --default` | la coquille |
-| `regions.json` | `regions.sample.json` | `glb2html.py --register`, le viewer | la page (`mapUrl`), la coquille, `glb2html.py --map` |
-| `NOM.tiles.json` | `region.tiles.sample.json` | `glb2tiles.py` | la page, le viewer, `glb2html.py --tiles` |
-| `NOM.reglages.json` | `region.reglages.sample.json` | le viewer (« Enregistrer dans un fichier ») | le viewer, `glb2html.py --settings` |
-| `disposition.json` | `disposition.sample.json` | la page (Réglages, « Enregistrer ») | la page (Réglages, « Charger ») |
-| `presence_identities.json` | `presence_identities.sample.json` | `presence_server.py` | `presence_server.py` |
-| `presence_bans.json` | `presence_bans.sample.json` | `presence_server.py` (commande `bannir`) | `presence_server.py` |
-| fichier de `--history-file` (par exemple `chat.jsonl`) | `chat_history.sample.jsonl` | `presence_server.py` | `presence_server.py` |
-| fichier de `--visits` (par exemple `visits.jsonl`) | `visits.sample.jsonl` | `presence_server.py` | `presence_server.py` |
-| `presence_visits_keys.json` | `presence_visits_keys.sample.json` | `presence_server.py` (commande `visits-key`) | `presence_server.py` |
-| `presence_creators.json` | `presence_creators.sample.json` | à la main (§ 34) | `presence_server.py` (`--creators`) |
+| Fichier réel                                           | Exemple dans `docs/samples/`       | Écrit par                                    | Lu par                                               |
+| ------------------------------------------------------ | ---------------------------------- | -------------------------------------------- | ---------------------------------------------------- |
+| `NOM.config.json`                                      | `region.config.sample.json`        | `glb2html.py`                                | la page                                              |
+| `NOM.zones.json`                                       | `region.zones.sample.json`         | le viewer, `glb2html.py --zones`, à la main  | la page, le viewer, `glb2html.py --zones`            |
+| `default.json`                                         | `default.sample.json`              | `glb2html.py --default`                      | la coquille                                          |
+| `regions.json`                                         | `regions.sample.json`              | `glb2html.py --register`, le viewer          | la page (`mapUrl`), la coquille, `glb2html.py --map` |
+| `NOM.tiles.json`                                       | `region.tiles.sample.json`         | `glb2tiles.py`                               | la page, le viewer, `glb2html.py --tiles`            |
+| `NOM.reglages.json`                                    | `region.reglages.sample.json`      | le viewer (« Enregistrer dans un fichier »)  | le viewer, `glb2html.py --settings`                  |
+| `disposition.json`                                     | `disposition.sample.json`          | la page (Réglages, « Enregistrer »)          | la page (Réglages, « Charger »)                      |
+| `presence_identities.json`                             | `presence_identities.sample.json`  | `presence_server.py`                         | `presence_server.py`                                 |
+| `presence_bans.json`                                   | `presence_bans.sample.json`        | `presence_server.py` (commande `bannir`)     | `presence_server.py`                                 |
+| fichier de `--history-file` (par exemple `chat.jsonl`) | `chat_history.sample.jsonl`        | `presence_server.py`                         | `presence_server.py`                                 |
+| fichier de `--visits` (par exemple `visits.jsonl`)     | `visits.sample.jsonl`              | `presence_server.py`                         | `presence_server.py`                                 |
+| `presence_visits_keys.json`                            | `presence_visits_keys.sample.json` | `presence_server.py` (commande `visits-key`) | `presence_server.py`                                 |
+| `presence_creators.json`                               | `presence_creators.sample.json`    | à la main (§ 34)                             | `presence_server.py` (`--creators`)                  |
 
 Deux autres fichiers ont **exactement le format** de `NOM.zones.json` :
 
@@ -1227,93 +1233,93 @@ Les positions sont en mètres, dans le repère de la page : x vers l'est, y vers
 
 **Mer et ciel**
 
-| Champ | Type | Défaut | Ce qu'il fait | Option |
-|---|---|---|---|---|
-| `sea` | oui / non | `true` | affiche la mer | `--sea`, `--no-sea` |
-| `seaY` | nombre | `-50` | hauteur de la mer en mètres (de -150 à 60) | `--sea-y` |
-| `seaColor` | couleur | `3840729` | couleur de la mer (`#3A9AD9`) | `--sea-color` |
-| `skyColor` | couleur | `8900331` | couleur du ciel et du brouillard (`#87CEEB`) | `--sky-color` |
-| `anim` | oui / non | `false` | vagues animées ; sinon la mer est fixe | `--anim`, `--no-anim` |
-| `wave` | nombre | `0.5` | hauteur des vagues (de 0 à 10) | `--wave` |
-| `seaSegments` | nombre entier | `400` | finesse de la surface de la mer (de 8 à 1000) ; ne compte qu'avec les vagues animées | `--sea-segments` |
-| `seaSize` | nombre | `4000` | largeur de la mer en mètres | — |
-| `hole` | nombre | `180` | rayon en mètres de la **zone calme** autour de l'île, où les vagues s'effacent (de 30 à 600) | `--hole` |
-| `holeFade` | nombre | `60` | largeur de la transition entre la zone calme et les vagues | `--hole-fade` |
-| `holeX`, `holeZ` | nombre | `0` | centre de la zone calme | `--hole-x`, `--hole-z` |
+| Champ            | Type          | Défaut    | Ce qu'il fait                                                                                | Option                 |
+| ---------------- | ------------- | --------- | -------------------------------------------------------------------------------------------- | ---------------------- |
+| `sea`            | oui / non     | `true`    | affiche la mer                                                                               | `--sea`, `--no-sea`    |
+| `seaY`           | nombre        | `-50`     | hauteur de la mer en mètres (de -150 à 60)                                                   | `--sea-y`              |
+| `seaColor`       | couleur       | `3840729` | couleur de la mer (`#3A9AD9`)                                                                | `--sea-color`          |
+| `skyColor`       | couleur       | `8900331` | couleur du ciel et du brouillard (`#87CEEB`)                                                 | `--sky-color`          |
+| `anim`           | oui / non     | `false`   | vagues animées ; sinon la mer est fixe                                                       | `--anim`, `--no-anim`  |
+| `wave`           | nombre        | `0.5`     | hauteur des vagues (de 0 à 10)                                                               | `--wave`               |
+| `seaSegments`    | nombre entier | `400`     | finesse de la surface de la mer (de 8 à 1000) ; ne compte qu'avec les vagues animées         | `--sea-segments`       |
+| `seaSize`        | nombre        | `4000`    | largeur de la mer en mètres                                                                  | —                      |
+| `hole`           | nombre        | `180`     | rayon en mètres de la **zone calme** autour de l'île, où les vagues s'effacent (de 30 à 600) | `--hole`               |
+| `holeFade`       | nombre        | `60`      | largeur de la transition entre la zone calme et les vagues                                   | `--hole-fade`          |
+| `holeX`, `holeZ` | nombre        | `0`       | centre de la zone calme                                                                      | `--hole-x`, `--hole-z` |
 
 **Région et caméra de départ**
 
-| Champ | Type | Défaut | Ce qu'il fait | Option |
-|---|---|---|---|---|
-| `rotate` | nombre entier | `0` | rotation de la région : 0, 90, 180 ou 270 degrés | `--rotate` |
-| `target` | liste de 3 nombres | `[0, 15, 0]` | point regardé par la caméra à l'ouverture | `--target` |
-| `targetExplicit` | oui / non | `false` | `true` quand `--target` a été donné : la page garde ce cadrage au lieu de partir de l'arrivée `default` | `--target` |
-| `camDir` | liste de 3 nombres | `[0, 0.25, 1]` | direction d'où regarde la caméra | `--cam-dir` |
-| `zoom` | nombre | `1` | recul de la caméra (1 = cadrage automatique, 2 = deux fois plus loin) | `--zoom` |
-| `compass` | oui / non | `true` | boussole en haut de la page | `--compass`, `--no-compass` |
-| `northDeg` | nombre | `0` | décalage en degrés de la boussole, pour un modèle qui ne vient pas d'OpenSim | `--north` |
+| Champ            | Type               | Défaut         | Ce qu'il fait                                                                                           | Option                      |
+| ---------------- | ------------------ | -------------- | ------------------------------------------------------------------------------------------------------- | --------------------------- |
+| `rotate`         | nombre entier      | `0`            | rotation de la région : 0, 90, 180 ou 270 degrés                                                        | `--rotate`                  |
+| `target`         | liste de 3 nombres | `[0, 15, 0]`   | point regardé par la caméra à l'ouverture                                                               | `--target`                  |
+| `targetExplicit` | oui / non          | `false`        | `true` quand `--target` a été donné : la page garde ce cadrage au lieu de partir de l'arrivée `default` | `--target`                  |
+| `camDir`         | liste de 3 nombres | `[0, 0.25, 1]` | direction d'où regarde la caméra                                                                        | `--cam-dir`                 |
+| `zoom`           | nombre             | `1`            | recul de la caméra (1 = cadrage automatique, 2 = deux fois plus loin)                                   | `--zoom`                    |
+| `compass`        | oui / non          | `true`         | boussole en haut de la page                                                                             | `--compass`, `--no-compass` |
+| `northDeg`       | nombre             | `0`            | décalage en degrés de la boussole, pour un modèle qui ne vient pas d'OpenSim                            | `--north`                   |
 
 **Affichage**
 
-| Champ | Type | Défaut | Ce qu'il fait | Option |
-|---|---|---|---|---|
-| `retina` | oui / non | `false` | haute résolution (plus net, environ quatre fois plus lourd) | `--retina`, `--no-retina` |
-| `light` | oui / non | `false` | la page s'ouvre en rendu léger tant que le visiteur n'a rien choisi (§ 26) | `--light`, `--no-light` |
-| `foliageCutout` | nombre | `0.12` | seuil de transparence des feuillages (de 0 à 0.5) : plus haut, les bords des feuilles sont plus découpés | `--foliage-cutout` |
-| `names` | oui / non | `false` | affiche le nom de l'élément cliqué | `--names`, `--no-names` |
-| `panel` | oui / non | `true` | bouton Réglages pour les visiteurs | `--panel`, `--no-panel` |
-| `libUrl` | texte | `""` | dossier ou adresse de `lib` (three.js) quand il n'est pas à côté de la page ; `--update` l'aligne sur la ligne `const LIB` de la coquille (§ 28.5) | `--lib-url` |
-| `version` | texte | version de l'outil | version de `glb2html.py` qui a écrit le fichier ; `--update` la remplace | — |
+| Champ           | Type      | Défaut             | Ce qu'il fait                                                                                                                                      | Option                    |
+| --------------- | --------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| `retina`        | oui / non | `false`            | haute résolution (plus net, environ quatre fois plus lourd)                                                                                        | `--retina`, `--no-retina` |
+| `light`         | oui / non | `false`            | la page s'ouvre en rendu léger tant que le visiteur n'a rien choisi (§ 26)                                                                         | `--light`, `--no-light`   |
+| `foliageCutout` | nombre    | `0.12`             | seuil de transparence des feuillages (de 0 à 0.5) : plus haut, les bords des feuilles sont plus découpés                                           | `--foliage-cutout`        |
+| `names`         | oui / non | `false`            | affiche le nom de l'élément cliqué                                                                                                                 | `--names`, `--no-names`   |
+| `panel`         | oui / non | `true`             | bouton Réglages pour les visiteurs                                                                                                                 | `--panel`, `--no-panel`   |
+| `libUrl`        | texte     | `""`               | dossier ou adresse de `lib` (three.js) quand il n'est pas à côté de la page ; `--update` l'aligne sur la ligne `const LIB` de la coquille (§ 28.5) | `--lib-url`               |
+| `version`       | texte     | version de l'outil | version de `glb2html.py` qui a écrit le fichier ; `--update` la remplace                                                                           | —                         |
 
 **Promenade**
 
-| Champ | Type | Défaut | Ce qu'il fait | Option |
-|---|---|---|---|---|
-| `walk` | oui / non | `true` | mode promenade (touche F) | `--walk`, `--no-walk` |
-| `fly` | oui / non | `true` | vol en promenade | `--fly`, `--no-fly` |
-| `eyeHeight` | nombre | `1.7` | hauteur des yeux en mètres | `--eye-height` |
-| `walkSpeed` | nombre | `3.5` | vitesse de marche en mètres par seconde (en courant : 2,2 fois plus) | `--walk-speed` |
-| `walkIgnore` | texte | `"door, porte"` | objets que l'on traverse, séparés par des virgules : `door` = tout nom qui commence par ce mot, `=mesh_346_5` = ce nom exact, `""` = aucun | `--walk-ignore` |
+| Champ        | Type      | Défaut          | Ce qu'il fait                                                                                                                              | Option                |
+| ------------ | --------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | --------------------- |
+| `walk`       | oui / non | `true`          | mode promenade (touche F)                                                                                                                  | `--walk`, `--no-walk` |
+| `fly`        | oui / non | `true`          | vol en promenade                                                                                                                           | `--fly`, `--no-fly`   |
+| `eyeHeight`  | nombre    | `1.7`           | hauteur des yeux en mètres                                                                                                                 | `--eye-height`        |
+| `walkSpeed`  | nombre    | `3.5`           | vitesse de marche en mètres par seconde (en courant : 2,2 fois plus)                                                                       | `--walk-speed`        |
+| `walkIgnore` | texte     | `"door, porte"` | objets que l'on traverse, séparés par des virgules : `door` = tout nom qui commence par ce mot, `=mesh_346_5` = ce nom exact, `""` = aucun | `--walk-ignore`       |
 
 **Visiteurs et chat**
 
-| Champ | Type | Défaut | Ce qu'il fait | Option |
-|---|---|---|---|---|
-| `presenceUrl` | texte | `""` | adresse du serveur de présence (`ws://...` ou `wss://...`) ; vide = seul, sans avatars ni chat | `--presence-url` |
-| `room` | texte | nom de la page | salon de présence : les visiteurs d'un même salon se voient | `--room` |
-| `spectate` | oui / non | `true` si `presenceUrl` est rempli | voir les promeneurs depuis la vue globale | `--spectate`, `--no-spectate` |
-| `chat` | oui / non | `true` | chat entre visiteurs (il faut un serveur de présence) | `--chat`, `--no-chat` |
-| `chatFade` | nombre | `0` | secondes avant que les messages et bulles disparaissent ; 0 = ils restent | `--chat-fade` |
+| Champ         | Type      | Défaut                             | Ce qu'il fait                                                                                  | Option                        |
+| ------------- | --------- | ---------------------------------- | ---------------------------------------------------------------------------------------------- | ----------------------------- |
+| `presenceUrl` | texte     | `""`                               | adresse du serveur de présence (`ws://...` ou `wss://...`) ; vide = seul, sans avatars ni chat | `--presence-url`              |
+| `room`        | texte     | nom de la page                     | salon de présence : les visiteurs d'un même salon se voient                                    | `--room`                      |
+| `spectate`    | oui / non | `true` si `presenceUrl` est rempli | voir les promeneurs depuis la vue globale                                                      | `--spectate`, `--no-spectate` |
+| `chat`        | oui / non | `true`                             | chat entre visiteurs (il faut un serveur de présence)                                          | `--chat`, `--no-chat`         |
+| `chatFade`    | nombre    | `0`                                | secondes avant que les messages et bulles disparaissent ; 0 = ils restent                      | `--chat-fade`                 |
 
 **Zones**
 
-| Champ | Type | Défaut | Ce qu'il fait | Option |
-|---|---|---|---|---|
-| `profile` | texte | `"public"` | `"public"` : les zones privées ne sont pas affichées ; `"private"` : toutes les zones le sont | `--profile` |
-| `zones` | liste | `[]` | toujours vide dans ce fichier : les zones sont dans `NOM.zones.json` | — |
-| `zonesLive` | texte | `""` | toujours vide dans ce fichier (sert aux pages autonomes, `--zones-live`) | `--zones-live` |
-| `zoneMarker` | texte | `"dot"` | repère des portails et zones libres : `"dot"` petit disque, `"range"` anneau au rayon réel de la zone, `"none"` rien | `--zone-marker` |
-| `zoneCone` | oui / non | `true` | petit cône au-dessus des portails (touche T) | `--zone-cone`, `--no-zone-cone` |
-| `showSpawns` | oui / non | `false` | dessine aussi les arrivées | `--show-spawns`, `--no-show-spawns` |
-| `zoneInfoDist` | nombre | `150` | distance en mètres (de 5 à 500) jusqu'où les zones répondent au survol et au clic en promenade | `--zone-info-dist` |
+| Champ          | Type      | Défaut     | Ce qu'il fait                                                                                                        | Option                              |
+| -------------- | --------- | ---------- | -------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| `profile`      | texte     | `"public"` | `"public"` : les zones privées ne sont pas affichées ; `"private"` : toutes les zones le sont                        | `--profile`                         |
+| `zones`        | liste     | `[]`       | toujours vide dans ce fichier : les zones sont dans `NOM.zones.json`                                                 | —                                   |
+| `zonesLive`    | texte     | `""`       | toujours vide dans ce fichier (sert aux pages autonomes, `--zones-live`)                                             | `--zones-live`                      |
+| `zoneMarker`   | texte     | `"dot"`    | repère des portails et zones libres : `"dot"` petit disque, `"range"` anneau au rayon réel de la zone, `"none"` rien | `--zone-marker`                     |
+| `zoneCone`     | oui / non | `true`     | petit cône au-dessus des portails (touche T)                                                                         | `--zone-cone`, `--no-zone-cone`     |
+| `showSpawns`   | oui / non | `false`    | dessine aussi les arrivées                                                                                           | `--show-spawns`, `--no-show-spawns` |
+| `zoneInfoDist` | nombre    | `150`      | distance en mètres (de 5 à 500) jusqu'où les zones répondent au survol et au clic en promenade                       | `--zone-info-dist`                  |
 
 **Carte des mondes**
 
-| Champ | Type | Défaut | Ce qu'il fait | Option |
-|---|---|---|---|---|
-| `map` | liste | `[]` | carte intégrée à la page : mêmes fiches que `regions.json` (§ 27.6) | `--map`, `--register` |
-| `mapUrl` | texte | `""` | adresse(s) de `regions.json` relues à chaque ouverture, séparées par des virgules | `--map-url` |
+| Champ    | Type  | Défaut | Ce qu'il fait                                                                     | Option                |
+| -------- | ----- | ------ | --------------------------------------------------------------------------------- | --------------------- |
+| `map`    | liste | `[]`   | carte intégrée à la page : mêmes fiches que `regions.json` (§ 27.6)               | `--map`, `--register` |
+| `mapUrl` | texte | `""`   | adresse(s) de `regions.json` relues à chaque ouverture, séparées par des virgules | `--map-url`           |
 
 **Région en tuiles** : ces six champs n'existent que pour une région découpée par `glb2tiles.py`. Pour une région faite d'un seul fichier `.glb`, il faut les **retirer** de l'exemple, sinon la page cherche des tuiles.
 
-| Champ | Type | Défaut | Ce qu'il fait | Option |
-|---|---|---|---|---|
-| `tiles` | texte | — | nom de l'index des tuiles, par exemple `"Region.tiles.json"` | `--tiles` |
-| `tileRadius` | nombre | `150` | rayon en mètres autour de l'avatar dans lequel les tuiles sont chargées | `--tile-radius` |
-| `tileMargin` | nombre | `60` | marge en mètres au-delà de ce rayon avant qu'une tuile soit retirée | `--tile-margin` |
-| `tileMaxMB` | nombre | `200` | mégaoctets de tuiles chargées en même temps, au plus | `--tile-max-mb` |
-| `tileMaxTriangles` | nombre entier | `8000000` | triangles de tuiles chargées en même temps, au plus | `--tile-max-triangles` |
-| `tileConcurrency` | nombre entier | `4` | téléchargements de tuiles en même temps | `--tile-concurrency` |
+| Champ              | Type          | Défaut    | Ce qu'il fait                                                           | Option                 |
+| ------------------ | ------------- | --------- | ----------------------------------------------------------------------- | ---------------------- |
+| `tiles`            | texte         | —         | nom de l'index des tuiles, par exemple `"Region.tiles.json"`            | `--tiles`              |
+| `tileRadius`       | nombre        | `150`     | rayon en mètres autour de l'avatar dans lequel les tuiles sont chargées | `--tile-radius`        |
+| `tileMargin`       | nombre        | `60`      | marge en mètres au-delà de ce rayon avant qu'une tuile soit retirée     | `--tile-margin`        |
+| `tileMaxMB`        | nombre        | `200`     | mégaoctets de tuiles chargées en même temps, au plus                    | `--tile-max-mb`        |
+| `tileMaxTriangles` | nombre entier | `8000000` | triangles de tuiles chargées en même temps, au plus                     | `--tile-max-triangles` |
+| `tileConcurrency`  | nombre entier | `4`       | téléchargements de tuiles en même temps                                 | `--tile-concurrency`   |
 
 Les réglages du rendu léger choisis par un visiteur (résolution, images par seconde, vue d'ensemble seule, anticrénelage) sont gardés **par son navigateur**, pas dans ce fichier : la page ignore `pixelScale`, `fpsMax`, `ovOnly` ou `antialias` écrits ici.
 
@@ -1323,116 +1329,116 @@ Une **liste** de zones, relue à chaque ouverture de la page. Chaque zone a les 
 
 Il existe **quatre sortes** de zones (champ `type`) : `"spawn"` (arrivée), `"portal"` (portail), `"url"` (lien web) et `"ha"` (commande). « Privée », « liée à un objet » et « nom affiché » ne sont pas des sortes : ce sont des cases (`private`, `mesh`, `showName`) valables pour toutes les sortes.
 
-| Champ | Type | Défaut | Ce qu'il fait |
-|---|---|---|---|
-| `id` | texte | `z1`, `z2`... | nom court et unique : lettres minuscules, chiffres, `-` et `_`, 40 caractères au plus. L'arrivée `default` est le point d'entrée de la région |
-| `type` | texte | `"portal"` | `"spawn"`, `"portal"`, `"url"` ou `"ha"` |
-| `label` | texte | `""` | nom affiché (infobulle, panneau), 60 caractères au plus |
-| `x`, `y`, `z` | nombre | `0` | position en mètres |
-| `yaw` | nombre | `0` | orientation en radians : sens du regard à l'arrivée, ou face du panneau |
-| `shape` | texte | `"ring"` | `"ring"` (anneau au sol) ou `"board"` (panneau sur un poteau) |
-| `trigger` | texte | `"click"` | portails seulement : `"click"` (clic ou E), `"enter"` (en marchant dedans) ou `"both"` (les deux). Les autres sortes sont toujours `"click"` |
-| `radius` | nombre | `2` | rayon de la zone en mètres (de 0.5 à 50) |
-| `w`, `h` | nombre | `2.4`, `1.2` | largeur et hauteur du panneau en mètres |
-| `target` | texte | `""` | portail : adresse de la région d'arrivée, ou vide pour un point de la même région ; lien : adresse de la page web ; commande : adresse appelée |
-| `spawn` | texte | `""` | portail : `id` de l'arrivée visée (vide = `default`) |
-| `confirm` | oui / non | `false` | demande une confirmation avant d'agir |
-| `private` | oui / non | `false` | zone privée : absente des pages publiques (profil `public`) |
-| `showName` | oui / non | `false` | écrit le `label` au-dessus de la zone en promenade |
-| `mesh` | texte | `""` | zone **liée à un objet** du modèle : son nom, ou `nom#numéro` quand plusieurs objets portent ce nom ; l'objet devient cliquable. Jamais pour une arrivée |
+| Champ         | Type      | Défaut        | Ce qu'il fait                                                                                                                                            |
+| ------------- | --------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`          | texte     | `z1`, `z2`... | nom court et unique : lettres minuscules, chiffres, `-` et `_`, 40 caractères au plus. L'arrivée `default` est le point d'entrée de la région            |
+| `type`        | texte     | `"portal"`    | `"spawn"`, `"portal"`, `"url"` ou `"ha"`                                                                                                                 |
+| `label`       | texte     | `""`          | nom affiché (infobulle, panneau), 60 caractères au plus                                                                                                  |
+| `x`, `y`, `z` | nombre    | `0`           | position en mètres                                                                                                                                       |
+| `yaw`         | nombre    | `0`           | orientation en radians : sens du regard à l'arrivée, ou face du panneau                                                                                  |
+| `shape`       | texte     | `"ring"`      | `"ring"` (anneau au sol) ou `"board"` (panneau sur un poteau)                                                                                            |
+| `trigger`     | texte     | `"click"`     | portails seulement : `"click"` (clic ou E), `"enter"` (en marchant dedans) ou `"both"` (les deux). Les autres sortes sont toujours `"click"`             |
+| `radius`      | nombre    | `2`           | rayon de la zone en mètres (de 0.5 à 50)                                                                                                                 |
+| `w`, `h`      | nombre    | `2.4`, `1.2`  | largeur et hauteur du panneau en mètres                                                                                                                  |
+| `target`      | texte     | `""`          | portail : adresse de la région d'arrivée, ou vide pour un point de la même région ; lien : adresse de la page web ; commande : adresse appelée           |
+| `spawn`       | texte     | `""`          | portail : `id` de l'arrivée visée (vide = `default`)                                                                                                     |
+| `confirm`     | oui / non | `false`       | demande une confirmation avant d'agir                                                                                                                    |
+| `private`     | oui / non | `false`       | zone privée : absente des pages publiques (profil `public`)                                                                                              |
+| `showName`    | oui / non | `false`       | écrit le `label` au-dessus de la zone en promenade                                                                                                       |
+| `mesh`        | texte     | `""`          | zone **liée à un objet** du modèle : son nom, ou `nom#numéro` quand plusieurs objets portent ce nom ; l'objet devient cliquable. Jamais pour une arrivée |
 
 L'exemple contient huit zones, une de chaque cas :
 
-| `id` | Sorte | Ce qu'elle montre |
-|---|---|---|
-| `default` | arrivée | point d'entrée de la région |
-| `gallery` | arrivée | seconde arrivée, visée par un portail |
-| `to-gallery` | portail | vers un autre point de la même région (`target` vide, `spawn` = `gallery`), en marchant dedans |
-| `to-other-region` | portail | vers une autre région, panneau, clic ou marche, avec confirmation |
-| `website` | lien | ouvre une page web, panneau |
-| `light-on` | commande | appel d'une adresse (par exemple un webhook Home Assistant), privée, avec confirmation |
-| `door-info` | lien | liée à l'objet `Door#2` du modèle |
-| `back-home` | portail | nom affiché au-dessus de la zone (`showName`) |
+| `id`              | Sorte    | Ce qu'elle montre                                                                              |
+| ----------------- | -------- | ---------------------------------------------------------------------------------------------- |
+| `default`         | arrivée  | point d'entrée de la région                                                                    |
+| `gallery`         | arrivée  | seconde arrivée, visée par un portail                                                          |
+| `to-gallery`      | portail  | vers un autre point de la même région (`target` vide, `spawn` = `gallery`), en marchant dedans |
+| `to-other-region` | portail  | vers une autre région, panneau, clic ou marche, avec confirmation                              |
+| `website`         | lien     | ouvre une page web, panneau                                                                    |
+| `light-on`        | commande | appel d'une adresse (par exemple un webhook Home Assistant), privée, avec confirmation         |
+| `door-info`       | lien     | liée à l'objet `Door#2` du modèle                                                              |
+| `back-home`       | portail  | nom affiché au-dessus de la zone (`showName`)                                                  |
 
 Dans une région en tuiles, une zone liée retrouve son objet grâce à l'étiquette `extras.ref` que `glb2tiles.py` écrit dans les objets des tuiles. Cette étiquette est dans les fichiers `.glb` des tuiles, **pas** dans `NOM.zones.json`.
 
 ### 27.5 `default.json` : la région par défaut
 
-| Champ | Type | Défaut | Ce qu'il fait | Option |
-|---|---|---|---|---|
-| `region` | texte | — | région ouverte quand l'adresse n'a pas de `?region=` (§ 16) | `--default` |
+| Champ    | Type  | Défaut | Ce qu'il fait                                               | Option      |
+| -------- | ----- | ------ | ----------------------------------------------------------- | ----------- |
+| `region` | texte | —      | région ouverte quand l'adresse n'a pas de `?region=` (§ 16) | `--default` |
 
 ### 27.6 `regions.json` : la carte des mondes
 
 Une **liste** de régions (forme simple), ou, depuis la v47, un **objet** avec un en-tête : `{"showUrl": false, "regions": [ ... ]}`. Les deux formes sont lues partout (carte `carte.html`, carte autonome, carte ouverte par M, coquille). Une fiche sans `name` ou sans `url` est ignorée.
 
-| Champ de l'en-tête | Type | Défaut | Ce qu'il fait | Option |
-|---|---|---|---|---|
-| `showUrl` | booléen | `false` | affiche l'adresse sous chaque tuile de la page carte ; la case de la page carte, une fois cochée ou décochée par le visiteur, l'emporte (choix retenu par son navigateur) | — |
-| `regions` | liste | — | les fiches de régions (tableau suivant) | — |
+| Champ de l'en-tête | Type    | Défaut  | Ce qu'il fait                                                                                                                                                             | Option |
+| ------------------ | ------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| `showUrl`          | booléen | `false` | affiche l'adresse sous chaque tuile de la page carte ; la case de la page carte, une fois cochée ou décochée par le visiteur, l'emporte (choix retenu par son navigateur) | —      |
+| `regions`          | liste   | —       | les fiches de régions (tableau suivant)                                                                                                                                   | —      |
 
 `--register` et `--scan-sites` gardent l'en-tête et la forme du fichier (liste ou objet). Le viewer aussi depuis la v50 : « Importer regions.json » accepte les deux formes, « Exporter regions.json » rend la forme importée avec son en-tête, et chaque fiche garde tous ses champs (§ 33).
 
-| Champ | Type | Défaut | Ce qu'il fait | Option |
-|---|---|---|---|---|
-| `id` | texte | tiré du nom | identifiant court, unique dans la carte | — |
-| `name` | texte | — | nom affiché, 60 caractères au plus | `--region-name` |
-| `url` | texte | — | adresse de la page : complète (`https://...`) ou relative (`index.html?region=Region`) | `--region-url` |
-| `x`, `y` | nombre entier | `0` | place sur la grille, comme dans OpenSim (x vers l'est, y vers le nord) | `--region-xy` |
-| `spawn` | texte | `""` | arrivée utilisée en venant de la carte (vide = `default`) | `--region-spawn` |
-| `presence` | texte | `""` | serveur de présence de cette région, s'il n'est pas celui de la page (pour compter les visiteurs) | — |
-| `room` | texte | `""` | salon de présence de cette région | `--room` |
-| `thumb` | texte | `""` | vignette : image intégrée (`data:image/...`) ou adresse d'une image | `--thumb` |
+| Champ      | Type          | Défaut      | Ce qu'il fait                                                                                     | Option           |
+| ---------- | ------------- | ----------- | ------------------------------------------------------------------------------------------------- | ---------------- |
+| `id`       | texte         | tiré du nom | identifiant court, unique dans la carte                                                           | —                |
+| `name`     | texte         | —           | nom affiché, 60 caractères au plus                                                                | `--region-name`  |
+| `url`      | texte         | —           | adresse de la page : complète (`https://...`) ou relative (`index.html?region=Region`)            | `--region-url`   |
+| `x`, `y`   | nombre entier | `0`         | place sur la grille, comme dans OpenSim (x vers l'est, y vers le nord)                            | `--region-xy`    |
+| `spawn`    | texte         | `""`        | arrivée utilisée en venant de la carte (vide = `default`)                                         | `--region-spawn` |
+| `presence` | texte         | `""`        | serveur de présence de cette région, s'il n'est pas celui de la page (pour compter les visiteurs) | —                |
+| `room`     | texte         | `""`        | salon de présence de cette région                                                                 | `--room`         |
+| `thumb`    | texte         | `""`        | vignette : image intégrée (`data:image/...`) ou adresse d'une image                               | `--thumb`        |
 
 ### 27.7 `NOM.tiles.json` : l'index des tuiles
 
 `glb2tiles.py` l'écrit ; il ne se modifie **pas à la main**. La page n'en lit que quelques champs : `tiles` (pour chaque tuile `file`, `min`, `max`, `bytes`, `triangles`), `nodeRefs` et `overview.file`. Les autres servent au compte rendu.
 
-| Champ | Type | Ce qu'il contient |
-|---|---|---|
-| `version` | nombre entier | version du format (1) |
-| `generator` | texte | outil et version qui ont écrit le fichier |
-| `source` | texte | nom du `.glb` découpé |
-| `extent` | objet | boîte de toute la région : `min` et `max`, chacun x, y, z |
-| `params` | objet | réglages du découpage : `budgetMB`, `budgetTriangles`, `minCell`, `wholeWeightMB`, `wholeExtent`, `thresholdMB`, `thresholdTriangles`, `outlier` (options `--budget`, `--budget-triangles`, `--min`, `--whole-weight`, `--whole-extent`, `--threshold`, `--threshold-triangles`, `--outlier`) |
-| `warnings` | liste de textes | avertissements du découpage |
-| `roots` | objet | objets gardés entiers (`whole`) et répartis (`split`) |
-| `duplication` | nombre | géométrie de toutes les tuiles divisée par celle du modèle (1 = rien en double) |
-| `nodeRefs` | nombre | 1 si les objets portent `extras.ref` (zones liées possibles), 0 avec `--no-refs` |
-| `replacedImages` | objet | images illisibles remplacées par du gris : `distinct`, `occurrences`, `grey` |
-| `tiles` | liste | une fiche par tuile (ci-dessous) |
-| `excluded` | objet | seulement avec `--exclude` : motifs, limites, nombre d'objets retirés, triangles et octets gagnés, noms les plus fréquents |
-| `overview` | objet | seulement avec la vue d'ensemble : `file` (le `.glb`), poids, triangles, objets gardés et omis, durée, `params` (`budgetMB`, `budgetTriangles`, `minExtent`, `maxExtent`, `resolution`, `terrainStep`) |
+| Champ            | Type            | Ce qu'il contient                                                                                                                                                                                                                                                                             |
+| ---------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `version`        | nombre entier   | version du format (1)                                                                                                                                                                                                                                                                         |
+| `generator`      | texte           | outil et version qui ont écrit le fichier                                                                                                                                                                                                                                                     |
+| `source`         | texte           | nom du `.glb` découpé                                                                                                                                                                                                                                                                         |
+| `extent`         | objet           | boîte de toute la région : `min` et `max`, chacun x, y, z                                                                                                                                                                                                                                     |
+| `params`         | objet           | réglages du découpage : `budgetMB`, `budgetTriangles`, `minCell`, `wholeWeightMB`, `wholeExtent`, `thresholdMB`, `thresholdTriangles`, `outlier` (options `--budget`, `--budget-triangles`, `--min`, `--whole-weight`, `--whole-extent`, `--threshold`, `--threshold-triangles`, `--outlier`) |
+| `warnings`       | liste de textes | avertissements du découpage                                                                                                                                                                                                                                                                   |
+| `roots`          | objet           | objets gardés entiers (`whole`) et répartis (`split`)                                                                                                                                                                                                                                         |
+| `duplication`    | nombre          | géométrie de toutes les tuiles divisée par celle du modèle (1 = rien en double)                                                                                                                                                                                                               |
+| `nodeRefs`       | nombre          | 1 si les objets portent `extras.ref` (zones liées possibles), 0 avec `--no-refs`                                                                                                                                                                                                              |
+| `replacedImages` | objet           | images illisibles remplacées par du gris : `distinct`, `occurrences`, `grey`                                                                                                                                                                                                                  |
+| `tiles`          | liste           | une fiche par tuile (ci-dessous)                                                                                                                                                                                                                                                              |
+| `excluded`       | objet           | seulement avec `--exclude` : motifs, limites, nombre d'objets retirés, triangles et octets gagnés, noms les plus fréquents                                                                                                                                                                    |
+| `overview`       | objet           | seulement avec la vue d'ensemble : `file` (le `.glb`), poids, triangles, objets gardés et omis, durée, `params` (`budgetMB`, `budgetTriangles`, `minExtent`, `maxExtent`, `resolution`, `terrainStep`)                                                                                        |
 
 Chaque fiche de `tiles` :
 
-| Champ | Type | Ce qu'il contient |
-|---|---|---|
-| `file` | texte | chemin du `.glb` de la tuile, relatif à l'index |
-| `level`, `i`, `j` | nombre entier | niveau et place de la tuile dans la grille |
-| `min`, `max` | liste de 3 nombres | boîte de la tuile |
-| `instances` | nombre entier | nombre d'objets dans la tuile |
-| `triangles` | nombre entier | triangles de la tuile |
-| `bytes` | nombre entier | poids du fichier |
-| `geometryBytes`, `imageBytes` | nombre entier | dont géométrie, dont images |
-| `replacedImages` | nombre entier | images remplacées par du gris dans cette tuile |
+| Champ                         | Type               | Ce qu'il contient                               |
+| ----------------------------- | ------------------ | ----------------------------------------------- |
+| `file`                        | texte              | chemin du `.glb` de la tuile, relatif à l'index |
+| `level`, `i`, `j`             | nombre entier      | niveau et place de la tuile dans la grille      |
+| `min`, `max`                  | liste de 3 nombres | boîte de la tuile                               |
+| `instances`                   | nombre entier      | nombre d'objets dans la tuile                   |
+| `triangles`                   | nombre entier      | triangles de la tuile                           |
+| `bytes`                       | nombre entier      | poids du fichier                                |
+| `geometryBytes`, `imageBytes` | nombre entier      | dont géométrie, dont images                     |
+| `replacedImages`              | nombre entier      | images remplacées par du gris dans cette tuile  |
 
 ### 27.8 `NOM.reglages.json` : l'état de travail du viewer
 
 Écrit par le bouton « Enregistrer dans un fichier » du viewer, relu par « Charger un fichier » et par `glb2html.py --settings`. Contrairement à `NOM.config.json`, il est **imbriqué** (§ 16).
 
-| Champ | Type | Ce qu'il contient |
-|---|---|---|
-| `v` | nombre entier | version du format : toujours `1` |
-| `file` | texte | nom du `.glb` ouvert dans le viewer |
-| `saved` | texte | date et heure de l'enregistrement |
-| `cfg` | objet | les réglages : mêmes noms et même sens que dans `NOM.config.json` (§ 27.3), plus cinq réglages propres au viewer (ci-dessous) |
-| `zones` | liste | toutes les zones, privées comprises (format du § 27.4) |
-| `camera` | objet | `camDir`, `target`, `zoom` : le cadrage choisi dans le viewer |
-| `profile` | texte | `"public"` ou `"private"` (menu « Profil d'export ») |
-| `thisReg` | objet | fiche de cette région pour la carte : `name`, `url`, `x`, `y`, `spawn`, `thumb` (§ 27.6) |
-| `cmd` | objet | champs du récapitulatif de commande : `script`, `glb`, `dest`, `mapPage` |
-| `targetExplicit` | oui / non | la cible de la caméra a été déplacée à la main |
+| Champ            | Type          | Ce qu'il contient                                                                                                             |
+| ---------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `v`              | nombre entier | version du format : toujours `1`                                                                                              |
+| `file`           | texte         | nom du `.glb` ouvert dans le viewer                                                                                           |
+| `saved`          | texte         | date et heure de l'enregistrement                                                                                             |
+| `cfg`            | objet         | les réglages : mêmes noms et même sens que dans `NOM.config.json` (§ 27.3), plus cinq réglages propres au viewer (ci-dessous) |
+| `zones`          | liste         | toutes les zones, privées comprises (format du § 27.4)                                                                        |
+| `camera`         | objet         | `camDir`, `target`, `zoom` : le cadrage choisi dans le viewer                                                                 |
+| `profile`        | texte         | `"public"` ou `"private"` (menu « Profil d'export »)                                                                          |
+| `thisReg`        | objet         | fiche de cette région pour la carte : `name`, `url`, `x`, `y`, `spawn`, `thumb` (§ 27.6)                                      |
+| `cmd`            | objet         | champs du récapitulatif de commande : `script`, `glb`, `dest`, `mapPage`                                                      |
+| `targetExplicit` | oui / non     | la cible de la caméra a été déplacée à la main                                                                                |
 
 Les cinq réglages de `cfg` propres au viewer : `pixelScale`, `fpsMax` et `ovOnly` (rendu léger, essais dans le viewer), `guide` (guide de la zone calme affiché dans le viewer) et `ignoreViz` (objets traversés montrés en fil de fer). `--settings` ne les reprend pas.
 
@@ -1440,12 +1446,12 @@ Les cinq réglages de `cfg` propres au viewer : `pixelScale`, `fpsMax` et `ovOnl
 
 Écrit par Réglages, « Enregistrer » (section « Disposition des fenêtres »), relu par « Charger » (§ 25).
 
-| Champ | Type | Ce qu'il contient |
-|---|---|---|
-| `app` | texte | toujours `"web3d-layout"` : un autre fichier est refusé |
-| `v` | nombre entier | version du format : `1` |
-| `layout` | objet | `wins` : pour chaque fenêtre (`H` aide, `I` informations / état, `L` arrivées), `pile` (`"L"` pile de gauche, `"R"` pile de droite, `"F"` libre), `home` (`"L"` ou `"R"`, la pile où la fenêtre revient au double-clic), et pour une fenêtre libre `x`, `y` en pixels ; `order` : ordre des fenêtres dans chaque pile |
-| `ls` | objet | état des fenêtres : `glb2html_help`, `glb2html_state`, `glb2html_spawn` (`"1"` affichée, `"0"` masquée), `glb2html_helpFold`, `glb2html_stateFold`, `glb2html_spawnFold` (`"1"` repliée), `glb2html_helpW`, `glb2html_stateW`, `glb2html_spawnW` (largeur en pixels) |
+| Champ    | Type          | Ce qu'il contient                                                                                                                                                                                                                                                                                                     |
+| -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `app`    | texte         | toujours `"web3d-layout"` : un autre fichier est refusé                                                                                                                                                                                                                                                               |
+| `v`      | nombre entier | version du format : `1`                                                                                                                                                                                                                                                                                               |
+| `layout` | objet         | `wins` : pour chaque fenêtre (`H` aide, `I` informations / état, `L` arrivées), `pile` (`"L"` pile de gauche, `"R"` pile de droite, `"F"` libre), `home` (`"L"` ou `"R"`, la pile où la fenêtre revient au double-clic), et pour une fenêtre libre `x`, `y` en pixels ; `order` : ordre des fenêtres dans chaque pile |
+| `ls`     | objet         | état des fenêtres : `glb2html_help`, `glb2html_state`, `glb2html_spawn` (`"1"` affichée, `"0"` masquée), `glb2html_helpFold`, `glb2html_stateFold`, `glb2html_spawnFold` (`"1"` repliée), `glb2html_helpW`, `glb2html_stateW`, `glb2html_spawnW` (largeur en pixels)                                                  |
 
 ### 27.10 Fichiers du serveur de présence
 
@@ -1453,95 +1459,95 @@ Le serveur les écrit lui-même ; on ne les modifie à la main que serveur arrê
 
 **`presence_identities.json`** (option `--identities`) : les pseudos réservés.
 
-| Champ | Type | Ce qu'il contient |
-|---|---|---|
-| `salt` | texte | « sel » secret tiré au hasard au premier démarrage, mélangé aux clés avant de les hacher. Le changer libère tous les pseudos |
-| `names` | objet | pour chaque pseudo simplifié (minuscules, sans accents ni espaces), l'empreinte de la clé du navigateur qui le possède |
+| Champ   | Type  | Ce qu'il contient                                                                                                                                                                                                            |
+| ------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `salt`  | texte | « sel » secret tiré au hasard au premier démarrage, mélangé aux clés avant de les hacher. Le changer libère tous les pseudos                                                                                                 |
+| `names` | objet | pour chaque pseudo simplifié (minuscules, sans accents ni espaces), l'empreinte de la clé du navigateur qui le possède                                                                                                       |
 | `users` | objet | pour chaque empreinte : `name` (pseudo tel qu'écrit), `key` (pseudo simplifié), `first` et `last` (première et dernière venue, en secondes depuis 1970). Un pseudo inutilisé depuis `--name-ttl-days` jours (365) est libéré |
 
 **`presence_bans.json`** (option `--bans`) : une liste de bannissements.
 
-| Champ | Type | Ce qu'il contient |
-|---|---|---|
-| `key` | texte | empreinte de la clé du navigateur banni (vide pour un visiteur sans clé) |
-| `ip` | texte | empreinte de son adresse IP |
-| `until` | nombre | fin du bannissement en secondes depuis 1970 ; `0` = définitif. Un bannissement terminé est retiré du fichier à la vérification suivante |
-| `name` | texte | pseudo au moment du bannissement |
-| `reason` | texte | raison donnée |
-| `added` | nombre | date du bannissement en secondes depuis 1970 |
+| Champ    | Type   | Ce qu'il contient                                                                                                                       |
+| -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `key`    | texte  | empreinte de la clé du navigateur banni (vide pour un visiteur sans clé)                                                                |
+| `ip`     | texte  | empreinte de son adresse IP                                                                                                             |
+| `until`  | nombre | fin du bannissement en secondes depuis 1970 ; `0` = définitif. Un bannissement terminé est retiré du fichier à la vérification suivante |
+| `name`   | texte  | pseudo au moment du bannissement                                                                                                        |
+| `reason` | texte  | raison donnée                                                                                                                           |
+| `added`  | nombre | date du bannissement en secondes depuis 1970                                                                                            |
 
 **Historique du chat** (option `--history-file`) : ce n'est pas un fichier JSON d'un seul bloc, mais **un message par ligne**, chaque ligne étant un petit JSON. Jamais d'adresse IP.
 
-| Champ | Type | Ce qu'il contient |
-|---|---|---|
-| `n` | nombre entier | numéro du message |
-| `t` | nombre entier | heure en secondes depuis 1970 (c'est elle qui compte pour `--history-days`) |
-| `d` | texte | la même heure lisible (jj/mm/aaaa hh:mm:ss) |
-| `room` | texte | salon |
-| `name` | texte | pseudo |
-| `text` | texte | message |
+| Champ  | Type          | Ce qu'il contient                                                           |
+| ------ | ------------- | --------------------------------------------------------------------------- |
+| `n`    | nombre entier | numéro du message                                                           |
+| `t`    | nombre entier | heure en secondes depuis 1970 (c'est elle qui compte pour `--history-days`) |
+| `d`    | texte         | la même heure lisible (jj/mm/aaaa hh:mm:ss)                                 |
+| `room` | texte         | salon                                                                       |
+| `name` | texte         | pseudo                                                                      |
+| `text` | texte         | message                                                                     |
 
 Les messages plus vieux que `--history-days` jours (30 par défaut) sont retirés au démarrage ; avec `--history-days 0`, rien n'est retiré.
 
 **Journal des visites** (option `--visits`, v48) : comme l'historique, **une visite par ligne**, chaque ligne étant un petit JSON. Jamais d'adresse IP.
 
-| Champ | Type | Ce qu'il contient |
-|---|---|---|
-| `room` | texte | salon |
-| `start` | nombre entier | arrivée en secondes depuis 1970 (c'est elle qui compte pour `--visits-days`) |
-| `dur` | nombre entier | durée de la connexion en secondes |
-| `walk` | nombre entier | secondes passées en promenade |
-| `v` | texte | empreinte du navigateur (10 caractères), différente de la clé du journal `presence.log` : sert à compter les visiteurs distincts et à fusionner les reconnexions |
-| `name` | texte | pseudo du promeneur, seulement avec `--visits-names` |
+| Champ   | Type          | Ce qu'il contient                                                                                                                                                |
+| ------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `room`  | texte         | salon                                                                                                                                                            |
+| `start` | nombre entier | arrivée en secondes depuis 1970 (c'est elle qui compte pour `--visits-days`)                                                                                     |
+| `dur`   | nombre entier | durée de la connexion en secondes                                                                                                                                |
+| `walk`  | nombre entier | secondes passées en promenade                                                                                                                                    |
+| `v`     | texte         | empreinte du navigateur (10 caractères), différente de la clé du journal `presence.log` : sert à compter les visiteurs distincts et à fusionner les reconnexions |
+| `name`  | texte         | pseudo du promeneur, seulement avec `--visits-names`                                                                                                             |
 
 Les visites plus vieilles que `--visits-days` jours (365 par défaut) sont retirées au démarrage puis toutes les 6 heures, avec les lignes illisibles ; avec `--visits-days 0`, rien n'est retiré.
 
 **`presence_visits_keys.json`** (option `--visits-keys`, v48) : les clés du journal des visites, écrites par la commande `visits-key`.
 
-| Champ | Type | Ce qu'il contient |
-|---|---|---|
+| Champ   | Type  | Ce qu'il contient                                                                                                                                                                                                           |
+| ------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `rooms` | objet | pour chaque salon : `salt` (sel tiré au hasard), `hash` (empreinte SHA-256 du sel suivi de la clé en majuscules, sans tirets ni espaces), `added` (création, en secondes depuis 1970). La clé elle-même n'est jamais écrite |
 
 **`presence_creators.json`** (option `--creators`, v51) : les créateurs accueillis, écrit à la main et relu sans relancer le serveur (§ 34). Un objet `{"creators": [...]}` ; pour chaque créateur :
 
-| Champ | Type | Ce qu'il contient |
-|---|---|---|
-| `id` | texte | identifiant unique : lettres, chiffres, `-` et `_`, 32 au plus |
-| `prefix` | texte | préfixe de ses salons, sans point ; absent = `id` ; `""` = l'hôte, qui garde tous les salons n'appartenant à aucun créateur (une seule entrée) |
-| `origins` | liste de textes | origines de ses pages (`https://alice.example`, `null` pour une page ouverte depuis le disque et pour le viewer) ; une origine n'appartient qu'à un créateur |
-| `maxWalkers` | nombre entier | promeneurs au plus sur tous ses salons ; `0` ou absent = seulement les limites générales |
-| `maxRooms` | nombre entier | salons ouverts en même temps au plus ; `0` ou absent = sans limite propre |
-| `off` | booléen | `true` : suspendu, ses nouvelles connexions sont refusées |
-| `note` | texte | note libre de l'hôte, ignorée par le serveur |
+| Champ        | Type            | Ce qu'il contient                                                                                                                                            |
+| ------------ | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `id`         | texte           | identifiant unique : lettres, chiffres, `-` et `_`, 32 au plus                                                                                               |
+| `prefix`     | texte           | préfixe de ses salons, sans point ; absent = `id` ; `""` = l'hôte, qui garde tous les salons n'appartenant à aucun créateur (une seule entrée)               |
+| `origins`    | liste de textes | origines de ses pages (`https://alice.example`, `null` pour une page ouverte depuis le disque et pour le viewer) ; une origine n'appartient qu'à un créateur |
+| `maxWalkers` | nombre entier   | promeneurs au plus sur tous ses salons ; `0` ou absent = seulement les limites générales                                                                     |
+| `maxRooms`   | nombre entier   | salons ouverts en même temps au plus ; `0` ou absent = sans limite propre                                                                                    |
+| `off`        | booléen         | `true` : suspendu, ses nouvelles connexions sont refusées                                                                                                    |
+| `note`       | texte           | note libre de l'hôte, ignorée par le serveur                                                                                                                 |
 
 ### 27.11 Noms en anglais depuis la v43
 
 Pour que tous les noms soient dans la même langue, la v43 a mis en anglais les derniers noms français : options des outils, valeurs dans les fichiers JSON et paramètres d'adresse. **Les anciens noms restent acceptés** : les commandes, les fichiers et les liens déjà écrits continuent de marcher. Un ancien nom est remplacé par le nouveau à la lecture ; quand un outil réécrit un fichier, il écrit le nouveau. `--update` garde tel quel un champ que l'on ne change pas : un ancien `tileMaxMo` reste donc dans `NOM.config.json`, et la page le lit toujours.
 
-| Où | Ancien nom | Nouveau nom |
-|---|---|---|
-| `glb2html.py` | `--maj` | `--update` |
-| `glb2html.py` | `--tile-max-mo`, `--tile-max-tri` | `--tile-max-mb`, `--tile-max-triangles` |
-| `glb2html.py` | `--zone-marker discret`, `portee`, `aucun` | `--zone-marker dot`, `range`, `none` |
-| `glb2html.py` | `--profile perso` | `--profile private` |
-| `glb2tiles.py` | `--budget-tri`, `--ov-budget-tri` | `--budget-triangles`, `--ov-budget-triangles` |
-| `glb2tiles.py` | `--entier-poids`, `--entier-etendue` | `--whole-weight`, `--whole-extent` |
-| `glb2tiles.py` | `--seuil`, `--seuil-tri`, `--aberrant` | `--threshold`, `--threshold-triangles`, `--outlier` |
-| `glb2tiles.py` | `--exclure`, `--exclure-max-tri`, `--exclure-max-meshes` | `--exclude`, `--exclude-max-triangles`, `--exclude-max-meshes` |
-| `glb2tiles.py` | `--sans-references`, `--sans-vue-ensemble`, `--vue-ensemble-seule` | `--no-refs`, `--no-overview`, `--overview-only` |
-| `glb2tiles.py` | `--ov-seuil`, `--ov-seuil-max`, `--ov-terrain-pas` | `--ov-threshold`, `--ov-threshold-max`, `--ov-terrain-step` |
-| `glb2tiles.py` | `--bloc`, `--forcer`, `--sortie` | `--block`, `--force`, `--output` |
-| `oar2glb.py` | `--reperes`, `--terrain-seul`, `--sortie` | `--markers`, `--terrain-only`, `--output` |
-| `oar2glb.py` | `--terrain oui`, `--terrain non` | `--terrain yes`, `--terrain no` |
-| `glb-stats.py` | `--bloc`, `--sortie` | `--block`, `--output` |
-| `gen_reference.py` (v44) | `--outils`, `--sortie`, `--verifier` | `--tools`, `--output`, `--check` |
-| `verif_trad.py` (v44) | `--glossaire` | `--glossary` |
-| `NOM.config.json` | `tileMaxMo`, `tileMaxTri` | `tileMaxMB`, `tileMaxTriangles` |
-| `NOM.config.json`, `NOM.reglages.json` | `zoneMarker` : `discret`, `portee`, `aucun` | `dot`, `range`, `none` |
-| `NOM.config.json`, `NOM.reglages.json` | `profile` : `perso` | `private` |
-| `NOM.tiles.json` | `budgetMo`, `wholeWeightMo`, `thresholdMo` | `budgetMB`, `wholeWeightMB`, `thresholdMB` |
-| adresse de la page | `?rayon=` | `?radius=` |
-| adresse du viewer | `?tuiles=` | `?tiles=` |
+| Où                                     | Ancien nom                                                         | Nouveau nom                                                    |
+| -------------------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------- |
+| `glb2html.py`                          | `--maj`                                                            | `--update`                                                     |
+| `glb2html.py`                          | `--tile-max-mo`, `--tile-max-tri`                                  | `--tile-max-mb`, `--tile-max-triangles`                        |
+| `glb2html.py`                          | `--zone-marker discret`, `portee`, `aucun`                         | `--zone-marker dot`, `range`, `none`                           |
+| `glb2html.py`                          | `--profile perso`                                                  | `--profile private`                                            |
+| `glb2tiles.py`                         | `--budget-tri`, `--ov-budget-tri`                                  | `--budget-triangles`, `--ov-budget-triangles`                  |
+| `glb2tiles.py`                         | `--entier-poids`, `--entier-etendue`                               | `--whole-weight`, `--whole-extent`                             |
+| `glb2tiles.py`                         | `--seuil`, `--seuil-tri`, `--aberrant`                             | `--threshold`, `--threshold-triangles`, `--outlier`            |
+| `glb2tiles.py`                         | `--exclure`, `--exclure-max-tri`, `--exclure-max-meshes`           | `--exclude`, `--exclude-max-triangles`, `--exclude-max-meshes` |
+| `glb2tiles.py`                         | `--sans-references`, `--sans-vue-ensemble`, `--vue-ensemble-seule` | `--no-refs`, `--no-overview`, `--overview-only`                |
+| `glb2tiles.py`                         | `--ov-seuil`, `--ov-seuil-max`, `--ov-terrain-pas`                 | `--ov-threshold`, `--ov-threshold-max`, `--ov-terrain-step`    |
+| `glb2tiles.py`                         | `--bloc`, `--forcer`, `--sortie`                                   | `--block`, `--force`, `--output`                               |
+| `oar2glb.py`                           | `--reperes`, `--terrain-seul`, `--sortie`                          | `--markers`, `--terrain-only`, `--output`                      |
+| `oar2glb.py`                           | `--terrain oui`, `--terrain non`                                   | `--terrain yes`, `--terrain no`                                |
+| `glb-stats.py`                         | `--bloc`, `--sortie`                                               | `--block`, `--output`                                          |
+| `gen_reference.py` (v44)               | `--outils`, `--sortie`, `--verifier`                               | `--tools`, `--output`, `--check`                               |
+| `verif_trad.py` (v44)                  | `--glossaire`                                                      | `--glossary`                                                   |
+| `NOM.config.json`                      | `tileMaxMo`, `tileMaxTri`                                          | `tileMaxMB`, `tileMaxTriangles`                                |
+| `NOM.config.json`, `NOM.reglages.json` | `zoneMarker` : `discret`, `portee`, `aucun`                        | `dot`, `range`, `none`                                         |
+| `NOM.config.json`, `NOM.reglages.json` | `profile` : `perso`                                                | `private`                                                      |
+| `NOM.tiles.json`                       | `budgetMo`, `wholeWeightMo`, `thresholdMo`                         | `budgetMB`, `wholeWeightMB`, `thresholdMB`                     |
+| adresse de la page                     | `?rayon=`                                                          | `?radius=`                                                     |
+| adresse du viewer                      | `?tuiles=`                                                         | `?tiles=`                                                      |
 
 Les deux outils de développement (`gen_reference.py`, `verif_trad.py`) ont suivi en v44, et les messages de `--update` commencent par `[update]`. Restent tels quels : `--analyse` (aussi de l'anglais britannique) et les valeurs qui sont des noms d'objets, comme `door, porte`. Dans l'aide des outils, les noms d'exemple des valeurs sont aussi en anglais (`FILE`, `PATH`, `NAME`, `DEGREES`, `SHELL.html`). L'historique (`CHANGELOG.md`, `HISTORIQUE.md`) garde les noms de l'époque.
 
@@ -1597,19 +1603,19 @@ Un pavé de 3 x 3 boutons, au-dessus de la ligne d'état, se clique à la souris
 
 En promenade (les flèches reprennent les touches du clavier : la marche ne change pas) :
 
-| Rangée | Gauche | Milieu | Droite |
-|---|---|---|---|
-| haut | tourner à gauche (←) | avancer (Z ou W, ↑) | tourner à droite (→) |
-| milieu | pas de côté à gauche (Q ou A) | **Courir** : un clic l'allume, un clic l'éteint (Maj) | pas de côté à droite (D) |
-| bas | monter, en vol seulement (Page Haut) | reculer (S, ↓) | descendre, en vol seulement (Page Bas ou C) |
+| Rangée | Gauche                               | Milieu                                                | Droite                                      |
+| ------ | ------------------------------------ | ----------------------------------------------------- | ------------------------------------------- |
+| haut   | tourner à gauche (←)                 | avancer (Z ou W, ↑)                                   | tourner à droite (→)                        |
+| milieu | pas de côté à gauche (Q ou A)        | **Courir** : un clic l'allume, un clic l'éteint (Maj) | pas de côté à droite (D)                    |
+| bas    | monter, en vol seulement (Page Haut) | reculer (S, ↓)                                        | descendre, en vol seulement (Page Bas ou C) |
 
 En vue globale :
 
-| Rangée | Gauche | Milieu | Droite |
-|---|---|---|---|
-| haut | tourner la vue à gauche | déplacer la vue en avant | tourner la vue à droite |
+| Rangée | Gauche                   | Milieu                                     | Droite                   |
+| ------ | ------------------------ | ------------------------------------------ | ------------------------ |
+| haut   | tourner la vue à gauche  | déplacer la vue en avant                   | tourner la vue à droite  |
 | milieu | déplacer la vue à gauche | **recentrer la vue** (cadrage d'ouverture) | déplacer la vue à droite |
-| bas | éloigner (−) | déplacer la vue en arrière | rapprocher (+) |
+| bas    | éloigner (−)             | déplacer la vue en arrière                 | rapprocher (+)           |
 
 Déplacer et rapprocher ne font pas la même chose : **déplacer** fait glisser la caméra et le point visé ensemble, à hauteur et distance constantes (le paysage défile, les tuiles se chargent autour du nouveau point) ; **rapprocher / éloigner** garde le point visé et change seulement la distance de la caméra, comme la molette.
 
@@ -1663,7 +1669,6 @@ Avec `--shared-shell` sans chemin, la coquille et un dossier `lib` sont écrits 
 ### 29.10 Non testé
 
 Un vrai téléphone, une vraie tablette, iPhone et iPad, Edge, Windows, le plein écran réel.
-
 
 ## 30. Nouveautés de la v47 (25/10/2026)
 

@@ -8,20 +8,19 @@ Les manuels sont en français dans `docs/fr/` (`MANUEL.md`, `PROCEDURES.md`, `HI
 
 ## Fichiers fabriqués
 
-| Fichier fabriqué | Rôle |
-|---|---|
-| `glb-viewer.html` | Page de réglages et d'export : on charge un `.glb` (ou, depuis la v32, le dossier d'une région en tuiles), on règle la mer, le trou, la caméra, la promenade, les zones et la fiche de région, puis on exporte (région en tuiles : zones et ligne de commande seulement). |
-| `glb2html.py` | Le même travail en ligne de commande (hors ligne, sans navigateur) : page unique, page modulaire ou coquille commune, régions en tuiles, `--update` pour mettre à jour une région publiée, `--scan-sites` pour la carte d'un site entier. |
-| `index.html` | La coquille commune, prête à copier à la racine d'un site (v45). |
-| `carte.html` | La page de la carte des mondes, identique pour tous les sites : elle lit `regions.json` à côté d'elle (v47). |
-| `presence_server.py` | Serveur WebSocket de présence, chat, modération, compteurs de visiteurs et journal des visites. |
-| `oar2glb.py` ¹| Convertit une sauvegarde OpenSim (`.oar`) en `.glb` (convoar + réparation) ; `--terrain-only` ajoute le terrain complet des régions de plus de 256 m à un GLB existant. |
-| `glb2tiles.py` (+ `glb-stats.py` à côté) | Découpe un GLB énorme en tuiles autonomes (`X.tiles/*.glb` + `X.tiles.json`) et fabrique une vue d'ensemble légère `X.overview.glb` ; `--analyse` mesure et recommande sans rien écrire ; `--exclude` écarte les « boîtes de livraison » d'un catalogue. |
+| Fichier fabriqué                         | Rôle                                                                                                                                                                                                                                                                      |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `glb-viewer.html`                        | Page de réglages et d'export : on charge un `.glb` (ou, depuis la v32, le dossier d'une région en tuiles), on règle la mer, le trou, la caméra, la promenade, les zones et la fiche de région, puis on exporte (région en tuiles : zones et ligne de commande seulement). |
+| `glb2html.py`                            | Le même travail en ligne de commande (hors ligne, sans navigateur) : page unique, page modulaire ou coquille commune, régions en tuiles, `--update` pour mettre à jour une région publiée, `--scan-sites` pour la carte d'un site entier.                                 |
+| `index.html`                             | La coquille commune, prête à copier à la racine d'un site (v45).                                                                                                                                                                                                          |
+| `carte.html`                             | La page de la carte des mondes, identique pour tous les sites : elle lit `regions.json` à côté d'elle (v47).                                                                                                                                                              |
+| `presence_server.py`                     | Serveur WebSocket de présence, chat, modération, compteurs de visiteurs et journal des visites.                                                                                                                                                                           |
+| `oar2glb.py` ¹                           | Convertit une sauvegarde OpenSim (`.oar`) en `.glb` (convoar + réparation) ; `--terrain-only` ajoute le terrain complet des régions de plus de 256 m à un GLB existant.                                                                                                   |
+| `glb2tiles.py` (+ `glb-stats.py` à côté) | Découpe un GLB énorme en tuiles autonomes (`X.tiles/*.glb` + `X.tiles.json`) et fabrique une vue d'ensemble légère `X.overview.glb` ; `--analyse` mesure et recommande sans rien écrire ; `--exclude` écarte les « boîtes de livraison » d'un catalogue.                  |
 
 ¹ **Prérequis** :  **oar2glb.py** s'appuie sur le convertisseur externe **convoar.exe**
-Téléchargement :
-https://github.com/Misterblue/convoar/tree/master/bin
-Sans convoar.exe, oar2glb.py ne peut pas effectuer la conversion OAR → GLB.
+  Téléchargement : https://github.com/Misterblue/convoar/tree/master/bin
+  Sans convoar.exe, oar2glb.py ne peut pas effectuer la conversion OAR → GLB.
 
 ## Fabriquer
 
@@ -75,20 +74,20 @@ Pour un modèle énorme, `glb2tiles.py` écrit les tuiles, et `glb2html.py --til
 
 ## Touches principales
 
-| Touche | Effet |
-|---|---|
-| **F** ou **P** | entrer en promenade / en sortir |
-| **ZQSD** ou **WASD**, flèches | se déplacer ; **Maj** ou double appui : courir |
-| **Espace** | sauter ; maintenu en vol : monter |
-| **Début**, le bouton de vol, ou **Page Haut** maintenu au sol | décoller / atterrir ; **Page Bas** ou **C** : descendre |
-| **E** ou clic | déclencher la zone proche (panneaux et portails) |
-| **V** / **M** | changer de vue / subjective ou troisième personne (hors promenade : carte des mondes) ; **Ctrl+M** : carte des mondes partout |
-| **R** | retour à l'arrivée (vue globale : centrer sur l'arrivée) |
-| **H**, **I**, **L**, **O** | fenêtres Aide, Informations, Arrivées, Réglages |
-| **K** | flèches à l'écran |
-| **T** | repères de portail (cônes) |
-| **G** | reprendre la souris après **Échap** |
-| **Entrée** | écrire dans le chat |
+| Touche                                                        | Effet                                                                                                                         |
+| ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| **F** ou **P**                                                | entrer en promenade / en sortir                                                                                               |
+| **ZQSD** ou **WASD**, flèches                                 | se déplacer ; **Maj** ou double appui : courir                                                                                |
+| **Espace**                                                    | sauter ; maintenu en vol : monter                                                                                             |
+| **Début**, le bouton de vol, ou **Page Haut** maintenu au sol | décoller / atterrir ; **Page Bas** ou **C** : descendre                                                                       |
+| **E** ou clic                                                 | déclencher la zone proche (panneaux et portails)                                                                              |
+| **V** / **M**                                                 | changer de vue / subjective ou troisième personne (hors promenade : carte des mondes) ; **Ctrl+M** : carte des mondes partout |
+| **R**                                                         | retour à l'arrivée (vue globale : centrer sur l'arrivée)                                                                      |
+| **H**, **I**, **L**, **O**                                    | fenêtres Aide, Informations, Arrivées, Réglages                                                                               |
+| **K**                                                         | flèches à l'écran                                                                                                             |
+| **T**                                                         | repères de portail (cônes)                                                                                                    |
+| **G**                                                         | reprendre la souris après **Échap**                                                                                           |
+| **Entrée**                                                    | écrire dans le chat                                                                                                           |
 
 Le réglage « Clavier » (Auto, AZERTY ou QWERTY) ne change que les lettres affichées dans l'aide ; les touches physiques restent les mêmes. Tableau complet : manuel § 2 et § 20.2.
 

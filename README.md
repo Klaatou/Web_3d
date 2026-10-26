@@ -19,10 +19,8 @@ The manuals are in English in `docs/en/` (`MANUAL.md`, `PROCEDURES.md`, `HISTORY
 | `glb2tiles.py` (+ `glb-stats.py` beside it) | Splits a huge GLB into self-contained tiles (`X.tiles/*.glb` + `X.tiles.json`) and builds a light overview `X.overview.glb`; `--analyse` measures and recommends without writing anything; `--exclude` drops catalogue "delivery boxes". |
 
 ¹ **Prerequisites**: **oar2glb.py** relies on the external converter **convoar.exe**
-Download:
-https://github.com/Misterblue/convoar/tree/master/bin
+Download: https://github.com/Misterblue/convoar/tree/master/bin
 Without convoar.exe, oar2glb.py cannot perform the OAR → GLB conversion.
-
 
 ## Build
 
