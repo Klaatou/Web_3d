@@ -8,15 +8,21 @@ The manuals are in English in `docs/en/` (`MANUAL.md`, `PROCEDURES.md`, `HISTORY
 
 ## Files built
 
-| Built file | Role |
-|---|---|
-| `glb-viewer.html` | Settings and export page: load a `.glb` (or, since v32, the folder of a tiled region), adjust the sea, the hole, the camera, walking, the zones and the region card, then export (for a tiled region: zones and command line only). |
-| `glb2html.py` | The same job on the command line (offline, no browser): single page, modular page or shared shell, tiled regions, `--update` to update a published region, `--scan-sites` for the map of a whole site. |
-| `index.html` | The shared shell, ready to copy to the root of a site (v45). |
-| `carte.html` | The world map page, identical for every site: it reads the `regions.json` next to it (v47). |
-| `presence_server.py` | WebSocket server for presence, chat, moderation, visitor counters and the visit log. |
-| `oar2glb.py` | Converts an OpenSim backup (`.oar`) to `.glb` (convoar + repair); `--terrain-only` adds the full terrain of regions over 256 m to an existing GLB. |
+| Built file                                  | Role                                                                                                                                                                                                                                     |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `glb-viewer.html`                           | Settings and export page: load a `.glb` (or, since v32, the folder of a tiled region), adjust the sea, the hole, the camera, walking, the zones and the region card, then export (for a tiled region: zones and command line only).      |
+| `glb2html.py`                               | The same job on the command line (offline, no browser): single page, modular page or shared shell, tiled regions, `--update` to update a published region, `--scan-sites` for the map of a whole site.                                   |
+| `index.html`                                | The shared shell, ready to copy to the root of a site (v45).                                                                                                                                                                             |
+| `carte.html`                                | The world map page, identical for every site: it reads the `regions.json` next to it (v47).                                                                                                                                              |
+| `presence_server.py`                        | WebSocket server for presence, chat, moderation, visitor counters and the visit log.                                                                                                                                                     |
+| `oar2glb.py`                              ¹ | Converts an OpenSim backup (`.oar`) to `.glb` (convoar + repair); `--terrain-only` adds the full terrain of regions over 256 m to an existing GLB.                                                                                       |
 | `glb2tiles.py` (+ `glb-stats.py` beside it) | Splits a huge GLB into self-contained tiles (`X.tiles/*.glb` + `X.tiles.json`) and builds a light overview `X.overview.glb`; `--analyse` measures and recommends without writing anything; `--exclude` drops catalogue "delivery boxes". |
+
+¹ **Prerequisites**: **oar2glb.py** relies on the external converter **convoar.exe**
+Download:
+https://github.com/Misterblue/convoar/tree/master/bin
+Without convoar.exe, oar2glb.py cannot perform the OAR → GLB conversion.
+
 
 ## Build
 
@@ -70,20 +76,20 @@ For a huge model, `glb2tiles.py` writes the tiles, and `glb2html.py --tiles X.ti
 
 ## Main keys
 
-| Key | Effect |
-|---|---|
-| **F** or **P** | enter / leave the walk |
-| **WASD** or **ZQSD**, arrow keys | move; **Shift** or double-tap: run |
-| **Space** | jump; held while flying: go up |
-| **Home**, the fly button, or **Page Up** held on the ground | take off / land; **Page Down** or **C**: go down |
-| **E** or click | trigger the nearby zone (signs and portals) |
-| **V** / **M** | change view / first or third person (outside the walk: world map); **Ctrl+M**: world map everywhere |
-| **R** | back to the arrival point (global view: center on the arrival point) |
-| **H**, **I**, **L**, **O** | Help, Information, Arrivals, Settings windows |
-| **K** | on-screen arrows |
-| **T** | portal markers (cones) |
-| **G** | grab the mouse again after **Esc** |
-| **Enter** | write in the chat |
+| Key                                                         | Effect                                                                                              |
+| ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| **F** or **P**                                              | enter / leave the walk                                                                              |
+| **WASD** or **ZQSD**, arrow keys                            | move; **Shift** or double-tap: run                                                                  |
+| **Space**                                                   | jump; held while flying: go up                                                                      |
+| **Home**, the fly button, or **Page Up** held on the ground | take off / land; **Page Down** or **C**: go down                                                    |
+| **E** or click                                              | trigger the nearby zone (signs and portals)                                                         |
+| **V** / **M**                                               | change view / first or third person (outside the walk: world map); **Ctrl+M**: world map everywhere |
+| **R**                                                       | back to the arrival point (global view: center on the arrival point)                                |
+| **H**, **I**, **L**, **O**                                  | Help, Information, Arrivals, Settings windows                                                       |
+| **K**                                                       | on-screen arrows                                                                                    |
+| **T**                                                       | portal markers (cones)                                                                              |
+| **G**                                                       | grab the mouse again after **Esc**                                                                  |
+| **Enter**                                                   | write in the chat                                                                                   |
 
 The "Keyboard" setting (Auto, AZERTY or QWERTY) only changes the letters shown in the help; the physical keys stay the same. Full table: manual § 2 and § 20.2.
 

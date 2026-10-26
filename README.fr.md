@@ -15,8 +15,13 @@ Les manuels sont en français dans `docs/fr/` (`MANUEL.md`, `PROCEDURES.md`, `HI
 | `index.html` | La coquille commune, prête à copier à la racine d'un site (v45). |
 | `carte.html` | La page de la carte des mondes, identique pour tous les sites : elle lit `regions.json` à côté d'elle (v47). |
 | `presence_server.py` | Serveur WebSocket de présence, chat, modération, compteurs de visiteurs et journal des visites. |
-| `oar2glb.py` | Convertit une sauvegarde OpenSim (`.oar`) en `.glb` (convoar + réparation) ; `--terrain-only` ajoute le terrain complet des régions de plus de 256 m à un GLB existant. |
+| `oar2glb.py` ¹| Convertit une sauvegarde OpenSim (`.oar`) en `.glb` (convoar + réparation) ; `--terrain-only` ajoute le terrain complet des régions de plus de 256 m à un GLB existant. |
 | `glb2tiles.py` (+ `glb-stats.py` à côté) | Découpe un GLB énorme en tuiles autonomes (`X.tiles/*.glb` + `X.tiles.json`) et fabrique une vue d'ensemble légère `X.overview.glb` ; `--analyse` mesure et recommande sans rien écrire ; `--exclude` écarte les « boîtes de livraison » d'un catalogue. |
+
+¹ **Prérequis** :  **oar2glb.py** s'appuie sur le convertisseur externe **convoar.exe**
+Téléchargement :
+https://github.com/Misterblue/convoar/tree/master/bin
+Sans convoar.exe, oar2glb.py ne peut pas effectuer la conversion OAR → GLB.
 
 ## Fabriquer
 
