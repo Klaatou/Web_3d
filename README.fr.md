@@ -2,6 +2,10 @@
 
 [English](README.md) | Français
 
+![Promenade sur la plage de PalmIsland, dans une page web](docs/images/PalmIsland_demo.gif)
+
+*Région de démonstration PalmIsland (source : site Outworldz) : promenade dans une page web, sans installation.*
+
 **web_3d** transforme une région d'un monde virtuel **OpenSim** (sauvegarde **OAR**) en une page web que l'on parcourt à pied, sans installation côté visiteur : l'OAR est convertie en modèle **glTF** (`.glb`), puis affichée avec **three.js** dans une page web « promenable » (avatar, collisions, visiteurs en temps réel, chat, zones et portails, carte des mondes). L'interface de la page, du viewer et des outils existe en **français et en anglais** (voir « Langue » plus bas).
 
 Les manuels sont en français dans `docs/fr/` (`MANUEL.md`, `PROCEDURES.md`, `HISTORIQUE.md`) et en anglais dans `docs/en/`. Toutes les options de chaque outil, en français et en anglais : [`REFERENCE_OPTIONS.md`](REFERENCE_OPTIONS.md) ; `python glb2html.py --help` (et de même pour les autres outils) les affiche.

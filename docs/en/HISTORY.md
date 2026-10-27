@@ -75,6 +75,8 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 25/10/2026 |  | after v52 | Documents: overview on one page (`docs/fr/VUE_ENSEMBLE.md`, `docs/en/OVERVIEW.md`); "Credits" section of the READMEs |
 | 26/10/2026 |  | after v52 | README: prerequisite of the external converter `convoar.exe` for `oar2glb.py`; `.gitattributes` (LF line endings in the repository) |
 | 27/10/2026 |  | after v52 | Corrective batch after an audit: presence server log without control characters, `.gitignore` (`*.zones.json`, `*.jsonl`), `null` origin without quotes reported, READMEs, manual § 20.8, § 34 and § 35.5, repaired tests, code hygiene; `tests/correctifs_v52.py` |
+| 27/10/2026 |  | after v52 | `oar2glb.py`: no more personal default path for `convoar.exe` (`CONVOAR` variable, PATH, next to the tool), help message with the download address; `tests/correctifs_v52.py` |
+| 27/10/2026 |  | after v52 | README: demonstration GIF (`docs/images/PalmIsland_demo.gif`, PalmIsland region) |
 
 ## Useful commands
 

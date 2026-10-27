@@ -3,6 +3,9 @@
 Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la v52)
+### 27/10/2026 : GIF de démonstration dans les README
+- **README FR et EN** : GIF de la région PalmIsland (`docs/images/PalmIsland_demo.gif`) sous le titre, avec texte alternatif et légende (source : site Outworldz).
+- **README FR and EN**: GIF of the PalmIsland region (`docs/images/PalmIsland_demo.gif`) under the title, with alternative text and caption (source: Outworldz site).
 ### 27/10/2026 : oar2glb, convoar introuvable
 - **`oar2glb.py`** : le chemin par défaut de `convoar.exe` n'est plus écrit dans le code (c'était un chemin personnel) : variable `CONVOAR`, sinon `convoar` du PATH, sinon `convoar.exe` à côté de `oar2glb.py`. Quand il est introuvable, le message dit à quoi il sert, donne l'adresse de téléchargement et l'option `--convoar CHEMIN`. Aide, manuel et README à jour ; `tests/correctifs_v52.py`.
 - **`oar2glb.py`**: the default path of `convoar.exe` is no longer written in the code (it was a personal path): the `CONVOAR` variable, otherwise `convoar` from the PATH, otherwise `convoar.exe` next to `oar2glb.py`. When it is not found, the message says what it is for, gives the download address and the `--convoar CHEMIN` option. Help, manual and README updated; `tests/correctifs_v52.py`.
