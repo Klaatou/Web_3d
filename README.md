@@ -20,7 +20,7 @@ The manuals are in English in `docs/en/` (`MANUAL.md`, `PROCEDURES.md`, `HISTORY
 
 ¹ **Prerequisites**: **oar2glb.py** relies on the external converter **convoar.exe** \
 Download: https://github.com/Misterblue/convoar/tree/master/bin \
-Without convoar.exe, oar2glb.py cannot perform the OAR → GLB conversion.
+Without convoar.exe, oar2glb.py cannot perform the OAR → GLB conversion. Its location is given with `--convoar CHEMIN` (default: `convoar` from the PATH).
 
 ## Build
 

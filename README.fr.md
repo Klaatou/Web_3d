@@ -20,7 +20,7 @@ Les manuels sont en français dans `docs/fr/` (`MANUEL.md`, `PROCEDURES.md`, `HI
 
 ¹ **Prérequis** :  **oar2glb.py** s'appuie sur le convertisseur externe **convoar.exe** \
   Téléchargement : https://github.com/Misterblue/convoar/tree/master/bin \
-  Sans convoar.exe, oar2glb.py ne peut pas effectuer la conversion OAR → GLB.
+  Sans convoar.exe, oar2glb.py ne peut pas effectuer la conversion OAR → GLB. Son emplacement s'indique avec `--convoar CHEMIN` (par défaut : `convoar` du PATH).
 
 ## Fabriquer
 

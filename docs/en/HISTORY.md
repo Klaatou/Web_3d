@@ -64,21 +64,21 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 25/10/2026 |  | v46 | v46: on-screen controls (manual § 29): always visible status line, 3 x 3 arrows while walking (forward, back, turn, step, Run, up and down while flying) and in the overview (move, turn, zoom, recenter), K key and "Arrows (K)" button; touch mode (column of buttons, menu, full screen, folded windows with ✕, drag a finger to look around, touch chat, landscape orientation, tooltip on long press); tooltips on all buttons; one shell for a whole site (§ 29.8); `tests/v46.py` |
 | 25/10/2026 |  | v47 | v47: world map (manual § 30): tile "N visitors · N walking" and tooltip on hover, optional address (`showUrl`, "Show addresses" checkbox), `regions.json` with a header kept by `--register`, `visitors` in the presence server reply, universal `dist/carte.html`; `tests/v47.py` |
 | 25/10/2026 |  | v48 | v48: visit log (manual § 31): the presence server records each visit in a separate file (`--visits`, no IP; `--visits-days`, `--visits-names`), `visits-key ROOM` command; the creator opens their page with `#visits` and the key: summary per day, visits of the last 30 days, CSV; `tests/v48.py` |
-
-## Useful commands
 | 25/10/2026 |  | v49 | v49: `glb2html.py --scan-sites` updates `regions.json` from the sites folder (cards, `NOM.jpg` thumbnails, nothing deleted), manual § 32; `tests/v49.py` |
 | 25/10/2026 |  | v50 | v50: viewer, world map: import and export of `regions.json` with a header, card fields kept, in-place "Add" (manual § 33); `tests/v50.py`; README, procedures § 4 and § 7, `CLAUDE.md` updated |
 | 25/10/2026 |  | v51 | v51: creators on the presence server (manual § 34): `--creators` (`presence_creators.json` re-read on change: origins, room prefix, limits, suspension), refusal shown by the page and the viewer, `creators` command; `tests/v51.py` |
 | 25/10/2026 |  | v51 | v51 (continued, first delivered as v52): presence server, a connection closed without a request gives an "empty" line with the address instead of a trace (manual § 34.9); `tests/v51_vides.py` |
 | 25/10/2026 |  | v51 | v51 (continued): presence address `ws://*:PORT` (the star takes the page's name) for the page, the Map window, `carte.html`, the visit log and the viewer (manual § 34.10); `tests/v51_etoile.py` |
-
-- See the history: `git log --oneline --decorate`
-- See what changed in a version: `git show v16 --stat`
-- Get the sources of a version: `git switch --detach v14` (then `git switch main` to go back)
-- Compare two versions: `git diff v16 v17 --stat`
 | 25/10/2026 |  | v52 | v52: `carte.html` (region count, total, arrival alert with sound and marker, thumbnail enlarged to 400 px, visitors and walkers on two lines in French), "walker", "Show the sea" checkbox (manual § 35.1 to 35.4); `tests/v52.py` |
 | 25/10/2026 |  | v52 | v52 (continued): presence server, an ordinary HTTP request gives an "http request" line instead of a trace (manual § 35.5); `tests/v52_http.py` |
 | 25/10/2026 |  | v52 | v52 (continued): renamed tiled region, the overview stays linked to the tiles by file name (manual § 35.6); `tests/v52_renom.py` |
 | 25/10/2026 |  | after v52 | Documents: overview on one page (`docs/fr/VUE_ENSEMBLE.md`, `docs/en/OVERVIEW.md`); "Credits" section of the READMEs |
 | 26/10/2026 |  | after v52 | README: prerequisite of the external converter `convoar.exe` for `oar2glb.py`; `.gitattributes` (LF line endings in the repository) |
 | 27/10/2026 |  | after v52 | Corrective batch after an audit: presence server log without control characters, `.gitignore` (`*.zones.json`, `*.jsonl`), `null` origin without quotes reported, READMEs, manual § 20.8, § 34 and § 35.5, repaired tests, code hygiene; `tests/correctifs_v52.py` |
+
+## Useful commands
+
+- See the history: `git log --oneline --decorate`
+- See what changed in a version: `git show v16 --stat`
+- Get the sources of a version: `git switch --detach v14` (then `git switch main` to go back)
+- Compare two versions: `git diff v16 v17 --stat`

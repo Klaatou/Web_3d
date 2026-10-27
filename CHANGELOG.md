@@ -3,6 +3,9 @@
 Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la v52)
+### 27/10/2026 : historique (tableau) et README
+- **Documents** : dans `docs/fr/HISTORIQUE.md` et `docs/en/HISTORY.md`, les lignes de la v49 à la v52 se trouvaient sous le titre « Commandes utiles », hors du tableau (qui s'arrêtait à la v48) : elles sont remises dans le tableau, avec les lignes « après v52 ». README FR et EN : `--convoar CHEMIN` dans la note du prérequis convoar.
+- **Documents**: in `docs/fr/HISTORIQUE.md` and `docs/en/HISTORY.md`, the v49 to v52 rows were under the "Useful commands" heading, outside the table (which stopped at v48): they are back in the table, with the "after v52" rows. README FR and EN: `--convoar CHEMIN` in the convoar prerequisite note.
 ### 27/10/2026 : historique à jour
 - **Documents** : `docs/fr/HISTORIQUE.md` et `docs/en/HISTORY.md` : lignes « après v52 » (vue d'ensemble, crédits, prérequis convoar, fins de ligne, lot correctif).
 - **Documents**: `docs/fr/HISTORIQUE.md` and `docs/en/HISTORY.md`: "after v52" rows (overview, credits, convoar prerequisite, line endings, corrective batch).
