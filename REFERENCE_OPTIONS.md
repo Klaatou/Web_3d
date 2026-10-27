@@ -125,7 +125,7 @@ Convertit une sauvegarde de région OpenSim (.oar) en GLB, refait le terrain com
 | `oar` (obligatoire / required) |  |  | fichier .oar (ou .tgz) de la région à convertir<br>the .oar (or .tgz) file of the region to convert |
 | `--reencode` | (aucune) / (none) |  | réencoder les textures J2K avant convoar<br>re-encode J2K textures before convoar |
 | `--max` | MAX | `600.0` | hauteur max (m) d'un objet racine (skybox au-delà), défaut 600<br>maximum height (m) of a root object (skybox beyond), default 600 |
-| `--convoar` | CONVOAR | `P:\_OpenSim\SL&OS\MOSES\convoar-master\dist\convoar.exe` | chemin de convoar.exe (défaut : convoar du PATH, sinon l'emplacement habituel)<br>path of convoar.exe (default: convoar from the PATH, otherwise the usual location) |
+| `--convoar` | CONVOAR |  | chemin de convoar.exe (défaut : variable CONVOAR, sinon convoar du PATH, sinon convoar.exe à côté de oar2glb.py ; téléchargement : https://github.com/Misterblue/convoar/tree/master/bin)<br>path of convoar.exe (default: the CONVOAR variable, otherwise convoar from the PATH, otherwise convoar.exe next to oar2glb.py; download: https://github.com/Misterblue/convoar/tree/master/bin) |
 | `--keep` | (aucune) / (none) |  | garder les fichiers intermédiaires<br>keep the intermediate files |
 | `--keep-invisible` | (aucune) / (none) |  | garder les prims entièrement transparents (retirés par défaut)<br>keep fully transparent prims (removed by default) |
 | `--markers` | (aucune) / (none) |  | ajouter un mât rouge de 15 m à chaque animal riggé posé (pour le retrouver dans le viewer)<br>add a red 15 m pole to each placed rigged animal (to find it in the viewer) |

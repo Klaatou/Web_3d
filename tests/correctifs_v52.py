@@ -64,5 +64,25 @@ if (racine / ".git").exists():
 else:
     print("(pas de depot git ici : controle de .gitignore non fait)")
 
+print("--- 4. oar2glb : convoar introuvable")
+oar_vide = tmp / "vide.oar"
+oar_vide.write_bytes(b"")
+URL = "https://github.com/Misterblue/convoar/tree/master/bin"
+outil = str(DIST / "oar2glb.py")
+r = subprocess.run([sys.executable, outil, str(oar_vide), "--nopause", "--convoar", str(tmp / "absent" / "convoar.exe")], capture_output=True, text=True)
+sortie = r.stdout + r.stderr
+rapport(r.returncode != 0 and URL in sortie and "--convoar CHEMIN" in sortie, "convoar absent : le message donne l'adresse de telechargement et l'option --convoar CHEMIN", sortie[-300:])
+env = dict(os.environ, CONVOAR=str(tmp / "autre" / "convoar.exe"))
+r = subprocess.run([sys.executable, outil, str(oar_vide), "--nopause"], capture_output=True, text=True, env=env)
+rapport(str(tmp / "autre" / "convoar.exe") in r.stdout + r.stderr, "la variable CONVOAR est utilisee quand --convoar n'est pas donne", (r.stdout + r.stderr)[-200:])
+env = {k: v for k, v in os.environ.items() if k != "CONVOAR"}
+env["PATH"] = str(tmp)
+r = subprocess.run([sys.executable, outil, str(oar_vide), "--nopause"], capture_output=True, text=True, env=env)
+rapport(str(DIST / "convoar.exe") in r.stdout + r.stderr, "sans option ni variable ni PATH : convoar.exe a cote de oar2glb.py", (r.stdout + r.stderr)[-200:])
+aide = subprocess.run([sys.executable, outil, "--help"], capture_output=True, text=True).stdout
+rapport("MOSES" not in aide and "CONVOAR" in aide and URL in aide, "l'aide : aucun chemin personnel, variable CONVOAR et adresse de telechargement")
+src = (pathlib.Path(__file__).resolve().parent.parent / "tools" / "oar2glb.py").read_text(encoding="utf-8")
+rapport("MOSES" not in src and "P:\\_OpenSim" not in src, "le code d'oar2glb.py ne contient plus de chemin personnel")
+
 print("\nRÉSULTAT : " + ("tout est passé" if not h37.resultat() else f"{h37.resultat()} échec(s)"))
 sys.exit(1 if h37.resultat() else 0)

@@ -3,6 +3,9 @@
 Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la v52)
+### 27/10/2026 : oar2glb, convoar introuvable
+- **`oar2glb.py`** : le chemin par défaut de `convoar.exe` n'est plus écrit dans le code (c'était un chemin personnel) : variable `CONVOAR`, sinon `convoar` du PATH, sinon `convoar.exe` à côté de `oar2glb.py`. Quand il est introuvable, le message dit à quoi il sert, donne l'adresse de téléchargement et l'option `--convoar CHEMIN`. Aide, manuel et README à jour ; `tests/correctifs_v52.py`.
+- **`oar2glb.py`**: the default path of `convoar.exe` is no longer written in the code (it was a personal path): the `CONVOAR` variable, otherwise `convoar` from the PATH, otherwise `convoar.exe` next to `oar2glb.py`. When it is not found, the message says what it is for, gives the download address and the `--convoar CHEMIN` option. Help, manual and README updated; `tests/correctifs_v52.py`.
 ### 27/10/2026 : historique (tableau) et README
 - **Documents** : dans `docs/fr/HISTORIQUE.md` et `docs/en/HISTORY.md`, les lignes de la v49 à la v52 se trouvaient sous le titre « Commandes utiles », hors du tableau (qui s'arrêtait à la v48) : elles sont remises dans le tableau, avec les lignes « après v52 ». README FR et EN : `--convoar CHEMIN` dans la note du prérequis convoar.
 - **Documents**: in `docs/fr/HISTORIQUE.md` and `docs/en/HISTORY.md`, the v49 to v52 rows were under the "Useful commands" heading, outside the table (which stopped at v48): they are back in the table, with the "after v52" rows. README FR and EN: `--convoar CHEMIN` in the convoar prerequisite note.

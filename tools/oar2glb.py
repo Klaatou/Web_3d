@@ -40,7 +40,12 @@ _tr, i18n_add_common = _I18N._tr, _I18N.i18n_add_common
 # <</I18N_PY>>
 
 VERSION = "__VERSION__"      # remplacé par build.py (fichier VERSION) dans dist/oar2glb.py
-DEFAULT_CONVOAR = r"P:\_OpenSim\SL&OS\MOSES\convoar-master\dist\convoar.exe"
+CONVOAR_URL = "https://github.com/Misterblue/convoar/tree/master/bin"
+
+
+def default_convoar():
+    """convoar.exe quand --convoar n'est pas donné : variable CONVOAR, sinon convoar du PATH, sinon convoar.exe à côté de oar2glb.py"""
+    return os.environ.get("CONVOAR") or shutil.which("convoar") or str(Path(__file__).resolve().with_name("convoar.exe"))
 
 LAUNCHER_CS = r"""
 using System; using System.Globalization; using System.IO; using System.Threading;
@@ -1673,7 +1678,7 @@ def main():
     ap.add_argument("oar", help=_tr("py.oar2glb.help.oar"))
     ap.add_argument("--reencode", action="store_true", help=_tr("py.oar2glb.reencoder_les_textures_j2k_avant_convoar"))
     ap.add_argument("--max", type=float, default=600.0, help=_tr("py.oar2glb.hauteur_max_m_d_un_objet"))
-    ap.add_argument("--convoar", default=shutil.which("convoar") or DEFAULT_CONVOAR, help=_tr("py.oar2glb.help.convoar"))
+    ap.add_argument("--convoar", help=_tr("py.oar2glb.help.convoar"))
     ap.add_argument("--keep", action="store_true", help=_tr("py.oar2glb.garder_les_fichiers_intermediaires"))
     ap.add_argument("--keep-invisible", action="store_true", help=_tr("py.oar2glb.garder_les_prims_entierement_transparents_re"))
     ap.add_argument("--markers", dest="reperes", action="store_true", help=_tr("py.oar2glb.ajouter_un_mat_rouge_de_15"))
@@ -1686,6 +1691,7 @@ def main():
     ap.add_argument("--terrain-only", dest="terrain_seul", metavar="GLB", help=_tr("py.oar2glb.ne_pas_lancer_convoar_ajouter_le"))
     ap.add_argument("--output", metavar="OUTPUT", dest="sortie", help=_tr("py.oar2glb.avec_terrain_seul_fichier_glb_de"))
     a = ap.parse_args()
+    a.convoar = a.convoar or default_convoar()
     if not 2 <= a.terrain_patch <= 255:
         sys.exit(_tr("py.oar2glb.erreur_terrain_patch_doit_etre_compris"))
 
@@ -1709,7 +1715,7 @@ def main():
         diag(scan, read_glb_json(glb) if glb.exists() else None, glb.name, glb.parent if glb.suffix.lower() == ".gltf" else None)
         return
     if not Path(a.convoar).exists():
-        sys.exit(_tr("py.oar2glb.erreur_convoar_introuvable_0_utilise_convoar", a.convoar))
+        sys.exit(_tr("py.oar2glb.erreur_convoar_introuvable_0_utilise_convoar", a.convoar, CONVOAR_URL))
     scan = oar_scan(oar)
     size, objs = oar_info(scan)
     src, tmp_oar = oar, None
