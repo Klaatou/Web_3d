@@ -59,6 +59,10 @@ async def essai(br, out, titre):
     await pg.wait_for_function("document.getElementById('msg') === null", timeout=60000)
     # v36 : l'invite dit « clic ou E : … ». L'avatar se place à 3 m du portail (vers le nord, il le regarde) et on clique sur le disque
     await pg.evaluate("window.__v.walkStart({ pos: [0, 15, 3], yaw: 0 })"); await pg.wait_for_timeout(400)
+    # rendu logiciel ici : la proposition de rendu leger (v42) et le pave de commandes (v46) couvrent le centre bas de la vue, la ou se trouve le portail
+    await pg.evaluate("document.getElementById('lightAskNo') && document.getElementById('lightAskNo').click()")
+    if await pg.evaluate("document.body.classList.contains('padOn')"):
+        await pg.keyboard.press("KeyK"); await pg.wait_for_timeout(200)
     invite = await pg.evaluate("document.getElementById('zonePrompt').textContent")
     await pg.evaluate("window.__marque = 1")
     pt = await pg.evaluate("""(() => { const c = window.__v.camera; c.updateMatrixWorld(true); const v = new c.position.constructor(0, 15.06, 0).project(c);

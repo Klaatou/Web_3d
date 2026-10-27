@@ -18,11 +18,13 @@ The manuals are in English in `docs/en/` (`MANUAL.md`, `PROCEDURES.md`, `HISTORY
 | `oar2glb.py`                              ¹ | Converts an OpenSim backup (`.oar`) to `.glb` (convoar + repair); `--terrain-only` adds the full terrain of regions over 256 m to an existing GLB.                                                                                       |
 | `glb2tiles.py` (+ `glb-stats.py` beside it) | Splits a huge GLB into self-contained tiles (`X.tiles/*.glb` + `X.tiles.json`) and builds a light overview `X.overview.glb`; `--analyse` measures and recommends without writing anything; `--exclude` drops catalogue "delivery boxes". |
 
-¹ **Prerequisites**: **oar2glb.py** relies on the external converter **convoar.exe**
-Download: https://github.com/Misterblue/convoar/tree/master/bin
+¹ **Prerequisites**: **oar2glb.py** relies on the external converter **convoar.exe** \
+Download: https://github.com/Misterblue/convoar/tree/master/bin \
 Without convoar.exe, oar2glb.py cannot perform the OAR → GLB conversion.
 
 ## Build
+
+Python 3.9 or later is required.
 
 ```
 python build.py
@@ -107,7 +109,7 @@ Positions, chat (history `--history-file`), moderation from its console (`liste`
 
 ## Security
 
-Never commit: Home Assistant addresses (`zones*.json`), `*.reglages.json`, `regions.json`, `presence_identities.json`, `presence_bans.json`, logs, the visit log, `presence_visits_keys.json` and `presence_creators.json`. The `.gitignore` excludes the usual ones. `--profile public` removes the private zones from published pages.
+Never commit: Home Assistant addresses (`*.zones.json`, `zones*.json`), `*.reglages.json`, `regions.json`, `presence_identities.json`, `presence_bans.json`, logs, the visit log, `presence_visits_keys.json` and `presence_creators.json`. The `.gitignore` excludes the usual ones. `--profile public` removes the private zones from published pages.; nor the chat history and the visit log (`*.jsonl`)
 
 ## License
 

@@ -1353,6 +1353,7 @@
  "py.presence.cr.bad": "creators: entry {0} ignored (missing or invalid id: letters, digits, - and _, 32 at most)",
  "py.presence.cr.badprefix": "creators: entry {0} ignored (invalid prefix {1}: letters, digits, space, - and _, no dot)",
  "py.presence.cr.dup": "creators: entry {0} ignored ({1} already used by a previous entry)",
+ "py.presence.cr.nulljson": "creators: {0}: origin null written without quotes, ignored (write \"null\" in quotes for a page opened from the disk)",
  "py.presence.cr.origindup": "creators: origin {0} already belongs to {1}, ignored for {2}",
  "py.presence.cr.missing": "creators file missing: {0}; every connection is refused until it exists",
  "py.presence.cr.unreadable": "unreadable creators file: {0} ({1}); previous list kept",

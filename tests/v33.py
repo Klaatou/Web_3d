@@ -177,7 +177,7 @@ class Onglet:
         self.pg.on("pageerror", lambda e: self.errs.append(str(e)))
         self.pg.on("console", lambda m: self.logs.append(m.text) if m.text.startswith("[tuile]") else (self.errs.append("console.error " + m.text) if m.type == "error" and "404" not in m.text and "WebSocket" not in m.text else None))
         if cpu > 1:
-            cdp = await self.ctx.new_cdp_session(self.pg)
+            cdp = self.cdp = await self.ctx.new_cdp_session(self.pg)
             await cdp.send("Emulation.setCPUThrottlingRate", {"rate": cpu})
         await self.pg.route("**/*.glb", self.route)
         self.t0 = time.time()
@@ -286,6 +286,8 @@ async def main():
             # grille de la tuile de l'avatar d'abord (même si d'autres sont arrivées avant dans la file)
             await o.attendre("window.__viewer.tilesState().loadingFiles.length === 0 && window.__viewer.tilesState().gridQueue === 0", 60)
             n0 = len((await o.ev("window.__viewer.tilesState()"))["log"])
+            if getattr(o, "cdp", None):   # le ralentissement x6 et le rendu logiciel du bac a sable figent les images : la reconstruction se verifie a vitesse normale
+                await o.cdp.send("Emulation.setCPUThrottlingRate", {"rate": 1})
             await o.ev("window.__viewer.refreshCollision()")
             await o.attendre(f"window.__viewer.tilesState().log.length > {n0}", 60)
             nouv = (await o.ev("window.__viewer.tilesState().log"))[n0:]
@@ -371,7 +373,7 @@ async def main():
             await o.touche("KeyR")
             t2 = await o.ev("window.__viewer.controls.target.toArray()")
             rapport(proche([t1[0], t1[2]], [500, -100], 0.01) and proche([t2[0], t2[2]], [DFX, DFZ], 0.01), "vue globale : R recadre la cible sur l'arrivée", (t1, t2))
-            rapport(await o.ev("document.getElementById('walkHint').textContent.includes('R : recadrer')"), "aide en vue globale : « R : recadrer » (v35 : groupes courts)")
+            rapport(await o.ev("document.getElementById('walkHint').textContent.includes(\"R : centrer sur l'arrivée\")"), "aide en vue globale : « R : centrer sur l'arrivée » (v40)")
             rapport(not o.errs, "aucune erreur JavaScript", o.errs)
             await o.fermer()
 

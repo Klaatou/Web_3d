@@ -408,7 +408,6 @@ def parse_object(xml_bytes):
 
 def oar_scan(oar, terrain_seul=False):
     # terrain_seul : ne lit que archive.xml, settings/ et terrains/ (ni objets ni meshes)
-    import html as _html  # noqa: F401
     size, groups, skins, terrain, water = (256.0, 256.0), [], {}, None, None
     with tarfile.open(oar, "r:*") as t:
         for m in t:
@@ -1203,7 +1202,6 @@ def fmt3(v):
 
 def diag(scan, g, glb_label, base=None):
     match = match_nodes(g, scan) if g else {}
-    tree = Tree(g) if g else None
     parts = [(grp, p) for grp in scan["groups"] for p in grp["parts"]]
     print(_tr("py.oar2glb.diag_0_objet_s_1_partie", len(scan['groups']), len(parts), 'oui' if scan['terrain'] else 'non', 'GLB ' + glb_label if g else _tr('py.oar2glb.pas_de_glb_correspondance_non_evaluee')))
     nr = ni = nm = 0

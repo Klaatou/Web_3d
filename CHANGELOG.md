@@ -3,6 +3,16 @@
 Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la v52)
+### 26/10/2026 : lot correctif après l'audit
+- **Serveur de présence** : plus aucun caractère de contrôle dans le journal (échappement de terminal, sonnerie) ; une requête HTTP pouvait les y faire entrer par son chemin depuis la ligne « requête http » de la v52. Créateurs : une origine `null` écrite sans guillemets est signalée et ignorée.
+- **`.gitignore`** : ajoute `*.zones.json` (les fichiers de zones réels, avec d'éventuelles adresses Home Assistant ; `zones*.json` ne les couvrait pas) et `*.jsonl` (historique du chat, journal des visites), sauf `docs/samples/*.jsonl`.
+- **Documents** : README FR et EN (Python 3.9 ou plus, fichiers à ne jamais committer, note convoar sur trois lignes) ; manuel § 20.8 (option inexistante retirée), § 34 (`null` entre guillemets), § 35.5 (journal sans caractère de contrôle).
+- **Tests** : `tests/portail_interne.py` et `tests/v24.py` écartent la proposition de rendu léger, le pavé de commandes et la fenêtre Informations, qui couvraient leur cible (v41, v42, v46) ; `tests/v33.py` vérifie la reconstruction des grilles à vitesse normale et attend le texte d'aide de la v40 ; nouveau `tests/correctifs_v52.py`. Code : imports en double et variables inutilisées retirés (`gen_tpl.py`, `oar2glb.py`, `glb-stats.py`).
+- **Presence server**: no control character left in the log (terminal escape, bell); since the v52 "http request" line an HTTP request could put them there through its path. Creators: an origin `null` written without quotes is reported and ignored.
+- **`.gitignore`**: adds `*.zones.json` (the real zone files, with possible Home Assistant addresses; `zones*.json` did not cover them) and `*.jsonl` (chat history, visit log), except `docs/samples/*.jsonl`.
+- **Documents**: README FR and EN (Python 3.9 or later, files never to commit, convoar note on three lines); manual § 20.8 (non-existent option removed), § 34 (`null` in quotes), § 35.5 (log without control characters).
+- **Tests**: `tests/portail_interne.py` and `tests/v24.py` dismiss the light rendering offer, the on-screen controls and the Information window, which covered their target (v41, v42, v46); `tests/v33.py` checks the grid rebuild at normal speed and expects the v40 help text; new `tests/correctifs_v52.py`. Code: duplicate imports and unused variables removed (`gen_tpl.py`, `oar2glb.py`, `glb-stats.py`).
+
 ### 25/10/2026 : crédits dans les README
 - **README** : section « Crédits » (français et anglais).
 - **README**: "Credits" section (French and English).

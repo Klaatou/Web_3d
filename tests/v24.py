@@ -134,6 +134,10 @@ async def verifier(br, url, etiquette):
     await pg.goto(url)
     await pg.wait_for_function("document.getElementById('msg') === null", timeout=20000)
     await pg.wait_for_timeout(800)
+    # rendu logiciel ici : la proposition de rendu leger (v42) couvre le centre bas de la vue (marqueurs survoles)
+    await pg.evaluate("document.getElementById('lightAskNo') && document.getElementById('lightAskNo').click()")
+    # la fenetre Informations depliee couvre aussi le bas de la vue (marqueur du portail) : on la replie
+    await pg.evaluate("(() => { const h = document.getElementById('stateHead'); if (h && h.getAttribute('aria-expanded') === 'true') h.click(); })()")
     # vue d'ensemble de dessus pour que tous les points soient visibles
     await pg.evaluate("(() => { const v = window.__viewer; v.camera.position.set(0, 41, 22); v.controls.target.set(0, 15, 2); v.controls.update(); v.camera.updateMatrixWorld(true); })()")
     await pg.wait_for_timeout(300)

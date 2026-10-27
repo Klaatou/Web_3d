@@ -28,3 +28,6 @@ regions.json
 REGLES.md
 _bak/
 patch_*.py
+*.zones.json
+*.jsonl
+!docs/samples/*.jsonl

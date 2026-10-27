@@ -13,7 +13,6 @@ découpage en tuiles. Plan horizontal = X et Z (glTF est Y vers le haut).
 import argparse
 import collections
 import json
-import math
 import os
 import struct
 import sys
@@ -177,8 +176,8 @@ def rapport(chemin, bloc=256.0, g=None, njson=0):
     if g is None:
         g, njson = lire_json(chemin)
     m = modele(g)
-    acc, bvs, meshes, nodes, mats = m["acc"], m["bvs"], m["meshes"], m["nodes"], m["mats"]
-    imgs, texs, acc_octets, img_octets = m["imgs"], m["texs"], m["acc_octets"], m["img_octets"]
+    meshes, nodes, mats = m["meshes"], m["nodes"], m["mats"]
+    imgs, acc_octets, img_octets = m["imgs"], m["acc_octets"], m["img_octets"]
     info, inst, vus = m["info"], m["inst"], m["vus"]
     utilises, img_utilisees, geo_total, img_total = m["utilises"], m["img_utilisees"], m["geo_total"], m["img_total"]
     som_uniques, som_rendus, tri_rendus = m["som_uniques"], m["som_rendus"], m["tri_rendus"]

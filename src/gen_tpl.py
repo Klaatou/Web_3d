@@ -30,7 +30,6 @@ import struct
 import time
 import sys
 import urllib.parse
-import urllib.parse
 import urllib.request
 
 # <<I18N_PY>>
@@ -1135,7 +1134,7 @@ def generate(glb_path: pathlib.Path, out_path: pathlib.Path, vendor_dir, modular
     elif kw.get("zones_live"):
         kw = dict(kw, zones_live=live_zones_name(out_path, kw["zones_live"]))
     try:
-        used = inspect_glb(data, glb_path.name)
+        inspect_glb(data, glb_path.name)   # valide le GLB (ValueError sinon)
         page = build_shell(kw.get("lib_url")) if modular else build_html(data, glb_path.name, vendor_dir, **kw)
     except ValueError as e:
         print(_tr("py.glb2html.erreur_0", e), file=sys.stderr)

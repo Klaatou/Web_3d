@@ -952,7 +952,7 @@ All the "copy" buttons (personal link, link to my position, targeted point, targ
 
 2. **Generate the web page of the map**: `python glb2html.py --update -o "X.html" --shared-shell --map-page carte.html` (it reads the regions of `regions.json` registered in the config of region `X`). For it to contain all the regions, run it **after** the registrations, or give `--map regions.json --map-page carte.html`.
 
-3. **Open it through the web server**, not from the disk: the folder containing `carte.html`, `index.html`, `lib/` and the regions is served over http(s) (`python -m http.server` for a test, or `presence_server.py --serve-dir` when it hosts the pages), then open `http://ADRESSE/carte.html`. Each link of the map opens the region at its arrival point, with the nickname typed at the top of the page.
+3. **Open it through the web server**, not from the disk: the folder containing `carte.html`, `index.html`, `lib/` and the regions is served over http(s) (`python -m http.server` for a test, or any web server), then open `http://ADRESSE/carte.html`. Each link of the map opens the region at its arrival point, with the nickname typed at the top of the page.
 
 4. **The region pages** show the map with the **M** key (**Ctrl+M** in walk mode): `--map-url http://ADRESSE/regions.json` (several addresses separated by commas, merged) makes them read `regions.json` again at each opening, without generating the pages again.
 
@@ -1514,7 +1514,7 @@ Visits older than `--visits-days` days (365 by default) are removed at startup a
 | ------------ | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `id`         | text          | unique identifier: letters, digits, `-` and `_`, 32 at most                                                                                        |
 | `prefix`     | text          | prefix of their rooms, without a dot; absent = `id`; `""` = the host, who keeps every room that belongs to no creator (a single entry)             |
-| `origins`    | list of texts | origins of their pages (`https://alice.example`, `null` for a page opened from the disk and for the viewer); an origin belongs to one creator only |
+| `origins`    | list of texts | origins of their pages (`https://alice.example`, `null` for a page opened from the disk and for the viewer, written in quotes; without quotes it is ignored with a warning); an origin belongs to one creator only |
 | `maxWalkers` | integer       | walkers at most over all their rooms; `0` or absent = only the general limits                                                                      |
 | `maxRooms`   | integer       | rooms open at the same time at most; `0` or absent = no limit of their own                                                                         |
 | `off`        | boolean       | `true`: suspended, their new connections are refused                                                                                               |
@@ -1894,7 +1894,7 @@ In Settings, before "Animated sea", only if the page has a sea (not made with `-
 
 ### 35.5 Presence server: ordinary HTTP requests
 
-With `websockets` 14 and 15, an ordinary HTTP request on the server port (a browser opening its address, a robot, a test) wrote a full trace ("opening handshake failed", `InvalidUpgrade`, "invalid Connection header: keep-alive"), although the client does get "426 Upgrade Required". The log now writes an `http request` line instead: address, path, host, agent and reason, at most one per minute and per address. It says who came. Malformed requests and other errors are still shown in full. **Restart the presence server** from `dist\`. Recent versions of `websockets` (17.3 tried) do not write this trace: nothing to filter.
+With `websockets` 14 and 15, an ordinary HTTP request on the server port (a browser opening its address, a robot, a test) wrote a full trace ("opening handshake failed", `InvalidUpgrade`, "invalid Connection header: keep-alive"), although the client does get "426 Upgrade Required". The log now writes an `http request` line instead: address, path, host, agent and reason, at most one per minute and per address. It says who came. Any control character (terminal escape, bell) is replaced with a space, in this line and in the whole log. Malformed requests and other errors are still shown in full. **Restart the presence server** from `dist\`. Recent versions of `websockets` (17.3 tried) do not write this trace: nothing to filter.
 
 ### 35.6 Renamed tiled region
 

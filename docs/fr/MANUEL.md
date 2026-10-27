@@ -952,7 +952,7 @@ Tous les boutons « copier » (lien personnel, lien de ma position, point visé,
 
 2. **Générer la page web de la carte** : `python glb2html.py --update -o "X.html" --shared-shell --map-page carte.html` (elle lit les régions de `regions.json` enregistrées dans la config de la région `X`). Pour qu'elle contienne toutes les régions, exécute-la **après** les enregistrements, ou donne `--map regions.json --map-page carte.html`.
 
-3. **L'ouvrir par le serveur web**, pas depuis le disque : le dossier contenant `carte.html`, `index.html`, `lib/` et les régions est servi en http(s) (`python -m http.server` pour un essai, ou `presence_server.py --serve-dir` quand il hébergera les pages), puis ouvre `http://ADRESSE/carte.html`. Chaque lien de la carte ouvre la région à son point d'arrivée, avec le pseudo saisi en haut de la page.
+3. **L'ouvrir par le serveur web**, pas depuis le disque : le dossier contenant `carte.html`, `index.html`, `lib/` et les régions est servi en http(s) (`python -m http.server` pour un essai, ou n'importe quel serveur web), puis ouvre `http://ADRESSE/carte.html`. Chaque lien de la carte ouvre la région à son point d'arrivée, avec le pseudo saisi en haut de la page.
 
 4. **Les pages des régions** affichent la carte avec la touche **M** (**Ctrl+M** en promenade) : `--map-url http://ADRESSE/regions.json` (plusieurs adresses séparées par des virgules, fusionnées) les fait relire `regions.json` à chaque ouverture, sans régénérer les pages.
 
@@ -1514,7 +1514,7 @@ Les visites plus vieilles que `--visits-days` jours (365 par défaut) sont retir
 | ------------ | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `id`         | texte           | identifiant unique : lettres, chiffres, `-` et `_`, 32 au plus                                                                                               |
 | `prefix`     | texte           | préfixe de ses salons, sans point ; absent = `id` ; `""` = l'hôte, qui garde tous les salons n'appartenant à aucun créateur (une seule entrée)               |
-| `origins`    | liste de textes | origines de ses pages (`https://alice.example`, `null` pour une page ouverte depuis le disque et pour le viewer) ; une origine n'appartient qu'à un créateur |
+| `origins`    | liste de textes | origines de ses pages (`https://alice.example`, `null` pour une page ouverte depuis le disque et pour le viewer, écrit entre guillemets ; sans guillemets, il est ignoré avec un avertissement) ; une origine n'appartient qu'à un créateur |
 | `maxWalkers` | nombre entier   | promeneurs au plus sur tous ses salons ; `0` ou absent = seulement les limites générales                                                                     |
 | `maxRooms`   | nombre entier   | salons ouverts en même temps au plus ; `0` ou absent = sans limite propre                                                                                    |
 | `off`        | booléen         | `true` : suspendu, ses nouvelles connexions sont refusées                                                                                                    |
@@ -1894,7 +1894,7 @@ Dans Réglages, avant « Mer animée », seulement si la page a une mer (pas fai
 
 ### 35.5 Serveur de présence : requêtes HTTP ordinaires
 
-Avec `websockets` 14 et 15, une requête HTTP ordinaire sur le port du serveur (navigateur qui ouvre son adresse, robot, test) écrivait une trace complète (« opening handshake failed », `InvalidUpgrade`, « invalid Connection header: keep-alive »), alors que le client reçoit bien « 426 Upgrade Required ». Le journal écrit à la place une ligne `requête http` : adresse, chemin, hôte, agent et raison, au plus une par minute et par adresse. Elle dit qui est venu. Les requêtes mal formées et les autres erreurs restent affichées en entier. **Relancer le serveur de présence** depuis `dist\`. Les versions récentes de `websockets` (17.3 essayée) n'écrivent pas cette trace : rien à filtrer.
+Avec `websockets` 14 et 15, une requête HTTP ordinaire sur le port du serveur (navigateur qui ouvre son adresse, robot, test) écrivait une trace complète (« opening handshake failed », `InvalidUpgrade`, « invalid Connection header: keep-alive »), alors que le client reçoit bien « 426 Upgrade Required ». Le journal écrit à la place une ligne `requête http` : adresse, chemin, hôte, agent et raison, au plus une par minute et par adresse. Elle dit qui est venu. Tout caractère de contrôle (échappement de terminal, sonnerie) est remplacé par une espace, dans cette ligne comme dans tout le journal. Les requêtes mal formées et les autres erreurs restent affichées en entier. **Relancer le serveur de présence** depuis `dist\`. Les versions récentes de `websockets` (17.3 essayée) n'écrivent pas cette trace : rien à filtrer.
 
 ### 35.6 Région en tuiles renommée
 

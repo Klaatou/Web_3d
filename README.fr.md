@@ -18,11 +18,13 @@ Les manuels sont en français dans `docs/fr/` (`MANUEL.md`, `PROCEDURES.md`, `HI
 | `oar2glb.py` ¹                           | Convertit une sauvegarde OpenSim (`.oar`) en `.glb` (convoar + réparation) ; `--terrain-only` ajoute le terrain complet des régions de plus de 256 m à un GLB existant.                                                                                                   |
 | `glb2tiles.py` (+ `glb-stats.py` à côté) | Découpe un GLB énorme en tuiles autonomes (`X.tiles/*.glb` + `X.tiles.json`) et fabrique une vue d'ensemble légère `X.overview.glb` ; `--analyse` mesure et recommande sans rien écrire ; `--exclude` écarte les « boîtes de livraison » d'un catalogue.                  |
 
-¹ **Prérequis** :  **oar2glb.py** s'appuie sur le convertisseur externe **convoar.exe**
-  Téléchargement : https://github.com/Misterblue/convoar/tree/master/bin
+¹ **Prérequis** :  **oar2glb.py** s'appuie sur le convertisseur externe **convoar.exe** \
+  Téléchargement : https://github.com/Misterblue/convoar/tree/master/bin \
   Sans convoar.exe, oar2glb.py ne peut pas effectuer la conversion OAR → GLB.
 
 ## Fabriquer
+
+Il faut Python 3.9 ou plus.
 
 ```
 python build.py
@@ -107,7 +109,7 @@ Positions, chat (historique `--history-file`), modération depuis sa console (`l
 
 ## Sécurité
 
-Ne jamais committer : adresses Home Assistant (`zones*.json`), `*.reglages.json`, `regions.json`, `presence_identities.json`, `presence_bans.json`, les journaux, le journal des visites, `presence_visits_keys.json` et `presence_creators.json`. Le `.gitignore` exclut les plus courants. Le profil `--profile public` retire les zones privées des pages publiées.
+Ne jamais committer : adresses Home Assistant (`*.zones.json`, `zones*.json`), `*.reglages.json`, `regions.json`, `presence_identities.json`, `presence_bans.json`, les journaux, le journal des visites, `presence_visits_keys.json` et `presence_creators.json`. Le `.gitignore` exclut les plus courants. Le profil `--profile public` retire les zones privées des pages publiées. ; ni l'historique du chat et le journal des visites (`*.jsonl`)
 
 ## Licence
 

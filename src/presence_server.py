@@ -259,7 +259,7 @@ def conn_request():
         if rq is not None:
             try:
                 h = rq.headers
-                return tuple(str(v).replace("|", "/")[:n] for v, n in ((rq.path, 80), (h.get("Host", "?"), 80), (h.get("User-Agent", "-"), 100)))
+                return tuple(re.sub(r"[\x00-\x1f\x7f]+", " ", str(v)).replace("|", "/")[:n] for v, n in ((rq.path, 80), (h.get("Host", "?"), 80), (h.get("User-Agent", "-"), 100)))
             except Exception:
                 pass
         f = f.f_back
@@ -320,7 +320,7 @@ def log(kind, room, who, extra=""):
     line = _tr("py.presence.log_line", kind, room, who)
     if extra:
         line += " | " + re.sub(r"[\r\n]+", " ", str(extra))
-    LOG.info(line)
+    LOG.info(re.sub(r"[\x00-\x1f\x7f]+", " ", line))   # aucun caractere de controle au journal (echappements de terminal venus d'une requete)
 
 
 class Peer:
@@ -458,6 +458,9 @@ def creators_parse(d):
         pres.add(pre.lower())
         origins = []
         for o in e.get("origins") if isinstance(e.get("origins"), list) else []:
+            if o is None:   # null JSON sans guillemets : une page ouverte depuis le disque envoie le texte "null"
+                print(_tr("py.presence.cr.nulljson", cid))
+                continue
             o = origin_norm(o)
             if not o or o in origins:
                 continue
