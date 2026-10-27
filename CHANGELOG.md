@@ -3,7 +3,10 @@
 Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la v52)
-### 26/10/2026 : lot correctif après l'audit
+### 27/10/2026 : historique à jour
+- **Documents** : `docs/fr/HISTORIQUE.md` et `docs/en/HISTORY.md` : lignes « après v52 » (vue d'ensemble, crédits, prérequis convoar, fins de ligne, lot correctif).
+- **Documents**: `docs/fr/HISTORIQUE.md` and `docs/en/HISTORY.md`: "after v52" rows (overview, credits, convoar prerequisite, line endings, corrective batch).
+### 27/10/2026 : lot correctif après l'audit
 - **Serveur de présence** : plus aucun caractère de contrôle dans le journal (échappement de terminal, sonnerie) ; une requête HTTP pouvait les y faire entrer par son chemin depuis la ligne « requête http » de la v52. Créateurs : une origine `null` écrite sans guillemets est signalée et ignorée.
 - **`.gitignore`** : ajoute `*.zones.json` (les fichiers de zones réels, avec d'éventuelles adresses Home Assistant ; `zones*.json` ne les couvrait pas) et `*.jsonl` (historique du chat, journal des visites), sauf `docs/samples/*.jsonl`.
 - **Documents** : README FR et EN (Python 3.9 ou plus, fichiers à ne jamais committer, note convoar sur trois lignes) ; manuel § 20.8 (option inexistante retirée), § 34 (`null` entre guillemets), § 35.5 (journal sans caractère de contrôle).

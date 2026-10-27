@@ -80,3 +80,6 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
   | 25/10/2026 |  | v52 | v52 : `carte.html` (décompte des régions, total, surveillance des arrivées avec son et repère, vignette agrandie à 400 px, visiteurs et promeneurs sur deux lignes en français), « promeneur », case « Afficher la mer » (manuel § 35.1 à 35.4) ; `tests/v52.py` |
   | 25/10/2026 |  | v52 | v52 (suite) : serveur de présence, une requête HTTP ordinaire donne une ligne « requête http » au lieu d'une trace (manuel § 35.5) ; `tests/v52_http.py` |
   | 25/10/2026 |  | v52 | v52 (suite) : région en tuiles renommée, la vue d'ensemble reste reliée aux tuiles par le nom de fichier (manuel § 35.6) ; `tests/v52_renom.py` |
+  | 25/10/2026 |  | après v52 | Documents : vue d'ensemble en une page (`docs/fr/VUE_ENSEMBLE.md`, `docs/en/OVERVIEW.md`) ; section « Crédits » des README |
+  | 26/10/2026 |  | après v52 | README : prérequis du convertisseur externe `convoar.exe` pour `oar2glb.py` ; `.gitattributes` (fins de ligne LF dans le dépôt) |
+  | 27/10/2026 |  | après v52 | Lot correctif après audit : journal du serveur de présence sans caractère de contrôle, `.gitignore` (`*.zones.json`, `*.jsonl`), origine `null` sans guillemets signalée, README, manuel § 20.8, § 34 et § 35.5, tests réparés, hygiène du code ; `tests/correctifs_v52.py` |
