@@ -3,6 +3,9 @@
 Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la v52)
+### 27/10/2026 : lien vers la source du GIF
+- **README FR et EN** : dans la légende du GIF, « Outworldz » renvoie à la page des OAR du site.
+- **README FR and EN**: in the GIF caption, "Outworldz" links to the site's OAR page.
 ### 27/10/2026 : GIF de démonstration dans les README
 - **README FR et EN** : GIF de la région PalmIsland (`docs/images/PalmIsland_demo.gif`) sous le titre, avec texte alternatif et légende (source : site Outworldz).
 - **README FR and EN**: GIF of the PalmIsland region (`docs/images/PalmIsland_demo.gif`) under the title, with alternative text and caption (source: Outworldz site).
