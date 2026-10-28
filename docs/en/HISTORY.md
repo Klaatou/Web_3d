@@ -81,6 +81,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 28/10/2026 |  | after v52 | Demo: bilingual README of the `Web_3d_demo` repository, share preview (`ajout_og.py` and `preview.jpg`, outside the repository), description, topics and social preview image of the GitHub repositories |
 | 28/10/2026 |  | after v52 | `carte.html`: alert checkbox hidden without a presence server; presence server: unreadable requests (RDP, TLS probes) in one line; `tests/v52.py`, `tests/v52_http.py` |
 | 28/10/2026 |  | after v52 | Mouse: a click in the view no longer captures it, only **G** or the "Capture the mouse" button; help texts, manual, `tests/v34.py` |
+| 28/10/2026 |  | after v52 | Mouse: the **G** key becomes a toggle (capture / release); the button only captures; help texts, manual, `tests/v34.py` |
 
 ## Useful commands
 

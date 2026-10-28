@@ -206,7 +206,7 @@ async def main():
             await o.pg.keyboard.press("i")
             await o.pg.keyboard.press("h")
             rapport(await o.ev("!document.getElementById('stateInfo').hidden && !document.getElementById('walkHint').hidden"), "I puis H les réaffichent")
-            rapport("I : informations" in aide and "G : reprendre" in aide and "Page Haut" in aide and "Page Bas" in aide, "l'aide liste I, G, Page Haut / Page Bas (v35 : groupes courts, plus d'explication de la sélection)", aide[:900])
+            rapport("I : informations" in aide and "G : capturer / libérer" in aide and "Page Haut" in aide and "Page Bas" in aide, "l'aide liste I, G, Page Haut / Page Bas (v35 : groupes courts, plus d'explication de la sélection)", aide[:900])
             rapport(not o.errs, "aucune erreur JavaScript", o.errs)
             await o.ctx.close()
 
@@ -281,6 +281,13 @@ async def main():
             await o.pg.keyboard.press("g")
             await o.pg.wait_for_timeout(100)
             rapport(await o.ev("window.__plCalls") == 1 and await o.ev("window.__viewer.mouseState") == "captured" and "capturée" in await o.txt("mouseInfo"), "touche G : capture volontaire de la souris", await o.ev("[window.__plCalls, window.__viewer.mouseState]"))
+            n1 = await o.ev("window.__plCalls")
+            await o.pg.keyboard.press("g")
+            await o.pg.wait_for_timeout(100)
+            rapport(await o.ev("window.__plCalls") == n1 and await o.ev("window.__viewer.mouseState") == "free" and "libre" in await o.txt("mouseInfo"), "touche G quand la souris est capturée : elle la libère (bascule)", await o.ev("[window.__plCalls, window.__viewer.mouseState]"))
+            await o.pg.keyboard.press("g")
+            await o.pg.wait_for_timeout(100)
+            rapport(await o.ev("window.__plCalls") == n1 + 1 and await o.ev("window.__viewer.mouseState") == "captured", "touche G de nouveau : elle recapture", await o.ev("[window.__plCalls, window.__viewer.mouseState]"))
             await o.ev("document.exitPointerLock()")   # ce que fait Échap
             await o.pg.wait_for_timeout(100)
             rapport(await o.ev("window.__viewer.mouseState") == "free" and "Souris : libre" in await o.txt("mouseInfo"), "Échap : état « souris libre » affiché dans le bloc d'état", await o.txt("mouseInfo"))

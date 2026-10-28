@@ -1269,6 +1269,13 @@ function createViewer(container, cfg0, loader) {
     if (onMouse) onMouse(mouseState());
     return true;
   }
+  // après la v52 : la touche G BASCULE (capture si la souris est libre, libère si elle est capturée) ; le bouton « Capturer la souris » ne fait que capturer
+  // (un pointeur verrouillé ne peut rien cliquer). exitPointerLock déclenche pointerlockchange : l'état « libre » et l'interface suivent.
+  function toggleMouse() {
+    if (!walking) return false;
+    if (document.pointerLockElement === dom) { try { document.exitPointerLock(); } catch (_) {} return true; }
+    return grabMouse();
+  }
   const mouseState = () => (document.pointerLockElement === dom ? 'captured' : (W.mouseFree ? 'free' : 'idle'));
   document.addEventListener('pointerlockchange', () => {
     if (!walking) return;   // sortie de promenade : walkStop libère le pointeur lui-même
@@ -1287,7 +1294,7 @@ function createViewer(container, cfg0, loader) {
     else if (e.code === 'End' && !mod) { recenterCam(); e.preventDefault(); }
     else if (e.code === 'KeyV' && !mod) cycleView();
     else if (keyChar(e) === 'm' && !mod) setView(W.view === 'tps' ? 'fps' : 'tps');   // v36 : reconnue par la lettre imprimée (« m »), pas par la place de la touche ; v35 : M bascule vue subjective / troisième personne (Ctrl+M : carte des mondes)
-    else if (e.code === 'KeyG' && !mod) grabMouse();
+    else if (e.code === 'KeyG' && !mod) toggleMouse();
   });
   window.addEventListener('keydown', e => { if (!walking || typing(e) || !MOVE_KEYS.has(e.code) || e.ctrlKey || e.metaKey || e.altKey) return;   // v34 : Ctrl+C copie (le texte de l'aide est sélectionnable)
     const c = e.code;
