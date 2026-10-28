@@ -3,6 +3,9 @@
 Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la v52)
+### 28/10/2026 : démo en ligne
+- **Démo** : dépôt séparé `Klaatou/Web_3d_demo` publié avec GitHub Pages (`https://klaatou.github.io/Web_3d_demo/`) : régions PalmIsland et Hobbit reliées par des portails à cible relative, carte des mondes, sans serveur de présence. **README FR et EN** : lien « Essayer la démo en ligne », GIF cliquable.
+- **Demo**: separate repository `Klaatou/Web_3d_demo` published with GitHub Pages (`https://klaatou.github.io/Web_3d_demo/`): PalmIsland and Hobbit regions linked by portals with relative targets, world map, no presence server. **README FR and EN**: "Try the online demo" link, clickable GIF.
 ### 27/10/2026 : lien vers la source du GIF
 - **README FR et EN** : dans la légende du GIF, « Outworldz » renvoie à la page des OAR du site.
 - **README FR and EN**: in the GIF caption, "Outworldz" links to the site's OAR page.

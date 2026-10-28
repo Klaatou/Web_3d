@@ -77,6 +77,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 27/10/2026 |  | après v52 | Lot correctif après audit : journal du serveur de présence sans caractère de contrôle, `.gitignore` (`*.zones.json`, `*.jsonl`), origine `null` sans guillemets signalée, README, manuel § 20.8, § 34 et § 35.5, tests réparés, hygiène du code ; `tests/correctifs_v52.py` |
 | 27/10/2026 |  | après v52 | `oar2glb.py` : plus de chemin personnel par défaut pour `convoar.exe` (variable `CONVOAR`, PATH, à côté de l'outil), message d'aide avec l'adresse de téléchargement ; `tests/correctifs_v52.py` |
 | 27/10/2026 |  | après v52 | README : GIF de démonstration (`docs/images/PalmIsland_demo.gif`, région PalmIsland) |
+| 28/10/2026 |  | après v52 | Démo en ligne : dépôt `Web_3d_demo` publié avec GitHub Pages (régions PalmIsland et Hobbit, portails relatifs, sans présence) ; README : lien vers la démo, GIF cliquable |
 
 ## Commandes utiles
 

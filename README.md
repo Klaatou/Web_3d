@@ -2,9 +2,11 @@
 
 English | [Français](README.fr.md)
 
-![Walking on the beach of PalmIsland, in a web page](docs/images/PalmIsland_demo.gif)
+[![Walking on the beach of PalmIsland, in a web page](docs/images/PalmIsland_demo.gif)](https://klaatou.github.io/Web_3d_demo/)
 
 *Demo region PalmIsland (source: [Outworldz](https://www.outworldz.com/cgi/freesculpts.plx?q=OAR-)): walking in a web page, with nothing to install.*
+
+**[Try the online demo](https://klaatou.github.io/Web_3d_demo/)**: two regions linked by portals, and the world map (no presence server).
 
 **web_3d** turns a region of an **OpenSim** virtual world (an **OAR** backup) into a web page that visitors can walk around, with nothing to install on their side. The OAR is converted to a **glTF** model (`.glb`), then displayed with **three.js** in a walkable web page: avatar, collisions, real-time visitors, chat, zones and portals, and a world map. The interface of the page, of the viewer and of the Python tools is available in **English and French** (see "Language" below).
 
