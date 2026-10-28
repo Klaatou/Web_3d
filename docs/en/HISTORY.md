@@ -78,6 +78,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 27/10/2026 |  | after v52 | `oar2glb.py`: no more personal default path for `convoar.exe` (`CONVOAR` variable, PATH, next to the tool), help message with the download address; `tests/correctifs_v52.py` |
 | 27/10/2026 |  | after v52 | README: demonstration GIF (`docs/images/PalmIsland_demo.gif`, PalmIsland region) |
 | 28/10/2026 |  | after v52 | Online demo: `Web_3d_demo` repository published with GitHub Pages (PalmIsland and Hobbit regions, relative portals, no presence); README: link to the demo, clickable GIF |
+| 28/10/2026 |  | after v52 | Demo: bilingual README of the `Web_3d_demo` repository, share preview (`ajout_og.py` and `preview.jpg`, outside the repository), description, topics and social preview image of the GitHub repositories |
 
 ## Useful commands
 
