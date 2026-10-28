@@ -79,6 +79,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 27/10/2026 |  | after v52 | README: demonstration GIF (`docs/images/PalmIsland_demo.gif`, PalmIsland region) |
 | 28/10/2026 |  | after v52 | Online demo: `Web_3d_demo` repository published with GitHub Pages (PalmIsland and Hobbit regions, relative portals, no presence); README: link to the demo, clickable GIF |
 | 28/10/2026 |  | after v52 | Demo: bilingual README of the `Web_3d_demo` repository, share preview (`ajout_og.py` and `preview.jpg`, outside the repository), description, topics and social preview image of the GitHub repositories |
+| 28/10/2026 |  | after v52 | `carte.html`: alert checkbox hidden without a presence server; presence server: unreadable requests (RDP, TLS probes) in one line; `tests/v52.py`, `tests/v52_http.py` |
 
 ## Useful commands
 

@@ -3,7 +3,7 @@
 
 websockets 14 et 15 écrivaient une trace complète (« opening handshake failed », EOFError) pour chaque connexion TCP fermée sans requête
 (préconnexion d'un navigateur, test de port, robot). Vérifie : aucune trace ; une seule ligne « vide » avec l'adresse pour 5 connexions
-(au plus une par minute et par adresse) ; une requête mal formée garde son message d'erreur ; un visiteur normal est toujours accueilli.
+(au plus une par minute et par adresse) ; une requête illisible donne une ligne courte ; un visiteur normal est toujours accueilli.
 Avec la version de websockets installée, puis, si la variable WS_OLD donne un dossier contenant websockets 14 ou 15
 (pip install --target DOSSIER "websockets==14.2"), avec cette version.
 
@@ -49,7 +49,7 @@ def essai(pythonpath, nom):
     if old:
         rapport(len(vides) == 1 and "ip 127.0.0.1" in vides[0] and "connexion ouverte puis fermée sans requête" in vides[0],
                 "une seule ligne « vide » avec l'adresse pour 5 connexions", vides)
-        rapport("did not receive a valid HTTP request" in out or "invalid" in out.lower(), "requête mal formée : son erreur reste affichée", out[-600:])
+        rapport("| requête illisible" in out and "did not receive a valid HTTP request" not in out, "requête mal formée : une ligne « requête illisible » à la place de la trace", out[-600:])
     else:
         rapport(not vides, "websockets récent : rien à filtrer, aucune ligne « vide »", vides)
 

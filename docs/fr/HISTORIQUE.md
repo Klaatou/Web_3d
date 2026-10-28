@@ -79,6 +79,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 27/10/2026 |  | après v52 | README : GIF de démonstration (`docs/images/PalmIsland_demo.gif`, région PalmIsland) |
 | 28/10/2026 |  | après v52 | Démo en ligne : dépôt `Web_3d_demo` publié avec GitHub Pages (régions PalmIsland et Hobbit, portails relatifs, sans présence) ; README : lien vers la démo, GIF cliquable |
 | 28/10/2026 |  | après v52 | Démo : README bilingue du dépôt `Web_3d_demo`, aperçu de partage (`ajout_og.py` et `preview.jpg`, hors dépôt), description, mots-clés et image de partage des dépôts GitHub |
+| 28/10/2026 |  | après v52 | `carte.html` : case de surveillance cachée sans serveur de présence ; serveur de présence : requêtes illisibles (sondages RDP, TLS) en une ligne ; `tests/v52.py`, `tests/v52_http.py` |
 
 ## Commandes utiles
 

@@ -250,6 +250,37 @@ def caused_by_header(exc):
     return False
 
 
+def caused_by_message(exc):
+    """requete illisible (pas du HTTP : sondage du Bureau a distance, connexion TLS sur un port sans chiffrement, octets quelconques) : InvalidMessage"""
+    try:
+        from websockets.exceptions import InvalidMessage
+    except Exception:
+        return False
+    for _ in range(10):
+        if exc is None:
+            return False
+        if isinstance(exc, InvalidMessage):
+            return True
+        exc = exc.__cause__ or exc.__context__
+    return False
+
+
+def raw_probe(exc):
+    """(sorte, debut) d'une requete illisible, lus dans le message de websockets (« invalid HTTP request line: ... », octets deja echappes)"""
+    msg, e = "", exc
+    for _ in range(10):
+        if e is None:
+            break
+        if isinstance(e, ValueError):
+            msg = str(e)
+            break
+        e = e.__cause__ or e.__context__
+    tail = msg.split("invalid HTTP request line: ", 1)[-1]
+    start = re.sub(r"[\x00-\x1f\x7f|]+", " ", tail)[:60]
+    kind = "rdp" if "mstshash" in msg.lower() else "tls" if tail.startswith(("\x16\x03", "\\x16\\x03")) else "misc"
+    return kind, start
+
+
 def conn_request():
     """v52 : (chemin, hote, agent) de la requete recue, lus dans la pile d'appels de websockets (variable connection) ; None si introuvable"""
     f = sys._getframe(1)
@@ -287,18 +318,23 @@ class EmptyConnFilter(logging.Filter):
         if not ei:
             return True
         eof = caused_by_eof(ei[1])
-        if not eof and not caused_by_header(ei[1]):
+        hdr = not eof and caused_by_header(ei[1])
+        raw = not eof and not hdr and caused_by_message(ei[1])
+        if not (eof or hdr or raw):
             return True              # toute autre erreur de websockets reste affichée en entier
         try:
             ip, now = empty_conn_ip(), time.monotonic()
+            kind, start = raw_probe(ei[1]) if raw else ("", "")
             if len(EMPTY) > 1000:
                 EMPTY.clear()
-            e = EMPTY.setdefault(ip if eof else "http|" + ip, [-1e9, 0])
+            e = EMPTY.setdefault(ip if eof else ("http|" if hdr else "raw|" + kind + "|") + ip, [-1e9, 0])
             e[1] += 1
             if now - e[0] >= 60:
                 ipl = f"ip {ip_for_log(ip) if ip != '?' else '?'}"
                 if eof:
                     log(_tr("py.presence.ev.empty"), "-", ipl, _tr("py.presence.empty", e[1]))
+                elif raw:   # requete illisible : une ligne par sorte (RDP, TLS, autre) au lieu de la trace
+                    log(_tr("py.presence.ev.raw"), "-", ipl, _tr("py.presence.raw", e[1], _tr("py.presence.rawkind." + kind), start))
                 else:   # v52 : requete HTTP ordinaire (navigateur qui ouvre l'adresse du serveur, robot, test) : la ligne dit laquelle
                     rq = conn_request() or ("?", "?", "-")
                     log(_tr("py.presence.ev.http"), "-", ipl, _tr("py.presence.http", e[1], rq[0], rq[1], rq[2], str(ei[1])[:100]))

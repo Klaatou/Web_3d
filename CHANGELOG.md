@@ -3,6 +3,9 @@
 Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la v52)
+### 28/10/2026 : serveur de présence, requêtes illisibles
+- **Serveur de présence** : une requête qui n'est pas du HTTP (sondage du Bureau à distance Windows `mstshash`, début d'une connexion TLS, octets quelconques) écrivait une trace complète (`InvalidMessage`, « did not receive a valid HTTP request »). Une ligne « requête illisible » la remplace : sorte reconnue et début de la requête, au plus une par minute, par adresse et par sorte. Constaté sur le serveur de Klaatou (sondages d'Internet). `tests/v51_vides.py` et `tests/v52_http.py` adaptés. Manuel § 35.5. **Relancer le serveur de présence.**
+- **Presence server**: a request that is not HTTP (Windows Remote Desktop probe `mstshash`, start of a TLS connection, arbitrary bytes) wrote a full trace (`InvalidMessage`, "did not receive a valid HTTP request"). An "unreadable request" line replaces it: recognised kind and start of the request, at most one per minute, per address and per kind. Seen on Klaatou's server (probes from the Internet). `tests/v51_vides.py` and `tests/v52_http.py` adapted. Manual § 35.5. **Restart the presence server.**
 ### 28/10/2026 : `carte.html` sans serveur de présence
 - **`carte.html`** : la case « Surveillance des arrivées (son et repère) » n'apparaît que si au moins une région a un serveur de présence (c'est le cas de la démo en ligne, qui n'en a pas). `tests/v52.py` (section 9) ; manuel § 35.2.
 - **`carte.html`**: the "Arrival alert (sound and marker)" checkbox only appears if at least one region has a presence server (the online demo has none). `tests/v52.py` (section 9); manual § 35.2.

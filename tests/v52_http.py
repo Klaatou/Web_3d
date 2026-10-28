@@ -4,7 +4,7 @@
 websockets 14 et 15 ecrivaient une trace complete (« opening handshake failed », InvalidUpgrade, « invalid Connection header: keep-alive ») pour une requete
 HTTP qui n'ouvre pas de WebSocket (navigateur qui ouvre l'adresse du serveur, robot, test), alors que le client recoit bien « 426 Upgrade Required ».
 Verifie : le client recoit toujours 426 ; aucune trace ; une seule ligne « requete http » (adresse, chemin, hote, agent, raison) pour 3 requetes
-(au plus une par minute et par adresse) ; une requete mal formee garde son message d'erreur ; un visiteur normal est toujours accueilli.
+(au plus une par minute et par adresse) ; une requete illisible donne une ligne courte ; un visiteur normal est toujours accueilli.
 Avec la version de websockets installee, puis, si WS_OLD donne un dossier contenant websockets 14 ou 15 (pip install --target DOSSIER "websockets==14.2"),
 avec cette version. Les versions recentes (16 et apres) n'ecrivent pas cette trace : rien a filtrer, aucune ligne.
 
@@ -38,6 +38,11 @@ def essai(pythonpath, nom):
     s.sendall(b"bonjour\r\n\r\n")
     time.sleep(0.5)
     s.close()
+    for sonde in (b"\x03\x00\x00/*\xe0\x00\x00\x00\x00\x00Cookie: mstshash=Administr\r\n", b"\x16\x03\x01\x02\x00\x01\x00\x01\xfc\x03\x03" + bytes(40) + b"\r\n"):   # sondage RDP, debut d'une connexion TLS
+        s = socket.create_connection(("127.0.0.1", port))
+        s.sendall(sonde)
+        time.sleep(0.5)
+        s.close()
 
     async def visiteur():
         async with websockets.connect(f"ws://127.0.0.1:{port}") as ws:
@@ -56,8 +61,11 @@ def essai(pythonpath, nom):
         l = lignes[0] if lignes else ""
         rapport("ip 127.0.0.1" in l and "GET /" in l and f"exemple.test:{port}" in l and "Mozilla/5.0 (essai v52)" in l and "invalid Connection header: keep-alive" in l,
                 "la ligne dit l'adresse, le chemin, l'hote, l'agent et la raison", l)
-        rapport(out.count("opening handshake failed") == 1, "une seule trace complete : celle de la requete mal formee (les 3 GET n'en ecrivent plus)", out.count("opening handshake failed"))
-        rapport("did not receive a valid HTTP request" in out or "invalid" in out.lower(), "requete mal formee : son erreur reste affichee", out[-600:])
+        rapport(out.count("opening handshake failed") == 0, "plus aucune trace complete : ni les 3 GET ni les requetes illisibles", out.count("opening handshake failed"))
+        illis = [l for l in out.splitlines() if "| requête illisible" in l]
+        rapport(len(illis) == 3, "trois lignes « requête illisible » : bonjour, sondage RDP, connexion TLS (une par sorte et par adresse)", illis)
+        rapport(any("sondage du Bureau à distance Windows (RDP)" in l and "mstshash" in l for l in illis) and any("connexion chiffrée (https)" in l for l in illis) and any("bonjour" in l and "ce n'est pas une requête HTTP" in l for l in illis),
+                "chaque sorte est reconnue et montre son debut", illis)
     else:
         rapport(not lignes, "websockets recent : rien a filtrer, aucune ligne « requête http »", lignes)
 
