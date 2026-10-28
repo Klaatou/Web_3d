@@ -1875,7 +1875,7 @@ Above the grid: "12 regions · Total: 3 visitors · 2 walkers". Each room is cou
 
 ### 35.2 Arrival alert (sound and marker)
 
-A checkbox at the top of `carte.html`, "Arrival alert (sound and marker)", remembered in this browser (key `glb2html_map_alert`). When ticked:
+A checkbox at the top of `carte.html`, "Arrival alert (sound and marker)", remembered in this browser (key `glb2html_map_alert`). It only appears if at least one region has a presence server (otherwise there is nothing to watch, as in the online demo). When ticked:
 
 - A **rise in the visitor count** of a room on the map between two polls is an arrival: two rising notes (660 then 880 Hz, like a walker arriving in the page), at most one beep every 2 s, and the **region's card is marked**: dashed outline that blinks, yellow background and the text "● arrival hh:mm" (never colour alone; no blinking if the system asks for reduced motion). The marker stays until the card is hovered; unticking the box clears it. The status line says "last arrival: region, hh:mm".
 - A server's **first poll** never sounds (it is the baseline). An arrival and a departure within the same poll interval cancel out: no beep.

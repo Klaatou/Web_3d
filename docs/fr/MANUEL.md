@@ -1875,7 +1875,7 @@ Au-dessus de la grille : « 12 régions · Total : 3 visiteurs · 2 promeneurs �
 
 ### 35.2 Surveillance des arrivées (son et repère)
 
-Une case en haut de `carte.html`, « Surveillance des arrivées (son et repère) », mémorisée dans ce navigateur (clé `glb2html_map_alert`). Cochée :
+Une case en haut de `carte.html`, « Surveillance des arrivées (son et repère) », mémorisée dans ce navigateur (clé `glb2html_map_alert`). Elle n'apparaît que si au moins une région a un serveur de présence (sinon il n'y a rien à surveiller, comme dans la démo en ligne). Cochée :
 
 - Une **hausse du nombre de visiteurs** d'un salon de la carte entre deux relevés est une arrivée : deux notes montantes (660 puis 880 Hz, comme l'arrivée d'un promeneur dans la page), au plus un bip toutes les 2 s, et la **tuile de la région est marquée** : contour en pointillés qui clignote, fond jaune et texte « ● arrivée hh:mm » (jamais la couleur seule ; pas de clignotement si le système demande de réduire les animations). Le repère reste jusqu'au survol de la tuile ; décocher la case l'efface. La ligne d'état dit « dernière arrivée : région, hh:mm ».
 - Le **premier relevé** d'un serveur ne sonne jamais (il sert de base). Une arrivée et un départ dans le même intervalle de relevé s'annulent : pas de bip.

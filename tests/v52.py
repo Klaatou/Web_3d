@@ -249,6 +249,16 @@ async def main():
         await o.attendre("window.__beeps.length >= 2", 6)
         rapport(await o.ev("document.querySelectorAll('.tile.arr').length") == 1, "POLL_MS = 60000 : une fois la case cochee, l'arrivee sonne et marque la tuile en moins de 6 s")
         await dan.close(); await o.ctx.close()
+        print("--- 9. sans serveur de presence, la case de surveillance disparait")
+        site4 = tmp / "site4"; site4.mkdir(); shutil.copy(site / "carte.html", site4 / "carte.html")
+        (site4 / "regions.json").write_text(json.dumps([fiche("Alpha", "v52a", 0, 0, presence=""), fiche("Beta", "v52b", 1, 0, presence="")]), encoding="utf-8")
+        http4, hport4 = serveur(site4)
+        o = await Onglet(br).ouvrir(f"http://127.0.0.1:{hport4}/carte.html", init=INIT, locale="fr-FR", viewer=False)
+        await tuiles(o, "document.querySelector('.tile')")      # sans serveur, les tuiles n'ont pas de ligne de comptes
+        await asyncio.sleep(1.5)
+        vis = await o.ev("(() => { const t = document.getElementById('tools'); return [getComputedStyle(t).display, document.getElementById('total').textContent]; })()")
+        rapport(vis[0] == "none" and vis[1] == "2 régions", "sans serveur de presence : la case de surveillance est cachee, la ligne de total dit seulement « 2 régions »", vis)
+        await o.ctx.close(); http4.kill()
         await br.close()
     for c in (zoe, spect):
         await c.close()

@@ -3,6 +3,9 @@
 Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la v52)
+### 28/10/2026 : `carte.html` sans serveur de présence
+- **`carte.html`** : la case « Surveillance des arrivées (son et repère) » n'apparaît que si au moins une région a un serveur de présence (c'est le cas de la démo en ligne, qui n'en a pas). `tests/v52.py` (section 9) ; manuel § 35.2.
+- **`carte.html`**: the "Arrival alert (sound and marker)" checkbox only appears if at least one region has a presence server (the online demo has none). `tests/v52.py` (section 9); manual § 35.2.
 ### 28/10/2026 : démo en ligne
 - **Démo** : dépôt séparé `Klaatou/Web_3d_demo` publié avec GitHub Pages (`https://klaatou.github.io/Web_3d_demo/`) : régions PalmIsland et Hobbit reliées par des portails à cible relative, carte des mondes, sans serveur de présence. **README FR et EN** : lien « Essayer la démo en ligne », GIF cliquable.
 - **Demo**: separate repository `Klaatou/Web_3d_demo` published with GitHub Pages (`https://klaatou.github.io/Web_3d_demo/`): PalmIsland and Hobbit regions linked by portals with relative targets, world map, no presence server. **README FR and EN**: "Try the online demo" link, clickable GIF.

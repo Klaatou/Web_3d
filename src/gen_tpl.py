@@ -401,6 +401,7 @@ __I18N__
     }
     if (!list.length) grid.textContent = emptyText();
     tot.textContent = list.length ? trn('map.regions', list.length) + (totGot ? ' · ' + tr('map.total', countText(totOld ? -1 : totV, totW)) : '') : '';   // decompte des regions, puis le total
+    document.getElementById('tools').hidden = !MAP.some(r => r && srvOf(r));   // sans serveur de presence, la surveillance n'a rien a surveiller : la case disparait
     if (zoomWas) reZoom();
   };
   // v51 : « * » à la place du nom = le même nom que la page (même règle que presUrl de core.js)
