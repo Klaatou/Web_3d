@@ -267,10 +267,20 @@ async def main():
             print("--- 4. souris libre après Échap")
             o = await Onglet(br).ouvrir(base_url + "Discret")
             await o.walk()
-            rapport(await o.ev("window.__viewer.mouseState") == "idle" and "Souris : clic dans la vue" in await o.txt("mouseInfo"), "entrée en promenade : souris ni capturée ni libre (« clic dans la vue »)", await o.txt("mouseInfo"))
+            rapport(await o.ev("window.__viewer.mouseState") == "idle" and "Souris : G ou bouton" in await o.txt("mouseInfo"), "entrée en promenade : souris ni capturée ni libre (« G ou bouton » pour la capturer)", await o.txt("mouseInfo"))
             await o.pg.mouse.click(500, 350)
             await o.pg.wait_for_timeout(100)
-            rapport(await o.ev("window.__plCalls") == 1 and await o.ev("window.__viewer.mouseState") == "captured" and "capturée" in await o.txt("mouseInfo"), "premier clic : verrouillage demandé (comportement d'avant)", await o.ev("[window.__plCalls, window.__viewer.mouseState, document.elementFromPoint(500, 350).outerHTML.slice(0, 160)]"))
+            rapport(await o.ev("window.__plCalls") == 0 and await o.ev("window.__viewer.mouseState") == "idle", "un clic dans la vue ne capture plus la souris (après la v52)", await o.ev("[window.__plCalls, window.__viewer.mouseState]"))
+            y0 = (await o.gw())["yaw"]
+            await o.ev("""() => { const cv = document.querySelector('canvas'); cv.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: 500, clientY: 300 }));
+                window.dispatchEvent(new MouseEvent('mousemove', { movementX: 60, movementY: 0 })); window.dispatchEvent(new MouseEvent('mouseup')); }""")
+            y1 = (await o.gw())["yaw"]
+            rapport(abs(y1 - y0) > 0.05 and await o.ev("window.__plCalls") == 0, f"sans capture : glisser, bouton enfoncé, tourne la vue (Δyaw {y1 - y0:.3f}), toujours sans verrouillage")
+            await o.ev("""() => { const cv = document.querySelector('canvas'); cv.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: 500, clientY: 300 }));
+                window.dispatchEvent(new MouseEvent('mousemove', { movementX: -60, movementY: 0 })); window.dispatchEvent(new MouseEvent('mouseup')); }""")   # on remet la vue comme avant : la suite du test vise des points a 45 degres
+            await o.pg.keyboard.press("g")
+            await o.pg.wait_for_timeout(100)
+            rapport(await o.ev("window.__plCalls") == 1 and await o.ev("window.__viewer.mouseState") == "captured" and "capturée" in await o.txt("mouseInfo"), "touche G : capture volontaire de la souris", await o.ev("[window.__plCalls, window.__viewer.mouseState]"))
             await o.ev("document.exitPointerLock()")   # ce que fait Échap
             await o.pg.wait_for_timeout(100)
             rapport(await o.ev("window.__viewer.mouseState") == "free" and "Souris : libre" in await o.txt("mouseInfo"), "Échap : état « souris libre » affiché dans le bloc d'état", await o.txt("mouseInfo"))
@@ -318,7 +328,7 @@ async def main():
             rapport(await o.ev("window.__viewer.mouseState") == "idle", "nouvelle entrée en promenade : l'état « libre » est réinitialisé")
             await o.pg.mouse.click(500, 350)
             await o.pg.wait_for_timeout(100)
-            rapport(await o.ev("window.__plCalls") == n0 + 3, "…et le premier clic redemande le verrouillage")
+            rapport(await o.ev("window.__plCalls") == n0 + 2, "…et un clic ne capture toujours pas la souris")
             rapport(not o.errs, "aucune erreur JavaScript", o.errs)
             await o.ctx.close()
 

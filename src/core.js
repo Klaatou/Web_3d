@@ -1260,8 +1260,8 @@ function createViewer(container, cfg0, loader) {
     return true;
   }
   const returnHome = () => (home ? goTo(home.pos, home.yaw) : false);
-  // v34 : souris libre. Quand le pointeur est libéré en promenade (Échap, perte de focus), l'état « souris libre » dure jusqu'à une action
-  // explicite (touche G, bouton « Capturer la souris ») : un clic, un double-clic ou un clic sur une zone ne redemande plus le verrouillage.
+  // v34 : souris libre (le pointeur vient d'être libéré en promenade : Échap, perte de focus). Après la v52, un clic, un double-clic ou un clic sur une zone
+  // ne capturent JAMAIS la souris : la capture est volontaire (touche G, bouton « Capturer la souris »). L'état « libre » ne sert plus qu'à l'afficher.
   function grabMouse() {
     if (!walking) return false;
     W.mouseFree = false;
@@ -1438,7 +1438,7 @@ function createViewer(container, cfg0, loader) {
     }
     lastClick = { t: now, x: e.clientX, y: e.clientY };
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
-    if (!W.mouseFree) { try { const p = dom.requestPointerLock(); if (p && p.catch) p.catch(() => {}); } catch (_) {} }
+    // un clic ne capture jamais la souris : seulement G ou le bouton « Capturer la souris » (grabMouse) ; sans capture, glisser bouton enfonce tourne la vue
     doPick(e, locked);
   });
 
