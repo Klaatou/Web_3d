@@ -86,7 +86,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 29/10/2026 |  | after v52 | `carte.html`: the displayed address moves out of the card's link (selectable and copyable), zoom kept; `tests/v52.py`, `tests/v47.py` |
 | 29/10/2026 |  | after v52 | Presence server: IPv6 by `/64` prefix (limit and bans), `oublier <pseudo>` command; page: presence connection attempts stop; `tests/ipv6.py`, `tests/oublier.py`, `tests/essais_presence.py`; manual § 36.2 to 36.4 |
 | 29/10/2026 |  | after v52 | Presence server: `pseudos [filtre]` console command (list of the reserved names); `tests/oublier.py` |
-| 29/10/2026 |  | 1.0.0 | `1.0.0` numbering (v52 = 1.0.0, `X.Y.Z` scheme, manual § 36.5); `PROCEDURES` revised (Debian 13 VM: service and `tmux` console); overview, manual, `CLAUDE.md`; `docs/samples/README.fr.md` and `README.md`; `tests/samples.py` |
+| 29/10/2026 |  | 1.0.0 | `1.0.0` numbering (v52 = 1.0.0, `X.Y.Z` scheme, manual § 36.5); `PROCEDURES` revised (Debian 13 VM: service and `tmux` console, texts of `lance_presence.sh` and of the unit); overview, manual, `CLAUDE.md`; `docs/samples/README.fr.md` and `README.md`; `tests/samples.py` |
 
 ## Useful commands
 

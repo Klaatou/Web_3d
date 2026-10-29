@@ -255,9 +255,47 @@ WantedBy=multi-user.target
 
 ### VM Debian 13 : service permanent avec console de modération (essayé le 29/10/2026)
 Voie A sur une VM Debian 13 (VMware, réseau NAT), publication par Tailscale Funnel, page publiée sur GitHub Pages. Le service doit démarrer seul **et** garder la console de modération (commandes tapées), qu'un service systemd seul ne peut pas offrir faute de clavier.
-1. **Installer** : `python3` et `python3-websockets` viennent d'`apt` (pas d'environnement virtuel) ; Tailscale (`tailscale up`) ; publication par `tailscale funnel --bg 8765`. L'origine de la page (`https://NOMDUSITE.github.io`) est déclarée dans le `presence_creators.json` de la VM (option `--creators`, sans `--origins`).
+1. **Installer** : `python3`, `python3-websockets` et `tmux` viennent d'`apt` (pas d'environnement virtuel) ; Tailscale (`tailscale up`) ; publication par `tailscale funnel --bg 8765`. L'origine de la page (`https://NOMDUSITE.github.io`) est déclarée dans le `presence_creators.json` de la VM (option `--creators`, sans `--origins`).
 2. **Options du serveur** : `--host 127.0.0.1 --port 8765 --proxy-header X-Forwarded-For --log presence.log --log-ip raw --log-days 0 --history-file chat.jsonl --history-days 0 --visits visits.jsonl --creators presence_creators.json`. Choix de l'auteur : `--log-ip raw` et conservation sans limite (adresses IP et messages d'inconnus sont des données personnelles, voir « À garder en tête » ; défauts du serveur : `--log-ip hash` et 30 jours).
 3. **Démarrage** : une unité systemd (`web3d-presence.service`, `Type=forking`, `Restart=always`, `RestartSec=5`) lance une session `tmux` nommée `presence` qui exécute un script `lance_presence.sh`. Ce script est une boucle qui relance `presence_server.py` 5 secondes après son arrêt. Le serveur garde ainsi sa console dans la session `tmux`.
+
+`lance_presence.sh`, dans le dossier du serveur (ici `/home/UTILISATEUR/presence`, à côté de `presence_server.py`), rendu exécutable par `chmod +x lance_presence.sh` :
+
+```bash
+#!/bin/bash
+# Lance le serveur de presence dans une boucle : s'il s'arrete, il repart apres 5 secondes.
+# A ranger dans le dossier du serveur (a cote de presence_server.py), rendre executable : chmod +x lance_presence.sh
+cd "$(dirname "$0")" || exit 1
+while true; do
+  python3 presence_server.py --host 127.0.0.1 --port 8765 --proxy-header X-Forwarded-For --log presence.log --log-ip raw --log-days 0 --history-file chat.jsonl --history-days 0 --visits visits.jsonl --creators presence_creators.json
+  echo "Serveur arrete (code $?). Relance dans 5 secondes (pour l'arreter pour de bon : systemctl stop web3d-presence)."
+  sleep 5
+done
+```
+
+`/etc/systemd/system/web3d-presence.service` (remplace `UTILISATEUR` par l'utilisateur de la VM) :
+
+```
+[Unit]
+Description=Web 3d presence server (console dans tmux)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=forking
+Restart=always
+RestartSec=5
+User=UTILISATEUR
+WorkingDirectory=/home/UTILISATEUR/presence
+ExecStart=/usr/bin/tmux new-session -d -s presence /home/UTILISATEUR/presence/lance_presence.sh
+ExecStop=/usr/bin/tmux kill-session -t presence
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Puis `systemctl daemon-reload` et `systemctl enable --now web3d-presence`. Ce sont les copies des deux fichiers de la VM de l'auteur.
+
 4. **Console** : sous l'utilisateur de la VM (pas `root`), `tmux attach -t presence` ; depuis le PC, `ssh -t UTILISATEUR@ADRESSE_VM "tmux attach -t presence"` (le copier-coller marche) ; pour sortir sans arrêter le serveur : **Ctrl+B** puis **D** ; pour l'arrêter pour de bon : `systemctl stop web3d-presence` (`root`).
 5. **Mettre à jour le serveur** après un `python build.py` qui change `presence_server.py` : envoyer le fichier de `dist\` par `scp`, puis `systemctl restart web3d-presence`. La VM a **sa propre copie** de `presence_creators.json` et de `presence_identities.json` (pseudos réservés).
 6. **Essayé le 29/10/2026** : `reboot` (la session `presence` et la publication Funnel reviennent seules) ; `tmux kill-server` (le service revient en quelques secondes) ; un visiteur extérieur, depuis une page de GitHub Pages.

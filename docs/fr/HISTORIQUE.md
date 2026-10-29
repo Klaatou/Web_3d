@@ -86,7 +86,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 29/10/2026 |  | après v52 | `carte.html` : l'adresse affichée sort du lien de la vignette (sélectionnable et copiable), zoom conservé ; `tests/v52.py`, `tests/v47.py` |
 | 29/10/2026 |  | après v52 | Serveur de présence : IPv6 par préfixe `/64` (limite et bannissements), commande `oublier <pseudo>` ; page : arrêt des essais de connexion à la présence ; `tests/ipv6.py`, `tests/oublier.py`, `tests/essais_presence.py` ; manuel § 36.2 à 36.4 |
 | 29/10/2026 |  | après v52 | Serveur de présence : commande de console `pseudos [filtre]` (liste des pseudos réservés) ; `tests/oublier.py` |
-| 29/10/2026 |  | 1.0.0 | Numérotation `1.0.0` (v52 = 1.0.0, schéma `X.Y.Z`, manuel § 36.5) ; `PROCEDURES` revues (VM Debian 13 : service et console `tmux`) ; vue d'ensemble, manuel, `CLAUDE.md` ; `docs/samples/README.fr.md` et `README.md` ; `tests/samples.py` |
+| 29/10/2026 |  | 1.0.0 | Numérotation `1.0.0` (v52 = 1.0.0, schéma `X.Y.Z`, manuel § 36.5) ; `PROCEDURES` revues (VM Debian 13 : service et console `tmux`, textes de `lance_presence.sh` et de l'unité) ; vue d'ensemble, manuel, `CLAUDE.md` ; `docs/samples/README.fr.md` et `README.md` ; `tests/samples.py` |
 
 ## Commandes utiles
 

@@ -255,9 +255,47 @@ WantedBy=multi-user.target
 
 ### Debian 13 VM: permanent service with a moderation console (tried on 29/10/2026)
 Way A on a Debian 13 VM (VMware, NAT network), published through Tailscale Funnel, page published on GitHub Pages. The service must start by itself **and** keep the moderation console (typed commands), which a plain systemd service cannot offer for lack of a keyboard.
-1. **Install**: `python3` and `python3-websockets` come from `apt` (no virtual environment); Tailscale (`tailscale up`); publication with `tailscale funnel --bg 8765`. The origin of the page (`https://NOMDUSITE.github.io`) is declared in the VM's `presence_creators.json` (`--creators` option, no `--origins`).
+1. **Install**: `python3`, `python3-websockets` and `tmux` come from `apt` (no virtual environment); Tailscale (`tailscale up`); publication with `tailscale funnel --bg 8765`. The origin of the page (`https://NOMDUSITE.github.io`) is declared in the VM's `presence_creators.json` (`--creators` option, no `--origins`).
 2. **Server options**: `--host 127.0.0.1 --port 8765 --proxy-header X-Forwarded-For --log presence.log --log-ip raw --log-days 0 --history-file chat.jsonl --history-days 0 --visits visits.jsonl --creators presence_creators.json`. The author's choice: `--log-ip raw` and no time limit (strangers' IP addresses and messages are personal data, see "Keep in mind"; the server's defaults: `--log-ip hash` and 30 days).
 3. **Start-up**: a systemd unit (`web3d-presence.service`, `Type=forking`, `Restart=always`, `RestartSec=5`) starts a `tmux` session named `presence` that runs a `lance_presence.sh` script. That script is a loop that restarts `presence_server.py` 5 seconds after it stops. The server thus keeps its console in the `tmux` session.
+
+`lance_presence.sh`, in the server's folder (here `/home/UTILISATEUR/presence`, next to `presence_server.py`), made executable with `chmod +x lance_presence.sh`:
+
+```bash
+#!/bin/bash
+# Lance le serveur de presence dans une boucle : s'il s'arrete, il repart apres 5 secondes.
+# A ranger dans le dossier du serveur (a cote de presence_server.py), rendre executable : chmod +x lance_presence.sh
+cd "$(dirname "$0")" || exit 1
+while true; do
+  python3 presence_server.py --host 127.0.0.1 --port 8765 --proxy-header X-Forwarded-For --log presence.log --log-ip raw --log-days 0 --history-file chat.jsonl --history-days 0 --visits visits.jsonl --creators presence_creators.json
+  echo "Serveur arrete (code $?). Relance dans 5 secondes (pour l'arreter pour de bon : systemctl stop web3d-presence)."
+  sleep 5
+done
+```
+
+`/etc/systemd/system/web3d-presence.service` (replace `UTILISATEUR` with the VM's user):
+
+```
+[Unit]
+Description=Web 3d presence server (console dans tmux)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=forking
+Restart=always
+RestartSec=5
+User=UTILISATEUR
+WorkingDirectory=/home/UTILISATEUR/presence
+ExecStart=/usr/bin/tmux new-session -d -s presence /home/UTILISATEUR/presence/lance_presence.sh
+ExecStop=/usr/bin/tmux kill-session -t presence
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Then `systemctl daemon-reload` and `systemctl enable --now web3d-presence`. These are the copies of the two files of the author's VM.
+
 4. **Console**: under the VM's user (not `root`), `tmux attach -t presence`; from the PC, `ssh -t UTILISATEUR@ADRESSE_VM "tmux attach -t presence"` (copy and paste work); to leave without stopping the server: **Ctrl+B** then **D**; to stop it for good: `systemctl stop web3d-presence` (`root`).
 5. **Update the server** after a `python build.py` that changes `presence_server.py`: send the file from `dist\` with `scp`, then `systemctl restart web3d-presence`. The VM has **its own copy** of `presence_creators.json` and `presence_identities.json` (reserved names).
 6. **Tried on 29/10/2026**: `reboot` (the `presence` session and the Funnel publication come back by themselves); `tmux kill-server` (the service comes back within a few seconds); a visitor from outside, from a GitHub Pages page.
