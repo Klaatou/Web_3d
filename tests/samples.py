@@ -35,11 +35,14 @@ for nom in ("REFERENCE_OPTIONS.md", "README.md", "README.fr.md", "CLAUDE.md", "d
 rapport(not trouves, "aide, messages et documents : seulement les nouveaux noms (anciens cités uniquement comme anciens)", trouves[:10])
 
 print("--- 1. les fichiers se lisent")
-noms = sorted(p.name for p in SAMPLES.iterdir())
+noms = sorted(p.name for p in SAMPLES.iterdir() if ".sample." in p.name)
 attendus = ["chat_history.sample.jsonl", "default.sample.json", "disposition.sample.json", "presence_bans.sample.json", "presence_creators.sample.json",
             "presence_identities.sample.json", "presence_visits_keys.sample.json", "region.config.sample.json", "region.reglages.sample.json", "region.tiles.sample.json", "region.zones.sample.json",
             "regions.sample.json", "visits.sample.jsonl"]
 rapport(noms == attendus, "docs/samples/ contient les 13 exemples", noms)
+for lg in ("README.md", "README.fr.md"):
+    txt = (SAMPLES / lg).read_text(encoding="utf-8") if (SAMPLES / lg).is_file() else ""
+    rapport(bool(txt) and all(("`" + a + "`") in txt for a in attendus), "docs/samples/" + lg + " : présent, présente chacun des 13 exemples", [a for a in attendus if ("`" + a + "`") not in txt])
 for n in noms:
     try:
         if n.endswith(".jsonl"):

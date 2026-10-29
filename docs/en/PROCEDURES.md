@@ -1,6 +1,6 @@
 # How do I… (step-by-step procedures)
 
-*Written on 23/10/2026 for version v36. The commands are for PowerShell, on a single line, with the paths of your machine. The full list of options is in `REFERENCE_OPTIONS.md`; zones, keys and settings are described in detail in `MANUAL.md`.*
+*Written on 23/10/2026, revised on 29/10/2026 for version 1.0.0 (the "vNN" in the text are the versions before 1.0.0: v52 became 1.0.0). The commands are for PowerShell, on a single line, with the paths of your machine. The full list of options is in `REFERENCE_OPTIONS.md`; zones, keys and settings are described in detail in `MANUAL.md`.*
 
 **What was tried here:** the `glb2html` and `glb2tiles` commands (including `--update`, `--register`, `--map-page`) on test regions, as a single GLB and as tiles. **What was not:** converting an OAR with convoar (convoar is not available in the sandbox), and the PowerShell commands themselves (tried under Linux with equivalent paths).
 
@@ -65,13 +65,13 @@ Useful keys: `seaY` (sea level, in m), `target` (`[x, y, z]`), `presenceUrl`, `c
 
 1. **Apply the patch and build** (the conversation gives the exact lines, each on one line):
    `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d"; git pull; python .\patch_NOM.py; if ($LASTEXITCODE -eq 0) { python build.py }`
-   then the `git add …; git commit …; git push` line delivered with the patch, and, at the end of a batch, `git tag vNN; git push origin vNN`.
+   then the `git add …; git commit …; git push` line delivered with the patch, and, only when you decide on a release, `git tag v1.0.0; git push origin v1.0.0` (the number is the one in `VERSION`).
 2. **Copy the shell and the map** to the root of the site (`Sites\` layout, `MANUAL.md` § 29.8); the shell's `const LIB` line stays `./lib`:
    `Copy-Item "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist\index.html" "P:\_OpenSim\SL&OS\Web_3d\Sites\index.html"; Copy-Item "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist\carte.html" "P:\_OpenSim\SL&OS\Web_3d\Sites\carte.html"`
 3. **Update each region** with `--update` (the config and the zones are kept). Give the path of the root shell, otherwise a useless shell and `lib` are written in the region's folder:
    `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python .\glb2html.py --update -o "P:\_OpenSim\SL&OS\Web_3d\Sites\houses\NOM.html" --shared-shell "P:\_OpenSim\SL&OS\Web_3d\Sites\index.html"`
    Region alone in its folder (shell next to it): `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python .\glb2html.py --update --shared-shell -o "P:\dossier\X.html"`. The `index.html` shell is renewed if it is older (the old one is kept under a dated name).
-4. Reload the page with Ctrl+F5. The bottom line of the help panel gives the version displayed (for example "glb2html v50"): if it is old, the update did not happen.
+4. Reload the page with Ctrl+F5. The bottom line of the help panel gives the version displayed (for example "glb2html 1.0.0 (29/10/2026)"): if it is old, the update did not happen.
 5. **Restart the presence server** from `dist\` (procedure 6) after each new version: an old copy keeps working but lacks the new features (v47: map counters; v48: visit log).
 6. The tile split only needs to be redone if the conversation says so, for example for new information in the tiles.
 
@@ -95,10 +95,11 @@ The zones of a tiled region are written in the model's original frame (no recent
    Chat history (v37): the last 200 messages are replayed to newcomers (`--history`); `--history-file chat.jsonl` keeps it between two restarts (messages are personal data, never an IP address in this file), `--history-days N` (30; 0 = keep everything) limits what is read back at startup.
 3. **Open the port** (8765 by default, `--port` to change it) on the router, towards the machine running the server.
 4. **Connect the page**: `--presence-url "ws://ADRESSE:8765"` when building, or the `presenceUrl` key of `X.config.json`. If the page is served over https, the address must use `wss://` (see `--cert` and `--key`, or a reverse proxy with `--proxy-header`). If your pages are opened through several addresses (`localhost`, network, public name), use `ws://*:8765`: the star takes the name the page was opened with (manual § 34.10).
-5. **Moderate** in the server console: `list` (visitors), `kick <no.|name> [reason]`, `ban <no.|name> [minutes] [reason]` (0 = permanent), `bans`, `unban <no. in bans>`, `pseudos` (lists the reserved names), `oublier <pseudo>` (releases a reserved name), `help`.
+5. **Moderate** in the server console: `list` (visitors), `kick <no.|name> [reason]`, `ban <no.|name> [minutes] [reason]` (0 = permanent), `bans`, `unban <no. in bans>`, `pseudos` (lists the reserved names), `oublier <pseudo>` (releases a reserved name), `help`. A ban targets the visitor's key (if it is not anonymous) and their IP address: the exact IPv4 address, IPv6 by `/64` prefix (never a wider range).
 6. **Visit log** (v48): add `--visits visits.jsonl` to the start line; in the console, `rooms` lists the known rooms (exact case) and `visits-key ROOM` gives a room's key (shown only once). Send the creator their page address followed by `#visits` and the key (manual § 31).
 7. **Welcome a creator** (v51, manual § 34): add `--creators presence_creators.json` to the start line; in this file (copy of `docs\samples\presence_creators.sample.json`), keep an entry for yourself (`"prefix": ""`, your origins and `null`) and add theirs (`id`, origins of their pages). The creator sets `room` to `ID.NAME` (for example `alice.galerie`) and your `wss://` address in `presenceUrl` of their config. Check with `creators` in the console; key of their visits: `visits-key alice.galerie`; card on your map: `--register` without a glb (manual § 27.6).
 8. **Update**: stop the server (Ctrl+C) and run it again from the `presence_server.py` of the `dist` folder after `python build.py`. An old copy ignores new features (for example the chosen colour).
+9. **Permanent server on a VM**: a plain systemd service gives the moderation console no keyboard; the way that worked (a `tmux` session started by systemd) is described in § 11, "Debian 13 VM: permanent service with a moderation console".
 
 IP addresses and chat messages are personal data: inform your visitors and limit how long they are kept. The visit log never contains an IP address.
 
@@ -144,7 +145,7 @@ With a single region, the map brings nothing: it is used to link several regions
 
 For any bug report, paste the text of the status and help panels, and the console messages (ignoring those of LastPass).
 
-## 10. Useful keys and language (v36)
+## 10. Useful keys and language
 
 | Need | Action |
 |---|---|
@@ -157,6 +158,9 @@ For any bug report, paste the text of the status and help panels, and the consol
 | Tools language | `--lang fr` or `--lang en` on each tool, or the `WEB3D_LANG` environment variable; with nothing, the system language. PowerShell, for one session: `$env:WEB3D_LANG = "fr"` |
 | Copy my position | "Copy my position" button (URL / xyz list); "Go to" accepts the `#pos=…` URL and `x, y, z` |
 | Open or close the Settings | **O** key (toggle, like **H** and **I**) |
+| Mouse in walk mode | **G** toggles the capture (captures it if it is free, releases it if it is captured); the "Capture the mouse" button only captures; **Esc** releases it; a click never captures it |
+| Change the view | **V**: first person, third person, free camera; **M**: first / third person in walk mode, world map outside walk mode (**Ctrl+M**: map everywhere) |
+| Go back to the arrival point | **R** |
 | Compass (heading at the top of the page) | "Compass" box in the Settings; `--no-compass` to remove it from the build, `--north DEGRES` for a GLB that does not come from OpenSim |
 | Adjust the width of the help and information windows | drag their right edge (260 px to 70 % of the window), remembered |
 | Chat: older messages, unread, mentions | "Older messages" button (chat open), tab title "(3) Region", "N messages mention you"; "History messages kept in the chat" setting |
@@ -173,7 +177,7 @@ Details: `MANUAL.md` §§ 2, 21 and 22.
 
 ## 11. Making the presence server public without showing your IP address
 
-*Written on 24/10/2026, completed on 24/10/2026 (v45). **Tried on 24/10/2026**: Tailscale Funnel (way A), with a page served over `http` and a visitor outside the network. **Not tried**: Caddy (way B), Cloudflare Tunnel (way C), Tailscale inside a VM (way D: Apache, service and configuration lines tried in the design sandbox, but not Tailscale) and the commands of the case "another service is already published". Always check the result with the control of the final step ("Checking the address seen by the server").*
+*Written on 24/10/2026, completed on 29/10/2026. **Tried on 24/10/2026**: Tailscale Funnel (way A), with a page served over `http` and a visitor outside the network. **Tried on 29/10/2026**: way A on a Debian 13 VM, with a page published on GitHub Pages (https), a visitor outside the network, a restart of the VM and of the service (see "Debian 13 VM: permanent service with a moderation console"). **Not tried**: Caddy (way B), Cloudflare Tunnel (way C), way D with Apache under Tailscale (Apache, service and configuration lines tried in the design sandbox, but not Tailscale) and the commands of the case "another service is already published". Always check the result with the control of the final step ("Checking the address seen by the server").*
 
 **Principle.** A browser refuses a `ws://` connection from an https page: an https page therefore needs a presence address in `wss://NOM`. The visitor only connects to that `NOM`, never to your IP. A relay receives the `wss://` and passes it on as `ws://` to `presence_server.py`, which then only listens on `127.0.0.1` (hence without `--cert` or `--key`). Choose **one** of the four ways.
 
@@ -249,6 +253,22 @@ WantedBy=multi-user.target
 5. **Connect the page**: `--presence-url "wss://MACHINE.TAILNET.ts.net/presence"` (section "Connecting the pages"). The page is at `https://MACHINE.TAILNET.ts.net/`.
 6. **Check**: `tailscale funnel status` lists both paths; open the page from a phone where Tailscale is switched off; read `presence.log` (control of the final step) and Apache's log.
 
+### Debian 13 VM: permanent service with a moderation console (tried on 29/10/2026)
+Way A on a Debian 13 VM (VMware, NAT network), published through Tailscale Funnel, page published on GitHub Pages. The service must start by itself **and** keep the moderation console (typed commands), which a plain systemd service cannot offer for lack of a keyboard.
+1. **Install**: `python3` and `python3-websockets` come from `apt` (no virtual environment); Tailscale (`tailscale up`); publication with `tailscale funnel --bg 8765`. The origin of the page (`https://NOMDUSITE.github.io`) is declared in the VM's `presence_creators.json` (`--creators` option, no `--origins`).
+2. **Server options**: `--host 127.0.0.1 --port 8765 --proxy-header X-Forwarded-For --log presence.log --log-ip raw --log-days 0 --history-file chat.jsonl --history-days 0 --visits visits.jsonl --creators presence_creators.json`. The author's choice: `--log-ip raw` and no time limit (strangers' IP addresses and messages are personal data, see "Keep in mind"; the server's defaults: `--log-ip hash` and 30 days).
+3. **Start-up**: a systemd unit (`web3d-presence.service`, `Type=forking`, `Restart=always`, `RestartSec=5`) starts a `tmux` session named `presence` that runs a `lance_presence.sh` script. That script is a loop that restarts `presence_server.py` 5 seconds after it stops. The server thus keeps its console in the `tmux` session.
+4. **Console**: under the VM's user (not `root`), `tmux attach -t presence`; from the PC, `ssh -t UTILISATEUR@ADRESSE_VM "tmux attach -t presence"` (copy and paste work); to leave without stopping the server: **Ctrl+B** then **D**; to stop it for good: `systemctl stop web3d-presence` (`root`).
+5. **Update the server** after a `python build.py` that changes `presence_server.py`: send the file from `dist\` with `scp`, then `systemctl restart web3d-presence`. The VM has **its own copy** of `presence_creators.json` and `presence_identities.json` (reserved names).
+6. **Tried on 29/10/2026**: `reboot` (the `presence` session and the Funnel publication come back by themselves); `tmux kill-server` (the service comes back within a few seconds); a visitor from outside, from a GitHub Pages page.
+7. **Debian 13 pitfalls**:
+   - the `python` package no longer exists: `python3`;
+   - the `cdrom` line of `/etc/apt/sources.list` makes `apt-get update` fail (remove it with `sed`) and **blocks** `apt-get update && apt-get install`: do not chain them;
+   - `su` without the dash does not put `/usr/sbin` in the path (`usermod` not found): use `su -`;
+   - `sudo` is not installed by default;
+   - a service file **pasted** into the VM console was copied wrongly (no clipboard without the VMware extensions): sending it with `scp` is reliable.
+8. **Seen once, not explained**: the VM console screen went black and could not be recovered; restart through VMware. Cause not established; if it comes back, first try an `ssh` connection before restarting: if it answers, only the screen is at fault (hypothesis, not verified).
+
 ### Case: another service is already published (example: an LLM published by `tailscale serve` on port 443)
 Do not run `tailscale funnel` on port 443: it would replace that service. Funnel also accepts ports 8443 and 10000 (Tailscale documentation): publish the page and the presence under the same name on port 8443, and the existing service keeps 443. **Proposed commands, not tried** (`PORT_PAGE` is the local port of the server that serves the page):
 - `tailscale funnel --bg --https=8443 --set-path=/presence http://127.0.0.1:8765`
@@ -267,6 +287,6 @@ Open a page from a phone on 4G (not from your network, and with Tailscale switch
 ### To keep in mind
 - `--origins` restricts connections to the pages of your site; without it, any page can connect to your server. Several sites: a comma-separated list.
 - The existing limits stay active: `--max-per-ip` (10), `--max-per-room` (50), `--chat-burst`, messages of 4,096 bytes at most.
-- Hiding the IP protects the machine, not the service: abuse (messages, nicknames) is handled by moderation (section 6, step 5). Run as a system service, the server has no keyboard: how to moderate in that case has not been tried.
+- Hiding the IP protects the machine, not the service: abuse (messages, nicknames) is handled by moderation (section 6, step 5). Run as a plain system service, the server has no keyboard: the solution that was tried (a `tmux` session started by systemd) is described above.
 - The relay (Tailscale, Cloudflare) sees the decrypted traffic. Messages and addresses remain personal data: inform the visitors.
 - Always restart the server after `python build.py` (section 6, step 6).

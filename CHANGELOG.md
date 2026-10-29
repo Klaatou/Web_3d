@@ -2,7 +2,16 @@
 
 Les dates sont au format jj/mm/aaaa.
 
-## Non publié (après la v52)
+## Non publié (après la 1.0.0)
+
+*(rien pour l'instant)*
+
+## 1.0.0 (29/10/2026)
+### 29/10/2026 : numérotation 1.0.0, documents revus
+- **Numérotation** : la v52 devient la **1.0.0** (les étiquettes `v14` à `v52` restent). Schéma `X.Y.Z` (majeur.mineur.correctif) : une publication qui ajoute une fonction donne `1.1.0`, `1.2.0`... ; une publication de correctifs seuls donne `1.0.1` ; un changement qui casse l'existant (renommage sans alias, format de fichier incompatible) donne `2.0.0`. `VERSION` s'écrit `1.0.0 (29/10/2026)`, l'étiquette `v1.0.0`. `VERSION` et l'étiquette ne changent que lorsque Klaatou décide une publication ; les lots intermédiaires restent des entrées « Non publié ». Les noms de `patch_vNNx.py` et de `tests/vNN.py` ne changent pas. Manuel § 36.5.
+- **Numbering**: v52 becomes **1.0.0** (the `v14` to `v52` tags stay). `X.Y.Z` scheme (major.minor.patch): a release that adds a feature gives `1.1.0`, `1.2.0`...; a release of fixes only gives `1.0.1`; a change that breaks existing things (renaming without an alias, incompatible file format) gives `2.0.0`. `VERSION` is written `1.0.0 (29/10/2026)`, the tag `v1.0.0`. `VERSION` and the tag only change when Klaatou decides on a release; the intermediate batches stay "Unreleased" entries. The names of `patch_vNNx.py` and `tests/vNN.py` do not change. Manual § 36.5.
+- **Documents** : `PROCEDURES` (FR et EN) revues : en-tête, commande d'étiquette, exemple de version, touches G / V / M / R, bannissement (IPv4 exacte, IPv6 par `/64`), nouveau paragraphe « VM Debian 13 : service permanent avec console de modération » (essayé le 29/10/2026 : `reboot`, `tmux kill-server`) ; vue d'ensemble, titres du manuel, `CLAUDE.md` mis à jour ; nouveaux `docs/samples/README.fr.md` et `docs/samples/README.md` (présentation des 13 fichiers d'exemple, `tests/samples.py` les vérifie).
+- **Documents**: `PROCEDURES` (FR and EN) revised: header, tag command, version example, G / V / M / R keys, bans (exact IPv4, IPv6 by `/64`), new paragraph "Debian 13 VM: permanent service with a moderation console" (tried on 29/10/2026: `reboot`, `tmux kill-server`); overview, manual titles, `CLAUDE.md` updated; new `docs/samples/README.fr.md` and `docs/samples/README.md` (presentation of the 13 example files, checked by `tests/samples.py`).
 ### 29/10/2026 : commande `pseudos`
 - **Serveur de présence** : la commande de console `pseudos [filtre]` (alias `names`, `noms`) liste les pseudos réservés : pseudo tel qu'écrit, code `#XXXX` du propriétaire, dernière venue, date de libération automatique, « (connecté) » si le propriétaire est en ligne ; le filtre garde les pseudos qui contiennent un morceau de texte. Complète `oublier <pseudo>`. `tests/oublier.py` étendu. Manuel § 36.2. **Relancer le serveur de présence.** Demande de Klaatou.
 - **Presence server**: the `pseudos [filtre]` console command (aliases `names`, `noms`) lists the reserved names: name as written, owner's `#XXXX` code, last seen, automatic release date, "(connected)" if the owner is online; the filter keeps the names containing a piece of text. Completes `oublier <pseudo>`. `tests/oublier.py` extended. Manual § 36.2. **Restart the presence server.** Requested by Klaatou.

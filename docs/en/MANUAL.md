@@ -1,6 +1,6 @@
-# User manual: zones, portals and arrival points (v52)
+# User manual: zones, portals and arrival points (1.0.0)
 
-> **Summary (v52).** This file is the detailed user manual; it is not meant to be read from end to end. For **all the options** of the tools, with their effect and their default, in French and English: `REFERENCE_OPTIONS.md` (generated from the tools by `gen_reference.py`). To **do a task step by step** (OAR to page, tiled region, update, zones, presence server, map): `PROCEDURES.md`. Here: zones and portals (§§ 1 to 10), keys (§ 2), settings and their files (§§ 11 to 19) and the new features version by version (§§ 18 to 34; § 27 is the JSON file reference). Language of the page and of the tools: § 21.8 to 21.11.
+> **Summary (1.0.0).** This file is the detailed user manual; it is not meant to be read from end to end. For **all the options** of the tools, with their effect and their default, in French and English: `REFERENCE_OPTIONS.md` (generated from the tools by `gen_reference.py`). To **do a task step by step** (OAR to page, tiled region, update, zones, presence server, map): `PROCEDURES.md`. Here: zones and portals (§§ 1 to 10), keys (§ 2), settings and their files (§§ 11 to 19) and the new features version by version (§§ 18 to 34; § 27 is the JSON file reference). Language of the page and of the tools: § 21.8 to 21.11.
 
 ## 1. The rule that explains 90 % of failures
 
@@ -1908,7 +1908,7 @@ With `websockets` 14 and 15, an ordinary HTTP request on the server port (a brow
 
 The real sound (the test replaces `AudioContext`), Edge, Windows, a real phone, a tab kept in the background for a long time (the browser may slow its timers: not measured), the server load at 5 s. The renaming of § 35.6 was confirmed by Klaatou on his Houses region (25/10/2026).
 
-## 36. Additions since v52 (unreleased)
+## 36. Additions in 1.0.0 (after v52)
 
 ### 36.1 Page icon (`favicon.ico`)
 
@@ -1925,3 +1925,7 @@ A subscriber usually has several IPv6 addresses, which change: counting or banni
 ### 36.4 Presence connection attempts
 
 When the page cannot reach the presence server, it retries at increasing intervals (1.5 s, 3 s, 4.5 s, up to 15 s). It now **stops**: after **5 attempts** if the connection never opened (wrong address, server off, firewall), after **12** if it had opened and was then lost (server restart). The name box then says "attempts stopped: reload the page to try again". Switching to walking again makes one more attempt. The numbers are the `PRES_TRIES_NEVER` and `PRES_TRIES_LOST` constants in `core.js`.
+
+### 36.5 Version numbering
+
+From **1.0.0** on (v52 became 1.0.0), versions follow the `X.Y.Z` scheme (major.minor.patch). A release that adds a feature gives `1.1.0`, `1.2.0`...; a release of fixes only gives `1.0.1`; a change that breaks existing things (renaming without an alias, incompatible file format) gives `2.0.0`. The `VERSION` file is written `1.0.0 (29/10/2026)` and the Git tag `v1.0.0`. A release is **decided by the author**: the intermediate changes stay commits described under "Unreleased" in `CHANGELOG.md`. The `v14` to `v52` tags stay in the history; `tests/vNN.py` and `patch_vNNx.py` keep their names.

@@ -1,6 +1,6 @@
-# Mode d'emploi : zones, portails et points d'arrivée (v52)
+# Mode d'emploi : zones, portails et points d'arrivée (1.0.0)
 
-> **Résumé (v52).** Ce fichier est le mode d'emploi détaillé ; il ne se lit pas d'un bout à l'autre. Pour **toutes les options** des outils, avec leur effet et leur défaut en français et en anglais : `REFERENCE_OPTIONS.md` (générée depuis les outils par `gen_reference.py`). Pour **faire une tâche pas à pas** (OAR vers page, région en tuiles, mise à jour, zones, serveur de présence, carte) : `PROCEDURES.md`. Ici : les zones et les portails (§§ 1 à 10), les touches (§ 2), les réglages et leurs fichiers (§§ 11 à 19) et les nouveautés version par version (§§ 18 à 34 ; le § 27 est la référence des fichiers JSON). Langue de la page et des outils : § 21.8 à 21.11.
+> **Résumé (1.0.0).** Ce fichier est le mode d'emploi détaillé ; il ne se lit pas d'un bout à l'autre. Pour **toutes les options** des outils, avec leur effet et leur défaut en français et en anglais : `REFERENCE_OPTIONS.md` (générée depuis les outils par `gen_reference.py`). Pour **faire une tâche pas à pas** (OAR vers page, région en tuiles, mise à jour, zones, serveur de présence, carte) : `PROCEDURES.md`. Ici : les zones et les portails (§§ 1 à 10), les touches (§ 2), les réglages et leurs fichiers (§§ 11 à 19) et les nouveautés version par version (§§ 18 à 34 ; le § 27 est la référence des fichiers JSON). Langue de la page et des outils : § 21.8 à 21.11.
 
 ## 1. La règle qui explique 90 % des pannes
 
@@ -1908,7 +1908,7 @@ Avec `websockets` 14 et 15, une requête HTTP ordinaire sur le port du serveur (
 
 Le son réel (le test remplace `AudioContext`), Edge, Windows, un vrai téléphone, un onglet gardé longtemps en arrière-plan (le navigateur peut ralentir ses minuteries : non mesuré), la charge du serveur à 5 s. Le renommage de § 35.6 a été confirmé par Klaatou sur sa région Houses (25/10/2026).
 
-## 36. Ajouts depuis la v52 (non publié)
+## 36. Ajouts de la 1.0.0 (après la v52)
 
 ### 36.1 Icône des pages (`favicon.ico`)
 
@@ -1925,3 +1925,7 @@ Un abonné a en général plusieurs adresses IPv6, qui changent : compter ou ban
 ### 36.4 Essais de connexion à la présence
 
 Quand la page n'arrive pas à joindre le serveur de présence, elle réessaie à intervalles croissants (1,5 s, 3 s, 4,5 s, jusqu'à 15 s). Elle **s'arrête maintenant** : après **5 essais** si la connexion ne s'est jamais ouverte (adresse fausse, serveur éteint, pare-feu), après **12** si elle s'était ouverte puis a été perdue (redémarrage du serveur). La cartouche du pseudo dit alors « essais arrêtés : recharge la page pour réessayer ». Un nouveau passage en promenade refait un essai. Les nombres sont les constantes `PRES_TRIES_NEVER` et `PRES_TRIES_LOST` de `core.js`.
+
+### 36.5 Numérotation des versions
+
+À partir de la **1.0.0** (la v52 est devenue la 1.0.0), les versions suivent le schéma `X.Y.Z` (majeur.mineur.correctif). Une publication qui ajoute une fonction donne `1.1.0`, `1.2.0`... ; une publication de correctifs seuls donne `1.0.1` ; un changement qui casse l'existant (renommage sans alias, format de fichier incompatible) donne `2.0.0`. Le fichier `VERSION` s'écrit `1.0.0 (29/10/2026)` et l'étiquette Git `v1.0.0`. Une publication est **décidée par l'auteur** : les modifications intermédiaires restent des commits décrits sous « Non publié » dans `CHANGELOG.md`. Les étiquettes `v14` à `v52` restent dans l'historique ; `tests/vNN.py` et `patch_vNNx.py` gardent leurs noms.

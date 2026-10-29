@@ -16,7 +16,7 @@ Les règles de travail sont dans `REGLES.md`, fichier du Projet claude.ai (hors 
 - `build.py` : assemble le tout dans `dist/`. **Ne jamais éditer `dist/`** : modifier `src/` puis `python build.py`. Le texte de la coquille modulaire n'est écrit qu'une fois, dans `gen_tpl.py` (`build_shell`) : `build.py` charge le script fabriqué et en tire la coquille pour le viewer (export `.zip`), sans la recopier.
 - Contraintes de fabrication : les textes insérés dans des chaînes Python `r"""..."""` ne doivent contenir ni `"""` ni finir par `\` (build.py le vérifie). `__VERSION__` est remplacé partout, y compris dans `MAP_PAGE_TEMPLATE`.
 - Les clés de `cfg` doivent rester identiques entre l'export du viewer (JS) et celui du script (Python).
-- Version : fichier `VERSION` + `CHANGELOG.md` à chaque livraison.
+- Version : fichier `VERSION` (changé seulement à une publication, manuel § 36.5) ; `CHANGELOG.md` à chaque livraison.
 
 ## Décisions techniques acquises
 - Page exportée 100 % autonome par défaut : three.js r160, GLTFLoader, OrbitControls, Draco et Meshopt en `data:` dans l'importmap ; GLB en base64. Aucun réseau à l'ouverture, ouverture possible depuis le disque.
@@ -165,4 +165,4 @@ Tenue dans `REPRISE.md`. L'ancienne liste de cette section (jusqu'à la v37) se 
 - Le chemin de téléchargement de `build.py` (jsDelivr) reprend celui de `glb2html.py` ; il n'a pas pu être exercé dans l'environnement de conception (réseau limité) : utiliser `--vendor` en cas de doute.
 
 ## Livraison d'une version
-Règles 10 à 16 de `REGLES.md`. À chaque lot : `VERSION` (format `vNN (jj/mm/aaaa)`), une entrée par patch en tête de `CHANGELOG.md`, une ligne dans le tableau de `docs/fr/HISTORIQUE.md` et `docs/en/HISTORY.md`, `REPRISE.md` remplacé en entier ; fabriquer (`python build.py`) et lancer les tests avant de livrer ; étiquette en fin de lot : `git tag vNN; git push origin vNN`.
+Règles 10 à 16 de `REGLES.md`. À chaque lot : une entrée par patch en tête de `CHANGELOG.md` (section « Non publié »), une ligne dans le tableau de `docs/fr/HISTORIQUE.md` et `docs/en/HISTORY.md`, `REPRISE.md` remplacé en entier ; fabriquer (`python build.py`) et lancer les tests avant de livrer ; `VERSION` (format `X.Y.Z (jj/mm/aaaa)`) et étiquette (`git tag vX.Y.Z; git push origin vX.Y.Z`) seulement quand Klaatou décide une publication (manuel § 36.5).

@@ -1,6 +1,6 @@
 # Que faire pour… (procédures pas à pas)
 
-*Écrit le 23/10/2026 pour la version v36. Les commandes sont en PowerShell, sur une seule ligne, avec les chemins de ta machine. La liste complète des options est dans `REFERENCE_OPTIONS.md` ; le détail des zones, touches et réglages est dans `MANUEL.md`.*
+*Écrit le 23/10/2026, revu le 29/10/2026 pour la version 1.0.0 (les « vNN » du texte sont les versions d'avant la 1.0.0 : la v52 est devenue la 1.0.0). Les commandes sont en PowerShell, sur une seule ligne, avec les chemins de ta machine. La liste complète des options est dans `REFERENCE_OPTIONS.md` ; le détail des zones, touches et réglages est dans `MANUEL.md`.*
 
 **Ce qui a été essayé ici :** les commandes de `glb2html`, `glb2tiles` (y compris `--update`, `--register`, `--map-page`) sur des régions de test, un seul GLB et en tuiles. **Ce qui ne l'a pas été :** la conversion d'un OAR par convoar (convoar n'est pas disponible dans le bac à sable), et les commandes PowerShell elles-mêmes (essayées sous Linux avec des chemins équivalents).
 
@@ -65,13 +65,13 @@ Clés utiles : `seaY` (hauteur de la mer, en m), `target` (`[x, y, z]`), `presen
 
 1. **Appliquer le patch et fabriquer** (la conversation donne les lignes exactes, chacune sur une ligne) :
    `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d"; git pull; python .\patch_NOM.py; if ($LASTEXITCODE -eq 0) { python build.py }`
-   puis la ligne `git add …; git commit …; git push` livrée avec le patch, et, à la fin d'un lot, `git tag vNN; git push origin vNN`.
+   puis la ligne `git add …; git commit …; git push` livrée avec le patch, et, seulement quand tu décides une publication, `git tag v1.0.0; git push origin v1.0.0` (le numéro est celui de `VERSION`).
 2. **Copier la coquille et la carte** à la racine du site (organisation `Sites\`, `MANUEL.md` § 29.8) ; la ligne `const LIB` de la coquille reste `./lib` :
    `Copy-Item "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist\index.html" "P:\_OpenSim\SL&OS\Web_3d\Sites\index.html"; Copy-Item "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist\carte.html" "P:\_OpenSim\SL&OS\Web_3d\Sites\carte.html"`
 3. **Mettre à jour chaque région** avec `--update` (la config et les zones sont gardées). Donner le chemin de la coquille de la racine, sinon une coquille et un `lib` inutiles sont écrits dans le dossier de la région :
    `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python .\glb2html.py --update -o "P:\_OpenSim\SL&OS\Web_3d\Sites\houses\NOM.html" --shared-shell "P:\_OpenSim\SL&OS\Web_3d\Sites\index.html"`
    Région seule dans son dossier (coquille à côté d'elle) : `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python .\glb2html.py --update --shared-shell -o "P:\dossier\X.html"`. La coquille `index.html` est renouvelée si elle est plus ancienne (l'ancienne est gardée sous un nom daté).
-4. Recharger la page avec Ctrl+F5. La ligne du bas du panneau d'aide donne la version affichée (par exemple « glb2html v50 ») : si elle est ancienne, la mise à jour n'a pas eu lieu.
+4. Recharger la page avec Ctrl+F5. La ligne du bas du panneau d'aide donne la version affichée (par exemple « glb2html 1.0.0 (29/10/2026) ») : si elle est ancienne, la mise à jour n'a pas eu lieu.
 5. **Relancer le serveur de présence** depuis `dist\` (procédure 6) après chaque nouvelle version : un ancien exemplaire continue de marcher mais n'a pas les nouveautés (v47 : compteurs de la carte ; v48 : journal des visites).
 6. Le découpage en tuiles n'est à refaire que si la conversation le dit, par exemple pour de nouvelles informations dans les tuiles.
 
@@ -95,10 +95,11 @@ Les zones d'une région en tuiles s'écrivent dans le repère d'origine du modè
    Historique du chat (v37) : 200 derniers messages rejoués aux nouveaux arrivants (`--history`) ; `--history-file chat.jsonl` le garde entre deux relances (messages = données personnelles, jamais d'adresse IP dans ce fichier), `--history-days N` (30 ; 0 = tout conserver) limite la relecture au démarrage.
 3. **Ouvrir le port** (8765 par défaut, `--port` pour en changer) dans la box, vers la machine qui fait tourner le serveur.
 4. **Brancher la page** : `--presence-url "ws://ADRESSE:8765"` à la fabrication, ou la clé `presenceUrl` de `X.config.json`. Si la page est en https, l'adresse doit être en `wss://` (voir `--cert` et `--key`, ou un reverse proxy avec `--proxy-header`). Si tes pages sont ouvertes par plusieurs adresses (`localhost`, réseau, nom public), mets `ws://*:8765` : l'étoile prend le nom par lequel la page a été ouverte (manuel § 34.10).
-5. **Modérer** dans la console du serveur : `liste` (visiteurs), `ejecter <n°|nom> [raison]`, `bannir <n°|nom> [minutes] [raison]` (0 = définitif), `bans`, `debannir <n° de bans>`, `pseudos` (liste les pseudos réservés), `oublier <pseudo>` (libère un pseudo réservé), `aide`.
+5. **Modérer** dans la console du serveur : `liste` (visiteurs), `ejecter <n°|nom> [raison]`, `bannir <n°|nom> [minutes] [raison]` (0 = définitif), `bans`, `debannir <n° de bans>`, `pseudos` (liste les pseudos réservés), `oublier <pseudo>` (libère un pseudo réservé), `aide`. Un bannissement vise la clé du visiteur (si elle n'est pas anonyme) et son adresse IP : l'IPv4 exacte, l'IPv6 par préfixe `/64` (jamais une plage plus large).
 6. **Journal des visites** (v48) : ajoute `--visits visits.jsonl` à la ligne de lancement ; dans la console, `rooms` liste les salons connus (casse exacte) et `visits-key ROOM` donne la clé d'un salon (affichée une seule fois). Envoie au créateur l'adresse de sa page suivie de `#visits` et la clé (manuel § 31).
 7. **Accueillir un créateur** (v51, manuel § 34) : ajoute `--creators presence_creators.json` à la ligne de lancement ; dans ce fichier (copie de `docs\samples\presence_creators.sample.json`), garde une entrée pour toi (`"prefix": ""`, tes origines et `null`) et ajoute la sienne (`id`, origines de ses pages). Le créateur met `room` à `ID.NAME` (par exemple `alice.galerie`) et ton adresse `wss://` dans `presenceUrl` de sa config. Vérifie avec `creators` dans la console ; clé de ses visites : `visits-key alice.galerie` ; fiche sur ta carte : `--register` sans glb (manuel § 27.6).
 8. **Mettre à jour** : arrête le serveur (Ctrl+C) et relance-le depuis le `presence_server.py` du dossier `dist` après `python build.py`. Un ancien exemplaire ignore les nouveautés (par exemple la couleur choisie).
+9. **Serveur permanent sur une VM** : un service systemd seul ne donne pas de clavier à la console de modération ; la façon qui a marché (une session `tmux` lancée par systemd) est décrite au § 11, « VM Debian 13 : service permanent avec console de modération ».
 
 Les adresses IP et les messages du chat sont des données personnelles : informe tes visiteurs et limite la durée de conservation. Le journal des visites ne contient jamais d'adresse IP.
 
@@ -144,7 +145,7 @@ Avec une seule région, la carte n'apporte rien : elle sert à relier plusieurs 
 
 Pour tout rapport de bug, colle le texte du panneau d'état et d'aide, et les messages de la console (en ignorant ceux de LastPass).
 
-## 10. Touches utiles et langue (v36)
+## 10. Touches utiles et langue
 
 | Besoin | Geste |
 |---|---|
@@ -157,6 +158,9 @@ Pour tout rapport de bug, colle le texte du panneau d'état et d'aide, et les me
 | Langue des outils | `--lang fr` ou `--lang en` sur chaque outil, ou la variable d'environnement `WEB3D_LANG` ; sans rien, la langue du système. PowerShell, une session : `$env:WEB3D_LANG = "fr"` |
 | Copier ma position | bouton « Copier ma position » (liste URL / xyz) ; « Aller à » accepte l'URL `#pos=…` et `x, y, z` |
 | Ouvrir / fermer les Réglages | touche **O** (bascule, comme **H** et **I**) |
+| Souris en promenade | **G** bascule la capture (capture si elle est libre, la libère si elle est capturée) ; le bouton « Capturer la souris » ne fait que capturer ; **Échap** la libère ; un clic ne la capture jamais |
+| Changer de vue | **V** : subjective, troisième personne, caméra libre ; **M** : subjective / troisième personne en promenade, carte des mondes hors promenade (**Ctrl+M** : carte partout) |
+| Revenir au point d'arrivée | **R** |
 | Boussole (cap en haut de la page) | case « Boussole » des Réglages ; `--no-compass` pour la retirer de la fabrication, `--north DEGRES` pour un GLB qui ne vient pas d'OpenSim |
 | Régler la largeur de l'aide et des informations | tirer leur bord droit (260 px à 70 % de la fenêtre), mémorisé |
 | Chat : messages plus anciens, non lus, citations | bouton « Messages plus anciens » (chat ouvert), titre de l'onglet « (3) Région », « N messages vous citent » ; réglage « Messages d'historique affichés » |
@@ -173,7 +177,7 @@ Détail : `MANUEL.md` §§ 2, 21 et 22.
 
 ## 11. Rendre le serveur de présence public sans montrer son adresse IP
 
-*Rédigé le 24/10/2026, complété le 24/10/2026 (v45). **Essayé le 24/10/2026** : Tailscale Funnel (voie A), avec une page servie en `http` et un visiteur extérieur au réseau. **Non essayé** : Caddy (voie B), Cloudflare Tunnel (voie C), Tailscale dans une VM (voie D : Apache, service et lignes de configuration essayés dans le bac à sable de conception, mais pas Tailscale) et les commandes du cas « un autre service est déjà publié ». Vérifie toujours le résultat avec le contrôle de l'étape finale (« Contrôler l'adresse vue par le serveur »).*
+*Rédigé le 24/10/2026, complété le 29/10/2026. **Essayé le 24/10/2026** : Tailscale Funnel (voie A), avec une page servie en `http` et un visiteur extérieur au réseau. **Essayé le 29/10/2026** : la voie A sur une VM Debian 13, avec une page publiée sur GitHub Pages (https), un visiteur extérieur, le redémarrage de la VM et celui du service (voir « VM Debian 13 : service permanent avec console de modération »). **Non essayé** : Caddy (voie B), Cloudflare Tunnel (voie C), la voie D avec Apache sous Tailscale (Apache, service et lignes de configuration essayés dans le bac à sable de conception, mais pas Tailscale) et les commandes du cas « un autre service est déjà publié ». Vérifie toujours le résultat avec le contrôle de l'étape finale (« Contrôler l'adresse vue par le serveur »).*
 
 **Principe.** Un navigateur refuse une connexion `ws://` depuis une page en https : une page https demande donc une adresse de présence en `wss://NOM`. Le visiteur ne se connecte qu'à ce `NOM`, jamais à ton IP. Un relais reçoit le `wss://` et le transmet en `ws://` à `presence_server.py`, qui n'écoute alors que sur `127.0.0.1` (donc sans `--cert` ni `--key`). Choisis **une** des quatre voies.
 
@@ -249,6 +253,22 @@ WantedBy=multi-user.target
 5. **Brancher la page** : `--presence-url "wss://MACHINE.TAILNET.ts.net/presence"` (section « Brancher les pages »). La page est à `https://MACHINE.TAILNET.ts.net/`.
 6. **Vérifier** : `tailscale funnel status` liste les deux chemins ; ouvre la page depuis un téléphone où Tailscale est coupé ; lis `presence.log` (contrôle de l'étape finale) et le journal d'Apache.
 
+### VM Debian 13 : service permanent avec console de modération (essayé le 29/10/2026)
+Voie A sur une VM Debian 13 (VMware, réseau NAT), publication par Tailscale Funnel, page publiée sur GitHub Pages. Le service doit démarrer seul **et** garder la console de modération (commandes tapées), qu'un service systemd seul ne peut pas offrir faute de clavier.
+1. **Installer** : `python3` et `python3-websockets` viennent d'`apt` (pas d'environnement virtuel) ; Tailscale (`tailscale up`) ; publication par `tailscale funnel --bg 8765`. L'origine de la page (`https://NOMDUSITE.github.io`) est déclarée dans le `presence_creators.json` de la VM (option `--creators`, sans `--origins`).
+2. **Options du serveur** : `--host 127.0.0.1 --port 8765 --proxy-header X-Forwarded-For --log presence.log --log-ip raw --log-days 0 --history-file chat.jsonl --history-days 0 --visits visits.jsonl --creators presence_creators.json`. Choix de l'auteur : `--log-ip raw` et conservation sans limite (adresses IP et messages d'inconnus sont des données personnelles, voir « À garder en tête » ; défauts du serveur : `--log-ip hash` et 30 jours).
+3. **Démarrage** : une unité systemd (`web3d-presence.service`, `Type=forking`, `Restart=always`, `RestartSec=5`) lance une session `tmux` nommée `presence` qui exécute un script `lance_presence.sh`. Ce script est une boucle qui relance `presence_server.py` 5 secondes après son arrêt. Le serveur garde ainsi sa console dans la session `tmux`.
+4. **Console** : sous l'utilisateur de la VM (pas `root`), `tmux attach -t presence` ; depuis le PC, `ssh -t UTILISATEUR@ADRESSE_VM "tmux attach -t presence"` (le copier-coller marche) ; pour sortir sans arrêter le serveur : **Ctrl+B** puis **D** ; pour l'arrêter pour de bon : `systemctl stop web3d-presence` (`root`).
+5. **Mettre à jour le serveur** après un `python build.py` qui change `presence_server.py` : envoyer le fichier de `dist\` par `scp`, puis `systemctl restart web3d-presence`. La VM a **sa propre copie** de `presence_creators.json` et de `presence_identities.json` (pseudos réservés).
+6. **Essayé le 29/10/2026** : `reboot` (la session `presence` et la publication Funnel reviennent seules) ; `tmux kill-server` (le service revient en quelques secondes) ; un visiteur extérieur, depuis une page de GitHub Pages.
+7. **Pièges de Debian 13** :
+   - le paquet `python` n'existe plus : `python3` ;
+   - la ligne `cdrom` de `/etc/apt/sources.list` fait échouer `apt-get update` (la retirer avec `sed`) et **bloque** `apt-get update && apt-get install` : ne pas les enchaîner ;
+   - `su` sans le tiret ne met pas `/usr/sbin` dans le chemin (`usermod` introuvable) : utiliser `su -` ;
+   - `sudo` n'est pas installé par défaut ;
+   - un fichier de service **collé** dans la console de la VM a été mal recopié (pas de presse-papiers sans les extensions VMware) : l'envoyer par `scp` est fiable.
+8. **Constaté une fois, non expliqué** : l'écran de la console de la VM est passé au noir sans qu'on puisse la retrouver ; redémarrage par VMware. Cause non établie ; si cela revient, essaie d'abord une connexion `ssh` avant de redémarrer : si elle répond, seul l'écran est en cause (hypothèse, non vérifiée).
+
 ### Cas : un autre service est déjà publié (exemple : un LLM publié par `tailscale serve` sur le port 443)
 Ne lance pas `tailscale funnel` sur le port 443 : il remplacerait ce service. Funnel accepte aussi les ports 8443 et 10000 (documentation Tailscale) : publie la page et la présence sous le même nom sur le port 8443, le service existant garde le 443. **Commandes proposées, non essayées** (`PORT_PAGE` est le port local du serveur qui sert la page) :
 - `tailscale funnel --bg --https=8443 --set-path=/presence http://127.0.0.1:8765`
@@ -267,6 +287,6 @@ Ouvre une page depuis un téléphone en 4G (pas depuis ton réseau, et avec Tail
 ### À garder en tête
 - `--origins` limite les connexions aux pages de ton site ; sans lui, n'importe quelle page peut se brancher sur ton serveur. Plusieurs sites : une liste séparée par des virgules.
 - Les limites existantes restent actives : `--max-per-ip` (10), `--max-per-room` (50), `--chat-burst`, message de 4 096 octets au plus.
-- Cacher l'IP protège la machine, pas le service : un abus (messages, pseudos) se traite par la modération (section 6, étape 5). Lancé comme service système, le serveur n'a pas de clavier : comment modérer dans ce cas n'a pas été essayé.
+- Cacher l'IP protège la machine, pas le service : un abus (messages, pseudos) se traite par la modération (section 6, étape 5). Lancé comme simple service système, le serveur n'a pas de clavier : la solution essayée (une session `tmux` lancée par systemd) est décrite plus haut.
 - Le relais (Tailscale, Cloudflare) voit le trafic déchiffré. Les messages et les adresses restent des données personnelles : informe les visiteurs.
 - Relance toujours le serveur après `python build.py` (section 6, étape 6).

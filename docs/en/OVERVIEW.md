@@ -1,6 +1,6 @@
 # Web 3d: overview on one page
 
-*State on 25/10/2026, version v52.*
+*State on 29/10/2026, version 1.0.0.*
 
 An OpenSim region (`.oar` backup) becomes a **3D web page** you can walk around in, with nothing to install. Repository: `github.com/Klaatou/Web_3d` (MIT licence). This page says where things stand; the detail is in the manual, the technical state in `REPRISE.md`.
 
@@ -11,21 +11,20 @@ An OpenSim region (`.oar` backup) becomes a **3D web page** you can walk around 
 - **Being several**: the presence server (`presence_server.py`): avatars, chat, visit log, hosted creators (`--creators`), console moderation.
 - **Linking the worlds**: the world map (`regions.json`), the `carte.html` page with live visitors and the arrival alert (sound and marker), `--scan-sites` to build the list from the sites folder.
 - **Settings**: the Settings window (high resolution, light rendering, sea, sounds, window layout); French and English.
+- **Online demo**: `https://klaatou.github.io/Web_3d_demo/` (two regions linked by portals, world map, presence).
 
 ## 2. What has been tried, and what has not
 
-- **Tried**: Chromium (automatic tests), Edge and Klaatou's phone ("a bit crowded on a small screen, but it works"), the reference region of 1,024 x 1,024 m in 106 tiles.
-- **Not tried**: Firefox and Safari; route D (Linux VM, Tailscale Funnel, Apache); `wss://` behind Funnel; a creator from another origin; the real sound (the tests simulate it); a `carte.html` tab kept in the background for a long time.
+- **Tried**: Chromium (automatic tests), Edge and Klaatou's phone ("a bit crowded on a small screen, but it works"), the reference region of 1,024 x 1,024 m in 106 tiles, the latest batches (icon, mouse, G key, map, presence) on the online demo, the public presence server on a Debian 13 VM (Tailscale Funnel, page on GitHub Pages, visitor from outside, restarts of the VM and of the service).
+- **Not tried**: Firefox and Safari; Caddy and Cloudflare Tunnel (routes B and C); route D with Apache; `wss://` outside Funnel; a domain of one's own; the real sound (the tests simulate it); a `carte.html` tab kept in the background for a long time.
 
 ## 3. What is left to do
 
-1. **Test from the VM**: access through Tailscale, and a creator from another origin (`--creators`).
-2. **A note for the creators** hosted on the presence server, written after that test.
-3. **Mouse**: capture it only on purpose (button or G), removing the capture on click.
-4. **Public demo**: candidate region Hobbit (small, it opens by itself); configuration without an IP address; GitHub Pages does not run PHP.
-5. **Numbering**: move to `1.0.0` after the tests above (proposed, not decided).
-6. **GitHub release** with notes in English (to be decided).
-7. **Ideas**: show an image or a page on an object, play music when entering a zone (studied, not started); guest book (optional, can be external).
+1. **A note for the creators** hosted on the presence server (the test from a declared origin succeeded).
+2. **Domain name**: for the presentation site and for a stable name for the presence server.
+3. **Presentation page**: clickable GIF leading to the demo, a button to try it, contact, removal procedure, legal notices.
+4. **GitHub release** of 1.0.0, with notes in English.
+5. **Ideas**: media zones (music, image, page), exhibition images, guest book (optional, can be external); extract each building of a large OAR into a separate GLB to recompose regions.
 
 ## 4. Where to read what
 
