@@ -34,8 +34,10 @@ async def venir(u, name):
 
 
 def commande(c):
+    n = len(sortie_texte())
     proc.stdin.write(c + "\n"); proc.stdin.flush()
     time.sleep(0.8)
+    return sortie_texte()[n:]
 
 
 def sortie_texte():
@@ -43,6 +45,9 @@ def sortie_texte():
 
 
 async def main():
+    print("--- 0. pseudos : la liste est vide au depart")
+    r = commande("pseudos")
+    rapport("(aucun pseudo réservé)" in r, "aucun pseudo reserve : message", r)
     print("--- 1. un pseudo pris est refuse a un autre navigateur")
     wa, ma = await venir(uid(1), "Zoé Test")
     rapport(ma.get("name") == "Zoé Test", "le premier navigateur obtient le pseudo", ma.get("name"))
@@ -52,6 +57,15 @@ async def main():
     d = json.loads(reg.read_text(encoding="utf-8"))
     rapport("zoetest" in d["names"] and len(d["users"]) >= 1, "le registre contient le pseudo simplifie « zoetest »", list(d["names"]))
 
+    print("--- 1b. pseudos : la liste")
+    r = commande("pseudos")
+    rapport("pseudos réservés (1) :" in r and "Zoé Test" in r and "(connecté)" in r and "libre le" in r, "un pseudo reserve, son proprietaire connecte, date de liberation", r)
+    m = __import__("re").search(r"#([A-Z2-7]{4})", r)
+    rapport(bool(m), "le code #XXXX du proprietaire est affiche", r)
+    r = commande("pseudos zoe")
+    rapport("Zoé Test" in r, "filtre : « zoe » trouve « Zoé Test »", r)
+    r = commande("pseudos zzz")
+    rapport("aucun pseudo réservé ne correspond à « zzz »" in r, "filtre sans resultat : message", r)
     print("--- 2. oublier : messages")
     commande("oublier")
     rapport("usage : oublier" in sortie_texte(), "sans argument : l'usage s'affiche")

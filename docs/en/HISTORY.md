@@ -85,6 +85,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 29/10/2026 |  | after v52 | "3D" icon of the pages, replaceable by a `favicon.ico` next to the page (`src/favicon.ico`, `build.py`, manual § 36.1); `tests/icone.py` |
 | 29/10/2026 |  | after v52 | `carte.html`: the displayed address moves out of the card's link (selectable and copyable), zoom kept; `tests/v52.py`, `tests/v47.py` |
 | 29/10/2026 |  | after v52 | Presence server: IPv6 by `/64` prefix (limit and bans), `oublier <pseudo>` command; page: presence connection attempts stop; `tests/ipv6.py`, `tests/oublier.py`, `tests/essais_presence.py`; manual § 36.2 to 36.4 |
+| 29/10/2026 |  | after v52 | Presence server: `pseudos [filtre]` console command (list of the reserved names); `tests/oublier.py` |
 
 ## Useful commands
 

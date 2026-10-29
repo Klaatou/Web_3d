@@ -484,6 +484,17 @@ class Registry:
         self.save()
         return shown, owner
 
+    def listing(self, filt=""):
+        """pseudos reserves : liste de (pseudo tel qu'ecrit, empreinte du proprietaire, premiere venue, derniere venue), triee par pseudo ; filt : morceau du pseudo (simplifie)"""
+        f = norm_name(filt)
+        rows = []
+        for key, owner in self.names.items():
+            if f and f not in key:
+                continue
+            u = self.users.get(owner, {})
+            rows.append((u.get("name") or key, owner, u.get("first", 0), u.get("last", 0)))
+        return sorted(rows, key=lambda r: r[0].lower())
+
 
 # ----------------------------------------------------------------- créateurs (v51)
 CREATORS = None          # None : sans --creators (tout le monde est accepté) ; sinon la liste des créateurs valides du fichier
@@ -895,6 +906,18 @@ def fmt_until(u):
     return _tr("py.presence.definitif") if not u else time.strftime("%d/%m/%Y %H:%M", time.localtime(u))
 
 
+def names_command(filt):
+    """pseudos [filtre] : liste les pseudos reserves (proprietaire par son code #XXXX, derniere venue, expiration)"""
+    rows = REG.listing(filt)
+    if not rows:
+        print(_tr("py.presence.forget_none", filt.strip()) if filt.strip() else _tr("py.presence.names_none"))
+        return
+    online = {p.uidh for p in all_peers()}
+    print(_tr("py.presence.names_head", len(rows)))
+    for name, owner, first, last in rows:
+        print(_tr("py.presence.names_line", name.ljust(24), Registry.code(owner), fmt_until(last) if last else "?", fmt_until(last + REG.ttl) if last else "?", (" " + _tr("py.presence.names_online")) if owner in online else ""))
+
+
 def forget_command(name):
     """oublier <pseudo> : libere un pseudo reserve, sans arreter le serveur ni toucher au fichier du registre"""
     if not name.strip():
@@ -964,6 +987,8 @@ async def run_command(line):
             log(_tr("py.presence.ev.kick"), peer.room, peer.who(), reason)
             asyncio.create_task(kick_peer(peer, reason))
             print(_tr("py.presence.0_ejecte", peer.name or _tr('py.presence.spectator_paren')))
+    elif cmd in ("pseudos", "names", "noms"):
+        names_command(rest)
     elif cmd in ("oublier", "forget", "liberer", "libérer"):
         forget_command(rest)
     elif cmd in ("rooms", "salons"):

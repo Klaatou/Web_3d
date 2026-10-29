@@ -3,6 +3,9 @@
 Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la v52)
+### 29/10/2026 : commande `pseudos`
+- **Serveur de présence** : la commande de console `pseudos [filtre]` (alias `names`, `noms`) liste les pseudos réservés : pseudo tel qu'écrit, code `#XXXX` du propriétaire, dernière venue, date de libération automatique, « (connecté) » si le propriétaire est en ligne ; le filtre garde les pseudos qui contiennent un morceau de texte. Complète `oublier <pseudo>`. `tests/oublier.py` étendu. Manuel § 36.2. **Relancer le serveur de présence.** Demande de Klaatou.
+- **Presence server**: the `pseudos [filtre]` console command (aliases `names`, `noms`) lists the reserved names: name as written, owner's `#XXXX` code, last seen, automatic release date, "(connected)" if the owner is online; the filter keeps the names containing a piece of text. Completes `oublier <pseudo>`. `tests/oublier.py` extended. Manual § 36.2. **Restart the presence server.** Requested by Klaatou.
 ### 29/10/2026 : IPv6 par `/64`, commande `oublier`, arrêt des essais de connexion
 - **Serveur de présence, IPv6** : `--max-per-ip` et les bannissements (`bannir`) comptent maintenant l'IPv6 par préfixe `/64` (`ip_group`) : un abonné qui change la fin de son adresse ne les contourne plus. IPv4 inchangée ; une IPv4 écrite en IPv6 compte comme l'IPv4 ; un ancien bannissement garde son adresse exacte. La console et le journal gardent l'adresse complète. `tests/ipv6.py` (nouveau). Manuel § 36.3. **Relancer le serveur de présence.**
 - **Serveur de présence, commande `oublier <pseudo>`** : libère un pseudo réservé sans arrêter le serveur ni toucher à `presence_identities.json` (écrit au journal ; signale un propriétaire connecté). `tests/oublier.py` (nouveau). Manuel § 36.2.
