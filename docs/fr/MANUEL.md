@@ -1835,7 +1835,7 @@ La page affiche « présence refusée : » suivi de la raison, et ne réessaie p
 
 ### 34.5 Accueillir un créateur
 
-Procédures § 6, point 7.
+Procédures § 6, point 7. Note à remettre au créateur : `docs/fr/CREATEURS.md` (en anglais : `docs/en/CREATORS.md`).
 
 ### 34.6 Limites
 

@@ -4,6 +4,10 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.0.0)
 
+### 29/10/2026 : note pour les créateurs
+- **Documents** : nouvelle note `docs/fr/CREATEURS.md` (et `docs/en/CREATORS.md`) à remettre à un créateur accueilli sur un serveur de présence : origine à donner, préfixe de salon et `room`, `--presence-url`, refus affichés par la page, journal des visites, ce que le serveur enregistre (valeurs par défaut du code, puis choix du serveur de démonstration de Klaatou), ce que le créateur ne contrôle pas, ce qui a été essayé. Renvoi depuis le manuel § 34.5. Aucun changement de code ni de numéro de version.
+- **Documents**: new note `docs/en/CREATORS.md` (and `docs/fr/CREATEURS.md`) to give to a creator welcomed on a presence server: origin to give, room prefix and `room`, `--presence-url`, refusals shown by the page, visit log, what the server records (code defaults, then the choice of Klaatou's demo server), what the creator does not control, what was tried. Linked from manual § 34.5. No code change, no version number change.
+
 ### 29/10/2026 : alignement du fichier de service
 - **Documents** : `web3d-presence.service` (racine du dépôt) : `NOM_USER` devient `UTILISATEUR`, comme dans `PROCEDURES` § 11 et `REPRISE.md`. Aucun changement de code ni de numéro de version.
 - **Documents**: `web3d-presence.service` (repository root): `NOM_USER` becomes `UTILISATEUR`, as in `PROCEDURES` § 11 and `REPRISE.md`. No code change, no version number change.

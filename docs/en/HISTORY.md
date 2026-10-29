@@ -88,6 +88,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 29/10/2026 |  | after v52 | Presence server: `pseudos [filtre]` console command (list of the reserved names); `tests/oublier.py` |
 | 29/10/2026 |  | 1.0.0 | `1.0.0` numbering (v52 = 1.0.0, `X.Y.Z` scheme, manual § 36.5); `PROCEDURES` revised (Debian 13 VM: service and `tmux` console, texts of `lance_presence.sh` and of the unit); overview, manual, `CLAUDE.md`; `docs/samples/README.fr.md` and `README.md`; `tests/samples.py` |
 | 29/10/2026 |  | after 1.0.0 | `web3d-presence.service`: `NOM_USER` becomes `UTILISATEUR` (as `PROCEDURES` § 11) |
+| 29/10/2026 |  | after 1.0.0 | Note for creators welcomed on a presence server: `docs/fr/CREATEURS.md` and `docs/en/CREATORS.md` (manual § 34.5) |
 
 ## Useful commands
 

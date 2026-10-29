@@ -88,6 +88,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 29/10/2026 |  | après v52 | Serveur de présence : commande de console `pseudos [filtre]` (liste des pseudos réservés) ; `tests/oublier.py` |
 | 29/10/2026 |  | 1.0.0 | Numérotation `1.0.0` (v52 = 1.0.0, schéma `X.Y.Z`, manuel § 36.5) ; `PROCEDURES` revues (VM Debian 13 : service et console `tmux`, textes de `lance_presence.sh` et de l'unité) ; vue d'ensemble, manuel, `CLAUDE.md` ; `docs/samples/README.fr.md` et `README.md` ; `tests/samples.py` |
 | 29/10/2026 |  | après 1.0.0 | `web3d-presence.service` : `NOM_USER` devient `UTILISATEUR` (comme `PROCEDURES` § 11) |
+| 29/10/2026 |  | après 1.0.0 | Note pour les créateurs accueillis sur un serveur de présence : `docs/fr/CREATEURS.md` et `docs/en/CREATORS.md` (manuel § 34.5) |
 
 ## Commandes utiles
 

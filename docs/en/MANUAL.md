@@ -1835,7 +1835,7 @@ The page shows "presence refused:" followed by the reason, and does not retry (r
 
 ### 34.5 Welcoming a creator
 
-Procedures § 6, item 7.
+Procedures § 6, item 7. Note to give to the creator: `docs/en/CREATORS.md` (in French: `docs/fr/CREATEURS.md`).
 
 ### 34.6 Limits
 
