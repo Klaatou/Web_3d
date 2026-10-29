@@ -7,9 +7,9 @@ Wants=network-online.target
 Type=forking
 Restart=always
 RestartSec=5
-User=NOM_USER
-WorkingDirectory=/home/NOM_USER/presence
-ExecStart=/usr/bin/tmux new-session -d -s presence /home/NOM_USER/presence/lance_presence.sh
+User=UTILISATEUR
+WorkingDirectory=/home/UTILISATEUR/presence
+ExecStart=/usr/bin/tmux new-session -d -s presence /home/UTILISATEUR/presence/lance_presence.sh
 ExecStop=/usr/bin/tmux kill-session -t presence
 
 [Install]

@@ -4,7 +4,9 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.0.0)
 
-*(rien pour l'instant)*
+### 29/10/2026 : alignement du fichier de service
+- **Documents** : `web3d-presence.service` (racine du dépôt) : `NOM_USER` devient `UTILISATEUR`, comme dans `PROCEDURES` § 11 et `REPRISE.md`. Aucun changement de code ni de numéro de version.
+- **Documents**: `web3d-presence.service` (repository root): `NOM_USER` becomes `UTILISATEUR`, as in `PROCEDURES` § 11 and `REPRISE.md`. No code change, no version number change.
 
 ## 1.0.0 (29/10/2026)
 ### 29/10/2026 : numérotation 1.0.0, documents revus
