@@ -1907,3 +1907,9 @@ Avec `websockets` 14 et 15, une requête HTTP ordinaire sur le port du serveur (
 ### 35.8 Non testé
 
 Le son réel (le test remplace `AudioContext`), Edge, Windows, un vrai téléphone, un onglet gardé longtemps en arrière-plan (le navigateur peut ralentir ses minuteries : non mesuré), la charge du serveur à 5 s. Le renommage de § 35.6 a été confirmé par Klaatou sur sa région Houses (25/10/2026).
+
+## 36. Ajouts depuis la v52 (non publié)
+
+### 36.1 Icône des pages (`favicon.ico`)
+
+Les pages (coquille `index.html`, page autonome, `carte.html`, `glb-viewer.html`) portent une icône « 3D » (texte blanc sur fond bleu foncé) incorporée par défaut. **Pour la changer, place un fichier `favicon.ico` à côté de la page** : s'il existe, la page l'adopte, sans refaire aucune page. `python build.py` écrit un `favicon.ico` d'exemple dans `dist\` (quatre tailles : 16, 32, 48 et 64 px) ; copie-le avec `index.html`, puis remplace-le par le tien (un fichier ICO à plusieurs tailles donne le meilleur rendu). Sans ce fichier, la page garde l'icône incorporée, et le serveur web voit une demande `favicon.ico` sans réponse. Pour un site à coquille partagée (§ 29.8), un seul `favicon.ico` à côté de `index.html` suffit ; une page autonome rangée dans un autre dossier a besoin du sien à côté d'elle. Safari n'a pas été essayé.

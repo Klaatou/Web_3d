@@ -118,6 +118,7 @@ exec(compile(py, "glb2html.py", "exec"), gen.__dict__)
 shell = gen.build_shell()
 (OUT / "carte.html").write_bytes(gen.build_map_shell().encode("utf-8"))   # v47 : la page de carte universelle (lit regions.json à côté d'elle)
 (OUT / "index.html").write_bytes(shell.encode("utf-8"))   # v45 : la coquille prête (dossier lib : ./lib), identique octet pour octet à celle de glb2html.py ; à copier à la place de --update (la ligne « const LIB » est à reporter si le dossier lib est ailleurs)
+(OUT / "favicon.ico").write_bytes((SRC / "favicon.ico").read_bytes())   # icone par defaut des pages (a copier a cote de index.html ; la remplacer par la sienne change l'icone, sans refaire les pages)
 shell_modules, shell_draco = gen.shell_lib_files()
 shell_lib = {"dir": gen.LIB_REL, "modules": shell_modules, "draco": shell_draco}
 (OUT / "presence_server.py").write_text(inline_i18n_py((SRC / "presence_server.py").read_text(encoding="utf-8")).replace("__VERSION__", VERSION), encoding="utf-8")

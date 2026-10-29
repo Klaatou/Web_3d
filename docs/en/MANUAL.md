@@ -1907,3 +1907,9 @@ With `websockets` 14 and 15, an ordinary HTTP request on the server port (a brow
 ### 35.8 Not tested
 
 The real sound (the test replaces `AudioContext`), Edge, Windows, a real phone, a tab kept in the background for a long time (the browser may slow its timers: not measured), the server load at 5 s. The renaming of § 35.6 was confirmed by Klaatou on his Houses region (25/10/2026).
+
+## 36. Additions since v52 (unreleased)
+
+### 36.1 Page icon (`favicon.ico`)
+
+The pages (shell `index.html`, standalone page, `carte.html`, `glb-viewer.html`) carry a "3D" icon (white text on dark blue) embedded by default. **To change it, put a `favicon.ico` file next to the page**: if it exists, the page adopts it, without rebuilding any page. `python build.py` writes a sample `favicon.ico` in `dist\` (four sizes: 16, 32, 48 and 64 px); copy it with `index.html`, then replace it with yours (an ICO file with several sizes renders best). Without that file, the page keeps the embedded icon, and the web server sees an unanswered `favicon.ico` request. For a shared-shell site (§ 29.8), a single `favicon.ico` next to `index.html` is enough; a standalone page kept in another folder needs its own next to it. Safari was not tried.

@@ -263,6 +263,8 @@ MAP_PAGE_TEMPLATE = r"""<!DOCTYPE html>
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
+<link rel="icon" id="siteIcon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20rx='12'%20fill='%230b3d6e'/%3E%3Ctext%20x='32'%20y='45'%20font-family='Arial%2CHelvetica%2Csans-serif'%20font-size='34'%20font-weight='700'%20text-anchor='middle'%20fill='%23fff'%3E3D%3C/text%3E%3C/svg%3E"/>
+<script>(function () { var i = new Image(); i.onload = function () { var l = document.getElementById("siteIcon"); l.type = "image/x-icon"; l.href = "favicon.ico"; }; i.src = "favicon.ico"; })();</script>
 <title>__TITLE__</title>
 <style>
 [hidden]{display:none!important}

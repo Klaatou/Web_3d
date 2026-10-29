@@ -82,6 +82,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 28/10/2026 |  | après v52 | `carte.html` : case de surveillance cachée sans serveur de présence ; serveur de présence : requêtes illisibles (sondages RDP, TLS) en une ligne ; `tests/v52.py`, `tests/v52_http.py` |
 | 28/10/2026 |  | après v52 | Souris : un clic dans la vue ne la capture plus, seulement **G** ou le bouton « Capturer la souris » ; textes d'aide, manuel, `tests/v34.py` |
 | 28/10/2026 |  | après v52 | Souris : la touche **G** devient une bascule (capture / libère) ; le bouton ne fait que capturer ; textes d'aide, manuel, `tests/v34.py` |
+| 29/10/2026 |  | après v52 | Icône « 3D » des pages, remplaçable par un `favicon.ico` à côté de la page (`src/favicon.ico`, `build.py`, manuel § 36.1) ; `tests/icone.py` |
 
 ## Commandes utiles
 

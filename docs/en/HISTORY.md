@@ -82,6 +82,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 28/10/2026 |  | after v52 | `carte.html`: alert checkbox hidden without a presence server; presence server: unreadable requests (RDP, TLS probes) in one line; `tests/v52.py`, `tests/v52_http.py` |
 | 28/10/2026 |  | after v52 | Mouse: a click in the view no longer captures it, only **G** or the "Capture the mouse" button; help texts, manual, `tests/v34.py` |
 | 28/10/2026 |  | after v52 | Mouse: the **G** key becomes a toggle (capture / release); the button only captures; help texts, manual, `tests/v34.py` |
+| 29/10/2026 |  | after v52 | "3D" icon of the pages, replaceable by a `favicon.ico` next to the page (`src/favicon.ico`, `build.py`, manual § 36.1); `tests/icone.py` |
 
 ## Useful commands
 
