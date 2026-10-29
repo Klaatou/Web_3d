@@ -1462,10 +1462,11 @@ function createViewer(container, cfg0, loader) {
     }
     return u;
   })();
-  const P = { ws: null, id: null, peers: new Map(), last: 0, name: '', state: 'off', retry: 0, timer: 0, sent: [0, 0, 0, 0], myColor: null, serverColor: null, opened: false, closeCode: null, closeReason: '' };
+  const P = { ws: null, id: null, peers: new Map(), last: 0, name: '', state: 'off', retry: 0, timer: 0, sent: [0, 0, 0, 0], myColor: null, serverColor: null, opened: false, closeCode: null, closeReason: '', everOpened: false, stopped: false };
+  const PRES_TRIES_NEVER = 5, PRES_TRIES_LOST = 12;   // essais de connexion consecutifs avant d'arreter jusqu'au rechargement : jamais ouverte / ouverte puis perdue
   const r2 = v => Math.round(v * 100) / 100;
   const cleanName = s => String(s || '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 24);
-  function pStatus(state, reason) { P.state = state; if (onPresence) onPresence({ state, count: state === 'online' ? P.peers.size + (walking ? 1 : 0) : 0, spectator: !walking, reason: reason || '' }); }
+  function pStatus(state, reason, stopped) { P.state = state; if (onPresence) onPresence({ state, count: state === 'online' ? P.peers.size + (walking ? 1 : 0) : 0, spectator: !walking, reason: reason || '', stopped: !!stopped }); }
   function setMyName(n) { n = cleanName(n); if (!n) return; P.name = n; if (onName) onName(n); }
   function makeLabel(text) {
     const cv = document.createElement('canvas'); cv.width = 256; cv.height = 64;
@@ -1603,12 +1604,12 @@ function createViewer(container, cfg0, loader) {
   function presUrl(u) { return String(u || '').trim().replace(/^(wss?:\/\/)(\*|0\.0\.0\.0)(?=[:/]|$)/i, (m, p, h) => p + (h === '*' ? (location.hostname || '127.0.0.1') : '127.0.0.1')); }
   function presenceConnect() {
     if (!cfg.presenceUrl || P.ws) return;
-    P.blocked = false; P.opened = false; P.closeCode = null; P.closeReason = '';
+    P.blocked = false; P.opened = false; P.stopped = false; P.closeCode = null; P.closeReason = '';
     pStatus('connecting');
     let ws;
     try { ws = new WebSocket(presUrl(cfg.presenceUrl)); } catch (e) { pStatus('error', e && e.name === 'SecurityError' ? tr('core.pres.secerr') : tr('core.pres.never')); return; }
     P.ws = ws;
-    ws.onopen = () => { P.retry = 0; P.opened = true; { const h = { t: 'hello', room: cfg.room || cfg.roomDefault || '', name: P.name, uid, spectator: !walking }; if (P.myColor !== null) h.color = P.myColor; ws.send(JSON.stringify(h)); } };
+    ws.onopen = () => { P.retry = 0; P.opened = true; P.everOpened = true; { const h = { t: 'hello', room: cfg.room || cfg.roomDefault || '', name: P.name, uid, spectator: !walking }; if (P.myColor !== null) h.color = P.myColor; ws.send(JSON.stringify(h)); } };
     ws.onmessage = ev => { let m; try { m = JSON.parse(ev.data); } catch (_) { return; } presenceMsg(m); };
     ws.onerror = () => {};
     ws.onclose = ev => {
@@ -1617,7 +1618,12 @@ function createViewer(container, cfg0, loader) {
       P.closeCode = code; P.closeReason = why;
       P.ws = null; P.id = null; clearPeers();
       if (P.blocked) return;
-      if ((walking || spectateOn) && P.state !== 'full') { pStatus('error', P.opened ? tr('core.pres.closed', code === null ? '?' : code, why ? ' : ' + why : '') : tr('core.pres.never')); clearTimeout(P.timer); P.timer = setTimeout(presenceConnect, Math.min(15000, 1500 * (++P.retry))); }
+      if ((walking || spectateOn) && P.state !== 'full') {
+        const why2 = P.opened ? tr('core.pres.closed', code === null ? '?' : code, why ? ' : ' + why : '') : tr('core.pres.never');
+        clearTimeout(P.timer);
+        if (P.retry + 1 >= (P.everOpened ? PRES_TRIES_LOST : PRES_TRIES_NEVER)) { P.stopped = true; pStatus('error', why2, true); }   // essais arretes jusqu'au rechargement de la page (ou jusqu'a un nouveau passage en promenade)
+        else { pStatus('error', why2); P.timer = setTimeout(presenceConnect, Math.min(15000, 1500 * (++P.retry))); }
+      }
       else if (!walking) pStatus('off');
     };
   }
@@ -2275,7 +2281,7 @@ function createViewer(container, cfg0, loader) {
     },
     blinkBubble: blinkStart, blinkStop, get blinking() { return BL.on; }, set onBlink(f) { onBlink = f; }, set onBlinkEnd(f) { onBlinkEnd = f; },
     setName(n) { P.name = cleanName(n); if (P.ws && P.ws.readyState === 1) P.ws.send(JSON.stringify({ t: 'name', name: P.name })); },
-    getPresence() { return { state: P.state, id: P.id, opened: P.opened, closeCode: P.closeCode, closeReason: P.closeReason, peers: [...P.peers.values()].map(q => ({ id: q.id, name: q.name, pos: q.g.position.toArray(), visible: q.g.visible, bubble: !!q.bubble, bubbleVisible: !!q.bubble && q.bubble.visible, labelVisible: (q.g.children.find(o => o.isSprite && !o.userData.isBubble) || { visible: null }).visible, blinking: !!q.blink, blinkHidden: q.blinkHidden || 0, color: q.color, stack: avatarStack(q) })) }; }, get walking() { return walking; },
+    getPresence() { return { state: P.state, id: P.id, opened: P.opened, stopped: P.stopped, tries: P.retry, closeCode: P.closeCode, closeReason: P.closeReason, peers: [...P.peers.values()].map(q => ({ id: q.id, name: q.name, pos: q.g.position.toArray(), visible: q.g.visible, bubble: !!q.bubble, bubbleVisible: !!q.bubble && q.bubble.visible, labelVisible: (q.g.children.find(o => o.isSprite && !o.userData.isBubble) || { visible: null }).visible, blinking: !!q.blink, blinkHidden: q.blinkHidden || 0, color: q.color, stack: avatarStack(q) })) }; }, get walking() { return walking; },
     walkTick(dt) { if (walking) walkStep(dt); },
     refreshCollision() { if (TL.on) { for (const t of TL.tiles) if (t.state === 'ready' && t.grp) { t.state = 'building'; t.grid = null; t.gen = collisionGridSteps(t.grp, 3, parseIgnore(cfg.walkIgnore)); t.qAt = performance.now(); t.qFirst = true; t.gridCpu = 0; TL.gridQ.push(t); } } else if (walking && model) W.grid = buildCollisionGrid(model, 3, parseIgnore(cfg.walkIgnore)); },
     teleportNdc(nx, ny) { return walkTeleport(nx, ny); },

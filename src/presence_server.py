@@ -38,6 +38,7 @@ import collections
 import colorsys
 import hashlib
 import hmac
+import ipaddress
 import json
 import logging
 import logging.handlers
@@ -344,6 +345,20 @@ class EmptyConnFilter(logging.Filter):
         return False
 
 
+def ip_group(ip):
+    """cle de regroupement d'une adresse pour la limite par adresse et les bannissements : l'IPv4 telle quelle, l'IPv6 ramenee a son prefixe /64.
+    Un abonne a plusieurs adresses IPv6 qui changent : compter ou bannir l'adresse exacte se contournait en changeant la fin de l'adresse."""
+    try:
+        a = ipaddress.ip_address(str(ip).split("%")[0])
+    except ValueError:
+        return ip
+    if a.version == 6:
+        if a.ipv4_mapped is not None:
+            return str(a.ipv4_mapped)
+        return str(ipaddress.ip_network((a, 64), strict=False))
+    return str(a)
+
+
 def ip_for_log(ip):
     if OPTS.log_ip == "raw":
         return ip
@@ -455,6 +470,19 @@ class Registry:
             self.save()
             return base, True
         return base[:18] + suffix, False
+
+    def forget(self, name):
+        """commande « oublier » : libere un pseudo reserve. Renvoie (pseudo tel qu'ecrit, empreinte du proprietaire) ou None s'il n'est pas reserve."""
+        key = norm_name(name)
+        owner = self.names.get(key) if key else None
+        if not owner:
+            return None
+        shown = self.users.get(owner, {}).get("name") or str(name).strip()
+        self.names.pop(key, None)
+        self.users.pop(owner, None)
+        self.dirty = True
+        self.save()
+        return shown, owner
 
 
 # ----------------------------------------------------------------- créateurs (v51)
@@ -739,8 +767,9 @@ def visits_answer(ip, msg):
     if not OPTS.visits:
         return {"t": "visits", "ok": False, "why": "off"}
     now = time.time()
-    tries = [x for x in VTRY.get(ip, []) if now - x < 60]
-    VTRY[ip] = tries
+    ipk = ip_group(ip)
+    tries = [x for x in VTRY.get(ipk, []) if now - x < 60]
+    VTRY[ipk] = tries
     if len(tries) >= 5:
         log(_tr("py.presence.ev.visits"), room, f"ip {ip_for_log(ip)}", _tr("py.presence.visits.rate"))
         return {"t": "visits", "ok": False, "why": "rate"}
@@ -836,9 +865,9 @@ def is_banned(uidh, ip):
         for e in gone:
             BANS.remove(e)
         bans_save()
-    iph = REG.hash("ip:" + ip)
+    iph = {REG.hash("ip:" + ip), REG.hash("ip:" + ip_group(ip))}      # l'adresse exacte (anciens bannissements) ou son groupe (IPv6 : prefixe /64)
     for e in BANS:
-        if (e.get("key") and e["key"] == uidh) or e.get("ip") == iph:
+        if (e.get("key") and e["key"] == uidh) or e.get("ip") in iph:
             return e
     return None
 
@@ -864,6 +893,21 @@ async def kick_peer(peer, reason, banned=False):
 
 def fmt_until(u):
     return _tr("py.presence.definitif") if not u else time.strftime("%d/%m/%Y %H:%M", time.localtime(u))
+
+
+def forget_command(name):
+    """oublier <pseudo> : libere un pseudo reserve, sans arreter le serveur ni toucher au fichier du registre"""
+    if not name.strip():
+        print(_tr("py.presence.usage_forget"))
+        return
+    r = REG.forget(name)
+    if not r:
+        print(_tr("py.presence.forget_none", name.strip()))
+        return
+    shown, owner = r
+    online = any(p.uidh == owner for p in all_peers())
+    log(_tr("py.presence.ev.forget"), "-", shown, _tr("py.presence.forget_logged", Registry.code(owner)))
+    print(_tr("py.presence.forget_done", shown) + ((" " + _tr("py.presence.forget_online")) if online else ""))
 
 
 HELP = _tr("py.presence.commandes_tape_les_ici_puis_entree")
@@ -910,7 +954,7 @@ async def run_command(line):
         reason = tail or (_tr("py.presence.comportement_inapproprie") if ban else _tr("py.presence.ejecte_par_l_hote"))
         if ban:
             until = 0 if minutes <= 0 else time.time() + minutes * 60
-            BANS.append({"key": "" if peer.uidh.startswith("anon-") else peer.uidh, "ip": REG.hash("ip:" + peer.ip), "until": until,
+            BANS.append({"key": "" if peer.uidh.startswith("anon-") else peer.uidh, "ip": REG.hash("ip:" + ip_group(peer.ip)), "until": until,
                          "name": peer.name or _tr("py.presence.spectator_paren"), "reason": reason, "added": time.time()})
             bans_save()
             log(_tr("py.presence.ev.ban"), peer.room, peer.who(), f"{fmt_until(until)} : {reason}")
@@ -920,6 +964,8 @@ async def run_command(line):
             log(_tr("py.presence.ev.kick"), peer.room, peer.who(), reason)
             asyncio.create_task(kick_peer(peer, reason))
             print(_tr("py.presence.0_ejecte", peer.name or _tr('py.presence.spectator_paren')))
+    elif cmd in ("oublier", "forget", "liberer", "libérer"):
+        forget_command(rest)
     elif cmd in ("rooms", "salons"):
         rooms_command()
     elif cmd in ("creators", "createurs", "créateurs"):
@@ -1028,17 +1074,18 @@ async def handler(ws):
     global NEXT_ID
     peer, room, counted = None, None, False
     ip = remote_ip(ws)
+    ipk = ip_group(ip)      # limite par adresse : l'IPv6 compte par prefixe /64
     try:
         eb = is_banned("", ip)
         if eb:
             await ws.send(json.dumps({"t": "banned", "reason": eb.get("reason", ""), "until": eb.get("until", 0)}))
             log(_tr("py.presence.ev.refuse"), "-", f"ip {ip_for_log(ip)}", _tr("py.presence.ban_ip"))
             return
-        if PER_IP.get(ip, 0) >= OPTS.max_per_ip:
+        if PER_IP.get(ipk, 0) >= OPTS.max_per_ip:
             await ws.send(json.dumps({"t": "full"}))
             log(_tr("py.presence.ev.refuse"), "-", f"ip {ip_for_log(ip)}", _tr("py.presence.limite_de_connexions_par_ip"))
             return
-        PER_IP[ip] = PER_IP.get(ip, 0) + 1
+        PER_IP[ipk] = PER_IP.get(ipk, 0) + 1
         counted = True
         cr = None
         if OPTS.creators:      # v51 : la page doit venir d'une origine déclarée par un créateur actif
@@ -1203,10 +1250,10 @@ async def handler(ws):
                 del ROOMS[room]
                 if not OPTS.history_file:
                     HISTORY.pop(room, None)
-        if counted and PER_IP.get(ip):
-            PER_IP[ip] -= 1
-            if PER_IP[ip] <= 0:
-                del PER_IP[ip]
+        if counted and PER_IP.get(ipk):
+            PER_IP[ipk] -= 1
+            if PER_IP[ipk] <= 0:
+                del PER_IP[ipk]
 
 
 async def flush_loop():

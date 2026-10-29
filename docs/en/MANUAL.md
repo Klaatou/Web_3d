@@ -1457,7 +1457,7 @@ Written by Settings, "Save" ("Window layout" section), read by "Load" (§ 25).
 
 The server writes them itself; edit them by hand only with the server stopped. "Hashed" values are fingerprints: the original key or IP address cannot be recovered, which protects the visitors. The fingerprints in the samples are made up and match nobody.
 
-**`presence_identities.json`** (`--identities` option): the reserved nicknames.
+**`presence_identities.json`** (`--identities` option): the reserved nicknames (the `oublier <pseudo>` console command releases one without touching the file, § 36.2).
 
 | Field   | Type   | What it contains                                                                                                                                                                                               |
 | ------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -1913,3 +1913,15 @@ The real sound (the test replaces `AudioContext`), Edge, Windows, a real phone, 
 ### 36.1 Page icon (`favicon.ico`)
 
 The pages (shell `index.html`, standalone page, `carte.html`, `glb-viewer.html`) carry a "3D" icon (white text on dark blue) embedded by default. **To change it, put a `favicon.ico` file next to the page**: if it exists, the page adopts it, without rebuilding any page. `python build.py` writes a sample `favicon.ico` in `dist\` (four sizes: 16, 32, 48 and 64 px); copy it with `index.html`, then replace it with yours (an ICO file with several sizes renders best). Without that file, the page keeps the embedded icon, and the web server sees an unanswered `favicon.ico` request. For a shared-shell site (§ 29.8), a single `favicon.ico` next to `index.html` is enough; a standalone page kept in another folder needs its own next to it. Safari was not tried.
+
+### 36.2 Names: the `oublier` command
+
+A name is reserved by the first browser that takes it (`presence_identities.json` file); another browser that asks for it gets the name followed by `#XXXX`. To **release** a name without stopping the server or touching the file, type in the server console: `oublier <pseudo>` (case, accents and spaces do not matter: "Zoé Test" and "zoetest" are the same name). The owner loses the reservation; the first browser that asks for the name afterwards gets it. If the owner is connected, the console says so: their displayed name does not change before their next connection. The operation is written to the log ("name released", with the `#XXXX` code of the former owner). An owner who changes browser gets their name back with "Copy my personal link" (Settings) from the old browser.
+
+### 36.3 IPv6 addresses: limit and bans per `/64` prefix
+
+A subscriber usually has several IPv6 addresses, which change: counting or banning the exact address could be dodged by changing the end of the address. **`--max-per-ip` and `bannir` now count IPv6 by `/64` prefix** (the first 64 bits, the subscriber's network); IPv4 is unchanged, and an IPv4 written as IPv6 (`::ffff:1.2.3.4`) counts as the IPv4. The console and the log still show the full address (according to `--log-ip`). A ban made before this change stays valid for the exact address it targeted; a new one covers the whole prefix. A network that shares one `/64` between several people counts as a single visitor: raise `--max-per-ip` if needed.
+
+### 36.4 Presence connection attempts
+
+When the page cannot reach the presence server, it retries at increasing intervals (1.5 s, 3 s, 4.5 s, up to 15 s). It now **stops**: after **5 attempts** if the connection never opened (wrong address, server off, firewall), after **12** if it had opened and was then lost (server restart). The name box then says "attempts stopped: reload the page to try again". Switching to walking again makes one more attempt. The numbers are the `PRES_TRIES_NEVER` and `PRES_TRIES_LOST` constants in `core.js`.

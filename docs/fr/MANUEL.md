@@ -1457,7 +1457,7 @@ Les cinq réglages de `cfg` propres au viewer : `pixelScale`, `fpsMax` et `ovOnl
 
 Le serveur les écrit lui-même ; on ne les modifie à la main que serveur arrêté. Les valeurs « hachées » sont des empreintes : on ne peut pas retrouver la clé ou l'adresse IP d'origine, ce qui protège les visiteurs. Les empreintes des exemples sont fabriquées et ne correspondent à personne.
 
-**`presence_identities.json`** (option `--identities`) : les pseudos réservés.
+**`presence_identities.json`** (option `--identities`) : les pseudos réservés (la commande de console `oublier <pseudo>` en libère un sans toucher au fichier, § 36.2).
 
 | Champ   | Type  | Ce qu'il contient                                                                                                                                                                                                            |
 | ------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -1913,3 +1913,15 @@ Le son réel (le test remplace `AudioContext`), Edge, Windows, un vrai télépho
 ### 36.1 Icône des pages (`favicon.ico`)
 
 Les pages (coquille `index.html`, page autonome, `carte.html`, `glb-viewer.html`) portent une icône « 3D » (texte blanc sur fond bleu foncé) incorporée par défaut. **Pour la changer, place un fichier `favicon.ico` à côté de la page** : s'il existe, la page l'adopte, sans refaire aucune page. `python build.py` écrit un `favicon.ico` d'exemple dans `dist\` (quatre tailles : 16, 32, 48 et 64 px) ; copie-le avec `index.html`, puis remplace-le par le tien (un fichier ICO à plusieurs tailles donne le meilleur rendu). Sans ce fichier, la page garde l'icône incorporée, et le serveur web voit une demande `favicon.ico` sans réponse. Pour un site à coquille partagée (§ 29.8), un seul `favicon.ico` à côté de `index.html` suffit ; une page autonome rangée dans un autre dossier a besoin du sien à côté d'elle. Safari n'a pas été essayé.
+
+### 36.2 Pseudos : la commande `oublier`
+
+Un pseudo est réservé par le premier navigateur qui le prend (fichier `presence_identities.json`) ; un autre navigateur qui le demande reçoit le pseudo suivi de `#XXXX`. Pour **libérer** un pseudo sans arrêter le serveur ni toucher au fichier, tape dans la console du serveur : `oublier <pseudo>` (casse, accents et espaces sans importance : « Zoé Test » et « zoetest » désignent le même pseudo). Le propriétaire perd la réservation ; le premier navigateur qui demande ensuite ce pseudo l'obtient. S'il est connecté, la console le signale : son nom affiché ne change pas avant sa prochaine connexion. L'opération est inscrite au journal (« pseudo libéré », avec le code `#XXXX` de l'ancien propriétaire). Un propriétaire qui change de navigateur retrouve son pseudo avec « Copier mon lien personnel » (Réglages) depuis l'ancien navigateur.
+
+### 36.3 Adresses IPv6 : limite et bannissements par préfixe `/64`
+
+Un abonné a en général plusieurs adresses IPv6, qui changent : compter ou bannir l'adresse exacte se contournait en changeant la fin de l'adresse. **`--max-per-ip` et `bannir` comptent maintenant l'IPv6 par préfixe `/64`** (les 64 premiers bits, le réseau de l'abonné) ; l'IPv4 est inchangée, et une IPv4 écrite en IPv6 (`::ffff:1.2.3.4`) compte comme l'IPv4. La console et le journal montrent toujours l'adresse complète (selon `--log-ip`). Un bannissement fait avant ce changement reste valable pour l'adresse exacte visée ; un nouveau couvre tout le préfixe. Un réseau qui partage un même `/64` entre plusieurs personnes compte pour un seul visiteur : relève `--max-per-ip` si besoin.
+
+### 36.4 Essais de connexion à la présence
+
+Quand la page n'arrive pas à joindre le serveur de présence, elle réessaie à intervalles croissants (1,5 s, 3 s, 4,5 s, jusqu'à 15 s). Elle **s'arrête maintenant** : après **5 essais** si la connexion ne s'est jamais ouverte (adresse fausse, serveur éteint, pare-feu), après **12** si elle s'était ouverte puis a été perdue (redémarrage du serveur). La cartouche du pseudo dit alors « essais arrêtés : recharge la page pour réessayer ». Un nouveau passage en promenade refait un essai. Les nombres sont les constantes `PRES_TRIES_NEVER` et `PRES_TRIES_LOST` de `core.js`.
