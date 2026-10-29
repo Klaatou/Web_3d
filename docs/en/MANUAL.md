@@ -1678,7 +1678,7 @@ Under the name, one line of text (never colour alone): "3 visitors · 1 walker" 
 
 ### 30.2 Optional address
 
-The address under each tile is **hidden by default**. It is shown if `showUrl` is `true` in the header of `regions.json` (§ 27.6), or if the visitor ticks the "Show addresses" checkbox at the top of the map page (next to the nickname). The visitor's choice is kept by their browser and wins over the file. An invalid address keeps its "(invalid address)" message.
+The address under each tile is **hidden by default**. It is shown if `showUrl` is `true` in the header of `regions.json` (§ 27.6), or if the visitor ticks the "Show addresses" checkbox at the top of the map page (next to the nickname). The visitor's choice is kept by their browser and wins over the file. An invalid address keeps its "(invalid address)" message. The address is shown under the card, **outside the link**: it can be selected with the mouse and copied (after v52; inside a link, a click-drag does not select the text), and the hover zoom stays on the card. The grid is only redrawn when the data changed, and never while text in the grid is selected (the counts wait for the selection to end).
 
 ### 30.3 `regions.json` with a header
 

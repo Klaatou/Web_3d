@@ -276,7 +276,8 @@ h1{font-size:20px;margin:0 0 4px}
 a.tile:hover{background:#eee}
 .tile img,.tile .ph{width:100%;aspect-ratio:1;object-fit:cover;background:#ccc;border:1px solid #000;display:block}
 .tile b{word-break:break-word}
-.tile small{font-size:11px;word-break:break-all;opacity:.8}
+.cell{display:flex;flex-direction:column;gap:4px;width:170px}
+.cell small{font-size:11px;word-break:break-all;opacity:.8}
 footer{font-size:11px;opacity:.7}
 #who{margin:8px 0}
 #who input{font:inherit;width:200px;border:2px solid #000;border-radius:6px;padding:4px 6px}
@@ -370,7 +371,13 @@ __I18N__
     showAlert();
   };
   const countText = (v, w, sep) => v < 0 ? trn('map.walking', w) : (v ? trn('map.visitors', v) + (w ? (sep || ' · ') + trn('map.walking', w) : '') : tr('map.novisitor'));   // sep : saut de ligne en francais sur les tuiles (cle map.sep)
+  let drawLater = false, lastSig = '';   // apres la v52 : on ne redessine que si les donnees ont change, et jamais tant qu'un texte de la grille est selectionne (sinon chaque releve efface la selection)
   const draw = () => {
+    const sel = window.getSelection ? window.getSelection() : null;
+    if (sel && !sel.isCollapsed && grid.contains(sel.anchorNode)) { drawLater = true; return; }
+    const sig = JSON.stringify([MAP.map(r => r && [r.name, r.url, r.x, r.y, r.spawn, r.room, r.presence, r.thumb ? r.thumb.length : 0]), counts, vis, answered, hasVis, urlOn(), pseudo(), arrMark, al.checked, C.showUrl, emptyText()]);
+    if (sig === lastSig && grid.firstChild) return;   // rien n'a change depuis le dernier dessin : le DOM n'est pas touche (selection et zoom restent)
+    lastSig = sig;
     const zoomWas = !zoom.hidden; hideZoom();
     let totV = 0, totW = 0, totOld = false, totGot = false; const totSeen = new Set();
     grid.textContent = '';
@@ -381,9 +388,9 @@ __I18N__
     grid.style.gridTemplateColumns = placed ? 'repeat(' + cols + ', 170px)' : 'repeat(auto-fill, 170px)';
     for (const r of list) {
       const u = okUrl(r.url); if (u) u.hash = 'spawn=' + encodeURIComponent(r.spawn || 'default') + (pseudo() ? '&name=' + encodeURIComponent(pseudo()) : '');
-      const t = document.createElement(u ? 'a' : 'div'); t.className = 'tile'; t.title = u ? tr('map.tip', r.spawn || 'default') : tr('map.badurl');
+      const cell = document.createElement('div'); cell.className = 'cell'; const t = document.createElement(u ? 'a' : 'div'); t.className = 'tile'; t.title = u ? tr('map.tip', r.spawn || 'default') : tr('map.badurl');
       if (u) { t.href = u.href; t.rel = 'noopener'; }
-      if (placed) { t.style.gridColumn = String(mx.get(r.x | 0) + 1); t.style.gridRow = String(rows - my.get(r.y | 0)); }
+      if (placed) { cell.style.gridColumn = String(mx.get(r.x | 0) + 1); cell.style.gridRow = String(rows - my.get(r.y | 0)); }
       if (r.thumb && safeThumb(r.thumb)) { const im = document.createElement('img'); im.src = r.thumb; im.alt = ''; im.referrerPolicy = 'no-referrer'; t.append(im); zoomOn(t, im); } else { const ph = document.createElement('div'); ph.className = 'ph'; t.append(ph); }
       const b = document.createElement('b'); b.textContent = r.name; t.append(b);
       const srv = srvOf(r), k = srv + '|' + (r.room || '');
@@ -398,14 +405,15 @@ __I18N__
         t.classList.add('arr'); const a = document.createElement('span'); a.className = 'arrb'; a.textContent = tr('map.arrived', arrMark[k]); t.append(a);
         t.addEventListener('pointerenter', () => { delete arrMark[k]; t.classList.remove('arr'); a.remove(); }, { once: true });
       }
-      if (!u || urlOn()) { const l = document.createElement('small'); l.textContent = u ? u.href : tr('map.badurl'); t.append(l); }
-      grid.append(t);
+      if (!u || urlOn()) { const l = document.createElement('small'); l.textContent = u ? u.href : tr('map.badurl'); cell.append(l); }   // apres la v52 : l'adresse est HORS du lien de la vignette (dans un lien, un clic-glisse ne selectionne pas le texte)
+      cell.prepend(t); grid.append(cell);
     }
     if (!list.length) grid.textContent = emptyText();
     tot.textContent = list.length ? trn('map.regions', list.length) + (totGot ? ' · ' + tr('map.total', countText(totOld ? -1 : totV, totW)) : '') : '';   // decompte des regions, puis le total
     document.getElementById('tools').hidden = !MAP.some(r => r && srvOf(r));   // sans serveur de presence, la surveillance n'a rien a surveiller : la case disparait
     if (zoomWas) reZoom();
   };
+  document.addEventListener('selectionchange', () => { if (drawLater) { const s = window.getSelection(); if (!s || s.isCollapsed) { drawLater = false; draw(); } } });   // la selection est finie : on redessine
   // v51 : « * » à la place du nom = le même nom que la page (même règle que presUrl de core.js)
   const presUrl = u => String(u || '').trim().replace(/^(wss?:\/\/)(\*|0\.0\.0\.0)(?=[:/]|$)/i, (m, p, h) => p + (h === '*' ? (location.hostname || '127.0.0.1') : '127.0.0.1'));
   const queryServer = srv => {

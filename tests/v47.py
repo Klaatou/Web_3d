@@ -57,7 +57,7 @@ site2 = tmp / "site2"; site2.mkdir(); shutil.copy(DIST / "carte.html", site2 / "
 http, hport = serveur(site); http2, hport2 = serveur(site2); http3, hport3 = serveur(site3)
 BASE = f"http://127.0.0.1:{hport}/"
 
-TUILES = """() => [...document.querySelectorAll('.tile')].map(t => ({ nom: t.querySelector('b').textContent, ligne: (t.querySelector('span') || {}).textContent || '', adresse: !!t.querySelector('small'), bulle: t.title }))"""
+TUILES = """() => [...document.querySelectorAll('.tile')].map(t => ({ nom: t.querySelector('b').textContent, ligne: (t.querySelector('span') || {}).textContent || '', adresse: !!t.parentElement.querySelector('small'), bulle: t.title }))"""
 
 
 async def tuiles(o, attente="document.querySelector('.tile span')"):
@@ -103,7 +103,7 @@ async def main():
         await o.ev("document.getElementById('showurl').click()")
         t = await tuiles(o)
         rapport(all(x["adresse"] for x in t.values()), "case cochée : les adresses apparaissent")
-        adr = await o.ev("document.querySelector('.tile small').textContent")
+        adr = await o.ev("document.querySelector('#grid small').textContent")
         rapport(adr.startswith("http://127.0.0.1:") and adr.endswith("#spawn=default"), "l'adresse affichée est celle du lien", adr)
         await o.pg.reload()
         t = await tuiles(o)

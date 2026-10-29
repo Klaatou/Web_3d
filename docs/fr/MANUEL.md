@@ -1678,7 +1678,7 @@ Sous le nom, une ligne de texte (jamais de couleur seule) : « 3 visiteurs » pu
 
 ### 30.2 Adresse facultative
 
-L'adresse sous chaque tuile est **masquée par défaut**. Elle s'affiche si `showUrl` vaut `true` dans l'en-tête de `regions.json` (§ 27.6), ou si le visiteur coche la case « Afficher les adresses » en haut de la page carte (à côté du pseudo). Le choix du visiteur est retenu par son navigateur et l'emporte sur le fichier. Une adresse invalide garde son message « (adresse invalide) ».
+L'adresse sous chaque tuile est **masquée par défaut**. Elle s'affiche si `showUrl` vaut `true` dans l'en-tête de `regions.json` (§ 27.6), ou si le visiteur coche la case « Afficher les adresses » en haut de la page carte (à côté du pseudo). Le choix du visiteur est retenu par son navigateur et l'emporte sur le fichier. Une adresse invalide garde son message « (adresse invalide) ». L'adresse s'affiche sous la vignette, **hors du lien** : on peut la sélectionner à la souris et la copier (après la v52 ; dans un lien, un clic-glissé ne sélectionne pas le texte), et le zoom au survol reste sur la vignette. La grille n'est redessinée que si les données ont changé, et jamais tant qu'un texte de la grille est sélectionné (les compteurs attendent la fin de la sélection).
 
 ### 30.3 `regions.json` avec en-tête
 
