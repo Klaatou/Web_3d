@@ -121,6 +121,32 @@ MESHOPT_FILES = {"three/addons/libs/meshopt_decoder.module.js": "examples/jsm/li
 
 
 ZONE_TYPES = ("url", "ha", "portal", "spawn", "image")
+IMG_EXTS = (".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif", ".bmp")
+IMG_DIR = [None]   # dossier ou se cherchent les images des zones « image » (celui de la page), pose par main() ; None : aucune recherche
+_IMG_SEEN = set()
+
+
+def resolve_image_name(t):
+    """« 12 » (sans extension, sans chemin ni adresse) -> « 12-Titre.jpg » ou « 12.png » d'apres les fichiers du dossier de la page (premier par ordre alphabetique) ;
+    sinon le texte tel quel. Une page hebergee ne peut pas lister un dossier : c'est donc le generateur qui ecrit le vrai nom."""
+    s = str(t or "").strip()
+    if not s or IMG_DIR[0] is None or re.search(r"[\\/:]", s) or re.search(r"\.[A-Za-z0-9]{2,5}$", s):
+        return t
+    try:
+        names = [p.name for p in IMG_DIR[0].iterdir() if p.is_file() and p.suffix.lower() in IMG_EXTS]
+    except OSError:
+        return t
+    low = s.lower()
+    hits = sorted((n for n in names if pathlib.Path(n).stem.lower() == low or pathlib.Path(n).stem.lower().startswith(low + "-")), key=lambda n: (n.lower(), n))
+    if s not in _IMG_SEEN:
+        _IMG_SEEN.add(s)
+        if not hits:
+            print(_tr("py.glb2html.image_sans_fichier", s, IMG_DIR[0]))
+        elif len(hits) > 1:
+            print(_tr("py.glb2html.image_plusieurs", s, hits[0], len(hits)))
+        else:
+            print(_tr("py.glb2html.image_completee", s, hits[0]))
+    return hits[0] if hits else t
 ZONE_MARKERS = ("dot", "range", "none")
 # v43 : anciennes valeurs (avant v43), toujours acceptées et converties
 ZONE_MARKER_OLD = {"discret": "dot", "portee": "range", "aucun": "none"}
@@ -165,7 +191,7 @@ def clean_zones(zones, profile):
             "yaw": num(z.get("yaw"), 0, -7, 7), "shape": "board" if z.get("shape") == "board" else "ring",
             "trigger": (z.get("trigger") if z.get("trigger") in ("click", "enter", "both") else "click") if t == "portal" else "click",
             "radius": num(z.get("radius"), 2, 0.5, 50), "w": num(z.get("w"), 1.2 if img else 2.4, 0.1 if img else 0.5, 10), "h": num(z.get("h"), 0, 0, 6) if img else num(z.get("h"), 1.2, 0.3, 6),
-            "target": str(z.get("target") or "")[:600], "spawn": _slug(z.get("spawn")),
+            "target": str(resolve_image_name(z.get("target")) if img else (z.get("target") or ""))[:600], "spawn": _slug(z.get("spawn")),
             "confirm": bool(z.get("confirm")), "private": bool(z.get("private")), "showName": bool(z.get("showName")),
             "mesh": "" if t in ("spawn", "image") else re.sub(r"[\x00-\x1f]", "", str(z.get("mesh") or ""))[:200],
         })
@@ -1689,6 +1715,9 @@ def main():
     if a.zones_live and not a.input and str(a.zones_live).lower().endswith((".glb", ".gltf")):
         a.input, a.zones_live = a.zones_live, "auto"
         kw["zones_live"] = "auto"
+    if a.output:   # les images des zones « image » se cherchent a cote de la page, comme imageBase au chargement
+        _o = pathlib.Path(a.output)
+        IMG_DIR[0] = (_o if _o.is_dir() else _o.parent).resolve()
     if a.zones_only:
         if not a.output:
             sys.exit(_tr("py.glb2html.erreur_zones_only_demande_o_page"))
