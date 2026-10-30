@@ -138,6 +138,12 @@ def resolve_image_name(t):
         return t
     low = s.lower()
     hits = sorted((n for n in names if pathlib.Path(n).stem.lower() == low or pathlib.Path(n).stem.lower().startswith(low + "-")), key=lambda n: (n.lower(), n))
+    plain = [n for n in hits if pathlib.Path(n).stem.lower() == low]
+    if plain:   # « 12.png » existe : la page le trouve toute seule (extensions essayees dans l'ordre), le nom reste « 12 »
+        if s not in _IMG_SEEN:
+            _IMG_SEEN.add(s)
+            print(_tr("py.glb2html.image_nombre", s, plain[0]))
+        return t
     if s not in _IMG_SEEN:
         _IMG_SEEN.add(s)
         if not hits:

@@ -404,6 +404,7 @@
  "py.glb2html.avertissement_vue_d_ensemble_0_introuvable": "[WARNING] overview {0} not found beside {1}; the page will work without it",
  "py.glb2html.avertissement_zones_live_est_ignore_en": "[WARNING] --zones-live is ignored in modular mode: the zones are always read again from <page>.zones.json",
  "py.glb2html.cache_telechargement_0": "[cache] downloading {0}",
+ "py.glb2html.image_nombre": "[image] \"{0}\": {1} exists, the name stays \"{0}\" (the page looks for the file by itself)",
  "py.glb2html.image_completee": "[image] \"{0}\" -> {1}",
  "py.glb2html.image_plusieurs": "[image] \"{0}\" -> {1} ({2} files match: the first in alphabetical order is used)",
  "py.glb2html.image_sans_fichier": "[image] \"{0}\": no file \"{0}.jpg\", \"{0}-...\" in {1} (name left as is)",

@@ -51,12 +51,12 @@ for n in ("12-Cezanne - Apples and Oranges.jpg", "1-aaa.webp", "1-Soleil.png", "
 (site / "sous").mkdir(); (site / "sous" / "9.jpg").write_bytes(b"x")
 liste = ["12", "1", "120", "7", "99", "x.jpg", "sous/9", "http://h/12", "12"]
 zj = tmp / "z.json"; zj.write_text(json.dumps([zone(f"z{i}", c) for i, c in enumerate(liste, 1)]), encoding="utf-8")
-att = ["12-Cezanne - Apples and Oranges.jpg", "1-aaa.webp", "120-autre.png", "7.PNG", "99", "x.jpg", "sous/9", "http://h/12", "12-Cezanne - Apples and Oranges.jpg"]
+att = ["12-Cezanne - Apples and Oranges.jpg", "1-aaa.webp", "120-autre.png", "7", "99", "x.jpg", "sous/9", "http://h/12", "12-Cezanne - Apples and Oranges.jpg"]
 
 code, sortie = gen(str(site / "sol.glb"), "-o", str(site / "p.html"), "--modular", "--no-sea", "--zones", str(zj))
 rapport(code == 0, "generation modulaire", sortie[-300:])
 res = cibles(site / "p.zones.json")
-rapport(res == att, "zones modulaires : « 12 » complete, « 1 » = premier par ordre alphabetique sans tenir compte de la casse (1-aaa avant 1-Soleil), « 120 » distinct, « 7 » -> 7.PNG, introuvable et chemin, extension, adresse intacts", res)
+rapport(res == att, "zones modulaires : « 12 » complete, « 1 » = premier par ordre alphabetique sans tenir compte de la casse (1-aaa avant 1-Soleil), « 120 » distinct, « 7 » reste « 7 » (7.PNG existe), introuvable et chemin, extension, adresse intacts", res)
 rapport("[image]" in sortie and "12-Cezanne - Apples and Oranges.jpg" in sortie, "le generateur annonce le nom complete", sortie[-400:])
 rapport("« 99 »" in sortie and "tel quel" in sortie, "le generateur signale « 99 » sans fichier", sortie[-400:])
 rapport("2 fichiers" in sortie or "2 files" in sortie, "le generateur signale les doublons (« 1 »)", sortie[-400:])
@@ -64,7 +64,7 @@ rapport("2 fichiers" in sortie or "2 files" in sortie, "le generateur signale le
 zj2 = tmp / "z2.json"; zj2.write_text(json.dumps([zone("a", "12"), zone("b", "7")]), encoding="utf-8")
 (site / "p.zones.json").write_text("[]", encoding="utf-8")
 code, sortie = gen("-o", str(site / "p.html"), "--zones-only", "--zones", str(zj2))
-rapport(code == 0 and cibles(site / "p.zones.json") == ["12-Cezanne - Apples and Oranges.jpg", "7.PNG"], "--zones-only complete aussi les noms", (code, sortie[-300:]))
+rapport(code == 0 and cibles(site / "p.zones.json") == ["12-Cezanne - Apples and Oranges.jpg", "7"], "--zones-only complete aussi les noms", (code, sortie[-300:]))
 
 print("\nRÉSULTAT : " + ("tout est passé" if not echecs else f"ÉCHEC ({echecs})"))
 sys.exit(1 if echecs else 0)

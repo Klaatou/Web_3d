@@ -404,6 +404,7 @@
  "py.glb2html.avertissement_vue_d_ensemble_0_introuvable": "[AVERTISSEMENT] vue d'ensemble {0} introuvable à côté de {1} ; la page fonctionnera sans elle",
  "py.glb2html.avertissement_zones_live_est_ignore_en": "[AVERTISSEMENT] --zones-live est ignoré en mode modulaire : les zones sont toujours relues dans <page>.zones.json",
  "py.glb2html.cache_telechargement_0": "[cache] téléchargement {0}",
+ "py.glb2html.image_nombre": "[image] « {0} » : {1} existe, le nom reste « {0} » (la page cherche le fichier toute seule)",
  "py.glb2html.image_completee": "[image] « {0} » → {1}",
  "py.glb2html.image_plusieurs": "[image] « {0} » → {1} ({2} fichiers correspondent : le premier par ordre alphabétique est pris)",
  "py.glb2html.image_sans_fichier": "[image] « {0} » : aucun fichier « {0}.jpg », « {0}-… » dans {1} (nom laissé tel quel)",

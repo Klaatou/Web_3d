@@ -498,9 +498,11 @@ function renderZoneList() {
       }); }));
       const ou = document.createElement('small'); ou.style.cssText = 'margin:0 0 6px;word-break:break-all';
       const ouTxt = tr('viewer.zf.image.where', (viewer.imageUrl(z.target) || '-').slice(0, 200));
-      ou.textContent = ouTxt; d.appendChild(ou);
+      const noExt = imgRel(z.target) && !/\.[A-Za-z0-9]{2,5}$/.test(String(z.target).trim());
+      ou.textContent = noExt ? tr('viewer.zf.image.noext', z.target) + ' ' + ouTxt : ouTxt; d.appendChild(ou);
       regionDirQuiet().then(async dir => {
         if (!dir || !imgRel(z.target)) return;
+        if (noExt) { const r = await imageNameFromDir(z.target, dir); if (!r.none && !r.nodir && r.name !== String(z.target).trim()) { upd({ target: r.name }, true); return; } }
         const f = await imageFileInDir(dir, z.target);
         if (ou.isConnected) ou.textContent = f ? tr('viewer.zf.image.indir', dir.name, z.target) : tr('viewer.zf.image.notindir', dir.name, ouTxt);
       });
@@ -1091,6 +1093,7 @@ async function imageNameFromDir(v, dirTest) {   // (dirTest : dossier fourni par
   if (!dir) return { name: v, nodir: true };
   const lv = v.toLowerCase(), hits = [];
   try { for await (const [n, h] of dir.entries()) { if (h.kind !== 'file' || !IMG_EXT_RE.test(n)) continue; const b = n.replace(IMG_EXT_RE, '').toLowerCase(); if (b === lv || b.startsWith(lv + '-')) hits.push(n); } } catch (e) {}
+  if (hits.some(n => n.replace(IMG_EXT_RE, '').toLowerCase() === lv)) return { name: v, plain: true };   // « 12.jpg » existe : la page le trouve toute seule, le nom reste « 12 »
   hits.sort((x, y) => x.localeCompare(y));
   return hits.length ? { name: hits[0], n: hits.length } : { name: v, none: true, dir: dir.name };
 }
@@ -1100,7 +1103,16 @@ async function imageFromDir(target) {   // appele par le viewer pour chaque zone
   return f ? URL.createObjectURL(f) : null;
 }
 viewer.setImageResolver(imageFromDir);
-viewer.imageNameFromDir = imageNameFromDir;   // crochet de test
+viewer.imageNameFromDir = imageNameFromDir; viewer.resolvePendingImages = resolvePendingImages;   // crochets de test
+async function resolvePendingImages(dir) {   // apres le choix du dossier : « 12 » (sans extension) devient le vrai nom de fichier pour toutes les zones image
+  const list = viewer.getZones(); let n = 0;
+  for (const z of list) {
+    if (z.type !== 'image') continue;
+    const r = await imageNameFromDir(z.target, dir);
+    if (!r.none && !r.nodir && r.name !== String(z.target || '').trim()) { z.target = r.name; n++; }
+  }
+  if (n) { zonesSync(list, true); setStatus(tr('viewer.zimgdir.resolved', n)); }
+}
 async function chooseImagesDir() {
   const say = t => setStatus(t);
   if (typeof window.showDirectoryPicker !== 'function') return say(tr('viewer.zdir.noapi'));
@@ -1120,6 +1132,7 @@ async function chooseImagesDir() {
     viewer.setImageResolver(imageFromDir);   // reconstruit les zones : les images sont relues dans le dossier
     renderZoneList();
     say(tr('viewer.zimgdir.ok', dir.name));
+    resolvePendingImages(dir).catch(() => {});
   } catch (e) {
     if (e && e.name === 'AbortError') return say(tr('viewer.zimgdir.abort'));
     if (e && e.name === 'WrongFolder') return say(tr('viewer.zdir.nothing', e.message));

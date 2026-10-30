@@ -1945,7 +1945,7 @@ function createViewer(container, cfg0, loader) {
     const pl = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat);
     const hOf = (iw, ih) => z.h > 0 ? z.h : z.w * (iw && ih ? ih / iw : 0.75);
     pl.scale.set(z.w, hOf(0, 0), 1);
-    const capText = imageCaption(z.target), cap = capText ? captionPlane(capText, z.w) : null;
+    const capText = imageCaption(z.target); let cap = capText ? captionPlane(capText, z.w) : null;
     const place = () => { if (cap) cap.position.y = -(pl.scale.y / 2 + z.w * 96 / 2048 + 0.03); };
     place(); if (cap) pl.userData.cap = cap;
     const absent = () => {
@@ -1954,14 +1954,38 @@ function createViewer(container, cfg0, loader) {
       dirty = true;
     };
     if (!z.target || /^\s*(javascript|vbscript):/i.test(z.target)) { absent(); return pl; }
-    const fromUrl = (u, tmp) => new THREE.TextureLoader().load(u, tex => {
+    const fromUrl = (u, tmp, fail) => new THREE.TextureLoader().load(u, tex => {
       if (tmp) URL.revokeObjectURL(u);
       tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
       mat.map = tex; mat.needsUpdate = true;
       pl.scale.y = hOf(tex.image.width, tex.image.height); place(); dirty = true;
-    }, undefined, () => { if (tmp) URL.revokeObjectURL(u); absent(); });
-    if (imageResolver) Promise.resolve().then(() => imageResolver(z.target)).then(u => u ? fromUrl(u, true) : fromUrl(imageUrl(z.target), false), () => fromUrl(imageUrl(z.target), false));
-    else fromUrl(imageUrl(z.target), false);
+    }, undefined, () => { if (tmp) URL.revokeObjectURL(u); (fail || absent)(); });
+    const loadCand = (cand, fail) => {
+      if (imageResolver) Promise.resolve().then(() => imageResolver(cand)).then(u => u ? fromUrl(u, true, fail) : fromUrl(imageUrl(cand), false, fail), () => fromUrl(imageUrl(cand), false, fail));
+      else fromUrl(imageUrl(cand), false, fail);
+    };
+    // titre : premiere ligne non vide de <nom>.txt s'il existe (a cote de l'image), qui remplace le texte apres le premier tiret du nom de fichier
+    const setCap = txt => {
+      txt = String(txt || '').replace(/^\uFEFF/, '').split(/\r?\n/).map(s => s.trim()).find(s => s);
+      if (!txt) return;
+      txt = txt.replace(/\s+/g, ' ').slice(0, 200);
+      if (cap) { if (cap.parent) cap.parent.remove(cap); cap.geometry.dispose(); cap.material.map.dispose(); cap.material.dispose(); }
+      cap = captionPlane(txt, z.w); cap.visible = pl.visible; pl.userData.cap = cap;
+      if (pl.parent && pl.parent.parent) pl.parent.add(cap);
+      place(); dirty = true;
+    };
+    const captionFromText = name => {
+      const direct = () => fetch(imageUrl(name)).then(r => r.ok ? r.text() : '').then(setCap, () => {});
+      if (imageResolver) Promise.resolve().then(() => imageResolver(name)).then(u => u ? fetch(u).then(r => r.text()).then(t => { URL.revokeObjectURL(u); setCap(t); }, () => URL.revokeObjectURL(u)) : direct(), () => direct());
+      else direct();
+    };
+    const tz = String(z.target).trim(), bare = !/^([a-z][a-z0-9+.\-]*:|\/)/i.test(tz), hasExt = /\.[A-Za-z0-9]{2,5}$/.test(tz), stem = tz.replace(/\.[A-Za-z0-9]{2,5}$/, '');
+    if (bare && !hasExt) {   // « 12 » : la page essaie 12.jpg, 12.png... dans l'ordre (cfg.imageExts) et garde le premier trouve
+      const exts = String(cfg.imageExts || 'jpg,jpeg,png,webp,gif,avif').split(/[\s,;]+/).map(e => e.replace(/^\./, '')).filter(Boolean);
+      const go = i => i >= exts.length ? absent() : loadCand(stem + '.' + exts[i], () => go(i + 1));
+      go(0);
+    } else loadCand(z.target, absent);
+    if (bare) captionFromText(stem + '.txt');
     return pl;
   }
   function buildZones() {

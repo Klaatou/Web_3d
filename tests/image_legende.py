@@ -55,6 +55,7 @@ def serveur(dossier):
 NOMS = """() => { const d = { name: 'reg', async *entries() { for (const n of ['1-Soleil_couchant.jpg', '1-aaa.webp', '10-autre.png', '2.PNG', 'texte.txt', '4-x.jpg']) yield [n, { kind: 'file' }]; yield ['sous-dossier', { kind: 'directory' }]; } };
   return Promise.all(['1', '10', '2', '3', '1.jpg', 'http://x/1', 'a/1', ' 4 '].map(v => window.__viewer.imageNameFromDir(v, d))); }"""
 SANSDOSSIER = """() => window.__viewer.imageNameFromDir('1', null)"""
+RESOUT = """() => window.__viewer.resolvePendingImages({ name: 'reg', async *entries() { for (const n of ['1-aaa.webp', '10-autre.png']) yield [n, { kind: 'file' }]; } })"""
 LEGENDES = """() => { const o = []; window.__viewer.scene.traverse(n => { if (n.userData && n.userData.caption) o.push([n.userData.caption, n.visible]); }); return o; }"""
 LEGENDES_PAGE = """() => { const o = []; window.__v.scene.traverse(n => { if (n.userData && n.userData.caption) o.push([n.userData.caption, n.visible]); }); return o; }"""
 
@@ -79,7 +80,7 @@ async def main():
             pv = await br.new_page(viewport={"width": 1300, "height": 800}); pv.on("pageerror", lambda e: errs.append(str(e)))
             await pv.goto((DIST / "glb-viewer.html").as_uri()); await pv.wait_for_function("window.__viewer", timeout=30000)
             res = await pv.evaluate(NOMS)
-            att = [{"name": "1-aaa.webp", "n": 2}, {"name": "10-autre.png", "n": 1}, {"name": "2.PNG", "n": 1}, {"name": "3", "none": True, "dir": "reg"}, {"name": "1.jpg"}, {"name": "http://x/1"}, {"name": "a/1"}, {"name": "4-x.jpg", "n": 1}]
+            att = [{"name": "1-aaa.webp", "n": 2}, {"name": "10-autre.png", "n": 1}, {"name": "2", "plain": True}, {"name": "3", "none": True, "dir": "reg"}, {"name": "1.jpg"}, {"name": "http://x/1"}, {"name": "a/1"}, {"name": "4-x.jpg", "n": 1}]
             rapport(res == att, "« 1 » : premier par ordre alphabetique, « 10 » n'est pas pris pour « 1 », casse et extension ignorees, introuvable signale, noms avec extension, chemins et adresses intacts", res)
             r2 = await pv.evaluate(SANSDOSSIER)
             rapport(r2 == {"name": "1", "nodir": True}, "sans dossier choisi : « 1 » reste tel quel et l'editeur le signale", r2)
@@ -88,6 +89,10 @@ async def main():
             await pv.wait_for_timeout(1500)
             cap = sorted(c[0] for c in await pv.evaluate(LEGENDES))
             rapport(cap == ["La nuit étoilée", "Soleil couchant", "y-z"], "editeur : legende = texte entre le premier tiret et l'extension (« _ » en espace) ; sans tiret ou en data: : aucune", cap)
+            await pv.evaluate("(z) => window.__viewer.setZones(z)", [zone("p", "1"), zone("q", "texte"), zone("r", "http://x/2"), zone("s", "10")])
+            await pv.evaluate(RESOUT); await pv.wait_for_timeout(500)
+            tg = await pv.evaluate("window.__viewer.getZones().map(z => z.target)")
+            rapport(tg == ["1-aaa.webp", "texte", "http://x/2", "10-autre.png"], "apres le choix du dossier : « 1 » et « 10 » sont completes, « texte » et l'adresse restent intacts", tg)
             await pv.close()
 
             pg = await br.new_page(viewport={"width": 900, "height": 600}); pg.on("pageerror", lambda e: errs.append(str(e)))
