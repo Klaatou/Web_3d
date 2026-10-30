@@ -489,7 +489,13 @@ function renderZoneList() {
     d.appendChild(inp(tr('viewer.zf.id'), 'text', z.id, v => { zoneSel = null; upd({ id: v }, true); }));
     d.appendChild(inp(tr('viewer.zf.label'), 'text', z.label, v => upd({ label: v }, true)));
     if (z.type === 'image') {
-      d.appendChild(inp(tr('viewer.zf.image'), 'text', z.target, v => upd({ target: v }, true)));
+      d.appendChild(inp(tr('viewer.zf.image'), 'text', z.target, v => { imageNameFromDir(v).then(r => {
+        if (r.nodir) setStatus(tr('viewer.zf.image.nodir', v));
+        else if (r.none) setStatus(tr('viewer.zf.image.none', v, r.dir));
+        else if (r.n > 1) setStatus(tr('viewer.zf.image.multi', v, r.name, r.n));
+        else if (r.name !== String(v).trim()) setStatus(tr('viewer.zf.image.resolved', v, r.name));
+        upd({ target: r.name }, true);
+      }); }));
       const ou = document.createElement('small'); ou.style.cssText = 'margin:0 0 6px;word-break:break-all';
       const ouTxt = tr('viewer.zf.image.where', (viewer.imageUrl(z.target) || '-').slice(0, 200));
       ou.textContent = ouTxt; d.appendChild(ou);
@@ -1077,12 +1083,24 @@ async function imageFileInDir(dir, target) {
     return await (await d.getFileHandle(parts[parts.length - 1])).getFile();
   } catch (e) { return null; }
 }
+const IMG_EXT_RE = /\.(jpe?g|png|webp|gif|avif|bmp)$/i;
+async function imageNameFromDir(v, dirTest) {   // (dirTest : dossier fourni par les tests) « 1 » (sans extension) -> « 1.jpg » ou « 1-Titre.png » : vrai nom de fichier du dossier de la region ; sinon le texte tel quel
+  v = String(v == null ? '' : v).trim();
+  if (!v || !imgRel(v) || /[\\/]/.test(v) || /\.[A-Za-z0-9]{2,5}$/.test(v)) return { name: v };
+  const dir = dirTest !== undefined ? dirTest : await regionDirQuiet();
+  if (!dir) return { name: v, nodir: true };
+  const lv = v.toLowerCase(), hits = [];
+  try { for await (const [n, h] of dir.entries()) { if (h.kind !== 'file' || !IMG_EXT_RE.test(n)) continue; const b = n.replace(IMG_EXT_RE, '').toLowerCase(); if (b === lv || b.startsWith(lv + '-')) hits.push(n); } } catch (e) {}
+  hits.sort((x, y) => x.localeCompare(y));
+  return hits.length ? { name: hits[0], n: hits.length } : { name: v, none: true, dir: dir.name };
+}
 async function imageFromDir(target) {   // appele par le viewer pour chaque zone image ; null : adresse habituelle
   const dir = await regionDirQuiet(); if (!dir) return null;
   const f = await imageFileInDir(dir, target);
   return f ? URL.createObjectURL(f) : null;
 }
 viewer.setImageResolver(imageFromDir);
+viewer.imageNameFromDir = imageNameFromDir;   // crochet de test
 async function chooseImagesDir() {
   const say = t => setStatus(t);
   if (typeof window.showDirectoryPicker !== 'function') return say(tr('viewer.zdir.noapi'));

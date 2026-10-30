@@ -1918,14 +1918,39 @@ function createViewer(container, cfg0, loader) {
   // apercu depuis un dossier choisi (editeur) : f(cible) renvoie une adresse blob: ou null (alors adresse habituelle) ; hors editeur : aucun effet
   let imageResolver = null;
   function setImageResolver(f) { imageResolver = typeof f === 'function' ? f : null; if (zones.length) { buildZones(); dirty = true; } }
+  // legende d'une image de zone : texte entre le premier « - » du nom de fichier et l'extension (« 1-Soleil_couchant.jpg » : « Soleil couchant »), « _ » devient espace
+  function imageCaption(t) {
+    t = String(t || '').trim();
+    if (!t || /^data:/i.test(t)) return '';
+    let b = t.split(/[?#]/)[0].split(/[\\/]+/).pop() || '';
+    try { b = decodeURIComponent(b); } catch (_) {}
+    b = b.replace(/\.[A-Za-z0-9]{2,5}$/, '');
+    const i = b.indexOf('-');
+    return i < 0 ? '' : b.slice(i + 1).replace(/_/g, ' ').trim();
+  }
+  function captionPlane(text, w) {
+    const W2 = 1024, H2 = 96, cv = document.createElement('canvas'); cv.width = W2; cv.height = H2;
+    const g = cv.getContext('2d');
+    g.fillStyle = 'rgba(255,255,255,0.92)'; g.fillRect(0, 0, W2, H2);
+    g.fillStyle = '#111'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    let px = 56; g.font = px + 'px sans-serif';
+    while (px > 22 && g.measureText(text).width > W2 - 40) { px -= 4; g.font = px + 'px sans-serif'; }
+    g.fillText(text, W2 / 2, H2 / 2);
+    const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, w * H2 / W2), new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide, transparent: true }));
+    m.userData.caption = text; return m;
+  }
   function imagePlane(z) {
     const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, transparent: true });
     const pl = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat);
     const hOf = (iw, ih) => z.h > 0 ? z.h : z.w * (iw && ih ? ih / iw : 0.75);
     pl.scale.set(z.w, hOf(0, 0), 1);
+    const capText = imageCaption(z.target), cap = capText ? captionPlane(capText, z.w) : null;
+    const place = () => { if (cap) cap.position.y = -(pl.scale.y / 2 + z.w * 96 / 2048 + 0.03); };
+    place(); if (cap) pl.userData.cap = cap;
     const absent = () => {
       console.warn(tr('core.image.missing', z.target || '-'));
-      if (zoneEditor) { mat.map = boardTex(z.label || z.id, tr('core.image.missing', z.target || '-'), z.w, pl.scale.y); mat.needsUpdate = true; } else pl.visible = false;
+      if (zoneEditor) { mat.map = boardTex(z.label || z.id, tr('core.image.missing', z.target || '-'), z.w, pl.scale.y); mat.needsUpdate = true; } else { pl.visible = false; if (cap) cap.visible = false; }
       dirty = true;
     };
     if (!z.target || /^\s*(javascript|vbscript):/i.test(z.target)) { absent(); return pl; }
@@ -1933,7 +1958,7 @@ function createViewer(container, cfg0, loader) {
       if (tmp) URL.revokeObjectURL(u);
       tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
       mat.map = tex; mat.needsUpdate = true;
-      pl.scale.y = hOf(tex.image.width, tex.image.height); dirty = true;
+      pl.scale.y = hOf(tex.image.width, tex.image.height); place(); dirty = true;
     }, undefined, () => { if (tmp) URL.revokeObjectURL(u); absent(); });
     if (imageResolver) Promise.resolve().then(() => imageResolver(z.target)).then(u => u ? fromUrl(u, true) : fromUrl(imageUrl(z.target), false), () => fromUrl(imageUrl(z.target), false));
     else fromUrl(imageUrl(z.target), false);
@@ -1954,7 +1979,7 @@ function createViewer(container, cfg0, loader) {
       const g = new THREE.Group(); g.userData.zoneId = z.id;
       if (!link) { g.position.set(z.x, z.y, z.z); g.rotation.y = z.yaw; }
       if (z.type === 'image') {
-        const pl = imagePlane(z); g.add(pl);
+        const pl = imagePlane(z); g.add(pl); if (pl.userData.cap) g.add(pl.userData.cap);
         if (zoneEditor) { pl.userData.zone = z; zoneAll.push(pl); const lab = makeLabel(z.label || z.id); lab.position.y = (z.h > 0 ? z.h : z.w * 0.75) / 2 + 0.3; lab.material.depthTest = false; lab.renderOrder = 999; g.add(lab); }   // etiquette toujours entiere : le mur peut avoir des reliefs devant elle
         zoneGroup.add(g);
         continue;
