@@ -21,6 +21,7 @@ OUT = args.out
 OUT.mkdir(parents=True, exist_ok=True)
 CACHE = ROOT / ".cache" / f"three@{THREE_VERSION}"
 VERSION = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
+REVISION = (ROOT / "REVISION").read_text(encoding="utf-8").strip() if (ROOT / "REVISION").exists() else ""   # date jj/mm/aaaa + lettre : change a chaque patch du code (affichee par presence_server.py)
 
 
 def vendor(rel):
@@ -121,7 +122,7 @@ shell = gen.build_shell()
 (OUT / "favicon.ico").write_bytes((SRC / "favicon.ico").read_bytes())   # icone par defaut des pages (a copier a cote de index.html ; la remplacer par la sienne change l'icone, sans refaire les pages)
 shell_modules, shell_draco = gen.shell_lib_files()
 shell_lib = {"dir": gen.LIB_REL, "modules": shell_modules, "draco": shell_draco}
-(OUT / "presence_server.py").write_text(inline_i18n_py((SRC / "presence_server.py").read_text(encoding="utf-8")).replace("__VERSION__", VERSION), encoding="utf-8")
+(OUT / "presence_server.py").write_text(inline_i18n_py((SRC / "presence_server.py").read_text(encoding="utf-8")).replace("__VERSION__", VERSION).replace("__REVISION__", REVISION), encoding="utf-8")
 (OUT / "oar2glb.py").write_text(inline_i18n_py((ROOT / "tools" / "oar2glb.py").read_text(encoding="utf-8")).replace("__VERSION__", VERSION), encoding="utf-8")
 (OUT / "glb2tiles.py").write_text(inline_i18n_py((ROOT / "tools" / "glb2tiles.py").read_text(encoding="utf-8")).replace("__VERSION__", VERSION), encoding="utf-8")   # fonctions communes de glb2tiles.py : doit rester à côté
 

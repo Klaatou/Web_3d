@@ -297,7 +297,7 @@ WantedBy=multi-user.target
 Then `systemctl daemon-reload` and `systemctl enable --now web3d-presence`. These are the copies of the two files of the author's VM.
 
 4. **Console**: under the VM's user (not `root`), `tmux attach -t presence`; from the PC, `ssh -t UTILISATEUR@ADRESSE_VM "tmux attach -t presence"` (copy and paste work); to leave without stopping the server: **Ctrl+B** then **D**; to stop it for good: `systemctl stop web3d-presence` (`root`).
-5. **Update the server** after a `python build.py` that changes `presence_server.py`: send the file from `dist\` with `scp`, then `systemctl restart web3d-presence`. The VM has **its own copy** of `presence_creators.json` and `presence_identities.json` (reserved names).
+5. **Update the server** after a `python build.py` that changes `presence_server.py`: send the file from `dist\` with `scp`, then `systemctl restart web3d-presence`. Then type `version` in the console: the revision shown must be that of the `REVISION` file at the root of the repository. The VM has **its own copy** of `presence_creators.json` and `presence_identities.json` (reserved names).
 6. **Tried on 29/10/2026**: `reboot` (the `presence` session and the Funnel publication come back by themselves); `tmux kill-server` (the service comes back within a few seconds); a visitor from outside, from a GitHub Pages page.
 7. **Debian 13 pitfalls**:
    - the `python` package no longer exists: `python3`;

@@ -30,6 +30,7 @@ est refusée avec une raison que la page affiche. Sans --creators, tout le monde
 from __future__ import annotations
 
 VERSION = "__VERSION__"
+REVISION = "__REVISION__"      # remplace par build.py (fichier REVISION : date jj/mm/aaaa + lettre, change a chaque patch du code) ; reste tel quel si on lance src/
 
 import argparse
 import asyncio
@@ -941,16 +942,30 @@ def forget_command(name):
 
 
 HELP = _tr("py.presence.commandes_tape_les_ici_puis_entree")
+CONSOLE_SEQ = re.compile(r"\x1b\[M[\x20-\xff]{3}|\x1b\[[0-?]*[ -/]*[@-~]|\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)?|\x1bO.|\x1b[@-Z\\-_]")   # CSI (reponses du terminal, fleches, molette), OSC, SS3, souris ancienne
+
+
+def clean_console_line(line):
+    """ligne tapee dans la console sans les sequences d'echappement que le terminal y envoie (reponses a tmux, fleches, molette) ni les autres caracteres de controle"""
+    return re.sub(r"[\x00-\x08\x0b-\x1f\x7f]", "", CONSOLE_SEQ.sub("", line))
+
+
+def version_tag():
+    """version, suivie de la revision (date jj/mm/aaaa + lettre, fichier REVISION) quand build.py l'a donnee"""
+    return VERSION if not REVISION or REVISION.startswith("__") else _tr("py.presence.version_tag", VERSION, REVISION)
 
 
 async def run_command(line):
-    line = line.strip()
+    line = clean_console_line(line).strip()
     if not line:
         return
     cmd, _, rest = line.partition(" ")
     cmd, rest = cmd.lower(), rest.strip()
     if cmd in ("aide", "help", "?"):
+        print("presence_server " + version_tag())
         print(HELP)
+    elif cmd in ("version", "ver"):
+        print("presence_server " + version_tag())
     elif cmd in ("liste", "list", "who", "l"):
         peers = sorted(all_peers(), key=lambda p: p.id)
         if not peers:
@@ -1305,7 +1320,7 @@ async def main():
     global OPTS, REG
     ap = argparse.ArgumentParser(description=_tr("py.presence.serveur_de_presence_glb2html_websocket", VERSION), add_help=False)
     i18n_add_common(ap)
-    ap.add_argument("--version", action="version", version=f"presence_server {VERSION}", help=_tr("py.common.version"))
+    ap.add_argument("--version", action="version", version=f"presence_server {version_tag()}", help=_tr("py.common.version"))
     ap.add_argument("--host", default="0.0.0.0", help=_tr("py.presence.help.host"))
     ap.add_argument("--port", type=int, default=8765, help=_tr("py.presence.help.port"))
     ap.add_argument("--max-per-room", type=int, default=50, help=_tr("py.presence.promeneurs_max_par_salon"))
@@ -1372,7 +1387,7 @@ async def main():
     try:
         async with websockets.serve(handler, OPTS.host, OPTS.port, max_size=4096, origins=origins, ssl=ctx):
             scheme = "wss" if ctx else "ws"
-            LOG.info(_tr("py.presence.serveur_presence_server_0_ecoute_sur", VERSION, OPTS.host, OPTS.port))
+            LOG.info(_tr("py.presence.serveur_presence_server_0_ecoute_sur", version_tag(), OPTS.host, OPTS.port))
             if OPTS.host in ("0.0.0.0", "::", ""):
                 ip = lan_ip()
                 LOG.info(_tr("py.presence.serveur_adresses_a_donner_a_presence", scheme, OPTS.port) + (_tr("py.presence.0_1_2_autres_appareils_du", scheme, ip, OPTS.port) if ip else ""))

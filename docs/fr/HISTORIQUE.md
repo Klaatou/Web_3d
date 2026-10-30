@@ -91,6 +91,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 29/10/2026 |  | après 1.0.0 | Note pour les créateurs accueillis sur un serveur de présence : `docs/fr/CREATEURS.md` et `docs/en/CREATORS.md` (manuel § 34.5) |
 | 30/10/2026 |  | après 1.0.0 | `PROCEDURES` § 11 : écran noir de la console de la VM, deux constats et marche à suivre |
 | 30/10/2026 |  | après 1.0.0 | `presence_server.py` : les lignes « requête http » donnent l'adresse de l'en-tête `--proxy-header` ; test `tests/http_proxy.py` |
+| 30/10/2026 |  | après 1.0.0 | Console de modération : séquences du terminal retirées, commande `version`, fichier `REVISION` ; test `tests/console.py` |
 
 ## Commandes utiles
 
