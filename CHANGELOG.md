@@ -4,6 +4,10 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.0.0)
 
+### 30/10/2026 : adresse des lignes « requête http » derrière un relais
+- **Correctif** : derrière un relais (`--proxy-header`, par exemple Tailscale Funnel), les lignes « requête http » donnaient l'adresse du relais (`127.0.0.1`) au lieu de celle du visiteur, et le compte « depuis la dernière ligne de cette adresse » mélangeait tous les visiteurs. Elles donnent maintenant la première adresse de l'en-tête, comme les connexions WebSocket (`presence_server.py`, `empty_conn_ip`). Les lignes « connexion vide » et « requête illisible » n'ont aucun en-tête lu : elles gardent l'adresse du relais. Visible seulement avec `websockets` 14 et 15. Test : `tests/http_proxy.py`. `VERSION` ne change pas.
+- **Fix**: behind a relay (`--proxy-header`, for example Tailscale Funnel), the "http request" lines showed the relay's address (`127.0.0.1`) instead of the visitor's, and the "since the last line for this address" count mixed all visitors. They now show the first address of the header, like WebSocket connections (`presence_server.py`, `empty_conn_ip`). The "empty connection" and "unreadable request" lines have no header read: they keep the relay's address. Only visible with `websockets` 14 and 15. Test: `tests/http_proxy.py`. `VERSION` does not change.
+
 ### 30/10/2026 : VM, écran noir
 - **Documents** : `PROCEDURES` § 11, point 8 : l'écran noir de la console de la VM est constaté deux fois, ce qui est écarté (extinction de l'écran, console texte), ce qui l'a ramené (Ctrl+Alt+Suppr depuis VMware) et les deux commandes à lancer avant de le faire. Cause toujours non établie. Aucun changement de code ni de numéro de version.
 - **Documents**: `PROCEDURES` § 11, item 8: the black VM console screen was seen twice, what was ruled out (screen blanking, text console), what brought it back (Ctrl+Alt+Del from VMware) and the two commands to run before doing it. Cause still not established. No code change, no version number change.

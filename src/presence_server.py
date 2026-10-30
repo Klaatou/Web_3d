@@ -299,14 +299,21 @@ def conn_request():
 
 
 def empty_conn_ip():
-    """adresse de l'appelant, lue dans la pile d'appels de websockets (variable connection) ; « ? » si introuvable"""
+    """adresse de l'appelant, lue dans la pile d'appels de websockets (variable connection) ; « ? » si introuvable.
+    Derriere un relais (--proxy-header), l'adresse de l'en-tete quand la requete a ete lue, comme remote_ip ; sinon (connexion vide ou illisible : aucun en-tete lu) celle du relais"""
     f = sys._getframe(1)
     while f is not None:
         c = f.f_locals.get("connection")
         try:
             ra = getattr(c, "remote_address", None) if c is not None else None
             if ra:
-                return str(ra[0])[:64]
+                ip = str(ra[0])[:64]
+                if OPTS is not None and OPTS.proxy_header:
+                    h = getattr(getattr(c, "request", None), "headers", None)
+                    v = h.get(OPTS.proxy_header) if h is not None else None
+                    if v and v.split(",")[0].strip():
+                        ip = v.split(",")[0].strip()[:64]
+                return ip
         except Exception:
             pass
         f = f.f_back

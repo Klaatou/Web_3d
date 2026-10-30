@@ -90,6 +90,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 29/10/2026 |  | after 1.0.0 | `web3d-presence.service`: `NOM_USER` becomes `UTILISATEUR` (as `PROCEDURES` § 11) |
 | 29/10/2026 |  | after 1.0.0 | Note for creators welcomed on a presence server: `docs/fr/CREATEURS.md` and `docs/en/CREATORS.md` (manual § 34.5) |
 | 30/10/2026 |  | after 1.0.0 | `PROCEDURES` § 11: black VM console screen, two sightings and what to do |
+| 30/10/2026 |  | after 1.0.0 | `presence_server.py`: the "http request" lines show the address of the `--proxy-header` header; test `tests/http_proxy.py` |
 
 ## Useful commands
 
