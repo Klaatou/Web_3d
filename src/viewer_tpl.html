@@ -159,7 +159,7 @@ function inspectGlb(buf, name = tr('viewer.glb.defname')) {
 // ---------- état
 const DEF = {
   rotate: 0, hole: 180, holeFade: 60, holeX: 0, holeZ: 0, guide: false, wave: 0.5, seaY: -50, zoom: 1, camDir: [0, 0.25, 1], target: [0, 15, 0],
-  sea: true, anim: false, retina: false, light: false, pixelScale: 1, fpsMax: 0, ovOnly: false, foliageCutout: 0.12, seaSize: 4000, seaSegments: 400, walk: true, eyeHeight: 1.7, walkSpeed: 3.5, walkIgnore: 'door, porte', ignoreViz: false, zones: [], profile: 'private', spectate: true, panel: true, map: [], mapUrl: '', names: false, chat: true, chatFade: 0, presenceUrl: '', room: '', zoneMarker: 'dot', showSpawns: false, zoneCone: true, fly: true, zoneInfoDist: 150, compass: true, northDeg: 0,
+  sea: true, anim: false, retina: false, light: false, pixelScale: 1, fpsMax: 0, ovOnly: false, foliageCutout: 0.12, seaSize: 4000, seaSegments: 400, walk: true, eyeHeight: 1.7, walkSpeed: 3.5, walkIgnore: 'door, porte', solidMaterials: '', ignoreViz: false, zones: [], profile: 'private', spectate: true, panel: true, map: [], mapUrl: '', names: false, chat: true, chatFade: 0, presenceUrl: '', room: '', zoneMarker: 'dot', showSpawns: false, zoneCone: true, fly: true, zoneInfoDist: 150, compass: true, northDeg: 0,
   seaColor: 0x3A9AD9, skyColor: 0x87CEEB
 };
 const viewer = createViewer(document.getElementById('view'), DEF, makeLoader());
@@ -952,7 +952,7 @@ coordInfo();
 
 $('bFrame').onclick = () => { viewer.frame(DEF.camDir, tilesMode ? tilesMode.target : DEF.target, 1); camInfo(); };
 $('bReset').onclick = () => {
-  const keep = ['zoneMarker', 'showSpawns', 'zoneCone', 'fly', 'zoneInfoDist', 'compass', 'northDeg', 'walk', 'names', 'chat', 'spectate', 'panel', 'chatFade', 'ignoreViz', 'presenceUrl', 'room', 'walkIgnore', 'eyeHeight', 'walkSpeed', 'hole', 'holeFade', 'holeX', 'holeZ', 'guide', 'wave', 'seaY', 'sea', 'anim', 'retina', 'light', 'pixelScale', 'fpsMax', 'ovOnly', 'foliageCutout', 'seaColor', 'skyColor'];
+  const keep = ['zoneMarker', 'showSpawns', 'zoneCone', 'fly', 'zoneInfoDist', 'compass', 'northDeg', 'walk', 'names', 'chat', 'spectate', 'panel', 'chatFade', 'ignoreViz', 'presenceUrl', 'room', 'walkIgnore', 'solidMaterials', 'eyeHeight', 'walkSpeed', 'hole', 'holeFade', 'holeX', 'holeZ', 'guide', 'wave', 'seaY', 'sea', 'anim', 'retina', 'light', 'pixelScale', 'fpsMax', 'ovOnly', 'foliageCutout', 'seaColor', 'skyColor'];
   const patch = {}; keep.forEach(k => { patch[k] = DEF[k]; });
   viewer.setCfg(patch);
   buildRows(); refreshEnabled(); camInfo(); updateGuide();
@@ -1141,7 +1141,7 @@ async function saveZonesToDir() {
 }
 
 // ---------- mémorisation des réglages, fichier par fichier (nom + taille du .glb)
-const SKEYS = ['zoneMarker', 'showSpawns', 'zoneCone', 'fly', 'zoneInfoDist', 'compass', 'northDeg', 'rotate', 'hole', 'holeFade', 'holeX', 'holeZ', 'wave', 'seaY', 'seaSegments', 'seaColor', 'skyColor', 'foliageCutout', 'anim', 'sea', 'retina', 'light', 'pixelScale', 'fpsMax', 'ovOnly', 'walk', 'eyeHeight', 'walkSpeed', 'walkIgnore', 'names', 'chat', 'chatFade', 'presenceUrl', 'room', 'spectate', 'panel', 'mapUrl', 'guide', 'ignoreViz'];
+const SKEYS = ['zoneMarker', 'showSpawns', 'zoneCone', 'fly', 'zoneInfoDist', 'compass', 'northDeg', 'rotate', 'hole', 'holeFade', 'holeX', 'holeZ', 'wave', 'seaY', 'seaSegments', 'seaColor', 'skyColor', 'foliageCutout', 'anim', 'sea', 'retina', 'light', 'pixelScale', 'fpsMax', 'ovOnly', 'walk', 'eyeHeight', 'walkSpeed', 'walkIgnore', 'solidMaterials', 'names', 'chat', 'chatFade', 'presenceUrl', 'room', 'spectate', 'panel', 'mapUrl', 'guide', 'ignoreViz'];
 let curFile = null, lastSaved = '', settingsReady = false;
 const fileKey = f => 'glb2html_set_' + f.name + '|' + f.size;
 function snapshot() {
@@ -1225,6 +1225,7 @@ function buildCommand() {
   if (tilesMode ? cam.target.some((v, i) => Math.abs(v - tilesMode.target[i]) > 0.5) : !same(cam.target.map(n4).map(Number), DEF.target)) a.push('--target ' + q(cam.target.map(n4).join(',')));
   sw('--walk', '--no-walk', cfg.walk, DEF.walk); sw('--fly', '--no-fly', cfg.fly, DEF.fly); sw('--compass', '--no-compass', cfg.compass, DEF.compass); num('--north', cfg.northDeg, DEF.northDeg); num('--eye-height', cfg.eyeHeight, DEF.eyeHeight); num('--walk-speed', cfg.walkSpeed, DEF.walkSpeed); num('--zone-info-dist', cfg.zoneInfoDist, DEF.zoneInfoDist);
   if (cfg.walkIgnore !== DEF.walkIgnore) a.push('--walk-ignore ' + q(cfg.walkIgnore));
+  if (cfg.solidMaterials !== DEF.solidMaterials) a.push('--solid-materials ' + q(cfg.solidMaterials));
   sw('--names', '--no-names', cfg.names, DEF.names); sw('--panel', '--no-panel', cfg.panel, DEF.panel);
   if (cfg.zoneMarker !== DEF.zoneMarker) a.push('--zone-marker ' + cfg.zoneMarker);
   sw('--zone-cone', '--no-zone-cone', cfg.zoneCone, DEF.zoneCone);
@@ -1296,7 +1297,7 @@ function liveConfig() {
     version: '__VERSION__',
     map: cfg.map || [], mapUrl: cfg.mapUrl || '',
     zones: (cfg.zones || []).filter(z => $('profileSel').value === 'private' || !z.private), profile: $('profileSel').value,
-    walk: cfg.walk, eyeHeight: cfg.eyeHeight, walkSpeed: cfg.walkSpeed, walkIgnore: cfg.walkIgnore,
+    walk: cfg.walk, eyeHeight: cfg.eyeHeight, walkSpeed: cfg.walkSpeed, walkIgnore: cfg.walkIgnore, solidMaterials: cfg.solidMaterials,
     names: cfg.names, chat: cfg.chat, chatFade: cfg.chatFade, presenceUrl: cfg.presenceUrl, room: cfg.room || baseName,
     zoneMarker: cfg.zoneMarker || 'dot', showSpawns: !!cfg.showSpawns, zoneCone: cfg.zoneCone !== false, fly: cfg.fly !== false, zoneInfoDist: Math.max(5, Math.min(500, Number(cfg.zoneInfoDist) || 150)), compass: cfg.compass !== false, northDeg: (((Number(cfg.northDeg) || 0) % 360) + 360) % 360, libUrl: '', targetExplicit: targetExplicit()
   };
@@ -1379,7 +1380,7 @@ $('bPy').onclick = () => {
     'ROTATE = ' + c.rotate + '\n' + 'HOLE_RADIUS = ' + n(c.hole) + '\nHOLE_FADE = ' + n(c.holeFade) + '\nHOLE_X = ' + n(c.holeX) + '\nHOLE_Z = ' + n(c.holeZ) + '\nWAVE_AMP = ' + n(c.wave) + '\nSEA_Y = ' + n(c.seaY) +
     '\nZOOM_RATIO = ' + n(c.zoom) + '\nCAM_DIR = ' + t(c.camDir) + '\nTARGET = ' + t(c.target) +
     '\nSEA_ENABLED = ' + B(c.sea) + '\nANIM_ENABLED = ' + B(c.anim) + '\nRETINA_ENABLED = ' + B(c.retina) + '\nLIGHT_ENABLED = ' + B(c.light) +
-    '\nFOLIAGE_CUTOUT = ' + n(c.foliageCutout) + '\nSEA_COLOR = ' + col(c.seaColor) + '\nSKY_COLOR = ' + col(c.skyColor) + '\nSEA_SEGMENTS = ' + Math.round(c.seaSegments) + '\nWALK_ENABLED = ' + B(c.walk) + '\nEYE_HEIGHT = ' + n(c.eyeHeight) + '\nWALK_SPEED = ' + n(c.walkSpeed) + '\nWALK_IGNORE = ' + JSON.stringify(c.walkIgnore) + '\nNAMES_ENABLED = ' + B(c.names) + '\nCHAT_ENABLED = ' + B(c.chat) + '\nCHAT_FADE = ' + n(c.chatFade) + '\nSPECTATE = ' + B(c.spectate) + '\nPANEL = ' + B(c.panel) + '\nMAP_JSON = ' + JSON.stringify(JSON.stringify(cfg.map || [])) + '\nMAP_URL = ' + JSON.stringify(cfg.mapUrl || '') + '\nPROFILE = ' + JSON.stringify($('profileSel').value) + '\nZONES_JSON = ' + JSON.stringify(JSON.stringify(cfg.zones || [])) + '\nPRESENCE_URL = ' + JSON.stringify(c.presenceUrl) + '\nROOM = ' + JSON.stringify(cfg.room || '') +
+    '\nFOLIAGE_CUTOUT = ' + n(c.foliageCutout) + '\nSEA_COLOR = ' + col(c.seaColor) + '\nSKY_COLOR = ' + col(c.skyColor) + '\nSEA_SEGMENTS = ' + Math.round(c.seaSegments) + '\nWALK_ENABLED = ' + B(c.walk) + '\nEYE_HEIGHT = ' + n(c.eyeHeight) + '\nWALK_SPEED = ' + n(c.walkSpeed) + '\nWALK_IGNORE = ' + JSON.stringify(c.walkIgnore) + '\nSOLID_MATERIALS = ' + JSON.stringify(c.solidMaterials) + '\nNAMES_ENABLED = ' + B(c.names) + '\nCHAT_ENABLED = ' + B(c.chat) + '\nCHAT_FADE = ' + n(c.chatFade) + '\nSPECTATE = ' + B(c.spectate) + '\nPANEL = ' + B(c.panel) + '\nMAP_JSON = ' + JSON.stringify(JSON.stringify(cfg.map || [])) + '\nMAP_URL = ' + JSON.stringify(cfg.mapUrl || '') + '\nPROFILE = ' + JSON.stringify($('profileSel').value) + '\nZONES_JSON = ' + JSON.stringify(JSON.stringify(cfg.zones || [])) + '\nPRESENCE_URL = ' + JSON.stringify(c.presenceUrl) + '\nROOM = ' + JSON.stringify(cfg.room || '') +
     '\nZONES_LIVE = ""' + '\nZONE_MARKER = ' + JSON.stringify(c.zoneMarker) + '\nSHOW_SPAWNS = ' + B(c.showSpawns) + '\nZONE_CONE = ' + B(c.zoneCone) + '\nFLY_ENABLED = ' + B(c.fly) + '\nZONE_INFO_DIST = ' + n(c.zoneInfoDist) + '\nCOMPASS = ' + B(c.compass) + '\nNORTH_DEG = ' + n(c.northDeg) + '\nTARGET_EXPLICIT = ' + B(c.targetExplicit) +
     '\n# <</DEFAULTS>>';
   const py = PY_SOURCE.replace(/# <<DEFAULTS>>[\s\S]*?# <<\/DEFAULTS>>/, () => block);

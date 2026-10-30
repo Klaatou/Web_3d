@@ -418,8 +418,22 @@ function createViewer(container, cfg0, loader) {
   }
   buildSea();
 
+  // option solidMaterials : materiaux rendus opaques. Un materiau glTF en BLEND ne remplit pas le tampon de profondeur (GLTFLoader : depthWrite = false) :
+  // les objets transparents derriere lui sont dessines par-dessus (on voit a travers un mur). « abc » : tout nom qui contient abc ; « =nom » : nom exact.
+  function solidApply(m, tokens) {
+    const n = (m.name || '').toLowerCase();
+    const on = !!n && tokens.some(k => (k[0] === '=' ? n === k.slice(1) : n.includes(k)));
+    if (on) {
+      if (!m.userData.solidOrig) m.userData.solidOrig = { t: m.transparent, d: m.depthWrite, a: m.alphaTest };
+      m.transparent = false; m.depthWrite = true; m.alphaTest = 0.5; m.needsUpdate = true;
+    } else if (m.userData.solidOrig) {
+      const o = m.userData.solidOrig; m.transparent = o.t; m.depthWrite = o.d; m.alphaTest = o.a; delete m.userData.solidOrig; m.needsUpdate = true;
+    }
+  }
+
   function fixMaterials(root, append) {
     if (!append) foliageMats = [];
+    const solidTok = parseIgnore(cfg.solidMaterials);
     root.traverse(o => {
       if (!o.isMesh || !o.material) return;
       let foliageMesh = false;
@@ -437,6 +451,7 @@ function createViewer(container, cfg0, loader) {
           m.alphaTest = cfg.foliageCutout; m.alphaToCoverage = true; m.fog = false;
         } else {
           if (trunk) m.side = THREE.FrontSide;
+          solidApply(m, solidTok);
           if (m.emissive && !m.emissiveMap && m.emissive.getHex() !== 0 && (trunk || !(n.includes('light') || n.includes('emit')))) {
             m.emissive.setHex(0); m.emissiveIntensity = 0;
           }
@@ -926,6 +941,11 @@ function createViewer(container, cfg0, loader) {
     if (sea) sea.position.set(seaCx, cfg.seaY, seaCz);
     if ('zoneMarker' in p || 'showSpawns' in p) buildZones();
     if ('foliageCutout' in p) foliageMats.forEach(m => { m.alphaTest = cfg.foliageCutout; m.needsUpdate = true; });
+    if ('solidMaterials' in p) {
+      const tk = parseIgnore(cfg.solidMaterials);
+      scene.traverse(o => { if (o.isMesh && o.material) for (const m of (Array.isArray(o.material) ? o.material : [o.material])) if (m && !foliageMats.includes(m)) solidApply(m, tk); });
+      dirty = true;
+    }
     dirty = true;
     if (onCfg) onCfg(cfg);
   }

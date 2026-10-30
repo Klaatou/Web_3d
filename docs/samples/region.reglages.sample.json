@@ -32,6 +32,7 @@
   "eyeHeight": 1.7,
   "walkSpeed": 3.5,
   "walkIgnore": "door, porte",
+  "solidMaterials": "",
   "names": false,
   "chat": true,
   "chatFade": 0.0,
