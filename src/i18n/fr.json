@@ -1064,6 +1064,7 @@
  "viewer.zf.h.image": "Hauteur (0 = d'après l'image)",
  "viewer.zone.image.notwall": "Clique sur un mur (une surface verticale) pour poser une image.",
  "core.image.missing": "image introuvable : {0}",
+ "core.webgl.missing": "La 3D ne peut pas s'afficher : WebGL est indisponible dans ce navigateur.\nQuand l'accélération matérielle est coupée, les navigateurs récents (Edge, Chrome) refusent maintenant le rendu logiciel.\nPistes : ouvrir cette page dans Firefox ; ou lancer Edge avec l'option --enable-unsafe-swiftshader (de préférence dans un profil réservé à ces pages) ; ou réactiver l'accélération matérielle.\nPour vérifier : edge://gpu (ou chrome://gpu), ligne WebGL.",
  "viewer.kind.url": "Lien",
  "viewer.lang": "Langue / Language",
  "viewer.link.btn": "Lier à un élément",

@@ -1064,6 +1064,7 @@
  "viewer.zf.h.image": "Height (0 = from the image)",
  "viewer.zone.image.notwall": "Click on a wall (a vertical surface) to place a picture.",
  "core.image.missing": "image not found: {0}",
+ "core.webgl.missing": "3D cannot be shown: WebGL is not available in this browser.\nWhen hardware acceleration is off, recent browsers (Edge, Chrome) now refuse software rendering.\nWays out: open this page in Firefox; or start Edge with the --enable-unsafe-swiftshader option (preferably in a profile kept for these pages); or turn hardware acceleration back on.\nTo check: edge://gpu (or chrome://gpu), WebGL line.",
  "viewer.kind.url": "Link",
  "viewer.lang": "Language / Langue",
  "viewer.link.btn": "Link to an element",

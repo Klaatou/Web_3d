@@ -321,6 +321,14 @@ function disposeObject(root) {
 // v43 : valeurs du repère des zones en anglais (dot, range, none) ; les anciennes (discret, portee, aucun) restent lues
 const ZM_OLD = { discret: 'dot', portee: 'range', aucun: 'none' };
 const zmNorm = v => ZM_OLD[v] || v;
+// WebGL indisponible (acceleration materielle coupee : les navigateurs recents ne se replient plus sur le rendu logiciel) : un message clair a la place de « Chargement… »
+function webglMissing(host) {
+  const text = tr('core.webgl.missing'), m = document.getElementById('msg');
+  if (m) { m.removeAttribute('data-i18n'); m.style.cssText += ';white-space:pre-line;text-align:center;padding:2em;pointer-events:auto'; m.textContent = text; return; }
+  const d = document.createElement('div');
+  d.style.cssText = 'position:fixed;inset:0;display:grid;place-items:center;z-index:99;background:#fff;color:#000;padding:2em;text-align:center;white-space:pre-line;font:15px/1.5 sans-serif';
+  d.textContent = text; (host && host.parentNode || document.body).appendChild(d);
+}
 function createViewer(container, cfg0, loader) {
   const cfg = Object.assign({}, cfg0);
   if (cfg.zoneMarker) cfg.zoneMarker = zmNorm(cfg.zoneMarker);
@@ -340,7 +348,8 @@ function createViewer(container, cfg0, loader) {
   const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 5000);
   camera.position.set(0, 22, 45);
 
-  const renderer = new THREE.WebGLRenderer({ antialias: cfg.antialias !== false, powerPreference: 'high-performance' });   // v42 : anticrénelage fixé à la création du contexte (rendu léger : pris au chargement)
+  let renderer;
+  try { renderer = new THREE.WebGLRenderer({ antialias: cfg.antialias !== false, powerPreference: 'high-performance' }); } catch (e) { webglMissing(container); throw e; }   // v42 : anticrénelage fixé à la création du contexte (rendu léger : pris au chargement)
   renderer.sortObjects = false;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.NoToneMapping;

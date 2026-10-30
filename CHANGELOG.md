@@ -4,6 +4,10 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.0.0)
 
+### 30/10/2026 : message clair quand WebGL est indisponible
+- **Correctif** : quand le navigateur refuse de créer le contexte WebGL (accélération matérielle coupée : les navigateurs Chromium récents ne se replient plus sur le rendu logiciel), la page de région et le viewer affichent un message avec les pistes (autre navigateur, option `--enable-unsafe-swiftshader`, accélération réactivée) au lieu de rester sur « Chargement… » ou de ne rien faire (`core.js`, `webglMissing`). Test : `tests/webgl_absent.py`.
+- **Fix**: when the browser refuses to create the WebGL context (hardware acceleration off: recent Chromium browsers no longer fall back to software rendering), the region page and the viewer show a message with the ways out (another browser, the `--enable-unsafe-swiftshader` option, acceleration back on) instead of staying on "Loading…" or doing nothing (`core.js`, `webglMissing`). Test: `tests/webgl_absent.py`.
+
 ### 30/10/2026 : zone « image »
 - **Ajout** : type de zone `image`, un tableau plaqué contre un mur. Posé par clic sur un mur dans l'éditeur (orienté d'après la face touchée, 2 cm devant ; sol et plafond refusés), largeur et hauteur réglables (hauteur 0 = d'après l'image), fichier relatif à la page ou adresse http(s) ou `data:`. Image introuvable : rien dans la page exportée, un panneau dans l'éditeur. Ouverte du disque, la page ne peut pas charger l'image (le navigateur la refuse) : rien n'est affiché. Test : `tests/image_zone.py`. Documents pas encore mis à jour (voir `REPRISE.md`).
 - **Added**: `image` zone type, a picture laid flat against a wall. Placed by clicking a wall in the editor (turned to the face hit, 2 cm in front; floor and ceiling refused), width and height adjustable (height 0 = from the image), file relative to the page or http(s) or `data:` address. Missing image: nothing in the exported page, a panel in the editor. Opened from disk, the page cannot load the image (the browser refuses it): nothing is shown. Test: `tests/image_zone.py`. Documents not updated yet (see `REPRISE.md`).
