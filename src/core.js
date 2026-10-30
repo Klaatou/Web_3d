@@ -122,9 +122,12 @@ function describeObject(o) {
   const parents = []; for (let q = o.parent; q; q = q.parent) if (q.name) parents.push(q.name);
   const mats = (Array.isArray(o.material) ? o.material : [o.material]).map(m => m && m.name).filter(Boolean);
   const token = o.name || parents[0] || mats[0] || '';
+  // objet racine = plus haut ancetre nomme (OAR : le prim racine du linkset, donc le nom du batiment) ; les enveloppes techniques (modele, tuiles) ne comptent pas
+  // nom d'origine du fichier (userData.name) : le chargeur remplace les espaces par _ et ajoute _N aux doublons
+  let building = '', rootNode = null; for (let q = o; q; q = q.parent) if (q.name && !(q.userData && q.userData.wrapper)) { building = (q.userData && q.userData.name) || q.name; rootNode = q; }
   return {
-    name: token, mesh: o.name || '', parents, materials: mats, token, size: sz.toArray(),
-    text: tr('core.pick.mesh', o.name || tr('core.pick.noname')) + '\n' + tr('core.pick.parents', parents.slice(0, 3).join(' › ') || tr('core.pick.none')) + '\n' + tr('core.pick.material', mats.join(', ') || tr('core.pick.noname')) + '\n' + tr('core.pick.size', sz.toArray().map(v => v.toFixed(2)).join(' × '))
+    name: token, mesh: o.name || '', building, isRoot: rootNode === o, parents, materials: mats, token, size: sz.toArray(),
+    text: (building && rootNode !== o ? tr('core.pick.building', building) + '\n' : '') + tr('core.pick.mesh', o.name || tr('core.pick.noname')) + '\n' + tr('core.pick.parents', parents.slice(0, 3).join(' › ') || tr('core.pick.none')) + '\n' + tr('core.pick.material', mats.join(', ') || tr('core.pick.noname')) + '\n' + tr('core.pick.size', sz.toArray().map(v => v.toFixed(2)).join(' × '))
   };
 }
 
@@ -458,7 +461,7 @@ function createViewer(container, cfg0, loader) {
     if (walking) walkStop();
     landY = null; landKey = '';
     if (model) { scene.remove(model); disposeObject(model); }
-    model = root;
+    model = root; root.userData.wrapper = true;
     fixMaterials(root);
     // rotation de la région autour de l'axe vertical : AVANT recentrage, boîte englobante, sol de promenade et capture de vignette
     modelRot = rotDeg();
@@ -678,7 +681,7 @@ function createViewer(container, cfg0, loader) {
       t.parseMs = performance.now() - tp;
       if (t.ac !== ac) { disposeTile(gltf.scene); return; }
       const grp = gltf.scene;
-      grp.name = 'tile:' + t.file;
+      grp.name = 'tile:' + t.file; grp.userData.wrapper = true;
       fixMaterials(grp, true);
       TL.root.add(grp); grp.updateMatrixWorld(true);
       grp.traverse(o => { if (o.isMesh) { o.updateMatrix(); o.matrixAutoUpdate = false; } });
@@ -783,7 +786,7 @@ function createViewer(container, cfg0, loader) {
     try {
       const buf = await TL.src.buf(dir + ov.file);
       const gltf = await loader.parseAsync(buf, '');
-      const g = gltf.scene; g.name = 'overview';
+      const g = gltf.scene; g.name = 'overview'; g.userData.wrapper = true;
       g.quaternion.copy(TL.root.quaternion);
       const byFile = new Map(TL.tiles.map(t => [t.file, t]));
       // v52 : le chemin ecrit dans le .overview.glb (extras.tile) est celui du decoupage ; apres un renommage des dossiers et de l'index il ne correspond plus :
@@ -832,7 +835,7 @@ function createViewer(container, cfg0, loader) {
     TL.maxTri = num(cfg.tileMaxTriangles !== undefined ? cfg.tileMaxTriangles : cfg.tileMaxTri, 8e6, 1e3, 1e9);
     TL.conc = Math.round(num(cfg.tileConcurrency, 4, 1, 16));
     modelRot = rotDeg();
-    const root = new THREE.Group(); root.name = 'tiles';
+    const root = new THREE.Group(); root.name = 'tiles'; root.userData.wrapper = true;
     if (modelRot) root.quaternion.setFromAxisAngle(UPV, modelRot * Math.PI / 180);
     root.updateMatrixWorld(true);
     const v = new THREE.Vector3(), ext = new THREE.Box3();

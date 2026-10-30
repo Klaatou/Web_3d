@@ -1349,8 +1349,8 @@ if (C.names) {
     clearTimeout(tm);
     if (!info) { tag.hidden = true; return; }
     tag.textContent = '';
-    const b = document.createElement('b'); b.textContent = info.name || tr('page.pick.noname'); tag.appendChild(b);
-    const extra = [info.parents[0] && info.parents[0] !== info.name ? tr('page.pick.parent', info.parents[0]) : '', info.materials.length ? tr('page.pick.material', info.materials.join(', ')) : ''].filter(Boolean).join(' · ');
+    const b = document.createElement('b'); b.textContent = info.building || info.name || tr('page.pick.noname'); tag.appendChild(b);
+    const extra = [info.name && !info.isRoot ? tr('page.pick.part', info.name) : '', info.materials.length ? tr('page.pick.material', info.materials.join(', ')) : ''].filter(Boolean).join(' · ');
     if (extra) { const d = document.createElement('div'); d.textContent = extra; tag.appendChild(d); }
     tag.hidden = false;
     tag.style.left = Math.max(8, Math.min(innerWidth - tag.offsetWidth - 8, cx + 12)) + 'px';
