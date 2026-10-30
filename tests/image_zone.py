@@ -138,6 +138,8 @@ async def viewer(br, port):
             break
         await pg.wait_for_timeout(250)
     rapport(await plans() == [1, 1], "editeur : la zone image est dessinee avec son image", await plans())
+    etiq = await pg.evaluate("""() => { let r = null; window.__viewer.scene.traverse(o => { if (o.isSprite && o.parent && o.parent.userData.zoneId === 'tab') r = [o.material.depthTest, o.renderOrder]; }); return r; }""")
+    rapport(etiq == [False, 999], "editeur : l'etiquette de l'image n'est pas coupee par les reliefs du mur (test de profondeur coupe)", etiq)
     sx, sy = await pg.evaluate(PROJ, [0, 18, -4.98])
     await pg.mouse.click(sx, sy); await pg.wait_for_timeout(400)
     sel = await pg.evaluate("document.querySelector('#zoneList details[open] summary') && document.querySelector('#zoneList details[open] summary').textContent")

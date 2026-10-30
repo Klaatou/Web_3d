@@ -4,6 +4,10 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.0.0)
 
+### 30/10/2026 : zone « image », étiquette de l'éditeur
+- **Correctif** : dans l'éditeur, l'étiquette d'une zone `image` n'est plus coupée quand le mur a des reliefs devant elle (test de profondeur coupé pour cette étiquette). Test : `tests/image_zone.py`.
+- **Fix**: in the editor, the label of an `image` zone is no longer cut off when the wall has relief in front of it (depth test off for this label). Test: `tests/image_zone.py`.
+
 ### 30/10/2026 : zone « image », dossier de la région
 - **Correctif** : dans une page qui charge une région par la coquille (`index.html?region=dossier/NOM`), les images des zones `image` se cherchent dans le dossier de la région, à côté du `.glb`, et non à côté de la page ; une page du dossier de la région ou un fichier autonome ne changent pas. L'éditeur affiche sous le champ « Image » l'adresse exacte où l'image est cherchée. Test : `tests/image_zone.py` (région en sous-dossier, coquille à la racine).
 - **Fix**: in a page that loads a region through the shell (`index.html?region=folder/NAME`), the pictures of `image` zones are looked up in the region folder, next to the `.glb`, not next to the page; a page inside the region folder or a standalone file is unchanged. The editor shows, under the "Image" field, the exact address the image is looked up at. Test: `tests/image_zone.py` (region in a subfolder, shell at the root).
