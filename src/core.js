@@ -1886,6 +1886,12 @@ function createViewer(container, cfg0, loader) {
     if (e.code === 'KeyT' && !e.repeat && !typing(e) && !e.ctrlKey && !e.metaKey && !e.altKey && !zoneEditor && zones.length) setCones(!coneOn);
   });
   // zone « image » : un plan texture, a plat contre un mur ; adresse relative a la page ou http(s) ou data: ; introuvable : rien dans la page exportee, panneau dans l'editeur
+  // adresse complete d'une image de zone : http(s):, data:, ou /chemin tels quels ; sinon relative au dossier de la region (cfg.imageBase, pose par la coquille), sinon a la page
+  function imageUrl(t) {
+    t = String(t || '').trim();
+    if (!t) return '';
+    try { return new URL(/^([a-z][a-z0-9+.\-]*:|\/)/i.test(t) ? t : (cfg.imageBase || '') + t, document.baseURI).href; } catch (_) { return t; }
+  }
   function imagePlane(z) {
     const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, transparent: true });
     const pl = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat);
@@ -1897,7 +1903,7 @@ function createViewer(container, cfg0, loader) {
       dirty = true;
     };
     if (!z.target || /^\s*(javascript|vbscript):/i.test(z.target)) { absent(); return pl; }
-    new THREE.TextureLoader().load(z.target, tex => {
+    new THREE.TextureLoader().load(imageUrl(z.target), tex => {
       tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
       mat.map = tex; mat.needsUpdate = true;
       pl.scale.y = hOf(tex.image.width, tex.image.height); dirty = true;
@@ -2218,7 +2224,7 @@ function createViewer(container, cfg0, loader) {
   });
 
   return {
-    scene, camera, renderer, controls, cfg, setCfg, setModel, loadBuffer, frame, getCameraState, setZoom, renderStats,
+    scene, camera, renderer, controls, cfg, setCfg, setModel, loadBuffer, imageUrl, frame, getCameraState, setZoom, renderStats,
     get model() { return model; }, get sea() { return sea; }, set onCfg(f) { onCfg = f; }, set onWalk(f) { onWalk = f; }, set onPick(f) { onPick = f; }, set pickOrbit(v) { pickOrbit = !!v; }, set onPresence(f) { onPresence = f; }, set onChat(f) { onChat = f; }, set onPeer(f) { onPeer = f; },
     setZones, zoneSelect, zonePickAt, findMeshes,
     // v36 : repères de portail (cônes) : affichés ou non (T), rappel, état pour les tests

@@ -805,6 +805,7 @@ const C = await (async () => {
     if (!r.ok) fail(BOOT.config, 'HTTP ' + r.status);
   }
   const cfg = await r.json();
+  cfg.imageBase = BOOT.dir || '';   // les images des zones « image » se cherchent dans le dossier de la région (à côté du .glb)
   if (cfg.tiles && BOOT.dir) cfg.tiles = BOOT.dir + cfg.tiles;   // région dans un sous-dossier : les chemins de la config sont relatifs à ce dossier
   // zones relues à chaque ouverture : X.zones.json, sinon zones.json du même dossier, sinon aucune
   cfg.zones = [];

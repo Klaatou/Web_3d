@@ -4,6 +4,10 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.0.0)
 
+### 30/10/2026 : zone « image », dossier de la région
+- **Correctif** : dans une page qui charge une région par la coquille (`index.html?region=dossier/NOM`), les images des zones `image` se cherchent dans le dossier de la région, à côté du `.glb`, et non à côté de la page ; une page du dossier de la région ou un fichier autonome ne changent pas. L'éditeur affiche sous le champ « Image » l'adresse exacte où l'image est cherchée. Test : `tests/image_zone.py` (région en sous-dossier, coquille à la racine).
+- **Fix**: in a page that loads a region through the shell (`index.html?region=folder/NAME`), the pictures of `image` zones are looked up in the region folder, next to the `.glb`, not next to the page; a page inside the region folder or a standalone file is unchanged. The editor shows, under the "Image" field, the exact address the image is looked up at. Test: `tests/image_zone.py` (region in a subfolder, shell at the root).
+
 ### 30/10/2026 : marque (empreinte) de chaque fichier fabriqué
 - **Ajout** : `build.py` calcule pour chaque fichier de `dist\` une marque, les 8 premiers caractères de son SHA-256, et la liste à la fin du build. `presence_server.py`, `oar2glb.py` et `glb2tiles.py` l'affichent (`--version`, « version » de la console, première ligne du journal, ligne de démarrage) : elle change si et seulement si le fichier change. Le fichier `REVISION` et sa règle disparaissent. Test : `tests/marque.py`.
 - **Added**: `build.py` computes a mark for every file in `dist\`, the first 8 characters of its SHA-256, and lists them at the end of the build. `presence_server.py`, `oar2glb.py` and `glb2tiles.py` show it (`--version`, the console "version" command, first line of the log, start-up line): it changes if and only if the file changes. The `REVISION` file and its rule are gone. Test: `tests/marque.py`.

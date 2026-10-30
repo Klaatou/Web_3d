@@ -1060,6 +1060,7 @@
  "viewer.kind.spawn": "Arrival",
  "viewer.kind.image": "Picture",
  "viewer.zone.t.image": "Picture (on a wall)",
+ "viewer.zf.image.where": "Looked up at: {0}",
  "viewer.zf.image": "Image (file name or address)",
  "viewer.zf.h.image": "Height (0 = from the image)",
  "viewer.zone.image.notwall": "Click on a wall (a vertical surface) to place a picture.",

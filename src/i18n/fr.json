@@ -1060,6 +1060,7 @@
  "viewer.kind.spawn": "Arrivée",
  "viewer.kind.image": "Image",
  "viewer.zone.t.image": "Image (tableau sur un mur)",
+ "viewer.zf.image.where": "Cherchée à : {0}",
  "viewer.zf.image": "Image (nom de fichier ou adresse)",
  "viewer.zf.h.image": "Hauteur (0 = d'après l'image)",
  "viewer.zone.image.notwall": "Clique sur un mur (une surface verticale) pour poser une image.",

@@ -144,6 +144,8 @@ async def viewer(br, port):
     rapport(bool(sel) and "Essai" in sel, "editeur : un clic sur l'image la selectionne", sel)
     champs = await pg.evaluate("[...document.querySelectorAll('#zoneList details[open] label')].map(l => l.textContent)")
     rapport(any("Image (nom de fichier" in c for c in champs) and any("0 = d'apr" in c for c in champs) and not any("Rayon" in c or "Confirm" in c for c in champs), "editeur : champs image, largeur, hauteur (0 = auto), sans portee ni confirmation", champs)
+    ou = await pg.evaluate("[...document.querySelectorAll('#zoneList details[open] small')].map(s => s.textContent)")
+    rapport(any("Cherchée à : http://127.0.0.1:" in t and t.endswith("/tableau.png") for t in ou), "editeur : l'adresse ou l'image est cherchee est affichee sous le champ", ou)
     rapport(not errs, "viewer : aucune erreur JavaScript", errs)
     await pg.close()
 
@@ -164,6 +166,18 @@ async def main():
     if r.returncode:
         sys.exit(f"[ECHEC] generation\n{r.stdout}{r.stderr}")
     out.write_text(out.read_text(encoding="utf-8").replace("const viewer = createViewer(", "const viewer = window.__v = createViewer(", 1), encoding="utf-8")
+    # region dans un sous-dossier (reg/), images a cote du .glb : page du dossier, puis coquille a la racine (?region=reg/salle)
+    reg = site / "reg"; reg.mkdir()
+    (reg / "reg-only.png").write_bytes(png(8, 4))   # cette image n'existe QUE dans le dossier de la region : la page de la racine ne la trouve pas a cote d'elle
+    zr = [dict(z, target="reg-only.png" if z["target"] == "tableau.png" else z["target"]) for z in zones]
+    (tmp / "zones_reg.json").write_text(json.dumps(zr), encoding="utf-8")
+    r = subprocess.run([sys.executable, str(DIST / "glb2html.py"), str(tmp / "salle.glb"), "-o", str(reg / "salle.html"), "--modular", "--zones", str(tmp / "zones_reg.json"), "--no-sea", *vend], capture_output=True, text=True)
+    if r.returncode:
+        sys.exit(f"[ECHEC] generation modulaire\n{r.stdout}{r.stderr}")
+    coquille = (reg / "salle.html").read_text(encoding="utf-8").replace("const viewer = createViewer(", "const viewer = window.__v = createViewer(", 1)
+    (reg / "salle.html").write_text(coquille, encoding="utf-8")
+    (site / "index.html").write_text(coquille, encoding="utf-8")
+    shutil.copytree(reg / "lib", site / "lib")
     proc, port = serveur(site)
     try:
         async with async_playwright() as p:
@@ -171,6 +185,8 @@ async def main():
             br = await p.chromium.launch(args=["--use-gl=swiftshader", "--enable-unsafe-swiftshader"], **kw)
             await page_exportee(br, f"http://127.0.0.1:{port}/page.html", "page exportee en http", True)
             await page_exportee(br, out.as_uri(), "page exportee ouverte du disque", False)
+            await page_exportee(br, f"http://127.0.0.1:{port}/reg/salle.html", "region en sous-dossier, page du dossier", True)
+            await page_exportee(br, f"http://127.0.0.1:{port}/index.html?region=reg/salle", "region en sous-dossier, coquille a la racine", True)
             await viewer(br, port)
             await br.close()
     finally:

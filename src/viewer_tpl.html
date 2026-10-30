@@ -489,6 +489,8 @@ function renderZoneList() {
     d.appendChild(inp(tr('viewer.zf.label'), 'text', z.label, v => upd({ label: v }, true)));
     if (z.type === 'image') {
       d.appendChild(inp(tr('viewer.zf.image'), 'text', z.target, v => upd({ target: v }, true)));
+      const ou = document.createElement('small'); ou.style.cssText = 'margin:0 0 6px;word-break:break-all';
+      ou.textContent = tr('viewer.zf.image.where', (viewer.imageUrl(z.target) || '-').slice(0, 200)); d.appendChild(ou);
       d.appendChild(inp(tr('viewer.zf.w'), 'number', z.w, v => upd({ w: v }, true)));
       d.appendChild(inp(tr('viewer.zf.h.image'), 'number', z.h, v => upd({ h: v }, true)));
     } else if (z.type !== 'spawn') {
