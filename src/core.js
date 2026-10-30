@@ -1892,6 +1892,9 @@ function createViewer(container, cfg0, loader) {
     if (!t) return '';
     try { return new URL(/^([a-z][a-z0-9+.\-]*:|\/)/i.test(t) ? t : (cfg.imageBase || '') + t, document.baseURI).href; } catch (_) { return t; }
   }
+  // apercu depuis un dossier choisi (editeur) : f(cible) renvoie une adresse blob: ou null (alors adresse habituelle) ; hors editeur : aucun effet
+  let imageResolver = null;
+  function setImageResolver(f) { imageResolver = typeof f === 'function' ? f : null; if (zones.length) { buildZones(); dirty = true; } }
   function imagePlane(z) {
     const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, transparent: true });
     const pl = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat);
@@ -1903,11 +1906,14 @@ function createViewer(container, cfg0, loader) {
       dirty = true;
     };
     if (!z.target || /^\s*(javascript|vbscript):/i.test(z.target)) { absent(); return pl; }
-    new THREE.TextureLoader().load(imageUrl(z.target), tex => {
+    const fromUrl = (u, tmp) => new THREE.TextureLoader().load(u, tex => {
+      if (tmp) URL.revokeObjectURL(u);
       tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
       mat.map = tex; mat.needsUpdate = true;
       pl.scale.y = hOf(tex.image.width, tex.image.height); dirty = true;
-    }, undefined, absent);
+    }, undefined, () => { if (tmp) URL.revokeObjectURL(u); absent(); });
+    if (imageResolver) Promise.resolve().then(() => imageResolver(z.target)).then(u => u ? fromUrl(u, true) : fromUrl(imageUrl(z.target), false), () => fromUrl(imageUrl(z.target), false));
+    else fromUrl(imageUrl(z.target), false);
     return pl;
   }
   function buildZones() {
@@ -2224,7 +2230,7 @@ function createViewer(container, cfg0, loader) {
   });
 
   return {
-    scene, camera, renderer, controls, cfg, setCfg, setModel, loadBuffer, imageUrl, frame, getCameraState, setZoom, renderStats,
+    scene, camera, renderer, controls, cfg, setCfg, setModel, loadBuffer, imageUrl, setImageResolver, frame, getCameraState, setZoom, renderStats,
     get model() { return model; }, get sea() { return sea; }, set onCfg(f) { onCfg = f; }, set onWalk(f) { onWalk = f; }, set onPick(f) { onPick = f; }, set pickOrbit(v) { pickOrbit = !!v; }, set onPresence(f) { onPresence = f; }, set onChat(f) { onChat = f; }, set onPeer(f) { onPeer = f; },
     setZones, zoneSelect, zonePickAt, findMeshes,
     // v36 : repères de portail (cônes) : affichés ou non (T), rappel, état pour les tests

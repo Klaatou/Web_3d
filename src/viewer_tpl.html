@@ -490,7 +490,14 @@ function renderZoneList() {
     if (z.type === 'image') {
       d.appendChild(inp(tr('viewer.zf.image'), 'text', z.target, v => upd({ target: v }, true)));
       const ou = document.createElement('small'); ou.style.cssText = 'margin:0 0 6px;word-break:break-all';
-      ou.textContent = tr('viewer.zf.image.where', (viewer.imageUrl(z.target) || '-').slice(0, 200)); d.appendChild(ou);
+      const ouTxt = tr('viewer.zf.image.where', (viewer.imageUrl(z.target) || '-').slice(0, 200));
+      ou.textContent = ouTxt; d.appendChild(ou);
+      regionDirQuiet().then(async dir => {
+        if (!dir || !imgRel(z.target)) return;
+        const f = await imageFileInDir(dir, z.target);
+        if (ou.isConnected) ou.textContent = f ? tr('viewer.zf.image.indir', dir.name, z.target) : tr('viewer.zf.image.notindir', dir.name, ouTxt);
+      });
+      const bd = document.createElement('button'); bd.className = 'wide'; bd.textContent = tr('viewer.zf.image.dirbtn'); bd.onclick = () => chooseImagesDir(); d.appendChild(bd);
       d.appendChild(inp(tr('viewer.zf.w'), 'number', z.w, v => upd({ w: v }, true)));
       d.appendChild(inp(tr('viewer.zf.h.image'), 'number', z.h, v => upd({ h: v }, true)));
     } else if (z.type !== 'spawn') {
@@ -1042,6 +1049,63 @@ const idbDirs = (mode, fn) => new Promise((res, rej) => {
 async function writeInDir(dir, name, text) {
   const h = await dir.getFileHandle(name, { create: true }), w = await h.createWritable();
   await w.write(text); await w.close();
+}
+// apercu des images d'une zone « image » depuis le dossier de la region : meme poignee que l'enregistrement des zones, mais en lecture seule (rien n'est ecrit)
+function imgRel(t) { t = String(t || '').trim(); return !!t && !/^([a-z][a-z0-9+.\-]*:|\/)/i.test(t); }
+async function regionDirQuiet() {   // dossier deja autorise et reconnu (il contient le fichier charge), sans rien demander ; sinon null
+  if (!loadedName) return null;
+  const ok = async dir => {
+    try {
+      if (typeof dir.queryPermission === 'function' && await dir.queryPermission({ mode: 'read' }) !== 'granted') return false;
+      await dir.getFileHandle(loadedName); return true;
+    } catch (e) { return false; }
+  };
+  if (zonesDirHandle && await ok(zonesDirHandle)) return zonesDirHandle;
+  let h = null;
+  try { h = await idbDirs('readonly', st => st.get(baseName)); } catch (e) { h = null; }
+  if (h && await ok(h)) { zonesDirHandle = h; return h; }
+  return null;
+}
+async function imageFileInDir(dir, target) {
+  if (!imgRel(target)) return null;
+  const parts = String(target).trim().split(/[\\/]+/);
+  if (parts.some(p => !p || p === '.' || p === '..')) return null;
+  try {
+    let d = dir;
+    for (const p of parts.slice(0, -1)) d = await d.getDirectoryHandle(p);
+    return await (await d.getFileHandle(parts[parts.length - 1])).getFile();
+  } catch (e) { return null; }
+}
+async function imageFromDir(target) {   // appele par le viewer pour chaque zone image ; null : adresse habituelle
+  const dir = await regionDirQuiet(); if (!dir) return null;
+  const f = await imageFileInDir(dir, target);
+  return f ? URL.createObjectURL(f) : null;
+}
+viewer.setImageResolver(imageFromDir);
+async function chooseImagesDir() {
+  const say = t => setStatus(t);
+  if (typeof window.showDirectoryPicker !== 'function') return say(tr('viewer.zdir.noapi'));
+  if (!loadedName) return say(tr('viewer.zimgdir.nofile'));
+  try {
+    let dir = zonesDirHandle;
+    if (!dir) { try { dir = await idbDirs('readonly', st => st.get(baseName)); } catch (e) { dir = null; } }
+    if (dir && typeof dir.queryPermission === 'function') {
+      let p = await dir.queryPermission({ mode: 'read' });
+      if (p !== 'granted' && typeof dir.requestPermission === 'function') p = await dir.requestPermission({ mode: 'read' });
+      if (p !== 'granted') dir = null;
+    }
+    if (dir) { try { await dir.getFileHandle(loadedName); } catch (e) { dir = null; } }
+    if (!dir) dir = await window.showDirectoryPicker({ id: 'glb2html-region', mode: 'read' });
+    try { await dir.getFileHandle(loadedName); } catch (e) { throw Object.assign(new Error(tr('viewer.zdir.wrong', loadedName)), { name: 'WrongFolder' }); }
+    zonesDirHandle = dir; try { await idbDirs('readwrite', st => st.put(dir, baseName)); } catch (e) {}
+    viewer.setImageResolver(imageFromDir);   // reconstruit les zones : les images sont relues dans le dossier
+    renderZoneList();
+    say(tr('viewer.zimgdir.ok', dir.name));
+  } catch (e) {
+    if (e && e.name === 'AbortError') return say(tr('viewer.zimgdir.abort'));
+    if (e && e.name === 'WrongFolder') return say(tr('viewer.zdir.nothing', e.message));
+    say(e && (e.name === 'SecurityError' || e.name === 'NotAllowedError') ? tr('viewer.zdir.denied') : tr('viewer.zimgdir.failed', e && e.message ? e.message : e));
+  }
 }
 async function saveZonesToDir() {
   const zname = baseName + '.zones.json', text = JSON.stringify(cfg.zones, null, 1), info = $('zDirInfo');

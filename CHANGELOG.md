@@ -4,6 +4,10 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.0.0)
 
+### 30/10/2026 : zone « image », aperçu depuis le dossier de la région (éditeur)
+- **Ajout** : dans l'éditeur (`glb-viewer.html`), le bouton « Choisir le dossier de la région (aperçu des images) », sous le champ « Image » d'une zone `image`, fait lire les images dans le dossier de la région, à côté du `.glb` (sous-dossiers acceptés, `..` refusé), au lieu de les chercher à côté de la page. Le dossier est en lecture seule et mémorisé par région avec celui de l'enregistrement des zones (Edge et Chrome seulement) ; sans lui, ou si l'image n'y est pas, rien ne change. Les pages exportées ne changent pas. Test : `tests/image_dossier.py` (dossier de remplacement OPFS ; la vraie fenêtre de choix n'est pas essayée).
+- **Addition**: in the editor (`glb-viewer.html`), the button "Choose the region folder (image preview)", under the "Image" field of an `image` zone, reads the images from the region folder, next to the `.glb` (subfolders accepted, `..` refused), instead of looking them up next to the page. The folder is read-only and remembered per region together with the zone-saving one (Edge and Chrome only); without it, or if the image is not there, nothing changes. Exported pages are unchanged. Test: `tests/image_dossier.py` (OPFS stand-in folder; the real folder dialog is not tried).
+
 ### 30/10/2026 : zone « image », étiquette de l'éditeur
 - **Correctif** : dans l'éditeur, l'étiquette d'une zone `image` n'est plus coupée quand le mur a des reliefs devant elle (test de profondeur coupé pour cette étiquette). Test : `tests/image_zone.py`.
 - **Fix**: in the editor, the label of an `image` zone is no longer cut off when the wall has relief in front of it (depth test off for this label). Test: `tests/image_zone.py`.
