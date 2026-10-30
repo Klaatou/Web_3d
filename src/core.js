@@ -1800,18 +1800,19 @@ function createViewer(container, cfg0, loader) {
     tipEl.style.left = Math.max(4, Math.min(innerWidth - w - 4, cx + 14)) + 'px';
     tipEl.style.top = Math.max(4, Math.min(innerHeight - h - 4, cy + 18)) + 'px';
   }
-  const ZONE_TYPES = ['url', 'ha', 'portal', 'spawn'];
+  const ZONE_TYPES = ['url', 'ha', 'portal', 'spawn', 'image'];
   const slug = s => String(s || '').toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
   function cleanZone(z, i) {
     const num = (v, d, lo, hi) => { v = Number(v); return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d; };
     const type = ZONE_TYPES.includes(z.type) ? z.type : 'portal';
+    const img = type === 'image';   // image : tableau plaque sur un mur ; h = 0 : hauteur d'apres le rapport de l'image
     const o = {
       id: slug(z.id) || ('z' + (i + 1)), type, label: String(z.label || '').slice(0, 60),
       x: num(z.x, 0, -1e5, 1e5), y: num(z.y, 0, -1e5, 1e5), z: num(z.z, 0, -1e5, 1e5), yaw: num(z.yaw, 0, -7, 7),
       shape: z.shape === 'board' ? 'board' : 'ring', trigger: ['click', 'enter', 'both'].includes(z.trigger) ? z.trigger : 'click',
-      radius: num(z.radius, 2, 0.5, 50), w: num(z.w, 2.4, 0.5, 10), h: num(z.h, 1.2, 0.3, 6),
+      radius: num(z.radius, 2, 0.5, 50), w: num(z.w, img ? 1.2 : 2.4, img ? 0.1 : 0.5, 10), h: img ? num(z.h, 0, 0, 6) : num(z.h, 1.2, 0.3, 6),
       target: String(z.target || '').slice(0, 600), spawn: slug(z.spawn), confirm: !!z.confirm, private: !!z.private, showName: !!z.showName,
-      mesh: type === 'spawn' ? '' : String(z.mesh || '').replace(/[\u0000-\u001f]/g, '').slice(0, 200)
+      mesh: type === 'spawn' || img ? '' : String(z.mesh || '').replace(/[\u0000-\u001f]/g, '').slice(0, 200)
     };
     if (type !== 'portal') o.trigger = 'click';
     return o;
@@ -1875,6 +1876,25 @@ function createViewer(container, cfg0, loader) {
   window.addEventListener('keydown', e => {
     if (e.code === 'KeyT' && !e.repeat && !typing(e) && !e.ctrlKey && !e.metaKey && !e.altKey && !zoneEditor && zones.length) setCones(!coneOn);
   });
+  // zone « image » : un plan texture, a plat contre un mur ; adresse relative a la page ou http(s) ou data: ; introuvable : rien dans la page exportee, panneau dans l'editeur
+  function imagePlane(z) {
+    const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, transparent: true });
+    const pl = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat);
+    const hOf = (iw, ih) => z.h > 0 ? z.h : z.w * (iw && ih ? ih / iw : 0.75);
+    pl.scale.set(z.w, hOf(0, 0), 1);
+    const absent = () => {
+      console.warn(tr('core.image.missing', z.target || '-'));
+      if (zoneEditor) { mat.map = boardTex(z.label || z.id, tr('core.image.missing', z.target || '-'), z.w, pl.scale.y); mat.needsUpdate = true; } else pl.visible = false;
+      dirty = true;
+    };
+    if (!z.target || /^\s*(javascript|vbscript):/i.test(z.target)) { absent(); return pl; }
+    new THREE.TextureLoader().load(z.target, tex => {
+      tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+      mat.map = tex; mat.needsUpdate = true;
+      pl.scale.y = hOf(tex.image.width, tex.image.height); dirty = true;
+    }, undefined, absent);
+    return pl;
+  }
   function buildZones() {
     for (const c of [...zoneGroup.children]) {
       zoneGroup.remove(c);
@@ -1889,6 +1909,12 @@ function createViewer(container, cfg0, loader) {
       const link = zoneLink.get(z.id);
       const g = new THREE.Group(); g.userData.zoneId = z.id;
       if (!link) { g.position.set(z.x, z.y, z.z); g.rotation.y = z.yaw; }
+      if (z.type === 'image') {
+        const pl = imagePlane(z); g.add(pl);
+        if (zoneEditor) { pl.userData.zone = z; zoneAll.push(pl); const lab = makeLabel(z.label || z.id); lab.position.y = (z.h > 0 ? z.h : z.w * 0.75) / 2 + 0.3; g.add(lab); }
+        zoneGroup.add(g);
+        continue;
+      }
       const kind = { url: tr('core.kind.url'), ha: tr('core.kind.ha'), portal: tr('core.kind.portal'), spawn: tr('core.kind.spawn') }[z.type];
       const priv = zoneEditor && z.private ? tr('core.private') : '';
       const clickable = z.type !== 'spawn' && z.trigger !== 'enter';

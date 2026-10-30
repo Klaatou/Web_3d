@@ -271,7 +271,7 @@ for (const r of ROWS) {
   }
   if (r[0] === 'zones') {
     const box = add('<div id="zonesBox"></div>');
-    box.innerHTML = '<div class="row"><label>' + tr('viewer.zone.type') + '</label><select id="zNewType" style="grid-column:1/-1;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;width:100%"><option value="portal">' + tr('viewer.zone.t.portal') + '</option><option value="url">' + tr('viewer.zone.t.url') + '</option><option value="ha">' + tr('viewer.zone.t.ha') + '</option><option value="spawn">' + tr('viewer.zone.t.spawn') + '</option></select></div>' +
+    box.innerHTML = '<div class="row"><label>' + tr('viewer.zone.type') + '</label><select id="zNewType" style="grid-column:1/-1;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;width:100%"><option value="portal">' + tr('viewer.zone.t.portal') + '</option><option value="url">' + tr('viewer.zone.t.url') + '</option><option value="ha">' + tr('viewer.zone.t.ha') + '</option><option value="spawn">' + tr('viewer.zone.t.spawn') + '</option><option value="image">' + tr('viewer.zone.t.image') + '</option></select></div>' +
       '<div class="btns"><button id="bZoneAdd" class="wide"></button></div><small>' + tr('viewer.zone.pnote') + '</small>' +
       '<div id="zoneList"></div>' +
       '<div class="btns"><button id="bZoneExp">' + tr('viewer.zone.exp') + '</button><button id="bZoneImp">' + tr('viewer.zone.imp') + '</button></div>' +
@@ -446,6 +446,7 @@ function setRotation(deg) {
 function zoneDefaults(type) {
   const base = { type, label: '', shape: 'ring', trigger: 'click', radius: 2, w: 2.4, h: 1.2, target: '', spawn: '', confirm: false, private: false, showName: false, yaw: 0, mesh: '' };
   if (type === 'portal') return Object.assign(base, { label: tr('viewer.kind.portal'), trigger: 'enter' });
+  if (type === 'image') return Object.assign(base, { label: tr('viewer.kind.image'), w: 1.2, h: 0 });
   if (type === 'url') return Object.assign(base, { label: tr('viewer.kind.url'), shape: 'board', target: 'https://' });
   if (type === 'ha') return Object.assign(base, { label: tr('viewer.kind.ha'), shape: 'board', target: 'http://homeassistant.local:8123/api/webhook/', private: true, confirm: true });
   return Object.assign(base, { id: 'arrivee', label: tr('viewer.kind.spawn') });
@@ -480,13 +481,17 @@ function renderZoneList() {
   viewer.getZones().forEach((z, idx) => {
     const d = document.createElement('details'); d.open = z.id === zoneSel; d.style.cssText = 'border:1px solid #000;border-radius:6px;padding:4px 8px;margin:6px 0';
     const s = document.createElement('summary'); s.style.cursor = 'pointer';
-    s.textContent = ({ url: tr('viewer.kind.url'), ha: tr('viewer.kind.ha'), portal: tr('viewer.kind.portal'), spawn: tr('viewer.kind.spawn') }[z.type]) + ' : ' + (z.label || z.id) + (z.private ? tr('viewer.private') : '');
+    s.textContent = ({ url: tr('viewer.kind.url'), ha: tr('viewer.kind.ha'), portal: tr('viewer.kind.portal'), spawn: tr('viewer.kind.spawn'), image: tr('viewer.kind.image') }[z.type]) + ' : ' + (z.label || z.id) + (z.private ? tr('viewer.private') : '');
     s.onclick = () => { setTimeout(() => { if (d.open) { zoneSel = z.id; viewer.zoneSelect(z.id); } }, 0); };
     d.appendChild(s);
     const upd = (patch, rerender) => { const list = viewer.getZones(); Object.assign(list[idx], patch); zonesSync(list, rerender); };
     d.appendChild(inp(tr('viewer.zf.id'), 'text', z.id, v => { zoneSel = null; upd({ id: v }, true); }));
     d.appendChild(inp(tr('viewer.zf.label'), 'text', z.label, v => upd({ label: v }, true)));
-    if (z.type !== 'spawn') {
+    if (z.type === 'image') {
+      d.appendChild(inp(tr('viewer.zf.image'), 'text', z.target, v => upd({ target: v }, true)));
+      d.appendChild(inp(tr('viewer.zf.w'), 'number', z.w, v => upd({ w: v }, true)));
+      d.appendChild(inp(tr('viewer.zf.h.image'), 'number', z.h, v => upd({ h: v }, true)));
+    } else if (z.type !== 'spawn') {
       if (z.type === 'portal') {
         d.appendChild(inp(tr('viewer.zf.target'), 'text', z.target, v => upd({ target: v })));
         d.appendChild(inp(tr('viewer.zf.spawn'), 'text', z.spawn, v => upd({ spawn: v })));
@@ -565,7 +570,8 @@ addEventListener('keydown', e => {
   if (e.code === 'KeyP' && !e.repeat && viewer.walking && n !== 'INPUT' && n !== 'TEXTAREA' && n !== 'SELECT') {
     const w = viewer.getWalk(), type = $('zNewType') ? $('zNewType').value : 'portal', fwd = [-Math.sin(w.yaw), -Math.cos(w.yaw)];
     const r2 = v => Math.round(v * 100) / 100;
-    if (type === 'url' || type === 'ha') addZone(type, r2(w.pos[0] + fwd[0] * 2.2), r2(w.pos[1]), r2(w.pos[2] + fwd[1] * 2.2), r2(w.yaw));
+    if (type === 'image') addZone(type, r2(w.pos[0] + fwd[0] * 2.2), r2(w.pos[1] + 1.6), r2(w.pos[2] + fwd[1] * 2.2), r2(w.yaw));   // en face de toi, a hauteur de mur : a ajuster
+    else if (type === 'url' || type === 'ha') addZone(type, r2(w.pos[0] + fwd[0] * 2.2), r2(w.pos[1]), r2(w.pos[2] + fwd[1] * 2.2), r2(w.yaw));
     else addZone(type, r2(w.pos[0]), r2(w.pos[1]), r2(w.pos[2]), type === 'spawn' ? r2(w.yaw) : 0);
     return;
   }
@@ -908,6 +914,14 @@ coordInfo();
       const h = tilesMode ? ray.intersectObject(viewer.model, true)[0] : ray.intersectObjects([viewer.model, viewer.sea].filter(Boolean), true)[0];
       if (!h) { if (tilesMode) tileMiss(ray); return; }
       const type = $('zNewType').value, cam = viewer.camera.position, tg = viewer.controls.target;
+      if (type === 'image') {   // plaque contre le mur touche : normale de la face, retournee vers le regard ; refuse sol et plafond
+        const n = h.face ? h.face.normal.clone().transformDirection(h.object.matrixWorld) : null;
+        if (n && n.dot(ray.ray.direction) > 0) n.negate();
+        if (!n || Math.abs(n.y) > 0.5) { setStatus(tr('viewer.zone.image.notwall')); return; }
+        zoneAddMode = false; zoneAddLabel();
+        addZone(type, Math.round((h.point.x + n.x * 0.02) * 100) / 100, Math.round(h.point.y * 100) / 100, Math.round((h.point.z + n.z * 0.02) * 100) / 100, Math.atan2(n.x, n.z));
+        return;
+      }
       const yaw = type === 'spawn' ? Math.atan2(-(tg.x - cam.x), -(tg.z - cam.z)) : (type === 'portal' ? 0 : Math.atan2(cam.x - h.point.x, cam.z - h.point.z));
       zoneAddMode = false; zoneAddLabel();
       addZone(type, Math.round(h.point.x * 100) / 100, Math.round(h.point.y * 100) / 100, Math.round(h.point.z * 100) / 100, yaw);

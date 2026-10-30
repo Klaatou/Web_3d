@@ -158,5 +158,25 @@
   "private": false,
   "showName": true,
   "mesh": ""
+ },
+ {
+  "id": "painting-1",
+  "type": "image",
+  "label": "Painting 1",
+  "x": 118.5,
+  "y": 27.2,
+  "z": -85.98,
+  "yaw": 0,
+  "shape": "ring",
+  "trigger": "click",
+  "radius": 2,
+  "w": 1.5,
+  "h": 0,
+  "target": "paintings/painting-1.jpg",
+  "spawn": "",
+  "confirm": false,
+  "private": false,
+  "showName": false,
+  "mesh": ""
  }
 ]

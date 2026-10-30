@@ -64,7 +64,7 @@ rapport(cfg["zoneMarker"] in G["ZONE_MARKERS"] and cfg["profile"] in ("public", 
 zones = lire("region.zones.sample.json")
 rapport(G["clean_zones"](zones, "private") == zones, "zones : déjà propres (rien à corriger) avec le profil private")
 pub = G["clean_zones"](zones, "public")
-rapport(len(pub) == 7 and all(not z["private"] for z in pub), "zones : profil public, la zone privée est retirée", len(pub))
+rapport(len(pub) == 8 and all(not z["private"] for z in pub), "zones : profil public, la zone privée est retirée", len(pub))
 rapport(sorted({z["type"] for z in zones}) == sorted(G["ZONE_TYPES"]), "zones : une zone de chaque sorte", sorted({z["type"] for z in zones}))
 rapport(any(z["mesh"] for z in zones) and any(z["showName"] for z in zones) and any(z["confirm"] for z in zones), "zones : liée à un objet, nom affiché, confirmation")
 rapport(G["clean_zones"](zones, "perso") == zones, "ancien profil « perso » : compris comme private")
@@ -186,7 +186,7 @@ async def main():
         ign = [l for l in o.logs if avant("core.tile.ignored") in l]
         rapport(tot == 4 and not ign, "index des tuiles d'exemple : 4 tuiles, aucune ignorée", (tot, ign))
         zs = await o.ev("window.__viewer.getZones().map(z => z.id)")
-        rapport(len(zs) == 7 and "light-on" not in zs, "zones d'exemple : 7 affichées, la zone privée retirée (profil public)", zs)
+        rapport(len(zs) == 8 and "light-on" not in zs, "zones d'exemple : 8 affichées, la zone privée retirée (profil public)", zs)
         await o.attendre("!document.getElementById('mapBtn').hidden", 10)
         await o.ev("document.getElementById('mapBtn').click()")
         await o.attendre("document.getElementById('mapGrid').textContent.includes('Other region')", 15)

@@ -119,7 +119,7 @@ DRACO_LIBS = {
 MESHOPT_FILES = {"three/addons/libs/meshopt_decoder.module.js": "examples/jsm/libs/meshopt_decoder.module.js"}
 
 
-ZONE_TYPES = ("url", "ha", "portal", "spawn")
+ZONE_TYPES = ("url", "ha", "portal", "spawn", "image")
 ZONE_MARKERS = ("dot", "range", "none")
 # v43 : anciennes valeurs (avant v43), toujours acceptées et converties
 ZONE_MARKER_OLD = {"discret": "dot", "portee": "range", "aucun": "none"}
@@ -157,15 +157,16 @@ def clean_zones(zones, profile):
         if z.get("private") and profile not in ("private", "perso"):
             continue
         t = z.get("type") if z.get("type") in ZONE_TYPES else "portal"
+        img = t == "image"   # image : tableau plaque sur un mur ; h = 0 : hauteur d'apres le rapport de l'image
         out.append({
             "id": _slug(z.get("id")) or f"z{i + 1}", "type": t, "label": str(z.get("label") or "")[:60],
             "x": num(z.get("x"), 0, -1e5, 1e5), "y": num(z.get("y"), 0, -1e5, 1e5), "z": num(z.get("z"), 0, -1e5, 1e5),
             "yaw": num(z.get("yaw"), 0, -7, 7), "shape": "board" if z.get("shape") == "board" else "ring",
             "trigger": (z.get("trigger") if z.get("trigger") in ("click", "enter", "both") else "click") if t == "portal" else "click",
-            "radius": num(z.get("radius"), 2, 0.5, 50), "w": num(z.get("w"), 2.4, 0.5, 10), "h": num(z.get("h"), 1.2, 0.3, 6),
+            "radius": num(z.get("radius"), 2, 0.5, 50), "w": num(z.get("w"), 1.2 if img else 2.4, 0.1 if img else 0.5, 10), "h": num(z.get("h"), 0, 0, 6) if img else num(z.get("h"), 1.2, 0.3, 6),
             "target": str(z.get("target") or "")[:600], "spawn": _slug(z.get("spawn")),
             "confirm": bool(z.get("confirm")), "private": bool(z.get("private")), "showName": bool(z.get("showName")),
-            "mesh": "" if t == "spawn" else re.sub(r"[\x00-\x1f]", "", str(z.get("mesh") or ""))[:200],
+            "mesh": "" if t in ("spawn", "image") else re.sub(r"[\x00-\x1f]", "", str(z.get("mesh") or ""))[:200],
         })
     return out
 

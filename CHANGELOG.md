@@ -4,6 +4,10 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.0.0)
 
+### 30/10/2026 : zone « image »
+- **Ajout** : type de zone `image`, un tableau plaqué contre un mur. Posé par clic sur un mur dans l'éditeur (orienté d'après la face touchée, 2 cm devant ; sol et plafond refusés), largeur et hauteur réglables (hauteur 0 = d'après l'image), fichier relatif à la page ou adresse http(s) ou `data:`. Image introuvable : rien dans la page exportée, un panneau dans l'éditeur. Ouverte du disque, la page ne peut pas charger l'image (le navigateur la refuse) : rien n'est affiché. Test : `tests/image_zone.py`. Documents pas encore mis à jour (voir `REPRISE.md`).
+- **Added**: `image` zone type, a picture laid flat against a wall. Placed by clicking a wall in the editor (turned to the face hit, 2 cm in front; floor and ceiling refused), width and height adjustable (height 0 = from the image), file relative to the page or http(s) or `data:` address. Missing image: nothing in the exported page, a panel in the editor. Opened from disk, the page cannot load the image (the browser refuses it): nothing is shown. Test: `tests/image_zone.py`. Documents not updated yet (see `REPRISE.md`).
+
 ### 30/10/2026 : console de modération, version et révision
 - **Correctif** : les séquences que le terminal envoie dans la console du serveur (réponses à tmux, flèches, molette, couleur du texte) sont retirées de la ligne avant l'exécution ; avant, elles faisaient répondre « commande inconnue » aux premières commandes (`presence_server.py`, `clean_console_line`).
 - **Ajout** : commande `version` de la console, et première ligne de `aide` : la version suivie de la **révision**, tirée du nouveau fichier `REVISION` à la racine (date jj/mm/aaaa et lettre, `30/10/2026a`) et remplacée par `build.py` dans le fichier de `dist\`. La révision change à chaque patch qui modifie le code livré ; `VERSION` et l'étiquette ne changent toujours qu'à une publication. Elle s'affiche aussi sur la ligne de démarrage et avec `--version`. Test : `tests/console.py`.
