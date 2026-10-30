@@ -595,7 +595,7 @@ dist = ROOT / "dist" / "glb2tiles.py"
 if dist.is_file():
     txt = dist.read_text(encoding="utf-8")
     v = subprocess.run([sys.executable, str(dist), "--version"], capture_output=True, text=True, cwd=tmp, timeout=30)
-    rapport("__VERSION__" not in txt and v.returncode == 0 and v.stdout.strip() == "glb2tiles " + vfile, "--version (dist) : version du fichier VERSION", (v.returncode, v.stdout, vfile))
+    rapport("__VERSION__" not in txt and v.returncode == 0 and v.stdout.strip().startswith("glb2tiles " + vfile), "--version (dist) : version du fichier VERSION", (v.returncode, v.stdout, vfile))
     rapport((ROOT / "dist" / "glb-stats.py").is_file(), "dist/ contient aussi glb-stats.py (fonctions communes)")
     copie = tmp / "copie_dist"
     copie.mkdir()
@@ -603,7 +603,7 @@ if dist.is_file():
     shutil.copy(ROOT / "dist" / "glb-stats.py", copie / "glb-stats.py")
     r = subprocess.run([sys.executable, str(copie / "glb2tiles.py"), str(tmp / "leger" / "leger.glb"), "--analyse", "--nopause"], capture_output=True, text=True, cwd=tmp, timeout=60)
     lignes_log = (copie / "glb2tiles.log").read_text(encoding="utf-8").splitlines()
-    rapport(r.returncode == 0 and r.stdout.splitlines()[:1] == ["[glb2tiles] " + vfile] and lignes_log[:1] == ["[glb2tiles] " + vfile] and
+    rapport(r.returncode == 0 and (r.stdout.splitlines() or [""])[0].startswith("[glb2tiles] " + vfile) and (lignes_log or [""])[0].startswith("[glb2tiles] " + vfile) and
             "pas de découpage nécessaire" in r.stdout, "le journal commence par la version (dist, lancé hors du dépôt)", (r.stdout[:200], lignes_log[:2], r.stderr[-300:]))
 else:
     print("[--]    dist/glb2tiles.py absent : lancer python build.py")

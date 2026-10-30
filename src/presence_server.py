@@ -30,7 +30,7 @@ est refusée avec une raison que la page affiche. Sans --creators, tout le monde
 from __future__ import annotations
 
 VERSION = "__VERSION__"
-REVISION = "__REVISION__"      # remplace par build.py (fichier REVISION : date jj/mm/aaaa + lettre, change a chaque patch du code) ; reste tel quel si on lance src/
+MARK = "__MARK__"      # empreinte du fichier fabrique, calculee et inscrite par build.py ; reste telle quelle si on lance src/
 
 import argparse
 import asyncio
@@ -951,8 +951,8 @@ def clean_console_line(line):
 
 
 def version_tag():
-    """version, suivie de la revision (date jj/mm/aaaa + lettre, fichier REVISION) quand build.py l'a donnee"""
-    return VERSION if not REVISION or REVISION.startswith("__") else _tr("py.presence.version_tag", VERSION, REVISION)
+    """version, suivie de l'empreinte du fichier quand build.py l'a inscrite"""
+    return VERSION if MARK.startswith("__") else _tr("py.common.version_mark", VERSION, MARK)
 
 
 async def run_command(line):

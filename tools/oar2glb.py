@@ -40,6 +40,12 @@ _tr, i18n_add_common = _I18N._tr, _I18N.i18n_add_common
 # <</I18N_PY>>
 
 VERSION = "__VERSION__"      # remplacé par build.py (fichier VERSION) dans dist/oar2glb.py
+MARK = "__MARK__"      # empreinte du fichier fabriqué, inscrite par build.py ; reste telle quelle depuis tools/
+
+
+def version_tag():
+    """version, suivie de l'empreinte du fichier quand build.py l'a inscrite"""
+    return VERSION if MARK.startswith("__") else _tr("py.common.version_mark", VERSION, MARK)
 CONVOAR_URL = "https://github.com/Misterblue/convoar/tree/master/bin"
 
 
@@ -1674,7 +1680,7 @@ def terrain_seul(glb, scan, out, mode, P, chunk=LECTURE):
 def main():
     ap = argparse.ArgumentParser(description=_tr("py.oar2glb.desc", VERSION), epilog=_tr("py.oar2glb.epilog"), formatter_class=argparse.RawDescriptionHelpFormatter, add_help=False)
     i18n_add_common(ap)
-    ap.add_argument("--version", action="version", version=f"oar2glb {VERSION}", help=_tr("py.common.version"))
+    ap.add_argument("--version", action="version", version=f"oar2glb {version_tag()}", help=_tr("py.common.version"))
     ap.add_argument("oar", help=_tr("py.oar2glb.help.oar"))
     ap.add_argument("--reencode", action="store_true", help=_tr("py.oar2glb.reencoder_les_textures_j2k_avant_convoar"))
     ap.add_argument("--max", type=float, default=600.0, help=_tr("py.oar2glb.hauteur_max_m_d_un_objet"))
@@ -1798,12 +1804,12 @@ def old_options(argv):
 if __name__ == "__main__":
     sys.argv = old_options(sys.argv)
     if "--version" in sys.argv[1:]:      # ni journal ni pause « Entrée »
-        print(_tr("py.oar2glb.oar2glb_0_2", VERSION))
+        print(_tr("py.oar2glb.oar2glb_0_2", version_tag()))
         sys.exit(0)
     log = Path(__file__).resolve().with_name("oar2glb.diag.log" if "--diag" in sys.argv else "oar2glb.log")
     lf = open(log, "w", encoding="utf-8")
     sys.stdout, sys.stderr = Tee(sys.__stdout__, lf), Tee(sys.__stderr__, lf)
-    print(_tr("py.oar2glb.oar2glb_0", VERSION))
+    print(_tr("py.oar2glb.oar2glb_0", version_tag()))
     print(_tr("py.oar2glb.args"), sys.argv[1:])
     code = 0
     try:

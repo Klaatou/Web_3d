@@ -468,11 +468,11 @@ rapport(dist.is_file(), "dist/oar2glb.py fabriqué par build.py (lancer python b
 if dist.is_file():
     txt = dist.read_text(encoding="utf-8")
     v = subprocess.run([sys.executable, str(dist), "--version"], capture_output=True, text=True, cwd=tmp, timeout=30)
-    rapport("__VERSION__" not in txt and v.returncode == 0 and v.stdout.strip() == "oar2glb " + vfile, "--version (dist) : version du fichier VERSION", (v.returncode, v.stdout, vfile))
+    rapport("__VERSION__" not in txt and v.returncode == 0 and v.stdout.strip().startswith("oar2glb " + vfile), "--version (dist) : version du fichier VERSION", (v.returncode, v.stdout, vfile))
     r = subprocess.run([sys.executable, str(dist), str(tmp / "R.oar"), "--convoar", str(fake), "--nopause"], capture_output=True, text=True, cwd=tmp)
     log = dist.with_name("oar2glb.log")
     lignes = log.read_text(encoding="utf-8").splitlines() if log.is_file() else []
-    rapport(r.stdout.splitlines()[:1] == ["[oar2glb] " + vfile] and lignes[:1] == ["[oar2glb] " + vfile], "le journal commence par la version", (r.stdout[:120], lignes[:2]))
+    rapport((r.stdout.splitlines() or [""])[0].startswith("[oar2glb] " + vfile) and (lignes or [""])[0].startswith("[oar2glb] " + vfile), "le journal commence par la version", (r.stdout[:120], lignes[:2]))
     log.unlink(missing_ok=True)
 
 print("\n" + ("TOUT PASSE" if not bad else f"{bad} ÉCHEC(S)"))

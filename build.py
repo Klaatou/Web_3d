@@ -5,7 +5,7 @@ Usage :  python build.py                  (télécharge three@0.160.0 depuis jsD
          python build.py --vendor DOSSIER (racine d'un paquet npm three déjà présent : hors ligne)
          python build.py --out DOSSIER    (sortie ailleurs que dist/)
 """
-import argparse, base64, json, pathlib, sys, types, urllib.request
+import argparse, base64, hashlib, json, pathlib, sys, types, urllib.request
 
 ROOT = pathlib.Path(__file__).resolve().parent
 SRC = ROOT / "src"
@@ -21,7 +21,6 @@ OUT = args.out
 OUT.mkdir(parents=True, exist_ok=True)
 CACHE = ROOT / ".cache" / f"three@{THREE_VERSION}"
 VERSION = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
-REVISION = (ROOT / "REVISION").read_text(encoding="utf-8").strip() if (ROOT / "REVISION").exists() else ""   # date jj/mm/aaaa + lettre : change a chaque patch du code (affichee par presence_server.py)
 
 
 def vendor(rel):
@@ -122,7 +121,7 @@ shell = gen.build_shell()
 (OUT / "favicon.ico").write_bytes((SRC / "favicon.ico").read_bytes())   # icone par defaut des pages (a copier a cote de index.html ; la remplacer par la sienne change l'icone, sans refaire les pages)
 shell_modules, shell_draco = gen.shell_lib_files()
 shell_lib = {"dir": gen.LIB_REL, "modules": shell_modules, "draco": shell_draco}
-(OUT / "presence_server.py").write_text(inline_i18n_py((SRC / "presence_server.py").read_text(encoding="utf-8")).replace("__VERSION__", VERSION).replace("__REVISION__", REVISION), encoding="utf-8")
+(OUT / "presence_server.py").write_text(inline_i18n_py((SRC / "presence_server.py").read_text(encoding="utf-8")).replace("__VERSION__", VERSION), encoding="utf-8")
 (OUT / "oar2glb.py").write_text(inline_i18n_py((ROOT / "tools" / "oar2glb.py").read_text(encoding="utf-8")).replace("__VERSION__", VERSION), encoding="utf-8")
 (OUT / "glb2tiles.py").write_text(inline_i18n_py((ROOT / "tools" / "glb2tiles.py").read_text(encoding="utf-8")).replace("__VERSION__", VERSION), encoding="utf-8")   # fonctions communes de glb2tiles.py : doit rester à côté
 
@@ -144,3 +143,23 @@ v = v.replace("__VERSION__", VERSION)
 (OUT / "glb-viewer.html").write_text(v, encoding="utf-8")
 print(f"[OK] coquille -> {OUT / 'index.html'} ({len(shell) // 1024} Ko) ; carte -> {OUT / 'carte.html'}")
 print(f"[OK] {VERSION} -> {OUT} (glb2html.py {len(py) // 1024} Ko, glb-viewer.html {len(v) // 1024} Ko)")
+
+
+# marque de chaque fichier fabrique : 8 premiers caracteres de l'empreinte SHA-256 du fichier, calculee avec la marque vide (les fichiers qui
+# l'affichent : presence_server.py, oar2glb.py, glb2tiles.py) ; elle ne change que si le fichier change. Verification : dans ces fichiers, remplacer la marque (entre guillemets) par """" puis calculer le SHA-256.
+def marquer(dossier):
+    marques = {}
+    for f in sorted(dossier.iterdir()):
+        if not f.is_file():
+            continue
+        d = f.read_bytes()
+        m = hashlib.sha256(d.replace(b"__MARK__", b"")).hexdigest()[:8]
+        if b"__MARK__" in d:
+            f.write_bytes(d.replace(b"__MARK__", m.encode()))
+        marques[f.name] = m
+    return marques
+
+
+print("marques (empreinte de chaque fichier fabriqué) :")
+for nom_f, m in marquer(OUT).items():
+    print(f"  {nom_f:<22} {m}")

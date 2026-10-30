@@ -69,6 +69,12 @@ _tr, i18n_add_common = _I18N._tr, _I18N.i18n_add_common
 # <</I18N_PY>>
 
 VERSION = "__VERSION__"      # remplacé par build.py (fichier VERSION) dans dist/glb2tiles.py
+MARK = "__MARK__"      # empreinte du fichier fabriqué, inscrite par build.py ; reste telle quelle depuis tools/
+
+
+def version_tag():
+    """version, suivie de l'empreinte du fichier quand build.py l'a inscrite"""
+    return VERSION if MARK.startswith("__") else _tr("py.common.version_mark", VERSION, MARK)
 FORMAT_TUILES = 1            # version du format de X.tiles.json
 BLOC_LECTURE = 4 << 20       # octets lus d'un coup dans le GLB d'entrée (lectures toujours par morceaux)
 MO = 1048576
@@ -1937,7 +1943,7 @@ def main(argv=None, log_path=None):
     ap = argparse.ArgumentParser(description=_tr("py.glb2tiles.desc", VERSION), epilog=_tr("py.glb2tiles.epilog"), formatter_class=argparse.RawDescriptionHelpFormatter, add_help=False)
     i18n_add_common(ap)
     ap.add_argument("glb", help=_tr("py.glb2tiles.glb_d_entree"))
-    ap.add_argument("--version", action="version", version=f"glb2tiles {VERSION}", help=_tr("py.common.version"))
+    ap.add_argument("--version", action="version", version=f"glb2tiles {version_tag()}", help=_tr("py.common.version"))
     ap.add_argument("--analyse", action="store_true", help=_tr("py.glb2tiles.lecture_seule_mesures_decoupage_prevu_recomm"))
     ap.add_argument("--budget", type=float, default=32.0, help=_tr("py.glb2tiles.mo_par_tuile_defaut_32"))
     ap.add_argument("--budget-triangles", metavar="BUDGET_TRIANGLES", dest="budget_tri", type=int, default=1500000, help=_tr("py.glb2tiles.triangles_par_tuile_defaut_1500000"))
@@ -2110,7 +2116,7 @@ def vue_ensemble_seule(glb, plan, tuiles, sortie, nom, OP, t0):
 if __name__ == "__main__":
     sys.argv = old_options(sys.argv)
     if "--version" in sys.argv[1:]:      # ni journal ni pause « Entrée »
-        print(_tr("py.glb2tiles.glb2tiles_0_2", VERSION))
+        print(_tr("py.glb2tiles.glb2tiles_0_2", version_tag()))
         sys.exit(0)
     try:
         sys.stdout.reconfigure(encoding="utf-8")
@@ -2118,8 +2124,8 @@ if __name__ == "__main__":
         pass
     journal = Path(__file__).resolve().with_name("glb2tiles.log")
     with open(journal, "w", encoding="utf-8") as lf:
-        lf.write(f"[glb2tiles] {VERSION}\n")
-    print(_tr("py.glb2tiles.glb2tiles_0", VERSION))
+        lf.write(f"[glb2tiles] {version_tag()}\n")
+    print(_tr("py.glb2tiles.glb2tiles_0", version_tag()))
     code = 0
     try:
         code = main(log_path=journal)

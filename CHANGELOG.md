@@ -4,6 +4,10 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.0.0)
 
+### 30/10/2026 : marque (empreinte) de chaque fichier fabriqué
+- **Ajout** : `build.py` calcule pour chaque fichier de `dist\` une marque, les 8 premiers caractères de son SHA-256, et la liste à la fin du build. `presence_server.py`, `oar2glb.py` et `glb2tiles.py` l'affichent (`--version`, « version » de la console, première ligne du journal, ligne de démarrage) : elle change si et seulement si le fichier change. Le fichier `REVISION` et sa règle disparaissent. Test : `tests/marque.py`.
+- **Added**: `build.py` computes a mark for every file in `dist\`, the first 8 characters of its SHA-256, and lists them at the end of the build. `presence_server.py`, `oar2glb.py` and `glb2tiles.py` show it (`--version`, the console "version" command, first line of the log, start-up line): it changes if and only if the file changes. The `REVISION` file and its rule are gone. Test: `tests/marque.py`.
+
 ### 30/10/2026 : message clair quand WebGL est indisponible
 - **Correctif** : quand le navigateur refuse de créer le contexte WebGL (accélération matérielle coupée : les navigateurs Chromium récents ne se replient plus sur le rendu logiciel), la page de région et le viewer affichent un message avec les pistes (autre navigateur, option `--enable-unsafe-swiftshader`, accélération réactivée) au lieu de rester sur « Chargement… » ou de ne rien faire (`core.js`, `webglMissing`). Test : `tests/webgl_absent.py`.
 - **Fix**: when the browser refuses to create the WebGL context (hardware acceleration off: recent Chromium browsers no longer fall back to software rendering), the region page and the viewer show a message with the ways out (another browser, the `--enable-unsafe-swiftshader` option, acceleration back on) instead of staying on "Loading…" or doing nothing (`core.js`, `webglMissing`). Test: `tests/webgl_absent.py`.
