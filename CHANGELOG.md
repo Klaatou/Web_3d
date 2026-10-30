@@ -4,6 +4,10 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.0.0)
 
+### 30/10/2026 : VM, écran noir
+- **Documents** : `PROCEDURES` § 11, point 8 : l'écran noir de la console de la VM est constaté deux fois, ce qui est écarté (extinction de l'écran, console texte), ce qui l'a ramené (Ctrl+Alt+Suppr depuis VMware) et les deux commandes à lancer avant de le faire. Cause toujours non établie. Aucun changement de code ni de numéro de version.
+- **Documents**: `PROCEDURES` § 11, item 8: the black VM console screen was seen twice, what was ruled out (screen blanking, text console), what brought it back (Ctrl+Alt+Del from VMware) and the two commands to run before doing it. Cause still not established. No code change, no version number change.
+
 ### 29/10/2026 : note pour les créateurs
 - **Documents** : nouvelle note `docs/fr/CREATEURS.md` (et `docs/en/CREATORS.md`) à remettre à un créateur accueilli sur un serveur de présence : origine à donner, préfixe de salon et `room`, `--presence-url`, refus affichés par la page, journal des visites, ce que le serveur enregistre (valeurs par défaut du code, puis choix du serveur de démonstration de Klaatou), ce que le créateur ne contrôle pas, ce qui a été essayé. Renvoi depuis le manuel § 34.5. Aucun changement de code ni de numéro de version.
 - **Documents**: new note `docs/en/CREATORS.md` (and `docs/fr/CREATEURS.md`) to give to a creator welcomed on a presence server: origin to give, room prefix and `room`, `--presence-url`, refusals shown by the page, visit log, what the server records (code defaults, then the choice of Klaatou's demo server), what the creator does not control, what was tried. Linked from manual § 34.5. No code change, no version number change.
