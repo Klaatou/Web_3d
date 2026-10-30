@@ -51,6 +51,9 @@ def serveur(dossier):
     sys.exit("[ECHEC] serveur http")
 
 
+CHAMP = """() => { const i = [...document.querySelectorAll('input[type=text]')].find(x => x.placeholder === '1471516'); if (!i) return null; i.value = 'mur'; i.dispatchEvent(new Event('change')); return window.__viewer.cfg.solidMaterials; }"""
+
+
 ETAT = """() => { const out = {}; window.__v.scene.traverse(o => { if (o.isMesh && o.material && o.material.name) { const m = o.material; out[m.name] = [m.transparent, m.depthWrite]; } }); return out; }"""
 
 
@@ -100,6 +103,11 @@ async def main():
             await pg.evaluate("window.__v.setCfg({ solidMaterials: '=vit' })"); e = await pg.evaluate(ETAT)
             rapport(e["vitre"] == [True, False], "=vit n'est pas le nom exact : rien n'est opaque", e)
             await pg.close()
+            pv = await br.new_page(viewport={"width": 1300, "height": 800}); pv.on("pageerror", lambda e: errs.append(str(e)))
+            await pv.goto((DIST / "glb-viewer.html").as_uri()); await pv.wait_for_function("window.__viewer", timeout=30000)
+            r = await pv.evaluate(CHAMP)
+            rapport(r == "mur", "viewer : le champ de reglage regle solidMaterials", r)
+            await pv.close()
             rapport(not errs, "aucune erreur JavaScript", errs)
             await br.close()
     finally:

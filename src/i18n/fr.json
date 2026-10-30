@@ -1175,6 +1175,7 @@
  "viewer.row.names": "Afficher le nom de l'élément au clic (dans l'export)",
  "viewer.row.north": "Angle du nord (°) pour un GLB qui ne vient pas d'OpenSim — --north",
  "viewer.row.panel": "Panneau de réglages pour les visiteurs (haute résolution, vagues)",
+ "viewer.row.solid": "Matériaux rendus pleins (textes séparés par des virgules ; =nom : nom exact)",
  "viewer.row.presence": "Serveur de présence (ws:// ou wss://, vide = aucun)",
  "viewer.row.presence.fix": "0.0.0.0 est une adresse d'écoute du serveur : remplacée par 127.0.0.1",
  "viewer.row.retina": "Haute résolution (rendu ×{0}, écran dPR {1})",
