@@ -170,8 +170,8 @@ async def main():
     out.write_text(out.read_text(encoding="utf-8").replace("const viewer = createViewer(", "const viewer = window.__v = createViewer(", 1), encoding="utf-8")
     # region dans un sous-dossier (reg/), images a cote du .glb : page du dossier, puis coquille a la racine (?region=reg/salle)
     reg = site / "reg"; reg.mkdir()
-    (reg / "reg-only.png").write_bytes(png(8, 4))   # cette image n'existe QUE dans le dossier de la region : la page de la racine ne la trouve pas a cote d'elle
-    zr = [dict(z, target="reg-only.png" if z["target"] == "tableau.png" else z["target"]) for z in zones]
+    (reg / "regonly.png").write_bytes(png(8, 4))   # cette image n'existe QUE dans le dossier de la region : la page de la racine ne la trouve pas a cote d'elle
+    zr = [dict(z, target="regonly.png" if z["target"] == "tableau.png" else z["target"]) for z in zones]
     (tmp / "zones_reg.json").write_text(json.dumps(zr), encoding="utf-8")
     r = subprocess.run([sys.executable, str(DIST / "glb2html.py"), str(tmp / "salle.glb"), "-o", str(reg / "salle.html"), "--modular", "--zones", str(tmp / "zones_reg.json"), "--no-sea", *vend], capture_output=True, text=True)
     if r.returncode:

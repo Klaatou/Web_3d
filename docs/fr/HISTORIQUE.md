@@ -105,6 +105,11 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 31/10/2026 |  | après 1.0.0 | Lot 1.0.3 : même chose quand le fichier remplacé est plus vieux (requête `HEAD`, empreinte `ETag` ou `Last-Modified`) ; `tests/image_cache_vieux.py` |
 | 31/10/2026 |  | après 1.0.0 | Lot 1.0.4 : un numéro de version par fichier fabriqué (`VERSIONS.json` écrit par `build.py`) |
 | 31/10/2026 |  | 1.1.0 | Publication 1.1.0 : `VERSION` 1.1.0 ; manuel (§ 37 et §§ 3, 27.3, 27.4, 34.4, 36.5), `PROCEDURES` (§§ 4, 5, 9, 11), historiques, README, exemples, vue d'ensemble, `CLAUDE.md`, `CHANGELOG.md`, FR et EN |
+| 31/10/2026 |  | après 1.1.0 | Lot 1.1.1 : clé `link` d'une zone `image` (le clic ou E ouvre la page) ; fin de l'invite « clic ou E » sur une zone image sans lien ; `tests/lien_image.py` |
+| 31/10/2026 |  | après 1.1.0 | Lot 1.1.2 : documents du lien d'une zone image (manuel, exemple de zones, README des exemples) |
+| 31/10/2026 |  | après 1.1.0 | Lot 1.1.3 : case « Numéros des zones image (repérage) » des Réglages ; le clic de pose d'une zone marche aussi en promenade ; `tests/zones_numeros.py`, `tests/pose_promenade.py` |
+| 31/10/2026 |  | après 1.1.0 | Lot 1.1.4 : numéros des zones image à plat, dans le plan de l'image |
+| 31/10/2026 |  | après 1.1.0 | Lot 1.1.5 : historiques, `PROCEDURES` et vue d'ensemble ; tests `image_zone` et `image_dossier` : noms de fichiers sans tiret (la légende était lue à la place de l'image) |
 
 ## Commandes utiles
 

@@ -68,8 +68,8 @@ PREP = """async ([glb, a, b]) => {
   const reg = await root.getDirectoryHandle('region', { create: true });
   await root.getDirectoryHandle('vide', { create: true });
   const put = async (d, name, bytes) => { const w = await (await d.getFileHandle(name, { create: true })).createWritable(); await w.write(new Uint8Array(bytes)); await w.close(); };
-  await put(reg, 'salle.glb', glb); await put(reg, 'dossier-only.png', a);
-  const sub = await reg.getDirectoryHandle('sous', { create: true }); await put(sub, 'dossier-only2.png', b);
+  await put(reg, 'salle.glb', glb); await put(reg, 'dossieronly.png', a);
+  const sub = await reg.getDirectoryHandle('sous', { create: true }); await put(sub, 'dossieronly2.png', b);
 }"""
 CHOISIR = """async (nom) => { const root = await navigator.storage.getDirectory(); window.showDirectoryPicker = async () => root.getDirectoryHandle(nom); }"""
 CLIQUE = """() => { const b = [...document.querySelectorAll('#zoneList button')].find(x => x.textContent.includes('Choisir le dossier de la région')); if (!b) return false; b.click(); return true; }"""
@@ -103,8 +103,8 @@ async def main():
     shutil.copy(DIST / "glb-viewer.html", site / "glb-viewer.html")
     shutil.copytree(DIST / "lib", site / "lib") if (DIST / "lib").exists() else None
     base = {"type": "image", "y": 18, "z": -4.98, "yaw": 0, "w": 1.2, "h": 0}
-    zs = [dict(base, id="tab", target="tableau.png", x=0), dict(base, id="dos", target="dossier-only.png", x=-4),
-          dict(base, id="sous", target="sous/dossier-only2.png", x=4), dict(base, id="hors", target="sous/../dossier-only.png", x=7)]
+    zs = [dict(base, id="tab", target="tableau.png", x=0), dict(base, id="dos", target="dossieronly.png", x=-4),
+          dict(base, id="sous", target="sous/dossieronly2.png", x=4), dict(base, id="hors", target="sous/../dossieronly.png", x=7)]
     (tmp / "z.json").write_text(json.dumps(zs), encoding="utf-8")
     proc, port = serveur(site)
     try:
@@ -135,7 +135,7 @@ async def main():
             stat = await pg.evaluate("document.getElementById('stat').textContent")
             rapport("region" in stat and "lecture seule" in stat, "message : dossier choisi, lecture seule", stat)
             txt = await pg.evaluate("[...document.querySelectorAll('#zoneList small')].map(s => s.textContent)")
-            rapport(any("Lue dans le dossier « region » : dossier-only.png" in t for t in txt), "editeur : la ligne dit que l'image est lue dans le dossier", txt)
+            rapport(any("Lue dans le dossier « region » : dossieronly.png" in t for t in txt), "editeur : la ligne dit que l'image est lue dans le dossier", txt)
             rapport(any("Absente du dossier « region »" in t and "tableau.png" in t for t in txt), "editeur : image absente du dossier, adresse habituelle indiquee", txt)
             rapport(not errs, "aucune erreur JavaScript", errs)
             await pg.close()

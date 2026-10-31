@@ -105,6 +105,11 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 31/10/2026 |  | after 1.0.0 | Batch 1.0.3: same when the replaced file is older (`HEAD` request, `ETag` or `Last-Modified` fingerprint); `tests/image_cache_vieux.py` |
 | 31/10/2026 |  | after 1.0.0 | Batch 1.0.4: one version number per built file (`VERSIONS.json` written by `build.py`) |
 | 31/10/2026 |  | 1.1.0 | Release 1.1.0: `VERSION` 1.1.0; manual (§ 37 and §§ 3, 27.3, 27.4, 34.4, 36.5), `PROCEDURES` (§§ 4, 5, 9, 11), histories, README, samples, overview, `CLAUDE.md`, `CHANGELOG.md`, French and English |
+| 31/10/2026 |  | after 1.1.0 | Batch 1.1.1: optional `link` key of an `image` zone (click or E opens the page); no more "click or E" prompt on an image zone without a link; `tests/lien_image.py` |
+| 31/10/2026 |  | after 1.1.0 | Batch 1.1.2: documents for the image zone link (manual, zones sample, samples README) |
+| 31/10/2026 |  | after 1.1.0 | Batch 1.1.3: "Image zone numbers (to find them)" box in Settings; the zone placement click also works while walking; `tests/zones_numeros.py`, `tests/pose_promenade.py` |
+| 31/10/2026 |  | after 1.1.0 | Batch 1.1.4: image zone numbers flat, in the image's plane |
+| 31/10/2026 |  | after 1.1.0 | Batch 1.1.5: histories, `PROCEDURES` and overview; `image_zone` and `image_dossier` tests: file names without a hyphen (the caption was read instead of the image) |
 
 ## Useful commands
 

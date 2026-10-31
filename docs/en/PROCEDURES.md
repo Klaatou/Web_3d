@@ -95,6 +95,8 @@ The zones of a tiled region are written in the model's original frame (no recent
 3. If you wrote `12` while only `12-Titre.jpg` exists, have the generator write the real name, running only the zones again:
    `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python .\glb2html.py -o "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.html" --zones-only --zones "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.zones.json"`
 4. Reload the page (F5): a replaced image or `12.txt` is picked up by itself. Opened from disk (`file://`), the page does not show images: serve it over `http` (online demo, web server, or `python -m http.server`).
+5. Optional, to make the picture clickable: fill in the viewer's "Link (page opened on click or E, optional)" field, or by hand `"link": "galerie.html"` in the zone of `X.zones.json` (an address relative to the open page, or `https://…`); a page rebuilt with 1.1.1 or later is required (`MANUAL.md` § 37.1).
+6. To find positions 1, 2, 3… without the viewer: in the page, Settings, "Image zone numbers (to find them)" box (unticked at every opening).
 
 ## 6. Presence server (positions, chat, moderation)
 

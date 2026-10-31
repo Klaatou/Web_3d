@@ -95,6 +95,8 @@ Les zones d'une région en tuiles s'écrivent dans le repère d'origine du modè
 3. Si tu as écrit `12` alors que seul `12-Titre.jpg` existe, fais écrire le vrai nom par le générateur, en relançant seulement les zones :
    `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python .\glb2html.py -o "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.html" --zones-only --zones "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.zones.json"`
 4. Recharge la page (F5) : une image ou un `12.txt` remplacé est repris tout seul. Ouverte du disque (`file://`), la page n'affiche pas les images : sers-la par `http` (démo en ligne, serveur web, ou `python -m http.server`).
+5. Facultatif, pour rendre le tableau cliquable : renseigne le champ « Lien (page ouverte au clic ou à E, facultatif) » du viewer, ou à la main `"link": "galerie.html"` dans la zone de `X.zones.json` (adresse relative à la page ouverte, ou `https://…`) ; une page reconstruite avec la 1.1.1 ou plus est nécessaire (`MANUEL.md` § 37.1).
+6. Pour repérer les emplacements 1, 2, 3… sans le viewer : dans la page, Réglages, case « Numéros des zones image (repérage) » (décochée à chaque ouverture).
 
 ## 6. Serveur de présence (positions, chat, modération)
 

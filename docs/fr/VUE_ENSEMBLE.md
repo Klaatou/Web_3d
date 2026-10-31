@@ -11,7 +11,7 @@ Une région OpenSim (sauvegarde `.oar`) devient une **page web 3D** où l'on se 
 - **Être plusieurs** : le serveur de présence (`presence_server.py`) : avatars, chat, journal des visites, créateurs accueillis (`--creators`), modération en console.
 - **Relier les mondes** : la carte des mondes (`regions.json`), la page `carte.html` avec les visiteurs en direct et la surveillance des arrivées (son et repère), `--scan-sites` pour construire la liste depuis le dossier des sites.
 - **Régler** : la fenêtre Réglages (haute résolution, rendu léger, mer, sons, disposition des fenêtres) ; français et anglais.
-- **Images d'exposition** : une zone `image` plaque une image sur un mur ; on dépose les fichiers dans le sous-dossier `medias` de la région, sans refaire la conversion ni passer par OpenSim ; légende dans le nom du fichier ou dans un fichier `.txt`.
+- **Images d'exposition** : une zone `image` plaque une image sur un mur ; on dépose les fichiers dans le sous-dossier `medias` de la région, sans refaire la conversion ni passer par OpenSim ; légende dans le nom du fichier ou dans un fichier `.txt` ; une zone image peut ouvrir une page au clic (`link`), et une case des Réglages affiche les numéros des zones pour repérer les emplacements.
 - **Démo en ligne** : `https://klaatou.github.io/Web_3d_demo/` (deux régions reliées par des portails, carte des mondes, présence).
 
 ## 2. Ce qui a été essayé, et ce qui ne l'a pas été

@@ -4,6 +4,12 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.1.0)
 
+### 31/10/2026 : version 1.1.5 : historiques, procédures, vue d'ensemble, tests d'images
+- **Documents** : `HISTORIQUE`/`HISTORY` (lots 1.1.1 à 1.1.5), `PROCEDURES` (étapes 5 et 6 : lien, numéros), `VUE_ENSEMBLE`/`OVERVIEW` (zones image : lien et numéros), FR et EN, `verif_trad.py` OK.
+- **Tests** : `image_zone.py` et `image_dossier.py` : les images de test s'appelaient `reg-only.png`, `dossier-only.png`, `dossier-only2.png` ; depuis la légende tirée du nom de fichier, le texte après le tiret (« only ») crée une bande de légende (1024 px de large, `core.js` `W2`) que le test lisait à la place de l'image. Noms sans tiret : `image_dossier` passe en entier, `image_zone` ne garde que l'erreur de console connue en `file://` (requête `HEAD` refusée, sans effet visible).
+- **Documents**: `HISTORIQUE`/`HISTORY` (batches 1.1.1 to 1.1.5), `PROCEDURES` (steps 5 and 6: link, numbers), `VUE_ENSEMBLE`/`OVERVIEW` (image zones: link and numbers), FR and EN, `verif_trad.py` OK.
+- **Tests**: `image_zone.py` and `image_dossier.py`: the test images were called `reg-only.png`, `dossier-only.png`, `dossier-only2.png`; since the caption comes from the file name, the text after the hyphen ("only") creates a caption strip (1024 px wide, `core.js` `W2`) that the test read instead of the image. Names without a hyphen: `image_dossier` passes entirely, `image_zone` keeps only the known `file://` console error (refused `HEAD` request, no visible effect).
+
 ### 31/10/2026 : version 1.1.4 : numéros des zones image à plat
 - **Correction** : les numéros des zones image sont des plans « à plat » dans le plan de l'image (même sens que l'image), et non plus des étiquettes tournées vers la caméra : de biais, celles-ci s'enfonçaient dans l'image et le mur et les dizaines (19, 20, 21) étaient coupées (constat de Klaatou). `core.js` : `makeNumber`. Test `zones_numeros.py` : contrôle l'orientation.
 - **Fix**: image zone numbers are now flat planes in the image's plane (same direction as the image), no longer camera-facing labels: seen at an angle those sank into the image and the wall and the tens digits (19, 20, 21) were cut off (Klaatou's finding). `core.js`: `makeNumber`. `zones_numeros.py` test: checks the orientation.
