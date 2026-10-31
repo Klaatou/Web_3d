@@ -869,7 +869,7 @@ SHELL_LOAD_NEW = """if (C.tiles) {
     const A = startPoint(), D = A ? null : defaultArrival(), at = A || (D && !keepTarget ? D : null);
     await viewer.loadTiles(C.tiles, { anchor: at ? at.pos : undefined, target: at ? at.pos : undefined, radius: rayon > 0 ? rayon : undefined });
   } else {
-    const rGlb = await fetch(BOOT.glb, { cache: 'no-cache' });   // revalide : un .glb remplace s'affiche sans vider le cache
+    const rGlb = await viewer.freshFetch(BOOT.glb);   // empreinte (HEAD), puis cache seulement si le .glb n'a pas change : un .glb remplace, plus vieux ou plus recent, s'affiche sans vider le cache
     if (!rGlb.ok) throw new Error(BOOT.glb + ' : HTTP ' + rGlb.status);
     await viewer.loadBuffer(await rGlb.arrayBuffer());
   }"""

@@ -1910,6 +1910,17 @@ function createViewer(container, cfg0, loader) {
     if (e.code === 'KeyT' && !e.repeat && !typing(e) && !e.ctrlKey && !e.metaKey && !e.altKey && !zoneEditor && zones.length) setCones(!coneOn);
   });
   // zone « image » : un plan texture, a plat contre un mur ; adresse relative a la page ou http(s) ou data: ; introuvable : rien dans la page exportee, panneau dans l'editeur
+  // fichier toujours a jour : une requete HEAD sans cache donne l'empreinte du fichier (ETag ou Last-Modified, et taille) ; le fichier est ensuite lu a l'adresse ?v=empreinte,
+  // dans le cache s'il y est (aucun retelechargement si le fichier n'a pas change), sinon sur le reseau : un fichier remplace, plus vieux ou plus recent, change d'adresse.
+  // cache: 'no-cache' seul ne suffit pas : un serveur repond inchange a un fichier plus vieux que la copie du navigateur. Sans empreinte (ni ETag ni Last-Modified, HEAD refuse) : cache: 'reload'
+  // (toujours juste, mais telechargement complet). Comme fetch : renvoie la reponse (404 comprise) ; rejette si la requete est impossible (autre site sans CORS, file://)
+  async function freshFetch(u) {
+    const h = await fetch(u, { method: 'HEAD', cache: 'no-store' });
+    if (h.status === 404 || h.status === 410) return h;
+    const sig = h.ok ? (h.headers.get('etag') || h.headers.get('last-modified')) : '';
+    if (!sig) return fetch(u, { cache: 'reload' });
+    return fetch(u + (u.includes('?') ? '&' : '?') + 'v=' + encodeURIComponent(sig + '|' + (h.headers.get('content-length') || '')), { cache: 'force-cache' });
+  }
   // adresse complete d'une image de zone : http(s):, data:, ou /chemin tels quels ; sinon relative au dossier de la region (cfg.imageBase, pose par la coquille), sinon a la page
   function imageUrl(t) {
     t = String(t || '').trim();
@@ -1962,12 +1973,12 @@ function createViewer(container, cfg0, loader) {
       mat.map = tex; mat.needsUpdate = true;
       pl.scale.y = hOf(tex.image.width, tex.image.height); place(); dirty = true; if (ok) ok();
     }, undefined, () => { if (tmp) URL.revokeObjectURL(u); (fail || absent)(); });
-    // image toujours revalidee aupres du serveur (cache: 'no-cache') : une image remplacee sous le meme nom apparait sans vider le cache du navigateur ;
-    // une balise img n'offre pas ce reglage, d'ou fetch puis adresse blob: (liberee apres chargement par fromUrl)
+    // image toujours a jour (freshFetch) : une image remplacee sous le meme nom, plus vieille ou plus recente, apparait sans vider le cache du navigateur ;
+    // une balise img n'offre aucun reglage de cache, d'ou fetch puis adresse blob: (liberee apres chargement par fromUrl)
     const fresh = (cand, fail, ok) => {
       const u = imageUrl(cand);
       if (!u || /^(data|blob):/i.test(u)) return fromUrl(u, false, fail, ok);
-      fetch(u, { cache: 'no-cache' }).then(
+      freshFetch(u).then(
         r => r.ok ? r.blob().then(b => fromUrl(URL.createObjectURL(b), true, fail, ok), () => fail()) : fail(),
         () => fromUrl(u, false, fail, ok));   // fetch impossible (autre site sans CORS, file://) : chargement direct, comme avant
     };
@@ -1989,7 +2000,7 @@ function createViewer(container, cfg0, loader) {
       const next = rest => {
         if (!rest.length) return;
         const name = rest[0], more = () => next(rest.slice(1));
-        const direct = () => fetch(imageUrl(name), { cache: 'no-cache' }).then(r => r.ok ? r.text() : Promise.reject(new Error('absent'))).then(setCap, more);
+        const direct = () => freshFetch(imageUrl(name)).then(r => r.ok ? r.text() : Promise.reject(new Error('absent'))).then(setCap, more);
         if (imageResolver) Promise.resolve().then(() => imageResolver(name)).then(u => u ? fetch(u).then(r => r.text()).then(t => { URL.revokeObjectURL(u); setCap(t); }, () => { URL.revokeObjectURL(u); more(); }) : direct(), () => direct());
         else direct();
       };
@@ -2325,7 +2336,7 @@ function createViewer(container, cfg0, loader) {
   });
 
   return {
-    scene, camera, renderer, controls, cfg, setCfg, setModel, loadBuffer, imageUrl, setImageResolver, frame, getCameraState, setZoom, renderStats,
+    scene, camera, renderer, controls, cfg, setCfg, setModel, loadBuffer, imageUrl, freshFetch, setImageResolver, frame, getCameraState, setZoom, renderStats,
     get model() { return model; }, get sea() { return sea; }, set onCfg(f) { onCfg = f; }, set onWalk(f) { onWalk = f; }, set onPick(f) { onPick = f; }, set pickOrbit(v) { pickOrbit = !!v; }, set onPresence(f) { onPresence = f; }, set onChat(f) { onChat = f; }, set onPeer(f) { onPeer = f; },
     setZones, zoneSelect, zonePickAt, findMeshes, imageDiag,
     // v36 : repères de portail (cônes) : affichés ou non (T), rappel, état pour les tests
