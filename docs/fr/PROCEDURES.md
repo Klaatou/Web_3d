@@ -1,6 +1,6 @@
 # Que faire pour… (procédures pas à pas)
 
-*Écrit le 23/10/2026, revu le 29/10/2026 pour la version 1.0.0 (les « vNN » du texte sont les versions d'avant la 1.0.0 : la v52 est devenue la 1.0.0). Les commandes sont en PowerShell, sur une seule ligne, avec les chemins de ta machine. La liste complète des options est dans `REFERENCE_OPTIONS.md` ; le détail des zones, touches et réglages est dans `MANUEL.md`.*
+*Écrit le 23/10/2026, revu le 31/10/2026 pour la version 1.1.0 (les « vNN » du texte sont les versions d'avant la 1.0.0 : la v52 est devenue la 1.0.0). Les commandes sont en PowerShell, sur une seule ligne, avec les chemins de ta machine. La liste complète des options est dans `REFERENCE_OPTIONS.md` ; le détail des zones, touches et réglages est dans `MANUEL.md`.*
 
 **Ce qui a été essayé ici :** les commandes de `glb2html`, `glb2tiles` (y compris `--update`, `--register`, `--map-page`) sur des régions de test, un seul GLB et en tuiles. **Ce qui ne l'a pas été :** la conversion d'un OAR par convoar (convoar n'est pas disponible dans le bac à sable), et les commandes PowerShell elles-mêmes (essayées sous Linux avec des chemins équivalents).
 
@@ -65,13 +65,13 @@ Clés utiles : `seaY` (hauteur de la mer, en m), `target` (`[x, y, z]`), `presen
 
 1. **Appliquer le patch et fabriquer** (la conversation donne les lignes exactes, chacune sur une ligne) :
    `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d"; git pull; python .\patch_NOM.py; if ($LASTEXITCODE -eq 0) { python build.py }`
-   puis la ligne `git add …; git commit …; git push` livrée avec le patch, et, seulement quand tu décides une publication, `git tag v1.0.0; git push origin v1.0.0` (le numéro est celui de `VERSION`).
+   puis la ligne `git add …; git commit …; git push` livrée avec le patch, et, seulement quand tu décides une publication, `git tag v1.1.0; git push origin v1.1.0` (le numéro est celui de `VERSION`).
 2. **Copier la coquille et la carte** à la racine du site (organisation `Sites\`, `MANUEL.md` § 29.8) ; la ligne `const LIB` de la coquille reste `./lib` :
    `Copy-Item "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist\index.html" "P:\_OpenSim\SL&OS\Web_3d\Sites\index.html"; Copy-Item "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist\carte.html" "P:\_OpenSim\SL&OS\Web_3d\Sites\carte.html"`
 3. **Mettre à jour chaque région** avec `--update` (la config et les zones sont gardées). Donner le chemin de la coquille de la racine, sinon une coquille et un `lib` inutiles sont écrits dans le dossier de la région :
    `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python .\glb2html.py --update -o "P:\_OpenSim\SL&OS\Web_3d\Sites\houses\NOM.html" --shared-shell "P:\_OpenSim\SL&OS\Web_3d\Sites\index.html"`
    Région seule dans son dossier (coquille à côté d'elle) : `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python .\glb2html.py --update --shared-shell -o "P:\dossier\X.html"`. La coquille `index.html` est renouvelée si elle est plus ancienne (l'ancienne est gardée sous un nom daté).
-4. Recharger la page avec Ctrl+F5. La ligne du bas du panneau d'aide donne la version affichée (par exemple « glb2html 1.0.0 (29/10/2026) ») : si elle est ancienne, la mise à jour n'a pas eu lieu.
+4. Recharger la page avec Ctrl+F5. La ligne du bas du panneau d'aide donne la version affichée (par exemple « glb2html 1.0.4 (31/10/2026) ») : si elle est ancienne, la mise à jour n'a pas eu lieu. Chaque fichier a **son** numéro, qui ne change que si le contenu de ce fichier change (`VERSIONS.json`, manuel § 37.6) : `python build.py` affiche le numéro de chaque fichier et marque ceux qui ont changé dans le lot.
 5. **Relancer le serveur de présence** depuis `dist\` (procédure 6) après chaque nouvelle version : un ancien exemplaire continue de marcher mais n'a pas les nouveautés (v47 : compteurs de la carte ; v48 : journal des visites).
 6. Le découpage en tuiles n'est à refaire que si la conversation le dit, par exemple pour de nouvelles informations dans les tuiles.
 
@@ -84,8 +84,17 @@ Clés utiles : `seaY` (hauteur de la mer, en m), `target` (`[x, y, z]`), `presen
 | Portail vers une autre région | `MANUEL.md` § 6 |
 | Zone liée à un objet du modèle | `MANUEL.md` § 9 (en tuiles : § 17 ter) |
 | Zone privée (visible seulement avec le profil « private ») | `MANUEL.md` § 10 |
+| Image sur un mur (zone `image`) | viewer, type « Image (tableau sur un mur) », `MANUEL.md` § 37.1 ; pas à pas ci-dessous |
 
 Les zones d'une région en tuiles s'écrivent dans le repère d'origine du modèle (aucun recentrage). Le viewer en mode tuiles produit ces coordonnées directement ; ne reporte pas à la main des coordonnées d'un autre GLB.
+
+**Ajouter ou remplacer une image sur un mur (zone `image`, mode hébergé seulement)**
+
+1. Dépose l'image dans le sous-dossier `medias` de la région, à côté du `.glb` : `12.jpg`, ou `12-Titre.jpg` (le texte après le premier tiret sert de légende). Un fichier `12.txt` (première ligne non vide = légende) l'emporte sur le titre du nom.
+2. Dans le viewer : type « Image (tableau sur un mur) », clic sur le mur, `12` dans le champ « Image » (avec « Choisir le dossier de la région », l'éditeur complète le nom si besoin), puis enregistre ou exporte les zones (`X.zones.json`).
+3. Si tu as écrit `12` alors que seul `12-Titre.jpg` existe, fais écrire le vrai nom par le générateur, en relançant seulement les zones :
+   `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python .\glb2html.py -o "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.html" --zones-only --zones "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.zones.json"`
+4. Recharge la page (F5) : une image ou un `12.txt` remplacé est repris tout seul. Ouverte du disque (`file://`), la page n'affiche pas les images : sers-la par `http` (démo en ligne, serveur web, ou `python -m http.server`).
 
 ## 6. Serveur de présence (positions, chat, modération)
 
@@ -141,6 +150,9 @@ Avec une seule région, la carte n'apporte rien : elle sert à relier plusieurs 
 | Erreurs « Couldn't load texture » | images de 0 octet dans des tuiles d'avant la v31 | redécouper avec glb2tiles v31 ou plus |
 | Pas de chat | page fabriquée sans `--presence-url` ou sans `--chat` | ajouter les options avec `--update`, relancer le serveur |
 | La couleur d'avatar ne change pas | serveur de présence ancien | relancer le `presence_server.py` du dossier `dist` |
+| Message « La 3D ne peut pas s'afficher : WebGL est indisponible » | accélération matérielle coupée : Edge et Chrome récents refusent le rendu logiciel | ouvrir la page dans Firefox ; ou Edge avec `--enable-unsafe-swiftshader` dans un profil réservé ; ou réactiver l'accélération ; vérifier `edge://gpu` (manuel § 37.5) |
+| Une image de zone n'apparaît pas | page ouverte du disque (`file://`), fichier absent de `medias/` et du dossier de la région, nom différent | servir la page par `http` ; « Copier le diagnostic » : la ligne « Image » donne la cible et le fichier lu (ou « masquée ») ; relancer `--zones-only` (§ 5) |
+| Une image remplacée ne change pas | page ou coquille d'avant la 1.0.3 (cache du navigateur) | `--update`, puis Ctrl+F5 (§ 4) ; ensuite F5 suffit |
 | Copier le texte de l'aide | — | sélectionner à la souris, Ctrl+C ; sinon, dans la console : `copy(document.body.innerText)` |
 
 Pour tout rapport de bug, colle le texte du panneau d'état et d'aide, et les messages de la console (en ignorant ceux de LastPass).
@@ -297,7 +309,7 @@ WantedBy=multi-user.target
 Puis `systemctl daemon-reload` et `systemctl enable --now web3d-presence`. Ce sont les copies des deux fichiers de la VM de l'auteur.
 
 4. **Console** : sous l'utilisateur de la VM (pas `root`), `tmux attach -t presence` ; depuis le PC, `ssh -t UTILISATEUR@ADRESSE_VM "tmux attach -t presence"` (le copier-coller marche) ; pour sortir sans arrêter le serveur : **Ctrl+B** puis **D** ; pour l'arrêter pour de bon : `systemctl stop web3d-presence` (`root`).
-5. **Mettre à jour le serveur** après un `python build.py` qui change `presence_server.py` : envoyer le fichier de `dist\` par `scp`, puis `systemctl restart web3d-presence`. Ensuite, tape `version` dans la console : la révision affichée doit être celle du fichier `REVISION` à la racine du dépôt. La VM a **sa propre copie** de `presence_creators.json` et de `presence_identities.json` (pseudos réservés).
+5. **Mettre à jour le serveur** après un `python build.py` qui change `presence_server.py` : envoyer le fichier de `dist\` par `scp`, puis `systemctl restart web3d-presence`. Ensuite, tape `version` dans la console : la version et l'empreinte affichées doivent être celles que `python build.py` a listées pour `presence_server.py` (manuel § 37.6). La VM a **sa propre copie** de `presence_creators.json` et de `presence_identities.json` (pseudos réservés).
 6. **Essayé le 29/10/2026** : `reboot` (la session `presence` et la publication Funnel reviennent seules) ; `tmux kill-server` (le service revient en quelques secondes) ; un visiteur extérieur, depuis une page de GitHub Pages.
 7. **Pièges de Debian 13** :
    - le paquet `python` n'existe plus : `python3` ;

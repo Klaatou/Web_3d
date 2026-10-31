@@ -2,7 +2,20 @@
 
 Les dates sont au format jj/mm/aaaa.
 
-## Non publié (après la 1.0.0)
+## Non publié (après la 1.1.0)
+
+*(rien pour l'instant)*
+
+## 1.1.0 (31/10/2026)
+
+### 31/10/2026 : publication 1.1.0 : documents bilingues à jour
+- **Publication** : la 1.1.0, décidée par Klaatou le 31/10/2026, réunit les lots 1.0.1 à 1.0.4 et ceux du 30/10/2026 décrits plus bas. `VERSION` passe de `1.0.4` à `1.1.0` (le numéro mineur monte : des fonctions ont été ajoutées). Aucun fichier fabriqué ne change : `VERSIONS.json` reste tel quel (`glb2html.py` et `glb-viewer.html` 1.0.4, `index.html` 1.0.3, `carte.html`, `presence_server.py`, `oar2glb.py`, `glb2tiles.py` 1.0.1).
+- **Nouveautés de la 1.1.0** : zone `image` (tableau sur un mur, posé par clic ; sous-dossier `medias` ; nom souple, mode « numéro seul » et `imageExts` ; légende dans le nom du fichier ou dans `12.txt` ; images, légendes et `.glb` toujours revalidés) ; éditeur : dossier de la région et aperçu des images ; `--solid-materials` (clé `solidMaterials`) ; pointeur : nom du bâtiment (objet racine) ; message clair quand WebGL est indisponible ; un numéro de version par fichier (`VERSIONS.json`) et marque de chaque fichier ; serveur de présence : console (séquences du terminal, commande `version`) et lignes « requête http » derrière un relais ; note pour les créateurs.
+- **Documents** : manuel § 37 (nouveau) et §§ 3, 27.3, 27.4, 34.4, 36.5 ; `PROCEDURES` §§ 4, 5, 9, 11 (la commande `version` se compare à la liste de `build.py`, plus au fichier `REVISION`) ; historiques ; README ; `docs/samples/README` ; vue d'ensemble ; `CLAUDE.md` ; `REPRISE.md` ; tout en français et en anglais. `REFERENCE_OPTIONS.md` n'a pas changé (la ligne `--solid-materials` y est déjà).
+- **Notes de la release GitHub** : les trois puces anglaises (Release, What is new, Documents) ci-dessous.
+- **Release**: 1.1.0, decided by Klaatou on 31/10/2026, gathers batches 1.0.1 to 1.0.4 and those of 30/10/2026 described below. `VERSION` goes from `1.0.4` to `1.1.0` (the minor number goes up: features were added). No built file changes: `VERSIONS.json` stays as it is (`glb2html.py` and `glb-viewer.html` 1.0.4, `index.html` 1.0.3, `carte.html`, `presence_server.py`, `oar2glb.py`, `glb2tiles.py` 1.0.1).
+- **What is new in 1.1.0**: `image` zone (a picture on a wall, placed by click; `medias` subfolder; flexible name, "bare number" mode and `imageExts`; caption in the file name or in `12.txt`; images, captions and `.glb` always revalidated); editor: region folder and image preview; `--solid-materials` (`solidMaterials` key); pointer: building name (root object); clear message when WebGL is unavailable; one version number per file (`VERSIONS.json`) and a mark for every file; presence server: console (terminal sequences, `version` command) and "http request" lines behind a relay; note for creators.
+- **Documents**: manual § 37 (new) and §§ 3, 27.3, 27.4, 34.4, 36.5; `PROCEDURES` §§ 4, 5, 9, 11 (the `version` command is compared with `build.py`'s list, no longer with the `REVISION` file); histories; README; `docs/samples/README`; overview; `CLAUDE.md`; `REPRISE.md`; all in French and English. `REFERENCE_OPTIONS.md` did not change (the `--solid-materials` line is already there).
 
 ### 31/10/2026 : version 1.0.4 : un numéro de version par fichier
 - **Changement** : chaque fichier fabriqué qui porte un numéro (`glb2html.py`, `index.html`, `carte.html`, `glb-viewer.html`, `presence_server.py`, `oar2glb.py`, `glb2tiles.py`) affiche **son propre** numéro, qui ne change que lorsque le contenu de CE fichier change. `VERSION` reste le compteur de lots. Avant, `build.py` écrivait le numéro du lot dans tous ces fichiers, même quand leur code n'avait pas bougé.

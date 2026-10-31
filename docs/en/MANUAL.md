@@ -1,6 +1,6 @@
-# User manual: zones, portals and arrival points (1.0.0)
+# User manual: zones, portals and arrival points (1.1.0)
 
-> **Summary (1.0.0).** This file is the detailed user manual; it is not meant to be read from end to end. For **all the options** of the tools, with their effect and their default, in French and English: `REFERENCE_OPTIONS.md` (generated from the tools by `gen_reference.py`). To **do a task step by step** (OAR to page, tiled region, update, zones, presence server, map): `PROCEDURES.md`. Here: zones and portals (§§ 1 to 10), keys (§ 2), settings and their files (§§ 11 to 19) and the new features version by version (§§ 18 to 34; § 27 is the JSON file reference). Language of the page and of the tools: § 21.8 to 21.11.
+> **Summary (1.1.0).** This file is the detailed user manual; it is not meant to be read from end to end. For **all the options** of the tools, with their effect and their default, in French and English: `REFERENCE_OPTIONS.md` (generated from the tools by `gen_reference.py`). To **do a task step by step** (OAR to page, tiled region, update, zones, presence server, map): `PROCEDURES.md`. Here: zones and portals (§§ 1 to 10), keys (§ 2), settings and their files (§§ 11 to 19) and the new features version by version (§§ 18 to 37; § 27 is the JSON file reference). Language of the page and of the tools: § 21.8 to 21.11.
 
 ## 1. The rule that explains 90 % of failures
 
@@ -82,7 +82,7 @@ No permanent text sign: the name only appears on hover, or when you are within r
 
 In the viewer, section **Zones: signs, portals, links, commands**:
 
-1. **Type to place**: choose the type.
+1. **Type to place**: choose the type (arrival, portal, web link, Home Assistant command, or **image** on a wall, § 37.1).
 2. Place it, either way:
    - click **Place a zone with a click on the scene**, then click in the scene;
    - or, in walk mode, stand at the right spot and press **P** (a circle under your feet, or a sign 2 m in front of you, facing you).
@@ -1266,7 +1266,8 @@ Positions are in meters, in the page's frame: x towards the east, y upwards, z t
 | `retina`        | yes / no | `false`             | high resolution (sharper, about four times heavier)                                                                                         | `--retina`, `--no-retina` |
 | `light`         | yes / no | `false`             | the page opens in light rendering as long as the visitor has chosen nothing (§ 26)                                                          | `--light`, `--no-light`   |
 | `foliageCutout` | number   | `0.12`              | transparency threshold of foliage (from 0 to 0.5): higher, the leaf edges are cut more                                                      | `--foliage-cutout`        |
-| `names`         | yes / no | `false`             | shows the name of the clicked element                                                                                                       | `--names`, `--no-names`   |
+| `solidMaterials` | text     | `""`                | materials drawn solid (§ 37.3): names or pieces of names separated by commas, `=name` for an exact name; empty = nothing changes            | `--solid-materials`       |
+| `names`         | yes / no | `false`             | shows the name of the building (root object) and of the element aimed at (§ 37.4)                                                                                                       | `--names`, `--no-names`   |
 | `panel`         | yes / no | `true`              | Settings button for visitors                                                                                                                | `--panel`, `--no-panel`   |
 | `libUrl`        | text     | `""`                | folder or address of `lib` (three.js) when it is not next to the page; `--update` aligns it with the `const LIB` line of the shell (§ 28.5) | `--lib-url`               |
 | `version`       | text     | version of the tool | version of `glb2html.py` that wrote the file; `--update` replaces it                                                                        | —                         |
@@ -1298,6 +1299,8 @@ Positions are in meters, in the page's frame: x towards the east, y upwards, z t
 | `profile`      | text     | `"public"` | `"public"`: private zones are not shown; `"private"`: all zones are                                              | `--profile`                         |
 | `zones`        | list     | `[]`       | always empty in this file: the zones are in `NOM.zones.json`                                                     | —                                   |
 | `zonesLive`    | text     | `""`       | always empty in this file (used by standalone pages, `--zones-live`)                                             | `--zones-live`                      |
+| `imageExts`    | text     | `"jpg,jpeg,png,webp,gif,avif"` | extensions tried, in order, for an image name without an extension (§ 37.1); optional key, absent from the file the generator writes | —                                   |
+| `mediaDir`     | text     | `"medias"` | subfolder of the images and text files of `image` zones (§ 37.1); `""` = none; optional key, absent from the file the generator writes | —                                   |
 | `zoneMarker`   | text     | `"dot"`    | marker of portals and free zones: `"dot"` small disc, `"range"` ring at the zone's real radius, `"none"` nothing | `--zone-marker`                     |
 | `zoneCone`     | yes / no | `true`     | small cone above the portals (T key)                                                                             | `--zone-cone`, `--no-zone-cone`     |
 | `showSpawns`   | yes / no | `false`    | also draws the arrivals                                                                                          | `--show-spawns`, `--no-show-spawns` |
@@ -1327,27 +1330,27 @@ The light rendering settings chosen by a visitor (resolution, frames per second,
 
 A **list** of zones, read again at each opening of the page. Each zone has the fields below; a missing field takes its default value, and a value outside the limits is brought back within them.
 
-There are **four kinds** of zones (`type` field): `"spawn"` (arrival), `"portal"` (portal), `"url"` (web link) and `"ha"` (command). "Private", "linked to an object" and "name shown" are not kinds: they are boxes (`private`, `mesh`, `showName`) valid for all kinds.
+There are **five kinds** of zones (`type` field): `"spawn"` (arrival), `"portal"` (portal), `"url"` (web link), `"ha"` (command) and `"image"` (picture on a wall, § 37.1). "Private", "linked to an object" and "name shown" are not kinds: they are boxes (`private`, `mesh`, `showName`) valid for all kinds.
 
 | Field         | Type     | Default       | What it does                                                                                                                                                  |
 | ------------- | -------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `id`          | text     | `z1`, `z2`... | short, unique name: lowercase letters, digits, `-` and `_`, 40 characters at most. The `default` arrival is the region's entry point                          |
-| `type`        | text     | `"portal"`    | `"spawn"`, `"portal"`, `"url"` or `"ha"`                                                                                                                      |
+| `type`        | text     | `"portal"`    | `"spawn"`, `"portal"`, `"url"`, `"ha"` or `"image"`                                                                                                                      |
 | `label`       | text     | `""`          | name shown (tooltip, sign), 60 characters at most                                                                                                             |
 | `x`, `y`, `z` | number   | `0`           | position in meters                                                                                                                                            |
 | `yaw`         | number   | `0`           | orientation in radians: direction of the gaze on arrival, or front of the sign                                                                                |
 | `shape`       | text     | `"ring"`      | `"ring"` (ring on the ground) or `"board"` (sign on a post)                                                                                                   |
 | `trigger`     | text     | `"click"`     | portals only: `"click"` (click or E), `"enter"` (walking into it) or `"both"` (both). The other kinds are always `"click"`                                    |
 | `radius`      | number   | `2`           | radius of the zone in meters (from 0.5 to 50)                                                                                                                 |
-| `w`, `h`      | number   | `2.4`, `1.2`  | width and height of the sign in meters                                                                                                                        |
-| `target`      | text     | `""`          | portal: address of the destination region, or empty for a point of the same region; link: address of the web page; command: address called                    |
+| `w`, `h`      | number   | `2.4`, `1.2`  | width and height of the sign in meters; for `image`: 1.2 wide by default, height 0 = from the image                                                                                                                        |
+| `target`      | text     | `""`          | portal: address of the destination region, or empty for a point of the same region; link: address of the web page; command: address called; image: file name or address of the image                    |
 | `spawn`       | text     | `""`          | portal: `id` of the targeted arrival (empty = `default`)                                                                                                      |
 | `confirm`     | yes / no | `false`       | asks for a confirmation before acting                                                                                                                         |
 | `private`     | yes / no | `false`       | private zone: absent from public pages (`public` profile)                                                                                                     |
 | `showName`    | yes / no | `false`       | writes the `label` above the zone in walk mode                                                                                                                |
 | `mesh`        | text     | `""`          | zone **linked to an object** of the model: its name, or `name#number` when several objects have that name; the object becomes clickable. Never for an arrival |
 
-The sample contains eight zones, one for each case:
+The sample contains nine zones, one for each case:
 
 | `id`              | Kind    | What it shows                                                                                 |
 | ----------------- | ------- | --------------------------------------------------------------------------------------------- |
@@ -1359,6 +1362,7 @@ The sample contains eight zones, one for each case:
 | `light-on`        | command | call to an address (for example a Home Assistant webhook), private, with confirmation         |
 | `door-info`       | link    | linked to the model's `Door#2` object                                                         |
 | `back-home`       | portal  | name shown above the zone (`showName`)                                                        |
+| `painting-1`      | image   | picture on a wall: file `paintings/painting-1.jpg`, height from the image                     |
 
 In a tiled region, a linked zone finds its object thanks to the `extras.ref` tag that `glb2tiles.py` writes in the objects of the tiles. This tag is in the tiles' `.glb` files, **not** in `NOM.zones.json`.
 
@@ -1832,6 +1836,7 @@ The page shows "presence refused:" followed by the reason, and does not retry (r
 - `creators` (alias `createurs`) re-reads the file and lists each creator: prefix, active or suspended, open rooms, walkers, origins.
 - Each refusal is logged as "refusal" in `presence.log` with its reason; an accepted connection is recognised by the prefix of its room.
 - Visit log keys remain per room: `visits-key alice.galerie`.
+- `version` shows the version of `presence_server.py` followed by its mark (fingerprint, § 37.6): the same as the one listed by `python build.py` for this file, useful to check a server is up to date after an `scp`.
 
 ### 34.5 Welcoming a creator
 
@@ -1928,4 +1933,78 @@ When the page cannot reach the presence server, it retries at increasing interva
 
 ### 36.5 Version numbering
 
-From **1.0.0** on (v52 became 1.0.0), versions follow the `X.Y.Z` scheme (major.minor.patch). A release that adds a feature gives `1.1.0`, `1.2.0`...; a release of fixes only gives `1.0.1`; a change that breaks existing things (renaming without an alias, incompatible file format) gives `2.0.0`. The `VERSION` file is written `1.0.0 (29/10/2026)` and the Git tag `v1.0.0`. A release is **decided by the author**: the intermediate changes stay commits described under "Unreleased" in `CHANGELOG.md`. The `v14` to `v52` tags stay in the history; `tests/vNN.py` and `patch_vNNx.py` keep their names.
+From **1.0.0** on (v52 became 1.0.0), versions follow the `X.Y.Z` scheme (major.minor.patch). A release that adds a feature gives `1.1.0`, `1.2.0`...; a release of fixes only gives `1.0.1`; a change that breaks existing things (renaming without an alias, incompatible file format) gives `2.0.0`. The `VERSION` file is written `1.1.0 (31/10/2026)` and the Git tag `v1.1.0`. A release is **decided by the author**. Between two releases, `VERSION` takes a patch number with every delivered batch (`1.0.1`, `1.0.2`...): it is the batch counter, described under "Unreleased" in `CHANGELOG.md`; at the release, the minor number goes up if features were added (1.0.4 became 1.1.0). Every built file also carries **its own number** (§ 37.6). The `v14` to `v52` tags stay in the history; `tests/vNN.py` and `patch_vNNx.py` keep their names.
+
+## 37. Additions in 1.1.0 (after 1.0.0)
+
+Everything below is in **1.1.0** (released on 31/10/2026). The detail, batch by batch, is in `CHANGELOG.md`.
+
+### 37.1 `image` zone: a picture on a wall
+
+An `image` zone lays a picture flat against a wall of the model.
+
+- **Placing**: in the viewer, type "Picture (on a wall)", then click a wall. The zone turns to the face hit and sits 2 cm in front of it. Floor and ceiling are refused ("Click on a wall (a vertical surface) to place a picture."). An image zone is never linked to an object (`mesh` stays empty) and always triggers on click.
+- **Size**: `w` is the width in metres (1.2 by default; from 0.1 to 10) and `h` the height (from 0 to 6). **`h` = 0 (the default): the height follows the image's aspect ratio.**
+- **Image**: the zone's `target` field: a file name, or an `http(s):` or `data:` address.
+- **Where the page looks**: with the shell (`index.html?region=dossier/NOM`), in the **region's folder** (next to the `.glb`), not next to the page; for a page stored in the region's folder or a stand-alone page, next to the page. In both cases, the **`medias` subfolder** first, then the folder itself: images already in place keep working. The name of this subfolder is the optional key `mediaDir` of `NOM.config.json` (`"medias"` by default, `""` for no subfolder, or another name; the generator always looks in `medias`).
+- **Full name or bare number**: `12-Cezanne.jpg` is a full name. With `12` alone, the page tries `12.jpg`, `12.jpeg`, `12.png`, `12.webp`, `12.gif`, `12.avif` in that order and keeps the first file found (optional key `imageExts`, for example `"png,jpg"`). Missing extensions show up as 404 responses in the browser console: that is expected.
+- **Caption** (small text under the image): the first non-empty line of `12.txt` (UTF-8, at most 200 characters; re-read at every page load: editing the file is enough, no need to run the generator again); otherwise the text between the first `-` of the file name and the extension (`1-Soleil_couchant.jpg` gives "Sunset glow", `_` becomes a space); otherwise no caption. A missing image has no caption either.
+- **Completing names**: a name like `12-Titre.jpg` cannot be guessed by the page (a hosted site cannot list a folder). If you write `12` while only `12-Titre.jpg` exists, the editor (after "Choose the region folder", § 37.2) and the `glb2html.py` generator (at generation, with `--update` and with `--zones-only`, also for the zones of a modular page) **write the real name** and say so. If `12.jpg` (or `12` with another extension) exists, the name `12` stays as it is. Extensions looked for: jpg, jpeg, png, webp, gif, avif, bmp; `12` does not take `120-…`; if several files match, the first in alphabetical order is taken and reported. After adding or renaming an image, run only the zones again (`PROCEDURES.md` § 5).
+- **Hosted mode only**: opened from disk (`file://`), the page cannot load the image (the browser refuses it as a WebGL texture) and shows nothing; a `data:` address works everywhere but makes the page heavier. Measured in Chromium.
+- **Missing image**: nothing in the exported page. In the editor: a panel "image not found: …" and, under the field, a line "Looked up at: …".
+- **Always up to date**: before each image, each caption file and each whole `.glb` of a modular page, the page sends a `HEAD` request without cache, builds a fingerprint (`ETag` or `Last-Modified`, plus the size) and reads the file at the address `file?v=fingerprint`: from the browser cache if the fingerprint is known (no re-download of an unchanged file), from the network otherwise. A replaced file, newer **or older** (an old folder put back with its old dates), is therefore picked up on reload (F5). Without a possible fingerprint (neither `ETag` nor `Last-Modified`, or `HEAD` refused), the page reloads the whole file at every opening; if `fetch` is impossible (another site without CORS, `file://`), it falls back to direct loading. Tiles, `index.html`, `lib/` and `favicon.ico` keep the browser's normal cache.
+- **Diagnostics**: "Copy diagnostics" (§ 23.1) gives one line per image zone: the zone, its target, the file actually read (`medias` folder or region folder), and the caption with its source (file name or text file), or "hidden".
+- **Tests**: `tests/image_zone.py`, `image_legende.py`, `image_numero.py`, `image_medias.py`, `image_noms_gen.py`, `image_cache.py`, `image_cache_vieux.py`, `image_diag.py`, `image_dossier.py`.
+- **Not tried**: image zone in a tiled region, wall with a slanted face, P key while walking, Windows and Edge in detail.
+
+### 37.2 Editor: region folder and image preview
+
+Under the "Image" field of an `image` zone, the button **"Choose the region folder (image preview)"** (viewer, `glb-viewer.html`) makes the viewer read the images in the region's folder, the one of the `.glb` (subfolders accepted, `..` refused), instead of looking for them next to the viewer page. The folder is read-only; it is remembered per region, together with the one used to save zones (§ 18.8): it is the same permission. Edge and Chrome only.
+
+- With no folder chosen, or if the image is not there, it is looked for next to `glb-viewer.html` and a line "Looked up at: …" says so.
+- After the folder is chosen, all image names without an extension are completed at once ("N image name(s) completed from the folder"). Opening a zone whose name has no extension completes it if the folder is already authorised; otherwise the line under the field tells you to choose the folder.
+- The label of an image zone stays whole even when the wall has reliefs in front of it.
+- **Not tried**: the real folder picker on Windows and Edge (tried with a replacement folder).
+
+### 37.3 Solid materials: `--solid-materials`
+
+A glTF material in `BLEND` mode does not write to the depth buffer (`depthWrite = false` in the three.js loader): a wall made of such a material lets you see through it the transparent objects placed behind it (seen on a real model). The `--solid-materials TEXTES` option (config key `solidMaterials`, empty by default: nothing changes) makes solid the materials whose name contains one of the texts (comma-separated, case ignored; `=name`: exact name): not transparent, depth written, and texels that are half transparent or more are removed (`alphaTest` at 0.5; without this threshold, the texels of zero alpha, black underneath, would form a black plate). The setting applies to the exported page, the editor and the tiles; `--update` keeps the key. In the viewer, the **"Materials drawn solid"** field of the settings (rendering section, under the foliage threshold) sets it live, saves it with the settings and exports it as `--solid-materials`. Foliage keeps its own treatment. To find a material's name: click the wall (§ 37.4, "material: …" line). Test: `tests/solid_materiaux.py`.
+
+### 37.4 Pointer: the building's name
+
+The label of the `names` key (`--names`) and the viewer's "Targeted" panel show in bold the name of the **root object**, that is the highest named ancestor: the building's name. The sub-element is shown small ("part: …"). Before, the sub-element was in bold. Technical wrappers (model, tiles, overview) are ignored. The three.js loader replaces spaces in names with `_` and numbers duplicates; the label shows the file's original name. The names used by zones (`mesh` field) do not change. The hole guide ("Show the hole guide (not exported)") is unchecked by default; a value already saved in a settings file keeps priority. Test: `tests/pointeur_objet.py`. **Not tried**: the label in tiles mode.
+
+### 37.5 When WebGL is unavailable
+
+When the browser refuses to create the WebGL context (hardware acceleration off: recent Edge and Chrome no longer fall back to software rendering), the region page and the viewer show a message with the ways out, instead of staying on "Loading…":
+
+- open the page in Firefox;
+- or start Edge with the `--enable-unsafe-swiftshader` option, preferably in a profile kept for these pages: `Start-Process msedge -ArgumentList "--enable-unsafe-swiftshader","--user-data-dir=C:\EdgeWebGL",ADRESSE` (tried on 30/10/2026: the regions open);
+- or turn hardware acceleration back on.
+
+To check: `edge://gpu` (or `chrome://gpu`), WebGL line. Test (Chromium without WebGL): `tests/webgl_absent.py`. Not tried here: Windows, graphics card.
+
+### 37.6 Versions: one number per file, mark, `version` command
+
+- **`VERSION`** is the **batch counter**: one patch number per delivered patch (`1.0.1` to `1.0.4`), then `1.1.0` at the release (§ 36.5).
+- **Every built file** that carries a number (`glb2html.py`, `index.html`, `carte.html`, `glb-viewer.html`, `presence_server.py`, `oar2glb.py`, `glb2tiles.py`) shows **its own number**, which changes only when the content of THAT file changes. `build.py` builds everything with a neutral number, compares each file's fingerprint with the one in `VERSIONS.json` (repository file: last fingerprint and number of the last batch that modified the file) and gives the batch number only to modified files. `python build.py` prints each file's number and marks those that changed in the batch; it updates `VERSIONS.json` (never by hand; to commit with the batch; not modified with `--out`).
+- **Where to see it**: the generator's `[OK]` line, the page's help panel, the viewer title, "Copy diagnostics". The number shown is that of the file that built the page: exported page = `glb2html.py`, shell = `index.html`, viewer = `glb-viewer.html`.
+- **At 1.1.0**, no built file has changed since 1.0.4: `glb2html.py` and `glb-viewer.html` show `1.0.4`, `index.html` `1.0.3`, `carte.html`, `presence_server.py`, `oar2glb.py` and `glb2tiles.py` `1.0.1`. The release number (`1.1.0`) is that of the `VERSION` file and of the Git tag.
+- **Mark**: at the end of every build, `build.py` lists, for each file of `dist\`, the first 8 characters of its SHA-256. `presence_server.py`, `oar2glb.py` and `glb2tiles.py` show it ("VERSION, fingerprint XXXXXXXX") with `--version`, on the start-up line and as the first line of the log; the server also gives it with the `version` console command (§ 34.4). It changes if and only if the file changes (`tests/marque.py`); it can only be compared between builds on the same system (CRLF line ends on Windows). It replaces the `REVISION` file of 30/10/2026, now deleted.
+
+### 37.7 Presence server: console and "http request" lines
+
+- The sequences the terminal sends into the console (replies from `tmux`, arrows, wheel, text colour) are removed from the line before it runs: before, they made the first commands after `tmux attach` answer "unknown command". `version` command (§ 34.4). Test: `tests/console.py`.
+- Behind a relay (`--proxy-header`, for example Tailscale Funnel), the "http request" lines now give the visitor's address and not the relay's. The "empty connection" and "unreadable request" lines keep the relay's address (`127.0.0.1`: **never ban it**). Visible with `websockets` 14 and 15. Test: `tests/http_proxy.py`.
+
+### 37.8 Documents added or revised since 1.0.0
+
+- `docs/en/CREATORS.md` and `docs/fr/CREATEURS.md`: note to give to a creator hosted on a presence server (§ 34.5).
+- `PROCEDURES.md`: § 11, item 8 (black VM console screen); § 5 (add or replace an image); § 9 (WebGL, images); `web3d-presence.service` written with `UTILISATEUR`.
+- `docs/samples/`: the `painting-1` zone (type `image`) in `region.zones.sample.json`.
+
+### 37.9 Tried and not tried
+
+- **Tried**: automatic tests in Chromium (image zone, names, caption, `medias`, revalidation, diagnostics, materials, pointer, WebGL absent, mark, console). By Klaatou: the images of a real region are displayed; choosing the region folder and the image preview work (30/10/2026); with `--solid-materials`, the low walls of a real model are no longer see-through; Edge started with the SwiftShader option opens the regions.
+- **Not tried**: Windows and Edge in detail (real folder picker); image zones in a tiled region; wall with a slanted face; the pointer label in tiles mode.
+- **Seen once, not reproduced**: a missing image title (cause not confirmed: if it comes back, the "Image" line of "Copy diagnostics" gives the target, the file read and the caption's source); placing an image by click on a low wall that put the image behind the visible face (the zones are then set by hand: `x` or `z` a few hundredths of a metre from the face).

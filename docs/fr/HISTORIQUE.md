@@ -92,6 +92,19 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 30/10/2026 |  | après 1.0.0 | `PROCEDURES` § 11 : écran noir de la console de la VM, deux constats et marche à suivre |
 | 30/10/2026 |  | après 1.0.0 | `presence_server.py` : les lignes « requête http » donnent l'adresse de l'en-tête `--proxy-header` ; test `tests/http_proxy.py` |
 | 30/10/2026 |  | après 1.0.0 | Console de modération : séquences du terminal retirées, commande `version`, fichier `REVISION` ; test `tests/console.py` |
+| 30/10/2026 |  | après 1.0.0 | Zone `image` : tableau plaqué sur un mur, posé par clic dans l'éditeur ; images cherchées dans le dossier de la région ; étiquette de l'éditeur jamais coupée ; `tests/image_zone.py` |
+| 30/10/2026 |  | après 1.0.0 | Marque (empreinte) de chaque fichier fabriqué, listée par `build.py` et affichée par les outils ; fin du fichier `REVISION` ; `tests/marque.py` |
+| 30/10/2026 |  | après 1.0.0 | Message clair quand WebGL est indisponible (page de région et viewer) ; `tests/webgl_absent.py` |
+| 30/10/2026 |  | après 1.0.0 | Éditeur : bouton « Choisir le dossier de la région (aperçu des images) » (lecture seule, poignée partagée avec l'enregistrement des zones) ; `tests/image_dossier.py` |
+| 30/10/2026 |  | après 1.0.0 | Pointeur : nom de l'objet racine (étiquette `--names`, panneau « Visé ») ; guide du trou décoché par défaut ; `tests/pointeur_objet.py` |
+| 30/10/2026 |  | après 1.0.0 | Option `--solid-materials` (clé `solidMaterials`, champ « Matériaux rendus pleins ») : fin du « voir à travers » les murs en `BLEND` ; `tests/solid_materiaux.py` |
+| 30/10/2026 |  | après 1.0.0 | Zone `image` : nom souple (`1` donne `1.jpg` ou `1-Titre.png`), légende sous l'image, noms complétés après le choix du dossier ; `tests/image_legende.py` |
+| 31/10/2026 |  | après 1.0.0 | Générateur : noms d'image sans extension complétés d'après le dossier de la page ; mode « numéro seul » (`imageExts`, fichier `12.txt`) ; `tests/image_noms_gen.py`, `tests/image_numero.py` |
+| 31/10/2026 |  | après 1.0.0 | Lot 1.0.1 : `VERSION` prend un numéro de correctif à chaque patch ; sous-dossier `medias` (`mediaDir`) ; « Copier le diagnostic » liste les zones image ; `tests/image_medias.py`, `tests/image_diag.py` |
+| 31/10/2026 |  | après 1.0.0 | Lot 1.0.2 : images, légendes et `.glb` entier de la page modulaire toujours revalidés (plus de cache périmé) ; `tests/image_cache.py` |
+| 31/10/2026 |  | après 1.0.0 | Lot 1.0.3 : même chose quand le fichier remplacé est plus vieux (requête `HEAD`, empreinte `ETag` ou `Last-Modified`) ; `tests/image_cache_vieux.py` |
+| 31/10/2026 |  | après 1.0.0 | Lot 1.0.4 : un numéro de version par fichier fabriqué (`VERSIONS.json` écrit par `build.py`) |
+| 31/10/2026 |  | 1.1.0 | Publication 1.1.0 : `VERSION` 1.1.0 ; manuel (§ 37 et §§ 3, 27.3, 27.4, 34.4, 36.5), `PROCEDURES` (§§ 4, 5, 9, 11), historiques, README, exemples, vue d'ensemble, `CLAUDE.md`, `CHANGELOG.md`, FR et EN |
 
 ## Commandes utiles
 

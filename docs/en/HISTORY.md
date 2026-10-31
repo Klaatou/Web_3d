@@ -92,6 +92,19 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 30/10/2026 |  | after 1.0.0 | `PROCEDURES` § 11: black VM console screen, two sightings and what to do |
 | 30/10/2026 |  | after 1.0.0 | `presence_server.py`: the "http request" lines show the address of the `--proxy-header` header; test `tests/http_proxy.py` |
 | 30/10/2026 |  | after 1.0.0 | Moderation console: terminal sequences removed, `version` command, `REVISION` file; test `tests/console.py` |
+| 30/10/2026 |  | after 1.0.0 | `image` zone: picture laid flat on a wall, placed by click in the editor; images looked for in the region's folder; editor label never cut off; `tests/image_zone.py` |
+| 30/10/2026 |  | after 1.0.0 | Mark (fingerprint) of every built file, listed by `build.py` and shown by the tools; end of the `REVISION` file; `tests/marque.py` |
+| 30/10/2026 |  | after 1.0.0 | Clear message when WebGL is unavailable (region page and viewer); `tests/webgl_absent.py` |
+| 30/10/2026 |  | after 1.0.0 | Editor: "Choose the region folder (image preview)" button (read-only, handle shared with the saving of zones); `tests/image_dossier.py` |
+| 30/10/2026 |  | after 1.0.0 | Pointer: name of the root object (`--names` label, "Targeted" panel); hole guide unchecked by default; `tests/pointeur_objet.py` |
+| 30/10/2026 |  | after 1.0.0 | `--solid-materials` option (`solidMaterials` key, "Materials drawn solid" field): end of the see-through `BLEND` walls; `tests/solid_materiaux.py` |
+| 30/10/2026 |  | after 1.0.0 | `image` zone: flexible name (`1` gives `1.jpg` or `1-Titre.png`), caption under the image, names completed after the folder is chosen; `tests/image_legende.py` |
+| 31/10/2026 |  | after 1.0.0 | Generator: image names without an extension completed from the page's folder; "bare number" mode (`imageExts`, `12.txt` file); `tests/image_noms_gen.py`, `tests/image_numero.py` |
+| 31/10/2026 |  | after 1.0.0 | Batch 1.0.1: `VERSION` takes a patch number with every patch; `medias` subfolder (`mediaDir`); "Copy diagnostics" lists the image zones; `tests/image_medias.py`, `tests/image_diag.py` |
+| 31/10/2026 |  | after 1.0.0 | Batch 1.0.2: images, captions and the whole `.glb` of the modular page always revalidated (no stale cache); `tests/image_cache.py` |
+| 31/10/2026 |  | after 1.0.0 | Batch 1.0.3: same when the replaced file is older (`HEAD` request, `ETag` or `Last-Modified` fingerprint); `tests/image_cache_vieux.py` |
+| 31/10/2026 |  | after 1.0.0 | Batch 1.0.4: one version number per built file (`VERSIONS.json` written by `build.py`) |
+| 31/10/2026 |  | 1.1.0 | Release 1.1.0: `VERSION` 1.1.0; manual (§ 37 and §§ 3, 27.3, 27.4, 34.4, 36.5), `PROCEDURES` (§§ 4, 5, 9, 11), histories, README, samples, overview, `CLAUDE.md`, `CHANGELOG.md`, French and English |
 
 ## Useful commands
 

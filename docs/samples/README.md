@@ -9,7 +9,7 @@ This folder holds **one example of each JSON file** that the page, the viewer, t
 | Example | Real file | What it is for | Manual |
 | --- | --- | --- | --- |
 | `region.config.sample.json` | `NOM.config.json` | the settings the page reads at start-up (sea, walking, chat, presence, map, tiles); written by `glb2html.py`; flat | § 27.3 |
-| `region.zones.sample.json` | `NOM.zones.json` | the zones: arrivals, portals, web links, Home Assistant | § 27.4 |
+| `region.zones.sample.json` | `NOM.zones.json` | the zones: arrivals, portals, web links, Home Assistant and pictures on a wall (the `painting-1` zone, type `image`) | § 27.4 |
 | `region.tiles.sample.json` | `NOM.tiles.json` | the tile index of a large region, written by `glb2tiles.py`; not to be edited by hand | § 27.7 |
 | `region.reglages.sample.json` | `NOM.reglages.json` | the viewer's working state, written by the "Save to a file" button: the settings, **all** the zones (private ones included), the camera framing, the region's card for the map and the command summary; nested; read back by the viewer and by `glb2html.py --settings` | § 27.8 |
 | `default.sample.json` | `default.json` | the region opened when the address has no `?region=` | § 27.5 |

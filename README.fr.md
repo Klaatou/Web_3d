@@ -75,6 +75,7 @@ Pour un modèle énorme, `glb2tiles.py` écrit les tuiles, et `glb2html.py --til
 ## La page
 
 - **Promenade** : avatar, collisions, course, saut, vol, trois vues (subjective, troisième personne, caméra libre), boussole, arrivées et portails, téléportation par la fenêtre Arrivées (L) ou par double-clic.
+- **Zones** : arrivées, portails, liens web, commandes Home Assistant et **images sur les murs** (fichiers déposés dans le sous-dossier `medias` de la région, légende dans le nom du fichier ou dans un fichier `.txt`) ; mode hébergé seulement (manuel § 37.1).
 - **Fenêtres** : Aide (H), Informations (I), Arrivées (L), Réglages (O), déplaçables et retenues par le navigateur (v41) ; bouton « Copier le diagnostic » (v39) ; « Journal des visites… » quand la page a un serveur de présence (v48).
 - **Commandes à l'écran** (v46) : ligne d'état, flèches 3 x 3 (touche K), mode tactile pour téléphone et tablette.
 - **Rendu léger** (v42) : résolution, images par seconde, vue d'ensemble seule, rayon des tuiles, anticrénelage (`--light`).

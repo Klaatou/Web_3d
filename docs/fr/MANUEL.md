@@ -1,6 +1,6 @@
-# Mode d'emploi : zones, portails et points d'arrivée (1.0.0)
+# Mode d'emploi : zones, portails et points d'arrivée (1.1.0)
 
-> **Résumé (1.0.0).** Ce fichier est le mode d'emploi détaillé ; il ne se lit pas d'un bout à l'autre. Pour **toutes les options** des outils, avec leur effet et leur défaut en français et en anglais : `REFERENCE_OPTIONS.md` (générée depuis les outils par `gen_reference.py`). Pour **faire une tâche pas à pas** (OAR vers page, région en tuiles, mise à jour, zones, serveur de présence, carte) : `PROCEDURES.md`. Ici : les zones et les portails (§§ 1 à 10), les touches (§ 2), les réglages et leurs fichiers (§§ 11 à 19) et les nouveautés version par version (§§ 18 à 34 ; le § 27 est la référence des fichiers JSON). Langue de la page et des outils : § 21.8 à 21.11.
+> **Résumé (1.1.0).** Ce fichier est le mode d'emploi détaillé ; il ne se lit pas d'un bout à l'autre. Pour **toutes les options** des outils, avec leur effet et leur défaut en français et en anglais : `REFERENCE_OPTIONS.md` (générée depuis les outils par `gen_reference.py`). Pour **faire une tâche pas à pas** (OAR vers page, région en tuiles, mise à jour, zones, serveur de présence, carte) : `PROCEDURES.md`. Ici : les zones et les portails (§§ 1 à 10), les touches (§ 2), les réglages et leurs fichiers (§§ 11 à 19) et les nouveautés version par version (§§ 18 à 37 ; le § 27 est la référence des fichiers JSON). Langue de la page et des outils : § 21.8 à 21.11.
 
 ## 1. La règle qui explique 90 % des pannes
 
@@ -82,7 +82,7 @@ Aucun panneau de texte permanent : le nom ne s'affiche qu'au survol, ou quand on
 
 Dans le viewer, section **Zones : panneaux, portails, liens, commandes** :
 
-1. **Type à poser** : choisis le type.
+1. **Type à poser** : choisis le type (arrivée, portail, lien web, commande Home Assistant, ou **image** sur un mur, § 37.1).
 2. Pose-la, au choix :
    - clique sur **Poser une zone par un clic sur la scène**, puis clique dans la scène ;
    - ou, en promenade, place-toi au bon endroit et appuie sur **P** (un cercle sous tes pieds, ou un panneau 2 m devant toi, tourné vers toi).
@@ -1266,7 +1266,8 @@ Les positions sont en mètres, dans le repère de la page : x vers l'est, y vers
 | `retina`        | oui / non | `false`            | haute résolution (plus net, environ quatre fois plus lourd)                                                                                        | `--retina`, `--no-retina` |
 | `light`         | oui / non | `false`            | la page s'ouvre en rendu léger tant que le visiteur n'a rien choisi (§ 26)                                                                         | `--light`, `--no-light`   |
 | `foliageCutout` | nombre    | `0.12`             | seuil de transparence des feuillages (de 0 à 0.5) : plus haut, les bords des feuilles sont plus découpés                                           | `--foliage-cutout`        |
-| `names`         | oui / non | `false`            | affiche le nom de l'élément cliqué                                                                                                                 | `--names`, `--no-names`   |
+| `solidMaterials` | texte     | `""`               | matériaux rendus pleins (§ 37.3) : noms ou morceaux de noms séparés par des virgules, `=nom` pour un nom exact ; vide = rien ne change             | `--solid-materials`       |
+| `names`         | oui / non | `false`            | affiche le nom du bâtiment (objet racine) et de l'élément visé (§ 37.4)                                                                                                                 | `--names`, `--no-names`   |
 | `panel`         | oui / non | `true`             | bouton Réglages pour les visiteurs                                                                                                                 | `--panel`, `--no-panel`   |
 | `libUrl`        | texte     | `""`               | dossier ou adresse de `lib` (three.js) quand il n'est pas à côté de la page ; `--update` l'aligne sur la ligne `const LIB` de la coquille (§ 28.5) | `--lib-url`               |
 | `version`       | texte     | version de l'outil | version de `glb2html.py` qui a écrit le fichier ; `--update` la remplace                                                                           | —                         |
@@ -1298,6 +1299,8 @@ Les positions sont en mètres, dans le repère de la page : x vers l'est, y vers
 | `profile`      | texte     | `"public"` | `"public"` : les zones privées ne sont pas affichées ; `"private"` : toutes les zones le sont                        | `--profile`                         |
 | `zones`        | liste     | `[]`       | toujours vide dans ce fichier : les zones sont dans `NOM.zones.json`                                                 | —                                   |
 | `zonesLive`    | texte     | `""`       | toujours vide dans ce fichier (sert aux pages autonomes, `--zones-live`)                                             | `--zones-live`                      |
+| `imageExts`    | texte     | `"jpg,jpeg,png,webp,gif,avif"` | extensions essayées, dans l'ordre, pour un nom d'image sans extension (§ 37.1) ; clé facultative, absente du fichier écrit par le générateur | —                                   |
+| `mediaDir`     | texte     | `"medias"` | sous-dossier des images et des fichiers texte des zones `image` (§ 37.1) ; `""` = aucun ; clé facultative, absente du fichier écrit par le générateur | —                                   |
 | `zoneMarker`   | texte     | `"dot"`    | repère des portails et zones libres : `"dot"` petit disque, `"range"` anneau au rayon réel de la zone, `"none"` rien | `--zone-marker`                     |
 | `zoneCone`     | oui / non | `true`     | petit cône au-dessus des portails (touche T)                                                                         | `--zone-cone`, `--no-zone-cone`     |
 | `showSpawns`   | oui / non | `false`    | dessine aussi les arrivées                                                                                           | `--show-spawns`, `--no-show-spawns` |
@@ -1327,27 +1330,27 @@ Les réglages du rendu léger choisis par un visiteur (résolution, images par s
 
 Une **liste** de zones, relue à chaque ouverture de la page. Chaque zone a les champs ci-dessous ; un champ absent prend sa valeur par défaut, et une valeur hors des limites est ramenée dans les limites.
 
-Il existe **quatre sortes** de zones (champ `type`) : `"spawn"` (arrivée), `"portal"` (portail), `"url"` (lien web) et `"ha"` (commande). « Privée », « liée à un objet » et « nom affiché » ne sont pas des sortes : ce sont des cases (`private`, `mesh`, `showName`) valables pour toutes les sortes.
+Il existe **cinq sortes** de zones (champ `type`) : `"spawn"` (arrivée), `"portal"` (portail), `"url"` (lien web), `"ha"` (commande) et `"image"` (tableau sur un mur, § 37.1). « Privée », « liée à un objet » et « nom affiché » ne sont pas des sortes : ce sont des cases (`private`, `mesh`, `showName`) valables pour toutes les sortes.
 
 | Champ         | Type      | Défaut        | Ce qu'il fait                                                                                                                                            |
 | ------------- | --------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `id`          | texte     | `z1`, `z2`... | nom court et unique : lettres minuscules, chiffres, `-` et `_`, 40 caractères au plus. L'arrivée `default` est le point d'entrée de la région            |
-| `type`        | texte     | `"portal"`    | `"spawn"`, `"portal"`, `"url"` ou `"ha"`                                                                                                                 |
+| `type`        | texte     | `"portal"`    | `"spawn"`, `"portal"`, `"url"`, `"ha"` ou `"image"`                                                                                                                 |
 | `label`       | texte     | `""`          | nom affiché (infobulle, panneau), 60 caractères au plus                                                                                                  |
 | `x`, `y`, `z` | nombre    | `0`           | position en mètres                                                                                                                                       |
 | `yaw`         | nombre    | `0`           | orientation en radians : sens du regard à l'arrivée, ou face du panneau                                                                                  |
 | `shape`       | texte     | `"ring"`      | `"ring"` (anneau au sol) ou `"board"` (panneau sur un poteau)                                                                                            |
 | `trigger`     | texte     | `"click"`     | portails seulement : `"click"` (clic ou E), `"enter"` (en marchant dedans) ou `"both"` (les deux). Les autres sortes sont toujours `"click"`             |
 | `radius`      | nombre    | `2`           | rayon de la zone en mètres (de 0.5 à 50)                                                                                                                 |
-| `w`, `h`      | nombre    | `2.4`, `1.2`  | largeur et hauteur du panneau en mètres                                                                                                                  |
-| `target`      | texte     | `""`          | portail : adresse de la région d'arrivée, ou vide pour un point de la même région ; lien : adresse de la page web ; commande : adresse appelée           |
+| `w`, `h`      | nombre    | `2.4`, `1.2`  | largeur et hauteur du panneau en mètres ; pour `image` : 1,2 de large par défaut, hauteur 0 = d'après l'image                                                                                                                  |
+| `target`      | texte     | `""`          | portail : adresse de la région d'arrivée, ou vide pour un point de la même région ; lien : adresse de la page web ; commande : adresse appelée ; image : nom du fichier ou adresse de l'image           |
 | `spawn`       | texte     | `""`          | portail : `id` de l'arrivée visée (vide = `default`)                                                                                                     |
 | `confirm`     | oui / non | `false`       | demande une confirmation avant d'agir                                                                                                                    |
 | `private`     | oui / non | `false`       | zone privée : absente des pages publiques (profil `public`)                                                                                              |
 | `showName`    | oui / non | `false`       | écrit le `label` au-dessus de la zone en promenade                                                                                                       |
 | `mesh`        | texte     | `""`          | zone **liée à un objet** du modèle : son nom, ou `nom#numéro` quand plusieurs objets portent ce nom ; l'objet devient cliquable. Jamais pour une arrivée |
 
-L'exemple contient huit zones, une de chaque cas :
+L'exemple contient neuf zones, une de chaque cas :
 
 | `id`              | Sorte    | Ce qu'elle montre                                                                              |
 | ----------------- | -------- | ---------------------------------------------------------------------------------------------- |
@@ -1359,6 +1362,7 @@ L'exemple contient huit zones, une de chaque cas :
 | `light-on`        | commande | appel d'une adresse (par exemple un webhook Home Assistant), privée, avec confirmation         |
 | `door-info`       | lien     | liée à l'objet `Door#2` du modèle                                                              |
 | `back-home`       | portail  | nom affiché au-dessus de la zone (`showName`)                                                  |
+| `painting-1`      | image    | tableau sur un mur : fichier `paintings/painting-1.jpg`, hauteur d'après l'image               |
 
 Dans une région en tuiles, une zone liée retrouve son objet grâce à l'étiquette `extras.ref` que `glb2tiles.py` écrit dans les objets des tuiles. Cette étiquette est dans les fichiers `.glb` des tuiles, **pas** dans `NOM.zones.json`.
 
@@ -1832,6 +1836,7 @@ La page affiche « présence refusée : » suivi de la raison, et ne réessaie p
 - `creators` (alias `createurs`) relit le fichier et liste chaque créateur : préfixe, actif ou suspendu, salons ouverts, promeneurs, origines.
 - Chaque refus est noté « refus » dans `presence.log` avec sa raison ; une connexion acceptée se reconnaît au préfixe de son salon.
 - Les clés du journal des visites restent par salon : `visits-key alice.galerie`.
+- `version` affiche la version de `presence_server.py` suivie de sa marque (empreinte, § 37.6) : la même que celle listée par `python build.py` pour ce fichier, utile pour vérifier qu'un serveur est à jour après un `scp`.
 
 ### 34.5 Accueillir un créateur
 
@@ -1928,4 +1933,78 @@ Quand la page n'arrive pas à joindre le serveur de présence, elle réessaie à
 
 ### 36.5 Numérotation des versions
 
-À partir de la **1.0.0** (la v52 est devenue la 1.0.0), les versions suivent le schéma `X.Y.Z` (majeur.mineur.correctif). Une publication qui ajoute une fonction donne `1.1.0`, `1.2.0`... ; une publication de correctifs seuls donne `1.0.1` ; un changement qui casse l'existant (renommage sans alias, format de fichier incompatible) donne `2.0.0`. Le fichier `VERSION` s'écrit `1.0.0 (29/10/2026)` et l'étiquette Git `v1.0.0`. Une publication est **décidée par l'auteur** : les modifications intermédiaires restent des commits décrits sous « Non publié » dans `CHANGELOG.md`. Les étiquettes `v14` à `v52` restent dans l'historique ; `tests/vNN.py` et `patch_vNNx.py` gardent leurs noms.
+À partir de la **1.0.0** (la v52 est devenue la 1.0.0), les versions suivent le schéma `X.Y.Z` (majeur.mineur.correctif). Une publication qui ajoute une fonction donne `1.1.0`, `1.2.0`... ; une publication de correctifs seuls donne `1.0.1` ; un changement qui casse l'existant (renommage sans alias, format de fichier incompatible) donne `2.0.0`. Le fichier `VERSION` s'écrit `1.1.0 (31/10/2026)` et l'étiquette Git `v1.1.0`. Une publication est **décidée par l'auteur**. Entre deux publications, `VERSION` prend un numéro de correctif à chaque lot livré (`1.0.1`, `1.0.2`...) : c'est le compteur de lots, décrit sous « Non publié » dans `CHANGELOG.md` ; à la publication, le numéro mineur monte si des fonctions ont été ajoutées (la 1.0.4 est devenue la 1.1.0). Chaque fichier fabriqué porte en plus **son propre numéro** (§ 37.6). Les étiquettes `v14` à `v52` restent dans l'historique ; `tests/vNN.py` et `patch_vNNx.py` gardent leurs noms.
+
+## 37. Ajouts de la 1.1.0 (après la 1.0.0)
+
+Tout ce qui suit est dans la **1.1.0** (publiée le 31/10/2026). Le détail, lot par lot, est dans `CHANGELOG.md`.
+
+### 37.1 Zone `image` : un tableau sur un mur
+
+Une zone de type `image` plaque une image contre un mur du modèle.
+
+- **Poser** : dans le viewer, type « Image (tableau sur un mur) », puis clic sur un mur. La zone se tourne vers la face touchée et se place 2 cm devant. Le sol et le plafond sont refusés (« Clique sur un mur (une surface verticale) pour poser une image. »). Une zone image n'est jamais liée à un objet (`mesh` reste vide) et se déclenche toujours au clic.
+- **Taille** : `w` est la largeur en mètres (1,2 par défaut ; de 0,1 à 10) et `h` la hauteur (de 0 à 6). **`h` = 0 (valeur par défaut) : la hauteur suit le rapport de l'image.**
+- **Image** : champ `target` de la zone : un nom de fichier, ou une adresse `http(s):` ou `data:`.
+- **Où la page cherche** : avec la coquille (`index.html?region=dossier/NOM`), dans le **dossier de la région** (à côté du `.glb`), et non à côté de la page ; pour une page rangée dans le dossier de la région ou une page autonome, à côté de la page. Dans les deux cas, le **sous-dossier `medias`** d'abord, puis le dossier lui-même : les images déjà en place continuent de marcher. Le nom de ce sous-dossier est la clé facultative `mediaDir` de `NOM.config.json` (`"medias"` par défaut, `""` pour aucun sous-dossier, ou un autre nom ; le générateur, lui, cherche toujours `medias`).
+- **Nom complet ou numéro seul** : `12-Cezanne.jpg` est un nom complet. Avec `12` seul, la page essaie `12.jpg`, `12.jpeg`, `12.png`, `12.webp`, `12.gif`, `12.avif` dans cet ordre et garde le premier fichier trouvé (clé facultative `imageExts`, par exemple `"png,jpg"`). Les extensions absentes donnent des réponses 404 dans la console du navigateur : c'est normal.
+- **Légende** (petit texte sous l'image) : la première ligne non vide de `12.txt` (UTF-8, 200 caractères au plus ; relu à chaque chargement de la page : modifier le fichier suffit, sans relancer le générateur) ; sinon le texte entre le premier `-` du nom de fichier et l'extension (`1-Soleil_couchant.jpg` donne « Soleil couchant », `_` devient espace) ; sinon pas de légende. Une image introuvable n'a pas de légende non plus.
+- **Compléter les noms** : un nom du type `12-Titre.jpg` ne peut pas être deviné par la page (un site hébergé ne peut pas lister un dossier). Si tu écris `12` alors que seul `12-Titre.jpg` existe, l'éditeur (après « Choisir le dossier de la région », § 37.2) et le générateur `glb2html.py` (à la génération, avec `--update` et avec `--zones-only`, aussi pour les zones d'une page modulaire) **écrivent le vrai nom** et l'annoncent. Si `12.jpg` (ou `12` avec une autre extension) existe, le nom `12` reste tel quel. Extensions cherchées : jpg, jpeg, png, webp, gif, avif, bmp ; `12` ne prend pas `120-…` ; si plusieurs fichiers correspondent, le premier par ordre alphabétique est pris et signalé. Après avoir ajouté ou renommé une image, relance seulement les zones (`PROCEDURES.md` § 5).
+- **Mode hébergé seulement** : ouverte du disque (`file://`), la page ne peut pas charger l'image (le navigateur la refuse comme texture WebGL) et n'affiche rien ; une adresse `data:` marche partout mais alourdit la page. Mesuré en Chromium.
+- **Image introuvable** : rien dans la page exportée. Dans l'éditeur : un panneau « image introuvable : … » et, sous le champ, une ligne « Cherchée à : … ».
+- **Toujours à jour** : avant chaque image, chaque fichier de légende et chaque `.glb` entier d'une page modulaire, la page envoie une requête `HEAD` sans cache, compose une empreinte (`ETag` ou `Last-Modified`, plus la taille) et lit le fichier à l'adresse `fichier?v=empreinte` : dans le cache du navigateur si l'empreinte est connue (aucun retéléchargement d'un fichier inchangé), sur le réseau sinon. Un fichier remplacé, plus récent **ou plus vieux** (un ancien dossier remis en place avec ses anciennes dates), est donc repris au rechargement (F5). Sans empreinte possible (ni `ETag` ni `Last-Modified`, ou `HEAD` refusé), la page recharge le fichier en entier à chaque ouverture ; si `fetch` est impossible (autre site sans CORS, `file://`), elle revient au chargement direct. Les tuiles, `index.html`, `lib/` et `favicon.ico` gardent le cache normal du navigateur.
+- **Diagnostic** : « Copier le diagnostic » (§ 23.1) donne une ligne par zone image : la zone, sa cible, le fichier effectivement lu (dossier `medias` ou dossier de la région), et la légende avec sa source (nom du fichier ou fichier texte), ou « masquée ».
+- **Tests** : `tests/image_zone.py`, `image_legende.py`, `image_numero.py`, `image_medias.py`, `image_noms_gen.py`, `image_cache.py`, `image_cache_vieux.py`, `image_diag.py`, `image_dossier.py`.
+- **Non essayé** : zone image en région en tuiles, mur à face inclinée, touche P en promenade, Windows et Edge pour le détail.
+
+### 37.2 Éditeur : dossier de la région et aperçu des images
+
+Sous le champ « Image » d'une zone `image`, le bouton **« Choisir le dossier de la région (aperçu des images) »** (viewer, `glb-viewer.html`) fait lire les images dans le dossier de la région, celui du `.glb` (sous-dossiers acceptés, `..` refusé), au lieu de les chercher à côté de la page du viewer. Le dossier est lu en lecture seule ; il est mémorisé par région, avec celui de l'enregistrement des zones (§ 18.8) : c'est la même autorisation. Edge et Chrome seulement.
+
+- Sans dossier choisi, ou si l'image n'y est pas, elle est cherchée à côté de `glb-viewer.html` et une ligne « Cherchée à : … » le dit.
+- Après le choix du dossier, tous les noms d'image sans extension sont complétés d'un coup (« N nom(s) d'image complété(s) d'après le dossier »). En ouvrant une zone dont le nom n'a pas d'extension, il est complété si le dossier est déjà autorisé ; sinon la ligne sous le champ dit de choisir le dossier.
+- L'étiquette d'une zone image reste entière même quand le mur a des reliefs devant elle.
+- **Non essayé** : le vrai sélecteur de dossier sous Windows et Edge (essayé avec un dossier de remplacement).
+
+### 37.3 Matériaux rendus pleins : `--solid-materials`
+
+Un matériau glTF en mode `BLEND` n'écrit pas dans le tampon de profondeur (`depthWrite = false` dans le chargeur three.js) : un mur fait de ce matériau laisse voir à travers lui les objets transparents placés derrière (constaté sur un vrai modèle). L'option `--solid-materials TEXTES` (clé `solidMaterials` de la config, vide par défaut : rien ne change) rend pleins les matériaux dont le nom contient un des textes (séparés par des virgules, casse ignorée ; `=nom` : nom exact) : non transparents, profondeur écrite, et les texels à moitié transparents ou plus sont retirés (`alphaTest` à 0,5 ; sans ce seuil, les texels d'alpha nul, noirs en dessous, formeraient une plaque noire). Le réglage vaut pour la page exportée, l'éditeur et les tuiles ; `--update` garde la clé. Dans le viewer, le champ **« Matériaux rendus pleins »** des réglages (section du rendu, sous le seuil des feuillages) la règle à chaud, l'enregistre avec les réglages et l'exporte en `--solid-materials`. Le feuillage garde son traitement. Pour connaître le nom d'un matériau : clique sur le mur (§ 37.4, ligne « matériau : … »). Test : `tests/solid_materiaux.py`.
+
+### 37.4 Pointeur : le nom du bâtiment
+
+L'étiquette de la clé `names` (`--names`) et le panneau « Visé » du viewer donnent en gras le nom de l'**objet racine**, c'est-à-dire le plus haut ancêtre nommé : le nom du bâtiment. Le sous-élément est en petit (« élément : … »). Avant, le sous-élément était en gras. Les enveloppes techniques (modèle, tuiles, vue d'ensemble) sont ignorées. Le chargeur three.js remplace les espaces des noms par `_` et numérote les doublons ; l'étiquette montre le nom d'origine du fichier. Les noms utilisés par les zones (champ `mesh`) ne changent pas. Le guide du trou (« Afficher le guide du trou (non exporté) ») est décoché par défaut ; une valeur déjà enregistrée dans un fichier de réglages garde la priorité. Test : `tests/pointeur_objet.py`. **Non essayé** : l'étiquette en mode tuiles.
+
+### 37.5 Quand WebGL est indisponible
+
+Quand le navigateur refuse de créer le contexte WebGL (accélération matérielle coupée : Edge et Chrome récents ne se replient plus sur le rendu logiciel), la page de région et le viewer affichent un message avec les pistes, au lieu de rester sur « Chargement… » :
+
+- ouvrir la page dans Firefox ;
+- ou lancer Edge avec l'option `--enable-unsafe-swiftshader`, de préférence dans un profil réservé à ces pages : `Start-Process msedge -ArgumentList "--enable-unsafe-swiftshader","--user-data-dir=C:\EdgeWebGL",ADRESSE` (essayé le 30/10/2026 : les régions s'ouvrent) ;
+- ou réactiver l'accélération matérielle.
+
+Pour vérifier : `edge://gpu` (ou `chrome://gpu`), ligne WebGL. Test (Chromium sans WebGL) : `tests/webgl_absent.py`. Non essayé ici : Windows, carte graphique.
+
+### 37.6 Versions : un numéro par fichier, marque, commande `version`
+
+- **`VERSION`** est le **compteur de lots** : un numéro de correctif par patch livré (`1.0.1` à `1.0.4`), puis `1.1.0` à la publication (§ 36.5).
+- **Chaque fichier fabriqué** qui porte un numéro (`glb2html.py`, `index.html`, `carte.html`, `glb-viewer.html`, `presence_server.py`, `oar2glb.py`, `glb2tiles.py`) affiche **son propre numéro**, qui ne change que lorsque le contenu de CE fichier change. `build.py` fabrique tout avec un numéro neutre, compare l'empreinte de chaque fichier à celle de `VERSIONS.json` (fichier du dépôt : dernière empreinte et numéro du dernier lot qui a modifié le fichier) et ne donne le numéro du lot qu'aux fichiers modifiés. `python build.py` affiche le numéro de chaque fichier et marque ceux qui ont changé dans le lot ; il met `VERSIONS.json` à jour (jamais à la main ; à commiter avec le lot ; non modifié avec `--out`).
+- **Où le voir** : ligne `[OK]` du générateur, panneau d'aide de la page, titre du viewer, « Copier le diagnostic ». Le numéro affiché est celui du fichier qui a fabriqué la page : page exportée = `glb2html.py`, coquille = `index.html`, viewer = `glb-viewer.html`.
+- **À la 1.1.0**, aucun fichier fabriqué n'a changé depuis la 1.0.4 : `glb2html.py` et `glb-viewer.html` affichent `1.0.4`, `index.html` `1.0.3`, `carte.html`, `presence_server.py`, `oar2glb.py` et `glb2tiles.py` `1.0.1`. Le numéro de la publication (`1.1.0`) est celui du fichier `VERSION` et de l'étiquette Git.
+- **Marque** : `build.py` liste à la fin de chaque build, pour chaque fichier de `dist\`, les 8 premiers caractères de son SHA-256. `presence_server.py`, `oar2glb.py` et `glb2tiles.py` l'affichent (« VERSION, empreinte XXXXXXXX ») avec `--version`, sur la ligne de démarrage et en première ligne du journal ; le serveur la donne aussi par la commande de console `version` (§ 34.4). Elle change si et seulement si le fichier change (`tests/marque.py`) ; elle ne se compare qu'entre builds du même système (fins de ligne CRLF sous Windows). Elle remplace le fichier `REVISION` du 30/10/2026, supprimé.
+
+### 37.7 Serveur de présence : console et lignes « requête http »
+
+- Les séquences que le terminal envoie dans la console (réponses de `tmux`, flèches, molette, couleur du texte) sont retirées de la ligne avant l'exécution : avant, elles faisaient répondre « commande inconnue » aux premières commandes après `tmux attach`. Commande `version` (§ 34.4). Test : `tests/console.py`.
+- Derrière un relais (`--proxy-header`, par exemple Tailscale Funnel), les lignes « requête http » donnent maintenant l'adresse du visiteur et non celle du relais. Les lignes « connexion vide » et « requête illisible » gardent l'adresse du relais (`127.0.0.1` : **ne jamais la bannir**). Visible avec `websockets` 14 et 15. Test : `tests/http_proxy.py`.
+
+### 37.8 Documents ajoutés ou revus depuis la 1.0.0
+
+- `docs/fr/CREATEURS.md` et `docs/en/CREATORS.md` : note à remettre à un créateur accueilli sur un serveur de présence (§ 34.5).
+- `PROCEDURES.md` : § 11, point 8 (écran noir de la console de la VM) ; § 5 (ajouter ou remplacer une image) ; § 9 (WebGL, images) ; `web3d-presence.service` écrit avec `UTILISATEUR`.
+- `docs/samples/` : la zone `painting-1` (type `image`) dans `region.zones.sample.json`.
+
+### 37.9 Essayé et non essayé
+
+- **Essayé** : tests automatiques en Chromium (zone image, noms, légende, `medias`, revalidation, diagnostic, matériaux, pointeur, WebGL absent, marque, console). Par Klaatou : les images d'une vraie région s'affichent ; la sélection du dossier de la région et l'aperçu des images marchent (30/10/2026) ; avec `--solid-materials`, on ne voit plus à travers les murets d'un vrai modèle ; Edge lancé avec l'option SwiftShader ouvre les régions.
+- **Non essayé** : Windows et Edge pour le détail (vrai sélecteur de dossier) ; zones image en région en tuiles ; mur à face inclinée ; étiquette du pointeur en mode tuiles.
+- **Constaté une fois, non reproduit** : un titre d'image manquant (cause non confirmée : en cas de retour, la ligne « Image » de « Copier le diagnostic » donne la cible, le fichier lu et la source de la légende) ; une pose d'image par clic sur un muret qui plaçait l'image derrière la face visible (les zones se règlent alors à la main : `x` ou `z` à quelques centièmes de mètre de la face).

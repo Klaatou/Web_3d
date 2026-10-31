@@ -75,6 +75,7 @@ For a huge model, `glb2tiles.py` writes the tiles, and `glb2html.py --tiles X.ti
 ## The page
 
 - **Walking**: avatar, collisions, running, jumping, flying, three views (first person, third person, free camera), compass, arrival points and portals, teleport through the Arrivals window (L) or by double-click.
+- **Zones**: arrivals, portals, web links, Home Assistant commands and **pictures on walls** (files put in the region's `medias` subfolder, caption in the file name or in a `.txt` file); hosted mode only (manual § 37.1).
 - **Windows**: Help (H), Information (I), Arrivals (L), Settings (O), movable and remembered by the browser (v41); "Copy diagnostics" button (v39); "Visit log…" when the page has a presence server (v48).
 - **On-screen controls** (v46): status line, 3 x 3 arrows (K key), touch mode for phones and tablets.
 - **Light rendering** (v42): resolution, frames per second, overview only, tile radius, anti-aliasing (`--light`).
