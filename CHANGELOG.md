@@ -4,7 +4,15 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.1.0)
 
-*(rien pour l'instant)*
+### 31/10/2026 : version 1.1.1 : lien d'un tableau (zone `image`)
+- **Nouveau** : une zone `image` accepte une clé facultative `link` (adresse `http(s)` ou page relative à la page, par exemple `galerie.html`). Le clic sur le tableau, ou la touche E devant lui, ouvre le lien dans un nouvel onglet, comme une zone `url` ; infobulle et curseur main au survol. Éditeur : champ « Lien (page ouverte au clic ou à E, facultatif) ». `link` n'est écrit dans les zones que lorsqu'il est rempli (`core.js` `cleanZone`, `gen_tpl.py` `clean_zones`) : les fichiers de zones existants ne changent pas. Une page plus ancienne ignore `link` (le tableau s'affiche sans action). **Attention** : un ancien éditeur (`glb-viewer.html`) qui enregistre des zones perd les `link` : garder le viewer et la page à la même version.
+- **Correction** : un tableau sans lien n'est plus une « zone proche » : plus d'invite « clic ou E : Image 8 » devant lui (E n'avait aucune action, `zoneTick` dans `core.js`). Un tableau dont l'image est introuvable n'est pas cliquable.
+- **Sécurité** : seules les adresses `http(s)` passent (`okUrl`) ; `javascript:` est refusé (message « Lien invalide »).
+- **Test** : `tests/lien_image.py` (nouveau). **Non essayé** : Edge, Windows, carte graphique, mode tuiles.
+- **Change**: an `image` zone accepts an optional `link` key (an `http(s)` address or a page relative to the page, for example `galerie.html`). Clicking the picture, or pressing E in front of it, opens the link in a new tab, like a `url` zone; tooltip and hand cursor on hover. Editor: field "Link (page opened on click or E, optional)". `link` is only written to the zones when filled in (`core.js` `cleanZone`, `gen_tpl.py` `clean_zones`): existing zone files do not change. An older page ignores `link` (the picture shows with no action). **Warning**: an older editor (`glb-viewer.html`) that saves zones loses the `link` keys: keep the viewer and the page at the same version.
+- **Fix**: a picture without a link is no longer a "near zone": no more "click or E: Image 8" prompt in front of it (E had no action, `zoneTick` in `core.js`). A picture whose image is missing is not clickable.
+- **Security**: only `http(s)` addresses pass (`okUrl`); `javascript:` is refused ("Invalid link" message).
+- **Test**: `tests/lien_image.py` (new). **Not tried**: Edge, Windows, graphics card, tiles mode.
 
 ## 1.1.0 (31/10/2026)
 

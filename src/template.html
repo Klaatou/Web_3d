@@ -367,8 +367,8 @@ if ((C.zones || []).length || C.zonesLive) {
       const u = okUrl(z.target); if (!u) return toast(tr('page.zone.noportal', label));
       u.hash = 'spawn=' + encodeURIComponent(z.spawn || '') + '&name=' + encodeURIComponent(visitor());
       fade.classList.add('on'); setTimeout(() => { location.href = u.href; }, 480);
-    } else if (z.type === 'url') {
-      const u = okUrl(z.target); if (!u) return toast(tr('page.zone.badlink', label));
+    } else if (z.type === 'url' || z.type === 'image') {   // tableau avec lien (zone image) : comme une zone url
+      const u = okUrl(z.type === 'image' ? z.link : z.target); if (!u) return toast(tr('page.zone.badlink', label));
       window.open(u.href, '_blank', 'noopener,noreferrer'); toast(tr('page.zone.opening', label));
     } else if (z.type === 'ha') {
       if (!okUrl(z.target)) return toast(tr('page.zone.badcmd', label));

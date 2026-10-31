@@ -198,7 +198,7 @@ def clean_zones(zones, profile):
             continue
         t = z.get("type") if z.get("type") in ZONE_TYPES else "portal"
         img = t == "image"   # image : tableau plaque sur un mur ; h = 0 : hauteur d'apres le rapport de l'image
-        out.append({
+        d = {
             "id": _slug(z.get("id")) or f"z{i + 1}", "type": t, "label": str(z.get("label") or "")[:60],
             "x": num(z.get("x"), 0, -1e5, 1e5), "y": num(z.get("y"), 0, -1e5, 1e5), "z": num(z.get("z"), 0, -1e5, 1e5),
             "yaw": num(z.get("yaw"), 0, -7, 7), "shape": "board" if z.get("shape") == "board" else "ring",
@@ -207,7 +207,12 @@ def clean_zones(zones, profile):
             "target": str(resolve_image_name(z.get("target")) if img else (z.get("target") or ""))[:600], "spawn": _slug(z.get("spawn")),
             "confirm": bool(z.get("confirm")), "private": bool(z.get("private")), "showName": bool(z.get("showName")),
             "mesh": "" if t in ("spawn", "image") else re.sub(r"[\x00-\x1f]", "", str(z.get("mesh") or ""))[:200],
-        })
+        }
+        if img:   # lien facultatif d'un tableau (page ouverte au clic ou a E) : ecrit seulement s'il est rempli, comme core.js
+            lk = re.sub(r"[\x00-\x1f]", "", str(z.get("link") or "")).strip()[:600]
+            if lk:
+                d["link"] = lk
+        out.append(d)
     return out
 
 

@@ -1751,6 +1751,7 @@ function createViewer(container, cfg0, loader) {
   const zoneGroup = new THREE.Group(); scene.add(zoneGroup);
   let selId = null;
   let zones = [], zoneHit = [], zoneAll = [], zoneInside = new Set(), nearZone = null, zoneEditor = false, selBox = null, onZone = null, onNear = null;
+  const imgGone = new Set();   // ids des tableaux dont l'image est introuvable (page exportee) : ni cliquables ni zone proche
   // zones liées à un élément du modèle (champ mesh = nom exact) : id de zone -> { meshes, box } ; mesh 3D -> zone
   const zoneLink = new Map(), meshZone = new Map();
   const zoneOf = o => o.userData.zone || meshZone.get(o) || null;
@@ -1810,6 +1811,7 @@ function createViewer(container, cfg0, loader) {
   function zoneTipText(z) {
     const name = z.label || z.id;
     if (z.type === 'url') return [name, z.target];
+    if (z.type === 'image') return [name, z.link || ''];
     if (z.type === 'ha') return [name, tr('core.tip.cmd', name)];
     return [name, tr('core.tip.region', (String(z.target || '').trim() || tr('core.tip.thisregion')) + (z.spawn ? ' #' + z.spawn : ''))];
   }
@@ -1848,6 +1850,7 @@ function createViewer(container, cfg0, loader) {
       mesh: type === 'spawn' || img ? '' : String(z.mesh || '').replace(/[\u0000-\u001f]/g, '').slice(0, 200)
     };
     if (type !== 'portal') o.trigger = 'click';
+    if (img) { const lk = String(z.link || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 600); if (lk) o.link = lk; }   // lien facultatif d'un tableau : page ouverte au clic ou a E ; ecrit seulement s'il est rempli
     return o;
   }
   function boardTex(label, sub, w, h) {
@@ -1963,7 +1966,7 @@ function createViewer(container, cfg0, loader) {
     const dg = { id: z.id, target: z.target, loaded: '', cap: capText || '', src: capText ? 'name' : '', vis: () => !!(cap && cap.visible) }; pl.userData.diag = dg;   // lu par « Copier le diagnostic »
     const absent = () => {
       console.warn(tr('core.image.missing', z.target || '-'));
-      if (zoneEditor) { mat.map = boardTex(z.label || z.id, tr('core.image.missing', z.target || '-'), z.w, pl.scale.y); mat.needsUpdate = true; } else { pl.visible = false; if (cap) cap.visible = false; }
+      if (zoneEditor) { mat.map = boardTex(z.label || z.id, tr('core.image.missing', z.target || '-'), z.w, pl.scale.y); mat.needsUpdate = true; } else { pl.visible = false; if (cap) cap.visible = false; imgGone.add(z.id); for (const L of [zoneHit, zoneAll]) { const k = L.indexOf(pl); if (k >= 0) L.splice(k, 1); } }
       dirty = true;
     };
     if (!z.target || /^\s*(javascript|vbscript):/i.test(z.target)) { absent(); return pl; }
@@ -2028,7 +2031,7 @@ function createViewer(container, cfg0, loader) {
       c.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) { if (o.material.map) o.material.map.dispose(); o.material.dispose(); } });
     }
     if (selBox) { scene.remove(selBox); selBox.geometry.dispose(); selBox.material.dispose(); selBox = null; }
-    zoneHit = []; zoneAll = []; zoneLabs = []; meshZone.clear();
+    zoneHit = []; zoneAll = []; zoneLabs = []; meshZone.clear(); imgGone.clear();
     setHover(null);
     markerMat.clear();
     for (const z of zones) {
@@ -2038,6 +2041,7 @@ function createViewer(container, cfg0, loader) {
       if (!link) { g.position.set(z.x, z.y, z.z); g.rotation.y = z.yaw; }
       if (z.type === 'image') {
         const pl = imagePlane(z); g.add(pl); if (pl.userData.cap) g.add(pl.userData.cap);
+        if (z.link && !zoneEditor && pl.visible) { pl.userData.zone = z; zoneAll.push(pl); zoneHit.push(pl); }   // tableau avec lien : cliquable (survol, clic, E) ; sans lien ou image absente : il ne reagit pas
         if (zoneEditor) { pl.userData.zone = z; zoneAll.push(pl); const lab = makeLabel(z.label || z.id); lab.position.y = (z.h > 0 ? z.h : z.w * 0.75) / 2 + 0.3; lab.material.depthTest = false; lab.renderOrder = 999; g.add(lab); }   // etiquette toujours entiere : le mur peut avoir des reliefs devant elle
         zoneGroup.add(g);
         continue;
@@ -2222,7 +2226,7 @@ function createViewer(container, cfg0, loader) {
     if (!zones.length) return;
     let best = null, bd = 1e9;
     for (const z of zones) {
-      if (z.type === 'spawn' || zoneOff(z)) continue;
+      if (z.type === 'spawn' || zoneOff(z) || (z.type === 'image' && (!z.link || imgGone.has(z.id)))) continue;   // un tableau sans lien n'est pas une zone proche (pas d'invite « clic ou E »)
       const { d, dy } = zoneDist(z);
       if (z.type === 'portal' && z.trigger !== 'click') {
         const inside = d <= z.radius && dy > -1.5 && dy < 3.5, was = zoneInside.has(z.id);

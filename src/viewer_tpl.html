@@ -509,6 +509,7 @@ function renderZoneList() {
       const bd = document.createElement('button'); bd.className = 'wide'; bd.textContent = tr('viewer.zf.image.dirbtn'); bd.onclick = () => chooseImagesDir(); d.appendChild(bd);
       d.appendChild(inp(tr('viewer.zf.w'), 'number', z.w, v => upd({ w: v }, true)));
       d.appendChild(inp(tr('viewer.zf.h.image'), 'number', z.h, v => upd({ h: v }, true)));
+      d.appendChild(inp(tr('viewer.zf.link.image'), 'text', z.link || '', v => upd({ link: v })));
     } else if (z.type !== 'spawn') {
       if (z.type === 'portal') {
         d.appendChild(inp(tr('viewer.zf.target'), 'text', z.target, v => upd({ target: v })));
@@ -549,7 +550,7 @@ function renderZoneList() {
   if (!cfg.zones.length) { const p = document.createElement('small'); p.textContent = tr('viewer.zone.none'); host.appendChild(p); }
 }
 viewer.onZone = (z, how) => {
-  setStatus(tr('viewer.preview.fired', { url: tr('viewer.kind.url'), ha: tr('viewer.kind.ha'), portal: tr('viewer.kind.portal'), spawn: tr('viewer.kind.spawn') }[z.type], z.label || z.id, how, z.target || tr('viewer.preview.notarget'), z.spawn ? ' #' + z.spawn : ''));
+  setStatus(tr('viewer.preview.fired', { url: tr('viewer.kind.url'), ha: tr('viewer.kind.ha'), portal: tr('viewer.kind.portal'), spawn: tr('viewer.kind.spawn'), image: tr('viewer.kind.image') }[z.type], z.label || z.id, how, (z.type === 'image' ? z.link : z.target) || tr('viewer.preview.notarget'), z.spawn ? ' #' + z.spawn : ''));
   // aperçu : un portail sans destination déplace dans la région vers son point d'arrivée
   if (z.type === 'portal' && !String(z.target || '').trim() && viewer.walking) {
     const id = z.spawn || 'default', s = viewer.getZones().find(q => q.type === 'spawn' && q.id === id);
