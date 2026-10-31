@@ -194,7 +194,7 @@ async def main():
         await pg.wait_for_timeout(500)
         st = await pg.evaluate("document.getElementById('stat').textContent")
         rapport(st.endswith("meshes • prêt"), "statut en français après chargement", st)
-        rapport(await pg.evaluate("document.title") == "GLB → HTML autonome · réglages · " + (ROOT / "VERSION").read_text(encoding="utf-8").strip(), "titre de la page en français", await pg.evaluate("document.title"))
+        rapport(await pg.evaluate("document.title") == "GLB → HTML autonome · réglages · " + __import__("json").loads((ROOT / "VERSIONS.json").read_text(encoding="utf-8"))["glb-viewer.html"]["version"], "titre de la page en français", await pg.evaluate("document.title"))
         await ctx.close()
 
         print("--- 3. réglage « Langue / Language », #lang=, disposition du clavier")

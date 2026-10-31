@@ -520,7 +520,7 @@ diff = {k for k in set(cfg0) | set(cfg1) if cfg0.get(k) != cfg1.get(k)}
 rapport(diff == {"seaY", "version"} and cfg1["seaY"] == 12.0, "--maj --sea-y 12 : seules seaY et la version changent dans X.config.json", (diff, r.stdout[-400:]))
 rapport(cfg1["hole"] == 99.0 and cfg1["walkSpeed"] == 5.0 and cfg1["zzCustom"] == {"a": [1, 2]} and cfg1["zoneMarker"] == "portee" and cfg1["presenceUrl"] == "ws://ADRESSE:9" and cfg1["room"] == "salonm" and cfg1["wave"] == 1.5,
         "valeurs modifiées à la main, clé inconnue, salon, présence et vagues : conservés")
-rapport(cfg1["version"] == (ROOT / "VERSION").read_text(encoding="utf-8").strip() and cfg1["tiles"] == cfg0["tiles"], "version courante écrite, champ « tiles » conservé", cfg1["version"])
+rapport(cfg1["version"] == __import__("json").loads((ROOT / "VERSIONS.json").read_text(encoding="utf-8"))["glb2html.py"]["version"] and cfg1["tiles"] == cfg0["tiles"], "version courante écrite, champ « tiles » conservé", cfg1["version"])
 rapport(zp.read_bytes() == zbytes, "X.zones.json : octet pour octet identique (zones ajoutées à la main gardées)")
 sauv = sorted(mj.glob("index.avant-*.html"))
 rapport(len(sauv) == 1 and sauv[0].read_bytes() == vieille, "l'ancienne coquille est gardée sous un nom daté", [q.name for q in sauv])

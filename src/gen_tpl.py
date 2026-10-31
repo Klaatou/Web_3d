@@ -17,6 +17,8 @@ Draco et Meshopt gérés automatiquement (décodeurs intégrés seulement si le 
 from __future__ import annotations
 
 VERSION = "__VERSION__"
+SHELL_VERSION = "__SHELL_VERSION__"   # numéro de version de la coquille (index.html) : écrit par build.py, ne change que si la coquille change
+MAP_VERSION = "__MAP_VERSION__"       # numéro de version de la page de carte (carte.html) : idem
 
 import argparse
 import base64
@@ -343,7 +345,7 @@ __I18N__
 <div id="tools"><label class="chk"><input type="checkbox" id="alert"> <span data-i18n="map.alert">Surveillance des arrivées (son et repère)</span></label> <small id="alertState"></small></div>
 <div id="total"></div>
 <div id="grid"></div>
-<footer id="foot">glb2html __VERSION__</footer>
+<footer id="foot">glb2html __MAP_VERSION__</footer>
 </main>
 <script type="application/json" id="cfg">__CONFIG__</script>
 <script>
@@ -353,7 +355,7 @@ __I18N__
   const POLL_ALERT_MS = 5000;   // quand « Surveillance sonore » est cochee
   const C = JSON.parse(document.getElementById('cfg').textContent);
   let MAP = C.map || [];
-  applyI18n(); document.getElementById('foot').textContent = tr('map.footer', '__VERSION__');
+  applyI18n(); document.getElementById('foot').textContent = tr('map.footer', '__MAP_VERSION__');
   if (document.querySelector('h1[data-i18n]')) document.title = tr('map.title');
   const grid = document.getElementById('grid'), counts = {}, vis = {}, answered = {}, hasVis = {}; let loadErr = '';
   // v34 : pseudo mémorisé (même clé que les régions) ; les liens des cartes reçoivent #name=PSEUDO
@@ -555,7 +557,7 @@ def register_region(path, entry):
 
 
 def map_page_html(cfg, title):
-    return (MAP_PAGE_TEMPLATE.replace("__TITLE_ATTR__", "" if title else 'data-i18n="map.title"').replace("__TITLE__", html.escape(title or "Carte des mondes")).replace("__VERSION__", VERSION)
+    return (MAP_PAGE_TEMPLATE.replace("__TITLE_ATTR__", "" if title else 'data-i18n="map.title"').replace("__TITLE__", html.escape(title or "Carte des mondes")).replace("__MAP_VERSION__", MAP_VERSION)
             .replace("__CONFIG__", json.dumps(cfg, ensure_ascii=False).replace("</", "<\\/")))
 
 
@@ -1064,8 +1066,8 @@ def build_shell(lib_url=None) -> str:
     tpl = replace_once(tpl, SHELL_GLB_TAG, "")
     tpl = replace_once(tpl, SHELL_BOOT_OLD, SHELL_BOOT_NEW)
     tpl = replace_once(tpl, SHELL_LOAD_OLD, SHELL_LOAD_NEW)
-    out = tpl.replace("__SKY_HEX__", SHELL_SKY).replace("__DECODERS__", "\n".join(decoders))
-    left = re.findall(r"__(?:TITLE|SKY_HEX|IMPORTMAP|CONFIG|DECODERS|GLB_B64|CORE)__", out)
+    out = tpl.replace("__SKY_HEX__", SHELL_SKY).replace("__DECODERS__", "\n".join(decoders)).replace("__CORE_VERSION__", SHELL_VERSION)
+    left = re.findall(r"__(?:TITLE|SKY_HEX|IMPORTMAP|CONFIG|DECODERS|GLB_B64|CORE|CORE_VERSION)__", out)
     if left:
         raise RuntimeError(_tr("py.glb2html.coquille_modulaire_marqueur_s_non_remplace", sorted(set(left))))
     return out
@@ -1104,7 +1106,8 @@ def build_html(glb: bytes, name: str, vendor_dir=None, **kw) -> str:
            .replace("__SKY_HEX__", f"{int(sky_color):06x}")
            .replace("__IMPORTMAP__", json.dumps(importmap, indent=1))
            .replace("__CONFIG__", json.dumps(cfg).replace("</", "<\\/"))
-           .replace("__DECODERS__", "\n".join(decoders)))
+           .replace("__DECODERS__", "\n".join(decoders))
+           .replace("__CORE_VERSION__", VERSION))
     # GLB injecté en dernier : rien n'est rescanné dans les Mo de base64
     return out.replace("__GLB_B64__", base64.b64encode(glb).decode("ascii"))
 

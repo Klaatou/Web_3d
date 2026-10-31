@@ -12,7 +12,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from h37 import *
 import h37
 
-VER = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
+VER = __import__("json").loads((ROOT / "VERSIONS.json").read_text(encoding="utf-8"))["index.html"]["version"]   # page ouverte par la coquille (?region=) : version de index.html
+VER_V = __import__("json").loads((ROOT / "VERSIONS.json").read_text(encoding="utf-8"))["glb-viewer.html"]["version"]   # viewer
 
 
 def damier_glb(path, n=3, cote=40.0):
@@ -129,7 +130,7 @@ async def main():
         rapport(b == "Copier le diagnostic", "viewer : bouton présent", b)
         rapport(st in ("Diagnostic copié", "Copie impossible : le texte est sélectionné, fais Ctrl+C"), "viewer : message après la copie", st)
         if st.startswith("Copie impossible"):
-            rapport(val.startswith("Diagnostic Web 3d") and f"Version : {VER}" in val, "viewer : texte affiché sélectionné", val[:200])
+            rapport(val.startswith("Diagnostic Web 3d") and f"Version : {VER_V}" in val, "viewer : texte affiché sélectionné", val[:200])
         else:
             rapport(val == "", "viewer : copie réussie, rien d'affiché")
         await o.ctx.close()

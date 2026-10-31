@@ -45,7 +45,7 @@ for outil, nom in (("glb2html.py", "glb2html.py"), ("glb2tiles.py", "glb2tiles.p
         t = subprocess.run([sys.executable, str(DIST / outil), "--help"], capture_output=True, text=True, env=e, input="").stdout
         prem = [l for l in t.splitlines() if l.strip()]
         ligne = next((l for l in prem if l.startswith(nom)), "")
-        ver = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
+        ver = __import__("json").loads((ROOT / "VERSIONS.json").read_text(encoding="utf-8"))[outil]["version"]
         rapport(bool(re.match(re.escape(nom) + " " + re.escape(ver) + r" ?: \S", ligne)), f"{outil} --help ({lg}) : ligne « {nom} {ver} : … »", ligne[:90])
 
 STUB2 = STUB + "try { localStorage.setItem('glb2html_name', 'Alice'); } catch (e) {}"

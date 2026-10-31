@@ -460,7 +460,7 @@ rapport(liste.is_file() and liste.read_text(encoding="utf-8").split() == [f"asse
 
 # ---------- version ----------
 print("--- version")
-vfile = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
+vfile = __import__("json").loads((ROOT / "VERSIONS.json").read_text(encoding="utf-8"))["oar2glb.py"]["version"]
 v = subprocess.run([sys.executable, str(TOOL), "--version"], capture_output=True, text=True, cwd=tmp, timeout=30)   # le délai prouve qu'aucune pause « Entrée » n'attend
 rapport(v.returncode == 0 and v.stdout.strip() == "oar2glb __VERSION__" and not v.stderr, "--version (source) : affiche la version et rend la main, sans pause", (v.returncode, v.stdout, v.stderr))
 dist = ROOT / "dist" / "oar2glb.py"

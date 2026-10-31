@@ -64,8 +64,8 @@ async def main():
     r = subprocess.run([sys.executable, str(DIST / "glb2html.py"), str(tmp / "sol.glb"), "-o", str(out), "--no-sea", "--zones", str(zj), *vend], capture_output=True, text=True)
     if r.returncode:
         sys.exit(f"[ECHEC] generation\n{r.stdout}{r.stderr}")
-    version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
-    rapport(len(version.split(" ")[0].split(".")) == 3 and version in r.stdout, "VERSION (numero de lot et date) et la ligne [OK] du generateur l'affiche", (version, r.stdout[-200:]))
+    version = __import__("json").loads((ROOT / "VERSIONS.json").read_text(encoding="utf-8"))["glb2html.py"]["version"]
+    rapport(len(version.split(" ")[0].split(".")) == 3 and version in r.stdout, "version de glb2html.py (VERSIONS.json) et la ligne [OK] du generateur l'affiche", (version, r.stdout[-200:]))
     out.write_text(out.read_text(encoding="utf-8").replace("const viewer = createViewer(", "const viewer = window.__v = createViewer(", 1), encoding="utf-8")
     proc, port = serveur(site)
     try:

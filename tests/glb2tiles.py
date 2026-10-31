@@ -590,7 +590,7 @@ rapport(r.returncode == 0 and "Traceback" not in r.stderr, "--nopause accepté",
 print("--- version")
 v = subprocess.run([sys.executable, str(TOOL), "--version"], capture_output=True, text=True, cwd=tmp, timeout=30)
 rapport(v.returncode == 0 and v.stdout.strip() == "glb2tiles __VERSION__" and not v.stderr, "--version (source) : affiche la version et rend la main, sans pause", (v.returncode, v.stdout, v.stderr))
-vfile = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
+vfile = __import__("json").loads((ROOT / "VERSIONS.json").read_text(encoding="utf-8"))["glb2tiles.py"]["version"]
 dist = ROOT / "dist" / "glb2tiles.py"
 if dist.is_file():
     txt = dist.read_text(encoding="utf-8")
