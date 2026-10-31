@@ -1513,6 +1513,31 @@ function createViewer(container, cfg0, loader) {
     sp.scale.set(1.6, 0.4, 1);
     return sp;
   }
+  // reperage des zones image (page exportee, case « Numeros des zones image ») : un gros numero devant chaque zone, masque par le decor (depthTest), jamais cliquable
+  function zoneNumText(z) {
+    const f = String(z.target || '').split(/[?#]/)[0].split('/').pop(), m = /^\d+/.exec(f) || /\d+/.exec(f);   // numero au debut du nom de fichier, sinon le premier numero du nom
+    return m ? String(parseInt(m[0], 10)) : (z.label || z.id);
+  }
+  function makeNumber(z) {
+    const text = zoneNumText(z), cv = document.createElement('canvas'); cv.width = 256; cv.height = 128;
+    const g = cv.getContext('2d');
+    g.font = 'bold ' + (text.length > 4 ? 56 : 96) + 'px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round';
+    g.lineWidth = 12; g.strokeStyle = '#000'; g.strokeText(text, 128, 68, 240); g.fillStyle = '#fff'; g.fillText(text, 128, 68, 240);
+    const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: true, depthWrite: false, fog: false }));
+    const w = Math.min(2, Math.max(0.8, z.w * 0.8)); sp.scale.set(w, w / 2, 1); sp.position.z = 0.06; sp.userData.zoneNum = text;
+    return sp;
+  }
+  function setZoneNumbers(on) {
+    zoneNums = !!on;
+    for (const g of zoneGroup.children) {
+      const old = g.children.find(o => o.userData && o.userData.zoneNum !== undefined);
+      if (old) { g.remove(old); old.material.map.dispose(); old.material.dispose(); }
+      const z = zoneNums && !zoneEditor ? zones.find(q => q.id === g.userData.zoneId) : null;
+      if (z && z.type === 'image') g.add(makeNumber(z));
+    }
+    dirty = true;
+  }
   function makeAvatar(name, color) {
     const g = new THREE.Group();
     const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.26, 0.85, 4, 12), new THREE.MeshStandardMaterial({ color, roughness: 0.7 }));
@@ -1752,6 +1777,7 @@ function createViewer(container, cfg0, loader) {
   let selId = null;
   let zones = [], zoneHit = [], zoneAll = [], zoneInside = new Set(), nearZone = null, zoneEditor = false, selBox = null, onZone = null, onNear = null;
   const imgGone = new Set();   // ids des tableaux dont l'image est introuvable (page exportee) : ni cliquables ni zone proche
+  let zoneNums = false;   // reperage des zones image : un gros numero devant chacune (jamais memorise ; voir setZoneNumbers)
   // zones liées à un élément du modèle (champ mesh = nom exact) : id de zone -> { meshes, box } ; mesh 3D -> zone
   const zoneLink = new Map(), meshZone = new Map();
   const zoneOf = o => o.userData.zone || meshZone.get(o) || null;
@@ -2043,6 +2069,7 @@ function createViewer(container, cfg0, loader) {
         const pl = imagePlane(z); g.add(pl); if (pl.userData.cap) g.add(pl.userData.cap);
         if (z.link && !zoneEditor && pl.visible) { pl.userData.zone = z; zoneAll.push(pl); zoneHit.push(pl); }   // tableau avec lien : cliquable (survol, clic, E) ; sans lien ou image absente : il ne reagit pas
         if (zoneEditor) { pl.userData.zone = z; zoneAll.push(pl); const lab = makeLabel(z.label || z.id); lab.position.y = (z.h > 0 ? z.h : z.w * 0.75) / 2 + 0.3; lab.material.depthTest = false; lab.renderOrder = 999; g.add(lab); }   // etiquette toujours entiere : le mur peut avoir des reliefs devant elle
+        if (zoneNums && !zoneEditor) g.add(makeNumber(z));   // meme si l'image manque : le numero repere l'emplacement
         zoneGroup.add(g);
         continue;
       }
@@ -2342,7 +2369,7 @@ function createViewer(container, cfg0, loader) {
   return {
     scene, camera, renderer, controls, cfg, setCfg, setModel, loadBuffer, imageUrl, freshFetch, setImageResolver, frame, getCameraState, setZoom, renderStats,
     get model() { return model; }, get sea() { return sea; }, set onCfg(f) { onCfg = f; }, set onWalk(f) { onWalk = f; }, set onPick(f) { onPick = f; }, set pickOrbit(v) { pickOrbit = !!v; }, set onPresence(f) { onPresence = f; }, set onChat(f) { onChat = f; }, set onPeer(f) { onPeer = f; },
-    setZones, zoneSelect, zonePickAt, findMeshes, imageDiag,
+    setZones, setZoneNumbers, zoneSelect, zonePickAt, findMeshes, imageDiag,
     // v36 : repères de portail (cônes) : affichés ou non (T), rappel, état pour les tests
     setCones, get cones() { return coneOn; }, set onCones(f) { onCones = f; },
     getCones() { const out = []; zoneGroup.traverse(o => { if (o.userData && o.userData.cone) { const p = o.getWorldPosition(new THREE.Vector3()); camera.updateMatrixWorld(true); const r = dom.getBoundingClientRect(), pr = p.clone().project(camera), d = camera.position.distanceTo(p); out.push({ id: o.userData.zone.id, visible: o.visible, pos: p.toArray(), scale: o.scale.x, dist: d, sx: r.left + (pr.x + 1) / 2 * r.width, sy: r.top + (1 - pr.y) / 2 * r.height, px: 0.35 * o.scale.x / (2 * d * Math.tan(camera.fov * Math.PI / 360)) * r.height }); } }); return out; },

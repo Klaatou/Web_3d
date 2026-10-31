@@ -4,6 +4,14 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.1.0)
 
+### 31/10/2026 : version 1.1.3 : numéros des zones image, pose par clic en promenade
+- **Nouveau** : case **« Numéros des zones image (repérage) »** dans les Réglages de la page exportée (décochée à chaque ouverture, jamais mémorisée ; absente si la région n'a aucune zone image) : un gros numéro devant chaque zone image, même si son image manque, pour repérer les emplacements 1, 2, 3... sans le viewer. Numéro = celui du nom de fichier visé, sinon le nom affiché, sinon l'`id`. Masqué par le décor (`depthTest`), non cliquable (`core.js` : `zoneNumText`, `makeNumber`, `setZoneNumbers` ; `template.html`).
+- **Correction** (viewer) : le clic de pose d'une zone était ignoré en promenade alors que le bouton restait sur « Pose ACTIVE ». Il pose maintenant aussi en promenade (rayon au centre de l'écran quand la souris est capturée). `viewer_tpl.html`.
+- **Tests** : `tests/zones_numeros.py`, `tests/pose_promenade.py` (nouveaux). **Non essayé** : Edge, Windows, vraie capture de souris (simulée), carte graphique.
+- **Change**: new **"Image zone numbers (to find them)"** box in the exported page's Settings (unticked at every opening, never remembered; absent if the region has no image zone): a big number in front of each image zone, even if its image is missing, to find positions 1, 2, 3... without the viewer. Number = the one in the targeted file name, otherwise the display name, otherwise the `id`. Hidden by the scenery (`depthTest`), not clickable.
+- **Fix** (viewer): the zone placement click was ignored while walking although the button stayed on "Placement ACTIVE". It now places while walking too (ray through the screen centre when the mouse is captured).
+- **Tests**: `tests/zones_numeros.py`, `tests/pose_promenade.py` (new). **Not tried**: Edge, Windows, real mouse capture (simulated), graphics card.
+
 ### 31/10/2026 : version 1.1.2 : documents du lien d'un tableau
 - **Documents** : manuel FR/EN (tableau des champs : ligne `link` ; § 37.1 : le lien, ses règles d'adresse, la pose en vue globale ou en promenade, le test `lien_image.py`) ; `docs/samples/region.zones.sample.json` (la zone `painting-1` porte un `link`) ; README des samples FR/EN. `HISTORIQUE`/`HISTORY` : encore à faire.
 - **Constat documenté, non corrigé** : le clic de pose d'une zone est ignoré en promenade (`viewer_tpl.html`, `viewer.walking`) alors que le bouton reste sur « Pose ACTIVE » ; seule la touche P pose. Correction du bouton ou clic de pose en promenade : décision de Klaatou en attente.

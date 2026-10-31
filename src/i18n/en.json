@@ -1383,6 +1383,7 @@
  "page.opt.touch": "Touch controls",
  "page.opt.touch.on": "Yes",
  "page.opt.touch.off": "No",
+ "page.opt.zonenums": "Image zone numbers (to find them)",
  "page.help.k": "K: on-screen arrows",
  "page.touch.look": "Drag your finger on the screen to look around",
  "page.diag.touch": "Touch controls",

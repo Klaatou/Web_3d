@@ -889,10 +889,10 @@ coordInfo();
   let down = null;
   dom.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY]; });
   dom.addEventListener('click', e => {
-    if (viewer.walking || !down || e.button !== 0 || (!viewer.model && !placeMode)) return;
+    if ((viewer.walking && !(zoneAddMode && !linkZone && !placeMode)) || !down || e.button !== 0 || (!viewer.model && !placeMode)) return;   // en promenade, seul le mode « pose d'une zone » prend le clic
     if ((e.clientX - down[0]) ** 2 + (e.clientY - down[1]) ** 2 > 25) return;
-    const r = dom.getBoundingClientRect();
-    p.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    const r = dom.getBoundingClientRect(), locked = document.pointerLockElement === dom;   // souris capturee (promenade) : on vise le centre de l'ecran
+    p.set(locked ? 0 : (e.clientX - r.left) / r.width * 2 - 1, locked ? 0 : -((e.clientY - r.top) / r.height) * 2 + 1);
     ray.setFromCamera(p, viewer.camera);
     if (linkZone) {
       // mode exclusif : ni atterrissage, ni trou, ni pose de zone. Les éléments traversables (walkIgnore) sont ignorés :
