@@ -77,7 +77,7 @@ async def page_exportee(br, url, titre, attendu_charge):
     await pg.goto(url)
     await pg.wait_for_function("document.getElementById('msg') === null", timeout=60000)
     if attendu_charge:
-        await pg.wait_for_function("(" + LIRE + ")().tab && (" + LIRE + ")().tab.image", timeout=20000)
+        await pg.wait_for_function("(() => { const z = (" + LIRE + ")(); return z.tab && z.tab.image && z.fixe && z.fixe.image; })()", timeout=20000)
     else:
         await pg.wait_for_timeout(2500)
     z = await pg.evaluate("(" + LIRE + ")()")

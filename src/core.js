@@ -1962,9 +1962,18 @@ function createViewer(container, cfg0, loader) {
       mat.map = tex; mat.needsUpdate = true;
       pl.scale.y = hOf(tex.image.width, tex.image.height); place(); dirty = true; if (ok) ok();
     }, undefined, () => { if (tmp) URL.revokeObjectURL(u); (fail || absent)(); });
+    // image toujours revalidee aupres du serveur (cache: 'no-cache') : une image remplacee sous le meme nom apparait sans vider le cache du navigateur ;
+    // une balise img n'offre pas ce reglage, d'ou fetch puis adresse blob: (liberee apres chargement par fromUrl)
+    const fresh = (cand, fail, ok) => {
+      const u = imageUrl(cand);
+      if (!u || /^(data|blob):/i.test(u)) return fromUrl(u, false, fail, ok);
+      fetch(u, { cache: 'no-cache' }).then(
+        r => r.ok ? r.blob().then(b => fromUrl(URL.createObjectURL(b), true, fail, ok), () => fail()) : fail(),
+        () => fromUrl(u, false, fail, ok));   // fetch impossible (autre site sans CORS, file://) : chargement direct, comme avant
+    };
     const loadCand = (cand, fail, ok) => {
-      if (imageResolver) Promise.resolve().then(() => imageResolver(cand)).then(u => u ? fromUrl(u, true, fail, ok) : fromUrl(imageUrl(cand), false, fail, ok), () => fromUrl(imageUrl(cand), false, fail, ok));
-      else fromUrl(imageUrl(cand), false, fail, ok);
+      if (imageResolver) Promise.resolve().then(() => imageResolver(cand)).then(u => u ? fromUrl(u, true, fail, ok) : fresh(cand, fail, ok), () => fresh(cand, fail, ok));
+      else fresh(cand, fail, ok);
     };
     // titre : premiere ligne non vide de <nom>.txt s'il existe (a cote de l'image), qui remplace le texte apres le premier tiret du nom de fichier
     const setCap = txt => {
@@ -1980,7 +1989,7 @@ function createViewer(container, cfg0, loader) {
       const next = rest => {
         if (!rest.length) return;
         const name = rest[0], more = () => next(rest.slice(1));
-        const direct = () => fetch(imageUrl(name)).then(r => r.ok ? r.text() : Promise.reject(new Error('absent'))).then(setCap, more);
+        const direct = () => fetch(imageUrl(name), { cache: 'no-cache' }).then(r => r.ok ? r.text() : Promise.reject(new Error('absent'))).then(setCap, more);
         if (imageResolver) Promise.resolve().then(() => imageResolver(name)).then(u => u ? fetch(u).then(r => r.text()).then(t => { URL.revokeObjectURL(u); setCap(t); }, () => { URL.revokeObjectURL(u); more(); }) : direct(), () => direct());
         else direct();
       };

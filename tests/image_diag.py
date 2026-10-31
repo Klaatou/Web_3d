@@ -65,7 +65,7 @@ async def main():
     if r.returncode:
         sys.exit(f"[ECHEC] generation\n{r.stdout}{r.stderr}")
     version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
-    rapport(version.startswith("1.0.1 ") and version in r.stdout, "VERSION = 1.0.1 et la ligne [OK] du generateur l'affiche", (version, r.stdout[-200:]))
+    rapport(len(version.split(" ")[0].split(".")) == 3 and version in r.stdout, "VERSION (numero de lot et date) et la ligne [OK] du generateur l'affiche", (version, r.stdout[-200:]))
     out.write_text(out.read_text(encoding="utf-8").replace("const viewer = createViewer(", "const viewer = window.__v = createViewer(", 1), encoding="utf-8")
     proc, port = serveur(site)
     try:

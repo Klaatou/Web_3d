@@ -53,7 +53,7 @@ def serveur(dossier):
     sys.exit("[ECHEC] serveur http")
 
 
-IMGS = """() => { const o = []; window.__v.scene.traverse(n => { if (n.isMesh && n.material && n.material.map && n.material.map.image && n.material.map.image.src) o.push(decodeURIComponent(n.material.map.image.src.split('/').slice(3).join('/'))); }); return o.sort(); }"""
+IMGS = """() => window.__v.imageDiag().map(d => d.loaded).filter(Boolean).sort()"""   # fichier lu (diagnostic des images) : l'adresse de l'image est blob:
 LEGS = """() => { const o = []; window.__v.scene.traverse(n => { if (n.userData && n.userData.caption) o.push([n.userData.caption, n.visible]); }); return o.sort(); }"""
 
 
