@@ -173,6 +173,7 @@
   "w": 1.5,
   "h": 0,
   "target": "paintings/painting-1.jpg",
+  "link": "gallery.html",
   "spawn": "",
   "confirm": false,
   "private": false,

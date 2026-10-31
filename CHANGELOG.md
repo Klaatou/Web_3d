@@ -4,6 +4,12 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.1.0)
 
+### 31/10/2026 : version 1.1.2 : documents du lien d'un tableau
+- **Documents** : manuel FR/EN (tableau des champs : ligne `link` ; § 37.1 : le lien, ses règles d'adresse, la pose en vue globale ou en promenade, le test `lien_image.py`) ; `docs/samples/region.zones.sample.json` (la zone `painting-1` porte un `link`) ; README des samples FR/EN. `HISTORIQUE`/`HISTORY` : encore à faire.
+- **Constat documenté, non corrigé** : le clic de pose d'une zone est ignoré en promenade (`viewer_tpl.html`, `viewer.walking`) alors que le bouton reste sur « Pose ACTIVE » ; seule la touche P pose. Correction du bouton ou clic de pose en promenade : décision de Klaatou en attente.
+- **Documents**: FR/EN manual (field table: `link` row; § 37.1: the link, its address rules, placing in global view or while walking, the `lien_image.py` test); `docs/samples/region.zones.sample.json` (the `painting-1` zone carries a `link`); samples README FR/EN. `HISTORIQUE`/`HISTORY`: still to do.
+- **Finding documented, not fixed**: the placement click is ignored while walking (`viewer_tpl.html`, `viewer.walking`) while the button stays on "Placement ACTIVE"; only the P key places. Fixing the button or allowing click placement while walking: Klaatou's decision pending.
+
 ### 31/10/2026 : version 1.1.1 : lien d'un tableau (zone `image`)
 - **Nouveau** : une zone `image` accepte une clé facultative `link` (adresse `http(s)` ou page relative à la page, par exemple `galerie.html`). Le clic sur le tableau, ou la touche E devant lui, ouvre le lien dans un nouvel onglet, comme une zone `url` ; infobulle et curseur main au survol. Éditeur : champ « Lien (page ouverte au clic ou à E, facultatif) ». `link` n'est écrit dans les zones que lorsqu'il est rempli (`core.js` `cleanZone`, `gen_tpl.py` `clean_zones`) : les fichiers de zones existants ne changent pas. Une page plus ancienne ignore `link` (le tableau s'affiche sans action). **Attention** : un ancien éditeur (`glb-viewer.html`) qui enregistre des zones perd les `link` : garder le viewer et la page à la même version.
 - **Correction** : un tableau sans lien n'est plus une « zone proche » : plus d'invite « clic ou E : Image 8 » devant lui (E n'avait aucune action, `zoneTick` dans `core.js`). Un tableau dont l'image est introuvable n'est pas cliquable.
