@@ -4,6 +4,10 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.1.0)
 
+### 31/10/2026 : version 1.1.4 : numéros des zones image à plat
+- **Correction** : les numéros des zones image sont des plans « à plat » dans le plan de l'image (même sens que l'image), et non plus des étiquettes tournées vers la caméra : de biais, celles-ci s'enfonçaient dans l'image et le mur et les dizaines (19, 20, 21) étaient coupées (constat de Klaatou). `core.js` : `makeNumber`. Test `zones_numeros.py` : contrôle l'orientation.
+- **Fix**: image zone numbers are now flat planes in the image's plane (same direction as the image), no longer camera-facing labels: seen at an angle those sank into the image and the wall and the tens digits (19, 20, 21) were cut off (Klaatou's finding). `core.js`: `makeNumber`. `zones_numeros.py` test: checks the orientation.
+
 ### 31/10/2026 : version 1.1.3 : numéros des zones image, pose par clic en promenade
 - **Nouveau** : case **« Numéros des zones image (repérage) »** dans les Réglages de la page exportée (décochée à chaque ouverture, jamais mémorisée ; absente si la région n'a aucune zone image) : un gros numéro devant chaque zone image, même si son image manque, pour repérer les emplacements 1, 2, 3... sans le viewer. Numéro = celui du nom de fichier visé, sinon le nom affiché, sinon l'`id`. Masqué par le décor (`depthTest`), non cliquable (`core.js` : `zoneNumText`, `makeNumber`, `setZoneNumbers` ; `template.html`).
 - **Correction** (viewer) : le clic de pose d'une zone était ignoré en promenade alors que le bouton restait sur « Pose ACTIVE ». Il pose maintenant aussi en promenade (rayon au centre de l'écran quand la souris est capturée). `viewer_tpl.html`.

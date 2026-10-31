@@ -1524,15 +1524,16 @@ function createViewer(container, cfg0, loader) {
     g.font = 'bold ' + (text.length > 4 ? 56 : 96) + 'px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round';
     g.lineWidth = 12; g.strokeStyle = '#000'; g.strokeText(text, 128, 68, 240); g.fillStyle = '#fff'; g.fillText(text, 128, 68, 240);
     const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
-    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: true, depthWrite: false, fog: false }));
-    const w = Math.min(2, Math.max(0.8, z.w * 0.8)); sp.scale.set(w, w / 2, 1); sp.position.z = 0.06; sp.userData.zoneNum = text;
+    const w = Math.min(2, Math.max(0.8, z.w * 0.8));
+    const sp = new THREE.Mesh(new THREE.PlaneGeometry(w, w / 2), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthTest: true, depthWrite: false, fog: false }));   // a plat dans le plan de l'image (une etiquette tournee vers la camera s'enfoncait dans le mur et coupait les dizaines)
+    sp.position.z = 0.06; sp.userData.zoneNum = text;
     return sp;
   }
   function setZoneNumbers(on) {
     zoneNums = !!on;
     for (const g of zoneGroup.children) {
       const old = g.children.find(o => o.userData && o.userData.zoneNum !== undefined);
-      if (old) { g.remove(old); old.material.map.dispose(); old.material.dispose(); }
+      if (old) { g.remove(old); old.geometry.dispose(); old.material.map.dispose(); old.material.dispose(); }
       const z = zoneNums && !zoneEditor ? zones.find(q => q.id === g.userData.zoneId) : null;
       if (z && z.type === 'image') g.add(makeNumber(z));
     }

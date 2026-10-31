@@ -62,7 +62,9 @@ def serveur(dossier):
 
 
 
-COUNT = """() => { const out = []; window.__v.scene.traverse(o => { if (o.isSprite && o.userData && o.userData.zoneNum !== undefined) out.push([o.userData.zoneNum, o.material.depthTest, o.material.depthWrite]); }); return out; }"""
+COUNT = """() => { const out = []; window.__v.scene.traverse(o => { if (o.isMesh && o.userData && o.userData.zoneNum !== undefined) out.push([o.userData.zoneNum, o.material.depthTest, o.material.depthWrite]); }); return out; }"""
+
+PLAT = """() => { const res = []; window.__v.scene.traverse(g => { if (!g.userData || !g.userData.zoneId) return; const n = g.children.find(o => o.userData && o.userData.zoneNum !== undefined); const p = g.children.find(o => o.isMesh && !(o.userData && o.userData.zoneNum !== undefined)); if (!n || !p) return; const a = n.getWorldQuaternion(n.quaternion.clone()), b = p.getWorldQuaternion(p.quaternion.clone()); res.push([n.isSprite === true, Math.abs(a.dot(b))]); }); return res; }"""
 
 
 def img(id_, x, target, label=""):
@@ -84,7 +86,7 @@ async def main():
     mur_glb(tmp / "salle.glb"); shutil.copy(tmp / "salle.glb", site / "salle.glb")
     (site / "tableau.png").write_bytes(png(8, 4))
     shutil.copy(DIST / "glb-viewer.html", site / "glb-viewer.html")
-    zones = [img("a", 0, "12-Titre.jpg"), img("b", 3, "7"), img("c", -3, "paintings/painting-1.jpg"), img("d", 6, "", label="Vide"), img("e", -6, "sans-chiffre.png"),
+    zones = [img("a", 0, "12-Titre.jpg"), dict(img("b", 3, "7"), yaw=0.5), img("c", -3, "paintings/painting-1.jpg"), img("d", 6, "", label="Vide"), img("e", -6, "sans-chiffre.png"),
              {"id": "p", "type": "portal", "label": "Porte", "target": "", "x": 8, "y": 15, "z": 0, "yaw": 0, "radius": 2}]
     (tmp / "zones.json").write_text(json.dumps(zones), encoding="utf-8")
     (tmp / "zones_sans.json").write_text(json.dumps([zones[-1]]), encoding="utf-8")
@@ -109,6 +111,8 @@ async def main():
             c = await pg.evaluate(COUNT)
             rapport(sorted(x[0] for x in c) == sorted(["12", "7", "1", "Vide", "e"]), "cochee : un numero par zone image (nom de fichier, sinon nom affiche, sinon id) ; pas pour le portail", c)
             rapport(c and all(x[1] is True and x[2] is False for x in c), "numeros masques par le decor (depthTest) et sans ecriture de profondeur", c)
+            pl = await pg.evaluate(PLAT)
+            rapport(len(pl) == 5 and all(not s and d > 0.9999 for s, d in pl), "numeros a plat : meme orientation que l'image de leur zone, pas d'etiquette tournee vers la camera", pl)
             await pg.evaluate("document.getElementById('visZoneNums').click()"); await pg.wait_for_timeout(400)
             rapport(await pg.evaluate(COUNT) == [], "decochee : les numeros disparaissent")
             await pg.evaluate("document.getElementById('visZoneNums').click()"); await pg.wait_for_timeout(400)
