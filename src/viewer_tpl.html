@@ -1091,8 +1091,13 @@ async function imageNameFromDir(v, dirTest) {   // (dirTest : dossier fourni par
   if (!v || !imgRel(v) || /[\\/]/.test(v) || /\.[A-Za-z0-9]{2,5}$/.test(v)) return { name: v };
   const dir = dirTest !== undefined ? dirTest : await regionDirQuiet();
   if (!dir) return { name: v, nodir: true };
-  const lv = v.toLowerCase(), hits = [];
-  try { for await (const [n, h] of dir.entries()) { if (h.kind !== 'file' || !IMG_EXT_RE.test(n)) continue; const b = n.replace(IMG_EXT_RE, '').toLowerCase(); if (b === lv || b.startsWith(lv + '-')) hits.push(n); } } catch (e) {}
+  const lv = v.toLowerCase(), hits = [], places = [], md = String(cfg.mediaDir === undefined ? 'medias' : (cfg.mediaDir || '')).replace(/^[\\/]+|[\\/]+$/g, '');
+  if (md) { try { places.push(await dir.getDirectoryHandle(md)); } catch (e) {} }   // le sous-dossier des medias d'abord, puis le dossier de la region
+  places.push(dir);
+  for (const d of places) {
+    try { for await (const [n, h] of d.entries()) { if (h.kind !== 'file' || !IMG_EXT_RE.test(n)) continue; const b = n.replace(IMG_EXT_RE, '').toLowerCase(); if (b === lv || b.startsWith(lv + '-')) hits.push(n); } } catch (e) {}
+    if (hits.length) break;
+  }
   if (hits.some(n => n.replace(IMG_EXT_RE, '').toLowerCase() === lv)) return { name: v, plain: true };   // « 12.jpg » existe : la page le trouve toute seule, le nom reste « 12 »
   hits.sort((x, y) => x.localeCompare(y));
   return hits.length ? { name: hits[0], n: hits.length } : { name: v, none: true, dir: dir.name };

@@ -122,6 +122,7 @@ MESHOPT_FILES = {"three/addons/libs/meshopt_decoder.module.js": "examples/jsm/li
 
 ZONE_TYPES = ("url", "ha", "portal", "spawn", "image")
 IMG_EXTS = (".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif", ".bmp")
+MEDIA_DIR = "medias"   # sous-dossier des medias de la region (cle mediaDir de la config cote page ; ici toujours « medias »)
 IMG_DIR = [None]   # dossier ou se cherchent les images des zones « image » (celui de la page), pose par main() ; None : aucune recherche
 _IMG_SEEN = set()
 
@@ -132,12 +133,16 @@ def resolve_image_name(t):
     s = str(t or "").strip()
     if not s or IMG_DIR[0] is None or re.search(r"[\\/:]", s) or re.search(r"\.[A-Za-z0-9]{2,5}$", s):
         return t
-    try:
-        names = [p.name for p in IMG_DIR[0].iterdir() if p.is_file() and p.suffix.lower() in IMG_EXTS]
-    except OSError:
-        return t
     low = s.lower()
-    hits = sorted((n for n in names if pathlib.Path(n).stem.lower() == low or pathlib.Path(n).stem.lower().startswith(low + "-")), key=lambda n: (n.lower(), n))
+    hits = []
+    for d in (IMG_DIR[0] / MEDIA_DIR, IMG_DIR[0]):   # le sous-dossier des medias d'abord, puis le dossier de la page
+        try:
+            names = [p.name for p in d.iterdir() if p.is_file() and p.suffix.lower() in IMG_EXTS]
+        except OSError:
+            continue
+        hits = sorted((n for n in names if pathlib.Path(n).stem.lower() == low or pathlib.Path(n).stem.lower().startswith(low + "-")), key=lambda n: (n.lower(), n))
+        if hits:
+            break
     plain = [n for n in hits if pathlib.Path(n).stem.lower() == low]
     if plain:   # « 12.png » existe : la page le trouve toute seule (extensions essayees dans l'ordre), le nom reste « 12 »
         if s not in _IMG_SEEN:

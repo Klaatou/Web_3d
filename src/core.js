@@ -95,6 +95,7 @@ function diagText(viewer, extra) {
     const why = { sea: tr('core.diag.cause.sea'), peers: tr('core.diag.cause.peers'), walk: tr('core.diag.cause.walk'), tiles: tr('core.diag.cause.tiles') };
     out.push(L(tr('core.diag.fps'), tr('core.diag.fps.v', nb(s.rate, 1), s.causes.length ? s.causes.map(k => why[k]).join(', ') : tr('core.diag.cause.none'))));
   }
+  if (viewer && viewer.imageDiag) for (const d of viewer.imageDiag().slice(0, 60)) out.push(L(tr('core.diag.image'), tr('core.diag.image.v', d.id, d.target || '\u2014', d.loaded || '\u2014', d.cap ? '\u00ab ' + d.cap + ' \u00bb (' + (d.src === 'txt' ? tr('core.diag.image.txt') : tr('core.diag.image.name')) + (d.vis ? '' : ', ' + tr('core.diag.image.hidden')) + ')' : '\u2014')));
   const pm = performance.memory;
   out.push(L(tr('core.diag.mem'), pm && pm.usedJSHeapSize ? tr('core.diag.mem.v', nb(pm.usedJSHeapSize / 1048576), nb(pm.jsHeapSizeLimit / 1048576)) : tr('core.diag.na')));
   if (viewer && viewer.tiled && viewer.tilesState) {
@@ -1948,21 +1949,22 @@ function createViewer(container, cfg0, loader) {
     const capText = imageCaption(z.target); let cap = capText ? captionPlane(capText, z.w) : null;
     const place = () => { if (cap) cap.position.y = -(pl.scale.y / 2 + z.w * 96 / 2048 + 0.03); };
     place(); if (cap) pl.userData.cap = cap;
+    const dg = { id: z.id, target: z.target, loaded: '', cap: capText || '', src: capText ? 'name' : '', vis: () => !!(cap && cap.visible) }; pl.userData.diag = dg;   // lu par « Copier le diagnostic »
     const absent = () => {
       console.warn(tr('core.image.missing', z.target || '-'));
       if (zoneEditor) { mat.map = boardTex(z.label || z.id, tr('core.image.missing', z.target || '-'), z.w, pl.scale.y); mat.needsUpdate = true; } else { pl.visible = false; if (cap) cap.visible = false; }
       dirty = true;
     };
     if (!z.target || /^\s*(javascript|vbscript):/i.test(z.target)) { absent(); return pl; }
-    const fromUrl = (u, tmp, fail) => new THREE.TextureLoader().load(u, tex => {
+    const fromUrl = (u, tmp, fail, ok) => new THREE.TextureLoader().load(u, tex => {
       if (tmp) URL.revokeObjectURL(u);
       tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
       mat.map = tex; mat.needsUpdate = true;
-      pl.scale.y = hOf(tex.image.width, tex.image.height); place(); dirty = true;
+      pl.scale.y = hOf(tex.image.width, tex.image.height); place(); dirty = true; if (ok) ok();
     }, undefined, () => { if (tmp) URL.revokeObjectURL(u); (fail || absent)(); });
-    const loadCand = (cand, fail) => {
-      if (imageResolver) Promise.resolve().then(() => imageResolver(cand)).then(u => u ? fromUrl(u, true, fail) : fromUrl(imageUrl(cand), false, fail), () => fromUrl(imageUrl(cand), false, fail));
-      else fromUrl(imageUrl(cand), false, fail);
+    const loadCand = (cand, fail, ok) => {
+      if (imageResolver) Promise.resolve().then(() => imageResolver(cand)).then(u => u ? fromUrl(u, true, fail, ok) : fromUrl(imageUrl(cand), false, fail, ok), () => fromUrl(imageUrl(cand), false, fail, ok));
+      else fromUrl(imageUrl(cand), false, fail, ok);
     };
     // titre : premiere ligne non vide de <nom>.txt s'il existe (a cote de l'image), qui remplace le texte apres le premier tiret du nom de fichier
     const setCap = txt => {
@@ -1970,24 +1972,36 @@ function createViewer(container, cfg0, loader) {
       if (!txt) return;
       txt = txt.replace(/\s+/g, ' ').slice(0, 200);
       if (cap) { if (cap.parent) cap.parent.remove(cap); cap.geometry.dispose(); cap.material.map.dispose(); cap.material.dispose(); }
-      cap = captionPlane(txt, z.w); cap.visible = pl.visible; pl.userData.cap = cap;
+      cap = captionPlane(txt, z.w); cap.visible = pl.visible; pl.userData.cap = cap; dg.cap = txt; dg.src = 'txt';
       if (pl.parent && pl.parent.parent) pl.parent.add(cap);
       place(); dirty = true;
     };
-    const captionFromText = name => {
-      const direct = () => fetch(imageUrl(name)).then(r => r.ok ? r.text() : '').then(setCap, () => {});
-      if (imageResolver) Promise.resolve().then(() => imageResolver(name)).then(u => u ? fetch(u).then(r => r.text()).then(t => { URL.revokeObjectURL(u); setCap(t); }, () => URL.revokeObjectURL(u)) : direct(), () => direct());
-      else direct();
+    const captionFromText = names => {   // essaie les noms dans l'ordre (dossier medias, puis dossier de la region) et prend le premier qui existe
+      const next = rest => {
+        if (!rest.length) return;
+        const name = rest[0], more = () => next(rest.slice(1));
+        const direct = () => fetch(imageUrl(name)).then(r => r.ok ? r.text() : Promise.reject(new Error('absent'))).then(setCap, more);
+        if (imageResolver) Promise.resolve().then(() => imageResolver(name)).then(u => u ? fetch(u).then(r => r.text()).then(t => { URL.revokeObjectURL(u); setCap(t); }, () => { URL.revokeObjectURL(u); more(); }) : direct(), () => direct());
+        else direct();
+      };
+      next(names);
     };
     const tz = String(z.target).trim(), bare = !/^([a-z][a-z0-9+.\-]*:|\/)/i.test(tz), hasExt = /\.[A-Za-z0-9]{2,5}$/.test(tz), stem = tz.replace(/\.[A-Za-z0-9]{2,5}$/, '');
-    if (bare && !hasExt) {   // « 12 » : la page essaie 12.jpg, 12.png... dans l'ordre (cfg.imageExts) et garde le premier trouve
+    // sous-dossier des medias de la region (cle facultative mediaDir de la config : « medias » par defaut, vide = aucun) : cherche dedans d'abord, puis dans le dossier de la region
+    const md = String(cfg.mediaDir === undefined ? 'medias' : (cfg.mediaDir || '')).replace(/^[\\/]+|[\\/]+$/g, ''), dirs = md ? [md + '/', ''] : [''];
+    let cands;
+    if (!bare) cands = [z.target];
+    else if (hasExt) cands = dirs.map(d => d + tz);
+    else {   // « 12 » : la page essaie 12.jpg, 12.png... (cfg.imageExts) dans chaque dossier et garde le premier trouve
       const exts = String(cfg.imageExts || 'jpg,jpeg,png,webp,gif,avif').split(/[\s,;]+/).map(e => e.replace(/^\./, '')).filter(Boolean);
-      const go = i => i >= exts.length ? absent() : loadCand(stem + '.' + exts[i], () => go(i + 1));
-      go(0);
-    } else loadCand(z.target, absent);
-    if (bare) captionFromText(stem + '.txt');
+      cands = []; for (const d of dirs) for (const e of exts) cands.push(d + stem + '.' + e);
+    }
+    const go = i => i >= cands.length ? absent() : loadCand(cands[i], () => go(i + 1), () => { dg.loaded = cands[i]; });
+    go(0);
+    if (bare) captionFromText(dirs.map(d => d + stem + '.txt'));
     return pl;
   }
+  function imageDiag() { const o = []; zoneGroup.traverse(n => { const d = n.userData && n.userData.diag; if (d) o.push({ id: d.id, target: d.target, loaded: d.loaded, cap: d.cap, src: d.src, vis: d.vis() }); }); return o; }
   function buildZones() {
     for (const c of [...zoneGroup.children]) {
       zoneGroup.remove(c);
@@ -2304,7 +2318,7 @@ function createViewer(container, cfg0, loader) {
   return {
     scene, camera, renderer, controls, cfg, setCfg, setModel, loadBuffer, imageUrl, setImageResolver, frame, getCameraState, setZoom, renderStats,
     get model() { return model; }, get sea() { return sea; }, set onCfg(f) { onCfg = f; }, set onWalk(f) { onWalk = f; }, set onPick(f) { onPick = f; }, set pickOrbit(v) { pickOrbit = !!v; }, set onPresence(f) { onPresence = f; }, set onChat(f) { onChat = f; }, set onPeer(f) { onPeer = f; },
-    setZones, zoneSelect, zonePickAt, findMeshes,
+    setZones, zoneSelect, zonePickAt, findMeshes, imageDiag,
     // v36 : repères de portail (cônes) : affichés ou non (T), rappel, état pour les tests
     setCones, get cones() { return coneOn; }, set onCones(f) { onCones = f; },
     getCones() { const out = []; zoneGroup.traverse(o => { if (o.userData && o.userData.cone) { const p = o.getWorldPosition(new THREE.Vector3()); camera.updateMatrixWorld(true); const r = dom.getBoundingClientRect(), pr = p.clone().project(camera), d = camera.position.distanceTo(p); out.push({ id: o.userData.zone.id, visible: o.visible, pos: p.toArray(), scale: o.scale.x, dist: d, sx: r.left + (pr.x + 1) / 2 * r.width, sy: r.top + (1 - pr.y) / 2 * r.height, px: 0.35 * o.scale.x / (2 * d * Math.tan(camera.fov * Math.PI / 360)) * r.height }); } }); return out; },

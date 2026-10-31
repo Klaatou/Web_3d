@@ -1,0 +1,116 @@
+#!/usr/bin/env python3
+"""Sous-dossier « medias » : la page cherche images et .txt dans medias/ puis dans le dossier de la region ; le generateur complete les noms depuis medias/ ; cle mediaDir.
+Prerequis : pip install playwright ; python build.py avant. Variables facultatives : THREE_DIR, CHROMIUM. Lancer : python tests/image_medias.py
+"""
+import os as _os_lang; _os_lang.environ["WEB3D_LANG"] = "fr"
+import asyncio, json, os, pathlib, socket, struct, subprocess, sys, tempfile, time, zlib
+
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+DIST = ROOT / "dist"
+tmp = pathlib.Path(tempfile.mkdtemp(prefix="glb2html_medias_"))
+vend = ["--vendor", os.environ["THREE_DIR"]] if os.environ.get("THREE_DIR") else []
+echecs = 0
+
+
+def rapport(ok, titre, detail=""):
+    global echecs
+    print(("[OK]    " if ok else "[ECHEC] ") + titre + ("" if ok else f"  {detail}"))
+    echecs += not ok
+
+
+def sol_glb(path):
+    v = [(-20, 0, -20), (20, 0, -20), (20, 0, 20), (-20, 0, 20)]
+    pos = b"".join(struct.pack("<3f", *p) for p in v)
+    idx = struct.pack("<6H", 0, 1, 2, 0, 2, 3)
+    blob = pos + idx + bytes(-(len(pos) + 12) % 4)
+    g = {"asset": {"version": "2.0"}, "buffers": [{"byteLength": len(blob)}],
+         "bufferViews": [{"buffer": 0, "byteOffset": 0, "byteLength": len(pos)}, {"buffer": 0, "byteOffset": len(pos), "byteLength": 12}],
+         "accessors": [{"bufferView": 0, "componentType": 5126, "count": 4, "type": "VEC3", "min": [-20, 0, -20], "max": [20, 0, 20]}, {"bufferView": 1, "componentType": 5123, "count": 6, "type": "SCALAR"}],
+         "meshes": [{"primitives": [{"attributes": {"POSITION": 0}, "indices": 1}]}], "nodes": [{"mesh": 0, "name": "sol"}], "scenes": [{"nodes": [0]}], "scene": 0}
+    js = json.dumps(g).encode(); js += b" " * (-len(js) % 4)
+    path.write_bytes(struct.pack("<4sII", b"glTF", 2, 12 + 8 + len(js) + 8 + len(blob)) + struct.pack("<I4s", len(js), b"JSON") + js + struct.pack("<I4s", len(blob), b"BIN\0") + blob)
+
+
+def png(path):
+    def ch(t, d): return struct.pack(">I", len(d)) + t + d + struct.pack(">I", zlib.crc32(t + d) & 0xffffffff)
+    path.parent.mkdir(exist_ok=True)
+    path.write_bytes(b"\x89PNG\r\n\x1a\n" + ch(b"IHDR", struct.pack(">IIBBBBB", 1, 1, 8, 2, 0, 0, 0)) + ch(b"IDAT", zlib.compress(b"\x00\xc8\x28\x28")) + ch(b"IEND", b""))
+
+
+def zone(i, cible):
+    return {"id": i, "type": "image", "label": i, "x": 0, "y": 2, "z": 0, "yaw": 0, "shape": "ring", "trigger": "click", "radius": 2, "w": 1.2, "h": 0, "target": cible, "spawn": "", "confirm": False, "private": False, "showName": False}
+
+
+def serveur(dossier):
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0)); port = s.getsockname()[1]
+    proc = subprocess.Popen([sys.executable, "-m", "http.server", str(port), "--bind", "127.0.0.1"], cwd=dossier, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    for _ in range(50):
+        try:
+            socket.create_connection(("127.0.0.1", port), timeout=0.2).close(); return proc, port
+        except OSError:
+            time.sleep(0.1)
+    sys.exit("[ECHEC] serveur http")
+
+
+IMGS = """() => { const o = []; window.__v.scene.traverse(n => { if (n.isMesh && n.material && n.material.map && n.material.map.image && n.material.map.image.src) o.push(decodeURIComponent(n.material.map.image.src.split('/').slice(3).join('/'))); }); return o.sort(); }"""
+LEGS = """() => { const o = []; window.__v.scene.traverse(n => { if (n.userData && n.userData.caption) o.push([n.userData.caption, n.visible]); }); return o.sort(); }"""
+
+
+def fabrique(site, nom, zones, *opt):
+    zj = tmp / (nom + ".z.json"); zj.write_text(json.dumps(zones), encoding="utf-8")
+    out = site / (nom + ".html")
+    r = subprocess.run([sys.executable, str(DIST / "glb2html.py"), str(tmp / "sol.glb"), "-o", str(out), "--no-sea", "--zones", str(zj), *opt, *vend], capture_output=True, text=True)
+    if r.returncode:
+        sys.exit(f"[ECHEC] generation {nom}\n{r.stdout}{r.stderr}")
+    out.write_text(out.read_text(encoding="utf-8").replace("const viewer = createViewer(", "const viewer = window.__v = createViewer(", 1), encoding="utf-8")
+    return r.stdout
+
+
+async def main():
+    from playwright.async_api import async_playwright
+    site = tmp / "site"; site.mkdir()
+    sol_glb(tmp / "sol.glb")
+    m = site / "medias"
+    png(m / "12.png"); png(m / "7-Titre double.png"); png(site / "5.png"); png(site / "medias" / "5.txt.png")
+    (m / "12.txt").write_text("Titre dans medias\n", encoding="utf-8")
+    (site / "5.txt").write_text("Titre a la racine\n", encoding="utf-8")
+    sortie = fabrique(site, "p", [zone("a", "12"), zone("b", "7"), zone("c", "5"), zone("d", "absente")])
+    zones = json.loads((tmp / "p.z.json").read_text(encoding="utf-8"))
+    rapport("7-Titre double.png" in sortie, "le generateur complete « 7 » depuis medias/", sortie[-300:])
+    fabrique(site, "q", [zone("e", "12")], "--modular")
+    cfgq = site / "q.config.json"; c = json.loads(cfgq.read_text(encoding="utf-8")); c["mediaDir"] = ""; cfgq.write_text(json.dumps(c), encoding="utf-8")
+    proc, port = serveur(site)
+    try:
+        async with async_playwright() as p:
+            kw = {"executable_path": os.environ["CHROMIUM"]} if os.environ.get("CHROMIUM") else {}
+            br = await p.chromium.launch(args=["--use-gl=swiftshader", "--enable-unsafe-swiftshader"], **kw)
+            errs = []
+
+            async def ouvre(nom):
+                pg = await br.new_page(viewport={"width": 900, "height": 600}); pg.on("pageerror", lambda e: errs.append(str(e)))
+                await pg.goto(f"http://127.0.0.1:{port}/{nom}.html")
+                await pg.wait_for_function("document.getElementById('msg') === null && window.__v && window.__v.model", timeout=60000)
+                await pg.wait_for_timeout(3500)
+                return pg
+
+            pg = await ouvre("p")
+            im = await pg.evaluate(IMGS)
+            rapport(im == ["5.png", "medias/12.png", "medias/7-Titre double.png"], "« 12 » et « 7-Titre double » lus dans medias/, « 5 » retombe sur le dossier de la region, « absente » : rien", im)
+            lg = await pg.evaluate(LEGS)
+            rapport(lg == [["Titre a la racine", True], ["Titre dans medias", True], ["Titre double", True]], "titres : 12.txt dans medias/, 5.txt a la racine (repli), tiret du nom sinon", lg)
+            await pg.close()
+
+            pg = await ouvre("q")
+            im = await pg.evaluate(IMGS)
+            rapport(im == [], "mediaDir vide dans la config : medias/ n'est plus consulte (12.png n'est pas a la racine)", im)
+            await pg.close()
+            rapport(not errs, "aucune erreur JavaScript", errs)
+            await br.close()
+    finally:
+        proc.kill()
+    print("\nRÉSULTAT : " + ("tout est passé" if not echecs else f"ÉCHEC ({echecs})"))
+    sys.exit(1 if echecs else 0)
+
+
+asyncio.run(main())
