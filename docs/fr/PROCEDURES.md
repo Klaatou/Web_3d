@@ -350,6 +350,6 @@ Deux paquets se téléchargent sur la page des versions du dépôt : `galerie-ph
 1. `python build.py`, puis `python .\tests\dist_a_jour.py` : `dist\` doit être à jour.
 2. `python .\fabriquer_paquets.py` : les zips sont écrits dans `paquets-zip\` (non suivi par git). `--vendor DOSSIER` pour travailler hors ligne.
 3. `python .\tests\paquets.py` : contrôle les zips (contenu, ouverture dans Chromium).
-4. Au moment d'une publication : joindre les deux zips à la version GitHub.
+4. Au moment d'une publication : `git tag vX.Y.Z` puis `git push origin vX.Y.Z` (le numéro est celui de `VERSION`). Sur la page GitHub du dépôt : **Releases**, puis **Draft a new release**. Choisir l'étiquette (**Choose a tag**), donner le titre (par exemple `1.2.0`) et coller les notes anglaises du `CHANGELOG.md`. Glisser les deux zips de `paquets-zip\` dans la zone **Attach binaries**, puis **Publish release**. Le lien `releases/latest` du `README` fonctionne alors.
 
 Modifier un paquet, c'est modifier ses sources dans `paquets\` (par exemple les images de `paquets\galerie-photos\site\medias\`), jamais le zip. Refais les zips après chaque nouvelle version des outils : ils embarquent `index.html`, `lib\` et `presence_server.py`.

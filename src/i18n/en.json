@@ -179,7 +179,7 @@
  "page.ground.loading": "Loading the ground…",
  "page.help.alt": "Alt + drag: orbit",
  "page.help.center": "\"Recenter the view\" button: opening framing",
- "page.help.chat.arrows": "arrows: move",
+ "page.help.chat.arrows": "arrows: in the text (after Esc: move around)",
  "page.help.chat.enter": "Enter: write",
  "page.help.chat.esc": "Esc: close",
  "page.help.down": "Page Down or C: go down",

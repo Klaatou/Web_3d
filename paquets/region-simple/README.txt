@@ -5,17 +5,20 @@ FRANCAIS
 --------
 Votre region OpenSim (un fichier GLB) dans un navigateur, sans rien installer pour la visiter.
 Produite avec Web_3d (https://github.com/Klaatou/Web_3d, licence MIT).
-Tout est detaille dans site/lisezmoi.html : la documentation du createur.
 
 Pour commencer
   1. Double-cliquez sur lancer-region.bat (Windows) : une petite region d'exemple s'ouvre dans le
      navigateur. Laissez ouverte la fenetre noire qui affiche "Region sur http://localhost:8000/ - fermez
      cette fenetre pour arreter." tant que vous regardez la region (le numero peut etre un autre que
      8000 si 8000 est deja pris).
-  2. Pour lire la documentation : ouvrez http://localhost:8000/lisezmoi.html dans le navigateur
-     (avec le meme numero que dans la fenetre noire).
-  3. Mettez VOTRE GLB dans le dossier site sous le nom region.glb (il remplace l'exemple), puis F5.
-  4. Un autre nom que "region" ? Double-cliquez sur renommer-region.bat.
+  2. Adresses utiles (avec le numero de la fenetre noire) :
+       http://localhost:8000/                la region
+       http://localhost:8000/aide.html       l'aide des visiteurs (a adapter a votre region)
+       http://localhost:8000/lisezmoi.html   la documentation du createur : tout y est detaille
+  3. Dans la region 3D, l'aide s'ouvre en cliquant sur le petit panneau "?" du mur est de la maison
+     d'exemple (visible en promenade). Avec votre propre GLB, deplacez ou supprimez ce panneau.
+  4. Mettez VOTRE GLB dans le dossier site sous le nom region.glb (il remplace l'exemple), puis F5.
+  5. Un autre nom que "region" ? Double-cliquez sur renommer-region.bat.
 
 Dossiers
   site/       tout ce qui se publie : copiez le CONTENU de ce dossier sur un hebergement web
@@ -27,16 +30,19 @@ ENGLISH
 -------
 Your OpenSim region (a GLB file) in a browser, with nothing to install to visit it.
 Made with Web_3d (https://github.com/Klaatou/Web_3d, MIT licence).
-Everything is detailed in site/lisezmoi.html: the creator's documentation.
 
 To start
   1. Double-click lancer-region.bat (Windows): a small example region opens in the browser. Keep open
      the black window that shows "Region sur http://localhost:8000/ - fermez cette fenetre pour
      arreter." while you look at the region (the number may differ from 8000 if 8000 is already taken).
-  2. To read the documentation: open http://localhost:8000/lisezmoi.html in the browser
-     (with the same number as in the black window).
-  3. Put YOUR GLB in the site folder under the name region.glb (it replaces the example), then F5.
-  4. A name other than "region"? Double-click renommer-region.bat.
+  2. Useful addresses (with the number from the black window):
+       http://localhost:8000/                the region
+       http://localhost:8000/aide.html       the visitors' help (to adapt to your region)
+       http://localhost:8000/lisezmoi.html   the creator's documentation: everything is detailed there
+  3. In the 3D region, the help opens by clicking the small "?" panel on the east wall of the example
+     house (visible while walking). With your own GLB, move or delete that panel.
+  4. Put YOUR GLB in the site folder under the name region.glb (it replaces the example), then F5.
+  5. A name other than "region"? Double-click renommer-region.bat.
 
 Folders
   site/       everything that gets published: copy the CONTENTS of this folder to a web host

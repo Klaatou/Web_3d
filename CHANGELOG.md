@@ -4,7 +4,14 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.2.0)
 
-*(rien pour l'instant)*
+### 01/11/2026 : version 1.2.1 : chat, aide et README.txt des paquets, README
+
+- **Correction** (chat) : pendant la saisie du chat, les flèches déplaçaient l'avatar au lieu du curseur dans le texte (décision de la v33 : on pouvait marcher en écrivant), ce qui empêchait de corriger son message (constat de Klaatou). Elles restent maintenant dans le texte tant que la saisie est ouverte ; Échap la ferme et rend les flèches à la promenade. `template.html` (gestionnaire de touches du chat), aide (`page.help.chat.arrows`), manuel FR/EN (§ 18.5, § 22.6 et tableau des touches). Tests : `tests/chat_fleches.py` (nouveau, avec un vrai serveur de présence) et `tests/v33.py` (deux vérifications inversées).
+- **Paquets** : `LISEZMOI.txt` devient `README.txt` (nom international), donne les adresses de l'aide (`aide.html`) et de la documentation, et dit où trouver l'aide dans le monde 3D (le panneau « ? ») ; `aide.html` : la touche K est décrite exactement (affiche ou masque les boutons fléchés), le chat suit la nouvelle aide.
+- **Documents** : le `README` (FR/EN) présente les deux paquets juste sous la démo ; `PROCEDURES` § 12, étape 4 : la création de la release GitHub pas à pas.
+- **Fix** (chat): while typing in the chat, the arrows moved the avatar instead of the cursor in the text (a v33 decision: you could walk while writing), which made it impossible to correct a message (Klaatou's finding). They now stay in the text while the input is open; Esc closes it and gives the arrows back to walk mode. `template.html` (the chat's key handler), help (`page.help.chat.arrows`), FR/EN manual (§ 18.5, § 22.6 and the key table). Tests: `tests/chat_fleches.py` (new, with a real presence server) and `tests/v33.py` (two checks inverted).
+- **Packages**: `LISEZMOI.txt` becomes `README.txt` (international name), gives the addresses of the help (`aide.html`) and of the documentation, and says where to find the help in the 3D world (the “?” panel); `aide.html`: the K key is described exactly (shows or hides the arrow buttons), the chat follows the new help.
+- **Documents**: the FR/EN `README` presents the two packages right under the demo; `PROCEDURES` § 12, step 4: creating the GitHub release step by step.
 
 ## 1.2.0 (01/11/2026)
 

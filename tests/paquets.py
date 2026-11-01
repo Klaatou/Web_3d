@@ -36,7 +36,7 @@ for nom in ("galerie-photos", "region-simple"):
     cible[nom] = p
     site = p / "site"
     for f in ("site/index.html", "site/default.json", "site/favicon.ico", "site/lib/three-0.160.0/three.module.js", "site/lib/three-0.160.0/draco/draco_decoder.wasm",
-              "presence/presence_server.py", "presence/LISEZMOI.txt", "LISEZMOI.txt", "VERSION.txt"):
+              "presence/presence_server.py", "presence/README.txt", "README.txt", "VERSION.txt"):
         rapport((p / f).is_file(), f"{nom} : {f}")
     # region ouverte par default.json : ses trois fichiers
     reg = json.loads((site / "default.json").read_text(encoding="utf-8"))["region"]
@@ -55,11 +55,13 @@ for nom in ("galerie-photos", "region-simple"):
     liens = [z for z in zones if z.get("link")]
     rapport(len(liens) == 1 and liens[0]["link"] == "aide.html" and liens[0]["target"] == "aide.jpg", f"{nom} : une zone image « aide.jpg » ouvre aide.html", [(z["id"], z.get("link")) for z in liens])
     rapport(all((p / f).is_file() for f in (f"renommer-{'galerie' if nom == 'galerie-photos' else 'region'}.bat", f"renommer-{'galerie' if nom == 'galerie-photos' else 'region'}.ps1")), f"{nom} : script de renommage")
-    rapport("PARAMETRES" not in (p / "LISEZMOI.txt").read_text(encoding="utf-8"), f"{nom} : le LISEZMOI ne cite plus d'ancien document")
+    rd = (p / "README.txt").read_text(encoding="utf-8")
+    rapport("PARAMETRES" not in rd and not (p / "LISEZMOI.txt").exists(), f"{nom} : README.txt (plus de LISEZMOI.txt ni d'ancien document)")
+    rapport("aide.html" in rd and doc in rd and "panneau" in rd, f"{nom} : README.txt donne l'adresse de l'aide, celle de {doc} et l'emplacement du panneau d'aide")
     # copie fidele du serveur de presence (fins de ligne ignorees)
     lf = lambda b: b.replace(b"\r\n", b"\n")
     rapport(lf((p / "presence" / "presence_server.py").read_bytes()) == lf((DIST / "presence_server.py").read_bytes()), f"{nom} : presence_server.py identique a dist/")
-    rapport("__VERSION_PRESENCE__" not in (p / "presence" / "LISEZMOI.txt").read_text(encoding="utf-8"), f"{nom} : version du serveur de presence ecrite dans sa notice")
+    rapport("__VERSION_PRESENCE__" not in (p / "presence" / "README.txt").read_text(encoding="utf-8"), f"{nom} : version du serveur de presence ecrite dans sa notice")
     # textes lisibles par un debutant : pas de file://, pas de nom d'hote reel
     mauvais = []
     for f in p.rglob("*"):

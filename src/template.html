@@ -1492,8 +1492,7 @@ if (C.presenceUrl && C.walk && C.chat) {
       if (e.key === 'Escape') { e.preventDefault(); cDismissed = inp.value; cHide(); return; }   // ferme la liste, pas la saisie
     }
     if (e.key === 'Enter') { e.preventDefault(); const v = inp.value.trim(); if (v) viewer.sendChat(v); inp.value = ''; cHide(); cDismissed = null; }   // envoie ET garde la saisie ouverte
-    else if (e.key === 'Escape') close();
-    else if (e.key.startsWith('Arrow')) { e.preventDefault(); viewer.holdKey(e.code, true); }   // les flèches déplacent et tournent l'avatar, les lettres vont dans le texte
+    else if (e.key === 'Escape') close();   // 1.1.9 : les flèches restent dans le texte (curseur) tant que la saisie est ouverte ; Échap la ferme et rend les flèches à la promenade
   });
   inp.addEventListener('keyup', e => { if (e.key.startsWith('Arrow')) viewer.holdKey(e.code, false); });
   inp.addEventListener('input', () => { cDismissed = null; cUpdate(); });

@@ -350,6 +350,6 @@ Two packages can be downloaded from the repository's releases page: `galerie-pho
 1. `python build.py`, then `python .\tests\dist_a_jour.py`: `dist\` must be up to date.
 2. `python .\fabriquer_paquets.py`: the zips are written to `paquets-zip\` (not tracked by git). `--vendor FOLDER` to work offline.
 3. `python .\tests\paquets.py`: checks the zips (contents, opening in Chromium).
-4. At release time: attach the two zips to the GitHub release.
+4. At release time: `git tag vX.Y.Z` then `git push origin vX.Y.Z` (the number is the one in `VERSION`). On the repository's GitHub page: **Releases**, then **Draft a new release**. Choose the tag (**Choose a tag**), give the title (for example `1.2.0`) and paste the English notes from `CHANGELOG.md`. Drag the two zips from `paquets-zip\` into the **Attach binaries** area, then **Publish release**. The `README`'s `releases/latest` link then works.
 
 Changing a package means changing its sources in `paquets\` (for example the images in `paquets\galerie-photos\site\medias\`), never the zip. Rebuild the zips after every new version of the tools: they embed `index.html`, `lib\` and `presence_server.py`.

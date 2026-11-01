@@ -8,6 +8,13 @@
 
 **[Essayer la démo en ligne](https://klaatou.github.io/Web_3d_demo/)** : deux régions reliées par des portails, et la carte des mondes (sans serveur de présence).
 
+**Chez vous, sans lire toute la documentation** : deux paquets prêts à l'emploi sont à télécharger sur la [page des versions](https://github.com/Klaatou/Web_3d/releases/latest) :
+
+- **`region-simple.zip`** : votre région OpenSim (un fichier GLB) dans un navigateur. On met son GLB sous `site/region.glb` ; `renommer-region.bat` change le nom ; `site/lisezmoi.html` explique les réglages et comment obtenir un GLB depuis un OAR.
+- **`galerie-photos.zip`** : une galerie de 30 photos en 3D. On remplace les images de `site/medias/` (`1.jpg` à `30.jpg`) ; `site/galerie.html` documente tout, `renommer-galerie.bat` change le nom.
+
+Dans les deux : dézipper, lire `README.txt`, double-cliquer sur le lanceur (Windows), puis copier le contenu de `site/` sur un hébergement pour publier. Le serveur de présence, facultatif, est dans `presence/`. Les sources sont dans `paquets/` ; `python fabriquer_paquets.py` refait les zips (`docs/fr/PROCEDURES.md` § 12, ou `docs/en/PROCEDURES.md` en anglais).
+
 **web_3d** transforme une région d'un monde virtuel **OpenSim** (sauvegarde **OAR**) en une page web que l'on parcourt à pied, sans installation côté visiteur : l'OAR est convertie en modèle **glTF** (`.glb`), puis affichée avec **three.js** dans une page web « promenable » (avatar, collisions, visiteurs en temps réel, chat, zones et portails, carte des mondes). L'interface de la page, du viewer et des outils existe en **français et en anglais** (voir « Langue » plus bas).
 
 Les manuels sont en français dans `docs/fr/` (`MANUEL.md`, `PROCEDURES.md`, `HISTORIQUE.md`) et en anglais dans `docs/en/`. Toutes les options de chaque outil, en français et en anglais : [`REFERENCE_OPTIONS.md`](REFERENCE_OPTIONS.md) ; `python glb2html.py --help` (et de même pour les autres outils) les affiche.
@@ -27,15 +34,6 @@ Les manuels sont en français dans `docs/fr/` (`MANUEL.md`, `PROCEDURES.md`, `HI
 ¹ **Prérequis** :  **oar2glb.py** s'appuie sur le convertisseur externe **convoar.exe** \
   Téléchargement : https://github.com/Misterblue/convoar/tree/master/bin \
   Sans convoar.exe, oar2glb.py ne peut pas effectuer la conversion OAR → GLB. Son emplacement s'indique avec `--convoar CHEMIN` (par défaut : la variable `CONVOAR`, sinon `convoar` du PATH, sinon `convoar.exe` à côté de `oar2glb.py`).
-
-## Paquets prêts à l'emploi
-
-Deux paquets à télécharger sur la [page des versions](https://github.com/Klaatou/Web_3d/releases/latest), pour essayer Web_3d sans lire toute la documentation :
-
-- **`region-simple.zip`** : votre région OpenSim (un fichier GLB) dans un navigateur. On met son GLB sous `site/region.glb` ; `renommer-region.bat` change le nom ; `site/lisezmoi.html` explique les réglages et comment obtenir un GLB depuis un OAR (avec un `aide.html` pour les visiteurs).
-- **`galerie-photos.zip`** : une galerie de 30 photos en 3D. On remplace les images de `site/medias/` (`1.jpg` à `30.jpg`) ; `site/galerie.html` documente tout, `renommer-galerie.bat` change le nom.
-
-Dans les deux : dézipper, double-cliquer sur le lanceur (Windows), puis copier le contenu de `site/` sur un hébergement pour publier. Le serveur de présence, facultatif, est dans `presence/`. Les sources sont dans `paquets/` ; `python fabriquer_paquets.py` refait les zips (`docs/fr/PROCEDURES.md` § 12, ou `docs/en/PROCEDURES.md` en anglais).
 
 ## Fabriquer
 
