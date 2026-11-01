@@ -113,6 +113,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 01/11/2026 |  | after 1.1.0 | Batch 1.1.6: `dist/` tracked by git (`.gitignore`), `tests/dist_a_jour.py` test, `README` and `PROCEDURES` § 6: where to find `presence_server.py` |
 | 01/11/2026 |  | after 1.1.0 | Batch 1.1.7: `build.py` writes LF everywhere (no more CRLF warnings from git) |
 | 01/11/2026 |  | after 1.1.0 | Batch 1.1.8: ready-to-use packages: sources in `paquets/`, `fabriquer_paquets.py`, `tests/paquets.py`, `README` section, `PROCEDURES` § 12, overview |
+| 01/11/2026 |  | 1.2.0 | Release 1.2.0: `VERSION` 1.2.0; `CHANGELOG.md` (batches 1.1.1 to 1.1.8 gathered), histories; `galerie-photos.zip` and `region-simple.zip` attached to the GitHub release |
 
 ## Useful commands
 

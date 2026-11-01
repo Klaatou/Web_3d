@@ -113,6 +113,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 01/11/2026 |  | après 1.1.0 | Lot 1.1.6 : `dist/` suivi par git (`.gitignore`), test `tests/dist_a_jour.py`, `README` et `PROCEDURES` § 6 : où trouver `presence_server.py` |
 | 01/11/2026 |  | après 1.1.0 | Lot 1.1.7 : `build.py` écrit du LF partout (plus d'avertissement CRLF de git) |
 | 01/11/2026 |  | après 1.1.0 | Lot 1.1.8 : paquets prêts à l'emploi : sources dans `paquets/`, `fabriquer_paquets.py`, `tests/paquets.py`, section du `README`, `PROCEDURES` § 12, vue d'ensemble |
+| 01/11/2026 |  | 1.2.0 | Publication 1.2.0 : `VERSION` 1.2.0 ; `CHANGELOG.md` (lots 1.1.1 à 1.1.8 réunis), historiques ; zips `galerie-photos.zip` et `region-simple.zip` joints à la release GitHub |
 
 ## Commandes utiles
 

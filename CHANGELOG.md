@@ -2,7 +2,20 @@
 
 Les dates sont au format jj/mm/aaaa.
 
-## Non publié (après la 1.1.0)
+## Non publié (après la 1.2.0)
+
+*(rien pour l'instant)*
+
+## 1.2.0 (01/11/2026)
+
+### 01/11/2026 : publication 1.2.0 : zones image cliquables, numéros, `dist/` et paquets prêts à l'emploi
+- **Publication** : la 1.2.0, décidée par Klaatou le 01/11/2026, réunit les lots 1.1.1 à 1.1.8 décrits plus bas. `VERSION` passe de `1.1.8` à `1.2.0` (le numéro mineur monte : des fonctions ont été ajoutées). Aucun fichier fabriqué ne change par rapport à la 1.1.8.
+- **Nouveautés de la 1.2.0** : clé `link` d'une zone `image` (le clic ou E ouvre une page) ; numéros des zones image (case des Réglages, à plat) ; le clic de pose d'une zone marche aussi en promenade (viewer) ; `dist/` est suivi par git (test `tests/dist_a_jour.py`) ; `build.py` écrit du LF partout ; paquets prêts à l'emploi `galerie-photos.zip` et `region-simple.zip` (sources dans `paquets/`, script `fabriquer_paquets.py`).
+- **Documents** : manuel (ligne `link` du § 27.3, § 37.1), `PROCEDURES` (§§ 6 et 12), README, exemple de zones et README des exemples, vue d'ensemble, historiques, FR et EN.
+- **Notes de la release GitHub** : les trois puces anglaises ci-dessous. À joindre à la release : `galerie-photos.zip` et `region-simple.zip` (fabriqués par `python fabriquer_paquets.py`).
+- **Release**: 1.2.0, decided by Klaatou on 01/11/2026, gathers batches 1.1.1 to 1.1.8 described below. `VERSION` goes from `1.1.8` to `1.2.0` (the minor number goes up: features were added). No built file changes compared to 1.1.8.
+- **What is new in 1.2.0**: optional `link` key on an `image` zone (a click or E opens a page); image zone numbers (a Settings box, drawn flat); the zone placement click also works while walking (viewer); `dist/` is tracked by git (`tests/dist_a_jour.py` test); `build.py` writes LF everywhere; ready-to-use packages `galerie-photos.zip` and `region-simple.zip` (sources in `paquets/`, `fabriquer_paquets.py` script).
+- **Documents**: manual (`link` row of § 27.3, § 37.1), `PROCEDURES` (§§ 6 and 12), README, zones sample and samples README, overview, histories, FR and EN.
 
 ### 01/11/2026 : version 1.1.8 : paquets prêts à l'emploi dans le dépôt
 - **Nouveau** : les sources de deux paquets sont dans `paquets/` : `galerie-photos` (galerie de 30 photos : zones, images génériques, enseigne, panneau d'aide, page `galerie.html`) et `region-simple` (une région à partir d'un GLB nommé `region.glb` : GLB d'exemple, config modèle, documentation `lisezmoi.html`, zone d'aide sur la maison d'exemple). Chacun a une aide des visiteurs (`aide.html`, ouverte par un panneau « ? »), sa documentation de créateur (`galerie.html`, `lisezmoi.html`), un script de renommage (`renommer-*.bat`), un lanceur Windows (`lancer-*.bat`, mini-serveur PowerShell sur `localhost`, ports 8000 à 8020) et un dossier `presence/`.
