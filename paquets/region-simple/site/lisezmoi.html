@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Région clé en main : documentation / Turnkey region: documentation</title>
+<style>
+:root{--bg:#f7f7f4;--fg:#1c1c1c;--mut:#555;--card:#fff;--line:#c9c9c0;--acc:#0b3d6e;--code:#eceae2}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15181c;--fg:#e8e8e4;--mut:#a9a9a3;--card:#1e2227;--line:#3a4048;--acc:#8ec1f2;--code:#2a3037}}
+:root[data-theme="dark"]{--bg:#15181c;--fg:#e8e8e4;--mut:#a9a9a3;--card:#1e2227;--line:#3a4048;--acc:#8ec1f2;--code:#2a3037}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:760px;margin:0 auto;padding:16px 16px 48px}
+header{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:8px}
+h1{font-size:1.5rem;margin:.4em 0}
+h3{font-size:1.02rem;margin:1.3em 0 .3em}
+h2{font-size:1.15rem;margin:1.6em 0 .4em;border-bottom:2px solid var(--line);padding-bottom:.2em}
+p,li{margin:.4em 0}
+code,pre{font-family:ui-monospace,Consolas,monospace;background:var(--code);border-radius:4px}
+code{padding:.05em .35em;font-size:.92em}
+pre{padding:10px 12px;overflow-x:auto;font-size:.9em}
+table{border-collapse:collapse;width:100%;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}
+th{background:var(--code)}
+.note{border-left:4px solid var(--acc);background:var(--card);padding:8px 12px;margin:.8em 0}
+.lang{display:inline-flex;border:2px solid var(--acc);border-radius:6px;overflow:hidden}
+.lang button{font:inherit;padding:4px 14px;border:0;background:var(--card);color:var(--fg);cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--acc);color:var(--bg);font-weight:700;text-decoration:underline}
+a{color:var(--acc)}
+[data-l]{display:none}
+html[data-lang="fr"] [data-l="fr"],html[data-lang="en"] [data-l="en"]{display:block}
+html[data-lang="fr"] span[data-l="fr"],html[data-lang="en"] span[data-l="en"]{display:inline}
+html[data-lang="fr"] li[data-l="fr"],html[data-lang="en"] li[data-l="en"]{display:list-item}
+html[data-lang="fr"] tr[data-l="fr"],html[data-lang="en"] tr[data-l="en"]{display:table-row}
+</style>
+<noscript><style>[data-l]{display:block!important}</style></noscript>
+<script>
+(function(){
+  var q=(location.search.match(/[?&]lang=(fr|en)/)||[])[1];
+  var l=q||((navigator.language||'fr').slice(0,2)==='fr'?'fr':'en');
+  document.documentElement.setAttribute('data-lang',l);document.documentElement.lang=l;
+  window.setLang=function(x){document.documentElement.setAttribute('data-lang',x);document.documentElement.lang=x;
+    var b=document.querySelectorAll('.lang button');for(var i=0;i<b.length;i++)b[i].setAttribute('aria-pressed',b[i].dataset.v===x?'true':'false');};
+  document.addEventListener('DOMContentLoaded',function(){window.setLang(l);});
+})();
+</script>
+
+</head>
+<body>
+<main>
+<header>
+  <h1><span data-l="fr">Région clé en main : documentation</span><span data-l="en">Turnkey region: documentation</span></h1>
+  <div class="lang" role="group" aria-label="Langue / Language">
+    <button type="button" data-v="fr" aria-pressed="true" onclick="setLang('fr')">Français</button>
+    <button type="button" data-v="en" aria-pressed="false" onclick="setLang('en')">English</button>
+  </div>
+</header>
+<div data-l="fr">
+<p>Ce paquet ouvre <strong>votre région</strong> (un fichier GLB) dans un navigateur, sans rien installer pour la visiter. Le nom de la région est <strong><code>region</code></strong> : mettez votre GLB sous le nom <code>region.glb</code>, ou renommez la région (section 6).</p>
+<p>Les documents complets sont dans le dépôt : <a href="https://github.com/Klaatou/Web_3d">https://github.com/Klaatou/Web_3d</a> (<code>docs/fr/PROCEDURES.md</code>, <code>docs/fr/MANUEL.md</code>). Ce fichier n'en reprend que l'essentiel.</p>
+<h2>1. Ce qu'il y a où</h2>
+<ul>
+<li><code>site/region.glb</code> : votre région. <strong>Ici, un petit exemple (sol, maison, deux arbres)</strong> : remplacez-le par le vôtre.</li>
+<li><code>site/region.config.json</code> : les réglages (section 3).</li>
+<li><code>site/region.zones.json</code> : les zones (portails, panneaux, images). Ici une seule : le petit panneau « ? » posé sur le mur est de la maison d'exemple, qui ouvre <code>aide.html</code>. <strong>Avec votre propre GLB, supprimez-la ou déplacez-la</strong> : elle est posée sur la maison de l'exemple.</li>
+<li><code>site/aide.html</code> : l'aide des visiteurs, ouverte par ce panneau. Elle commence par un cadre qui renvoie vers ce document : supprimez ce cadre, puis adaptez la page à votre région.</li>
+<li><code>site/lisezmoi.html</code> : ce document, pour le créateur. Vous pouvez le retirer de <code>site</code> avant de publier.</li>
+<li><code>site/medias/aide.jpg</code> : l'image du panneau d'aide.</li>
+<li><code>site/default.json</code> : dit quelle région ouvrir. Il contient <code>{"region": "region"}</code>.</li>
+<li><code>site/index.html</code>, <code>site/lib/</code> : la page et sa bibliothèque 3D : à ne pas modifier.</li>
+<li><code>lancer-region.bat</code> : montre la région sur <strong>cet</strong> ordinateur. <code>renommer-region.bat</code> : change le nom de la région.</li>
+<li><code>presence/</code> : le serveur de présence, facultatif (section 8).</li>
+</ul>
+<h2>2. Obtenir un GLB depuis un OAR</h2>
+<ol>
+<li>Il faut Windows, Python 3.9 ou plus, et <code>convoar.exe</code> (l'outil qui convertit un OAR en fichiers 3D ; <code>oar2glb.py</code> le lance pour vous). Téléchargement de convoar : <a href="https://github.com/Misterblue/convoar/tree/master/bin">https://github.com/Misterblue/convoar/tree/master/bin</a>.</li>
+<li><code>oar2glb.py</code> est dans le dossier <code>dist</code> du dépôt Web_3d (<a href="https://github.com/Klaatou/Web_3d/tree/main/dist">https://github.com/Klaatou/Web_3d/tree/main/dist</a>). Dans une fenêtre de commandes : <code>python oar2glb.py "C:\chemin\MaRegion.oar"</code>. Le GLB est écrit <strong>à côté de l'OAR</strong> (<code>MaRegion.glb</code>).</li>
+<li>Copiez-le dans <code>site\</code> sous le nom <code>region.glb</code>, puis rechargez la page.</li>
+<li>Ce paquet convient aux régions « légères » : en gros, un GLB de moins de 150 Mo et de 3 millions de triangles. <code>python glb2tiles.py MaRegion.glb --analyse</code> le vérifie sans rien écrire. Au-delà, il faut découper la région en tuiles : <code>docs/fr/PROCEDURES.md</code> § 2, hors de ce paquet.</li>
+</ol>
+<p>Détails : <code>docs/fr/PROCEDURES.md</code> § 1.</p>
+<h2>3. Les réglages de <code>region.config.json</code></h2>
+<p>Ouvrez le fichier avec le Bloc-notes, changez une valeur, enregistrez, puis rechargez la page (F5) : elle relit le fichier à chaque ouverture. Le JSON est strict : gardez les guillemets et les virgules. <strong>Les couleurs sont des nombres décimaux</strong>, pas des codes hexadécimaux.</p>
+<p><strong>Vue de départ</strong></p>
+<table>
+<thead>
+<tr>
+<th>Clé</th>
+<th>Valeur dans le modèle</th>
+<th>Rôle</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>target</code></td>
+<td><code>[0, 15, 0]</code></td>
+<td>cible de la caméra au départ, <code>[x, y, z]</code> (avec <code>targetExplicit</code> à <code>true</code>, la page garde ce cadrage)</td>
+</tr>
+<tr>
+<td><code>camDir</code></td>
+<td><code>[-0.55, 0.42, 0.72]</code></td>
+<td>direction de la caméra, <code>[x, y, z]</code></td>
+</tr>
+<tr>
+<td><code>zoom</code></td>
+<td><code>0.65</code></td>
+<td>ratio de cadrage (1 = cadrage automatique)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Mer et ciel</strong></p>
+<table>
+<thead>
+<tr>
+<th>Clé</th>
+<th>Valeur dans le modèle</th>
+<th>Rôle</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>sea</code></td>
+<td><code>true</code></td>
+<td>afficher la mer (<code>true</code>) ou non (<code>false</code>)</td>
+</tr>
+<tr>
+<td><code>seaY</code></td>
+<td><code>10</code></td>
+<td>hauteur de la mer, de -150 à 60</td>
+</tr>
+<tr>
+<td><code>seaColor</code></td>
+<td><code>3840729</code></td>
+<td>couleur de la mer (nombre décimal : 3840729 = <code>3a9ad9</code>)</td>
+</tr>
+<tr>
+<td><code>skyColor</code></td>
+<td><code>8900331</code></td>
+<td>couleur du ciel (nombre décimal)</td>
+</tr>
+<tr>
+<td><code>wave</code></td>
+<td><code>0.5</code></td>
+<td>amplitude des vagues, de 0 à 10</td>
+</tr>
+<tr>
+<td><code>hole</code></td>
+<td><code>180</code></td>
+<td>rayon du trou de la mer, de 30 à 600 (zone plate = rayon moins fondu)</td>
+</tr>
+<tr>
+<td><code>holeFade</code></td>
+<td><code>60</code></td>
+<td>demi-largeur du fondu du trou</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Promenade</strong></p>
+<table>
+<thead>
+<tr>
+<th>Clé</th>
+<th>Valeur dans le modèle</th>
+<th>Rôle</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>walk</code></td>
+<td><code>true</code></td>
+<td>mode promenade (touches P ou F)</td>
+</tr>
+<tr>
+<td><code>fly</code></td>
+<td><code>true</code></td>
+<td>vol en promenade (touche F ou Début ; Page Haut ou E monte, Page Bas ou C descend)</td>
+</tr>
+<tr>
+<td><code>eyeHeight</code></td>
+<td><code>1.7</code></td>
+<td>hauteur des yeux en mètres</td>
+</tr>
+<tr>
+<td><code>walkSpeed</code></td>
+<td><code>3.5</code></td>
+<td>vitesse de marche en m/s (Maj = x2,2)</td>
+</tr>
+<tr>
+<td><code>walkIgnore</code></td>
+<td><code>"door, porte"</code></td>
+<td>objets qu'on traverse, séparés par des virgules : <code>door</code> = tout nom qui commence par ce mot, <code>=mesh_346_5</code> = ce nom exact, <code>""</code> = aucun</td>
+</tr>
+<tr>
+<td><code>solidMaterials</code></td>
+<td><code>null</code></td>
+<td>matériaux rendus opaques (ils masquent ce qui est derrière), séparés par des virgules : <code>1471516</code> = tout nom qui contient ce texte, <code>=pbrmat-123</code> = nom exact</td>
+</tr>
+<tr>
+<td><code>foliageCutout</code></td>
+<td><code>0.12</code></td>
+<td>seuil de transparence des feuillages, de 0 à 0.5</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Orientation</strong></p>
+<table>
+<thead>
+<tr>
+<th>Clé</th>
+<th>Valeur dans le modèle</th>
+<th>Rôle</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>rotate</code></td>
+<td><code>0</code></td>
+<td>rotation de la région : 0, 90, 180 ou 270 degrés</td>
+</tr>
+<tr>
+<td><code>northDeg</code></td>
+<td><code>0.0</code></td>
+<td>décalage en degrés ajouté au cap affiché ; 0 = le nord est la direction -Z du modèle (OpenSim)</td>
+</tr>
+<tr>
+<td><code>compass</code></td>
+<td><code>true</code></td>
+<td>boussole en haut de la page</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Affichage</strong></p>
+<table>
+<thead>
+<tr>
+<th>Clé</th>
+<th>Valeur dans le modèle</th>
+<th>Rôle</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>panel</code></td>
+<td><code>true</code></td>
+<td>panneau de réglages pour les visiteurs (bouton en haut à droite)</td>
+</tr>
+<tr>
+<td><code>retina</code></td>
+<td><code>false</code></td>
+<td>haute résolution par défaut (plus net, environ 4 fois plus lourd)</td>
+</tr>
+<tr>
+<td><code>light</code></td>
+<td><code>false</code></td>
+<td>la page s'ouvre en rendu léger tant que le visiteur n'a rien choisi</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Présence (facultatif)</strong></p>
+<table>
+<thead>
+<tr>
+<th>Clé</th>
+<th>Valeur dans le modèle</th>
+<th>Rôle</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>presenceUrl</code></td>
+<td><code>""</code></td>
+<td>adresse du serveur de présence : <code>ws://...</code> ou <code>wss://...</code> ; <code>*</code> à la place du nom = la même machine que la page ; vide = désactivé</td>
+</tr>
+<tr>
+<td><code>chat</code></td>
+<td><code>false</code></td>
+<td>chat entre visiteurs (demande <code>presenceUrl</code>)</td>
+</tr>
+<tr>
+<td><code>spectate</code></td>
+<td><code>false</code></td>
+<td>voir les visiteurs depuis la vue globale (se connecte dès l'ouverture)</td>
+</tr>
+<tr>
+<td><code>room</code></td>
+<td><code>"region"</code></td>
+<td>nom du salon de présence (le script de renommage le met à jour)</td>
+</tr>
+</tbody>
+</table>
+<p>Pour changer plusieurs valeurs d'un coup sans éditer le fichier, <code>glb2html.py --update</code> (dossier <code>dist</code> du dépôt) s'en charge : <code>docs/fr/PROCEDURES.md</code> § 3. Toutes les clés sont décrites dans le dépôt (<code>REFERENCE_OPTIONS.md</code>).</p>
+<h2>4. Régler la vue de départ</h2>
+<p>Changez <code>target</code>, <code>camDir</code> et <code>zoom</code> dans <code>region.config.json</code> par petits essais, en rechargeant la page (F5) à chaque fois. Le point <code>target</code> est la position, en mètres, vers laquelle la caméra regarde ; <code>camDir</code> indique d'où elle regarde.</p>
+<h2>5. Poser des zones (portails, panneaux, images)</h2>
+<p>Elles se posent dans le viewer du dépôt, <code>glb-viewer.html</code> (dossier <code>dist</code>) : ouvrez-le, chargez votre GLB, posez les zones, exportez le fichier de zones et copiez-le dans <code>site\</code> sous le nom <code>region.zones.json</code>. Procédure : <code>docs/fr/PROCEDURES.md</code> § 5 et <code>docs/fr/MANUEL.md</code> §§ 3 à 12.</p>
+<h2>6. Renommer la région</h2>
+<p><strong>Pourquoi.</strong> Pour donner à votre région le nom de votre choix (par exemple <code>MonIle</code>) au lieu de <code>region</code>. Ce nom devient aussi celui du <strong>salon de présence</strong> : les visiteurs d'une région ne voient que ceux de la même.</p>
+<p><strong>Comment.</strong>
+1. Si le lanceur est ouvert, fermez sa fenêtre noire.
+2. Double-cliquez sur <code>renommer-region.bat</code>. Une fenêtre demande « Nouveau nom (lettres, chiffres, tiret, souligné) » : tapez <code>MonIle</code>, puis Entrée. (Ou, dans une fenêtre de commandes ouverte dans ce dossier : <code>renommer-region.bat MonIle</code>.)
+3. La fenêtre liste ce qu'elle a fait. Rechargez la page (F5).</p>
+<p><strong>Ce que le script change</strong> (et rien d'autre) :</p>
+<table>
+<thead>
+<tr>
+<th>Avant</th>
+<th>Après</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>site\region.glb</code></td>
+<td><code>site\MonIle.glb</code></td>
+</tr>
+<tr>
+<td><code>site\region.config.json</code></td>
+<td><code>site\MonIle.config.json</code></td>
+</tr>
+<tr>
+<td><code>site\region.zones.json</code></td>
+<td><code>site\MonIle.zones.json</code></td>
+</tr>
+<tr>
+<td><code>site\default.json</code> : <code>{{"region": "region"}}</code></td>
+<td><code>{{"region": "MonIle"}}</code></td>
+</tr>
+<tr>
+<td>dans <code>MonIle.config.json</code> : <code>"room": "region"</code></td>
+<td><code>"room": "MonIle"</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>À savoir.</strong>
+- Le nom ne peut contenir que des lettres, des chiffres, <code>-</code> et <code>_</code> (ni espace, ni point). Évitez les accents.
+- Si un fichier du nouveau nom existe déjà dans <code>site</code>, le script s'arrête sans rien modifier.
+- Votre GLB, s'il est déjà dans <code>site</code> sous le nom <code>region.glb</code>, est renommé avec le reste. Un GLB que vous ajouterez plus tard doit porter le <strong>nouveau</strong> nom : <code>MonIle.glb</code>.
+- Pour revenir au nom d'origine, relancez le script avec <code>region</code>.
+- À la main, ce sont exactement ces cinq changements. La page elle-même (<code>index.html</code>) n'est jamais modifiée.</p>
+<h2>7. Montrer la région</h2>
+<ul>
+<li><strong>Chez vous, ou sur une clé USB (Windows)</strong> : double-cliquez sur <code>lancer-region.bat</code>. Laissez ouverte la fenêtre noire qui affiche « Region sur http://localhost:8000/ - fermez cette fenetre pour arreter. » (le numéro peut être un autre que 8000 si 8000 est pris) : la fermer arrête le serveur. Seul votre ordinateur voit la région. Double-cliquer sur <code>index.html</code> ne marche pas.</li>
+<li><strong>Autre système</strong> : dans le dossier <code>site</code>, <code>python -m http.server</code> puis <code>http://localhost:8000/</code> (8000 est le port par défaut).</li>
+<li><strong>Sur un site web</strong> : copiez <strong>le contenu du dossier <code>site</code></strong>, et rien d'autre, sur votre hébergement. Rien à installer sur le serveur. Gardez les noms de fichiers en minuscules.</li>
+</ul>
+<h2>8. Présence : voir les autres visiteurs et tchatter (facultatif)</h2>
+<p>Par défaut chaque visiteur est seul. Le serveur de présence est fourni dans <code>presence/</code> (copie de <code>presence_server.py</code> du dépôt Web_3d, dossier <code>dist</code>, licence MIT).</p>
+<ol>
+<li>Installez Python (python.org), puis : <code>pip install websockets</code></li>
+<li>Dans le dossier <code>presence</code>, lancez : <code>python presence_server.py</code></li>
+<li>Dans <code>site/region.config.json</code> : <code>"presenceUrl": "ws://*:8765"</code> et <code>"chat": true</code>. Le <code>*</code> veut dire « la même machine que la page ».</li>
+<li>Servez la région avec <code>python -m http.server</code> lancé dans le dossier <code>site</code> (pas avec <code>lancer-region.bat</code>, réservé à votre ordinateur).</li>
+<li>Donnez à vos visiteurs <code>http://ADRESSE:8000/</code>. Pour des proches sur votre réseau, ADRESSE est l'adresse IP de votre PC (commande <code>ipconfig</code>). Pour des visiteurs sur Internet, c'est votre adresse IP publique ou un nom de domaine, <strong>après avoir ouvert les ports 8000 et 8765</strong> de votre box vers votre PC.</li>
+</ol>
+<p>Un visiteur apparaît dans la présence quand il entre en promenade (touche P ou F). <strong>Pour Internet, attention</strong> : cela expose votre ordinateur, qui doit rester allumé, et votre adresse IP peut changer. Si la région est sur un hébergement en https, la présence doit être en <code>wss://</code>, avec un certificat : <code>docs/fr/PROCEDURES.md</code> § 6.</p>
+<p><strong>Données personnelles.</strong> Pseudos, messages et adresses IP des visiteurs sont des données personnelles : prévenez vos visiteurs. Réglages de conservation : options <code>--log-days</code>, <code>--log-ip</code>, <code>--history-days</code> du serveur (<code>docs/fr/MANUEL.md</code> § 18.6, 18.7 et 22.6, <code>docs/fr/PROCEDURES.md</code> § 6). Le serveur écrit ses fichiers dans le dossier <code>presence</code> : ne les copiez jamais dans <code>site</code>.</p>
+<h2>9. Quand ça ne marche pas</h2>
+<ul>
+<li><strong>« Aucune région à ouvrir »</strong> : <code>default.json</code> doit contenir le bon nom, et <code>NOM.config.json</code> doit exister dans <code>site</code> avec ce nom exact.</li>
+<li><strong>La page ne s'ouvre pas en double-cliquant sur <code>index.html</code></strong> : normal, passez par <code>lancer-region.bat</code> ou un hébergement.</li>
+<li><strong>« présence interrompue »</strong> : <code>presenceUrl</code> est rempli mais aucun serveur de présence ne répond. Videz <code>presenceUrl</code>, ou lancez le serveur.</li>
+<li><strong>Une image ou une zone n'apparaît pas sur un hébergement</strong> : vérifiez les majuscules (<code>2.jpg</code> n'est pas <code>2.JPG</code>).</li>
+<li><strong>Plus d'aide</strong> : <code>docs/fr/PROCEDURES.md</code> § 9 dans le dépôt.</li>
+</ul>
+</div>
+
+<div data-l="en">
+<p>This package opens <strong>your region</strong> (a GLB file) in a browser, with nothing to install to visit it. The region's name is <strong><code>region</code></strong>: put your GLB under the name <code>region.glb</code>, or rename the region (section 6).</p>
+<p>The full documents are in the repository: <a href="https://github.com/Klaatou/Web_3d">https://github.com/Klaatou/Web_3d</a> (<code>docs/en/PROCEDURES.md</code>, <code>docs/en/MANUAL.md</code>). This file only repeats the essentials.</p>
+<h2>1. What is where</h2>
+<ul>
+<li><code>site/region.glb</code>: your region. <strong>Here, a tiny example (ground, house, two trees)</strong>: replace it with yours.</li>
+<li><code>site/region.config.json</code>: the settings (section 3).</li>
+<li><code>site/region.zones.json</code>: the zones (portals, signs, pictures). Just one here: the small “?” panel on the east wall of the example house, which opens <code>aide.html</code>. <strong>With your own GLB, delete it or move it</strong>: it sits on the example's house.</li>
+<li><code>site/aide.html</code>: the visitors' help, opened by that panel. It starts with a box pointing to this document: delete that box, then adapt the page to your region.</li>
+<li><code>site/lisezmoi.html</code>: this document, for the creator. You may remove it from <code>site</code> before publishing.</li>
+<li><code>site/medias/aide.jpg</code>: the help panel's image.</li>
+<li><code>site/default.json</code>: says which region to open. It contains <code>{"region": "region"}</code>.</li>
+<li><code>site/index.html</code>, <code>site/lib/</code>: the page and its 3D library: do not edit.</li>
+<li><code>lancer-region.bat</code>: shows the region on <strong>this</strong> computer. <code>renommer-region.bat</code>: changes the region's name.</li>
+<li><code>presence/</code>: the presence server, optional (section 8).</li>
+</ul>
+<h2>2. Getting a GLB from an OAR</h2>
+<ol>
+<li>You need Windows, Python 3.9 or later, and <code>convoar.exe</code> (the tool that converts an OAR into 3D files; <code>oar2glb.py</code> runs it for you). Download convoar: <a href="https://github.com/Misterblue/convoar/tree/master/bin">https://github.com/Misterblue/convoar/tree/master/bin</a>.</li>
+<li><code>oar2glb.py</code> is in the Web_3d repository's <code>dist</code> folder (<a href="https://github.com/Klaatou/Web_3d/tree/main/dist">https://github.com/Klaatou/Web_3d/tree/main/dist</a>). In a command window: <code>python oar2glb.py "C:\path\MyRegion.oar"</code>. The GLB is written <strong>next to the OAR</strong> (<code>MyRegion.glb</code>).</li>
+<li>Copy it into <code>site\</code> under the name <code>region.glb</code>, then reload the page.</li>
+<li>This package suits "light" regions: roughly a GLB under 150 MB and 3 million triangles. <code>python glb2tiles.py MyRegion.glb --analyse</code> checks it without writing anything. Beyond that the region must be split into tiles: <code>docs/en/PROCEDURES.md</code> § 2, outside this package.</li>
+</ol>
+<p>Details: <code>docs/en/PROCEDURES.md</code> § 1.</p>
+<h2>3. The settings in <code>region.config.json</code></h2>
+<p>Open the file with Notepad, change a value, save, then reload the page (F5): it re-reads the file at every opening. The JSON is strict: keep the quotes and commas. <strong>Colours are decimal numbers</strong>, not hexadecimal codes.</p>
+<p><strong>Starting view</strong></p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Value in the template</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>target</code></td>
+<td><code>[0, 15, 0]</code></td>
+<td>camera target at start, <code>[x, y, z]</code> (with <code>targetExplicit</code> set to <code>true</code>, the page keeps this framing)</td>
+</tr>
+<tr>
+<td><code>camDir</code></td>
+<td><code>[-0.55, 0.42, 0.72]</code></td>
+<td>camera direction, <code>[x, y, z]</code></td>
+</tr>
+<tr>
+<td><code>zoom</code></td>
+<td><code>0.65</code></td>
+<td>framing ratio (1 = automatic framing)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Sea and sky</strong></p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Value in the template</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>sea</code></td>
+<td><code>true</code></td>
+<td>show the sea (<code>true</code>) or not (<code>false</code>)</td>
+</tr>
+<tr>
+<td><code>seaY</code></td>
+<td><code>10</code></td>
+<td>sea height, from -150 to 60</td>
+</tr>
+<tr>
+<td><code>seaColor</code></td>
+<td><code>3840729</code></td>
+<td>sea colour (decimal number: 3840729 = <code>3a9ad9</code>)</td>
+</tr>
+<tr>
+<td><code>skyColor</code></td>
+<td><code>8900331</code></td>
+<td>sky colour (decimal number)</td>
+</tr>
+<tr>
+<td><code>wave</code></td>
+<td><code>0.5</code></td>
+<td>wave amplitude, 0 to 10</td>
+</tr>
+<tr>
+<td><code>hole</code></td>
+<td><code>180</code></td>
+<td>radius of the hole in the sea, 30 to 600 (flat zone = radius minus fade)</td>
+</tr>
+<tr>
+<td><code>holeFade</code></td>
+<td><code>60</code></td>
+<td>half-width of the hole's fade</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Walking</strong></p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Value in the template</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>walk</code></td>
+<td><code>true</code></td>
+<td>walking mode (P or F key)</td>
+</tr>
+<tr>
+<td><code>fly</code></td>
+<td><code>true</code></td>
+<td>flying while walking (F or Home key; Page Up or E goes up, Page Down or C goes down)</td>
+</tr>
+<tr>
+<td><code>eyeHeight</code></td>
+<td><code>1.7</code></td>
+<td>eye height in metres</td>
+</tr>
+<tr>
+<td><code>walkSpeed</code></td>
+<td><code>3.5</code></td>
+<td>walking speed in m/s (Shift = x2.2)</td>
+</tr>
+<tr>
+<td><code>walkIgnore</code></td>
+<td><code>"door, porte"</code></td>
+<td>objects you walk through, comma-separated: <code>door</code> = any name starting with that word, <code>=mesh_346_5</code> = that exact name, <code>""</code> = none</td>
+</tr>
+<tr>
+<td><code>solidMaterials</code></td>
+<td><code>null</code></td>
+<td>materials drawn opaque (they hide what is behind), comma-separated: <code>1471516</code> = any name containing that text, <code>=pbrmat-123</code> = exact name</td>
+</tr>
+<tr>
+<td><code>foliageCutout</code></td>
+<td><code>0.12</code></td>
+<td>foliage transparency threshold, 0 to 0.5</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Orientation</strong></p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Value in the template</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>rotate</code></td>
+<td><code>0</code></td>
+<td>region rotation: 0, 90, 180 or 270 degrees</td>
+</tr>
+<tr>
+<td><code>northDeg</code></td>
+<td><code>0.0</code></td>
+<td>offset in degrees added to the displayed heading; 0 = north is the model's -Z direction (OpenSim)</td>
+</tr>
+<tr>
+<td><code>compass</code></td>
+<td><code>true</code></td>
+<td>compass at the top of the page</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Display</strong></p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Value in the template</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>panel</code></td>
+<td><code>true</code></td>
+<td>settings panel for visitors (button at the top right)</td>
+</tr>
+<tr>
+<td><code>retina</code></td>
+<td><code>false</code></td>
+<td>high resolution by default (sharper, about 4 times heavier)</td>
+</tr>
+<tr>
+<td><code>light</code></td>
+<td><code>false</code></td>
+<td>the page opens in light rendering until the visitor has chosen something</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Presence (optional)</strong></p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Value in the template</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>presenceUrl</code></td>
+<td><code>""</code></td>
+<td>presence server address: <code>ws://...</code> or <code>wss://...</code>; <code>*</code> instead of the name = the same machine as the page; empty = off</td>
+</tr>
+<tr>
+<td><code>chat</code></td>
+<td><code>false</code></td>
+<td>chat between visitors (needs <code>presenceUrl</code>)</td>
+</tr>
+<tr>
+<td><code>spectate</code></td>
+<td><code>false</code></td>
+<td>see visitors from the global view (connects as soon as the page opens)</td>
+</tr>
+<tr>
+<td><code>room</code></td>
+<td><code>"region"</code></td>
+<td>presence room name (the renaming script updates it)</td>
+</tr>
+</tbody>
+</table>
+<p>To change several values at once without editing the file, <code>glb2html.py --update</code> (the repository's <code>dist</code> folder) does it: <code>docs/en/PROCEDURES.md</code> § 3. All keys are described in the repository (<code>REFERENCE_OPTIONS.md</code>).</p>
+<h2>4. Setting the starting view</h2>
+<p>Change <code>target</code>, <code>camDir</code> and <code>zoom</code> in <code>region.config.json</code> by small trials, reloading the page (F5) each time. <code>target</code> is the position, in metres, the camera looks at; <code>camDir</code> says where it looks from.</p>
+<h2>5. Placing zones (portals, signs, pictures)</h2>
+<p>They are placed in the repository's viewer, <code>glb-viewer.html</code> (<code>dist</code> folder): open it, load your GLB, place the zones, export the zones file and copy it into <code>site\</code> under the name <code>region.zones.json</code>. Procedure: <code>docs/en/PROCEDURES.md</code> § 5 and <code>docs/en/MANUAL.md</code> §§ 3 to 12.</p>
+<h2>6. Renaming the region</h2>
+<p><strong>Why.</strong> To give your region the name you want (for example <code>MyIsland</code>) instead of <code>region</code>. This name is also the <strong>presence room</strong>: visitors of one region only see those of the same one.</p>
+<p><strong>How.</strong>
+1. If the launcher is open, close its black window.
+2. Double-click <code>renommer-region.bat</code>. A window asks "Nouveau nom (lettres, chiffres, tiret, souligne)" (new name): type <code>MyIsland</code>, then Enter. (Or, in a command window opened in this folder: <code>renommer-region.bat MyIsland</code>.)
+3. The window lists what it did. Reload the page (F5).</p>
+<p><strong>What the script changes</strong> (and nothing else):</p>
+<table>
+<thead>
+<tr>
+<th>Before</th>
+<th>After</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>site\region.glb</code></td>
+<td><code>site\MyIsland.glb</code></td>
+</tr>
+<tr>
+<td><code>site\region.config.json</code></td>
+<td><code>site\MyIsland.config.json</code></td>
+</tr>
+<tr>
+<td><code>site\region.zones.json</code></td>
+<td><code>site\MyIsland.zones.json</code></td>
+</tr>
+<tr>
+<td><code>site\default.json</code>: <code>{{"region": "region"}}</code></td>
+<td><code>{{"region": "MyIsland"}}</code></td>
+</tr>
+<tr>
+<td>in <code>MyIsland.config.json</code>: <code>"room": "region"</code></td>
+<td><code>"room": "MyIsland"</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Good to know.</strong>
+- The name may only contain letters, digits, <code>-</code> and <code>_</code> (no space, no dot). Avoid accents.
+- If a file with the new name already exists in <code>site</code>, the script stops without changing anything.
+- Your GLB, if it is already in <code>site</code> as <code>region.glb</code>, is renamed with the rest. A GLB you add later must carry the <strong>new</strong> name: <code>MyIsland.glb</code>.
+- To go back to the original name, run the script again with <code>region</code>.
+- By hand, these are exactly the five changes. The page itself (<code>index.html</code>) is never modified.</p>
+<h2>7. Showing the region</h2>
+<ul>
+<li><strong>At home, or on a USB stick (Windows)</strong>: double-click <code>lancer-region.bat</code>. Keep open the black window that shows "Region sur http://localhost:8000/ - fermez cette fenetre pour arreter." (the number may differ from 8000 if 8000 is taken): closing it stops the server. Only your computer sees the region. Double-clicking <code>index.html</code> does not work.</li>
+<li><strong>Other systems</strong>: in the <code>site</code> folder, <code>python -m http.server</code> then <code>http://localhost:8000/</code> (8000 is the default port).</li>
+<li><strong>On a website</strong>: copy <strong>the contents of the <code>site</code> folder</strong>, and nothing else, to your hosting. Nothing to install on the server. Keep file names in lowercase.</li>
+</ul>
+<h2>8. Presence: seeing the other visitors and chatting (optional)</h2>
+<p>By default every visitor is alone. The presence server is supplied in <code>presence/</code> (a copy of <code>presence_server.py</code> from the Web_3d repository, <code>dist</code> folder, MIT licence).</p>
+<ol>
+<li>Install Python (python.org), then: <code>pip install websockets</code></li>
+<li>In the <code>presence</code> folder, run: <code>python presence_server.py</code></li>
+<li>In <code>site/region.config.json</code>: <code>"presenceUrl": "ws://*:8765"</code> and <code>"chat": true</code>. The <code>*</code> means "the same machine as the page".</li>
+<li>Serve the region with <code>python -m http.server</code> run in the <code>site</code> folder (not with <code>lancer-region.bat</code>, which is only for your own computer).</li>
+<li>Give your visitors <code>http://ADDRESS:8000/</code>. For people on your own network, ADDRESS is your PC's IP address (the <code>ipconfig</code> command). For visitors on the Internet, it is your public IP address or a domain name, <strong>after opening ports 8000 and 8765</strong> on your router towards your PC.</li>
+</ol>
+<p>A visitor appears in the presence when they start walking (P or F key). <strong>For the Internet, be careful</strong>: this exposes your computer, which must stay on, and your IP address may change. If the region is on an https host, the presence must be <code>wss://</code>, with a certificate: <code>docs/en/PROCEDURES.md</code> § 6.</p>
+<p><strong>Personal data.</strong> Visitors' nicknames, chat messages and IP addresses are personal data: tell your visitors. Retention settings: the server's <code>--log-days</code>, <code>--log-ip</code>, <code>--history-days</code> options (<code>docs/en/MANUAL.md</code> § 18.6, 18.7 and 22.6, <code>docs/en/PROCEDURES.md</code> § 6). The server writes its files in the <code>presence</code> folder: never copy them into <code>site</code>.</p>
+<h2>9. When it does not work</h2>
+<ul>
+<li><strong>"No region to open"</strong>: <code>default.json</code> must contain the right name, and <code>NAME.config.json</code> must exist in <code>site</code> with that exact name.</li>
+<li><strong>The page does not open by double-clicking <code>index.html</code></strong>: expected, use <code>lancer-region.bat</code> or a web host.</li>
+<li><strong>"presence interrupted"</strong>: <code>presenceUrl</code> is filled in but no presence server answers. Empty <code>presenceUrl</code>, or start the server.</li>
+<li><strong>A picture or zone does not show on a host</strong>: check capital letters (<code>2.jpg</code> is not <code>2.JPG</code>).</li>
+<li><strong>More help</strong>: <code>docs/en/PROCEDURES.md</code> § 9 in the repository.</li>
+</ul>
+</div>
+</main>
+</body>
+</html>

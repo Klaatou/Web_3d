@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Aide : visiter la galerie / Help: visiting the gallery</title>
+<style>
+:root{--bg:#f7f7f4;--fg:#1c1c1c;--mut:#555;--card:#fff;--line:#c9c9c0;--acc:#0b3d6e;--code:#eceae2}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15181c;--fg:#e8e8e4;--mut:#a9a9a3;--card:#1e2227;--line:#3a4048;--acc:#8ec1f2;--code:#2a3037}}
+:root[data-theme="dark"]{--bg:#15181c;--fg:#e8e8e4;--mut:#a9a9a3;--card:#1e2227;--line:#3a4048;--acc:#8ec1f2;--code:#2a3037}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:760px;margin:0 auto;padding:16px 16px 48px}
+header{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:8px}
+h1{font-size:1.5rem;margin:.4em 0}
+h3{font-size:1.02rem;margin:1.3em 0 .3em}
+h2{font-size:1.15rem;margin:1.6em 0 .4em;border-bottom:2px solid var(--line);padding-bottom:.2em}
+p,li{margin:.4em 0}
+code,pre{font-family:ui-monospace,Consolas,monospace;background:var(--code);border-radius:4px}
+code{padding:.05em .35em;font-size:.92em}
+pre{padding:10px 12px;overflow-x:auto;font-size:.9em}
+table{border-collapse:collapse;width:100%;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}
+th{background:var(--code)}
+.note{border-left:4px solid var(--acc);background:var(--card);padding:8px 12px;margin:.8em 0}
+.lang{display:inline-flex;border:2px solid var(--acc);border-radius:6px;overflow:hidden}
+.lang button{font:inherit;padding:4px 14px;border:0;background:var(--card);color:var(--fg);cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--acc);color:var(--bg);font-weight:700;text-decoration:underline}
+a{color:var(--acc)}
+[data-l]{display:none}
+html[data-lang="fr"] [data-l="fr"],html[data-lang="en"] [data-l="en"]{display:block}
+html[data-lang="fr"] span[data-l="fr"],html[data-lang="en"] span[data-l="en"]{display:inline}
+html[data-lang="fr"] li[data-l="fr"],html[data-lang="en"] li[data-l="en"]{display:list-item}
+html[data-lang="fr"] tr[data-l="fr"],html[data-lang="en"] tr[data-l="en"]{display:table-row}
+</style>
+<noscript><style>[data-l]{display:block!important}</style></noscript>
+<script>
+(function(){
+  var q=(location.search.match(/[?&]lang=(fr|en)/)||[])[1];
+  var l=q||((navigator.language||'fr').slice(0,2)==='fr'?'fr':'en');
+  document.documentElement.setAttribute('data-lang',l);document.documentElement.lang=l;
+  window.setLang=function(x){document.documentElement.setAttribute('data-lang',x);document.documentElement.lang=x;
+    var b=document.querySelectorAll('.lang button');for(var i=0;i<b.length;i++)b[i].setAttribute('aria-pressed',b[i].dataset.v===x?'true':'false');};
+  document.addEventListener('DOMContentLoaded',function(){window.setLang(l);});
+})();
+</script>
+
+</head>
+<body>
+<main>
+<header>
+  <h1><span data-l="fr">Aide : visiter la galerie</span><span data-l="en">Help: visiting the gallery</span></h1>
+  <div class="lang" role="group" aria-label="Langue / Language">
+    <button type="button" data-v="fr" aria-pressed="true" onclick="setLang('fr')">Français</button>
+    <button type="button" data-v="en" aria-pressed="false" onclick="setLang('en')">English</button>
+  </div>
+</header>
+<div data-l="fr">
+<div class="note" id="doc-createur"><b>Pour le créateur</b> : la documentation de ce paquet est dans <a href="galerie.html">galerie.html</a>. Cette page-ci est l'aide des visiteurs : modifiez-la comme vous voulez, et <b>supprimez ce cadre</b> (la balise <code>div</code> d'<code>id="doc-createur"</code>) quand elle est prête.</div>
+<p>Voici comment visiter la galerie. Les mêmes touches sont rappelées dans la page par la touche <b>H</b>.</p>
+<h2>À l'ouverture : la vue globale</h2>
+<ul>
+<li>glisser : tourner</li>
+<li>molette : zoom</li>
+<li>clic droit + glisser : déplacer</li>
+<li>R : centrer sur l&#x27;arrivée</li>
+<li>bouton « Recentrer la vue » : cadrage d&#x27;ouverture</li>
+</ul>
+<h2>Entrer en promenade</h2>
+<ul>
+<li>P ou F : entrer</li>
+<li>double-clic : choisir le point d&#x27;atterrissage</li>
+<li>P ou F : quitter la promenade</li>
+</ul>
+<h2>Se déplacer</h2>
+<ul>
+<li>ZQSD / flèches (WASD sur un clavier QWERTY)</li>
+<li>Maj ou double appui Z S ↑ ↓ : courir (W, S sur un clavier QWERTY)</li>
+<li>Espace : sauter</li>
+<li>double-clic : se téléporter</li>
+<li>R : retour à l&#x27;arrivée</li>
+</ul>
+<h2>Voler</h2>
+<ul>
+<li>Début : voler / atterrir (ou le bouton)</li>
+<li>Page Haut ou Espace maintenu : monter</li>
+<li>Page Haut maintenu au sol : décoller</li>
+<li>Page Bas ou C : descendre</li>
+</ul>
+<h2>Changer de vue</h2>
+<ul>
+<li>V : changer de vue</li>
+<li>M : subjective / 3e personne</li>
+<li>molette : distance de la caméra (3e personne) ou zoom (caméra libre)</li>
+<li>Fin ou Alt + clic : caméra derrière l&#x27;avatar</li>
+<li>Alt + glisser : orbiter</li>
+</ul>
+<h2>La souris</h2>
+<ul>
+<li>G ou bouton « Capturer la souris », puis souris : regarder (ou glisser, bouton enfoncé)</li>
+<li>Échap : libérer</li>
+<li>G : capturer / libérer</li>
+</ul>
+<h2>Les zones (panneaux, images, portails)</h2>
+<ul>
+<li>clic ou E : panneaux et portails</li>
+<li>T : repères de portail</li>
+<li>clic : nom de l&#x27;élément</li>
+</ul>
+<h2>Boutons et menus</h2>
+<ul>
+<li><b>Promenade (P)</b> : entre en promenade.</li>
+<li><b>Retour à l&#x27;arrivée (R)</b> : ramène au point d'arrivée.</li>
+<li><b>Aide (H)</b> : affiche ou masque l'aide courte de la page.</li>
+<li><b>Flèches (K)</b> : flèches à l'écran, pour la souris seule ou le tactile.</li>
+<li><b>Réglages</b> (bouton en haut à droite, ou touche <b>O</b>) : Haute résolution (plus net, plus lourd) ; Rendu léger ; Afficher la mer ; Mer animée ; Vagues ; Choisir la couleur de mon avatar ; Boussole (cap en haut de l&#x27;écran) ; Numéros des zones image (repérage) ; Sons ; Disposition du clavier ; Flèches à l&#x27;écran (K) ; Commandes tactiles ; Langue / Language ; Valeurs d&#x27;origine. Certains réglages n'apparaissent que si la région a des zones image ou la présence. En promenade, Échap libère la souris pour utiliser ce panneau. Tes choix sont mémorisés sur cet appareil.</li>
+<li><b>Informations / État</b> (touche <b>I</b>) : la vue, le mode, la position. Son bouton « Copier le diagnostic » aide à signaler un problème.</li>
+</ul>
+<h2>Voir les autres visiteurs et tchatter (si la présence est activée)</h2>
+<p>Seulement si le créateur a activé la présence : on y voit les autres visiteurs en promenade et on peut leur écrire.</p>
+<ul>
+<li>Entrée : écrire</li>
+<li>Échap : fermer</li>
+<li>flèches : se déplacer</li>
+</ul>
+<!-- Ajoutez ici la présentation de la galerie : ce que l'on y voit, les règles, les liens... -->
+</div>
+
+<div data-l="en">
+<div class="note" id="doc-createur"><b>For the creator</b>: this package's documentation is in <a href="galerie.html">galerie.html</a>. This page is the visitors' help: change it as you like, and <b>delete this box</b> (the <code>div</code> tag with <code>id="doc-createur"</code>) when it is ready.</div>
+<p>Here is how to visit the gallery. The same keys are shown in the page with the <b>H</b> key.</p>
+<h2>On opening: the global view</h2>
+<ul>
+<li>drag: rotate</li>
+<li>wheel: zoom</li>
+<li>right-click + drag: pan</li>
+<li>R: center on the arrival point</li>
+<li>&quot;Recenter the view&quot; button: opening framing</li>
+</ul>
+<h2>Start walking</h2>
+<ul>
+<li>P or F: enter</li>
+<li>double-click: choose the landing point</li>
+<li>P or F: leave the walk</li>
+</ul>
+<h2>Moving around</h2>
+<ul>
+<li>ZQSD / arrows (WASD on a QWERTY keyboard)</li>
+<li>Shift or double-tap Z S ↑ ↓: run (W, S on a QWERTY keyboard)</li>
+<li>Space: jump</li>
+<li>double-click: teleport</li>
+<li>R: back to the arrival point</li>
+</ul>
+<h2>Flying</h2>
+<ul>
+<li>Home: fly / land (or the button)</li>
+<li>Page Up or Space held: go up</li>
+<li>Page Up held on the ground: take off</li>
+<li>Page Down or C: go down</li>
+</ul>
+<h2>Changing the view</h2>
+<ul>
+<li>V: change view</li>
+<li>M: first / third person</li>
+<li>wheel: camera distance (third person) or zoom (free camera)</li>
+<li>End or Alt + click: camera behind the avatar</li>
+<li>Alt + drag: orbit</li>
+</ul>
+<h2>The mouse</h2>
+<ul>
+<li>G or the “Capture the mouse” button, then mouse: look around (or drag with the button held)</li>
+<li>Esc: release</li>
+<li>G: capture / release</li>
+</ul>
+<h2>Zones (signs, pictures, portals)</h2>
+<ul>
+<li>click or E: signs and portals</li>
+<li>T: portal markers</li>
+<li>click: name of the element</li>
+</ul>
+<h2>Buttons and menus</h2>
+<ul>
+<li><b>Walk (P)</b>: starts walking.</li>
+<li><b>Back to the arrival point (R)</b>: takes you back to the arrival point.</li>
+<li><b>Help (H)</b>: shows or hides the page's short help.</li>
+<li><b>Arrows (K)</b>: on-screen arrows, for mouse-only or touch use.</li>
+<li><b>Settings</b> (button at the top right, or the <b>O</b> key): High resolution (sharper, heavier); Light rendering; Show the sea; Animated sea; Waves; Choose my avatar&#x27;s color; Compass (heading at the top of the screen); Image zone numbers (to find them); Sounds; Keyboard layout; On-screen arrows (K); Touch controls; Language / Langue; Default values. Some settings only appear if the region has image zones or presence. While walking, Esc releases the mouse so you can use this panel. Your choices are remembered on this device.</li>
+<li><b>Information / Status</b> (<b>I</b> key): the view, the mode, the position. Its “Copy diagnostics” button helps to report a problem.</li>
+</ul>
+<h2>Seeing the other visitors and chatting (if presence is on)</h2>
+<p>Only if the creator turned presence on: you can see the other visitors who are walking and write to them.</p>
+<ul>
+<li>Enter: write</li>
+<li>Esc: close</li>
+<li>arrows: move</li>
+</ul>
+<!-- Add here the presentation of the gallery: what to see, the rules, links... -->
+</div>
+</main>
+</body>
+</html>

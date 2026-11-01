@@ -110,6 +110,9 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 31/10/2026 |  | après 1.1.0 | Lot 1.1.3 : case « Numéros des zones image (repérage) » des Réglages ; le clic de pose d'une zone marche aussi en promenade ; `tests/zones_numeros.py`, `tests/pose_promenade.py` |
 | 31/10/2026 |  | après 1.1.0 | Lot 1.1.4 : numéros des zones image à plat, dans le plan de l'image |
 | 31/10/2026 |  | après 1.1.0 | Lot 1.1.5 : historiques, `PROCEDURES` et vue d'ensemble ; tests `image_zone` et `image_dossier` : noms de fichiers sans tiret (la légende était lue à la place de l'image) |
+| 01/11/2026 |  | après 1.1.0 | Lot 1.1.6 : `dist/` suivi par git (`.gitignore`), test `tests/dist_a_jour.py`, `README` et `PROCEDURES` § 6 : où trouver `presence_server.py` |
+| 01/11/2026 |  | après 1.1.0 | Lot 1.1.7 : `build.py` écrit du LF partout (plus d'avertissement CRLF de git) |
+| 01/11/2026 |  | après 1.1.0 | Lot 1.1.8 : paquets prêts à l'emploi : sources dans `paquets/`, `fabriquer_paquets.py`, `tests/paquets.py`, section du `README`, `PROCEDURES` § 12, vue d'ensemble |
 
 ## Commandes utiles
 

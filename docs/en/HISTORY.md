@@ -110,6 +110,9 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 31/10/2026 |  | after 1.1.0 | Batch 1.1.3: "Image zone numbers (to find them)" box in Settings; the zone placement click also works while walking; `tests/zones_numeros.py`, `tests/pose_promenade.py` |
 | 31/10/2026 |  | after 1.1.0 | Batch 1.1.4: image zone numbers flat, in the image's plane |
 | 31/10/2026 |  | after 1.1.0 | Batch 1.1.5: histories, `PROCEDURES` and overview; `image_zone` and `image_dossier` tests: file names without a hyphen (the caption was read instead of the image) |
+| 01/11/2026 |  | after 1.1.0 | Batch 1.1.6: `dist/` tracked by git (`.gitignore`), `tests/dist_a_jour.py` test, `README` and `PROCEDURES` § 6: where to find `presence_server.py` |
+| 01/11/2026 |  | after 1.1.0 | Batch 1.1.7: `build.py` writes LF everywhere (no more CRLF warnings from git) |
+| 01/11/2026 |  | after 1.1.0 | Batch 1.1.8: ready-to-use packages: sources in `paquets/`, `fabriquer_paquets.py`, `tests/paquets.py`, `README` section, `PROCEDURES` § 12, overview |
 
 ## Useful commands
 

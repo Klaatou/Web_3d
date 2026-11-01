@@ -28,6 +28,15 @@ The manuals are in English in `docs/en/` (`MANUAL.md`, `PROCEDURES.md`, `HISTORY
 Download: https://github.com/Misterblue/convoar/tree/master/bin \
 Without convoar.exe, oar2glb.py cannot perform the OAR → GLB conversion. Its location is given with `--convoar CHEMIN` (default: the `CONVOAR` variable, otherwise `convoar` from the PATH, otherwise `convoar.exe` next to `oar2glb.py`).
 
+## Ready-to-use packages
+
+Two packages to download from the [releases page](https://github.com/Klaatou/Web_3d/releases/latest), to try Web_3d without reading all the documentation:
+
+- **`region-simple.zip`**: your OpenSim region (a GLB file) in a browser. You put your GLB under `site/region.glb`; `renommer-region.bat` changes the name; `site/lisezmoi.html` explains the settings and how to get a GLB from an OAR (with an `aide.html` for visitors).
+- **`galerie-photos.zip`**: a 3D gallery of 30 photos. You replace the images in `site/medias/` (`1.jpg` to `30.jpg`); `site/galerie.html` documents everything, `renommer-galerie.bat` changes the name.
+
+In both: unzip, double-click the launcher (Windows), then copy the contents of `site/` to a web host to publish. The optional presence server is in `presence/`. The sources are in `paquets/`; `python fabriquer_paquets.py` rebuilds the zips (`docs/en/PROCEDURES.md` § 12, or `docs/fr/PROCEDURES.md` in French).
+
 ## Build
 
 **The ready-to-use files are already in `dist/`** (viewer, generator, presence server, tools): there is no need to build to use them. `python build.py` is only needed if you change `src/` or `tools/`.

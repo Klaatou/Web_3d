@@ -342,3 +342,14 @@ Open a page from a phone on 4G (not from your network, and with Tailscale switch
 - Hiding the IP protects the machine, not the service: abuse (messages, nicknames) is handled by moderation (section 6, step 5). Run as a plain system service, the server has no keyboard: the solution that was tried (a `tmux` session started by systemd) is described above.
 - The relay (Tailscale, Cloudflare) sees the decrypted traffic. Messages and addresses remain personal data: inform the visitors.
 - Always restart the server after `python build.py` (section 6, step 6).
+
+## 12. Building the ready-to-use packages (zips)
+
+Two packages can be downloaded from the repository's releases page: `galerie-photos.zip` (a gallery of 30 photos) and `region-simple.zip` (a region from a GLB). Their sources are in `paquets\`; the `fabriquer_paquets.py` script adds the built files (`index.html`, `lib\`, `presence_server.py` from `dist\`) and writes the zips.
+
+1. `python build.py`, then `python .\tests\dist_a_jour.py`: `dist\` must be up to date.
+2. `python .\fabriquer_paquets.py`: the zips are written to `paquets-zip\` (not tracked by git). `--vendor FOLDER` to work offline.
+3. `python .\tests\paquets.py`: checks the zips (contents, opening in Chromium).
+4. At release time: attach the two zips to the GitHub release.
+
+Changing a package means changing its sources in `paquets\` (for example the images in `paquets\galerie-photos\site\medias\`), never the zip. Rebuild the zips after every new version of the tools: they embed `index.html`, `lib\` and `presence_server.py`.

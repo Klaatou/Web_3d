@@ -32,3 +32,7 @@ patch_*.py
 *.jsonl
 !docs/samples/*.jsonl
 
+# sources des paquets prêts à l'emploi (paquets/) : exceptions aux règles ci-dessus ; les zips fabriqués ne sont pas suivis
+!paquets/**
+paquets-zip/
+

@@ -12,6 +12,7 @@ An OpenSim region (`.oar` backup) becomes a **3D web page** you can walk around 
 - **Linking the worlds**: the world map (`regions.json`), the `carte.html` page with live visitors and the arrival alert (sound and marker), `--scan-sites` to build the list from the sites folder.
 - **Settings**: the Settings window (high resolution, light rendering, sea, sounds, window layout); French and English.
 - **Exhibition pictures**: an `image` zone lays a picture on a wall; the files go in the region's `medias` subfolder, with no new conversion and no need to go through OpenSim; caption in the file name or in a `.txt` file; an image zone can open a page on click (`link`), and a Settings box shows the zone numbers to find the positions.
+- **Ready-to-use packages**: `galerie-photos.zip` (a 3D gallery of 30 photos) and `region-simple.zip` (a region from a GLB), to download from the releases page; each opens with a double-click (Windows), with an optional presence server; sources in `paquets/`.
 - **Online demo**: `https://klaatou.github.io/Web_3d_demo/` (two regions linked by portals, world map, presence).
 
 ## 2. What has been tried, and what has not

@@ -342,3 +342,14 @@ Ouvre une page depuis un téléphone en 4G (pas depuis ton réseau, et avec Tail
 - Cacher l'IP protège la machine, pas le service : un abus (messages, pseudos) se traite par la modération (section 6, étape 5). Lancé comme simple service système, le serveur n'a pas de clavier : la solution essayée (une session `tmux` lancée par systemd) est décrite plus haut.
 - Le relais (Tailscale, Cloudflare) voit le trafic déchiffré. Les messages et les adresses restent des données personnelles : informe les visiteurs.
 - Relance toujours le serveur après `python build.py` (section 6, étape 6).
+
+## 12. Fabriquer les paquets prêts à l'emploi (zips)
+
+Deux paquets se téléchargent sur la page des versions du dépôt : `galerie-photos.zip` (galerie de 30 photos) et `region-simple.zip` (une région à partir d'un GLB). Leurs sources sont dans `paquets\` ; le script `fabriquer_paquets.py` y ajoute les fichiers fabriqués (`index.html`, `lib\`, `presence_server.py` de `dist\`) et écrit les zips.
+
+1. `python build.py`, puis `python .\tests\dist_a_jour.py` : `dist\` doit être à jour.
+2. `python .\fabriquer_paquets.py` : les zips sont écrits dans `paquets-zip\` (non suivi par git). `--vendor DOSSIER` pour travailler hors ligne.
+3. `python .\tests\paquets.py` : contrôle les zips (contenu, ouverture dans Chromium).
+4. Au moment d'une publication : joindre les deux zips à la version GitHub.
+
+Modifier un paquet, c'est modifier ses sources dans `paquets\` (par exemple les images de `paquets\galerie-photos\site\medias\`), jamais le zip. Refais les zips après chaque nouvelle version des outils : ils embarquent `index.html`, `lib\` et `presence_server.py`.

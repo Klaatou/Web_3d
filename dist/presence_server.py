@@ -30,7 +30,7 @@ est refusée avec une raison que la page affiche. Sans --creators, tout le monde
 from __future__ import annotations
 
 VERSION = "1.0.1 (31/10/2026)"
-MARK = "d5924c20"      # empreinte du fichier fabrique, calculee et inscrite par build.py ; reste telle quelle si on lance src/
+MARK = "ec4e2f71"      # empreinte du fichier fabrique, calculee et inscrite par build.py ; reste telle quelle si on lance src/
 
 import argparse
 import asyncio

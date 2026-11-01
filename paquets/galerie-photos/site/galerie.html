@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Galerie de tableaux 3D : comment ça marche / How the 3D picture gallery works</title>
+<style>
+:root{--bg:#f7f7f4;--fg:#1c1c1c;--mut:#555;--card:#fff;--line:#c9c9c0;--acc:#0b3d6e;--code:#eceae2}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15181c;--fg:#e8e8e4;--mut:#a9a9a3;--card:#1e2227;--line:#3a4048;--acc:#8ec1f2;--code:#2a3037}}
+:root[data-theme="dark"]{--bg:#15181c;--fg:#e8e8e4;--mut:#a9a9a3;--card:#1e2227;--line:#3a4048;--acc:#8ec1f2;--code:#2a3037}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:760px;margin:0 auto;padding:16px 16px 48px}
+header{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:8px}
+h1{font-size:1.5rem;margin:.4em 0}
+h3{font-size:1.02rem;margin:1.3em 0 .3em}
+h2{font-size:1.15rem;margin:1.6em 0 .4em;border-bottom:2px solid var(--line);padding-bottom:.2em}
+p,li{margin:.4em 0}
+code,pre{font-family:ui-monospace,Consolas,monospace;background:var(--code);border-radius:4px}
+code{padding:.05em .35em;font-size:.92em}
+pre{padding:10px 12px;overflow-x:auto;font-size:.9em}
+table{border-collapse:collapse;width:100%;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}
+th{background:var(--code)}
+.note{border-left:4px solid var(--acc);background:var(--card);padding:8px 12px;margin:.8em 0}
+.lang{display:inline-flex;border:2px solid var(--acc);border-radius:6px;overflow:hidden}
+.lang button{font:inherit;padding:4px 14px;border:0;background:var(--card);color:var(--fg);cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--acc);color:var(--bg);font-weight:700;text-decoration:underline}
+a{color:var(--acc)}
+[data-l]{display:none}
+html[data-lang="fr"] [data-l="fr"],html[data-lang="en"] [data-l="en"]{display:block}
+html[data-lang="fr"] span[data-l="fr"],html[data-lang="en"] span[data-l="en"]{display:inline}
+html[data-lang="fr"] li[data-l="fr"],html[data-lang="en"] li[data-l="en"]{display:list-item}
+html[data-lang="fr"] tr[data-l="fr"],html[data-lang="en"] tr[data-l="en"]{display:table-row}
+</style>
+<noscript><style>[data-l]{display:block!important}</style></noscript>
+<script>
+(function(){
+  var q=(location.search.match(/[?&]lang=(fr|en)/)||[])[1];
+  var l=q||((navigator.language||'fr').slice(0,2)==='fr'?'fr':'en');
+  document.documentElement.setAttribute('data-lang',l);document.documentElement.lang=l;
+  window.setLang=function(x){document.documentElement.setAttribute('data-lang',x);document.documentElement.lang=x;
+    var b=document.querySelectorAll('.lang button');for(var i=0;i<b.length;i++)b[i].setAttribute('aria-pressed',b[i].dataset.v===x?'true':'false');};
+  document.addEventListener('DOMContentLoaded',function(){window.setLang(l);});
+})();
+</script>
+</head>
+<body>
+<main>
+<header>
+  <h1><span data-l="fr">Comment marche la galerie de tableaux</span><span data-l="en">How the picture gallery works</span></h1>
+  <div class="lang" role="group" aria-label="Langue / Language">
+    <button type="button" data-v="fr" aria-pressed="true" onclick="setLang('fr')">Français</button>
+    <button type="button" data-v="en" aria-pressed="false" onclick="setLang('en')">English</button>
+  </div>
+</header>
+
+<!-- ================= FRANÇAIS ================= -->
+<div data-l="fr">
+<div class="note"><b>Cette page est la documentation de ce paquet, pour le créateur de la galerie.</b> Ce que voient vos visiteurs quand ils cliquent sur le petit panneau « ? » du comptoir, c'est <code>aide.html</code> : une aide générique à modifier pour présenter votre galerie. Vous pouvez supprimer <code>galerie.html</code> de <code>site</code> avant de publier (et le lien qui y mène, en tête de <code>aide.html</code>).</div>
+<p>Le principe est de pouvoir mettre à jour simplement sa galerie de photos.</p>
+<p>Le bâtiment 3D de la galerie est préparé avec <b>30 zones</b> pour ces photos (de 1 à 30). Il suffit de mettre ses photos dans le dossier « <code>medias</code> », en leur donnant le nom correspondant, <b>de <code>1.jpg</code> à <code>30.jpg</code></b>, pour qu'elles aillent sur la zone correspondante.</p>
+
+<h2>1. Remplacer ou ajouter une image</h2>
+<ul>
+<li>Les images sont dans <code>medias/</code>. Le tableau n° 7 correspond au fichier <code>7.jpg</code>.</li>
+<li>Remplacez le fichier par une autre image <b>du même nom</b> : elle apparaît à la prochaine visite, sans vider le cache du navigateur.</li>
+<li>Formats essayés, dans cet ordre : <code>jpg, jpeg, png, webp, gif, avif</code>.</li>
+<li><b>Écrivez les noms en minuscules</b> (<code>2.jpg</code>, pas <code>2.JPG</code>) : sous Windows la casse ne compte pas, mais sur la plupart des hébergements <code>2.jpg</code> et <code>2.JPG</code> sont deux fichiers différents, et le tableau resterait vide.</li>
+<li>Les zones image sont réglées pour que leur hauteur s'adapte aux proportions de l'image affichée : une image large donne un tableau large, une image haute un tableau haut, sans déformation.</li>
+</ul>
+
+<h2>2. Les légendes</h2>
+<p>Une légende peut s'afficher sous chaque photo. Pour en donner une, mettez à côté de la photo un fichier texte <b>du même nom</b> : <code>9.txt</code> pour <code>9.jpg</code>. La première ligne non vide du fichier (en UTF-8) devient la légende. Sans fichier texte, aucune légende n'apparaît.</p>
+<p>Autre possibilité : écrire la légende dans le nom de la photo, après un tiret (<code>9-Mon_titre.jpg</code> donne la légende « Mon titre » : le <code>_</code> devient une espace).</p>
+
+<h2>3. Repérer les emplacements des photos</h2>
+<p>Pour savoir où ira chaque photo, ouvrez les <b>Réglages</b> de la galerie (bouton en haut à droite) et cochez <b>« Numéros des zones image (repérage) »</b> : un gros numéro s'affiche devant chaque emplacement, même s'il est encore vide. Décochez la case pour les faire disparaître (elle se décoche aussi toute seule à chaque ouverture de la galerie).</p>
+<p><img src="aide-numeros.jpg" alt="Les Réglages de la galerie, avec la case « Numéros des zones image (repérage) » entourée, et les numéros affichés devant les photos" style="max-width:100%;height:auto;border:1px solid var(--line)"></p>
+
+<h2>4. Ce qui fixe le nombre et la place des tableaux</h2>
+<p>Les zones (emplacement sur le mur, orientation, largeur <code>w</code>, hauteur <code>h</code>) sont enregistrées dans <code>galerie.zones.json</code>. Avec <code>h = 0</code>, la hauteur suit la proportion de l'image. Déplacer, ajouter ou supprimer un tableau se fait dans l'éditeur de zones du <b>viewer</b> de Web_3d (<code>glb-viewer.html</code>, outil séparé), qui écrit ce fichier : la page exportée de la galerie, elle, ne sert qu'à visiter.</p>
+<p>Tant que vous ne changez que le contenu de <code>medias/</code>, aucun outil n'est nécessaire.</p>
+<p>Deux zones image ont un rôle à part : le <b>panneau « Galerie »</b> au centre du bâtiment (<code>enseigne.jpg</code>, une simple enseigne : mettez-y le nom de votre galerie) et le <b>petit panneau « ? »</b> sur le devant du comptoir (<code>aide.jpg</code>). Un clic sur ce petit panneau ouvre <code>aide.html</code>, l'aide des visiteurs : modifiez-la pour présenter votre galerie, en gardant son nom. Cette page-ci, <code>galerie.html</code>, est la documentation du créateur.</p>
+
+<h2>5. Montrer la galerie : trois façons</h2>
+<table>
+<tr><th>Formule</th><th>Pour</th><th>Ce qu'il faut</th></tr>
+<tr><td>1. Chez soi, ou sur une clé USB</td><td>essayer, ou montrer la galerie sur votre ordinateur</td><td>Windows : double-cliquer sur <code>lancer-galerie.bat</code> (à la racine du paquet). Rien à installer.</td></tr>
+<tr><td>2. Sur un site web</td><td>la montrer à tout le monde</td><td>un hébergement web où copier le contenu du dossier <code>site</code>. Rien à installer sur le serveur. Pas de présence.</td></tr>
+<tr><td>3. Avec présence</td><td>voir les autres visiteurs et tchatter</td><td>en plus, le serveur de présence (section 6).</td></tr>
+</table>
+
+<h3>1. Chez soi, ou sur une clé USB (Windows)</h3>
+<ul>
+<li>Double-cliquez sur <code>lancer-galerie.bat</code>. Un petit serveur démarre sur votre ordinateur et la galerie s'ouvre dans le navigateur. <b>Laissez ouverte la fenêtre noire</b> qui affiche « Galerie sur http://localhost:8000/ - fermez cette fenetre pour arreter. » (le numéro peut être un autre que 8000 si 8000 est pris) tant que vous regardez la galerie : la fermer arrête le serveur.</li>
+<li>Seul votre ordinateur peut alors voir la galerie. C'est voulu : rien n'est ouvert sur Internet.</li>
+<li>Double-cliquer sur <code>index.html</code> ne marche pas : la page affiche seulement un message qui demande un serveur web.</li>
+<li>Autre système que Windows : installez Python, puis lancez dans le dossier <code>site</code> la commande <code>python -m http.server</code> et ouvrez <code>http://localhost:8000/</code> (8000 est le port par défaut).</li>
+</ul>
+
+<h3>2. Sur un site web</h3>
+<ul>
+<li>Copiez <b>le contenu du dossier <code>site</code></b>, et rien d'autre, dans le dossier public de votre hébergement (GitHub Pages, hébergement mutualisé, serveur web). Ce sont de simples fichiers : rien à installer sur le serveur, pas de base de données.</li>
+<li>Gardez les noms de fichiers en <b>minuscules</b> : sur la plupart des serveurs, <code>2.jpg</code> et <code>2.JPG</code> sont deux fichiers différents.</li>
+<li>Pour mettre à jour la galerie, remplacez les fichiers du dossier <code>medias</code> sur le serveur.</li>
+</ul>
+
+<h2>6. Voir les autres visiteurs et tchatter (facultatif)</h2>
+<p>Dans ce paquet, chaque visiteur est seul : pas d'autres avatars, pas de chat. Pour les activer, il faut un petit programme en plus : le <b>serveur de présence</b>. Il est fourni dans le dossier <code>presence</code> : c'est une copie de <code>presence_server.py</code> du dépôt Web_3d (<code>github.com/Klaatou/Web_3d</code>, dossier <code>dist</code>, licence MIT).</p>
+<ol>
+<li>Installez Python (python.org), puis dans une fenêtre de commandes : <code>pip install websockets</code></li>
+<li>Dans le dossier <code>presence</code>, lancez : <code>python presence_server.py</code></li>
+<li>Dans <code>site/galerie.config.json</code> : <code>"presenceUrl": "ws://*:8765"</code> et <code>"chat": true</code>. Le <code>*</code> veut dire « la même machine que la page ».</li>
+<li>Servez la galerie avec <code>python -m http.server</code> lancé dans le dossier <code>site</code> (pas avec le lanceur <code>.bat</code>, réservé à votre ordinateur).</li>
+<li>Donnez à vos visiteurs <code>http://ADRESSE:8000/</code>. Pour des proches sur votre réseau, ADRESSE est l'adresse IP de votre PC (commande <code>ipconfig</code>). Pour des visiteurs sur Internet, c'est votre adresse IP publique ou un nom de domaine, <b>après avoir ouvert les ports 8000 et 8765</b> de votre box vers votre PC.</li>
+</ol>
+<p>Un visiteur apparaît dans la présence quand il entre en promenade (touche <b>P</b> ou <b>F</b>) : avant, la page indique « hors ligne ».</p>
+<p><b>Pour Internet, attention</b> : cela expose votre ordinateur. Il doit rester allumé, et votre adresse IP peut changer. Si votre galerie est sur un hébergement en https, la présence doit être en <code>wss://</code>, avec un certificat : voir <code>docs/fr/PROCEDURES.md</code> § 6 dans le dépôt Web_3d.</p>
+<div class="note"><b>Données personnelles.</b> Les pseudos, les messages du chat et les adresses IP des visiteurs sont des données personnelles : prévenez vos visiteurs. Les réglages de conservation (options <code>--log-days</code>, <code>--log-ip</code>, <code>--history-days</code> du serveur) sont décrits dans <code>docs/fr/MANUEL.md</code> § 18.6, 18.7 et 22.6 et dans <code>docs/fr/PROCEDURES.md</code> § 6. Le serveur écrit ses fichiers (pseudos réservés, bannissements, et journaux si vous les demandez) dans le dossier <code>presence</code> : ne les copiez jamais dans <code>site</code>.</div>
+
+<h2>7. Renommer la galerie</h2>
+<p><b>Pourquoi.</b> Pour donner à votre galerie le nom de votre choix (par exemple <code>MonExpo</code>) au lieu de <code>galerie</code>. Ce nom devient aussi celui du <b>salon de présence</b> : les visiteurs d'une galerie ne voient que ceux de la même.</p>
+<p><b>Comment.</b></p>
+<ol>
+<li>Si le lanceur est ouvert, fermez sa fenêtre noire.</li>
+<li>Double-cliquez sur <code>renommer-galerie.bat</code>. Une fenêtre demande « Nouveau nom (lettres, chiffres, tiret, souligné) » : tapez <code>MonExpo</code>, puis Entrée. (Ou, dans une fenêtre de commandes ouverte dans ce dossier : <code>renommer-galerie.bat MonExpo</code>.)</li>
+<li>La fenêtre liste ce qu'elle a fait. Rechargez la page (F5).</li>
+</ol>
+<p><b>Ce que le script change</b> (et rien d'autre) :</p>
+<table>
+<tr><th>Avant</th><th>Après</th></tr>
+<tr><td><code>site\galerie.glb</code></td><td><code>site\MonExpo.glb</code></td></tr>
+<tr><td><code>site\galerie.config.json</code></td><td><code>site\MonExpo.config.json</code></td></tr>
+<tr><td><code>site\galerie.zones.json</code></td><td><code>site\MonExpo.zones.json</code></td></tr>
+<tr><td><code>site\default.json</code> : <code>{"region": "galerie"}</code></td><td><code>{"region": "MonExpo"}</code></td></tr>
+<tr><td>dans <code>MonExpo.config.json</code> : <code>"room": "galerie"</code></td><td><code>"room": "MonExpo"</code></td></tr>
+</table>
+<p>Le nom ne peut contenir que des lettres, des chiffres, <code>-</code> et <code>_</code> (ni espace, ni point) ; évitez les accents. Si un fichier du nouveau nom existe déjà dans <code>site</code>, le script s'arrête sans rien modifier. Pour revenir au nom d'origine, relancez-le avec <code>galerie</code>. À la main, ce sont exactement ces cinq changements. Les liens des zones (<code>aide.html</code>) et la page elle-même (<code>index.html</code>) ne changent pas.</p>
+
+<div class="note"><b>Poids de vos fichiers photo.</b> La page ne limite pas le poids des fichiers (leur taille en Ko ou en Mo, telle que l'affiche l'explorateur de fichiers), mais chaque visiteur doit les télécharger : plus un fichier est lourd, plus la galerie met de temps à s'afficher, surtout avec une connexion lente. Les photos fournies pèsent 47 Ko chacune en moyenne (1,4 Mo pour les 30). Repère (estimation, non mesurée) : moins de 500 Ko par fichier. Un logiciel de retouche permet de réduire le poids d'une photo (moins de pixels, ou compression JPEG plus forte).</div>
+
+<p><a href="https://github.com/Klaatou/Web_3d">Web_3d sur GitHub</a> (code, manuel, éditeur de zones).</p>
+</div>
+
+<!-- ================= ENGLISH ================= -->
+<div data-l="en">
+<div class="note"><b>This page is the documentation of this package, for the gallery's creator.</b> What your visitors see when they click the small “?” panel on the counter is <code>aide.html</code>: a generic help page that you can change to present your gallery. You may delete <code>galerie.html</code> from <code>site</code> before publishing (and the link to it at the top of <code>aide.html</code>).</div>
+<p>The idea is to let you update your photo gallery simply.</p>
+<p>The gallery's 3D building is prepared with <b>30 zones</b> for these photos (numbered 1 to 30). Just put your photos in the “<code>medias</code>” folder and give them the matching name, <b><code>1.jpg</code> to <code>30.jpg</code></b>, and each one goes on the matching zone.</p>
+
+<h2>1. Replace or add an image</h2>
+<ul>
+<li>Images live in <code>medias/</code>. Picture no. 7 is the file <code>7.jpg</code>.</li>
+<li>Replace the file with another image <b>of the same name</b>: it shows up on the next visit, without clearing the browser cache.</li>
+<li>Formats tried, in this order: <code>jpg, jpeg, png, webp, gif, avif</code>.</li>
+<li><b>Use lowercase file names</b> (<code>2.jpg</code>, not <code>2.JPG</code>): Windows ignores case, but on most web hosts <code>2.jpg</code> and <code>2.JPG</code> are two different files, and the picture would stay empty.</li>
+<li>The image zones are set so that their height adapts to the proportions of the displayed image: a wide image gives a wide picture, a tall image a tall one, undistorted.</li>
+</ul>
+
+<h2>2. Captions</h2>
+<p>A caption can appear under each photo. To give one, put a text file <b>of the same name</b> next to the photo: <code>9.txt</code> for <code>9.jpg</code>. The first non-empty line of the file (UTF-8) becomes the caption. With no text file, no caption appears.</p>
+<p>Another way: write the caption in the photo's name, after a hyphen (<code>9-My_title.jpg</code> gives the caption “My title”: the <code>_</code> becomes a space).</p>
+
+<h2>3. Finding the positions of the photos</h2>
+<p>To see where each photo will go, open the gallery's <b>Settings</b> (button at the top right) and tick <b>“Image zone numbers (to find them)”</b>: a big number appears in front of each position, even if it is still empty. Untick the box to hide them (it also unticks itself every time the gallery is opened).</p>
+<p><img src="aide-numeros.jpg" alt="The gallery's Settings, with the “Image zone numbers” box circled, and the numbers shown in front of the photos" style="max-width:100%;height:auto;border:1px solid var(--line)"></p>
+
+<h2>4. What fixes the number and position of the pictures</h2>
+<p>The zones (position on the wall, orientation, width <code>w</code>, height <code>h</code>) are stored in <code>galerie.zones.json</code>. With <code>h = 0</code> the height follows the image's proportions. Moving, adding or removing a picture is done in the zone editor of the Web_3d <b>viewer</b> (<code>glb-viewer.html</code>, a separate tool), which writes that file: the exported gallery page itself is for visiting only.</p>
+<p>As long as you only change the contents of <code>medias/</code>, no tool is needed.</p>
+<p>Two image zones have a role of their own: the <b>“Gallery” sign</b> in the middle of the building (<code>enseigne.jpg</code>, a plain sign: put your gallery's name on it) and the <b>small “?” panel</b> on the front of the counter (<code>aide.jpg</code>). Clicking that small panel opens <code>aide.html</code>, the visitors' help: change it to present your gallery, keeping its name. This page, <code>galerie.html</code>, is the creator's documentation.</p>
+
+<h2>5. Showing the gallery: three ways</h2>
+<table>
+<tr><th>Way</th><th>For</th><th>What you need</th></tr>
+<tr><td>1. At home, or on a USB stick</td><td>trying it, or showing the gallery on your computer</td><td>Windows: double-click <code>lancer-galerie.bat</code> (at the root of the package). Nothing to install.</td></tr>
+<tr><td>2. On a website</td><td>showing it to everyone</td><td>web hosting where you copy the contents of the <code>site</code> folder. Nothing to install on the server. No presence.</td></tr>
+<tr><td>3. With presence</td><td>seeing the other visitors and chatting</td><td>on top of that, the presence server (section 6).</td></tr>
+</table>
+
+<h3>1. At home, or on a USB stick (Windows)</h3>
+<ul>
+<li>Double-click <code>lancer-galerie.bat</code>. A small server starts on your computer and the gallery opens in the browser. <b>Keep open the black window</b> that shows “Galerie sur http://localhost:8000/ - fermez cette fenetre pour arreter.” (the number may differ from 8000 if 8000 is taken) while you look at the gallery: closing it stops the server.</li>
+<li>Only your computer can then see the gallery. That is intended: nothing is opened to the Internet.</li>
+<li>Double-clicking <code>index.html</code> does not work: the page only shows a message asking for a web server.</li>
+<li>Systems other than Windows: install Python, then run <code>python -m http.server</code> in the <code>site</code> folder and open <code>http://localhost:8000/</code> (8000 is the default port).</li>
+</ul>
+
+<h3>2. On a website</h3>
+<ul>
+<li>Copy <b>the contents of the <code>site</code> folder</b>, and nothing else, into the public folder of your hosting (GitHub Pages, shared hosting, web server). They are plain files: nothing to install on the server, no database.</li>
+<li>Keep file names in <b>lowercase</b>: on most servers, <code>2.jpg</code> and <code>2.JPG</code> are two different files.</li>
+<li>To update the gallery, replace the files of the <code>medias</code> folder on the server.</li>
+</ul>
+
+<h2>6. Seeing the other visitors and chatting (optional)</h2>
+<p>In this package, every visitor is alone: no other avatars, no chat. To turn them on, you need one more small program: the <b>presence server</b>. It is supplied in the <code>presence</code> folder: a copy of <code>presence_server.py</code> from the Web_3d repository (<code>github.com/Klaatou/Web_3d</code>, <code>dist</code> folder, MIT licence).</p>
+<ol>
+<li>Install Python (python.org), then in a command window: <code>pip install websockets</code></li>
+<li>In the <code>presence</code> folder, run: <code>python presence_server.py</code></li>
+<li>In <code>site/galerie.config.json</code>: <code>"presenceUrl": "ws://*:8765"</code> and <code>"chat": true</code>. The <code>*</code> means “the same machine as the page”.</li>
+<li>Serve the gallery with <code>python -m http.server</code> run in the <code>site</code> folder (not with the <code>.bat</code> launcher, which is only for your own computer).</li>
+<li>Give your visitors <code>http://ADDRESS:8000/</code>. For people on your own network, ADDRESS is your PC's IP address (the <code>ipconfig</code> command). For visitors on the Internet, it is your public IP address or a domain name, <b>after opening ports 8000 and 8765</b> on your router towards your PC.</li>
+</ol>
+<p>A visitor appears in the presence when they start walking (<b>P</b> or <b>F</b> key): before that, the page says “offline”.</p>
+<p><b>For the Internet, be careful</b>: this exposes your computer. It must stay on, and your IP address may change. If your gallery is on an https host, the presence must be <code>wss://</code>, with a certificate: see <code>docs/en/PROCEDURES.md</code> § 6 in the Web_3d repository.</p>
+<div class="note"><b>Personal data.</b> Visitors' nicknames, chat messages and IP addresses are personal data: tell your visitors. The retention settings (the server's <code>--log-days</code>, <code>--log-ip</code>, <code>--history-days</code> options) are described in <code>docs/en/MANUAL.md</code> § 18.6, 18.7 and 22.6 and in <code>docs/en/PROCEDURES.md</code> § 6. The server writes its files (reserved nicknames, bans, and logs if you ask for them) in the <code>presence</code> folder: never copy them into <code>site</code>.</div>
+
+<h2>7. Renaming the gallery</h2>
+<p><b>Why.</b> To give your gallery the name you want (for example <code>MyShow</code>) instead of <code>galerie</code>. This name is also the <b>presence room</b>: visitors of one gallery only see those of the same one.</p>
+<p><b>How.</b></p>
+<ol>
+<li>If the launcher is open, close its black window.</li>
+<li>Double-click <code>renommer-galerie.bat</code>. A window asks "Nouveau nom (lettres, chiffres, tiret, souligne)" (new name): type <code>MyShow</code>, then Enter. (Or, in a command window opened in this folder: <code>renommer-galerie.bat MyShow</code>.)</li>
+<li>The window lists what it did. Reload the page (F5).</li>
+</ol>
+<p><b>What the script changes</b> (and nothing else):</p>
+<table>
+<tr><th>Before</th><th>After</th></tr>
+<tr><td><code>site\galerie.glb</code></td><td><code>site\MyShow.glb</code></td></tr>
+<tr><td><code>site\galerie.config.json</code></td><td><code>site\MyShow.config.json</code></td></tr>
+<tr><td><code>site\galerie.zones.json</code></td><td><code>site\MyShow.zones.json</code></td></tr>
+<tr><td><code>site\default.json</code>: <code>{"region": "galerie"}</code></td><td><code>{"region": "MyShow"}</code></td></tr>
+<tr><td>in <code>MyShow.config.json</code>: <code>"room": "galerie"</code></td><td><code>"room": "MyShow"</code></td></tr>
+</table>
+<p>The name may only contain letters, digits, <code>-</code> and <code>_</code> (no space, no dot); avoid accents. If a file with the new name already exists in <code>site</code>, the script stops without changing anything. To go back to the original name, run it again with <code>galerie</code>. By hand, these are exactly the five changes. The zones' links (<code>aide.html</code>) and the page itself (<code>index.html</code>) do not change.</p>
+
+<div class="note"><b>File size of your photos.</b> The page does not limit the size of your photo files (in KB or MB, as your file explorer shows it), but every visitor has to download them: the larger a file, the longer the gallery takes to appear, especially on a slow connection. The supplied photos weigh 47 KB each on average (1.4 MB for the 30). A rough guide (estimate, not measured): under 500 KB per file. An image editor can reduce a photo's size (fewer pixels, or stronger JPEG compression).</div>
+
+<p><a href="https://github.com/Klaatou/Web_3d">Web_3d on GitHub</a> (code, manual, zone editor).</p>
+</div>
+</main>
+</body>
+</html>

@@ -1,0 +1,45 @@
+REGION CLE EN MAIN / TURNKEY REGION
+===================================
+
+FRANCAIS
+--------
+Votre region OpenSim (un fichier GLB) dans un navigateur, sans rien installer pour la visiter.
+Produite avec Web_3d (https://github.com/Klaatou/Web_3d, licence MIT).
+Tout est detaille dans site/lisezmoi.html : la documentation du createur.
+
+Pour commencer
+  1. Double-cliquez sur lancer-region.bat (Windows) : une petite region d'exemple s'ouvre dans le
+     navigateur. Laissez ouverte la fenetre noire qui affiche "Region sur http://localhost:8000/ - fermez
+     cette fenetre pour arreter." tant que vous regardez la region (le numero peut etre un autre que
+     8000 si 8000 est deja pris).
+  2. Pour lire la documentation : ouvrez http://localhost:8000/lisezmoi.html dans le navigateur
+     (avec le meme numero que dans la fenetre noire).
+  3. Mettez VOTRE GLB dans le dossier site sous le nom region.glb (il remplace l'exemple), puis F5.
+  4. Un autre nom que "region" ? Double-cliquez sur renommer-region.bat.
+
+Dossiers
+  site/       tout ce qui se publie : copiez le CONTENU de ce dossier sur un hebergement web
+  presence/   le serveur de presence (facultatif : voir les autres visiteurs, chat)
+  lancer-region.bat, renommer-region.bat   lanceur et renommage (Windows)
+Double-cliquer sur site/index.html ne marche pas : un message demande un serveur web.
+
+ENGLISH
+-------
+Your OpenSim region (a GLB file) in a browser, with nothing to install to visit it.
+Made with Web_3d (https://github.com/Klaatou/Web_3d, MIT licence).
+Everything is detailed in site/lisezmoi.html: the creator's documentation.
+
+To start
+  1. Double-click lancer-region.bat (Windows): a small example region opens in the browser. Keep open
+     the black window that shows "Region sur http://localhost:8000/ - fermez cette fenetre pour
+     arreter." while you look at the region (the number may differ from 8000 if 8000 is already taken).
+  2. To read the documentation: open http://localhost:8000/lisezmoi.html in the browser
+     (with the same number as in the black window).
+  3. Put YOUR GLB in the site folder under the name region.glb (it replaces the example), then F5.
+  4. A name other than "region"? Double-click renommer-region.bat.
+
+Folders
+  site/       everything that gets published: copy the CONTENTS of this folder to a web host
+  presence/   the presence server (optional: see other visitors, chat)
+  lancer-region.bat, renommer-region.bat   launcher and renaming (Windows)
+Double-clicking site/index.html does not work: a message asks for a web server.

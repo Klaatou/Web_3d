@@ -153,7 +153,7 @@ def i18n_add_common(ap):
 
 
 VERSION = "1.0.1 (31/10/2026)"      # remplacé par build.py (fichier VERSION) dans dist/glb2tiles.py
-MARK = "e47b6fd1"      # empreinte du fichier fabriqué, inscrite par build.py ; reste telle quelle depuis tools/
+MARK = "944e2728"      # empreinte du fichier fabriqué, inscrite par build.py ; reste telle quelle depuis tools/
 
 
 def version_tag():

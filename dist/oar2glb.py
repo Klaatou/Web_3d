@@ -124,7 +124,7 @@ def i18n_add_common(ap):
 
 
 VERSION = "1.0.1 (31/10/2026)"      # remplacé par build.py (fichier VERSION) dans dist/oar2glb.py
-MARK = "7ca846fa"      # empreinte du fichier fabriqué, inscrite par build.py ; reste telle quelle depuis tools/
+MARK = "ab67198d"      # empreinte du fichier fabriqué, inscrite par build.py ; reste telle quelle depuis tools/
 
 
 def version_tag():

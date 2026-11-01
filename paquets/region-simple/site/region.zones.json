@@ -1,0 +1,23 @@
+[
+  {
+    "id": "aide",
+    "type": "image",
+    "label": "Aide",
+    "x": -4.48,
+    "y": 17.2,
+    "z": -6.0,
+    "yaw": 1.5707963,
+    "shape": "ring",
+    "trigger": "click",
+    "radius": 2,
+    "w": 0.9,
+    "h": 0,
+    "target": "aide.jpg",
+    "spawn": "",
+    "confirm": false,
+    "private": false,
+    "showName": false,
+    "mesh": "",
+    "link": "aide.html"
+  }
+]
