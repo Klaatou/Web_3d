@@ -1384,7 +1384,7 @@
  "page.opt.touch.on": "Yes",
  "page.opt.touch.off": "No",
  "page.opt.zonenums": "Image zone numbers (to find them)",
- "page.help.k": "K: on-screen arrows",
+ "page.help.k": "K: movement pad (on-screen arrows)",
  "page.touch.look": "Drag your finger on the screen to look around",
  "page.diag.touch": "Touch controls",
  "page.diag.touch.v": "{0} (setting: {1}; touch screen detected: {2}; touch points: {3})",

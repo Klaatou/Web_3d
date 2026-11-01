@@ -4,6 +4,17 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.2.0)
 
+### 01/11/2026 : version 1.2.2 : documentation des paquets (readme.html), pavé de déplacement
+
+- **Paquets** : `lisezmoi.html` devient `readme.html` (même nom que `README.txt`) ; sa première section s'appelle « Où se trouve quoi » et les réglages, la vue de départ, les zones et le renommage passent à la fin de la page (sections 6 à 9) ; nouvelle section « Figurer sur une carte des mondes » (ce qu'il faut transmettre à une carte commune : nom, adresse complète, vignette, place sur la grille, présence), aussi dans `galerie.html` (section 8) ; le panneau d'aide de la maison d'exemple est signalé « à revoir avec votre GLB », avec la façon de le supprimer ou de le déplacer (viewer ou `region.zones.json`) et pourquoi les coordonnées sont celles de la page ; liens vers le dépôt (convoar, dossier `dist`, procédures) ; `README.txt` : même signalement du panneau ; `aide.html` : la touche K est décrite comme le pavé de déplacement.
+- **Aide de la page** (touche H) : `page.help.k` dit « pavé de déplacement (flèches à l'écran) », en français et en anglais ; manuel (tableau des touches) ; `tests/v46.py`.
+- **Test** `tests/chat_fleches.py` : il vérifie que `websockets` est installé et que le serveur de présence répond, et le dit clairement sinon (échec constaté chez Klaatou : sans serveur de présence, la touche Entrée n'ouvre pas le chat).
+- **Dépôt** : `paquets-sources.zip` (archive de livraison, commitée par erreur à la racine) est retiré par ce patch ; `.gitignore` l'ignore désormais.
+- **Packages**: `lisezmoi.html` becomes `readme.html` (same name as `README.txt`); its first section is now "What is where" and the settings, starting view, zones and renaming move to the end of the page (sections 6 to 9); new section "Appearing on a world map" (what to send to a shared map: name, complete address, thumbnail, place on the grid, presence), also in `galerie.html` (section 8); the example house's help panel is flagged "to review with your GLB", with how to delete or move it (viewer or `region.zones.json`) and why the coordinates are the page's; links to the repository (convoar, `dist` folder, procedures); `README.txt`: same flag for the panel; `aide.html`: the K key is described as the movement pad.
+- **Page help** (H key): `page.help.k` says "movement pad (on-screen arrows)", in French and English; manual (key table); `tests/v46.py`.
+- **Test** `tests/chat_fleches.py`: it checks that `websockets` is installed and that the presence server answers, and says so clearly otherwise (failure seen on Klaatou's machine: without a presence server, the Enter key does not open the chat).
+- **Repository**: `paquets-sources.zip` (a delivery archive, committed by mistake at the root) is removed by this patch; `.gitignore` now ignores it.
+
 ### 01/11/2026 : version 1.2.1 : chat, aide et README.txt des paquets, README
 
 - **Correction** (chat) : pendant la saisie du chat, les flèches déplaçaient l'avatar au lieu du curseur dans le texte (décision de la v33 : on pouvait marcher en écrivant), ce qui empêchait de corriger son message (constat de Klaatou). Elles restent maintenant dans le texte tant que la saisie est ouverte ; Échap la ferme et rend les flèches à la promenade. `template.html` (gestionnaire de touches du chat), aide (`page.help.chat.arrows`), manuel FR/EN (§ 18.5, § 22.6 et tableau des touches). Tests : `tests/chat_fleches.py` (nouveau, avec un vrai serveur de présence) et `tests/v33.py` (deux vérifications inversées).

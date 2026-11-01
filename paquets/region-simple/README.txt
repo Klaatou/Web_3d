@@ -14,9 +14,11 @@ Pour commencer
   2. Adresses utiles (avec le numero de la fenetre noire) :
        http://localhost:8000/                la region
        http://localhost:8000/aide.html       l'aide des visiteurs (a adapter a votre region)
-       http://localhost:8000/lisezmoi.html   la documentation du createur : tout y est detaille
+       http://localhost:8000/readme.html   la documentation du createur : tout y est detaille
   3. Dans la region 3D, l'aide s'ouvre en cliquant sur le petit panneau "?" du mur est de la maison
-     d'exemple (visible en promenade). Avec votre propre GLB, deplacez ou supprimez ce panneau.
+     d'exemple (visible en promenade). A REVOIR avec votre propre GLB : ce panneau flotterait dans le
+     vide. Supprimez-le (remplacez le contenu de site/region.zones.json par []) ou deplacez-le avec le
+     viewer : voir readme.html, section 8.
   4. Mettez VOTRE GLB dans le dossier site sous le nom region.glb (il remplace l'exemple), puis F5.
   5. Un autre nom que "region" ? Double-cliquez sur renommer-region.bat.
 
@@ -38,9 +40,11 @@ To start
   2. Useful addresses (with the number from the black window):
        http://localhost:8000/                the region
        http://localhost:8000/aide.html       the visitors' help (to adapt to your region)
-       http://localhost:8000/lisezmoi.html   the creator's documentation: everything is detailed there
+       http://localhost:8000/readme.html   the creator's documentation: everything is detailed there
   3. In the 3D region, the help opens by clicking the small "?" panel on the east wall of the example
-     house (visible while walking). With your own GLB, move or delete that panel.
+     house (visible while walking). TO REVIEW with your own GLB: that panel would float in empty space.
+     Delete it (replace the contents of site/region.zones.json with []) or move it with the viewer:
+     see readme.html, section 8.
   4. Put YOUR GLB in the site folder under the name region.glb (it replaces the example), then F5.
   5. A name other than "region"? Double-click renommer-region.bat.
 

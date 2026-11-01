@@ -115,6 +115,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 01/11/2026 |  | after 1.1.0 | Batch 1.1.8: ready-to-use packages: sources in `paquets/`, `fabriquer_paquets.py`, `tests/paquets.py`, `README` section, `PROCEDURES` § 12, overview |
 | 01/11/2026 |  | 1.2.0 | Release 1.2.0: `VERSION` 1.2.0; `CHANGELOG.md` (batches 1.1.1 to 1.1.8 gathered), histories; `galerie-photos.zip` and `region-simple.zip` attached to the GitHub release |
 | 01/11/2026 |  | after 1.2.0 | Batch 1.2.1: chat: the arrows stay in the text while typing; packages: `README.txt` and help; `README`: packages under the demo; `tests/chat_fleches.py` |
+| 01/11/2026 |  | after 1.2.0 | Batch 1.2.2: packages: `readme.html` (reordered sections, world map, help panel to review); movement pad (K key) in the help; clearer `tests/chat_fleches.py` |
 
 ## Useful commands
 

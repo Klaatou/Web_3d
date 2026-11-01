@@ -12,7 +12,7 @@ marche, chaque visiteur est seul.
   2. Dans CE dossier : python presence_server.py     (port 8765 par defaut)
   3. Dans site/region.config.json : "presenceUrl": "ws://*:8765"  et  "chat": true   (le nom du fichier suit le nom de la region)
   4. Servez la region avec "python -m http.server" lance dans le dossier site.
-  Details : site/lisezmoi.html (section 8).
+  Details : site/readme.html (section 4).
 
 Le serveur ECRIT SES FICHIERS ICI (pseudos reserves, bannissements ; journaux si vous les demandez).
 Ne les copiez jamais dans le dossier site ni sur un hebergement.
@@ -31,7 +31,7 @@ visitor is alone.
   2. In THIS folder: python presence_server.py     (port 8765 by default)
   3. In site/region.config.json: "presenceUrl": "ws://*:8765"  and  "chat": true
   4. Serve the region with "python -m http.server" run in the site folder.
-  Details: site/lisezmoi.html (section 8).
+  Details: site/readme.html (section 4).
 
 The server WRITES ITS FILES HERE (reserved nicknames, bans; logs if you ask for them).
 Never copy them into the site folder or onto a web host.

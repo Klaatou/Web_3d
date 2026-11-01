@@ -56,20 +56,20 @@ html[data-lang="fr"] tr[data-l="fr"],html[data-lang="en"] tr[data-l="en"]{displa
   </div>
 </header>
 <div data-l="fr">
-<p>Ce paquet ouvre <strong>votre région</strong> (un fichier GLB) dans un navigateur, sans rien installer pour la visiter. Le nom de la région est <strong><code>region</code></strong> : mettez votre GLB sous le nom <code>region.glb</code>, ou renommez la région (section 6).</p>
+<p>Ce paquet ouvre <strong>votre région</strong> (un fichier GLB) dans un navigateur, sans rien installer pour la visiter. Le nom de la région est <strong><code>region</code></strong> : mettez votre GLB sous le nom <code>region.glb</code>, ou renommez la région (section 9).</p>
 <p>Les documents complets sont dans le dépôt : <a href="https://github.com/Klaatou/Web_3d">https://github.com/Klaatou/Web_3d</a> (<code>docs/fr/PROCEDURES.md</code>, <code>docs/fr/MANUEL.md</code>). Ce fichier n'en reprend que l'essentiel.</p>
-<h2>1. Ce qu'il y a où</h2>
+<h2>1. Où se trouve quoi</h2>
 <ul>
 <li><code>site/region.glb</code> : votre région. <strong>Ici, un petit exemple (sol, maison, deux arbres)</strong> : remplacez-le par le vôtre.</li>
-<li><code>site/region.config.json</code> : les réglages (section 3).</li>
-<li><code>site/region.zones.json</code> : les zones (portails, panneaux, images). Ici une seule : le petit panneau « ? » posé sur le mur est de la maison d'exemple, qui ouvre <code>aide.html</code>. <strong>Avec votre propre GLB, supprimez-la ou déplacez-la</strong> : elle est posée sur la maison de l'exemple.</li>
+<li><code>site/region.config.json</code> : les réglages (section 6).</li>
+<li><code>site/region.zones.json</code> : les zones (portails, panneaux, images). Ici une seule : le petit panneau « ? » posé sur le mur est de la maison d'exemple, qui ouvre <code>aide.html</code>. <strong>À revoir quand vous installez votre propre GLB</strong> : ce panneau est posé sur la maison de l'exemple. Pour le supprimer, ouvrez <code>region.zones.json</code> avec le Bloc-notes et remplacez tout son contenu par <code>[]</code> ; pour le déplacer, voir la section 8.</li>
 <li><code>site/aide.html</code> : l'aide des visiteurs, ouverte par ce panneau. Elle commence par un cadre qui renvoie vers ce document : supprimez ce cadre, puis adaptez la page à votre région.</li>
-<li><code>site/lisezmoi.html</code> : ce document, pour le créateur. Vous pouvez le retirer de <code>site</code> avant de publier.</li>
+<li><code>site/readme.html</code> : ce document, pour le créateur. Vous pouvez le retirer de <code>site</code> avant de publier.</li>
 <li><code>site/medias/aide.jpg</code> : l'image du panneau d'aide.</li>
 <li><code>site/default.json</code> : dit quelle région ouvrir. Il contient <code>{"region": "region"}</code>.</li>
 <li><code>site/index.html</code>, <code>site/lib/</code> : la page et sa bibliothèque 3D : à ne pas modifier.</li>
 <li><code>lancer-region.bat</code> : montre la région sur <strong>cet</strong> ordinateur. <code>renommer-region.bat</code> : change le nom de la région.</li>
-<li><code>presence/</code> : le serveur de présence, facultatif (section 8).</li>
+<li><code>presence/</code> : le serveur de présence, facultatif (section 4).</li>
 </ul>
 <h2>2. Obtenir un GLB depuis un OAR</h2>
 <ol>
@@ -79,7 +79,32 @@ html[data-lang="fr"] tr[data-l="fr"],html[data-lang="en"] tr[data-l="en"]{displa
 <li>Ce paquet convient aux régions « légères » : en gros, un GLB de moins de 150 Mo et de 3 millions de triangles. <code>python glb2tiles.py MaRegion.glb --analyse</code> le vérifie sans rien écrire. Au-delà, il faut découper la région en tuiles : <code>docs/fr/PROCEDURES.md</code> § 2, hors de ce paquet.</li>
 </ol>
 <p>Détails : <code>docs/fr/PROCEDURES.md</code> § 1.</p>
-<h2>3. Les réglages de <code>region.config.json</code></h2>
+<h2>3. Montrer la région</h2>
+<ul>
+<li><strong>Chez vous, ou sur une clé USB (Windows)</strong> : double-cliquez sur <code>lancer-region.bat</code>. Laissez ouverte la fenêtre noire qui affiche « Region sur http://localhost:8000/ - fermez cette fenetre pour arreter. » (le numéro peut être un autre que 8000 si 8000 est pris) : la fermer arrête le serveur. Seul votre ordinateur voit la région. Double-cliquer sur <code>index.html</code> ne marche pas.</li>
+<li><strong>Autre système</strong> : dans le dossier <code>site</code>, <code>python -m http.server</code> puis <code>http://localhost:8000/</code> (8000 est le port par défaut).</li>
+<li><strong>Sur un site web</strong> : copiez <strong>le contenu du dossier <code>site</code></strong>, et rien d'autre, sur votre hébergement. Rien à installer sur le serveur. Gardez les noms de fichiers en minuscules.</li>
+</ul>
+<h2>4. Présence : voir les autres visiteurs et tchatter (facultatif)</h2>
+<p>Par défaut chaque visiteur est seul. Le serveur de présence est fourni dans <code>presence/</code> (copie de <code>presence_server.py</code> du dépôt Web_3d, dossier <code>dist</code>, licence MIT).</p>
+<ol>
+<li>Installez Python (python.org), puis : <code>pip install websockets</code></li>
+<li>Dans le dossier <code>presence</code>, lancez : <code>python presence_server.py</code></li>
+<li>Dans <code>site/region.config.json</code> : <code>"presenceUrl": "ws://*:8765"</code> et <code>"chat": true</code>. Le <code>*</code> veut dire « la même machine que la page ».</li>
+<li>Servez la région avec <code>python -m http.server</code> lancé dans le dossier <code>site</code> (pas avec <code>lancer-region.bat</code>, réservé à votre ordinateur).</li>
+<li>Donnez à vos visiteurs <code>http://ADRESSE:8000/</code>. Pour des proches sur votre réseau, ADRESSE est l'adresse IP de votre PC (commande <code>ipconfig</code>). Pour des visiteurs sur Internet, c'est votre adresse IP publique ou un nom de domaine, <strong>après avoir ouvert les ports 8000 et 8765</strong> de votre box vers votre PC.</li>
+</ol>
+<p>Un visiteur apparaît dans la présence quand il entre en promenade (touche P ou F). <strong>Pour Internet, attention</strong> : cela expose votre ordinateur, qui doit rester allumé, et votre adresse IP peut changer. Si la région est sur un hébergement en https, la présence doit être en <code>wss://</code>, avec un certificat : <code>docs/fr/PROCEDURES.md</code> § 6.</p>
+<p><strong>Données personnelles.</strong> Pseudos, messages et adresses IP des visiteurs sont des données personnelles : prévenez vos visiteurs. Réglages de conservation : options <code>--log-days</code>, <code>--log-ip</code>, <code>--history-days</code> du serveur (<code>docs/fr/MANUEL.md</code> § 18.6, 18.7 et 22.6, <code>docs/fr/PROCEDURES.md</code> § 6). Le serveur écrit ses fichiers dans le dossier <code>presence</code> : ne les copiez jamais dans <code>site</code>.</p>
+<h2>5. Quand ça ne marche pas</h2>
+<ul>
+<li><strong>« Aucune région à ouvrir »</strong> : <code>default.json</code> doit contenir le bon nom, et <code>NOM.config.json</code> doit exister dans <code>site</code> avec ce nom exact.</li>
+<li><strong>La page ne s'ouvre pas en double-cliquant sur <code>index.html</code></strong> : normal, passez par <code>lancer-region.bat</code> ou un hébergement.</li>
+<li><strong>« présence interrompue »</strong> : <code>presenceUrl</code> est rempli mais aucun serveur de présence ne répond. Videz <code>presenceUrl</code>, ou lancez le serveur.</li>
+<li><strong>Une image ou une zone n'apparaît pas sur un hébergement</strong> : vérifiez les majuscules (<code>2.jpg</code> n'est pas <code>2.JPG</code>).</li>
+<li><strong>Plus d'aide</strong> : <a href="https://github.com/Klaatou/Web_3d/blob/main/docs/fr/PROCEDURES.md"><code>docs/fr/PROCEDURES.md</code> § 9</a> dans le <a href="https://github.com/Klaatou/Web_3d">dépôt Web_3d</a>.</li>
+</ul>
+<h2>6. Les réglages de <code>region.config.json</code></h2>
 <p>Ouvrez le fichier avec le Bloc-notes, changez une valeur, enregistrez, puis rechargez la page (F5) : elle relit le fichier à chaque ouverture. Le JSON est strict : gardez les guillemets et les virgules. <strong>Les couleurs sont des nombres décimaux</strong>, pas des codes hexadécimaux.</p>
 <p><strong>Vue de départ</strong></p>
 <table>
@@ -289,11 +314,15 @@ html[data-lang="fr"] tr[data-l="fr"],html[data-lang="en"] tr[data-l="en"]{displa
 </tbody>
 </table>
 <p>Pour changer plusieurs valeurs d'un coup sans éditer le fichier, <code>glb2html.py --update</code> (dossier <code>dist</code> du dépôt) s'en charge : <code>docs/fr/PROCEDURES.md</code> § 3. Toutes les clés sont décrites dans le dépôt (<code>REFERENCE_OPTIONS.md</code>).</p>
-<h2>4. Régler la vue de départ</h2>
+<h2>7. Régler la vue de départ</h2>
 <p>Changez <code>target</code>, <code>camDir</code> et <code>zoom</code> dans <code>region.config.json</code> par petits essais, en rechargeant la page (F5) à chaque fois. Le point <code>target</code> est la position, en mètres, vers laquelle la caméra regarde ; <code>camDir</code> indique d'où elle regarde.</p>
-<h2>5. Poser des zones (portails, panneaux, images)</h2>
-<p>Elles se posent dans le viewer du dépôt, <code>glb-viewer.html</code> (dossier <code>dist</code>) : ouvrez-le, chargez votre GLB, posez les zones, exportez le fichier de zones et copiez-le dans <code>site\</code> sous le nom <code>region.zones.json</code>. Procédure : <code>docs/fr/PROCEDURES.md</code> § 5 et <code>docs/fr/MANUEL.md</code> §§ 3 à 12.</p>
-<h2>6. Renommer la région</h2>
+<h2>8. Poser, déplacer ou supprimer des zones (portails, panneaux, images)</h2>
+<p>Les zones se posent dans le viewer du dépôt, <code>glb-viewer.html</code> (dossier <code>dist</code>, <a href="https://github.com/Klaatou/Web_3d/tree/main/dist">https://github.com/Klaatou/Web_3d/tree/main/dist</a>) : ouvrez-le, chargez votre GLB (« Ouvrir .glb »), puis « Importer zones (.json) » avec <code>site/region.zones.json</code> pour reprendre les zones existantes. Posez, déplacez ou supprimez les zones, cliquez sur « Exporter zones (.json) » et copiez le fichier dans <code>site\</code> sous le nom <code>region.zones.json</code>. Procédure : <code>docs/fr/PROCEDURES.md</code> § 5 et <code>docs/fr/MANUEL.md</code> §§ 3 à 12.</p>
+<p><strong>Le panneau d'aide de l'exemple.</strong> Avec votre propre GLB, il flotte dans le vide : à vous de le supprimer ou de le replacer.
+- <strong>Supprimer</strong> : remplacez tout le contenu de <code>region.zones.json</code> par <code>[]</code>.
+- <strong>Déplacer</strong> : dans le viewer, importez <code>region.zones.json</code>, ouvrez la zone « Aide » dans la liste et réglez sa position ; ou supprimez-la et posez-en une nouvelle (type Image, image <code>aide.jpg</code>, lien <code>aide.html</code>) par un clic sur un mur.
+- <strong>À la main</strong>, dans <code>region.zones.json</code> : <code>x</code>, <code>y</code>, <code>z</code> (la position) et <code>yaw</code> (l'orientation, en radians). Attention : ce sont les coordonnées de <strong>la page</strong>, qui recentre le modèle : elles ne sont pas celles du fichier GLB. Le plus simple est de relever la position dans la page (touche <strong>I</strong>, ligne « Position avatar »).</p>
+<h2>9. Renommer la région</h2>
 <p><strong>Pourquoi.</strong> Pour donner à votre région le nom de votre choix (par exemple <code>MonIle</code>) au lieu de <code>region</code>. Ce nom devient aussi celui du <strong>salon de présence</strong> : les visiteurs d'une région ne voient que ceux de la même.</p>
 <p><strong>Comment.</strong>
 1. Si le lanceur est ouvert, fermez sa fenêtre noire.
@@ -336,48 +365,64 @@ html[data-lang="fr"] tr[data-l="fr"],html[data-lang="en"] tr[data-l="en"]{displa
 - Votre GLB, s'il est déjà dans <code>site</code> sous le nom <code>region.glb</code>, est renommé avec le reste. Un GLB que vous ajouterez plus tard doit porter le <strong>nouveau</strong> nom : <code>MonIle.glb</code>.
 - Pour revenir au nom d'origine, relancez le script avec <code>region</code>.
 - À la main, ce sont exactement ces cinq changements. La page elle-même (<code>index.html</code>) n'est jamais modifiée.</p>
-<h2>7. Montrer la région</h2>
-<ul>
-<li><strong>Chez vous, ou sur une clé USB (Windows)</strong> : double-cliquez sur <code>lancer-region.bat</code>. Laissez ouverte la fenêtre noire qui affiche « Region sur http://localhost:8000/ - fermez cette fenetre pour arreter. » (le numéro peut être un autre que 8000 si 8000 est pris) : la fermer arrête le serveur. Seul votre ordinateur voit la région. Double-cliquer sur <code>index.html</code> ne marche pas.</li>
-<li><strong>Autre système</strong> : dans le dossier <code>site</code>, <code>python -m http.server</code> puis <code>http://localhost:8000/</code> (8000 est le port par défaut).</li>
-<li><strong>Sur un site web</strong> : copiez <strong>le contenu du dossier <code>site</code></strong>, et rien d'autre, sur votre hébergement. Rien à installer sur le serveur. Gardez les noms de fichiers en minuscules.</li>
-</ul>
-<h2>8. Présence : voir les autres visiteurs et tchatter (facultatif)</h2>
-<p>Par défaut chaque visiteur est seul. Le serveur de présence est fourni dans <code>presence/</code> (copie de <code>presence_server.py</code> du dépôt Web_3d, dossier <code>dist</code>, licence MIT).</p>
-<ol>
-<li>Installez Python (python.org), puis : <code>pip install websockets</code></li>
-<li>Dans le dossier <code>presence</code>, lancez : <code>python presence_server.py</code></li>
-<li>Dans <code>site/region.config.json</code> : <code>"presenceUrl": "ws://*:8765"</code> et <code>"chat": true</code>. Le <code>*</code> veut dire « la même machine que la page ».</li>
-<li>Servez la région avec <code>python -m http.server</code> lancé dans le dossier <code>site</code> (pas avec <code>lancer-region.bat</code>, réservé à votre ordinateur).</li>
-<li>Donnez à vos visiteurs <code>http://ADRESSE:8000/</code>. Pour des proches sur votre réseau, ADRESSE est l'adresse IP de votre PC (commande <code>ipconfig</code>). Pour des visiteurs sur Internet, c'est votre adresse IP publique ou un nom de domaine, <strong>après avoir ouvert les ports 8000 et 8765</strong> de votre box vers votre PC.</li>
-</ol>
-<p>Un visiteur apparaît dans la présence quand il entre en promenade (touche P ou F). <strong>Pour Internet, attention</strong> : cela expose votre ordinateur, qui doit rester allumé, et votre adresse IP peut changer. Si la région est sur un hébergement en https, la présence doit être en <code>wss://</code>, avec un certificat : <code>docs/fr/PROCEDURES.md</code> § 6.</p>
-<p><strong>Données personnelles.</strong> Pseudos, messages et adresses IP des visiteurs sont des données personnelles : prévenez vos visiteurs. Réglages de conservation : options <code>--log-days</code>, <code>--log-ip</code>, <code>--history-days</code> du serveur (<code>docs/fr/MANUEL.md</code> § 18.6, 18.7 et 22.6, <code>docs/fr/PROCEDURES.md</code> § 6). Le serveur écrit ses fichiers dans le dossier <code>presence</code> : ne les copiez jamais dans <code>site</code>.</p>
-<h2>9. Quand ça ne marche pas</h2>
-<ul>
-<li><strong>« Aucune région à ouvrir »</strong> : <code>default.json</code> doit contenir le bon nom, et <code>NOM.config.json</code> doit exister dans <code>site</code> avec ce nom exact.</li>
-<li><strong>La page ne s'ouvre pas en double-cliquant sur <code>index.html</code></strong> : normal, passez par <code>lancer-region.bat</code> ou un hébergement.</li>
-<li><strong>« présence interrompue »</strong> : <code>presenceUrl</code> est rempli mais aucun serveur de présence ne répond. Videz <code>presenceUrl</code>, ou lancez le serveur.</li>
-<li><strong>Une image ou une zone n'apparaît pas sur un hébergement</strong> : vérifiez les majuscules (<code>2.jpg</code> n'est pas <code>2.JPG</code>).</li>
-<li><strong>Plus d'aide</strong> : <code>docs/fr/PROCEDURES.md</code> § 9 dans le dépôt.</li>
-</ul>
+<h2>10. Figurer sur une carte des mondes (facultatif)</h2>
+<p>Une <strong>carte des mondes</strong> est une page (<code>carte.html</code>) qui présente plusieurs régions sous forme de tuiles cliquables. Si quelqu'un tient une carte commune à plusieurs créateurs, voici ce qu'il faut lui transmettre pour que votre région y figure :</p>
+<table>
+<thead>
+<tr>
+<th>Information</th>
+<th>Exemple</th>
+<th>Remarque</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>nom affiché</td>
+<td><code>Mon île</code></td>
+<td>60 caractères au plus</td>
+</tr>
+<tr>
+<td>adresse de la page</td>
+<td><code>https://monsite.exemple/index.html</code></td>
+<td><strong>complète</strong> (<code>https://…</code>) : une adresse relative ne marcherait pas depuis une autre carte</td>
+</tr>
+<tr>
+<td>vignette</td>
+<td>une image jpg, png ou webp de 140 Ko au plus, ou son adresse <code>https://monsite.exemple/vignette.jpg</code></td>
+<td>une capture de votre région vue de dessus ou à hauteur d'yeux</td>
+</tr>
+<tr>
+<td>place sur la grille (facultatif)</td>
+<td><code>1000,1001</code></td>
+<td>comme dans OpenSim : x vers l'est, y vers le nord</td>
+</tr>
+<tr>
+<td>présence (facultatif)</td>
+<td><code>wss://…</code> et le nom du salon (la clé <code>room</code> de <code>region.config.json</code>)</td>
+<td>pour que la carte compte les visiteurs ; si votre serveur de présence limite les origines (option <code>--origins</code>), ajoutez-y l'adresse de la carte</td>
+</tr>
+</tbody>
+</table>
+<p>Tout cela tient en une fiche de quelques lignes (format <code>regions.json</code>, manuel § 27.6) :</p>
+<p><code>{"id": "MonIle", "name": "Mon île", "url": "https://monsite.exemple/index.html", "x": 1000, "y": 1001, "thumb": "https://monsite.exemple/vignette.jpg"}</code></p>
+<p>Pour que <strong>votre</strong> page ait elle aussi le bouton « Carte (M) », renseignez la clé <code>mapUrl</code> de <code>region.config.json</code> avec l'adresse du <code>regions.json</code> de la carte (une carte hébergée ailleurs doit autoriser sa lecture depuis votre site). Rien de tout cela n'est nécessaire pour une région seule.</p>
 </div>
 
 <div data-l="en">
-<p>This package opens <strong>your region</strong> (a GLB file) in a browser, with nothing to install to visit it. The region's name is <strong><code>region</code></strong>: put your GLB under the name <code>region.glb</code>, or rename the region (section 6).</p>
+<p>This package opens <strong>your region</strong> (a GLB file) in a browser, with nothing to install to visit it. The region's name is <strong><code>region</code></strong>: put your GLB under the name <code>region.glb</code>, or rename the region (section 9).</p>
 <p>The full documents are in the repository: <a href="https://github.com/Klaatou/Web_3d">https://github.com/Klaatou/Web_3d</a> (<code>docs/en/PROCEDURES.md</code>, <code>docs/en/MANUAL.md</code>). This file only repeats the essentials.</p>
 <h2>1. What is where</h2>
 <ul>
 <li><code>site/region.glb</code>: your region. <strong>Here, a tiny example (ground, house, two trees)</strong>: replace it with yours.</li>
-<li><code>site/region.config.json</code>: the settings (section 3).</li>
-<li><code>site/region.zones.json</code>: the zones (portals, signs, pictures). Just one here: the small “?” panel on the east wall of the example house, which opens <code>aide.html</code>. <strong>With your own GLB, delete it or move it</strong>: it sits on the example's house.</li>
+<li><code>site/region.config.json</code>: the settings (section 6).</li>
+<li><code>site/region.zones.json</code>: the zones (portals, signs, pictures). Just one here: the small "?" panel on the east wall of the example house, which opens <code>aide.html</code>. <strong>To review when you install your own GLB</strong>: that panel sits on the example's house. To delete it, open <code>region.zones.json</code> with Notepad and replace all its contents with <code>[]</code>; to move it, see section 8.</li>
 <li><code>site/aide.html</code>: the visitors' help, opened by that panel. It starts with a box pointing to this document: delete that box, then adapt the page to your region.</li>
-<li><code>site/lisezmoi.html</code>: this document, for the creator. You may remove it from <code>site</code> before publishing.</li>
+<li><code>site/readme.html</code>: this document, for the creator. You may remove it from <code>site</code> before publishing.</li>
 <li><code>site/medias/aide.jpg</code>: the help panel's image.</li>
 <li><code>site/default.json</code>: says which region to open. It contains <code>{"region": "region"}</code>.</li>
 <li><code>site/index.html</code>, <code>site/lib/</code>: the page and its 3D library: do not edit.</li>
 <li><code>lancer-region.bat</code>: shows the region on <strong>this</strong> computer. <code>renommer-region.bat</code>: changes the region's name.</li>
-<li><code>presence/</code>: the presence server, optional (section 8).</li>
+<li><code>presence/</code>: the presence server, optional (section 4).</li>
 </ul>
 <h2>2. Getting a GLB from an OAR</h2>
 <ol>
@@ -387,7 +432,32 @@ html[data-lang="fr"] tr[data-l="fr"],html[data-lang="en"] tr[data-l="en"]{displa
 <li>This package suits "light" regions: roughly a GLB under 150 MB and 3 million triangles. <code>python glb2tiles.py MyRegion.glb --analyse</code> checks it without writing anything. Beyond that the region must be split into tiles: <code>docs/en/PROCEDURES.md</code> § 2, outside this package.</li>
 </ol>
 <p>Details: <code>docs/en/PROCEDURES.md</code> § 1.</p>
-<h2>3. The settings in <code>region.config.json</code></h2>
+<h2>3. Showing the region</h2>
+<ul>
+<li><strong>At home, or on a USB stick (Windows)</strong>: double-click <code>lancer-region.bat</code>. Keep open the black window that shows "Region sur http://localhost:8000/ - fermez cette fenetre pour arreter." (the number may differ from 8000 if 8000 is taken): closing it stops the server. Only your computer sees the region. Double-clicking <code>index.html</code> does not work.</li>
+<li><strong>Other systems</strong>: in the <code>site</code> folder, <code>python -m http.server</code> then <code>http://localhost:8000/</code> (8000 is the default port).</li>
+<li><strong>On a website</strong>: copy <strong>the contents of the <code>site</code> folder</strong>, and nothing else, to your hosting. Nothing to install on the server. Keep file names in lowercase.</li>
+</ul>
+<h2>4. Presence: seeing the other visitors and chatting (optional)</h2>
+<p>By default every visitor is alone. The presence server is supplied in <code>presence/</code> (a copy of <code>presence_server.py</code> from the Web_3d repository, <code>dist</code> folder, MIT licence).</p>
+<ol>
+<li>Install Python (python.org), then: <code>pip install websockets</code></li>
+<li>In the <code>presence</code> folder, run: <code>python presence_server.py</code></li>
+<li>In <code>site/region.config.json</code>: <code>"presenceUrl": "ws://*:8765"</code> and <code>"chat": true</code>. The <code>*</code> means "the same machine as the page".</li>
+<li>Serve the region with <code>python -m http.server</code> run in the <code>site</code> folder (not with <code>lancer-region.bat</code>, which is only for your own computer).</li>
+<li>Give your visitors <code>http://ADDRESS:8000/</code>. For people on your own network, ADDRESS is your PC's IP address (the <code>ipconfig</code> command). For visitors on the Internet, it is your public IP address or a domain name, <strong>after opening ports 8000 and 8765</strong> on your router towards your PC.</li>
+</ol>
+<p>A visitor appears in the presence when they start walking (P or F key). <strong>For the Internet, be careful</strong>: this exposes your computer, which must stay on, and your IP address may change. If the region is on an https host, the presence must be <code>wss://</code>, with a certificate: <code>docs/en/PROCEDURES.md</code> § 6.</p>
+<p><strong>Personal data.</strong> Visitors' nicknames, chat messages and IP addresses are personal data: tell your visitors. Retention settings: the server's <code>--log-days</code>, <code>--log-ip</code>, <code>--history-days</code> options (<code>docs/en/MANUAL.md</code> § 18.6, 18.7 and 22.6, <code>docs/en/PROCEDURES.md</code> § 6). The server writes its files in the <code>presence</code> folder: never copy them into <code>site</code>.</p>
+<h2>5. When it does not work</h2>
+<ul>
+<li><strong>"No region to open"</strong>: <code>default.json</code> must contain the right name, and <code>NAME.config.json</code> must exist in <code>site</code> with that exact name.</li>
+<li><strong>The page does not open by double-clicking <code>index.html</code></strong>: expected, use <code>lancer-region.bat</code> or a web host.</li>
+<li><strong>"presence interrupted"</strong>: <code>presenceUrl</code> is filled in but no presence server answers. Empty <code>presenceUrl</code>, or start the server.</li>
+<li><strong>A picture or zone does not show on a host</strong>: check capital letters (<code>2.jpg</code> is not <code>2.JPG</code>).</li>
+<li><strong>More help</strong>: <a href="https://github.com/Klaatou/Web_3d/blob/main/docs/en/PROCEDURES.md"><code>docs/en/PROCEDURES.md</code> § 9</a> in the <a href="https://github.com/Klaatou/Web_3d">Web_3d repository</a>.</li>
+</ul>
+<h2>6. The settings in <code>region.config.json</code></h2>
 <p>Open the file with Notepad, change a value, save, then reload the page (F5): it re-reads the file at every opening. The JSON is strict: keep the quotes and commas. <strong>Colours are decimal numbers</strong>, not hexadecimal codes.</p>
 <p><strong>Starting view</strong></p>
 <table>
@@ -597,11 +667,15 @@ html[data-lang="fr"] tr[data-l="fr"],html[data-lang="en"] tr[data-l="en"]{displa
 </tbody>
 </table>
 <p>To change several values at once without editing the file, <code>glb2html.py --update</code> (the repository's <code>dist</code> folder) does it: <code>docs/en/PROCEDURES.md</code> § 3. All keys are described in the repository (<code>REFERENCE_OPTIONS.md</code>).</p>
-<h2>4. Setting the starting view</h2>
+<h2>7. Setting the starting view</h2>
 <p>Change <code>target</code>, <code>camDir</code> and <code>zoom</code> in <code>region.config.json</code> by small trials, reloading the page (F5) each time. <code>target</code> is the position, in metres, the camera looks at; <code>camDir</code> says where it looks from.</p>
-<h2>5. Placing zones (portals, signs, pictures)</h2>
-<p>They are placed in the repository's viewer, <code>glb-viewer.html</code> (<code>dist</code> folder): open it, load your GLB, place the zones, export the zones file and copy it into <code>site\</code> under the name <code>region.zones.json</code>. Procedure: <code>docs/en/PROCEDURES.md</code> § 5 and <code>docs/en/MANUAL.md</code> §§ 3 to 12.</p>
-<h2>6. Renaming the region</h2>
+<h2>8. Placing, moving or deleting zones (portals, signs, pictures)</h2>
+<p>Zones are placed in the repository's viewer, <code>glb-viewer.html</code> (the <code>dist</code> folder, <a href="https://github.com/Klaatou/Web_3d/tree/main/dist">https://github.com/Klaatou/Web_3d/tree/main/dist</a>): open it, load your GLB ("Open .glb"), then "Import zones (.json)" with <code>site/region.zones.json</code> to bring in the existing zones. Place, move or delete zones, click "Export zones (.json)" and copy the file into <code>site\</code> under the name <code>region.zones.json</code>. Procedure: <code>docs/en/PROCEDURES.md</code> § 5 and <code>docs/en/MANUAL.md</code> §§ 3 to 12.</p>
+<p><strong>The example's help panel.</strong> With your own GLB it floats in empty space: you have to delete it or put it back somewhere.
+- <strong>Delete</strong>: replace all the contents of <code>region.zones.json</code> with <code>[]</code>.
+- <strong>Move</strong>: in the viewer, import <code>region.zones.json</code>, open the "Aide" zone in the list and set its position; or delete it and place a new one (Image type, image <code>aide.jpg</code>, link <code>aide.html</code>) by clicking a wall.
+- <strong>By hand</strong>, in <code>region.zones.json</code>: <code>x</code>, <code>y</code>, <code>z</code> (the position) and <code>yaw</code> (the orientation, in radians). Careful: these are <strong>the page's</strong> coordinates, and the page recentres the model: they are not those of the GLB file. The simplest is to read the position in the page (the <strong>I</strong> key, "Position avatar" line).</p>
+<h2>9. Renaming the region</h2>
 <p><strong>Why.</strong> To give your region the name you want (for example <code>MyIsland</code>) instead of <code>region</code>. This name is also the <strong>presence room</strong>: visitors of one region only see those of the same one.</p>
 <p><strong>How.</strong>
 1. If the launcher is open, close its black window.
@@ -644,31 +718,47 @@ html[data-lang="fr"] tr[data-l="fr"],html[data-lang="en"] tr[data-l="en"]{displa
 - Your GLB, if it is already in <code>site</code> as <code>region.glb</code>, is renamed with the rest. A GLB you add later must carry the <strong>new</strong> name: <code>MyIsland.glb</code>.
 - To go back to the original name, run the script again with <code>region</code>.
 - By hand, these are exactly the five changes. The page itself (<code>index.html</code>) is never modified.</p>
-<h2>7. Showing the region</h2>
-<ul>
-<li><strong>At home, or on a USB stick (Windows)</strong>: double-click <code>lancer-region.bat</code>. Keep open the black window that shows "Region sur http://localhost:8000/ - fermez cette fenetre pour arreter." (the number may differ from 8000 if 8000 is taken): closing it stops the server. Only your computer sees the region. Double-clicking <code>index.html</code> does not work.</li>
-<li><strong>Other systems</strong>: in the <code>site</code> folder, <code>python -m http.server</code> then <code>http://localhost:8000/</code> (8000 is the default port).</li>
-<li><strong>On a website</strong>: copy <strong>the contents of the <code>site</code> folder</strong>, and nothing else, to your hosting. Nothing to install on the server. Keep file names in lowercase.</li>
-</ul>
-<h2>8. Presence: seeing the other visitors and chatting (optional)</h2>
-<p>By default every visitor is alone. The presence server is supplied in <code>presence/</code> (a copy of <code>presence_server.py</code> from the Web_3d repository, <code>dist</code> folder, MIT licence).</p>
-<ol>
-<li>Install Python (python.org), then: <code>pip install websockets</code></li>
-<li>In the <code>presence</code> folder, run: <code>python presence_server.py</code></li>
-<li>In <code>site/region.config.json</code>: <code>"presenceUrl": "ws://*:8765"</code> and <code>"chat": true</code>. The <code>*</code> means "the same machine as the page".</li>
-<li>Serve the region with <code>python -m http.server</code> run in the <code>site</code> folder (not with <code>lancer-region.bat</code>, which is only for your own computer).</li>
-<li>Give your visitors <code>http://ADDRESS:8000/</code>. For people on your own network, ADDRESS is your PC's IP address (the <code>ipconfig</code> command). For visitors on the Internet, it is your public IP address or a domain name, <strong>after opening ports 8000 and 8765</strong> on your router towards your PC.</li>
-</ol>
-<p>A visitor appears in the presence when they start walking (P or F key). <strong>For the Internet, be careful</strong>: this exposes your computer, which must stay on, and your IP address may change. If the region is on an https host, the presence must be <code>wss://</code>, with a certificate: <code>docs/en/PROCEDURES.md</code> § 6.</p>
-<p><strong>Personal data.</strong> Visitors' nicknames, chat messages and IP addresses are personal data: tell your visitors. Retention settings: the server's <code>--log-days</code>, <code>--log-ip</code>, <code>--history-days</code> options (<code>docs/en/MANUAL.md</code> § 18.6, 18.7 and 22.6, <code>docs/en/PROCEDURES.md</code> § 6). The server writes its files in the <code>presence</code> folder: never copy them into <code>site</code>.</p>
-<h2>9. When it does not work</h2>
-<ul>
-<li><strong>"No region to open"</strong>: <code>default.json</code> must contain the right name, and <code>NAME.config.json</code> must exist in <code>site</code> with that exact name.</li>
-<li><strong>The page does not open by double-clicking <code>index.html</code></strong>: expected, use <code>lancer-region.bat</code> or a web host.</li>
-<li><strong>"presence interrupted"</strong>: <code>presenceUrl</code> is filled in but no presence server answers. Empty <code>presenceUrl</code>, or start the server.</li>
-<li><strong>A picture or zone does not show on a host</strong>: check capital letters (<code>2.jpg</code> is not <code>2.JPG</code>).</li>
-<li><strong>More help</strong>: <code>docs/en/PROCEDURES.md</code> § 9 in the repository.</li>
-</ul>
+<h2>10. Appearing on a world map (optional)</h2>
+<p>A <strong>world map</strong> is a page (<code>carte.html</code>) that shows several regions as clickable tiles. If someone keeps a map shared by several creators, here is what to send them so that your region appears on it:</p>
+<table>
+<thead>
+<tr>
+<th>Information</th>
+<th>Example</th>
+<th>Note</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>displayed name</td>
+<td><code>My island</code></td>
+<td>60 characters at most</td>
+</tr>
+<tr>
+<td>page address</td>
+<td><code>https://mysite.example/index.html</code></td>
+<td><strong>complete</strong> (<code>https://…</code>): a relative address would not work from another map</td>
+</tr>
+<tr>
+<td>thumbnail</td>
+<td>a jpg, png or webp image of 140 KB at most, or its address <code>https://mysite.example/thumbnail.jpg</code></td>
+<td>a picture of your region seen from above or at eye level</td>
+</tr>
+<tr>
+<td>place on the grid (optional)</td>
+<td><code>1000,1001</code></td>
+<td>as in OpenSim: x towards the east, y towards the north</td>
+</tr>
+<tr>
+<td>presence (optional)</td>
+<td><code>wss://…</code> and the room name (the <code>room</code> key of <code>region.config.json</code>)</td>
+<td>so that the map counts the visitors; if your presence server limits origins (the <code>--origins</code> option), add the map's address to it</td>
+</tr>
+</tbody>
+</table>
+<p>All of this fits in a card of a few lines (<code>regions.json</code> format, manual § 27.6):</p>
+<p><code>{"id": "MyIsland", "name": "My island", "url": "https://mysite.example/index.html", "x": 1000, "y": 1001, "thumb": "https://mysite.example/thumbnail.jpg"}</code></p>
+<p>For <strong>your</strong> page to have the "Map (M)" button too, set the <code>mapUrl</code> key of <code>region.config.json</code> to the address of the map's <code>regions.json</code> (a map hosted elsewhere must allow it to be read from your site). None of this is needed for a region single one.</p>
 </div>
 </main>
 </body>

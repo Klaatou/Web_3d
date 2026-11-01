@@ -43,11 +43,20 @@ async def main():
     site = tmp / "site"; site.mkdir()
     sol_glb(tmp / "sol.glb")
     pport, wport = port_libre(), port_libre()
+    if subprocess.run([sys.executable, "-c", "import websockets"], capture_output=True).returncode:
+        sys.exit("[ECHEC] la bibliotheque « websockets » n'est pas installee : le serveur de presence ne peut pas demarrer (pip install websockets), donc le chat n'existe pas.")
     pres = subprocess.Popen([sys.executable, str(DIST / "presence_server.py"), "--host", "127.0.0.1", "--port", str(pport),
                              "--identities", str(tmp / "id.json"), "--bans", str(tmp / "bans.json")], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     r = subprocess.run([sys.executable, str(DIST / "glb2html.py"), str(tmp / "sol.glb"), "-o", str(site / "page.html"), "--no-sea", "--presence-url", f"ws://127.0.0.1:{pport}", "--room", "t", "--chat", *vend], capture_output=True, text=True)
     if r.returncode:
         pres.kill(); sys.exit(f"[ECHEC] generation\n{r.stdout}{r.stderr}")
+    for _ in range(60):   # le serveur de presence doit repondre avant d'ouvrir la page
+        try:
+            socket.create_connection(("127.0.0.1", pport), timeout=0.3).close(); break
+        except OSError:
+            time.sleep(0.2)
+    else:
+        pres.kill(); sys.exit("[ECHEC] le serveur de presence ne repond pas sur le port " + str(pport))
     page = site / "page.html"
     page.write_text(page.read_text(encoding="utf-8").replace("const viewer = createViewer(", "const viewer = window.__v = createViewer(", 1), encoding="utf-8")
     web = subprocess.Popen([sys.executable, "-m", "http.server", str(wport), "--bind", "127.0.0.1"], cwd=site, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

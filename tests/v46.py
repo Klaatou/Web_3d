@@ -120,7 +120,7 @@ async def main():
         k2 = await o.ev("({ pad: document.getElementById('pad').hidden, cb: document.getElementById('centerBtn').hidden, chk: document.getElementById('visPad').checked })")
         rapport(not k2["pad"] and k2["cb"] and k2["chk"], "le bouton « Flèches (K) » les remet", k2)
         hlp = await o.txt("helpBody")
-        rapport("K : flèches à l'écran" in hlp, "aide : touche K")
+        rapport("K : pavé de déplacement (flèches à l'écran)" in hlp, "aide : touche K (pavé de déplacement)")
 
         print("--- 2. ordinateur, promenade")
         await o.walk()

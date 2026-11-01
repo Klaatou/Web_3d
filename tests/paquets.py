@@ -48,7 +48,7 @@ for nom in ("galerie-photos", "region-simple"):
     absentes = [z["target"] for z in zones if z.get("type") == "image" and not (site / "medias" / z["target"]).is_file()]
     rapport(not absentes, f"{nom} : chaque zone image a son fichier dans medias", absentes)
     # aide des visiteurs (aide.html), documentation du createur, zone d'aide, script de renommage
-    doc = "galerie.html" if nom == "galerie-photos" else "lisezmoi.html"
+    doc = "galerie.html" if nom == "galerie-photos" else "readme.html"
     rapport((site / "aide.html").is_file() and (site / doc).is_file(), f"{nom} : site/aide.html et site/{doc}")
     aide = (site / "aide.html").read_text(encoding="utf-8")
     rapport(f'href="{doc}"' in aide and 'id="doc-createur"' in aide, f"{nom} : aide.html commence par le cadre qui renvoie vers {doc}")

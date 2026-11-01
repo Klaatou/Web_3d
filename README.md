@@ -10,7 +10,7 @@ English | [Français](README.fr.md)
 
 **At home, without reading all the documentation**: two ready-to-use packages can be downloaded from the [releases page](https://github.com/Klaatou/Web_3d/releases/latest):
 
-- **`region-simple.zip`**: your OpenSim region (a GLB file) in a browser. You put your GLB under `site/region.glb`; `renommer-region.bat` changes the name; `site/lisezmoi.html` explains the settings and how to get a GLB from an OAR.
+- **`region-simple.zip`**: your OpenSim region (a GLB file) in a browser. You put your GLB under `site/region.glb`; `renommer-region.bat` changes the name; `site/readme.html` explains the settings and how to get a GLB from an OAR.
 - **`galerie-photos.zip`**: a 3D gallery of 30 photos. You replace the images in `site/medias/` (`1.jpg` to `30.jpg`); `site/galerie.html` documents everything, `renommer-galerie.bat` changes the name.
 
 In both: unzip, read `README.txt`, double-click the launcher (Windows), then copy the contents of `site/` to a web host to publish. The optional presence server is in `presence/`. The sources are in `paquets/`; `python fabriquer_paquets.py` rebuilds the zips (`docs/en/PROCEDURES.md` § 12, or `docs/fr/PROCEDURES.md` in French).

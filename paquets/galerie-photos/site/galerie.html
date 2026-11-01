@@ -138,6 +138,47 @@ html[data-lang="fr"] tr[data-l="fr"],html[data-lang="en"] tr[data-l="en"]{displa
 </table>
 <p>Le nom ne peut contenir que des lettres, des chiffres, <code>-</code> et <code>_</code> (ni espace, ni point) ; évitez les accents. Si un fichier du nouveau nom existe déjà dans <code>site</code>, le script s'arrête sans rien modifier. Pour revenir au nom d'origine, relancez-le avec <code>galerie</code>. À la main, ce sont exactement ces cinq changements. Les liens des zones (<code>aide.html</code>) et la page elle-même (<code>index.html</code>) ne changent pas.</p>
 
+<h2>8. Figurer sur une carte des mondes (facultatif)</h2>
+<p>Une <strong>carte des mondes</strong> est une page (<code>carte.html</code>) qui présente plusieurs régions sous forme de tuiles cliquables. Si quelqu'un tient une carte commune à plusieurs créateurs, voici ce qu'il faut lui transmettre pour que votre galerie y figure :</p>
+<table>
+<thead>
+<tr>
+<th>Information</th>
+<th>Exemple</th>
+<th>Remarque</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>nom affiché</td>
+<td><code>Mon île</code></td>
+<td>60 caractères au plus</td>
+</tr>
+<tr>
+<td>adresse de la page</td>
+<td><code>https://monsite.exemple/index.html</code></td>
+<td><strong>complète</strong> (<code>https://…</code>) : une adresse relative ne marcherait pas depuis une autre carte</td>
+</tr>
+<tr>
+<td>vignette</td>
+<td>une image jpg, png ou webp de 140 Ko au plus, ou son adresse <code>https://monsite.exemple/vignette.jpg</code></td>
+<td>une capture de votre région vue de dessus ou à hauteur d'yeux</td>
+</tr>
+<tr>
+<td>place sur la grille (facultatif)</td>
+<td><code>1000,1001</code></td>
+<td>comme dans OpenSim : x vers l'est, y vers le nord</td>
+</tr>
+<tr>
+<td>présence (facultatif)</td>
+<td><code>wss://…</code> et le nom du salon (la clé <code>room</code> de <code>galerie.config.json</code>)</td>
+<td>pour que la carte compte les visiteurs ; si votre serveur de présence limite les origines (option <code>--origins</code>), ajoutez-y l'adresse de la carte</td>
+</tr>
+</tbody>
+</table>
+<p>Tout cela tient en une fiche de quelques lignes (format <code>regions.json</code>, manuel § 27.6) :</p>
+<p><code>{"id": "MonIle", "name": "Mon île", "url": "https://monsite.exemple/index.html", "x": 1000, "y": 1001, "thumb": "https://monsite.exemple/vignette.jpg"}</code></p>
+<p>Pour que <strong>votre</strong> page ait elle aussi le bouton « Carte (M) », renseignez la clé <code>mapUrl</code> de <code>galerie.config.json</code> avec l'adresse du <code>regions.json</code> de la carte (une carte hébergée ailleurs doit autoriser sa lecture depuis votre site). Rien de tout cela n'est nécessaire pour une galerie seule.</p>
 <div class="note"><b>Poids de vos fichiers photo.</b> La page ne limite pas le poids des fichiers (leur taille en Ko ou en Mo, telle que l'affiche l'explorateur de fichiers), mais chaque visiteur doit les télécharger : plus un fichier est lourd, plus la galerie met de temps à s'afficher, surtout avec une connexion lente. Les photos fournies pèsent 47 Ko chacune en moyenne (1,4 Mo pour les 30). Repère (estimation, non mesurée) : moins de 500 Ko par fichier. Un logiciel de retouche permet de réduire le poids d'une photo (moins de pixels, ou compression JPEG plus forte).</div>
 
 <p><a href="https://github.com/Klaatou/Web_3d">Web_3d sur GitHub</a> (code, manuel, éditeur de zones).</p>
@@ -226,6 +267,47 @@ html[data-lang="fr"] tr[data-l="fr"],html[data-lang="en"] tr[data-l="en"]{displa
 </table>
 <p>The name may only contain letters, digits, <code>-</code> and <code>_</code> (no space, no dot); avoid accents. If a file with the new name already exists in <code>site</code>, the script stops without changing anything. To go back to the original name, run it again with <code>galerie</code>. By hand, these are exactly the five changes. The zones' links (<code>aide.html</code>) and the page itself (<code>index.html</code>) do not change.</p>
 
+<h2>8. Appearing on a world map (optional)</h2>
+<p>A <strong>world map</strong> is a page (<code>carte.html</code>) that shows several regions as clickable tiles. If someone keeps a map shared by several creators, here is what to send them so that your gallery appears on it:</p>
+<table>
+<thead>
+<tr>
+<th>Information</th>
+<th>Example</th>
+<th>Note</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>displayed name</td>
+<td><code>My island</code></td>
+<td>60 characters at most</td>
+</tr>
+<tr>
+<td>page address</td>
+<td><code>https://mysite.example/index.html</code></td>
+<td><strong>complete</strong> (<code>https://…</code>): a relative address would not work from another map</td>
+</tr>
+<tr>
+<td>thumbnail</td>
+<td>a jpg, png or webp image of 140 KB at most, or its address <code>https://mysite.example/thumbnail.jpg</code></td>
+<td>a picture of your region seen from above or at eye level</td>
+</tr>
+<tr>
+<td>place on the grid (optional)</td>
+<td><code>1000,1001</code></td>
+<td>as in OpenSim: x towards the east, y towards the north</td>
+</tr>
+<tr>
+<td>presence (optional)</td>
+<td><code>wss://…</code> and the room name (the <code>room</code> key of <code>galerie.config.json</code>)</td>
+<td>so that the map counts the visitors; if your presence server limits origins (the <code>--origins</code> option), add the map's address to it</td>
+</tr>
+</tbody>
+</table>
+<p>All of this fits in a card of a few lines (<code>regions.json</code> format, manual § 27.6):</p>
+<p><code>{"id": "MyIsland", "name": "My island", "url": "https://mysite.example/index.html", "x": 1000, "y": 1001, "thumb": "https://mysite.example/thumbnail.jpg"}</code></p>
+<p>For <strong>your</strong> page to have the "Map (M)" button too, set the <code>mapUrl</code> key of <code>galerie.config.json</code> to the address of the map's <code>regions.json</code> (a map hosted elsewhere must allow it to be read from your site). None of this is needed for a gallery single one.</p>
 <div class="note"><b>File size of your photos.</b> The page does not limit the size of your photo files (in KB or MB, as your file explorer shows it), but every visitor has to download them: the larger a file, the longer the gallery takes to appear, especially on a slow connection. The supplied photos weigh 47 KB each on average (1.4 MB for the 30). A rough guide (estimate, not measured): under 500 KB per file. An image editor can reduce a photo's size (fewer pixels, or stronger JPEG compression).</div>
 
 <p><a href="https://github.com/Klaatou/Web_3d">Web_3d on GitHub</a> (code, manual, zone editor).</p>
