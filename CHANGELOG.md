@@ -4,6 +4,11 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.2.0)
 
+### 01/11/2026 : version 1.2.3 : test du chat plus rigoureux
+
+- **Test** `tests/chat_fleches.py` : il attend l'état réel de la présence (`en ligne`) au lieu d'un texte d'aide présent dès le départ, laisse 1,5 s à la page avant d'appuyer sur Entrée, et affiche l'état complet (présence, focus de la fenêtre, champ, élément actif, curseur) quand un contrôle échoue. Constat de Klaatou : le test échouait chez lui alors que la page marchait (diagnostic : Entrée ouvre le champ avec le focus, la flèche gauche déplace le curseur, Échap ferme). Aucun changement de la page.
+- **Test** `tests/chat_fleches.py`: it waits for the real presence state (`online`) instead of a help text that exists from the start, gives the page 1.5 s before pressing Enter, and prints the full state (presence, window focus, field, active element, caret) when a check fails. Klaatou's finding: the test failed on his machine while the page worked (diagnostic: Enter opens the field with focus, the left arrow moves the caret, Esc closes it). No change to the page.
+
 ### 01/11/2026 : version 1.2.2 : documentation des paquets (readme.html), pavé de déplacement
 
 - **Paquets** : `lisezmoi.html` devient `readme.html` (même nom que `README.txt`) ; sa première section s'appelle « Où se trouve quoi » et les réglages, la vue de départ, les zones et le renommage passent à la fin de la page (sections 6 à 9) ; nouvelle section « Figurer sur une carte des mondes » (ce qu'il faut transmettre à une carte commune : nom, adresse complète, vignette, place sur la grille, présence), aussi dans `galerie.html` (section 8) ; le panneau d'aide de la maison d'exemple est signalé « à revoir avec votre GLB », avec la façon de le supprimer ou de le déplacer (viewer ou `region.zones.json`) et pourquoi les coordonnées sont celles de la page ; liens vers le dépôt (convoar, dossier `dist`, procédures) ; `README.txt` : même signalement du panneau ; `aide.html` : la touche K est décrite comme le pavé de déplacement.

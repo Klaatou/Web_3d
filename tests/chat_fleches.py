@@ -70,13 +70,15 @@ async def main():
             await pg.goto(f"http://127.0.0.1:{wport}/page.html")
             await pg.wait_for_function("document.getElementById('msg') === null", timeout=90000); await pg.wait_for_timeout(2500)
             await pg.keyboard.press("f"); await pg.wait_for_function("window.__v.walking", timeout=10000)
-            try:
-                await pg.wait_for_function("document.getElementById('chatHelp') && /Entr/.test(document.getElementById('chatHelp').textContent)", timeout=20000)
-            except Exception:
-                pass
             ev = lambda s: pg.evaluate(s)
-            await pg.keyboard.press("Enter"); await pg.wait_for_timeout(500)
-            rapport(await ev("document.activeElement && document.activeElement.id") == "chatInput", "Entree ouvre la saisie du chat (le champ a le focus)")
+            ETAT = "(() => { const i = document.getElementById('chatInput'), a = document.activeElement; return { presence: window.__v.getPresence().state, fenetre_focus: document.hasFocus(), champ_cache: i.hidden, actif: a ? (a.id || a.tagName) : null, curseur: i.selectionStart, texte: i.value }; })()"
+            try:   # l'etat reel de la presence (le texte d'aide du chat existe avant la connexion et ne prouve rien)
+                await pg.wait_for_function("window.__v.getPresence().state === 'online'", timeout=30000)
+            except Exception:
+                rapport(False, "la presence est en ligne avant d'ecrire", await ev(ETAT))
+            await pg.wait_for_timeout(1500)
+            await pg.keyboard.press("Enter"); await pg.wait_for_timeout(800)
+            rapport(await ev("document.activeElement && document.activeElement.id") == "chatInput", "Entree ouvre la saisie du chat (le champ a le focus)", await ev(ETAT))
             await pg.keyboard.type("abc")
             w0 = await ev("(() => { const w = window.__v.getWalk(); return [w.yaw, w.pos.slice()]; })()")
             await pg.keyboard.down("ArrowLeft")
