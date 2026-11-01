@@ -30,6 +30,8 @@ Without convoar.exe, oar2glb.py cannot perform the OAR → GLB conversion. Its l
 
 ## Build
 
+**The ready-to-use files are already in `dist/`** (viewer, generator, presence server, tools): there is no need to build to use them. `python build.py` is only needed if you change `src/` or `tools/`.
+
 Python 3.9 or later is required.
 
 ```

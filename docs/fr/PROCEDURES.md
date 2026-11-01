@@ -100,7 +100,7 @@ Les zones d'une région en tuiles s'écrivent dans le repère d'origine du modè
 
 ## 6. Serveur de présence (positions, chat, modération)
 
-1. **Installer** une fois : `pip install websockets`
+1. **Récupérer et installer** : `presence_server.py` est dans le dossier `dist\` du dépôt, prêt à l'emploi (pas besoin de fabriquer) ; installe une fois sa dépendance : `pip install websockets`
 2. **Lancer** (le journal relatif est écrit dans le dossier du script ; `--log-ip raw` écrit les adresses IP en clair, `--log-days` limite la conservation, **`--log-days 0` conserve les journaux sans limite**) :
    `python ".\presence_server.py" --log presence.log --log-ip raw --log-days 0`
    Historique du chat (v37) : 200 derniers messages rejoués aux nouveaux arrivants (`--history`) ; `--history-file chat.jsonl` le garde entre deux relances (messages = données personnelles, jamais d'adresse IP dans ce fichier), `--history-days N` (30 ; 0 = tout conserver) limite la relecture au démarrage.

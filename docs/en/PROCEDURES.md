@@ -100,7 +100,7 @@ The zones of a tiled region are written in the model's original frame (no recent
 
 ## 6. Presence server (positions, chat, moderation)
 
-1. **Install** once: `pip install websockets`
+1. **Get and install**: `presence_server.py` is in the repository's `dist\` folder, ready to use (no need to build); install its dependency once: `pip install websockets`
 2. **Run** (a relative log is written in the script's folder; `--log-ip raw` writes IP addresses in clear, `--log-days` limits retention, **`--log-days 0` keeps the logs without limit**):
    `python ".\presence_server.py" --log presence.log --log-ip raw --log-days 0`
    Chat history (v37): the last 200 messages are replayed to newcomers (`--history`); `--history-file chat.jsonl` keeps it between two restarts (messages are personal data, never an IP address in this file), `--history-days N` (30; 0 = keep everything) limits what is read back at startup.

@@ -30,6 +30,8 @@ Les manuels sont en français dans `docs/fr/` (`MANUEL.md`, `PROCEDURES.md`, `HI
 
 ## Fabriquer
 
+**Les fichiers prêts à l'emploi sont déjà dans `dist/`** (viewer, générateur, serveur de présence, outils) : inutile de fabriquer pour les utiliser. `python build.py` ne sert que si tu modifies `src/` ou `tools/`.
+
 Il faut Python 3.9 ou plus.
 
 ```

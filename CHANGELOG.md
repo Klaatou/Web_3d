@@ -4,6 +4,14 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.1.0)
 
+### 01/11/2026 : version 1.1.6 : `dist/` dans le dépôt
+- **Change** : le dossier `dist/` (fichiers fabriqués : viewer, générateur, serveur de présence, outils) est maintenant suivi par git (retiré de `.gitignore`) : un créateur qui télécharge le dépôt a tout, sans `python build.py`. Décision de Klaatou : le serveur de présence n'était pas facile à repérer pour un novice (la source `src/presence_server.py` se lance bien, mais la doc renvoyait à `dist\`, qui n'existait pas sans fabrication).
+- **Test** : `tests/dist_a_jour.py` (nouveau) fabrique dans un dossier temporaire et compare octet par octet avec `dist/` : échoue si `dist/` est périmé par rapport à `src/`. À lancer avant chaque commit ; après chaque lot, `python build.py` puis `git add -A dist`.
+- **Documents** : `README` FR/EN (les fichiers prêts à l'emploi sont dans `dist/`), `PROCEDURES` § 6 étape 1 FR/EN (où trouver `presence_server.py`).
+- **Change**: the `dist/` folder (built files: viewer, generator, presence server, tools) is now tracked by git (removed from `.gitignore`): a creator who downloads the repository has everything, with no `python build.py`. Klaatou's decision: the presence server was hard for a novice to find (the source `src/presence_server.py` does run, but the docs pointed to `dist\`, which did not exist without building).
+- **Test**: `tests/dist_a_jour.py` (new) builds into a temporary folder and compares byte for byte with `dist/`: fails if `dist/` is stale compared to `src/`. Run it before every commit; after each batch, `python build.py` then `git add -A dist`.
+- **Documents**: FR/EN `README` (the ready-to-use files are in `dist/`), `PROCEDURES` § 6 step 1 FR/EN (where to find `presence_server.py`).
+
 ### 31/10/2026 : version 1.1.5 : historiques, procédures, vue d'ensemble, tests d'images
 - **Documents** : `HISTORIQUE`/`HISTORY` (lots 1.1.1 à 1.1.5), `PROCEDURES` (étapes 5 et 6 : lien, numéros), `VUE_ENSEMBLE`/`OVERVIEW` (zones image : lien et numéros), FR et EN, `verif_trad.py` OK.
 - **Tests** : `image_zone.py` et `image_dossier.py` : les images de test s'appelaient `reg-only.png`, `dossier-only.png`, `dossier-only2.png` ; depuis la légende tirée du nom de fichier, le texte après le tiret (« only ») crée une bande de légende (1024 px de large, `core.js` `W2`) que le test lisait à la place de l'image. Noms sans tiret : `image_dossier` passe en entier, `image_zone` ne garde que l'erreur de console connue en `file://` (requête `HEAD` refusée, sans effet visible).

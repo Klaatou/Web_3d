@@ -1,5 +1,4 @@
-# fabriqué / cache
-dist/
+# cache (dist/ est suivi par git : les fichiers prêts à l'emploi y sont)
 .cache/
 __pycache__/
 *.pyc
@@ -20,6 +19,7 @@ regions.json
 # pages et modèles générés
 *.html
 !src/*.html
+!dist/*.html
 !tests/essai_importmap.html
 *.glb
 !tests/data/*.glb
