@@ -4,6 +4,10 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.1.0)
 
+### 01/11/2026 : version 1.1.7 : `build.py` écrit du LF partout
+- **Correction** : `build.py` écrivait les `.py` de `dist/` et `glb-viewer.html` avec `write_text`, donc en CRLF sous Windows, alors que `.gitattributes` impose LF dans git : chaque `git add` affichait « CRLF will be replaced by LF » pour six fichiers de `dist/`. Tous les fichiers fabriqués (et `VERSIONS.json`, le fichier d'empreintes) sont maintenant écrits en octets, LF partout. Les octets de `dist/` ne changent pas sous Linux ; sous Windows, plus d'avertissement.
+- **Fix**: `build.py` wrote the `.py` files of `dist/` and `glb-viewer.html` with `write_text`, i.e. as CRLF on Windows, while `.gitattributes` forces LF in git: every `git add` printed "CRLF will be replaced by LF" for six `dist/` files. All built files (and `VERSIONS.json`, the fingerprint file) are now written as bytes, LF everywhere. `dist/` bytes do not change on Linux; on Windows, no more warnings.
+
 ### 01/11/2026 : version 1.1.6 : `dist/` dans le dépôt
 - **Change** : le dossier `dist/` (fichiers fabriqués : viewer, générateur, serveur de présence, outils) est maintenant suivi par git (retiré de `.gitignore`) : un créateur qui télécharge le dépôt a tout, sans `python build.py`. Décision de Klaatou : le serveur de présence n'était pas facile à repérer pour un novice (la source `src/presence_server.py` se lance bien, mais la doc renvoyait à `dist\`, qui n'existait pas sans fabrication).
 - **Test** : `tests/dist_a_jour.py` (nouveau) fabrique dans un dossier temporaire et compare octet par octet avec `dist/` : échoue si `dist/` est périmé par rapport à `src/`. À lancer avant chaque commit ; après chaque lot, `python build.py` puis `git add -A dist`.

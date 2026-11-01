@@ -157,7 +157,7 @@ def empreinte(texte):
 
 neutre = fabrique({n: NEUTRE for n in FICHIERS_VERSION})
 if args.empreintes:   # sert à reconstituer VERSIONS.json depuis l'historique : empreintes neutres de chaque fichier, rien n'est écrit dans dist/
-    args.empreintes.write_text(json.dumps({n: empreinte(neutre[n]) for n in FICHIERS_VERSION}, indent=1, sort_keys=True) + "\n", encoding="utf-8")
+    args.empreintes.write_bytes((json.dumps({n: empreinte(neutre[n]) for n in FICHIERS_VERSION}, indent=1, sort_keys=True) + "\n").encode("utf-8"))
     sys.exit(0)
 VERSIONS_FILE = ROOT / "VERSIONS.json"
 versions = json.loads(VERSIONS_FILE.read_text(encoding="utf-8")) if VERSIONS_FILE.is_file() else {}
@@ -174,10 +174,7 @@ sortie = fabrique(ver)
 for n in ("index.html", "carte.html", "presence_server.py", "oar2glb.py", "glb2tiles.py"):   # contrôle : hors son numéro, un fichier est identique à sa fabrication neutre
     assert sortie[n].replace(ver[n], NEUTRE) == neutre[n], n
 for n, t in sortie.items():
-    if n in ("index.html", "carte.html"):
-        (OUT / n).write_bytes(t.encode("utf-8"))
-    else:
-        (OUT / n).write_text(t, encoding="utf-8")
+    (OUT / n).write_bytes(t.encode("utf-8"))   # octets : LF partout, meme sous Windows (write_text ecrirait du CRLF : avertissements de git, dist_a_jour)
 (OUT / "favicon.ico").write_bytes((SRC / "favicon.ico").read_bytes())   # icone par defaut des pages (a copier a cote de index.html ; la remplacer par la sienne change l'icone, sans refaire les pages)
 py, v, shell = sortie["glb2html.py"], sortie["glb-viewer.html"], sortie["index.html"]
 print(f"[OK] coquille -> {OUT / 'index.html'} ({len(shell) // 1024} Ko) ; carte -> {OUT / 'carte.html'}")
@@ -187,7 +184,7 @@ for n in FICHIERS_VERSION:
     print(f"  {n:<22} {ver[n]}" + ("   <- modifié dans ce lot" if n in modifies else ""))
 if modifies:
     if OUT.resolve() == (ROOT / "dist").resolve():
-        VERSIONS_FILE.write_text(json.dumps(versions, indent=1, sort_keys=True) + "\n", encoding="utf-8")
+        VERSIONS_FILE.write_bytes((json.dumps(versions, indent=1, sort_keys=True) + "\n").encode("utf-8"))
     else:
         print("(VERSIONS.json non modifié : sortie ailleurs que dist/)")
 
