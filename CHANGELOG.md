@@ -2,7 +2,18 @@
 
 Les dates sont au format jj/mm/aaaa.
 
-## Non publié (après la 1.2.0)
+## Non publié (après la 1.3.0)
+
+*(rien pour l'instant)*
+
+## 1.3.0 (02/11/2026)
+
+### 02/11/2026 : publication 1.3.0 : lanceurs Linux et macOS pour les paquets
+- **Publication** : la 1.3.0, décidée par Klaatou le 02/11/2026, réunit les lots 1.2.1 à 1.2.4 décrits plus bas ; la 1.2.3 avait déjà été publiée sur GitHub (les étiquettes 1.2.0 à 1.2.2 n'ont jamais existé). `VERSION` passe de `1.2.4` à `1.3.0` (le numéro mineur monte : des fonctions ont été ajoutées). Aucun fichier fabriqué ne change par rapport à la 1.2.3 : seuls les paquets, les tests et les documents changent.
+- **Nouveautés de la 1.3.0** : lanceurs et renommage pour Linux et macOS dans les deux paquets (`.sh`, `.command`), qui s'ajoutent aux scripts Windows ; les zips marquent ces fichiers exécutables ; documentation des trois systèmes. **Non essayé sous macOS.**
+- **Notes de la release GitHub** : les deux puces ci-dessous, en anglais puis en français. À joindre à la release : `galerie-photos.zip` et `region-simple.zip` (fabriqués par `python fabriquer_paquets.py`).
+- **Release**: 1.3.0, decided by Klaatou on 02/11/2026, gathers batches 1.2.1 to 1.2.4 described below; 1.2.3 had already been published on GitHub (tags 1.2.0 to 1.2.2 never existed). `VERSION` goes from `1.2.4` to `1.3.0` (the minor number goes up: features were added). No built file changes compared to 1.2.3: only the packages, tests and documents change.
+- **What is new in 1.3.0**: launchers and renaming for Linux and macOS in both packages (`.sh`, `.command`), next to the Windows scripts; the zips mark these files executable; documentation for the three systems. **Not tried on macOS.**
 
 ### 02/11/2026 : version 1.2.4 : lanceurs Linux et macOS pour les paquets
 
