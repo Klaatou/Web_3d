@@ -117,6 +117,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 01/11/2026 |  | après 1.2.0 | Lot 1.2.1 : chat : les flèches restent dans le texte pendant la saisie ; paquets : `README.txt` et aide ; `README` : paquets sous la démo ; `tests/chat_fleches.py` |
 | 01/11/2026 |  | après 1.2.0 | Lot 1.2.2 : paquets : `readme.html` (sections réordonnées, carte des mondes, panneau d'aide à revoir) ; pavé de déplacement (touche K) dans l'aide ; `tests/chat_fleches.py` plus explicite |
 | 01/11/2026 |  | après 1.2.0 | Lot 1.2.3 : `tests/chat_fleches.py` attend l'état réel de la présence et affiche l'état complet en cas d'échec |
+| 02/11/2026 |  | après 1.2.0 | Lot 1.2.4 : paquets : lanceurs et renommage pour Linux et macOS (`.sh`, `.command`) ; `fabriquer_paquets.py` marque les lanceurs exécutables ; `tests/paquets.py` les essaie en direct |
 
 ## Commandes utiles
 

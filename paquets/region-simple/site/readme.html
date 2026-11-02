@@ -68,7 +68,7 @@ html[data-lang="fr"] tr[data-l="fr"],html[data-lang="en"] tr[data-l="en"]{displa
 <li><code>site/medias/aide.jpg</code> : l'image du panneau d'aide.</li>
 <li><code>site/default.json</code> : dit quelle région ouvrir. Il contient <code>{"region": "region"}</code>.</li>
 <li><code>site/index.html</code>, <code>site/lib/</code> : la page et sa bibliothèque 3D : à ne pas modifier.</li>
-<li><code>lancer-region.bat</code> : montre la région sur <strong>cet</strong> ordinateur. <code>renommer-region.bat</code> : change le nom de la région.</li>
+<li><code>lancer-region.bat</code> : montre la région sur <strong>cet</strong> ordinateur. <code>renommer-region.bat</code> : change le nom de la région. Les mêmes pour Linux et macOS : <code>lancer-region.sh</code>, <code>renommer-region.sh</code> et les fichiers <code>.command</code> (voir la section 3).</li>
 <li><code>presence/</code> : le serveur de présence, facultatif (section 4).</li>
 </ul>
 <h2>2. Obtenir un GLB depuis un OAR</h2>
@@ -81,7 +81,7 @@ html[data-lang="fr"] tr[data-l="fr"],html[data-lang="en"] tr[data-l="en"]{displa
 <p>Détails : <code>docs/fr/PROCEDURES.md</code> § 1.</p>
 <h2>3. Montrer la région</h2>
 <ul>
-<li><strong>Chez vous, ou sur une clé USB (Windows)</strong> : double-cliquez sur <code>lancer-region.bat</code>. Laissez ouverte la fenêtre noire qui affiche « Region sur http://localhost:8000/ - fermez cette fenetre pour arreter. » (le numéro peut être un autre que 8000 si 8000 est pris) : la fermer arrête le serveur. Seul votre ordinateur voit la région. Double-cliquer sur <code>index.html</code> ne marche pas.</li>
+<li><strong>Chez vous, ou sur une clé USB</strong> : sous <strong>Windows</strong>, double-cliquez sur <code>lancer-region.bat</code> ; sous <strong>macOS</strong>, sur <code>lancer-region.command</code> (la première fois : clic droit, Ouvrir) ; sous <strong>Linux</strong> (ou macOS dans le Terminal), tapez <code>sh lancer-region.sh</code> dans un terminal ouvert dans ce dossier (Python 3.7 ou plus). Laissez ouverte la fenêtre noire ou le terminal, qui affiche « Region sur http://localhost:8000/ … » (le numéro peut être un autre que 8000 si 8000 est pris) : la fermer, ou taper Ctrl+C sous Linux et macOS, arrête le serveur. Seul votre ordinateur voit la région. Double-cliquer sur <code>index.html</code> ne marche pas. <em>Les lanceurs macOS n'ont pas encore été essayés sur un Mac.</em></li>
 <li><strong>Autre système</strong> : dans le dossier <code>site</code>, <code>python -m http.server</code> puis <code>http://localhost:8000/</code> (8000 est le port par défaut).</li>
 <li><strong>Sur un site web</strong> : copiez <strong>le contenu du dossier <code>site</code></strong>, et rien d'autre, sur votre hébergement. Rien à installer sur le serveur. Gardez les noms de fichiers en minuscules.</li>
 </ul>
@@ -326,7 +326,7 @@ html[data-lang="fr"] tr[data-l="fr"],html[data-lang="en"] tr[data-l="en"]{displa
 <p><strong>Pourquoi.</strong> Pour donner à votre région le nom de votre choix (par exemple <code>MonIle</code>) au lieu de <code>region</code>. Ce nom devient aussi celui du <strong>salon de présence</strong> : les visiteurs d'une région ne voient que ceux de la même.</p>
 <p><strong>Comment.</strong>
 1. Si le lanceur est ouvert, fermez sa fenêtre noire.
-2. Double-cliquez sur <code>renommer-region.bat</code>. Une fenêtre demande « Nouveau nom (lettres, chiffres, tiret, souligné) » : tapez <code>MonIle</code>, puis Entrée. (Ou, dans une fenêtre de commandes ouverte dans ce dossier : <code>renommer-region.bat MonIle</code>.)
+2. Double-cliquez sur <code>renommer-region.bat</code>. Une fenêtre demande « Nouveau nom (lettres, chiffres, tiret, souligné) » : tapez <code>MonIle</code>, puis Entrée. (Ou, dans une fenêtre de commandes ouverte dans ce dossier : <code>renommer-region.bat MonIle</code>. Sous macOS : <code>renommer-region.command</code>. Sous Linux : <code>sh renommer-region.sh MonIle</code>.)
 3. La fenêtre liste ce qu'elle a fait. Rechargez la page (F5).</p>
 <p><strong>Ce que le script change</strong> (et rien d'autre) :</p>
 <table>
@@ -421,7 +421,7 @@ html[data-lang="fr"] tr[data-l="fr"],html[data-lang="en"] tr[data-l="en"]{displa
 <li><code>site/medias/aide.jpg</code>: the help panel's image.</li>
 <li><code>site/default.json</code>: says which region to open. It contains <code>{"region": "region"}</code>.</li>
 <li><code>site/index.html</code>, <code>site/lib/</code>: the page and its 3D library: do not edit.</li>
-<li><code>lancer-region.bat</code>: shows the region on <strong>this</strong> computer. <code>renommer-region.bat</code>: changes the region's name.</li>
+<li><code>lancer-region.bat</code>: shows the region on <strong>this</strong> computer. <code>renommer-region.bat</code>: changes the region's name. The same for Linux and macOS: <code>lancer-region.sh</code>, <code>renommer-region.sh</code> and the <code>.command</code> files (see section 3).</li>
 <li><code>presence/</code>: the presence server, optional (section 4).</li>
 </ul>
 <h2>2. Getting a GLB from an OAR</h2>
@@ -434,7 +434,7 @@ html[data-lang="fr"] tr[data-l="fr"],html[data-lang="en"] tr[data-l="en"]{displa
 <p>Details: <code>docs/en/PROCEDURES.md</code> § 1.</p>
 <h2>3. Showing the region</h2>
 <ul>
-<li><strong>At home, or on a USB stick (Windows)</strong>: double-click <code>lancer-region.bat</code>. Keep open the black window that shows "Region sur http://localhost:8000/ - fermez cette fenetre pour arreter." (the number may differ from 8000 if 8000 is taken): closing it stops the server. Only your computer sees the region. Double-clicking <code>index.html</code> does not work.</li>
+<li><strong>At home, or on a USB stick</strong>: on <strong>Windows</strong>, double-click <code>lancer-region.bat</code>; on <strong>macOS</strong>, <code>lancer-region.command</code> (the first time: right-click, Open); on <strong>Linux</strong> (or macOS in the Terminal), type <code>sh lancer-region.sh</code> in a terminal opened in this folder (Python 3.7 or later). Keep open the black window or the terminal, which shows "Region sur http://localhost:8000/ …" (the number may differ from 8000 if 8000 is taken): closing it, or pressing Ctrl+C on Linux and macOS, stops the server. Only your computer sees the region. Double-clicking <code>index.html</code> does not work. <em>The macOS launchers have not been tried on a Mac yet.</em></li>
 <li><strong>Other systems</strong>: in the <code>site</code> folder, <code>python -m http.server</code> then <code>http://localhost:8000/</code> (8000 is the default port).</li>
 <li><strong>On a website</strong>: copy <strong>the contents of the <code>site</code> folder</strong>, and nothing else, to your hosting. Nothing to install on the server. Keep file names in lowercase.</li>
 </ul>
@@ -679,7 +679,7 @@ html[data-lang="fr"] tr[data-l="fr"],html[data-lang="en"] tr[data-l="en"]{displa
 <p><strong>Why.</strong> To give your region the name you want (for example <code>MyIsland</code>) instead of <code>region</code>. This name is also the <strong>presence room</strong>: visitors of one region only see those of the same one.</p>
 <p><strong>How.</strong>
 1. If the launcher is open, close its black window.
-2. Double-click <code>renommer-region.bat</code>. A window asks "Nouveau nom (lettres, chiffres, tiret, souligne)" (new name): type <code>MyIsland</code>, then Enter. (Or, in a command window opened in this folder: <code>renommer-region.bat MyIsland</code>.)
+2. Double-click <code>renommer-region.bat</code>. A window asks "Nouveau nom (lettres, chiffres, tiret, souligne)" (new name): type <code>MyIsland</code>, then Enter. (Or, in a command window opened in this folder: <code>renommer-region.bat MyIsland</code>. On macOS: <code>renommer-region.command</code>. On Linux: <code>sh renommer-region.sh MyIsland</code>.)
 3. The window lists what it did. Reload the page (F5).</p>
 <p><strong>What the script changes</strong> (and nothing else):</p>
 <table>

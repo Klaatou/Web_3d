@@ -4,6 +4,15 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.2.0)
 
+### 02/11/2026 : version 1.2.4 : lanceurs Linux et macOS pour les paquets
+
+- **Paquets** : `lancer-galerie.sh` et `lancer-region.sh` (serveur local sur le premier port libre de 8000 à 8020, adresse `localhost`, navigateur ouvert par Python ; il faut `python3` 3.7 ou plus), `renommer-galerie.sh` et `renommer-region.sh` (les cinq mêmes changements que les scripts Windows) et leurs fichiers `.command` pour un double-clic sous macOS. Ils sont en ASCII et en LF, marqués exécutables (0755) dans les zips par `fabriquer_paquets.py` ; `.gitattributes` force le LF pour `*.sh` et `*.command`. `README.txt`, `galerie.html` et `readme.html` donnent les trois systèmes. **Non essayé sous macOS** (c'est dit dans les documents) ; les scripts Windows ne changent pas.
+- **Tests** : `tests/paquets.py` contrôle les fichiers, les droits dans le zip, la syntaxe (`sh -n`), un vrai lancement (port, types MIME, rien en dehors de `site/`, port suivant quand le premier est pris, arrêt par Ctrl+C) et le renommage (refus, renommage complet, conflit, retour au nom d'origine). Contre-épreuve : sans le droit exécutable, huit contrôles échouent.
+- **Documents** : `README` et vue d'ensemble, FR et EN.
+- **Packages**: `lancer-galerie.sh` and `lancer-region.sh` (local server on the first free port from 8000 to 8020, `localhost` address, browser opened by Python; `python3` 3.7 or later is needed), `renommer-galerie.sh` and `renommer-region.sh` (the same five changes as the Windows scripts) and their `.command` files for a double-click on macOS. They are ASCII with LF line endings, marked executable (0755) in the zips by `fabriquer_paquets.py`; `.gitattributes` forces LF for `*.sh` and `*.command`. `README.txt`, `galerie.html` and `readme.html` cover the three systems. **Not tried on macOS** (the documents say so); the Windows scripts do not change.
+- **Tests**: `tests/paquets.py` checks the files, the permissions in the zip, the syntax (`sh -n`), a real launch (port, MIME types, nothing outside `site/`, next port when the first is taken, stop with Ctrl+C) and the renaming (refusal, full renaming, conflict, back to the original name). Counter-test: without the executable permission, eight checks fail.
+- **Documents**: `README` and overview, FR and EN.
+
 ### 01/11/2026 : version 1.2.3 : test du chat plus rigoureux
 
 - **Test** `tests/chat_fleches.py` : il attend l'état réel de la présence (`en ligne`) au lieu d'un texte d'aide présent dès le départ, laisse 1,5 s à la page avant d'appuyer sur Entrée, et affiche l'état complet (présence, focus de la fenêtre, champ, élément actif, curseur) quand un contrôle échoue. Constat de Klaatou : le test échouait chez lui alors que la page marchait (diagnostic : Entrée ouvre le champ avec le focus, la flèche gauche déplace le curseur, Échap ferme). Aucun changement de la page.

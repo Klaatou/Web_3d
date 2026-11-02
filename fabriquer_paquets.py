@@ -7,7 +7,7 @@ Usage :  python fabriquer_paquets.py                  (zips dans paquets-zip/ ; 
 
 Chaque dossier de paquets/ (galerie-photos, region-simple...) contient les sources du paquet (notices, scripts, config, zones, GLB, images).
 Y sont ajoutes a la fabrication : site/index.html et site/favicon.ico (dist/), site/lib/three-X/ (ecrit par glb2html), presence/presence_server.py (dist/),
-VERSION.txt ; la marque __VERSION_PRESENCE__ des notices est remplacee par la version du serveur de presence ; les .bat et .ps1 sont ecrits en CRLF.
+VERSION.txt ; la marque __VERSION_PRESENCE__ des notices est remplacee par la version du serveur de presence ; les .bat et .ps1 sont ecrits en CRLF ; les .sh et .command (Linux, macOS) restent en LF et sont marques executables (0755) dans le zip.
 Prerequis : python build.py (dist/ a jour : python tests/dist_a_jour.py).
 """
 import argparse, pathlib, re, shutil, sys, zipfile
@@ -68,7 +68,7 @@ for paquet in sorted(p for p in SRC.iterdir() if p.is_dir()):
                 data = data.replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")   # Windows : fins de ligne CRLF
             zi = zipfile.ZipInfo(f"{nom}/{f.relative_to(tmp).as_posix()}", date_time=date_zip)
             zi.compress_type = zipfile.ZIP_DEFLATED
-            zi.external_attr = 0o644 << 16
+            zi.external_attr = (0o755 if f.suffix.lower() in (".sh", ".command") else 0o644) << 16   # lanceurs Linux/macOS executables
             z.writestr(zi, data)
     print(f"[OK] {zip_path} ({zip_path.stat().st_size / 1048576:.2f} Mo, {sum(1 for _ in tmp.rglob('*') if _.is_file())} fichiers)")
 shutil.rmtree(tmp_racine)

@@ -2,7 +2,7 @@
 """Paquets prets a l'emploi (galerie-photos, region-simple) : fabrication, contenu, ouverture dans Chromium sans tete.
 
 Fabrique avec fabriquer_paquets.py (dans un dossier temporaire), puis pour chaque zip : structure et fichiers attendus, JSON valides, zones et region
-coherentes avec leurs fichiers, aucune adresse file:// ni nom d'hote reel dans les textes, presence eteinte dans les config, .bat/.ps1 en ASCII et CRLF,
+coherentes avec leurs fichiers, aucune adresse file:// ni nom d'hote reel dans les textes, presence eteinte dans les config, .bat/.ps1 en ASCII et CRLF, .sh/.command en ASCII, LF et executables, lanceur et renommage Linux/macOS essayes en direct (sh),
 copie fidele de presence_server.py. Navigateur : la galerie s'ouvre et le panneau d'aide ouvre galerie.html ; la region s'ouvre et la promenade pose les yeux sur le sol.
 
 Prerequis : python build.py ; pip install playwright. Variables facultatives : THREE_DIR (racine d'un paquet npm three, hors ligne), CHROMIUM. Lancer : python tests/paquets.py
@@ -134,4 +134,76 @@ async def main():
     sys.exit(1 if echecs else 0)
 
 
+
+def essai_lanceurs_unix():
+    """lanceurs et renommage Linux/macOS : fichiers, droits dans le zip, syntaxe, lancement reel (sous Linux et macOS seulement)"""
+    import http.client, select, shutil, signal
+    noms = (("galerie-photos", "galerie"), ("region-simple", "region"))
+    for nom, court in noms:
+        modes = {pathlib.PurePosixPath(i.filename).name: (i.external_attr >> 16) & 0o777 for i in zipfile.ZipFile(tmp / "zips" / f"{nom}.zip").infolist()}
+        for f in (f"lancer-{court}.sh", f"renommer-{court}.sh", f"lancer-{court}.command", f"renommer-{court}.command"):
+            b = (cible[nom] / f).read_bytes()
+            rapport(b.startswith(b"#!/bin/sh\n") and all(c < 128 for c in b) and b"\r" not in b, f"{nom} : {f} en ASCII, LF, #!/bin/sh")
+            rapport(modes.get(f) == 0o755, f"{nom} : {f} executable (0755) dans le zip", oct(modes.get(f) or 0))
+    if os.name == "nt" or not shutil.which("sh"):
+        print("[--]    lanceurs Linux/macOS : essai en direct ignore (pas de shell sh sur cette machine)")
+        return
+    for nom, court in noms:
+        p = cible[nom]
+        for f in (f"lancer-{court}.sh", f"renommer-{court}.sh", f"lancer-{court}.command", f"renommer-{court}.command"):
+            r = subprocess.run(["sh", "-n", str(p / f)], capture_output=True, text=True)
+            rapport(r.returncode == 0, f"{nom} : sh -n {f}", r.stderr[-200:])
+        # lancement reel : deux lanceurs a la suite doivent prendre deux ports differents
+        env = dict(os.environ, BROWSER="true")
+        procs, ports = [], []
+        try:
+            for _ in range(2):
+                pr = subprocess.Popen(["sh", str(p / f"lancer-{court}.sh")], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, env=env, cwd=p)
+                procs.append(pr)
+                ok = select.select([pr.stdout], [], [], 20)[0]
+                ligne = pr.stdout.readline() if ok else ""
+                m = re.search(r"localhost:(\d+)", ligne)
+                ports.append(int(m.group(1)) if m else None)
+            rapport(all(ports) and ports[0] != ports[1] and all(8000 <= x <= 8020 for x in ports if x), f"{nom} : le lanceur sh choisit un port de 8000 a 8020, puis le suivant s'il est pris", ports)
+            if ports[0]:
+                def get(chemin):
+                    c = http.client.HTTPConnection("localhost", ports[0], timeout=10); c.request("GET", chemin)
+                    r = c.getresponse(); r.read(); out = (r.status, r.getheader("Content-Type") or ""); c.close(); return out
+                s, ct = get("/"); rapport(s == 200 and "text/html" in ct, f"{nom} : lanceur sh : la page est servie (text/html)", (s, ct))
+                s, ct = get(f"/{court}.glb"); rapport(s == 200 and ct == "model/gltf-binary", f"{nom} : lanceur sh : le GLB est servi en model/gltf-binary", (s, ct))
+                s, ct = get("/lib/three-0.160.0/three.module.js"); rapport(s == 200 and "javascript" in ct, f"{nom} : lanceur sh : les modules JavaScript sont servis en javascript", (s, ct))
+                s, ct = get("/lib/three-0.160.0/draco/draco_decoder.wasm"); rapport(s == 200 and ct == "application/wasm", f"{nom} : lanceur sh : le decodeur Draco est servi en application/wasm", (s, ct))
+                rapport(get("/../README.txt")[0] == 404 and get("/%2e%2e/README.txt")[0] == 404 and get("/absent.txt")[0] == 404, f"{nom} : lanceur sh : rien en dehors de site/, 404 pour un fichier absent")
+        finally:
+            for pr in procs:
+                pr.send_signal(signal.SIGINT)
+            fins = []
+            for pr in procs:
+                try:
+                    pr.wait(timeout=8); fins.append(True)
+                except subprocess.TimeoutExpired:
+                    pr.kill(); fins.append(False)
+            rapport(all(fins), f"{nom} : Ctrl+C arrete le serveur", fins)
+        # renommage : nom refuse, renommage complet, conflit, retour au nom d'origine
+        d = tmp / "renommage" / nom
+        shutil.copytree(p, d)
+        site = d / "site"
+        def lancer(*args, entree=None):
+            return subprocess.run(["sh", str(d / f"renommer-{court}.sh"), *args], capture_output=True, text=True, input=entree)
+        avant = sorted(x.name for x in site.iterdir())
+        r = lancer("a b"); rapport(r.returncode == 1 and sorted(x.name for x in site.iterdir()) == avant, f"{nom} : renommage : un nom avec espace est refuse sans rien changer", r.stdout[-200:])
+        r = lancer(court); rapport(r.returncode == 0 and "deja le nom actuel" in r.stdout, f"{nom} : renommage : le meme nom ne fait rien", r.stdout[-200:])
+        r = lancer("Essai_1")
+        cfg = (site / "Essai_1.config.json").read_text(encoding="utf-8") if (site / "Essai_1.config.json").is_file() else ""
+        rapport(r.returncode == 0 and all((site / f"Essai_1{e}").is_file() for e in (".glb", ".config.json", ".zones.json")) and not (site / f"{court}.glb").exists()
+                and json.loads((site / "default.json").read_text(encoding="utf-8")) == {"region": "Essai_1"} and f'"room": "Essai_1"' in cfg, f"{nom} : renommage : fichiers, default.json et salon (room) changes", r.stdout[-300:])
+        (site / "Autre.glb").write_bytes(b"x")
+        r = lancer("Autre"); rapport(r.returncode == 1 and (site / "Essai_1.glb").is_file(), f"{nom} : renommage : un fichier du nouveau nom existe deja, abandon sans rien changer", r.stdout[-200:])
+        (site / "Autre.glb").unlink()
+        r = lancer(entree=f"{court}\n")
+        rapport(r.returncode == 0 and (site / f"{court}.glb").is_file() and f'"room": "{court}"' in (site / f"{court}.config.json").read_text(encoding="utf-8")
+                and json.loads((site / "default.json").read_text(encoding="utf-8")) == {"region": court}, f"{nom} : renommage : sans argument le nom est demande ; retour au nom d'origine", r.stdout[-300:])
+
+
+essai_lanceurs_unix()
 asyncio.run(main())

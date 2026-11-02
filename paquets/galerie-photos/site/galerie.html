@@ -86,17 +86,17 @@ html[data-lang="fr"] tr[data-l="fr"],html[data-lang="en"] tr[data-l="en"]{displa
 <h2>5. Montrer la galerie : trois façons</h2>
 <table>
 <tr><th>Formule</th><th>Pour</th><th>Ce qu'il faut</th></tr>
-<tr><td>1. Chez soi, ou sur une clé USB</td><td>essayer, ou montrer la galerie sur votre ordinateur</td><td>Windows : double-cliquer sur <code>lancer-galerie.bat</code> (à la racine du paquet). Rien à installer.</td></tr>
+<tr><td>1. Chez soi, ou sur une clé USB</td><td>essayer, ou montrer la galerie sur votre ordinateur</td><td>Windows : double-cliquer sur <code>lancer-galerie.bat</code> (rien à installer) ; macOS : <code>lancer-galerie.command</code> ; Linux : <code>sh lancer-galerie.sh</code> (Python 3.7 ou plus). À la racine du paquet.</td></tr>
 <tr><td>2. Sur un site web</td><td>la montrer à tout le monde</td><td>un hébergement web où copier le contenu du dossier <code>site</code>. Rien à installer sur le serveur. Pas de présence.</td></tr>
 <tr><td>3. Avec présence</td><td>voir les autres visiteurs et tchatter</td><td>en plus, le serveur de présence (section 6).</td></tr>
 </table>
 
-<h3>1. Chez soi, ou sur une clé USB (Windows)</h3>
+<h3>1. Chez soi, ou sur une clé USB</h3>
 <ul>
-<li>Double-cliquez sur <code>lancer-galerie.bat</code>. Un petit serveur démarre sur votre ordinateur et la galerie s'ouvre dans le navigateur. <b>Laissez ouverte la fenêtre noire</b> qui affiche « Galerie sur http://localhost:8000/ - fermez cette fenetre pour arreter. » (le numéro peut être un autre que 8000 si 8000 est pris) tant que vous regardez la galerie : la fermer arrête le serveur.</li>
+<li>Sous <b>Windows</b>, double-cliquez sur <code>lancer-galerie.bat</code> ; sous <b>macOS</b>, sur <code>lancer-galerie.command</code> (la première fois : clic droit, Ouvrir) ; sous <b>Linux</b> (ou macOS dans le Terminal), tapez <code>sh lancer-galerie.sh</code> dans un terminal ouvert dans ce dossier (Python 3.7 ou plus). Un petit serveur démarre sur votre ordinateur et la galerie s'ouvre dans le navigateur. <b>Laissez ouverte la fenêtre noire ou le terminal</b> qui affiche « Galerie sur http://localhost:8000/ … » (le numéro peut être un autre que 8000 si 8000 est pris) tant que vous regardez la galerie : la fermer, ou taper Ctrl+C sous Linux et macOS, arrête le serveur. <i>Les lanceurs macOS n'ont pas encore été essayés sur un Mac.</i></li>
 <li>Seul votre ordinateur peut alors voir la galerie. C'est voulu : rien n'est ouvert sur Internet.</li>
 <li>Double-cliquer sur <code>index.html</code> ne marche pas : la page affiche seulement un message qui demande un serveur web.</li>
-<li>Autre système que Windows : installez Python, puis lancez dans le dossier <code>site</code> la commande <code>python -m http.server</code> et ouvrez <code>http://localhost:8000/</code> (8000 est le port par défaut).</li>
+<li>Autre méthode (ou si les lanceurs ne marchent pas) : installez Python, puis lancez dans le dossier <code>site</code> la commande <code>python -m http.server</code> et ouvrez <code>http://localhost:8000/</code> (8000 est le port par défaut).</li>
 </ul>
 
 <h3>2. Sur un site web</h3>
@@ -124,7 +124,7 @@ html[data-lang="fr"] tr[data-l="fr"],html[data-lang="en"] tr[data-l="en"]{displa
 <p><b>Comment.</b></p>
 <ol>
 <li>Si le lanceur est ouvert, fermez sa fenêtre noire.</li>
-<li>Double-cliquez sur <code>renommer-galerie.bat</code>. Une fenêtre demande « Nouveau nom (lettres, chiffres, tiret, souligné) » : tapez <code>MonExpo</code>, puis Entrée. (Ou, dans une fenêtre de commandes ouverte dans ce dossier : <code>renommer-galerie.bat MonExpo</code>.)</li>
+<li>Double-cliquez sur <code>renommer-galerie.bat</code>. Une fenêtre demande « Nouveau nom (lettres, chiffres, tiret, souligné) » : tapez <code>MonExpo</code>, puis Entrée. (Ou, dans une fenêtre de commandes ouverte dans ce dossier : <code>renommer-galerie.bat MonExpo</code>. Sous macOS : <code>renommer-galerie.command</code>. Sous Linux : <code>sh renommer-galerie.sh MonExpo</code>.)</li>
 <li>La fenêtre liste ce qu'elle a fait. Rechargez la page (F5).</li>
 </ol>
 <p><b>Ce que le script change</b> (et rien d'autre) :</p>
@@ -215,17 +215,17 @@ html[data-lang="fr"] tr[data-l="fr"],html[data-lang="en"] tr[data-l="en"]{displa
 <h2>5. Showing the gallery: three ways</h2>
 <table>
 <tr><th>Way</th><th>For</th><th>What you need</th></tr>
-<tr><td>1. At home, or on a USB stick</td><td>trying it, or showing the gallery on your computer</td><td>Windows: double-click <code>lancer-galerie.bat</code> (at the root of the package). Nothing to install.</td></tr>
+<tr><td>1. At home, or on a USB stick</td><td>trying it, or showing the gallery on your computer</td><td>Windows: double-click <code>lancer-galerie.bat</code> (nothing to install); macOS: <code>lancer-galerie.command</code>; Linux: <code>sh lancer-galerie.sh</code> (Python 3.7 or later). At the root of the package.</td></tr>
 <tr><td>2. On a website</td><td>showing it to everyone</td><td>web hosting where you copy the contents of the <code>site</code> folder. Nothing to install on the server. No presence.</td></tr>
 <tr><td>3. With presence</td><td>seeing the other visitors and chatting</td><td>on top of that, the presence server (section 6).</td></tr>
 </table>
 
-<h3>1. At home, or on a USB stick (Windows)</h3>
+<h3>1. At home, or on a USB stick</h3>
 <ul>
-<li>Double-click <code>lancer-galerie.bat</code>. A small server starts on your computer and the gallery opens in the browser. <b>Keep open the black window</b> that shows “Galerie sur http://localhost:8000/ - fermez cette fenetre pour arreter.” (the number may differ from 8000 if 8000 is taken) while you look at the gallery: closing it stops the server.</li>
+<li>On <b>Windows</b>, double-click <code>lancer-galerie.bat</code>; on <b>macOS</b>, <code>lancer-galerie.command</code> (the first time: right-click, Open); on <b>Linux</b> (or macOS in the Terminal), type <code>sh lancer-galerie.sh</code> in a terminal opened in this folder (Python 3.7 or later). A small server starts on your computer and the gallery opens in the browser. <b>Keep open the black window or the terminal</b>, which shows “Galerie sur http://localhost:8000/ …” (the number may differ from 8000 if 8000 is taken), while you look at the gallery: closing it, or pressing Ctrl+C on Linux and macOS, stops the server. <i>The macOS launchers have not been tried on a Mac yet.</i></li>
 <li>Only your computer can then see the gallery. That is intended: nothing is opened to the Internet.</li>
 <li>Double-clicking <code>index.html</code> does not work: the page only shows a message asking for a web server.</li>
-<li>Systems other than Windows: install Python, then run <code>python -m http.server</code> in the <code>site</code> folder and open <code>http://localhost:8000/</code> (8000 is the default port).</li>
+<li>Another way (or if the launchers do not work): install Python, then run <code>python -m http.server</code> in the <code>site</code> folder and open <code>http://localhost:8000/</code> (8000 is the default port).</li>
 </ul>
 
 <h3>2. On a website</h3>
@@ -253,7 +253,7 @@ html[data-lang="fr"] tr[data-l="fr"],html[data-lang="en"] tr[data-l="en"]{displa
 <p><b>How.</b></p>
 <ol>
 <li>If the launcher is open, close its black window.</li>
-<li>Double-click <code>renommer-galerie.bat</code>. A window asks "Nouveau nom (lettres, chiffres, tiret, souligne)" (new name): type <code>MyShow</code>, then Enter. (Or, in a command window opened in this folder: <code>renommer-galerie.bat MyShow</code>.)</li>
+<li>Double-click <code>renommer-galerie.bat</code>. A window asks "Nouveau nom (lettres, chiffres, tiret, souligne)" (new name): type <code>MyShow</code>, then Enter. (Or, in a command window opened in this folder: <code>renommer-galerie.bat MyShow</code>. On macOS: <code>renommer-galerie.command</code>. On Linux: <code>sh renommer-galerie.sh MyShow</code>.)</li>
 <li>The window lists what it did. Reload the page (F5).</li>
 </ol>
 <p><b>What the script changes</b> (and nothing else):</p>
