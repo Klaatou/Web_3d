@@ -2,7 +2,19 @@
 
 Les dates sont au format jj/mm/aaaa.
 
-## Non publié (après la 1.3.0)
+## Non publié (après la 1.4.0)
+
+*(rien pour l'instant)*
+
+## 1.4.0 (02/11/2026)
+
+### 02/11/2026 : publication 1.4.0 : pseudos de la carte, bip du chat, garde-fou des lanceurs
+
+- **Publication** : la 1.4.0, décidée par Klaatou, réunit les lots notés « Non publié » depuis la 1.3.0 (décrits plus bas). `VERSION` passe de `1.3.5` à `1.4.0` (le numéro mineur monte : des fonctions ont été ajoutées). Fichiers fabriqués qui changent par rapport à la 1.3.0 : `glb2html.py`, `index.html`, `carte.html`, `glb-viewer.html`, `presence_server.py`, `oar2glb.py` et `glb2tiles.py` ; les paquets (`paquets/`) changent aussi.
+- **Nouveautés de la 1.4.0** : carte des mondes : pseudos des promeneurs et des visiteurs en vue globale, protégés par une clé (`--map-names-key` du serveur de présence, `carte.html#pseudos=CLE`), nombres sans doublon (« 1 promeneur », « 2 visiteurs, dont 1 en promenade »), plusieurs `#` acceptés dans l'adresse de la carte ; chat : un bip à chaque message quand la page n'a pas le focus (réglage dans les sons) ; paquets : garde-fou des lanceurs contre le dossier source du dépôt (« Download ZIP »), `paquets/README.txt`.
+- **Notes de la release GitHub** : les deux puces ci-dessous, en anglais puis en français. À joindre : `galerie-photos.zip` et `region-simple.zip` (fabriqués par `python fabriquer_paquets.py`).
+- **Release** 1.4.0, decided by Klaatou, gathers the batches noted "Unpublished" since 1.3.0 (described below). `VERSION` goes from `1.3.5` to `1.4.0` (the minor number goes up: features were added). Built files that change compared to 1.3.0: `glb2html.py`, `index.html`, `carte.html`, `glb-viewer.html`, `presence_server.py`, `oar2glb.py` and `glb2tiles.py`; the packages (`paquets/`) change too.
+- **What is new in 1.4.0**: world map: nicknames of walkers and of visitors in the global view, protected by a key (`--map-names-key` of the presence server, `carte.html#pseudos=KEY`), numbers without double counting ("1 walker", "2 visitors, 1 walking"), several `#` accepted in the map's address; chat: a beep for every message when the page is not focused (setting among the sounds); packages: launcher guard against the repository's source folder ("Download ZIP"), `paquets/README.txt`.
 
 ### 02/11/2026 : version 1.3.5 : chat : bip à chaque message quand la page n'a pas le focus
 
