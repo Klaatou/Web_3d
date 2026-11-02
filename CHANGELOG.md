@@ -4,6 +4,11 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.3.0)
 
+### 02/11/2026 : version 1.3.4 : carte autonome : plusieurs # dans l'adresse
+
+- **Correction** (constat de Klaatou : adresse `carte.html?region=X#name=Klaatou#pseudos=SECRET`). La carte autonome lisait la partie `#` comme un seul paramètre (`name=Klaatou#pseudos=SECRET`) et ne voyait pas `pseudos=`, donc pas la clé des pseudos ; les pages de région acceptaient déjà `#` comme séparateur (`hashParams`, `src/i18n.js`). `src/gen_tpl.py` fait maintenant pareil. Le manuel le dit (FR et EN). Test : `tests/carte_pseudos.py`, étape 5b. **Fabriqué** : `carte.html` change.
+- **Fix** (Klaatou's finding: address `carte.html?region=X#name=Klaatou#pseudos=SECRET`). The standalone map read the `#` part as a single parameter (`name=Klaatou#pseudos=SECRET`) and did not see `pseudos=`, hence not the nicknames key; the region pages already accepted `#` as a separator (`hashParams`, `src/i18n.js`). `src/gen_tpl.py` now does the same. The manual says so (FR and EN). Test: `tests/carte_pseudos.py`, step 5b. **Built**: `carte.html` changes.
+
 ### 02/11/2026 : version 1.3.3 : carte des mondes : les pseudos sont protégés par une clé
 
 - **Changé** (la 1.3.1 donnait les pseudos à toute page qui interroge le serveur de présence ; demande de Klaatou : seulement à qui a la clé). L'option `--map-names` est remplacée par `--map-names-key SECRET` (8 caractères au moins) : la réponse `rooms` ne contient `names` (promeneurs, le plus récent d'abord) et `viewers` (visiteurs en vue globale) que si la demande présente la bonne clé. Les cartes la lisent dans la partie `#` de leur adresse : `carte.html#pseudos=SECRET`, et de même derrière l'adresse d'une région pour la carte ouverte par M. Sans clé ou avec une mauvaise clé : seulement les nombres, exactement la même réponse. Le serveur compare la clé à temps constant et n'écoute plus après 5 clés fausses par minute et par adresse (comme le journal des visites). Sur une adresse `ws://` la clé circule en clair : `wss://` pour un vrai secret (dit dans le manuel). L'ancienne option `--map-names` est conservée mais sans effet : elle ne donne aucun pseudo et le serveur l'écrit au démarrage.

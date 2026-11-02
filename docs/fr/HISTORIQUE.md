@@ -122,6 +122,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 02/11/2026 |  | après 1.3.0 | Lot 1.3.1 : carte des mondes : option `--map-names` (pseudos des promeneurs) ; un nombre n'est plus compté deux fois ; `tests/carte_pseudos.py` |
 | 02/11/2026 |  | après 1.3.0 | Lot 1.3.2 : lanceurs : garde-fou contre le dossier source du dépôt (« Download ZIP ») ; `paquets/README.txt` ; test dans `tests/paquets.py` |
 | 02/11/2026 |  | après 1.3.0 | Lot 1.3.3 : carte des mondes : pseudos protégés par une clé (`--map-names-key`, `#pseudos=`) ; visiteurs en vue globale ; `tests/carte_pseudos.py` réécrit |
+| 02/11/2026 |  | après 1.3.0 | Lot 1.3.4 : carte autonome : plusieurs `#` dans l'adresse (`#name=...#pseudos=...`) ; test 5b dans `tests/carte_pseudos.py` |
 
 ## Commandes utiles
 

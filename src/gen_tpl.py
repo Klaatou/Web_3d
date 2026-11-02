@@ -362,7 +362,7 @@ __I18N__
   let MAP = C.map || [];
   applyI18n(); document.getElementById('foot').textContent = tr('map.footer', '__MAP_VERSION__');
   if (document.querySelector('h1[data-i18n]')) document.title = tr('map.title');
-  const grid = document.getElementById('grid'), counts = {}, vis = {}, nms = {}, answered = {}, hasVis = {}, MAPKEY = new URLSearchParams(location.hash.replace(/^#/, '')).get('pseudos') || '';   // #pseudos=CLE : la cle du serveur (--map-names-key) pour voir les pseudos
+  const grid = document.getElementById('grid'), counts = {}, vis = {}, nms = {}, answered = {}, hasVis = {}, MAPKEY = new URLSearchParams(location.hash.replace(/^#/, '').replace(/#/g, '&')).get('pseudos') || '';   // #pseudos=CLE : la cle du serveur (--map-names-key) pour voir les pseudos
    let loadErr = '';
   // v34 : pseudo mémorisé (même clé que les régions) ; les liens des cartes reçoivent #name=PSEUDO
   const pin = document.getElementById('pseudo');

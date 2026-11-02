@@ -147,6 +147,13 @@ async def main():
         rapport(not o.errs, "aucune erreur de page", o.errs)
         await o.ctx.close()
 
+        print("--- 5b. carte.html avec deux # (#name=...#pseudos=...)")
+        o, _ = await lire(BASE + "carte.html#name=Klaatou#pseudos=" + CLE)
+        await o.attendre("[...document.querySelectorAll('.tile span')].some(s => s.textContent.includes('autres'))", 25)
+        L2 = {x["nom"]: x["ligne"] for x in await o.ev(TUILES)}
+        rapport(L2["Beta"] == "2 visiteurs, dont 1 en promenade\nAna\nen vue globale : Cléo", "adresse avec deux # : la clé est bien lue", L2["Beta"])
+        await o.ctx.close()
+
         print("--- 6. carte.html avec la bonne clé (anglais)")
         o, t = await lire(BASE + "carte.html#pseudos=" + CLE, "en-GB")
         await o.attendre("[...document.querySelectorAll('.tile span')].some(s => s.textContent.includes('others'))", 25)

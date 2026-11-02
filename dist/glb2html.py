@@ -16,9 +16,9 @@ Draco et Meshopt gérés automatiquement (décodeurs intégrés seulement si le 
 """
 from __future__ import annotations
 
-VERSION = "1.3.3 (02/11/2026)"
+VERSION = "1.3.4 (02/11/2026)"
 SHELL_VERSION = "1.3.3 (02/11/2026)"   # numéro de version de la coquille (index.html) : écrit par build.py, ne change que si la coquille change
-MAP_VERSION = "1.3.3 (02/11/2026)"       # numéro de version de la page de carte (carte.html) : idem
+MAP_VERSION = "1.3.4 (02/11/2026)"       # numéro de version de la page de carte (carte.html) : idem
 
 import argparse
 import base64
@@ -492,7 +492,7 @@ function setLangPref(v) {
 <div id="tools"><label class="chk"><input type="checkbox" id="alert"> <span data-i18n="map.alert">Surveillance des arrivées (son et repère)</span></label> <small id="alertState"></small></div>
 <div id="total"></div>
 <div id="grid"></div>
-<footer id="foot">glb2html 1.3.3 (02/11/2026)</footer>
+<footer id="foot">glb2html 1.3.4 (02/11/2026)</footer>
 </main>
 <script type="application/json" id="cfg">__CONFIG__</script>
 <script>
@@ -502,9 +502,9 @@ function setLangPref(v) {
   const POLL_ALERT_MS = 5000;   // quand « Surveillance sonore » est cochee
   const C = JSON.parse(document.getElementById('cfg').textContent);
   let MAP = C.map || [];
-  applyI18n(); document.getElementById('foot').textContent = tr('map.footer', '1.3.3 (02/11/2026)');
+  applyI18n(); document.getElementById('foot').textContent = tr('map.footer', '1.3.4 (02/11/2026)');
   if (document.querySelector('h1[data-i18n]')) document.title = tr('map.title');
-  const grid = document.getElementById('grid'), counts = {}, vis = {}, nms = {}, answered = {}, hasVis = {}, MAPKEY = new URLSearchParams(location.hash.replace(/^#/, '')).get('pseudos') || '';   // #pseudos=CLE : la cle du serveur (--map-names-key) pour voir les pseudos
+  const grid = document.getElementById('grid'), counts = {}, vis = {}, nms = {}, answered = {}, hasVis = {}, MAPKEY = new URLSearchParams(location.hash.replace(/^#/, '').replace(/#/g, '&')).get('pseudos') || '';   // #pseudos=CLE : la cle du serveur (--map-names-key) pour voir les pseudos
    let loadErr = '';
   // v34 : pseudo mémorisé (même clé que les régions) ; les liens des cartes reçoivent #name=PSEUDO
   const pin = document.getElementById('pseudo');
@@ -706,7 +706,7 @@ def register_region(path, entry):
 
 
 def map_page_html(cfg, title):
-    return (MAP_PAGE_TEMPLATE.replace("__TITLE_ATTR__", "" if title else 'data-i18n="map.title"').replace("__TITLE__", html.escape(title or "Carte des mondes")).replace("1.3.3 (02/11/2026)", MAP_VERSION)
+    return (MAP_PAGE_TEMPLATE.replace("__TITLE_ATTR__", "" if title else 'data-i18n="map.title"').replace("__TITLE__", html.escape(title or "Carte des mondes")).replace("1.3.4 (02/11/2026)", MAP_VERSION)
             .replace("__CONFIG__", json.dumps(cfg, ensure_ascii=False).replace("</", "<\\/")))
 
 
