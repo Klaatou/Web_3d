@@ -1,6 +1,12 @@
 # Sert le dossier site sur http://localhost (cette machine seulement) et ouvre la galerie
 $base = Split-Path -Parent $MyInvocation.MyCommand.Path
 $racine = (Resolve-Path (Join-Path $base 'site')).Path.TrimEnd('\')
+if (-not ((Test-Path -LiteralPath (Join-Path $racine 'index.html')) -and (Test-Path -LiteralPath (Join-Path $racine 'lib')))) {
+  Write-Host "Ce dossier est le CODE SOURCE du depot Web_3d : il manque site\index.html et site\lib."
+  Write-Host "Telechargez le paquet pret a l'emploi (region-simple.zip ou galerie-photos.zip) sur :"
+  Write-Host "https://github.com/Klaatou/Web_3d/releases/latest"
+  Read-Host "Entree pour fermer"; exit 1
+}
 $types = @{ '.html'='text/html; charset=utf-8'; '.js'='text/javascript; charset=utf-8'; '.mjs'='text/javascript; charset=utf-8'
   '.json'='application/json; charset=utf-8'; '.txt'='text/plain; charset=utf-8'; '.glb'='model/gltf-binary'
   '.jpg'='image/jpeg'; '.jpeg'='image/jpeg'; '.png'='image/png'; '.webp'='image/webp'; '.gif'='image/gif'; '.ico'='image/x-icon' }

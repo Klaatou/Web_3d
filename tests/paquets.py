@@ -76,6 +76,7 @@ for nom in ("galerie-photos", "region-simple"):
         rapport(all(c < 128 for c in b) and b"\r\n" in b and b"\n" not in b.replace(b"\r\n", b""), f"{nom} : {f.name} en ASCII et CRLF")
     lp = next(p.glob("lancer-*.ps1")).read_text(encoding="ascii")
     rapport("8000..8020" in lp and "'site'" in lp, f"{nom} : le lanceur sert site\\ sur les ports 8000 a 8020")
+    rapport("CODE SOURCE" in lp and "releases/latest" in lp and "index.html" in lp and "exit 1" in lp, f"{nom} : le lanceur Windows refuse le dossier source du depot et indique le paquet a telecharger")
 
 
 def serveur(d):
@@ -139,6 +140,8 @@ def essai_lanceurs_unix():
     """lanceurs et renommage Linux/macOS : fichiers, droits dans le zip, syntaxe, lancement reel (sous Linux et macOS seulement)"""
     import http.client, select, shutil, signal
     noms = (("galerie-photos", "galerie"), ("region-simple", "region"))
+    lisez = ROOT / "paquets" / "README.txt"
+    rapport(lisez.is_file() and "releases/latest" in lisez.read_text(encoding="ascii") and "Download ZIP" in lisez.read_text(encoding="ascii"), "paquets/README.txt : dit que ce sont des sources et ou telecharger le paquet")
     for nom, court in noms:
         modes = {pathlib.PurePosixPath(i.filename).name: (i.external_attr >> 16) & 0o777 for i in zipfile.ZipFile(tmp / "zips" / f"{nom}.zip").infolist()}
         for f in (f"lancer-{court}.sh", f"renommer-{court}.sh", f"lancer-{court}.command", f"renommer-{court}.command"):
@@ -153,6 +156,9 @@ def essai_lanceurs_unix():
         for f in (f"lancer-{court}.sh", f"renommer-{court}.sh", f"lancer-{court}.command", f"renommer-{court}.command"):
             r = subprocess.run(["sh", "-n", str(p / f)], capture_output=True, text=True)
             rapport(r.returncode == 0, f"{nom} : sh -n {f}", r.stderr[-200:])
+        # lance depuis le dossier SOURCE du depot (ni index.html ni lib) : message clair, code 3, pas de serveur
+        r = subprocess.run(["sh", str(ROOT / "paquets" / nom / f"lancer-{court}.sh")], capture_output=True, text=True, timeout=20, env=dict(os.environ, BROWSER="true"))
+        rapport(r.returncode == 3 and "CODE SOURCE" in r.stdout and "releases/latest" in r.stdout and "localhost:" not in r.stdout, f"{nom} : lance depuis le dossier source du depot, le lanceur sh dit de telecharger le paquet (pas de 404)", (r.returncode, r.stdout[-200:]))
         # lancement reel : deux lanceurs a la suite doivent prendre deux ports differents
         env = dict(os.environ, BROWSER="true")
         procs, ports = [], []

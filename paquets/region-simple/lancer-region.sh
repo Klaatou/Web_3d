@@ -12,6 +12,11 @@ fi
 exec "$PY" - site Region <<'PYEOF'
 import http.server, os, sys, webbrowser
 racine = os.path.abspath(sys.argv[1]); libelle = sys.argv[2]
+if not (os.path.isfile(os.path.join(racine, 'index.html')) and os.path.isdir(os.path.join(racine, 'lib'))):
+    print("Ce dossier est le CODE SOURCE du depot Web_3d : il manque site/index.html et site/lib.")
+    print("Telechargez le paquet pret a l'emploi (region-simple.zip ou galerie-photos.zip) sur :")
+    print("https://github.com/Klaatou/Web_3d/releases/latest")
+    sys.exit(3)
 types = {'.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8',
          '.json': 'application/json; charset=utf-8', '.txt': 'text/plain; charset=utf-8', '.glb': 'model/gltf-binary', '.wasm': 'application/wasm',
          '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif', '.ico': 'image/x-icon'}
