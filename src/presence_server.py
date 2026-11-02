@@ -384,7 +384,7 @@ def log(kind, room, who, extra=""):
 
 class Peer:
     __slots__ = ("id", "ws", "name", "color", "p", "yaw", "last", "ip", "chat_times", "spectator", "uidh", "t0", "zone_t", "room", "color_t", "hist_t",
-                 "wall0", "walk_s", "walk0", "vname")
+                 "wall0", "walk_s", "walk0", "vname", "label")
 
     def __init__(self, pid, ws, name, color, ip, spectator, uidh, room):
         self.id, self.ws, self.name, self.color, self.ip = pid, ws, name, color, ip
@@ -394,6 +394,7 @@ class Peer:
         self.t0 = time.monotonic()
         self.wall0, self.walk_s, self.vname = time.time(), 0.0, ""      # v48 : journal des visites
         self.walk0 = None if spectator else self.t0
+        self.label = ""      # pseudo d'affichage pour la carte d'un visiteur en vue globale (seulement avec --map-names-key)
 
     def walk_mark(self, walking):
         """v48 : début ou fin de promenade (temps de promenade du journal des visites)"""
@@ -1086,11 +1087,39 @@ def walkers(room):
 
 
 MAP_NAMES_MAX = 20
+MAP_KEY_MIN = 8
+MTRY: dict = {}          # IP -> instants des cles de carte refusees (5 par minute au plus)
 
 
 def map_names():
-    """pseudos des promeneurs par salon, du plus recent au plus ancien, pour la carte des mondes (seulement avec --map-names)"""
-    return {room: [p.name for p in sorted(walkers(room), key=lambda p: -(p.walk0 or 0)) if p.name][:MAP_NAMES_MAX] for room in ROOMS if walkers(room)}
+    """pseudos par salon pour la carte des mondes (seulement avec la bonne cle) : les promeneurs, du plus recent au plus ancien, puis les visiteurs en vue globale"""
+    walk, view = {}, {}
+    for room in ROOMS:
+        w = [p.name for p in sorted(walkers(room), key=lambda p: -(p.walk0 or 0)) if p.name][:MAP_NAMES_MAX]
+        v = [p.label for p in sorted((p for p in ROOMS[room].values() if p.spectator), key=lambda p: -p.id) if p.label][:MAP_NAMES_MAX]
+        if w:
+            walk[room] = w
+        if v:
+            view[room] = v
+    return walk, view
+
+
+def map_key_ok(ip, key):
+    """vrai si la demande de la carte presente la bonne cle --map-names-key ; 5 cles refusees par minute et par adresse au plus ; sans cle, rien n'est compte"""
+    if not OPTS.map_names_key or not key:
+        return False
+    now = time.time()
+    ipk = ip_group(ip)
+    tries = [x for x in MTRY.get(ipk, []) if now - x < 60]
+    MTRY[ipk] = tries
+    if len(tries) >= 5:
+        log(_tr("py.presence.ev.mapnames"), "", f"ip {ip_for_log(ip)}", _tr("py.presence.visits.rate"))
+        return False
+    good = hmac.compare_digest(hashlib.sha256(str(key)[:200].encode("utf-8")).digest(), hashlib.sha256(OPTS.map_names_key.encode("utf-8")).digest())
+    if not good:
+        tries.append(now)
+        log(_tr("py.presence.ev.mapnames"), "", f"ip {ip_for_log(ip)}", _tr("py.presence.visits.badkey"))
+    return good
 
 
 def ws_origin(ws):
@@ -1159,7 +1188,7 @@ async def handler(ws):
             await ws.send(json.dumps({"t": "rooms", "rooms": {name: len(walkers(name)) for name in ROOMS if walkers(name)},
                                       "visitors": {name: len(peers_in) for name, peers_in in ROOMS.items() if peers_in},   # v47 : promeneurs et spectateurs, par salon
                                       "spectators": sum(1 for p in all_peers() if p.spectator),
-                                      **({"names": map_names()} if OPTS.map_names else {})}, separators=(",", ":")))
+                                      **(dict(zip(("names", "viewers"), map_names())) if map_key_ok(ip, msg.get("key")) else {})}, separators=(",", ":")))
             return
         if not isinstance(msg, dict) or msg.get("t") != "hello":
             return
@@ -1194,6 +1223,8 @@ async def handler(ws):
         if not spectator:
             peer.name, _ = REG.resolve(uidh, msg.get("name"), persistent=not uidh.startswith("anon-"))
             peer.vname = peer.name
+        elif OPTS.map_names_key:
+            peer.label = clean_name(msg.get("name"))
         existing = [p.public() for p in walkers(room)]
         peers = ROOMS.setdefault(room, {})      # v51 : créé ici seulement (un refus plus haut ne laisse plus de salon vide)
         peers[pid] = peer
@@ -1228,6 +1259,7 @@ async def handler(ws):
                     peer.walk_mark(False)
                     await broadcast(room, {"t": "leave", "id": pid}, exclude=peer)
                     log(_tr("py.presence.ev.walk"), room, peer.who(), _tr("py.presence.ev.end"))
+                    peer.label = peer.name if OPTS.map_names_key else ""
                     peer.name = ""
             elif t == "color":
                 # v34 : changement de couleur en cours de connexion ; valeur invalide ignorée sans bruit, au plus un changement toutes les 0,2 s
@@ -1354,12 +1386,15 @@ async def main():
     ap.add_argument("--visits", default="", metavar="FILE", help=_tr("py.presence.help.visits"))
     ap.add_argument("--visits-days", type=int, default=365, metavar="N", help=_tr("py.presence.help.visits_days"))
     ap.add_argument("--visits-names", action="store_true", help=_tr("py.presence.help.visits_names"))
-    ap.add_argument("--map-names", action="store_true", help=_tr("py.presence.help.map_names"))
+    ap.add_argument("--map-names-key", metavar="SECRET", help=_tr("py.presence.help.map_names_key"))
+    ap.add_argument("--map-names", action="store_true", help=argparse.SUPPRESS)   # ancienne option (1.3.1) : sans effet, un avertissement le dit
     ap.add_argument("--visits-keys", default="presence_visits_keys.json", metavar="FILE", help=_tr("py.presence.help.visits_keys"))
     ap.add_argument("--creators", default="", metavar="FILE", help=_tr("py.presence.help.creators"))
     ap.add_argument("--cert", help=_tr("py.presence.certificat_tls_wss"))
     ap.add_argument("--key", help=_tr("py.presence.cle_privee_tls"))
     OPTS = ap.parse_args()
+    if OPTS.map_names_key is not None and len(OPTS.map_names_key) < MAP_KEY_MIN:
+        ap.error(_tr("py.presence.map_key_short", MAP_KEY_MIN))
     try:
         sys.stdout.reconfigure(line_buffering=True)
     except (AttributeError, ValueError):
@@ -1408,8 +1443,10 @@ async def main():
             LOG.info(_tr("py.presence.serveur_journal_0_registre_des_noms", OPTS.log or '(aucun : option --log)', OPTS.identities or '(en mémoire)'))
             if OPTS.visits:
                 LOG.info(_tr("py.presence.visits_on", OPTS.visits, OPTS.visits_days, _tr("py.presence.visits.yes") if OPTS.visits_names else _tr("py.presence.visits.no")))
-            if OPTS.map_names:
+            if OPTS.map_names_key:
                 LOG.info(_tr("py.presence.map_names_on"))
+            if OPTS.map_names:
+                LOG.warning(_tr("py.presence.map_names_old"))
             if OPTS.creators:
                 LOG.info(_tr("py.presence.cr.on", OPTS.creators, len(CREATORS or ())))
             print(_tr("py.presence.moderation_tape_aide_pour_la_liste"))

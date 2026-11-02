@@ -382,7 +382,8 @@ if ((C.zones || []).length || C.zonesLive) {
 if ((C.map || []).length || C.mapUrl) {
   let MAP = (C.map || []).slice();
   const ov = document.getElementById('mapOverlay'), grid = document.getElementById('mapGrid'), mb = document.getElementById('mapBtn');
-  const counts = {}, vis = {}, nms = {}, answered = {}, hasVis = {}; let tm = 0;
+  const counts = {}, vis = {}, nms = {}, answered = {}, hasVis = {}, MAPKEY = hashParams().get('pseudos') || ''; let tm = 0;   // #pseudos=CLE : la cle du serveur (--map-names-key) pour voir les pseudos
+
   const srvOf = r => (r.presence || C.presenceUrl || '');
   const norm = u => { try { const x = new URL(u, location.href); x.hash = ''; return x.href; } catch (e) { return ''; } };
   const here = r => (r.room && r.room === C.room) || (r.url && norm(r.url) === norm(location.href));
@@ -426,7 +427,11 @@ if ((C.map || []).length || C.mapUrl) {
       if (answered[srv] && r.room) {   // v47 : visiteurs (promeneurs et spectateurs) et promeneurs, en texte ; un ancien serveur ne donne que les promeneurs
         const w = counts[k] || 0, v = hasVis[srv] ? Math.max(vis[k] || 0, w) : -1;
         parts.push(v < 0 ? trn('page.map.count', w) : !v ? tr('page.map.novisitor') : !w ? trn('page.map.visitors', v) : v === w ? trn('page.map.count', w) : trn('page.map.mixed', v, w));   // un seul nombre : celui qui marche n'est pas compté deux fois
-        const nm = nms[k]; if (nm && nm.length) { const shown = nm.slice(0, 5), extra = Math.max(w - shown.length, 0); parts.push(shown.join(', ') + (extra ? tr('page.map.and') + trn('page.map.other', extra) : '')); }   // pseudos (serveur lancé avec --map-names), le plus récent d'abord
+        const nm = nms[k];   // pseudos (serveur lancé avec --map-names-key, carte ouverte avec #pseudos=CLE) : les promeneurs, le plus récent d'abord, puis les visiteurs en vue globale
+        if (nm) {
+          if (nm.w.length) { const shown = nm.w.slice(0, 5), extra = Math.max(w - shown.length, 0); parts.push(shown.join(', ') + (extra ? tr('page.map.and') + trn('page.map.other', extra) : '')); }
+          if (nm.v.length) { const shown = nm.v.slice(0, 5), extra = Math.max(Math.max(v - w, 0) - shown.length, 0); parts.push(tr('page.map.viewers', shown.join(', ') + (extra ? tr('page.map.and') + trn('page.map.other', extra) : ''))); }
+        }
       }
       if (parts.length) { const s = document.createElement('span'); s.textContent = parts.join(tr('page.map.sep')); t.append(s); }
       t.onclick = () => { if (here(r)) close(); else go(r); };
@@ -438,9 +443,9 @@ if ((C.map || []).length || C.mapUrl) {
   const queryServer = srv => {
     try {
       const ws = new WebSocket(presUrl(srv)); const to = setTimeout(() => { try { ws.close(); } catch (e) {} }, 4000);
-      ws.onopen = () => ws.send(JSON.stringify({ t: 'rooms' }));
+      ws.onopen = () => ws.send(JSON.stringify(MAPKEY ? { t: 'rooms', key: MAPKEY } : { t: 'rooms' }));
       ws.onmessage = ev => {
-        try { const m = JSON.parse(ev.data); if (m.t === 'rooms') { for (const o of [counts, vis, nms]) for (const k of Object.keys(o)) if (k.startsWith(srv + '|')) delete o[k]; for (const [room, n] of Object.entries(m.rooms || {})) counts[srv + '|' + room] = n; hasVis[srv] = !!(m.visitors && typeof m.visitors === 'object'); if (hasVis[srv]) for (const [room, n] of Object.entries(m.visitors)) vis[srv + '|' + room] = n; if (m.names && typeof m.names === 'object') for (const [room, a] of Object.entries(m.names)) if (Array.isArray(a)) nms[srv + '|' + room] = a.filter(x => typeof x === 'string' && x).slice(0, 20); answered[srv] = true; draw(); } } catch (e) {}
+        try { const m = JSON.parse(ev.data); if (m.t === 'rooms') { for (const o of [counts, vis, nms]) for (const k of Object.keys(o)) if (k.startsWith(srv + '|')) delete o[k]; for (const [room, n] of Object.entries(m.rooms || {})) counts[srv + '|' + room] = n; hasVis[srv] = !!(m.visitors && typeof m.visitors === 'object'); if (hasVis[srv]) for (const [room, n] of Object.entries(m.visitors)) vis[srv + '|' + room] = n; const ob = x => (x && typeof x === 'object' ? x : {}), cl = a => (Array.isArray(a) ? a.filter(x => typeof x === 'string' && x).slice(0, 20) : []); for (const room of new Set([...Object.keys(ob(m.names)), ...Object.keys(ob(m.viewers))])) nms[srv + '|' + room] = { w: cl(ob(m.names)[room]), v: cl(ob(m.viewers)[room]) }; answered[srv] = true; draw(); } } catch (e) {}
         try { ws.close(); } catch (e) {}
       };
       ws.onclose = () => clearTimeout(to); ws.onerror = () => {};

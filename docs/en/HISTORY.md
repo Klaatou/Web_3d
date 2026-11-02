@@ -121,6 +121,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 02/11/2026 |  | 1.3.0 | Release 1.3.0: `VERSION` 1.3.0; `CHANGELOG.md`; gathers batches 1.2.1 to 1.2.4 (Linux and macOS launchers for the packages); no built file changes |
 | 02/11/2026 |  | after 1.3.0 | Batch 1.3.1: world map: `--map-names` option (walkers' nicknames); a number is no longer counted twice; `tests/carte_pseudos.py` |
 | 02/11/2026 |  | after 1.3.0 | Batch 1.3.2: launchers: guard against the repository's source folder ("Download ZIP"); `paquets/README.txt`; test in `tests/paquets.py` |
+| 02/11/2026 |  | after 1.3.0 | Batch 1.3.3: world map: nicknames protected by a key (`--map-names-key`, `#pseudos=`); visitors in the global view; `tests/carte_pseudos.py` rewritten |
 
 ## Useful commands
 

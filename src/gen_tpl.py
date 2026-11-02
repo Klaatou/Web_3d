@@ -362,7 +362,8 @@ __I18N__
   let MAP = C.map || [];
   applyI18n(); document.getElementById('foot').textContent = tr('map.footer', '__MAP_VERSION__');
   if (document.querySelector('h1[data-i18n]')) document.title = tr('map.title');
-  const grid = document.getElementById('grid'), counts = {}, vis = {}, nms = {}, answered = {}, hasVis = {}; let loadErr = '';
+  const grid = document.getElementById('grid'), counts = {}, vis = {}, nms = {}, answered = {}, hasVis = {}, MAPKEY = new URLSearchParams(location.hash.replace(/^#/, '')).get('pseudos') || '';   // #pseudos=CLE : la cle du serveur (--map-names-key) pour voir les pseudos
+   let loadErr = '';
   // v34 : pseudo mémorisé (même clé que les régions) ; les liens des cartes reçoivent #name=PSEUDO
   const pin = document.getElementById('pseudo');
   const pseudo = () => pin.value.replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 24);
@@ -417,7 +418,7 @@ __I18N__
     showAlert();
   };
   const countText = (v, w) => v < 0 ? trn('map.walking', w) : !v ? tr('map.novisitor') : !w ? trn('map.visitors', v) : v === w ? trn('map.walking', w) : trn('map.mixed', v, w);   // un seul nombre : celui qui marche n'est pas compte deux fois
-  const namesText = (k, w) => { const nm = nms[k]; if (!nm || !nm.length) return ''; const shown = nm.slice(0, 5), extra = Math.max(w - shown.length, 0); return shown.join(', ') + (extra ? tr('map.and') + trn('map.other', extra) : ''); };   // pseudos (serveur lance avec --map-names), le plus recent d'abord
+  const namesText = (k, w, v) => { const nm = nms[k]; if (!nm) return ''; const lst = (a, rest) => { const shown = a.slice(0, 5), extra = Math.max(rest - shown.length, 0); return shown.join(', ') + (extra ? tr('map.and') + trn('map.other', extra) : ''); }; const out = []; if (nm.w.length) out.push(lst(nm.w, w)); if (nm.v.length) out.push(tr('map.viewers', lst(nm.v, Math.max(v - w, 0)))); return out.join('\n'); };   // pseudos (serveur lance avec --map-names-key, carte ouverte avec #pseudos=CLE) : les promeneurs, le plus recent d'abord, puis les visiteurs en vue globale
   let drawLater = false, lastSig = '';   // apres la v52 : on ne redessine que si les donnees ont change, et jamais tant qu'un texte de la grille est selectionne (sinon chaque releve efface la selection)
   const draw = () => {
     const sel = window.getSelection ? window.getSelection() : null;
@@ -444,7 +445,7 @@ __I18N__
       if (answered[srv] && r.room) {   // v47 : visiteurs (promeneurs et spectateurs) et promeneurs, en texte ; un ancien serveur ne donne que les promeneurs
         const w = counts[k] || 0, v = hasVis[srv] ? Math.max(vis[k] || 0, w) : -1;
         const s = document.createElement('span');
-        const nt = namesText(k, w); s.textContent = countText(v, w) + (nt ? '\n' + nt : '');
+        const nt = namesText(k, w, v); s.textContent = countText(v, w) + (nt ? '\n' + nt : '');
         if (!totSeen.has(k)) { totSeen.add(k); totGot = true; totW += w; if (v < 0) totOld = true; else totV += v; }
         t.append(s);
       }
@@ -466,9 +467,9 @@ __I18N__
   const queryServer = srv => {
     try {
       const ws = new WebSocket(presUrl(srv)), to = setTimeout(() => { try { ws.close(); } catch (e) {} }, 4000);
-      ws.onopen = () => ws.send(JSON.stringify({ t: 'rooms' }));
+      ws.onopen = () => ws.send(JSON.stringify(MAPKEY ? { t: 'rooms', key: MAPKEY } : { t: 'rooms' }));
       ws.onmessage = ev => {
-        try { const m = JSON.parse(ev.data); if (m.t === 'rooms') { const before = beforeOf(srv); for (const o of [counts, vis, nms]) for (const k of Object.keys(o)) if (k.startsWith(srv + '|')) delete o[k]; for (const [room, n] of Object.entries(m.rooms || {})) counts[srv + '|' + room] = n; hasVis[srv] = !!(m.visitors && typeof m.visitors === 'object'); if (hasVis[srv]) for (const [room, n] of Object.entries(m.visitors)) vis[srv + '|' + room] = n; if (m.names && typeof m.names === 'object') for (const [room, a] of Object.entries(m.names)) if (Array.isArray(a)) nms[srv + '|' + room] = a.filter(x => typeof x === 'string' && x).slice(0, 20); answered[srv] = true; arrivals(srv, before); draw(); } } catch (e) {}
+        try { const m = JSON.parse(ev.data); if (m.t === 'rooms') { const before = beforeOf(srv); for (const o of [counts, vis, nms]) for (const k of Object.keys(o)) if (k.startsWith(srv + '|')) delete o[k]; for (const [room, n] of Object.entries(m.rooms || {})) counts[srv + '|' + room] = n; hasVis[srv] = !!(m.visitors && typeof m.visitors === 'object'); if (hasVis[srv]) for (const [room, n] of Object.entries(m.visitors)) vis[srv + '|' + room] = n; const ob = x => (x && typeof x === 'object' ? x : {}), cl = a => (Array.isArray(a) ? a.filter(x => typeof x === 'string' && x).slice(0, 20) : []); for (const room of new Set([...Object.keys(ob(m.names)), ...Object.keys(ob(m.viewers))])) nms[srv + '|' + room] = { w: cl(ob(m.names)[room]), v: cl(ob(m.viewers)[room]) }; answered[srv] = true; arrivals(srv, before); draw(); } } catch (e) {}
         try { ws.close(); } catch (e) {}
       };
       ws.onclose = () => clearTimeout(to); ws.onerror = () => {};
