@@ -1,23 +1,23 @@
 {
  "carte.html": {
-  "hash": "4d44b36013cf6f6527dd5ed4eb22a124610f9bf90d9202796f45291b9194110d",
-  "version": "1.3.4 (02/11/2026)"
+  "hash": "8b5d6b11dd0e0ebaa7f950c3f83258763d4c8f4788e3803e635695fec07df3c4",
+  "version": "1.3.5 (02/11/2026)"
  },
  "glb-viewer.html": {
-  "hash": "40f5d07e35b72a2d2bb87bf0865257a2ea4dd4e5849fd76a55e47ee7e29431b8",
-  "version": "1.3.4 (02/11/2026)"
+  "hash": "42587fd3d4f18ef6f6132586e25149268831296bb8e837effac1dbd567caef3d",
+  "version": "1.3.5 (02/11/2026)"
  },
  "glb2html.py": {
-  "hash": "7a823c3f1132a0b6035d3c59080d021dff6dc84aa5e6b07bc6674cc3d3206d05",
-  "version": "1.3.4 (02/11/2026)"
+  "hash": "f3c816b55cb1123a23316bebac3b180e852733672524abdc433ad89cf7bff3e1",
+  "version": "1.3.5 (02/11/2026)"
  },
  "glb2tiles.py": {
   "hash": "6fd91fbc3016f5a2ae3e648a02093a51887ce9b32e1c7cf413ec285f5fd1b72e",
   "version": "1.3.3 (02/11/2026)"
  },
  "index.html": {
-  "hash": "34d2121a797a501abc0520e090135321624edf394870d7a9cc992fc23dbd81a6",
-  "version": "1.3.3 (02/11/2026)"
+  "hash": "4ff254a02fd0f5d90857725f4181bb06526ec7b8779d4ebc1183ebf26fb95195",
+  "version": "1.3.5 (02/11/2026)"
  },
  "oar2glb.py": {
   "hash": "9ec37c37a2025149633c2aa90096c6b2c7fd90d4ffa4ae75ef8c0f213898c095",

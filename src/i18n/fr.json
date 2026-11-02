@@ -302,6 +302,7 @@
  "page.opt.retina": "Haute résolution (plus net, plus lourd)",
  "page.opt.sea": "Afficher la mer",
  "page.opt.sound.cite": "Bip quand un message cite mon pseudo",
+ "page.opt.sound.msg": "Bip à chaque message quand la page n'a pas le focus",
  "page.opt.sound.join": "Son à l'arrivée d'un visiteur",
  "page.opt.sound.leave": "Son au départ d'un visiteur",
  "page.opt.sounds": "Sons",

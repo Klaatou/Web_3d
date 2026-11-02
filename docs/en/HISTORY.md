@@ -123,6 +123,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 02/11/2026 |  | after 1.3.0 | Batch 1.3.2: launchers: guard against the repository's source folder ("Download ZIP"); `paquets/README.txt`; test in `tests/paquets.py` |
 | 02/11/2026 |  | after 1.3.0 | Batch 1.3.3: world map: nicknames protected by a key (`--map-names-key`, `#pseudos=`); visitors in the global view; `tests/carte_pseudos.py` rewritten |
 | 02/11/2026 |  | after 1.3.0 | Batch 1.3.4: standalone map: several `#` in the address (`#name=...#pseudos=...`); step 5b in `tests/carte_pseudos.py` |
+| 02/11/2026 |  | after 1.3.0 | Batch 1.3.5: chat: a beep for every message when the page is not focused (`soundMsg` setting); `tests/chat_bip.py` |
 
 ## Useful commands
 
