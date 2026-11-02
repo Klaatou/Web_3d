@@ -5,6 +5,9 @@ Un faux contexte audio (injecté avant la page) compte les notes jouées ; docum
 Vérifie : page sans focus -> un bip (988 Hz) ; page avec focus -> aucun ; au plus un bip toutes les 2 s ; ses propres messages -> aucun ;
 l'historique rechargé à la connexion -> aucun ; message qui cite mon pseudo -> seulement le bip « cite » (880 Hz) ; case décochée -> aucun.
 
+Version 3 (02/11/2026) : le serveur de test n'a pas de limite de rythme (sinon il jette en silence les messages envoyés à moins de 0,7 s les uns des autres),
+chaque message est confirmé accepté par le serveur, les bips sont attendus jusqu'à 6 s (machine lente) et leur retard est affiché.
+
 Prérequis : python build.py ; pip install playwright websockets. Variables facultatives : THREE_DIR, CHROMIUM. Lancer : python tests/chat_bip.py
 """
 import os as _os_lang; _os_lang.environ["WEB3D_LANG"] = "fr"
@@ -15,6 +18,7 @@ DIST = ROOT / "dist"
 tmp = pathlib.Path(tempfile.mkdtemp(prefix="glb2html_bip_"))
 vend = ["--vendor", os.environ["THREE_DIR"]] if os.environ.get("THREE_DIR") else []
 echecs = 0
+print("chat_bip.py version 3 (02/11/2026) : serveur de test sans limite de rythme ; bips attendus jusqu'a 6 s")
 
 
 def rapport(ok, titre, detail=""):
@@ -39,15 +43,15 @@ def port_libre():
         s.bind(("127.0.0.1", 0)); return s.getsockname()[1]
 
 
-# faux contexte audio : enregistre les fréquences des notes ; focus piloté par window.__focus
+# faux contexte audio : enregistre la frequence et l'heure de chaque note ; focus piloté par window.__focus
 FAUX = """
-window.__beeps = []; window.__focus = true;
+window.__beeps = []; window.__beeps_t = []; window.__focus = true;
 document.hasFocus = () => window.__focus;
 window.AudioContext = window.webkitAudioContext = class {
   constructor() { this.state = 'running'; this.currentTime = 0; this.destination = {}; }
   resume() {}
   createGain() { return { gain: { setValueAtTime() {}, exponentialRampToValueAtTime() {} }, connect() {} }; }
-  createOscillator() { return { type: '', frequency: { set value(v) { window.__beeps.push(v); } }, connect() {}, start() {}, stop() {} }; }
+  createOscillator() { return { type: '', frequency: { set value(v) { window.__beeps.push(v); window.__beeps_t.push(Date.now()); } }, connect() {}, start() {}, stop() {} }; }
 };
 """
 
@@ -62,7 +66,7 @@ async def main():
         sys.exit("[ECHEC] la bibliotheque « websockets » n'est pas installee (pip install websockets).")
     pres = subprocess.Popen([sys.executable, str(DIST / "presence_server.py"), "--host", "127.0.0.1", "--port", str(pport),
                              "--identities", str(tmp / "id.json"), "--bans", str(tmp / "bans.json"),
-                             "--chat-gap", "0.05", "--chat-burst", "100"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)   # sans cela le serveur jette tout message envoye moins de 0,7 s apres le precedent
+                             "--chat-gap", "0.05", "--chat-burst", "100"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     r = subprocess.run([sys.executable, str(DIST / "glb2html.py"), str(tmp / "sol.glb"), "-o", str(site / "page.html"), "--no-sea", "--presence-url", f"ws://127.0.0.1:{pport}", "--room", "t", "--chat", *vend], capture_output=True, text=True)
     if r.returncode:
         pres.kill(); sys.exit(f"[ECHEC] generation\n{r.stdout}{r.stderr}")
@@ -90,13 +94,25 @@ async def main():
             return False
 
         async def envoyer(texte):
+            """envoie un message, attend la confirmation du serveur ; rend l'heure d'envoi (ms)"""
+            t0 = time.time() * 1000
             await bob.send(json.dumps({"t": "chat", "text": texte}))
-            ok = await echo(texte)
-            if not ok:
-                rapport(False, f"le serveur a accepte le message « {texte} »", "message jete (rythme, limite ?)")
+            if not await echo(texte):
+                rapport(False, f"le serveur a accepte le message « {texte} »", "message jete par le serveur (rythme, limite ?)")
+            return t0
 
-        async def dire(texte):
-            await envoyer(texte); await asyncio.sleep(0.8)
+        async def attendre(pg, n, delai=6):
+            """attend jusqu'a delai s qu'il y ait au moins n notes ; rend le nombre de notes"""
+            fin = time.time() + delai
+            while time.time() < fin:
+                k = await pg.evaluate("window.__beeps.length")
+                if k >= n:
+                    return k
+                await asyncio.sleep(0.1)
+            return await pg.evaluate("window.__beeps.length")
+
+        async def etat(pg):
+            return await pg.evaluate("({ notes: window.__beeps.slice(), heures: window.__beeps_t.map(t => t % 100000), focus: window.__focus, cacher: document.hidden })")
 
         async with async_playwright() as p:
             kw = {"executable_path": os.environ["CHROMIUM"]} if os.environ.get("CHROMIUM") else {}
@@ -116,38 +132,46 @@ async def main():
 
             beeps = lambda pg: pg.evaluate("window.__beeps.slice()")
             ctx, pg, errs = await ouvrir(focus=True)
-            await dire("bonjour (page avec focus)")
+            await envoyer("bonjour (page avec focus)"); await asyncio.sleep(2)
             rapport(await beeps(pg) == [], "page avec focus : aucun bip", await beeps(pg))
             await pg.evaluate("window.__focus = false")
-            await dire("salut (page sans focus)")
-            rapport(await beeps(pg) == [988], "page sans focus : un bip (une note, 988 Hz)", await beeps(pg))
-            await asyncio.sleep(2.2)
+            t0 = await envoyer("salut (page sans focus)")
+            k = await attendre(pg, 1)
+            e = await etat(pg)
+            rapport(e["notes"] == [988], "page sans focus : un bip (une note, 988 Hz)", e)
+            if e["notes"]:
+                print(f"   (retard du bip : {int(await pg.evaluate('window.__beeps_t[0]') - t0)} ms apres l'envoi du message)")
+            await asyncio.sleep(2.5)
             await envoyer("un"); await asyncio.sleep(0.1)
             await envoyer("deux"); await asyncio.sleep(0.1)
-            await envoyer("trois"); await asyncio.sleep(0.8)
-            rapport(await beeps(pg) == [988, 988], "trois messages en moins de 2 s : un seul bip de plus", await beeps(pg))
-            await asyncio.sleep(2.2)
-            await dire("Zoe, tu m'entends ?")
-            b = await beeps(pg)
-            rapport(b == [988, 988, 880], "message qui cite mon pseudo : seulement le bip « cite » (880 Hz), pas deux bips", b)
+            await envoyer("trois")
+            k = await attendre(pg, 2); await asyncio.sleep(1.5)
+            e = await etat(pg)
+            rapport(e["notes"] == [988, 988], "trois messages en moins de 2 s : un seul bip de plus", e)
+            await asyncio.sleep(2.5)
+            await envoyer("Zoe, tu m'entends ?")
+            k = await attendre(pg, 3); await asyncio.sleep(1.5)
+            e = await etat(pg)
+            rapport(e["notes"] == [988, 988, 880], "message qui cite mon pseudo : seulement le bip « cite » (880 Hz), pas deux bips", e)
             # mes propres messages : aucun bip
             n = len(await beeps(pg))
             await pg.keyboard.press("Enter"); await pg.wait_for_timeout(400)
-            await pg.keyboard.type("mon message"); await pg.keyboard.press("Enter"); await pg.wait_for_timeout(1000)
+            await pg.keyboard.type("mon message"); await pg.keyboard.press("Enter"); await pg.wait_for_timeout(2000)
             rapport(len(await beeps(pg)) == n, "mon propre message : aucun bip", await beeps(pg))
             await pg.keyboard.press("Escape")
             # case décochée : aucun bip (le réglage est dans le panneau des réglages)
             await pg.evaluate("document.getElementById('visSoundCite') && (document.getElementById('visSoundCite').checked = false, document.getElementById('visSoundCite').dispatchEvent(new Event('change')))")
-            await asyncio.sleep(2.2)
+            await asyncio.sleep(2.5)
             await pg.evaluate("(() => { const c = document.getElementById('visSoundMsg'); c.checked = false; c.dispatchEvent(new Event('change')); })()")
             n = len(await beeps(pg))
-            await dire("encore un message")
+            await envoyer("encore un message"); await asyncio.sleep(2)
             rapport(len(await beeps(pg)) == n, "case « Bip à chaque message… » décochée : aucun bip", await beeps(pg))
             rapport(not errs, "aucune erreur JavaScript", errs)
             await ctx.close()
 
             # historique rechargé à la connexion : aucun bip (page ouverte sans focus, le salon a déjà des messages)
             ctx, pg, errs = await ouvrir(focus=False)
+            await asyncio.sleep(2)
             b = await beeps(pg)
             rapport(b == [], "historique rechargé à la connexion : aucun bip", b)
             await ctx.close()
