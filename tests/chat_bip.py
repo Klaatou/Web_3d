@@ -61,7 +61,8 @@ async def main():
     if subprocess.run([sys.executable, "-c", "import websockets"], capture_output=True).returncode:
         sys.exit("[ECHEC] la bibliotheque « websockets » n'est pas installee (pip install websockets).")
     pres = subprocess.Popen([sys.executable, str(DIST / "presence_server.py"), "--host", "127.0.0.1", "--port", str(pport),
-                             "--identities", str(tmp / "id.json"), "--bans", str(tmp / "bans.json")], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                             "--identities", str(tmp / "id.json"), "--bans", str(tmp / "bans.json"),
+                             "--chat-gap", "0.05", "--chat-burst", "100"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)   # sans cela le serveur jette tout message envoye moins de 0,7 s apres le precedent
     r = subprocess.run([sys.executable, str(DIST / "glb2html.py"), str(tmp / "sol.glb"), "-o", str(site / "page.html"), "--no-sea", "--presence-url", f"ws://127.0.0.1:{pport}", "--room", "t", "--chat", *vend], capture_output=True, text=True)
     if r.returncode:
         pres.kill(); sys.exit(f"[ECHEC] generation\n{r.stdout}{r.stderr}")
@@ -77,8 +78,25 @@ async def main():
         bob = await websockets.asyncio.client.connect(f"ws://127.0.0.1:{pport}"); ouverts.append(bob)
         await bob.send(json.dumps({"t": "hello", "room": "t", "uid": os.urandom(12).hex(), "spectator": False, "name": "Bob"})); await bob.recv()
 
+        async def echo(texte, delai=5):      # le serveur renvoie le message a tous, Bob compris : preuve qu'il l'a accepte
+            fin = time.time() + delai
+            while time.time() < fin:
+                try:
+                    m = json.loads(await asyncio.wait_for(bob.recv(), 1))
+                except asyncio.TimeoutError:
+                    continue
+                if m.get("t") == "chat" and m.get("text") == texte:
+                    return True
+            return False
+
+        async def envoyer(texte):
+            await bob.send(json.dumps({"t": "chat", "text": texte}))
+            ok = await echo(texte)
+            if not ok:
+                rapport(False, f"le serveur a accepte le message « {texte} »", "message jete (rythme, limite ?)")
+
         async def dire(texte):
-            await bob.send(json.dumps({"t": "chat", "text": texte})); await asyncio.sleep(0.6)
+            await envoyer(texte); await asyncio.sleep(0.8)
 
         async with async_playwright() as p:
             kw = {"executable_path": os.environ["CHROMIUM"]} if os.environ.get("CHROMIUM") else {}
@@ -104,9 +122,9 @@ async def main():
             await dire("salut (page sans focus)")
             rapport(await beeps(pg) == [988], "page sans focus : un bip (une note, 988 Hz)", await beeps(pg))
             await asyncio.sleep(2.2)
-            await bob.send(json.dumps({"t": "chat", "text": "un"})); await asyncio.sleep(0.2)
-            await bob.send(json.dumps({"t": "chat", "text": "deux"})); await asyncio.sleep(0.2)
-            await bob.send(json.dumps({"t": "chat", "text": "trois"})); await asyncio.sleep(0.8)
+            await envoyer("un"); await asyncio.sleep(0.1)
+            await envoyer("deux"); await asyncio.sleep(0.1)
+            await envoyer("trois"); await asyncio.sleep(0.8)
             rapport(await beeps(pg) == [988, 988], "trois messages en moins de 2 s : un seul bip de plus", await beeps(pg))
             await asyncio.sleep(2.2)
             await dire("Zoe, tu m'entends ?")
