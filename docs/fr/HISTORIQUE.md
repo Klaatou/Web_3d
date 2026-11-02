@@ -125,6 +125,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 02/11/2026 |  | après 1.3.0 | Lot 1.3.4 : carte autonome : plusieurs `#` dans l'adresse (`#name=...#pseudos=...`) ; test 5b dans `tests/carte_pseudos.py` |
 | 02/11/2026 |  | après 1.3.0 | Lot 1.3.5 : chat : bip à chaque message quand la page n'a pas le focus (réglage `soundMsg`) ; `tests/chat_bip.py` |
 | 02/11/2026 |  | 1.4.0 | Publication 1.4.0 : `VERSION` 1.4.0 ; `CHANGELOG.md` ; réunit les lots depuis la 1.3.0 (pseudos de la carte protégés par une clé, bip du chat, garde-fou des lanceurs) |
+| 02/11/2026 |  | après 1.4.0 | Lot 1.4.1 : `CLAUDE.md` retiré (périmé depuis la v37) ; `tests/samples.py` et le manuel ne le citent plus |
 
 ## Commandes utiles
 

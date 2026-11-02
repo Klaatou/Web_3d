@@ -27,7 +27,7 @@ for nom in ("src/i18n/fr.json", "src/i18n/en.json"):
     for k, v in json.loads((ROOT / nom).read_text(encoding="utf-8")).items():
         if isinstance(v, str) and ANCIENS.search(v) and not EXCEPTION.search(v):
             trouves.append(nom + " " + k)
-for nom in ("REFERENCE_OPTIONS.md", "README.md", "README.fr.md", "CLAUDE.md", "docs/fr/MANUEL.md", "docs/en/MANUAL.md", "docs/fr/PROCEDURES.md", "docs/en/PROCEDURES.md"):
+for nom in ("REFERENCE_OPTIONS.md", "README.md", "README.fr.md", "docs/fr/MANUEL.md", "docs/en/MANUAL.md", "docs/fr/PROCEDURES.md", "docs/en/PROCEDURES.md"):
     texte = re.sub(r"### 27\.11.*?(?=\n## |\Z)", "", (ROOT / nom).read_text(encoding="utf-8"), flags=re.S)   # tableau des anciens noms
     for i, ligne in enumerate(texte.splitlines(), 1):
         if ANCIENS.search(ligne) and not EXCEPTION.search(ligne):

@@ -4,7 +4,10 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.4.0)
 
-*(rien pour l'instant)*
+### 02/11/2026 : version 1.4.1 : `CLAUDE.md` retiré
+
+- **Retiré** (demande de Klaatou, après relecture) : `CLAUDE.md` servait aux sessions Claude Code jusqu'à la v37 (23/10/2026) ; il le disait lui-même en tête. L'état courant est dans `REPRISE.md`, le détail dans `CHANGELOG.md` et les historiques, l'usage dans le manuel. Il contenait en outre des décisions renversées depuis (par exemple les flèches du chat passant par `viewer.holdKey`, changées en 1.2.1). Il reste dans l'historique git. `tests/samples.py` ne le contrôle plus ; le manuel (« Fichiers autonomes », FR et EN) ne le cite plus. Le fichier lui-même se retire avec `git rm CLAUDE.md` (ou en l'effaçant avant `git add -A`).
+- **Removed** (Klaatou's request, after reading it): `CLAUDE.md` served the Claude Code sessions up to v37 (23/10/2026); it said so at its very top. The current state is in `REPRISE.md`, the detail in `CHANGELOG.md` and the histories, the usage in the manual. It also held decisions reversed since (for example the chat arrows going through `viewer.holdKey`, changed in 1.2.1). It stays in the git history. `tests/samples.py` no longer checks it; the manual ("Standalone files", FR and EN) no longer cites it. The file itself is removed with `git rm CLAUDE.md` (or by deleting it before `git add -A`).
 
 ## 1.4.0 (02/11/2026)
 

@@ -125,6 +125,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 02/11/2026 |  | after 1.3.0 | Batch 1.3.4: standalone map: several `#` in the address (`#name=...#pseudos=...`); step 5b in `tests/carte_pseudos.py` |
 | 02/11/2026 |  | after 1.3.0 | Batch 1.3.5: chat: a beep for every message when the page is not focused (`soundMsg` setting); `tests/chat_bip.py` |
 | 02/11/2026 |  | 1.4.0 | Release 1.4.0: `VERSION` 1.4.0; `CHANGELOG.md`; gathers the batches since 1.3.0 (nicknames on the map protected by a key, chat beep, launcher guard) |
+| 02/11/2026 |  | after 1.4.0 | Batch 1.4.1: `CLAUDE.md` removed (out of date since v37); `tests/samples.py` and the manual no longer cite it |
 
 ## Useful commands
 
