@@ -4,7 +4,16 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.3.0)
 
-*(rien pour l'instant)*
+### 02/11/2026 : version 1.3.1 : carte des mondes : pseudos des promeneurs (option) et nombres sans doublon
+
+- **Nouveau** : option `--map-names` du serveur de présence (éteinte par défaut). La réponse `rooms` ajoute alors `names`, les pseudos des promeneurs de chaque salon, le plus récent d'abord (20 au plus). Les cartes (`carte.html` et la carte ouverte par M) affichent une ligne de pseudos sous le compte : cinq au plus, puis « et 2 autres ». Sans l'option, rien ne change : aucun pseudo dans la réponse. Le pseudo est une donnée personnelle et le serveur répond à toute page qui le demande : c'est dit dans le manuel (carte des mondes). Les pseudos passent par `textContent` (test avec un pseudo piégé).
+- **Changé** (demande de Klaatou) : un nombre n'est plus compté deux fois. « 1 promeneur » quand tous les visiteurs marchent (avant : « 1 visiteur » puis « 1 promeneur »), « 2 visiteurs, dont 1 en promenade » quand il y a aussi des spectateurs, « 1 visiteur » quand personne ne marche ; une seule ligne, dans les tuiles et dans le total. La clé de langue `map.sep` disparaît (devenue inutile) ; nouvelles clés `map.mixed`, `map.and`, `map.other` et leurs équivalents `page.map.*`.
+- **Tests** : `tests/carte_pseudos.py` (nouveau : vrais serveurs de présence avec et sans l'option, Chromium, français, anglais, carte ouverte par M, pseudo piégé) ; `tests/v47.py` et `tests/v52.py` : textes attendus mis à jour.
+- **Fabriqué** : `presence_server.py`, `glb2html.py`, `index.html`, `carte.html`, `glb-viewer.html`, `oar2glb.py` et `glb2tiles.py` changent (les textes de traduction y sont embarqués). Manuel FR et EN.
+- **New**: `--map-names` option of the presence server (off by default). The `rooms` answer then adds `names`, the walkers' nicknames of each room, most recent first (20 at most). The maps (`carte.html` and the map opened with M) show a line of nicknames under the count: five at most, then "and 2 others". Without the option nothing changes: no nickname in the answer. A nickname is personal data and the server answers any page that asks: the manual says so (world map). Nicknames go through `textContent` (test with a booby-trapped nickname).
+- **Changed** (Klaatou's request): a number is no longer counted twice. "1 walker" when every visitor is walking (before: "1 visitor" then "1 walker"), "2 visitors, 1 walking" when there are also spectators, "1 visitor" when nobody is walking; one line, in the cards and in the total. The language key `map.sep` goes away (no longer needed); new keys `map.mixed`, `map.and`, `map.other` and their `page.map.*` equivalents.
+- **Tests**: `tests/carte_pseudos.py` (new: real presence servers with and without the option, Chromium, French, English, map opened with M, booby-trapped nickname); `tests/v47.py` and `tests/v52.py`: expected texts updated.
+- **Built**: `presence_server.py`, `glb2html.py`, `index.html`, `carte.html`, `glb-viewer.html`, `oar2glb.py` and `glb2tiles.py` change (the translation texts are embedded in them). FR and EN manual.
 
 ## 1.3.0 (02/11/2026)
 

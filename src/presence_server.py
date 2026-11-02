@@ -1085,6 +1085,14 @@ def walkers(room):
     return [p for p in ROOMS.get(room, {}).values() if not p.spectator]
 
 
+MAP_NAMES_MAX = 20
+
+
+def map_names():
+    """pseudos des promeneurs par salon, du plus recent au plus ancien, pour la carte des mondes (seulement avec --map-names)"""
+    return {room: [p.name for p in sorted(walkers(room), key=lambda p: -(p.walk0 or 0)) if p.name][:MAP_NAMES_MAX] for room in ROOMS if walkers(room)}
+
+
 def ws_origin(ws):
     """en-tête Origin de la connexion (donné par le navigateur ; « null » pour une page ouverte depuis le disque)"""
     try:
@@ -1150,7 +1158,8 @@ async def handler(ws):
         if isinstance(msg, dict) and msg.get("t") == "rooms":
             await ws.send(json.dumps({"t": "rooms", "rooms": {name: len(walkers(name)) for name in ROOMS if walkers(name)},
                                       "visitors": {name: len(peers_in) for name, peers_in in ROOMS.items() if peers_in},   # v47 : promeneurs et spectateurs, par salon
-                                      "spectators": sum(1 for p in all_peers() if p.spectator)}, separators=(",", ":")))
+                                      "spectators": sum(1 for p in all_peers() if p.spectator),
+                                      **({"names": map_names()} if OPTS.map_names else {})}, separators=(",", ":")))
             return
         if not isinstance(msg, dict) or msg.get("t") != "hello":
             return
@@ -1345,6 +1354,7 @@ async def main():
     ap.add_argument("--visits", default="", metavar="FILE", help=_tr("py.presence.help.visits"))
     ap.add_argument("--visits-days", type=int, default=365, metavar="N", help=_tr("py.presence.help.visits_days"))
     ap.add_argument("--visits-names", action="store_true", help=_tr("py.presence.help.visits_names"))
+    ap.add_argument("--map-names", action="store_true", help=_tr("py.presence.help.map_names"))
     ap.add_argument("--visits-keys", default="presence_visits_keys.json", metavar="FILE", help=_tr("py.presence.help.visits_keys"))
     ap.add_argument("--creators", default="", metavar="FILE", help=_tr("py.presence.help.creators"))
     ap.add_argument("--cert", help=_tr("py.presence.certificat_tls_wss"))
@@ -1398,6 +1408,8 @@ async def main():
             LOG.info(_tr("py.presence.serveur_journal_0_registre_des_noms", OPTS.log or '(aucun : option --log)', OPTS.identities or '(en mémoire)'))
             if OPTS.visits:
                 LOG.info(_tr("py.presence.visits_on", OPTS.visits, OPTS.visits_days, _tr("py.presence.visits.yes") if OPTS.visits_names else _tr("py.presence.visits.no")))
+            if OPTS.map_names:
+                LOG.info(_tr("py.presence.map_names_on"))
             if OPTS.creators:
                 LOG.info(_tr("py.presence.cr.on", OPTS.creators, len(CREATORS or ())))
             print(_tr("py.presence.moderation_tape_aide_pour_la_liste"))

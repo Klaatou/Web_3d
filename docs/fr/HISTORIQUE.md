@@ -119,6 +119,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 01/11/2026 |  | après 1.2.0 | Lot 1.2.3 : `tests/chat_fleches.py` attend l'état réel de la présence et affiche l'état complet en cas d'échec |
 | 02/11/2026 |  | après 1.2.0 | Lot 1.2.4 : paquets : lanceurs et renommage pour Linux et macOS (`.sh`, `.command`) ; `fabriquer_paquets.py` marque les lanceurs exécutables ; `tests/paquets.py` les essaie en direct |
 | 02/11/2026 |  | 1.3.0 | Publication 1.3.0 : `VERSION` 1.3.0 ; `CHANGELOG.md` ; réunit les lots 1.2.1 à 1.2.4 (lanceurs Linux et macOS pour les paquets) ; aucun fichier fabriqué ne change |
+| 02/11/2026 |  | après 1.3.0 | Lot 1.3.1 : carte des mondes : option `--map-names` (pseudos des promeneurs) ; un nombre n'est plus compté deux fois ; `tests/carte_pseudos.py` |
 
 ## Commandes utiles
 

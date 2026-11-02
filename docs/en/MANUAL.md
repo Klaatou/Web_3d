@@ -1877,7 +1877,7 @@ The star works everywhere: `--presence-url`, `presenceUrl` of `NOM.config.json`,
 
 ### 35.1 `carte.html`: count, total, two lines
 
-Above the grid: "12 regions · Total: 3 visitors · 2 walkers". Each room is counted once; with an old server that does not answer `visitors`, only the walkers are counted (no invented visitors). In the cards, visitors and walkers go on two lines in French ("2 visiteurs", then "1 promeneur") and stay on one line in English ("2 visitors · 1 walker"): this is the language key `map.sep` (`page.map.sep` for the map opened with M), a line break in French and " · " in English; a new language chooses its own. The total stays on one line.
+Above the grid: "12 regions · Total: 3 visitors · 2 walkers". Each room is counted once; with an old server that does not answer `visitors`, only the walkers are counted (no invented visitors). In the cards and in the total, a number is never counted twice: "2 visitors, 1 walking" when there are spectators and walkers, "1 walker" when every visitor is walking, "1 visitor" when nobody is walking, "no visitors" otherwise. With a presence server started with `--map-names` (off by default), the card adds a line of nicknames: the room's walkers, most recent first, five at most then "and 2 others" (spectators have no nickname). Careful: a nickname is personal data, and the server answers any page that asks, without it joining the room: turn the option on only if your visitors are informed. `tests/carte_pseudos.py` (real servers, Chromium) checks the option, the order, the limit of five, both languages and a booby-trapped nickname.
 
 ### 35.2 Arrival alert (sound and marker)
 
