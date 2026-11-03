@@ -4,6 +4,15 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.4.0)
 
+### 03/11/2026 : version 1.4.3 : ligne des tuiles : un élément par ligne
+
+- **Corrigé** (constat de Klaatou : la fenêtre Informations / État était illisible) : depuis la 1.4.2, la ligne des tuiles réunissait tout derrière des « · » : « Tuiles : … · Tuile(s) sous l'avatar : … · Vue d'ensemble (à part) : … ». Chaque élément a maintenant sa ligne : tuiles chargées (avec « en cours » et « en échec »), tuile(s) sous l'avatar, vue d'ensemble. Même correction dans le viewer (`#tilesLoad`) : la tuile sous l'avatar sur sa propre ligne.
+- **Mécanisme** : `#tilesInfo` est un seul `div` dont le texte est assemblé dans `template.html` ; les éléments sont séparés par un saut de ligne, affiché grâce à `white-space: pre-line` (CSS de `#tilesInfo` et de `#tilesLoad`). Le texte copié par le diagnostic garde les sauts de ligne.
+- **Test** : `tests/tuile_ici.py` vérifie l'affichage réel (`innerText` : trois lignes dans la page, deux dans le viewer) ; contre-épreuve : sur la 1.4.2 il échoue.
+- **Fixed** (Klaatou's report: the Information / State window was hard to read): since 1.4.2 the tiles line joined everything with "·": "Tiles: … · Tile(s) under the avatar: … · Overview (counted apart): …". Each element now has its own line: loaded tiles (with "in progress" and "failed"), tile(s) under the avatar, overview. Same fix in the viewer (`#tilesLoad`): the tile under the avatar on its own line.
+- **How**: `#tilesInfo` is a single `div` whose text is built in `template.html`; elements are separated by a newline, displayed through `white-space: pre-line` (CSS of `#tilesInfo` and `#tilesLoad`). The text copied by the diagnostics keeps the newlines.
+- **Test**: `tests/tuile_ici.py` checks the real display (`innerText`: three lines in the page, two in the viewer); counter-test: it fails on 1.4.2.
+
 ### 03/11/2026 : version 1.4.2 : le nom de la tuile sous l'avatar dans le panneau d'état
 
 - **Nouveau** (demande de Klaatou) : en région découpée en tuiles, la ligne « Tuiles : N chargées / … » du panneau Informations / état (et la ligne du viewer) ajoute « Tuile(s) sous l'avatar : T_3_0_5.glb » : le ou les fichiers dont la boîte contient la position de l'avatar en promenade (tolérance 0,5 m ; deux noms quand les boîtes se chevauchent). Plus besoin de F12 pour savoir où l'on est. Hors promenade (vue globale), la mention disparaît. `tilesState().here` donne la même liste (diagnostic).

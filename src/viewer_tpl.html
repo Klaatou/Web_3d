@@ -39,6 +39,7 @@ button:disabled{opacity:.35;cursor:default}
 .btns .wide{grid-column:1/-1}
 pre{margin:6px 0 0;padding:6px;border:1px solid #000;border-radius:4px;white-space:pre-wrap;font:inherit}
 small{display:block;margin-top:8px;color:#333}
+#tilesLoad{white-space:pre-line}   /* 1.4.3 : la tuile sous l'avatar sur sa propre ligne */
 @media(max-width:760px){#app{grid-template-columns:1fr;grid-template-rows:55vh 1fr}#panel{border-left:0;border-top:1px solid #000}}
 </style>
 <script type="importmap">__IMPORTMAP_JSON__</script>
@@ -726,7 +727,7 @@ function afterLoadTiles(name, size) {
   if ($('bWalk')) $('bWalk').disabled = false;
   if (cfg.spectate && cfg.presenceUrl) { viewer.spectate(false); viewer.spectate(true); }
   const tl = $('tilesLoad'); tl.hidden = false;
-  viewer.onTiles = s => { tl.textContent = tr('viewer.tiles.line', s.loaded, s.total, s.loading ? ' · ' + tr('page.tiles.loading', s.loading) : '', s.failed ? ' · ' + tr('viewer.tiles.failed', s.failed) : '', Math.round(s.bytes / 104857.6) / 10) + (s.here && s.here.length ? ' · ' + tr('page.tiles.here', s.here.join(', ')) : ''); };
+  viewer.onTiles = s => { tl.textContent = tr('viewer.tiles.line', s.loaded, s.total, s.loading ? ' · ' + tr('page.tiles.loading', s.loading) : '', s.failed ? ' · ' + tr('viewer.tiles.failed', s.failed) : '', Math.round(s.bytes / 104857.6) / 10) + (s.here && s.here.length ? '\n' + tr('page.tiles.here', s.here.join(', ')) : ''); };
 }
 function openTilesIndex(rel) {
   const f = tilesDir.map.get(rel);

@@ -111,7 +111,7 @@ body.padOn #bar{max-width:max(200px,calc(50vw - 90px))}   /* v46 : la barre pass
 #spawnBody button{display:block;width:100%;text-align:left;font:inherit;background:#fff;color:#000;border:1px solid #000;border-radius:4px;padding:1px 6px;margin:2px 0;cursor:pointer;text-decoration:underline}
 .fold{display:block;width:100%;text-align:left;font:inherit;font-weight:bold;background:#ececec;color:#000;border:1px solid #000;border-radius:4px;padding:1px 6px;margin:0 0 4px;cursor:pointer}
 .grp{margin:2px 0}.grp b{margin-right:8px}
-#tilesInfo{font:11px/1.4 ui-monospace,Consolas,monospace;color:#000}
+#tilesInfo{font:11px/1.4 ui-monospace,Consolas,monospace;color:#000;white-space:pre-line}   /* 1.4.3 : un élément par ligne (tuiles, tuile sous l'avatar, vue d'ensemble) */
 #tilesInfo.alone{position:fixed;left:12px;bottom:54px;background:#fffffff0;border:1px solid #000;border-radius:6px;padding:5px 9px}
 #groundWait{position:fixed;left:50%;top:38%;transform:translateX(-50%);z-index:55;max-width:90%;text-align:center;font:14px/1.4 ui-monospace,Consolas,monospace;background:#000;color:#fff;border:2px solid #fff;border-radius:6px;padding:8px 16px}
 #compass{position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:30;pointer-events:none;font:bold 13px/1.3 ui-monospace,Consolas,monospace;background:#fffffff0;color:#000;border:1px solid #000;border-radius:6px;padding:2px 10px}
@@ -1344,9 +1344,9 @@ if (viewer.tiled) {
     info.hidden = false;
     info.textContent = trn('page.tiles.main', s.loaded, s.total, nb(s.bytes / 1048576, 0), tri(s.tri))
       + (s.loading ? ' · ' + tr('page.tiles.loading', s.loading) : '') + (s.failed ? ' · ' + tr('page.tiles.failed', s.failed) : '')
-      + (s.here && s.here.length ? ' · ' + tr('page.tiles.here', s.here.join(', ')) : '')
-      + (s.ov && s.ov.state === 'ready' ? ' · ' + tr('page.tiles.ov', nb(s.ov.bytes / 1048576, 1), tri(s.ov.tri)) : '')
-      + (s.ov && s.ov.state === 'failed' ? ' · ' + tr('page.tiles.ov.failed') : '');
+      + (s.here && s.here.length ? '\n' + tr('page.tiles.here', s.here.join(', ')) : '')
+      + (s.ov && s.ov.state === 'ready' ? '\n' + tr('page.tiles.ov', nb(s.ov.bytes / 1048576, 1), tri(s.ov.tri)) : '')
+      + (s.ov && s.ov.state === 'failed' ? '\n' + tr('page.tiles.ov.failed') : '');
     lastWait = s.wait;
     if (!bootOn) { gw.hidden = !s.waiting; if (s.waiting) gw.textContent = waitText(s.wait); }
   };

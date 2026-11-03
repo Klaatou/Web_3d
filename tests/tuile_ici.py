@@ -10,7 +10,7 @@ Prerequis : pip install playwright ; python build.py avant. Variables facultativ
 Lancer : python tests/tuile_ici.py
 """
 import os as _os_lang; _os_lang.environ["WEB3D_LANG"] = "fr"
-import asyncio, json, math, os, pathlib, socket, struct, subprocess, sys, tempfile, time
+import asyncio, json, math, os, pathlib, shutil, socket, struct, subprocess, sys, tempfile, time
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 DIST = ROOT / "dist"
@@ -190,6 +190,11 @@ async def main():
             r = await lire()
             exp = attendu(r["pos"][0], r["pos"][2])
             rapport(exp and r["here"] == exp and ligne_ok(r), "a l'arrivee : la ligne donne la tuile sous l'avatar", (r, exp))
+            # 1.4.3 : un element par ligne, tel que le navigateur l'affiche (innerText suit white-space: pre-line)
+            aff = await pg.evaluate("document.getElementById('tilesInfo').innerText")
+            ls = [x for x in aff.split("\n") if x.strip()]
+            rapport(len(ls) == 3 and ls[0].startswith("Tuiles : ") and ls[1].startswith("Tuile(s) sous l'avatar : ") and ls[2].startswith("Vue d'ensemble")
+                    and "sous l'avatar" not in ls[0] and "Vue d'ensemble" not in ls[0] and "Vue d'ensemble" not in ls[1], "page : tuiles, tuile sous l'avatar et vue d'ensemble, chacune sur sa ligne", aff)
             vus, ok_all, details = set(), True, []
             for k in range(12):
                 await pg.evaluate("""() => { const v = window.__viewer, k = c => window.dispatchEvent(new KeyboardEvent('keydown', { code: c }));
@@ -216,6 +221,21 @@ async def main():
             await pg.wait_for_function("!window.__viewer.walking", timeout=15000)
             r = await lire()
             rapport(r["here"] == [] and "sous l'avatar" not in r["ligne"] and "Tuiles : " in r["ligne"], "hors promenade : la mention disparait, le reste de la ligne reste", r)
+            # viewer : la tuile sous l'avatar sur sa propre ligne
+            shutil.copy(DIST / "glb-viewer.html", site / "glb-viewer.html")
+            vp = await ctx.new_page()
+            vp.on("pageerror", lambda e: errs.append(str(e)))
+            await vp.goto(f"http://127.0.0.1:{port}/glb-viewer.html?tiles=Tuilee.tiles.json")
+            await vp.wait_for_function("window.__viewer && window.__viewer.tiled && window.__viewer.tilesState().ready.length > 0 && !document.getElementById('tilesLoad').hidden", timeout=60000)   # gestionnaire branche apres loadTiles
+            await vp.evaluate("window.__viewer.walkStart({ pos: [130, 14, -100], yaw: 0 })")
+            try:
+                await vp.wait_for_function("document.getElementById('tilesLoad').innerText.includes(\"sous l'avatar\")", timeout=20000)
+            except Exception:
+                pass
+            tx = await vp.evaluate("document.getElementById('tilesLoad').innerText")
+            dbg = await vp.evaluate("({ walking: window.__viewer.walking, pos: window.__viewer.getWalk().pos, here: window.__viewer.tilesState().here, hidden: document.getElementById('tilesLoad').hidden, texte: document.getElementById('tilesLoad').textContent })")
+            lv = [x for x in tx.split("\n") if x.strip()]
+            rapport(len(lv) == 2 and lv[0].startswith("Tuiles : ") and lv[1].startswith("Tuile(s) sous l'avatar : ") and "sous l'avatar" not in lv[0], "viewer : la tuile sous l'avatar sur sa propre ligne", (tx, dbg))
             rapport(max(lags) < 4000, "la ligne rattrape l'etat (retard max %d ms, mediane %d ms)" % (max(lags), sorted(lags)[len(lags) // 2]), lags)
             rapport(not errs, "aucune erreur JavaScript", errs)
         finally:
