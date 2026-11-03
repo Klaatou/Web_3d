@@ -130,6 +130,8 @@
  "map.walking.one": "{0} promeneur",
  "map.walking.other": "{0} promeneurs",
  "page.about.btn": "À propos de la région",
+ "page.about.btnkey": "À propos de la région (touche ?)",
+ "page.about.helpbtn": "Aide des visiteurs",
  "page.about.close": "Fermer (Échap)",
  "page.about.hide": "Ne plus afficher",
  "page.about.opt": "Afficher l'à propos à l'entrée",

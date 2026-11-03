@@ -130,6 +130,8 @@
  "map.walking.one": "{0} walker",
  "map.walking.other": "{0} walkers",
  "page.about.btn": "About this region",
+ "page.about.btnkey": "About this region (? key)",
+ "page.about.helpbtn": "Visitors' help",
  "page.about.close": "Close (Esc)",
  "page.about.hide": "Don't show again",
  "page.about.opt": "Show the about panel on entry",

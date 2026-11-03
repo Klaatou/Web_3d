@@ -1,6 +1,6 @@
 # Reprise du projet Web 3d
 
-*État au 03/11/2026 (lots 1.4.2 à 1.4.7 appliqués et poussés par Klaatou ; lot **1.4.8** `patch_docs.py` livré, à appliquer : documents seulement, voir § 6.1 ter ; `VERSION` chez Klaatou : 1.4.7 avant ce patch, 1.4.8 après) : release **1.4.0** publiée par Klaatou (zips `region-simple.zip` et `galerie-photos.zip` joints). `VERSION` chez Klaatou : **à relever en début de conversation** (`Get-Content VERSION`) : au moins 1.4.0, **1.4.1** si `patch_sans_claude_md.py` (retrait de `CLAUDE.md`) a été appliqué. Les patchs récents (`patch_garde_fou`, `patch_carte_pseudos`, `patch_carte_cle`, `patch_carte_hash`, `patch_chat_bip`, `patch_publication_140`, `patch_sans_claude_md`) calculent eux-mêmes le numéro suivant et l'endroit du `CHANGELOG`. **Ce fichier est volontairement court.** L'ancien REPRISE complet (lots, échanges, mesures) est dans **`REPRISE_ARCHIVE.md`** (intact : ne le lire que pour retrouver un détail) ; l'étude de la méga-région est dans **`ETUDE_MEGAREGION.md`**. Les § 1 à 5 et 7 ci-dessous sont ceux de l'ancien fichier, complétés.*
+*État au 03/11/2026 (lots 1.4.2 à 1.4.8 appliqués et poussés par Klaatou ; lot **1.4.9** `patch_apropos_docs.py` livré, à appliquer : voir § 6.1 quater ; `VERSION` chez Klaatou : 1.4.8 avant ce patch, 1.4.9 après) : release **1.4.0** publiée par Klaatou (zips `region-simple.zip` et `galerie-photos.zip` joints). `VERSION` chez Klaatou : **à relever en début de conversation** (`Get-Content VERSION`) : au moins 1.4.0, **1.4.1** si `patch_sans_claude_md.py` (retrait de `CLAUDE.md`) a été appliqué. Les patchs récents (`patch_garde_fou`, `patch_carte_pseudos`, `patch_carte_cle`, `patch_carte_hash`, `patch_chat_bip`, `patch_publication_140`, `patch_sans_claude_md`) calculent eux-mêmes le numéro suivant et l'endroit du `CHANGELOG`. **Ce fichier est volontairement court.** L'ancien REPRISE complet (lots, échanges, mesures) est dans **`REPRISE_ARCHIVE.md`** (intact : ne le lire que pour retrouver un détail) ; l'étude de la méga-région est dans **`ETUDE_MEGAREGION.md`**. Les § 1 à 5 et 7 ci-dessous sont ceux de l'ancien fichier, complétés.*
 
 ## 1. Ce qu'est ce projet
 
@@ -29,28 +29,29 @@ Une région OpenSim (sauvegarde `.oar`) devient une **page web 3D** où l'on se 
 - **Plan « page de présentation et services »** : document de Klaatou hors dépôt (objectif, six étapes à critères de passage, liste de contrôle technique, juridique et coût, risques).
 
 ### 2.3 Hors dépôt, à garder chez Klaatou
+
 `ajout_og.py` (ajoute les balises d'aperçu à l'`index.html` de la démo, à relancer après chaque recopie de `dist\index.html`), `preview.jpg` (1200 x 630), `lance_presence.sh` et `web3d-presence.service` (copies dans la VM ; dans le dépôt, à la racine, depuis le 29/10/2026, sans nom d'utilisateur ; leur texte, avec `UTILISATEUR`, est aussi dans `PROCEDURES` § 11), `presence_creators.json` (copie sur le PC : `P:\_OpenSim\SL&OS\Web_3d\`, **jamais** dans `Sites\` : servi publiquement), ses sites (`P:\_OpenSim\SL&OS\Web_3d\Sites\` : **une** coquille `index.html`, `lib\`, `regions.json`, `carte.html`, un dossier par région avec config, `.glb` ou tuiles, zones et `default.json` ; lien `index.html?region=houses/NOM#spawn=default&name=…` ; la bonne commande de mise à jour est celle du § 4). Région de référence : la « 4X4 » (`OAR-Free_House_Gallery_I(4X4)-terrain`, 1 024 x 1 024 m, 106 tuiles et une vue d'ensemble, mer à 18,5 m, cible de départ `392,68,-373`).
 
 `extraire_batiments.py` (dossier `P:\_OpenSim\SL&OS\Web_3d\`, à côté de `_bak\` et du dossier `extraire_batiments.cache`) : script d'extraction des bâtiments de l'OAR de la région de référence, **hors dépôt** (décision du 30/10/2026), avec ses patchs `patch_extraire.py`, `patch_extraire2.py` et `patch_extraire3.py` (appliqués dans cet ordre le 31/10/2026) ; état et mesures au § 6, point 6. Il importe `oar2glb.py` et `glb2tiles.py` de `web_3d\dist` et peut casser si ces fichiers changent.
 
 ## 3. Architecture (détail jusqu'à la v37 : ancien `CLAUDE.md`, retiré du dépôt par `patch_sans_claude_md.py` ; il reste dans l'historique git)
 
-| Élément | Rôle |
-|---|---|
-| `src/core.js` | noyau JavaScript commun : collisions, promenade, avatars, zones, carte, chat |
-| `src/template.html` | page exportée (aide, état, réglages, chat) |
-| `src/viewer_tpl.html` | viewer / éditeur de zones (`glb-viewer.html`) |
-| `src/gen_tpl.py` | devient `dist/glb2html.py` : fabrique la page, `--update`, `--register`, `--map-page`, `--scan-sites` ; contient aussi la page de carte (`MAP_PAGE_TEMPLATE`) |
-| `src/presence_server.py` | serveur WebSocket de présence et de chat (dépendance `websockets`) |
-| `tools/glb2tiles.py` | découpe un GLB énorme en tuiles + `X.overview.glb` |
-| `tools/oar2glb.py` | convertit un OAR en GLB, refait le terrain complet |
-| `src/i18n/fr.json`, `en.json`, `src/i18n.js`, `src/i18n_py.py` | tous les textes (page, viewer, outils) en français et en anglais |
-| `build.py` | assemble tout dans `dist/` (**jamais éditer `dist/`**) |
-| `gen_reference.py` | écrit `REFERENCE_OPTIONS.md` (bilingue) depuis les outils |
-| `verif_trad.py` | compare un document français et sa traduction (titres, tableaux, listes, code, liens, glossaire de l'interface) ; `python verif_trad.py docs\fr\MANUEL.md docs\en\MANUAL.md` |
-| `tests/` | une cinquantaine de fichiers de test (Chromium sans tête, vrai `presence_server.py`) ; `h37.py` : outils communs (`Onglet`, `serveur`, `port_libre`) |
-| `src/favicon.ico` | icône par défaut, copiée dans `dist\` par `build.py` |
-| Documents | `docs/fr/` : `MANUEL.md`, `PROCEDURES.md`, `HISTORIQUE.md` ; `docs/en/` : `MANUAL.md`, `PROCEDURES.md`, `HISTORY.md` (tenus à jour ensemble, contrôlés par `verif_trad.py`) ; à la racine : `README.md` (anglais), `README.fr.md`, `CHANGELOG.md`, `REFERENCE_OPTIONS.md`, `REPRISE.md`, `REPRISE_ARCHIVE.md`, `ETUDE_MEGAREGION.md` (`CLAUDE.md` retiré par `patch_sans_claude_md.py`) |
+| Élément                                                        | Rôle                                                                                                                                                                                                                                                                                                                                                                                    |
+| -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/core.js`                                                  | noyau JavaScript commun : collisions, promenade, avatars, zones, carte, chat                                                                                                                                                                                                                                                                                                            |
+| `src/template.html`                                            | page exportée (aide, état, réglages, chat)                                                                                                                                                                                                                                                                                                                                              |
+| `src/viewer_tpl.html`                                          | viewer / éditeur de zones (`glb-viewer.html`)                                                                                                                                                                                                                                                                                                                                           |
+| `src/gen_tpl.py`                                               | devient `dist/glb2html.py` : fabrique la page, `--update`, `--register`, `--map-page`, `--scan-sites` ; contient aussi la page de carte (`MAP_PAGE_TEMPLATE`)                                                                                                                                                                                                                           |
+| `src/presence_server.py`                                       | serveur WebSocket de présence et de chat (dépendance `websockets`)                                                                                                                                                                                                                                                                                                                      |
+| `tools/glb2tiles.py`                                           | découpe un GLB énorme en tuiles + `X.overview.glb`                                                                                                                                                                                                                                                                                                                                      |
+| `tools/oar2glb.py`                                             | convertit un OAR en GLB, refait le terrain complet                                                                                                                                                                                                                                                                                                                                      |
+| `src/i18n/fr.json`, `en.json`, `src/i18n.js`, `src/i18n_py.py` | tous les textes (page, viewer, outils) en français et en anglais                                                                                                                                                                                                                                                                                                                        |
+| `build.py`                                                     | assemble tout dans `dist/` (**jamais éditer `dist/`**)                                                                                                                                                                                                                                                                                                                                  |
+| `gen_reference.py`                                             | écrit `REFERENCE_OPTIONS.md` (bilingue) depuis les outils                                                                                                                                                                                                                                                                                                                               |
+| `verif_trad.py`                                                | compare un document français et sa traduction (titres, tableaux, listes, code, liens, glossaire de l'interface) ; `python verif_trad.py docs\fr\MANUEL.md docs\en\MANUAL.md`                                                                                                                                                                                                            |
+| `tests/`                                                       | une cinquantaine de fichiers de test (Chromium sans tête, vrai `presence_server.py`) ; `h37.py` : outils communs (`Onglet`, `serveur`, `port_libre`)                                                                                                                                                                                                                                    |
+| `src/favicon.ico`                                              | icône par défaut, copiée dans `dist\` par `build.py`                                                                                                                                                                                                                                                                                                                                    |
+| Documents                                                      | `docs/fr/` : `MANUEL.md`, `PROCEDURES.md`, `HISTORIQUE.md` ; `docs/en/` : `MANUAL.md`, `PROCEDURES.md`, `HISTORY.md` (tenus à jour ensemble, contrôlés par `verif_trad.py`) ; à la racine : `README.md` (anglais), `README.fr.md`, `CHANGELOG.md`, `REFERENCE_OPTIONS.md`, `REPRISE.md`, `REPRISE_ARCHIVE.md`, `ETUDE_MEGAREGION.md` (`CLAUDE.md` retiré par `patch_sans_claude_md.py`) |
 
 Le dossier des outils fabriqués est `dist\` ; le dépôt local est `P:\_OpenSim\SL&OS\Web_3d\web_3d` ; les sites publiés sont dans `P:\_OpenSim\SL&OS\Web_3d\Sites` (une coquille à la racine, un dossier par région, voir § 2) ; l'ancien dossier `P:\_OpenSim\SL&OS\Web_3d\tuiles` n'est plus celui que Klaatou publie.
 
@@ -71,51 +72,73 @@ Le dossier des outils fabriqués est `dist\` ; le dépôt local est `P:\_OpenSim
 
 **Touches** (même lettre sur AZERTY et QWERTY sauf la marche ; **M se reconnaît par le caractère imprimé**, pas par la position) :
 
-| Action | Touche |
-|---|---|
-| Entrer et sortir de la promenade | F, P (dans le viewer, P pose une zone ; on en sort avec F ou Maj+P) |
-| Marcher | codes physiques W A S D (donc Z Q S D sur AZERTY), flèches |
-| Courir | Maj, ou double appui rapide (moins de 300 ms) sur avancer ou reculer |
-| Sauter | Espace |
-| Voler / atterrir | Début, bouton « Voler / Atterrir », ou Page Haut maintenu plus de 0,4 s au sol |
-| Monter, descendre en vol | Page Haut ou Espace maintenu, Page Bas ou C ; atterrissage en descendant jusqu'au sol |
-| Action d'une zone proche | E (et clic) |
-| Vue : subjective, 3e personne, caméra libre | V ; M bascule subjective et 3e personne en promenade (hors promenade, M ouvre la carte) ; Ctrl+M carte partout |
-| Caméra | molette (distance), Alt+glisser (orbite), Fin (derrière l'avatar) |
-| Chat | Entrée ouvre et envoie, Échap ferme ; les flèches marchent pendant la saisie |
-| Souris | **G bascule** (capture si la souris est libre, la libère si elle est capturée) ; le bouton « Capturer la souris » ne fait que capturer (un pointeur capturé ne clique rien) ; **un clic ne capture jamais** ; Échap libère (réservé au navigateur) ; sans capture, glisser bouton enfoncé tourne la vue |
-| Retour à l'arrivée | R |
-| Fenêtres et repères | H aide, I informations / état, L arrivées (téléportation), O réglages, T cônes de portail |
-| Recentrer la vue globale | bouton « Recentrer la vue » (pas de touche) |
+| Action                                      | Touche                                                                                                                                                                                                                                                                                                  |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Entrer et sortir de la promenade            | F, P (dans le viewer, P pose une zone ; on en sort avec F ou Maj+P)                                                                                                                                                                                                                                     |
+| Marcher                                     | codes physiques W A S D (donc Z Q S D sur AZERTY), flèches                                                                                                                                                                                                                                              |
+| Courir                                      | Maj, ou double appui rapide (moins de 300 ms) sur avancer ou reculer                                                                                                                                                                                                                                    |
+| Sauter                                      | Espace                                                                                                                                                                                                                                                                                                  |
+| Voler / atterrir                            | Début, bouton « Voler / Atterrir », ou Page Haut maintenu plus de 0,4 s au sol                                                                                                                                                                                                                          |
+| Monter, descendre en vol                    | Page Haut ou Espace maintenu, Page Bas ou C ; atterrissage en descendant jusqu'au sol                                                                                                                                                                                                                   |
+| Action d'une zone proche                    | E (et clic)                                                                                                                                                                                                                                                                                             |
+| Vue : subjective, 3e personne, caméra libre | V ; M bascule subjective et 3e personne en promenade (hors promenade, M ouvre la carte) ; Ctrl+M carte partout                                                                                                                                                                                          |
+| Caméra                                      | molette (distance), Alt+glisser (orbite), Fin (derrière l'avatar)                                                                                                                                                                                                                                       |
+| Chat                                        | Entrée ouvre et envoie, Échap ferme ; les flèches marchent pendant la saisie                                                                                                                                                                                                                            |
+| Souris                                      | **G bascule** (capture si la souris est libre, la libère si elle est capturée) ; le bouton « Capturer la souris » ne fait que capturer (un pointeur capturé ne clique rien) ; **un clic ne capture jamais** ; Échap libère (réservé au navigateur) ; sans capture, glisser bouton enfoncé tourne la vue |
+| Retour à l'arrivée                          | R                                                                                                                                                                                                                                                                                                       |
+| Fenêtres et repères                         | H aide, I informations / état, L arrivées (téléportation), O réglages, T cônes de portail                                                                                                                                                                                                               |
+| Recentrer la vue globale                    | bouton « Recentrer la vue » (pas de touche)                                                                                                                                                                                                                                                             |
 
 **Comportements**
+
 - Une arrivée nommée `default` sert de point d'entrée à l'ouverture sans lien ; `--target` explicite garde le cadrage. `#spawn=NOM` ou `#pos=x,y,z,yaw` : arrivée demandée.
+
 - **Arrivée occupée** : le nouvel arrivant est décalé (1,5 m environ de l'occupant) et tourné vers lui ; jamais quelqu'un qui marche.
+
 - **Région par défaut** (adresse sans `?region=`) : `X.config.json` du nom de la page, puis `default.json`, puis la première entrée relative de `regions.json`, sinon message d'erreur. `?region=` accepte `nom` ou `dossier/nom`, jamais `..`, `:`, `\`, `?`, `#`.
+
 - **Paramètres de l'adresse** : séparés par `&` ou `#` (fonction `hashParams`), langue `#lang=en`, pseudo `#name=`.
+
 - **Zones d'une région en tuiles** : repère du modèle d'origine, sans recentrage ; zones liées à un objet par `extras.ref`. Fichiers `X.zones.json`, `regions.json`, `*.html`, journaux : jamais dans le dépôt (`.gitignore`).
+
 - **Clignotement du pseudo cité** : sans limite de durée, jusqu'à la première action (touche, clic, mouvement), uniquement sur la page du visiteur cité. Le compteur « (N) » du titre se remet à zéro à l'ouverture du chat (comportement voulu par Klaatou, documenté au manuel § 29.6).
+
 - **Langue** : tout texte visible passe par `tr()` ou `data-i18n*`, jamais de français en dur ; ajouter une langue = ajouter un fichier `src/i18n/xx.json`. Réglage « Langue / Language » (Auto, Français, English).
+
 - **Sons** : réglage général (volume), citation, arrivée, départ ; les promeneurs seulement, jamais la liste initiale.
+
 - **Boussole** : le nord est la direction -Z du modèle (z = -y d'OpenSim), décalée par `rotate` et `--north` ; case dans les réglages.
+
 - **Chat et serveur** : historique de 200 messages par défaut, `--history-file` conserve entre deux relances (jamais d'adresse IP), `--log-days 0` ne supprime aucun journal.
+
 - **Options de fabrication** : `--update` ne ressaisit rien et garde config et zones ; `--default` écrit `default.json` ; `--lib-url` place `lib` ailleurs ; `--zone-info-dist` (150 m par défaut) règle la distance des infobulles et des cônes.
+
 - **Interface** : jamais d'information portée par la seule couleur.
+
 - **Deux philosophies du projet (Klaatou, 25/10/2026)** : (1) **autonome** : des `.html` fabriqués par `glb2html.py` avec tout dedans (région, liste des régions de `--map-page`), qui s'ouvrent depuis le disque ; (2) **hébergée** : les deux coquilles communes `index.html` et `carte.html` (déposées par `build.py` dans `dist\`) lisent leurs JSON (`NOM.config.json`, `regions.json`) et demandent un serveur web ; elles peuvent aussi être fabriquées par le générateur. Les deux modes cohabitent.
+
 - **Versions** : une publication (`X.Y.Z`) est décidée par Klaatou ; un point numéroté de ses demandes reste regroupé en un seul lot (une seule entrée de `CHANGELOG.md`, du manuel et de l'historique). Ne jamais changer `VERSION` ni parler d'étiquette sans son ordre.
+
 - **Noms (v43)** : options, valeurs et clés JSON, paramètres d'adresse et noms d'exemple de l'aide sont **en anglais** ; un nom renommé garde l'ancien en alias (jamais de rupture pour Klaatou). Les textes visibles restent traduits par `src/i18n`. L'historique (`CHANGELOG.md`, `HISTORIQUE.md`) garde les noms de l'époque.
+
 - **Contrôle des noms (v44)** : tout nouveau renommage ajoute l'ancien nom à l'expression `ANCIENS` de `tests/samples.py` et au tableau du manuel § 27.11.
+
 - **Historique** : chaque lot ajoute sa ligne à `docs/fr/HISTORIQUE.md` et `docs/en/HISTORY.md`.
+
 - **Fichiers JSON (v43)** : tout champ ajouté ou changé dans un fichier JSON se reporte dans le manuel § 27 (FR et EN) et dans l'exemple de `docs/samples/` ; `tests/samples.py` échoue si la config d'exemple n'a pas exactement les clés écrites par `build_cfg`.
 
 - **Séparateurs de langue (v52)** : une clé en `.sep` (`map.sep`, `page.map.sep`) est un séparateur : saut de ligne en français, « · » en anglais ; une nouvelle langue choisit le sien. `tests/i18n.py` accepte les valeurs blanches pour ces clés seulement.
+
 - **Délais de `carte.html` (v52)** : `POLL_MS` et `POLL_ALERT_MS` en tête du script de la page, modifiables à la main ; Klaatou veut pouvoir les changer sans chercher.
+
 - **Surveillance des arrivées (v52)** : seulement `carte.html` ; repère visuel en texte et forme (jamais la couleur seule) ; le repère reste jusqu'au survol de la tuile.
 
 - **Images d'exposition (idée de Klaatou, 25/10/2026, pas commencée)** : pour des expositions ou des portfolios. Exigence de Klaatou : **mettre à jour le contenu sans repasser par un serveur OpenSim, sans modifier l'OAR ni refaire la conversion** : déposer des images dans un dossier, avec un nommage qui les affiche à l'endroit voulu. Pistes à étudier (aucune décidée) : lien par zone liée à un objet (manuel § 9, `extras.ref`) ou par nom d'objet ; un site statique ne peut pas lister un dossier, donc soit un index écrit par une commande (comme `--scan-sites`), soit la page essaie des noms connus ; remplacer la texture de l'objet (un objet plat dédié est préférable : étirement et orientation dépendent des UV, à essayer sur un vrai objet) ; images d'un autre site : CORS requis pour WebGL, `http` bloqué dans une page `https`.
+
 - **Zones média (réponse à Klaatou, 25/10/2026, estimations non essayées)** : aujourd'hui les zones sont `url` (nouvel onglet), `ha`, `portal`, `spawn` (`core.js:1790`). Musique (la plus simple : clic ou E, ou entrée dans la zone ; boucle, fondu à la sortie, volume du réglage « Sons », une seule à la fois ; mp3 ou ogg à côté de la région ; un geste de l'utilisateur suffit, la promenade en fournit un), image sur un objet, page HTML dans une fenêtre superposée (iframe `sandbox`, `http` et `https` seulement ; beaucoup de sites interdisent l'affichage dans un cadre ; ton propre fichier à côté de la région marche). Ordre proposé : musique, image, page, en une seule version. **Klaatou : « on verra quand le faire ».**
 
 **Décisions du 28 et 29/10/2026**
+
 - **Souris** (demandes de Klaatou) : capture volontaire seulement (G ou bouton) ; G en bascule ; le bouton ne change pas d'étiquette (souris capturée, on ne peut plus cliquer dessus).
 - **Icône des pages** : petit SVG « 3D » incorporé dans `<link rel="icon">` (`template.html`, `viewer_tpl.html`, page carte de `gen_tpl.py`) **et** adoption d'un `favicon.ico` placé à côté de la page (sonde par `Image`) : on change l'icône d'un site en remplaçant ce fichier. `build.py` écrit `dist\favicon.ico` depuis `src/favicon.ico` (16, 32, 48, 64 px).
 - **`carte.html`** : la case de surveillance disparaît sans serveur de présence ; l'adresse affichée est **hors du lien** de la vignette (`.cell`), donc sélectionnable (le zoom n'était pas en cause : un clic-glissé dans un lien ne sélectionne pas) ; `draw()` ne redessine que si les données changent (`lastSig`, qui doit inclure tout ce qui change le contenu, y compris `emptyText()`) et jamais pendant une sélection (`drawLater`).
@@ -164,6 +187,14 @@ Le dossier des outils fabriqués est `dist\` ; le dépôt local est `P:\_OpenSim
 - **`renommer_region.py`** (hors dépôt, à côté d'`extraire_batiments.py` ; l'automatisation du manuel § 35.6) : `python renommer_region.py DOSSIER ANCIEN NOUVEAU [--dry-run|--simuler] [--remplacer]` ; renomme `.tiles`, `.overview.glb`, `.tiles.json`, `.config.json`, `.zones.json`, vignette, fichiers `about`, corrige les chemins de l'index, `room` et `tiles` de la config, `default.json`, les liens `?region=` des zones ; sauvegarde dans `_avant_renommage` ; tout est vérifié avant d'écrire ; essayé sur une région synthétique (Chromium : tuiles chargées, vue d'ensemble reliée, à propos ouvert), **pas encore sur des fichiers réels autres que ceux de Klaatou**. Klaatou l'a lancé le 03/11/2026 sur `Sites\houses` : `Houses-terrain` → `houses` (107 chemins corrigés, 3 modifications de config). **Corrigé le 03/11/2026** : le script traite aussi le bloc `map` de la config (`id`, `url`) et la fiche de `regions.json` (cherché dans le dossier puis ses parents : `id`, `room`, `url`, vignette) ; il peut être relancé sur une région déjà renommée (corrections seulement) ; les copies vont dans `_avant_renommage\AAAAMMJJ-HHMMSS\` sous leur nom d'origine (plus de suffixe) ; `--dry-run` est un alias de `--simuler` ; le champ `source` de l'index (nom du GLB d'origine, lu par aucun code) n'est plus signalé. Les 2 « Houses-terrain » restants dans `houses.config.json` étaient ce bloc `map`. `Houses-terrain.tiles+` reste non touché (inconnu du script). **Reste pour Klaatou** : `--scan-sites --prune-missing` (fiche orpheline `houses/Houses`).
 - **Nom technique / nom affiché** : fichiers, adresses et salon en **minuscules** (GitHub Pages distingue la casse) ; le nom lisible se met dans `title`.
 
+### 6.1 quater Lot 1.4.9 et points ouverts (03/11/2026)
+
+- **Lot 1.4.9 (`patch_apropos_docs.py`, qui crée aussi les fichiers nouveaux : `tests/apropos_liens.py`, `docs/fr/GUIDE.md`, `docs/en/GUIDE.md`, `docs/fr/DEVELOPPEMENT.md`, `docs/en/DEVELOPMENT.md` ; deux `GUIDE.md` homonymes ne pouvaient pas être livrés en téléchargement)** : à propos : liens `http(s)` cliquables, bouton « Aide des visiteurs » (si `aide.html` est à côté de la coquille), bouton de l'aide « À propos de la région (touche ?) ». Documents réorganisés selon le plan validé par Klaatou : guide pour tous (`GUIDE.md`), procédures de l'hôte (`PROCEDURES_SIMPLES.md`, réécrit), développement (`DEVELOPPEMENT.md`). **Décision de Klaatou** : la conversion OAR vers GLB n'est **pas** proposée comme service (« envoie-moi ton OAR » retiré). **Tests faits** : `apropos_liens` (9 contrôles ; contre-épreuve sur 1.4.8 : échec), `dist_a_jour`, `i18n`, `apropos`, `smoke`, `samples`, `tuile_ici`, `titre`, `v31` ; `verif_trad.py` sans erreur sur toutes les paires. **En `dist\`** : `index.html`, `glb2html.py`, `glb-viewer.html`, `carte.html` (textes de page) ; les outils Python gardent 1.4.7.
+- **convoar** (vérifié dans son dépôt le 03/11/2026) : `convoar.exe` est dans `dist/` (148 fichiers, 20 Mo, DLL) et n'est pas autonome ; .NET Framework 4.8 sous Windows ; sous Linux il marche avec Mono (pas de Docker). Mais `oar2glb.py` le lance par un lanceur compilé avec `csc.exe` de Windows (`oar2glb.py`, `ensure_launcher`) : **conversion réservée à Windows** aujourd'hui, écrit dans `GUIDE.md` § 1.2. **Idée, non faite** : `oar2glb.py` lance `mono convoar.exe` hors Windows (non testable ici sans Mono ni OAR d'essai).
+- **Dictionnaire de textes** : les outils Python embarquent les textes `py.*` de **tous** les outils Python (pas ceux des pages) ; c'est pourquoi `presence_server.py` change de numéro quand un texte de `glb2html.py` est ajouté. **Idée proposée, non faite** : chaque outil n'embarque que ses propres textes (`build.py`).
+- **`carte.html` « redécouvre » un promeneur** (constat de Klaatou) : la carte sonne quand le nombre de visiteurs d'un salon monte entre deux relevés (`arrivals`, `gen_tpl.py`). Hypothèse non vérifiée : l'onglet du promeneur, laissé en arrière-plan, est mis en veille par le navigateur (onglets en veille d'Edge) et sa connexion se coupe ; au retour sur l'onglet il se reconnecte : vraie arrivée pour la carte. **À vérifier** dans `presence.log` (départ et retour du pseudo à ces moments-là) avant tout correctif.
+- **Règle 15 de `REGLES.md`** : Klaatou veut `git status --short` sur la même ligne que le commit (`git status --short; git add -A; git commit -m "..."; git push`) : texte de remplacement donné dans la conversation.
+
 ### 6.2 À vérifier ou à relever chez Klaatou
 
 - **Lot 1.4.8** : le patch se lance depuis la racine du dépôt ; les deux nouveaux documents se rangent par `Move-Item` (`PROCEDURES_SIMPLES.md` dans `docs\fr`, `SIMPLE_PROCEDURES.md` dans `docs\en`, règle 11). **Serveur de présence** : le code de `presence_server.py` n'a pas changé depuis le 02/11/2026 (`--map-names-key`, commit `7dc563c`) ; les exemplaires de `dist\` des lots 1.4.5 à 1.4.8 ne diffèrent que par le dictionnaire de textes embarqué : pas de `scp` nécessaire si la VM a déjà la version du 02/11/2026. **`REGLES.md`** : Klaatou a ajouté la règle 24 (réponses minimales) le 03/11/2026. Crédit des sessions cloud de Klaatou : environ 3 $ restants le 03/11/2026, jusqu'au 05/11/2026 (règle 1 : sessions cloud seulement sur sa demande ; usage envisagé : mise à jour des documents en retard, à lancer après qu'il a essayé les fonctions).
@@ -182,6 +213,7 @@ Le dossier des outils fabriqués est `dist\` ; le dépôt local est `P:\_OpenSim
 - `tests/v33.py` (long) : toutes les vérifications du chat passent mais l'exécution s'arrête plus loin sur l'attente d'un troisième visiteur (90 s) dans mon bac à sable : **non concluant**, à lancer chez Klaatou si besoin.
 
 ### Règles permanentes de documentation
+
 Toute modification du manuel, des procédures ou de l'historique se fait dans les deux langues, puis `verif_trad.py` sur le couple modifié (0 erreur exigée) ; chaque entrée de `CHANGELOG.md` en français puis en anglais ; chaque lot ajoute sa ligne à `docs/fr/HISTORIQUE.md` et `docs/en/HISTORY.md` ; tout renommage ajoute l'ancien nom à `ANCIENS` dans `tests/samples.py` et au manuel § 27.11 ; tout champ JSON ajouté ou modifié va au manuel § 27 et dans `docs/samples/` ; `REFERENCE_OPTIONS.md` est régénéré par `gen_reference.py` après `python build.py`.
 
 ## 7. Limites connues et pièges
@@ -191,6 +223,7 @@ Toute modification du manuel, des procédures ou de l'historique se fait dans le
 - **Non essayé du tout** : Firefox et Safari (ne plus les redemander à Klaatou), un vrai téléphone, `wss://` hors de Funnel, un domaine à soi.
 
 **Bac à sable et tests**
+
 - Tests de navigateur : **un seul à la fois**. Durées mesurées (rendu logiciel) : `v34` 2 min, `v33` 9 min, `modulaire` 4,3 min, `essais_presence` 1 min, `v36` 1,5 min, `v37` 1 min ; les autres de 5 à 70 s. Les longues séries : un script lancé par `setsid nohup bash script.sh &`, qui écrit un résumé lu ensuite. **Ne jamais reconstruire ni recloner le dossier pendant qu'une série tourne** (résultats faux, constaté le 29/10/2026).
 - `websockets` n'est pas installé d'office dans le bac à sable : `pip install websockets --break-system-packages` avant les tests du serveur (sans lui, `samples` échoue à « presence_server ne démarre pas »).
 - Variables : `THREE_DIR` (dossier `package` de `npm pack three@0.160.0`, `python build.py --vendor`), `WEB3D_LANG=fr`, `CHROMIUM` si besoin ; `WS_OLD` et `WS_OLD2` (anciennes versions de `websockets`, 14.2 et 15.0.1) : **sans elles, les sections « anciennes versions » de `v51_vides`, `v52_http` et `correctifs_v52` ne tournent pas** (compteurs plus bas : ce n'est pas une régression).
@@ -203,6 +236,7 @@ Toute modification du manuel, des procédures ou de l'historique se fait dans le
 - Tests fragiles connus : `v31` (échoue depuis la v46, défaut du test), `v27`, `v46` et `v35` parfois (passent à la relance), `v33` dure 9 minutes (rendu logiciel, processeur ralenti).
 
 **Klaatou et PowerShell**
+
 - Commandes dans un **bloc de code isolé**, une par ligne, **jamais dans une phrase** (un point final copié casse la ligne), **chemins complets entre guillemets** (le chemin contient `&`), **sans variables** `$b`, `$d` ; une ligne de procédure doit marcher **relancée** et être suivie d'une ligne de contrôle ; après un patch : `if ($LASTEXITCODE -eq 0) { python build.py }` ; ne pas enchaîner deux commandes dont la deuxième ne doit pas partir si la première échoue.
 - Klaatou n'a pas de presse-papiers dans la console de sa VM (pas d'extensions VMware) : pour coller du texte, il passe par SSH depuis PowerShell, ou on lui donne un **fichier** à envoyer par `scp` (c'est plus sûr qu'un long bloc collé).
 - Les commandes PowerShell et Windows ne sont pas testables ici : le dire chaque fois (règle 20).

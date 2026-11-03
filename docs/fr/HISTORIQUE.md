@@ -133,6 +133,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 03/11/2026 |  | après 1.4.0 | Lot 1.4.6 : `glb2tiles.py --compress` (`gltfpack`) ; `tests/compress.py` |
 | 03/11/2026 |  | après 1.4.0 | Lot 1.4.7 : clé `title` et `--title` actif en mode coquille ; `--scan-sites --prune-missing` ; `tests/titre.py` |
 | 03/11/2026 |  | après 1.4.0 | Lot 1.4.8 : documents : manuel § 38, `PROCEDURES_SIMPLES.md`, note aux créateurs |
+| 03/11/2026 |  | après 1.4.0 | Lot 1.4.9 : à propos : liens cliquables, bouton « Aide des visiteurs », touche `?` dans le bouton de l'aide ; documents : `GUIDE.md`, `DEVELOPPEMENT.md`, procédures de l'hôte |
 
 ## Commandes utiles
 

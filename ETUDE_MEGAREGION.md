@@ -21,17 +21,17 @@ Une **méga-région** : une page unique où le visiteur marche d'une région à 
 
 Réponse à la question de Klaatou (« ces risques ne sont-ils pas ceux d'un site normal, avec des iframes par exemple ? ») : **oui pour l'essentiel, c'est la même famille de risques que le web ordinaire** (contenu tiers, vie privée, images distantes) et on la traite avec les mêmes outils (liste d'hôtes autorisés, politique CSP, empreintes). Deux différences : (a) une `iframe` est **isolée** par le navigateur, alors que des tuiles chargées dans la scène sont des données dans le contexte de la page, présentées comme faisant partie de **sa** méga-région ; (b) un GLB n'exécute pas de script, mais il peut figer l'affichage (trop de triangles, fichier énorme).
 
-| Risque | Parade proposée |
-|---|---|
-| Le créateur change ses tuiles après coup (contenu, poids) | **Manifeste** avec `bytes` et `sha256` par tuile (voir § 4.1) ; la page vérifie la taille avant, l'empreinte après le téléchargement ; une tuile différente est refusée |
-| Fichier énorme | plafond par fichier (en plus des plafonds existants), vérifié sur `bytes` puis sur `Content-Length` |
-| Vie privée du visiteur (IP, navigateur, adresse de la page vue par l'hébergeur) | bandeau d'information + **accord par hébergeur** mémorisé (§ 4.5) ; `credentials: 'omit'`, `referrerPolicy: 'no-referrer'` |
-| Adresses cachées **dans** un GLB (image distante, requête vers le réseau local du visiteur) | gestionnaire d'URL du chargeur qui refuse toute adresse hors liste ; CSP (`connect-src`, `img-src`) écrite par `glb2html` à partir de la liste d'hôtes |
-| Lien fabriqué qui impose des tuiles étrangères à ta page | adresses externes acceptées **uniquement** depuis le fichier de configuration de la méga-région (même origine), avec liste d'hôtes ; **jamais** depuis `?` ni `#` |
-| Décodeurs WASM lisant un fichier malformé | bac à sable du navigateur ; risque déjà présent aujourd'hui ; limité par l'allowlist |
-| Noms ou `extras` affichés comme du HTML | à auditer : tout doit passer par `textContent` (déjà le cas pour les pseudos, testé) |
-| Hébergeur indisponible ou lent | la tuile manquante est ignorée avec un message ; la région voisine continue |
-| Droits et bande passante des créateurs | accord explicite de chaque créateur ; champ « licence » et « contact » dans le manifeste |
+| Risque                                                                                      | Parade proposée                                                                                                                                                         |
+| ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Le créateur change ses tuiles après coup (contenu, poids)                                   | **Manifeste** avec `bytes` et `sha256` par tuile (voir § 4.1) ; la page vérifie la taille avant, l'empreinte après le téléchargement ; une tuile différente est refusée |
+| Fichier énorme                                                                              | plafond par fichier (en plus des plafonds existants), vérifié sur `bytes` puis sur `Content-Length`                                                                     |
+| Vie privée du visiteur (IP, navigateur, adresse de la page vue par l'hébergeur)             | bandeau d'information + **accord par hébergeur** mémorisé (§ 4.5) ; `credentials: 'omit'`, `referrerPolicy: 'no-referrer'`                                              |
+| Adresses cachées **dans** un GLB (image distante, requête vers le réseau local du visiteur) | gestionnaire d'URL du chargeur qui refuse toute adresse hors liste ; CSP (`connect-src`, `img-src`) écrite par `glb2html` à partir de la liste d'hôtes                  |
+| Lien fabriqué qui impose des tuiles étrangères à ta page                                    | adresses externes acceptées **uniquement** depuis le fichier de configuration de la méga-région (même origine), avec liste d'hôtes ; **jamais** depuis `?` ni `#`       |
+| Décodeurs WASM lisant un fichier malformé                                                   | bac à sable du navigateur ; risque déjà présent aujourd'hui ; limité par l'allowlist                                                                                    |
+| Noms ou `extras` affichés comme du HTML                                                     | à auditer : tout doit passer par `textContent` (déjà le cas pour les pseudos, testé)                                                                                    |
+| Hébergeur indisponible ou lent                                                              | la tuile manquante est ignorée avec un message ; la région voisine continue                                                                                             |
+| Droits et bande passante des créateurs                                                      | accord explicite de chaque créateur ; champ « licence » et « contact » dans le manifeste                                                                                |
 
 **Signature.** Klaatou propose un élément produit par un script chez le créateur : c'est le manifeste. Version minimale proposée : **empreintes SHA-256** (la fonction `crypto.subtle.digest('SHA-256')` existe dans tous les navigateurs courants) ; la méga-région **épingle** l'empreinte du manifeste de chaque source. Une vraie **signature** (clé publique du créateur) est une option ultérieure ; je ne l'affirme pas disponible partout (Ed25519 dans WebCrypto : à vérifier avant de s'y fier).
 
@@ -72,11 +72,20 @@ Deux serveurs http locaux sur deux ports différents (deux **origines** distinct
 ## 7. Questions ouvertes pour Klaatou
 
 - Empreinte épinglée seule (simple), ou signature par clé publique du créateur (plus lourd) ?
+  Réponse : empreinte simple dans un premier temps, je me demande meme si ça n'est pas trop contraignant en cas de petite modifs du GLB...
 - Accord du visiteur obligatoire à chaque nouvel hébergeur, ou simple bandeau ?
+  Non, on verra a l'avenir si integre ça dans le "manifest" ou pas
 - Qui tient la liste des hôtes autorisés et comment un créateur y entre-t-il ?
+  Il me semblait avoir compris que c'est l'hébergeur de la Méga Région et pour y entrer, c'est avec la fourniture tu manifeste de la tuile/région proposée par le créateur avec l'outils diffusé.
 - Mention des droits d'auteur et accord écrit de chaque créateur : sous quelle forme ?
+  à voir ...
 - Où héberger **la** page de la méga-région (même question d'adresse IP que pour la région « Houses » : voir `REPRISE.md` § 6) ?
+  A voir ... chez moi on un vps pour le coup ! comme la carte générale ...
 
 ## 8. Ce que cette étude ne règle pas
 
 La **taille** des régions (voir l'essai de compression dans `REPRISE.md` § 6) et leur **hébergement** (GitHub Pages, Cloudflare Pages, etc.) sont des questions voisines mais indépendantes : chaque créateur choisit le sien.
+
+## 7. Questions ouvertes de Klaatou à Claude
+
+- La compression est elle appliqué à la conversion des OAR au GLB uniques produit (sans les tuiles) ?

@@ -1,38 +1,18 @@
-# Procédures simplifiées
+# Mes procédures : sites et serveur de présence
 
-*03/11/2026. Les tâches de tous les jours, une commande par bloc, à copier telle quelle (PowerShell). Le détail est dans `PROCEDURES.md` et `MANUEL.md`. Dans les commandes, `NOM` est le nom de la région, `ANCIEN` son ancien nom, `NOUVEAU` son nouveau nom, `CHEMIN` un chemin, `MESSAGE` un message de commit.*
+*03/11/2026. Pour l'hôte (Klaatou) : ses sites publiés et son serveur de présence. Créer une région : `GUIDE.md`. Livraisons et versions : `DEVELOPPEMENT.md` (en anglais : `DEVELOPMENT.md`). Dans les commandes, `NOM` est le nom de la région, `ANCIEN` et `NOUVEAU` l'ancien et le nouveau nom, `CHEMIN` un chemin, `UTILISATEUR` et `ADRESSE_VM` le compte et l'adresse de la VM.*
 
-## 1. Appliquer une livraison
+## 1. Mettre une région publiée au niveau d'une nouvelle version
 
-Récupérer et appliquer le patch (essai à blanc d'abord) :
-
-```powershell
-cd "P:\_OpenSim\SL&OS\Web_3d\web_3d"; git pull; python .\patch_NOM.py --dry-run; if ($LASTEXITCODE -eq 0) { python .\patch_NOM.py }
-```
-
-Fabriquer et contrôler. Sans cette étape, `dist\` reste à l'ancienne version :
-
-```powershell
-python build.py; python .\tests\dist_a_jour.py
-```
-
-Publier : d'abord le statut, puis tout :
-
-```powershell
-git status --short
-```
-
-```powershell
-git add -A; git commit -m "MESSAGE"; git push
-```
-
-## 2. Mettre à jour la page d'une région publiée
-
-Garde la configuration et les zones, renouvelle la coquille `index.html` si elle est plus ancienne. Ajouter `--title "Houses"` pour fixer le titre affiché dans l'onglet (les fichiers et le salon restent en minuscules). Ensuite Ctrl+F5 dans la page.
+À faire après une nouvelle version des outils : la page reçoit la nouvelle coquille `index.html` (l'ancienne est gardée sous un nom daté) et sa configuration est mise à jour, sans rien ressaisir ; les zones ne bougent pas. Ensuite Ctrl+F5 dans la page.
 
 ```powershell
 cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python .\glb2html.py --update -o "P:\_OpenSim\SL&OS\Web_3d\Sites\houses\houses.html" --shared-shell "P:\_OpenSim\SL&OS\Web_3d\Sites\index.html"
 ```
+
+## 2. Fixer le titre affiché dans l'onglet
+
+La même commande avec `--title "Houses"`, ou à la main la ligne `"title": "Houses",` dans `NOM.config.json`. Les fichiers et le salon restent en minuscules.
 
 ## 3. Renommer une région en tuiles
 
@@ -62,15 +42,9 @@ Pour retirer aussi les fiches dont la région n'existe plus (les fiches externes
 python .\glb2html.py --scan-sites "P:\_OpenSim\SL&OS\Web_3d\Sites" --prune-missing --dry-run
 ```
 
-## 5. Découper et compresser une grosse région
+## 5. Compresser une grosse région déjà découpée
 
-Région neuve : découper avec la compression (Node requis, `gltfpack` est lancé par `npx`) :
-
-```powershell
-cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python .\glb2tiles.py "CHEMIN\Region.glb" --compress
-```
-
-Tuiles déjà découpées et non compressées : à la main, depuis le dossier qui contient `NOM.tiles`, vers un dossier `sortie` (jamais recompresser un fichier déjà compressé) :
+Pour une région neuve, `--compress` de `glb2tiles.py` suffit (`GUIDE.md` § 1.3). Pour des tuiles déjà découpées et non compressées : à la main, depuis le dossier qui contient `NOM.tiles`, vers un dossier `sortie` (Node requis ; jamais recompresser un fichier déjà compressé) :
 
 ```powershell
 New-Item -ItemType Directory -Force ".\sortie" | Out-Null; Get-ChildItem ".\NOM.tiles" -Filter *.glb | ForEach-Object { npx -y gltfpack -i $_.FullName -o ".\sortie\$($_.Name)" -cc -kn -ke -km -vpf -vtf }
@@ -82,15 +56,47 @@ npx -y gltfpack -i ".\NOM.overview.glb" -o ".\sortie\NOM.overview.glb" -cc -kn -
 
 Remplacer ensuite les fichiers par ceux de `sortie`. Garder une sauvegarde avant.
 
-## 6. Mettre à jour la démo en ligne
+## 6. Extraire des bâtiments d'une région
 
-À faire quand `index.html`, `carte.html` ou l'icône changent (le chemin d'`ajout_og.py` est à confirmer) :
+Le script `extraire_batiments.py` (hors dépôt, dans `P:\_OpenSim\SL&OS\Web_3d`) sort un GLB par bâtiment, recentré, avec un `.json` qui garde sa position d'origine. Il lit l'OAR et le GLB fabriqué par `oar2glb.py` ; la première lecture est longue, la suite vient d'un cache. Lister les groupes d'au moins 5 parties :
 
 ```powershell
-Copy-Item "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist\index.html" "P:\_OpenSim\SL&OS\Web_3d\Web_3d_demo"; cd "P:\_OpenSim\SL&OS\Web_3d\Web_3d_demo"; python "P:\_OpenSim\SL&OS\Web_3d\ajout_og.py"; git add index.html; git commit -m "mise a jour"; git push
+cd "P:\_OpenSim\SL&OS\Web_3d"; python .\extraire_batiments.py "CHEMIN\NOM.oar" "CHEMIN\NOM.glb" --list --min-parties 5
 ```
 
-## 7. Accueillir un créateur sur mon serveur de présence
+Extraire par nom (ou `--groupe 12`, `--groupe 15,18,100-150`) ; `--sol 5` ajoute un sol d'essai de 5 m autour :
+
+```powershell
+python .\extraire_batiments.py "CHEMIN\NOM.oar" "CHEMIN\NOM.glb" --nom "Jewel Box House" -o "CHEMIN\batiments"
+```
+
+Les autres options (boîtes de livraison, voisins, fusion, tout extraire) sont décrites en tête du script.
+
+## 7. Mettre à jour la démo en ligne
+
+À faire quand `index.html`, `carte.html` ou l'icône changent. `ajout_og.py` (hors dépôt) remet dans `index.html` les balises d'aperçu de partage (image et titre affichés quand on partage le lien) ; le chemin indiqué est à confirmer :
+
+```powershell
+Copy-Item "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist\index.html", "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist\carte.html", "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist\favicon.ico" "P:\_OpenSim\SL&OS\Web_3d\Web_3d_demo"; cd "P:\_OpenSim\SL&OS\Web_3d\Web_3d_demo"; python "P:\_OpenSim\SL&OS\Web_3d\ajout_og.py"; git add index.html carte.html favicon.ico; git commit -m "mise a jour"; git push
+```
+
+## 8. Le serveur de présence sur la VM
+
+Ouvrir la console de modération depuis le PC ; pour en sortir sans arrêter le serveur : Ctrl+B puis D.
+
+```powershell
+ssh -t UTILISATEUR@ADRESSE_VM "tmux attach -t presence"
+```
+
+Dans la console : `version` donne la version et l'empreinte du serveur ; `liste`, `ejecter`, `bannir`, `creators`, `aide`. Mettre le serveur à jour **seulement** si l'empreinte affichée par `version` diffère de celle que `python build.py` liste pour `presence_server.py` : envoyer le fichier, puis, sur la VM en root, `systemctl restart web3d-presence`.
+
+```powershell
+scp "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist\presence_server.py" UTILISATEUR@ADRESSE_VM:/home/UTILISATEUR/presence/
+```
+
+Installation complète de la VM : `PROCEDURES.md` § 11.
+
+## 9. Accueillir un créateur sur mon serveur de présence
 
 Ce que je lui envoie (message à copier) :
 
@@ -106,11 +112,8 @@ Si la présence est refusée, la page dit pourquoi (note aux créateurs, § 5).
 Ce que je fais ensuite :
 
 - Sur la VM, ouvrir ma copie de `presence_creators.json` et ajouter l'entrée du créateur (modèle : `docs/samples/presence_creators.sample.json`), par exemple `{"id": "alice", "origins": ["https://alice.example"]}`. Pas de redémarrage : le fichier est relu en 2 secondes au plus.
-- Dans la console du serveur (`tmux attach -t presence`), taper `creators` : il liste le créateur, ses origines et son état.
-- Lui envoyer l'adresse `wss://` de mon serveur et son préfixe (`alice.`).
+- Dans la console (§ 8), taper `creators` : il liste le créateur, ses origines et son état.
+- Lui envoyer l'adresse `wss://` de mon serveur, son préfixe (`alice.`) et la note aux créateurs (`CREATEURS.md`, en anglais `CREATORS.md`).
 - Facultatif : `visits-key alice.NOM` donne la clé de son journal des visites, à lui envoyer avec l'adresse de sa page suivie de `#visits`.
 
-S'il n'a pas encore de GLB :
-
-- Il a déjà un `.glb` : le paquet `region-simple.zip` (page des versions du dépôt GitHub) l'affiche sans rien installer.
-- Il n'a qu'un OAR : la conversion demande `convoar.exe` (Windows) et `oar2glb.py`. Le plus simple est qu'il m'envoie l'OAR, que je le convertisse (§ 5) et que je lui renvoie les fichiers de la région. La conversion OAR vers GLB n'a été essayée jusqu'ici que par Klaatou.
+S'il n'a pas encore sa région en page web : lui envoyer `GUIDE.md`.

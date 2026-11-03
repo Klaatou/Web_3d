@@ -46,6 +46,7 @@ body.padOn #bar{max-width:max(200px,calc(50vw - 90px))}   /* v46 : la barre pass
 #aboutBox:focus{outline:none}
 #aboutBox h2{margin:0 0 10px;font-size:15px}
 #aboutText{white-space:pre-wrap;overflow-wrap:anywhere;margin:0 0 12px}
+#aboutText a{color:#0000c8;text-decoration:underline}   /* 1.4.9 : liens soulignés (pas seulement colorés) */
 #aboutBox button,#aboutBtn{font:inherit;color:#000;background:#fff;border:2px solid #000;border-radius:6px;padding:4px 10px;margin-right:6px;cursor:pointer}
 #aboutBtn{margin:6px 0 0;padding:2px 8px}
 #mapGrid{display:grid;gap:10px;justify-content:start;margin-bottom:10px}
@@ -180,7 +181,7 @@ __I18N__
 <div id="view"></div>
 <div id="msg" data-i18n="page.loading">Chargement…</div>
 <div id="opts"><button id="optsBtn" hidden data-i18n="page.opts">Réglages</button><div id="optsPanel" hidden></div><div id="lightPanel" hidden></div><div id="hudR"></div></div>
-<div id="aboutOverlay" hidden><div id="aboutBox" role="dialog" aria-modal="true" aria-labelledby="aboutTitle" tabindex="-1"><h2 id="aboutTitle"></h2><div id="aboutText"></div><button type="button" id="aboutClose"></button><button type="button" id="aboutHide"></button></div></div>
+<div id="aboutOverlay" hidden><div id="aboutBox" role="dialog" aria-modal="true" aria-labelledby="aboutTitle" tabindex="-1"><h2 id="aboutTitle"></h2><div id="aboutText"></div><button type="button" id="aboutClose"></button><button type="button" id="aboutHide"></button><button type="button" id="aboutHelp" hidden></button></div></div>
 <div id="mapOverlay" hidden><div id="mapBox"><h2 data-i18n="page.map.title">Carte des mondes</h2><div id="mapGrid"></div><button id="mapClose" data-i18n="page.map.close">Fermer (Échap)</button></div></div>
 <div id="visitsOverlay" hidden><div id="visitsBox" role="dialog" aria-labelledby="visitsTitle"><h2 id="visitsTitle" data-i18n="page.visits.title">Journal des visites</h2><p data-i18n="page.visits.intro">Résumé des visites de cette région, pour son créateur. Entre la clé que l'hôte du serveur de présence t'a donnée.</p><div id="visitsForm"><label for="visitsKey" data-i18n="page.visits.key">Clé : </label><input id="visitsKey" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="40"> <button id="visitsGo" type="button" data-i18n="page.visits.show">Afficher</button><button id="visitsForget" type="button" hidden data-i18n="page.visits.forget">Oublier la clé</button></div><div id="visitsStatus" role="status" aria-live="polite"></div><div id="visitsOut"></div><button id="visitsCsv" type="button" hidden data-i18n="page.visits.csv">Télécharger (CSV)</button><button id="visitsClose" type="button" data-i18n="page.visits.close">Fermer (Échap)</button></div></div>
 <div id="nameTag" hidden></div>
@@ -832,7 +833,7 @@ if (C.walk) {
   const fillGroups = groups => {
     l1.textContent = '';
     for (const g of groups) { const d = document.createElement('div'); d.className = 'grp'; const b = document.createElement('b'); b.textContent = g.t; d.append(b, g.items.join(' · ')); l1.append(d); }
-    if (ABOUT.found) { const d = document.createElement('div'), b = document.createElement('button'); b.type = 'button'; b.id = 'aboutBtn'; b.textContent = tr('page.about.btn'); b.onclick = () => aboutToggle(); d.append(b); l1.append(d); }   // 1.4.5
+    if (ABOUT.found) { const d = document.createElement('div'), b = document.createElement('button'); b.type = 'button'; b.id = 'aboutBtn'; b.textContent = tr('page.about.btnkey'); b.onclick = () => aboutToggle(); d.append(b); l1.append(d); }   // 1.4.5
   };
   // v34 : bloc d'état (texte sélectionnable, distinct de l'aide) : vue, mode (à pied / en vol), souris, position, tuiles
   const sb = document.getElementById('stateInfo'), sbody = document.getElementById('stateBody'), shead = document.getElementById('stateHead');
@@ -1577,8 +1578,21 @@ function aboutOpen() {
   if (!ABOUT.found) return;
   if (document.pointerLockElement && document.exitPointerLock) document.exitPointerLock();
   document.getElementById('aboutTitle').textContent = ABOUT.title;
-  document.getElementById('aboutText').textContent = ABOUT.text;   // jamais de HTML interprété
+  aboutLinkify(document.getElementById('aboutText'), ABOUT.text);   // jamais de HTML interprété ; seules les adresses http(s) deviennent des liens
   aboutOv.hidden = false; aboutBox.focus();
+}
+// 1.4.9 : texte posé par nœuds (jamais innerHTML) ; une adresse http(s):// devient un lien ouvert dans un nouvel onglet ; la ponctuation finale reste du texte
+function aboutLinkify(el, t) {
+  el.textContent = ''; const rx = /https?:\/\/[^\s<>"]+/g; let last = 0, m;
+  while ((m = rx.exec(t))) {
+    let u = m[0]; const tail = u.match(/[.,;:!?)\]}»'"]+$/); if (tail) u = u.slice(0, -tail[0].length);
+    let ok = false; try { ok = /^https?:$/.test(new URL(u).protocol); } catch (e) {}
+    if (!ok || !u) continue;
+    if (m.index > last) el.append(t.slice(last, m.index));
+    const a = document.createElement('a'); a.href = u; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.textContent = u; el.append(a);
+    last = m.index + u.length; rx.lastIndex = last;
+  }
+  if (last < t.length) el.append(t.slice(last));
 }
 function aboutToggle() { if (aboutOv.hidden) aboutOpen(); else aboutClose(); }
 ABOUT.ready.then(() => {
@@ -1588,6 +1602,10 @@ ABOUT.ready.then(() => {
   document.getElementById('aboutClose').onclick = aboutClose;
   document.getElementById('aboutHide').onclick = () => { aboutSetHidden(true); if (aboutOpt) aboutOpt.checked = false; aboutClose(); };
   aboutOv.addEventListener('click', e => { if (e.target === aboutOv) aboutClose(); });
+  // 1.4.9 : bouton « Aide des visiteurs » si aide.html existe à côté de la coquille (page des paquets) ; ouvre un nouvel onglet
+  const ah = document.getElementById('aboutHelp'), aideUrl = new URL('aide.html', location.href).href;
+  ah.textContent = tr('page.about.helpbtn'); ah.onclick = () => window.open(aideUrl, '_blank', 'noopener');
+  if (/^https?:$/.test(location.protocol)) fetch(aideUrl, { method: 'HEAD', cache: 'no-store' }).then(r => { if (r.ok) ah.hidden = false; }).catch(() => {});
   const opn = document.getElementById('optsPanel');
   if (opn) {   // case des réglages : cochée = le panneau s'ouvre à l'entrée
     const cb = document.createElement('input'), lb = document.createElement('label'), sp = document.createElement('span');

@@ -1,6 +1,6 @@
 # Que faire pour… (procédures pas à pas)
 
-**Version courte : `PROCEDURES_SIMPLES.md` (en anglais : `SIMPLE_PROCEDURES.md`) : les tâches de tous les jours, une commande par bloc.**
+**Voir aussi : `GUIDE.md` (créer et gérer sa région, pour tous) ; `PROCEDURES_SIMPLES.md` (en anglais : `SIMPLE_PROCEDURES.md` ; les sites et le serveur de l'hôte) ; `DEVELOPPEMENT.md` (en anglais : `DEVELOPMENT.md` ; livraisons et versions).**
 
 *Écrit le 23/10/2026, revu le 31/10/2026 pour la version 1.1.0 (les « vNN » du texte sont les versions d'avant la 1.0.0 : la v52 est devenue la 1.0.0). Les commandes sont en PowerShell, sur une seule ligne, avec les chemins de ta machine. La liste complète des options est dans `REFERENCE_OPTIONS.md` ; le détail des zones, touches et réglages est dans `MANUEL.md`.*
 

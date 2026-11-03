@@ -133,6 +133,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 03/11/2026 |  | after 1.4.0 | Batch 1.4.6 : `glb2tiles.py --compress` (`gltfpack`); `tests/compress.py` |
 | 03/11/2026 |  | after 1.4.0 | Batch 1.4.7 : `title` key and `--title` active in shell mode; `--scan-sites --prune-missing`; `tests/titre.py` |
 | 03/11/2026 |  | after 1.4.0 | Batch 1.4.8 : documents: manual § 38, `PROCEDURES_SIMPLES.md`, creators note |
+| 03/11/2026 |  | after 1.4.0 | Batch 1.4.9 : about: clickable links, "Visitors' help" button, `?` key in the help button; documents: `GUIDE.md`, `DEVELOPPEMENT.md`, host procedures |
 
 ## Useful commands
 
