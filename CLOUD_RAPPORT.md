@@ -1,120 +1,255 @@
-# Rapport de la session cloud (lots 1.4.4 à 1.4.6)
+# Rapport de la session cloud : refonte du manuel
 
-Branche : `claude/lots-1-4-4` (point de départ : `main` 1.4.3, commit 3336bbb). Environnement : Chromium 1243 sans tête, Linux, three 0.160.0, Playwright 1.64.1 (variable `CHROMIUM` nécessaire : l'installation de Playwright a changé sa version).
+*Branche `claude/manuel` (point de départ : `main` 1.4.10, commit d92045b). L'ancien rapport (lots 1.4.4 à 1.4.6) reste dans l'historique git. Aucun fichier de code, `VERSION`, `CHANGELOG.md` ou `VERSIONS.json` modifié.*
 
-## Étape 1 : suite complète (aucun code modifié)
+## État des étapes
 
-72 fichiers lancés un par un. **69 passent, 3 échouent** (voir plus bas).
+| Étape | État | Contrôles | Reste |
+| --- | --- | --- | --- |
+| 1. Table de correspondance | faite | 228 titres, chacun placé une fois (script) | |
+| 2. Manuel français | non commencée | | |
+| 3. Manuel anglais | non commencée | | |
+| 4. Renvois des autres documents | non commencée | | |
 
-| Fichier | Résultat | Durée |
-|---|---|---|
-| carte_pseudos | ok | 8s |
-| chat_bip | ok | 34s |
-| chat_fleches | ok | 10s |
-| console | ok | 4s |
-| correctifs_v52 | ok | 2s |
-| dist_a_jour | ok | 0s |
-| doc_options | ÉCHEC | 1s |
-| essais_presence | ok | 67s |
-| glb2tiles | ok | 1s |
-| glbfab | ok | 0s |
-| http_proxy | ok | 0s |
-| i18n | ok | 1s |
-| icone | ok | 17s |
-| image_cache | ok | 10s |
-| image_cache_vieux | ok | 31s |
-| image_diag | ok | 6s |
-| image_dossier | ÉCHEC | 6s |
-| image_legende | ok | 8s |
-| image_medias | ok | 10s |
-| image_noms_gen | ok | 1s |
-| image_numero | ok | 10s |
-| image_zone | ok | 11s |
-| ipv6 | ok | 3s |
-| lien_image | ok | 21s |
-| marque | ÉCHEC | 2s |
-| modulaire | ok | 142s |
-| oar2glb | ok | 29s |
-| oublier | ok | 7s |
-| paquets | ok | 21s |
-| pointeur_objet | ok | 4s |
-| portail_interne | ok | 6s |
-| pose_promenade | ok | 11s |
-| samples | ok | 10s |
-| smoke | ok | 35s |
-| solid_materiaux | ok | 4s |
-| terrain | ok | 38s |
-| tools_lang | ok | 1s |
-| tuile_ici | ok | 9s |
-| tuiles | ok | 43s |
-| v23 | ok | 17s |
-| v24 | ok | 15s |
-| v27 | ok | 20s |
-| v31 | ok | 21s |
-| v32 | ok | 42s |
-| v33 | ok | 355s |
-| v34 | ok | 60s |
-| v35 | ok | 35s |
-| v36 | ok | 64s |
-| v36_lang | ok | 22s |
-| v36_viewer_lang | ok | 10s |
-| v37 | ok | 41s |
-| v37_chat | ok | 63s |
-| v37_region | ok | 35s |
-| v39 | ok | 6s |
-| v40 | ok | 7s |
-| v41 | ok | 6s |
-| v42 | ok | 19s |
-| v45 | ok | 6s |
-| v45_lib | ok | 4s |
-| v46 | ok | 18s |
-| v47 | ok | 6s |
-| v48 | ok | 21s |
-| v49 | ok | 1s |
-| v50 | ok | 7s |
-| v51 | ok | 25s |
-| v51_etoile | ok | 6s |
-| v51_vides | ok | 2s |
-| v52 | ok | 28s |
-| v52_http | ok | 4s |
-| v52_renom | ok | 18s |
-| webgl_absent | ok | 10s |
-| zones_numeros | ok | 10s |
+## Plan retenu
 
-### Échecs, relancés seuls puis comparés à la publication 1.4.0
+Les 12 chapitres du brief, plus un 13e : l'annexe (tableau « version → contenu », renvois à `HISTORIQUE.md` et `CHANGELOG.md`). Écarts au brief, justifiés :
 
-L'étiquette `v1.4.0` n'existe pas dans le dépôt cloné (aucune étiquette) : comparaison faite sur le commit `b9337a5` « Publication 1.4.0 » (`git worktree`, build neuf).
+- Chapitre 12 « Dépannage » : le tableau de l'ancien § 13 et les trois parties « Si quelque chose ne va pas » (OAR, découpage, tuiles dans la page).
+- L'ancien § 16 (fichiers JSON d'une région modulaire) va au chapitre 11 avec le § 27 ; sa partie « Coquille unique » va au chapitre 6.
+- Les titres « Nouveautés de la vNN » disparaissent ; leurs sous-sections vont dans leur thème. Les textes d'introduction des conteneurs 37 et 38 et les § 36.5, 37.6, 37.8 vont en annexe.
+- Les notes « Non testé » / « Essayé » gardent leur thème et reçoivent la version entre parenthèses.
+- Seules suppressions : les 13 listes « Tests de la vNN » (y compris « Test de la coquille », ancien § 28.8, qui est une liste de tests) et les titres-conteneurs.
 
-- **doc_options** : échoue seul, et sur 1.4.0 (même nombre d'échecs). Messages : « presence_server `--map-names` : description absente (fr) » et « REFERENCE_OPTIONS.md est à jour ». C'est la dérive connue du brief, non corrigée.
-- **marque** : échoue seul, et sur 1.4.0. Le test attend une empreinte dans la sortie de `--version` de `presence_server.py`, `oar2glb.py`, `glb2tiles.py`, qui affichent par exemple « glb2tiles 1.3.3 (02/11/2026), fingerprint 0166707d ». Cause du format non analysée (rien corrigé).
-- **image_dossier** : échoue seul. Sur 1.4.x : « bon dossier : images relatives lues dans le dossier … {'tab': 0, 'dos': 16, 'sous': 6, 'hors': 512} » puis `TargetClosedError` dans `Page.set_input_files`. Sur 1.4.0 : échec différent (attente de `#fZones`, délai dépassé). Cause non élucidée ; probablement lié au sélecteur de dossier en Chromium sans tête. Non corrigé.
+## Étape 1 : table de correspondance
 
-Aucun échec « sensible à la charge » : tous les tests ont été lancés séparément. `v31` et `v33` (355 s) passent.
-
-**Non testé ici** : Windows, Edge, carte graphique réelle, Firefox, Safari, téléphone.
-
-## Étape 2 : lot 1.4.4 (faite)
-
-- (a) `core.js` : champ `got` ajouté à `tilesStatus()` et à la clé de `tilesInfo()` ; `bytes` inchangé (budget). Affichage : `template.html` (`page.tiles.main`) et `viewer_tpl.html` (`viewer.tiles.line`). (b) setter `onTiles` : rejoue l'état.
-- Tests lancés (tous OK) : `tuile_ici` (étendu : index gonflé de 2 Mo par tuile, `bytes` suit l'index, `got` et la ligne suivent les fichiers servis ; viewer : ligne présente dès le branchement, sans attendre), `tuiles`, `v31`, `v32`, `i18n`, `smoke`, `dist_a_jour`.
-- Contre-épreuve : avec `src/` d'avant le correctif, `tuile_ici` échoue (ligne vide au branchement du viewer, puis plantage faute de `got`).
-- Build : seuls `glb-viewer.html`, `glb2html.py` et `index.html` ont changé de numéro (1.4.3 → 1.4.4) ; les autres fichiers de `dist/` gardent le leur.
-- Non testé : poids affiché avec de vraies tuiles `gltfpack` (seulement un index gonflé sur une région synthétique), Windows, Edge, carte graphique.
-
-## Étape 3 : lot 1.4.5, panneau « À propos de la région » (faite)
-
-- Code : `src/template.html` (objet `ABOUT`, `#aboutOverlay`, touche `?`, bouton dans l'aide, case des Réglages), `src/gen_tpl.py` (`mk()` de la coquille : `name` et `about`), textes `page.about.*` et `page.help.about` (fr/en). Pas d'à propos pour une page autonome (sans coquille).
-- Tests lancés (tous OK) : `apropos` (nouveau, 33 contrôles), `tuile_ici`, `tuiles`, `v31`, `v32`, `i18n`, `smoke`, `dist_a_jour`. Contre-épreuve : sur le code de la 1.4.4, `apropos` échoue (élément `#aboutOverlay` absent).
-- **Effet de bord corrigé dans un test** : `v31` refusait tout avertissement de console ; l'essai des fichiers `NOM.about.*.txt` absents produit des « 404 » journalisés par le navigateur (inévitables avec un site statique). `tests/v31.py` ignore maintenant précisément les adresses `*.about.txt` et `*.about.xx.txt`. D'autres tests qui surveillent la console pourraient réagir de la même façon : la suite complète est relancée en fin de session.
-- **Choix de conception à confirmer par Klaatou** : mémorisation **par région** (clé `web3d.about.hide.NOM`) plutôt que globale ; « Ne plus afficher » et la case des Réglages (décochée) sont équivalents. Le brief dit « si la région n'est pas masquée » : je n'ai trouvé aucune notion de région masquée dans la page ; je l'ai compris comme « pas en erreur de chargement » (le panneau ne s'ouvre qu'après un chargement réussi).
-- Détails : un serveur qui répond une page HTML au lieu d'un 404 est ignoré (type de contenu `text/html`) ; troncature à 20 000 caractères avec « … » (estimation).
-- Non testé : `?` réellement tapé sur un clavier AZERTY (simulé par `key '?'` + `code 'Comma'`), le chat réel (seulement un champ `<input>` de test ; le garde est sur le nom de balise), lecteur d'écran, Windows, Edge, téléphone.
-
-## Étape 4 : lot 1.4.6, `glb2tiles.py --compress` (faite)
-
-- Code : `tools/glb2tiles.py` (`trouver_gltfpack`, `extensions_glb`, `compresser_fichiers`, `compresser_sortie`, option `--compress`), textes `py.glb2tiles.compress_*` (fr/en), ligne ajoutée à `REFERENCE_OPTIONS.md`. `gltfpack` : `PATH`, sinon `npx -y gltfpack` ; options `-cc -kn -ke -km -vpf -vtf` (jamais `-tc`). Absent : arrêt **avant toute écriture**, code non nul. Fichier déjà compressé : sauté avec message. Erreur sur un fichier : original intact, les autres continuent, code 3. `X.tiles.json` non modifié.
-- Test : `tests/compress.py` (nouveau, 25 contrôles), tous OK ici avec le vrai `gltfpack` (via `npx`, téléchargé par npm dans ce bac à sable) : extension meshopt, mêmes noms de nœuds, mêmes extras, mêmes matériaux, triangles proches, index identique octet pour octet, relance sans effet, erreur isolée, page chargeant la région compressée (toutes les tuiles prêtes, ligne « Tuile(s) sous l'avatar » exacte). Contre-épreuve : sur le code d'avant, il échoue.
-- **Mesure** : la région synthétique de test est minuscule (quelques centaines de Ko par fichier, sans rapport avec « Houses ») : les gains mesurés ici (par exemple 0,2 Mo → 0,1 Mo pour une tuile) **ne disent rien** des 1 434 Mo → environ 650 Mo de Klaatou, qui sont ses propres mesures.
-- **Numéros de version** : fichiers qui changent dans ce lot : `glb2tiles.py`, `oar2glb.py`, `presence_server.py` (ils embarquent le catalogue de textes `py.*`), `glb2html.py` et `glb-viewer.html` ; `index.html` et `carte.html` gardent leur numéro (1.4.5). `glb-stats.py` change aussi mais n'est pas numéroté. Un build fait trop tôt (contre-épreuve avant le passage de `VERSION`) avait faussé les numéros ; j'ai reconstruit les commits non poussés des étapes 3 et 4 pour les corriger, `dist_a_jour` passe.
-- **Non testé** : `gltfpack` installé dans le `PATH` (seul `npx` essayé), Windows (`npx.cmd`), Edge, la compression de la vraie région « Houses » (106 tuiles) et la limite de 1 Go de GitHub Pages (à revérifier).
-- Suite complète finale (74 fichiers) : lancée après cette étape ; résultats ajoutés plus bas dans ce rapport.
+| Titre de l'ancien manuel | Où il va |
+| --- | --- |
+| 1. La règle qui explique 90 % des pannes | chapitre 5 « Poser les zones (le viewer) », § 5.1 |
+| 2. Les touches | chapitre 7 « La page côté visiteur », § 7.1 |
+| &nbsp;&nbsp;Clic et double-clic (vue globale du viewer) | chapitre 5 « Poser les zones (le viewer) », § 5.3 |
+| 2 bis. Ce que voit le visiteur : les liens se comportent comme sur le web | chapitre 7 « La page côté visiteur », § 7.13 |
+| 3. Poser une zone | chapitre 5 « Poser les zones (le viewer) », § 5.2 |
+| 4. Point d'arrivée | chapitre 5 « Poser les zones (le viewer) », § 5.4 |
+| 5. Portail vers un autre endroit de la même région | chapitre 5 « Poser les zones (le viewer) », § 5.5 |
+| 6. Portail vers une autre région | chapitre 5 « Poser les zones (le viewer) », § 5.6 |
+| 7. Panneaux | chapitre 5 « Poser les zones (le viewer) », § 5.7 |
+| &nbsp;&nbsp;Lien web | chapitre 5 « Poser les zones (le viewer) », § 5.7.1 |
+| &nbsp;&nbsp;Commande Home Assistant | chapitre 5 « Poser les zones (le viewer) », § 5.7.2 |
+| 8. Déclenchement, forme et taille | chapitre 5 « Poser les zones (le viewer) », § 5.8 |
+| 9. Lier une zone à un élément du modèle | chapitre 5 « Poser les zones (le viewer) », § 5.9 |
+| 10. Zones privées | chapitre 5 « Poser les zones (le viewer) », § 5.10 |
+| 11. Carte des mondes | chapitre 9 « Carte des mondes », § 9.1 |
+| &nbsp;&nbsp;Rotation de la région | chapitre 5 « Poser les zones (le viewer) », § 5.13 |
+| 12. Publier les changements | chapitre 6 « Fabriquer la page (`glb2html.py`) », § 6.16 |
+| 13. Dépannage | chapitre 12 « Dépannage » |
+| 14. Réglages mémorisés | chapitre 5 « Poser les zones (le viewer) », § 5.16 |
+| 15. Convertir un OAR en GLB (`tools/oar2glb.py`) | chapitre 3 « Convertir un OAR en GLB (`tools/oar2glb.py`) » |
+| &nbsp;&nbsp;Les commandes (PowerShell, une seule ligne) | chapitre 3 « Convertir un OAR en GLB (`tools/oar2glb.py`) », § 3.1 |
+| &nbsp;&nbsp;Les options | chapitre 3 « Convertir un OAR en GLB (`tools/oar2glb.py`) », § 3.2 |
+| &nbsp;&nbsp;Terrain complet des régions de plus de 256 m (v29) | chapitre 3 « Convertir un OAR en GLB (`tools/oar2glb.py`) », § 3.3 |
+| &nbsp;&nbsp;Ce que le script corrige | chapitre 3 « Convertir un OAR en GLB (`tools/oar2glb.py`) », § 3.4 |
+| &nbsp;&nbsp;Lire le journal (`oar2glb.log`, à côté du script) | chapitre 3 « Convertir un OAR en GLB (`tools/oar2glb.py`) », § 3.5 |
+| &nbsp;&nbsp;Diagnostic : `--diag` | chapitre 3 « Convertir un OAR en GLB (`tools/oar2glb.py`) », § 3.6 |
+| &nbsp;&nbsp;Si quelque chose ne va pas | chapitre 12 « Dépannage », § 12.1 |
+| 16. Fichiers JSON d'une région modulaire | chapitre 11 « Référence des fichiers JSON (v43) », § 11.12 |
+| &nbsp;&nbsp;Coquille unique pour plusieurs régions (`--shared-shell`, v26) | chapitre 6 « Fabriquer la page (`glb2html.py`) », § 6.1 |
+| &nbsp;&nbsp;Quel fichier de zones est lu | chapitre 11 « Référence des fichiers JSON (v43) », § 11.12.1 |
+| &nbsp;&nbsp;Region.config.json : le rendu de la page, pas le viewer | chapitre 11 « Référence des fichiers JSON (v43) », § 11.12.2 |
+| &nbsp;&nbsp;`.reglages.json` et `.config.json` n'ont pas la même structure | chapitre 11 « Référence des fichiers JSON (v43) », § 11.12.3 |
+| &nbsp;&nbsp;Quel fichier modifier, et ce qui l'écrase | chapitre 11 « Référence des fichiers JSON (v43) », § 11.12.4 |
+| 17. Découper un GLB énorme en tuiles (`tools/glb2tiles.py`, v28 ; `--exclude` et pause en v29 ; images invalides et vue d'ensemble en v31) | chapitre 4 « Mesurer et découper une grosse région », § 4.1 |
+| &nbsp;&nbsp;Les commandes (PowerShell, une seule ligne) | chapitre 4 « Mesurer et découper une grosse région », § 4.1.1 |
+| &nbsp;&nbsp;Les paramètres | chapitre 4 « Mesurer et découper une grosse région », § 4.1.2 |
+| &nbsp;&nbsp;Exclure des objets (`--exclude`, v29) | chapitre 4 « Mesurer et découper une grosse région », § 4.1.3 |
+| &nbsp;&nbsp;Références d'objets (v32) : lier une zone à un objet en mode tuiles | chapitre 4 « Mesurer et découper une grosse région », § 4.1.4 |
+| &nbsp;&nbsp;Images vides ou invalides (v31) | chapitre 4 « Mesurer et découper une grosse région », § 4.1.5 |
+| &nbsp;&nbsp;Vue d'ensemble (`X.overview.glb`, v31) | chapitre 4 « Mesurer et découper une grosse région », § 4.1.6 |
+| &nbsp;&nbsp;Comment le découpage se décide | chapitre 4 « Mesurer et découper une grosse région », § 4.1.7 |
+| &nbsp;&nbsp;Fichiers produits | chapitre 4 « Mesurer et découper une grosse région », § 4.1.8 |
+| &nbsp;&nbsp;Lire le journal (`glb2tiles.log`, à côté du script) | chapitre 4 « Mesurer et découper une grosse région », § 4.1.9 |
+| &nbsp;&nbsp;Si quelque chose ne va pas | chapitre 12 « Dépannage », § 12.2 |
+| 17 bis. Charger une région en tuiles dans la page (`glb2html.py --tiles`, v30) | chapitre 8 « Charger une région en tuiles dans la page (`glb2html.py --tiles`, v30) » |
+| &nbsp;&nbsp;Les commandes (PowerShell, une seule ligne) | chapitre 8 « Charger une région en tuiles dans la page (`glb2html.py --tiles`, v30) », § 8.1 |
+| &nbsp;&nbsp;Les paramètres (dans `X.config.json`, avec leurs options) | chapitre 8 « Charger une région en tuiles dans la page (`glb2html.py --tiles`, v30) », § 8.2 |
+| &nbsp;&nbsp;Ce que fait la page | chapitre 8 « Charger une région en tuiles dans la page (`glb2html.py --tiles`, v30) », § 8.3 |
+| &nbsp;&nbsp;Repère, rotation, mer, zones | chapitre 8 « Charger une région en tuiles dans la page (`glb2html.py --tiles`, v30) », § 8.4 |
+| &nbsp;&nbsp;Limites de cette version | chapitre 8 « Charger une région en tuiles dans la page (`glb2html.py --tiles`, v30) », § 8.5 |
+| &nbsp;&nbsp;Si quelque chose ne va pas | chapitre 12 « Dépannage », § 12.3 |
+| 17 ter. Poser des zones dans une région en tuiles (viewer, v32) | chapitre 5 « Poser les zones (le viewer) », § 5.14 |
+| 18. Nouveautés de la v33 (22/10/2026) | titre supprimé (conteneur « Nouveautés/Ajouts » : sous-sections réparties ; une ligne dans le tableau de l'annexe, chapitre 13) |
+| &nbsp;&nbsp;18.1 Démarrage avec une arrivée (`#spawn=`, `#pos=`) dans une région en tuiles | chapitre 8 « Charger une région en tuiles dans la page (`glb2html.py --tiles`, v30) », § 8.6 |
+| &nbsp;&nbsp;18.2 Arrivée par défaut et retour à l'arrivée | chapitre 7 « La page côté visiteur », § 7.21 |
+| &nbsp;&nbsp;18.3 Marqueurs de zones dans la page exportée | chapitre 7 « La page côté visiteur », § 7.14 |
+| &nbsp;&nbsp;18.4 Vol, trois vues, « Aller à » | chapitre 7 « La page côté visiteur », § 7.7 |
+| &nbsp;&nbsp;18.5 Chat | chapitre 7 « La page côté visiteur », § 7.25 |
+| &nbsp;&nbsp;18.6 Couleur de l'avatar (client et serveur) | chapitre 7 « La page côté visiteur », § 7.29 |
+| &nbsp;&nbsp;18.7 Adresses IP dans le journal : `--log-ip raw` | chapitre 10 « Serveur de présence », § 10.22 |
+| &nbsp;&nbsp;18.8 Enregistrer les zones directement dans le dossier de la région (viewer) | chapitre 5 « Poser les zones (le viewer) », § 5.15 |
+| &nbsp;&nbsp;18.9 `glb2html.py --tiles --zones` avec le fichier déjà en place | chapitre 8 « Charger une région en tuiles dans la page (`glb2html.py --tiles`, v30) », § 8.7 |
+| &nbsp;&nbsp;18.10 Mettre à jour une région déjà publiée | chapitre 6 « Fabriquer la page (`glb2html.py`) », § 6.14 |
+| 19. Nouveautés de la v34 (22/10/2026) | titre supprimé (conteneur « Nouveautés/Ajouts » : sous-sections réparties ; une ligne dans le tableau de l'annexe, chapitre 13) |
+| &nbsp;&nbsp;19.1 Panneau d'aide sélectionnable et bloc d'état | chapitre 7 « La page côté visiteur », § 7.38 |
+| &nbsp;&nbsp;19.2 Zone de survol et de clic des marqueurs | chapitre 7 « La page côté visiteur », § 7.15 |
+| &nbsp;&nbsp;19.3 Vol | chapitre 7 « La page côté visiteur », § 7.8 |
+| &nbsp;&nbsp;19.4 Souris libre après Échap | chapitre 7 « La page côté visiteur », § 7.10 |
+| &nbsp;&nbsp;19.5 Couleur en direct | chapitre 7 « La page côté visiteur », § 7.30 |
+| &nbsp;&nbsp;19.6 `glb2html.py --update` : mettre à jour une région sans rien ressaisir | chapitre 6 « Fabriquer la page (`glb2html.py`) », § 6.15 |
+| &nbsp;&nbsp;19.7 Pseudo, lien personnel, page de lancement | chapitre 7 « La page côté visiteur », § 7.28 |
+| 20. Nouveautés de la v35 (22/10/2026) | titre supprimé (conteneur « Nouveautés/Ajouts » : sous-sections réparties ; une ligne dans le tableau de l'annexe, chapitre 13) |
+| &nbsp;&nbsp;20.1 Aide en groupes, panneaux repliables | chapitre 7 « La page côté visiteur », § 7.39 |
+| &nbsp;&nbsp;20.2 Touches Firestorm / touches de cette page | chapitre 7 « La page côté visiteur », § 7.2 |
+| &nbsp;&nbsp;20.3 Vol et saut | chapitre 7 « La page côté visiteur », § 7.5 |
+| &nbsp;&nbsp;20.4 Troisième personne | chapitre 7 « La page côté visiteur », § 7.6 |
+| &nbsp;&nbsp;20.5 Infobulle et clic des zones : `--zone-info-dist` | chapitre 7 « La page côté visiteur », § 7.16 |
+| &nbsp;&nbsp;20.6 Copier dans le presse-papiers | chapitre 7 « La page côté visiteur », § 7.23 |
+| &nbsp;&nbsp;20.7 `--update` et la carte des mondes | chapitre 9 « Carte des mondes », § 9.3 |
+| &nbsp;&nbsp;20.8 Créer la carte des mondes | chapitre 9 « Carte des mondes », § 9.2 |
+| &nbsp;&nbsp;20.9 Caméra libre et molette | chapitre 7 « La page côté visiteur », § 7.9 |
+| 21. Nouveautés de la v36 (23/10/2026) | titre supprimé (conteneur « Nouveautés/Ajouts » : sous-sections réparties ; une ligne dans le tableau de l'annexe, chapitre 13) |
+| &nbsp;&nbsp;21.1 Touches : F et P, E, vol | chapitre 7 « La page côté visiteur », § 7.3 |
+| &nbsp;&nbsp;21.2 Disposition du clavier : AZERTY ou QWERTY | chapitre 7 « La page côté visiteur », § 7.4 |
+| &nbsp;&nbsp;21.3 Aide et informations : trois temps | chapitre 7 « La page côté visiteur », § 7.40 |
+| &nbsp;&nbsp;21.4 Repères de portail (cônes) : `--zone-cone`, touche T | chapitre 7 « La page côté visiteur », § 7.17 |
+| &nbsp;&nbsp;21.5 Arrivée occupée | chapitre 7 « La page côté visiteur », § 7.19 |
+| &nbsp;&nbsp;21.6 Sons | chapitre 7 « La page côté visiteur », § 7.31 |
+| &nbsp;&nbsp;21.7 Copier ma position, « Aller à » | chapitre 7 « La page côté visiteur », § 7.22 |
+| &nbsp;&nbsp;21.8 Langue de la page | chapitre 7 « La page côté visiteur », § 7.49 |
+| &nbsp;&nbsp;21.9 Ajouter une langue (sans toucher au code) | chapitre 2 « Les outils et leurs fichiers », § 2.2 |
+| &nbsp;&nbsp;21.10 Langue du viewer | chapitre 5 « Poser les zones (le viewer) », § 5.17 |
+| &nbsp;&nbsp;21.11 Langue des outils Python : `--lang`, `WEB3D_LANG` | chapitre 2 « Les outils et leurs fichiers », § 2.1 |
+| 22. Nouveautés de la v37 (23/10/2026) | titre supprimé (conteneur « Nouveautés/Ajouts » : sous-sections réparties ; une ligne dans le tableau de l'annexe, chapitre 13) |
+| &nbsp;&nbsp;22.1 Indicateur de course, boussole, fenêtres redimensionnables, touche O | chapitre 7 « La page côté visiteur », § 7.12 |
+| &nbsp;&nbsp;22.2 Repère de portail (cône) : taille constante, distance | chapitre 7 « La page côté visiteur », § 7.18 |
+| &nbsp;&nbsp;22.3 Arrivée occupée, améliorée | chapitre 7 « La page côté visiteur », § 7.20 |
+| &nbsp;&nbsp;22.4 Pseudo cité : clignotement continu | chapitre 7 « La page côté visiteur », § 7.27 |
+| &nbsp;&nbsp;22.5 Paramètres du lien après `#` | chapitre 7 « La page côté visiteur », § 7.50 |
+| &nbsp;&nbsp;22.6 Historique du chat | chapitre 10 « Serveur de présence », § 10.21 |
+| &nbsp;&nbsp;22.7 Région par défaut (`default.json`) | chapitre 6 « Fabriquer la page (`glb2html.py`) », § 6.7 |
+| &nbsp;&nbsp;22.8 Dossier lib : `--lib-url` | chapitre 6 « Fabriquer la page (`glb2html.py`) », § 6.5 |
+| &nbsp;&nbsp;22.9 Régions dans des sous-dossiers | chapitre 6 « Fabriquer la page (`glb2html.py`) », § 6.6 |
+| &nbsp;&nbsp;22.10 Tests de la v37 | supprimé (liste « Tests de la vNN » : voir `CHANGELOG.md`) |
+| 23. Nouveautés de la v39 (23/10/2026) | titre supprimé (conteneur « Nouveautés/Ajouts » : sous-sections réparties ; une ligne dans le tableau de l'annexe, chapitre 13) |
+| &nbsp;&nbsp;23.1 Bouton « Copier le diagnostic » | chapitre 7 « La page côté visiteur », § 7.51 |
+| &nbsp;&nbsp;23.2 Tests de la v39 | supprimé (liste « Tests de la vNN » : voir `CHANGELOG.md`) |
+| 24. Nouveautés de la v40 (24/10/2026) | titre supprimé (conteneur « Nouveautés/Ajouts » : sous-sections réparties ; une ligne dans le tableau de l'annexe, chapitre 13) |
+| &nbsp;&nbsp;24.1 Fenêtre « Arrivées » (touche L) | chapitre 7 « La page côté visiteur », § 7.24 |
+| &nbsp;&nbsp;24.2 Bouton « Recentrer la vue » | chapitre 7 « La page côté visiteur », § 7.11 |
+| &nbsp;&nbsp;24.3 Lien « Manuel complet » et bulle du diagnostic | chapitre 7 « La page côté visiteur », § 7.41 |
+| &nbsp;&nbsp;24.4 Tests de la v40 | supprimé (liste « Tests de la vNN » : voir `CHANGELOG.md`) |
+| 25. Nouveautés de la v41 (24/10/2026) | titre supprimé (conteneur « Nouveautés/Ajouts » : sous-sections réparties ; une ligne dans le tableau de l'annexe, chapitre 13) |
+| &nbsp;&nbsp;25.1 Bulles des fenêtres | chapitre 7 « La page côté visiteur », § 7.42 |
+| &nbsp;&nbsp;25.2 Fenêtres déplaçables | chapitre 7 « La page côté visiteur », § 7.43 |
+| &nbsp;&nbsp;25.3 Disposition retenue et fichier de disposition | chapitre 7 « La page côté visiteur », § 7.44 |
+| &nbsp;&nbsp;25.4 Tests de la v41 | supprimé (liste « Tests de la vNN » : voir `CHANGELOG.md`) |
+| 26. Nouveautés de la v42 (24/10/2026) | titre supprimé (conteneur « Nouveautés/Ajouts » : sous-sections réparties ; une ligne dans le tableau de l'annexe, chapitre 13) |
+| &nbsp;&nbsp;26.1 Rendu léger | chapitre 7 « La page côté visiteur », § 7.45 |
+| &nbsp;&nbsp;26.2 Réglages fins | chapitre 7 « La page côté visiteur », § 7.46 |
+| &nbsp;&nbsp;26.3 Proposition automatique | chapitre 7 « La page côté visiteur », § 7.47 |
+| &nbsp;&nbsp;26.4 Option `--light` | chapitre 6 « Fabriquer la page (`glb2html.py`) », § 6.12 |
+| &nbsp;&nbsp;26.5 Fenêtre Réglages plus étroite | chapitre 7 « La page côté visiteur », § 7.48 |
+| &nbsp;&nbsp;26.6 Diagnostic | chapitre 7 « La page côté visiteur », § 7.52 |
+| &nbsp;&nbsp;26.7 Tests de la v42 | supprimé (liste « Tests de la vNN » : voir `CHANGELOG.md`) |
+| 27. Référence des fichiers JSON (v43) | chapitre 11 « Référence des fichiers JSON (v43) » |
+| &nbsp;&nbsp;27.1 Les fichiers et leurs exemples | chapitre 11 « Référence des fichiers JSON (v43) », § 11.1 |
+| &nbsp;&nbsp;27.2 Comment lire les tableaux | chapitre 11 « Référence des fichiers JSON (v43) », § 11.2 |
+| &nbsp;&nbsp;27.3 `NOM.config.json` : les réglages de la page | chapitre 11 « Référence des fichiers JSON (v43) », § 11.3 |
+| &nbsp;&nbsp;27.4 `NOM.zones.json` : les zones | chapitre 11 « Référence des fichiers JSON (v43) », § 11.4 |
+| &nbsp;&nbsp;27.5 `default.json` : la région par défaut | chapitre 11 « Référence des fichiers JSON (v43) », § 11.5 |
+| &nbsp;&nbsp;27.6 `regions.json` : la carte des mondes | chapitre 11 « Référence des fichiers JSON (v43) », § 11.6 |
+| &nbsp;&nbsp;27.7 `NOM.tiles.json` : l'index des tuiles | chapitre 11 « Référence des fichiers JSON (v43) », § 11.7 |
+| &nbsp;&nbsp;27.8 `NOM.reglages.json` : l'état de travail du viewer | chapitre 11 « Référence des fichiers JSON (v43) », § 11.8 |
+| &nbsp;&nbsp;27.9 `disposition.json` : la place des fenêtres | chapitre 11 « Référence des fichiers JSON (v43) », § 11.9 |
+| &nbsp;&nbsp;27.10 Fichiers du serveur de présence | chapitre 11 « Référence des fichiers JSON (v43) », § 11.10 |
+| &nbsp;&nbsp;27.11 Noms en anglais depuis la v43 | chapitre 11 « Référence des fichiers JSON (v43) », § 11.11 |
+| 28. Nouveautés de la v45 (24/10/2026) | titre supprimé (conteneur « Nouveautés/Ajouts » : sous-sections réparties ; une ligne dans le tableau de l'annexe, chapitre 13) |
+| &nbsp;&nbsp;28.1 La page dit pourquoi la présence s'est coupée | chapitre 7 « La page côté visiteur », § 7.55 |
+| &nbsp;&nbsp;28.2 Diagnostic | chapitre 7 « La page côté visiteur », § 7.53 |
+| &nbsp;&nbsp;28.3 Test de la présence | chapitre 10 « Serveur de présence », § 10.23 |
+| &nbsp;&nbsp;28.4 Une seule ligne pour le dossier `lib` | chapitre 6 « Fabriquer la page (`glb2html.py`) », § 6.3 |
+| &nbsp;&nbsp;28.5 `--update` garde la ligne | chapitre 6 « Fabriquer la page (`glb2html.py`) », § 6.4 |
+| &nbsp;&nbsp;28.6 `dist\index.html` | chapitre 6 « Fabriquer la page (`glb2html.py`) », § 6.8 |
+| &nbsp;&nbsp;28.7 Navigateurs | chapitre 7 « La page côté visiteur », § 7.57 |
+| &nbsp;&nbsp;28.8 Test de la coquille | supprimé (liste « Tests de la vNN » : voir `CHANGELOG.md`) |
+| 29. Nouveautés de la v46 (25/10/2026) | titre supprimé (conteneur « Nouveautés/Ajouts » : sous-sections réparties ; une ligne dans le tableau de l'annexe, chapitre 13) |
+| &nbsp;&nbsp;29.1 Ligne d'état | chapitre 7 « La page côté visiteur », § 7.32 |
+| &nbsp;&nbsp;29.2 Flèches à l'écran | chapitre 7 « La page côté visiteur », § 7.33 |
+| &nbsp;&nbsp;29.3 Cacher ou montrer les flèches | chapitre 7 « La page côté visiteur », § 7.34 |
+| &nbsp;&nbsp;29.4 Écran tactile (téléphone, tablette) | chapitre 7 « La page côté visiteur », § 7.35 |
+| &nbsp;&nbsp;29.5 Bulles | chapitre 7 « La page côté visiteur », § 7.36 |
+| &nbsp;&nbsp;29.6 Compteur du chat | chapitre 7 « La page côté visiteur », § 7.26 |
+| &nbsp;&nbsp;29.7 Diagnostic | chapitre 7 « La page côté visiteur », § 7.54 |
+| &nbsp;&nbsp;29.8 Une coquille pour tout un site | chapitre 6 « Fabriquer la page (`glb2html.py`) », § 6.2 |
+| &nbsp;&nbsp;29.9 Tests de la v46 | supprimé (liste « Tests de la vNN » : voir `CHANGELOG.md`) |
+| &nbsp;&nbsp;29.10 Non testé | chapitre 7 « La page côté visiteur », § 7.37 |
+| 30. Nouveautés de la v47 (25/10/2026) | titre supprimé (conteneur « Nouveautés/Ajouts » : sous-sections réparties ; une ligne dans le tableau de l'annexe, chapitre 13) |
+| &nbsp;&nbsp;30.1 La tuile de la carte | chapitre 9 « Carte des mondes », § 9.4 |
+| &nbsp;&nbsp;30.2 Adresse facultative | chapitre 9 « Carte des mondes », § 9.5 |
+| &nbsp;&nbsp;30.3 `regions.json` avec en-tête | chapitre 9 « Carte des mondes », § 9.6 |
+| &nbsp;&nbsp;30.4 Deux façons de faire la carte | chapitre 9 « Carte des mondes », § 9.7 |
+| &nbsp;&nbsp;30.5 Serveur de présence | chapitre 10 « Serveur de présence », § 10.1 |
+| &nbsp;&nbsp;30.6 Tests de la v47 | supprimé (liste « Tests de la vNN » : voir `CHANGELOG.md`) |
+| &nbsp;&nbsp;30.7 Non testé | chapitre 9 « Carte des mondes », § 9.8 |
+| 31. Nouveautés de la v48 (25/10/2026) : journal des visites | titre supprimé (conteneur « Nouveautés/Ajouts » : sous-sections réparties ; une ligne dans le tableau de l'annexe, chapitre 13) |
+| &nbsp;&nbsp;31.1 À quoi il sert | chapitre 10 « Serveur de présence », § 10.2 |
+| &nbsp;&nbsp;31.2 Côté hôte : le serveur de présence | chapitre 10 « Serveur de présence », § 10.3 |
+| &nbsp;&nbsp;31.3 Côté créateur : la fenêtre « Journal des visites » | chapitre 10 « Serveur de présence », § 10.4 |
+| &nbsp;&nbsp;31.4 Ce qui est compté | chapitre 10 « Serveur de présence », § 10.5 |
+| &nbsp;&nbsp;31.5 Données personnelles | chapitre 10 « Serveur de présence », § 10.6 |
+| &nbsp;&nbsp;31.6 Fichiers | chapitre 10 « Serveur de présence », § 10.7 |
+| &nbsp;&nbsp;31.7 Tests de la v48 | supprimé (liste « Tests de la vNN » : voir `CHANGELOG.md`) |
+| &nbsp;&nbsp;31.8 Non testé | chapitre 10 « Serveur de présence », § 10.8 |
+| 32. Nouveautés de la v49 (25/10/2026) : mise à jour de `regions.json` depuis le dossier des sites | titre supprimé (conteneur « Nouveautés/Ajouts » : sous-sections réparties ; une ligne dans le tableau de l'annexe, chapitre 13) |
+| &nbsp;&nbsp;32.1 La commande | chapitre 9 « Carte des mondes », § 9.9 |
+| &nbsp;&nbsp;32.2 Ce que fait le parcours | chapitre 9 « Carte des mondes », § 9.10 |
+| &nbsp;&nbsp;32.3 Les vignettes | chapitre 9 « Carte des mondes », § 9.11 |
+| &nbsp;&nbsp;32.4 Tests de la v49 | supprimé (liste « Tests de la vNN » : voir `CHANGELOG.md`) |
+| &nbsp;&nbsp;32.5 Non testé | chapitre 9 « Carte des mondes », § 9.12 |
+| 33. Nouveautés de la v50 (25/10/2026) : la carte des mondes dans le viewer | titre supprimé (conteneur « Nouveautés/Ajouts » : sous-sections réparties ; une ligne dans le tableau de l'annexe, chapitre 13) |
+| &nbsp;&nbsp;33.1 Importer et exporter `regions.json` | chapitre 9 « Carte des mondes », § 9.13 |
+| &nbsp;&nbsp;33.2 Ajouter ou mettre à jour cette région | chapitre 9 « Carte des mondes », § 9.14 |
+| &nbsp;&nbsp;33.3 Tests de la v50 | supprimé (liste « Tests de la vNN » : voir `CHANGELOG.md`) |
+| &nbsp;&nbsp;33.4 Non testé | chapitre 9 « Carte des mondes », § 9.15 |
+| 34. Nouveautés de la v51 (25/10/2026) : créateurs sur le serveur de présence | titre supprimé (conteneur « Nouveautés/Ajouts » : sous-sections réparties ; une ligne dans le tableau de l'annexe, chapitre 13) |
+| &nbsp;&nbsp;34.1 À quoi ça sert | chapitre 10 « Serveur de présence », § 10.9 |
+| &nbsp;&nbsp;34.2 Le fichier des créateurs | chapitre 10 « Serveur de présence », § 10.10 |
+| &nbsp;&nbsp;34.3 Ce que voit le visiteur | chapitre 10 « Serveur de présence », § 10.11 |
+| &nbsp;&nbsp;34.4 Console et journal | chapitre 10 « Serveur de présence », § 10.12 |
+| &nbsp;&nbsp;34.5 Accueillir un créateur | chapitre 10 « Serveur de présence », § 10.13 |
+| &nbsp;&nbsp;34.6 Limites | chapitre 10 « Serveur de présence », § 10.14 |
+| &nbsp;&nbsp;34.7 Tests de la v51 | supprimé (liste « Tests de la vNN » : voir `CHANGELOG.md`) |
+| &nbsp;&nbsp;34.8 Non testé | chapitre 10 « Serveur de présence », § 10.15 |
+| &nbsp;&nbsp;34.9 Connexions vides | chapitre 10 « Serveur de présence », § 10.16 |
+| &nbsp;&nbsp;34.10 Adresse de présence « même nom que la page » | chapitre 10 « Serveur de présence », § 10.17 |
+| 35. Nouveautés de la v52 (25/10/2026) | titre supprimé (conteneur « Nouveautés/Ajouts » : sous-sections réparties ; une ligne dans le tableau de l'annexe, chapitre 13) |
+| &nbsp;&nbsp;35.1 `carte.html` : décompte, total, deux lignes | chapitre 9 « Carte des mondes », § 9.16 |
+| &nbsp;&nbsp;35.2 Surveillance des arrivées (son et repère) | chapitre 9 « Carte des mondes », § 9.17 |
+| &nbsp;&nbsp;35.3 Vignette agrandie au survol | chapitre 9 « Carte des mondes », § 9.18 |
+| &nbsp;&nbsp;35.4 Case « Afficher la mer » | chapitre 9 « Carte des mondes », § 9.19 |
+| &nbsp;&nbsp;35.5 Serveur de présence : requêtes HTTP ordinaires | chapitre 10 « Serveur de présence », § 10.18 |
+| &nbsp;&nbsp;35.6 Région en tuiles renommée | chapitre 8 « Charger une région en tuiles dans la page (`glb2html.py --tiles`, v30) », § 8.9 |
+| &nbsp;&nbsp;35.7 Tests de la v52 | supprimé (liste « Tests de la vNN » : voir `CHANGELOG.md`) |
+| &nbsp;&nbsp;35.8 Non testé | chapitre 9 « Carte des mondes », § 9.20 |
+| 36. Ajouts de la 1.0.0 (après la v52) | titre supprimé (conteneur « Nouveautés/Ajouts » : sous-sections réparties ; une ligne dans le tableau de l'annexe, chapitre 13) |
+| &nbsp;&nbsp;36.1 Icône des pages (`favicon.ico`) | chapitre 6 « Fabriquer la page (`glb2html.py`) », § 6.9 |
+| &nbsp;&nbsp;36.2 Pseudos : la commande `oublier` | chapitre 10 « Serveur de présence », § 10.19 |
+| &nbsp;&nbsp;36.3 Adresses IPv6 : limite et bannissements par préfixe `/64` | chapitre 10 « Serveur de présence », § 10.20 |
+| &nbsp;&nbsp;36.4 Essais de connexion à la présence | chapitre 7 « La page côté visiteur », § 7.56 |
+| &nbsp;&nbsp;36.5 Numérotation des versions | chapitre 13 « Annexe : ce que chaque version a apporté », § 13.1 |
+| 37. Ajouts de la 1.1.0 (après la 1.0.0) | titre supprimé (conteneur « Nouveautés/Ajouts » : sous-sections réparties ; une ligne dans le tableau de l'annexe, chapitre 13) |
+| &nbsp;&nbsp;37.1 Zone `image` : un tableau sur un mur | chapitre 5 « Poser les zones (le viewer) », § 5.11 |
+| &nbsp;&nbsp;37.2 Éditeur : dossier de la région et aperçu des images | chapitre 5 « Poser les zones (le viewer) », § 5.12 |
+| &nbsp;&nbsp;37.3 Matériaux rendus pleins : `--solid-materials` | chapitre 6 « Fabriquer la page (`glb2html.py`) », § 6.13 |
+| &nbsp;&nbsp;37.4 Pointeur : le nom du bâtiment | chapitre 7 « La page côté visiteur », § 7.59 |
+| &nbsp;&nbsp;37.5 Quand WebGL est indisponible | chapitre 7 « La page côté visiteur », § 7.58 |
+| &nbsp;&nbsp;37.6 Versions : un numéro par fichier, marque, commande `version` | chapitre 13 « Annexe : ce que chaque version a apporté », § 13.2 |
+| &nbsp;&nbsp;37.7 Serveur de présence : console et lignes « requête http » | chapitre 10 « Serveur de présence », § 10.24 |
+| &nbsp;&nbsp;37.8 Documents ajoutés ou revus depuis la 1.0.0 | chapitre 13 « Annexe : ce que chaque version a apporté », § 13.3 |
+| &nbsp;&nbsp;37.9 Essayé et non essayé | chapitre 5 « Poser les zones (le viewer) », § 5.18 |
+| 38. Ajouts de la 1.4 (lots 1.4.2 à 1.4.7) | titre supprimé (conteneur « Nouveautés/Ajouts » : sous-sections réparties ; une ligne dans le tableau de l'annexe, chapitre 13) |
+| &nbsp;&nbsp;38.1 La ligne des tuiles | chapitre 8 « Charger une région en tuiles dans la page (`glb2html.py --tiles`, v30) », § 8.8 |
+| &nbsp;&nbsp;38.2 « À propos de la région » | chapitre 6 « Fabriquer la page (`glb2html.py`) », § 6.10 |
+| &nbsp;&nbsp;38.3 Compresser les tuiles : `glb2tiles.py --compress` | chapitre 4 « Mesurer et découper une grosse région », § 4.2 |
+| &nbsp;&nbsp;38.4 Titre affiché : la clé `title` | chapitre 6 « Fabriquer la page (`glb2html.py`) », § 6.11 |
+| &nbsp;&nbsp;38.5 `--scan-sites --prune-missing` | chapitre 9 « Carte des mondes », § 9.21 |
+| &nbsp;&nbsp;38.6 Essayé et non essayé | chapitre 6 « Fabriquer la page (`glb2html.py`) », § 6.17 |
