@@ -60,7 +60,7 @@ Adresses IP, pseudos et messages sont des données personnelles : prévois d'inf
 
 - La modération : l'hôte lit le journal et peut éjecter ou bannir un visiteur (`ejecter`, `bannir`).
 - La suspension de ton accès, tes limites, la durée de conservation.
-- La disponibilité du serveur : s'il s'arrête, ta page cesse ses essais de connexion après quelques tentatives et demande de la recharger (manuel § 7.56).
+- La disponibilité du serveur : s'il s'arrête, ta page cesse ses essais de connexion après quelques tentatives et demande de la recharger (manuel § 7.58).
 
 ## 9. Essayé, non essayé
 

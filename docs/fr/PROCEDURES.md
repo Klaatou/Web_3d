@@ -154,7 +154,7 @@ Avec une seule région, la carte n'apporte rien : elle sert à relier plusieurs 
 | Erreurs « Couldn't load texture » | images de 0 octet dans des tuiles d'avant la v31 | redécouper avec glb2tiles v31 ou plus |
 | Pas de chat | page fabriquée sans `--presence-url` ou sans `--chat` | ajouter les options avec `--update`, relancer le serveur |
 | La couleur d'avatar ne change pas | serveur de présence ancien | relancer le `presence_server.py` du dossier `dist` |
-| Message « La 3D ne peut pas s'afficher : WebGL est indisponible » | accélération matérielle coupée : Edge et Chrome récents refusent le rendu logiciel | ouvrir la page dans Firefox ; ou Edge avec `--enable-unsafe-swiftshader` dans un profil réservé ; ou réactiver l'accélération ; vérifier `edge://gpu` (manuel § 7.58) |
+| Message « La 3D ne peut pas s'afficher : WebGL est indisponible » | accélération matérielle coupée : Edge et Chrome récents refusent le rendu logiciel | ouvrir la page dans Firefox ; ou Edge avec `--enable-unsafe-swiftshader` dans un profil réservé ; ou réactiver l'accélération ; vérifier `edge://gpu` (manuel § 7.60) |
 | Une image de zone n'apparaît pas | page ouverte du disque (`file://`), fichier absent de `medias/` et du dossier de la région, nom différent | servir la page par `http` ; « Copier le diagnostic » : la ligne « Image » donne la cible et le fichier lu (ou « masquée ») ; relancer `--zones-only` (§ 5) |
 | Une image remplacée ne change pas | page ou coquille d'avant la 1.0.3 (cache du navigateur) | `--update`, puis Ctrl+F5 (§ 4) ; ensuite F5 suffit |
 | Copier le texte de l'aide | — | sélectionner à la souris, Ctrl+C ; sinon, dans la console : `copy(document.body.innerText)` |
@@ -187,7 +187,7 @@ Pour tout rapport de bug, colle le texte du panneau d'état et d'aide, et les me
 | Téléphone, tablette (v46) | mode tactile automatique (réglage « Commandes tactiles ») : colonne de boutons, « Menu », glisser du doigt pour regarder, appui long = bulle |
 | Paramètres de l'adresse | séparés par `&` ; `#` est aussi accepté (`#name=Klaatou&lang=en` = `#name=Klaatou#lang=en`) |
 
-Détail : `MANUEL.md` chapitre 7 (touches) et §§ 7.49, 2.1 et 2.2 (langue).
+Détail : `MANUEL.md` chapitre 7 (touches) et §§ 7.49 à 7.51 (langue).
 
 ---
 

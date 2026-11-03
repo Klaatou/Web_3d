@@ -45,6 +45,15 @@ Contrôles : `python verif_trad.py` sans erreur sur chaque paire (`MANUEL`/`MANU
 4. Le numéro du manuel dans le titre est « 1.4.10 » (le titre d'avant disait « 1.1.0 »).
 5. `tests/doc_options.py` : non lancé (échoue déjà sur `main`, consigne du brief).
 
+## Révision après relecture de Klaatou (03/11/2026)
+
+- « leur défaut » devient « les valeurs par défaut de leurs paramètres » (résumé et chapitre 2, FR et EN).
+- Chapitre 1 : nouveau § 1.1 « vocabulaire » (région, OAR, GLB, tuiles, viewer, zone, page autonome, page avec coquille, présence, carte des mondes), puis § 1.2 (trois chemins) et § 1.3 (où chercher).
+- Chapitre 2 : tableau des fichiers de `dist` en mots simples, sans les deux sections sur les langues, déplacées au chapitre 7 (§ 7.49 à 7.51), après « Langue de la page ».
+- Chapitre 5 : l'introduction dit tout ce que fait le viewer (regarder, régler, poser les zones, capturer la vignette, exporter), pas seulement les zones.
+- `X.glb`, `X.oar`, `X.tiles.json`, `X.config.json`… deviennent `NOM.glb`, `NOM.oar`… dans tout le manuel (FR et EN) ; `NOM` est défini au § 1.1. `X.Y.Z` (schéma de version) et `three-X` sont inchangés.
+- Renvois des autres documents recalculés avec la nouvelle numérotation du chapitre 7. Contrôles refaits : `verif_trad.py` 0 erreur sur toutes les paires ; codes en ligne absents : toujours les 28 des listes « Tests » (après le remplacement `X` vers `NOM` des deux côtés).
+
 ## Étape 1 : table de correspondance
 
 | Titre de l'ancien manuel | Où il va |

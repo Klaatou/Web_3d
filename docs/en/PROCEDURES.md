@@ -154,7 +154,7 @@ With a single region, the map brings nothing: it is used to link several regions
 | "Couldn't load texture" errors | 0-byte images in tiles from before v31 | split again with glb2tiles v31 or later |
 | No chat | page built without `--presence-url` or without `--chat` | add the options with `--update`, restart the server |
 | The avatar colour does not change | old presence server | restart the `presence_server.py` of the `dist` folder |
-| Message "3D cannot be shown: WebGL is not available" | hardware acceleration off: recent Edge and Chrome refuse software rendering | open the page in Firefox; or Edge with `--enable-unsafe-swiftshader` in a dedicated profile; or turn acceleration back on; check `edge://gpu` (manual § 7.58) |
+| Message "3D cannot be shown: WebGL is not available" | hardware acceleration off: recent Edge and Chrome refuse software rendering | open the page in Firefox; or Edge with `--enable-unsafe-swiftshader` in a dedicated profile; or turn acceleration back on; check `edge://gpu` (manual § 7.60) |
 | A zone image does not appear | page opened from disk (`file://`), file missing from `medias/` and from the region folder, different name | serve the page over `http`; "Copy diagnostics": the "Image" line gives the target and the file read (or "hidden"); run `--zones-only` again (§ 5) |
 | A replaced image does not change | page or shell from before 1.0.3 (browser cache) | `--update`, then Ctrl+F5 (§ 4); after that F5 is enough |
 | Copy the help text | — | select with the mouse, Ctrl+C; otherwise, in the console: `copy(document.body.innerText)` |
@@ -187,7 +187,7 @@ For any bug report, paste the text of the status and help panels, and the consol
 | Phone, tablet (v46) | automatic touch mode ("Touch controls" setting): column of buttons, "Menu", drag a finger to look around, long press = tooltip |
 | Address parameters | separated by `&`; `#` is also accepted (`#name=Klaatou&lang=en` = `#name=Klaatou#lang=en`) |
 
-Details: `MANUAL.md` chapter 7 (keys) and §§ 7.49, 2.1 and 2.2 (language).
+Details: `MANUAL.md` chapter 7 (keys) and §§ 7.49 to 7.51 (language).
 
 ---
 

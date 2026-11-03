@@ -60,7 +60,7 @@ IP addresses, nicknames and messages are personal data: plan to inform your visi
 
 - Moderation: the host reads the log and can kick or ban a visitor (`ejecter`, `bannir`).
 - The suspension of your access, your limits, the retention period.
-- The availability of the server: if it stops, your page gives up connecting after a few attempts and asks to be reloaded (manual § 7.56).
+- The availability of the server: if it stops, your page gives up connecting after a few attempts and asks to be reloaded (manual § 7.58).
 
 ## 9. Tried, not tried
 

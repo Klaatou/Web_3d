@@ -1,27 +1,45 @@
 # Manuel de Web_3d (1.4.10)
 
-> **Résumé.** Ce manuel suit le projet de bout en bout, thème par thème : pour commencer (chapitre 1), les outils (2), convertir un OAR (3), mesurer et découper une grosse région (4), poser les zones dans le viewer (5), fabriquer la page (6), la page côté visiteur (7), les régions en tuiles (8), la carte des mondes (9), le serveur de présence (10), la référence des fichiers JSON (11), le dépannage (12) et, en annexe, ce que chaque version a apporté (13). Pour **toutes les options** des outils, avec leur effet et leur défaut en français et en anglais : `REFERENCE_OPTIONS.md` (générée depuis les outils par `gen_reference.py`). Pour **faire une tâche pas à pas** : `PROCEDURES.md`. Langue de la page et des outils : § 7.49, § 2.2 et § 2.1.
+> **Résumé.** Ce manuel suit le projet de bout en bout, thème par thème : pour commencer, avec le vocabulaire (chapitre 1), les outils (2), convertir un OAR (3), mesurer et découper une grosse région (4), le viewer et les zones (5), fabriquer la page (6), la page côté visiteur (7), les régions en tuiles (8), la carte des mondes (9), le serveur de présence (10), la référence des fichiers JSON (11), le dépannage (12) et, en annexe, ce que chaque version a apporté (13). Pour **toutes les options** des outils, avec leur effet et les valeurs par défaut de leurs paramètres, en français et en anglais : `REFERENCE_OPTIONS.md` (générée depuis les outils par `gen_reference.py`). Pour **faire une tâche pas à pas** : `PROCEDURES.md`. Langue de la page et des outils : § 7.49, § 7.51 et § 7.50.
 
 ## 1. Pour commencer
 
-Web_3d transforme une région OpenSim (sauvegarde `.oar`) en une **page web 3D** où l'on se promène : conversion en glTF (`.glb`), chargement par tuiles pour les régions énormes, avatars des autres visiteurs, chat, portails et zones. Rien à installer pour les visiteurs.
+Web_3d transforme une région OpenSim (sauvegarde `.oar`) en une **page web 3D** où l'on se promène avec un navigateur : on peut y voir les autres visiteurs, discuter, et traverser des portails vers d'autres endroits. Les visiteurs n'ont rien à installer.
 
-Trois chemins, du plus simple au plus complet :
+### 1.1 Quelques mots du vocabulaire
+
+| Mot | Ce que c'est |
+| --- | --- |
+| **Région** | un morceau de monde OpenSim (terrain, bâtiments, objets). Dans les noms de fichiers de ce manuel, `NOM` est le nom de ta région : `NOM.oar`, `NOM.glb`, `NOM.zones.json`… |
+| **OAR** (`NOM.oar`) | la sauvegarde d'une région OpenSim. |
+| **GLB** (`NOM.glb`) | un fichier de modèle 3D que les navigateurs savent afficher. `oar2glb.py` le fabrique à partir de l'OAR. |
+| **Tuiles** | une région très lourde est découpée en morceaux (les tuiles), que la page charge au fur et à mesure de la promenade. |
+| **Viewer** (`glb-viewer.html`) | une page que tu ouvres toi-même, avec ton `.glb` : elle sert à regarder le modèle, à régler son affichage (mer, rotation, caméra…), à poser les zones et à préparer la carte des mondes (chapitre 5). |
+| **Zone** | un endroit du modèle auquel on attache quelque chose : un **point d'arrivée** (où apparaît le visiteur), un **portail** (qui mène à un autre endroit ou à une autre région), un panneau, un lien web, une commande Home Assistant, une image sur un mur, une zone privée. Les zones sont enregistrées dans `NOM.zones.json`. |
+| **Page** | le fichier `.html` que les visiteurs ouvrent. Elle existe en deux formes (ci-dessous). |
+| **Page autonome** | un seul fichier `.html` qui contient tout, le modèle compris. Simple à envoyer, mais il faut tout refaire à chaque changement. |
+| **Page avec coquille** | la **coquille** est la page générique `index.html` : un lecteur commun qui sait afficher n'importe quelle région du dossier. Chaque région garde ses données dans des fichiers à côté (`NOM.glb`, `NOM.config.json`, `NOM.zones.json`) ; on l'ouvre par `index.html?region=NOM`. C'est la forme à préférer quand il y a plusieurs régions. |
+| **Présence** | un serveur facultatif qui montre les autres visiteurs et porte le chat. |
+| **Carte des mondes** | une page (`carte.html`) qui présente les régions d'un site et mène à chacune. |
+
+### 1.2 Trois chemins
 
 | Chemin | Pour qui | Où |
 | --- | --- | --- |
 | **Paquet prêt à l'emploi** (`galerie-photos.zip`, `region-simple.zip`) | essayer sans rien fabriquer | page des versions du dépôt GitHub ; `GUIDE.md` § 1.1 |
-| **De l'OAR à la page** | avoir sa propre région dans une page | chapitres 3 (convertir), 5 (zones), 6 (page) |
+| **De l'OAR à la page** | avoir sa propre région dans une page | chapitres 3 (convertir), 5 (viewer et zones), 6 (page) |
 | **Les outils un par un** | régions lourdes, site de plusieurs régions, carte, présence | chapitres 2 et 4 à 10 |
 
 `GUIDE.md` raconte le chemin dans l'ordre, tâche après tâche ; `PROCEDURES.md` donne les procédures pas à pas ; ce manuel est la description complète, thème par thème.
+
+### 1.3 Où chercher
 
 | Je veux… | Chapitre |
 | --- | --- |
 | savoir à quoi sert chaque fichier de `dist` | 2 |
 | convertir un OAR en `.glb` | 3 |
 | mesurer ou découper une région énorme | 4 |
-| poser arrivées, portails, panneaux, liens, images | 5 |
+| régler le modèle et poser arrivées, portails, panneaux, liens, images | 5 |
 | fabriquer ou mettre à jour la page | 6 |
 | savoir ce que le visiteur peut faire (touches, vol, chat…) | 7 |
 | charger une région en tuiles dans la page | 8 |
@@ -33,38 +51,25 @@ Trois chemins, du plus simple au plus complet :
 
 ## 2. Les outils et leurs fichiers
 
-Les fichiers prêts à l'emploi sont déjà dans `dist/` (viewer, générateur, serveur de présence, outils) : inutile de fabriquer pour les utiliser. `python build.py` ne sert que si tu modifies `src/` ou `tools/` ; il assemble tout dans `dist/` (on n'édite jamais `dist/` à la main).
+Les fichiers prêts à l'emploi sont déjà dans le dossier `dist/` du dépôt : inutile de les fabriquer pour les utiliser. `python build.py` ne sert que si tu modifies `src/` ou `tools/` ; il assemble tout dans `dist/` (on n'édite jamais `dist/` à la main).
 
 | Fichier de `dist` | Rôle | Chapitre |
 | --- | --- | --- |
-| `oar2glb.py` | convertit un OAR en `.glb`, refait le terrain complet | 3 |
-| `glb-stats.py` | mesures d'un `.glb` ; doit rester à côté de `glb2tiles.py` | 4 |
-| `glb2tiles.py` | découpe un `.glb` énorme en tuiles et fabrique `X.overview.glb` | 4 |
-| `glb-viewer.html` | le viewer : ouvre un `.glb` et sert à poser les zones | 5 |
-| `glb2html.py` | fabrique la page (autonome ou avec coquille) ; `--update`, `--register`, `--map-page`, `--scan-sites` | 6 |
-| `index.html` | la coquille commune à plusieurs régions | 6 |
+| `oar2glb.py` | convertit un OAR en `.glb` et refait le terrain complet | 3 |
+| `glb-stats.py` | mesure un `.glb` ; doit rester à côté de `glb2tiles.py` | 4 |
+| `glb2tiles.py` | découpe un `.glb` énorme en tuiles et fabrique `NOM.overview.glb` (la vue d'ensemble) | 4 |
+| `glb-viewer.html` | le viewer : on y ouvre un `.glb` pour le régler et y poser les zones | 5 |
+| `glb2html.py` | fabrique la page (autonome ou avec coquille) et tient à jour les sites : `--update`, `--register`, `--map-page`, `--scan-sites` | 6 |
+| `index.html` | la coquille : la page générique qui affiche les régions d'un dossier (voir le vocabulaire, § 1.1) | 6 |
 | `carte.html` | la carte des mondes | 9 |
-| `presence_server.py` | le serveur WebSocket de présence et de chat (dépendance `websockets`) | 10 |
+| `presence_server.py` | le serveur de présence et de chat (a besoin du module Python `websockets`) | 10 |
 | `favicon.ico` | l'icône par défaut des pages | 6 |
 
-Toutes les options de chaque outil, avec leur effet et leur défaut : `REFERENCE_OPTIONS.md`.
-
-### 2.1 Langue des outils Python : `--lang`, `WEB3D_LANG`
-
-`glb2html.py`, `glb2tiles.py`, `oar2glb.py` et `presence_server.py` (et `glb-stats.py`, utilisé par `glb2tiles.py`) affichent leurs messages, leurs avertissements, leurs erreurs et leur aide (`--help`) en français ou en anglais. **Choix de la langue** : `--lang fr`, `--lang en` ou `--lang auto` (par défaut) ; sinon la variable d'environnement `WEB3D_LANG` ; sinon la langue du système ; sinon l'anglais. `--lang` l'emporte sur `WEB3D_LANG`. Les options elles-mêmes (`--budget`, `--exclude`…) et les commandes de modération du serveur (`liste`, `ejecter`, `bannir`, `bans`, `debannir`, `aide`) ne changent pas de langue. Les fichiers de sortie (JSON, journaux des outils) gardent leurs clés ; les journaux sont écrits dans la langue choisie.
-
-**Fichiers autonomes** : `build.py` intègre les textes de `src/i18n/*.json` (clés `py.*`) dans chaque outil de `dist\` : un outil copié seul sur une autre machine garde ses deux langues (c'est un choix de fabrication). Depuis les sources (`tools\`, `src\`), les outils lisent `i18n_py.py` et `i18n\` à côté d'eux ou dans `src\`. Ajouter une langue : § 2.2, aucun code à modifier. Une nouvelle option d'un outil doit avoir sa clé `py.*` dans **les deux** fichiers (`python tests/i18n.py` le vérifie) ; `python gen_reference.py` refait `REFERENCE_OPTIONS.md` (français puis anglais dans chaque case « Effet »), `python tests/doc_options.py` vérifie qu'aucune option n'y manque et qu'aucune description n'est vide.
-
-### 2.2 Ajouter une langue (sans toucher au code)
-
-1. Copie `src/i18n/en.json` en `src/i18n/<code>.json` (le code est celui de `navigator.language` : `de`, `es`, `pt`…).
-2. Traduis les **valeurs** (jamais les clés). `_name` = le nom de la langue dans cette langue (« Deutsch »). `{0}`, `{1}`… sont des marqueurs à garder tels quels (ils peuvent changer de place) ; les clés qui finissent par `.one` / `.other` (pluriel) peuvent aussi avoir `.zero`, `.two`, `.few`, `.many` si ta langue le demande. Une clé absente est remplacée par l'anglais, puis le français, puis la clé elle-même : une traduction partielle fonctionne.
-3. Les clés commençant par `page.`, `core.`, `viewer.`, `map.` et `common.` sont celles des pages et du viewer ; celles qui commencent par `py.` sont celles des outils Python (`--lang`, § 2.1).
-4. Fabrique avec `python build.py` (le dossier de langue se choisit avec `--i18n DOSSIER`) : la liste « Langue / Language » propose la nouvelle langue, les pages et les outils de `dist\` l'embarquent. Aucun code à modifier. `python tests/i18n.py` vérifie les fichiers de langue (mêmes clés, mêmes marqueurs, aucune clé inutilisée).
+Pour **toutes** les options de chaque outil, avec leur effet et les valeurs par défaut de leurs paramètres : `REFERENCE_OPTIONS.md`.
 
 ## 3. Convertir un OAR en GLB (`tools/oar2glb.py`)
 
-`oar2glb.py` transforme une sauvegarde de région OpenSim (`.oar`) en un seul fichier `.glb` prêt pour le viewer et pour `glb2html.py`. Il lance convoar¹, répare sa sortie et assemble le tout. La sortie est écrite à côté de l'OAR : `X.oar` donne `X.glb`.
+`oar2glb.py` transforme une sauvegarde de région OpenSim (`.oar`) en un seul fichier `.glb` prêt pour le viewer et pour `glb2html.py`. Il lance convoar¹, répare sa sortie et assemble le tout. La sortie est écrite à côté de l'OAR : `NOM.oar` donne `NOM.glb`.
 
 ¹ **Prérequis** :  **oar2glb.py** s'appuie sur le convertisseur externe **convoar.exe**
   Téléchargement : https://github.com/Misterblue/convoar/tree/master/bin
@@ -76,34 +81,34 @@ Se placer d'abord dans le dossier du script : `cd "P:\_OpenSim\SL&OS\Web_3d"`.
 
 | Besoin                                                                      | Commande                                                                                 |
 | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| Conversion normale                                                          | `python oar2glb.py "J:\...\X.oar"`                                                       |
-| Conversion qui garde les dossiers intermédiaires (nécessaire pour `--diag`) | `python oar2glb.py "J:\...\X.oar" --keep`                                                |
-| Retrouver les animaux dans le viewer (mât rouge de 15 m à chacun)           | `python oar2glb.py "J:\...\X.oar" --keep --markers`                                      |
-| Garder les prims invisibles                                                 | `python oar2glb.py "J:\...\X.oar" --keep-invisible`                                      |
-| Vérifier ce que le script voit, sans rien modifier                          | `python oar2glb.py "J:\...\X.oar" --diag`                                                |
-| Idem, en désignant le GLB ou le `.gltf` à comparer                          | `python oar2glb.py "J:\...\X.oar" --diag --glb "J:\...\X-GLTF\fichier.gltf"`             |
+| Conversion normale                                                          | `python oar2glb.py "J:\...\NOM.oar"`                                                       |
+| Conversion qui garde les dossiers intermédiaires (nécessaire pour `--diag`) | `python oar2glb.py "J:\...\NOM.oar" --keep`                                                |
+| Retrouver les animaux dans le viewer (mât rouge de 15 m à chacun)           | `python oar2glb.py "J:\...\NOM.oar" --keep --markers`                                      |
+| Garder les prims invisibles                                                 | `python oar2glb.py "J:\...\NOM.oar" --keep-invisible`                                      |
+| Vérifier ce que le script voit, sans rien modifier                          | `python oar2glb.py "J:\...\NOM.oar" --diag`                                                |
+| Idem, en désignant le GLB ou le `.gltf` à comparer                          | `python oar2glb.py "J:\...\NOM.oar" --diag --glb "J:\...\NOM-GLTF\fichier.gltf"`             |
 | Ne pas attendre « Entrée » à la fin                                         | ajouter `--nopause`                                                                      |
-| Ajouter le terrain complet à un GLB existant, sans relancer convoar         | `python oar2glb.py "J:\...\X.oar" --terrain-only "J:\...\X.glb"` (écrit `X-terrain.glb`) |
+| Ajouter le terrain complet à un GLB existant, sans relancer convoar         | `python oar2glb.py "J:\...\NOM.oar" --terrain-only "J:\...\NOM.glb"` (écrit `NOM-terrain.glb`) |
 
-Avant de refaire une conversion, supprimer l'ancien dossier intermédiaire : `Remove-Item -Recurse -Force "J:\...\X-GLTF*"`.
+Avant de refaire une conversion, supprimer l'ancien dossier intermédiaire : `Remove-Item -Recurse -Force "J:\...\NOM-GLTF*"`.
 
 ### 3.2 Les options
 
 | Option                    | Effet                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--keep`                  | garde le dossier `X-GLTF` (images, tampons, `.gltf`) ; indispensable pour lancer ensuite `--diag`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `--keep`                  | garde le dossier `NOM-GLTF` (images, tampons, `.gltf`) ; indispensable pour lancer ensuite `--diag`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `--keep-invisible`        | garde les prims entièrement transparents (retirés par défaut)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `--markers`               | ajoute un mât rouge de 15 m à chaque animal riggé posé ; le nom du nœud donne l'animal et sa taille ; à retirer en relançant sans l'option                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `--diag`                  | ne modifie rien et ne lance pas convoar : liste chaque partie de l'OAR (voir plus bas)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| `--glb CHEMIN`            | avec `--diag` : GLB ou `.gltf` à comparer ; par défaut le `.gltf` du dossier `X-GLTF`, sinon le `X.glb` voisin                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `--glb CHEMIN`            | avec `--diag` : GLB ou `.gltf` à comparer ; par défaut le `.gltf` du dossier `NOM-GLTF`, sinon le `NOM.glb` voisin                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `--max N`                 | hauteur maximale (m) d'un objet racine ; au-delà (skybox) il est retiré ; défaut 600                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `--convoar CHEMIN`        | chemin de `convoar.exe` (défaut : variable `CONVOAR`, sinon `convoar` du PATH, sinon `convoar.exe` à côté de `oar2glb.py`) ; s'il est introuvable, le message donne l'adresse de téléchargement                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| `--reencode`              | **à éviter** : réencode les textures avant convoar ; sur Jungle_Isle il faisait manquer environ 150 textures sur 353 (textures grises). À n'utiliser que si convoar affiche beaucoup d'erreurs « unhandled number of components » ou plante dans `OpenJPEG.DotNetDecode64` (code retour 3221225477). Les textures que Pillow ne sait pas lire sont remplacées par un gris 4x4 (liste dans `X-reenc-illisibles.txt`, à côté de l'OAR) pour ne pas les laisser au décodeur de convoar ; les sculpt maps restent intactes ; 8 cœurs au plus et envoi par lots de 512 pour limiter la mémoire |
+| `--reencode`              | **à éviter** : réencode les textures avant convoar ; sur Jungle_Isle il faisait manquer environ 150 textures sur 353 (textures grises). À n'utiliser que si convoar affiche beaucoup d'erreurs « unhandled number of components » ou plante dans `OpenJPEG.DotNetDecode64` (code retour 3221225477). Les textures que Pillow ne sait pas lire sont remplacées par un gris 4x4 (liste dans `NOM-reenc-illisibles.txt`, à côté de l'OAR) pour ne pas les laisser au décodeur de convoar ; les sculpt maps restent intactes ; 8 cœurs au plus et envoi par lots de 512 pour limiter la mémoire |
 | `--nopause`               | ne pas attendre « Entrée » à la fin (la pause est aussi supprimée quand il n'y a pas de console, et avec `--terrain-only`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `--terrain auto\|yes\|no` | terrain complet depuis la carte de hauteurs (voir plus bas) ; `auto` par défaut                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `--terrain-patch N`       | côté d'un patch de terrain en mètres, de 2 à 255 ; défaut 64                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| `--terrain-only GLB`      | ne lance pas convoar : ajoute le terrain complet à ce GLB et écrit `X-terrain.glb` à côté (l'original n'est jamais modifié)                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| `--output FICHIER`        | avec `--terrain-only` : fichier de sortie à la place de `X-terrain.glb` (jamais l'original)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `--terrain-only GLB`      | ne lance pas convoar : ajoute le terrain complet à ce GLB et écrit `NOM-terrain.glb` à côté (l'original n'est jamais modifié)                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `--output FICHIER`        | avec `--terrain-only` : fichier de sortie à la place de `NOM-terrain.glb` (jamais l'original)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 
 ### 3.3 Terrain complet des régions de plus de 256 m (v29)
 
@@ -123,7 +128,7 @@ convoar ne produit qu'**un** nœud « Terrain » dont l'étendue plafonne (par e
 
 - **Niveau d'eau.** `WaterHeight` lu dans `settings/*.xml` de l'OAR, sinon 20 m (défaut d'OpenSim). Le journal dit quelle valeur est utilisée et d'où elle vient.
 - **Quand remplacer.** `--terrain auto` (défaut) : si le nœud « Terrain » de convoar existe et couvre moins de 95 % de la carte (boîtes comparées en repère monde), il est retiré de la scène et les patches sont ajoutés. Sinon (région de 256 m, terrain déjà complet, pas de nœud « Terrain ») le GLB n'est **pas modifié** : il est identique à celui de `--terrain no`. `--terrain yes` ajoute toujours les patches (et retire le « Terrain » de convoar s'il existe) ; `--terrain no` ne fait rien. Un GLB qui contient déjà des patches n'en reçoit pas d'autres. Le filtre des objets hors région ne retire jamais les patches.
-- **`--terrain-only GLB`** (sans relancer convoar, pour un GLB de plusieurs Go) : le GLB n'est **pas chargé en entier**. L'en-tête JSON est réécrit, le chunk binaire est recopié par morceaux de 8 Mo, les nouveaux tampons sont ajoutés à la fin. Sortie `X-terrain.glb` à côté de l'original (ou `--output`) ; l'original n'est jamais écrasé, et rien n'est écrit si le terrain de convoar est déjà complet. Les données de l'ancien « Terrain » restent dans le fichier, inutilisées (quelques Mo). Aucune pause « Entrée » à la fin.
+- **`--terrain-only GLB`** (sans relancer convoar, pour un GLB de plusieurs Go) : le GLB n'est **pas chargé en entier**. L'en-tête JSON est réécrit, le chunk binaire est recopié par morceaux de 8 Mo, les nouveaux tampons sont ajoutés à la fin. Sortie `NOM-terrain.glb` à côté de l'original (ou `--output`) ; l'original n'est jamais écrasé, et rien n'est écrit si le terrain de convoar est déjà complet. Les données de l'ancien « Terrain » restent dans le fichier, inutilisées (quelques Mo). Aucune pause « Entrée » à la fin.
 - **Journal.** Ligne `[terrain] carte N x N échantillons (1 m) ; niveau d'eau E m (origine) ; K patch(es) de P m ; V sommets ; B Mo ajoutés ; durée`. Un OAR sans carte de hauteurs donne `cet OAR n'a pas de carte de hauteurs ... rien n'est modifié` (code de retour 0, aucune erreur).
 - **Hors lot** : textures de terrain d'OpenSim (les quatre textures mélangées selon l'altitude), niveau de détail du terrain pour la vue d'ensemble.
 
@@ -198,8 +203,8 @@ Commencer par `--analyse` : elle donne les mesures de `glb-stats.py`, les 10 mes
 | `--exclude-max-triangles`              | 24            | triangles au plus dans l'objet racine, tous meshes compris, pour être exclu                                                                                                                                        |
 | `--exclude-max-meshes`                 | 1             | meshes au plus dans l'objet racine pour être exclu                                                                                                                                                                 |
 | `--no-refs`                            |               | ne pas écrire `extras.ref` / `extras.box` dans les nœuds des tuiles (format de la v31 : zones liées à un objet impossibles en mode tuiles)                                                                         |
-| `--no-overview`                        |               | ne pas écrire `X.overview.glb`                                                                                                                                                                                     |
-| `--overview-only`                      |               | n'écrire que `X.overview.glb` et sa mention dans `X.tiles.json` ; le découpage recalculé doit retrouver exactement les tuiles de `X.tiles.json` (sinon : erreur « ne correspond pas », utiliser les mêmes options) |
+| `--no-overview`                        |               | ne pas écrire `NOM.overview.glb`                                                                                                                                                                                     |
+| `--overview-only`                      |               | n'écrire que `NOM.overview.glb` et sa mention dans `NOM.tiles.json` ; le découpage recalculé doit retrouver exactement les tuiles de `NOM.tiles.json` (sinon : erreur « ne correspond pas », utiliser les mêmes options) |
 | `--ov-budget`, `--ov-budget-triangles` | 25, 1500000   | Mo et triangles de toute la vue d'ensemble                                                                                                                                                                         |
 | `--ov-threshold`                       | 3             | m : les objets dont la plus grande dimension est plus petite sont omis (le budget peut relever ce seuil)                                                                                                           |
 | `--ov-threshold-max`                   | 24            | m : si le budget oblige à omettre des objets plus grands que cela, la résolution baisse                                                                                                                            |
@@ -213,16 +218,16 @@ Certains catalogues posent à côté de chaque bâtiment une « boîte de livrai
 
 - Plusieurs `--exclude` s'additionnent. Une expression invalide donne un message clair (`Expression régulière invalide pour --exclude`) et rien n'est lu.
 - Les nœuds retirés sont l'objet racine et tous ses descendants ; aucun autre objet ne change. Les exclus n'entrent ni dans les tuiles ni dans les calculs de poids, de triangles et de budget (la recommandation « pas de découpage » retire aussi leurs octets de la taille du GLB). Le GLB d'origine n'est pas modifié ; la partie `glb-stats` de `--analyse` décrit le fichier d'origine.
-- `--analyse` et le rapport final donnent : le nombre d'objets exclus, les triangles retirés, les octets gagnés (géométrie et images qu'aucun objet conservé n'utilise ; **0** quand tous les exclus partagent leurs primitives ou leurs images avec des objets conservés, par exemple un cube commun : le rapport le dit alors, et chiffre les octets partagés non gagnés), le nombre d'objets au nom correspondant mais conservés par les garde-fous, et les 20 noms les plus fréquents avec leur nombre. `X.tiles.json` reçoit une clé `excluded` (motifs, garde-fous, `count`, `triangles`, `bytesSaved`, `bytesShared`, `names`) seulement quand `--exclude` est utilisé.
+- `--analyse` et le rapport final donnent : le nombre d'objets exclus, les triangles retirés, les octets gagnés (géométrie et images qu'aucun objet conservé n'utilise ; **0** quand tous les exclus partagent leurs primitives ou leurs images avec des objets conservés, par exemple un cube commun : le rapport le dit alors, et chiffre les octets partagés non gagnés), le nombre d'objets au nom correspondant mais conservés par les garde-fous, et les 20 noms les plus fréquents avec leur nombre. `NOM.tiles.json` reçoit une clé `excluded` (motifs, garde-fous, `count`, `triangles`, `bytesSaved`, `bytesShared`, `names`) seulement quand `--exclude` est utilisé.
 
 #### 4.1.4 Références d'objets (v32) : lier une zone à un objet en mode tuiles
 
-Chaque nœud copié dans une tuile reçoit dans ses `extras` : **`ref`**, sa référence stable dans le modèle d'origine, et **`box`**, la boîte (monde, 6 nombres en m) de **l'objet entier**, même quand il est réparti sur plusieurs tuiles (chaque morceau porte la même boîte). `X.tiles.json` porte `"nodeRefs": 1`.
+Chaque nœud copié dans une tuile reçoit dans ses `extras` : **`ref`**, sa référence stable dans le modèle d'origine, et **`box`**, la boîte (monde, 6 nombres en m) de **l'objet entier**, même quand il est réparti sur plusieurs tuiles (chaque morceau porte la même boîte). `NOM.tiles.json` porte `"nodeRefs": 1`.
 
 - **Règle de la référence** (celle de `nom#index` du mode GLB unique, calculée sur le GLB entier) : le **nom** du nœud (à défaut le nom de son mesh) s'il est unique dans tout le modèle ; sinon **`nom#index`**, index = rang du nœud parmi les nœuds de ce nom, dans l'ordre de parcours (pré-ordre, enfants dans l'ordre du fichier). Les objets retirés par `--exclude` comptent dans les rangs (une référence ne change pas quand on exclut autre chose). Un nœud sans nom n'a pas de référence ; une référence de plus de 200 caractères n'est pas écrite.
 - Ces références sont celles des **noms du GLB**, pas celles que verrait le viewer en ouvrant le même GLB entier (le chargeur de three.js renomme les doublons) : une zone liée écrite en mode tuiles s'utilise en mode tuiles.
 - **Coût mesuré** (GLB synthétique de 40 000 nœuds) : +0,5 s sur 8 s, +3 Mo sur 230 Mo de tuiles.
-- Des tuiles écrites **avant la v32** n'ont pas ces extras : les zones liées y restent ignorées. `glb2tiles.py --analyse` (et `--overview-only`) le signalent quand `X.tiles.json` existe déjà sans `nodeRefs` ; `glb2html.py --tiles` aussi, s'il y a des zones liées. Il faut **refaire le découpage** (sans `--overview-only`).
+- Des tuiles écrites **avant la v32** n'ont pas ces extras : les zones liées y restent ignorées. `glb2tiles.py --analyse` (et `--overview-only`) le signalent quand `NOM.tiles.json` existe déjà sans `nodeRefs` ; `glb2html.py --tiles` aussi, s'il y a des zones liées. Il faut **refaire le découpage** (sans `--overview-only`).
 
 #### 4.1.5 Images vides ou invalides (v31)
 
@@ -230,14 +235,14 @@ Une image embarquée **de 0 octet**, d'un **autre format** que PNG, JPEG ou WebP
 
 - À l'écriture, chaque image de ce genre est remplacée par **un PNG gris de 4 x 4 pixels** (gris 128, celui des textures remplacées par `oar2glb.py`), **écrit une seule fois par tuile** et partagé par toutes les références de cette tuile (nom `image-remplacee`). Les matériaux, les textures et les coordonnées de texture ne changent pas.
 - Vérification sans décoder : PNG = blocs chaînés jusqu'à `IEND` ; JPEG = marqueur de fin `FFD9` en dernier (aux zéros et espaces de bourrage près) ; WebP = taille RIFF contenue dans le fichier. Seuls l'en-tête, la fin et les en-têtes de blocs sont lus (jamais l'image entière). Un fichier qui serait décodé par Chromium malgré une fin inhabituelle serait remplacé à tort : le nombre rapporté permet de s'en apercevoir.
-- `--analyse` et le rapport final donnent « Images vides ou invalides remplacées… : N distincte(s), M occurrence(s) » (une occurrence = une image écrite dans une tuile). `X.tiles.json` reçoit `"replacedImages": {"distinct": N, "occurrences": M, "grey": 128}` et chaque tuile son propre nombre.
+- `--analyse` et le rapport final donnent « Images vides ou invalides remplacées… : N distincte(s), M occurrence(s) » (une occurrence = une image écrite dans une tuile). `NOM.tiles.json` reçoit `"replacedImages": {"distinct": N, "occurrences": M, "grey": 128}` et chaque tuile son propre nombre.
 
-#### 4.1.6 Vue d'ensemble (`X.overview.glb`, v31)
+#### 4.1.6 Vue d'ensemble (`NOM.overview.glb`, v31)
 
 But : en vue globale, voir **toute** la région ; en promenade, voir **au loin** au-delà des tuiles chargées. Les tuiles détaillées restent la seule source des collisions et du sol.
 
-- **Écrite avec les tuiles** (ou seule avec `--overview-only`), à côté de `X.tiles.json`, et référencée dans `X.tiles.json` (clé `overview` : `file`, `bytes`, `triangles`, `terrainTriangles`, `objects`, `candidates`, `omitted`, `effectiveMinExtent`, `effectiveTerrainStep`, `resolution`, `seconds`, `colors`, `params`).
-- **Un nœud par fichier de tuile**, nommé comme la tuile (`X.tiles/T_3_2_5.glb`, et `extras.tile`) : la page masque la cellule dès que la tuile détaillée est **affichée** et la réaffiche quand la tuile est déchargée ou en échec. Les objets d'une cellule sont exactement ceux de la tuile : pas de double affichage, pas de trou pendant le chargement.
+- **Écrite avec les tuiles** (ou seule avec `--overview-only`), à côté de `NOM.tiles.json`, et référencée dans `NOM.tiles.json` (clé `overview` : `file`, `bytes`, `triangles`, `terrainTriangles`, `objects`, `candidates`, `omitted`, `effectiveMinExtent`, `effectiveTerrainStep`, `resolution`, `seconds`, `colors`, `params`).
+- **Un nœud par fichier de tuile**, nommé comme la tuile (`NOM.tiles/T_3_2_5.glb`, et `extras.tile`) : la page masque la cellule dès que la tuile détaillée est **affichée** et la réaffiche quand la tuile est déchargée ou en échec. Les objets d'une cellule sont exactement ceux de la tuile : pas de double affichage, pas de trou pendant le chargement.
 - **Aucune image.** Un seul matériau ; les couleurs sont des **couleurs de sommets**. Chaque matériau devient une couleur unie : la **couleur moyenne de sa texture** si Pillow est installé (moyenne en espace linéaire, pondérée par l'opacité), sinon sa **couleur de base**. Les couleurs de sommets du terrain sont conservées. Sans normales : la page affiche la vue d'ensemble en ombrage plat. Les primitives translucides (`alphaMode` BLEND : verre, effets) et les objets à squelette sont omis.
 - **Chaque primitive UNIQUE est simplifiée une seule fois**, puis recopiée avec la matrice de chacune de ses instances (jamais simplifiée par instance). Méthode : regroupement de sommets sur une grille de côté (plus grande dimension de la primitive) / `--ov-resolution` ; un sommet par cellule (moyenne), triangles dégénérés et doublons retirés. Python standard seulement ; Pillow est facultatif (couleurs moyennes).
 - **Terrain simplifié à part.** Les pièces marquées `extras.terrain` (patches d'`oar2glb.py`) sont rééchantillonnées sur un **réseau régulier commun** de pas `--ov-terrain-step` : hauteur et couleur interpolées dans les triangles d'origine, une case appartient à une seule pièce (donc à une seule tuile). Un point du réseau sur un bord commun reçoit la même hauteur des deux côtés : **aucune fente entre les patches** (testé). Le terrain prend au plus la moitié des budgets ; sinon son pas grossit (× 1,5) jusqu'à ce qu'il tienne (dit dans le journal).
@@ -258,13 +263,13 @@ But : en vue globale, voir **toute** la région ; en promenade, voir **au loin**
 
 #### 4.1.8 Fichiers produits
 
-`X.tiles/T_<niveau>_<i>_<j>.glb` (niveau et position de la cellule dans le quadtree), `X.tiles.json` (UTF-8 sans BOM) et `X.overview.glb` (v31), à côté du GLB `X.glb` :
+`NOM.tiles/T_<niveau>_<i>_<j>.glb` (niveau et position de la cellule dans le quadtree), `NOM.tiles.json` (UTF-8 sans BOM) et `NOM.overview.glb` (v31), à côté du GLB `NOM.glb` :
 
 ```
 {
  "version": 1,                      version du format
  "generator": "glb2tiles v28 (21/10/2026)",
- "source": "X.glb",
+ "source": "NOM.glb",
  "extent": {"min": [x,y,z], "max": [x,y,z]},     étendue globale du contenu
  "params": {"budgetMB": 32, "budgetTriangles": 1500000, "minCell": 16, "wholeWeightMB": 16, "wholeExtent": 256,
             "thresholdMB": 150, "thresholdTriangles": 3000000, "outlier": 1000},
@@ -273,17 +278,17 @@ But : en vue globale, voir **toute** la région ; en promenade, voir **au loin**
  "duplication": 1.8,                somme des octets de géométrie des tuiles / géométrie unique du GLB
  "nodeRefs": 1,                     extras.ref / extras.box dans les nœuds des tuiles (v32 ; 0 avec --no-refs)
  "replacedImages": {"distinct": 778, "occurrences": 1200, "grey": 128},    images vides ou invalides remplacées (v31)
- "overview": {"file": "X.overview.glb", "bytes": 23000000, "triangles": 1400000, "terrainTriangles": 131072,
+ "overview": {"file": "NOM.overview.glb", "bytes": 23000000, "triangles": 1400000, "terrainTriangles": 131072,
               "objects": 21000, "candidates": 30000, "omitted": {"small": 9000, "skinned": 12, "translucentPrimitives": 800, "budget": 0},
               "effectiveMinExtent": 3, "effectiveTerrainStep": 4, "resolution": 10, "seconds": 95.0, "colors": {...}, "params": {...}},   (v31)
- "tiles": [{"file": "X.tiles/T_3_2_5.glb", "level": 3, "i": 2, "j": 5,
+ "tiles": [{"file": "NOM.tiles/T_3_2_5.glb", "level": 3, "i": 2, "j": 5,
             "min": [x,y,z], "max": [x,y,z],   boîte du contenu réel de la tuile (un objet qui déborde de sa cellule reste couvert)
             "instances": 812, "triangles": 410233,
             "bytes": 21345678, "geometryBytes": 9001234, "imageBytes": 12000000, "replacedImages": 2}]
 }
 ```
 
-Relancer réécrit les `T_*_*_*.glb` du dossier `X.tiles/` ; **ensuite** (v31), les `T_*_*_*.glb` d'une exécution précédente qui ne figurent plus dans le nouvel index sont **supprimés** et le rapport en donne le nombre (les autres fichiers du dossier ne sont pas touchés). `--overview-only` ne touche à aucune tuile.
+Relancer réécrit les `T_*_*_*.glb` du dossier `NOM.tiles/` ; **ensuite** (v31), les `T_*_*_*.glb` d'une exécution précédente qui ne figurent plus dans le nouvel index sont **supprimés** et le rapport en donne le nombre (les autres fichiers du dossier ne sont pas touchés). `--overview-only` ne touche à aucune tuile.
 
 #### 4.1.9 Lire le journal (`glb2tiles.log`, à côté du script)
 
@@ -297,7 +302,7 @@ Dans `--analyse`, la ligne « Lecture » indique les octets lus. Les positions n
 
 ## 5. Poser les zones (le viewer)
 
-Le viewer (`glb-viewer.html`) sert à poser les zones sur le modèle : points d'arrivée, portails, panneaux, liens, images, zones privées. Il enregistre `NOM.zones.json` (champs : chapitre 11, § 11.4), à mettre à côté de la page ; pour que la page voie les changements : § 6.16.
+Le viewer (`glb-viewer.html`) est la page que tu ouvres avec ton `.glb`. Elle sert à **regarder** le modèle, à **régler** son affichage (mer, rotation, caméra, fiche de la région…), à **poser les zones** (points d'arrivée, portails, panneaux, liens, images, zones privées : voir le vocabulaire, § 1.1), à **capturer la vignette** de la carte des mondes et à **exporter** la page autonome, les zones (`NOM.zones.json`) et `regions.json`. Champs de `NOM.zones.json` : chapitre 11, § 11.4. Pour que la page publiée voie les changements : § 6.16.
 
 ### 5.1 La règle qui explique 90 % des pannes
 
@@ -475,7 +480,7 @@ Une zone de type `image` plaque une image contre un mur du modèle.
 - **Mode hébergé seulement** : ouverte du disque (`file://`), la page ne peut pas charger l'image (le navigateur la refuse comme texture WebGL) et n'affiche rien ; une adresse `data:` marche partout mais alourdit la page. Mesuré en Chromium.
 - **Image introuvable** : rien dans la page exportée. Dans l'éditeur : un panneau « image introuvable : … » et, sous le champ, une ligne « Cherchée à : … ».
 - **Toujours à jour** : avant chaque image, chaque fichier de légende et chaque `.glb` entier d'une page modulaire, la page envoie une requête `HEAD` sans cache, compose une empreinte (`ETag` ou `Last-Modified`, plus la taille) et lit le fichier à l'adresse `fichier?v=empreinte` : dans le cache du navigateur si l'empreinte est connue (aucun retéléchargement d'un fichier inchangé), sur le réseau sinon. Un fichier remplacé, plus récent **ou plus vieux** (un ancien dossier remis en place avec ses anciennes dates), est donc repris au rechargement (F5). Sans empreinte possible (ni `ETag` ni `Last-Modified`, ou `HEAD` refusé), la page recharge le fichier en entier à chaque ouverture ; si `fetch` est impossible (autre site sans CORS, `file://`), elle revient au chargement direct. Les tuiles, `index.html`, `lib/` et `favicon.ico` gardent le cache normal du navigateur.
-- **Diagnostic** : « Copier le diagnostic » (§ 7.51) donne une ligne par zone image : la zone, sa cible, le fichier effectivement lu (dossier `medias` ou dossier de la région), et la légende avec sa source (nom du fichier ou fichier texte), ou « masquée ».
+- **Diagnostic** : « Copier le diagnostic » (§ 7.53) donne une ligne par zone image : la zone, sa cible, le fichier effectivement lu (dossier `medias` ou dossier de la région), et la légende avec sa source (nom du fichier ou fichier texte), ou « masquée ».
 - **Tests** : `tests/image_zone.py`, `image_legende.py`, `image_numero.py`, `image_medias.py`, `image_noms_gen.py`, `image_cache.py`, `image_cache_vieux.py`, `image_diag.py`, `image_dossier.py`, `lien_image.py` (lien d'un tableau), `zones_numeros.py`, `pose_promenade.py`.
 - **Non essayé** : zone image en région en tuiles, mur à face inclinée, Windows et Edge pour le détail (la touche P en promenade n'a été essayée qu'en Chromium).
 
@@ -507,16 +512,16 @@ Le viewer (`glb-viewer.html`) ouvre une région découpée en tuiles et la montr
 **Pas à pas** (Edge ou Chrome récents) :
 
 1. Ouvre `glb-viewer.html` (double-clic sur le fichier, ou dans un navigateur).
-2. Clique sur **« Ouvrir une région en tuiles (dossier) »** et choisis le **dossier qui contient `X.tiles.json`** (celui où `glb2tiles.py` a écrit `X.tiles.json`, `X.overview.glb` et le dossier `X.tiles`). Ou **glisse ce dossier** dans la fenêtre. Le navigateur peut demander de confirmer l'envoi des fichiers : rien n'est envoyé nulle part, il les lit sur place, un par un, quand une tuile est nécessaire. S'il y a plusieurs régions dans le dossier, une liste « Région du dossier » apparaît.
+2. Clique sur **« Ouvrir une région en tuiles (dossier) »** et choisis le **dossier qui contient `NOM.tiles.json`** (celui où `glb2tiles.py` a écrit `NOM.tiles.json`, `NOM.overview.glb` et le dossier `NOM.tiles`). Ou **glisse ce dossier** dans la fenêtre. Le navigateur peut demander de confirmer l'envoi des fichiers : rien n'est envoyé nulle part, il les lit sur place, un par un, quand une tuile est nécessaire. S'il y a plusieurs régions dans le dossier, une liste « Région du dossier » apparaît.
 3. Le texte sous les boutons dit ce qui est ouvert (tuiles, vue d'ensemble, références d'objets). La région apparaît en entier ; les tuiles autour de la cible (le petit cercle noir et blanc au sol) se chargent.
 4. **Déplace la cible** : double-clic sur le terrain (même sur la vue d'ensemble : les tuiles de cet endroit se chargent). Molette pour zoomer, glisser pour tourner, clic droit + glisser pour déplacer.
 5. Dans la section **« Zones »**, choisis le type, clique **« Poser une zone par un clic sur la scène »**, puis clique sur le sol ou un objet **une fois la tuile affichée**. Si tu cliques hors d'une tuile chargée (sur la vue d'ensemble), le viewer te le dit en texte (« Pas de tuile détaillée chargée à cet endroit… »), charge la tuile, et tu cliques de nouveau quelques secondes plus tard. Tout le reste est comme en mode GLB unique : rayon et hauteur, portails (§ 5.5, 6), arrivées (§ 5.4), panneaux, Home Assistant (§ 5.7, 8), touche P en promenade.
 6. **Lier une zone à un objet** (§ 5.9) : dans la fiche de la zone, **« Lier à un élément »**, puis clic sur l'objet. La zone prend la position de l'objet. Une zone liée n'est visible que lorsque la tuile de l'objet est chargée (le texte de la fiche le dit : « tuile non chargée » ; **« Voir cette zone »** la charge). Si le viewer répond que l'élément n'a pas de référence, les tuiles datent d'avant la v32 : refaire le découpage (§ 4.1).
 7. Section **« Coordonnées (m) »** : le point visé (clic simple sur le modèle) et la cible, en texte (x, y, z, une décimale), avec **« Copier le point visé »** et **« Copier la cible »**.
-8. **Exporter les zones** : « Exporter zones (.json) » écrit **`X.zones.json`** (X = nom de la région) dans ton dossier de téléchargements. Pour **compléter** une région déjà faite : ouvre la région, « Importer zones (.json) » avec le `X.zones.json` existant, ajoute les nouvelles zones, exporte de nouveau.
-9. **Régénérer la page** : renseigne « Chemin de glb2html.py » et clique sur **« Générer la ligne de commande PowerShell »** : le viewer écrit la commande complète (`--tiles`, `--zones`, `-o`, coquille commune, hauteur de la mer, présence, chat…). Lance-la depuis le dossier de `glb2html.py`, en corrigeant le chemin de `X.zones.json` s'il n'est pas à côté. Si la page existe déjà et que la coquille `index.html` a changé de version, supprime-la d'abord (une coquille existante différente n'est jamais écrasée : l'avertissement le dit).
+8. **Exporter les zones** : « Exporter zones (.json) » écrit **`NOM.zones.json`** (NOM = nom de la région) dans ton dossier de téléchargements. Pour **compléter** une région déjà faite : ouvre la région, « Importer zones (.json) » avec le `NOM.zones.json` existant, ajoute les nouvelles zones, exporte de nouveau.
+9. **Régénérer la page** : renseigne « Chemin de glb2html.py » et clique sur **« Générer la ligne de commande PowerShell »** : le viewer écrit la commande complète (`--tiles`, `--zones`, `-o`, coquille commune, hauteur de la mer, présence, chat…). Lance-la depuis le dossier de `glb2html.py`, en corrigeant le chemin de `NOM.zones.json` s'il n'est pas à côté. Si la page existe déjà et que la coquille `index.html` a changé de version, supprime-la d'abord (une coquille existante différente n'est jamais écrasée : l'avertissement le dit).
 
-Autre façon d'ouvrir : par adresse, si le viewer est servi en http (par exemple `python -m http.server` lancé dans un dossier qui contient `glb-viewer.html` et, en dessous, la région) : `http://localhost:8000/glb-viewer.html?tiles=region/X.tiles.json`. Le chemin est relatif à la page, sans `..`, sans `:`, `?` ni `#`.
+Autre façon d'ouvrir : par adresse, si le viewer est servi en http (par exemple `python -m http.server` lancé dans un dossier qui contient `glb-viewer.html` et, en dessous, la région) : `http://localhost:8000/glb-viewer.html?tiles=region/NOM.tiles.json`. Le chemin est relatif à la page, sans `..`, sans `:`, `?` ni `#`.
 
 **Ce qui est différent du mode GLB unique** : pas d'export HTML autonome ni de `.zip` (il n'y a pas de GLB unique ; les boutons sont désactivés) ; pas de rotation de la région (repère d'origine ; avec `glb2html.py --tiles --rotate`, les zones doivent déjà être dans le repère tourné) ; le trou de la mer est relatif au **centre de la région** (comme dans la page) ; la mer est à 20 m par défaut (`--sea-y` pour la changer, la commande l'écrit) ; le filaire des éléments traversables ne montre que les tuiles déjà chargées ; le texte d'une fiche de zone liée (« tuile non chargée ») ne se met à jour qu'au prochain changement de la liste (modifier ou ajouter une zone, cliquer une zone dans la scène), pas au moment où la tuile arrive ; la zone, elle, apparaît aussitôt dans la scène.
 
@@ -526,12 +531,12 @@ Test : `python tests/v32.py` (région synthétique de 16 tuiles : zones libre, p
 
 En mode tuiles, section « Zones » du viewer : bouton **« Enregistrer les zones dans le dossier de la région »**.
 
-1. **Edge ou Chrome** (API File System Access) : le bouton demande **une seule fois** le dossier de la région (celui qui contient `X.tiles.json`, accès en lecture-écriture). Il est mémorisé pour la session (et dans IndexedDB quand le navigateur l'accepte, pour ne pas le redemander ; une confirmation d'accès peut être redemandée par le navigateur).
-2. `X.zones.json` y est écrit (X = nom de `X.tiles.json` sans extension), **après avoir gardé l'ancien sous `X.zones.bak.json`** (une seule copie, écrasée à chaque enregistrement).
-3. Le viewer affiche en texte le dossier, le fichier, la date jj/mm/aaaa et l'heure. (Le navigateur ne donne pas le chemin complet, seulement le nom du dossier.) Si le dossier choisi ne contient pas `X.tiles.json`, rien n'est écrit.
-4. **Sans l'API (Firefox, Safari), ou si l'accès est refusé** : le fichier est téléchargé et le viewer dit « enregistre ce fichier dans le dossier de la région, sous le nom X.zones.json, en remplaçant l'ancien ». Choix du dossier annulé : rien n'est écrit.
+1. **Edge ou Chrome** (API File System Access) : le bouton demande **une seule fois** le dossier de la région (celui qui contient `NOM.tiles.json`, accès en lecture-écriture). Il est mémorisé pour la session (et dans IndexedDB quand le navigateur l'accepte, pour ne pas le redemander ; une confirmation d'accès peut être redemandée par le navigateur).
+2. `NOM.zones.json` y est écrit (NOM = nom de `NOM.tiles.json` sans extension), **après avoir gardé l'ancien sous `NOM.zones.bak.json`** (une seule copie, écrasée à chaque enregistrement).
+3. Le viewer affiche en texte le dossier, le fichier, la date jj/mm/aaaa et l'heure. (Le navigateur ne donne pas le chemin complet, seulement le nom du dossier.) Si le dossier choisi ne contient pas `NOM.tiles.json`, rien n'est écrit.
+4. **Sans l'API (Firefox, Safari), ou si l'accès est refusé** : le fichier est téléchargé et le viewer dit « enregistre ce fichier dans le dossier de la région, sous le nom NOM.zones.json, en remplaçant l'ancien ». Choix du dossier annulé : rien n'est écrit.
 
-**La coquille relit `X.zones.json` à chaque ouverture** : après cet enregistrement, **F5 suffit** dans le navigateur, **sans régénérer la page** — sauf si tu changes les options de la page (`--zone-marker`, `--target`, `--presence-url`…), qui sont dans `X.config.json`.
+**La coquille relit `NOM.zones.json` à chaque ouverture** : après cet enregistrement, **F5 suffit** dans le navigateur, **sans régénérer la page** — sauf si tu changes les options de la page (`--zone-marker`, `--target`, `--presence-url`…), qui sont dans `NOM.config.json`.
 
 ### 5.16 Réglages mémorisés
 
@@ -555,7 +560,7 @@ Le viewer (`glb-viewer.html`) a la même liste « **Langue / Language** » que l
 
 ## 6. Fabriquer la page (`glb2html.py`)
 
-`glb2html.py` fabrique la page à partir du `.glb`. Deux formes : une page **autonome** (un seul `.html`) ou une page **avec coquille** (`--shared-shell`, une `index.html` commune à toutes les régions du dossier). Toutes les options : `REFERENCE_OPTIONS.md`.
+`glb2html.py` fabrique la page à partir du `.glb`. Deux formes (voir le vocabulaire, § 1.1) : la page **autonome**, un seul `.html` qui contient tout ; la page **avec coquille** (`--shared-shell`), où une `index.html` commune affiche toutes les régions du dossier. Toutes les options : `REFERENCE_OPTIONS.md`.
 
 ### 6.1 Coquille unique pour plusieurs régions (`--shared-shell`, v26)
 
@@ -608,11 +613,11 @@ Ordre de priorité du dossier `lib` : l'option `--lib-url` si elle est donnée ;
 
 ### 6.6 Régions dans des sous-dossiers
 
-`?region=` accepte `dossier/nom` ou `a/b/nom` : segments faits de lettres, chiffres, point (pas au début), tiret, souligné, espace et parenthèses ; jamais `..`, `:`, `\`, `?`, `#`, ni chemin commençant par `/`. La config, le GLB ou les tuiles, les zones (et `zones.json` de ce dossier) et la vue d'ensemble se résolvent à partir du **dossier de la région** (les chemins de la config sont relatifs à ce dossier). Fabriquer : `glb2html.py X.glb --shared-shell P:\site\index.html -o P:\site\sous\dossier\Ile.html` (le chemin de la coquille désigne le dossier parent ; la région doit être dessous ; coquille, `lib/` et `default.json` sont écrits dans ce dossier parent ; combine avec `--lib-url`). L'adresse devient `index.html?region=sous/dossier/Ile`.
+`?region=` accepte `dossier/nom` ou `a/b/nom` : segments faits de lettres, chiffres, point (pas au début), tiret, souligné, espace et parenthèses ; jamais `..`, `:`, `\`, `?`, `#`, ni chemin commençant par `/`. La config, le GLB ou les tuiles, les zones (et `zones.json` de ce dossier) et la vue d'ensemble se résolvent à partir du **dossier de la région** (les chemins de la config sont relatifs à ce dossier). Fabriquer : `glb2html.py NOM.glb --shared-shell P:\site\index.html -o P:\site\sous\dossier\Ile.html` (le chemin de la coquille désigne le dossier parent ; la région doit être dessous ; coquille, `lib/` et `default.json` sont écrits dans ce dossier parent ; combine avec `--lib-url`). L'adresse devient `index.html?region=sous/dossier/Ile`.
 
 ### 6.7 Région par défaut (`default.json`)
 
-Quand l'adresse de la coquille n'a pas de paramètre `region`, elle essaie dans l'ordre : (a) `X.config.json` du nom de la page (comportement d'avant) ; (b) **`default.json`** du dossier, de la forme `{"region": "NOM"}` ; (c) la **première entrée de `regions.json`** dont l'adresse est relative et dont le paramètre `?region=NOM` est valide ; (d) sinon un message d'une phrase qui dit quoi faire. Le nom suit les mêmes contrôles de sécurité que `?region=`. `glb2html.py --shared-shell` écrit `default.json` la **première fois** qu'il fabrique une région dans un dossier où il n'existe pas ; **`--default`** fait de la région fabriquée la région par défaut même si `default.json` existe. `--update` ne l'écrase jamais, sauf avec `--default`.
+Quand l'adresse de la coquille n'a pas de paramètre `region`, elle essaie dans l'ordre : (a) `NOM.config.json` du nom de la page (comportement d'avant) ; (b) **`default.json`** du dossier, de la forme `{"region": "NOM"}` ; (c) la **première entrée de `regions.json`** dont l'adresse est relative et dont le paramètre `?region=NOM` est valide ; (d) sinon un message d'une phrase qui dit quoi faire. Le nom suit les mêmes contrôles de sécurité que `?region=`. `glb2html.py --shared-shell` écrit `default.json` la **première fois** qu'il fabrique une région dans un dossier où il n'existe pas ; **`--default`** fait de la région fabriquée la région par défaut même si `default.json` existe. `--update` ne l'écrase jamais, sauf avec `--default`.
 
 ### 6.8 `dist\index.html`
 
@@ -638,19 +643,19 @@ Le panneau s'ouvre à l'entrée dans la région. Le bouton « Ne plus afficher �
 
 ### 6.13 Matériaux rendus pleins : `--solid-materials`
 
-Un matériau glTF en mode `BLEND` n'écrit pas dans le tampon de profondeur (`depthWrite = false` dans le chargeur three.js) : un mur fait de ce matériau laisse voir à travers lui les objets transparents placés derrière (constaté sur un vrai modèle). L'option `--solid-materials TEXTES` (clé `solidMaterials` de la config, vide par défaut : rien ne change) rend pleins les matériaux dont le nom contient un des textes (séparés par des virgules, casse ignorée ; `=nom` : nom exact) : non transparents, profondeur écrite, et les texels à moitié transparents ou plus sont retirés (`alphaTest` à 0,5 ; sans ce seuil, les texels d'alpha nul, noirs en dessous, formeraient une plaque noire). Le réglage vaut pour la page exportée, l'éditeur et les tuiles ; `--update` garde la clé. Dans le viewer, le champ **« Matériaux rendus pleins »** des réglages (section du rendu, sous le seuil des feuillages) la règle à chaud, l'enregistre avec les réglages et l'exporte en `--solid-materials`. Le feuillage garde son traitement. Pour connaître le nom d'un matériau : clique sur le mur (§ 7.59, ligne « matériau : … »). Test : `tests/solid_materiaux.py`.
+Un matériau glTF en mode `BLEND` n'écrit pas dans le tampon de profondeur (`depthWrite = false` dans le chargeur three.js) : un mur fait de ce matériau laisse voir à travers lui les objets transparents placés derrière (constaté sur un vrai modèle). L'option `--solid-materials TEXTES` (clé `solidMaterials` de la config, vide par défaut : rien ne change) rend pleins les matériaux dont le nom contient un des textes (séparés par des virgules, casse ignorée ; `=nom` : nom exact) : non transparents, profondeur écrite, et les texels à moitié transparents ou plus sont retirés (`alphaTest` à 0,5 ; sans ce seuil, les texels d'alpha nul, noirs en dessous, formeraient une plaque noire). Le réglage vaut pour la page exportée, l'éditeur et les tuiles ; `--update` garde la clé. Dans le viewer, le champ **« Matériaux rendus pleins »** des réglages (section du rendu, sous le seuil des feuillages) la règle à chaud, l'enregistre avec les réglages et l'exporte en `--solid-materials`. Le feuillage garde son traitement. Pour connaître le nom d'un matériau : clique sur le mur (§ 7.61, ligne « matériau : … »). Test : `tests/solid_materiaux.py`.
 
 ### 6.14 Mettre à jour une région déjà publiée
 
-La coquille (`index.html`), `core.js` et `X.config.json` changent ; **les tuiles et `X.tiles.json` ne changent pas** (aucun redécoupage). Supprimer la coquille `index.html` de la région (une coquille existante et différente n'est jamais écrasée), régénérer la page **sans `--zones`** (le `X.zones.json` existant est conservé), relancer `presence_server.py` (§ 7.29).
+La coquille (`index.html`), `core.js` et `NOM.config.json` changent ; **les tuiles et `NOM.tiles.json` ne changent pas** (aucun redécoupage). Supprimer la coquille `index.html` de la région (une coquille existante et différente n'est jamais écrasée), régénérer la page **sans `--zones`** (le `NOM.zones.json` existant est conservé), relancer `presence_server.py` (§ 7.29).
 
 ### 6.15 `glb2html.py --update` : mettre à jour une région sans rien ressaisir
 
 | Option     | Effet                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `--update` | lit `X.config.json` existant, **n'applique que les options explicitement données** (une valeur égale à la valeur par défaut, mais donnée, est appliquée), garde tout le reste (clés inconnues comprises) et `X.zones.json` (réécrit seulement avec `--zones`), écrit la version courante, **renouvelle la coquille** si elle diffère de celle de cette version (ancienne copie gardée sous `index.avant-AAAAMMJJ-HHMMSS.html`) et écrit `lib/` s'il manque. Sans `X.config.json`, échoue en proposant la commande sans `--update`. Exclut `--settings` |
+| `--update` | lit `NOM.config.json` existant, **n'applique que les options explicitement données** (une valeur égale à la valeur par défaut, mais donnée, est appliquée), garde tout le reste (clés inconnues comprises) et `NOM.zones.json` (réécrit seulement avec `--zones`), écrit la version courante, **renouvelle la coquille** si elle diffère de celle de cette version (ancienne copie gardée sous `index.avant-AAAAMMJJ-HHMMSS.html`) et écrit `lib/` s'il manque. Sans `NOM.config.json`, échoue en proposant la commande sans `--update`. Exclut `--settings` |
 
-Forme : `python glb2html.py --update -o "X.html" [--shared-shell [COQUILLE.html]] [--tiles "X.tiles.json" | "X.glb"] [options]`. Sans `--shared-shell`, la page `X.html` doit exister. La coquille est **partagée par les autres régions du dossier** : elles gardent leur comportement (les anciennes configurations restent comprises ; aucune clé de config n'est nouvelle en v34). Le compte rendu liste les clés changées. Le profil (`--profile`) ne filtre les zones qu'à l'écriture de la liste : ajouter `--zones` pour la réécrire.
+Forme : `python glb2html.py --update -o "NOM.html" [--shared-shell [COQUILLE.html]] [--tiles "NOM.tiles.json" | "NOM.glb"] [options]`. Sans `--shared-shell`, la page `NOM.html` doit exister. La coquille est **partagée par les autres régions du dossier** : elles gardent leur comportement (les anciennes configurations restent comprises ; aucune clé de config n'est nouvelle en v34). Le compte rendu liste les clés changées. Le profil (`--profile`) ne filtre les zones qu'à l'écriture de la liste : ajouter `--zones` pour la réécrire.
 
 ### 6.16 Publier les changements
 
@@ -672,7 +677,7 @@ Les zones peuvent aussi être sauvées et rechargées avec **Exporter zones (.js
 
 ## 7. La page côté visiteur
 
-Ce chapitre décrit ce que voit le visiteur et ce qu'il peut faire dans la page exportée : touches, promenade, vol, vues, souris, écran tactile, chat, aide, fenêtres, réglages, langue, informations et diagnostic. Les zones elles-mêmes se posent dans le viewer (chapitre 5).
+Ce chapitre décrit ce que voit le visiteur et ce qu'il peut faire dans la page : touches, promenade, vol, vues, souris, écran tactile, chat, aide, fenêtres, réglages, langue, informations et diagnostic. Les zones elles-mêmes se posent dans le viewer (chapitre 5).
 
 ### 7.1 Les touches
 
@@ -1058,11 +1063,24 @@ Réglages fait au plus 420 px de large : les longs libellés passent à la ligne
 
 Toute l'interface (aide, réglages, informations, invites, messages de chargement et d'erreur, chat, carte, page « carte des mondes », viewer) existe en **français** et en **anglais**. Réglage visiteur **« Langue / Language »** : **Auto** (la première langue de `navigator.languages` qui est disponible, sinon l'anglais), puis chaque langue disponible. Changer la langue recharge la page. Le paramètre **`#lang=en`** (ou `#lang=fr`, `#lang=auto`) dans l'adresse est prioritaire et mémorisé ; il se combine avec `#spawn=`, `#pos=`, `#name=`. Les textes que **tu** saisis (noms de zones, panneaux, pseudos) ne sont jamais traduits.
 
-### 7.50 Paramètres du lien après `#`
+### 7.50 Langue des outils Python : `--lang`, `WEB3D_LANG`
+
+`glb2html.py`, `glb2tiles.py`, `oar2glb.py` et `presence_server.py` (et `glb-stats.py`, utilisé par `glb2tiles.py`) affichent leurs messages, leurs avertissements, leurs erreurs et leur aide (`--help`) en français ou en anglais. **Choix de la langue** : `--lang fr`, `--lang en` ou `--lang auto` (par défaut) ; sinon la variable d'environnement `WEB3D_LANG` ; sinon la langue du système ; sinon l'anglais. `--lang` l'emporte sur `WEB3D_LANG`. Les options elles-mêmes (`--budget`, `--exclude`…) et les commandes de modération du serveur (`liste`, `ejecter`, `bannir`, `bans`, `debannir`, `aide`) ne changent pas de langue. Les fichiers de sortie (JSON, journaux des outils) gardent leurs clés ; les journaux sont écrits dans la langue choisie.
+
+**Fichiers autonomes** : `build.py` intègre les textes de `src/i18n/*.json` (clés `py.*`) dans chaque outil de `dist\` : un outil copié seul sur une autre machine garde ses deux langues (c'est un choix de fabrication). Depuis les sources (`tools\`, `src\`), les outils lisent `i18n_py.py` et `i18n\` à côté d'eux ou dans `src\`. Ajouter une langue : § 7.51, aucun code à modifier. Une nouvelle option d'un outil doit avoir sa clé `py.*` dans **les deux** fichiers (`python tests/i18n.py` le vérifie) ; `python gen_reference.py` refait `REFERENCE_OPTIONS.md` (français puis anglais dans chaque case « Effet »), `python tests/doc_options.py` vérifie qu'aucune option n'y manque et qu'aucune description n'est vide.
+
+### 7.51 Ajouter une langue (sans toucher au code)
+
+1. Copie `src/i18n/en.json` en `src/i18n/<code>.json` (le code est celui de `navigator.language` : `de`, `es`, `pt`…).
+2. Traduis les **valeurs** (jamais les clés). `_name` = le nom de la langue dans cette langue (« Deutsch »). `{0}`, `{1}`… sont des marqueurs à garder tels quels (ils peuvent changer de place) ; les clés qui finissent par `.one` / `.other` (pluriel) peuvent aussi avoir `.zero`, `.two`, `.few`, `.many` si ta langue le demande. Une clé absente est remplacée par l'anglais, puis le français, puis la clé elle-même : une traduction partielle fonctionne.
+3. Les clés commençant par `page.`, `core.`, `viewer.`, `map.` et `common.` sont celles des pages et du viewer ; celles qui commencent par `py.` sont celles des outils Python (`--lang`, § 7.50).
+4. Fabrique avec `python build.py` (le dossier de langue se choisit avec `--i18n DOSSIER`) : la liste « Langue / Language » propose la nouvelle langue, les pages et les outils de `dist\` l'embarquent. Aucun code à modifier. `python tests/i18n.py` vérifie les fichiers de langue (mêmes clés, mêmes marqueurs, aucune clé inutilisée).
+
+### 7.52 Paramètres du lien après `#`
 
 Le séparateur est **`&`** ; **`#` est aussi accepté** : `#name=Klaatou&lang=en` et `#name=Klaatou#lang=en` sont équivalents (`name`, `lang`, `spawn`, `pos`, `key`). Une seule fonction (`hashParams`) lit le lien dans la page, la coquille et la page carte.
 
-### 7.51 Bouton « Copier le diagnostic »
+### 7.53 Bouton « Copier le diagnostic »
 
 En bas de la fenêtre **Informations / État** (touche **I**), le bouton **« Copier le diagnostic »** copie dans le presse-papiers un texte à coller tel quel dans une conversation d'aide : il remplace les relevés de la console F12. Le bouton reste visible quand la fenêtre est réduite ; il ne garde pas le focus (Espace et Entrée restent à la promenade et au chat). Le même bouton est en haut du panneau du viewer (`glb-viewer.html`).
 
@@ -1072,19 +1090,19 @@ Le texte contient : la version du code (et celle de la configuration de la régi
 
 Si le navigateur refuse la copie (page en `http://` hors `localhost`), le texte s'affiche **déjà sélectionné** sous le bouton : **Ctrl+C**. Une page fabriquée avec `--no-walk` n'a pas de fenêtre Informations / État, donc pas de bouton.
 
-### 7.52 Diagnostic (v42)
+### 7.54 Diagnostic (v42)
 
 « Copier le diagnostic » ajoute deux lignes : les réglages du rendu léger en cours, et le nombre d'images rendues par seconde sur les 5 dernières secondes, avec ce qui force le rendu continu (mer animée, autres visiteurs, promenade, tuiles en chargement ; « rien » quand la page ne redessine qu'à la demande).
 
-### 7.53 Diagnostic (v45)
+### 7.55 Diagnostic (v45)
 
 « Copier le diagnostic » ajoute la ligne « Connexion de présence » : la connexion s'est-elle ouverte (oui ou non), dernier code de fermeture et dernière raison. Les adresses restent remplacées par `ADRESSE`.
 
-### 7.54 Diagnostic (v46)
+### 7.56 Diagnostic (v46)
 
 « Copier le diagnostic » ajoute la ligne « Commandes tactiles » : mode tactile oui ou non, réglage, écran tactile détecté, nombre de points de contact.
 
-### 7.55 La page dit pourquoi la présence s'est coupée
+### 7.57 La page dit pourquoi la présence s'est coupée
 
 Quand la connexion au serveur de présence se ferme, la ligne de présence (fenêtre Informations / État, panneau du viewer) ne dit plus toujours « serveur injoignable » : elle donne ce que le navigateur sait.
 
@@ -1094,15 +1112,15 @@ Quand la connexion au serveur de présence se ferme, la ligne de présence (fen�
 
 Limite : le navigateur ne donne jamais la cause d'une connexion qui ne s'ouvre pas (code 1006, sans raison). La page ne peut donc pas distinguer un nom introuvable, un port fermé, un pare-feu ou un blocage du navigateur ; seul un serveur qui coupe une connexion déjà ouverte fournit un code et une raison.
 
-### 7.56 Essais de connexion à la présence
+### 7.58 Essais de connexion à la présence
 
 Quand la page n'arrive pas à joindre le serveur de présence, elle réessaie à intervalles croissants (1,5 s, 3 s, 4,5 s, jusqu'à 15 s). Elle **s'arrête maintenant** : après **5 essais** si la connexion ne s'est jamais ouverte (adresse fausse, serveur éteint, pare-feu), après **12** si elle s'était ouverte puis a été perdue (redémarrage du serveur). La cartouche du pseudo dit alors « essais arrêtés : recharge la page pour réessayer ». Un nouveau passage en promenade refait un essai. Les nombres sont les constantes `PRES_TRIES_NEVER` et `PRES_TRIES_LOST` de `core.js`.
 
-### 7.57 Navigateurs
+### 7.59 Navigateurs
 
 Essayé dans Chromium (`tests/v45_lib.py`). **Non essayé : Firefox et Safari.** Le fichier `tests/essai_importmap.html` (à ouvrir dans le navigateur ; résultat écrit en toutes lettres) vérifie qu'un navigateur accepte une table d'import construite par un script ; si l'essai échoue dans un navigateur, la coquille ne démarre pas dedans.
 
-### 7.58 Quand WebGL est indisponible
+### 7.60 Quand WebGL est indisponible
 
 Quand le navigateur refuse de créer le contexte WebGL (accélération matérielle coupée : Edge et Chrome récents ne se replient plus sur le rendu logiciel), la page de région et le viewer affichent un message avec les pistes, au lieu de rester sur « Chargement… » :
 
@@ -1112,13 +1130,13 @@ Quand le navigateur refuse de créer le contexte WebGL (accélération matériel
 
 Pour vérifier : `edge://gpu` (ou `chrome://gpu`), ligne WebGL. Test (Chromium sans WebGL) : `tests/webgl_absent.py`. Non essayé ici : Windows, carte graphique.
 
-### 7.59 Pointeur : le nom du bâtiment
+### 7.61 Pointeur : le nom du bâtiment
 
 L'étiquette de la clé `names` (`--names`) et le panneau « Visé » du viewer donnent en gras le nom de l'**objet racine**, c'est-à-dire le plus haut ancêtre nommé : le nom du bâtiment. Le sous-élément est en petit (« élément : … »). Avant, le sous-élément était en gras. Les enveloppes techniques (modèle, tuiles, vue d'ensemble) sont ignorées. Le chargeur three.js remplace les espaces des noms par `_` et numérote les doublons ; l'étiquette montre le nom d'origine du fichier. Les noms utilisés par les zones (champ `mesh`) ne changent pas. Le guide du trou (« Afficher le guide du trou (non exporté) ») est décoché par défaut ; une valeur déjà enregistrée dans un fichier de réglages garde la priorité. Test : `tests/pointeur_objet.py`. **Non essayé** : l'étiquette en mode tuiles.
 
 ## 8. Charger une région en tuiles dans la page (`glb2html.py --tiles`, v30)
 
-Une région de plusieurs centaines de Mo ou de plusieurs Go ne tient pas dans un navigateur : après `glb2tiles.py` (§ 4.1), la **coquille** charge seulement les tuiles proches de l'avatar et décharge les lointaines, et (v31) affiche au loin la **vue d'ensemble légère** `X.overview.glb` quand elle existe. Sans le champ `tiles` dans `X.config.json`, la page se comporte exactement comme avant (un seul `X.glb`).
+Une région de plusieurs centaines de Mo ou de plusieurs Go ne tient pas dans un navigateur : après `glb2tiles.py` (§ 4.1), la **coquille** charge seulement les tuiles proches de l'avatar et décharge les lointaines, et (v31) affiche au loin la **vue d'ensemble légère** `NOM.overview.glb` quand elle existe. Sans le champ `tiles` dans `NOM.config.json`, la page se comporte exactement comme avant (un seul `NOM.glb`).
 
 ### 8.1 Les commandes (PowerShell, une seule ligne)
 
@@ -1132,11 +1150,11 @@ Une région de plusieurs centaines de Mo ou de plusieurs Go ne tient pas dans un
 
 `-o` désigne la région (son nom sans extension). Pas de `.glb` en entrée. `--tiles` seul (sans `--shared-shell`) donne une coquille propre `4X4.html`. Sont écrits : `4X4.config.json` (champ `tiles`), `4X4.zones.json` (si absent ou si une source de zones est donnée), la coquille et `lib/` s'ils manquent. **`4X4.tiles.json` et le dossier des tuiles ne sont copiés que s'ils ne sont pas déjà à côté de la page** : mettre `-o` dans le dossier des tuiles évite toute copie (« tuiles déjà à côté de la page : rien n'est copié ») ; sinon le script copie ce qui manque ou a une autre taille, fichier par fichier, et dit combien. Il n'y a pas de `4X4.glb`. Comme tout mode modulaire, la page demande http/https.
 
-### 8.2 Les paramètres (dans `X.config.json`, avec leurs options)
+### 8.2 Les paramètres (dans `NOM.config.json`, avec leurs options)
 
 | Clé / option                                | Défaut    | Sens                                                                                                                                                              |
 | ------------------------------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tileRadius` / `--tile-radius`              | 150       | m : charger les tuiles dont la **boîte** (min / max de `X.tiles.json`) est à moins de ce rayon de l'avatar, en plan X,Z (distance 0 = l'avatar est dans la boîte) |
+| `tileRadius` / `--tile-radius`              | 150       | m : charger les tuiles dont la **boîte** (min / max de `NOM.tiles.json`) est à moins de ce rayon de l'avatar, en plan X,Z (distance 0 = l'avatar est dans la boîte) |
 | `tileMargin` / `--tile-margin`              | 60        | m : décharger au-delà de rayon + marge (hystérésis : pas de va-et-vient à la limite)                                                                              |
 | `tileMaxMB` / `--tile-max-mb`               | 200       | Mo de tuiles chargées en même temps (poids des fichiers `.glb`)                                                                                                   |
 | `tileMaxTriangles` / `--tile-max-triangles` | 8 000 000 | triangles de tuiles chargées en même temps                                                                                                                        |
@@ -1152,8 +1170,8 @@ Une région de plusieurs centaines de Mo ou de plusieurs Go ne tient pas dans un
 - **Promenade et collisions.** Une grille de collision est construite par tuile, par tranches pour ne pas figer l'image, et supprimée avec la tuile. Sol et murs ne viennent que des tuiles prêtes. L'avatar **n'avance jamais vers un point dont une tuile n'est pas prête** : il reste sur place, le texte « Chargement du sol… » s'affiche, et il repart dès que la tuile est prête (jamais de chute). **F** attend la tuile sous l'avatar avant de démarrer la promenade (F de nouveau : annuler) ; un portail interne ou un double-clic vers une zone non chargée attend de même. Les patches de terrain ont des bords communs : le sol se prolonge d'une tuile à l'autre sans marche.
 - **Tuile en échec** (fichier absent, HTTP 404, GLB illisible) : message en haut de la page et dans la ligne d'information, avertissement en console, nouvelle tentative 3 s, 6 s, 12 s… jusqu'à 30 s après. Les autres tuiles ne sont pas retardées. Un avatar ne traverse pas la boîte d'une tuile en échec (même règle que « pas prête »).
 - **Ligne d'information** (texte seul), dans le panneau d'aide en bas à gauche (masquable avec H), sinon dans un petit cadre : « Tuiles : 7 chargées / 106 · 74 Mo · 2,10 M triangles », avec « · 2 en cours » et « · 1 en échec (nouvelle tentative) » quand il y en a, puis (v31) « · Vue d'ensemble (à part) : 23,1 Mo · 1,40 M triangles » : la vue d'ensemble est comptée à part, hors des 200 Mo / 8 M triangles du budget.
-- **Vue d'ensemble (v31).** Si `X.tiles.json` mentionne `overview`, la page la charge **en premier** (avant toute tuile), avec les mêmes règles de sécurité de chemin que les tuiles. Elle montre toute la région en géométrie légère, sans image. Chaque cellule (un nœud par fichier de tuile) est **masquée dès que la tuile détaillée correspondante est affichée** et réaffichée quand la tuile est déchargée ou en échec : jamais les deux, jamais de trou pendant un chargement. Elle ne sert **ni aux collisions, ni au sol, ni à « Chargement du sol… »** (la promenade attend toujours la tuile), et n'entre pas dans le budget `tileMaxMB` / `tileMaxTriangles`. Un **double-clic** dessus en vue globale place la cible sur le point lointain ; le sol réel est repris quand sa tuile est prête. Si elle est introuvable ou illisible : avertissement en console, « Vue d'ensemble indisponible » dans la ligne d'information, la région fonctionne comme en v30.
-- **Vue globale.** Avec la vue d'ensemble, la caméra se cadre sur **toute la région** (distance maximale, brouillard et plan lointain suivent l'étendue). Sans elle (ancien `X.tiles.json` ou `--no-overview`), comme en v30 : seules les tuiles chargées autour de la cible, et la caméra se cadre sur le rayon de chargement.
+- **Vue d'ensemble (v31).** Si `NOM.tiles.json` mentionne `overview`, la page la charge **en premier** (avant toute tuile), avec les mêmes règles de sécurité de chemin que les tuiles. Elle montre toute la région en géométrie légère, sans image. Chaque cellule (un nœud par fichier de tuile) est **masquée dès que la tuile détaillée correspondante est affichée** et réaffichée quand la tuile est déchargée ou en échec : jamais les deux, jamais de trou pendant un chargement. Elle ne sert **ni aux collisions, ni au sol, ni à « Chargement du sol… »** (la promenade attend toujours la tuile), et n'entre pas dans le budget `tileMaxMB` / `tileMaxTriangles`. Un **double-clic** dessus en vue globale place la cible sur le point lointain ; le sol réel est repris quand sa tuile est prête. Si elle est introuvable ou illisible : avertissement en console, « Vue d'ensemble indisponible » dans la ligne d'information, la région fonctionne comme en v30.
+- **Vue globale.** Avec la vue d'ensemble, la caméra se cadre sur **toute la région** (distance maximale, brouillard et plan lointain suivent l'étendue). Sans elle (ancien `NOM.tiles.json` ou `--no-overview`), comme en v30 : seules les tuiles chargées autour de la cible, et la caméra se cadre sur le rayon de chargement.
 - **Sortie de promenade (v31).** F pour sortir place la cible de la vue globale au sol sous l'avatar et garde le décalage de caméra d'avant l'entrée en promenade ; le chargeur suit cette cible, donc les tuiles autour de l'avatar ne sont pas déchargées.
 
 ### 8.4 Repère, rotation, mer, zones
@@ -1188,15 +1206,15 @@ Une région de plusieurs centaines de Mo ou de plusieurs Go ne tient pas dans un
 **Une ligne par tuile dans la console** (touche F12 du navigateur) quand elle devient prête ou échoue, à coller dans le chat de diagnostic :
 
 ```
-[tuile] X.tiles/T_3_0_1.glb prête : 14.0 Mo · 1002668 triangles · attente avant téléchargement 0 ms · téléchargement 278 ms · analyse du GLB 28 ms · attente en file de grille 53 ms · construction de la grille 142 ms de travail (1004 ms écoulées) · total 1310 ms
-[tuile] X.tiles/T_3_2_4.glb : échec après 2100 ms (HTTP 404)
+[tuile] NOM.tiles/T_3_0_1.glb prête : 14.0 Mo · 1002668 triangles · attente avant téléchargement 0 ms · téléchargement 278 ms · analyse du GLB 28 ms · attente en file de grille 53 ms · construction de la grille 142 ms de travail (1004 ms écoulées) · total 1310 ms
+[tuile] NOM.tiles/T_3_2_4.glb : échec après 2100 ms (HTTP 404)
 ```
 
 « Construction de la grille » = temps de calcul réellement consommé ; « écoulées » = temps d'horloge entre l'entrée dans la file et la fin (comprend le rendu des images). `viewer.tilesState().log` (console du navigateur : `__viewer.tilesState().log`) donne les mêmes valeurs en nombres.
 
 ### 8.7 `glb2html.py --tiles --zones` avec le fichier déjà en place
 
-Si `--zones FICHIER` désigne **le `X.zones.json` de destination** (même chemin une fois résolu, absolu ou relatif), rien n'est copié, rien n'est réécrit, rien n'échoue : le script dit « zones déjà en place ». Le fichier n'est donc pas filtré par le profil `public` ni reformaté. Sans `--zones`, un `X.zones.json` existant est de toute façon conservé.
+Si `--zones FICHIER` désigne **le `NOM.zones.json` de destination** (même chemin une fois résolu, absolu ou relatif), rien n'est copié, rien n'est réécrit, rien n'échoue : le script dit « zones déjà en place ». Le fichier n'est donc pas filtré par le profil `public` ni reformaté. Sans `--zones`, un `NOM.zones.json` existant est de toute façon conservé.
 
 ### 8.8 La ligne des tuiles
 
@@ -1208,7 +1226,7 @@ En région en tuiles, la fenêtre Informations / État (touche I) donne, chacun 
 
 ## 9. Carte des mondes
 
-La carte des mondes (`carte.html`) relie les régions d'un même site à partir de `regions.json`, qui se prépare dans le viewer ou avec `glb2html.py --scan-sites`. Format de `regions.json` : § 11.6.
+La carte des mondes (`carte.html`) présente les régions d'un même site à partir de `regions.json`, qui se prépare dans le viewer ou avec `glb2html.py --scan-sites`. Format de `regions.json` : § 11.6.
 
 ### 9.1 Carte des mondes
 
@@ -1221,11 +1239,11 @@ Dans la section **Carte des mondes**, le champ **Point d'arrivée des visiteurs 
 
 1. **Chaque région est enregistrée dans un même `regions.json`**, à côté des pages (un seul dossier de pages, une coquille commune). Pour chaque région déjà générée, une commande `--update --register`, **une seule ligne PowerShell** (nom, position sur la grille OpenSim, vignette facultative de 140 Ko au plus à côté de la page) :
    
-   `python glb2html.py --update -o "X.html" --shared-shell --register regions.json --region-name "Nom affiché" --region-xy 1000,1001 --thumb vignette.png`
+   `python glb2html.py --update -o "NOM.html" --shared-shell --register regions.json --region-name "Nom affiché" --region-xy 1000,1001 --thumb vignette.png`
    
-   La fiche reçoit l'adresse `index.html?region=X`, le salon et le serveur de présence de la config de la région. Redonner la commande met la fiche à jour (identifiée par le salon), sans doublon.
+   La fiche reçoit l'adresse `index.html?region=NOM`, le salon et le serveur de présence de la config de la région. Redonner la commande met la fiche à jour (identifiée par le salon), sans doublon.
 
-2. **Générer la page web de la carte** : `python glb2html.py --update -o "X.html" --shared-shell --map-page carte.html` (elle lit les régions de `regions.json` enregistrées dans la config de la région `X`). Pour qu'elle contienne toutes les régions, exécute-la **après** les enregistrements, ou donne `--map regions.json --map-page carte.html`.
+2. **Générer la page web de la carte** : `python glb2html.py --update -o "NOM.html" --shared-shell --map-page carte.html` (elle lit les régions de `regions.json` enregistrées dans la config de la région `NOM`). Pour qu'elle contienne toutes les régions, exécute-la **après** les enregistrements, ou donne `--map regions.json --map-page carte.html`.
 
 3. **L'ouvrir par le serveur web**, pas depuis le disque : le dossier contenant `carte.html`, `index.html`, `lib/` et les régions est servi en http(s) (`python -m http.server` pour un essai, ou n'importe quel serveur web), puis ouvre `http://ADRESSE/carte.html`. Chaque lien de la carte ouvre la région à son point d'arrivée, avec le pseudo saisi en haut de la page.
 
@@ -1564,7 +1582,7 @@ Les positions sont en mètres, dans le repère de la page : x vers l'est, y vers
 | `light`         | oui / non | `false`            | la page s'ouvre en rendu léger tant que le visiteur n'a rien choisi (§ 7.45)                                                                         | `--light`, `--no-light`   |
 | `foliageCutout` | nombre    | `0.12`             | seuil de transparence des feuillages (de 0 à 0.5) : plus haut, les bords des feuilles sont plus découpés                                           | `--foliage-cutout`        |
 | `solidMaterials` | texte     | `""`               | matériaux rendus pleins (§ 6.13) : noms ou morceaux de noms séparés par des virgules, `=nom` pour un nom exact ; vide = rien ne change             | `--solid-materials`       |
-| `names`         | oui / non | `false`            | affiche le nom du bâtiment (objet racine) et de l'élément visé (§ 7.59)                                                                                                                 | `--names`, `--no-names`   |
+| `names`         | oui / non | `false`            | affiche le nom du bâtiment (objet racine) et de l'élément visé (§ 7.61)                                                                                                                 | `--names`, `--no-names`   |
 | `panel`         | oui / non | `true`             | bouton Réglages pour les visiteurs                                                                                                                 | `--panel`, `--no-panel`   |
 | `libUrl`        | texte     | `""`               | dossier ou adresse de `lib` (three.js) quand il n'est pas à côté de la page ; `--update` l'aligne sur la ligne `const LIB` de la coquille (§ 6.4) | `--lib-url`               |
 | `version`       | texte     | version de l'outil | version de `glb2html.py` qui a écrit le fichier ; `--update` la remplace                                                                           | —                         |
@@ -1979,7 +1997,7 @@ Test du script : `python tests/oar2glb.py` (OAR synthétique et faux convoar, sa
 | « Tuile … hors budget »                                                      | un mesh unique (terrain, mer) dépasse le budget, ou la cellule minimale est atteinte                  | normal à ce stade : voir la feuille de route (découpage par triangles)                                               |
 | Beaucoup de tuiles pour un petit GLB                                         | `--budget` trop petit ou duplication forte                                                            | relancer `--analyse` avec d'autres valeurs                                                                           |
 | « THREE.GLTFLoader: Couldn't load texture » sur une tuile faite avant la v31 | image de 0 octet ou tronquée dans le GLB                                                              | refaire le découpage avec la v31 (images remplacées par un gris)                                                     |
-| « Le découpage recalculé … ne correspond pas à X.tiles.json »                | `--overview-only` lancé avec d'autres options de découpage                                            | reprendre exactement les options du découpage d'origine                                                              |
+| « Le découpage recalculé … ne correspond pas à NOM.tiles.json »                | `--overview-only` lancé avec d'autres options de découpage                                            | reprendre exactement les options du découpage d'origine                                                              |
 | « Pillow absent » dans le rapport                                            | la vue d'ensemble utilise la couleur de base des matériaux (souvent blanche pour un matériau texturé) | `pip install pillow` puis `--overview-only`                                                                          |
 | Vue d'ensemble trop lourde ou objets manquants                               | budget atteint, `effectiveMinExtent` monté                                                            | `--ov-budget` / `--ov-budget-triangles` plus grands, ou `--ov-threshold` plus haut ; lire les lignes « objets omis » |
 | Instance à 3 000 m signalée                                                  | un prim géant ou un objet égaré                                                                       | l'outil la garde ; la corriger dans le modèle si c'est une erreur                                                    |
@@ -1990,12 +2008,12 @@ Test : `python tests/glb2tiles.py` (GLB synthétiques, sans navigateur ni résea
 
 | Symptôme                                             | Cause probable                                                                                                                                       | Que faire                                                                                                                           |
 | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| « Erreur de chargement : … X.tiles.json : HTTP 404 » | `X.tiles.json` n'est pas à côté de la page, ou le champ `tiles` de la config est faux                                                                | relancer `glb2html.py --tiles` ; vérifier le dossier                                                                                |
-| « adresse de tuiles refusée »                        | le champ `tiles` contient `..`, `:`, `?`, `#` ou commence par `/`                                                                                    | un chemin relatif simple (`X.tiles.json`)                                                                                           |
+| « Erreur de chargement : … NOM.tiles.json : HTTP 404 » | `NOM.tiles.json` n'est pas à côté de la page, ou le champ `tiles` de la config est faux                                                                | relancer `glb2html.py --tiles` ; vérifier le dossier                                                                                |
+| « adresse de tuiles refusée »                        | le champ `tiles` contient `..`, `:`, `?`, `#` ou commence par `/`                                                                                    | un chemin relatif simple (`NOM.tiles.json`)                                                                                           |
 | Sol partiel, trous                                   | tuiles hors du rayon, ou en échec                                                                                                                    | monter `tileRadius` (ou `?radius=`), voir la ligne d'information et la console                                                      |
 | « Chargement du sol… » qui reste                     | une tuile en échec devant l'avatar                                                                                                                   | corriger le fichier ; la page réessaie seule                                                                                        |
 | Au loin, rien ou un trou                             | pas de vue d'ensemble (région découpée avant la v31, ou `--no-overview`)                                                                             | `glb2tiles.py … --overview-only` avec les options d'origine, puis relancer `glb2html.py --tiles` (copie le fichier avec les tuiles) |
-| « Vue d'ensemble indisponible »                      | `X.overview.glb` absent à côté de la page, ou illisible                                                                                              | le copier à côté de `X.tiles.json` ; relancer `glb2html.py --tiles`                                                                 |
+| « Vue d'ensemble indisponible »                      | `NOM.overview.glb` absent à côté de la page, ou illisible                                                                                              | le copier à côté de `NOM.tiles.json` ; relancer `glb2html.py --tiles`                                                                 |
 | Page lourde, ralentie                                | trop de textures chargées                                                                                                                            | baisser `tileMaxMB`, `tileMaxTriangles` ou `tileRadius`                                                                             |
 | Les zones liées n'apparaissent pas                   | la tuile de l'objet n'est pas chargée (elles n'existent que tuile chargée), ou les tuiles datent d'avant la v32 (ignorées, avertissement en console) | s'approcher / `?radius=` ; sinon refaire le découpage avec `glb2tiles.py` v32 (§ 4.1), ou utiliser des zones libres à coordonnées    |
 | Les zones sont décalées                              | elles viennent du viewer (repère recentré)                                                                                                           | les écrire dans le repère du modèle d'origine                                                                                       |
@@ -2011,22 +2029,22 @@ Le détail, version par version, est dans `HISTORIQUE.md` (récit) et `CHANGELOG
 | Nouveautés de la v33 (22/10/2026) | Démarrage avec une arrivée (`#spawn=`, `#pos=`) dans une région en tuiles (§ 8.6); Arrivée par défaut et retour à l'arrivée (§ 7.21); Marqueurs de zones dans la page exportée (§ 7.14); Vol, trois vues, « Aller à » (§ 7.7); Chat (§ 7.25); Couleur de l'avatar (client et serveur) (§ 7.29); Adresses IP dans le journal : `--log-ip raw` (§ 10.22); Enregistrer les zones directement dans le dossier de la région (viewer) (§ 5.15); `glb2html.py --tiles --zones` avec le fichier déjà en place (§ 8.7); Mettre à jour une région déjà publiée (§ 6.14) |
 | Nouveautés de la v34 (22/10/2026) | Panneau d'aide sélectionnable et bloc d'état (§ 7.38); Zone de survol et de clic des marqueurs (§ 7.15); Vol (§ 7.8); Souris libre après Échap (§ 7.10); Couleur en direct (§ 7.30); `glb2html.py --update` : mettre à jour une région sans rien ressaisir (§ 6.15); Pseudo, lien personnel, page de lancement (§ 7.28) |
 | Nouveautés de la v35 (22/10/2026) | Aide en groupes, panneaux repliables (§ 7.39); Touches Firestorm / touches de cette page (§ 7.2); Vol et saut (§ 7.5); Troisième personne (§ 7.6); Infobulle et clic des zones : `--zone-info-dist` (§ 7.16); Copier dans le presse-papiers (§ 7.23); `--update` et la carte des mondes (§ 9.3); Créer la carte des mondes (§ 9.2); Caméra libre et molette (§ 7.9) |
-| Nouveautés de la v36 (23/10/2026) | Touches : F et P, E, vol (§ 7.3); Disposition du clavier : AZERTY ou QWERTY (§ 7.4); Aide et informations : trois temps (§ 7.40); Repères de portail (cônes) : `--zone-cone`, touche T (§ 7.17); Arrivée occupée (§ 7.19); Sons (§ 7.31); Copier ma position, « Aller à » (§ 7.22); Langue de la page (§ 7.49); Ajouter une langue (sans toucher au code) (§ 2.2); Langue du viewer (§ 5.17); Langue des outils Python : `--lang`, `WEB3D_LANG` (§ 2.1) |
-| Nouveautés de la v37 (23/10/2026) | Indicateur de course, boussole, fenêtres redimensionnables, touche O (§ 7.12); Repère de portail (cône) : taille constante, distance (§ 7.18); Arrivée occupée, améliorée (§ 7.20); Pseudo cité : clignotement continu (§ 7.27); Paramètres du lien après `#` (§ 7.50); Historique du chat (§ 10.21); Région par défaut (`default.json`) (§ 6.7); Dossier lib : `--lib-url` (§ 6.5); Régions dans des sous-dossiers (§ 6.6) |
-| Nouveautés de la v39 (23/10/2026) | Bouton « Copier le diagnostic » (§ 7.51) |
+| Nouveautés de la v36 (23/10/2026) | Touches : F et P, E, vol (§ 7.3); Disposition du clavier : AZERTY ou QWERTY (§ 7.4); Aide et informations : trois temps (§ 7.40); Repères de portail (cônes) : `--zone-cone`, touche T (§ 7.17); Arrivée occupée (§ 7.19); Sons (§ 7.31); Copier ma position, « Aller à » (§ 7.22); Langue de la page (§ 7.49); Ajouter une langue (sans toucher au code) (§ 7.51); Langue du viewer (§ 5.17); Langue des outils Python : `--lang`, `WEB3D_LANG` (§ 7.50) |
+| Nouveautés de la v37 (23/10/2026) | Indicateur de course, boussole, fenêtres redimensionnables, touche O (§ 7.12); Repère de portail (cône) : taille constante, distance (§ 7.18); Arrivée occupée, améliorée (§ 7.20); Pseudo cité : clignotement continu (§ 7.27); Paramètres du lien après `#` (§ 7.52); Historique du chat (§ 10.21); Région par défaut (`default.json`) (§ 6.7); Dossier lib : `--lib-url` (§ 6.5); Régions dans des sous-dossiers (§ 6.6) |
+| Nouveautés de la v39 (23/10/2026) | Bouton « Copier le diagnostic » (§ 7.53) |
 | Nouveautés de la v40 (24/10/2026) | Fenêtre « Arrivées » (touche L) (§ 7.24); Bouton « Recentrer la vue » (§ 7.11); Lien « Manuel complet » et bulle du diagnostic (§ 7.41) |
 | Nouveautés de la v41 (24/10/2026) | Bulles des fenêtres (§ 7.42); Fenêtres déplaçables (§ 7.43); Disposition retenue et fichier de disposition (§ 7.44) |
-| Nouveautés de la v42 (24/10/2026) | Rendu léger (§ 7.45); Réglages fins (§ 7.46); Proposition automatique (§ 7.47); Option `--light` (§ 6.12); Fenêtre Réglages plus étroite (§ 7.48); Diagnostic (§ 7.52) |
-| Nouveautés de la v45 (24/10/2026) | La page dit pourquoi la présence s'est coupée (§ 7.55); Diagnostic (§ 7.53); Test de la présence (§ 10.23); Une seule ligne pour le dossier `lib` (§ 6.3); `--update` garde la ligne (§ 6.4); `dist\index.html` (§ 6.8); Navigateurs (§ 7.57) |
-| Nouveautés de la v46 (25/10/2026) | Ligne d'état (§ 7.32); Flèches à l'écran (§ 7.33); Cacher ou montrer les flèches (§ 7.34); Écran tactile (téléphone, tablette) (§ 7.35); Bulles (§ 7.36); Compteur du chat (§ 7.26); Diagnostic (§ 7.54); Une coquille pour tout un site (§ 6.2); Non testé (§ 7.37) |
+| Nouveautés de la v42 (24/10/2026) | Rendu léger (§ 7.45); Réglages fins (§ 7.46); Proposition automatique (§ 7.47); Option `--light` (§ 6.12); Fenêtre Réglages plus étroite (§ 7.48); Diagnostic (§ 7.54) |
+| Nouveautés de la v45 (24/10/2026) | La page dit pourquoi la présence s'est coupée (§ 7.57); Diagnostic (§ 7.55); Test de la présence (§ 10.23); Une seule ligne pour le dossier `lib` (§ 6.3); `--update` garde la ligne (§ 6.4); `dist\index.html` (§ 6.8); Navigateurs (§ 7.59) |
+| Nouveautés de la v46 (25/10/2026) | Ligne d'état (§ 7.32); Flèches à l'écran (§ 7.33); Cacher ou montrer les flèches (§ 7.34); Écran tactile (téléphone, tablette) (§ 7.35); Bulles (§ 7.36); Compteur du chat (§ 7.26); Diagnostic (§ 7.56); Une coquille pour tout un site (§ 6.2); Non testé (§ 7.37) |
 | Nouveautés de la v47 (25/10/2026) | La tuile de la carte (§ 9.4); Adresse facultative (§ 9.5); `regions.json` avec en-tête (§ 9.6); Deux façons de faire la carte (§ 9.7); Serveur de présence (§ 10.1); Non testé (§ 9.8) |
 | Nouveautés de la v48 (25/10/2026) : journal des visites | À quoi il sert (§ 10.2); Côté hôte : le serveur de présence (§ 10.3); Côté créateur : la fenêtre « Journal des visites » (§ 10.4); Ce qui est compté (§ 10.5); Données personnelles (§ 10.6); Fichiers (§ 10.7); Non testé (§ 10.8) |
 | Nouveautés de la v49 (25/10/2026) : mise à jour de `regions.json` depuis le dossier des sites | La commande (§ 9.9); Ce que fait le parcours (§ 9.10); Les vignettes (§ 9.11); Non testé (§ 9.12) |
 | Nouveautés de la v50 (25/10/2026) : la carte des mondes dans le viewer | Importer et exporter `regions.json` (§ 9.13); Ajouter ou mettre à jour cette région (§ 9.14); Non testé (§ 9.15) |
 | Nouveautés de la v51 (25/10/2026) : créateurs sur le serveur de présence | À quoi ça sert (§ 10.9); Le fichier des créateurs (§ 10.10); Ce que voit le visiteur (§ 10.11); Console et journal (§ 10.12); Accueillir un créateur (§ 10.13); Limites (§ 10.14); Non testé (§ 10.15); Connexions vides (§ 10.16); Adresse de présence « même nom que la page » (§ 10.17) |
 | Nouveautés de la v52 (25/10/2026) | `carte.html` : décompte, total, deux lignes (§ 9.16); Surveillance des arrivées (son et repère) (§ 9.17); Vignette agrandie au survol (§ 9.18); Case « Afficher la mer » (§ 9.19); Serveur de présence : requêtes HTTP ordinaires (§ 10.18); Région en tuiles renommée (§ 8.9); Non testé (§ 9.20) |
-| Ajouts de la 1.0.0 (après la v52) | Icône des pages (`favicon.ico`) (§ 6.9); Pseudos : la commande `oublier` (§ 10.19); Adresses IPv6 : limite et bannissements par préfixe `/64` (§ 10.20); Essais de connexion à la présence (§ 7.56); Numérotation des versions (§ 13.1) |
-| Ajouts de la 1.1.0 (après la 1.0.0) | Zone `image` : un tableau sur un mur (§ 5.11); Éditeur : dossier de la région et aperçu des images (§ 5.12); Matériaux rendus pleins : `--solid-materials` (§ 6.13); Pointeur : le nom du bâtiment (§ 7.59); Quand WebGL est indisponible (§ 7.58); Versions : un numéro par fichier, marque, commande `version` (§ 13.2); Serveur de présence : console et lignes « requête http » (§ 10.24); Documents ajoutés ou revus depuis la 1.0.0 (§ 13.3); Essayé et non essayé (§ 5.18) |
+| Ajouts de la 1.0.0 (après la v52) | Icône des pages (`favicon.ico`) (§ 6.9); Pseudos : la commande `oublier` (§ 10.19); Adresses IPv6 : limite et bannissements par préfixe `/64` (§ 10.20); Essais de connexion à la présence (§ 7.58); Numérotation des versions (§ 13.1) |
+| Ajouts de la 1.1.0 (après la 1.0.0) | Zone `image` : un tableau sur un mur (§ 5.11); Éditeur : dossier de la région et aperçu des images (§ 5.12); Matériaux rendus pleins : `--solid-materials` (§ 6.13); Pointeur : le nom du bâtiment (§ 7.61); Quand WebGL est indisponible (§ 7.60); Versions : un numéro par fichier, marque, commande `version` (§ 13.2); Serveur de présence : console et lignes « requête http » (§ 10.24); Documents ajoutés ou revus depuis la 1.0.0 (§ 13.3); Essayé et non essayé (§ 5.18) |
 | Ajouts de la 1.4 (lots 1.4.2 à 1.4.7) | La ligne des tuiles (§ 8.8); « À propos de la région » (§ 6.10); Compresser les tuiles : `glb2tiles.py --compress` (§ 4.2); Titre affiché : la clé `title` (§ 6.11); `--scan-sites --prune-missing` (§ 9.21); Essayé et non essayé (§ 6.17) |
 
 Tout ce qui suit est dans la **1.1.0** (publiée le 31/10/2026). Le détail, lot par lot, est dans `CHANGELOG.md`.
