@@ -578,10 +578,11 @@ SCAN_SKIP = {"lib", "_bak", "node_modules"}
 SCAN_IMG = (".jpg", ".jpeg", ".png", ".webp")
 
 
-def scan_sites(root, dry):
+def scan_sites(root, dry, prune=False):
     """v49 : parcourt le dossier des sites (coquille commune à la racine) et met à jour root/regions.json : une fiche par NOM.config.json
     (adresse index.html?region=dossier/NOM, salon, serveur de présence, vignette NOM.jpg/.png/.webp à côté). Reconnaît une fiche par son salon,
-    sinon par son adresse ; garde le nom, la place, l'arrivée et l'en-tête ; ne touche pas aux fiches externes ; ne supprime rien."""
+    sinon par son adresse ; garde le nom, la place, l'arrivée et l'en-tête ; ne touche pas aux fiches externes ; ne supprime rien (sauf avec prune : les fiches locales
+    introuvables sont retirées). Le nom d'une NOUVELLE fiche est le « title » de la config s'il existe, sinon le nom du fichier."""
     root = pathlib.Path(root).expanduser()
     if not root.is_dir():
         sys.exit(_tr("py.glb2html.scan.nofolder", root))
@@ -612,7 +613,7 @@ def scan_sites(root, dry):
         stem = cf.name[:-len(".config.json")]
         name = "/".join(rel.parts[:-1] + (stem,))
         img = next((cf.with_name(stem + e) for e in SCAN_IMG if cf.with_name(stem + e).is_file()), None)
-        found.append({"name": stem, "url": "index.html?region=" + name, "room": str(c.get("room") or "").strip()[:64],
+        found.append({"name": str(c.get("title") or "").strip()[:60] or stem, "url": "index.html?region=" + name, "room": str(c.get("room") or "").strip()[:64],
                       "presence": str(c.get("presenceUrl") or ""), "thumb": urllib.parse.quote(img.relative_to(root).as_posix()) if img else ""})
     used = {(int(r.get("x") or 0), int(r.get("y") or 0)) for r in data}
     ids = {str(r.get("id") or "") for r in data}
@@ -650,8 +651,12 @@ def scan_sites(root, dry):
     ext = sum(1 for r in data if not local(r.get("url")))
     orph = [r for k, r in enumerate(data) if k not in seen and local(r.get("url"))]
     for r in orph:
-        print(_tr("py.glb2html.scan.orphan", r.get("name"), r.get("url")))
-    print(_tr("py.glb2html.scan.summary", added, updated, same, ext, len(orph), reg))
+        print(_tr("py.glb2html.scan.pruned" if prune else "py.glb2html.scan.orphan", r.get("name"), r.get("url")))
+    if prune and orph:
+        data = [r for r in data if not any(r is o for o in orph)]
+    print(_tr("py.glb2html.scan.summary", added, updated, same, ext, 0 if prune else len(orph), reg))
+    if prune:
+        print(_tr("py.glb2html.scan.prunedtotal", len(orph)))
     if dry:
         print(_tr("py.glb2html.scan.dry"))
         return
@@ -758,7 +763,7 @@ DRACO_JS = r"""__DRACO_JS__"""
 MESHOPT_JS = r"""__MESHOPT_JS__"""
 
 
-def build_cfg(name: str, *, rotate=ROTATE, hole=HOLE_RADIUS, hole_fade=HOLE_FADE, hole_x=HOLE_X, hole_z=HOLE_Z, wave=WAVE_AMP,
+def build_cfg(name: str, *, title="", rotate=ROTATE, hole=HOLE_RADIUS, hole_fade=HOLE_FADE, hole_x=HOLE_X, hole_z=HOLE_Z, wave=WAVE_AMP,
                sea_y=SEA_Y, zoom=ZOOM_RATIO, cam_dir=CAM_DIR, target=TARGET, sea_enabled=SEA_ENABLED,
                anim_enabled=ANIM_ENABLED, retina=RETINA_ENABLED, light=LIGHT_ENABLED, foliage_cutout=FOLIAGE_CUTOUT,
                sea_color=SEA_COLOR, sky_color=SKY_COLOR, sea_segments=SEA_SEGMENTS, walk=WALK_ENABLED, eye_height=EYE_HEIGHT, walk_speed=WALK_SPEED, walk_ignore=WALK_IGNORE, solid_materials=SOLID_MATERIALS, names=NAMES_ENABLED, presence_url=PRESENCE_URL, room=ROOM, chat=CHAT_ENABLED, chat_fade=CHAT_FADE, zones=None, profile=PROFILE, spectate=SPECTATE, panel=PANEL, zones_live=ZONES_LIVE, map_entries=None, map_url=MAP_URL, modular=False, zone_marker=ZONE_MARKER, show_spawns=SHOW_SPAWNS, zone_cone=ZONE_CONE, fly=FLY_ENABLED, zone_info_dist=ZONE_INFO_DIST, compass=COMPASS, north=NORTH_DEG, lib_url="", make_default=False, target_explicit=TARGET_EXPLICIT, tiles=None, tile_radius=TILE_RADIUS, tile_margin=TILE_MARGIN, tile_max_mo=TILE_MAX_MO, tile_max_tri=TILE_MAX_TRI, tile_concurrency=TILE_CONCURRENCY) -> dict:
@@ -780,6 +785,8 @@ def build_cfg(name: str, *, rotate=ROTATE, hole=HOLE_RADIUS, hole_fade=HOLE_FADE
     }
     if modular:
         cfg["zones"], cfg["zonesLive"] = [], ""
+        if title:   # 1.4.7 : titre affiche dans l'onglet (facultatif) ; sans lui, le titre est le salon (room)
+            cfg["title"] = str(title).strip()[:60]
     if tiles:
         # mode tuiles : clés présentes seulement dans ce cas (sans « tiles », la config est celle d'avant)
         cfg.update({"tiles": str(tiles), "tileRadius": float(tile_radius), "tileMargin": float(tile_margin), "tileMaxMB": float(tile_max_mo),
@@ -865,7 +872,7 @@ const C = await (async () => {
   }
   return cfg;
 })();
-document.title = C.room || document.title;
+document.title = C.title || C.room || document.title;
 { const sky = '#' + (Number(C.skyColor) >>> 0).toString(16).padStart(6, '0'); document.documentElement.style.background = sky; document.body.style.background = sky; }"""
 SHELL_CFG_TAG = '<script type="application/json" id="cfg">__CONFIG__</script>\n'
 SHELL_GLB_TAG = '<script type="application/octet-stream" id="glb">__GLB_B64__</script>\n'
@@ -1186,8 +1193,6 @@ def generate(glb_path: pathlib.Path, out_path: pathlib.Path, vendor_dir, modular
             print(_tr("py.glb2html.erreur_nom_de_region_0_refuse", rname or out_path.stem), file=sys.stderr)
             return False
     if modular:
-        if kw.get("title"):
-            print(_tr("py.glb2html.avertissement_title_est_ignore_en_mode"), file=sys.stderr)
         if kw.get("zones_live"):
             print(_tr("py.glb2html.avertissement_zones_live_est_ignore_en"), file=sys.stderr)
         kw = dict(kw, zones_live="")
@@ -1306,8 +1311,6 @@ def generate_tiles(tiles_path: pathlib.Path, doc, out_path: pathlib.Path, vendor
         if rname is None or not valid_region_name(rname):
             print(_tr("py.glb2html.erreur_nom_de_region_0_refuse", rname or out_path.stem), file=sys.stderr)
             return False
-    if kw.get("title"):
-        print(_tr("py.glb2html.avertissement_title_est_ignore_en_mode"), file=sys.stderr)
     if kw.get("zones_live"):
         print(_tr("py.glb2html.avertissement_zones_live_est_ignore_en"), file=sys.stderr)
     kw = dict(kw, zones_live="")
@@ -1337,7 +1340,7 @@ def generate_tiles(tiles_path: pathlib.Path, doc, out_path: pathlib.Path, vendor
 
 def write_config(cfg_path: pathlib.Path, name: str, kw):
     """Écrit <page>.config.json = le dictionnaire cfg de la page modulaire (carte comprise, zones exclues), JSON sans BOM."""
-    cfg = build_cfg(name, **{k: v for k, v in kw.items() if k != "title"}, modular=True)
+    cfg = build_cfg(name, **kw, modular=True)
     write_atomic(cfg_path, json.dumps(cfg, ensure_ascii=False, indent=1).encode("utf-8"))
     return cfg
 
@@ -1348,7 +1351,7 @@ MAJ_KEYS = {
     "zoom": ("zoom",), "cam_dir": ("camDir",), "target": ("target", "targetExplicit"), "foliage_cutout": ("foliageCutout",), "sea_color": ("seaColor",),
     "sky_color": ("skyColor",), "sea_segments": ("seaSegments",), "walk": ("walk",), "eye_height": ("eyeHeight",), "walk_speed": ("walkSpeed",),
     "walk_ignore": ("walkIgnore",), "solid_materials": ("solidMaterials",), "names": ("names",), "presence_url": ("presenceUrl",), "chat": ("chat",), "chat_fade": ("chatFade",), "profile": ("profile",),
-    "spectate": ("spectate",), "panel": ("panel",), "map_url": ("mapUrl",), "room": ("room",), "sea_enabled": ("sea",), "anim_enabled": ("anim",), "retina": ("retina",), "light": ("light",),
+    "spectate": ("spectate",), "panel": ("panel",), "map_url": ("mapUrl",), "room": ("room",), "title": ("title",), "sea_enabled": ("sea",), "anim_enabled": ("anim",), "retina": ("retina",), "light": ("light",),
     "zone_marker": ("zoneMarker",), "show_spawns": ("showSpawns",), "zone_cone": ("zoneCone",), "fly": ("fly",), "zone_info_dist": ("zoneInfoDist",), "compass": ("compass",), "north": ("northDeg",), "lib_url": ("libUrl",), "tile_radius": ("tileRadius",), "tile_margin": ("tileMargin",),
     "tile_max_mo": ("tileMaxMB",), "tile_max_tri": ("tileMaxTriangles",), "tile_concurrency": ("tileConcurrency",), "tiles": ("tiles",),
     "map": ("map",), "register": ("map",),
@@ -1437,7 +1440,7 @@ def run_maj(a, kw, explicit, S_reg):
     kw.pop("make_default", None)
     if a.input and a.tiles:
         sys.exit(_tr("py.glb2html.erreur_tiles_remplace_le_glb_ne"))
-    explicit = set(explicit) - {"input", "output", "maj", "vendor", "shared_shell", "modular", "config_only", "zones_only", "zones_live", "title", "zones", "map_page", "thumb", "default",
+    explicit = set(explicit) - {"input", "output", "maj", "vendor", "shared_shell", "modular", "config_only", "zones_only", "zones_live", "zones", "map_page", "thumb", "default",
                                   "region_name", "region_url", "region_xy", "region_spawn"}
     kw.update(tile_radius=clamp(a.tile_radius, 10, 5000), tile_margin=clamp(a.tile_margin, 0, 5000), tile_max_mo=clamp(a.tile_max_mo, 1, 100000),
               tile_max_tri=int(clamp(a.tile_max_tri, 1000, 10**9)), tile_concurrency=int(clamp(a.tile_concurrency, 1, 16)))
@@ -1474,7 +1477,7 @@ def run_maj(a, kw, explicit, S_reg):
         print(_tr("py.glb2html.avertissement_region_name_region_url_region"), file=sys.stderr)
     if not a.register and not a.map and "map" not in explicit:
         kw["map_entries"] = old.get("map") if isinstance(old.get("map"), list) else []
-    new = build_cfg(out.stem, **{k: v for k, v in kw.items() if k != "title"}, modular=True)
+    new = build_cfg(out.stem, **kw, modular=True)
     cfg, changes = merge_maj_cfg(old, new, explicit)
     if a.input:
         inp = pathlib.Path(a.input)
@@ -1615,6 +1618,7 @@ def main():
     ap.add_argument("--register", help=_tr("py.glb2html.fichier_regions_json_a_mettre_a"))
     ap.add_argument("--scan-sites", metavar="FOLDER", help=_tr("py.glb2html.scan.help"))
     ap.add_argument("--dry-run", action="store_true", help=_tr("py.glb2html.scan.dryhelp"))
+    ap.add_argument("--prune-missing", action="store_true", help=_tr("py.glb2html.scan.prunehelp"))
     ap.add_argument("--region-name", help=_tr("py.glb2html.nom_affiche_dans_la_carte_defaut"))
     ap.add_argument("--region-url", help=_tr("py.glb2html.adresse_de_la_page_de_cette"))
     ap.add_argument("--region-xy", metavar="X,Y", help=_tr("py.glb2html.position_sur_la_grille_comme_opensim"))
@@ -1832,8 +1836,10 @@ def main():
             else:
                 print(_tr("py.glb2html.avertissement_map_page_ignore_aucune_region_2"), file=sys.stderr)
         sys.exit(0 if ok else 1)
+    if a.prune_missing and not a.scan_sites:
+        ap.error(_tr("py.glb2html.scan.prunenoscan"))
     if a.scan_sites and not a.input:   # v49 : mise à jour de regions.json depuis le dossier des sites
-        scan_sites(a.scan_sites, a.dry_run)
+        scan_sites(a.scan_sites, a.dry_run, a.prune_missing)
         sys.exit(0)
     if a.register and not a.input:
         if not (a.region_name and a.region_url and a.room):

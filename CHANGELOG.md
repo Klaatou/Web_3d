@@ -4,6 +4,19 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.4.0)
 
+### 03/11/2026 : version 1.4.7 : titre affiché distinct du salon ; `--prune-missing`
+
+- **Nouveau** (demande de Klaatou : « Houses » dans l'onglet, `houses` dans les fichiers) : clé facultative **`title`** dans `NOM.config.json` (60 caractères au plus). Le titre de l'onglet devient `title`, sinon `room` comme avant (`gen_tpl.py`, coquille : `document.title = C.title || C.room`). `--title` de `glb2html.py`, jusqu'ici **ignoré** en mode coquille et en mode tuiles (avec un avertissement), l'écrit dans la config ; `--update` le garde s'il n'est pas redonné. Sans `--title`, aucune clé n'est ajoutée : les configs existantes ne changent pas. Le salon de présence (`room`) et les noms de fichiers ne changent pas.
+- **Nouveau** : `--scan-sites` donne à une **nouvelle** fiche le nom `title` de la config (sinon le nom du fichier) ; les fiches existantes gardent leur nom.
+- **Nouveau** : `--prune-missing` (avec `--scan-sites`) retire de `regions.json` les fiches **locales** dont la région est introuvable dans le dossier ; les fiches externes sont gardées ; `--dry-run` montre la liste sans rien écrire. Sans cette option, rien n'est supprimé, comme avant. Seul nouveau drapeau du lot.
+- **Retiré** : l'avertissement « `--title` est ignoré » (texte `py.glb2html.avertissement_title_est_ignore_en_mode`, devenu inutile).
+- **Test** : `tests/titre.py` (nouveau) ; documents en retard : manuel § 27 (clé `title`), manuel (`--prune-missing`), `PROCEDURES`, `HISTORIQUE`/`HISTORY`.
+- **New** (Klaatou's request: "Houses" in the tab, `houses` in the files): optional **`title`** key in `NAME.config.json` (60 characters at most). The tab title becomes `title`, otherwise `room` as before (`gen_tpl.py`, shell: `document.title = C.title || C.room`). `--title` of `glb2html.py`, until now **ignored** in shell and tiles modes (with a warning), writes it to the config; `--update` keeps it when not given again. Without `--title`, no key is added: existing configs do not change. The presence room (`room`) and the file names do not change.
+- **New**: `--scan-sites` gives a **new** card the config's `title` as its name (otherwise the file name); existing cards keep their name.
+- **New**: `--prune-missing` (with `--scan-sites`) removes from `regions.json` the **local** cards whose region is not found in the folder; external cards are kept; `--dry-run` shows the list without writing. Without this option nothing is deleted, as before. The only new flag of the batch.
+- **Removed**: the "`--title` is ignored" warning (text `py.glb2html.avertissement_title_est_ignore_en_mode`, no longer needed).
+- **Test**: `tests/titre.py` (new); documents behind: manual § 27 (`title` key), manual (`--prune-missing`), `PROCEDURES`, `HISTORIQUE`/`HISTORY`.
+
 ### 03/11/2026 : version 1.4.6 : `glb2tiles.py --compress`
 
 - **Nouveau** (demande de Klaatou : la région « Houses » passe de 1 434 Mo à environ 650 Mo, ce qui permet de la publier sur GitHub Pages ; limite d'environ 1 Go par site, à revérifier) : l'option `--compress` de `glb2tiles.py` compresse, **après** l'écriture des tuiles et de la vue d'ensemble (y compris avec `--overview-only`), chaque `.glb` avec `gltfpack` et les options `-cc -kn -ke -km -vpf -vtf` (jamais `-tc` : KTX2 n'est pas lu par le visionneur ; sans `-vtf`, `gltfpack` signale des erreurs de coordonnées de texture). Mesures de Klaatou (03/11/2026) : tuile de 33,2 Mo → 15,9 Mo ; vue d'ensemble 23 Mo → 4,43 Mo.
