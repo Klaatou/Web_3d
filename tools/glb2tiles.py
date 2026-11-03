@@ -28,7 +28,11 @@ unique est simplifiée une seule fois (regroupement de sommets), le terrain est 
 tuiles (--no-overview pour s'en passer) ou seule (--overview-only, mêmes options de découpage). Options --ov-*.
 
 Hors lot : découpage par triangles d'un mesh unique plus grand qu'une cellule (terrain, mer), compression des tuiles.
-Les GLB compressés (Draco, meshopt) sont refusés.
+Les GLB compressés (Draco, meshopt) sont refusés en entrée.
+
+--compress (1.4.6) : après l'écriture des tuiles et de la vue d'ensemble, compresse chaque .glb produit avec gltfpack
+(-cc -kn -ke -km -vpf -vtf ; jamais -tc) ; gltfpack est cherché dans le PATH, sinon par npx. Un fichier déjà compressé est sauté ;
+X.tiles.json n'est pas modifié (ses « bytes » restent ceux d'avant la compression : le budget de chargement reste prudent).
 
 Les fonctions communes de mesure (lecture de l'en-tête, matrices, instances) viennent de glb-stats.py, qui doit se
 trouver à côté de ce script (build.py le recopie dans dist/).
@@ -43,7 +47,9 @@ import json
 import math
 import os
 import re
+import shutil
 import statistics
+import subprocess
 import struct
 import sys
 import time
@@ -1969,6 +1975,7 @@ def main(argv=None, log_path=None):
     ap.add_argument("--ov-terrain-step", metavar="OV_TERRAIN_STEP", dest="ov_terrain_pas", type=float, default=OV_PAS_TERRAIN, help=_tr("py.glb2tiles.m_pas_du_reseau_du_terrain"))
     ap.add_argument("--force", dest="forcer", action="store_true", help=_tr("py.glb2tiles.decouper_meme_si_la_recommandation_est"))
     ap.add_argument("--output", metavar="OUTPUT", dest="sortie", help=_tr("py.glb2tiles.dossier_de_sortie_defaut_a_cote"))
+    ap.add_argument("--compress", action="store_true", help=_tr("py.glb2tiles.compress_aide"))
     ap.add_argument("--nopause", action="store_true", help=_tr("py.glb2tiles.ne_pas_attendre_entree_a_la"))
     a = ap.parse_args(old_options(sys.argv[1:] if argv is None else list(argv)))
     P = Params(a.budget, a.budget_tri, a.cote_min, a.entier_poids, a.entier_etendue, a.seuil, a.seuil_tri, a.aberrant, a.bloc,
@@ -1976,6 +1983,8 @@ def main(argv=None, log_path=None):
     OP = ParamsOv(a.ov_budget, a.ov_budget_tri, a.ov_seuil, a.ov_seuil_max, a.ov_resolution, a.ov_terrain_pas)
     if a.sans_vue_ensemble and a.vue_ensemble_seule:
         raise ErreurGlb(_tr("py.glb2tiles.sans_vue_ensemble_et_vue_ensemble"))
+    if a.compress and not a.analyse and not trouver_gltfpack():
+        raise ErreurGlb(_tr("py.glb2tiles.compress_absent"))   # avant toute écriture : rien n'est modifié
     t0 = time.time()
     chemin = Path(a.glb)
     if not chemin.is_file():
@@ -1990,7 +1999,8 @@ def main(argv=None, log_path=None):
         sortie = Path(a.sortie) if a.sortie else chemin.resolve().parent
         nom = chemin.stem
         if a.vue_ensemble_seule and not a.analyse:
-            return vue_ensemble_seule(glb, plan, tuiles, sortie, nom, OP, t0)
+            code = vue_ensemble_seule(glb, plan, tuiles, sortie, nom, OP, t0)
+            return compresser_sortie(sortie, nom) if a.compress and not code else code
         decoupe, phrase = recommandation(glb, plan, tuiles)
         if a.analyse:
             for ligne in rapport_analyse(glb, plan, tuiles):
@@ -2060,9 +2070,105 @@ def main(argv=None, log_path=None):
         for w in avert:
             log(_tr("py.glb2tiles.warning_prefix") + w)
         log(_tr("py.glb2tiles.temps_0_1f_s_1_octets", time.time() - t0, fmt(glb.octets_lus), fmt(glb.taille)))
-        return 0
+        return compresser_sortie(sortie, nom) if a.compress else 0
     finally:
         glb.fermer()
+
+
+# ---------------------------------------------------------------- 1.4.6 : compression des tuiles (--compress)
+
+GLTFPACK_OPTIONS = ["-cc", "-kn", "-ke", "-km", "-vpf", "-vtf"]   # meshopt + quantification, noms et extras gardés, matériaux gardés ; -vtf : coordonnées de texture en flottants ; jamais -tc (KTX2 non lu)
+
+
+def trouver_gltfpack():
+    """Commande de gltfpack : le programme du PATH, sinon « npx -y gltfpack » (Node requis) ; None si ni l'un ni l'autre."""
+    g = shutil.which("gltfpack")
+    if g:
+        return [g]
+    n = shutil.which("npx")
+    return [n, "-y", "gltfpack"] if n else None
+
+
+def extensions_glb(chemin):
+    """extensionsUsed d'un GLB (lit seulement l'en-tête et le premier bloc JSON) ; None si illisible."""
+    try:
+        with open(chemin, "rb") as f:
+            en = f.read(20)
+            if len(en) < 20 or en[:4] != b"glTF":
+                return None
+            n, typ = struct.unpack("<I4s", en[12:20])
+            if typ != b"JSON" or n > 256 << 20:
+                return None
+            return json.loads(f.read(n).decode("utf-8")).get("extensionsUsed", [])
+    except (OSError, ValueError):
+        return None
+
+
+def compresser_fichiers(commande, fichiers):
+    """Compresse chaque GLB de la liste (fichier temporaire puis remplacement atomique) ; renvoie 0, ou 3 si un fichier a échoué."""
+    t0 = time.time()
+    faits = sautes = erreurs = avert = 0
+    avant = apres = 0
+    for ch in fichiers:
+        ch = Path(ch)
+        ext = extensions_glb(ch)
+        if ext is None:
+            erreurs += 1
+            log(_tr("py.glb2tiles.compress_illisible", ch.name))
+            continue
+        comp = [e for e in ext if e in COMPRESSIONS]
+        if comp:
+            sautes += 1
+            log(_tr("py.glb2tiles.compress_saute", ch.name, ", ".join(comp)))
+            continue
+        tmp = ch.with_name(ch.stem + ".gltfpack-tmp.glb")
+        try:
+            r = subprocess.run(commande + ["-i", str(ch), "-o", str(tmp)] + GLTFPACK_OPTIONS, capture_output=True, text=True, encoding="utf-8", errors="replace")
+            sortie = (r.stdout or "") + "\n" + (r.stderr or "")
+            w = [x.strip() for x in sortie.splitlines() if re.match(r"\s*warning", x, re.I)]
+            if r.returncode != 0 or not tmp.is_file() or tmp.stat().st_size == 0:
+                raise ErreurGlb(_tr("py.glb2tiles.compress_code", r.returncode, " ".join(sortie.split())[:300]))
+            if not [e for e in (extensions_glb(tmp) or []) if e in COMPRESSIONS]:
+                raise ErreurGlb(_tr("py.glb2tiles.compress_pas_compresse"))
+            a, b = ch.stat().st_size, tmp.stat().st_size
+            os.replace(tmp, ch)
+            faits += 1
+            avant += a
+            apres += b
+            avert += len(w)
+            log(_tr("py.glb2tiles.compress_fait", ch.name, a / MO, b / MO, len(w)))
+            for x in w[:5]:
+                log("    " + x)
+        except (ErreurGlb, OSError) as e:
+            erreurs += 1
+            log(_tr("py.glb2tiles.compress_erreur", ch.name, e))
+        finally:
+            try:
+                tmp.unlink()
+            except OSError:
+                pass
+    log(_tr("py.glb2tiles.compress_total", faits, sautes, erreurs, avert, avant / MO, apres / MO, time.time() - t0))
+    return 3 if erreurs else 0
+
+
+def compresser_sortie(sortie, nom):
+    """--compress : compresse les tuiles de X.tiles.json (qui n'est pas modifié) et X.overview.glb."""
+    commande = trouver_gltfpack()
+    if not commande:
+        raise ErreurGlb(_tr("py.glb2tiles.compress_absent"))
+    fichiers = []
+    try:
+        doc = json.loads((Path(sortie) / f"{nom}.tiles.json").read_text(encoding="utf-8-sig"))
+        fichiers = [Path(sortie) / f["file"] for f in doc.get("tiles", []) if isinstance(f, dict) and f.get("file")]
+    except (OSError, ValueError):
+        pass
+    ov = Path(sortie) / f"{nom}.overview.glb"
+    if ov.is_file():
+        fichiers.append(ov)
+    fichiers = [f for f in fichiers if f.is_file()]
+    log("")
+    log(_tr("py.glb2tiles.compress_debut", len(fichiers), " ".join(commande[:3] if len(commande) > 1 else commande[:1])))
+    return compresser_fichiers(commande, fichiers)
 
 
 def ecrire_index(chemin, doc):

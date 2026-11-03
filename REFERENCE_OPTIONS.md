@@ -113,6 +113,7 @@ Découpe un GLB énorme en tuiles autonomes et fabrique la vue d'ensemble légè
 | `--ov-terrain-step` | OV_TERRAIN_STEP | `4.0` | m : pas du réseau du terrain dans la vue d'ensemble (défaut %(default)g)<br>m: step of the terrain grid in the overview (default %(default)g) |
 | `--force` | (aucune) / (none) |  | découper même si la recommandation est « pas de découpage »<br>split even if the recommendation is "no split" |
 | `--output` | OUTPUT |  | dossier de sortie (défaut : à côté du GLB)<br>output folder (default: beside the GLB) |
+| `--compress` | (aucune) / (none) |  | compresser chaque .glb écrit (tuiles et vue d'ensemble) avec gltfpack (-cc -kn -ke -km -vpf -vtf) ; gltfpack est cherché dans le PATH, sinon par npx (Node requis) ; un fichier déjà compressé est sauté ; X.tiles.json n'est pas modifié<br>compress every written .glb (tiles and overview) with gltfpack (-cc -kn -ke -km -vpf -vtf); gltfpack is looked up in the PATH, otherwise run through npx (Node required); an already compressed file is skipped; X.tiles.json is not modified |
 | `--nopause` | (aucune) / (none) |  | ne pas attendre Entrée à la fin<br>do not wait for Enter at the end |
 
 ## oar2glb.py
