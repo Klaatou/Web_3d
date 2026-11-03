@@ -726,7 +726,7 @@ function afterLoadTiles(name, size) {
   if ($('bWalk')) $('bWalk').disabled = false;
   if (cfg.spectate && cfg.presenceUrl) { viewer.spectate(false); viewer.spectate(true); }
   const tl = $('tilesLoad'); tl.hidden = false;
-  viewer.onTiles = s => { tl.textContent = tr('viewer.tiles.line', s.loaded, s.total, s.loading ? ' · ' + tr('page.tiles.loading', s.loading) : '', s.failed ? ' · ' + tr('viewer.tiles.failed', s.failed) : '', Math.round(s.bytes / 104857.6) / 10); };
+  viewer.onTiles = s => { tl.textContent = tr('viewer.tiles.line', s.loaded, s.total, s.loading ? ' · ' + tr('page.tiles.loading', s.loading) : '', s.failed ? ' · ' + tr('viewer.tiles.failed', s.failed) : '', Math.round(s.bytes / 104857.6) / 10) + (s.here && s.here.length ? ' · ' + tr('page.tiles.here', s.here.join(', ')) : ''); };
 }
 function openTilesIndex(rel) {
   const f = tilesDir.map.get(rel);

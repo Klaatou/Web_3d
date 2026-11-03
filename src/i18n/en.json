@@ -354,6 +354,7 @@
  "page.state.view.global": "global (orbit)",
  "page.tiles.error": "Tile “{0}”: {1} (will retry later)",
  "page.tiles.failed": "{0} failed (will retry)",
+ "page.tiles.here": "Tile(s) under the avatar: {0}",
  "page.tiles.loading": "{0} in progress",
  "page.tiles.main.one": "Tiles: {0} loaded / {1} · {2} MB · {3} triangles",
  "page.tiles.main.other": "Tiles: {0} loaded / {1} · {2} MB · {3} triangles",

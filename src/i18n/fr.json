@@ -354,6 +354,7 @@
  "page.state.view.global": "globale (orbite)",
  "page.tiles.error": "Tuile « {0} » : {1} (nouvelle tentative plus tard)",
  "page.tiles.failed": "{0} en échec (nouvelle tentative)",
+ "page.tiles.here": "Tuile(s) sous l'avatar : {0}",
  "page.tiles.loading": "{0} en cours",
  "page.tiles.main.one": "Tuiles : {0} chargée / {1} · {2} Mo · {3} triangles",
  "page.tiles.main.other": "Tuiles : {0} chargées / {1} · {2} Mo · {3} triangles",

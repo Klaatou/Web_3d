@@ -646,10 +646,12 @@ function createViewer(container, cfg0, loader) {
       else if (t.state === 'failed') failed++;
     }
     const now = performance.now(), wait = waitInfo(now);
-    return { total: TL.tiles.length, loaded, loading, failed, bytes, tri, waiting: !!TL.pending || now - TL.waitT < 600 || !!(wait && wait.kind === 'anchor'), wait, ov: { state: OV.state, bytes: OV.bytes, tri: OV.tri } };
+    // v1.4.2 : tuile(s) sous l'avatar (nom du fichier, sans dossier) ; vide hors promenade
+    const here = walking ? TL.tiles.filter(t => inTile(t, W.pos.x, W.pos.z, TILE_M)).map(t => String(t.file).split('/').pop()) : [];
+    return { total: TL.tiles.length, loaded, loading, failed, bytes, tri, here, waiting: !!TL.pending || now - TL.waitT < 600 || !!(wait && wait.kind === 'anchor'), wait, ov: { state: OV.state, bytes: OV.bytes, tri: OV.tri } };
   }
   function tilesInfo() {
-    const s = tilesStatus(), w = s.wait, key = [s.loaded, s.loading, s.failed, s.bytes, s.tri, s.waiting ? 1 : 0, OV.state, OV.bytes, OV.tri, w ? w.kind + w.ready + '/' + w.total + ':' + w.secs : ''].join('|');
+    const s = tilesStatus(), w = s.wait, key = [s.loaded, s.loading, s.failed, s.bytes, s.tri, s.waiting ? 1 : 0, OV.state, OV.bytes, OV.tri, w ? w.kind + w.ready + '/' + w.total + ':' + w.secs : '', s.here.join(',')].join('|');
     if (key === TL.infoKey) return;
     TL.infoKey = key;
     if (TL.onInfo) TL.onInfo(s);

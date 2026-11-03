@@ -4,6 +4,15 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.4.0)
 
+### 03/11/2026 : version 1.4.2 : le nom de la tuile sous l'avatar dans le panneau d'état
+
+- **Nouveau** (demande de Klaatou) : en région découpée en tuiles, la ligne « Tuiles : N chargées / … » du panneau Informations / état (et la ligne du viewer) ajoute « Tuile(s) sous l'avatar : T_3_0_5.glb » : le ou les fichiers dont la boîte contient la position de l'avatar en promenade (tolérance 0,5 m ; deux noms quand les boîtes se chevauchent). Plus besoin de F12 pour savoir où l'on est. Hors promenade (vue globale), la mention disparaît. `tilesState().here` donne la même liste (diagnostic).
+- **Mécanisme** : `tilesStatus()` (`core.js`) calcule `here` avec `inTile` ; la clé de `tilesInfo()` l'inclut, sinon la ligne ne se redessinerait pas en franchissant une frontière sans chargement. Textes : `page.tiles.here` (fr et en) ; `template.html` et `viewer_tpl.html` (les deux pages affichent la même mention).
+- **Test** : `tests/tuile_ici.py` (nouveau : région synthétique, marche de 300 m par tronçons, téléportation, sortie de promenade ; comparaison avec un calcul indépendant des boîtes).
+- **New** (Klaatou's request): in a region split into tiles, the "Tiles: N loaded / …" line of the Information / state panel (and the viewer's line) now adds "Tile(s) under the avatar: T_3_0_5.glb": the file(s) whose box contains the walking avatar's position (0.5 m tolerance; two names when boxes overlap). No more F12 to know where one is. Outside walking (global view) the mention disappears. `tilesState().here` returns the same list (diagnostics).
+- **How**: `tilesStatus()` (`core.js`) computes `here` with `inTile`; the `tilesInfo()` key includes it, otherwise the line would not redraw when crossing a border with nothing loading. Texts: `page.tiles.here` (fr and en); `template.html` and `viewer_tpl.html` (both pages show the same mention).
+- **Test**: `tests/tuile_ici.py` (new: synthetic region, 300 m walk in steps, teleport, leaving the walk; compared with an independent computation of the boxes).
+
 ### 02/11/2026 : version 1.4.1 : `CLAUDE.md` retiré
 
 - **Retiré** (demande de Klaatou, après relecture) : `CLAUDE.md` servait aux sessions Claude Code jusqu'à la v37 (23/10/2026) ; il le disait lui-même en tête. L'état courant est dans `REPRISE.md`, le détail dans `CHANGELOG.md` et les historiques, l'usage dans le manuel. Il contenait en outre des décisions renversées depuis (par exemple les flèches du chat passant par `viewer.holdKey`, changées en 1.2.1). Il reste dans l'historique git. `tests/samples.py` ne le contrôle plus ; le manuel (« Fichiers autonomes », FR et EN) ne le cite plus. Le fichier lui-même se retire avec `git rm CLAUDE.md` (ou en l'effaçant avant `git add -A`).

@@ -1344,6 +1344,7 @@ if (viewer.tiled) {
     info.hidden = false;
     info.textContent = trn('page.tiles.main', s.loaded, s.total, nb(s.bytes / 1048576, 0), tri(s.tri))
       + (s.loading ? ' · ' + tr('page.tiles.loading', s.loading) : '') + (s.failed ? ' · ' + tr('page.tiles.failed', s.failed) : '')
+      + (s.here && s.here.length ? ' · ' + tr('page.tiles.here', s.here.join(', ')) : '')
       + (s.ov && s.ov.state === 'ready' ? ' · ' + tr('page.tiles.ov', nb(s.ov.bytes / 1048576, 1), tri(s.ov.tri)) : '')
       + (s.ov && s.ov.state === 'failed' ? ' · ' + tr('page.tiles.ov.failed') : '');
     lastWait = s.wait;
