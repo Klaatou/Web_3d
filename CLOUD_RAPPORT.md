@@ -92,3 +92,11 @@ L'étiquette `v1.4.0` n'existe pas dans le dépôt cloné (aucune étiquette) : 
 Aucun échec « sensible à la charge » : tous les tests ont été lancés séparément. `v31` et `v33` (355 s) passent.
 
 **Non testé ici** : Windows, Edge, carte graphique réelle, Firefox, Safari, téléphone.
+
+## Étape 2 : lot 1.4.4 (faite)
+
+- (a) `core.js` : champ `got` ajouté à `tilesStatus()` et à la clé de `tilesInfo()` ; `bytes` inchangé (budget). Affichage : `template.html` (`page.tiles.main`) et `viewer_tpl.html` (`viewer.tiles.line`). (b) setter `onTiles` : rejoue l'état.
+- Tests lancés (tous OK) : `tuile_ici` (étendu : index gonflé de 2 Mo par tuile, `bytes` suit l'index, `got` et la ligne suivent les fichiers servis ; viewer : ligne présente dès le branchement, sans attendre), `tuiles`, `v31`, `v32`, `i18n`, `smoke`, `dist_a_jour`.
+- Contre-épreuve : avec `src/` d'avant le correctif, `tuile_ici` échoue (ligne vide au branchement du viewer, puis plantage faute de `got`).
+- Build : seuls `glb-viewer.html`, `glb2html.py` et `index.html` ont changé de numéro (1.4.3 → 1.4.4) ; les autres fichiers de `dist/` gardent le leur.
+- Non testé : poids affiché avec de vraies tuiles `gltfpack` (seulement un index gonflé sur une région synthétique), Windows, Edge, carte graphique.

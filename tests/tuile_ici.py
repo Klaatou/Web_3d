@@ -227,6 +227,9 @@ async def main():
             vp.on("pageerror", lambda e: errs.append(str(e)))
             await vp.goto(f"http://127.0.0.1:{port}/glb-viewer.html?tiles=Tuilee.tiles.json")
             await vp.wait_for_function("window.__viewer && window.__viewer.tiled && window.__viewer.tilesState().ready.length > 0 && !document.getElementById('tilesLoad').hidden", timeout=60000)   # gestionnaire branche apres loadTiles
+            # 1.4.4 : la ligne est la des le branchement du gestionnaire (avant : vide tant que rien ne changeait), sans attendre un autre evenement
+            tx0 = await vp.evaluate("document.getElementById('tilesLoad').textContent")
+            rapport(tx0.startswith("Tuiles : "), "viewer : la ligne « Tuiles : … » est la des que le gestionnaire est branche", tx0)
             await vp.evaluate("window.__viewer.walkStart({ pos: [130, 14, -100], yaw: 0 })")
             try:
                 await vp.wait_for_function("document.getElementById('tilesLoad').innerText.includes(\"sous l'avatar\")", timeout=20000)
@@ -237,6 +240,29 @@ async def main():
             lv = [x for x in tx.split("\n") if x.strip()]
             rapport(len(lv) == 2 and lv[0].startswith("Tuiles : ") and lv[1].startswith("Tuile(s) sous l'avatar : ") and "sous l'avatar" not in lv[0], "viewer : la tuile sous l'avatar sur sa propre ligne", (tx, dbg))
             rapport(max(lags) < 4000, "la ligne rattrape l'etat (retard max %d ms, mediane %d ms)" % (max(lags), sorted(lags)[len(lags) // 2]), lags)
+            # 1.4.4 : poids affiche = poids recu ; le budget (bytes) reste sur l'index. L'index est gonfle de 2 Mo par tuile : l'ancien affichage donnerait
+            # plusieurs Mo, le nouveau donne le poids reel des fichiers servis (quelques Ko, donc « 0 Mo »)
+            idx_p = src / "Tuilee.tiles.json"
+            idx_orig = idx_p.read_text(encoding="utf-8")
+            idx = json.loads(idx_orig)
+            for t in idx["tiles"]:
+                t["bytes"] = t["bytes"] + 2 * 1048576
+            idx_p.write_text(json.dumps(idx), encoding="utf-8")
+            site_idx = site / "Tuilee.tiles.json"
+            if site_idx.exists() and site_idx.resolve() != idx_p.resolve():
+                site_idx.write_text(json.dumps(idx), encoding="utf-8")
+            pg3 = await ctx.new_page()
+            pg3.on("pageerror", lambda e: errs.append(str(e)))
+            await pg3.goto(f"http://127.0.0.1:{port}/index.html?region=Tuilee#spawn=default&name=Test2")
+            await pg3.wait_for_function("document.getElementById('msg') === null", timeout=60000)
+            await pg3.wait_for_function("window.__viewer.tilesState().loaded >= 2 && window.__viewer.tilesState().loading === 0", timeout=60000)
+            st = await pg3.evaluate("(() => { const s = window.__viewer.tilesState(); return { loaded: s.loaded, bytes: s.bytes, got: s.got }; })()")
+            lg = await pg3.evaluate("document.getElementById('tilesInfo').innerText.split('\\n')[0]")
+            rapport(st["bytes"] >= st["loaded"] * 2 * 1048576 and st["got"] < st["bytes"] / 2, "etat : bytes = somme de l'index (gonfle), got = poids recu (bien plus petit)", st)
+            rapport(" · 0 Mo · " in lg, "page : la ligne montre le poids recu (0 Mo), pas celui de l'index (%d Mo)" % round(st["bytes"] / 1048576), lg)
+            idx_p.write_text(idx_orig, encoding="utf-8")
+            if site_idx.exists() and site_idx.resolve() != idx_p.resolve():
+                site_idx.write_text(idx_orig, encoding="utf-8")
             rapport(not errs, "aucune erreur JavaScript", errs)
         finally:
             proc.kill()

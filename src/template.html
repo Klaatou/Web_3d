@@ -1342,7 +1342,7 @@ if (viewer.tiled) {
   const nb = (n, d) => i18nNum(n, d), tri = v => (v >= 1e6 ? nb(v / 1e6, 2) + ' M' : nb(v / 1e3, 0) + ' k');
   viewer.onTiles = s => {
     info.hidden = false;
-    info.textContent = trn('page.tiles.main', s.loaded, s.total, nb(s.bytes / 1048576, 0), tri(s.tri))
+    info.textContent = trn('page.tiles.main', s.loaded, s.total, nb(s.got / 1048576, 0), tri(s.tri))
       + (s.loading ? ' · ' + tr('page.tiles.loading', s.loading) : '') + (s.failed ? ' · ' + tr('page.tiles.failed', s.failed) : '')
       + (s.here && s.here.length ? '\n' + tr('page.tiles.here', s.here.join(', ')) : '')
       + (s.ov && s.ov.state === 'ready' ? '\n' + tr('page.tiles.ov', nb(s.ov.bytes / 1048576, 1), tri(s.ov.tri)) : '')

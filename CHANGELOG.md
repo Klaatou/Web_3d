@@ -4,6 +4,15 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.4.0)
 
+### 03/11/2026 : version 1.4.4 : poids affiché = poids reçu ; viewer : la ligne des tuiles dès le départ
+
+- **Corrigé** (a) : le poids de la ligne « Tuiles : … » (page et viewer) additionnait les `bytes` de l'index ; après compression par `gltfpack`, l'index garde les tailles d'avant et l'affichage montrait presque le double du poids réellement reçu. `tilesStatus()` (`core.js`) ajoute un champ `got` (somme de `t.got`, la taille téléchargée, ou de `t.bytes` tant que la tuile n'est pas arrivée) ; l'affichage (`template.html`, `viewer_tpl.html`) l'utilise. **Le budget de chargement reste sur les `bytes` de l'index** (décision de Klaatou) ; `bytes` n'est ni retiré ni renommé ; `got` est dans la clé de `tilesInfo()`.
+- **Corrigé** (b) : dans le viewer, la ligne des tuiles restait vide jusqu'au prochain changement, car le gestionnaire `onTiles` est branché après `loadTiles` ; le setter `onTiles` (`core.js`) rejoue maintenant l'état à son branchement.
+- **Test** : `tests/tuile_ici.py` (index gonflé de 2 Mo par tuile : `bytes` suit l'index, `got` et la ligne affichée suivent les fichiers servis ; viewer : ligne présente dès le branchement). Contre-épreuve : sans le correctif, ces contrôles échouent.
+- **Fixed** (a): the weight on the "Tiles: …" line (page and viewer) summed the index `bytes`; after `gltfpack` compression the index keeps the old sizes, so the display showed almost twice the weight actually received. `tilesStatus()` (`core.js`) adds a `got` field (sum of `t.got`, the downloaded size, or of `t.bytes` until the tile has arrived); the display (`template.html`, `viewer_tpl.html`) uses it. **The loading budget stays on the index `bytes`** (Klaatou's decision); `bytes` is neither removed nor renamed; `got` is part of the `tilesInfo()` key.
+- **Fixed** (b): in the viewer the tiles line stayed empty until the next change, because the `onTiles` handler is attached after `loadTiles`; the `onTiles` setter (`core.js`) now replays the state when attached.
+- **Test**: `tests/tuile_ici.py` (index inflated by 2 MB per tile: `bytes` follows the index, `got` and the displayed line follow the served files; viewer: line present as soon as the handler is attached). Counter-test: without the fix these checks fail.
+
 ### 03/11/2026 : version 1.4.3 : ligne des tuiles : un élément par ligne
 
 - **Corrigé** (constat de Klaatou : la fenêtre Informations / État était illisible) : depuis la 1.4.2, la ligne des tuiles réunissait tout derrière des « · » : « Tuiles : … · Tuile(s) sous l'avatar : … · Vue d'ensemble (à part) : … ». Chaque élément a maintenant sa ligne : tuiles chargées (avec « en cours » et « en échec »), tuile(s) sous l'avatar, vue d'ensemble. Même correction dans le viewer (`#tilesLoad`) : la tuile sous l'avatar sur sa propre ligne.
