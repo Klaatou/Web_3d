@@ -7,7 +7,7 @@
 | Étape | État | Contrôles | Reste |
 | --- | --- | --- | --- |
 | 1. Table de correspondance | faite | 228 titres, chacun placé une fois (script) | |
-| 2. Manuel français | non commencée | | |
+| 2. Manuel français | faite | script d'assemblage : 228 titres placés une fois ; codes en ligne comparés (ci-dessous) ; blocs de code : 7 sur 7 ; renvois `§` renumérotés automatiquement (aucun non résolu) | relecture humaine des chapitres 1 et 2 (textes neufs) |
 | 3. Manuel anglais | non commencée | | |
 | 4. Renvois des autres documents | non commencée | | |
 
@@ -20,6 +20,12 @@ Les 12 chapitres du brief, plus un 13e : l'annexe (tableau « version → conten
 - Les titres « Nouveautés de la vNN » disparaissent ; leurs sous-sections vont dans leur thème. Les textes d'introduction des conteneurs 37 et 38 et les § 36.5, 37.6, 37.8 vont en annexe.
 - Les notes « Non testé » / « Essayé » gardent leur thème et reçoivent la version entre parenthèses.
 - Seules suppressions : les 13 listes « Tests de la vNN » (y compris « Test de la coquille », ancien § 28.8, qui est une liste de tests) et les titres-conteneurs.
+
+## Étape 2 : manuel français
+
+Méthode : le nouveau `docs/fr/MANUEL.md` est assemblé par script à partir des blocs de l'ancien (aucune réécriture des faits), dans l'ordre du plan, avec renumérotation des titres et des renvois `§`. Textes neufs : titre, résumé, chapitres 1 et 2 (tirés de `GUIDE.md`, `README.fr.md` et de l'ancien manuel), une phrase d'introduction par chapitre (pointeurs seulement), l'annexe (tableau généré à partir des titres). Cinq renvois qui visaient des chapitres « Nouveautés » supprimés (`§ 25`, `§ 26`, `§ 29`, `§ 33`, `§ 34`) pointent désormais vers la sous-section précise (ancien 25.3, 26.1, 29.3, 33.1, 34.2).
+
+Contrôle « rien ne se perd » : 1 108 codes en ligne dans l'ancien, 1 086 dans le nouveau ; **28 absents, tous dans des listes « Tests de la vNN » supprimées** : `--zone-info-dist 40`, `tests/h37.py`, `tests/v37.py`, `v33.py`, `v35.py`, `v36.py` (ancien § 22.10) ; `tests/v39.py` (23.2) ; `tests/v40.py` (24.4) ; `tests/v35.py`, `tests/v36.py`, `tests/v41.py` (25.4) ; `tests/v42.py` (26.7) ; `tests/v46.py` (29.9) ; `tests/v47.py` à `tests/v51.py` (30.6 à 34.7) ; `.sep`, `POLL_ALERT_MS`, `POLL_MS`, `WS_OLD2`, `tests/i18n.py`, `tests/v52.py`, `tests/v52_http.py`, `tests/v52_renom.py` (35.7). Blocs de code : 7 dans l'ancien, 7 dans le nouveau, identiques.
 
 ## Étape 1 : table de correspondance
 
