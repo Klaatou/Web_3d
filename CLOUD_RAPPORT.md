@@ -8,7 +8,7 @@
 | --- | --- | --- | --- |
 | 1. Table de correspondance | faite | 228 titres, chacun placé une fois (script) | |
 | 2. Manuel français | faite | script d'assemblage : 228 titres placés une fois ; codes en ligne comparés (ci-dessous) ; blocs de code : 7 sur 7 ; renvois `§` renumérotés automatiquement (aucun non résolu) | relecture humaine des chapitres 1 et 2 (textes neufs) |
-| 3. Manuel anglais | non commencée | | |
+| 3. Manuel anglais | faite | `python verif_trad.py docs/fr/MANUEL.md docs/en/MANUAL.md` : OK, 0 erreur, 9 avertissements (glossaire, comme avant) ; 205 titres, 67 tableaux, 7 blocs de code, 2 331 codes en ligne identiques | relecture humaine des chapitres 1 et 2 anglais |
 | 4. Renvois des autres documents | non commencée | | |
 
 ## Plan retenu
@@ -26,6 +26,10 @@ Les 12 chapitres du brief, plus un 13e : l'annexe (tableau « version → conten
 Méthode : le nouveau `docs/fr/MANUEL.md` est assemblé par script à partir des blocs de l'ancien (aucune réécriture des faits), dans l'ordre du plan, avec renumérotation des titres et des renvois `§`. Textes neufs : titre, résumé, chapitres 1 et 2 (tirés de `GUIDE.md`, `README.fr.md` et de l'ancien manuel), une phrase d'introduction par chapitre (pointeurs seulement), l'annexe (tableau généré à partir des titres). Cinq renvois qui visaient des chapitres « Nouveautés » supprimés (`§ 25`, `§ 26`, `§ 29`, `§ 33`, `§ 34`) pointent désormais vers la sous-section précise (ancien 25.3, 26.1, 29.3, 33.1, 34.2).
 
 Contrôle « rien ne se perd » : 1 108 codes en ligne dans l'ancien, 1 086 dans le nouveau ; **28 absents, tous dans des listes « Tests de la vNN » supprimées** : `--zone-info-dist 40`, `tests/h37.py`, `tests/v37.py`, `v33.py`, `v35.py`, `v36.py` (ancien § 22.10) ; `tests/v39.py` (23.2) ; `tests/v40.py` (24.4) ; `tests/v35.py`, `tests/v36.py`, `tests/v41.py` (25.4) ; `tests/v42.py` (26.7) ; `tests/v46.py` (29.9) ; `tests/v47.py` à `tests/v51.py` (30.6 à 34.7) ; `.sep`, `POLL_ALERT_MS`, `POLL_MS`, `WS_OLD2`, `tests/i18n.py`, `tests/v52.py`, `tests/v52_http.py`, `tests/v52_renom.py` (35.7). Blocs de code : 7 dans l'ancien, 7 dans le nouveau, identiques.
+
+## Étape 3 : manuel anglais
+
+Même assemblage, mêmes positions de titres, à partir de l'ancien `docs/en/MANUAL.md` (les textes anglais existants sont repris tels quels) ; textes neufs traduits à la main (titre, résumé, chapitres 1 et 2, introductions, annexe). Le tableau de l'annexe renvoie à `HISTORIQUE.md` côté français et à `HISTORY.md` côté anglais, comme dans les deux anciens manuels.
 
 ## Étape 1 : table de correspondance
 

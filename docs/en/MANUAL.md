@@ -1,274 +1,68 @@
-# User manual: zones, portals and arrival points (1.1.0)
+# Web_3d manual (1.4.10)
 
-> **Summary (1.1.0).** This file is the detailed user manual; it is not meant to be read from end to end. For **all the options** of the tools, with their effect and their default, in French and English: `REFERENCE_OPTIONS.md` (generated from the tools by `gen_reference.py`). To **do a task step by step** (OAR to page, tiled region, update, zones, presence server, map): `PROCEDURES.md`. Here: zones and portals (§§ 1 to 10), keys (§ 2), settings and their files (§§ 11 to 19) and the new features version by version (§§ 18 to 37; § 27 is the JSON file reference). Language of the page and of the tools: § 21.8 to 21.11.
+> **Summary.** This manual follows the project from end to end, theme by theme: getting started (chapter 1), the tools (2), converting an OAR (3), measuring and cutting up a big region (4), placing the zones in the viewer (5), building the page (6), the page from the visitor's side (7), tiled regions (8), the world map (9), the presence server (10), the JSON file reference (11), troubleshooting (12) and, as an appendix, what each version brought (13). For **every option** of the tools, with its effect and default in French and English: `REFERENCE_OPTIONS.md` (generated from the tools by `gen_reference.py`). To **do a task step by step**: `PROCEDURES.md`. Language of the page and tools: § 7.49, § 2.2 and § 2.1.
 
-## 1. The rule that explains 90 % of failures
+## 1. Getting started
 
-Each zone has two names:
+Web_3d turns an OpenSim region (a `.oar` backup) into a **3D web page** you can walk around in: conversion to glTF (`.glb`), tile loading for huge regions, other visitors' avatars, chat, portals and zones. Visitors install nothing.
 
-| Field              | What it is for                              | Who reads it                            |
-| ------------------ | ------------------------------------------- | --------------------------------------- |
-| **Identifier**     | the technical name of the zone              | portals, the world map, `#spawn=` links |
-| **Displayed name** | the text seen by the visitor ("E: Emperor") | the screen only                         |
+Three paths, from the simplest to the most complete:
 
-**A portal always designates an arrival by its Identifier, never by its Displayed name.**
-The identifier is automatically lowercased, and any character other than an unaccented letter, a digit, `-` or `_` becomes a hyphen (`Salle du Trône` becomes `salle-du-tr-ne`). Write it directly in lowercase, without accents or spaces, to avoid surprises.
+| Path | For whom | Where |
+| --- | --- | --- |
+| **Ready-to-use package** (`galerie-photos.zip`, `region-simple.zip`) | trying it without building anything | the GitHub repository's releases page; `GUIDE.md` § 1.1 |
+| **From the OAR to the page** | having your own region in a page | chapters 3 (convert), 5 (zones), 6 (page) |
+| **The tools one by one** | heavy regions, a multi-region site, map, presence | chapters 2 and 4 to 10 |
 
-Correct example:
+`GUIDE.md` tells the path in order, task by task; `PROCEDURES.md` gives step-by-step procedures; this manual is the full description, theme by theme.
 
-- Arrival: Identifier `empereur`, Displayed name `Salle de l'Empereur`
-- Portal: Arrival point `empereur`
+| I want to… | Chapter |
+| --- | --- |
+| know what each file in `dist` is for | 2 |
+| convert an OAR to `.glb` | 3 |
+| measure or cut up a huge region | 4 |
+| place arrivals, portals, signs, links, images | 5 |
+| build or update the page | 6 |
+| know what the visitor can do (keys, flight, chat…) | 7 |
+| load a tiled region in the page | 8 |
+| link several regions with a map | 9 |
+| see other visitors, moderate, keep a log | 10 |
+| know the fields of the JSON files | 11 |
+| understand a failure | 12 |
+| know what each version brought | 13 |
 
-## 2. The keys
+## 2. The tools and their files
 
-| Key                                    | Effect                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **F** (v36)                            | **enters and leaves walk mode**, from the global view as from walk mode (like **P**); flight is toggled with **Home** (in v35, F toggled flight). **When leaving (v31)**, the small landing circle and the target of the global view are placed **on the ground, under the last place where the avatar was**; the camera comes back at the **same distance and in the same direction** from this target as before entering walk mode (it no longer returns to the exact spot you had left from). In tiles mode, the tiles around the avatar therefore stay loaded. |
-| **P** (v35)                            | **enter or leave walk mode** (the "Walk (P)" button stays in the global view; there is no "Leave the walk" button any more). In the **viewer**, P places a zone in walk mode: leave with **F**, **Shift+P** or the button                                                                                                                                                                                                                                                                                                                                          |
-| **E** (v36)                            | **triggers the nearby zone** (trigger "on click" or "both", as before v35; a "walking into it" portal fires when entering its radius, § 8). The name of the nearby zone is shown at the bottom: "click or E: …". **E does nothing else** (it no longer jumps nor goes up)                                                                                                                                                                                                                                                                                          |
-| **Page Up** (v35)                      | **short press on the ground = jump** (like Space); **held more than 0.4 s on the ground = take off**; in flight, held = go up                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| **Space** (v36)                        | on the ground: jump; **in flight, held: go up**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| **T** (v36)                            | shows or hides the **portal markers** (small cones, § 21.4); the choice is remembered                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| **Home** (v33)                         | take off or land (toggle; v36: F no longer toggles flight). In flight: **Page Up** or **Space** held goes up, **C** / **Page Down** goes down, no gravity, walls stay solid, never below the ground. Can be removed with `--no-fly` (§ 18.4)                                                                                                                                                                                                                                                                                                                       |
-| **M** (v35)                            | **in walk mode: toggles first person / third person**; outside walk mode: opens the world map (as before). **Ctrl+M opens the world map everywhere**. **v36: the key is recognised by the printed letter "m"**, not by its position: on an AZERTY keyboard it is the real M key (before, it was the "," key)                                                                                                                                                                                                                                                       |
-| **End**, **Alt + click** (v35)         | put the camera back **behind the avatar** (third person). **Alt + drag** orbits the camera (in third person the mouse already orbits; in first person, Alt + drag looks around like the mouse)                                                                                                                                                                                                                                                                                                                                                                     |
-| **wheel** (v35)                        | in walk mode, the page does not scroll. **Third person**: sets the camera distance (1 to 30 m, 4 m by default, remembered); **free camera**: moves the camera forwards / backwards along the line of sight; first person: nothing (§ 20.9)                                                                                                                                                                                                                                                                                                                         |
-| **double press** on W, S, ↑ or ↓ (v35) | **running** as long as the key stays down (two presses less than 300 ms apart); **Shift** still runs. No permanent running (Ctrl+R reloads the page)                                                                                                                                                                                                                                                                                                                                                                                                               |
-| **V** (v33)                            | change view: first person → third person → free camera → first person. The current view is written as text in the status block ("View: …", v34)                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| **R** (v33)                            | **back to the arrival point**: in walk mode, teleports to the `default` arrival (failing that, to the starting target) while waiting for the tile; in the global view, reframes the target and the camera on this point. The "Back to the arrival point (R)" button does the same                                                                                                                                                                                                                                                                                  |
-| **Enter** (v33)                        | open the chat input; **Enter sends and keeps the input open**, **Esc** closes it. The arrows stay in the text while the input is open; after Esc they move the avatar again (§ 18.5)                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| **Page Up** / **Page Down** (v34)      | in flight, go up / down (in addition to **Space** held / **C**, v36); the page does not scroll. **Going down to the ground lands the avatar**: flight stops by itself. "Fly / Land" button in the bottom bar for those who have no Home key (§ 19.3)                                                                                                                                                                                                                                                                                                               |
-| **Esc** (v34)                          | releases the mouse in walk mode. The mouse then stays **free** until **G** or the "Capture the mouse" button (§ 19.4); **a click never captures it** (after v52)                                                                                                                                                                                                                                                                                                                                                                                      |
-| **G** (v34) | **toggles the mouse capture** (after v52): captures it if it is free, releases it if it is captured. The "Capture the mouse" button only captures (a captured pointer cannot click anything); **a click never captures it** |
-| **O** (v37)                            | opens / closes the **Settings** window (toggle, like **H** and **I**); **R** is already taken by the return to the arrival point                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| **I** (v34)                            | the **Information / Status** window (v36: formerly the "status block": view, mode, mouse, keyboard, position, tiles): hidden → expanded; collapsed → expanded; expanded → hidden. **H** does the same for the help alone (§ 19.1, § 21.3)                                                                                                                                                                                                                                                                                                                          |
-| **K** (v46)                            | shows or hides the **movement pad** (the **on-screen arrows**; like the "Arrows (K)" button and the Settings checkbox; remembered by the browser; same place on AZERTY and QWERTY, § 29.3)                                                                                                                                                                                                                                                                                                                                                                                               |
-| **L** (v40)                            | the **Arrivals** window: list of the region's teleport points; clicking a name teleports there (in walk mode) or enters walk mode there (in global view). Same cycle as **H** and **I**; absent if the region has no arrival point                                                                                                                                                                                                                                                                                                                                 |
+The ready-to-use files are already in `dist/` (viewer, generator, presence server, tools): there is no need to build them to use them. `python build.py` is only needed if you change `src/` or `tools/`; it assembles everything into `dist/` (`dist/` is never edited by hand).
 
-Portals only work in walk mode.
+| File in `dist` | Role | Chapter |
+| --- | --- | --- |
+| `oar2glb.py` | converts an OAR to `.glb`, rebuilds the full terrain | 3 |
+| `glb-stats.py` | measurements of a `.glb`; must stay next to `glb2tiles.py` | 4 |
+| `glb2tiles.py` | cuts a huge `.glb` into tiles and makes `X.overview.glb` | 4 |
+| `glb-viewer.html` | the viewer: opens a `.glb` and is used to place the zones | 5 |
+| `glb2html.py` | builds the page (standalone or with a shell); `--update`, `--register`, `--map-page`, `--scan-sites` | 6 |
+| `index.html` | the shell shared by several regions | 6 |
+| `carte.html` | the world map | 9 |
+| `presence_server.py` | the WebSocket presence and chat server (needs `websockets`) | 10 |
+| `favicon.ico` | the pages' default icon | 6 |
 
-### Click and double-click (global view of the viewer)
+All the options of each tool, with their effect and default: `REFERENCE_OPTIONS.md`.
 
-| Gesture                       | Effect                                                                                                                                                                                                                                 |
-| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **single click** on the model | shows, in the "picked" block and the status bar, the **name of the element** and the **coordinates of the touched point** (x, y, z, 2 decimals). Nothing moves: neither the target nor the landing circle.                             |
-| **double-click** on the model | chooses the **target** of the view and the **landing point** (as in the exported page). In tiles mode (§ 17 bis), the double-click also works on the **overview**: the target is placed on the distant point and the tiles load there. |
+### 2.1 Language of the Python tools: `--lang`, `WEB3D_LANG`
 
-Two circles not to be confused:
+`glb2html.py`, `glb2tiles.py`, `oar2glb.py` and `presence_server.py` (and `glb-stats.py`, used by `glb2tiles.py`) show their messages, warnings, errors and help (`--help`) in French or in English. **Choice of language**: `--lang fr`, `--lang en` or `--lang auto` (default); otherwise the `WEB3D_LANG` environment variable; otherwise the system language; otherwise English. `--lang` takes precedence over `WEB3D_LANG`. The options themselves (`--budget`, `--exclude`…) and the moderation commands of the server (`list`, `kick`, `ban`, `bans`, `unban`, `help`, and their French equivalents) do not depend on the language. Output files (JSON, tool logs) keep their keys; the logs are written in the chosen language.
 
-- the **small circle** (black and white, lying on the ground) is the **landing marker**: it shows where the avatar will appear when you press F. It follows the target, so it only changes on a double-click;
-- the **large circle** (translucent cylinder with its name) is a **zone**: its radius is the one in the zone's form. **It only exists in the viewer** (see § 2 bis).
+**Standalone files**: `build.py` embeds the texts of `src/i18n/*.json` (`py.*` keys) in each tool of `dist\`: a tool copied alone to another machine keeps its two languages (a build choice). From the sources (`tools\`, `src\`), the tools read `i18n_py.py` and `i18n\` next to them or in `src\`. Adding a language: § 2.2, no code to change. A new option of a tool must have its `py.*` key in **both** files (`python tests/i18n.py` checks it); `python gen_reference.py` regenerates `REFERENCE_OPTIONS.md` (French then English in each "Effect" cell), `python tests/doc_options.py` checks that no option is missing from it and that no description is empty.
 
-## 2 bis. What the visitor sees: links behave as on the web
+### 2.2 Add a language (without touching the code)
 
-In the **viewer** (editing), each unlinked zone keeps its **translucent cylinder**, always visible, to find and position it (signs too); a zone linked to an element is outlined there. None of this is exported.
+1. Copy `src/i18n/en.json` to `src/i18n/<code>.json` (the code is that of `navigator.language`: `de`, `es`, `pt`…).
+2. Translate the **values** (never the keys). `_name` = the name of the language in that language ("Deutsch"). `{0}`, `{1}`… are markers to keep as they are (they can move); keys ending in `.one` / `.other` (plural) can also have `.zero`, `.two`, `.few`, `.many` if your language needs them. A missing key is replaced by English, then French, then the key itself: a partial translation works.
+3. Keys starting with `page.`, `core.`, `viewer.`, `map.` and `common.` are those of the pages and the viewer; those starting with `py.` are those of the Python tools (`--lang`, § 2.1).
+4. Build with `python build.py` (the language folder is chosen with `--i18n DOSSIER`): the "Language / Langue" list offers the new language, the pages and the tools of `dist\` embed it. No code to change. `python tests/i18n.py` checks the language files (same keys, same markers, no unused key).
 
-In the **exported page** (standalone or modular), there is **no cylinder** for web link, Home Assistant command and portal zones:
-
-| Zone                     | What is added to the scene                                                                         | On hover                                                                                                              |
-| ------------------------ | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| **linked to an element** | **nothing**                                                                                        | the cursor becomes a **hand**, the element gets a light **outline**, a **tooltip** shows the name and the destination |
-| **unlinked**             | a **discreet marker on the ground** (small flat disc of 0.4 m, semi-transparent, with a thin ring) | same thing: hand, tooltip, the marker brightens                                                                       |
-
-The tooltip gives the **name** then the **destination**: the web address for a link, "Region: address (#arrival)" for a portal ("this region" if the destination is empty), "Command: name" for a Home Assistant command (the webhook address is **never** shown). A **click** follows the link. A portal set to "walking into it" has no hover (it triggers by itself).
-
-No permanent text sign: the name only appears on hover, or when you are within range ("click: …" at the bottom of the screen).
-
-**Always show the name** (zone form, **unchecked by default**): keeps a name permanently visible, above the element or the marker; for an unlinked zone of "sign" shape, the whole sign is displayed.
-
-*Change since v23*: unlinked zones of "sign" shape are no longer drawn in the exported page, unless **Always show the name** is checked.
-
-## 3. Place a zone
-
-In the viewer, section **Zones: signs, portals, links, commands**:
-
-1. **Type to place**: choose the type (arrival, portal, web link, Home Assistant command, or **image** on a wall, § 37.1).
-2. Place it, either way:
-   - click **Place a zone with a click on the scene**, then click in the scene;
-   - or, in walk mode, stand at the right spot and press **P** (a circle under your feet, or a sign 2 m in front of you, facing you).
-3. The zone appears in the list: open its form to set it up.
-4. **See this zone** reframes the view on it; **Delete** erases it.
-5. **Place here (last clicked point)** copies x, y, z of the last single click on the model into the zone's position: click on the model (the coordinates are shown in "picked"), open the form, then click this button.
-
-## 4. Arrival point
-
-This is the place where a visitor appears.
-
-| Field              | Setting                                                          |
-| ------------------ | ---------------------------------------------------------------- |
-| Identifier         | the name the portals will use (`empereur`, `temple`, `default`…) |
-| Displayed name     | free                                                             |
-| Position X / Y / Z | Y is the height                                                  |
-| Heading (degrees)  | the direction the visitor faces when arriving                    |
-
-Place it in walk mode with **P**, looking in the desired direction: position and heading are taken in one go.
-
-The arrival whose identifier is **`default`** is special: it is where a visitor arrives when nothing else is specified (portal without an arrival point, requested arrival not found, coming from the map without a setting). Put one in each region.
-
-**`default` arrival and opening without a link (v33)**: if the region has a `default` arrival, the page opens **framed on it** (the camera target becomes its position) and **F starts at its point, with its heading** (as long as the target has not been moved, for example by a double-click). A target given explicitly on the command line (`--target`) keeps priority for the framing: see the exact rule in § 18.2.
-
-## 5. Portal to another spot in the same region
-
-| Field                      | Setting                                            |
-| -------------------------- | -------------------------------------------------- |
-| Destination page           | **empty** (the name of the page itself also works) |
-| Arrival point in that page | the **Identifier** of the target arrival           |
-| Trigger                    | see § 8                                            |
-
-Effect: fade to black, then the visitor is placed on the arrival, facing like it. The page is not reloaded: they stay connected to presence and chat.
-
-If the arrival does not exist, a message "Arrival point … not found in this region" is shown.
-
-## 6. Portal to another region
-
-| Field                      | Setting                                                                                                                                                                                                                  |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Destination page           | the other page: `autre-region.html` if it is in the same folder, otherwise its full address `https://…/autre-region.html`. With a common shell (§ 16): `index.html?region=AutreRegion` (the `#spawn=` is added after it) |
-| Arrival point in that page | the **Identifier** of an arrival **of the other page** (empty = `default`)                                                                                                                                               |
-
-Effect: fade, loading of the other page, the visitor arrives there directly in walk mode, with their nickname.
-
-To check:
-
-- the other page must exist at this address and have walk mode enabled;
-- the target arrival must exist **in the other page**, not in this one;
-- only `http` and `https` addresses and local files are accepted.
-
-## 7. Signs
-
-### Web link
-
-| Field       | Setting     |
-| ----------- | ----------- |
-| Web address | `https://…` |
-
-Walk up to it and press **E** (or click): the page opens in a new tab.
-
-Accepted formats for the address (also for the destination page of a portal):
-
-| Format                | Example                         | Note                                                                      |
-| --------------------- | ------------------------------- | ------------------------------------------------------------------------- |
-| web address           | `https://monsite.fr/ile.html`   | works everywhere                                                          |
-| relative `.html` file | `autre-ile.html`                | relative to the page that contains the zone                               |
-| local file            | `file:///P:/web/autre-ile.html` | **without quotes**; only works if the page itself is opened from the disk |
-
-Spaces are written `%20` (`file:///P:/mes%20pages/ile.html`). Any other form (`javascript:`, `ftp:`…) is refused.
-
-### Home Assistant command
-
-| Field                          | Setting                                          |
-| ------------------------------ | ------------------------------------------------ |
-| Home Assistant webhook address | the webhook address of your automation           |
-| Ask for confirmation           | checked: the visitor must confirm before sending |
-
-Effect: a POST request is sent to the webhook with two values, `zone` (the displayed name) and `visitor` (the nickname). The same command cannot be sent again within 3 s. The page does not receive Home Assistant's answer: "Command sent" means sent, not executed.
-
-## 8. Trigger, shape and size
-
-**Trigger** (portals):
-
-| Choice          | Effect                                                            |
-| --------------- | ----------------------------------------------------------------- |
-| walking into it | the portal fires as soon as you enter the circle                  |
-| on click        | you have to click on it (v35: the E key no longer triggers zones) |
-| both            | one or the other                                                  |
-
-A "walking into it" portal on which you arrive does not trigger immediately: you have to leave it and enter it again. Two portals that send to each other therefore do not play ping-pong.
-
-**Shape**:
-
-| Choice               | Size setting                                                 |
-| -------------------- | ------------------------------------------------------------ |
-| circle on the ground | Radius (m)                                                   |
-| sign                 | Width, Height, and Approach range for the "click" prompt (m) |
-
-## 9. Link a zone to an element of the model
-
-To make an object of the scene act as the trigger itself (a door, a box…):
-
-1. In the zone's form, click **Link to an element**.
-2. Click on the object in the scene.
-3. The form shows the linked element. The size field becomes "Trigger distance… (m, from the element)".
-
-The visitor then triggers the zone by clicking on the object, or with E when close enough to it. **Unlink** puts the zone back at its own position.
-
-**Only one piece is linked**: the one you clicked on. If several objects of the model have the same name (frequent in an OAR), the zone stores `nom#index` (the rank of the object among those with this name) instead of the name alone: the other objects with the same name are not affected.
-
-**Limit: 10 m.** An element with a dimension over 10 m is refused with the message "Element too big (L × W × H m): probably merged with a building in the OAR…". Cause: an object belonging to an OpenSim **linkset** is merged with it in the GLB; it no longer exists on its own, and it cannot be linked. Two remedies:
-
-- **unlink it in OpenSim** (Unlink) before exporting the OAR, then generate the GLB again;
-- or keep the building as it is and place a **circle zone** on it (Shape: circle on the ground), with the **Place here** button to position it.
-
-## 10. Private zones
-
-**Private (absent from the public export)** checked: the zone stays in your "private" exports, but disappears from the "public" exports. The choice is made in **Export profile**:
-
-- **private: all the zones** (called "perso" before v43)
-- **public: without the private zones**
-
-A private arrival also disappears from the public export: a public portal that targets it will land on `default`.
-
-## 11. World map
-
-In the **World map** section, the **Arrival point of the visitors (identifier)** field tells where someone coming from the map arrives. The viewer shows under this field:
-
-- ✔ if this arrival exists in the region;
-- ⚠ otherwise (the visitor then appears at the usual starting point of the F key).
-
-### Rotation of the region
-
-When the OAR arrives rotated (or the island flipped north-south on the map), the **Region** section of the viewer offers **Rotation of the region**: 0, 90, 180 or 270° around the vertical axis. The model turns, and by the same angle, around the centre of the region: the zones (position and heading), the arrival points, the target and the landing circle, the sea hole. Linked zones follow their element. The status bar announces "Region rotated by N°: M zone(s) moved. Capture the thumbnail again."
-
-The rotation is remembered like the other settings, and carried into the command (`--rotate 180`), into `.reglages.json` and into `<page>.config.json`. The generated page applies the rotation on loading; the zones of the file are already in the rotated frame: do not rotate twice.
-
-**After a rotation**, the map thumbnail no longer matches the model:
-
-1. **World map** section: **Capture the thumbnail (top view)**;
-2. **Add / update this region in the map**;
-3. **Export regions.json** (then generate again or republish the pages that embed it).
-
-## 12. Publish the changes
-
-Zones are set up in the viewer, but a page already published only sees them after publication:
-
-| Your page is…                      | What to do after changing the zones                                                                         |
-| ---------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| **standalone** (a single .html)    | **Export standalone HTML**, then replace the old page                                                       |
-| **modular** (shell + .glb + .json) | **Export zones (.json)**, rename to `<nom de la page>.zones.json`, replace the old one, then F5 in the page |
-
-Zones can also be saved and reloaded with **Export zones (.json)** / **Import zones (.json)**, for example to copy them from one region to another.
-
-**After a version change** of glb2html (such as v21 → v22), existing pages keep the old behaviour: they must be generated again. In modular mode, it is the `.html` shell that changes: generate it again, simply replacing the `.json` files is not enough.
-
-## 13. Troubleshooting
-
-| Symptom                                       | Likely cause                                                                                                       | Remedy                                                                                                                                        |
-| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Nothing happens when entering a portal        | not in walk mode                                                                                                   | press P (or F in the global view)                                                                                                             |
-|                                               | trigger set to "on click"                                                                                          | click on the portal (v35: E no longer triggers it), or switch to "walking into it"                                                            |
-|                                               | you were already in the circle when arriving                                                                       | leave the circle, then enter again                                                                                                            |
-| "Arrival point … not found"                   | the portal contains the **Displayed name** instead of the **Identifier**                                           | copy the exact Identifier of the arrival (§ 1)                                                                                                |
-| Arrival at the wrong place in another region  | the target arrival does not exist in the **other** page, or it is private and the page is public                   | create it in the other page, or uncheck Private                                                                                               |
-| Black screen after an internal portal         | page generated before v22                                                                                          | generate the page again                                                                                                                       |
-| "Portal without a valid destination"          | address badly written, or protocol not accepted                                                                    | `https://…` or a `.html` file name                                                                                                            |
-| The zone works in the viewer, not in the page | page not republished                                                                                               | see § 12                                                                                                                                      |
-| HA command "sent" but nothing moves           | wrong webhook, or automation disabled                                                                              | test the webhook directly from Home Assistant                                                                                                 |
-| A deleted zone comes back after reloading     | the viewer restores the settings remembered for this file, or the old `.reglages.json` / `zones.json` was reloaded | delete it (**Delete**), wait 2 s (automatic saving), or **Forget this file's settings** (§ 14); also check `zones.json` / `<page>.zones.json` |
-| The link takes a 30 m object                  | (before v23) the object is merged with a building in the OAR; the limit was 30 m                                   | v23: 10 m limit and explicit message; unlink the object in OpenSim (Unlink) or place a circle zone (§ 9)                                      |
-| The landing circle "jumps"                    | (before v23) each single click moved the target                                                                    | v23: only the **double-click** moves it; the single click shows name and coordinates                                                          |
-| The island is flipped north-south on the map  | the OAR was exported in the other orientation                                                                      | **Rotation of the region**: 180° (§ 11), then capture the thumbnail again, update the region in the map and export `regions.json` again       |
-
-## 14. Remembered settings
-
-The viewer remembers **everything** (zones included, but also hole, waves, camera, rotation, map, region card…) **per `.glb` file** in the browser (key: name + size of the file). It saves by itself, about every 1.5 s after a change. When the same `.glb` is reloaded, everything is restored, and the status bar shows "Settings restored from the browser's memory (N zone(s))".
-
-Consequences:
-
-- a zone added or deleted is found as it was when reloading; to **delete a zone**, open its form and click **Delete** (wait 2 s before closing the tab);
-- the memory belongs to the browser and to the address of the viewer page: another browser or another computer sees nothing. To carry the settings: **Save to a file** (`.reglages.json`) then **Load from a file**, or `glb2html.py --settings`;
-- **Forget this file's settings** (Remembered settings section) erases the memory of this `.glb`: the current values stay on screen, but are no longer protected, and they will be remembered again at the next change. To start from scratch: click this button, then reload the viewer page and open the `.glb` again.
-
-## 15. Convert an OAR to GLB (`tools/oar2glb.py`)
+## 3. Convert an OAR to GLB (`tools/oar2glb.py`)
 
 `oar2glb.py` turns an OpenSim region backup (`.oar`) into a single `.glb` file ready for the viewer and for `glb2html.py`. It runs convoar¹, repairs its output and assembles everything. The output is written next to the OAR: `X.oar` gives `X.glb`.
 
@@ -276,7 +70,7 @@ Consequences:
   Download: https://github.com/Misterblue/convoar/tree/master/bin
   Without convoar.exe, oar2glb.py cannot perform the OAR → GLB conversion.
 
-### The commands (PowerShell, a single line)
+### 3.1 The commands (PowerShell, a single line)
 
 First go to the script's folder: `cd "P:\_OpenSim\SL&OS\Web_3d"`.
 
@@ -293,7 +87,7 @@ First go to the script's folder: `cd "P:\_OpenSim\SL&OS\Web_3d"`.
 
 Before converting again, delete the old intermediate folder: `Remove-Item -Recurse -Force "J:\...\X-GLTF*"`.
 
-### The options
+### 3.2 The options
 
 | Option                    | Effect                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -311,7 +105,7 @@ Before converting again, delete the old intermediate folder: `Remove-Item -Recur
 | `--terrain-only GLB`      | does not run convoar: adds the complete terrain to this GLB and writes `X-terrain.glb` next to it (the original is never modified)                                                                                                                                                                                                                                                                                                                                                                                                |
 | `--output FICHIER`        | with `--terrain-only`: output file instead of `X-terrain.glb` (never the original)                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 
-### Complete terrain for regions larger than 256 m (v29)
+### 3.3 Complete terrain for regions larger than 256 m (v29)
 
 convoar produces only **one** "Terrain" node whose extent is capped (for example 257 x 267 m on a 1,024 m region: one sixteenth of the region has no ground). The complete height map is in the OAR (`terrains/*.r32`, one sample per metre). `oar2glb.py` uses it to build the ground:
 
@@ -335,14 +129,14 @@ convoar produces only **one** "Terrain" node whose extent is capped (for example
 
 Test: `python tests/terrain.py` (synthetic OAR and GLB).
 
-### What the script fixes
+### 3.4 What the script fixes
 
 - **Rigged animals (animesh).** The geometry convoar writes for these meshes is unusable (giant hippos, tiny or flying elephants, shapes shared between animals). The script rebuilds it from the OAR's `.llmesh` file: positions, normals, UVs, triangles, then `bind_shape_matrix`; the prim's scale is ignored. The pieces of one animal stay together. The animal is centred on the position of the object's root and its feet are placed under the root box (at the altitude of the root if it is itself rigged). The textures come from convoar (face n of the mesh = material n). No rule depends on an animal's name. An animal whose computed size falls outside 0.1 to 12 m stays as convoar produced it (the log says so).
 - **Invisible prims.** Removed: prims whose faces all have alpha 0 or carry a standard invisible texture, nodes whose materials are all transparent, and the root box of an animesh (simple prim, root of an object whose other pieces are all rigged meshes). The children of a removed root stay.
 - **Textures.** The script compares the images announced by the `.gltf` with the files present; if some are missing, it runs convoar again (at most 2 more attempts), keeping the images already written.
 - **Positions of regions larger than 256 m** and objects outside the region: processing unchanged. The terrain of these regions is completed by the patches (see "Complete terrain").
 
-### Reading the log (`oar2glb.log`, next to the script)
+### 3.5 Reading the log (`oar2glb.log`, next to the script)
 
 | Line                                                                      | Meaning                                                                                             |
 | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
@@ -357,144 +151,21 @@ Test: `python tests/terrain.py` (synthetic OAR and GLB).
 | `[terrain] ...`                                                           | decision (coverage of convoar's terrain) then summary of the patches added                          |
 | `[OK] ...glb (taille, meshes, textures)`                                  | normal end                                                                                          |
 
-### Diagnostic: `--diag`
+### 3.6 Diagnostic: `--diag`
 
 Run it after a conversion made with `--keep`. The log is `oar2glb.diag.log`. Each part of the OAR gives one line: name, UUID, root or child, rigged yes/no, prim scale, `bind_shape_matrix` scale, transparent yes/no, animesh root box yes/no, and the GLB node found with the method (prim UUID, mesh UUID, name + position). Animals and invisible prims also show the summary of the `TextureEntry`, the full matrix, the position domain and the GLB material. A "node not found" line on an animal or a transparent prim means that the fix will not apply to it.
 
-### If something goes wrong
+## 4. Measuring and cutting up a big region
 
-| Symptom                                   | Likely cause                                                            | Remedy                                                                       |
-| ----------------------------------------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| Many grey textures                        | `--reencode`, or images not written by convoar                          | run again without `--reencode`; read `[GLB] N texture(s) missing`            |
-| An animal invisible or in the wrong place | node not found, or hidden animal                                        | `--keep --markers`, then `--diag`; send `oar2glb.log` and `oar2glb.diag.log` |
-| An animal with the wrong texture          | the order of the mesh faces does not follow that of convoar's materials | report the animal with its log                                               |
-| Transparent prims you wanted to keep      | removed by default                                                      | `--keep-invisible`                                                           |
-| "convoar not found"                       | different path                                                          | `--convoar "P:\...\convoar.exe"`                                             |
+For a huge region: measure with `glb-stats.py` (through `--analyse` of `glb2tiles.py`), cut with `glb2tiles.py`, compress the tiles. To load the result in the page: chapter 8.
 
-`python oar2glb.py --version` shows the version (`oar2glb v29 (22/10/2026)`) without running anything; the first line of the log (`oar2glb.log`, `oar2glb.diag.log`) repeats it: `[oar2glb] v29 (22/10/2026)`. Attaching this log to any report therefore gives the version used. The file is built in `dist/` by `python build.py`.
+### 4.1 Split a huge GLB into tiles (`tools/glb2tiles.py`, v28; `--exclude` and pause in v29; invalid images and overview in v31)
 
-Test of the script: `python tests/oar2glb.py` (synthetic OAR and fake convoar, without network).
-
-## 16. JSON files of a modular region
-
-For a `Region.html` page produced by `--modular` (or by "Export the modular structure (.zip)" in the viewer), the folder contains:
-
-These files are those of a region with its own shell (`--modular`). For several regions in the same folder with **a single** shell, see "Single shell for several regions" below.
-
-| File                 | Role                                                                                      | Read again at each F5 |
-| -------------------- | ----------------------------------------------------------------------------------------- | --------------------- |
-| `Region.html`        | shell identical for all regions, it deduces its files from its own name                   | no                    |
-| `Region.glb`         | the model                                                                                 | no                    |
-| `Region.config.json` | settings for **rendering the page** (see below)                                           | yes                   |
-| `Region.zones.json`  | zones, portals, arrivals                                                                  | yes                   |
-| `zones.json`         | fallback zones, shared by the pages of the folder that have no `.zones.json` of their own | yes                   |
-| `lib/three-0.160.0/` | three.js, Draco, Meshopt, shared by all the pages of the folder                           | no                    |
-
-### Single shell for several regions (`--shared-shell`, v26)
-
-A single shell (`index.html` by default) serves all the regions of the same folder, with a single `lib/`. Each region only adds three files. The region opens at **`index.html?region=NOM`**, where NOM is the name of the files without extension (`?region=NOM.html` is accepted: the extension is removed).
-
-```
-dossier/
-  index.html            the shell, identical for all regions
-  lib/three-0.160.0/    shared
-  Ankh.glb   Ankh.config.json   Ankh.zones.json
-  Jungle.glb Jungle.config.json Jungle.zones.json
-```
-
-| Need                  | Command (PowerShell, a single line)                                                                                                                             |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Generate a region     | `python glb2html.py "Ankh.glb" --settings --shared-shell --register regions.json -o "Ankh.html"`                                                                |
-| Another shell name    | `--shared-shell monde.html` (address `monde.html?region=Ankh`)                                                                                                  |
-| Change a setting      | `python glb2html.py --settings "Ankh.glb" --config-only --shared-shell --wave 2 -o "Ankh.html"`                                                                 |
-| Change only the zones | `python glb2html.py -o "Ankh.html" --zones-only --zones zones.json`                                                                                             |
-| Update a region (v34) | `python glb2html.py --update -o "Ankh.html" --shared-shell --sea-y 12`: applies **only** the options given, keeps the rest of the config and the zones (§ 19.6) |
-
-Rules:
-
-- `-o` designates the **region**: its name without extension gives NOM. `Ankh.html` is not written; written are `Ankh.glb`, `Ankh.config.json`, `Ankh.zones.json`, plus `index.html` and `lib/three-0.160.0/` **if they are missing**. An existing shell is never overwritten (the other regions share it): if it differs from the one of the current version, the script warns; delete it to renew it.
-- `--register` writes the address `index.html?region=NOM` into `regions.json` (unless `--region-url` or a card in `.reglages.json`). Portals and the map add `#spawn=…` after the query string: `index.html?region=NOM#spawn=default&name=…`. "● you are here" recognises the region by its room, then by the full address (query string included).
-- **Without a `region` parameter**, the shell behaves as before: it deduces its files from the page's name (`index.html` loads `index.config.json`, `index.glb`, `index.zones.json`). Pages already published and their shells therefore keep working, without changing anything. Without a parameter or a matching file, the page shows "Error: … not found (HTTP 404)" with the name of the file looked for.
-- **Security.** NOM must be a single file name. Refused, with an error message in the page and **no network request**: an empty name, a name containing `/` `\` `:` `?` `#` or `..` (even encoded in the address), or starting with a dot. Without this, `?region=https://autre-site/x` would load config, zones and model from a foreign site (trapped portals, Home Assistant webhooks sent elsewhere). The script refuses in the same way an `-o` whose name would be refused.
-- Viewer: "Export the modular structure (.zip)" gives the same structure (`index.html`, `NOM.glb`, `NOM.config.json`, `NOM.zones.json`, `lib/`); the "Shared shell" box of the summary for the script adds `--shared-shell` instead of `--modular`. The `.zip` overwrites `index.html` when unpacked: for a folder that already has several regions, copy only the NOM files if the shell has not changed.
-- Like any modular mode, the page needs http/https (no opening from the disk).
-
-### Which zone file is read
-
-In this order, stopping at the first one that gives a valid JSON list:
-
-1. `Region.zones.json`
-2. `zones.json` of the same folder, **only if** the first one is missing, inaccessible (HTTP error) or is not a list
-3. otherwise: no zone
-
-There is **no merging**: as soon as `Region.zones.json` is read, `zones.json` is ignored. A `zones.json` placed next to a region that already has its `.zones.json` therefore has no effect.
-
-Zones marked **private** are removed when reading, in either file, unless `profile` is `private` in `Region.config.json`.
-
-### Region.config.json: the page rendering, not the viewer
-
-It is the dictionary of settings that the page reads at startup (the same as the one embedded in a standalone page). It is **flat**. The complete list of its fields, with their type, default value, role and the option that sets them, is in **§ 27.3**; a complete sample is in `docs/samples/region.config.sample.json`.
-
-`zones` is **always empty** there (`[]`) and `zonesLive` always empty: in modular mode, the zones are only in `Region.zones.json`.
-
-The viewer never reads this file: it works with its own settings file (below).
-
-### `.reglages.json` and `.config.json` do not have the same structure
-
-`<nom>.reglages.json` is the working state of the viewer ("Save to a file"). It is **nested**:
-
-```
-{ v, file, saved,
-  cfg:     { rotate, hole, holeFade, ..., mapUrl, guide, ignoreViz },
-  camera:  { camDir, target, zoom },
-  zones:   [ ...all the zones, private ones included ],
-  profile, thisReg: { card of this region for the map },
-  cmd:     { script, glb, dest, mapPage } }
-```
-
-|            | `<nom>.reglages.json` (viewer)           | `<page>.config.json` (page)              |
-| ---------- | ---------------------------------------- | ---------------------------------------- |
-| Structure  | nested (`cfg`, `camera`, ...)            | flat                                     |
-| Camera     | `camera` sub-object                      | at the root (`camDir`, `target`, `zoom`) |
-| Zones      | all, private ones included               | always empty                             |
-| Map        | only the card of this region (`thisReg`) | complete resolved map (`map`)            |
-| Its own    | `guide`, `ignoreViz`, `cmd`, `thisReg`   | `seaSize`, `version`                     |
-| Written by | the viewer                               | `glb2html.py`                            |
-| Read by    | the viewer, `glb2html.py --settings`     | the exported page                        |
-
-The conversion only goes one way:
-
-```
-<nom>.reglages.json  ->  glb2html.py --settings  ->  <page>.config.json + <page>.zones.json
-```
-
-A `.config.json` cannot be given to `--settings` (the script looks for the `cfg` key and refuses the file), nor reloaded in the viewer ("settings file not recognized"). To keep your settings, you must therefore keep the `.reglages.json`: the `.config.json` is only a derived product of it.
-
-### Which file to edit, and what overwrites it
-
-| I want to change...                 | I edit / I run                                                  | What can overwrite it afterwards                                           |
-| ----------------------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| a rendering setting (waves, sky...) | `--config-only` (see below), or `Region.config.json` by hand    | any new `--modular` or `--config-only` rewrites `Region.config.json`       |
-| a zone                              | `Region.zones.json` by hand, or **Export zones (.json)** (§ 12) | `--modular` with `--zones` or `--settings`; `--config-only` with `--zones` |
-| the working state of the viewer     | **Save to a file**                                              | nothing (it is the source)                                                 |
-
-Without `--zones` or `--settings`, a `Region.zones.json` already present (edited by hand, for example) is not overwritten. As soon as a source of zones is given, it is rewritten.
-
-Change a setting without touching the `.glb`, the shell or the zones:
-
-```
-python glb2html.py --settings "Region-final.glb" --config-only --wave 2 -o "Region.html"
-```
-
-The command-line options take precedence over the `.reglages.json`. Visitors see the change at their next reload.
-
-## 17. Split a huge GLB into tiles (`tools/glb2tiles.py`, v28; `--exclude` and pause in v29; invalid images and overview in v31)
-
-`glb2tiles.py` splits a GLB that is too heavy into **standalone tiles**: each one is a valid GLB (can be opened alone in `glb-viewer.html`), with its own nodes, meshes, materials and images, at the original coordinates (no recentring). This tool **writes the tiles, their list and (v31) a light overview of the whole region**; it is the shell that loads them around the avatar (v30, see § 17 bis). Standard Python only. The input GLB is never loaded in full: the JSON header is read, then the indices, positions and images in pieces.
+`glb2tiles.py` splits a GLB that is too heavy into **standalone tiles**: each one is a valid GLB (can be opened alone in `glb-viewer.html`), with its own nodes, meshes, materials and images, at the original coordinates (no recentring). This tool **writes the tiles, their list and (v31) a light overview of the whole region**; it is the shell that loads them around the avatar (v30, see § 8). Standard Python only. The input GLB is never loaded in full: the JSON header is read, then the indices, positions and images in pieces.
 
 `glb-stats.py` must stay **next to** `glb2tiles.py` (shared measuring functions); `python build.py` puts both in `dist/`.
 
-### The commands (PowerShell, a single line)
+#### 4.1.1 The commands (PowerShell, a single line)
 
 | To                                                         | Command                                                                                                                                            |
 | ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -509,7 +180,7 @@ The command-line options take precedence over the `.reglages.json`. Visitors see
 
 Start with `--analyse`: it gives the measurements of `glb-stats.py`, the 10 heaviest meshes (compacted bytes, extent in metres), the 10 instances furthest from the median centre (outliers), the number of tiles expected with the chosen parameters, the expected duplication factor, the number of root objects kept whole or spread, and a recommendation sentence: "no split needed" or "split: budget N MB, T tiles, duplication F". A light GLB answers "no split needed" and nothing is written (even without `--analyse`, except with `--force`).
 
-### The parameters
+#### 4.1.2 The parameters
 
 | Option                                 | Default         | Meaning                                                                                                                                                                                     |
 | -------------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -536,7 +207,7 @@ Start with `--analyse`: it gives the measurements of `glb-stats.py`, the 10 heav
 | `--ov-terrain-step`                    | 4               | m: grid step of the terrain in the overview                                                                                                                                                 |
 | `--nopause`                            |                 | do not wait for Enter at the end (the pause is also skipped when there is no console: script, scheduled task)                                                                               |
 
-### Excluding objects (`--exclude`, v29)
+#### 4.1.3 Excluding objects (`--exclude`, v29)
 
 Some catalogues place next to each building a "delivery box" (textured cube of 12 triangles, a single mesh) whose name ends with the supplier's, for example "City Stores - Box - RAKis Freebies 2019". `--exclude "Freebies"` removes them, **provided that** the root object also has at most `--exclude-max-triangles` triangles (all meshes included) **and** at most `--exclude-max-meshes` meshes. Without these safeguards the supplier's name would also remove real buildings ("Jewel Box House V17 with Stairs - RAKis Freebies 2": 143 meshes, kept). The decision **never depends on the extent**: the bounding box of a small mesh that shares a vertex buffer with others is inflated, up to several tens of metres for a cube of 12 triangles.
 
@@ -544,7 +215,7 @@ Some catalogues place next to each building a "delivery box" (textured cube of 1
 - The nodes removed are the root object and all its descendants; no other object changes. Excluded objects enter neither the tiles nor the weight, triangle and budget calculations (the "no split" recommendation also removes their bytes from the size of the GLB). The original GLB is not modified; the `glb-stats` part of `--analyse` describes the original file.
 - `--analyse` and the final report give: the number of excluded objects, the triangles removed, the bytes saved (geometry and images that no kept object uses; **0** when all excluded objects share their primitives or their images with kept objects, for example a common cube: the report then says so, and counts the shared bytes not saved), the number of objects with a matching name but kept by the safeguards, and the 20 most frequent names with their count. `X.tiles.json` gets an `excluded` key (patterns, safeguards, `count`, `triangles`, `bytesSaved`, `bytesShared`, `names`) only when `--exclude` is used.
 
-### Object references (v32): link a zone to an object in tiles mode
+#### 4.1.4 Object references (v32): link a zone to an object in tiles mode
 
 Each node copied into a tile gets in its `extras`: **`ref`**, its stable reference in the original model, and **`box`**, the box (world, 6 numbers in m) of **the whole object**, even when it is spread over several tiles (each piece carries the same box). `X.tiles.json` carries `"nodeRefs": 1`.
 
@@ -553,7 +224,7 @@ Each node copied into a tile gets in its `extras`: **`ref`**, its stable referen
 - **Measured cost** (synthetic GLB of 40,000 nodes): +0.5 s out of 8 s, +3 MB out of 230 MB of tiles.
 - Tiles written **before v32** do not have these extras: linked zones are still ignored there. `glb2tiles.py --analyse` (and `--overview-only`) report it when `X.tiles.json` already exists without `nodeRefs`; `glb2html.py --tiles` too, if there are linked zones. You must **split again** (without `--overview-only`).
 
-### Empty or invalid images (v31)
+#### 4.1.5 Empty or invalid images (v31)
 
 An embedded image **of 0 bytes**, of **another format** than PNG, JPEG or WebP, or **truncated** makes the loading of the tile fail in the browser ("THREE.GLTFLoader: Couldn't load texture"): measured in Chromium, `createImageBitmap` also fails on a cut PNG, JPEG or WebP, not only on an empty image. On the "Free House Gallery 4X4" region, 778 images out of 19,799 were in this case (all with a `bufferView` of `byteLength` 0).
 
@@ -561,7 +232,7 @@ An embedded image **of 0 bytes**, of **another format** than PNG, JPEG or WebP, 
 - Check without decoding: PNG = chained chunks up to `IEND`; JPEG = end marker `FFD9` last (give or take padding zeros and spaces); WebP = RIFF size contained in the file. Only the header, the end and the chunk headers are read (never the whole image). A file that Chromium would decode despite an unusual ending would be replaced wrongly: the reported number lets you notice it.
 - `--analyse` and the final report give "Empty or invalid images replaced…: N distinct, M occurrence(s)" (an occurrence = an image written in a tile). `X.tiles.json` gets `"replacedImages": {"distinct": N, "occurrences": M, "grey": 128}` and each tile its own number.
 
-### Overview (`X.overview.glb`, v31)
+#### 4.1.6 Overview (`X.overview.glb`, v31)
 
 Purpose: in the global view, see the **whole** region; in walk mode, see **into the distance** beyond the loaded tiles. The detailed tiles remain the only source of collisions and ground.
 
@@ -575,7 +246,7 @@ Purpose: in the global view, see the **whole** region; in walk mode, see **into 
 - **The GLB is never loaded in full** (same reading in pieces of at most 4 MB as for the tiles), with a progress line ("[overview: primitives] …"); the terrain pieces are read one by one.
 - **Duration.** Throughput measured on synthetic GLBs of increasing size (0.5; 2; 8; 24 million unique triangles): about 1.8 million unique triangles per second, linear (0.3; 1.2; 4.5; 13 s), i.e. 14 to 680 MB of GLB for 25 to 164 MB of memory; 20,000 small meshes (4 million triangles, 40,000 instances): 15 s, 377 MB; 1,024 m terrain in 256 patches of 4,225 vertices: 3.6 s, 57 MB. The estimate for the 1.3 GB region is given in `CHANGELOG.md` (v31).
 
-### How the split is decided
+#### 4.1.7 How the split is decided
 
 - Adaptive quadtree on the X,Z plane (Y is the height), only on non-empty cells. A cell is subdivided as long as its standalone weight exceeds `--budget` **or** its triangles exceed `--budget-triangles`, and its side exceeds `--min`.
 - A **root object** (first-level node of the scene) stays **whole**, in the cell of the centre of its box, if its standalone weight ≤ `--whole-weight` **and** its extent ≤ `--whole-extent`. Otherwise it is **spread instance by instance**: each instance goes into the cell of its own centre, and the parent nodes are copied (without mesh) with their original transforms.
@@ -585,7 +256,7 @@ Purpose: in the global view, see the **whole** region; in walk mode, see **into 
 - A **single** mesh heavier than the budget (terrain, sea) cannot be spread at this stage: its cell stays as it is, over budget, with a warning (name, extent, MB).
 - A compressed GLB (Draco, meshopt) is refused with a clear message. `sparse` accessors: refused with a message.
 
-### Files produced
+#### 4.1.8 Files produced
 
 `X.tiles/T_<niveau>_<i>_<j>.glb` (level and position of the cell in the quadtree), `X.tiles.json` (UTF-8 without BOM) and `X.overview.glb` (v31), next to the GLB `X.glb`:
 
@@ -614,100 +285,222 @@ Purpose: in the global view, see the **whole** region; in walk mode, see **into 
 
 Running again rewrites the `T_*_*_*.glb` of the `X.tiles/` folder; **then** (v31), the `T_*_*_*.glb` of a previous run that are no longer in the new index are **deleted** and the report gives their number (the other files of the folder are not touched). `--overview-only` touches no tile.
 
-### Reading the log (`glb2tiles.log`, next to the script)
+#### 4.1.9 Reading the log (`glb2tiles.log`, next to the script)
 
 First line: `[glb2tiles] v31 (22/10/2026)`. Progress is written every 5 % or 10 s. The final report gives: number of tiles, median / 90 % / maximum of weight and triangles, actual duplication, number of whole and spread roots, warnings, total time. `python glb2tiles.py --version` shows the version without log or pause.
 
 In `--analyse`, the "Reading" line gives the bytes read. Positions are only read for primitives that use only part of a shared vertex buffer (the accessor's box would be too large); the other boxes come from the header.
 
-### If something goes wrong
+### 4.2 Compressing the tiles: `glb2tiles.py --compress`
 
-| Symptom                                                             | Likely cause                                                                             | What to do                                                                                                   |
-| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| "compressed GLB"                                                    | the GLB uses Draco or meshopt                                                            | decompress the GLB first (outside this batch)                                                                |
-| "glb-stats.py not found"                                            | the script is alone in its folder                                                        | copy `glb-stats.py` next to it                                                                               |
-| "Tile … over budget"                                                | a single mesh (terrain, sea) exceeds the budget, or the minimum cell is reached          | normal at this stage: see the roadmap (split by triangles)                                                   |
-| Many tiles for a small GLB                                          | `--budget` too small or strong duplication                                               | run `--analyse` again with other values                                                                      |
-| "THREE.GLTFLoader: Couldn't load texture" on a tile made before v31 | 0-byte or truncated image in the GLB                                                     | split again with v31 (images replaced by grey)                                                               |
-| "The recomputed split … does not match X.tiles.json"                | `--overview-only` run with other split options                                           | use exactly the options of the original split                                                                |
-| "Pillow missing" in the report                                      | the overview uses the base colour of the materials (often white for a textured material) | `pip install pillow` then `--overview-only`                                                                  |
-| Overview too heavy or objects missing                               | budget reached, `effectiveMinExtent` raised                                              | larger `--ov-budget` / `--ov-budget-triangles`, or higher `--ov-threshold`; read the "objects omitted" lines |
-| Instance at 3,000 m reported                                        | a giant prim or a stray object                                                           | the tool keeps it; fix it in the model if it is a mistake                                                    |
+`--compress` compresses every `.glb` written (tiles and overview) with `gltfpack` (`-cc -kn -ke -km -vpf -vtf`, never `-tc`): files about half the size, same node names, same `extras`, same materials. `gltfpack` is looked for in the `PATH`, otherwise started by `npx` (Node required); if it is missing, nothing is modified. A file that is already compressed is skipped (never recompressed). `NOM.tiles.json` is not modified. The page reads these files with no setting (built-in `meshopt` decoder). For tiles already split, the manual command is in `PROCEDURES_SIMPLES.md` § 5.5 (in English: `SIMPLE_PROCEDURES.md`).
 
-Test: `python tests/glb2tiles.py` (synthetic GLBs, without browser or network); `python tests/v31.py` (invalid images, overview, leaving walk mode).
+## 5. Placing the zones (the viewer)
 
-## 17 bis. Load a tiled region in the page (`glb2html.py --tiles`, v30)
+The viewer (`glb-viewer.html`) is used to place the zones on the model: arrival points, portals, signs, links, images, private zones. It saves `NOM.zones.json` (fields: chapter 11, § 11.4), to put next to the page; for the page to see the changes: § 6.16.
 
-A region of several hundred MB or several GB does not fit in a browser: after `glb2tiles.py` (§ 17), the **shell** loads only the tiles close to the avatar and unloads the distant ones, and (v31) shows in the distance the **light overview** `X.overview.glb` when it exists. Without the `tiles` field in `X.config.json`, the page behaves exactly as before (a single `X.glb`).
+### 5.1 The rule that explains 90 % of failures
 
-### The commands (PowerShell, a single line)
+Each zone has two names:
 
-| To                         | Command                                                                                                                    |
-| -------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Split                      | `python glb2tiles.py "P:\regions\4X4.glb" --exclude "Freebies"` (writes `4X4.tiles.json` and `4X4.tiles\` next to the GLB) |
-| Put the region in the site | `python glb2html.py --shared-shell -o "P:\site\4X4.html" --tiles "P:\regions\4X4.tiles.json"`                              |
-| Open                       | `http://…/index.html?region=4X4` (the common shell, as in § 16)                                                            |
-| Try another radius         | `index.html?region=4X4&radius=300`                                                                                         |
-| Change a setting           | run the same command again with the option: nothing heavy is copied again                                                  |
+| Field              | What it is for                              | Who reads it                            |
+| ------------------ | ------------------------------------------- | --------------------------------------- |
+| **Identifier**     | the technical name of the zone              | portals, the world map, `#spawn=` links |
+| **Displayed name** | the text seen by the visitor ("E: Emperor") | the screen only                         |
 
-`-o` designates the region (its name without extension). No `.glb` as input. `--tiles` alone (without `--shared-shell`) gives a shell of its own, `4X4.html`. Written: `4X4.config.json` (`tiles` field), `4X4.zones.json` (if missing or if a source of zones is given), the shell and `lib/` if they are missing. **`4X4.tiles.json` and the tiles folder are only copied if they are not already next to the page**: putting `-o` in the tiles folder avoids any copy ("already beside the page: nothing is copied"); otherwise the script copies what is missing or has another size, file by file, and says how many. There is no `4X4.glb`. Like any modular mode, the page needs http/https.
+**A portal always designates an arrival by its Identifier, never by its Displayed name.**
+The identifier is automatically lowercased, and any character other than an unaccented letter, a digit, `-` or `_` becomes a hyphen (`Salle du Trône` becomes `salle-du-tr-ne`). Write it directly in lowercase, without accents or spaces, to avoid surprises.
 
-### The parameters (in `X.config.json`, with their options)
+Correct example:
 
-| Key / option                                | Default   | Meaning                                                                                                                                                          |
-| ------------------------------------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tileRadius` / `--tile-radius`              | 150       | m: load the tiles whose **box** (min / max of `X.tiles.json`) is closer than this radius to the avatar, on the X,Z plane (distance 0 = the avatar is in the box) |
-| `tileMargin` / `--tile-margin`              | 60        | m: unload beyond radius + margin (hysteresis: no back-and-forth at the limit)                                                                                    |
-| `tileMaxMB` / `--tile-max-mb`               | 200       | MB of tiles loaded at the same time (weight of the `.glb` files)                                                                                                 |
-| `tileMaxTriangles` / `--tile-max-triangles` | 8 000 000 | triangles of tiles loaded at the same time                                                                                                                       |
-| `tileConcurrency` / `--tile-concurrency`    | 4         | simultaneous downloads                                                                                                                                           |
+- Arrival: Identifier `empereur`, Displayed name `Salle de l'Empereur`
+- Portal: Arrival point `empereur`
 
-`?radius=NNN` in the address replaces `tileRadius` for this opening (10 to 5 000). These keys only exist in the config for a tiled region.
+### 5.2 Place a zone
 
-### What the page does
+In the viewer, section **Zones: signs, portals, links, commands**:
 
-- **Start.** The tiles around the starting point load first, the closest first: the arrival of the link (`#spawn=…`, otherwise the `default` arrival) if the page is opened by a portal, otherwise the camera target. "Loading…" stays displayed until the tiles containing this point are ready (or have failed); the others come afterwards. A partial ground is normal as long as everything is not there: a tile only contains its terrain patches and its objects.
-- **During the visit.** The reference point is the avatar in walk mode, or the target (the landing circle) in the global view. Every 250 ms: unloading of the tiles beyond radius + margin, loading of those within the radius. If `tileMaxMB` or `tileMaxTriangles` would be exceeded, the **most distant loaded tiles** (more distant than the one to load) go first; a tile containing the avatar is loaded even if it alone exceeds the budget (warning in the console).
-- **Memory.** An unloaded tile frees its geometries, materials, textures and decoded images. The budget counts the **weight of the files**: decoded textures weigh much more in graphics memory than their compressed file; if the page is heavy, lower `tileMaxMB` or `tileRadius`. The collision grid of each tile costs about 36 bytes per ground and wall triangle, plus the index: at 8 million triangles, count several hundred MB.
-- **Walk mode and collisions.** A collision grid is built per tile, in slices so as not to freeze the image, and deleted with the tile. Ground and walls only come from ready tiles. The avatar **never moves towards a point whose tile is not ready**: it stays where it is, the text "Loading the ground…" is shown, and it moves again as soon as the tile is ready (never a fall). **F** waits for the tile under the avatar before starting walk mode (F again: cancel); an internal portal or a double-click towards a zone not loaded waits in the same way. The terrain patches have shared edges: the ground continues from one tile to the next without a step.
-- **Failed tile** (missing file, HTTP 404, unreadable GLB): message at the top of the page and in the information line, warning in the console, new attempt after 3 s, 6 s, 12 s… up to 30 s. The other tiles are not delayed. An avatar does not cross the box of a failed tile (same rule as "not ready").
-- **Information line** (text only), in the help panel at the bottom left (can be hidden with H), otherwise in a small frame: "Tiles: 7 loaded / 106 · 74 MB · 2.10 M triangles", with "· 2 in progress" and "· 1 failed (will retry)" when there are some, then (v31) "· Overview (counted apart): 23.1 MB · 1.40 M triangles": the overview is counted apart, outside the 200 MB / 8 M triangles of the budget.
-- **Overview (v31).** If `X.tiles.json` mentions `overview`, the page loads it **first** (before any tile), with the same path security rules as the tiles. It shows the whole region in light geometry, without images. Each cell (one node per tile file) is **hidden as soon as the matching detailed tile is displayed** and shown again when the tile is unloaded or has failed: never both, never a hole during loading. It is used **neither for collisions, nor for the ground, nor for "Loading the ground…"** (walk mode always waits for the tile), and does not count in the `tileMaxMB` / `tileMaxTriangles` budget. A **double-click** on it in the global view places the target on the distant point; the real ground takes over when its tile is ready. If it cannot be found or read: warning in the console, "Overview unavailable" in the information line, the region works as in v30.
-- **Global view.** With the overview, the camera frames **the whole region** (maximum distance, fog and far plane follow the extent). Without it (old `X.tiles.json` or `--no-overview`), as in v30: only the tiles loaded around the target, and the camera frames the loading radius.
-- **Leaving walk mode (v31).** F to leave places the target of the global view on the ground under the avatar and keeps the camera offset from before entering walk mode; the loader follows this target, so the tiles around the avatar are not unloaded.
+1. **Type to place**: choose the type (arrival, portal, web link, Home Assistant command, or **image** on a wall, § 5.11).
+2. Place it, either way:
+   - click **Place a zone with a click on the scene**, then click in the scene;
+   - or, in walk mode, stand at the right spot and press **P** (a circle under your feet, or a sign 2 m in front of you, facing you).
+3. The zone appears in the list: open its form to set it up.
+4. **See this zone** reframes the view on it; **Delete** erases it.
+5. **Place here (last clicked point)** copies x, y, z of the last single click on the model into the zone's position: click on the model (the coordinates are shown in "picked"), open the form, then click this button.
 
-### Frame, rotation, sea, zones
+### 5.3 Click and double-click (global view of the viewer)
 
-- **Frame.** That of the original model: **no recentring** (the tiles keep their coordinates). The coordinates of the zones, arrivals, camera target and sea hole are therefore in this frame, not in the viewer's (which recentres the whole model, something that cannot be done with tiles). `--rotate` (0, 90, 180, 270) turns the root of the tiles around the vertical axis through the origin; as in § 11, the stored values are in the already rotated frame, and so is the default target written by `--tiles`.
-- **Default target and sea.** Without `--target`, the camera target is the centre of the extent of the tiles, at a height of 20 m; without `--sea-y`, the sea is at 20 m (OpenSim's water). The sea is centred on the centre of the extent; the hole (`--hole`, `--hole-x`, `--hole-z`) is relative to this centre. To remove the sea: `--no-sea`.
-- **Free zones** (cylinders with coordinates, arrivals, portals, signs): as before. **Zones linked to an object** (`mesh` field, v32): if the tiles carry the object references (`glb2tiles.py` v32, § 17), the zone **appears when the tile containing the object is loaded** and disappears when it is unloaded: clickable, E key closer than `radius` m from the object, as in single-GLB mode. An object spread over several tiles: the zone follows the **box of the whole object** (stored in the tiles), as soon as **one** piece is loaded. Tiles from before v32: zone **ignored**, with "zone “id” ignored: linked to the element “…” … (tiles written without object references: split again with glb2tiles v32)" in the console, and a warning from `glb2html.py` when generating. Presence, chat, world map, portals: unchanged. The viewer now opens a tiled region (§ 17 ter).
-- **Displayed position (v32).** The help panel (H key, bottom left) gives as text the **position of the target** in the global view, or of the **avatar** in walk mode: "Position target (global view): x 123.5 · y 15.0 · z -77.7 m", in metres, one decimal, in the frame of the original model: that of the zones. Handy to note a spot.
+| Gesture                       | Effect                                                                                                                                                                                                                                 |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **single click** on the model | shows, in the "picked" block and the status bar, the **name of the element** and the **coordinates of the touched point** (x, y, z, 2 decimals). Nothing moves: neither the target nor the landing circle.                             |
+| **double-click** on the model | chooses the **target** of the view and the **landing point** (as in the exported page). In tiles mode (§ 8), the double-click also works on the **overview**: the target is placed on the distant point and the tiles load there. |
 
-### Limits of this version
+Two circles not to be confused:
 
-- The overview is coarse: small objects (under `--ov-threshold`), glass and skinned objects are not in it, the colours are flat, the terrain has a 4 m step; at the edge of a loaded tile, the ground height can differ by a few decimetres between the tile (1 m) and the overview (4 m).
-- Meshes shared between tiles are duplicated in each tile that uses them (standalone tiles): more MB downloaded.
-- A single mesh heavier than the `glb2tiles.py` budget stays in a single tile (no split by triangles).
-- A tile very heavy in triangles stays costly to process: the construction of its collision grid is sliced, not removed.
-- No meshopt compression of the tiles, no OpenSim terrain textures yet (vertex colours from `oar2glb.py`).
+- the **small circle** (black and white, lying on the ground) is the **landing marker**: it shows where the avatar will appear when you press F. It follows the target, so it only changes on a double-click;
+- the **large circle** (translucent cylinder with its name) is a **zone**: its radius is the one in the zone's form. **It only exists in the viewer** (see § 7.13).
 
-### If something goes wrong
+### 5.4 Arrival point
 
-| Symptom                                   | Likely cause                                                                                                                                    | What to do                                                                                                                        |
-| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| "Loading error: … X.tiles.json: HTTP 404" | `X.tiles.json` is not next to the page, or the `tiles` field of the config is wrong                                                             | run `glb2html.py --tiles` again; check the folder                                                                                 |
-| "tile address refused"                    | the `tiles` field contains `..`, `:`, `?`, `#` or starts with `/`                                                                               | a simple relative path (`X.tiles.json`)                                                                                           |
-| Partial ground, holes                     | tiles outside the radius, or failed                                                                                                             | raise `tileRadius` (or `?radius=`), see the information line and the console                                                      |
-| "Loading the ground…" that stays          | a failed tile in front of the avatar                                                                                                            | fix the file; the page retries by itself                                                                                          |
-| Nothing or a hole in the distance         | no overview (region split before v31, or `--no-overview`)                                                                                       | `glb2tiles.py … --overview-only` with the original options, then run `glb2html.py --tiles` again (copies the file with the tiles) |
-| "Overview unavailable"                    | `X.overview.glb` missing next to the page, or unreadable                                                                                        | copy it next to `X.tiles.json`; run `glb2html.py --tiles` again                                                                   |
-| Heavy, slowed-down page                   | too many textures loaded                                                                                                                        | lower `tileMaxMB`, `tileMaxTriangles` or `tileRadius`                                                                             |
-| Linked zones do not appear                | the object's tile is not loaded (they only exist while the tile is loaded), or the tiles date from before v32 (ignored, warning in the console) | get closer / `?radius=`; otherwise split again with `glb2tiles.py` v32 (§ 17), or use free zones with coordinates                 |
-| The zones are shifted                     | they come from the viewer (recentred frame)                                                                                                     | write them in the frame of the original model                                                                                     |
+This is the place where a visitor appears.
 
-Test: `python tests/tuiles.py` (synthetic region of 16 tiles, headless Chromium) and `python tests/v31.py` (overview in the shell, leaving walk mode).
+| Field              | Setting                                                          |
+| ------------------ | ---------------------------------------------------------------- |
+| Identifier         | the name the portals will use (`empereur`, `temple`, `default`…) |
+| Displayed name     | free                                                             |
+| Position X / Y / Z | Y is the height                                                  |
+| Heading (degrees)  | the direction the visitor faces when arriving                    |
 
-## 17 ter. Place zones in a tiled region (viewer, v32)
+Place it in walk mode with **P**, looking in the desired direction: position and heading are taken in one go.
+
+The arrival whose identifier is **`default`** is special: it is where a visitor arrives when nothing else is specified (portal without an arrival point, requested arrival not found, coming from the map without a setting). Put one in each region.
+
+**`default` arrival and opening without a link (v33)**: if the region has a `default` arrival, the page opens **framed on it** (the camera target becomes its position) and **F starts at its point, with its heading** (as long as the target has not been moved, for example by a double-click). A target given explicitly on the command line (`--target`) keeps priority for the framing: see the exact rule in § 7.21.
+
+### 5.5 Portal to another spot in the same region
+
+| Field                      | Setting                                            |
+| -------------------------- | -------------------------------------------------- |
+| Destination page           | **empty** (the name of the page itself also works) |
+| Arrival point in that page | the **Identifier** of the target arrival           |
+| Trigger                    | see § 5.8                                            |
+
+Effect: fade to black, then the visitor is placed on the arrival, facing like it. The page is not reloaded: they stay connected to presence and chat.
+
+If the arrival does not exist, a message "Arrival point … not found in this region" is shown.
+
+### 5.6 Portal to another region
+
+| Field                      | Setting                                                                                                                                                                                                                  |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Destination page           | the other page: `autre-region.html` if it is in the same folder, otherwise its full address `https://…/autre-region.html`. With a common shell (§ 11.12): `index.html?region=AutreRegion` (the `#spawn=` is added after it) |
+| Arrival point in that page | the **Identifier** of an arrival **of the other page** (empty = `default`)                                                                                                                                               |
+
+Effect: fade, loading of the other page, the visitor arrives there directly in walk mode, with their nickname.
+
+To check:
+
+- the other page must exist at this address and have walk mode enabled;
+- the target arrival must exist **in the other page**, not in this one;
+- only `http` and `https` addresses and local files are accepted.
+
+### 5.7 Signs
+
+#### 5.7.1 Web link
+
+| Field       | Setting     |
+| ----------- | ----------- |
+| Web address | `https://…` |
+
+Walk up to it and press **E** (or click): the page opens in a new tab.
+
+Accepted formats for the address (also for the destination page of a portal):
+
+| Format                | Example                         | Note                                                                      |
+| --------------------- | ------------------------------- | ------------------------------------------------------------------------- |
+| web address           | `https://monsite.fr/ile.html`   | works everywhere                                                          |
+| relative `.html` file | `autre-ile.html`                | relative to the page that contains the zone                               |
+| local file            | `file:///P:/web/autre-ile.html` | **without quotes**; only works if the page itself is opened from the disk |
+
+Spaces are written `%20` (`file:///P:/mes%20pages/ile.html`). Any other form (`javascript:`, `ftp:`…) is refused.
+
+#### 5.7.2 Home Assistant command
+
+| Field                          | Setting                                          |
+| ------------------------------ | ------------------------------------------------ |
+| Home Assistant webhook address | the webhook address of your automation           |
+| Ask for confirmation           | checked: the visitor must confirm before sending |
+
+Effect: a POST request is sent to the webhook with two values, `zone` (the displayed name) and `visitor` (the nickname). The same command cannot be sent again within 3 s. The page does not receive Home Assistant's answer: "Command sent" means sent, not executed.
+
+### 5.8 Trigger, shape and size
+
+**Trigger** (portals):
+
+| Choice          | Effect                                                            |
+| --------------- | ----------------------------------------------------------------- |
+| walking into it | the portal fires as soon as you enter the circle                  |
+| on click        | you have to click on it (v35: the E key no longer triggers zones) |
+| both            | one or the other                                                  |
+
+A "walking into it" portal on which you arrive does not trigger immediately: you have to leave it and enter it again. Two portals that send to each other therefore do not play ping-pong.
+
+**Shape**:
+
+| Choice               | Size setting                                                 |
+| -------------------- | ------------------------------------------------------------ |
+| circle on the ground | Radius (m)                                                   |
+| sign                 | Width, Height, and Approach range for the "click" prompt (m) |
+
+### 5.9 Link a zone to an element of the model
+
+To make an object of the scene act as the trigger itself (a door, a box…):
+
+1. In the zone's form, click **Link to an element**.
+2. Click on the object in the scene.
+3. The form shows the linked element. The size field becomes "Trigger distance… (m, from the element)".
+
+The visitor then triggers the zone by clicking on the object, or with E when close enough to it. **Unlink** puts the zone back at its own position.
+
+**Only one piece is linked**: the one you clicked on. If several objects of the model have the same name (frequent in an OAR), the zone stores `nom#index` (the rank of the object among those with this name) instead of the name alone: the other objects with the same name are not affected.
+
+**Limit: 10 m.** An element with a dimension over 10 m is refused with the message "Element too big (L × W × H m): probably merged with a building in the OAR…". Cause: an object belonging to an OpenSim **linkset** is merged with it in the GLB; it no longer exists on its own, and it cannot be linked. Two remedies:
+
+- **unlink it in OpenSim** (Unlink) before exporting the OAR, then generate the GLB again;
+- or keep the building as it is and place a **circle zone** on it (Shape: circle on the ground), with the **Place here** button to position it.
+
+### 5.10 Private zones
+
+**Private (absent from the public export)** checked: the zone stays in your "private" exports, but disappears from the "public" exports. The choice is made in **Export profile**:
+
+- **private: all the zones** (called "perso" before v43)
+- **public: without the private zones**
+
+A private arrival also disappears from the public export: a public portal that targets it will land on `default`.
+
+### 5.11 `image` zone: a picture on a wall
+
+An `image` zone lays a picture flat against a wall of the model.
+
+- **Placing**: in the viewer, type "Picture (on a wall)", then click a wall. The zone turns to the face hit and sits 2 cm in front of it. Floor and ceiling are refused ("Click on a wall (a vertical surface) to place a picture."). An image zone is never linked to an object (`mesh` stays empty) and always triggers on click.
+- **Size**: `w` is the width in metres (1.2 by default; from 0.1 to 10) and `h` the height (from 0 to 6). **`h` = 0 (the default): the height follows the image's aspect ratio.**
+- **Link (optional `link` key)**: clicking the picture, or pressing E in front of it, opens this link in a new tab, like a `url` zone; tooltip and hand cursor on hover. It is an `http(s)` address or a path **relative to the address of the open page** (not to the region folder): `galerie.html` for a file next to `index.html`, `pages/galerie.html` in a subfolder; `../` leaves the page's folder. Without `link`, the picture does not react (no prompt, no action). Only `http(s)` passes: `javascript:` is refused ("Invalid link"). A picture whose image is missing is neither clickable nor a "near zone". By hand: add `"link": "galerie.html"` to the zone in `NOM.zones.json`. In the editor: field "Link (page opened on click or E, optional)". Pages and viewers older than 1.1.1 ignore `link`, and **a `glb-viewer.html` older than 1.1.1 that saves zones loses the `link` keys**: keep the viewer and the page at the same version.
+- **Placing, in global view or while walking**: click placement works in both. While walking (mouse captured) it places the zone where the centre of the screen aims; the **P key** also places a picture 2.2 m in front of you, 1.6 m above your feet, facing you. In both cases, adjust the position afterwards in the zone's fields.
+- **Finding image zones (exported page)**: in "Settings", the **"Image zone numbers (to find them)"** box (unticked at every opening, never remembered) shows a big number, flat, in front of each image zone (in the image's plane, not turned towards you), even if its image is still missing: the position is what matters. The number is the one in the targeted file name (`12`, `12.jpg` and `12-Cezanne.jpg` give 12; `paintings/painting-1.jpg` gives 1), otherwise the zone's display name, then its `id`. The numbers are hidden by the scenery and are not clickable. The box only exists if the region has at least one image zone.
+- **Image**: the zone's `target` field: a file name, or an `http(s):` or `data:` address.
+- **Where the page looks**: with the shell (`index.html?region=dossier/NOM`), in the **region's folder** (next to the `.glb`), not next to the page; for a page stored in the region's folder or a stand-alone page, next to the page. In both cases, the **`medias` subfolder** first, then the folder itself: images already in place keep working. The name of this subfolder is the optional key `mediaDir` of `NOM.config.json` (`"medias"` by default, `""` for no subfolder, or another name; the generator always looks in `medias`).
+- **Full name or bare number**: `12-Cezanne.jpg` is a full name. With `12` alone, the page tries `12.jpg`, `12.jpeg`, `12.png`, `12.webp`, `12.gif`, `12.avif` in that order and keeps the first file found (optional key `imageExts`, for example `"png,jpg"`). Missing extensions show up as 404 responses in the browser console: that is expected.
+- **Caption** (small text under the image): the first non-empty line of `12.txt` (UTF-8, at most 200 characters; re-read at every page load: editing the file is enough, no need to run the generator again); otherwise the text between the first `-` of the file name and the extension (`1-Soleil_couchant.jpg` gives "Sunset glow", `_` becomes a space); otherwise no caption. A missing image has no caption either.
+- **Completing names**: a name like `12-Titre.jpg` cannot be guessed by the page (a hosted site cannot list a folder). If you write `12` while only `12-Titre.jpg` exists, the editor (after "Choose the region folder", § 5.12) and the `glb2html.py` generator (at generation, with `--update` and with `--zones-only`, also for the zones of a modular page) **write the real name** and say so. If `12.jpg` (or `12` with another extension) exists, the name `12` stays as it is. Extensions looked for: jpg, jpeg, png, webp, gif, avif, bmp; `12` does not take `120-…`; if several files match, the first in alphabetical order is taken and reported. After adding or renaming an image, run only the zones again (`PROCEDURES.md` § 5.5).
+- **Hosted mode only**: opened from disk (`file://`), the page cannot load the image (the browser refuses it as a WebGL texture) and shows nothing; a `data:` address works everywhere but makes the page heavier. Measured in Chromium.
+- **Missing image**: nothing in the exported page. In the editor: a panel "image not found: …" and, under the field, a line "Looked up at: …".
+- **Always up to date**: before each image, each caption file and each whole `.glb` of a modular page, the page sends a `HEAD` request without cache, builds a fingerprint (`ETag` or `Last-Modified`, plus the size) and reads the file at the address `file?v=fingerprint`: from the browser cache if the fingerprint is known (no re-download of an unchanged file), from the network otherwise. A replaced file, newer **or older** (an old folder put back with its old dates), is therefore picked up on reload (F5). Without a possible fingerprint (neither `ETag` nor `Last-Modified`, or `HEAD` refused), the page reloads the whole file at every opening; if `fetch` is impossible (another site without CORS, `file://`), it falls back to direct loading. Tiles, `index.html`, `lib/` and `favicon.ico` keep the browser's normal cache.
+- **Diagnostics**: "Copy diagnostics" (§ 7.51) gives one line per image zone: the zone, its target, the file actually read (`medias` folder or region folder), and the caption with its source (file name or text file), or "hidden".
+- **Tests**: `tests/image_zone.py`, `image_legende.py`, `image_numero.py`, `image_medias.py`, `image_noms_gen.py`, `image_cache.py`, `image_cache_vieux.py`, `image_diag.py`, `image_dossier.py`, `lien_image.py` (picture link), `zones_numeros.py`, `pose_promenade.py`.
+- **Not tried**: image zone in a tiled region, wall with a slanted face, Windows and Edge in detail (the P key while walking was only tried in Chromium).
+
+### 5.12 Editor: region folder and image preview
+
+Under the "Image" field of an `image` zone, the button **"Choose the region folder (image preview)"** (viewer, `glb-viewer.html`) makes the viewer read the images in the region's folder, the one of the `.glb` (subfolders accepted, `..` refused), instead of looking for them next to the viewer page. The folder is read-only; it is remembered per region, together with the one used to save zones (§ 5.15): it is the same permission. Edge and Chrome only.
+
+- With no folder chosen, or if the image is not there, it is looked for next to `glb-viewer.html` and a line "Looked up at: …" says so.
+- After the folder is chosen, all image names without an extension are completed at once ("N image name(s) completed from the folder"). Opening a zone whose name has no extension completes it if the folder is already authorised; otherwise the line under the field tells you to choose the folder.
+- The label of an image zone stays whole even when the wall has reliefs in front of it.
+- **Not tried**: the real folder picker on Windows and Edge (tried with a replacement folder).
+
+### 5.13 Rotation of the region
+
+When the OAR arrives rotated (or the island flipped north-south on the map), the **Region** section of the viewer offers **Rotation of the region**: 0, 90, 180 or 270° around the vertical axis. The model turns, and by the same angle, around the centre of the region: the zones (position and heading), the arrival points, the target and the landing circle, the sea hole. Linked zones follow their element. The status bar announces "Region rotated by N°: M zone(s) moved. Capture the thumbnail again."
+
+The rotation is remembered like the other settings, and carried into the command (`--rotate 180`), into `.reglages.json` and into `<page>.config.json`. The generated page applies the rotation on loading; the zones of the file are already in the rotated frame: do not rotate twice.
+
+**After a rotation**, the map thumbnail no longer matches the model:
+
+1. **World map** section: **Capture the thumbnail (top view)**;
+2. **Add / update this region in the map**;
+3. **Export regions.json** (then generate again or republish the pages that embed it).
+
+### 5.14 Place zones in a tiled region (viewer, v32)
 
 The viewer (`glb-viewer.html`) opens a region split into tiles and shows it **in the frame of the original model** (no recentring): the coordinates of zones, arrivals, camera and sea hole that it produces are directly those `glb2html.py --tiles` expects. It shows the overview everywhere and loads the detailed tiles **around the target** (with the same loader and the same limits as the page: radius 150 m, 200 MB, 8 million triangles).
 
@@ -717,8 +510,8 @@ The viewer (`glb-viewer.html`) opens a region split into tiles and shows it **in
 2. Click **"Open a tiled region (folder)"** and choose the **folder that contains `X.tiles.json`** (the one where `glb2tiles.py` wrote `X.tiles.json`, `X.overview.glb` and the `X.tiles` folder). Or **drag this folder** into the window. The browser may ask to confirm sending the files: nothing is sent anywhere, it reads them in place, one by one, when a tile is needed. If there are several regions in the folder, a "Region in the folder" list appears.
 3. The text under the buttons says what is open (tiles, overview, object references). The whole region appears; the tiles around the target (the small black and white circle on the ground) load.
 4. **Move the target**: double-click on the terrain (even on the overview: the tiles of that spot load). Wheel to zoom, drag to rotate, right click + drag to pan.
-5. In the **"Zones"** section, choose the type, click **"Place a zone with a click on the scene"**, then click on the ground or an object **once the tile is displayed**. If you click outside a loaded tile (on the overview), the viewer tells you so as text ("No detailed tile loaded at this spot…"), loads the tile, and you click again a few seconds later. Everything else is as in single-GLB mode: radius and height, portals (§ 5, 6), arrivals (§ 4), signs, Home Assistant (§ 7, 8), P key in walk mode.
-6. **Link a zone to an object** (§ 9): in the zone's form, **"Link to an element"**, then click on the object. The zone takes the position of the object. A linked zone is only visible when the object's tile is loaded (the text of the form says so: "tile not loaded"; **"See this zone"** loads it). If the viewer answers that the element has no reference, the tiles date from before v32: split again (§ 17).
+5. In the **"Zones"** section, choose the type, click **"Place a zone with a click on the scene"**, then click on the ground or an object **once the tile is displayed**. If you click outside a loaded tile (on the overview), the viewer tells you so as text ("No detailed tile loaded at this spot…"), loads the tile, and you click again a few seconds later. Everything else is as in single-GLB mode: radius and height, portals (§ 5.5, 6), arrivals (§ 5.4), signs, Home Assistant (§ 5.7, 8), P key in walk mode.
+6. **Link a zone to an object** (§ 5.9): in the zone's form, **"Link to an element"**, then click on the object. The zone takes the position of the object. A linked zone is only visible when the object's tile is loaded (the text of the form says so: "tile not loaded"; **"See this zone"** loads it). If the viewer answers that the element has no reference, the tiles date from before v32: split again (§ 4.1).
 7. **"Coordinates (m)"** section: the targeted point (single click on the model) and the target, as text (x, y, z, one decimal), with **"Copy the targeted point"** and **"Copy the target"**.
 8. **Export the zones**: "Export zones (.json)" writes **`X.zones.json`** (X = name of the region) into your downloads folder. To **complete** a region already done: open the region, "Import zones (.json)" with the existing `X.zones.json`, add the new zones, export again.
 9. **Generate the page again**: fill in "Path of glb2html.py" and click **"Generate the PowerShell command line"**: the viewer writes the full command (`--tiles`, `--zones`, `-o`, common shell, sea level, presence, chat…). Run it from the folder of `glb2html.py`, correcting the path of `X.zones.json` if it is not next to it. If the page already exists and the `index.html` shell has changed version, delete it first (an existing different shell is never overwritten: the warning says so).
@@ -729,91 +522,7 @@ Another way to open: by address, if the viewer is served over http (for example 
 
 Test: `python tests/v32.py` (synthetic region of 16 tiles: free, portal, arrival and linked zones placed in the viewer, export, then generated page).
 
-## 18. New in v33 (22/10/2026)
-
-### 18.1 Starting at an arrival (`#spawn=`, `#pos=`) in a tiled region
-
-**What used to happen (measured, 22/10/2026).** With a `#spawn=chateau` link, the loader took the arrival as its reference for **only 4 seconds**, then went back to the default camera target. If the arrival's tile was not ready at that moment (heavy tile, slow processor or network), it was **unloaded and its download abandoned**, the tiles around the target loaded instead, and the page waited 120 seconds before going on, **behind a black screen without any text**. Reproduced on a synthetic region of 16 tiles, two of them with more than a million triangles (23 MB, `tests/glbfab.py`), processor slowed down 10 times (Chromium developer tools): black screen **121.6 s**, avatar in walk mode at **125.7 s**; with v33: walk mode at **7.1 s**. Without slowdown: 2.6 s before, 1.6 s after. The measured cause is the 4 s window (the arrival's tile, unloaded, was requested again later); the construction of the collision grid was not the cause on this synthetic region (142 ms of computation for 1 million triangles without slowdown, 2 s at x10).
-
-**What v33 does.**
-
-- The requested arrival point (`#spawn=ID`, or `#pos=x,y,z,yaw`, or the `default` arrival when opening without a link) is the **loader's reference until walk mode starts** (or until the target of the global view is moved), never the camera target.
-- The tile or tiles containing this point start **before the overview and before any other tile**; **no other tile starts** until those are ready (or have failed).
-- Their collision grid goes first in the queue, with a **time budget per frame of 40 ms** (6 ms for the other tiles). During walk mode, the grid of the tile containing the avatar **always** goes before the others.
-- **Never a black screen without text**: from the start, "Loading the ground… 0/1 tile ready · 3 s" (tiles ready out of tiles expected, elapsed time), on a black background with framed white text. **After 15 s**, the black screen is removed: you see the scene (overview included) with the text, and walk mode starts as soon as the tile is ready. After 60 s, the text adds "long wait (heavy tile or slow network)"; the 120 s delay no longer exists.
-- If loading fails, the error message is no longer hidden behind the black screen.
-
-**`#pos=x,y,z[,yaw]`** (numbers only, decimal point, values limited to ±100 000; anything else is ignored): anonymous arrival at this point, with the same loading rules. The frame is that of the original model in tiles mode, that of the page (recentred model) in single-GLB mode. The help panel offers **"Copy the link to my position"**: address of the page (with `?region=`) followed by `#pos=x,y,z,yaw` (2 decimals), readable when opening; without a clipboard, the link is written in a field of the panel.
-
-**One line per tile in the console** (the browser's F12 key) when it becomes ready or fails, to paste into the diagnostic chat:
-
-```
-[tile] X.tiles/T_3_0_1.glb ready: 14.0 MB · 1002668 triangles · wait before download 0 ms · download 278 ms · GLB parsing 28 ms · wait in the grid queue 53 ms · grid construction 142 ms of work (1004 ms elapsed) · total 1310 ms
-[tile] X.tiles/T_3_2_4.glb: failed after 2100 ms (HTTP 404)
-```
-
-"Grid construction" = computation time actually used; "elapsed" = clock time between entering the queue and the end (includes rendering the frames). `viewer.tilesState().log` (browser console: `__viewer.tilesState().log`) gives the same values as numbers.
-
-### 18.2 Default arrival and back to the arrival point
-
-Exact rule, **without a link** (neither `#spawn=` nor `#pos=`):
-
-| Situation                                                           | Starting framing (camera target)                                                       | F key (without having moved the target) |
-| ------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | --------------------------------------- |
-| the region has a `default` arrival, no `--target`                   | **the position of this arrival**                                                       | **its point and its heading**           |
-| the region has a `default` arrival, `--target` given                | the given target                                                                       | the target (as before)                  |
-| no `default` arrival                                                | the target (the one from the configuration, or the centre of the extent in tiles mode) | the target (as before)                  |
-| configuration written before v33 (without the `targetExplicit` key) | the target (as before)                                                                 | the target (as before)                  |
-
-With a link (`#spawn=`, `#pos=`), the framing and walk mode happen at the requested arrival. In tiles mode, this point is the loading reference at the start.
-
-The viewer writes `targetExplicit` as true when the target of its camera is not the default target (same test as the `--target` command line). A `default` arrival placed in the viewer therefore changes nothing for a page whose camera you framed by hand.
-
-**Back to the arrival point**: "Back to the arrival point (R)" button or **R** key. In walk mode: teleport to the `default` arrival (failing that: to the starting target), with "Loading the ground…" if the tile is not ready, like an internal portal. In the global view: the target and the camera move to this point (same camera offset).
-
-### 18.3 Zone markers in the exported page
-
-| Option          | Value                                 | Effect                                                                                                                                                                 |
-| --------------- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--zone-marker` | `dot` (default; `discret` before v43) | previous behaviour: flat semi-transparent 0.4 m disc and thin ring                                                                                                     |
-|                 | `range` (`portee` before v43)         | **thin sharp ring at the real radius of the zone**, without a cylinder; a one-pixel line is added to the flat ring so that it is still drawn from afar                 |
-|                 | `none` (`aucun` before v43)           | no marker; the zone stays clickable and triggers as before                                                                                                             |
-| `--show-spawns` | (none)                                | also draws the **arrivals**: small 0.3 m disc and thin ring on the ground. Without this option, arrivals are **never** drawn in the exported page (only in the editor) |
-
-They concern portals and free zones (web link, command). Setting in the viewer: "Zones" section ("Marker of portals and free zones" menu, "Draw the arrivals" box); it appears in the summary of the command line. Config: `zoneMarker`, `showSpawns`.
-
-### 18.4 Flight, three views, "Go to"
-
-- **Flight** (`--fly`, default; `--no-fly` removes it from the page and the help): **Home** takes off or lands. In flight, **Page Up** (or **Space** held, v36) goes up and **C** goes down (same speed as walking, **Shift** speeds up), no gravity, walls block as on the ground, the avatar never goes below the ground of the loaded tiles. Towards a tile not yet ready, the avatar stops at the edge ("Loading the ground…"), as on foot. On landing, gravity brings it back to the ground (or onto a roof). Presence transmits the height normally. In flight, E triggers the nearby zone as on the ground (v36).
-- **Views** (**V**): first person (the previous view); **third person** (the camera turns around the avatar, at 4 m, comes closer if a wall is behind it, never goes below the ground, the mouse sets the height); **free camera** (the avatar stays in place, the movement keys and the arrows move and turn the camera, **Page Up** and **C** raise and lower it, it does not go through the ground). In free camera, **V** again gives control back to the avatar (v36: **F** leaves walk mode, like **P**). The avatar is drawn with the same model as the other visitors, with the visitor's name and colour. The view is written as text in the help panel (v34: "View: third person" and "Mode: on foot" in the status block, § 19.1).
-- **"Go to x, y, z"** (help panel): metres, **frame of the original model in tiles mode, frame of the page (recentred model) in single-GLB mode** (the panel says so). Formats: `68.2, 39, -823.3`; `68.2 39 -823.3`; `68,2 ; 39,0 ; -823,3` (decimal comma with semicolons). In walk mode: teleport, waiting for the tile; in the global view: the target moves.
-
-### 18.5 Chat
-
-- **Persistent input**: **Enter** opens the input, **Enter sends and keeps it open** (field emptied), **Esc** closes it and gives the keys back to walk mode. While it is open, letters **and arrows** stay in the text (the arrows move the cursor); after Esc the arrows move the avatar again. (Up to 1.1.8, the arrows moved the avatar while typing.) The state is written in the help. Nothing changes for those who do not use the chat.
-- **Save the chat**: button under the chat. Downloads a UTF-8 text file (with byte order mark, readable in Notepad, Windows line endings): one line `jj/mm/aaaa hh:mm:ss | Nom | texte` per message received or sent **since your arrival**. Everything happens in the browser: **nothing is stored on the server side for you**. Note: the presence server keeps in memory the last messages of a room (`--history`, 20 by default) and replays them when a visitor arrives; they are displayed but **are not in the file** (they come before the arrival).
-- **Mentioned nickname**: when your nickname appears in a received message **as a whole word**, ignoring case, with or without `@` in front (`@alice`, `ALICE,`, `l'alice` yes; `Alicex`, `Alicia` no), the message is shown **in bold and preceded by "@"**, the **author's bubble blinks** 6 times (visible 150 ms, hidden 150 ms) and a **short beep** is played (Web Audio, moderate volume, no file; only after a first interaction with the page, a browser rule). Three boxes in "Settings": bold, blinking (checked by default), sound (unchecked by default), remembered in the browser. No change on the server side. Everything is redundant with the text: nothing depends on colour.
-- **`@` completion**: when the text ends with `@` followed by letters, a list of **at most 5 nicknames** (online visitors whose nickname starts with these letters) is shown above the input; **up and down arrows** to choose (the choice is marked by `▶`, in bold and inverted), **Tab or Enter** insert `@Pseudo ` (Enter does not send while the list is open), **Esc** closes the list without closing the input. Empty list: nothing is shown.
-
-### 18.6 Avatar colour (client and server)
-
-Settings → "Choose my avatar's color": the value is remembered in the browser and **sent in the `hello` message** (integer from 0 to 0xFFFFFF). `presence_server.py` accepts it if it is **an integer between 0 and 0xFFFFFF**; otherwise (out of range, float, text, boolean, null, list) it **rejects it silently** and picks a random colour, as before, then broadcasts it as the current colour. An old client (without colour) works; an old server simply ignores the field. Since v34, the change is **sent at once** (§ 19.5). **The displayed name stays the main marker** (label above the avatar); nothing is based on colour alone.
-
-**To do on the server side: restart `presence_server.py` with the new version** (the chosen colour is only taken into account by v33 of the server). Typical command (a single line, to adapt to your options):
-
-```
-python .\presence_server.py --host 0.0.0.0 --port 8765 --log presence.log --log-days 30 --log-ip raw
-```
-
-(Since v37 the recommended launch example is `python .\presence_server.py --log presence.log --log-ip raw --log-days 0`; see § 22.6 for `--log-days 0`, the chat history and personal data.)
-
-### 18.7 IP addresses in the log: `--log-ip raw`
-
-The existing `--log-ip` option accepts `hash` (default: 8-character fingerprint), `raw` (**address in clear**) or `none`. With `raw`, the address appears **from the connection**, in the console and in the log (`--log`): `connection | room=… | Name [id 3, key a1b2c3, ip ADRESSE]`. Checked by `tests/v33.py` (default: fingerprint; `raw`: address in clear, in the console and in the file).
-
-**Reminder: an IP address is personal data.** Tell your visitors that the log records them (and for what purpose), limit the retention period with `--log-days` (30 days by default; the log rotates every night), and never publish the log.
-
-### 18.8 Save the zones directly in the region folder (viewer)
+### 5.15 Save the zones directly in the region folder (viewer)
 
 In tiles mode, "Zones" section of the viewer: **"Save the zones in the region folder"** button.
 
@@ -824,44 +533,118 @@ In tiles mode, "Zones" section of the viewer: **"Save the zones in the region fo
 
 **The shell reads `X.zones.json` again at each opening**: after this save, **F5 is enough** in the browser, **without generating the page again** — unless you change the options of the page (`--zone-marker`, `--target`, `--presence-url`…), which are in `X.config.json`.
 
-### 18.9 `glb2html.py --tiles --zones` with the file already in place
+### 5.16 Remembered settings
 
-If `--zones FICHIER` designates **the destination `X.zones.json`** (same path once resolved, absolute or relative), nothing is copied, nothing is rewritten, nothing fails: the script says "zones already in place". The file is therefore not filtered by the `public` profile nor reformatted. Without `--zones`, an existing `X.zones.json` is kept anyway.
+The viewer remembers **everything** (zones included, but also hole, waves, camera, rotation, map, region card…) **per `.glb` file** in the browser (key: name + size of the file). It saves by itself, about every 1.5 s after a change. When the same `.glb` is reloaded, everything is restored, and the status bar shows "Settings restored from the browser's memory (N zone(s))".
 
-### 18.10 Update a region already published
+Consequences:
 
-The shell (`index.html`), `core.js` and `X.config.json` change; **the tiles and `X.tiles.json` do not change** (no new split). Delete the region's `index.html` shell (an existing and different shell is never overwritten), generate the page again **without `--zones`** (the existing `X.zones.json` is kept), restart `presence_server.py` (§ 18.6).
+- a zone added or deleted is found as it was when reloading; to **delete a zone**, open its form and click **Delete** (wait 2 s before closing the tab);
+- the memory belongs to the browser and to the address of the viewer page: another browser or another computer sees nothing. To carry the settings: **Save to a file** (`.reglages.json`) then **Load from a file**, or `glb2html.py --settings`;
+- **Forget this file's settings** (Remembered settings section) erases the memory of this `.glb`: the current values stay on screen, but are no longer protected, and they will be remembered again at the next change. To start from scratch: click this button, then reload the viewer page and open the `.glb` again.
 
-## 19. New in v34 (22/10/2026)
+### 5.17 Viewer language
 
-### 19.1 Selectable help panel and status block
+The viewer (`glb-viewer.html`) has the same "**Language / Langue**" list as the exported pages (Auto, then each available language), the same fallback (English, then French, then the key) and the same `#lang=` parameter. All its texts are translated (settings, buttons, messages, help), including the "Keyboard" section (Auto / AZERTY / QWERTY) and the commands it builds; the zone names you type never are. The pages the viewer exports (standalone HTML, modular `.zip`) contain the same shell as `glb2html.py`: their language is set on the exported page, not in the viewer.
 
-- The **help text** (**H** key) can be selected with the mouse and copied with **Ctrl+C**, without a "copy" button; **Ctrl+C is no longer intercepted** by walk mode (the **C** key alone still goes down in flight). The help receives the mouse: hovering over zone markers no longer works **under** the help, it works everywhere else. Its size is limited (width of at most 440 px and 45 % of the window, height of 42 % of the window with scrolling).
-- New **status block**, separate from the help, below it, with selectable text too: `View: …` (first person, third person, free camera, or global in orbit), `Mode: on foot` / `Mode: flying`, `Mouse: …` (§ 19.4), `Position avatar: x … y … z …` (or target of the global view), then the lines of the tiles and of the overview. The help only keeps the keys and the settings.
-- **H** hides the help alone (the status stays). **I** hides or shows the status block (choice remembered in the browser, key `glb2html_state`).
-- The label "View: third person · on the ground" is replaced by two lines: "View: third person" and "Mode: on foot".
+### 5.18 Tried and not tried (1.1.0)
 
-### 19.2 Hover and click area of the markers
+- **Tried**: automatic tests in Chromium (image zone, names, caption, `medias`, revalidation, diagnostics, materials, pointer, WebGL absent, mark, console). By Klaatou: the images of a real region are displayed; choosing the region folder and the image preview work (30/10/2026); with `--solid-materials`, the low walls of a real model are no longer see-through; Edge started with the SwiftShader option opens the regions.
+- **Not tried**: Windows and Edge in detail (real folder picker); image zones in a tiled region; wall with a slanted face; the pointer label in tiles mode.
+- **Seen once, not reproduced**: a missing image title (cause not confirmed: if it comes back, the "Image" line of "Copy diagnostics" gives the target, the file read and the caption's source); placing an image by click on a low wall that put the image behind the visible face (the zones are then set by hand: `x` or `z` a few hundredths of a metre from the face).
 
-| Option                        | Radius of the hover / click area (invisible disc on the ground)                                                                                      |
-| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--zone-marker range`         | **the radius of the visible ring** (real radius of the zone; at least 2 m for a sign): the tooltip appears when hovering over the ring or its inside |
-| `--zone-marker dot` (default) | the radius of the zone limited between **0.6 m** (as before) and **1 m**                                                                             |
-| `--zone-marker none`          | 0.6 m, as before                                                                                                                                     |
+## 6. Building the page (`glb2html.py`)
 
-### 19.3 Flight
+`glb2html.py` builds the page from the `.glb`. Two forms: a **standalone** page (a single `.html`) or a page **with a shell** (`--shared-shell`, an `index.html` shared by all the regions of the folder). All the options: `REFERENCE_OPTIONS.md`.
 
-**Page Up** goes up, **Page Down** goes down (in addition to **Space** held and **C**, v36), without scrolling the page. **Home** keeps the toggle. When you go down to the ground, **the avatar lands by itself** (flight stops, gravity resumes); it never goes below the ground. The **"Fly / Land"** button in the bottom bar (visible in walk mode, absent with `--no-fly`) toggles flight; its state (`aria-pressed`) and the "Mode: …" line say it as text.
+### 6.1 Single shell for several regions (`--shared-shell`, v26)
 
-### 19.4 Free mouse after Esc
+A single shell (`index.html` by default) serves all the regions of the same folder, with a single `lib/`. Each region only adds three files. The region opens at **`index.html?region=NOM`**, where NOM is the name of the files without extension (`?region=NOM.html` is accepted: the extension is removed).
 
-In walk mode, when the pointer is released (Esc, or loss of focus), the page remembers **"free mouse"**, writes "Mouse: free (G or the “Capture the mouse” button to grab it again)" in the status block and **no longer asks for the lock again**: a single click, a double-click (teleport to the spot under the cursor) and a click on a zone work where the cursor is; dragging with the button held still turns the view. **Capture**: **G** key (it toggles: if the mouse is already captured, it releases it) or **"Capture the mouse"** button (bottom bar; it only captures, a captured pointer cannot click it). The state is reset each time walk mode is entered, but **a click never captures the mouse** (after v52; before, the first click captured it): capturing is always on purpose, with **G** or the button. Without capture, dragging with the button held turns the view.
+```
+dossier/
+  index.html            the shell, identical for all regions
+  lib/three-0.160.0/    shared
+  Ankh.glb   Ankh.config.json   Ankh.zones.json
+  Jungle.glb Jungle.config.json Jungle.zones.json
+```
 
-### 19.5 Live colour
+| Need                  | Command (PowerShell, a single line)                                                                                                                             |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Generate a region     | `python glb2html.py "Ankh.glb" --settings --shared-shell --register regions.json -o "Ankh.html"`                                                                |
+| Another shell name    | `--shared-shell monde.html` (address `monde.html?region=Ankh`)                                                                                                  |
+| Change a setting      | `python glb2html.py --settings "Ankh.glb" --config-only --shared-shell --wave 2 -o "Ankh.html"`                                                                 |
+| Change only the zones | `python glb2html.py -o "Ankh.html" --zones-only --zones zones.json`                                                                                             |
+| Update a region (v34) | `python glb2html.py --update -o "Ankh.html" --shared-shell --sea-y 12`: applies **only** the options given, keeps the rest of the config and the zones (§ 6.15) |
 
-Changing the colour in the Settings while connected sends `{"t":"color","color":N}` (at most every 300 ms, the last value is always sent). `presence_server.py` accepts an **integer from 0 to 0xFFFFFF** (otherwise silently ignored), ignores two changes less than 0.2 s apart, updates the visitor and broadcasts `{"t":"color","id":…,"color":N}` to the others; a visitor arriving afterwards gets the updated colour. The visitor's own avatar (third-person view) takes it too. Compatible: an old server ignores the message, an old client does not send it. **Restart `presence_server.py`** to benefit from it.
+Rules:
 
-### 19.6 `glb2html.py --update`: update a region without typing anything again
+- `-o` designates the **region**: its name without extension gives NOM. `Ankh.html` is not written; written are `Ankh.glb`, `Ankh.config.json`, `Ankh.zones.json`, plus `index.html` and `lib/three-0.160.0/` **if they are missing**. An existing shell is never overwritten (the other regions share it): if it differs from the one of the current version, the script warns; delete it to renew it.
+- `--register` writes the address `index.html?region=NOM` into `regions.json` (unless `--region-url` or a card in `.reglages.json`). Portals and the map add `#spawn=…` after the query string: `index.html?region=NOM#spawn=default&name=…`. "● you are here" recognises the region by its room, then by the full address (query string included).
+- **Without a `region` parameter**, the shell behaves as before: it deduces its files from the page's name (`index.html` loads `index.config.json`, `index.glb`, `index.zones.json`). Pages already published and their shells therefore keep working, without changing anything. Without a parameter or a matching file, the page shows "Error: … not found (HTTP 404)" with the name of the file looked for.
+- **Security.** NOM must be a single file name. Refused, with an error message in the page and **no network request**: an empty name, a name containing `/` `\` `:` `?` `#` or `..` (even encoded in the address), or starting with a dot. Without this, `?region=https://autre-site/x` would load config, zones and model from a foreign site (trapped portals, Home Assistant webhooks sent elsewhere). The script refuses in the same way an `-o` whose name would be refused.
+- Viewer: "Export the modular structure (.zip)" gives the same structure (`index.html`, `NOM.glb`, `NOM.config.json`, `NOM.zones.json`, `lib/`); the "Shared shell" box of the summary for the script adds `--shared-shell` instead of `--modular`. The `.zip` overwrites `index.html` when unpacked: for a folder that already has several regions, copy only the NOM files if the shell has not changed.
+- Like any modular mode, the page needs http/https (no opening from the disk).
+
+### 6.2 One shell for a whole site
+
+Recommended layout: at the root of the site, a single `index.html` shell, the `lib` folder, `regions.json` and `default.json`; one folder per region. Address of a region: `index.html?region=dossier/NOM`. To update a region **and** the root shell, give the shell path to `--shared-shell`:
+
+`python glb2html.py --update -o "P:\site\dossier\NOM.html" --shared-shell "P:\site\index.html"`
+
+With `--shared-shell` and no path, the shell and a `lib` folder are written **in the region folder**, where they are of no use with this layout. Another way after `python build.py`: copy `dist\index.html` over `index.html` (the `const LIB` line stays `./lib`). `--update` compares the shell with the one it contains itself: run the `glb2html.py` of `dist`, built last (an older copy elsewhere writes its older shell). A shell edited by hand is renewed, the old one kept under a dated name (`index.avant-AAAAMMJJ-HHMMSS.html`).
+
+### 6.3 One line for the `lib` folder
+
+The shell (the `index.html` file shared by all the regions of a folder) starts with a `const LIB = './lib';` line: it is **the only line to edit** to put the `lib` folder elsewhere (for example `'../lib'`, or an `https://…/lib` address). The three.js import map and the path of the Draco decoders are built from that line by a small script run before any module. Accepted values: the same as `--lib-url` (§ 6.5); a refused value is ignored.
+
+### 6.4 `--update` keeps the line
+
+Priority of the `lib` folder: the `--lib-url` option if given; the `const LIB` line of an existing shell if it is not `./lib`; the `libUrl` key of `NOM.config.json`; otherwise `./lib`. When the shell's line wins, `--update` says so in its report and aligns `libUrl`. A shell saved with Windows line endings (CRLF) is recognised as identical. A new region created in a folder whose shell was edited by hand keeps the same `lib` folder, without any warning.
+
+### 6.5 lib folder: `--lib-url`
+
+`--lib-url CHEMIN`: relative path (for example `../lib`) or full `http(s)` address where three.js and its modules are found. It is written into the `const LIB = './lib';` line at the start of the shell (§ 6.3) when the shell is written, and kept in the config (`libUrl`) so that `--update` finds it again. Relative path: `lib/three-X/` is created there if it is missing; full address: nothing is copied. An existing shell is never overwritten: to change the folder of a shell already in place, edit the `const LIB` line by hand (§ 6.3) or use `--update --lib-url CHEMIN` (dated copy of the old one). Refused values: `?`, `#`, `\`, quotes, other schemes (`javascript:`), paths starting with `/`.
+
+### 6.6 Regions in subfolders
+
+`?region=` accepts `dossier/nom` or `a/b/nom`: segments made of letters, digits, dot (not at the start), hyphen, underscore, space and parentheses; never `..`, `:`, `\`, `?`, `#`, nor a path starting with `/`. The config, the GLB or the tiles, the zones (and `zones.json` of that folder) and the overview are resolved from the **region's folder** (the paths of the config are relative to this folder). Build: `glb2html.py X.glb --shared-shell P:\site\index.html -o P:\site\sous\dossier\Ile.html` (the path of the shell designates the parent folder; the region must be below it; shell, `lib/` and `default.json` are written in this parent folder; combines with `--lib-url`). The address becomes `index.html?region=sous/dossier/Ile`.
+
+### 6.7 Default region (`default.json`)
+
+When the address of the shell has no `region` parameter, it tries in this order: (a) `X.config.json` of the page's name (previous behaviour); (b) **`default.json`** of the folder, of the form `{"region": "NOM"}`; (c) the **first entry of `regions.json`** whose address is relative and whose `?region=NOM` parameter is valid; (d) otherwise a one-sentence message saying what to do. The name goes through the same security checks as `?region=`. `glb2html.py --shared-shell` writes `default.json` the **first time** it builds a region in a folder where it does not exist; **`--default`** makes the region being built the default region even if `default.json` exists. `--update` never overwrites it, except with `--default`.
+
+### 6.8 `dist\index.html`
+
+`python build.py` now puts the ready-made shell in `dist\index.html` (`lib` folder: `./lib`), byte for byte the same as the one `glb2html.py` writes. It can be copied into a folder of regions instead of running `--update`; if the `lib` folder is elsewhere, the `const LIB` line has to be carried over. `--update` is still needed to update a region's configuration.
+
+### 6.9 Page icon (`favicon.ico`)
+
+The pages (shell `index.html`, standalone page, `carte.html`, `glb-viewer.html`) carry a "3D" icon (white text on dark blue) embedded by default. **To change it, put a `favicon.ico` file next to the page**: if it exists, the page adopts it, without rebuilding any page. `python build.py` writes a sample `favicon.ico` in `dist\` (four sizes: 16, 32, 48 and 64 px); copy it with `index.html`, then replace it with yours (an ICO file with several sizes renders best). Without that file, the page keeps the embedded icon, and the web server sees an unanswered `favicon.ico` request. For a shared-shell site (§ 6.2), a single `favicon.ico` next to `index.html` is enough; a standalone page kept in another folder needs its own next to it. Safari was not tried.
+
+### 6.10 "About this region"
+
+A text file next to `NOM.config.json` describes the region: `NOM.about.fr.txt`, `NOM.about.en.txt`, or `NOM.about.txt` for all languages. The page looks first for the file of its language, then `NOM.about.txt`; with no file, there is no panel, no key and no checkbox. The first line is the title, the rest is the text (plain text, never HTML, 20,000 characters at most). The file name must be the region's name, the same as `NOM.config.json`: a region `houses` needs `houses.about.fr.txt`.
+
+The panel opens when entering the region. The "Don't show again" button and the "Show the about panel on entry" checkbox of the Settings window decide whether it opens on later visits; this choice is kept **per region**, in the browser (if storage is unavailable, the panel opens at every entry). To reopen it: the `?` key (recognised by the printed character, so on AZERTY as on QWERTY; no effect in an input field) or the "About this region" button of the help. Esc closes it. It does not exist in a standalone page (without a shell). Since 1.4.9: the `http://` and `https://` addresses of the text are links (underlined, opened in a new tab; the punctuation that follows them stays text); the "Visitors' help" button opens `aide.html` when that file is next to the shell (the packages have one); the help button is called "About this region (? key)".
+
+### 6.11 Displayed title: the `title` key
+
+`NOM.config.json` accepts an optional `title` key (60 characters at most): it is the title of the browser tab. Without it, the title is the room (`room`), as before. `--title` of `glb2html.py` writes it (it was ignored in shell mode) and `--update` keeps it if it is not given again. The files and the room stay in lowercase (a hosted site tells capitals apart): the readable name goes in `title`. `--scan-sites` uses it to name a **new** card of the map.
+
+### 6.12 `--light` option
+
+`glb2html.py --light`: the page opens in light rendering until the visitor chooses otherwise; `--no-light` returns to normal rendering (default). The option is carried over by `--update`. In the viewer, the "Exported page opens in light rendering (--light)" box does the same for exported pages; three lines of the rendering section (resolution, frames per second, overview only) set the viewer itself.
+
+### 6.13 Solid materials: `--solid-materials`
+
+A glTF material in `BLEND` mode does not write to the depth buffer (`depthWrite = false` in the three.js loader): a wall made of such a material lets you see through it the transparent objects placed behind it (seen on a real model). The `--solid-materials TEXTES` option (config key `solidMaterials`, empty by default: nothing changes) makes solid the materials whose name contains one of the texts (comma-separated, case ignored; `=name`: exact name): not transparent, depth written, and texels that are half transparent or more are removed (`alphaTest` at 0.5; without this threshold, the texels of zero alpha, black underneath, would form a black plate). The setting applies to the exported page, the editor and the tiles; `--update` keeps the key. In the viewer, the **"Materials drawn solid"** field of the settings (rendering section, under the foliage threshold) sets it live, saves it with the settings and exports it as `--solid-materials`. Foliage keeps its own treatment. To find a material's name: click the wall (§ 7.59, "material: …" line). Test: `tests/solid_materiaux.py`.
+
+### 6.14 Update a region already published
+
+The shell (`index.html`), `core.js` and `X.config.json` change; **the tiles and `X.tiles.json` do not change** (no new split). Delete the region's `index.html` shell (an existing and different shell is never overwritten), generate the page again **without `--zones`** (the existing `X.zones.json` is kept), restart `presence_server.py` (§ 7.29).
+
+### 6.15 `glb2html.py --update`: update a region without typing anything again
 
 | Option     | Effect                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -869,21 +652,57 @@ Changing the colour in the Settings while connected sends `{"t":"color","color":
 
 Form: `python glb2html.py --update -o "X.html" [--shared-shell [COQUILLE.html]] [--tiles "X.tiles.json" | "X.glb"] [options]`. Without `--shared-shell`, the page `X.html` must exist. The shell is **shared by the other regions of the folder**: they keep their behaviour (old configurations are still understood; no config key is new in v34). The report lists the keys changed. The profile (`--profile`) only filters the zones when the list is written: add `--zones` to rewrite it.
 
-### 19.7 Nickname, personal link, launch page
+### 6.16 Publish the changes
 
-- **`#name=PSEUDO`** in the address sets the nickname (remembered in the browser); portals and the map already add it.
-- Settings → **"Copy my personal link"**: copies the address of the page with `#name=PSEUDO&key=CLE`, where CLE is the **identity key of the browser** (32 hexadecimal characters, `glb2html_uid`, the one the server associates with the reserved name). **This link is a secret: whoever opens it takes the identity** (the reserved name). When opening, a key in the right format becomes the browser's; if this browser already has a **different** one, a message on screen asks for confirmation before replacing it. The key is then **removed from the visible address**. A key in the wrong format is ignored (and removed). No change to the server.
-- **Map page** (`--map-page`): **"My nickname"** field at the top, remembered in the browser; the links to the regions get `#spawn=…&name=PSEUDO`.
+Zones are set up in the viewer, but a page already published only sees them after publication:
 
-## 20. New in v35 (22/10/2026)
+| Your page is…                      | What to do after changing the zones                                                                         |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| **standalone** (a single .html)    | **Export standalone HTML**, then replace the old page                                                       |
+| **modular** (shell + .glb + .json) | **Export zones (.json)**, rename to `<nom de la page>.zones.json`, replace the old one, then F5 in the page |
 
-### 20.1 Help in groups, collapsible panels
+Zones can also be saved and reloaded with **Export zones (.json)** / **Import zones (.json)**, for example to copy them from one region to another.
 
-- The help is written in **short groups**, one line per group, without sentences: **Movement**, **Flight**, **View**, **Mouse**, **Chat**, **Zones**, **Page** (in the global view: **Global view**, **Walk**, **Zones**, **Page**). The mention "Ctrl+C copies" and the explanation of the selection are gone; the text stays selectable.
-- The help and the status block each have a **title bar** ("▾ Help", "▾ Status"): a click **collapses** it ("▸ Help", only the bar stays) or expands it. The title says the state as text (arrow and `aria-expanded`), never by colour. The collapsed or expanded state is **remembered in the browser** (keys `glb2html_helpFold` and `glb2html_stateFold`). **H** and **I** still hide the help and the status completely.
-- The "Leave the walk (F)" button is removed (the **P** key is enough). In the global view, the button is called "Walk (P)".
+**After a version change** of glb2html (such as v21 → v22), existing pages keep the old behaviour: they must be generated again. In modular mode, it is the `.html` shell that changes: generate it again, simply replacing the `.json` files is not enough.
 
-### 20.2 Firestorm keys / keys of this page
+### 6.17 Tried and not tried (1.4)
+
+- **Tried**: automatic tests in Chromium for each point above (`tuile_ici`, `apropos`, `compress`, `titre`). By Klaatou: the tile name and the three lines, the about panel and the `?` key, the title "Houses" in the tab, the renaming of the Houses region, the manual compression of its 106 tiles (1,434 MB before, about 650 MB after).
+- **Not tried**: `--compress` on a real region, `gltfpack` under Windows (`npx.cmd`), Edge for the detail, the `?` key on a real AZERTY keyboard for the automatic tests (simulated).
+
+## 7. The page, from the visitor's side
+
+This chapter describes what the visitor sees and can do in the exported page: keys, walking, flight, views, mouse, touch screen, chat, help, windows, settings, language, information and diagnostic. The zones themselves are placed in the viewer (chapter 5).
+
+### 7.1 The keys
+
+| Key                                    | Effect                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **F** (v36)                            | **enters and leaves walk mode**, from the global view as from walk mode (like **P**); flight is toggled with **Home** (in v35, F toggled flight). **When leaving (v31)**, the small landing circle and the target of the global view are placed **on the ground, under the last place where the avatar was**; the camera comes back at the **same distance and in the same direction** from this target as before entering walk mode (it no longer returns to the exact spot you had left from). In tiles mode, the tiles around the avatar therefore stay loaded. |
+| **P** (v35)                            | **enter or leave walk mode** (the "Walk (P)" button stays in the global view; there is no "Leave the walk" button any more). In the **viewer**, P places a zone in walk mode: leave with **F**, **Shift+P** or the button                                                                                                                                                                                                                                                                                                                                          |
+| **E** (v36)                            | **triggers the nearby zone** (trigger "on click" or "both", as before v35; a "walking into it" portal fires when entering its radius, § 5.8). The name of the nearby zone is shown at the bottom: "click or E: …". **E does nothing else** (it no longer jumps nor goes up)                                                                                                                                                                                                                                                                                          |
+| **Page Up** (v35)                      | **short press on the ground = jump** (like Space); **held more than 0.4 s on the ground = take off**; in flight, held = go up                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| **Space** (v36)                        | on the ground: jump; **in flight, held: go up**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| **T** (v36)                            | shows or hides the **portal markers** (small cones, § 7.17); the choice is remembered                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| **Home** (v33)                         | take off or land (toggle; v36: F no longer toggles flight). In flight: **Page Up** or **Space** held goes up, **C** / **Page Down** goes down, no gravity, walls stay solid, never below the ground. Can be removed with `--no-fly` (§ 7.7)                                                                                                                                                                                                                                                                                                                       |
+| **M** (v35)                            | **in walk mode: toggles first person / third person**; outside walk mode: opens the world map (as before). **Ctrl+M opens the world map everywhere**. **v36: the key is recognised by the printed letter "m"**, not by its position: on an AZERTY keyboard it is the real M key (before, it was the "," key)                                                                                                                                                                                                                                                       |
+| **End**, **Alt + click** (v35)         | put the camera back **behind the avatar** (third person). **Alt + drag** orbits the camera (in third person the mouse already orbits; in first person, Alt + drag looks around like the mouse)                                                                                                                                                                                                                                                                                                                                                                     |
+| **wheel** (v35)                        | in walk mode, the page does not scroll. **Third person**: sets the camera distance (1 to 30 m, 4 m by default, remembered); **free camera**: moves the camera forwards / backwards along the line of sight; first person: nothing (§ 7.9)                                                                                                                                                                                                                                                                                                                         |
+| **double press** on W, S, ↑ or ↓ (v35) | **running** as long as the key stays down (two presses less than 300 ms apart); **Shift** still runs. No permanent running (Ctrl+R reloads the page)                                                                                                                                                                                                                                                                                                                                                                                                               |
+| **V** (v33)                            | change view: first person → third person → free camera → first person. The current view is written as text in the status block ("View: …", v34)                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| **R** (v33)                            | **back to the arrival point**: in walk mode, teleports to the `default` arrival (failing that, to the starting target) while waiting for the tile; in the global view, reframes the target and the camera on this point. The "Back to the arrival point (R)" button does the same                                                                                                                                                                                                                                                                                  |
+| **Enter** (v33)                        | open the chat input; **Enter sends and keeps the input open**, **Esc** closes it. The arrows stay in the text while the input is open; after Esc they move the avatar again (§ 7.25)                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| **Page Up** / **Page Down** (v34)      | in flight, go up / down (in addition to **Space** held / **C**, v36); the page does not scroll. **Going down to the ground lands the avatar**: flight stops by itself. "Fly / Land" button in the bottom bar for those who have no Home key (§ 7.8)                                                                                                                                                                                                                                                                                                               |
+| **Esc** (v34)                          | releases the mouse in walk mode. The mouse then stays **free** until **G** or the "Capture the mouse" button (§ 7.10); **a click never captures it** (after v52)                                                                                                                                                                                                                                                                                                                                                                                      |
+| **G** (v34) | **toggles the mouse capture** (after v52): captures it if it is free, releases it if it is captured. The "Capture the mouse" button only captures (a captured pointer cannot click anything); **a click never captures it** |
+| **O** (v37)                            | opens / closes the **Settings** window (toggle, like **H** and **I**); **R** is already taken by the return to the arrival point                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| **I** (v34)                            | the **Information / Status** window (v36: formerly the "status block": view, mode, mouse, keyboard, position, tiles): hidden → expanded; collapsed → expanded; expanded → hidden. **H** does the same for the help alone (§ 7.38, § 7.40)                                                                                                                                                                                                                                                                                                                          |
+| **K** (v46)                            | shows or hides the **movement pad** (the **on-screen arrows**; like the "Arrows (K)" button and the Settings checkbox; remembered by the browser; same place on AZERTY and QWERTY, § 7.34)                                                                                                                                                                                                                                                                                                                                                                                               |
+| **L** (v40)                            | the **Arrivals** window: list of the region's teleport points; clicking a name teleports there (in walk mode) or enters walk mode there (in global view). Same cycle as **H** and **I**; absent if the region has no arrival point                                                                                                                                                                                                                                                                                                                                 |
+
+Portals only work in walk mode.
+
+### 7.2 Firestorm keys / keys of this page
 
 Left column: the defaults of the official viewer according to the Second Life wiki (Quick Start Guide, "Keyboard Shortcuts"), which Firestorm takes over as far as I know; they were not compared here with an installation of Firestorm.
 
@@ -907,186 +726,150 @@ Left column: the defaults of the official viewer according to the Second Life wi
 | Enter / leave walk mode   | (does not exist)                                      | **P** or **F** (v36)                                                                                                                                      |
 | Touch an object, a zone   | click                                                 | **click** or **E** (v36); a "walking into it" portal fires when entering its radius                                                                       |
 | Teleport                  | (map, double-click depending on the setting)          | **double-click**                                                                                                                                          |
-| On-screen arrows          | (does not exist)                                      | **K** or the "Arrows (K)" button hides or shows them (v46, § 29)                                                                                          |
+| On-screen arrows          | (does not exist)                                      | **K** or the "Arrows (K)" button hides or shows them (v46, § 7.34)                                                                                          |
 
 Kept as they are: ZQSD / WASD / arrows, Space, Enter, G, R, V, H, I, Shift.
 
-### 20.3 Flight and jump
-
-- On the ground, **Page Up**: a short press **jumps** (like Space); **held more than 0.4 s**, the avatar **takes off** and climbs as long as the key is held. When released, it stays in flight, motionless in height.
-- **Home** toggles flight (v36: F no longer does); the "Fly / Land" button stays. Going down to the ground (C or Page Down) lands the avatar: flight stops by itself (v34). With `--no-fly`, none of this makes you fly: Page Up only jumps.
-
-### 20.4 Third person
-
-- The **mouse orbits the camera** around the avatar (yaw and pitch of the camera itself) **without turning it**; when standing still, the avatar keeps its heading: you can turn around it and see its front.
-- When a walking key is pressed, **the avatar turns towards its direction of movement** (smoothed rotation, a few tenths of a second); walking forwards goes **in the direction of the camera**. The camera goes through neither ground nor wall, as before.
-- **Presence transmits the heading of the avatar**, not that of the camera: turning the camera by 180° without walking changes nothing for the other visitors. First person and free camera are unchanged. **M** (or V) changes view; when switching to first person the gaze keeps the direction of the camera.
-
-### 20.5 Zone tooltip and click: `--zone-info-dist`
-
-| Option               | Config         | Effect                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| -------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--zone-info-dist M` | `zoneInfoDist` | distance, **in walk mode**, up to which the tooltip, the click and the **displayed name** ("Always show the name") of the zones work. **150 m by default since v37** (40 m in v35 and v36), from **5 to 500** (out of range: brought back to the limit). Adjustable in the viewer ("Walk" section), carried into the command line. A name further away than this distance is hidden in walk mode and reappears in the global view |
-
-`glb2html.py --update --zone-info-dist 60` is enough to apply it to a region already published (§ 20.7).
-
-### 20.6 Copy to the clipboard
-
-All the "copy" buttons (personal link, link to my position, targeted point, target, command) use `navigator.clipboard.writeText` in a **secure context** (https, localhost), and otherwise, **over http on a public address**, a fallback: temporary off-screen field, selection, `document.execCommand('copy')`, removal. The page shows **"Copied"** for a few seconds. If everything fails, the link field stays **displayed and selected**, with "Copy failed: the text is selected, press Ctrl+C".
-
-### 20.7 `--update` and the world map
-
-`glb2html.py --update` now also accepts `--register FICHIER`, `--region-name`, `--region-xy`, `--region-url`, `--region-spawn`, `--thumb`, `--map`, `--map-url` and `--map-page FICHIER.html`: it applies what is given and keeps everything else (config and zones, as before). The room and the presence of the card come from the existing config when you do not give them again.
-
-**With `--update`, the relative paths of `--register`, `--map`, `--map-page` and `--thumb` are relative to the page's folder (that of `-o`)**, and not to the tools folder or to the launch folder; the final message repeats it with the folder. An absolute path is respected. `--region-name`, `--region-url`, `--region-xy`, `--region-spawn` and `--thumb` without `--register` are ignored with a warning.
-
-**Without `--update`**, the old behaviour is kept (a relative path of `--register` is looked for in the launch folder, otherwise in the tools folder, where it is created); when the file is not next to the `-o` page, a line says where `regions.json` is written and suggests `--update` or a full path.
-
-### 20.8 Create the world map
-
-1. **Each region is registered in the same `regions.json`**, next to the pages (a single folder of pages, a common shell). For each region already generated, a `--update --register` command, **a single PowerShell line** (name, position on the OpenSim grid, optional thumbnail of at most 140 KB next to the page):
-   
-   `python glb2html.py --update -o "X.html" --shared-shell --register regions.json --region-name "Display name" --region-xy 1000,1001 --thumb vignette.png`
-   
-   The card gets the address `index.html?region=X`, the room and the presence server of the region's config. Giving the command again updates the card (identified by the room), without duplicates.
-
-2. **Generate the web page of the map**: `python glb2html.py --update -o "X.html" --shared-shell --map-page carte.html` (it reads the regions of `regions.json` registered in the config of region `X`). For it to contain all the regions, run it **after** the registrations, or give `--map regions.json --map-page carte.html`.
-
-3. **Open it through the web server**, not from the disk: the folder containing `carte.html`, `index.html`, `lib/` and the regions is served over http(s) (`python -m http.server` for a test, or any web server), then open `http://ADRESSE/carte.html`. Each link of the map opens the region at its arrival point, with the nickname typed at the top of the page.
-
-4. **The region pages** show the map with the **M** key (**Ctrl+M** in walk mode): `--map-url http://ADRESSE/regions.json` (several addresses separated by commas, merged) makes them read `regions.json` again at each opening, without generating the pages again.
-
-**Since v47**: the map page can also be a universal `carte.html`, with no region inside, that re-reads `regions.json` at every opening (§ 30.4).
-
-### 20.9 Free camera and wheel
-
-- **Third person**: the **wheel** sets the camera distance (from **1 to 30 m**, **4 m by default**, remembered in the browser, key `glb2html_tpsDist`), with the pull-back in front of a wall and the ground protection already in place. **End** puts the camera back behind the avatar at the default distance.
-- **Free camera**: the wheel **moves the camera forwards or backwards along the line of sight**, by a step proportional to the camera-avatar distance (15 %, at least 0.5 m and at most 20 m per notch), never below the ground. The **speed of the keys** is `max(walking speed, 0.5 x camera-avatar distance)` m/s, capped at **60 m/s**; **Shift multiplies it by 3**. **Alt + drag** orbits the camera around the avatar keeping its distance (yaw and pitch), the gaze staying on it. **End** puts it back behind the avatar, at 4 m.
-- **First person**: the wheel does nothing. In all cases the page does not scroll in walk mode (over the view; the help and the status keep their scrolling).
-
-## 21. New in v36 (23/10/2026)
-
-### 21.1 Keys: F and P, E, flight
+### 7.3 Keys: F and P, E, flight
 
 - **F** and **P** enter and leave walk mode (from the global view as from walk mode). In the **viewer**, P places a zone in walk mode; leave with **F**, **Shift+P** or the button.
 - **F no longer toggles flight.** Fly / land: **Home**, the "Fly / Land" button, or **Page Up** held more than 0.4 s on the ground. Go up in flight: **Page Up** or **Space** held. Go down: **Page Down** or **C** (automatic landing on the ground). Jump on the ground: **Space**, or **Page Up** with a short press.
 - **E** is again the action key of the zones (trigger "on click" or "both"): the prompt says "click or E: …". E does nothing else (it no longer jumps, no longer goes up).
 
-### 21.2 Keyboard layout: AZERTY or QWERTY
+### 7.4 Keyboard layout: AZERTY or QWERTY
 
 Walking keeps the **physical** keys (those that are Z, Q, S, D on an AZERTY keyboard are W, A, S, D on a QWERTY one): nothing changes to play. The **help** and the **Information / Status** window show the **real** letters of your layout ("Z Q S D" or "W A S D", never both at once). The layout is detected with `navigator.keyboard.getLayoutMap()` when the browser has it (Chrome, Edge; only over https or on localhost), otherwise with the browser language (fr, fr-FR and fr-BE: AZERTY; the rest: QWERTY). Visitor setting **"Keyboard layout: Auto / AZERTY / QWERTY"** (Settings, remembered); same setting in the viewer. **M** (first person / third person in walk mode, world map otherwise; Ctrl+M: map everywhere) is recognised by the **printed letter "m"**, not by the position of the key: on an AZERTY keyboard it is the real M key (before v36, it was the "," key).
 
-### 21.3 Help and information: three steps
+### 7.5 Flight and jump
 
-The "Status" window is called **Information / Status**. **H** (help) and **I** (information) cycle the window: **hidden → shown expanded**; **collapsed → expanded**; **expanded → hidden**. A click on the title bar collapses / expands; the state (hidden, collapsed, expanded) is remembered in the browser.
+- On the ground, **Page Up**: a short press **jumps** (like Space); **held more than 0.4 s**, the avatar **takes off** and climbs as long as the key is held. When released, it stays in flight, motionless in height.
+- **Home** toggles flight (v36: F no longer does); the "Fly / Land" button stays. Going down to the ground (C or Page Down) lands the avatar: flight stops by itself (v34). With `--no-fly`, none of this makes you fly: Page Up only jumps.
 
-### 21.4 Portal markers (cones): `--zone-cone`, T key
+### 7.6 Third person
 
-Above each portal and each "walking into it" or "both" zone, the page draws a small **cone pointing downwards** (about 0.35 m wide, 0.5 m high, tip 2 m above the centre of the zone; light neutral tint, dark outline: it can be read without depending on colour). It is added to `--zone-marker` (it does not replace it). Visible up to `--zone-info-dist` (150 m by default since v37); hovering over the cone shows the same tooltip as the zone, with the **distance** to the visitor (§ 22.2). Since v37 its **apparent size is constant** (§ 22.2). **T** shows or hides all the cones (choice remembered). `--no-zone-cone` hides them at the start (config `zoneCone`); arrivals only have a cone with `--show-spawns`.
+- The **mouse orbits the camera** around the avatar (yaw and pitch of the camera itself) **without turning it**; when standing still, the avatar keeps its heading: you can turn around it and see its front.
+- When a walking key is pressed, **the avatar turns towards its direction of movement** (smoothed rotation, a few tenths of a second); walking forwards goes **in the direction of the camera**. The camera goes through neither ground nor wall, as before.
+- **Presence transmits the heading of the avatar**, not that of the camera: turning the camera by 180° without walking changes nothing for the other visitors. First person and free camera are unchanged. **M** (or V) changes view; when switching to first person the gaze keeps the direction of the camera.
 
-### 21.5 Occupied arrival
+### 7.7 Flight, three views, "Go to"
 
-When the avatar is placed on a point (opening, `#spawn=`, `#pos=`, default arrival, **R**, internal portal or portal to another region, "Go to"), if another visitor in walk mode is less than **1 m** away (2 m in height), the **newcomer** is shifted to the nearest free point: rings of 1.2, 2.4 then 3.6 m, ground less than 1 m apart in height, no wall between the two points, no visitor closer than 1 m. **(Rule replaced in v37: see § 22.3; the rings are now around the occupant.)** If presence is not connected yet, the check is done again when the list of visitors arrives, only if the avatar has not moved more than 0.3 m (someone who is walking is never moved). Without a free place within 3.6 m, the avatar is placed at the requested spot. Visitors in the global view are invisible: ignored.
+- **Flight** (`--fly`, default; `--no-fly` removes it from the page and the help): **Home** takes off or lands. In flight, **Page Up** (or **Space** held, v36) goes up and **C** goes down (same speed as walking, **Shift** speeds up), no gravity, walls block as on the ground, the avatar never goes below the ground of the loaded tiles. Towards a tile not yet ready, the avatar stops at the edge ("Loading the ground…"), as on foot. On landing, gravity brings it back to the ground (or onto a roof). Presence transmits the height normally. In flight, E triggers the nearby zone as on the ground (v36).
+- **Views** (**V**): first person (the previous view); **third person** (the camera turns around the avatar, at 4 m, comes closer if a wall is behind it, never goes below the ground, the mouse sets the height); **free camera** (the avatar stays in place, the movement keys and the arrows move and turn the camera, **Page Up** and **C** raise and lower it, it does not go through the ground). In free camera, **V** again gives control back to the avatar (v36: **F** leaves walk mode, like **P**). The avatar is drawn with the same model as the other visitors, with the visitor's name and colour. The view is written as text in the help panel (v34: "View: third person" and "Mode: on foot" in the status block, § 7.38).
+- **"Go to x, y, z"** (help panel): metres, **frame of the original model in tiles mode, frame of the page (recentred model) in single-GLB mode** (the panel says so). Formats: `68.2, 39, -823.3`; `68.2 39 -823.3`; `68,2 ; 39,0 ; -823,3` (decimal comma with semicolons). In walk mode: teleport, waiting for the tile; in the global view: the target moves.
 
-### 21.6 Sounds
+### 7.8 Flight
 
-Visitor settings: general **"Sounds"** box (checked) with a **volume** from 0 to 100 (50), then four checked boxes: "Beep when a message mentions my nickname", "Beep for every message when the page is not focused" (one note; hidden tab or another window in front; never for your own messages nor for the history reloaded on connection; at most one beep every 2 s; if the message mentions you and the "mentions" beep is checked, only that one sounds), "Sound when a visitor arrives" (two rising notes), "Sound when a visitor leaves" (two falling notes). The sounds are synthesised (Web Audio), without files; the arrival and departure sounds only concern visitors **in walk mode** in your room (never spectators, never you, never those already present when you arrive), at most one arrival sound and one departure sound every 2 s. `tests/chat_bip.py` (real presence server, fake audio context) checks the message beep. The browser only allows sound after a first action on your part on the page. The old beep settings (key `sound`) are ignored.
+**Page Up** goes up, **Page Down** goes down (in addition to **Space** held and **C**, v36), without scrolling the page. **Home** keeps the toggle. When you go down to the ground, **the avatar lands by itself** (flight stops, gravity resumes); it never goes below the ground. The **"Fly / Land"** button in the bottom bar (visible in walk mode, absent with `--no-fly`) toggles flight; its state (`aria-pressed`) and the "Mode: …" line say it as text.
 
-### 21.7 Copy my position, "Go to"
+### 7.9 Free camera and wheel
 
-"**Copy my position**" (help panel) copies, depending on the list next to it (remembered): **URL** = the address of the page with `#pos=x,y,z,cap`; **xyz** = `68.2, 39.0, -823.3` (metres, decimal point, one decimal). The "**Go to**" field accepts both, as well as the earlier formats; with a full address containing `#pos=x,y,z,cap`, it also takes the heading.
+- **Third person**: the **wheel** sets the camera distance (from **1 to 30 m**, **4 m by default**, remembered in the browser, key `glb2html_tpsDist`), with the pull-back in front of a wall and the ground protection already in place. **End** puts the camera back behind the avatar at the default distance.
+- **Free camera**: the wheel **moves the camera forwards or backwards along the line of sight**, by a step proportional to the camera-avatar distance (15 %, at least 0.5 m and at most 20 m per notch), never below the ground. The **speed of the keys** is `max(walking speed, 0.5 x camera-avatar distance)` m/s, capped at **60 m/s**; **Shift multiplies it by 3**. **Alt + drag** orbits the camera around the avatar keeping its distance (yaw and pitch), the gaze staying on it. **End** puts it back behind the avatar, at 4 m.
+- **First person**: the wheel does nothing. In all cases the page does not scroll in walk mode (over the view; the help and the status keep their scrolling).
 
-### 21.8 Page language
+### 7.10 Free mouse after Esc
 
-The whole interface (help, settings, information, prompts, loading and error messages, chat, map, "world map" page, viewer) exists in **French** and in **English**. Visitor setting **"Language / Langue"**: **Auto** (the first language of `navigator.languages` that is available, otherwise English), then each available language. Changing the language reloads the page. The **`#lang=en`** parameter (or `#lang=fr`, `#lang=auto`) in the address takes priority and is remembered; it combines with `#spawn=`, `#pos=`, `#name=`. The texts **you** type (zone names, signs, nicknames) are never translated.
+In walk mode, when the pointer is released (Esc, or loss of focus), the page remembers **"free mouse"**, writes "Mouse: free (G or the “Capture the mouse” button to grab it again)" in the status block and **no longer asks for the lock again**: a single click, a double-click (teleport to the spot under the cursor) and a click on a zone work where the cursor is; dragging with the button held still turns the view. **Capture**: **G** key (it toggles: if the mouse is already captured, it releases it) or **"Capture the mouse"** button (bottom bar; it only captures, a captured pointer cannot click it). The state is reset each time walk mode is entered, but **a click never captures the mouse** (after v52; before, the first click captured it): capturing is always on purpose, with **G** or the button. Without capture, dragging with the button held turns the view.
 
-### 21.9 Add a language (without touching the code)
+### 7.11 "Recenter the view" button
 
-1. Copy `src/i18n/en.json` to `src/i18n/<code>.json` (the code is that of `navigator.language`: `de`, `es`, `pt`…).
-2. Translate the **values** (never the keys). `_name` = the name of the language in that language ("Deutsch"). `{0}`, `{1}`… are markers to keep as they are (they can move); keys ending in `.one` / `.other` (plural) can also have `.zero`, `.two`, `.few`, `.many` if your language needs them. A missing key is replaced by English, then French, then the key itself: a partial translation works.
-3. Keys starting with `page.`, `core.`, `viewer.`, `map.` and `common.` are those of the pages and the viewer; those starting with `py.` are those of the Python tools (`--lang`, § 21.11).
-4. Build with `python build.py` (the language folder is chosen with `--i18n DOSSIER`): the "Language / Langue" list offers the new language, the pages and the tools of `dist\` embed it. No code to change. `python tests/i18n.py` checks the language files (same keys, same markers, no unused key).
+In the bottom bar, outside walk mode only: the **"Recenter the view"** button restores the region's opening framing (same center, same angle, same distance as at the end of loading). **R** stays the return to the arrival point: in global view, it centers the view on the arrival point while keeping the angle and distance.
 
-### 21.10 Viewer language
-
-The viewer (`glb-viewer.html`) has the same "**Language / Langue**" list as the exported pages (Auto, then each available language), the same fallback (English, then French, then the key) and the same `#lang=` parameter. All its texts are translated (settings, buttons, messages, help), including the "Keyboard" section (Auto / AZERTY / QWERTY) and the commands it builds; the zone names you type never are. The pages the viewer exports (standalone HTML, modular `.zip`) contain the same shell as `glb2html.py`: their language is set on the exported page, not in the viewer.
-
-### 21.11 Language of the Python tools: `--lang`, `WEB3D_LANG`
-
-`glb2html.py`, `glb2tiles.py`, `oar2glb.py` and `presence_server.py` (and `glb-stats.py`, used by `glb2tiles.py`) show their messages, warnings, errors and help (`--help`) in French or in English. **Choice of language**: `--lang fr`, `--lang en` or `--lang auto` (default); otherwise the `WEB3D_LANG` environment variable; otherwise the system language; otherwise English. `--lang` takes precedence over `WEB3D_LANG`. The options themselves (`--budget`, `--exclude`…) and the moderation commands of the server (`list`, `kick`, `ban`, `bans`, `unban`, `help`, and their French equivalents) do not depend on the language. Output files (JSON, tool logs) keep their keys; the logs are written in the chosen language.
-
-**Standalone files**: `build.py` embeds the texts of `src/i18n/*.json` (`py.*` keys) in each tool of `dist\`: a tool copied alone to another machine keeps its two languages (a build choice). From the sources (`tools\`, `src\`), the tools read `i18n_py.py` and `i18n\` next to them or in `src\`. Adding a language: § 21.9, no code to change. A new option of a tool must have its `py.*` key in **both** files (`python tests/i18n.py` checks it); `python gen_reference.py` regenerates `REFERENCE_OPTIONS.md` (French then English in each "Effect" cell), `python tests/doc_options.py` checks that no option is missing from it and that no description is empty.
-
-## 22. New in v37 (23/10/2026)
-
-### 22.1 Running indicator, compass, resizable windows, O key
+### 7.12 Running indicator, compass, resizable windows, O key
 
 - The **Mode** line of the Information / Status window shows **"on foot · running"** or **"flying · running"** as long as running is active (**Shift** key held, or fast double press in progress), then goes back to "on foot" or "flying".
 - **Compass**: at the top of the page, in the centre, the heading as text, cardinal point then degrees ("NE 45°"). It is the heading of the **avatar** in walk mode, of the **camera** in the global view. OpenSim convention: north is the **-Z** direction of the model (z = -y of OpenSim); the rotation of the region (`rotate`) is taken into account. Letters: French N, NE, E, SE, S, SO, O, NO; English N, NE, E, SE, S, SW, W, NW. **"Compass"** box in the visitor Settings (checked by default, remembered). Options of `glb2html.py`: `--compass` / `--no-compass` (config `compass`, enabled by default) and `--north DEGRES` (config `northDeg`, default 0) for a GLB that does not come from OpenSim: the offset is **added** to the heading displayed (180: facing -Z, the compass shows S). `--update` applies them.
 - **Help and Information windows**: a **right edge to drag** (resize cursor, double line on the edge) sets the width of each, from **260 px** to **70 %** of the browser window; the width is **remembered** in the browser. The text reflows and the **height follows the content** (the help's scroll bar only appears if the browser window is too low: at 260 px wide the help needs about 730 px of height). The two windows stay stacked at the bottom left: when the help loses height, it moves down to stay stuck to the information window. The 440 px / 45 % of v34 are the default values.
 - **O** key: opens / closes the **Settings** window (R is already taken).
 
-### 22.2 Portal marker (cone): constant size, distance
+### 7.13 What the visitor sees: links behave as on the web
+
+In the **viewer** (editing), each unlinked zone keeps its **translucent cylinder**, always visible, to find and position it (signs too); a zone linked to an element is outlined there. None of this is exported.
+
+In the **exported page** (standalone or modular), there is **no cylinder** for web link, Home Assistant command and portal zones:
+
+| Zone                     | What is added to the scene                                                                         | On hover                                                                                                              |
+| ------------------------ | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| **linked to an element** | **nothing**                                                                                        | the cursor becomes a **hand**, the element gets a light **outline**, a **tooltip** shows the name and the destination |
+| **unlinked**             | a **discreet marker on the ground** (small flat disc of 0.4 m, semi-transparent, with a thin ring) | same thing: hand, tooltip, the marker brightens                                                                       |
+
+The tooltip gives the **name** then the **destination**: the web address for a link, "Region: address (#arrival)" for a portal ("this region" if the destination is empty), "Command: name" for a Home Assistant command (the webhook address is **never** shown). A **click** follows the link. A portal set to "walking into it" has no hover (it triggers by itself).
+
+No permanent text sign: the name only appears on hover, or when you are within range ("click: …" at the bottom of the screen).
+
+**Always show the name** (zone form, **unchecked by default**): keeps a name permanently visible, above the element or the marker; for an unlinked zone of "sign" shape, the whole sign is displayed.
+
+*Change since v23*: unlinked zones of "sign" shape are no longer drawn in the exported page, unless **Always show the name** is checked.
+
+### 7.14 Zone markers in the exported page
+
+| Option          | Value                                 | Effect                                                                                                                                                                 |
+| --------------- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--zone-marker` | `dot` (default; `discret` before v43) | previous behaviour: flat semi-transparent 0.4 m disc and thin ring                                                                                                     |
+|                 | `range` (`portee` before v43)         | **thin sharp ring at the real radius of the zone**, without a cylinder; a one-pixel line is added to the flat ring so that it is still drawn from afar                 |
+|                 | `none` (`aucun` before v43)           | no marker; the zone stays clickable and triggers as before                                                                                                             |
+| `--show-spawns` | (none)                                | also draws the **arrivals**: small 0.3 m disc and thin ring on the ground. Without this option, arrivals are **never** drawn in the exported page (only in the editor) |
+
+They concern portals and free zones (web link, command). Setting in the viewer: "Zones" section ("Marker of portals and free zones" menu, "Draw the arrivals" box); it appears in the summary of the command line. Config: `zoneMarker`, `showSpawns`.
+
+### 7.15 Hover and click area of the markers
+
+| Option                        | Radius of the hover / click area (invisible disc on the ground)                                                                                      |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--zone-marker range`         | **the radius of the visible ring** (real radius of the zone; at least 2 m for a sign): the tooltip appears when hovering over the ring or its inside |
+| `--zone-marker dot` (default) | the radius of the zone limited between **0.6 m** (as before) and **1 m**                                                                             |
+| `--zone-marker none`          | 0.6 m, as before                                                                                                                                     |
+
+### 7.16 Zone tooltip and click: `--zone-info-dist`
+
+| Option               | Config         | Effect                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| -------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--zone-info-dist M` | `zoneInfoDist` | distance, **in walk mode**, up to which the tooltip, the click and the **displayed name** ("Always show the name") of the zones work. **150 m by default since v37** (40 m in v35 and v36), from **5 to 500** (out of range: brought back to the limit). Adjustable in the viewer ("Walk" section), carried into the command line. A name further away than this distance is hidden in walk mode and reappears in the global view |
+
+`glb2html.py --update --zone-info-dist 60` is enough to apply it to a region already published (§ 9.3).
+
+### 7.17 Portal markers (cones): `--zone-cone`, T key
+
+Above each portal and each "walking into it" or "both" zone, the page draws a small **cone pointing downwards** (about 0.35 m wide, 0.5 m high, tip 2 m above the centre of the zone; light neutral tint, dark outline: it can be read without depending on colour). It is added to `--zone-marker` (it does not replace it). Visible up to `--zone-info-dist` (150 m by default since v37); hovering over the cone shows the same tooltip as the zone, with the **distance** to the visitor (§ 7.18). Since v37 its **apparent size is constant** (§ 7.18). **T** shows or hides all the cones (choice remembered). `--no-zone-cone` hides them at the start (config `zoneCone`); arrivals only have a cone with `--show-spawns`.
+
+### 7.18 Portal marker (cone): constant size, distance
 
 The cone keeps the **same apparent size**: its scale follows the distance to the camera (distance / 12, between 1 and 12), its tip stays at the same point and its shape does not change. It stays visible up to `zoneInfoDist`, **150 m by default** (range 5 to 500). Its tooltip adds the **distance to the visitor**, rounded to the metre and updated when you move: "Portal → château · 120 m" (in the global view: distance to the camera).
 
-### 22.3 Occupied arrival, improved
+### 7.19 Occupied arrival
+
+When the avatar is placed on a point (opening, `#spawn=`, `#pos=`, default arrival, **R**, internal portal or portal to another region, "Go to"), if another visitor in walk mode is less than **1 m** away (2 m in height), the **newcomer** is shifted to the nearest free point: rings of 1.2, 2.4 then 3.6 m, ground less than 1 m apart in height, no wall between the two points, no visitor closer than 1 m. **(Rule replaced in v37: see § 7.20; the rings are now around the occupant.)** If presence is not connected yet, the check is done again when the list of visitors arrives, only if the avatar has not moved more than 0.3 m (someone who is walking is never moved). Without a free place within 3.6 m, the avatar is placed at the requested spot. Visitors in the global view are invisible: ignored.
+
+### 7.20 Occupied arrival, improved
 
 The free point chosen is the one closest to the **occupant** (and not to the requested point): rings of **1.5, 2.0 then 3.0 m** around them (16 candidates per ring), same ground, wall and distance-to-other-visitors conditions as in v36; within the ring, the candidate closest to the requested point. The newcomer is then **turned towards the occupant** (the closest one if there are several). A line is written in the browser console: "occupied arrival: moved X m (ring R m)".
 
-### 22.4 Mentioned nickname: continuous blinking
+### 7.21 Default arrival and back to the arrival point
 
-When a message mentions my nickname, the alert blinks on **my page only**: half a second visible, half a second hidden, on the **author's name label** (which stays even when their bubble has disappeared), their **bubble** if it still exists, and the **message line** in the chat. **Without a time limit**: the blinking goes on until my first action (key, click, movement of the avatar, sending a message), then everything stays visible. Several mentions before my action all blink. The text is not just a colour: the element disappears and reappears. (Replaces the 6 blinks of 300 ms of v33.)
+Exact rule, **without a link** (neither `#spawn=` nor `#pos=`):
 
-### 22.5 Link parameters after `#`
+| Situation                                                           | Starting framing (camera target)                                                       | F key (without having moved the target) |
+| ------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | --------------------------------------- |
+| the region has a `default` arrival, no `--target`                   | **the position of this arrival**                                                       | **its point and its heading**           |
+| the region has a `default` arrival, `--target` given                | the given target                                                                       | the target (as before)                  |
+| no `default` arrival                                                | the target (the one from the configuration, or the centre of the extent in tiles mode) | the target (as before)                  |
+| configuration written before v33 (without the `targetExplicit` key) | the target (as before)                                                                 | the target (as before)                  |
 
-The separator is **`&`**; **`#` is also accepted**: `#name=Klaatou&lang=en` and `#name=Klaatou#lang=en` are equivalent (`name`, `lang`, `spawn`, `pos`, `key`). A single function (`hashParams`) reads the link in the page, the shell and the map page.
+With a link (`#spawn=`, `#pos=`), the framing and walk mode happen at the requested arrival. In tiles mode, this point is the loading reference at the start.
 
-### 22.6 Chat history
+The viewer writes `targetExplicit` as true when the target of its camera is not the default target (same test as the `--target` command line). A `default` arrival placed in the viewer therefore changes nothing for a page whose camera you framed by hand.
 
-- `presence_server.py --history N`: last messages replayed to newcomers, **200 by default** (20 before), 0 = none.
-- `--history-file FICHIER` (disabled by default): each message is appended to the file, one JSON line per message: `{"n":number,"t":Unix seconds,"d":"dd/mm/yyyy hh:mm:ss","room":room,"name":nickname,"text":text}`. **Never the IP address.** The file is read back at startup: the history survives restarts (up to 20,000 messages per room in memory).
-- `--history-days N` (default 30; **0 = keep everything**): at startup, older messages are neither read back nor kept (the file is rewritten without them).
-- **Protocol**: the client sends `{t:'history', before:N, n:50}` (N = number of the oldest message displayed); the server answers `{t:'history', msgs:[…], more:true|false}` for its room (at most 100 messages, one request every 0.2 s). Each message (welcome, broadcast, history page) also carries `n` and `t`/`ts`; old clients ignore them. An old server does not answer: the "Older messages" button hides itself after 4 s.
-- **Page**: the open chat panel **scrolls**. Visitor setting **"History messages kept in the chat"** (200 by default, from 20 to 2000, remembered). **"Older messages"** button (in batches of 50, inserted at the top; hidden if `more` is false or if the server does not answer). **Tab title**: "(3) RegionName" = unread messages when the page is hidden or the chat collapsed, reset to zero when the chat is opened (intended behaviour: opening the chat counts as reading all the messages, even without scrolling through them). **"N messages mention you"** with a "Go to the first" button (these messages keep the blinking of § 22.4 until my first action).
-- **Personal data.** The messages (nickname, text, time) are personal data: inform your visitors, limit the duration with `--history-days`, protect the file. Likewise **`--log-days 0` keeps the logs without limit** (the nightly rotation continues but no file is deleted any more): only use it if you take responsibility for it.
-- Command to launch the server (a single line; **restart the server** to benefit from the history): `python .\presence_server.py --log presence.log --log-ip raw --log-days 0`; add `--history-file chat.jsonl` to keep the history between two restarts.
+**Back to the arrival point**: "Back to the arrival point (R)" button or **R** key. In walk mode: teleport to the `default` arrival (failing that: to the starting target), with "Loading the ground…" if the tile is not ready, like an internal portal. In the global view: the target and the camera move to this point (same camera offset).
 
-### 22.7 Default region (`default.json`)
+### 7.22 Copy my position, "Go to"
 
-When the address of the shell has no `region` parameter, it tries in this order: (a) `X.config.json` of the page's name (previous behaviour); (b) **`default.json`** of the folder, of the form `{"region": "NOM"}`; (c) the **first entry of `regions.json`** whose address is relative and whose `?region=NOM` parameter is valid; (d) otherwise a one-sentence message saying what to do. The name goes through the same security checks as `?region=`. `glb2html.py --shared-shell` writes `default.json` the **first time** it builds a region in a folder where it does not exist; **`--default`** makes the region being built the default region even if `default.json` exists. `--update` never overwrites it, except with `--default`.
+"**Copy my position**" (help panel) copies, depending on the list next to it (remembered): **URL** = the address of the page with `#pos=x,y,z,cap`; **xyz** = `68.2, 39.0, -823.3` (metres, decimal point, one decimal). The "**Go to**" field accepts both, as well as the earlier formats; with a full address containing `#pos=x,y,z,cap`, it also takes the heading.
 
-### 22.8 lib folder: `--lib-url`
+### 7.23 Copy to the clipboard
 
-`--lib-url CHEMIN`: relative path (for example `../lib`) or full `http(s)` address where three.js and its modules are found. It is written into the `const LIB = './lib';` line at the start of the shell (§ 28.4) when the shell is written, and kept in the config (`libUrl`) so that `--update` finds it again. Relative path: `lib/three-X/` is created there if it is missing; full address: nothing is copied. An existing shell is never overwritten: to change the folder of a shell already in place, edit the `const LIB` line by hand (§ 28.4) or use `--update --lib-url CHEMIN` (dated copy of the old one). Refused values: `?`, `#`, `\`, quotes, other schemes (`javascript:`), paths starting with `/`.
+All the "copy" buttons (personal link, link to my position, targeted point, target, command) use `navigator.clipboard.writeText` in a **secure context** (https, localhost), and otherwise, **over http on a public address**, a fallback: temporary off-screen field, selection, `document.execCommand('copy')`, removal. The page shows **"Copied"** for a few seconds. If everything fails, the link field stays **displayed and selected**, with "Copy failed: the text is selected, press Ctrl+C".
 
-### 22.9 Regions in subfolders
-
-`?region=` accepts `dossier/nom` or `a/b/nom`: segments made of letters, digits, dot (not at the start), hyphen, underscore, space and parentheses; never `..`, `:`, `\`, `?`, `#`, nor a path starting with `/`. The config, the GLB or the tiles, the zones (and `zones.json` of that folder) and the overview are resolved from the **region's folder** (the paths of the config are relative to this folder). Build: `glb2html.py X.glb --shared-shell P:\site\index.html -o P:\site\sous\dossier\Ile.html` (the path of the shell designates the parent folder; the region must be below it; shell, `lib/` and `default.json` are written in this parent folder; combines with `--lib-url`). The address becomes `index.html?region=sous/dossier/Ile`.
-
-### 22.10 Tests of v37
-
-`tests/v37.py` (batch 1), `tests/v37_chat.py` (batch 2), `tests/v37_region.py` (batch 3), shared helper `tests/h37.py`. Expectations adapted because a v37 rule requires it: `v33.py` (the blinking no longer stops by itself: it stops on a key), `v35.py` (zoneInfoDist 150 by default, limits 5 and 500; the 40 m tests ask for `--zone-info-dist 40`), `v36.py` (the tip of the cone stays in place when the scale changes).
-
-## 23. New in v39 (23/10/2026)
-
-### 23.1 "Copy diagnostics" button
-
-At the bottom of the **Information / Status** window (**I** key), the **"Copy diagnostics"** button copies to the clipboard a text to paste as is into a help conversation: it replaces readings from the F12 console. The button stays visible when the window is collapsed; it does not keep the focus (Space and Enter stay with walking and the chat). The same button is at the top of the viewer panel (`glb-viewer.html`).
-
-The text contains: the code version (and the region configuration version if it differs), the date, the time since opening, the page address, the language, the keyboard, the browser, the window size, the graphics card as seen by WebGL, the rendering of the last frame (triangles, draw calls, geometries, textures), the JavaScript memory (Chrome and Edge only), the tiles (ready, loading, failed) and their timings (first and last ready, median and maximum per tile), the lines shown in the Information / Status window, the presence status, then **the last 10 errors and warnings** of the page (uncaught errors, rejected promises, `console.error`, `console.warn`, files that fail to load).
-
-**Nothing private**: the host of the page and of any server is replaced by `ADRESSE`, and so are IP addresses; the `#` part of the address (nickname, key) is never copied.
-
-If the browser refuses to copy (page over `http://` other than `localhost`), the text is shown **already selected** under the button: **Ctrl+C**. A page built with `--no-walk` has no Information / Status window, hence no button.
-
-### 23.2 v39 tests
-
-`tests/v39.py`: button present in the page and in the viewer, in French and in English, addresses masked, errors captured, timings of a region split into tiles.
-
-## 24. New in v40 (24/10/2026)
-
-### 24.1 "Arrivals" window (L key)
+### 7.24 "Arrivals" window (L key)
 
 Below the **Information / Status** window, the **Arrivals** window lists the region's arrival points (`default` first, then by name; the label replaces the identifier when there is one). On hover, a tooltip recalls its role: list of available teleport points (TP).
 
@@ -1095,25 +878,130 @@ Below the **Information / Status** window, the **Arrivals** window lists the reg
 - **L** cycles the window like **H** and **I**: hidden → expanded; collapsed → expanded; expanded → hidden. The "▾ Arrivals" title collapses or expands it. The states are remembered in the browser (keys `glb2html_spawn` and `glb2html_spawnFold`).
 - A region without an arrival point has no such window; **L** says so with a message, and the help does not mention **L**.
 
-### 24.2 "Recenter the view" button
+### 7.25 Chat
 
-In the bottom bar, outside walk mode only: the **"Recenter the view"** button restores the region's opening framing (same center, same angle, same distance as at the end of loading). **R** stays the return to the arrival point: in global view, it centers the view on the arrival point while keeping the angle and distance.
+- **Persistent input**: **Enter** opens the input, **Enter sends and keeps it open** (field emptied), **Esc** closes it and gives the keys back to walk mode. While it is open, letters **and arrows** stay in the text (the arrows move the cursor); after Esc the arrows move the avatar again. (Up to 1.1.8, the arrows moved the avatar while typing.) The state is written in the help. Nothing changes for those who do not use the chat.
+- **Save the chat**: button under the chat. Downloads a UTF-8 text file (with byte order mark, readable in Notepad, Windows line endings): one line `jj/mm/aaaa hh:mm:ss | Nom | texte` per message received or sent **since your arrival**. Everything happens in the browser: **nothing is stored on the server side for you**. Note: the presence server keeps in memory the last messages of a room (`--history`, 20 by default) and replays them when a visitor arrives; they are displayed but **are not in the file** (they come before the arrival).
+- **Mentioned nickname**: when your nickname appears in a received message **as a whole word**, ignoring case, with or without `@` in front (`@alice`, `ALICE,`, `l'alice` yes; `Alicex`, `Alicia` no), the message is shown **in bold and preceded by "@"**, the **author's bubble blinks** 6 times (visible 150 ms, hidden 150 ms) and a **short beep** is played (Web Audio, moderate volume, no file; only after a first interaction with the page, a browser rule). Three boxes in "Settings": bold, blinking (checked by default), sound (unchecked by default), remembered in the browser. No change on the server side. Everything is redundant with the text: nothing depends on colour.
+- **`@` completion**: when the text ends with `@` followed by letters, a list of **at most 5 nicknames** (online visitors whose nickname starts with these letters) is shown above the input; **up and down arrows** to choose (the choice is marked by `▶`, in bold and inverted), **Tab or Enter** insert `@Pseudo ` (Enter does not send while the list is open), **Esc** closes the list without closing the input. Empty list: nothing is shown.
 
-### 24.3 "Full manual" link and diagnostics tooltip
+### 7.26 Chat counter
+
+The number in brackets in the tab title ("(3) Region") and on the "Chat" button counts the messages from other visitors received while the chat is closed or the tab hidden (the history replayed on arrival is not counted); it goes back to zero **when the chat is opened**, even without reading the messages (intended behaviour).
+
+### 7.27 Mentioned nickname: continuous blinking
+
+When a message mentions my nickname, the alert blinks on **my page only**: half a second visible, half a second hidden, on the **author's name label** (which stays even when their bubble has disappeared), their **bubble** if it still exists, and the **message line** in the chat. **Without a time limit**: the blinking goes on until my first action (key, click, movement of the avatar, sending a message), then everything stays visible. Several mentions before my action all blink. The text is not just a colour: the element disappears and reappears. (Replaces the 6 blinks of 300 ms of v33.)
+
+### 7.28 Nickname, personal link, launch page
+
+- **`#name=PSEUDO`** in the address sets the nickname (remembered in the browser); portals and the map already add it.
+- Settings → **"Copy my personal link"**: copies the address of the page with `#name=PSEUDO&key=CLE`, where CLE is the **identity key of the browser** (32 hexadecimal characters, `glb2html_uid`, the one the server associates with the reserved name). **This link is a secret: whoever opens it takes the identity** (the reserved name). When opening, a key in the right format becomes the browser's; if this browser already has a **different** one, a message on screen asks for confirmation before replacing it. The key is then **removed from the visible address**. A key in the wrong format is ignored (and removed). No change to the server.
+- **Map page** (`--map-page`): **"My nickname"** field at the top, remembered in the browser; the links to the regions get `#spawn=…&name=PSEUDO`.
+
+### 7.29 Avatar colour (client and server)
+
+Settings → "Choose my avatar's color": the value is remembered in the browser and **sent in the `hello` message** (integer from 0 to 0xFFFFFF). `presence_server.py` accepts it if it is **an integer between 0 and 0xFFFFFF**; otherwise (out of range, float, text, boolean, null, list) it **rejects it silently** and picks a random colour, as before, then broadcasts it as the current colour. An old client (without colour) works; an old server simply ignores the field. Since v34, the change is **sent at once** (§ 7.30). **The displayed name stays the main marker** (label above the avatar); nothing is based on colour alone.
+
+**To do on the server side: restart `presence_server.py` with the new version** (the chosen colour is only taken into account by v33 of the server). Typical command (a single line, to adapt to your options):
+
+```
+python .\presence_server.py --host 0.0.0.0 --port 8765 --log presence.log --log-days 30 --log-ip raw
+```
+
+(Since v37 the recommended launch example is `python .\presence_server.py --log presence.log --log-ip raw --log-days 0`; see § 10.21 for `--log-days 0`, the chat history and personal data.)
+
+### 7.30 Live colour
+
+Changing the colour in the Settings while connected sends `{"t":"color","color":N}` (at most every 300 ms, the last value is always sent). `presence_server.py` accepts an **integer from 0 to 0xFFFFFF** (otherwise silently ignored), ignores two changes less than 0.2 s apart, updates the visitor and broadcasts `{"t":"color","id":…,"color":N}` to the others; a visitor arriving afterwards gets the updated colour. The visitor's own avatar (third-person view) takes it too. Compatible: an old server ignores the message, an old client does not send it. **Restart `presence_server.py`** to benefit from it.
+
+### 7.31 Sounds
+
+Visitor settings: general **"Sounds"** box (checked) with a **volume** from 0 to 100 (50), then four checked boxes: "Beep when a message mentions my nickname", "Beep for every message when the page is not focused" (one note; hidden tab or another window in front; never for your own messages nor for the history reloaded on connection; at most one beep every 2 s; if the message mentions you and the "mentions" beep is checked, only that one sounds), "Sound when a visitor arrives" (two rising notes), "Sound when a visitor leaves" (two falling notes). The sounds are synthesised (Web Audio), without files; the arrival and departure sounds only concern visitors **in walk mode** in your room (never spectators, never you, never those already present when you arrive), at most one arrival sound and one departure sound every 2 s. `tests/chat_bip.py` (real presence server, fake audio context) checks the message beep. The browser only allows sound after a first action on your part on the page. The old beep settings (key `sound`) are ignored.
+
+### 7.32 Status line
+
+An always visible line gives, without opening the Information window: the **mode** in bold ("Walking" or "Overview"), then while walking the gait (on foot, flying, running), the view (first person, third person, free camera) and the `x y z` position; in the overview, the target. It sits at the bottom centre; on a screen narrower than 1361 px, and on a touch screen, it moves to the top, under the compass (and under the name box). No information in it is carried by a colour.
+
+### 7.33 On-screen arrows
+
+A pad of 3 x 3 buttons, above the status line, is clicked with the mouse or touched with a finger. **Press and hold = key held**: the movement lasts as long as the button is pressed.
+
+While walking (the arrows reuse the keyboard keys: walking does not change):
+
+| Row    | Left                            | Middle                                                       | Right                                    |
+| ------ | ------------------------------- | ------------------------------------------------------------ | ---------------------------------------- |
+| top    | turn left (←)                   | forward (Z or W, ↑)                                          | turn right (→)                           |
+| middle | step left (Q or A)              | **Run**: one click turns it on, another turns it off (Shift) | step right (D)                           |
+| bottom | up, while flying only (Page Up) | back (S, ↓)                                                  | down, while flying only (Page Down or C) |
+
+In the overview:
+
+| Row    | Left               | Middle                                  | Right               |
+| ------ | ------------------ | --------------------------------------- | ------------------- |
+| top    | turn the view left | move the view forward                   | turn the view right |
+| middle | move the view left | **recenter the view** (opening framing) | move the view right |
+| bottom | zoom out (−)       | move the view back                      | zoom in (+)         |
+
+Moving and zooming do different things: **move** slides the camera and the target together, at constant height and distance (the landscape scrolls, tiles load around the new point); **zoom in / out** keeps the target and only changes the camera distance, like the wheel.
+
+The middle of the pad replaces the "Recenter the view" button: that button only comes back in the bar when the arrows are hidden. While walking, a captured mouse (with **G** or the button) cannot click the arrows: **Esc** or **G** frees it, **G** or the "Capture the mouse" button takes it back.
+
+The zone prompt and the light rendering offer move up above the pad.
+
+### 7.34 Hiding or showing the arrows
+
+Three ways, which do the same thing and are remembered by the browser: the **K** key (same place on AZERTY and QWERTY), the "Arrows (K)" button of the bar ("Arrows (K): hidden" when they are; on a touch screen, the "Arrows" button of the column), and the "On-screen arrows (K)" checkbox in Settings. The arrows are shown by default.
+
+### 7.35 Touch screen (phone, tablet)
+
+The page switches to touch mode when the browser reports a touch screen as the main pointer ("Touch controls" setting: Auto; Yes forces touch mode, No refuses it, for example on a computer with a touch screen). In touch mode:
+
+- the button bar is replaced by a **column of buttons** at the bottom right: "Walk" ("Exit" while walking), "Jump", "Fly" ("Land" while flying), "View", "Chat" (with the number of unread messages), "Arrows", "Menu"; the active button has a thick border;
+- the **menu** offers: Help, Information, Arrivals, World map, Back to arrival (while walking), Recenter the view (when the arrows are hidden) and **Full screen** when the browser allows it (not on iPhone, where Safari only grants it to videos);
+- the Help, Information and Arrivals windows are **folded on opening** (without changing the remembered setting) and have a **✕** button to close them;
+- the arrows are large (56 px), at the bottom left;
+- while walking, **dragging a finger** on the scene looks around: you pull the scenery (finger to the right, gaze to the left); a tooltip explains it on the first walk. In the overview, the gestures are the same as before (one finger: turn; two fingers: move and zoom);
+- "Chat" opens a real input field (the phone keyboard opens) with "Send" and "✕ Close"; arrows and column hide while typing;
+- landscape orientation is supported: the column switches to two or three columns;
+- "Capture the mouse" does not exist (nothing to capture with a finger).
+
+On a small phone screen, the page remains busy: windows and chat can be closed to clear the view.
+
+### 7.36 Tooltips
+
+Every button of the bar and every arrow has a tooltip: its role and its key (the letter follows the keyboard layout). On a touch screen, **a long press** (half a second) shows the tooltip; on a single-action button, the long press does not trigger the action.
+
+### 7.37 Not tested (v46)
+
+A real phone, a real tablet, iPhone and iPad, Edge, Windows, real full screen.
+
+### 7.38 Selectable help panel and status block
+
+- The **help text** (**H** key) can be selected with the mouse and copied with **Ctrl+C**, without a "copy" button; **Ctrl+C is no longer intercepted** by walk mode (the **C** key alone still goes down in flight). The help receives the mouse: hovering over zone markers no longer works **under** the help, it works everywhere else. Its size is limited (width of at most 440 px and 45 % of the window, height of 42 % of the window with scrolling).
+- New **status block**, separate from the help, below it, with selectable text too: `View: …` (first person, third person, free camera, or global in orbit), `Mode: on foot` / `Mode: flying`, `Mouse: …` (§ 7.10), `Position avatar: x … y … z …` (or target of the global view), then the lines of the tiles and of the overview. The help only keeps the keys and the settings.
+- **H** hides the help alone (the status stays). **I** hides or shows the status block (choice remembered in the browser, key `glb2html_state`).
+- The label "View: third person · on the ground" is replaced by two lines: "View: third person" and "Mode: on foot".
+
+### 7.39 Help in groups, collapsible panels
+
+- The help is written in **short groups**, one line per group, without sentences: **Movement**, **Flight**, **View**, **Mouse**, **Chat**, **Zones**, **Page** (in the global view: **Global view**, **Walk**, **Zones**, **Page**). The mention "Ctrl+C copies" and the explanation of the selection are gone; the text stays selectable.
+- The help and the status block each have a **title bar** ("▾ Help", "▾ Status"): a click **collapses** it ("▸ Help", only the bar stays) or expands it. The title says the state as text (arrow and `aria-expanded`), never by colour. The collapsed or expanded state is **remembered in the browser** (keys `glb2html_helpFold` and `glb2html_stateFold`). **H** and **I** still hide the help and the status completely.
+- The "Leave the walk (F)" button is removed (the **P** key is enough). In the global view, the button is called "Walk (P)".
+
+### 7.40 Help and information: three steps
+
+The "Status" window is called **Information / Status**. **H** (help) and **I** (information) cycle the window: **hidden → shown expanded**; **collapsed → expanded**; **expanded → hidden**. A click on the title bar collapses / expands; the state (hidden, collapsed, expanded) is remembered in the browser.
+
+### 7.41 "Full manual" link and diagnostics tooltip
 
 The help window (**H**) ends with a **"Full manual (online)"** link to this manual on GitHub, in French if the page is in French, in English otherwise (an Internet connection is needed). The viewer has the same link under the "Copy diagnostics" button. That button now has a tooltip explaining what it copies and what it never copies.
 
-### 24.4 v40 tests
-
-`tests/v40.py`: list and order of the arrival points, L key, teleport on click (global view and walk mode), "Recenter the view" button (exact opening framing), region without an arrival point, help, manual link and diagnostics tooltip in French and in English, viewer.
-
-## 25. New in v41 (24/10/2026)
-
-### 25.1 Window tooltips
+### 7.42 Window tooltips
 
 On hovering the title, each window gives its role and its key: **Help** (H), **Information / Status** (I), **Arrivals** (L), then how to collapse it, move it and put it back in its stack. The **Settings** button has its tooltip too (O).
 
-### 25.2 Movable windows
+### 7.43 Movable windows
 
 The **Help**, **Information / Status** and **Arrivals** windows move by **dragging their title**. There are two stacks:
 
@@ -1124,7 +1012,7 @@ A window dropped on a stack docks to it, at the height where it is dropped. Drop
 
 A **click** on the title still collapses or expands the window, but **250 ms after the click** when made with the mouse: a double-click therefore does not collapse it. The right edge keeps its v37 role (drag to change the width); the width of the Arrivals window can be set too.
 
-### 25.3 Remembered layout and layout file
+### 7.44 Remembered layout and layout file
 
 The layout (stack or position of each window, order in the stacks) is remembered by the browser (key `glb2html_layout`), together with the open / collapsed states and the widths. It depends on the browser and on the page address.
 
@@ -1136,19 +1024,13 @@ In **Settings**, **Window layout** section:
 
 A web page cannot write on its own into a file chosen in advance: saving therefore goes through a download.
 
-### 25.4 v41 tests
-
-`tests/v41.py`: tooltips, drag to the view (free), to Settings (right stack pushed by Settings), reload, double-click back without collapsing, delayed click, save, original layout, load, refused file, free window kept on screen. `tests/v35.py` and `tests/v36.py` now wait 300 ms after a mouse click on a title.
-
-## 26. New in v42 (24/10/2026)
-
-### 26.1 Light rendering
+### 7.45 Light rendering
 
 Without a graphics card (software rendering, for example "Microsoft Basic Render Driver" in Edge), or on a very large region, every frame is expensive and the page responds slowly. **Light rendering** makes the image lighter: fewer pixels computed, fewer frames per second and, in global view, the overview only.
 
 In **Settings**, the **"Light rendering"** box sits below **"High resolution"**. Checking it applies the recommended values; unchecking it restores the page's normal values. The choice is remembered by this browser, for this region.
 
-### 26.2 Fine settings
+### 7.46 Fine settings
 
 The **"Fine settings…"** button, next to the box, opens a small window to the left of Settings; it hides when Settings closes. Each setting applies at once, whether the box is checked or not:
 
@@ -1164,33 +1046,448 @@ The two tile settings only appear on a region split into tiles. **"Recommended v
 
 With the overview only, detailed tiles load when entering walk mode and go away when leaving it. Zones linked to an object of a tile are therefore only visible in walk mode.
 
-### 26.3 Automatic offer
+### 7.47 Automatic offer
 
 When the page sees rendering without a graphics card ("Basic Render Driver", "SwiftShader", "llvmpipe"), a message at the bottom of the screen, above the buttons, offers to turn on light rendering: **Yes** applies the recommended values, **No** keeps normal rendering. The question is asked only once; you change your mind in Settings.
 
-### 26.4 `--light` option
-
-`glb2html.py --light`: the page opens in light rendering until the visitor chooses otherwise; `--no-light` returns to normal rendering (default). The option is carried over by `--update`. In the viewer, the "Exported page opens in light rendering (--light)" box does the same for exported pages; three lines of the rendering section (resolution, frames per second, overview only) set the viewer itself.
-
-### 26.5 Narrower Settings window
+### 7.48 Narrower Settings window
 
 Settings is at most 420 px wide: long labels wrap, and the window scrolls if it is taller than the screen. The note about the avatar color fits on two lines. **Window layout** becomes a real section (bold title, line above, three buttons in a row), and the note "While walking, Esc releases the mouse…" is now at the very bottom of the window.
 
-### 26.6 Diagnostics
+### 7.49 Page language
+
+The whole interface (help, settings, information, prompts, loading and error messages, chat, map, "world map" page, viewer) exists in **French** and in **English**. Visitor setting **"Language / Langue"**: **Auto** (the first language of `navigator.languages` that is available, otherwise English), then each available language. Changing the language reloads the page. The **`#lang=en`** parameter (or `#lang=fr`, `#lang=auto`) in the address takes priority and is remembered; it combines with `#spawn=`, `#pos=`, `#name=`. The texts **you** type (zone names, signs, nicknames) are never translated.
+
+### 7.50 Link parameters after `#`
+
+The separator is **`&`**; **`#` is also accepted**: `#name=Klaatou&lang=en` and `#name=Klaatou#lang=en` are equivalent (`name`, `lang`, `spawn`, `pos`, `key`). A single function (`hashParams`) reads the link in the page, the shell and the map page.
+
+### 7.51 "Copy diagnostics" button
+
+At the bottom of the **Information / Status** window (**I** key), the **"Copy diagnostics"** button copies to the clipboard a text to paste as is into a help conversation: it replaces readings from the F12 console. The button stays visible when the window is collapsed; it does not keep the focus (Space and Enter stay with walking and the chat). The same button is at the top of the viewer panel (`glb-viewer.html`).
+
+The text contains: the code version (and the region configuration version if it differs), the date, the time since opening, the page address, the language, the keyboard, the browser, the window size, the graphics card as seen by WebGL, the rendering of the last frame (triangles, draw calls, geometries, textures), the JavaScript memory (Chrome and Edge only), the tiles (ready, loading, failed) and their timings (first and last ready, median and maximum per tile), the lines shown in the Information / Status window, the presence status, then **the last 10 errors and warnings** of the page (uncaught errors, rejected promises, `console.error`, `console.warn`, files that fail to load).
+
+**Nothing private**: the host of the page and of any server is replaced by `ADRESSE`, and so are IP addresses; the `#` part of the address (nickname, key) is never copied.
+
+If the browser refuses to copy (page over `http://` other than `localhost`), the text is shown **already selected** under the button: **Ctrl+C**. A page built with `--no-walk` has no Information / Status window, hence no button.
+
+### 7.52 Diagnostics (v42)
 
 "Copy diagnostics" adds two lines: the current light rendering settings, and the number of frames rendered per second over the last 5 seconds, with what forces continuous rendering (animated sea, other visitors, walk mode, tiles loading; "nothing" when the page only redraws on demand).
 
-### 26.7 v42 tests
+### 7.53 Diagnostics (v45)
 
-`tests/v42.py`: offer in software rendering, Yes, choice remembered, antialiasing off at load, box and sub-window, live settings, recommended values, frames per second cap, diagnostics, default values, `--light` page, `--update`, overview only on a region split into tiles (unloading, walk mode, return), live radius, viewer lines, color note on two lines, Settings width, Layout section, note at the bottom.
+"Copy diagnostics" adds the "Presence connection" line: whether the connection opened (yes or no), last closing code and last reason. Addresses stay replaced by `ADRESSE`.
 
-## 27. JSON file reference (v43)
+### 7.54 Diagnostics (v46)
+
+"Copy diagnostics" adds the "Touch controls" line: touch mode yes or no, setting, touch screen detected, number of touch points.
+
+### 7.55 The page says why presence was cut
+
+When the connection to the presence server closes, the presence line (Information / Status window, viewer panel) no longer always says "server unreachable": it gives what the browser knows.
+
+- **the connection never opened**: "connection never established (check address, port or firewall)";
+- **the connection had opened, then the server or the network cut it**: "connection opened then closed (code N)", followed by the reason sent by the server when it gives one;
+- **the browser refused to create the connection** (https page with a `ws://` address, or forbidden port): "refused by the browser".
+
+Limit: the browser never gives the cause of a connection that does not open (code 1006, no reason). The page therefore cannot tell an unknown name, a closed port, a firewall or a browser block apart; only a server that cuts an already open connection supplies a code and a reason.
+
+### 7.56 Presence connection attempts
+
+When the page cannot reach the presence server, it retries at increasing intervals (1.5 s, 3 s, 4.5 s, up to 15 s). It now **stops**: after **5 attempts** if the connection never opened (wrong address, server off, firewall), after **12** if it had opened and was then lost (server restart). The name box then says "attempts stopped: reload the page to try again". Switching to walking again makes one more attempt. The numbers are the `PRES_TRIES_NEVER` and `PRES_TRIES_LOST` constants in `core.js`.
+
+### 7.57 Browsers
+
+Tried in Chromium (`tests/v45_lib.py`). **Not tried: Firefox and Safari.** The `tests/essai_importmap.html` file (open it in the browser; the result is written in plain words) checks that a browser accepts an import map built by a script; if the test fails in a browser, the shell does not start in it.
+
+### 7.58 When WebGL is unavailable
+
+When the browser refuses to create the WebGL context (hardware acceleration off: recent Edge and Chrome no longer fall back to software rendering), the region page and the viewer show a message with the ways out, instead of staying on "Loading…":
+
+- open the page in Firefox;
+- or start Edge with the `--enable-unsafe-swiftshader` option, preferably in a profile kept for these pages: `Start-Process msedge -ArgumentList "--enable-unsafe-swiftshader","--user-data-dir=C:\EdgeWebGL",ADRESSE` (tried on 30/10/2026: the regions open);
+- or turn hardware acceleration back on.
+
+To check: `edge://gpu` (or `chrome://gpu`), WebGL line. Test (Chromium without WebGL): `tests/webgl_absent.py`. Not tried here: Windows, graphics card.
+
+### 7.59 Pointer: the building's name
+
+The label of the `names` key (`--names`) and the viewer's "Targeted" panel show in bold the name of the **root object**, that is the highest named ancestor: the building's name. The sub-element is shown small ("part: …"). Before, the sub-element was in bold. Technical wrappers (model, tiles, overview) are ignored. The three.js loader replaces spaces in names with `_` and numbers duplicates; the label shows the file's original name. The names used by zones (`mesh` field) do not change. The hole guide ("Show the hole guide (not exported)") is unchecked by default; a value already saved in a settings file keeps priority. Test: `tests/pointeur_objet.py`. **Not tried**: the label in tiles mode.
+
+## 8. Load a tiled region in the page (`glb2html.py --tiles`, v30)
+
+A region of several hundred MB or several GB does not fit in a browser: after `glb2tiles.py` (§ 4.1), the **shell** loads only the tiles close to the avatar and unloads the distant ones, and (v31) shows in the distance the **light overview** `X.overview.glb` when it exists. Without the `tiles` field in `X.config.json`, the page behaves exactly as before (a single `X.glb`).
+
+### 8.1 The commands (PowerShell, a single line)
+
+| To                         | Command                                                                                                                    |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Split                      | `python glb2tiles.py "P:\regions\4X4.glb" --exclude "Freebies"` (writes `4X4.tiles.json` and `4X4.tiles\` next to the GLB) |
+| Put the region in the site | `python glb2html.py --shared-shell -o "P:\site\4X4.html" --tiles "P:\regions\4X4.tiles.json"`                              |
+| Open                       | `http://…/index.html?region=4X4` (the common shell, as in § 11.12)                                                            |
+| Try another radius         | `index.html?region=4X4&radius=300`                                                                                         |
+| Change a setting           | run the same command again with the option: nothing heavy is copied again                                                  |
+
+`-o` designates the region (its name without extension). No `.glb` as input. `--tiles` alone (without `--shared-shell`) gives a shell of its own, `4X4.html`. Written: `4X4.config.json` (`tiles` field), `4X4.zones.json` (if missing or if a source of zones is given), the shell and `lib/` if they are missing. **`4X4.tiles.json` and the tiles folder are only copied if they are not already next to the page**: putting `-o` in the tiles folder avoids any copy ("already beside the page: nothing is copied"); otherwise the script copies what is missing or has another size, file by file, and says how many. There is no `4X4.glb`. Like any modular mode, the page needs http/https.
+
+### 8.2 The parameters (in `X.config.json`, with their options)
+
+| Key / option                                | Default   | Meaning                                                                                                                                                          |
+| ------------------------------------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tileRadius` / `--tile-radius`              | 150       | m: load the tiles whose **box** (min / max of `X.tiles.json`) is closer than this radius to the avatar, on the X,Z plane (distance 0 = the avatar is in the box) |
+| `tileMargin` / `--tile-margin`              | 60        | m: unload beyond radius + margin (hysteresis: no back-and-forth at the limit)                                                                                    |
+| `tileMaxMB` / `--tile-max-mb`               | 200       | MB of tiles loaded at the same time (weight of the `.glb` files)                                                                                                 |
+| `tileMaxTriangles` / `--tile-max-triangles` | 8 000 000 | triangles of tiles loaded at the same time                                                                                                                       |
+| `tileConcurrency` / `--tile-concurrency`    | 4         | simultaneous downloads                                                                                                                                           |
+
+`?radius=NNN` in the address replaces `tileRadius` for this opening (10 to 5 000). These keys only exist in the config for a tiled region.
+
+### 8.3 What the page does
+
+- **Start.** The tiles around the starting point load first, the closest first: the arrival of the link (`#spawn=…`, otherwise the `default` arrival) if the page is opened by a portal, otherwise the camera target. "Loading…" stays displayed until the tiles containing this point are ready (or have failed); the others come afterwards. A partial ground is normal as long as everything is not there: a tile only contains its terrain patches and its objects.
+- **During the visit.** The reference point is the avatar in walk mode, or the target (the landing circle) in the global view. Every 250 ms: unloading of the tiles beyond radius + margin, loading of those within the radius. If `tileMaxMB` or `tileMaxTriangles` would be exceeded, the **most distant loaded tiles** (more distant than the one to load) go first; a tile containing the avatar is loaded even if it alone exceeds the budget (warning in the console).
+- **Memory.** An unloaded tile frees its geometries, materials, textures and decoded images. The budget counts the **weight of the files**: decoded textures weigh much more in graphics memory than their compressed file; if the page is heavy, lower `tileMaxMB` or `tileRadius`. The collision grid of each tile costs about 36 bytes per ground and wall triangle, plus the index: at 8 million triangles, count several hundred MB.
+- **Walk mode and collisions.** A collision grid is built per tile, in slices so as not to freeze the image, and deleted with the tile. Ground and walls only come from ready tiles. The avatar **never moves towards a point whose tile is not ready**: it stays where it is, the text "Loading the ground…" is shown, and it moves again as soon as the tile is ready (never a fall). **F** waits for the tile under the avatar before starting walk mode (F again: cancel); an internal portal or a double-click towards a zone not loaded waits in the same way. The terrain patches have shared edges: the ground continues from one tile to the next without a step.
+- **Failed tile** (missing file, HTTP 404, unreadable GLB): message at the top of the page and in the information line, warning in the console, new attempt after 3 s, 6 s, 12 s… up to 30 s. The other tiles are not delayed. An avatar does not cross the box of a failed tile (same rule as "not ready").
+- **Information line** (text only), in the help panel at the bottom left (can be hidden with H), otherwise in a small frame: "Tiles: 7 loaded / 106 · 74 MB · 2.10 M triangles", with "· 2 in progress" and "· 1 failed (will retry)" when there are some, then (v31) "· Overview (counted apart): 23.1 MB · 1.40 M triangles": the overview is counted apart, outside the 200 MB / 8 M triangles of the budget.
+- **Overview (v31).** If `X.tiles.json` mentions `overview`, the page loads it **first** (before any tile), with the same path security rules as the tiles. It shows the whole region in light geometry, without images. Each cell (one node per tile file) is **hidden as soon as the matching detailed tile is displayed** and shown again when the tile is unloaded or has failed: never both, never a hole during loading. It is used **neither for collisions, nor for the ground, nor for "Loading the ground…"** (walk mode always waits for the tile), and does not count in the `tileMaxMB` / `tileMaxTriangles` budget. A **double-click** on it in the global view places the target on the distant point; the real ground takes over when its tile is ready. If it cannot be found or read: warning in the console, "Overview unavailable" in the information line, the region works as in v30.
+- **Global view.** With the overview, the camera frames **the whole region** (maximum distance, fog and far plane follow the extent). Without it (old `X.tiles.json` or `--no-overview`), as in v30: only the tiles loaded around the target, and the camera frames the loading radius.
+- **Leaving walk mode (v31).** F to leave places the target of the global view on the ground under the avatar and keeps the camera offset from before entering walk mode; the loader follows this target, so the tiles around the avatar are not unloaded.
+
+### 8.4 Frame, rotation, sea, zones
+
+- **Frame.** That of the original model: **no recentring** (the tiles keep their coordinates). The coordinates of the zones, arrivals, camera target and sea hole are therefore in this frame, not in the viewer's (which recentres the whole model, something that cannot be done with tiles). `--rotate` (0, 90, 180, 270) turns the root of the tiles around the vertical axis through the origin; as in § 9.1, the stored values are in the already rotated frame, and so is the default target written by `--tiles`.
+- **Default target and sea.** Without `--target`, the camera target is the centre of the extent of the tiles, at a height of 20 m; without `--sea-y`, the sea is at 20 m (OpenSim's water). The sea is centred on the centre of the extent; the hole (`--hole`, `--hole-x`, `--hole-z`) is relative to this centre. To remove the sea: `--no-sea`.
+- **Free zones** (cylinders with coordinates, arrivals, portals, signs): as before. **Zones linked to an object** (`mesh` field, v32): if the tiles carry the object references (`glb2tiles.py` v32, § 4.1), the zone **appears when the tile containing the object is loaded** and disappears when it is unloaded: clickable, E key closer than `radius` m from the object, as in single-GLB mode. An object spread over several tiles: the zone follows the **box of the whole object** (stored in the tiles), as soon as **one** piece is loaded. Tiles from before v32: zone **ignored**, with "zone “id” ignored: linked to the element “…” … (tiles written without object references: split again with glb2tiles v32)" in the console, and a warning from `glb2html.py` when generating. Presence, chat, world map, portals: unchanged. The viewer now opens a tiled region (§ 5.14).
+- **Displayed position (v32).** The help panel (H key, bottom left) gives as text the **position of the target** in the global view, or of the **avatar** in walk mode: "Position target (global view): x 123.5 · y 15.0 · z -77.7 m", in metres, one decimal, in the frame of the original model: that of the zones. Handy to note a spot.
+
+### 8.5 Limits of this version
+
+- The overview is coarse: small objects (under `--ov-threshold`), glass and skinned objects are not in it, the colours are flat, the terrain has a 4 m step; at the edge of a loaded tile, the ground height can differ by a few decimetres between the tile (1 m) and the overview (4 m).
+- Meshes shared between tiles are duplicated in each tile that uses them (standalone tiles): more MB downloaded.
+- A single mesh heavier than the `glb2tiles.py` budget stays in a single tile (no split by triangles).
+- A tile very heavy in triangles stays costly to process: the construction of its collision grid is sliced, not removed.
+- No meshopt compression of the tiles, no OpenSim terrain textures yet (vertex colours from `oar2glb.py`).
+
+### 8.6 Starting at an arrival (`#spawn=`, `#pos=`) in a tiled region
+
+**What used to happen (measured, 22/10/2026).** With a `#spawn=chateau` link, the loader took the arrival as its reference for **only 4 seconds**, then went back to the default camera target. If the arrival's tile was not ready at that moment (heavy tile, slow processor or network), it was **unloaded and its download abandoned**, the tiles around the target loaded instead, and the page waited 120 seconds before going on, **behind a black screen without any text**. Reproduced on a synthetic region of 16 tiles, two of them with more than a million triangles (23 MB, `tests/glbfab.py`), processor slowed down 10 times (Chromium developer tools): black screen **121.6 s**, avatar in walk mode at **125.7 s**; with v33: walk mode at **7.1 s**. Without slowdown: 2.6 s before, 1.6 s after. The measured cause is the 4 s window (the arrival's tile, unloaded, was requested again later); the construction of the collision grid was not the cause on this synthetic region (142 ms of computation for 1 million triangles without slowdown, 2 s at x10).
+
+**What v33 does.**
+
+- The requested arrival point (`#spawn=ID`, or `#pos=x,y,z,yaw`, or the `default` arrival when opening without a link) is the **loader's reference until walk mode starts** (or until the target of the global view is moved), never the camera target.
+- The tile or tiles containing this point start **before the overview and before any other tile**; **no other tile starts** until those are ready (or have failed).
+- Their collision grid goes first in the queue, with a **time budget per frame of 40 ms** (6 ms for the other tiles). During walk mode, the grid of the tile containing the avatar **always** goes before the others.
+- **Never a black screen without text**: from the start, "Loading the ground… 0/1 tile ready · 3 s" (tiles ready out of tiles expected, elapsed time), on a black background with framed white text. **After 15 s**, the black screen is removed: you see the scene (overview included) with the text, and walk mode starts as soon as the tile is ready. After 60 s, the text adds "long wait (heavy tile or slow network)"; the 120 s delay no longer exists.
+- If loading fails, the error message is no longer hidden behind the black screen.
+
+**`#pos=x,y,z[,yaw]`** (numbers only, decimal point, values limited to ±100 000; anything else is ignored): anonymous arrival at this point, with the same loading rules. The frame is that of the original model in tiles mode, that of the page (recentred model) in single-GLB mode. The help panel offers **"Copy the link to my position"**: address of the page (with `?region=`) followed by `#pos=x,y,z,yaw` (2 decimals), readable when opening; without a clipboard, the link is written in a field of the panel.
+
+**One line per tile in the console** (the browser's F12 key) when it becomes ready or fails, to paste into the diagnostic chat:
+
+```
+[tile] X.tiles/T_3_0_1.glb ready: 14.0 MB · 1002668 triangles · wait before download 0 ms · download 278 ms · GLB parsing 28 ms · wait in the grid queue 53 ms · grid construction 142 ms of work (1004 ms elapsed) · total 1310 ms
+[tile] X.tiles/T_3_2_4.glb: failed after 2100 ms (HTTP 404)
+```
+
+"Grid construction" = computation time actually used; "elapsed" = clock time between entering the queue and the end (includes rendering the frames). `viewer.tilesState().log` (browser console: `__viewer.tilesState().log`) gives the same values as numbers.
+
+### 8.7 `glb2html.py --tiles --zones` with the file already in place
+
+If `--zones FICHIER` designates **the destination `X.zones.json`** (same path once resolved, absolute or relative), nothing is copied, nothing is rewritten, nothing fails: the script says "zones already in place". The file is therefore not filtered by the `public` profile nor reformatted. Without `--zones`, an existing `X.zones.json` is kept anyway.
+
+### 8.8 The tiles line
+
+In a region split into tiles, the Information / State window (key I) gives, each on its own line: the loaded tiles (`Tiles: N loaded / total · MB · triangles`, with "in progress" and "failed"), the tile(s) under the avatar while walking (`Tile(s) under the avatar: T_3_0_5.glb`; two names when the boxes overlap; nothing outside walking) and the overview. The weight shown is that of the files **actually received**; the `tileMaxMB` budget keeps counting the `bytes` of `NOM.tiles.json` (weight before compression), so a compressed region loads as many tiles as before. The viewer shows the same mention. `tilesState()` gives `here` (tiles under the avatar), `got` (weight received) and `bytes` (budget).
+
+### 8.9 Renamed tiled region
+
+`NOM.overview.glb` keeps in each node the path of its tile as it was when the region was split (`NOM.tiles/T_3_0_0.glb`). Up to v51, renaming the folders and the index paths by hand left the overview **visible under the detailed tiles**: overlapping surfaces, moire and dark patches on the terrain and the rocks (Klaatou's case, Houses region, 25/10/2026). Since v52, the page finds the cell by the **tile's file name** when the full path does not match (unique in a region; otherwise the cell stays visible, never a hole). To rename a tiled region: rename `NOM.tiles`, `NOM.overview.glb`, `NOM.tiles.json`, `NOM.config.json` and `NOM.zones.json`, fix in the index the tiles' `file` paths and `overview.file`, fix the `tiles` field of the config, then copy the v52 `index.html` shell. There is no need to regenerate the overview.
+
+## 9. World map
+
+The world map (`carte.html`) links the regions of one site from `regions.json`, which is prepared in the viewer or with `glb2html.py --scan-sites`. Format of `regions.json`: § 11.6.
+
+### 9.1 World map
+
+In the **World map** section, the **Arrival point of the visitors (identifier)** field tells where someone coming from the map arrives. The viewer shows under this field:
+
+- ✔ if this arrival exists in the region;
+- ⚠ otherwise (the visitor then appears at the usual starting point of the F key).
+
+### 9.2 Create the world map
+
+1. **Each region is registered in the same `regions.json`**, next to the pages (a single folder of pages, a common shell). For each region already generated, a `--update --register` command, **a single PowerShell line** (name, position on the OpenSim grid, optional thumbnail of at most 140 KB next to the page):
+   
+   `python glb2html.py --update -o "X.html" --shared-shell --register regions.json --region-name "Display name" --region-xy 1000,1001 --thumb vignette.png`
+   
+   The card gets the address `index.html?region=X`, the room and the presence server of the region's config. Giving the command again updates the card (identified by the room), without duplicates.
+
+2. **Generate the web page of the map**: `python glb2html.py --update -o "X.html" --shared-shell --map-page carte.html` (it reads the regions of `regions.json` registered in the config of region `X`). For it to contain all the regions, run it **after** the registrations, or give `--map regions.json --map-page carte.html`.
+
+3. **Open it through the web server**, not from the disk: the folder containing `carte.html`, `index.html`, `lib/` and the regions is served over http(s) (`python -m http.server` for a test, or any web server), then open `http://ADRESSE/carte.html`. Each link of the map opens the region at its arrival point, with the nickname typed at the top of the page.
+
+4. **The region pages** show the map with the **M** key (**Ctrl+M** in walk mode): `--map-url http://ADRESSE/regions.json` (several addresses separated by commas, merged) makes them read `regions.json` again at each opening, without generating the pages again.
+
+**Since v47**: the map page can also be a universal `carte.html`, with no region inside, that re-reads `regions.json` at every opening (§ 9.7).
+
+### 9.3 `--update` and the world map
+
+`glb2html.py --update` now also accepts `--register FICHIER`, `--region-name`, `--region-xy`, `--region-url`, `--region-spawn`, `--thumb`, `--map`, `--map-url` and `--map-page FICHIER.html`: it applies what is given and keeps everything else (config and zones, as before). The room and the presence of the card come from the existing config when you do not give them again.
+
+**With `--update`, the relative paths of `--register`, `--map`, `--map-page` and `--thumb` are relative to the page's folder (that of `-o`)**, and not to the tools folder or to the launch folder; the final message repeats it with the folder. An absolute path is respected. `--region-name`, `--region-url`, `--region-xy`, `--region-spawn` and `--thumb` without `--register` are ignored with a warning.
+
+**Without `--update`**, the old behaviour is kept (a relative path of `--register` is looked for in the launch folder, otherwise in the tools folder, where it is created); when the file is not next to the `-o` page, a line says where `regions.json` is written and suggests `--update` or a full path.
+
+### 9.4 The map tile
+
+Under the name, one line of text (never colour alone): "3 visitors · 1 walker" on one line (v52; in French "3 visiteurs" then "1 promeneur" on two lines), or "no visitors". Visitors count the walkers **and** the spectators (pages open in the overview); walkers are only shown when there are some. The line only appears if the card has a room (`room`) and a presence server (`presence`, or the page's own). The word "visit →" is gone: a **tooltip** on hover says what the click does ("Click to enter the region (arrival: default)"). The region you are in keeps "● you are here". A finger has no hover, so no tooltip. Same display on the map page and in the map opened with M.
+
+### 9.5 Optional address
+
+The address under each tile is **hidden by default**. It is shown if `showUrl` is `true` in the header of `regions.json` (§ 11.6), or if the visitor ticks the "Show addresses" checkbox at the top of the map page (next to the nickname). The visitor's choice is kept by their browser and wins over the file. An invalid address keeps its "(invalid address)" message. The address is shown under the card, **outside the link**: it can be selected with the mouse and copied (after v52; inside a link, a click-drag does not select the text), and the hover zoom stays on the card. The grid is only redrawn when the data changed, and never while text in the grid is selected (the counts wait for the selection to end).
+
+### 9.6 `regions.json` with a header
+
+Two forms, the plain list and the object `{"showUrl": ..., "regions": [...]}` (§ 11.6). `--register` reads and rewrites the file keeping the header and the shape. An older `glb2html.py` wipes a file that is not a list: do not use it on a file with a header.
+
+### 9.7 Two ways to make the map
+
+- **Standalone mode**: `--map-page` writes a page with the list of regions inside. It opens from disk and is regenerated when the list changes (except with `--map-url`, which makes it re-read `regions.json`). The header's `showUrl` is taken over.
+- **Hosted mode**: `python build.py` writes `dist\carte.html`, one page identical for every site, **with no region inside**. It reads the `regions.json` next to it at every opening, like `index.html` reads the `NOM.config.json` files. Copy it once next to `index.html`: `Copy-Item "P:\site\web_3d\dist\carte.html" "P:\site\carte.html"`. Nothing to regenerate when `regions.json` changes. It needs a web server: opened from disk, it says so; without `regions.json`, it says "Cannot read regions.json".
+
+The two modes live side by side.
+
+### 9.8 Not tested (v47)
+
+A real phone (no tooltip with a finger), Edge, Windows, the PowerShell lines themselves.
+
+### 9.9 The command
+
+`cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python .\glb2html.py --scan-sites "P:\_OpenSim\SL&OS\Web_3d\Sites" --dry-run`
+
+`--dry-run` shows what would change without writing anything; the same line without `--dry-run` writes `Sites\regions.json`. The folder given is the one of the shared shell (`index.html` at the root); without `index.html`, a warning says so.
+
+### 9.10 What the scan does
+
+- One card per `NOM.config.json` file found in the folder and its subfolders (the `lib` and `_bak` folders and those starting with a dot are skipped, as is a file without a `room` field).
+- Card address: `index.html?region=dossier/NOM`; room and presence server: those of the config (`room`, `presenceUrl`).
+- An existing card is recognised by its room, otherwise by its address. Its name, place (`x`, `y`), arrival (`spawn`) and `id` are kept: only the address, room, server and thumbnail are updated. The name of a new card is the file name: change it once in `regions.json`, it is kept afterwards.
+- A new region gets the first free cell of the `y = 0` row (never a place already taken: two cards at the same place make the map fall back to a plain list).
+- The creators' cards (full address in `http` or `https`) are never touched. The header (`showUrl`) and the shape of the file (object or list) are kept. Without `regions.json`, the file is created with the header.
+- Nothing is deleted: a local card whose region is no longer in the folder is reported as an "orphan" and kept.
+
+### 9.11 Thumbnails
+
+An image `NOM.jpg` (or `.jpeg`, `.png`, `.webp`) next to `NOM.config.json` becomes the card's thumbnail, through a relative path (`houses/NOM.jpg`): `regions.json` stays light, and the path works from `carte.html` as from the map opened with M, both at the root. Without an image, the thumbnail already recorded is kept.
+
+Recommended: a **square image of 320 x 320 pixels**, medium-quality JPEG (a few tens of KB, estimate). The tile shows it as a square about 155 pixels wide (`aspect-ratio: 1`); 320 pixels stay sharp on high-density screens. An image that is not square is cropped in the centre (`object-fit: cover`).
+
+### 9.12 Not tested (v49)
+
+Windows, Klaatou's paths, the PowerShell lines themselves.
+
+### 9.13 Importing and exporting `regions.json`
+
+"World map" section of the viewer:
+
+- **Import regions.json** accepts the plain list as well as the object with a header (`{"showUrl": ..., "regions": [...]}`, § 11.6). Before v50, the object shape was refused ("array expected"): it is the one `--scan-sites` writes when it creates the file.
+- **Export regions.json** gives back the imported shape: an object with the same header, or a list. The header is remembered by the browser, like the list of regions. Without an import, the export is a plain list.
+- Every card keeps all its fields, including `presence` (presence server of an external region), which used to be lost on import.
+- A file without regions is refused with the message "map file expected: list of regions, or object {"regions": [...]}".
+
+### 9.14 Adding or updating this region
+
+The **Add / update this region in the map** button updates the card of the same room in place, like `--register`: its position in the list no longer changes, an empty field (a thumbnail not captured, for instance) does not erase the old one, and the fields the viewer does not show (`presence`...) stay. The name, address, place and arrival come from the viewer's fields.
+
+### 9.15 Not tested (v50)
+
+Edge, Windows.
+
+### 9.16 `carte.html`: count, total, two lines
+
+Above the grid: "12 regions · Total: 3 visitors · 2 walkers". Each room is counted once; with an old server that does not answer `visitors`, only the walkers are counted (no invented visitors). In the cards and in the total, a number is never counted twice: "2 visitors, 1 walking" when there are spectators and walkers, "1 walker" when every visitor is walking, "1 visitor" when nobody is walking, "no visitors" otherwise. With a presence server started with `--map-names-key SECRET` (at least 8 characters; off by default), the card adds lines of nicknames, but **only for a map opened with that key**: `carte.html#pseudos=SECRET` (the same behind a region's address for the map opened with M; several parameters are separated by `&` or by `#`, as in `#name=Zoe#pseudos=SECRET`). Walkers first, the most recent first, five at most then "and 2 others"; then "global view:" with the visitors who are not walking (their nickname is the one their page sends; a walker who goes back to the global view keeps theirs). Without the key, or with a wrong key, the server's answer contains no nickname: only the numbers. The `#` part of the address stays in the browser and is not sent to the web server; the key itself is sent to the presence server, **in clear on a `ws://` address**: use `wss://` if it must stay secret. The server compares the key in constant time and stops listening after 5 wrong keys per minute and per address. Keep the address with the key to yourself: giving it away gives access to the nicknames. The old `--map-names` option (1.3.1) no longer exists: it gives no nickname and the server says so at start-up. A nickname is personal data: turn the option on only if your visitors are informed. `tests/carte_pseudos.py` (real servers, Chromium) checks the key, the order, the limit of five, both languages, the 5 attempts per minute and a booby-trapped nickname.
+
+### 9.17 Arrival alert (sound and marker)
+
+A checkbox at the top of `carte.html`, "Arrival alert (sound and marker)", remembered in this browser (key `glb2html_map_alert`). It only appears if at least one region has a presence server (otherwise there is nothing to watch, as in the online demo). When ticked:
+
+- A **rise in the visitor count** of a room on the map between two polls is an arrival: two rising notes (660 then 880 Hz, like a walker arriving in the page), at most one beep every 2 s, and the **region's card is marked**: dashed outline that blinks, yellow background and the text "● arrival hh:mm" (never colour alone; no blinking if the system asks for reduced motion). The marker stays until the card is hovered; unticking the box clears it. The status line says "last arrival: region, hh:mm".
+- A server's **first poll** never sounds (it is the baseline). An arrival and a departure within the same poll interval cancel out: no beep.
+- The browser forbids any sound before a click or a key press on the page: after a reload, the ticked box shows "sound starts at the first click on the page". Ticking the box is already a click.
+- **Delays**: at the top of the `carte.html` script (in the repository, `MAP_PAGE_TEMPLATE` of `src/gen_tpl.py`), `const POLL_MS = 10000;` (normal poll) and `const POLL_ALERT_MS = 5000;` (box ticked), in milliseconds. The delay is re-read at each round and as soon as the box changes. Each poll opens one short connection per presence server: raising these values lightens the server (load not measured).
+
+The alert only concerns `carte.html` (and the standalone `--map-page`); the map opened with M keeps the page's sounds (§ 7.31).
+
+### 9.18 Thumbnail enlarged on hover
+
+Hovering a card that has a thumbnail, **with a mouse only** (not with a finger), shows the thumbnail large, 400 px at most, moved to stay inside the window. It is the same code in `carte.html` and in the map opened with M. The recommended thumbnails are 320 x 320 px (§ 9.11): the image is enlarged, not improved. A card without a thumbnail has nothing to enlarge.
+
+### 9.19 "Show the sea" checkbox
+
+In Settings, before "Animated sea", only if the page has a sea (not made with `--no-sea`). Unticked: the sea disappears from the scene, "Animated sea" and "Waves" are greyed out. The choice is kept with the other settings (key `glb2html_opts_SALON`); "Default values" restores the page's own. Useful for a region without water made without `--no-sea` (the sea is on by default). The sea height is only used to place the water plane: hiding the sea changes no collision. A page made with `--no-sea` ignores an old remembered choice.
+
+### 9.20 Not tested (v52)
+
+The real sound (the test replaces `AudioContext`), Edge, Windows, a real phone, a tab kept in the background for a long time (the browser may slow its timers: not measured), the server load at 5 s. The renaming of § 8.9 was confirmed by Klaatou on his Houses region (25/10/2026).
+
+### 9.21 `--scan-sites --prune-missing`
+
+`--prune-missing` removes from `regions.json` the local cards whose region is not found in the sites folder (external cards are kept). `--dry-run` shows the list without writing anything. Without this option, nothing is deleted: these cards are only reported.
+
+## 10. Presence server
+
+The presence server (`presence_server.py`) shows the other visitors and carries the chat. This chapter covers starting it, moderation, the visit log and welcoming creators; setting up the public server is described in `PROCEDURES.md` § 11. Server files: § 11.10.
+
+### 10.1 Presence server (v47)
+
+The reply to a `rooms` request adds `visitors` (walkers and spectators, per room) to `rooms` (walkers) and `spectators` (total). With an older server, the map only shows the walkers: restart the `presence_server.py` from `dist\` after `python build.py`.
+
+### 10.2 What it is for
+
+The creator of a region (for example an artist showing their gallery) sees how many people visited it, when and for how long, even when they were not there. Visits are recorded by the presence server in a separate file; the creator reads them from their region's page, with a key. They only get a summary, never the file.
+
+### 10.3 Host side: the presence server
+
+1. Run the server with `--visits visits.jsonl` (a relative path means the script's folder, like `--log`). `--visits-days N` sets how long visits are kept (365 days by default; `0` = keep everything). `--visits-names` also records walkers' nicknames (off by default):
+   `python ".\presence_server.py" --log presence.log --log-ip raw --log-days 0 --history-file chat.jsonl --history-days 0 --visits visits.jsonl`
+2. In the server console, type `visits-key ROOM`. The room is the `room` value of the page's config (by default, the page name). The key is shown **only once**, for example `K7QF-29MD-XR4P`; only its fingerprint is kept, in `presence_visits_keys.json` (`--visits-keys` option). Running the command again gives a new key: the old one stops working. `visits-key ROOM off` removes the key; `visits-key` alone lists the rooms that have a key. `cle-visites` is accepted instead of `visits-key`. **Case matters** in the room name, as everywhere in the server (`Houses` and `houses` are two rooms): if the typed name only exists with a different case, the console says so. The `rooms` command (alias `salons`) lists the known rooms, with their exact case: connected visitors (walkers among them), number of visits and date of the last one, key or not. A room never visited and without a key is not shown: its name is the `room` value of `NOM.config.json`, the page name by default.
+3. Send the creator their page address followed by `#visits`, and the key: `https://ADRESSE/index.html?region=galerie#visits`.
+
+### 10.4 Creator side: the "Visit log" window
+
+They open this link, from any device, with nothing to install. The region opens with the "Visit log" window. Without `#visits`, the "Visit log…" button of the Information window (I), next to "Copy diagnostics", opens the same window; it only exists on a page that has a presence server. They type the key (upper or lower case, dashes or spaces: it does not matter), then "Show" or Enter:
+
+- "Per day" table: Date, Visits, Distinct visitors, Total duration, Median duration, With walk;
+- "Visits of the last 30 days" table: Arrival, Duration, Walk (yes or no), and Nickname if the server has `--visits-names` (1000 visits at most);
+- "Download (CSV)" button: both tables for a spreadsheet, durations in seconds, separator `;` in French and `,` in English.
+
+The accepted key is kept by the browser: next time, the summary is shown at once. "Forget the key" erases it (do it on a shared computer). Esc or "Close (Esc)" closes the window; the region stays usable behind it.
+
+Possible messages: key refused; too many attempts (5 refused keys per minute and per IP address, then a minute's wait); server started without `--visits`; server too old (before v48); server not answering; page without a presence server.
+
+### 10.5 What is counted
+
+- **A visit** is a connection to the presence server: an open page (spectator, when `spectate` is on, which is the default with a presence address) or a walk. Time spent walking is recorded separately ("With walk" column).
+- **Reconnections**: a page reload, a network drop or a switch between walking and overview less than 2 minutes after the end counts as the same visit (same browser, same room).
+- **Distinct visitors**: counted by the browser fingerprint. The same visitor on two devices counts twice; a browser that clears its data counts as a new visitor.
+- **Not counted**: pages without a presence server, visitors whose connection fails (firewall, https page with a `ws://` address), pages built with `--no-spectate` as long as nobody walks. Reading the log itself counts as a visit (the page is open). The number of pages served is read in the web server's log (Apache).
+- Days follow the clock of the server machine.
+- A visit is written when it ends. Clean server stop (Ctrl+C): visits in progress are written. Sudden stop of the server or the machine: they are lost.
+
+### 10.6 Personal data
+
+The visit file **never contains an IP address**. The browser fingerprint is pseudonymous data, the nickname (with `--visits-names`) personal data: inform visitors and keep a reasonable duration (`--visits-days`). The `presence.log` log does not change. On a `ws://` address, the key travels in clear: for access from outside, page and presence over https and `wss://` (procedures § 9.1).
+
+### 10.7 Files
+
+Format of the visit file and of `presence_visits_keys.json`: § 11.10. Samples: `docs/samples/visits.sample.jsonl` and `docs/samples/presence_visits_keys.sample.json` (sample key `ABCD-EFGH-JKMN`, never to be used).
+
+### 10.8 Not tested (v48)
+
+Windows (Ctrl+C in the Windows console), Edge, a real phone, Tailscale Funnel, the PowerShell lines themselves.
+
+### 10.9 What it is for
+
+The host of a presence server welcomes the regions of other creators, hosted wherever they like. Without care, any page that knows the server address can connect to it and take someone else's room, and adding an origin (`--origins`) means restarting the server. With `--creators`, the server only accepts declared pages, each in its own rooms. Without `--creators`, nothing changes.
+
+### 10.10 The creators file
+
+Start: add `--creators presence_creators.json` to the server line (path relative to the script's folder). The file is written by hand, from `docs/samples/presence_creators.sample.json` (fields in § 11.10). It is re-read without restarting the server: a change applies to the next connections (checked at most every 2 s); connections already open stay (to cut one: `ejecter`).
+
+- **Origin**: the beginning of the page address, without a path: `https://alice.example`, with the port if it is not the usual one (`http://localhost:8000`). A page opened from the disk and the viewer have the origin `null`.
+- **Prefix**: creator `alice` only opens `alice.NAME` rooms (case of the prefix ignored); the `room` value of their config must therefore start with `alice.`. Only one entry may have `"prefix": ""`: the host, who keeps every room that belongs to no creator (their current rooms keep their names).
+- **Limits**: `maxWalkers` (walkers at most over all their rooms; beyond it, "room full", also when switching to walking), `maxRooms` (rooms open at the same time). The general limits (`--max-per-room`, `--max-total`, `--max-per-ip`) still apply.
+- **`"off": true`** suspends the creator.
+- Missing file: every connection is refused. Unreadable file (for example while it is being written): the previous list is kept. Invalid entry: reported in the console and ignored.
+
+### 10.11 What the visitor sees
+
+The page shows "presence refused:" followed by the reason, and does not retry (reload the page once fixed): page not declared on this server, creator suspended, room that does not belong to the creator, too many open rooms. The viewer shows the same reason. The server closes the connection with code 4003, which "Copy diagnostics" shows.
+
+### 10.12 Console and log
+
+- `creators` (alias `createurs`) re-reads the file and lists each creator: prefix, active or suspended, open rooms, walkers, origins.
+- Each refusal is logged as "refusal" in `presence.log` with its reason; an accepted connection is recognised by the prefix of its room.
+- Visit log keys remain per room: `visits-key alice.galerie`.
+- `version` shows the version of `presence_server.py` followed by its mark (fingerprint, § 13.2): the same as the one listed by `python build.py` for this file, useful to check a server is up to date after an `scp`.
+
+### 10.13 Welcoming a creator
+
+Procedures § 5.6, item 7. Note to give to the creator: `docs/en/CREATORS.md` (in French: `docs/fr/CREATEURS.md`).
+
+### 10.14 Limits
+
+- The origin is announced by the browser: it stops another web page from taking a room, not a program written on purpose that would announce a false origin. Against it remain `--max-per-ip`, `ejecter` and `bannir`.
+- An https page can only reach a `wss://` server (procedures § 9.1).
+- The world map counters (room request) follow the same origin rule.
+
+### 10.15 Not tested (v51)
+
+Windows, Edge, `wss://` behind Funnel, a creator's page on another domain.
+
+### 10.16 Empty connections
+
+A connection opened on the presence server port then closed without sending anything (browser preconnection, port test, robot) filled the console with a long "opening handshake failed" trace with versions 14 and 15 of `websockets`. Since v51, it gives a short "empty" line in the console and in `presence.log`, with the caller's address (masked according to `--log-ip`) and the number of empty connections, at most one line per minute and per address. It is harmless; other `websockets` errors are still shown in full.
+
+`tests/v51_vides.py`: with the installed version, then with an old version given by the `WS_OLD` variable (tried here with 13.1, 14.2 and 15.0.1). Not tested: Windows, Edge.
+
+### 10.17 Presence address "same name as the page"
+
+A presence address can be written with a star instead of the name: `ws://*:8765`. The page replaces the star with the name it was opened with: opened through `http://localhost:8096`, it targets `ws://localhost:8765`; opened through the network address or the public name of the machine, it targets that same address. A page opened from the disk, and the viewer, target `127.0.0.1`. The rule "presence at the same place as the page" (procedures § 9.1) is thus kept automatically.
+
+Why: each config or card carried a single address (network address, public IP address or public name), right for only one of the access paths. A page opened through the public name that targets a local network address is cut by Edge before the request is sent: the map stays without counters and the server logs an "empty" connection at each query (every 10 s for `carte.html`, every 8 s for the Map window). This blocking is deduced from Klaatou's observations; it is not reproduced here and was not tried under Edge.
+
+The star works everywhere: `--presence-url`, `presenceUrl` of `NOM.config.json`, `presence` field of `regions.json`, presence field of the viewer. The server recalls this form at start-up. Limit: for a visitor coming from the Internet, the presence server port must be reachable under the same name as the page (box port forwarding, or Funnel, procedures § 9.1).
+
+`tests/v51_etoile.py` (Chromium): page opened through `127.0.0.1` then `localhost`, Map window, `carte.html`, visit log, viewer opened from the disk, `ws://0.0.0.0` still corrected, error message with the resolved address. Not tested: Windows, Edge.
+
+### 10.18 Presence server: ordinary HTTP requests
+
+With `websockets` 14 and 15, an ordinary HTTP request on the server port (a browser opening its address, a robot, a test) wrote a full trace ("opening handshake failed", `InvalidUpgrade`, "invalid Connection header: keep-alive"), although the client does get "426 Upgrade Required". The log now writes an `http request` line instead: address, path, host, agent and reason, at most one per minute and per address. It says who came. Any control character (terminal escape, bell) is replaced with a space, in this line and in the whole log. An unreadable request (Windows Remote Desktop probe, encrypted connection on this port, arbitrary bytes) also gives a single "unreadable request" line with the recognised kind and the start of the request, at most one per minute, per address and per kind. Other errors are still shown in full. **Restart the presence server** from `dist\`. Recent versions of `websockets` (17.3 tried) do not write this trace: nothing to filter.
+
+### 10.19 Names: the `oublier` command
+
+A name is reserved by the first browser that takes it (`presence_identities.json` file); another browser that asks for it gets the name followed by `#XXXX`. To **release** a name without stopping the server or touching the file, type in the server console: `oublier <pseudo>` (case, accents and spaces do not matter: "Zoé Test" and "zoetest" are the same name). The owner loses the reservation; the first browser that asks for the name afterwards gets it. If the owner is connected, the console says so: their displayed name does not change before their next connection. The operation is written to the log ("name released", with the `#XXXX` code of the former owner). An owner who changes browser gets their name back with "Copy my personal link" (Settings) from the old browser. To **see** the reserved names before releasing one: `pseudos [filtre]` (the filter keeps the names that contain that piece of text) shows the name, the `#XXXX` code of its owner, its last visit, the date when it will be released if it stays unused (`--name-ttl-days`), and "(connected)" if its owner is online.
+
+### 10.20 IPv6 addresses: limit and bans per `/64` prefix
+
+A subscriber usually has several IPv6 addresses, which change: counting or banning the exact address could be dodged by changing the end of the address. **`--max-per-ip` and `bannir` now count IPv6 by `/64` prefix** (the first 64 bits, the subscriber's network); IPv4 is unchanged, and an IPv4 written as IPv6 (`::ffff:1.2.3.4`) counts as the IPv4. The console and the log still show the full address (according to `--log-ip`). A ban made before this change stays valid for the exact address it targeted; a new one covers the whole prefix. A network that shares one `/64` between several people counts as a single visitor: raise `--max-per-ip` if needed.
+
+### 10.21 Chat history
+
+- `presence_server.py --history N`: last messages replayed to newcomers, **200 by default** (20 before), 0 = none.
+- `--history-file FICHIER` (disabled by default): each message is appended to the file, one JSON line per message: `{"n":number,"t":Unix seconds,"d":"dd/mm/yyyy hh:mm:ss","room":room,"name":nickname,"text":text}`. **Never the IP address.** The file is read back at startup: the history survives restarts (up to 20,000 messages per room in memory).
+- `--history-days N` (default 30; **0 = keep everything**): at startup, older messages are neither read back nor kept (the file is rewritten without them).
+- **Protocol**: the client sends `{t:'history', before:N, n:50}` (N = number of the oldest message displayed); the server answers `{t:'history', msgs:[…], more:true|false}` for its room (at most 100 messages, one request every 0.2 s). Each message (welcome, broadcast, history page) also carries `n` and `t`/`ts`; old clients ignore them. An old server does not answer: the "Older messages" button hides itself after 4 s.
+- **Page**: the open chat panel **scrolls**. Visitor setting **"History messages kept in the chat"** (200 by default, from 20 to 2000, remembered). **"Older messages"** button (in batches of 50, inserted at the top; hidden if `more` is false or if the server does not answer). **Tab title**: "(3) RegionName" = unread messages when the page is hidden or the chat collapsed, reset to zero when the chat is opened (intended behaviour: opening the chat counts as reading all the messages, even without scrolling through them). **"N messages mention you"** with a "Go to the first" button (these messages keep the blinking of § 7.27 until my first action).
+- **Personal data.** The messages (nickname, text, time) are personal data: inform your visitors, limit the duration with `--history-days`, protect the file. Likewise **`--log-days 0` keeps the logs without limit** (the nightly rotation continues but no file is deleted any more): only use it if you take responsibility for it.
+- Command to launch the server (a single line; **restart the server** to benefit from the history): `python .\presence_server.py --log presence.log --log-ip raw --log-days 0`; add `--history-file chat.jsonl` to keep the history between two restarts.
+
+### 10.22 IP addresses in the log: `--log-ip raw`
+
+The existing `--log-ip` option accepts `hash` (default: 8-character fingerprint), `raw` (**address in clear**) or `none`. With `raw`, the address appears **from the connection**, in the console and in the log (`--log`): `connection | room=… | Name [id 3, key a1b2c3, ip ADRESSE]`. Checked by `tests/v33.py` (default: fingerprint; `raw`: address in clear, in the console and in the file).
+
+**Reminder: an IP address is personal data.** Tell your visitors that the log records them (and for what purpose), limit the retention period with `--log-days` (30 days by default; the log rotates every night), and never publish the log.
+
+### 10.23 Presence test
+
+`tests/v45.py`: absent server, server that closes with a code and a reason, constructor refused by the browser, English, viewer.
+
+### 10.24 Presence server: console and "http request" lines
+
+- The sequences the terminal sends into the console (replies from `tmux`, arrows, wheel, text colour) are removed from the line before it runs: before, they made the first commands after `tmux attach` answer "unknown command". `version` command (§ 10.12). Test: `tests/console.py`.
+- Behind a relay (`--proxy-header`, for example Tailscale Funnel), the "http request" lines now give the visitor's address and not the relay's. The "empty connection" and "unreadable request" lines keep the relay's address (`127.0.0.1`: **never ban it**). Visible with `websockets` 14 and 15. Test: `tests/http_proxy.py`.
+
+## 11. JSON file reference (v43)
 
 This section describes **every JSON file of the project, field by field**, the way `opensim.sample.ini` and `robust.sample.ini` do for OpenSim.
 
 A JSON file does not accept comments. The explanations are therefore here, and the samples are separate, in the `docs/samples/` folder: they are **real, complete and valid files**. To use one, copy the sample, rename it and change the values. The `tests/samples.py` test checks that each sample is accepted by the real code that reads that file: the page, the viewer, the tools and the presence server. The samples therefore stay correct when the code changes.
 
-### 27.1 The files and their samples
+### 11.1 The files and their samples
 
 | Real file                                        | Sample in `docs/samples/`          | Written by                                  | Read by                                             |
 | ------------------------------------------------ | ---------------------------------- | ------------------------------------------- | --------------------------------------------------- |
@@ -1206,16 +1503,16 @@ A JSON file does not accept comments. The explanations are therefore here, and t
 | `--history-file` file (for example `chat.jsonl`) | `chat_history.sample.jsonl`        | `presence_server.py`                        | `presence_server.py`                                |
 | `--visits` file (for example `visits.jsonl`)     | `visits.sample.jsonl`              | `presence_server.py`                        | `presence_server.py`                                |
 | `presence_visits_keys.json`                      | `presence_visits_keys.sample.json` | `presence_server.py` (`visits-key` command) | `presence_server.py`                                |
-| `presence_creators.json`                         | `presence_creators.sample.json`    | by hand (§ 34)                              | `presence_server.py` (`--creators`)                 |
+| `presence_creators.json`                         | `presence_creators.sample.json`    | by hand (§ 10.10)                              | `presence_server.py` (`--creators`)                 |
 
 Two other files have **exactly the format** of `NOM.zones.json`:
 
-- `zones.json`, the zones shared by the regions of a folder, read when a region has no `NOM.zones.json` of its own (§ 16);
+- `zones.json`, the zones shared by the regions of a folder, read when a region has no `NOM.zones.json` of its own (§ 11.12);
 - `NOM.zones.bak.json`, the backup copy the viewer leaves when it saves the zones in the region's folder.
 
 In the samples, the region is called `Region`. For a region "Ankh", rename `region.config.sample.json` to `Ankh.config.json` and replace `Region` with `Ankh` in the values that contain it (`room`, `tiles`, the addresses). The addresses in the samples are written `ADRESSE`: put your own there.
 
-### 27.2 How to read the tables
+### 11.2 How to read the tables
 
 - **Text**: a value in quotes, for example `"door, porte"`.
 - **Number**: without quotes, with a dot for decimals, for example `18.5`.
@@ -1227,7 +1524,7 @@ In the samples, the region is called `Region`. For a region "Ankh", rename `regi
 
 Positions are in meters, in the page's frame: x towards the east, y upwards, z towards the south (north is the -z direction). Angles (`yaw`) are in radians: 1.57 is a quarter turn, 3.14 a half turn.
 
-### 27.3 `NOM.config.json`: the page settings
+### 11.3 `NOM.config.json`: the page settings
 
 `glb2html.py` writes it; the page reads it again at each opening, so **F5 is enough** after a change. The preferred way to change it is `glb2html.py --update -o NOM.html --shared-shell` followed by the wanted options: only the fields of the given options change, the rest is kept, including a field added by hand. It can also be edited by hand; a syntax error (forgotten comma, missing quote) then prevents the page from opening.
 
@@ -1264,12 +1561,12 @@ Positions are in meters, in the page's frame: x towards the east, y upwards, z t
 | Field           | Type     | Default             | What it does                                                                                                                                | Option                    |
 | --------------- | -------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
 | `retina`        | yes / no | `false`             | high resolution (sharper, about four times heavier)                                                                                         | `--retina`, `--no-retina` |
-| `light`         | yes / no | `false`             | the page opens in light rendering as long as the visitor has chosen nothing (§ 26)                                                          | `--light`, `--no-light`   |
+| `light`         | yes / no | `false`             | the page opens in light rendering as long as the visitor has chosen nothing (§ 7.45)                                                          | `--light`, `--no-light`   |
 | `foliageCutout` | number   | `0.12`              | transparency threshold of foliage (from 0 to 0.5): higher, the leaf edges are cut more                                                      | `--foliage-cutout`        |
-| `solidMaterials` | text     | `""`                | materials drawn solid (§ 37.3): names or pieces of names separated by commas, `=name` for an exact name; empty = nothing changes            | `--solid-materials`       |
-| `names`         | yes / no | `false`             | shows the name of the building (root object) and of the element aimed at (§ 37.4)                                                                                                       | `--names`, `--no-names`   |
+| `solidMaterials` | text     | `""`                | materials drawn solid (§ 6.13): names or pieces of names separated by commas, `=name` for an exact name; empty = nothing changes            | `--solid-materials`       |
+| `names`         | yes / no | `false`             | shows the name of the building (root object) and of the element aimed at (§ 7.59)                                                                                                       | `--names`, `--no-names`   |
 | `panel`         | yes / no | `true`              | Settings button for visitors                                                                                                                | `--panel`, `--no-panel`   |
-| `libUrl`        | text     | `""`                | folder or address of `lib` (three.js) when it is not next to the page; `--update` aligns it with the `const LIB` line of the shell (§ 28.5) | `--lib-url`               |
+| `libUrl`        | text     | `""`                | folder or address of `lib` (three.js) when it is not next to the page; `--update` aligns it with the `const LIB` line of the shell (§ 6.4) | `--lib-url`               |
 | `version`       | text     | version of the tool | version of `glb2html.py` that wrote the file; `--update` replaces it                                                                        | —                         |
 
 **Walk mode**
@@ -1300,8 +1597,8 @@ Positions are in meters, in the page's frame: x towards the east, y upwards, z t
 | `profile`      | text     | `"public"` | `"public"`: private zones are not shown; `"private"`: all zones are                                              | `--profile`                         |
 | `zones`        | list     | `[]`       | always empty in this file: the zones are in `NOM.zones.json`                                                     | —                                   |
 | `zonesLive`    | text     | `""`       | always empty in this file (used by standalone pages, `--zones-live`)                                             | `--zones-live`                      |
-| `imageExts`    | text     | `"jpg,jpeg,png,webp,gif,avif"` | extensions tried, in order, for an image name without an extension (§ 37.1); optional key, absent from the file the generator writes | —                                   |
-| `mediaDir`     | text     | `"medias"` | subfolder of the images and text files of `image` zones (§ 37.1); `""` = none; optional key, absent from the file the generator writes | —                                   |
+| `imageExts`    | text     | `"jpg,jpeg,png,webp,gif,avif"` | extensions tried, in order, for an image name without an extension (§ 5.11); optional key, absent from the file the generator writes | —                                   |
+| `mediaDir`     | text     | `"medias"` | subfolder of the images and text files of `image` zones (§ 5.11); `""` = none; optional key, absent from the file the generator writes | —                                   |
 | `zoneMarker`   | text     | `"dot"`    | marker of portals and free zones: `"dot"` small disc, `"range"` ring at the zone's real radius, `"none"` nothing | `--zone-marker`                     |
 | `zoneCone`     | yes / no | `true`     | small cone above the portals (T key)                                                                             | `--zone-cone`, `--no-zone-cone`     |
 | `showSpawns`   | yes / no | `false`    | also draws the arrivals                                                                                          | `--show-spawns`, `--no-show-spawns` |
@@ -1311,7 +1608,7 @@ Positions are in meters, in the page's frame: x towards the east, y upwards, z t
 
 | Field    | Type | Default | What it does                                                                  | Option                |
 | -------- | ---- | ------- | ----------------------------------------------------------------------------- | --------------------- |
-| `map`    | list | `[]`    | map embedded in the page: same cards as `regions.json` (§ 27.6)               | `--map`, `--register` |
+| `map`    | list | `[]`    | map embedded in the page: same cards as `regions.json` (§ 11.6)               | `--map`, `--register` |
 | `mapUrl` | text | `""`    | address(es) of `regions.json` read again at each opening, separated by commas | `--map-url`           |
 
 **Tiled region**: these six fields only exist for a region split by `glb2tiles.py`. For a region made of a single `.glb` file, **remove** them from the sample, otherwise the page looks for tiles.
@@ -1327,11 +1624,11 @@ Positions are in meters, in the page's frame: x towards the east, y upwards, z t
 
 The light rendering settings chosen by a visitor (resolution, frames per second, overview only, antialiasing) are kept **by their browser**, not in this file: the page ignores `pixelScale`, `fpsMax`, `ovOnly` or `antialias` written here.
 
-### 27.4 `NOM.zones.json`: the zones
+### 11.4 `NOM.zones.json`: the zones
 
 A **list** of zones, read again at each opening of the page. Each zone has the fields below; a missing field takes its default value, and a value outside the limits is brought back within them.
 
-There are **five kinds** of zones (`type` field): `"spawn"` (arrival), `"portal"` (portal), `"url"` (web link), `"ha"` (command) and `"image"` (picture on a wall, § 37.1). "Private", "linked to an object" and "name shown" are not kinds: they are boxes (`private`, `mesh`, `showName`) valid for all kinds.
+There are **five kinds** of zones (`type` field): `"spawn"` (arrival), `"portal"` (portal), `"url"` (web link), `"ha"` (command) and `"image"` (picture on a wall, § 5.11). "Private", "linked to an object" and "name shown" are not kinds: they are boxes (`private`, `mesh`, `showName`) valid for all kinds.
 
 | Field         | Type     | Default       | What it does                                                                                                                                                  |
 | ------------- | -------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -1345,7 +1642,7 @@ There are **five kinds** of zones (`type` field): `"spawn"` (arrival), `"portal"
 | `radius`      | number   | `2`           | radius of the zone in meters (from 0.5 to 50)                                                                                                                 |
 | `w`, `h`      | number   | `2.4`, `1.2`  | width and height of the sign in meters; for `image`: 1.2 wide by default, height 0 = from the image                                                                                                                        |
 | `target`      | text     | `""`          | portal: address of the destination region, or empty for a point of the same region; link: address of the web page; command: address called; image: file name or address of the image                    |
-| `link`        | text     | `""`          | image only, optional: page opened on click or E in front of the picture (an `http(s)` address, or a path relative to the open page, for example `galerie.html`); at most 600 characters; the key is only written when filled in (§ 37.1) |
+| `link`        | text     | `""`          | image only, optional: page opened on click or E in front of the picture (an `http(s)` address, or a path relative to the open page, for example `galerie.html`); at most 600 characters; the key is only written when filled in (§ 5.11) |
 | `spawn`       | text     | `""`          | portal: `id` of the targeted arrival (empty = `default`)                                                                                                      |
 | `confirm`     | yes / no | `false`       | asks for a confirmation before acting                                                                                                                         |
 | `private`     | yes / no | `false`       | private zone: absent from public pages (`public` profile)                                                                                                     |
@@ -1368,13 +1665,13 @@ The sample contains nine zones, one for each case:
 
 In a tiled region, a linked zone finds its object thanks to the `extras.ref` tag that `glb2tiles.py` writes in the objects of the tiles. This tag is in the tiles' `.glb` files, **not** in `NOM.zones.json`.
 
-### 27.5 `default.json`: the default region
+### 11.5 `default.json`: the default region
 
 | Field    | Type | Default | What it does                                            | Option      |
 | -------- | ---- | ------- | ------------------------------------------------------- | ----------- |
-| `region` | text | —       | region opened when the address has no `?region=` (§ 16) | `--default` |
+| `region` | text | —       | region opened when the address has no `?region=` (§ 11.12) | `--default` |
 
-### 27.6 `regions.json`: the world map
+### 11.6 `regions.json`: the world map
 
 A **list** of regions (plain form), or, since v47, an **object** with a header: `{"showUrl": false, "regions": [ ... ]}`. Both forms are read everywhere (`carte.html` map, standalone map, map opened with M, shell). A card without `name` or without `url` is ignored.
 
@@ -1383,7 +1680,7 @@ A **list** of regions (plain form), or, since v47, an **object** with a header: 
 | `showUrl`    | boolean | `false` | shows the address under each tile of the map page; the checkbox on the map page, once ticked or unticked by the visitor, wins (choice kept by their browser) | —      |
 | `regions`    | list    | —       | the region cards (next table)                                                                                                                                | —      |
 
-`--register` and `--scan-sites` keep the header and the shape of the file (list or object). So does the viewer since v50: "Import regions.json" accepts both shapes, "Export regions.json" gives back the imported shape with its header, and every card keeps all its fields (§ 33).
+`--register` and `--scan-sites` keep the header and the shape of the file (list or object). So does the viewer since v50: "Import regions.json" accepts both shapes, "Export regions.json" gives back the imported shape with its header, and every card keeps all its fields (§ 9.13).
 
 | Field      | Type         | Default             | What it does                                                                           | Option           |
 | ---------- | ------------ | ------------------- | -------------------------------------------------------------------------------------- | ---------------- |
@@ -1396,7 +1693,7 @@ A **list** of regions (plain form), or, since v47, an **object** with a header: 
 | `room`     | text         | `""`                | presence room of this region                                                           | `--room`         |
 | `thumb`    | text         | `""`                | thumbnail: embedded image (`data:image/...`) or address of an image                    | `--thumb`        |
 
-### 27.7 `NOM.tiles.json`: the tile index
+### 11.7 `NOM.tiles.json`: the tile index
 
 `glb2tiles.py` writes it; it is **not edited by hand**. The page only reads a few fields: `tiles` (for each tile `file`, `min`, `max`, `bytes`, `triangles`), `nodeRefs` and `overview.file`. The others are for the report.
 
@@ -1429,28 +1726,28 @@ Each card of `tiles`:
 | `geometryBytes`, `imageBytes` | whole number      | of which geometry, of which images               |
 | `replacedImages`              | whole number      | images replaced by grey in this tile             |
 
-### 27.8 `NOM.reglages.json`: the viewer's working state
+### 11.8 `NOM.reglages.json`: the viewer's working state
 
-Written by the viewer's "Save to a file" button, read by "Load a file" and by `glb2html.py --settings`. Unlike `NOM.config.json`, it is **nested** (§ 16).
+Written by the viewer's "Save to a file" button, read by "Load a file" and by `glb2html.py --settings`. Unlike `NOM.config.json`, it is **nested** (§ 11.12).
 
 | Field            | Type         | What it contains                                                                                                              |
 | ---------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------- |
 | `v`              | whole number | format version: always `1`                                                                                                    |
 | `file`           | text         | name of the `.glb` open in the viewer                                                                                         |
 | `saved`          | text         | date and time of the save                                                                                                     |
-| `cfg`            | object       | the settings: same names and same meaning as in `NOM.config.json` (§ 27.3), plus five settings specific to the viewer (below) |
-| `zones`          | list         | all the zones, private ones included (format of § 27.4)                                                                       |
+| `cfg`            | object       | the settings: same names and same meaning as in `NOM.config.json` (§ 11.3), plus five settings specific to the viewer (below) |
+| `zones`          | list         | all the zones, private ones included (format of § 11.4)                                                                       |
 | `camera`         | object       | `camDir`, `target`, `zoom`: the framing chosen in the viewer                                                                  |
 | `profile`        | text         | `"public"` or `"private"` ("Export profile" menu)                                                                             |
-| `thisReg`        | object       | card of this region for the map: `name`, `url`, `x`, `y`, `spawn`, `thumb` (§ 27.6)                                           |
+| `thisReg`        | object       | card of this region for the map: `name`, `url`, `x`, `y`, `spawn`, `thumb` (§ 11.6)                                           |
 | `cmd`            | object       | fields of the command summary: `script`, `glb`, `dest`, `mapPage`                                                             |
 | `targetExplicit` | yes / no     | the camera target was moved by hand                                                                                           |
 
 The five `cfg` settings specific to the viewer: `pixelScale`, `fpsMax` and `ovOnly` (light rendering, tried in the viewer), `guide` (guide of the calm area shown in the viewer) and `ignoreViz` (objects walked through shown as wireframe). `--settings` does not take them.
 
-### 27.9 `disposition.json`: where the windows are
+### 11.9 `disposition.json`: where the windows are
 
-Written by Settings, "Save" ("Window layout" section), read by "Load" (§ 25).
+Written by Settings, "Save" ("Window layout" section), read by "Load" (§ 7.44).
 
 | Field    | Type         | What it contains                                                                                                                                                                                                                                                                                      |
 | -------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -1459,11 +1756,11 @@ Written by Settings, "Save" ("Window layout" section), read by "Load" (§ 25).
 | `layout` | object       | `wins`: for each window (`H` help, `I` information / status, `L` arrivals), `pile` (`"L"` left stack, `"R"` right stack, `"F"` free), `home` (`"L"` or `"R"`, the stack the window returns to on double-click), and for a free window `x`, `y` in pixels; `order`: order of the windows in each stack |
 | `ls`     | object       | state of the windows: `glb2html_help`, `glb2html_state`, `glb2html_spawn` (`"1"` shown, `"0"` hidden), `glb2html_helpFold`, `glb2html_stateFold`, `glb2html_spawnFold` (`"1"` collapsed), `glb2html_helpW`, `glb2html_stateW`, `glb2html_spawnW` (width in pixels)                                    |
 
-### 27.10 Presence server files
+### 11.10 Presence server files
 
 The server writes them itself; edit them by hand only with the server stopped. "Hashed" values are fingerprints: the original key or IP address cannot be recovered, which protects the visitors. The fingerprints in the samples are made up and match nobody.
 
-**`presence_identities.json`** (`--identities` option): the reserved nicknames (the `oublier <pseudo>` console command releases one without touching the file, § 36.2).
+**`presence_identities.json`** (`--identities` option): the reserved nicknames (the `oublier <pseudo>` console command releases one without touching the file, § 10.19).
 
 | Field   | Type   | What it contains                                                                                                                                                                                               |
 | ------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -1514,7 +1811,7 @@ Visits older than `--visits-days` days (365 by default) are removed at startup a
 | ------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `rooms` | object | for each room: `salt` (random salt), `hash` (SHA-256 fingerprint of the salt followed by the key in upper case, without dashes or spaces), `added` (creation, in seconds since 1970). The key itself is never written |
 
-**`presence_creators.json`** (`--creators` option, v51): the hosted creators, written by hand and re-read without restarting the server (§ 34). An object `{"creators": [...]}`; for each creator:
+**`presence_creators.json`** (`--creators` option, v51): the hosted creators, written by hand and re-read without restarting the server (§ 10.10). An object `{"creators": [...]}`; for each creator:
 
 | Field        | Type          | What it contains                                                                                                                                   |
 | ------------ | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -1526,7 +1823,7 @@ Visits older than `--visits-days` days (365 by default) are removed at startup a
 | `off`        | boolean       | `true`: suspended, their new connections are refused                                                                                               |
 | `note`       | text          | free note of the host, ignored by the server                                                                                                       |
 
-### 27.11 English names since v43
+### 11.11 English names since v43
 
 So that all names are in the same language, v43 put the last French names into English: tool options, values in the JSON files and address parameters. **The old names are still accepted**: commands, files and links already written keep working. An old name is replaced by the new one when read; when a tool rewrites a file, it writes the new one. `--update` keeps a field you do not change as it is: an old `tileMaxMo` therefore stays in `NOM.config.json`, and the page still reads it.
 
@@ -1557,488 +1854,197 @@ So that all names are in the same language, v43 put the last French names into E
 
 The two development tools (`gen_reference.py`, `verif_trad.py`) followed in v44, and the `--update` messages start with `[update]`. Unchanged: `--analyse` (also British English) and the values that are object names, such as `door, porte`. In the tools' help, the example names of the values are also in English (`FILE`, `PATH`, `NAME`, `DEGREES`, `SHELL.html`). The history (`CHANGELOG.md`, `HISTORY.md`) keeps the names of the time.
 
-## 28. New in v45 (24/10/2026)
+### 11.12 JSON files of a modular region
 
-### 28.1 The page says why presence was cut
+For a `Region.html` page produced by `--modular` (or by "Export the modular structure (.zip)" in the viewer), the folder contains:
 
-When the connection to the presence server closes, the presence line (Information / Status window, viewer panel) no longer always says "server unreachable": it gives what the browser knows.
+These files are those of a region with its own shell (`--modular`). For several regions in the same folder with **a single** shell, see "Single shell for several regions" below.
 
-- **the connection never opened**: "connection never established (check address, port or firewall)";
-- **the connection had opened, then the server or the network cut it**: "connection opened then closed (code N)", followed by the reason sent by the server when it gives one;
-- **the browser refused to create the connection** (https page with a `ws://` address, or forbidden port): "refused by the browser".
+| File                 | Role                                                                                      | Read again at each F5 |
+| -------------------- | ----------------------------------------------------------------------------------------- | --------------------- |
+| `Region.html`        | shell identical for all regions, it deduces its files from its own name                   | no                    |
+| `Region.glb`         | the model                                                                                 | no                    |
+| `Region.config.json` | settings for **rendering the page** (see below)                                           | yes                   |
+| `Region.zones.json`  | zones, portals, arrivals                                                                  | yes                   |
+| `zones.json`         | fallback zones, shared by the pages of the folder that have no `.zones.json` of their own | yes                   |
+| `lib/three-0.160.0/` | three.js, Draco, Meshopt, shared by all the pages of the folder                           | no                    |
 
-Limit: the browser never gives the cause of a connection that does not open (code 1006, no reason). The page therefore cannot tell an unknown name, a closed port, a firewall or a browser block apart; only a server that cuts an already open connection supplies a code and a reason.
+#### 11.12.1 Which zone file is read
 
-### 28.2 Diagnostics
+In this order, stopping at the first one that gives a valid JSON list:
 
-"Copy diagnostics" adds the "Presence connection" line: whether the connection opened (yes or no), last closing code and last reason. Addresses stay replaced by `ADRESSE`.
+1. `Region.zones.json`
+2. `zones.json` of the same folder, **only if** the first one is missing, inaccessible (HTTP error) or is not a list
+3. otherwise: no zone
 
-### 28.3 Presence test
+There is **no merging**: as soon as `Region.zones.json` is read, `zones.json` is ignored. A `zones.json` placed next to a region that already has its `.zones.json` therefore has no effect.
 
-`tests/v45.py`: absent server, server that closes with a code and a reason, constructor refused by the browser, English, viewer.
+Zones marked **private** are removed when reading, in either file, unless `profile` is `private` in `Region.config.json`.
 
-### 28.4 One line for the `lib` folder
+#### 11.12.2 Region.config.json: the page rendering, not the viewer
 
-The shell (the `index.html` file shared by all the regions of a folder) starts with a `const LIB = './lib';` line: it is **the only line to edit** to put the `lib` folder elsewhere (for example `'../lib'`, or an `https://…/lib` address). The three.js import map and the path of the Draco decoders are built from that line by a small script run before any module. Accepted values: the same as `--lib-url` (§ 22.8); a refused value is ignored.
+It is the dictionary of settings that the page reads at startup (the same as the one embedded in a standalone page). It is **flat**. The complete list of its fields, with their type, default value, role and the option that sets them, is in **§ 11.3**; a complete sample is in `docs/samples/region.config.sample.json`.
 
-### 28.5 `--update` keeps the line
+`zones` is **always empty** there (`[]`) and `zonesLive` always empty: in modular mode, the zones are only in `Region.zones.json`.
 
-Priority of the `lib` folder: the `--lib-url` option if given; the `const LIB` line of an existing shell if it is not `./lib`; the `libUrl` key of `NOM.config.json`; otherwise `./lib`. When the shell's line wins, `--update` says so in its report and aligns `libUrl`. A shell saved with Windows line endings (CRLF) is recognised as identical. A new region created in a folder whose shell was edited by hand keeps the same `lib` folder, without any warning.
+The viewer never reads this file: it works with its own settings file (below).
 
-### 28.6 `dist\index.html`
+#### 11.12.3 `.reglages.json` and `.config.json` do not have the same structure
 
-`python build.py` now puts the ready-made shell in `dist\index.html` (`lib` folder: `./lib`), byte for byte the same as the one `glb2html.py` writes. It can be copied into a folder of regions instead of running `--update`; if the `lib` folder is elsewhere, the `const LIB` line has to be carried over. `--update` is still needed to update a region's configuration.
+`<nom>.reglages.json` is the working state of the viewer ("Save to a file"). It is **nested**:
 
-### 28.7 Browsers
+```
+{ v, file, saved,
+  cfg:     { rotate, hole, holeFade, ..., mapUrl, guide, ignoreViz },
+  camera:  { camDir, target, zoom },
+  zones:   [ ...all the zones, private ones included ],
+  profile, thisReg: { card of this region for the map },
+  cmd:     { script, glb, dest, mapPage } }
+```
 
-Tried in Chromium (`tests/v45_lib.py`). **Not tried: Firefox and Safari.** The `tests/essai_importmap.html` file (open it in the browser; the result is written in plain words) checks that a browser accepts an import map built by a script; if the test fails in a browser, the shell does not start in it.
+|            | `<nom>.reglages.json` (viewer)           | `<page>.config.json` (page)              |
+| ---------- | ---------------------------------------- | ---------------------------------------- |
+| Structure  | nested (`cfg`, `camera`, ...)            | flat                                     |
+| Camera     | `camera` sub-object                      | at the root (`camDir`, `target`, `zoom`) |
+| Zones      | all, private ones included               | always empty                             |
+| Map        | only the card of this region (`thisReg`) | complete resolved map (`map`)            |
+| Its own    | `guide`, `ignoreViz`, `cmd`, `thisReg`   | `seaSize`, `version`                     |
+| Written by | the viewer                               | `glb2html.py`                            |
+| Read by    | the viewer, `glb2html.py --settings`     | the exported page                        |
 
-### 28.8 Shell test
+The conversion only goes one way:
 
-`tests/v45_lib.py`: single line, no import map tag left in the shell, identical `dist\index.html`, unchanged standalone page, start-up in Chromium with `./lib` then with `../lib` (one line changed), `--update` keeping the line (message, aligned config, no dated copy), CRLF, refused value, `--lib-url` priority, new region, test page.
-
-## 29. New in v46 (25/10/2026)
-
-### 29.1 Status line
-
-An always visible line gives, without opening the Information window: the **mode** in bold ("Walking" or "Overview"), then while walking the gait (on foot, flying, running), the view (first person, third person, free camera) and the `x y z` position; in the overview, the target. It sits at the bottom centre; on a screen narrower than 1361 px, and on a touch screen, it moves to the top, under the compass (and under the name box). No information in it is carried by a colour.
-
-### 29.2 On-screen arrows
-
-A pad of 3 x 3 buttons, above the status line, is clicked with the mouse or touched with a finger. **Press and hold = key held**: the movement lasts as long as the button is pressed.
-
-While walking (the arrows reuse the keyboard keys: walking does not change):
-
-| Row    | Left                            | Middle                                                       | Right                                    |
-| ------ | ------------------------------- | ------------------------------------------------------------ | ---------------------------------------- |
-| top    | turn left (←)                   | forward (Z or W, ↑)                                          | turn right (→)                           |
-| middle | step left (Q or A)              | **Run**: one click turns it on, another turns it off (Shift) | step right (D)                           |
-| bottom | up, while flying only (Page Up) | back (S, ↓)                                                  | down, while flying only (Page Down or C) |
-
-In the overview:
-
-| Row    | Left               | Middle                                  | Right               |
-| ------ | ------------------ | --------------------------------------- | ------------------- |
-| top    | turn the view left | move the view forward                   | turn the view right |
-| middle | move the view left | **recenter the view** (opening framing) | move the view right |
-| bottom | zoom out (−)       | move the view back                      | zoom in (+)         |
-
-Moving and zooming do different things: **move** slides the camera and the target together, at constant height and distance (the landscape scrolls, tiles load around the new point); **zoom in / out** keeps the target and only changes the camera distance, like the wheel.
-
-The middle of the pad replaces the "Recenter the view" button: that button only comes back in the bar when the arrows are hidden. While walking, a captured mouse (with **G** or the button) cannot click the arrows: **Esc** or **G** frees it, **G** or the "Capture the mouse" button takes it back.
-
-The zone prompt and the light rendering offer move up above the pad.
-
-### 29.3 Hiding or showing the arrows
-
-Three ways, which do the same thing and are remembered by the browser: the **K** key (same place on AZERTY and QWERTY), the "Arrows (K)" button of the bar ("Arrows (K): hidden" when they are; on a touch screen, the "Arrows" button of the column), and the "On-screen arrows (K)" checkbox in Settings. The arrows are shown by default.
-
-### 29.4 Touch screen (phone, tablet)
-
-The page switches to touch mode when the browser reports a touch screen as the main pointer ("Touch controls" setting: Auto; Yes forces touch mode, No refuses it, for example on a computer with a touch screen). In touch mode:
-
-- the button bar is replaced by a **column of buttons** at the bottom right: "Walk" ("Exit" while walking), "Jump", "Fly" ("Land" while flying), "View", "Chat" (with the number of unread messages), "Arrows", "Menu"; the active button has a thick border;
-- the **menu** offers: Help, Information, Arrivals, World map, Back to arrival (while walking), Recenter the view (when the arrows are hidden) and **Full screen** when the browser allows it (not on iPhone, where Safari only grants it to videos);
-- the Help, Information and Arrivals windows are **folded on opening** (without changing the remembered setting) and have a **✕** button to close them;
-- the arrows are large (56 px), at the bottom left;
-- while walking, **dragging a finger** on the scene looks around: you pull the scenery (finger to the right, gaze to the left); a tooltip explains it on the first walk. In the overview, the gestures are the same as before (one finger: turn; two fingers: move and zoom);
-- "Chat" opens a real input field (the phone keyboard opens) with "Send" and "✕ Close"; arrows and column hide while typing;
-- landscape orientation is supported: the column switches to two or three columns;
-- "Capture the mouse" does not exist (nothing to capture with a finger).
-
-On a small phone screen, the page remains busy: windows and chat can be closed to clear the view.
-
-### 29.5 Tooltips
-
-Every button of the bar and every arrow has a tooltip: its role and its key (the letter follows the keyboard layout). On a touch screen, **a long press** (half a second) shows the tooltip; on a single-action button, the long press does not trigger the action.
-
-### 29.6 Chat counter
-
-The number in brackets in the tab title ("(3) Region") and on the "Chat" button counts the messages from other visitors received while the chat is closed or the tab hidden (the history replayed on arrival is not counted); it goes back to zero **when the chat is opened**, even without reading the messages (intended behaviour).
-
-### 29.7 Diagnostics
-
-"Copy diagnostics" adds the "Touch controls" line: touch mode yes or no, setting, touch screen detected, number of touch points.
-
-### 29.8 One shell for a whole site
-
-Recommended layout: at the root of the site, a single `index.html` shell, the `lib` folder, `regions.json` and `default.json`; one folder per region. Address of a region: `index.html?region=dossier/NOM`. To update a region **and** the root shell, give the shell path to `--shared-shell`:
-
-`python glb2html.py --update -o "P:\site\dossier\NOM.html" --shared-shell "P:\site\index.html"`
-
-With `--shared-shell` and no path, the shell and a `lib` folder are written **in the region folder**, where they are of no use with this layout. Another way after `python build.py`: copy `dist\index.html` over `index.html` (the `const LIB` line stays `./lib`). `--update` compares the shell with the one it contains itself: run the `glb2html.py` of `dist`, built last (an older copy elsewhere writes its older shell). A shell edited by hand is renewed, the old one kept under a dated name (`index.avant-AAAAMMJJ-HHMMSS.html`).
-
-### 29.9 Tests of v46
-
-`tests/v46.py` (Chromium, touch screen simulated with real touch events): status line, placement of the elements (nothing overlaps, at 1440 x 900, 390 x 844, 844 x 390 and 1180 x 820), arrows held with the mouse and the finger (forward, step, turn, up, overview), Run, K and "Arrows (K)" button, Recenter, tooltips, long press, menu, touch chat, ✕, settings, diagnostics, English.
-
-### 29.10 Not tested
-
-A real phone, a real tablet, iPhone and iPad, Edge, Windows, real full screen.
-
-## 30. New in v47 (25/10/2026)
-
-### 30.1 The map tile
-
-Under the name, one line of text (never colour alone): "3 visitors · 1 walker" on one line (v52; in French "3 visiteurs" then "1 promeneur" on two lines), or "no visitors". Visitors count the walkers **and** the spectators (pages open in the overview); walkers are only shown when there are some. The line only appears if the card has a room (`room`) and a presence server (`presence`, or the page's own). The word "visit →" is gone: a **tooltip** on hover says what the click does ("Click to enter the region (arrival: default)"). The region you are in keeps "● you are here". A finger has no hover, so no tooltip. Same display on the map page and in the map opened with M.
-
-### 30.2 Optional address
-
-The address under each tile is **hidden by default**. It is shown if `showUrl` is `true` in the header of `regions.json` (§ 27.6), or if the visitor ticks the "Show addresses" checkbox at the top of the map page (next to the nickname). The visitor's choice is kept by their browser and wins over the file. An invalid address keeps its "(invalid address)" message. The address is shown under the card, **outside the link**: it can be selected with the mouse and copied (after v52; inside a link, a click-drag does not select the text), and the hover zoom stays on the card. The grid is only redrawn when the data changed, and never while text in the grid is selected (the counts wait for the selection to end).
-
-### 30.3 `regions.json` with a header
-
-Two forms, the plain list and the object `{"showUrl": ..., "regions": [...]}` (§ 27.6). `--register` reads and rewrites the file keeping the header and the shape. An older `glb2html.py` wipes a file that is not a list: do not use it on a file with a header.
-
-### 30.4 Two ways to make the map
-
-- **Standalone mode**: `--map-page` writes a page with the list of regions inside. It opens from disk and is regenerated when the list changes (except with `--map-url`, which makes it re-read `regions.json`). The header's `showUrl` is taken over.
-- **Hosted mode**: `python build.py` writes `dist\carte.html`, one page identical for every site, **with no region inside**. It reads the `regions.json` next to it at every opening, like `index.html` reads the `NOM.config.json` files. Copy it once next to `index.html`: `Copy-Item "P:\site\web_3d\dist\carte.html" "P:\site\carte.html"`. Nothing to regenerate when `regions.json` changes. It needs a web server: opened from disk, it says so; without `regions.json`, it says "Cannot read regions.json".
-
-The two modes live side by side.
-
-### 30.5 Presence server
-
-The reply to a `rooms` request adds `visitors` (walkers and spectators, per room) to `rooms` (walkers) and `spectators` (total). With an older server, the map only shows the walkers: restart the `presence_server.py` from `dist\` after `python build.py`.
-
-### 30.6 v47 tests
-
-`tests/v47.py` (Chromium, real presence server): `visitors` per room, universal `carte.html`, plain list and header, checkbox (start, kept choice, priority), English, `--register` keeping the header, older server, missing `regions.json`, opening from disk, map opened with M.
-
-### 30.7 Not tested
-
-A real phone (no tooltip with a finger), Edge, Windows, the PowerShell lines themselves.
-
-## 31. New in v48 (25/10/2026): visit log
-
-### 31.1 What it is for
-
-The creator of a region (for example an artist showing their gallery) sees how many people visited it, when and for how long, even when they were not there. Visits are recorded by the presence server in a separate file; the creator reads them from their region's page, with a key. They only get a summary, never the file.
-
-### 31.2 Host side: the presence server
-
-1. Run the server with `--visits visits.jsonl` (a relative path means the script's folder, like `--log`). `--visits-days N` sets how long visits are kept (365 days by default; `0` = keep everything). `--visits-names` also records walkers' nicknames (off by default):
-   `python ".\presence_server.py" --log presence.log --log-ip raw --log-days 0 --history-file chat.jsonl --history-days 0 --visits visits.jsonl`
-2. In the server console, type `visits-key ROOM`. The room is the `room` value of the page's config (by default, the page name). The key is shown **only once**, for example `K7QF-29MD-XR4P`; only its fingerprint is kept, in `presence_visits_keys.json` (`--visits-keys` option). Running the command again gives a new key: the old one stops working. `visits-key ROOM off` removes the key; `visits-key` alone lists the rooms that have a key. `cle-visites` is accepted instead of `visits-key`. **Case matters** in the room name, as everywhere in the server (`Houses` and `houses` are two rooms): if the typed name only exists with a different case, the console says so. The `rooms` command (alias `salons`) lists the known rooms, with their exact case: connected visitors (walkers among them), number of visits and date of the last one, key or not. A room never visited and without a key is not shown: its name is the `room` value of `NOM.config.json`, the page name by default.
-3. Send the creator their page address followed by `#visits`, and the key: `https://ADRESSE/index.html?region=galerie#visits`.
-
-### 31.3 Creator side: the "Visit log" window
-
-They open this link, from any device, with nothing to install. The region opens with the "Visit log" window. Without `#visits`, the "Visit log…" button of the Information window (I), next to "Copy diagnostics", opens the same window; it only exists on a page that has a presence server. They type the key (upper or lower case, dashes or spaces: it does not matter), then "Show" or Enter:
-
-- "Per day" table: Date, Visits, Distinct visitors, Total duration, Median duration, With walk;
-- "Visits of the last 30 days" table: Arrival, Duration, Walk (yes or no), and Nickname if the server has `--visits-names` (1000 visits at most);
-- "Download (CSV)" button: both tables for a spreadsheet, durations in seconds, separator `;` in French and `,` in English.
-
-The accepted key is kept by the browser: next time, the summary is shown at once. "Forget the key" erases it (do it on a shared computer). Esc or "Close (Esc)" closes the window; the region stays usable behind it.
-
-Possible messages: key refused; too many attempts (5 refused keys per minute and per IP address, then a minute's wait); server started without `--visits`; server too old (before v48); server not answering; page without a presence server.
-
-### 31.4 What is counted
-
-- **A visit** is a connection to the presence server: an open page (spectator, when `spectate` is on, which is the default with a presence address) or a walk. Time spent walking is recorded separately ("With walk" column).
-- **Reconnections**: a page reload, a network drop or a switch between walking and overview less than 2 minutes after the end counts as the same visit (same browser, same room).
-- **Distinct visitors**: counted by the browser fingerprint. The same visitor on two devices counts twice; a browser that clears its data counts as a new visitor.
-- **Not counted**: pages without a presence server, visitors whose connection fails (firewall, https page with a `ws://` address), pages built with `--no-spectate` as long as nobody walks. Reading the log itself counts as a visit (the page is open). The number of pages served is read in the web server's log (Apache).
-- Days follow the clock of the server machine.
-- A visit is written when it ends. Clean server stop (Ctrl+C): visits in progress are written. Sudden stop of the server or the machine: they are lost.
-
-### 31.5 Personal data
-
-The visit file **never contains an IP address**. The browser fingerprint is pseudonymous data, the nickname (with `--visits-names`) personal data: inform visitors and keep a reasonable duration (`--visits-days`). The `presence.log` log does not change. On a `ws://` address, the key travels in clear: for access from outside, page and presence over https and `wss://` (procedures § 11).
-
-### 31.6 Files
-
-Format of the visit file and of `presence_visits_keys.json`: § 27.10. Samples: `docs/samples/visits.sample.jsonl` and `docs/samples/presence_visits_keys.sample.json` (sample key `ABCD-EFGH-JKMN`, never to be used).
-
-### 31.7 v48 tests
-
-`tests/v48.py` (real presence server, Chromium): visits written without IP or nickname, reconnections merged, walking time, key fingerprint only, lower-case key accepted, wrong key, 5-attempt limit, `visits-key ROOM off`, purge, nicknames with `--visits-names`, clean stop, page window (key refused, summary, CSV, key kept then forgotten, Esc), page without presence, server without `--visits`, older server, missing server, English. `tests/samples.py` reads the two new samples.
-
-### 31.8 Not tested
-
-Windows (Ctrl+C in the Windows console), Edge, a real phone, Tailscale Funnel, the PowerShell lines themselves.
-
-## 32. New in v49 (25/10/2026): updating `regions.json` from the sites folder
-
-### 32.1 The command
-
-`cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python .\glb2html.py --scan-sites "P:\_OpenSim\SL&OS\Web_3d\Sites" --dry-run`
-
-`--dry-run` shows what would change without writing anything; the same line without `--dry-run` writes `Sites\regions.json`. The folder given is the one of the shared shell (`index.html` at the root); without `index.html`, a warning says so.
-
-### 32.2 What the scan does
-
-- One card per `NOM.config.json` file found in the folder and its subfolders (the `lib` and `_bak` folders and those starting with a dot are skipped, as is a file without a `room` field).
-- Card address: `index.html?region=dossier/NOM`; room and presence server: those of the config (`room`, `presenceUrl`).
-- An existing card is recognised by its room, otherwise by its address. Its name, place (`x`, `y`), arrival (`spawn`) and `id` are kept: only the address, room, server and thumbnail are updated. The name of a new card is the file name: change it once in `regions.json`, it is kept afterwards.
-- A new region gets the first free cell of the `y = 0` row (never a place already taken: two cards at the same place make the map fall back to a plain list).
-- The creators' cards (full address in `http` or `https`) are never touched. The header (`showUrl`) and the shape of the file (object or list) are kept. Without `regions.json`, the file is created with the header.
-- Nothing is deleted: a local card whose region is no longer in the folder is reported as an "orphan" and kept.
-
-### 32.3 Thumbnails
-
-An image `NOM.jpg` (or `.jpeg`, `.png`, `.webp`) next to `NOM.config.json` becomes the card's thumbnail, through a relative path (`houses/NOM.jpg`): `regions.json` stays light, and the path works from `carte.html` as from the map opened with M, both at the root. Without an image, the thumbnail already recorded is kept.
-
-Recommended: a **square image of 320 x 320 pixels**, medium-quality JPEG (a few tens of KB, estimate). The tile shows it as a square about 155 pixels wide (`aspect-ratio: 1`); 320 pixels stay sharp on high-density screens. An image that is not square is cropped in the centre (`object-fit: cover`).
-
-### 32.4 v49 tests
-
-`tests/v49.py` (no browser): cards created and updated, thumbnails (encoded path), name, place and arrival kept, header kept, external card untouched, orphan kept, no duplicate places, skipped folders, `--dry-run`, second run without change, plain list, missing folder, missing `index.html`, English.
-
-### 32.5 Not tested
-
-Windows, Klaatou's paths, the PowerShell lines themselves.
-
-## 33. What is new in v50 (25/10/2026): the world map in the viewer
-
-### 33.1 Importing and exporting `regions.json`
-
-"World map" section of the viewer:
-
-- **Import regions.json** accepts the plain list as well as the object with a header (`{"showUrl": ..., "regions": [...]}`, § 27.6). Before v50, the object shape was refused ("array expected"): it is the one `--scan-sites` writes when it creates the file.
-- **Export regions.json** gives back the imported shape: an object with the same header, or a list. The header is remembered by the browser, like the list of regions. Without an import, the export is a plain list.
-- Every card keeps all its fields, including `presence` (presence server of an external region), which used to be lost on import.
-- A file without regions is refused with the message "map file expected: list of regions, or object {"regions": [...]}".
-
-### 33.2 Adding or updating this region
-
-The **Add / update this region in the map** button updates the card of the same room in place, like `--register`: its position in the list no longer changes, an empty field (a thumbnail not captured, for instance) does not erase the old one, and the fields the viewer does not show (`presence`...) stay. The name, address, place and arrival come from the viewer's fields.
-
-### 33.3 v50 tests
-
-`tests/v50.py` (Chromium): import of the object shape, identical export (header and unknown fields kept), viewer reload, in-place "Add", plain list exported as a list, refused file (French and English).
-
-### 33.4 Not tested
-
-Edge, Windows.
-
-## 34. What's new in v51 (25/10/2026): creators on the presence server
-
-### 34.1 What it is for
-
-The host of a presence server welcomes the regions of other creators, hosted wherever they like. Without care, any page that knows the server address can connect to it and take someone else's room, and adding an origin (`--origins`) means restarting the server. With `--creators`, the server only accepts declared pages, each in its own rooms. Without `--creators`, nothing changes.
-
-### 34.2 The creators file
-
-Start: add `--creators presence_creators.json` to the server line (path relative to the script's folder). The file is written by hand, from `docs/samples/presence_creators.sample.json` (fields in § 27.10). It is re-read without restarting the server: a change applies to the next connections (checked at most every 2 s); connections already open stay (to cut one: `ejecter`).
-
-- **Origin**: the beginning of the page address, without a path: `https://alice.example`, with the port if it is not the usual one (`http://localhost:8000`). A page opened from the disk and the viewer have the origin `null`.
-- **Prefix**: creator `alice` only opens `alice.NAME` rooms (case of the prefix ignored); the `room` value of their config must therefore start with `alice.`. Only one entry may have `"prefix": ""`: the host, who keeps every room that belongs to no creator (their current rooms keep their names).
-- **Limits**: `maxWalkers` (walkers at most over all their rooms; beyond it, "room full", also when switching to walking), `maxRooms` (rooms open at the same time). The general limits (`--max-per-room`, `--max-total`, `--max-per-ip`) still apply.
-- **`"off": true`** suspends the creator.
-- Missing file: every connection is refused. Unreadable file (for example while it is being written): the previous list is kept. Invalid entry: reported in the console and ignored.
-
-### 34.3 What the visitor sees
-
-The page shows "presence refused:" followed by the reason, and does not retry (reload the page once fixed): page not declared on this server, creator suspended, room that does not belong to the creator, too many open rooms. The viewer shows the same reason. The server closes the connection with code 4003, which "Copy diagnostics" shows.
-
-### 34.4 Console and log
-
-- `creators` (alias `createurs`) re-reads the file and lists each creator: prefix, active or suspended, open rooms, walkers, origins.
-- Each refusal is logged as "refusal" in `presence.log` with its reason; an accepted connection is recognised by the prefix of its room.
-- Visit log keys remain per room: `visits-key alice.galerie`.
-- `version` shows the version of `presence_server.py` followed by its mark (fingerprint, § 37.6): the same as the one listed by `python build.py` for this file, useful to check a server is up to date after an `scp`.
-
-### 34.5 Welcoming a creator
-
-Procedures § 6, item 7. Note to give to the creator: `docs/en/CREATORS.md` (in French: `docs/fr/CREATEURS.md`).
-
-### 34.6 Limits
-
-- The origin is announced by the browser: it stops another web page from taking a room, not a program written on purpose that would announce a false origin. Against it remain `--max-per-ip`, `ejecter` and `bannir`.
-- An https page can only reach a `wss://` server (procedures § 11).
-- The world map counters (room request) follow the same origin rule.
-
-### 34.7 v51 tests
-
-`tests/v51.py` (real server, then Chromium): without a file, everything is accepted; refusal by origin, suspension, prefix, number of rooms; walkers at most on arrival and when switching to walking; host without prefix; re-reading on change; console; log; refusal shown by the page (French, English) and by the viewer. `tests/samples.py` reads the sample.
-
-### 34.8 Not tested
-
-Windows, Edge, `wss://` behind Funnel, a creator's page on another domain.
-
-### 34.9 Empty connections
-
-A connection opened on the presence server port then closed without sending anything (browser preconnection, port test, robot) filled the console with a long "opening handshake failed" trace with versions 14 and 15 of `websockets`. Since v51, it gives a short "empty" line in the console and in `presence.log`, with the caller's address (masked according to `--log-ip`) and the number of empty connections, at most one line per minute and per address. It is harmless; other `websockets` errors are still shown in full.
-
-`tests/v51_vides.py`: with the installed version, then with an old version given by the `WS_OLD` variable (tried here with 13.1, 14.2 and 15.0.1). Not tested: Windows, Edge.
-
-### 34.10 Presence address "same name as the page"
-
-A presence address can be written with a star instead of the name: `ws://*:8765`. The page replaces the star with the name it was opened with: opened through `http://localhost:8096`, it targets `ws://localhost:8765`; opened through the network address or the public name of the machine, it targets that same address. A page opened from the disk, and the viewer, target `127.0.0.1`. The rule "presence at the same place as the page" (procedures § 11) is thus kept automatically.
-
-Why: each config or card carried a single address (network address, public IP address or public name), right for only one of the access paths. A page opened through the public name that targets a local network address is cut by Edge before the request is sent: the map stays without counters and the server logs an "empty" connection at each query (every 10 s for `carte.html`, every 8 s for the Map window). This blocking is deduced from Klaatou's observations; it is not reproduced here and was not tried under Edge.
-
-The star works everywhere: `--presence-url`, `presenceUrl` of `NOM.config.json`, `presence` field of `regions.json`, presence field of the viewer. The server recalls this form at start-up. Limit: for a visitor coming from the Internet, the presence server port must be reachable under the same name as the page (box port forwarding, or Funnel, procedures § 11).
-
-`tests/v51_etoile.py` (Chromium): page opened through `127.0.0.1` then `localhost`, Map window, `carte.html`, visit log, viewer opened from the disk, `ws://0.0.0.0` still corrected, error message with the resolved address. Not tested: Windows, Edge.
-
-## 35. What's new in v52 (25/10/2026)
-
-### 35.1 `carte.html`: count, total, two lines
-
-Above the grid: "12 regions · Total: 3 visitors · 2 walkers". Each room is counted once; with an old server that does not answer `visitors`, only the walkers are counted (no invented visitors). In the cards and in the total, a number is never counted twice: "2 visitors, 1 walking" when there are spectators and walkers, "1 walker" when every visitor is walking, "1 visitor" when nobody is walking, "no visitors" otherwise. With a presence server started with `--map-names-key SECRET` (at least 8 characters; off by default), the card adds lines of nicknames, but **only for a map opened with that key**: `carte.html#pseudos=SECRET` (the same behind a region's address for the map opened with M; several parameters are separated by `&` or by `#`, as in `#name=Zoe#pseudos=SECRET`). Walkers first, the most recent first, five at most then "and 2 others"; then "global view:" with the visitors who are not walking (their nickname is the one their page sends; a walker who goes back to the global view keeps theirs). Without the key, or with a wrong key, the server's answer contains no nickname: only the numbers. The `#` part of the address stays in the browser and is not sent to the web server; the key itself is sent to the presence server, **in clear on a `ws://` address**: use `wss://` if it must stay secret. The server compares the key in constant time and stops listening after 5 wrong keys per minute and per address. Keep the address with the key to yourself: giving it away gives access to the nicknames. The old `--map-names` option (1.3.1) no longer exists: it gives no nickname and the server says so at start-up. A nickname is personal data: turn the option on only if your visitors are informed. `tests/carte_pseudos.py` (real servers, Chromium) checks the key, the order, the limit of five, both languages, the 5 attempts per minute and a booby-trapped nickname.
-
-### 35.2 Arrival alert (sound and marker)
-
-A checkbox at the top of `carte.html`, "Arrival alert (sound and marker)", remembered in this browser (key `glb2html_map_alert`). It only appears if at least one region has a presence server (otherwise there is nothing to watch, as in the online demo). When ticked:
-
-- A **rise in the visitor count** of a room on the map between two polls is an arrival: two rising notes (660 then 880 Hz, like a walker arriving in the page), at most one beep every 2 s, and the **region's card is marked**: dashed outline that blinks, yellow background and the text "● arrival hh:mm" (never colour alone; no blinking if the system asks for reduced motion). The marker stays until the card is hovered; unticking the box clears it. The status line says "last arrival: region, hh:mm".
-- A server's **first poll** never sounds (it is the baseline). An arrival and a departure within the same poll interval cancel out: no beep.
-- The browser forbids any sound before a click or a key press on the page: after a reload, the ticked box shows "sound starts at the first click on the page". Ticking the box is already a click.
-- **Delays**: at the top of the `carte.html` script (in the repository, `MAP_PAGE_TEMPLATE` of `src/gen_tpl.py`), `const POLL_MS = 10000;` (normal poll) and `const POLL_ALERT_MS = 5000;` (box ticked), in milliseconds. The delay is re-read at each round and as soon as the box changes. Each poll opens one short connection per presence server: raising these values lightens the server (load not measured).
-
-The alert only concerns `carte.html` (and the standalone `--map-page`); the map opened with M keeps the page's sounds (§ 21.6).
-
-### 35.3 Thumbnail enlarged on hover
-
-Hovering a card that has a thumbnail, **with a mouse only** (not with a finger), shows the thumbnail large, 400 px at most, moved to stay inside the window. It is the same code in `carte.html` and in the map opened with M. The recommended thumbnails are 320 x 320 px (§ 32.3): the image is enlarged, not improved. A card without a thumbnail has nothing to enlarge.
-
-### 35.4 "Show the sea" checkbox
-
-In Settings, before "Animated sea", only if the page has a sea (not made with `--no-sea`). Unticked: the sea disappears from the scene, "Animated sea" and "Waves" are greyed out. The choice is kept with the other settings (key `glb2html_opts_SALON`); "Default values" restores the page's own. Useful for a region without water made without `--no-sea` (the sea is on by default). The sea height is only used to place the water plane: hiding the sea changes no collision. A page made with `--no-sea` ignores an old remembered choice.
-
-### 35.5 Presence server: ordinary HTTP requests
-
-With `websockets` 14 and 15, an ordinary HTTP request on the server port (a browser opening its address, a robot, a test) wrote a full trace ("opening handshake failed", `InvalidUpgrade`, "invalid Connection header: keep-alive"), although the client does get "426 Upgrade Required". The log now writes an `http request` line instead: address, path, host, agent and reason, at most one per minute and per address. It says who came. Any control character (terminal escape, bell) is replaced with a space, in this line and in the whole log. An unreadable request (Windows Remote Desktop probe, encrypted connection on this port, arbitrary bytes) also gives a single "unreadable request" line with the recognised kind and the start of the request, at most one per minute, per address and per kind. Other errors are still shown in full. **Restart the presence server** from `dist\`. Recent versions of `websockets` (17.3 tried) do not write this trace: nothing to filter.
-
-### 35.6 Renamed tiled region
-
-`NOM.overview.glb` keeps in each node the path of its tile as it was when the region was split (`NOM.tiles/T_3_0_0.glb`). Up to v51, renaming the folders and the index paths by hand left the overview **visible under the detailed tiles**: overlapping surfaces, moire and dark patches on the terrain and the rocks (Klaatou's case, Houses region, 25/10/2026). Since v52, the page finds the cell by the **tile's file name** when the full path does not match (unique in a region; otherwise the cell stays visible, never a hole). To rename a tiled region: rename `NOM.tiles`, `NOM.overview.glb`, `NOM.tiles.json`, `NOM.config.json` and `NOM.zones.json`, fix in the index the tiles' `file` paths and `overview.file`, fix the `tiles` field of the config, then copy the v52 `index.html` shell. There is no need to regenerate the overview.
-
-### 35.7 Tests of v52
-
-`tests/v52.py` (Chromium, real presence server, fake `AudioContext`): `carte.html` ("walker", total and count, no sound on the first poll or with the box unticked, two notes 660 and 880 Hz on an arrival, visual marker and its disappearance on hover, delay re-read when the box is ticked, constants `POLL_MS` and `POLL_ALERT_MS`), enlarged thumbnail (map and M map), old server, English, "Show the sea" checkbox; `tests/v52_http.py` (real server, installed `websockets` then `WS_OLD` and `WS_OLD2`); `tests/v52_renom.py` (split region, copied under two other names); `tests/i18n.py` accepts a blank value for keys ending in `.sep`; `tests/v47.py` adapted to the "walker" text.
-
-### 35.8 Not tested
-
-The real sound (the test replaces `AudioContext`), Edge, Windows, a real phone, a tab kept in the background for a long time (the browser may slow its timers: not measured), the server load at 5 s. The renaming of § 35.6 was confirmed by Klaatou on his Houses region (25/10/2026).
-
-## 36. Additions in 1.0.0 (after v52)
-
-### 36.1 Page icon (`favicon.ico`)
-
-The pages (shell `index.html`, standalone page, `carte.html`, `glb-viewer.html`) carry a "3D" icon (white text on dark blue) embedded by default. **To change it, put a `favicon.ico` file next to the page**: if it exists, the page adopts it, without rebuilding any page. `python build.py` writes a sample `favicon.ico` in `dist\` (four sizes: 16, 32, 48 and 64 px); copy it with `index.html`, then replace it with yours (an ICO file with several sizes renders best). Without that file, the page keeps the embedded icon, and the web server sees an unanswered `favicon.ico` request. For a shared-shell site (§ 29.8), a single `favicon.ico` next to `index.html` is enough; a standalone page kept in another folder needs its own next to it. Safari was not tried.
-
-### 36.2 Names: the `oublier` command
-
-A name is reserved by the first browser that takes it (`presence_identities.json` file); another browser that asks for it gets the name followed by `#XXXX`. To **release** a name without stopping the server or touching the file, type in the server console: `oublier <pseudo>` (case, accents and spaces do not matter: "Zoé Test" and "zoetest" are the same name). The owner loses the reservation; the first browser that asks for the name afterwards gets it. If the owner is connected, the console says so: their displayed name does not change before their next connection. The operation is written to the log ("name released", with the `#XXXX` code of the former owner). An owner who changes browser gets their name back with "Copy my personal link" (Settings) from the old browser. To **see** the reserved names before releasing one: `pseudos [filtre]` (the filter keeps the names that contain that piece of text) shows the name, the `#XXXX` code of its owner, its last visit, the date when it will be released if it stays unused (`--name-ttl-days`), and "(connected)" if its owner is online.
-
-### 36.3 IPv6 addresses: limit and bans per `/64` prefix
-
-A subscriber usually has several IPv6 addresses, which change: counting or banning the exact address could be dodged by changing the end of the address. **`--max-per-ip` and `bannir` now count IPv6 by `/64` prefix** (the first 64 bits, the subscriber's network); IPv4 is unchanged, and an IPv4 written as IPv6 (`::ffff:1.2.3.4`) counts as the IPv4. The console and the log still show the full address (according to `--log-ip`). A ban made before this change stays valid for the exact address it targeted; a new one covers the whole prefix. A network that shares one `/64` between several people counts as a single visitor: raise `--max-per-ip` if needed.
-
-### 36.4 Presence connection attempts
-
-When the page cannot reach the presence server, it retries at increasing intervals (1.5 s, 3 s, 4.5 s, up to 15 s). It now **stops**: after **5 attempts** if the connection never opened (wrong address, server off, firewall), after **12** if it had opened and was then lost (server restart). The name box then says "attempts stopped: reload the page to try again". Switching to walking again makes one more attempt. The numbers are the `PRES_TRIES_NEVER` and `PRES_TRIES_LOST` constants in `core.js`.
-
-### 36.5 Version numbering
-
-From **1.0.0** on (v52 became 1.0.0), versions follow the `X.Y.Z` scheme (major.minor.patch). A release that adds a feature gives `1.1.0`, `1.2.0`...; a release of fixes only gives `1.0.1`; a change that breaks existing things (renaming without an alias, incompatible file format) gives `2.0.0`. The `VERSION` file is written `1.1.0 (31/10/2026)` and the Git tag `v1.1.0`. A release is **decided by the author**. Between two releases, `VERSION` takes a patch number with every delivered batch (`1.0.1`, `1.0.2`...): it is the batch counter, described under "Unreleased" in `CHANGELOG.md`; at the release, the minor number goes up if features were added (1.0.4 became 1.1.0). Every built file also carries **its own number** (§ 37.6). The `v14` to `v52` tags stay in the history; `tests/vNN.py` and `patch_vNNx.py` keep their names.
-
-## 37. Additions in 1.1.0 (after 1.0.0)
+```
+<nom>.reglages.json  ->  glb2html.py --settings  ->  <page>.config.json + <page>.zones.json
+```
+
+A `.config.json` cannot be given to `--settings` (the script looks for the `cfg` key and refuses the file), nor reloaded in the viewer ("settings file not recognized"). To keep your settings, you must therefore keep the `.reglages.json`: the `.config.json` is only a derived product of it.
+
+#### 11.12.4 Which file to edit, and what overwrites it
+
+| I want to change...                 | I edit / I run                                                  | What can overwrite it afterwards                                           |
+| ----------------------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| a rendering setting (waves, sky...) | `--config-only` (see below), or `Region.config.json` by hand    | any new `--modular` or `--config-only` rewrites `Region.config.json`       |
+| a zone                              | `Region.zones.json` by hand, or **Export zones (.json)** (§ 6.16) | `--modular` with `--zones` or `--settings`; `--config-only` with `--zones` |
+| the working state of the viewer     | **Save to a file**                                              | nothing (it is the source)                                                 |
+
+Without `--zones` or `--settings`, a `Region.zones.json` already present (edited by hand, for example) is not overwritten. As soon as a source of zones is given, it is rewritten.
+
+Change a setting without touching the `.glb`, the shell or the zones:
+
+```
+python glb2html.py --settings "Region-final.glb" --config-only --wave 2 -o "Region.html"
+```
+
+The command-line options take precedence over the `.reglages.json`. Visitors see the change at their next reload.
+
+## 12. Troubleshooting
+
+| Symptom                                       | Likely cause                                                                                                       | Remedy                                                                                                                                        |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Nothing happens when entering a portal        | not in walk mode                                                                                                   | press P (or F in the global view)                                                                                                             |
+|                                               | trigger set to "on click"                                                                                          | click on the portal (v35: E no longer triggers it), or switch to "walking into it"                                                            |
+|                                               | you were already in the circle when arriving                                                                       | leave the circle, then enter again                                                                                                            |
+| "Arrival point … not found"                   | the portal contains the **Displayed name** instead of the **Identifier**                                           | copy the exact Identifier of the arrival (§ 5.1)                                                                                                |
+| Arrival at the wrong place in another region  | the target arrival does not exist in the **other** page, or it is private and the page is public                   | create it in the other page, or uncheck Private                                                                                               |
+| Black screen after an internal portal         | page generated before v22                                                                                          | generate the page again                                                                                                                       |
+| "Portal without a valid destination"          | address badly written, or protocol not accepted                                                                    | `https://…` or a `.html` file name                                                                                                            |
+| The zone works in the viewer, not in the page | page not republished                                                                                               | see § 6.16                                                                                                                                      |
+| HA command "sent" but nothing moves           | wrong webhook, or automation disabled                                                                              | test the webhook directly from Home Assistant                                                                                                 |
+| A deleted zone comes back after reloading     | the viewer restores the settings remembered for this file, or the old `.reglages.json` / `zones.json` was reloaded | delete it (**Delete**), wait 2 s (automatic saving), or **Forget this file's settings** (§ 5.16); also check `zones.json` / `<page>.zones.json` |
+| The link takes a 30 m object                  | (before v23) the object is merged with a building in the OAR; the limit was 30 m                                   | v23: 10 m limit and explicit message; unlink the object in OpenSim (Unlink) or place a circle zone (§ 5.9)                                      |
+| The landing circle "jumps"                    | (before v23) each single click moved the target                                                                    | v23: only the **double-click** moves it; the single click shows name and coordinates                                                          |
+| The island is flipped north-south on the map  | the OAR was exported in the other orientation                                                                      | **Rotation of the region**: 180° (§ 9.1), then capture the thumbnail again, update the region in the map and export `regions.json` again       |
+
+### 12.1 Converting an OAR
+
+| Symptom                                   | Likely cause                                                            | Remedy                                                                       |
+| ----------------------------------------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Many grey textures                        | `--reencode`, or images not written by convoar                          | run again without `--reencode`; read `[GLB] N texture(s) missing`            |
+| An animal invisible or in the wrong place | node not found, or hidden animal                                        | `--keep --markers`, then `--diag`; send `oar2glb.log` and `oar2glb.diag.log` |
+| An animal with the wrong texture          | the order of the mesh faces does not follow that of convoar's materials | report the animal with its log                                               |
+| Transparent prims you wanted to keep      | removed by default                                                      | `--keep-invisible`                                                           |
+| "convoar not found"                       | different path                                                          | `--convoar "P:\...\convoar.exe"`                                             |
+
+`python oar2glb.py --version` shows the version (`oar2glb v29 (22/10/2026)`) without running anything; the first line of the log (`oar2glb.log`, `oar2glb.diag.log`) repeats it: `[oar2glb] v29 (22/10/2026)`. Attaching this log to any report therefore gives the version used. The file is built in `dist/` by `python build.py`.
+
+Test of the script: `python tests/oar2glb.py` (synthetic OAR and fake convoar, without network).
+
+### 12.2 Cutting into tiles
+
+| Symptom                                                             | Likely cause                                                                             | What to do                                                                                                   |
+| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| "compressed GLB"                                                    | the GLB uses Draco or meshopt                                                            | decompress the GLB first (outside this batch)                                                                |
+| "glb-stats.py not found"                                            | the script is alone in its folder                                                        | copy `glb-stats.py` next to it                                                                               |
+| "Tile … over budget"                                                | a single mesh (terrain, sea) exceeds the budget, or the minimum cell is reached          | normal at this stage: see the roadmap (split by triangles)                                                   |
+| Many tiles for a small GLB                                          | `--budget` too small or strong duplication                                               | run `--analyse` again with other values                                                                      |
+| "THREE.GLTFLoader: Couldn't load texture" on a tile made before v31 | 0-byte or truncated image in the GLB                                                     | split again with v31 (images replaced by grey)                                                               |
+| "The recomputed split … does not match X.tiles.json"                | `--overview-only` run with other split options                                           | use exactly the options of the original split                                                                |
+| "Pillow missing" in the report                                      | the overview uses the base colour of the materials (often white for a textured material) | `pip install pillow` then `--overview-only`                                                                  |
+| Overview too heavy or objects missing                               | budget reached, `effectiveMinExtent` raised                                              | larger `--ov-budget` / `--ov-budget-triangles`, or higher `--ov-threshold`; read the "objects omitted" lines |
+| Instance at 3,000 m reported                                        | a giant prim or a stray object                                                           | the tool keeps it; fix it in the model if it is a mistake                                                    |
+
+Test: `python tests/glb2tiles.py` (synthetic GLBs, without browser or network); `python tests/v31.py` (invalid images, overview, leaving walk mode).
+
+### 12.3 Tiled region in the page
+
+| Symptom                                   | Likely cause                                                                                                                                    | What to do                                                                                                                        |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| "Loading error: … X.tiles.json: HTTP 404" | `X.tiles.json` is not next to the page, or the `tiles` field of the config is wrong                                                             | run `glb2html.py --tiles` again; check the folder                                                                                 |
+| "tile address refused"                    | the `tiles` field contains `..`, `:`, `?`, `#` or starts with `/`                                                                               | a simple relative path (`X.tiles.json`)                                                                                           |
+| Partial ground, holes                     | tiles outside the radius, or failed                                                                                                             | raise `tileRadius` (or `?radius=`), see the information line and the console                                                      |
+| "Loading the ground…" that stays          | a failed tile in front of the avatar                                                                                                            | fix the file; the page retries by itself                                                                                          |
+| Nothing or a hole in the distance         | no overview (region split before v31, or `--no-overview`)                                                                                       | `glb2tiles.py … --overview-only` with the original options, then run `glb2html.py --tiles` again (copies the file with the tiles) |
+| "Overview unavailable"                    | `X.overview.glb` missing next to the page, or unreadable                                                                                        | copy it next to `X.tiles.json`; run `glb2html.py --tiles` again                                                                   |
+| Heavy, slowed-down page                   | too many textures loaded                                                                                                                        | lower `tileMaxMB`, `tileMaxTriangles` or `tileRadius`                                                                             |
+| Linked zones do not appear                | the object's tile is not loaded (they only exist while the tile is loaded), or the tiles date from before v32 (ignored, warning in the console) | get closer / `?radius=`; otherwise split again with `glb2tiles.py` v32 (§ 4.1), or use free zones with coordinates                 |
+| The zones are shifted                     | they come from the viewer (recentred frame)                                                                                                     | write them in the frame of the original model                                                                                     |
+
+Test: `python tests/tuiles.py` (synthetic region of 16 tiles, headless Chromium) and `python tests/v31.py` (overview in the shell, leaving walk mode).
+
+## 13. Appendix: what each version brought
+
+The detail, version by version, is in `HISTORY.md` (narrative) and `CHANGELOG.md` (full list, with the tests). The table below only says where each addition is found today in this manual.
+
+| Version | What it brought (manual cross-references) |
+| --- | --- |
+| New in v33 (22/10/2026) | Starting at an arrival (`#spawn=`, `#pos=`) in a tiled region (§ 8.6); Default arrival and back to the arrival point (§ 7.21); Zone markers in the exported page (§ 7.14); Flight, three views, "Go to" (§ 7.7); Chat (§ 7.25); Avatar colour (client and server) (§ 7.29); IP addresses in the log: `--log-ip raw` (§ 10.22); Save the zones directly in the region folder (viewer) (§ 5.15); `glb2html.py --tiles --zones` with the file already in place (§ 8.7); Update a region already published (§ 6.14) |
+| New in v34 (22/10/2026) | Selectable help panel and status block (§ 7.38); Hover and click area of the markers (§ 7.15); Flight (§ 7.8); Free mouse after Esc (§ 7.10); Live colour (§ 7.30); `glb2html.py --update`: update a region without typing anything again (§ 6.15); Nickname, personal link, launch page (§ 7.28) |
+| New in v35 (22/10/2026) | Help in groups, collapsible panels (§ 7.39); Firestorm keys / keys of this page (§ 7.2); Flight and jump (§ 7.5); Third person (§ 7.6); Zone tooltip and click: `--zone-info-dist` (§ 7.16); Copy to the clipboard (§ 7.23); `--update` and the world map (§ 9.3); Create the world map (§ 9.2); Free camera and wheel (§ 7.9) |
+| New in v36 (23/10/2026) | Keys: F and P, E, flight (§ 7.3); Keyboard layout: AZERTY or QWERTY (§ 7.4); Help and information: three steps (§ 7.40); Portal markers (cones): `--zone-cone`, T key (§ 7.17); Occupied arrival (§ 7.19); Sounds (§ 7.31); Copy my position, "Go to" (§ 7.22); Page language (§ 7.49); Add a language (without touching the code) (§ 2.2); Viewer language (§ 5.17); Language of the Python tools: `--lang`, `WEB3D_LANG` (§ 2.1) |
+| New in v37 (23/10/2026) | Running indicator, compass, resizable windows, O key (§ 7.12); Portal marker (cone): constant size, distance (§ 7.18); Occupied arrival, improved (§ 7.20); Mentioned nickname: continuous blinking (§ 7.27); Link parameters after `#` (§ 7.50); Chat history (§ 10.21); Default region (`default.json`) (§ 6.7); lib folder: `--lib-url` (§ 6.5); Regions in subfolders (§ 6.6) |
+| New in v39 (23/10/2026) | "Copy diagnostics" button (§ 7.51) |
+| New in v40 (24/10/2026) | "Arrivals" window (L key) (§ 7.24); "Recenter the view" button (§ 7.11); "Full manual" link and diagnostics tooltip (§ 7.41) |
+| New in v41 (24/10/2026) | Window tooltips (§ 7.42); Movable windows (§ 7.43); Remembered layout and layout file (§ 7.44) |
+| New in v42 (24/10/2026) | Light rendering (§ 7.45); Fine settings (§ 7.46); Automatic offer (§ 7.47); `--light` option (§ 6.12); Narrower Settings window (§ 7.48); Diagnostics (§ 7.52) |
+| New in v45 (24/10/2026) | The page says why presence was cut (§ 7.55); Diagnostics (§ 7.53); Presence test (§ 10.23); One line for the `lib` folder (§ 6.3); `--update` keeps the line (§ 6.4); `dist\index.html` (§ 6.8); Browsers (§ 7.57) |
+| New in v46 (25/10/2026) | Status line (§ 7.32); On-screen arrows (§ 7.33); Hiding or showing the arrows (§ 7.34); Touch screen (phone, tablet) (§ 7.35); Tooltips (§ 7.36); Chat counter (§ 7.26); Diagnostics (§ 7.54); One shell for a whole site (§ 6.2); Not tested (§ 7.37) |
+| New in v47 (25/10/2026) | The map tile (§ 9.4); Optional address (§ 9.5); `regions.json` with a header (§ 9.6); Two ways to make the map (§ 9.7); Presence server (§ 10.1); Not tested (§ 9.8) |
+| New in v48 (25/10/2026): visit log | What it is for (§ 10.2); Host side: the presence server (§ 10.3); Creator side: the "Visit log" window (§ 10.4); What is counted (§ 10.5); Personal data (§ 10.6); Files (§ 10.7); Not tested (§ 10.8) |
+| New in v49 (25/10/2026): updating `regions.json` from the sites folder | The command (§ 9.9); What the scan does (§ 9.10); Thumbnails (§ 9.11); Not tested (§ 9.12) |
+| What is new in v50 (25/10/2026): the world map in the viewer | Importing and exporting `regions.json` (§ 9.13); Adding or updating this region (§ 9.14); Not tested (§ 9.15) |
+| What's new in v51 (25/10/2026): creators on the presence server | What it is for (§ 10.9); The creators file (§ 10.10); What the visitor sees (§ 10.11); Console and log (§ 10.12); Welcoming a creator (§ 10.13); Limits (§ 10.14); Not tested (§ 10.15); Empty connections (§ 10.16); Presence address "same name as the page" (§ 10.17) |
+| What's new in v52 (25/10/2026) | `carte.html`: count, total, two lines (§ 9.16); Arrival alert (sound and marker) (§ 9.17); Thumbnail enlarged on hover (§ 9.18); "Show the sea" checkbox (§ 9.19); Presence server: ordinary HTTP requests (§ 10.18); Renamed tiled region (§ 8.9); Not tested (§ 9.20) |
+| Additions in 1.0.0 (after v52) | Page icon (`favicon.ico`) (§ 6.9); Names: the `oublier` command (§ 10.19); IPv6 addresses: limit and bans per `/64` prefix (§ 10.20); Presence connection attempts (§ 7.56); Version numbering (§ 13.1) |
+| Additions in 1.1.0 (after 1.0.0) | `image` zone: a picture on a wall (§ 5.11); Editor: region folder and image preview (§ 5.12); Solid materials: `--solid-materials` (§ 6.13); Pointer: the building's name (§ 7.59); When WebGL is unavailable (§ 7.58); Versions: one number per file, mark, `version` command (§ 13.2); Presence server: console and "http request" lines (§ 10.24); Documents added or revised since 1.0.0 (§ 13.3); Tried and not tried (§ 5.18) |
+| Additions of 1.4 (batches 1.4.2 to 1.4.7) | The tiles line (§ 8.8); "About this region" (§ 6.10); Compressing the tiles: `glb2tiles.py --compress` (§ 4.2); Displayed title: the `title` key (§ 6.11); `--scan-sites --prune-missing` (§ 9.21); Tried and not tried (§ 6.17) |
 
 Everything below is in **1.1.0** (released on 31/10/2026). The detail, batch by batch, is in `CHANGELOG.md`.
 
-### 37.1 `image` zone: a picture on a wall
+### 13.1 Version numbering
 
-An `image` zone lays a picture flat against a wall of the model.
+From **1.0.0** on (v52 became 1.0.0), versions follow the `X.Y.Z` scheme (major.minor.patch). A release that adds a feature gives `1.1.0`, `1.2.0`...; a release of fixes only gives `1.0.1`; a change that breaks existing things (renaming without an alias, incompatible file format) gives `2.0.0`. The `VERSION` file is written `1.1.0 (31/10/2026)` and the Git tag `v1.1.0`. A release is **decided by the author**. Between two releases, `VERSION` takes a patch number with every delivered batch (`1.0.1`, `1.0.2`...): it is the batch counter, described under "Unreleased" in `CHANGELOG.md`; at the release, the minor number goes up if features were added (1.0.4 became 1.1.0). Every built file also carries **its own number** (§ 13.2). The `v14` to `v52` tags stay in the history; `tests/vNN.py` and `patch_vNNx.py` keep their names.
 
-- **Placing**: in the viewer, type "Picture (on a wall)", then click a wall. The zone turns to the face hit and sits 2 cm in front of it. Floor and ceiling are refused ("Click on a wall (a vertical surface) to place a picture."). An image zone is never linked to an object (`mesh` stays empty) and always triggers on click.
-- **Size**: `w` is the width in metres (1.2 by default; from 0.1 to 10) and `h` the height (from 0 to 6). **`h` = 0 (the default): the height follows the image's aspect ratio.**
-- **Link (optional `link` key)**: clicking the picture, or pressing E in front of it, opens this link in a new tab, like a `url` zone; tooltip and hand cursor on hover. It is an `http(s)` address or a path **relative to the address of the open page** (not to the region folder): `galerie.html` for a file next to `index.html`, `pages/galerie.html` in a subfolder; `../` leaves the page's folder. Without `link`, the picture does not react (no prompt, no action). Only `http(s)` passes: `javascript:` is refused ("Invalid link"). A picture whose image is missing is neither clickable nor a "near zone". By hand: add `"link": "galerie.html"` to the zone in `NOM.zones.json`. In the editor: field "Link (page opened on click or E, optional)". Pages and viewers older than 1.1.1 ignore `link`, and **a `glb-viewer.html` older than 1.1.1 that saves zones loses the `link` keys**: keep the viewer and the page at the same version.
-- **Placing, in global view or while walking**: click placement works in both. While walking (mouse captured) it places the zone where the centre of the screen aims; the **P key** also places a picture 2.2 m in front of you, 1.6 m above your feet, facing you. In both cases, adjust the position afterwards in the zone's fields.
-- **Finding image zones (exported page)**: in "Settings", the **"Image zone numbers (to find them)"** box (unticked at every opening, never remembered) shows a big number, flat, in front of each image zone (in the image's plane, not turned towards you), even if its image is still missing: the position is what matters. The number is the one in the targeted file name (`12`, `12.jpg` and `12-Cezanne.jpg` give 12; `paintings/painting-1.jpg` gives 1), otherwise the zone's display name, then its `id`. The numbers are hidden by the scenery and are not clickable. The box only exists if the region has at least one image zone.
-- **Image**: the zone's `target` field: a file name, or an `http(s):` or `data:` address.
-- **Where the page looks**: with the shell (`index.html?region=dossier/NOM`), in the **region's folder** (next to the `.glb`), not next to the page; for a page stored in the region's folder or a stand-alone page, next to the page. In both cases, the **`medias` subfolder** first, then the folder itself: images already in place keep working. The name of this subfolder is the optional key `mediaDir` of `NOM.config.json` (`"medias"` by default, `""` for no subfolder, or another name; the generator always looks in `medias`).
-- **Full name or bare number**: `12-Cezanne.jpg` is a full name. With `12` alone, the page tries `12.jpg`, `12.jpeg`, `12.png`, `12.webp`, `12.gif`, `12.avif` in that order and keeps the first file found (optional key `imageExts`, for example `"png,jpg"`). Missing extensions show up as 404 responses in the browser console: that is expected.
-- **Caption** (small text under the image): the first non-empty line of `12.txt` (UTF-8, at most 200 characters; re-read at every page load: editing the file is enough, no need to run the generator again); otherwise the text between the first `-` of the file name and the extension (`1-Soleil_couchant.jpg` gives "Sunset glow", `_` becomes a space); otherwise no caption. A missing image has no caption either.
-- **Completing names**: a name like `12-Titre.jpg` cannot be guessed by the page (a hosted site cannot list a folder). If you write `12` while only `12-Titre.jpg` exists, the editor (after "Choose the region folder", § 37.2) and the `glb2html.py` generator (at generation, with `--update` and with `--zones-only`, also for the zones of a modular page) **write the real name** and say so. If `12.jpg` (or `12` with another extension) exists, the name `12` stays as it is. Extensions looked for: jpg, jpeg, png, webp, gif, avif, bmp; `12` does not take `120-…`; if several files match, the first in alphabetical order is taken and reported. After adding or renaming an image, run only the zones again (`PROCEDURES.md` § 5).
-- **Hosted mode only**: opened from disk (`file://`), the page cannot load the image (the browser refuses it as a WebGL texture) and shows nothing; a `data:` address works everywhere but makes the page heavier. Measured in Chromium.
-- **Missing image**: nothing in the exported page. In the editor: a panel "image not found: …" and, under the field, a line "Looked up at: …".
-- **Always up to date**: before each image, each caption file and each whole `.glb` of a modular page, the page sends a `HEAD` request without cache, builds a fingerprint (`ETag` or `Last-Modified`, plus the size) and reads the file at the address `file?v=fingerprint`: from the browser cache if the fingerprint is known (no re-download of an unchanged file), from the network otherwise. A replaced file, newer **or older** (an old folder put back with its old dates), is therefore picked up on reload (F5). Without a possible fingerprint (neither `ETag` nor `Last-Modified`, or `HEAD` refused), the page reloads the whole file at every opening; if `fetch` is impossible (another site without CORS, `file://`), it falls back to direct loading. Tiles, `index.html`, `lib/` and `favicon.ico` keep the browser's normal cache.
-- **Diagnostics**: "Copy diagnostics" (§ 23.1) gives one line per image zone: the zone, its target, the file actually read (`medias` folder or region folder), and the caption with its source (file name or text file), or "hidden".
-- **Tests**: `tests/image_zone.py`, `image_legende.py`, `image_numero.py`, `image_medias.py`, `image_noms_gen.py`, `image_cache.py`, `image_cache_vieux.py`, `image_diag.py`, `image_dossier.py`, `lien_image.py` (picture link), `zones_numeros.py`, `pose_promenade.py`.
-- **Not tried**: image zone in a tiled region, wall with a slanted face, Windows and Edge in detail (the P key while walking was only tried in Chromium).
+### 13.2 Versions: one number per file, mark, `version` command
 
-### 37.2 Editor: region folder and image preview
-
-Under the "Image" field of an `image` zone, the button **"Choose the region folder (image preview)"** (viewer, `glb-viewer.html`) makes the viewer read the images in the region's folder, the one of the `.glb` (subfolders accepted, `..` refused), instead of looking for them next to the viewer page. The folder is read-only; it is remembered per region, together with the one used to save zones (§ 18.8): it is the same permission. Edge and Chrome only.
-
-- With no folder chosen, or if the image is not there, it is looked for next to `glb-viewer.html` and a line "Looked up at: …" says so.
-- After the folder is chosen, all image names without an extension are completed at once ("N image name(s) completed from the folder"). Opening a zone whose name has no extension completes it if the folder is already authorised; otherwise the line under the field tells you to choose the folder.
-- The label of an image zone stays whole even when the wall has reliefs in front of it.
-- **Not tried**: the real folder picker on Windows and Edge (tried with a replacement folder).
-
-### 37.3 Solid materials: `--solid-materials`
-
-A glTF material in `BLEND` mode does not write to the depth buffer (`depthWrite = false` in the three.js loader): a wall made of such a material lets you see through it the transparent objects placed behind it (seen on a real model). The `--solid-materials TEXTES` option (config key `solidMaterials`, empty by default: nothing changes) makes solid the materials whose name contains one of the texts (comma-separated, case ignored; `=name`: exact name): not transparent, depth written, and texels that are half transparent or more are removed (`alphaTest` at 0.5; without this threshold, the texels of zero alpha, black underneath, would form a black plate). The setting applies to the exported page, the editor and the tiles; `--update` keeps the key. In the viewer, the **"Materials drawn solid"** field of the settings (rendering section, under the foliage threshold) sets it live, saves it with the settings and exports it as `--solid-materials`. Foliage keeps its own treatment. To find a material's name: click the wall (§ 37.4, "material: …" line). Test: `tests/solid_materiaux.py`.
-
-### 37.4 Pointer: the building's name
-
-The label of the `names` key (`--names`) and the viewer's "Targeted" panel show in bold the name of the **root object**, that is the highest named ancestor: the building's name. The sub-element is shown small ("part: …"). Before, the sub-element was in bold. Technical wrappers (model, tiles, overview) are ignored. The three.js loader replaces spaces in names with `_` and numbers duplicates; the label shows the file's original name. The names used by zones (`mesh` field) do not change. The hole guide ("Show the hole guide (not exported)") is unchecked by default; a value already saved in a settings file keeps priority. Test: `tests/pointeur_objet.py`. **Not tried**: the label in tiles mode.
-
-### 37.5 When WebGL is unavailable
-
-When the browser refuses to create the WebGL context (hardware acceleration off: recent Edge and Chrome no longer fall back to software rendering), the region page and the viewer show a message with the ways out, instead of staying on "Loading…":
-
-- open the page in Firefox;
-- or start Edge with the `--enable-unsafe-swiftshader` option, preferably in a profile kept for these pages: `Start-Process msedge -ArgumentList "--enable-unsafe-swiftshader","--user-data-dir=C:\EdgeWebGL",ADRESSE` (tried on 30/10/2026: the regions open);
-- or turn hardware acceleration back on.
-
-To check: `edge://gpu` (or `chrome://gpu`), WebGL line. Test (Chromium without WebGL): `tests/webgl_absent.py`. Not tried here: Windows, graphics card.
-
-### 37.6 Versions: one number per file, mark, `version` command
-
-- **`VERSION`** is the **batch counter**: one patch number per delivered patch (`1.0.1` to `1.0.4`), then `1.1.0` at the release (§ 36.5).
+- **`VERSION`** is the **batch counter**: one patch number per delivered patch (`1.0.1` to `1.0.4`), then `1.1.0` at the release (§ 13.1).
 - **Every built file** that carries a number (`glb2html.py`, `index.html`, `carte.html`, `glb-viewer.html`, `presence_server.py`, `oar2glb.py`, `glb2tiles.py`) shows **its own number**, which changes only when the content of THAT file changes. `build.py` builds everything with a neutral number, compares each file's fingerprint with the one in `VERSIONS.json` (repository file: last fingerprint and number of the last batch that modified the file) and gives the batch number only to modified files. `python build.py` prints each file's number and marks those that changed in the batch; it updates `VERSIONS.json` (never by hand; to commit with the batch; not modified with `--out`).
 - **Where to see it**: the generator's `[OK]` line, the page's help panel, the viewer title, "Copy diagnostics". The number shown is that of the file that built the page: exported page = `glb2html.py`, shell = `index.html`, viewer = `glb-viewer.html`.
 - **At 1.1.0**, no built file has changed since 1.0.4: `glb2html.py` and `glb-viewer.html` show `1.0.4`, `index.html` `1.0.3`, `carte.html`, `presence_server.py`, `oar2glb.py` and `glb2tiles.py` `1.0.1`. The release number (`1.1.0`) is that of the `VERSION` file and of the Git tag.
-- **Mark**: at the end of every build, `build.py` lists, for each file of `dist\`, the first 8 characters of its SHA-256. `presence_server.py`, `oar2glb.py` and `glb2tiles.py` show it ("VERSION, fingerprint XXXXXXXX") with `--version`, on the start-up line and as the first line of the log; the server also gives it with the `version` console command (§ 34.4). It changes if and only if the file changes (`tests/marque.py`); it can only be compared between builds on the same system (CRLF line ends on Windows). It replaces the `REVISION` file of 30/10/2026, now deleted.
+- **Mark**: at the end of every build, `build.py` lists, for each file of `dist\`, the first 8 characters of its SHA-256. `presence_server.py`, `oar2glb.py` and `glb2tiles.py` show it ("VERSION, fingerprint XXXXXXXX") with `--version`, on the start-up line and as the first line of the log; the server also gives it with the `version` console command (§ 10.12). It changes if and only if the file changes (`tests/marque.py`); it can only be compared between builds on the same system (CRLF line ends on Windows). It replaces the `REVISION` file of 30/10/2026, now deleted.
 
-### 37.7 Presence server: console and "http request" lines
+### 13.3 Documents added or revised since 1.0.0
 
-- The sequences the terminal sends into the console (replies from `tmux`, arrows, wheel, text colour) are removed from the line before it runs: before, they made the first commands after `tmux attach` answer "unknown command". `version` command (§ 34.4). Test: `tests/console.py`.
-- Behind a relay (`--proxy-header`, for example Tailscale Funnel), the "http request" lines now give the visitor's address and not the relay's. The "empty connection" and "unreadable request" lines keep the relay's address (`127.0.0.1`: **never ban it**). Visible with `websockets` 14 and 15. Test: `tests/http_proxy.py`.
-
-### 37.8 Documents added or revised since 1.0.0
-
-- `docs/en/CREATORS.md` and `docs/fr/CREATEURS.md`: note to give to a creator hosted on a presence server (§ 34.5).
-- `PROCEDURES.md`: § 11, item 8 (black VM console screen); § 5 (add or replace an image); § 9 (WebGL, images); `web3d-presence.service` written with `UTILISATEUR`.
+- `docs/en/CREATORS.md` and `docs/fr/CREATEURS.md`: note to give to a creator hosted on a presence server (§ 10.13).
+- `PROCEDURES.md`: § 9.1, item 8 (black VM console screen); § 5.5 (add or replace an image); § 5.9 (WebGL, images); `web3d-presence.service` written with `UTILISATEUR`.
 - `docs/samples/`: the `painting-1` zone (type `image`) in `region.zones.sample.json`.
-
-### 37.9 Tried and not tried
-
-- **Tried**: automatic tests in Chromium (image zone, names, caption, `medias`, revalidation, diagnostics, materials, pointer, WebGL absent, mark, console). By Klaatou: the images of a real region are displayed; choosing the region folder and the image preview work (30/10/2026); with `--solid-materials`, the low walls of a real model are no longer see-through; Edge started with the SwiftShader option opens the regions.
-- **Not tried**: Windows and Edge in detail (real folder picker); image zones in a tiled region; wall with a slanted face; the pointer label in tiles mode.
-- **Seen once, not reproduced**: a missing image title (cause not confirmed: if it comes back, the "Image" line of "Copy diagnostics" gives the target, the file read and the caption's source); placing an image by click on a low wall that put the image behind the visible face (the zones are then set by hand: `x` or `z` a few hundredths of a metre from the face).
-
-## 38. Additions of 1.4 (batches 1.4.2 to 1.4.7)
-
-### 38.1 The tiles line
-
-In a region split into tiles, the Information / State window (key I) gives, each on its own line: the loaded tiles (`Tiles: N loaded / total · MB · triangles`, with "in progress" and "failed"), the tile(s) under the avatar while walking (`Tile(s) under the avatar: T_3_0_5.glb`; two names when the boxes overlap; nothing outside walking) and the overview. The weight shown is that of the files **actually received**; the `tileMaxMB` budget keeps counting the `bytes` of `NOM.tiles.json` (weight before compression), so a compressed region loads as many tiles as before. The viewer shows the same mention. `tilesState()` gives `here` (tiles under the avatar), `got` (weight received) and `bytes` (budget).
-
-### 38.2 "About this region"
-
-A text file next to `NOM.config.json` describes the region: `NOM.about.fr.txt`, `NOM.about.en.txt`, or `NOM.about.txt` for all languages. The page looks first for the file of its language, then `NOM.about.txt`; with no file, there is no panel, no key and no checkbox. The first line is the title, the rest is the text (plain text, never HTML, 20,000 characters at most). The file name must be the region's name, the same as `NOM.config.json`: a region `houses` needs `houses.about.fr.txt`.
-
-The panel opens when entering the region. The "Don't show again" button and the "Show the about panel on entry" checkbox of the Settings window decide whether it opens on later visits; this choice is kept **per region**, in the browser (if storage is unavailable, the panel opens at every entry). To reopen it: the `?` key (recognised by the printed character, so on AZERTY as on QWERTY; no effect in an input field) or the "About this region" button of the help. Esc closes it. It does not exist in a standalone page (without a shell). Since 1.4.9: the `http://` and `https://` addresses of the text are links (underlined, opened in a new tab; the punctuation that follows them stays text); the "Visitors' help" button opens `aide.html` when that file is next to the shell (the packages have one); the help button is called "About this region (? key)".
-
-### 38.3 Compressing the tiles: `glb2tiles.py --compress`
-
-`--compress` compresses every `.glb` written (tiles and overview) with `gltfpack` (`-cc -kn -ke -km -vpf -vtf`, never `-tc`): files about half the size, same node names, same `extras`, same materials. `gltfpack` is looked for in the `PATH`, otherwise started by `npx` (Node required); if it is missing, nothing is modified. A file that is already compressed is skipped (never recompressed). `NOM.tiles.json` is not modified. The page reads these files with no setting (built-in `meshopt` decoder). For tiles already split, the manual command is in `PROCEDURES_SIMPLES.md` § 5 (in English: `SIMPLE_PROCEDURES.md`).
-
-### 38.4 Displayed title: the `title` key
-
-`NOM.config.json` accepts an optional `title` key (60 characters at most): it is the title of the browser tab. Without it, the title is the room (`room`), as before. `--title` of `glb2html.py` writes it (it was ignored in shell mode) and `--update` keeps it if it is not given again. The files and the room stay in lowercase (a hosted site tells capitals apart): the readable name goes in `title`. `--scan-sites` uses it to name a **new** card of the map.
-
-### 38.5 `--scan-sites --prune-missing`
-
-`--prune-missing` removes from `regions.json` the local cards whose region is not found in the sites folder (external cards are kept). `--dry-run` shows the list without writing anything. Without this option, nothing is deleted: these cards are only reported.
-
-### 38.6 Tried and not tried
-
-- **Tried**: automatic tests in Chromium for each point above (`tuile_ici`, `apropos`, `compress`, `titre`). By Klaatou: the tile name and the three lines, the about panel and the `?` key, the title "Houses" in the tab, the renaming of the Houses region, the manual compression of its 106 tiles (1,434 MB before, about 650 MB after).
-- **Not tried**: `--compress` on a real region, `gltfpack` under Windows (`npx.cmd`), Edge for the detail, the `?` key on a real AZERTY keyboard for the automatic tests (simulated).
