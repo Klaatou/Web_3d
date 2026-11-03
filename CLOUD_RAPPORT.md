@@ -9,7 +9,7 @@
 | 1. Table de correspondance | faite | 228 titres, chacun placé une fois (script) | |
 | 2. Manuel français | faite | script d'assemblage : 228 titres placés une fois ; codes en ligne comparés (ci-dessous) ; blocs de code : 7 sur 7 ; renvois `§` renumérotés automatiquement (aucun non résolu) | relecture humaine des chapitres 1 et 2 (textes neufs) |
 | 3. Manuel anglais | faite | `python verif_trad.py docs/fr/MANUEL.md docs/en/MANUAL.md` : OK, 0 erreur, 9 avertissements (glossaire, comme avant) ; 205 titres, 67 tableaux, 7 blocs de code, 2 331 codes en ligne identiques | relecture humaine des chapitres 1 et 2 anglais |
-| 4. Renvois des autres documents | non commencée | | |
+| 4. Renvois des autres documents | faite | `verif_trad.py` OK (0 erreur) sur les 6 paires ; `tests/samples.py` : voir ci-dessous | décisions de Klaatou sur les points « À signaler » |
 
 ## Plan retenu
 
@@ -30,6 +30,20 @@ Contrôle « rien ne se perd » : 1 108 codes en ligne dans l'ancien, 1 086 dans
 ## Étape 3 : manuel anglais
 
 Même assemblage, mêmes positions de titres, à partir de l'ancien `docs/en/MANUAL.md` (les textes anglais existants sont repris tels quels) ; textes neufs traduits à la main (titre, résumé, chapitres 1 et 2, introductions, annexe). Le tableau de l'annexe renvoie à `HISTORIQUE.md` côté français et à `HISTORY.md` côté anglais, comme dans les deux anciens manuels.
+
+## Étape 4 : renvois
+
+Fichiers modifiés (français et anglais, mêmes lignes) : `GUIDE.md`, `PROCEDURES.md`, `CREATEURS.md` / `CREATORS.md`, `README.fr.md` / `README.md`, et, en plus de la liste du brief, `docs/samples/README.fr.md` et `docs/samples/README.md` (renvois `§ 27.x` et `§ 34`). Méthode : un script ne change que les `§` qui visent le manuel (mot « manuel », `MANUEL.md`, `MANUAL.md` juste avant, ou ligne reconnue à la main) ; les renvois à `GUIDE.md`, `PROCEDURES.md`, aux procédures simples et à la note créateurs ne sont pas touchés. Relu à l'œil sur le diff. Les plages (`§§ 3 à 12`, `§§ 3 à 8`, `§§ 2, 21 et 22`) deviennent « chapitre 5 » ou « chapitre 7 (touches) et §§ 7.49, 2.1 et 2.2 (langue) ». Les renvois à un ancien chapitre « Nouveautés » supprimé pointent vers un chapitre ou une sous-section (ancien 30 vers chapitre 9, 31 vers chapitre 10, 32 vers § 9.9). `PROCEDURES_SIMPLES.md` / `SIMPLE_PROCEDURES.md` : aucun renvoi au manuel, rien changé.
+
+Contrôles : `python verif_trad.py` sans erreur sur chaque paire (`MANUEL`/`MANUAL`, `GUIDE`, `PROCEDURES`, `PROCEDURES_SIMPLES`/`SIMPLE_PROCEDURES`, `CREATEURS`/`CREATORS`, `README.fr`/`README`, `docs/samples/README*`).
+
+### À signaler (rien n'a été modifié pour ces points)
+
+1. **`tests/samples.py` : un échec de plus qu'avant, dû au nouveau plan.** Sur `main`, un seul échec (le téléchargement de three.js, bloqué ici par le proxy). Maintenant un second : la ligne 31 retire du manuel le tableau des anciens noms par l'expression `### 27\.11.*?(?=\n## |\Z)`, et ce tableau est désormais au § 11.11. Correction d'une ligne dans le test : remplacer `27\.11` par `11\.11` (le brief interdit de toucher au code ; je n'ai pas modifié `tests/`).
+2. **Deux commentaires du code citent le manuel** (non modifiés) : `src/gen_tpl.py:881` « `docs/fr/MANUEL.md § 17 bis` » devient « chapitre 8 » ; `tools/oar2glb.py:1411` « palette ... `docs/fr/MANUEL.md § 15` » devient « chapitre 3 » (aucune mention de « palette » dans le manuel actuel : à vérifier).
+3. **Documents qui citent encore les anciens numéros** (hors liste du brief, non modifiés) : `docs/fr/HISTORIQUE.md` et `docs/en/HISTORY.md` (20 renvois chacun, historiques par nature), `REPRISE.md` (12 renvois). La correspondance ancien → nouveau est dans la table de l'étape 1.
+4. Le numéro du manuel dans le titre est « 1.4.10 » (le titre d'avant disait « 1.1.0 »).
+5. `tests/doc_options.py` : non lancé (échoue déjà sur `main`, consigne du brief).
 
 ## Étape 1 : table de correspondance
 

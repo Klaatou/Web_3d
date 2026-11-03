@@ -40,11 +40,11 @@ Le découpage, avec la compression qui réduit les fichiers d'environ moitié (N
 python glb2tiles.py "CHEMIN\NOM.glb" --compress
 ```
 
-Détails : § 17 et § 38.3.
+Détails : § 4.1 et § 4.2.
 
 ## 2. Poser les zones : le viewer `glb-viewer.html`
 
-Le viewer s'ouvre dans le navigateur ; on y ouvre son `.glb` et on y pose les zones : point d'arrivée, portails, panneaux, liens, images (§ 3 à 12). Il enregistre `NOM.zones.json`, à mettre à côté de la page.
+Le viewer s'ouvre dans le navigateur ; on y ouvre son `.glb` et on y pose les zones : point d'arrivée, portails, panneaux, liens, images (chapitre 5). Il enregistre `NOM.zones.json`, à mettre à côté de la page.
 
 ## 3. Fabriquer la page : `glb2html.py`
 
@@ -61,10 +61,10 @@ python glb2html.py "CHEMIN\NOM.glb" --shared-shell -o "CHEMIN\site\NOM.html" --t
 |---|---|
 | `-o` | fichier de la page (son nom donne le nom de la région) |
 | `--shared-shell` | page avec coquille commune |
-| `--title` | titre affiché dans l'onglet (§ 38.4) |
+| `--title` | titre affiché dans l'onglet (§ 6.11) |
 | `--sea-y` | hauteur de la mer |
 | `--presence-url`, `--room`, `--chat` | serveur de présence, salon, chat (§ 5) |
-| `--tiles` | région découpée en tuiles (§ 17 bis) |
+| `--tiles` | région découpée en tuiles (§ 8) |
 | `--update` | remettre une page au niveau d'une nouvelle version des outils sans rien ressaisir |
 
 Toutes les options : `REFERENCE_OPTIONS.md`.
@@ -79,7 +79,7 @@ python -m http.server 8000
 
   puis ouvrir `http://localhost:8000/index.html?region=NOM`.
 - Noms de fichiers en minuscules : un hébergeur distingue les majuscules. Le nom lisible va dans `title`.
-- Facultatif : une présentation de la région dans `NOM.about.fr.txt` (§ 38.2) et une carte des mondes (`--scan-sites`, § 32).
+- Facultatif : une présentation de la région dans `NOM.about.fr.txt` (§ 6.10) et une carte des mondes (`--scan-sites`, § 9.9).
 
 ## 5. Les autres visiteurs : la présence
 

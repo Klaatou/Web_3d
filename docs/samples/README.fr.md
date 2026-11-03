@@ -8,24 +8,24 @@ Ce dossier contient **un exemple de chaque fichier JSON** que la page, le viewer
 
 | Exemple | Fichier réel | À quoi il sert | Manuel |
 | --- | --- | --- | --- |
-| `region.config.sample.json` | `NOM.config.json` | les réglages que la page lit au démarrage (mer, marche, chat, présence, carte, tuiles) ; écrit par `glb2html.py` ; à plat | § 27.3 |
-| `region.zones.sample.json` | `NOM.zones.json` | les zones : arrivées, portails, liens web, Home Assistant et images sur un mur (la zone `painting-1`, type `image`, avec sa clé facultative `link` : page ouverte au clic) | § 27.4 |
-| `region.tiles.sample.json` | `NOM.tiles.json` | l'index des tuiles d'une grosse région, écrit par `glb2tiles.py` ; ne se modifie pas à la main | § 27.7 |
-| `region.reglages.sample.json` | `NOM.reglages.json` | l'état de travail du viewer, écrit par le bouton « Enregistrer dans un fichier » : les réglages, **toutes** les zones (privées comprises), le cadrage de la caméra, la fiche de la région pour la carte et le récapitulatif de commande ; imbriqué ; relu par le viewer et par `glb2html.py --settings` | § 27.8 |
-| `default.sample.json` | `default.json` | la région ouverte quand l'adresse n'a pas de `?region=` | § 27.5 |
-| `regions.sample.json` | `regions.json` | la carte des mondes : une fiche par région (nom, place, adresse, présence, vignette) | § 27.6 |
-| `disposition.sample.json` | `disposition.json` | la place des fenêtres d'aide, d'informations et d'arrivées, enregistrée par les Réglages de la page | § 27.9 |
+| `region.config.sample.json` | `NOM.config.json` | les réglages que la page lit au démarrage (mer, marche, chat, présence, carte, tuiles) ; écrit par `glb2html.py` ; à plat | § 11.3 |
+| `region.zones.sample.json` | `NOM.zones.json` | les zones : arrivées, portails, liens web, Home Assistant et images sur un mur (la zone `painting-1`, type `image`, avec sa clé facultative `link` : page ouverte au clic) | § 11.4 |
+| `region.tiles.sample.json` | `NOM.tiles.json` | l'index des tuiles d'une grosse région, écrit par `glb2tiles.py` ; ne se modifie pas à la main | § 11.7 |
+| `region.reglages.sample.json` | `NOM.reglages.json` | l'état de travail du viewer, écrit par le bouton « Enregistrer dans un fichier » : les réglages, **toutes** les zones (privées comprises), le cadrage de la caméra, la fiche de la région pour la carte et le récapitulatif de commande ; imbriqué ; relu par le viewer et par `glb2html.py --settings` | § 11.8 |
+| `default.sample.json` | `default.json` | la région ouverte quand l'adresse n'a pas de `?region=` | § 11.5 |
+| `regions.sample.json` | `regions.json` | la carte des mondes : une fiche par région (nom, place, adresse, présence, vignette) | § 11.6 |
+| `disposition.sample.json` | `disposition.json` | la place des fenêtres d'aide, d'informations et d'arrivées, enregistrée par les Réglages de la page | § 11.9 |
 
 ## Fichiers du serveur de présence
 
 | Exemple | Fichier réel | À quoi il sert | Manuel |
 | --- | --- | --- | --- |
-| `presence_identities.sample.json` | `presence_identities.json` | les pseudos réservés, gardés sous forme d'empreintes | § 27.10 |
-| `presence_bans.sample.json` | `presence_bans.json` | les bannissements posés par la commande `bannir` (clé et adresse en empreintes, fin éventuelle) | § 27.10 |
-| `chat_history.sample.jsonl` | fichier de `--history-file` | l'historique du chat, une ligne par message | § 27.10 |
-| `visits.sample.jsonl` | fichier de `--visits` | le journal des visites, une ligne par visite, sans adresse IP | § 27.10 |
-| `presence_visits_keys.sample.json` | `presence_visits_keys.json` | les clés (en empreintes) qui donnent accès au journal des visites d'un salon, commande `visits-key` | § 27.10 |
-| `presence_creators.sample.json` | `presence_creators.json` | les créateurs accueillis (`--creators`) ; écrit à la main | § 34 |
+| `presence_identities.sample.json` | `presence_identities.json` | les pseudos réservés, gardés sous forme d'empreintes | § 11.10 |
+| `presence_bans.sample.json` | `presence_bans.json` | les bannissements posés par la commande `bannir` (clé et adresse en empreintes, fin éventuelle) | § 11.10 |
+| `chat_history.sample.jsonl` | fichier de `--history-file` | l'historique du chat, une ligne par message | § 11.10 |
+| `visits.sample.jsonl` | fichier de `--visits` | le journal des visites, une ligne par visite, sans adresse IP | § 11.10 |
+| `presence_visits_keys.sample.json` | `presence_visits_keys.json` | les clés (en empreintes) qui donnent accès au journal des visites d'un salon, commande `visits-key` | § 11.10 |
+| `presence_creators.sample.json` | `presence_creators.json` | les créateurs accueillis (`--creators`) ; écrit à la main | § 10.10 |
 
 ## Ce qui ne va jamais dans le dépôt des outils
 

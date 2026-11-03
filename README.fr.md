@@ -62,29 +62,29 @@ Les étapes complètes (de l'OAR à la page, région en tuiles, mise à jour, zo
 
 ## Un site : une coquille, un dossier par région
 
-Organisation conseillée (manuel § 29.8) : à la racine du site, une seule coquille `index.html` (copie de `dist/index.html`), le dossier `lib/`, `regions.json` et `carte.html` (copie de `dist/carte.html`) ; puis un dossier par région avec ses `NOM.glb` (ou ses tuiles), `NOM.config.json` et `NOM.zones.json`. Une région s'ouvre à `index.html?region=dossier/NOM`. Il faut servir le site en http/https (essai local : `python -m http.server`).
+Organisation conseillée (manuel § 6.2) : à la racine du site, une seule coquille `index.html` (copie de `dist/index.html`), le dossier `lib/`, `regions.json` et `carte.html` (copie de `dist/carte.html`) ; puis un dossier par région avec ses `NOM.glb` (ou ses tuiles), `NOM.config.json` et `NOM.zones.json`. Une région s'ouvre à `index.html?region=dossier/NOM`. Il faut servir le site en http/https (essai local : `python -m http.server`).
 
 - Mettre à jour une région après une nouvelle version : `python glb2html.py --update -o "SITE/dossier/NOM.html" --shared-shell "SITE/index.html"` (le chemin de la coquille de la racine évite d'écrire une coquille inutile dans le dossier de la région).
-- Mettre à jour la carte de tout le site : `python glb2html.py --scan-sites SITE --dry-run`, puis sans `--dry-run` (v49, manuel § 32).
+- Mettre à jour la carte de tout le site : `python glb2html.py --scan-sites SITE --dry-run`, puis sans `--dry-run` (v49, manuel § 9.9).
 
 ## Mode modulaire et coquille commune
 
 `--modular` écrit `Region.html` (coquille, identique pour toutes les régions : elle déduit ses fichiers de son propre nom), `Region.glb`, `Region.config.json` (réglages, relus à chaque F5), `Region.zones.json` (zones, relues à chaque F5) et `lib/three-0.160.0/`. Avec `--shared-shell`, une seule coquille et un seul `lib/` servent plusieurs régions : `-o` désigne la région, la coquille et `lib/` ne sont écrits que s'ils sont absents. NOM doit être un nom de fichier ou un chemin de sous-dossiers (`a/b/nom`) : adresses, `..`, nom vide ou commençant par un point sont refusés sans aucune requête réseau.
 
-`--config-only` ne réécrit que la config, `--zones-only` que les zones. Le viewer exporte la même structure en `.zip`, à côté de « Exporter HTML autonome » (page unique qui s'ouvre depuis le disque). Détail : manuel § 16, référence des fichiers JSON : § 27.
+`--config-only` ne réécrit que la config, `--zones-only` que les zones. Le viewer exporte la même structure en `.zip`, à côté de « Exporter HTML autonome » (page unique qui s'ouvre depuis le disque). Détail : manuel § 11.12, référence des fichiers JSON : § 11.
 
 ## Régions en tuiles
 
-Pour un modèle énorme, `glb2tiles.py` écrit les tuiles, et `glb2html.py --tiles X.tiles.json -o X.html --shared-shell` fabrique la page : les tuiles proches de l'avatar sont chargées et déchargées pendant la marche, une vue d'ensemble légère reste affichée, et les zones peuvent être liées à des objets des tuiles. Détail : manuel § 17.
+Pour un modèle énorme, `glb2tiles.py` écrit les tuiles, et `glb2html.py --tiles X.tiles.json -o X.html --shared-shell` fabrique la page : les tuiles proches de l'avatar sont chargées et déchargées pendant la marche, une vue d'ensemble légère reste affichée, et les zones peuvent être liées à des objets des tuiles. Détail : manuel § 4.1.
 
 ## Carte des mondes
 
-`regions.json` est la carte : une liste de fiches (nom, adresse, X, Y, arrivée, salon, serveur de présence, vignette), ou, depuis la v47, un objet `{"showUrl": ..., "regions": [...]}` avec un en-tête. Elle s'alimente de trois façons, qui gardent toutes l'en-tête et la forme du fichier : `--register` (la région en cours de génération), `--scan-sites` (toutes les régions d'un site, avec leurs vignettes) et les boutons « Importer / Exporter regions.json » du viewer (v50). `carte.html` la relit à chaque ouverture ; `--map-page` écrit à la place une page autonome qui contient la liste ; `--map-url a.json,b.json` fusionne les cartes de plusieurs propriétaires. Chaque tuile affiche le nombre de visiteurs. Détail : manuel § 27.6, § 30, § 32 et § 33.
+`regions.json` est la carte : une liste de fiches (nom, adresse, X, Y, arrivée, salon, serveur de présence, vignette), ou, depuis la v47, un objet `{"showUrl": ..., "regions": [...]}` avec un en-tête. Elle s'alimente de trois façons, qui gardent toutes l'en-tête et la forme du fichier : `--register` (la région en cours de génération), `--scan-sites` (toutes les régions d'un site, avec leurs vignettes) et les boutons « Importer / Exporter regions.json » du viewer (v50). `carte.html` la relit à chaque ouverture ; `--map-page` écrit à la place une page autonome qui contient la liste ; `--map-url a.json,b.json` fusionne les cartes de plusieurs propriétaires. Chaque tuile affiche le nombre de visiteurs. Détail : manuel § 11.6, § 9, § 9.9 et § 9.13.
 
 ## La page
 
 - **Promenade** : avatar, collisions, course, saut, vol, trois vues (subjective, troisième personne, caméra libre), boussole, arrivées et portails, téléportation par la fenêtre Arrivées (L) ou par double-clic.
-- **Zones** : arrivées, portails, liens web, commandes Home Assistant et **images sur les murs** (fichiers déposés dans le sous-dossier `medias` de la région, légende dans le nom du fichier ou dans un fichier `.txt`) ; mode hébergé seulement (manuel § 37.1).
+- **Zones** : arrivées, portails, liens web, commandes Home Assistant et **images sur les murs** (fichiers déposés dans le sous-dossier `medias` de la région, légende dans le nom du fichier ou dans un fichier `.txt`) ; mode hébergé seulement (manuel § 5.11).
 - **Fenêtres** : Aide (H), Informations (I), Arrivées (L), Réglages (O), déplaçables et retenues par le navigateur (v41) ; bouton « Copier le diagnostic » (v39) ; « Journal des visites… » quand la page a un serveur de présence (v48).
 - **Commandes à l'écran** (v46) : ligne d'état, flèches 3 x 3 (touche K), mode tactile pour téléphone et tablette.
 - **Rendu léger** (v42) : résolution, images par seconde, vue d'ensemble seule, rayon des tuiles, anticrénelage (`--light`).
@@ -107,11 +107,11 @@ Pour un modèle énorme, `glb2tiles.py` écrit les tuiles, et `glb2html.py --til
 | **G**                                                         | reprendre la souris après **Échap**                                                                                           |
 | **Entrée**                                                    | écrire dans le chat                                                                                                           |
 
-Le réglage « Clavier » (Auto, AZERTY ou QWERTY) ne change que les lettres affichées dans l'aide ; les touches physiques restent les mêmes. Tableau complet : manuel § 2 et § 20.2.
+Le réglage « Clavier » (Auto, AZERTY ou QWERTY) ne change que les lettres affichées dans l'aide ; les touches physiques restent les mêmes. Tableau complet : manuel § 7.1 et § 7.2.
 
 ## Serveur de présence
 
-Positions, chat (historique `--history-file`), modération depuis sa console (`liste`, `ejecter`, `bannir`, `bans`, `debannir`, `rooms`, `visits-key`, `creators`, `aide` ; alias anglais `list`, `kick`, `ban`, `unban`, `help`), compteurs de visiteurs pour la carte, journal des visites sans adresse IP (`--visits`, v48) que le créateur consulte avec `#visits` et sa clé, accueil d'autres créateurs (`--creators`, v51 : pages déclarées, salons réservés par un préfixe, manuel § 34). Le rendre public sans montrer son adresse IP : procédures § 11. Détail : manuel § 31.
+Positions, chat (historique `--history-file`), modération depuis sa console (`liste`, `ejecter`, `bannir`, `bans`, `debannir`, `rooms`, `visits-key`, `creators`, `aide` ; alias anglais `list`, `kick`, `ban`, `unban`, `help`), compteurs de visiteurs pour la carte, journal des visites sans adresse IP (`--visits`, v48) que le créateur consulte avec `#visits` et sa clé, accueil d'autres créateurs (`--creators`, v51 : pages déclarées, salons réservés par un préfixe, manuel § 10.10). Le rendre public sans montrer son adresse IP : procédures § 11. Détail : manuel § 10.
 
 ## Langue
 
