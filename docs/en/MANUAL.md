@@ -1288,6 +1288,7 @@ Positions are in meters, in the page's frame: x towards the east, y upwards, z t
 | ------------- | -------- | --------------------------------- | -------------------------------------------------------------------------------------------------- | ----------------------------- |
 | `presenceUrl` | text     | `""`                              | address of the presence server (`ws://...` or `wss://...`); empty = alone, without avatars or chat | `--presence-url`              |
 | `room`        | text     | name of the page                  | presence room: visitors of the same room see each other                                            | `--room`                      |
+| `title`       | text     | absent (the title is the room)    | title of the browser tab (60 characters at most), optional, shell only                             | `--title`                     |
 | `spectate`    | yes / no | `true` if `presenceUrl` is filled | see the walkers from the global view                                                               | `--spectate`, `--no-spectate` |
 | `chat`        | yes / no | `true`                            | chat between visitors (a presence server is needed)                                                | `--chat`, `--no-chat`         |
 | `chatFade`    | number   | `0`                               | seconds before messages and bubbles disappear; 0 = they stay                                       | `--chat-fade`                 |
@@ -2012,3 +2013,32 @@ To check: `edge://gpu` (or `chrome://gpu`), WebGL line. Test (Chromium without W
 - **Tried**: automatic tests in Chromium (image zone, names, caption, `medias`, revalidation, diagnostics, materials, pointer, WebGL absent, mark, console). By Klaatou: the images of a real region are displayed; choosing the region folder and the image preview work (30/10/2026); with `--solid-materials`, the low walls of a real model are no longer see-through; Edge started with the SwiftShader option opens the regions.
 - **Not tried**: Windows and Edge in detail (real folder picker); image zones in a tiled region; wall with a slanted face; the pointer label in tiles mode.
 - **Seen once, not reproduced**: a missing image title (cause not confirmed: if it comes back, the "Image" line of "Copy diagnostics" gives the target, the file read and the caption's source); placing an image by click on a low wall that put the image behind the visible face (the zones are then set by hand: `x` or `z` a few hundredths of a metre from the face).
+
+## 38. Additions of 1.4 (batches 1.4.2 to 1.4.7)
+
+### 38.1 The tiles line
+
+In a region split into tiles, the Information / State window (key I) gives, each on its own line: the loaded tiles (`Tiles: N loaded / total · MB · triangles`, with "in progress" and "failed"), the tile(s) under the avatar while walking (`Tile(s) under the avatar: T_3_0_5.glb`; two names when the boxes overlap; nothing outside walking) and the overview. The weight shown is that of the files **actually received**; the `tileMaxMB` budget keeps counting the `bytes` of `NOM.tiles.json` (weight before compression), so a compressed region loads as many tiles as before. The viewer shows the same mention. `tilesState()` gives `here` (tiles under the avatar), `got` (weight received) and `bytes` (budget).
+
+### 38.2 "About this region"
+
+A text file next to `NOM.config.json` describes the region: `NOM.about.fr.txt`, `NOM.about.en.txt`, or `NOM.about.txt` for all languages. The page looks first for the file of its language, then `NOM.about.txt`; with no file, there is no panel, no key and no checkbox. The first line is the title, the rest is the text (plain text, never HTML, 20,000 characters at most). The file name must be the region's name, the same as `NOM.config.json`: a region `houses` needs `houses.about.fr.txt`.
+
+The panel opens when entering the region. The "Don't show again" button and the "Show the about panel on entry" checkbox of the Settings window decide whether it opens on later visits; this choice is kept **per region**, in the browser (if storage is unavailable, the panel opens at every entry). To reopen it: the `?` key (recognised by the printed character, so on AZERTY as on QWERTY; no effect in an input field) or the "About this region" button of the help. Esc closes it. It does not exist in a standalone page (without a shell).
+
+### 38.3 Compressing the tiles: `glb2tiles.py --compress`
+
+`--compress` compresses every `.glb` written (tiles and overview) with `gltfpack` (`-cc -kn -ke -km -vpf -vtf`, never `-tc`): files about half the size, same node names, same `extras`, same materials. `gltfpack` is looked for in the `PATH`, otherwise started by `npx` (Node required); if it is missing, nothing is modified. A file that is already compressed is skipped (never recompressed). `NOM.tiles.json` is not modified. The page reads these files with no setting (built-in `meshopt` decoder). For tiles already split, the manual command is in `PROCEDURES_SIMPLES.md` § 5 (in English: `SIMPLE_PROCEDURES.md`).
+
+### 38.4 Displayed title: the `title` key
+
+`NOM.config.json` accepts an optional `title` key (60 characters at most): it is the title of the browser tab. Without it, the title is the room (`room`), as before. `--title` of `glb2html.py` writes it (it was ignored in shell mode) and `--update` keeps it if it is not given again. The files and the room stay in lowercase (a hosted site tells capitals apart): the readable name goes in `title`. `--scan-sites` uses it to name a **new** card of the map.
+
+### 38.5 `--scan-sites --prune-missing`
+
+`--prune-missing` removes from `regions.json` the local cards whose region is not found in the sites folder (external cards are kept). `--dry-run` shows the list without writing anything. Without this option, nothing is deleted: these cards are only reported.
+
+### 38.6 Tried and not tried
+
+- **Tried**: automatic tests in Chromium for each point above (`tuile_ici`, `apropos`, `compress`, `titre`). By Klaatou: the tile name and the three lines, the about panel and the `?` key, the title "Houses" in the tab, the renaming of the Houses region, the manual compression of its 106 tiles (1,434 MB before, about 650 MB after).
+- **Not tried**: `--compress` on a real region, `gltfpack` under Windows (`npx.cmd`), Edge for the detail, the `?` key on a real AZERTY keyboard for the automatic tests (simulated).

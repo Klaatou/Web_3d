@@ -27,6 +27,8 @@ Deux façons, au choix :
 
 `room` n'est pas facultatif : sans lui, le salon prend le nom de la page, qui ne commence pas par ton préfixe, et le serveur refuse. Recharge ensuite la page.
 
+Facultatif : la clé `title` de `NOM.config.json` (le titre de l'onglet, par exemple `Alice Galerie`) et un fichier texte `NOM.about.fr.txt` (et `NOM.about.en.txt`) à côté de `NOM.config.json` : sa première ligne est le titre, le reste s'affiche à l'entrée dans ta région, et la touche `?` le rouvre. Détail : manuel § 38.
+
 ## 5. Si la présence est refusée
 
 La page affiche « présence refusée : » suivi de la raison, et ne réessaie pas : recharge-la une fois corrigé. « Copier le diagnostic » (touche I) montre le code 4003.

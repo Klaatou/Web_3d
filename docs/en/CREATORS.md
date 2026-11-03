@@ -27,6 +27,8 @@ Two ways, your choice:
 
 `room` is not optional: without it, the room takes the page's name, which does not start with your prefix, and the server refuses. Then reload the page.
 
+Optional: the `title` key of `NOM.config.json` (the tab title, for example `Alice Galerie`) and a text file `NOM.about.fr.txt` (and `NOM.about.en.txt`) next to `NOM.config.json`: its first line is the title, the rest is shown when entering your region, and the `?` key reopens it. Details: manual § 38.
+
 ## 5. If presence is refused
 
 The page shows "presence refused:" followed by the reason, and does not retry: reload it once fixed. "Copy diagnostics" (I key) shows the code 4003.

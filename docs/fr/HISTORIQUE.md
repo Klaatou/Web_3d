@@ -126,6 +126,13 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 02/11/2026 |  | après 1.3.0 | Lot 1.3.5 : chat : bip à chaque message quand la page n'a pas le focus (réglage `soundMsg`) ; `tests/chat_bip.py` |
 | 02/11/2026 |  | 1.4.0 | Publication 1.4.0 : `VERSION` 1.4.0 ; `CHANGELOG.md` ; réunit les lots depuis la 1.3.0 (pseudos de la carte protégés par une clé, bip du chat, garde-fou des lanceurs) |
 | 02/11/2026 |  | après 1.4.0 | Lot 1.4.1 : `CLAUDE.md` retiré (périmé depuis la v37) ; `tests/samples.py` et le manuel ne le citent plus |
+| 03/11/2026 |  | après 1.4.0 | Lot 1.4.2 : le nom de la tuile sous l'avatar dans le panneau d'état (`tilesState().here`) ; `tests/tuile_ici.py` |
+| 03/11/2026 |  | après 1.4.0 | Lot 1.4.3 : ligne des tuiles : un élément par ligne (page et viewer) |
+| 03/11/2026 |  | après 1.4.0 | Lot 1.4.4 : poids affiché = poids reçu (`got`) ; viewer : la ligne des tuiles dès le branchement |
+| 03/11/2026 |  | après 1.4.0 | Lot 1.4.5 : panneau « À propos de la région » (`NOM.about.<langue>.txt`, touche `?`) ; `tests/apropos.py` |
+| 03/11/2026 |  | après 1.4.0 | Lot 1.4.6 : `glb2tiles.py --compress` (`gltfpack`) ; `tests/compress.py` |
+| 03/11/2026 |  | après 1.4.0 | Lot 1.4.7 : clé `title` et `--title` actif en mode coquille ; `--scan-sites --prune-missing` ; `tests/titre.py` |
+| 03/11/2026 |  | après 1.4.0 | Lot 1.4.8 : documents : manuel § 38, `PROCEDURES_SIMPLES.md`, note aux créateurs |
 
 ## Commandes utiles
 

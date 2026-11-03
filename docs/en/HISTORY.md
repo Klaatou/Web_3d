@@ -126,6 +126,13 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 02/11/2026 |  | after 1.3.0 | Batch 1.3.5: chat: a beep for every message when the page is not focused (`soundMsg` setting); `tests/chat_bip.py` |
 | 02/11/2026 |  | 1.4.0 | Release 1.4.0: `VERSION` 1.4.0; `CHANGELOG.md`; gathers the batches since 1.3.0 (nicknames on the map protected by a key, chat beep, launcher guard) |
 | 02/11/2026 |  | after 1.4.0 | Batch 1.4.1: `CLAUDE.md` removed (out of date since v37); `tests/samples.py` and the manual no longer cite it |
+| 03/11/2026 |  | after 1.4.0 | Batch 1.4.2 : the name of the tile under the avatar in the state panel (`tilesState().here`); `tests/tuile_ici.py` |
+| 03/11/2026 |  | after 1.4.0 | Batch 1.4.3 : tiles line: one element per line (page and viewer) |
+| 03/11/2026 |  | after 1.4.0 | Batch 1.4.4 : weight shown = weight received (`got`); viewer: the tiles line as soon as the handler is plugged in |
+| 03/11/2026 |  | after 1.4.0 | Batch 1.4.5 : "About this region" panel (`NOM.about.<langue>.txt`, `?` key); `tests/apropos.py` |
+| 03/11/2026 |  | after 1.4.0 | Batch 1.4.6 : `glb2tiles.py --compress` (`gltfpack`); `tests/compress.py` |
+| 03/11/2026 |  | after 1.4.0 | Batch 1.4.7 : `title` key and `--title` active in shell mode; `--scan-sites --prune-missing`; `tests/titre.py` |
+| 03/11/2026 |  | after 1.4.0 | Batch 1.4.8 : documents: manual § 38, `PROCEDURES_SIMPLES.md`, creators note |
 
 ## Useful commands
 

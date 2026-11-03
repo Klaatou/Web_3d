@@ -1,5 +1,7 @@
 # How do I… (step-by-step procedures)
 
+**Short version: `PROCEDURES_SIMPLES.md` (in English: `SIMPLE_PROCEDURES.md`): everyday tasks, one command per block.**
+
 *Written on 23/10/2026, revised on 31/10/2026 for version 1.1.0 (the "vNN" in the text are the versions before 1.0.0: v52 became 1.0.0). The commands are for PowerShell, on a single line, with the paths of your machine. The full list of options is in `REFERENCE_OPTIONS.md`; zones, keys and settings are described in detail in `MANUAL.md`.*
 
 **What was tried here:** the `glb2html` and `glb2tiles` commands (including `--update`, `--register`, `--map-page`) on test regions, as a single GLB and as tiles. **What was not:** converting an OAR with convoar (convoar is not available in the sandbox), and the PowerShell commands themselves (tried under Linux with equivalent paths).

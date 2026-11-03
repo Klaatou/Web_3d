@@ -1288,6 +1288,7 @@ Les positions sont en mètres, dans le repère de la page : x vers l'est, y vers
 | ------------- | --------- | ---------------------------------- | ---------------------------------------------------------------------------------------------- | ----------------------------- |
 | `presenceUrl` | texte     | `""`                               | adresse du serveur de présence (`ws://...` ou `wss://...`) ; vide = seul, sans avatars ni chat | `--presence-url`              |
 | `room`        | texte     | nom de la page                     | salon de présence : les visiteurs d'un même salon se voient                                    | `--room`                      |
+| `title`       | texte     | absent (le titre est le salon)     | titre de l'onglet du navigateur (60 caractères au plus), facultatif, coquille seulement         | `--title`                     |
 | `spectate`    | oui / non | `true` si `presenceUrl` est rempli | voir les promeneurs depuis la vue globale                                                      | `--spectate`, `--no-spectate` |
 | `chat`        | oui / non | `true`                             | chat entre visiteurs (il faut un serveur de présence)                                          | `--chat`, `--no-chat`         |
 | `chatFade`    | nombre    | `0`                                | secondes avant que les messages et bulles disparaissent ; 0 = ils restent                      | `--chat-fade`                 |
@@ -2012,3 +2013,32 @@ Pour vérifier : `edge://gpu` (ou `chrome://gpu`), ligne WebGL. Test (Chromium s
 - **Essayé** : tests automatiques en Chromium (zone image, noms, légende, `medias`, revalidation, diagnostic, matériaux, pointeur, WebGL absent, marque, console). Par Klaatou : les images d'une vraie région s'affichent ; la sélection du dossier de la région et l'aperçu des images marchent (30/10/2026) ; avec `--solid-materials`, on ne voit plus à travers les murets d'un vrai modèle ; Edge lancé avec l'option SwiftShader ouvre les régions.
 - **Non essayé** : Windows et Edge pour le détail (vrai sélecteur de dossier) ; zones image en région en tuiles ; mur à face inclinée ; étiquette du pointeur en mode tuiles.
 - **Constaté une fois, non reproduit** : un titre d'image manquant (cause non confirmée : en cas de retour, la ligne « Image » de « Copier le diagnostic » donne la cible, le fichier lu et la source de la légende) ; une pose d'image par clic sur un muret qui plaçait l'image derrière la face visible (les zones se règlent alors à la main : `x` ou `z` à quelques centièmes de mètre de la face).
+
+## 38. Ajouts de la 1.4 (lots 1.4.2 à 1.4.7)
+
+### 38.1 La ligne des tuiles
+
+En région en tuiles, la fenêtre Informations / État (touche I) donne, chacun sur sa ligne : les tuiles chargées (`Tuiles : N chargées / total · Mo · triangles`, avec « en cours » et « en échec »), la ou les tuiles sous l'avatar en promenade (`Tuile(s) sous l'avatar : T_3_0_5.glb` ; deux noms quand les boîtes se chevauchent ; rien hors promenade) et la vue d'ensemble. Le poids affiché est celui des fichiers **réellement reçus** ; le budget `tileMaxMB` continue de compter les `bytes` de `NOM.tiles.json` (poids d'avant compression), donc une région compressée charge autant de tuiles qu'avant. Le viewer affiche la même mention. `tilesState()` donne `here` (tuiles sous l'avatar), `got` (poids reçu) et `bytes` (budget).
+
+### 38.2 « À propos de la région »
+
+Un fichier texte à côté de `NOM.config.json` décrit la région : `NOM.about.fr.txt`, `NOM.about.en.txt`, ou `NOM.about.txt` pour toutes les langues. La page cherche d'abord le fichier de sa langue, puis `NOM.about.txt` ; sans fichier, il n'y a ni panneau, ni touche, ni case. La première ligne est le titre, le reste le texte (texte brut, jamais de HTML, 20 000 caractères au plus). Le nom de fichier doit être celui de la région, le même que `NOM.config.json` : une région `houses` demande `houses.about.fr.txt`.
+
+Le panneau s'ouvre à l'entrée dans la région. Le bouton « Ne plus afficher » et la case « Afficher l'à propos à l'entrée » de la fenêtre Réglages décident s'il s'ouvre aux visites suivantes ; ce choix est gardé **par région**, dans le navigateur (si le stockage est indisponible, le panneau s'ouvre à chaque entrée). Pour le rouvrir : la touche `?` (reconnue par le caractère imprimé, donc sur AZERTY comme sur QWERTY ; sans effet dans une zone de saisie) ou le bouton « À propos de la région » de l'aide. Échap le ferme. Il n'existe pas dans une page autonome (sans coquille).
+
+### 38.3 Compresser les tuiles : `glb2tiles.py --compress`
+
+`--compress` compresse chaque `.glb` écrit (tuiles et vue d'ensemble) avec `gltfpack` (`-cc -kn -ke -km -vpf -vtf`, jamais `-tc`) : fichiers environ deux fois plus petits, mêmes noms de nœuds, mêmes `extras`, mêmes matériaux. `gltfpack` est cherché dans le `PATH`, sinon lancé par `npx` (Node requis) ; s'il manque, rien n'est modifié. Un fichier déjà compressé est sauté (jamais recompressé). `NOM.tiles.json` n'est pas modifié. La page lit ces fichiers sans réglage (décodeur `meshopt` intégré). Pour des tuiles déjà découpées, la commande à la main est dans `PROCEDURES_SIMPLES.md` § 5 (en anglais : `SIMPLE_PROCEDURES.md`).
+
+### 38.4 Titre affiché : la clé `title`
+
+`NOM.config.json` accepte une clé facultative `title` (60 caractères au plus) : c'est le titre de l'onglet du navigateur. Sans elle, le titre est le salon (`room`), comme avant. `--title` de `glb2html.py` l'écrit (il était ignoré en mode coquille) et `--update` la garde s'il n'est pas redonné. Les fichiers et le salon restent en minuscules (un site hébergé distingue les majuscules) : on met le nom lisible dans `title`. `--scan-sites` s'en sert pour nommer une **nouvelle** fiche de la carte.
+
+### 38.5 `--scan-sites --prune-missing`
+
+`--prune-missing` retire de `regions.json` les fiches locales dont la région est introuvable dans le dossier des sites (les fiches externes sont gardées). `--dry-run` montre la liste sans rien écrire. Sans cette option, rien n'est supprimé : ces fiches sont seulement signalées.
+
+### 38.6 Essayé et non essayé
+
+- **Essayé** : tests automatiques en Chromium pour chaque point ci-dessus (`tuile_ici`, `apropos`, `compress`, `titre`). Par Klaatou : le nom de la tuile et les trois lignes, le panneau à propos et la touche `?`, le titre « Houses » dans l'onglet, le renommage de la région Houses, la compression à la main de ses 106 tuiles (1 434 Mo avant, environ 650 Mo après).
+- **Non essayé** : `--compress` sur une vraie région, `gltfpack` sous Windows (`npx.cmd`), Edge pour le détail, la touche `?` sur un clavier AZERTY réel pour les tests automatiques (simulée).

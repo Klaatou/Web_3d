@@ -4,6 +4,11 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.4.0)
 
+### 03/11/2026 : version 1.4.8 : documents (manuel, procédures simplifiées, note aux créateurs)
+
+- **Documents** (français et anglais, `verif_trad.py` sans erreur) : manuel § 38 (ligne des tuiles, « À propos de la région », `--compress`, clé `title`, `--prune-missing`, essayé et non essayé) et ligne `title` du tableau § 27.3 ; **nouveau** `docs/fr/PROCEDURES_SIMPLES.md` et `docs/en/SIMPLE_PROCEDURES.md` (les tâches de tous les jours, une commande par bloc, dont l'accueil d'un créateur sur le serveur de présence : message à envoyer et gestes à faire) ; note aux créateurs (`title`, fichier `about`) ; `PROCEDURES.md` (renvoi vers la version courte) ; `HISTORIQUE` / `HISTORY` (lots 1.4.2 à 1.4.8). Aucun code ni `dist\` modifié.
+- **Documents** (French and English, `verif_trad.py` with no error): manual § 38 (tiles line, "About this region", `--compress`, `title` key, `--prune-missing`, tried and not tried) and the `title` row of the § 27.3 table; **new** `docs/fr/PROCEDURES_SIMPLES.md` and `docs/en/SIMPLE_PROCEDURES.md` (everyday tasks, one command per block, including hosting a creator on the presence server: message to send and steps to take); creators note (`title`, `about` file); `PROCEDURES.md` (pointer to the short version); `HISTORIQUE` / `HISTORY` (batches 1.4.2 to 1.4.8). No code and no `dist\` modified.
+
 ### 03/11/2026 : version 1.4.7 : titre affiché distinct du salon ; `--prune-missing`
 
 - **Nouveau** (demande de Klaatou : « Houses » dans l'onglet, `houses` dans les fichiers) : clé facultative **`title`** dans `NOM.config.json` (60 caractères au plus). Le titre de l'onglet devient `title`, sinon `room` comme avant (`gen_tpl.py`, coquille : `document.title = C.title || C.room`). `--title` de `glb2html.py`, jusqu'ici **ignoré** en mode coquille et en mode tuiles (avec un avertissement), l'écrit dans la config ; `--update` le garde s'il n'est pas redonné. Sans `--title`, aucune clé n'est ajoutée : les configs existantes ne changent pas. Le salon de présence (`room`) et les noms de fichiers ne changent pas.
