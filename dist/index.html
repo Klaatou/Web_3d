@@ -168,7 +168,7 @@ body.touch.chatOpen #pad,body.touch.chatOpen #tcol{display:none}
 body.touch #chatInput{font-size:16px}
 @media (orientation:landscape){#tcol{display:grid;grid-template-columns:repeat(2,auto)}}
 @media (orientation:landscape) and (max-height:500px){#tcol{grid-template-columns:repeat(3,auto)}body.touch #pad{--pb:44px;--pg:4px;bottom:12px}#tcol{bottom:12px}#tcol button{min-height:42px}}
-#msg{position:fixed;inset:0;display:grid;place-items:center;font:14px ui-monospace,monospace;color:#123;pointer-events:none}
+#msg{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:20;box-sizing:border-box;max-width:min(92vw,640px);padding:12px 22px;background:#fff;color:#000;border:2px solid #000;border-radius:10px;box-shadow:0 4px 18px #0007;font:bold 18px/1.4 ui-monospace,Consolas,monospace;text-align:center;white-space:pre-line;pointer-events:none}   /* 1.4.10 : cadre bien visible sur la vue d'ensemble (avant : texte seul, peu lisible sur le décor) */
 </style>
 <script>
 // LIB : dossier de lib (seule ligne a modifier) / folder of lib (the only line to edit)
@@ -430,7 +430,7 @@ const softGpu = r => /Basic Render|SwiftShader|llvmpipe|softpipe|Software/i.test
 function diagText(viewer, extra) {
   const x = extra || {}, L = (k, v) => tr('core.diag.line', k, v), out = [tr('core.diag.title')];
   const nb = (v, d) => (Number.isFinite(v) ? i18nNum(v, d || 0) : '?');   // nombres à la manière de la langue (virgule en français)
-  out.push(L(tr('core.diag.version'), '1.4.9 (03/11/2026)' + (x.cfgVersion && x.cfgVersion !== '1.4.9 (03/11/2026)' ? ' ; ' + tr('core.diag.cfgver', x.cfgVersion) : '')));
+  out.push(L(tr('core.diag.version'), '1.4.10 (03/11/2026)' + (x.cfgVersion && x.cfgVersion !== '1.4.10 (03/11/2026)' ? ' ; ' + tr('core.diag.cfgver', x.cfgVersion) : '')));
   out.push(L(tr('core.diag.date'), new Date().toLocaleString(({ fr: 'fr-FR', en: 'en-GB' })[LANG]) + ' ; ' + tr('core.diag.uptime', nb(performance.now() / 1000))));
   out.push(L(tr('core.diag.page'), location.protocol + (location.host ? '//ADRESSE' : '//') + location.pathname + location.search));
   out.push(L(tr('core.diag.lang'), LANG + ' · ' + ((navigator.languages || []).join(',') || navigator.language || '?') + ' · ' + KB.layout().toUpperCase()));

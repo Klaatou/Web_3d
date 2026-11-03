@@ -63,11 +63,13 @@ I18N_SRC = (SRC / "i18n.js").read_text(encoding="utf-8")
 I18N_RT = I18N_SRC.replace("__I18N_DATA__", jsonjs(WEB_I18N))
 
 
-def inline_i18n_py(text):
-    """outils Python : le bloc « # <<I18N_PY>> … # <</I18N_PY>> » (qui charge src/i18n_py.py depuis les sources) devient le texte de i18n_py.py avec les langues intégrées"""
+def inline_i18n_py(text, outil):
+    """outils Python : le bloc « # <<I18N_PY>> … # <</I18N_PY>> » (qui charge src/i18n_py.py depuis les sources) devient le texte de i18n_py.py avec les langues intégrées ;
+    1.4.10 : seulement les textes de cet outil (py.<outil>.*), les textes communs (py.common.*) et _name, pas ceux des autres outils"""
     mod = (SRC / "i18n_py.py").read_text(encoding="utf-8")
     mod = mod[mod.index('"""', mod.index('"""') + 3) + 3:].lstrip("\n")   # sans le docstring du module
-    data = json.dumps(PY_I18N, ensure_ascii=False, separators=(",", ":"))
+    garde = ("py." + outil + ".", "py.common.")
+    data = json.dumps({c: {k: v for k, v in d.items() if k == "_name" or k.startswith(garde)} for c, d in PY_I18N.items()}, ensure_ascii=False, separators=(",", ":"))
     assert "'''" not in data and not data.endswith("\\")
     assert "I18N_DATA = None  # __I18N_PY_DATA__" in mod
     mod = mod.replace("I18N_DATA = None  # __I18N_PY_DATA__", "I18N_DATA = _json.loads(r'''" + data + "''')")
@@ -122,7 +124,7 @@ FICHIERS_VERSION = ["glb2html.py", "index.html", "carte.html", "glb-viewer.html"
 def fabrique(ver):
     """Tous les fichiers de dist/ fabriqués à partir des sources, chacun avec son propre numéro de version (ver[nom]) : rend {nom: texte}."""
     sortie = {}
-    py = inline_i18n_py((SRC / "gen_tpl.py").read_text(encoding="utf-8"))
+    py = inline_i18n_py((SRC / "gen_tpl.py").read_text(encoding="utf-8"), "glb2html")
     py = py.replace("__HTML_TEMPLATE__", template).replace("__DRACO_JS__", draco_js).replace("__MESHOPT_JS__", meshopt_js)
     py = py.replace("__I18N__", I18N_RT)
     py = py.replace("__VERSION__", ver["glb2html.py"]).replace("__SHELL_VERSION__", ver["index.html"]).replace("__MAP_VERSION__", ver["carte.html"])
@@ -136,9 +138,9 @@ def fabrique(ver):
     sortie["carte.html"] = gen.build_map_shell()   # v47 : la page de carte universelle (lit regions.json à côté d'elle)
     shell_modules, shell_draco = gen.shell_lib_files()
     shell_lib = {"dir": gen.LIB_REL, "modules": shell_modules, "draco": shell_draco}
-    for nom, chemin in (("presence_server.py", SRC / "presence_server.py"), ("oar2glb.py", ROOT / "tools" / "oar2glb.py"), ("glb2tiles.py", ROOT / "tools" / "glb2tiles.py")):
-        sortie[nom] = inline_i18n_py(chemin.read_text(encoding="utf-8")).replace("__VERSION__", ver[nom])   # glb2tiles.py : fonctions communes avec glb-stats.py, doit rester à côté
-    sortie["glb-stats.py"] = inline_i18n_py((ROOT / "tools" / "glb-stats.py").read_text(encoding="utf-8"))   # fonctions communes de glb2tiles.py : doit rester à côté
+    for nom, chemin, outil in (("presence_server.py", SRC / "presence_server.py", "presence"), ("oar2glb.py", ROOT / "tools" / "oar2glb.py", "oar2glb"), ("glb2tiles.py", ROOT / "tools" / "glb2tiles.py", "glb2tiles")):
+        sortie[nom] = inline_i18n_py(chemin.read_text(encoding="utf-8"), outil).replace("__VERSION__", ver[nom])   # glb2tiles.py : fonctions communes avec glb-stats.py, doit rester à côté
+    sortie["glb-stats.py"] = inline_i18n_py((ROOT / "tools" / "glb-stats.py").read_text(encoding="utf-8"), "stats")   # fonctions communes de glb2tiles.py : doit rester à côté
     vv = ver["glb-viewer.html"]
     v = (SRC / "viewer_tpl.html").read_text(encoding="utf-8")
     v = v.replace("__CORE__", core).replace("__I18N__", I18N_RT_VIEWER).replace("__CORE_VERSION__", vv)  # core avant le reste : pas de placeholder dedans

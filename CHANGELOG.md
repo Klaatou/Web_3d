@@ -4,6 +4,13 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.4.0)
 
+### 03/11/2026 : version 1.4.10 : textes propres à chaque outil ; « Chargement… » visible
+
+- **Nettoyage** (demande de Klaatou) : `build.py` copiait dans **chaque** outil Python la table de **tous** les textes des outils Python ; chaque outil n'embarque plus que les siens (`py.<outil>.*`), les textes communs (`py.common.*`) et `_name`. Effets : fichiers plus petits (`glb2html.py` 670 Ko -> 580 Ko), et un outil ne change plus de numéro quand on ajoute un texte à un autre. Les familles étaient déjà séparées (aucun outil n'utilise les textes d'un autre ; `glb2tiles.py` charge `glb-stats.py`, qui garde ses propres textes). Test `tests/textes_outils.py` (nouveau : aucun texte étranger, tous les textes cités présents en français et en anglais, `--help` dans les deux langues, `glb2tiles.py --analyse` ; sur la 1.4.9 il échoue).
+- **Corrigé** (constat de Klaatou) : « Chargement… » était un texte seul, peu lisible sur la vue d'ensemble d'une grande région ; il est maintenant dans un cadre blanc bordé de noir, centré, en gras (`#msg`, `template.html`). Même cadre pour les messages d'erreur du chargement.
+- **Cleanup** (Klaatou's request): `build.py` copied into **every** Python tool the table of **all** the texts of the Python tools; each tool now embeds only its own (`py.<tool>.*`), the common texts (`py.common.*`) and `_name`. Effects: smaller files (`glb2html.py` 670 KB -> 580 KB), and a tool no longer changes number when a text is added to another. The families were already separate (no tool uses another's texts; `glb2tiles.py` loads `glb-stats.py`, which keeps its own texts). Test `tests/textes_outils.py` (new: no foreign text, every cited text present in French and English, `--help` in both languages, `glb2tiles.py --analyse`; it fails on 1.4.9).
+- **Fixed** (Klaatou's report): "Loading…" was a bare text, hard to read over the overview of a big region; it is now in a white frame with a black border, centred, in bold (`#msg`, `template.html`). Same frame for the loading error messages.
+
 ### 03/11/2026 : version 1.4.9 : à propos (liens, aide des visiteurs) ; documents réorganisés
 
 - **Nouveau** (demandes de Klaatou) : dans le panneau « À propos de la région », les adresses `http(s)://` du texte deviennent des liens (soulignés, nouvel onglet, `rel="noopener noreferrer"`, ponctuation finale laissée au texte ; texte posé par nœuds, jamais de HTML interprété) ; bouton « Aide des visiteurs » quand `aide.html` est à côté de la coquille (essai `HEAD`, en http(s) seulement) ; le bouton de l'aide s'appelle « À propos de la région (touche ?) » (`page.about.btnkey`, `page.about.helpbtn`). Test `tests/apropos_liens.py` (nouveau ; sur la 1.4.8 il échoue).
