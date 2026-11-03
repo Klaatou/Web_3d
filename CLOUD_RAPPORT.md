@@ -100,3 +100,12 @@ Aucun échec « sensible à la charge » : tous les tests ont été lancés sép
 - Contre-épreuve : avec `src/` d'avant le correctif, `tuile_ici` échoue (ligne vide au branchement du viewer, puis plantage faute de `got`).
 - Build : seuls `glb-viewer.html`, `glb2html.py` et `index.html` ont changé de numéro (1.4.3 → 1.4.4) ; les autres fichiers de `dist/` gardent le leur.
 - Non testé : poids affiché avec de vraies tuiles `gltfpack` (seulement un index gonflé sur une région synthétique), Windows, Edge, carte graphique.
+
+## Étape 3 : lot 1.4.5, panneau « À propos de la région » (faite)
+
+- Code : `src/template.html` (objet `ABOUT`, `#aboutOverlay`, touche `?`, bouton dans l'aide, case des Réglages), `src/gen_tpl.py` (`mk()` de la coquille : `name` et `about`), textes `page.about.*` et `page.help.about` (fr/en). Pas d'à propos pour une page autonome (sans coquille).
+- Tests lancés (tous OK) : `apropos` (nouveau, 33 contrôles), `tuile_ici`, `tuiles`, `v31`, `v32`, `i18n`, `smoke`, `dist_a_jour`. Contre-épreuve : sur le code de la 1.4.4, `apropos` échoue (élément `#aboutOverlay` absent).
+- **Effet de bord corrigé dans un test** : `v31` refusait tout avertissement de console ; l'essai des fichiers `NOM.about.*.txt` absents produit des « 404 » journalisés par le navigateur (inévitables avec un site statique). `tests/v31.py` ignore maintenant précisément les adresses `*.about.txt` et `*.about.xx.txt`. D'autres tests qui surveillent la console pourraient réagir de la même façon : la suite complète est relancée en fin de session.
+- **Choix de conception à confirmer par Klaatou** : mémorisation **par région** (clé `web3d.about.hide.NOM`) plutôt que globale ; « Ne plus afficher » et la case des Réglages (décochée) sont équivalents. Le brief dit « si la région n'est pas masquée » : je n'ai trouvé aucune notion de région masquée dans la page ; je l'ai compris comme « pas en erreur de chargement » (le panneau ne s'ouvre qu'après un chargement réussi).
+- Détails : un serveur qui répond une page HTML au lieu d'un 404 est ignoré (type de contenu `text/html`) ; troncature à 20 000 caractères avec « … » (estimation).
+- Non testé : `?` réellement tapé sur un clavier AZERTY (simulé par `key '?'` + `code 'Comma'`), le chat réel (seulement un champ `<input>` de test ; le garde est sur le nom de balise), lecteur d'écran, Windows, Edge, téléphone.

@@ -810,7 +810,7 @@ const BOOT = await (async () => {
   // fichiers de la région NOM (ou a/b/NOM) : tous relatifs au dossier de la région (dir) ; les zones se cherchent aussi dans zones.json de ce dossier
   const mk = nom => {
     const i = nom.lastIndexOf('/'), dir = i < 0 ? '' : nom.slice(0, i).split('/').map(encodeURIComponent).join('/') + '/', e = dir + encodeURIComponent(nom.slice(i + 1));
-    return { dir, config: e + '.config.json', glb: e + '.glb', zones: [e + '.zones.json', dir + 'zones.json'] };
+    return { dir, name: nom, config: e + '.config.json', glb: e + '.glb', zones: [e + '.zones.json', dir + 'zones.json'], about: e + '.about' };   // 1.4.5 : about = base de NOM.about.<langue>.txt et NOM.about.txt
   };
   const q = new URLSearchParams(location.search);
   if (q.has('region')) {

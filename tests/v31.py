@@ -13,7 +13,7 @@ information à part, panne de la vue d'ensemble sans conséquence, ancien X.tile
 Prérequis : pip install playwright ; python build.py avant. Variables facultatives : THREE_DIR, CHROMIUM. Lancer : python tests/v31.py
 """
 import os as _os_lang; _os_lang.environ["WEB3D_LANG"] = "fr"   # outils Python en français (v36)
-import asyncio, importlib.util, json, math, os, pathlib, shutil, socket, struct, subprocess, sys, tempfile, time
+import asyncio, importlib.util, json, math, os, pathlib, re, shutil, socket, struct, subprocess, sys, tempfile, time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import glbfab
@@ -383,7 +383,7 @@ async def main():
                 ctx = await br.new_context(locale="fr-FR", viewport={"width": 700, "height": 500})
                 self.pg = await ctx.new_page()
                 self.pg.on("pageerror", lambda e: self.errs.append(str(e)))
-                self.pg.on("console", lambda m: self.warns.append(m.text) if m.type in ("warning", "error") else None)
+                self.pg.on("console", lambda m: self.warns.append(m.text) if m.type in ("warning", "error") and not (m.location or {}).get("url", "").endswith(".about.txt") and not re.search(r"\.about\.[a-z]{2,3}\.txt$", (m.location or {}).get("url", "")) else None)   # 1.4.5 : le 404 d'un NOM.about.*.txt absent est journalise par le navigateur (essai voulu)
                 await self.pg.route("**/*.glb", self.route)
                 await self.pg.goto(url)
                 return self
