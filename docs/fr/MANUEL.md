@@ -1,4 +1,4 @@
-# Manuel de Web_3d (1.4.13)
+# Manuel de Web_3d (1.5.0)
 
 > **Résumé.** Ce manuel suit le projet de bout en bout, thème par thème : pour commencer, avec le vocabulaire (chapitre 1), les outils (2), convertir un OAR (3), mesurer et découper une grosse région (4), le viewer et les zones (5), fabriquer la page (6), la page côté visiteur (7), les régions en tuiles (8), la carte des mondes (9), le serveur de présence (10), la référence des fichiers JSON (11), le dépannage (12) et, en annexe, ce que chaque version a apporté (13). Pour **toutes les options** des outils, avec leur effet et les valeurs par défaut de leurs paramètres, en français et en anglais : `REFERENCE_OPTIONS.md` (générée depuis les outils par `gen_reference.py`). Pour **faire une tâche pas à pas** : `PROCEDURES.md`. Langue de la page et des outils : § 7.49, § 7.51 et § 7.50.
 
