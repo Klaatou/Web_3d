@@ -47,6 +47,11 @@ for paquet in sorted(p for p in SRC.iterdir() if p.is_dir()):
     tmp = tmp_racine / nom
     shutil.copytree(paquet, tmp)
     (tmp / "site").mkdir(exist_ok=True)
+    for cfgf in sorted((tmp / "site").glob("*.config.json")):   # 1.5.1 : la version affichee par la fenetre Aide est celle de la release
+        t = cfgf.read_bytes().decode("utf-8")
+        t2, n = re.subn(r'("version"\s*:\s*")[^"]*(")', lambda mm: mm.group(1) + version + mm.group(2), t, count=1)
+        if n:
+            cfgf.write_bytes(t2.encode("utf-8"))
     (tmp / "presence").mkdir(exist_ok=True)
     shutil.copy2(DIST / "index.html", tmp / "site" / "index.html")
     shutil.copy2(DIST / "carte.html", tmp / "site" / "carte.html")   # 1.4.13 : la carte du paquet (page de presentation, avec regions.json et vignette.jpg)

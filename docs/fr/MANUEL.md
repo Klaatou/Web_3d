@@ -1,4 +1,4 @@
-# Manuel de Web_3d (1.5.0)
+# Manuel de Web_3d (1.5.1)
 
 > **Résumé.** Ce manuel suit le projet de bout en bout, thème par thème : pour commencer, avec le vocabulaire (chapitre 1), les outils (2), convertir un OAR (3), mesurer et découper une grosse région (4), le viewer et les zones (5), fabriquer la page (6), la page côté visiteur (7), les régions en tuiles (8), la carte des mondes (9), le serveur de présence (10), la référence des fichiers JSON (11), le dépannage (12) et, en annexe, ce que chaque version a apporté (13). Pour **toutes les options** des outils, avec leur effet et les valeurs par défaut de leurs paramètres, en français et en anglais : `REFERENCE_OPTIONS.md` (générée depuis les outils par `gen_reference.py`). Pour **faire une tâche pas à pas** : `PROCEDURES.md`. Langue de la page et des outils : § 7.49, § 7.51 et § 7.50.
 
@@ -1585,7 +1585,7 @@ Les positions sont en mètres, dans le repère de la page : x vers l'est, y vers
 | `names`         | oui / non | `false`            | affiche le nom du bâtiment (objet racine) et de l'élément visé (§ 7.61)                                                                                                                 | `--names`, `--no-names`   |
 | `panel`         | oui / non | `true`             | bouton Réglages pour les visiteurs                                                                                                                 | `--panel`, `--no-panel`   |
 | `libUrl`        | texte     | `""`               | dossier ou adresse de `lib` (three.js) quand il n'est pas à côté de la page ; `--update` l'aligne sur la ligne `const LIB` de la coquille (§ 6.4) | `--lib-url`               |
-| `version`       | texte     | version de l'outil | version de `glb2html.py` qui a écrit le fichier ; `--update` la remplace                                                                           | —                         |
+| `version`       | texte     | version de l'outil | version de `glb2html.py` qui a écrit le fichier ; `--update` la remplace ; `fabriquer_paquets.py` y écrit la version de la release dans les paquets                    | —                         |
 
 **Promenade**
 

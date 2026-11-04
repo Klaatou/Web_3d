@@ -141,6 +141,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 04/11/2026 |  | after 1.4.0 | Batch 1.4.12: the "About" panel no longer dims the page |
 | 04/11/2026 |  | after 1.4.0 | Batch 1.4.13: each package has its map (`carte.html`, `regions.json`, `vignette.jpg` 320 x 320); the renaming script keeps the card up to date |
 | 04/11/2026 |  | 1.5.0 | Release 1.5.0: `VERSION` 1.5.0; `CHANGELOG.md`; gathers the batches since 1.4.0 (compressed tiles, "About this region", package maps, new documentation) |
+| 04/11/2026 |  | 1.5.1 | Release 1.5.1: `VERSION` 1.5.1; `CHANGELOG.md`; the version shown by the packages is the release version (`fabriquer_paquets.py`) |
 
 ## Useful commands
 

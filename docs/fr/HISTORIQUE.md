@@ -141,6 +141,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 04/11/2026 |  | après 1.4.0 | Lot 1.4.12 : le panneau « À propos » ne grise plus la page |
 | 04/11/2026 |  | après 1.4.0 | Lot 1.4.13 : chaque paquet a sa carte (`carte.html`, `regions.json`, `vignette.jpg` 320 x 320) ; le script de renommage tient la fiche à jour |
 | 04/11/2026 |  | 1.5.0 | Publication 1.5.0 : `VERSION` 1.5.0 ; `CHANGELOG.md` ; réunit les lots depuis la 1.4.0 (tuiles compressées, « À propos de la région », cartes des paquets, nouvelle documentation) |
+| 04/11/2026 |  | 1.5.1 | Publication 1.5.1 : `VERSION` 1.5.1 ; `CHANGELOG.md` ; la version affichée par les paquets est celle de la release (`fabriquer_paquets.py`) |
 
 ## Commandes utiles
 
