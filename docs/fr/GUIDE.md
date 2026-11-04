@@ -11,7 +11,7 @@ Deux paquets sont sur la page des versions du dépôt GitHub. Rien à installer 
 - `galerie-photos.zip` : une galerie de photos en 3D, prête à remplir.
 - `region-simple.zip` : une région d'exemple ; on y met son propre `.glb` sous le nom `site\region.glb` pour le voir dans le navigateur. C'est aussi le moyen le plus simple d'essayer un GLB qu'on vient de fabriquer (§ 1.2).
 
-Dans chaque paquet, `lancer-…` ouvre la région (`.bat` sous Windows, `.sh` sous Linux, `.command` sous macOS) et `renommer-…` change son nom. Le `README.txt` et le `readme.html` du paquet détaillent tout.
+Dans chaque paquet, `lancer-…` ouvre la région (`.bat` sous Windows, `.sh` sous Linux, `.command` sous macOS) et `renommer-…` change son nom. Chaque paquet a aussi sa propre carte (`carte.html`, avec la vignette `site/vignette.jpg` et la fiche `site/regions.json`) : une page de présentation de la région, que le créateur complète de ses autres régions. Le `README.txt` et le `readme.html` du paquet détaillent tout.
 
 ### 1.2 Depuis son OAR : `oar2glb.py` (Windows seulement)
 

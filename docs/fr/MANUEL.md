@@ -1,4 +1,4 @@
-# Manuel de Web_3d (1.4.12)
+# Manuel de Web_3d (1.4.13)
 
 > **Résumé.** Ce manuel suit le projet de bout en bout, thème par thème : pour commencer, avec le vocabulaire (chapitre 1), les outils (2), convertir un OAR (3), mesurer et découper une grosse région (4), le viewer et les zones (5), fabriquer la page (6), la page côté visiteur (7), les régions en tuiles (8), la carte des mondes (9), le serveur de présence (10), la référence des fichiers JSON (11), le dépannage (12) et, en annexe, ce que chaque version a apporté (13). Pour **toutes les options** des outils, avec leur effet et les valeurs par défaut de leurs paramètres, en français et en anglais : `REFERENCE_OPTIONS.md` (générée depuis les outils par `gen_reference.py`). Pour **faire une tâche pas à pas** : `PROCEDURES.md`. Langue de la page et des outils : § 7.49, § 7.51 et § 7.50.
 
@@ -1226,7 +1226,7 @@ En région en tuiles, la fenêtre Informations / État (touche I) donne, chacun 
 
 ## 9. Carte des mondes
 
-La carte des mondes (`carte.html`) présente les régions d'un même site à partir de `regions.json`, qui se prépare dans le viewer ou avec `glb2html.py --scan-sites`. Format de `regions.json` : § 11.6.
+La carte des mondes (`carte.html`) présente les régions d'un même site à partir de `regions.json`, qui se prépare dans le viewer ou avec `glb2html.py --scan-sites`. Format de `regions.json` : § 11.6. Les paquets `galerie-photos.zip` et `region-simple.zip` ont leur propre carte, avec une seule région : `site/carte.html`, `site/regions.json` (la fiche) et `site/vignette.jpg` (320 x 320 pixels) ; leur script de renommage tient la fiche à jour. C'est une page de présentation que le créateur peut compléter d'autres fiches.
 
 ### 9.1 Carte des mondes
 

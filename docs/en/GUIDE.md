@@ -11,7 +11,7 @@ Two packages are on the releases page of the GitHub repository. Nothing to insta
 - `galerie-photos.zip`: a 3D photo gallery, ready to fill.
 - `region-simple.zip`: an example region; you put your own `.glb` in it under the name `site\region.glb` to see it in the browser. It is also the simplest way to try a GLB you have just made (§ 1.2).
 
-In each package, `lancer-…` opens the region (`.bat` on Windows, `.sh` on Linux, `.command` on macOS) and `renommer-…` changes its name. The package's `README.txt` and `readme.html` detail everything.
+In each package, `lancer-…` opens the region (`.bat` on Windows, `.sh` on Linux, `.command` on macOS) and `renommer-…` changes its name. Each package also has its own map (`carte.html`, with the thumbnail `site/vignette.jpg` and the card `site/regions.json`): a presentation page for the region, which the creator completes with their other regions. The package's `README.txt` and `readme.html` detail everything.
 
 ### 1.2 From your OAR: `oar2glb.py` (Windows only)
 
