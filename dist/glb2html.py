@@ -16,8 +16,8 @@ Draco et Meshopt gérés automatiquement (décodeurs intégrés seulement si le 
 """
 from __future__ import annotations
 
-VERSION = "1.4.12 (04/11/2026)"
-SHELL_VERSION = "1.4.12 (04/11/2026)"   # numéro de version de la coquille (index.html) : écrit par build.py, ne change que si la coquille change
+VERSION = "1.5.2 (04/11/2026)"
+SHELL_VERSION = "1.5.2 (04/11/2026)"   # numéro de version de la coquille (index.html) : écrit par build.py, ne change que si la coquille change
 MAP_VERSION = "1.4.9 (03/11/2026)"       # numéro de version de la page de carte (carte.html) : idem
 
 import argparse
@@ -4849,6 +4849,7 @@ if (C.presenceUrl && C.walk && C.chat) {
   const baseTitle = document.title, ments = [];
   let unread = 0, ext = 0, olderOK = true, olderWait = 0, anchor = null, openChat = null;
   const saved = [];   // messages reçus ou envoyés depuis l'arrivée de ce visiteur (le serveur n'en garde pas ; l'historique rejoué à l'arrivée n'en fait pas partie)
+  let shown = [];
   const render = () => {
     chat.hidden = !viewer.walking;
     const open = !inp.hidden, now = Date.now();
@@ -4856,7 +4857,13 @@ if (C.presenceUrl && C.walk && C.chat) {
     const show = open ? msgs : (fade > 0 ? msgs.filter(x => now - x.t < fade) : msgs).slice(-6);
     const top0 = log.scrollTop, stick = !log.classList.contains('open') || log.scrollTop + log.clientHeight >= log.scrollHeight - 6;
     log.classList.toggle('open', open);
-    log.textContent = ''; show.forEach(x => log.appendChild(x.el));
+    // la sélection de texte survit : le journal n'est touché que si la liste affichée a changé ; un message de plus s'ajoute au bout sans tout reconstruire
+    const cur = show.map(x => x.el);
+    if (cur.length !== shown.length || cur.some((e, i) => e !== shown[i])) {
+      if (cur.length > shown.length && shown.every((e, i) => e === cur[i]) && shown.every(e => e.parentNode === log)) cur.slice(shown.length).forEach(e => log.appendChild(e));
+      else { log.textContent = ''; cur.forEach(e => log.appendChild(e)); }
+      shown = cur;
+    }
     if (anchor) { log.scrollTop = anchor.top + log.scrollHeight - anchor.h; anchor = null; } else if (open) log.scrollTop = stick ? log.scrollHeight : top0;
     olderBtn.hidden = !(open && olderOK && !olderWait && oldestN() !== undefined);
     mentBar.hidden = !ments.length;

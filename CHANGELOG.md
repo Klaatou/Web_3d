@@ -4,7 +4,11 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.5.1)
 
-*(rien pour l'instant)*
+### 04/11/2026 : chat : une sélection de texte dans le journal n'est plus effacée
+
+- **Constat de Klaatou** : impossible de copier un message du chat, la sélection se perdait. **Cause** : la page reconstruisait tout le journal chaque seconde (`setInterval(render, 1000)`, `template.html`), ce qui efface une sélection de texte. **Correctif** : le journal n'est touché que si la liste affichée change, et un message de plus s'ajoute au bout sans tout reconstruire ; dans le viewer, un message de plus s'ajoute au journal sans le réécrire. Rien ne change côté réseau : `render()` ne parle pas au serveur de présence. `VERSION` : `1.5.2`. Changent en `dist\` : `glb2html.py`, `index.html`, `glb-viewer.html`.
+- **Tests** : `tests/chat_selection.py` (nouveau : triple clic sur un message, la sélection tient 3,5 s et quand un message arrive ; plus de 6 messages : reconstruction correcte ; sur la 1.5.1, 2 contrôles échouent). **Non testé ici** : Windows, Edge.
+- **Fixed**: a text selection in the chat log is no longer erased. The page rebuilt the whole log every second (`setInterval(render, 1000)`), which cleared any selection; the log is now touched only when the displayed list changes, and a new message is appended without rebuilding. In the viewer, a new message is appended to the log without rewriting it. Nothing changes on the network side. New test `tests/chat_selection.py` (fails on 1.5.1). Not tested here: Windows, Edge.
 
 ## 1.5.1 (04/11/2026)
 

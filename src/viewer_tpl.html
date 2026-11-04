@@ -568,8 +568,8 @@ function presUpdate() {
 viewer.onPresence = s => { presLast = s; presUpdate(); };
 viewer.onName = n => { myName = n; const i = document.querySelector('input[data-myname]'); if (i) i.value = n; setStatus(tr('viewer.name.given', n)); };
 viewer.onChat = m => {
-  chatLines.push(m.system ? '* ' + m.text : m.name + ' : ' + m.text); if (chatLines.length > 40) chatLines.shift();
-  const lg = $('chatLog'); if (lg) { lg.textContent = chatLines.join('\n'); lg.scrollTop = lg.scrollHeight; }
+  const ligne = m.system ? '* ' + m.text : m.name + ' : ' + m.text; chatLines.push(ligne); const plein = chatLines.length > 40; if (plein) chatLines.shift();
+  const lg = $('chatLog'); if (lg) { if (plein || !lg.textContent) lg.textContent = chatLines.join('\n'); else lg.appendChild(document.createTextNode('\n' + ligne)); lg.scrollTop = lg.scrollHeight; }   // sans tout réécrire : la sélection de texte survit
 };
 viewer.onPick = info => {
   if (!info) return;
