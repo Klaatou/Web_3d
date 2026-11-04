@@ -40,11 +40,11 @@ The splitting, with the compression that makes the files about half the size (No
 python glb2tiles.py "CHEMIN\NOM.glb" --compress
 ```
 
-Details: § 17 and § 38.3.
+Details: § 4.1 and § 4.2.
 
 ## 2. Placing the zones: the viewer `glb-viewer.html`
 
-The viewer opens in the browser; you open your `.glb` in it and place the zones: arrival point, portals, panels, links, images (§ 3 to 12). It saves `NOM.zones.json`, to put next to the page.
+The viewer opens in the browser; you open your `.glb` in it and place the zones: arrival point, portals, panels, links, images (chapter 5). It saves `NOM.zones.json`, to put next to the page.
 
 ## 3. Making the page: `glb2html.py`
 
@@ -61,10 +61,10 @@ python glb2html.py "CHEMIN\NOM.glb" --shared-shell -o "CHEMIN\site\NOM.html" --t
 |---|---|
 | `-o` | file of the page (its name gives the name of the region) |
 | `--shared-shell` | page with a shared shell |
-| `--title` | title shown in the tab (§ 38.4) |
+| `--title` | title shown in the tab (§ 6.11) |
 | `--sea-y` | height of the sea |
 | `--presence-url`, `--room`, `--chat` | presence server, room, chat (§ 5) |
-| `--tiles` | region split into tiles (§ 17 bis) |
+| `--tiles` | region split into tiles (§ 8) |
 | `--update` | bring a page up to a new version of the tools without retyping anything |
 
 All the options: `REFERENCE_OPTIONS.md`.
@@ -79,7 +79,7 @@ python -m http.server 8000
 
   then open `http://localhost:8000/index.html?region=NOM`.
 - File names in lowercase: a host tells capitals apart. The readable name goes in `title`.
-- Optional: a presentation of the region in `NOM.about.fr.txt` (§ 38.2) and a world map (`--scan-sites`, § 32).
+- Optional: a presentation of the region in `NOM.about.fr.txt` (§ 6.10) and a world map (`--scan-sites`, § 9.9).
 
 ## 5. The other visitors: presence
 

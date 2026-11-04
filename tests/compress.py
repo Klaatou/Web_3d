@@ -187,8 +187,8 @@ async def page():
             exp = attendu(r["pos"][0], r["pos"][2])
             rapport(bool(r["here"]) and r["here"] == exp and ("sous l'avatar : " + ", ".join(r["here"])) in r["ligne"], "la ligne « Tuile(s) sous l'avatar » est exacte", (r, exp))
             rapport("Mo" in r["ligne"], "la ligne donne un poids", r["ligne"])
-            # les 404 de fichiers facultatifs absents (favicon.ico, NOM.about.*.txt) sont journalises par le navigateur : voulus
-            errs = [e for e in errs if not re.search(r"404.*(favicon\.ico|\.about(\.[a-z]{2,3})?\.txt)$", e)]
+            # les 404 de fichiers facultatifs absents (favicon.ico, NOM.about.*.txt, aide.html) sont journalises par le navigateur : voulus
+            errs = [e for e in errs if not re.search(r"404.*(favicon\.ico|aide\.html|\.about(\.[a-z]{2,3})?\.txt)$", e)]
             rapport(not errs, "aucune erreur JavaScript ni de console", errs[:3])
         finally:
             proc.kill()

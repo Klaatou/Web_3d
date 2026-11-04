@@ -1,6 +1,6 @@
 # Joining a presence server: a note for creators
 
-*29/10/2026. For the creator of a region who wants to connect it to a host's presence server. The host's side is in manual § 34 and procedures § 6, item 7.*
+*29/10/2026. For the creator of a region who wants to connect it to a host's presence server. The host's side is in manual § 10.10 and procedures § 6, item 7.*
 
 ## 1. What this is
 
@@ -43,7 +43,7 @@ The page shows "presence refused:" followed by the reason, and does not retry: r
 
 ## 6. Visit log
 
-The host can give you a key for your room (`visits-key alice.galerie` in their console). You then open your page's address followed by `#visits`, from any device, and type the key: visits per day, durations, CSV export. The log never contains an IP address. Details: manual § 31.
+The host can give you a key for your room (`visits-key alice.galerie` in their console). You then open your page's address followed by `#visits`, from any device, and type the key: visits per day, durations, CSV export. The log never contains an IP address. Details: manual § 10.
 
 ## 7. What the server records
 
@@ -60,7 +60,7 @@ IP addresses, nicknames and messages are personal data: plan to inform your visi
 
 - Moderation: the host reads the log and can kick or ban a visitor (`ejecter`, `bannir`).
 - The suspension of your access, your limits, the retention period.
-- The availability of the server: if it stops, your page gives up connecting after a few attempts and asks to be reloaded (manual § 36.4).
+- The availability of the server: if it stops, your page gives up connecting after a few attempts and asks to be reloaded (manual § 7.58).
 
 ## 9. Tried, not tried
 

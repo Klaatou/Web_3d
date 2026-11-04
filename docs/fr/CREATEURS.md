@@ -1,6 +1,6 @@
 # Accueil sur un serveur de présence : note pour les créateurs
 
-*29/10/2026. Pour le créateur d'une région qui veut la brancher sur le serveur de présence d'un hôte. Le côté hôte est au manuel § 34 et aux procédures § 6, point 7.*
+*29/10/2026. Pour le créateur d'une région qui veut la brancher sur le serveur de présence d'un hôte. Le côté hôte est au manuel § 10.10 et aux procédures § 6, point 7.*
 
 ## 1. De quoi il s'agit
 
@@ -43,7 +43,7 @@ La page affiche « présence refusée : » suivi de la raison, et ne réessaie p
 
 ## 6. Journal des visites
 
-L'hôte peut te donner une clé pour ton salon (`visits-key alice.galerie` dans sa console). Tu ouvres alors l'adresse de ta page suivie de `#visits`, depuis n'importe quel appareil, et tu tapes la clé : visites par jour, durées, export CSV. Le journal ne contient jamais d'adresse IP. Détail : manuel § 31.
+L'hôte peut te donner une clé pour ton salon (`visits-key alice.galerie` dans sa console). Tu ouvres alors l'adresse de ta page suivie de `#visits`, depuis n'importe quel appareil, et tu tapes la clé : visites par jour, durées, export CSV. Le journal ne contient jamais d'adresse IP. Détail : manuel § 10.
 
 ## 7. Ce que le serveur enregistre
 
@@ -60,7 +60,7 @@ Adresses IP, pseudos et messages sont des données personnelles : prévois d'inf
 
 - La modération : l'hôte lit le journal et peut éjecter ou bannir un visiteur (`ejecter`, `bannir`).
 - La suspension de ton accès, tes limites, la durée de conservation.
-- La disponibilité du serveur : s'il s'arrête, ta page cesse ses essais de connexion après quelques tentatives et demande de la recharger (manuel § 36.4).
+- La disponibilité du serveur : s'il s'arrête, ta page cesse ses essais de connexion après quelques tentatives et demande de la recharger (manuel § 7.58).
 
 ## 9. Essayé, non essayé
 

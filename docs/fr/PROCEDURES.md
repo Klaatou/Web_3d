@@ -32,13 +32,13 @@
 4. **Servir et ouvrir.** La page doit passer par un serveur web, pas par un double-clic.
    `cd "P:\_OpenSim\SL&OS\Web_3d\sites\MaRegion"; python -m http.server 8000`
    Puis `http://localhost:8000/index.html?region=MaRegion`.
-5. **Poser les zones** (portails, arrivées, panneaux) dans `glb-viewer.html` : voir `MANUEL.md` §§ 3 à 12. En fin de travail, le viewer exporte `MaRegion.zones.json` : copie-le dans le dossier de la page, puis F5.
+5. **Poser les zones** (portails, arrivées, panneaux) dans `glb-viewer.html` : voir `MANUEL.md` chapitre 5. En fin de travail, le viewer exporte `MaRegion.zones.json` : copie-le dans le dossier de la page, puis F5.
 
 ## 2. D'un OAR à une page web, région lourde (tuiles)
 
 Cas de la 4X4 : un GLB de 1,2 Go ne tient pas d'un bloc dans le navigateur. Les tuiles chargent autour de l'avatar et déchargent le reste ; la vue d'ensemble montre toute la région de loin.
 
-1. **Convertir l'OAR** comme au 1.1. Ça peut durer plusieurs heures et plusieurs dizaines de Go de mémoire (4 h 20 et 45 Go pour la 4X4). Si convoar plante dans la lecture des textures JPEG 2000, relance avec `--reencode` (voir `MANUEL.md` § 15 : à n'utiliser qu'en dernier recours).
+1. **Convertir l'OAR** comme au 1.1. Ça peut durer plusieurs heures et plusieurs dizaines de Go de mémoire (4 h 20 et 45 Go pour la 4X4). Si convoar plante dans la lecture des textures JPEG 2000, relance avec `--reencode` (voir `MANUEL.md` § 3 : à n'utiliser qu'en dernier recours).
 2. **Analyser** (lecture seule) :
    `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python glb2tiles.py "J:\...\OAR\X.glb" --analyse`
 3. **Découper.** `--output` désigne le dossier où sont écrits `X.tiles\`, `X.tiles.json` et `X.overview.glb`. `--exclude` retire du découpage les objets dont le nom correspond (garde-fous : 24 triangles et 1 mesh au plus), par exemple les boîtes de livraison des catalogues.
@@ -68,12 +68,12 @@ Clés utiles : `seaY` (hauteur de la mer, en m), `target` (`[x, y, z]`), `presen
 1. **Appliquer le patch et fabriquer** (la conversation donne les lignes exactes, chacune sur une ligne) :
    `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d"; git pull; python .\patch_NOM.py; if ($LASTEXITCODE -eq 0) { python build.py }`
    puis la ligne `git add …; git commit …; git push` livrée avec le patch, et, seulement quand tu décides une publication, `git tag v1.1.0; git push origin v1.1.0` (le numéro est celui de `VERSION`).
-2. **Copier la coquille et la carte** à la racine du site (organisation `Sites\`, `MANUEL.md` § 29.8) ; la ligne `const LIB` de la coquille reste `./lib` :
+2. **Copier la coquille et la carte** à la racine du site (organisation `Sites\`, `MANUEL.md` § 6.2) ; la ligne `const LIB` de la coquille reste `./lib` :
    `Copy-Item "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist\index.html" "P:\_OpenSim\SL&OS\Web_3d\Sites\index.html"; Copy-Item "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist\carte.html" "P:\_OpenSim\SL&OS\Web_3d\Sites\carte.html"`
 3. **Mettre à jour chaque région** avec `--update` (la config et les zones sont gardées). Donner le chemin de la coquille de la racine, sinon une coquille et un `lib` inutiles sont écrits dans le dossier de la région :
    `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python .\glb2html.py --update -o "P:\_OpenSim\SL&OS\Web_3d\Sites\houses\NOM.html" --shared-shell "P:\_OpenSim\SL&OS\Web_3d\Sites\index.html"`
    Région seule dans son dossier (coquille à côté d'elle) : `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python .\glb2html.py --update --shared-shell -o "P:\dossier\X.html"`. La coquille `index.html` est renouvelée si elle est plus ancienne (l'ancienne est gardée sous un nom daté).
-4. Recharger la page avec Ctrl+F5. La ligne du bas du panneau d'aide donne la version affichée (par exemple « glb2html 1.0.4 (31/10/2026) ») : si elle est ancienne, la mise à jour n'a pas eu lieu. Chaque fichier a **son** numéro, qui ne change que si le contenu de ce fichier change (`VERSIONS.json`, manuel § 37.6) : `python build.py` affiche le numéro de chaque fichier et marque ceux qui ont changé dans le lot.
+4. Recharger la page avec Ctrl+F5. La ligne du bas du panneau d'aide donne la version affichée (par exemple « glb2html 1.0.4 (31/10/2026) ») : si elle est ancienne, la mise à jour n'a pas eu lieu. Chaque fichier a **son** numéro, qui ne change que si le contenu de ce fichier change (`VERSIONS.json`, manuel § 13.2) : `python build.py` affiche le numéro de chaque fichier et marque ceux qui ont changé dans le lot.
 5. **Relancer le serveur de présence** depuis `dist\` (procédure 6) après chaque nouvelle version : un ancien exemplaire continue de marcher mais n'a pas les nouveautés (v47 : compteurs de la carte ; v48 : journal des visites).
 6. Le découpage en tuiles n'est à refaire que si la conversation le dit, par exemple pour de nouvelles informations dans les tuiles.
 
@@ -81,12 +81,12 @@ Clés utiles : `seaY` (hauteur de la mer, en m), `target` (`[x, y, z]`), `presen
 
 | Besoin | Où |
 |---|---|
-| Poser portail, arrivée, panneau, lien | viewer, `MANUEL.md` §§ 3 à 8 |
-| Arrivée utilisée à l'ouverture sans lien | une arrivée nommée `default` (§ 4) ; `--target` explicite garde le cadrage |
-| Portail vers une autre région | `MANUEL.md` § 6 |
-| Zone liée à un objet du modèle | `MANUEL.md` § 9 (en tuiles : § 17 ter) |
-| Zone privée (visible seulement avec le profil « private ») | `MANUEL.md` § 10 |
-| Image sur un mur (zone `image`) | viewer, type « Image (tableau sur un mur) », `MANUEL.md` § 37.1 ; pas à pas ci-dessous |
+| Poser portail, arrivée, panneau, lien | viewer, `MANUEL.md` chapitre 5 |
+| Arrivée utilisée à l'ouverture sans lien | une arrivée nommée `default` (§ 5.4) ; `--target` explicite garde le cadrage |
+| Portail vers une autre région | `MANUEL.md` § 5.6 |
+| Zone liée à un objet du modèle | `MANUEL.md` § 5.9 (en tuiles : § 5.14) |
+| Zone privée (visible seulement avec le profil « private ») | `MANUEL.md` § 5.10 |
+| Image sur un mur (zone `image`) | viewer, type « Image (tableau sur un mur) », `MANUEL.md` § 5.11 ; pas à pas ci-dessous |
 
 Les zones d'une région en tuiles s'écrivent dans le repère d'origine du modèle (aucun recentrage). Le viewer en mode tuiles produit ces coordonnées directement ; ne reporte pas à la main des coordonnées d'un autre GLB.
 
@@ -97,7 +97,7 @@ Les zones d'une région en tuiles s'écrivent dans le repère d'origine du modè
 3. Si tu as écrit `12` alors que seul `12-Titre.jpg` existe, fais écrire le vrai nom par le générateur, en relançant seulement les zones :
    `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python .\glb2html.py -o "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.html" --zones-only --zones "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.zones.json"`
 4. Recharge la page (F5) : une image ou un `12.txt` remplacé est repris tout seul. Ouverte du disque (`file://`), la page n'affiche pas les images : sers-la par `http` (démo en ligne, serveur web, ou `python -m http.server`).
-5. Facultatif, pour rendre le tableau cliquable : renseigne le champ « Lien (page ouverte au clic ou à E, facultatif) » du viewer, ou à la main `"link": "galerie.html"` dans la zone de `X.zones.json` (adresse relative à la page ouverte, ou `https://…`) ; une page reconstruite avec la 1.1.1 ou plus est nécessaire (`MANUEL.md` § 37.1).
+5. Facultatif, pour rendre le tableau cliquable : renseigne le champ « Lien (page ouverte au clic ou à E, facultatif) » du viewer, ou à la main `"link": "galerie.html"` dans la zone de `X.zones.json` (adresse relative à la page ouverte, ou `https://…`) ; une page reconstruite avec la 1.1.1 ou plus est nécessaire (`MANUEL.md` § 5.11).
 6. Pour repérer les emplacements 1, 2, 3… sans le viewer : dans la page, Réglages, case « Numéros des zones image (repérage) » (décochée à chaque ouverture).
 
 ## 6. Serveur de présence (positions, chat, modération)
@@ -107,10 +107,10 @@ Les zones d'une région en tuiles s'écrivent dans le repère d'origine du modè
    `python ".\presence_server.py" --log presence.log --log-ip raw --log-days 0`
    Historique du chat (v37) : 200 derniers messages rejoués aux nouveaux arrivants (`--history`) ; `--history-file chat.jsonl` le garde entre deux relances (messages = données personnelles, jamais d'adresse IP dans ce fichier), `--history-days N` (30 ; 0 = tout conserver) limite la relecture au démarrage.
 3. **Ouvrir le port** (8765 par défaut, `--port` pour en changer) dans la box, vers la machine qui fait tourner le serveur.
-4. **Brancher la page** : `--presence-url "ws://ADRESSE:8765"` à la fabrication, ou la clé `presenceUrl` de `X.config.json`. Si la page est en https, l'adresse doit être en `wss://` (voir `--cert` et `--key`, ou un reverse proxy avec `--proxy-header`). Si tes pages sont ouvertes par plusieurs adresses (`localhost`, réseau, nom public), mets `ws://*:8765` : l'étoile prend le nom par lequel la page a été ouverte (manuel § 34.10).
+4. **Brancher la page** : `--presence-url "ws://ADRESSE:8765"` à la fabrication, ou la clé `presenceUrl` de `X.config.json`. Si la page est en https, l'adresse doit être en `wss://` (voir `--cert` et `--key`, ou un reverse proxy avec `--proxy-header`). Si tes pages sont ouvertes par plusieurs adresses (`localhost`, réseau, nom public), mets `ws://*:8765` : l'étoile prend le nom par lequel la page a été ouverte (manuel § 10.17).
 5. **Modérer** dans la console du serveur : `liste` (visiteurs), `ejecter <n°|nom> [raison]`, `bannir <n°|nom> [minutes] [raison]` (0 = définitif), `bans`, `debannir <n° de bans>`, `pseudos` (liste les pseudos réservés), `oublier <pseudo>` (libère un pseudo réservé), `aide`. Un bannissement vise la clé du visiteur (si elle n'est pas anonyme) et son adresse IP : l'IPv4 exacte, l'IPv6 par préfixe `/64` (jamais une plage plus large).
-6. **Journal des visites** (v48) : ajoute `--visits visits.jsonl` à la ligne de lancement ; dans la console, `rooms` liste les salons connus (casse exacte) et `visits-key ROOM` donne la clé d'un salon (affichée une seule fois). Envoie au créateur l'adresse de sa page suivie de `#visits` et la clé (manuel § 31).
-7. **Accueillir un créateur** (v51, manuel § 34) : ajoute `--creators presence_creators.json` à la ligne de lancement ; dans ce fichier (copie de `docs\samples\presence_creators.sample.json`), garde une entrée pour toi (`"prefix": ""`, tes origines et `null`) et ajoute la sienne (`id`, origines de ses pages). Le créateur met `room` à `ID.NAME` (par exemple `alice.galerie`) et ton adresse `wss://` dans `presenceUrl` de sa config. Vérifie avec `creators` dans la console ; clé de ses visites : `visits-key alice.galerie` ; fiche sur ta carte : `--register` sans glb (manuel § 27.6).
+6. **Journal des visites** (v48) : ajoute `--visits visits.jsonl` à la ligne de lancement ; dans la console, `rooms` liste les salons connus (casse exacte) et `visits-key ROOM` donne la clé d'un salon (affichée une seule fois). Envoie au créateur l'adresse de sa page suivie de `#visits` et la clé (manuel § 10).
+7. **Accueillir un créateur** (v51, manuel § 10.10) : ajoute `--creators presence_creators.json` à la ligne de lancement ; dans ce fichier (copie de `docs\samples\presence_creators.sample.json`), garde une entrée pour toi (`"prefix": ""`, tes origines et `null`) et ajoute la sienne (`id`, origines de ses pages). Le créateur met `room` à `ID.NAME` (par exemple `alice.galerie`) et ton adresse `wss://` dans `presenceUrl` de sa config. Vérifie avec `creators` dans la console ; clé de ses visites : `visits-key alice.galerie` ; fiche sur ta carte : `--register` sans glb (manuel § 11.6).
 8. **Mettre à jour** : arrête le serveur (Ctrl+C) et relance-le depuis le `presence_server.py` du dossier `dist` après `python build.py`. Un ancien exemplaire ignore les nouveautés (par exemple la couleur choisie).
 9. **Serveur permanent sur une VM** : un service systemd seul ne donne pas de clavier à la console de modération ; la façon qui a marché (une session `tmux` lancée par systemd) est décrite au § 11, « VM Debian 13 : service permanent avec console de modération ».
 
@@ -118,15 +118,15 @@ Les adresses IP et les messages du chat sont des données personnelles : informe
 
 ## 7. Carte des mondes
 
-Avec l'organisation `Sites\` (une coquille à la racine, un dossier par région, `MANUEL.md` § 29.8) :
+Avec l'organisation `Sites\` (une coquille à la racine, un dossier par région, `MANUEL.md` § 6.2) :
 
 1. **Mettre à jour `regions.json` depuis le dossier** (v49) :
    `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python .\glb2html.py --scan-sites "P:\_OpenSim\SL&OS\Web_3d\Sites" --dry-run`
-   puis la même ligne sans `--dry-run`. Une fiche par région trouvée, avec sa vignette `NOM.jpg` à côté de `NOM.config.json` (carré de 320 pixels conseillé) ; les noms, places et arrivées déjà notés sont gardés ; rien n'est supprimé (`MANUEL.md` § 32).
+   puis la même ligne sans `--dry-run`. Une fiche par région trouvée, avec sa vignette `NOM.jpg` à côté de `NOM.config.json` (carré de 320 pixels conseillé) ; les noms, places et arrivées déjà notés sont gardés ; rien n'est supprimé (`MANUEL.md` § 9.9).
 2. **Nommer et placer les régions** une fois : `name`, `x`, `y` et `spawn` dans `Sites\regions.json`, à la main ou avec le viewer (« Importer regions.json », modifier, « Exporter regions.json » : l'en-tête et tous les champs sont gardés depuis la v50). Les parcours suivants les gardent.
-3. **Afficher la carte** : `carte.html` (copiée à la racine, procédure 4) relit `regions.json` à chaque ouverture, rien à régénérer (`MANUEL.md` § 30.4). L'ouvrir par le serveur web, par exemple `http://localhost:8000/carte.html` après `cd "P:\_OpenSim\SL&OS\Web_3d\Sites"; python -m http.server 8000`. Un champ « Mon pseudo » en haut ajoute `name=` aux liens des régions.
+3. **Afficher la carte** : `carte.html` (copiée à la racine, procédure 4) relit `regions.json` à chaque ouverture, rien à régénérer (`MANUEL.md` § 9.7). L'ouvrir par le serveur web, par exemple `http://localhost:8000/carte.html` après `cd "P:\_OpenSim\SL&OS\Web_3d\Sites"; python -m http.server 8000`. Un champ « Mon pseudo » en haut ajoute `name=` aux liens des régions.
 
-Sans dossier de site : `--register regions.json` ajoute la région à chaque génération (`--region-name`, `--region-xy x,y`), et `--map-page carte.html` écrit une page autonome qui contient la liste (`MANUEL.md` § 30.4).
+Sans dossier de site : `--register regions.json` ajoute la région à chaque génération (`--region-name`, `--region-xy x,y`), et `--map-page carte.html` écrit une page autonome qui contient la liste (`MANUEL.md` § 9.7).
 
 Avec une seule région, la carte n'apporte rien : elle sert à relier plusieurs régions entre elles.
 
@@ -154,7 +154,7 @@ Avec une seule région, la carte n'apporte rien : elle sert à relier plusieurs 
 | Erreurs « Couldn't load texture » | images de 0 octet dans des tuiles d'avant la v31 | redécouper avec glb2tiles v31 ou plus |
 | Pas de chat | page fabriquée sans `--presence-url` ou sans `--chat` | ajouter les options avec `--update`, relancer le serveur |
 | La couleur d'avatar ne change pas | serveur de présence ancien | relancer le `presence_server.py` du dossier `dist` |
-| Message « La 3D ne peut pas s'afficher : WebGL est indisponible » | accélération matérielle coupée : Edge et Chrome récents refusent le rendu logiciel | ouvrir la page dans Firefox ; ou Edge avec `--enable-unsafe-swiftshader` dans un profil réservé ; ou réactiver l'accélération ; vérifier `edge://gpu` (manuel § 37.5) |
+| Message « La 3D ne peut pas s'afficher : WebGL est indisponible » | accélération matérielle coupée : Edge et Chrome récents refusent le rendu logiciel | ouvrir la page dans Firefox ; ou Edge avec `--enable-unsafe-swiftshader` dans un profil réservé ; ou réactiver l'accélération ; vérifier `edge://gpu` (manuel § 7.60) |
 | Une image de zone n'apparaît pas | page ouverte du disque (`file://`), fichier absent de `medias/` et du dossier de la région, nom différent | servir la page par `http` ; « Copier le diagnostic » : la ligne « Image » donne la cible et le fichier lu (ou « masquée ») ; relancer `--zones-only` (§ 5) |
 | Une image remplacée ne change pas | page ou coquille d'avant la 1.0.3 (cache du navigateur) | `--update`, puis Ctrl+F5 (§ 4) ; ensuite F5 suffit |
 | Copier le texte de l'aide | — | sélectionner à la souris, Ctrl+C ; sinon, dans la console : `copy(document.body.innerText)` |
@@ -187,7 +187,7 @@ Pour tout rapport de bug, colle le texte du panneau d'état et d'aide, et les me
 | Téléphone, tablette (v46) | mode tactile automatique (réglage « Commandes tactiles ») : colonne de boutons, « Menu », glisser du doigt pour regarder, appui long = bulle |
 | Paramètres de l'adresse | séparés par `&` ; `#` est aussi accepté (`#name=Klaatou&lang=en` = `#name=Klaatou#lang=en`) |
 
-Détail : `MANUEL.md` §§ 2, 21 et 22.
+Détail : `MANUEL.md` chapitre 7 (touches) et §§ 7.49 à 7.51 (langue).
 
 ---
 
@@ -313,7 +313,7 @@ WantedBy=multi-user.target
 Puis `systemctl daemon-reload` et `systemctl enable --now web3d-presence`. Ce sont les copies des deux fichiers de la VM de l'auteur.
 
 4. **Console** : sous l'utilisateur de la VM (pas `root`), `tmux attach -t presence` ; depuis le PC, `ssh -t UTILISATEUR@ADRESSE_VM "tmux attach -t presence"` (le copier-coller marche) ; pour sortir sans arrêter le serveur : **Ctrl+B** puis **D** ; pour l'arrêter pour de bon : `systemctl stop web3d-presence` (`root`).
-5. **Mettre à jour le serveur** après un `python build.py` qui change `presence_server.py` : envoyer le fichier de `dist\` par `scp`, puis `systemctl restart web3d-presence`. Ensuite, tape `version` dans la console : la version et l'empreinte affichées doivent être celles que `python build.py` a listées pour `presence_server.py` (manuel § 37.6). La VM a **sa propre copie** de `presence_creators.json` et de `presence_identities.json` (pseudos réservés).
+5. **Mettre à jour le serveur** après un `python build.py` qui change `presence_server.py` : envoyer le fichier de `dist\` par `scp`, puis `systemctl restart web3d-presence`. Ensuite, tape `version` dans la console : la version et l'empreinte affichées doivent être celles que `python build.py` a listées pour `presence_server.py` (manuel § 13.2). La VM a **sa propre copie** de `presence_creators.json` et de `presence_identities.json` (pseudos réservés).
 6. **Essayé le 29/10/2026** : `reboot` (la session `presence` et la publication Funnel reviennent seules) ; `tmux kill-server` (le service revient en quelques secondes) ; un visiteur extérieur, depuis une page de GitHub Pages.
 7. **Pièges de Debian 13** :
    - le paquet `python` n'existe plus : `python3` ;

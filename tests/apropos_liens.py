@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Test 1.4.9 : panneau « A propos de la region » : liens cliquables, bouton « Aide des visiteurs », libelle du bouton de l'aide avec la touche ?.
 
-Deux sites servis par http.server, la meme region : l'un avec aide.html a cote de la coquille, l'autre sans.
+Trois sites servis par http.server, la meme region : « avec » (a propos + aide.html), « sans » (a propos, pas d'aide.html), « aide » (aide.html, pas d'a propos).
 Verifie : les adresses http(s):// du texte deviennent des liens (nouvel onglet, rel noopener), la ponctuation finale reste du texte, le texte affiche est
 identique au fichier, une adresse javascript: et une balise <a> ecrite dans le texte restent du texte ; le bouton « Aide des visiteurs » n'existe qu'avec
-aide.html et ouvre aide.html dans un nouvel onglet ; le bouton de l'aide dit « (touche ?) » ; aucune erreur JavaScript.
+aide.html et ouvre aide.html dans un nouvel onglet ; le lien « Aide des visiteurs » de la fenetre Aide (touche H) existe avec aide.html, meme sans a propos, et
+disparait sans aide.html ; le bouton de l'aide dit « (touche ?) » ; aucune erreur JavaScript.
 
 Prerequis : pip install playwright ; python build.py avant. Variables facultatives : THREE_DIR, CHROMIUM.
 Lancer : python tests/apropos_liens.py
@@ -22,12 +23,13 @@ src = tmp / "src"
 src.mkdir()
 sol_glb(src / "Liens.glb")
 sites = {}
-for nom, aide in (("avec", True), ("sans", False)):
+for nom, aide, apropos in (("avec", True, True), ("sans", False, True), ("aide", True, False)):
     d = tmp / nom
     d.mkdir()
     html(src / "Liens.glb", "-o", d / "Liens.html", "--shared-shell")
     shutil.copy(DIST / "index.html", d / "index.html")
-    (d / "Liens.about.fr.txt").write_text(TEXTE, encoding="utf-8")
+    if apropos:
+        (d / "Liens.about.fr.txt").write_text(TEXTE, encoding="utf-8")
     if aide:
         (d / "aide.html").write_text("<!doctype html><title>Aide</title><p>aide des visiteurs</p>", encoding="utf-8")
     sites[nom] = d
@@ -49,8 +51,12 @@ async def main():
                 pg = await ctx.new_page()
                 pg.on("pageerror", lambda e: errs.append(str(e)))
                 await pg.goto(f"http://127.0.0.1:{port}/index.html?region=Liens")
-                await pg.wait_for_function("!document.getElementById('aboutOverlay').hidden", timeout=60000)
+                if nom == "aide":
+                    await pg.wait_for_function("document.getElementById('msg') === null", timeout=60000)
+                else:
+                    await pg.wait_for_function("!document.getElementById('aboutOverlay').hidden", timeout=60000)
                 await pg.wait_for_timeout(600)   # le test d'existence d'aide.html est asynchrone
+                LIEN = "(() => { const a = document.getElementById('aideLink'); return a ? [!a.parentElement.hidden, a.getAttribute('href').split('/').pop(), a.textContent] : null; })()"
                 if nom == "avec":
                     liens = await pg.evaluate("[...document.querySelectorAll('#aboutText a')].map(a => [a.getAttribute('href'), a.target, a.rel, a.textContent])")
                     rapport(liens == [["https://exemple.org/page?a=1&b=2", "_blank", "noopener noreferrer", "https://exemple.org/page?a=1&b=2"],
@@ -74,8 +80,13 @@ async def main():
                     await pg.wait_for_timeout(300)
                     lab = await pg.evaluate("(document.getElementById('aboutBtn') || {}).textContent || ''")
                     rapport(lab == "À propos de la région (touche ?)", "bouton de l'aide : « À propos de la région (touche ?) »", lab)
-                else:
+                    rapport(await pg.evaluate(LIEN) == [True, "aide.html", "Aide des visiteurs"], "fenetre Aide : lien « Aide des visiteurs » visible (avec aide.html)", await pg.evaluate(LIEN))
+                elif nom == "sans":
                     rapport(await pg.evaluate("document.getElementById('aboutHelp').hidden"), "sans aide.html : pas de bouton « Aide des visiteurs »")
+                    rapport((await pg.evaluate(LIEN) or [True])[0] is False, "fenetre Aide : lien « Aide des visiteurs » cache (sans aide.html)", await pg.evaluate(LIEN))
+                else:
+                    rapport(await pg.evaluate("!document.getElementById('aboutBtn') && !document.getElementById('aboutOverlay').offsetParent"), "aide seule : pas d'a propos (ni bouton, ni panneau)")
+                    rapport(await pg.evaluate(LIEN) == [True, "aide.html", "Aide des visiteurs"], "aide seule : le lien « Aide des visiteurs » est dans la fenetre Aide", await pg.evaluate(LIEN))
                 await ctx.close()
             finally:
                 http.kill()

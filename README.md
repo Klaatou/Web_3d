@@ -62,29 +62,29 @@ The full steps (OAR to page, tiled region, update, zones, public presence server
 
 ## A site: one shell, one folder per region
 
-Recommended layout (manual § 29.8): at the root of the site, a single shell `index.html` (copy of `dist/index.html`), the `lib/` folder, `regions.json` and `carte.html` (copy of `dist/carte.html`); then one folder per region with its `NOM.glb` (or its tiles), `NOM.config.json` and `NOM.zones.json`. A region opens at `index.html?region=dossier/NOM`. The site must be served over http/https (local test: `python -m http.server`).
+Recommended layout (manual § 6.2): at the root of the site, a single shell `index.html` (copy of `dist/index.html`), the `lib/` folder, `regions.json` and `carte.html` (copy of `dist/carte.html`); then one folder per region with its `NOM.glb` (or its tiles), `NOM.config.json` and `NOM.zones.json`. A region opens at `index.html?region=dossier/NOM`. The site must be served over http/https (local test: `python -m http.server`).
 
 - Update a region after a new version: `python glb2html.py --update -o "SITE/dossier/NOM.html" --shared-shell "SITE/index.html"` (the path of the root shell avoids writing a useless shell into the region's folder).
-- Update the map of the whole site: `python glb2html.py --scan-sites SITE --dry-run`, then without `--dry-run` (v49, manual § 32).
+- Update the map of the whole site: `python glb2html.py --scan-sites SITE --dry-run`, then without `--dry-run` (v49, manual § 9.9).
 
 ## Modular mode and shared shell
 
 `--modular` writes `Region.html` (a shell, identical for every region: it derives its files from its own name), `Region.glb`, `Region.config.json` (settings, read again on every F5), `Region.zones.json` (zones, read again on every F5) and `lib/three-0.160.0/`. With `--shared-shell`, one shell and one `lib/` serve several regions: `-o` names the region, and the shell and `lib/` are only written when missing. NAME must be a file name or a path of sub-folders (`a/b/nom`): addresses, `..`, an empty name or a name starting with a dot are refused without any network request.
 
-`--config-only` rewrites only the config, `--zones-only` only the zones. The viewer exports the same structure as a `.zip`, next to "Export standalone HTML" (a single page that opens from disk). Details: manual § 16, JSON file reference: § 27.
+`--config-only` rewrites only the config, `--zones-only` only the zones. The viewer exports the same structure as a `.zip`, next to "Export standalone HTML" (a single page that opens from disk). Details: manual § 11.12, JSON file reference: § 11.
 
 ## Tiled regions
 
-For a huge model, `glb2tiles.py` writes the tiles, and `glb2html.py --tiles X.tiles.json -o X.html --shared-shell` builds the page: the tiles near the avatar are loaded and unloaded while walking, a light overview stays visible, and zones can be linked to objects of the tiles. Details: manual § 17.
+For a huge model, `glb2tiles.py` writes the tiles, and `glb2html.py --tiles X.tiles.json -o X.html --shared-shell` builds the page: the tiles near the avatar are loaded and unloaded while walking, a light overview stays visible, and zones can be linked to objects of the tiles. Details: manual § 4.1.
 
 ## World map
 
-`regions.json` is the map: a list of cards (name, address, X, Y, arrival point, room, presence server, thumbnail), or, since v47, an object `{"showUrl": ..., "regions": [...]}` with a header. It is fed in three ways, which all keep the header and the shape of the file: `--register` (the region being generated), `--scan-sites` (every region of a site, with their thumbnails) and the viewer's "Import / Export regions.json" buttons (v50). `carte.html` reads it again each time it opens; `--map-page` writes instead a standalone page that contains the list; `--map-url a.json,b.json` merges the maps of several owners. Each tile shows the number of visitors. Details: manual § 27.6, § 30, § 32 and § 33.
+`regions.json` is the map: a list of cards (name, address, X, Y, arrival point, room, presence server, thumbnail), or, since v47, an object `{"showUrl": ..., "regions": [...]}` with a header. It is fed in three ways, which all keep the header and the shape of the file: `--register` (the region being generated), `--scan-sites` (every region of a site, with their thumbnails) and the viewer's "Import / Export regions.json" buttons (v50). `carte.html` reads it again each time it opens; `--map-page` writes instead a standalone page that contains the list; `--map-url a.json,b.json` merges the maps of several owners. Each tile shows the number of visitors. Details: manual § 11.6, § 9, § 9.9 and § 9.13.
 
 ## The page
 
 - **Walking**: avatar, collisions, running, jumping, flying, three views (first person, third person, free camera), compass, arrival points and portals, teleport through the Arrivals window (L) or by double-click.
-- **Zones**: arrivals, portals, web links, Home Assistant commands and **pictures on walls** (files put in the region's `medias` subfolder, caption in the file name or in a `.txt` file); hosted mode only (manual § 37.1).
+- **Zones**: arrivals, portals, web links, Home Assistant commands and **pictures on walls** (files put in the region's `medias` subfolder, caption in the file name or in a `.txt` file); hosted mode only (manual § 5.11).
 - **Windows**: Help (H), Information (I), Arrivals (L), Settings (O), movable and remembered by the browser (v41); "Copy diagnostics" button (v39); "Visit log…" when the page has a presence server (v48).
 - **On-screen controls** (v46): status line, 3 x 3 arrows (K key), touch mode for phones and tablets.
 - **Light rendering** (v42): resolution, frames per second, overview only, tile radius, anti-aliasing (`--light`).
@@ -107,11 +107,11 @@ For a huge model, `glb2tiles.py` writes the tiles, and `glb2html.py --tiles X.ti
 | **G**                                                       | grab the mouse again after **Esc**                                                                  |
 | **Enter**                                                   | write in the chat                                                                                   |
 
-The "Keyboard" setting (Auto, AZERTY or QWERTY) only changes the letters shown in the help; the physical keys stay the same. Full table: manual § 2 and § 20.2.
+The "Keyboard" setting (Auto, AZERTY or QWERTY) only changes the letters shown in the help; the physical keys stay the same. Full table: manual § 7.1 and § 7.2.
 
 ## Presence server
 
-Positions, chat (history `--history-file`), moderation from its console (`liste`, `ejecter`, `bannir`, `bans`, `debannir`, `rooms`, `visits-key`, `creators`, `aide`; English aliases `list`, `kick`, `ban`, `unban`, `help`), visitor counters for the map, a visit log without IP addresses (`--visits`, v48) that the creator reads with `#visits` and their key, hosting of other creators (`--creators`, v51: declared pages, rooms reserved by a prefix, manual § 34). Making it public without showing its IP address: procedures § 11. Details: manual § 31.
+Positions, chat (history `--history-file`), moderation from its console (`liste`, `ejecter`, `bannir`, `bans`, `debannir`, `rooms`, `visits-key`, `creators`, `aide`; English aliases `list`, `kick`, `ban`, `unban`, `help`), visitor counters for the map, a visit log without IP addresses (`--visits`, v48) that the creator reads with `#visits` and their key, hosting of other creators (`--creators`, v51: declared pages, rooms reserved by a prefix, manual § 10.10). Making it public without showing its IP address: procedures § 11. Details: manual § 10.
 
 ## Language
 

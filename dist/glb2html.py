@@ -16,8 +16,8 @@ Draco et Meshopt gérés automatiquement (décodeurs intégrés seulement si le 
 """
 from __future__ import annotations
 
-VERSION = "1.4.10 (03/11/2026)"
-SHELL_VERSION = "1.4.10 (03/11/2026)"   # numéro de version de la coquille (index.html) : écrit par build.py, ne change que si la coquille change
+VERSION = "1.4.11 (03/11/2026)"
+SHELL_VERSION = "1.4.11 (03/11/2026)"   # numéro de version de la coquille (index.html) : écrit par build.py, ne change que si la coquille change
 MAP_VERSION = "1.4.9 (03/11/2026)"       # numéro de version de la page de carte (carte.html) : idem
 
 import argparse
@@ -3707,6 +3707,9 @@ const fade = document.getElementById('fade');
 // 1.4.5 : « À propos de la région » : NOM.about.<langue>.txt, sinon NOM.about.txt, à côté de NOM.config.json (région chargée par la coquille ; absent d'une page autonome).
 // Un site statique ne peut pas lister un dossier : essais par fetch, un 404 est silencieux. Texte brut (textContent) ; première ligne = titre.
 const ABOUT = { text: '', title: '', name: '', ready: null, ABOUT_MAX: 20000 };
+// 1.4.11 : aide.html à côté de la coquille (page des paquets) ? Essai HEAD une seule fois, en http(s) seulement ; sert à la fenêtre Aide et au panneau « À propos »
+const AIDE = { url: new URL('aide.html', location.href).href, ok: null };
+AIDE.ok = /^https?:$/.test(location.protocol) ? fetch(AIDE.url, { method: 'HEAD', cache: 'no-store' }).then(r => r.ok).catch(() => false) : Promise.resolve(false);
 ABOUT.ready = (async () => {
   if (typeof BOOT === 'undefined' || !BOOT || !BOOT.about) return;
   ABOUT.name = String(BOOT.name || '');
@@ -4266,7 +4269,11 @@ if (C.walk) {
   // v40 : lien vers le manuel complet sur GitHub (français si la page est en français, anglais sinon)
   const l3 = document.createElement('div'), man = document.createElement('a');
   l3.style.cssText = 'font-size:11px;margin-top:4px'; man.id = 'manualLink'; man.href = manualUrl(); man.target = '_blank'; man.rel = 'noopener'; man.textContent = tr('core.manual'); l3.append(man);
-  hbody.append(l1, l2, l3);
+  // 1.4.11 : lien « Aide des visiteurs » (aide.html) dans la fenêtre Aide, même sans fichier « À propos »
+  const l4 = document.createElement('div'), aid = document.createElement('a');
+  l4.style.cssText = 'font-size:11px;margin-top:4px'; l4.hidden = true; aid.id = 'aideLink'; aid.href = AIDE.url; aid.target = '_blank'; aid.rel = 'noopener'; aid.textContent = tr('page.about.helpbtn'); l4.append(aid);
+  AIDE.ok.then(ok => { l4.hidden = !ok; });
+  hbody.append(l1, l2, l3, l4);
   const fillGroups = groups => {
     l1.textContent = '';
     for (const g of groups) { const d = document.createElement('div'); d.className = 'grp'; const b = document.createElement('b'); b.textContent = g.t; d.append(b, g.items.join(' · ')); l1.append(d); }
@@ -5040,9 +5047,9 @@ ABOUT.ready.then(() => {
   document.getElementById('aboutHide').onclick = () => { aboutSetHidden(true); if (aboutOpt) aboutOpt.checked = false; aboutClose(); };
   aboutOv.addEventListener('click', e => { if (e.target === aboutOv) aboutClose(); });
   // 1.4.9 : bouton « Aide des visiteurs » si aide.html existe à côté de la coquille (page des paquets) ; ouvre un nouvel onglet
-  const ah = document.getElementById('aboutHelp'), aideUrl = new URL('aide.html', location.href).href;
-  ah.textContent = tr('page.about.helpbtn'); ah.onclick = () => window.open(aideUrl, '_blank', 'noopener');
-  if (/^https?:$/.test(location.protocol)) fetch(aideUrl, { method: 'HEAD', cache: 'no-store' }).then(r => { if (r.ok) ah.hidden = false; }).catch(() => {});
+  const ah = document.getElementById('aboutHelp');
+  ah.textContent = tr('page.about.helpbtn'); ah.onclick = () => window.open(AIDE.url, '_blank', 'noopener');
+  AIDE.ok.then(ok => { if (ok) ah.hidden = false; });
   const opn = document.getElementById('optsPanel');
   if (opn) {   // case des réglages : cochée = le panneau s'ouvre à l'entrée
     const cb = document.createElement('input'), lb = document.createElement('label'), sp = document.createElement('span');
@@ -5202,7 +5209,7 @@ SHELL_CFG_TAG = '<script type="application/json" id="cfg">__CONFIG__</script>\n'
 SHELL_GLB_TAG = '<script type="application/octet-stream" id="glb">__GLB_B64__</script>\n'
 SHELL_LOAD_OLD = "await viewer.loadBuffer(await b64ToBuffer(document.getElementById('glb').textContent.trim()));"
 SHELL_LOAD_NEW = """if (C.tiles) {
-    // région en tuiles (X.tiles.json, voir docs/fr/MANUEL.md § 17 bis) : pas de X.glb ; ?radius=NNN remplace tileRadius (essais).
+    // région en tuiles (X.tiles.json, voir docs/fr/MANUEL.md chapitre 8) : pas de X.glb ; ?radius=NNN remplace tileRadius (essais).
     // Arrivée demandée (lien #spawn= ou #pos=) : cadrage et chargement d'abord sur ce point. Sans lien, arrivée « default » si la région en a une
     // (sauf --target explicite) ; sinon la cible de la configuration. La page continue après 15 s même si la tuile n'est pas prête.
     const rayon = Number(new URLSearchParams(location.search).get('radius') || new URLSearchParams(location.search).get('rayon'));   // v43 : ?radius= ; l'ancien ?radius= reste lu

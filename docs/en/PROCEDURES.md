@@ -32,13 +32,13 @@ Choose this when `glb2tiles --analyse` does not recommend splitting (roughly: GL
 4. **Serve and open.** The page must go through a web server, not a double-click.
    `cd "P:\_OpenSim\SL&OS\Web_3d\sites\MaRegion"; python -m http.server 8000`
    Then `http://localhost:8000/index.html?region=MaRegion`.
-5. **Place the zones** (portals, arrivals, signs) in `glb-viewer.html`: see `MANUAL.md` §§ 3 to 12. When you are done, the viewer exports `MaRegion.zones.json`: copy it into the page's folder, then F5.
+5. **Place the zones** (portals, arrivals, signs) in `glb-viewer.html`: see `MANUAL.md` chapter 5. When you are done, the viewer exports `MaRegion.zones.json`: copy it into the page's folder, then F5.
 
 ## 2. From an OAR to a web page, heavy region (tiles)
 
 The case of the 4X4: a 1.2 GB GLB does not fit in one piece in the browser. Tiles load around the avatar and the rest is unloaded; the overview shows the whole region from afar.
 
-1. **Convert the OAR** as in 1.1. It can take several hours and several tens of GB of memory (4 h 20 and 45 GB for the 4X4). If convoar crashes while reading the JPEG 2000 textures, run it again with `--reencode` (see `MANUAL.md` § 15: only as a last resort).
+1. **Convert the OAR** as in 1.1. It can take several hours and several tens of GB of memory (4 h 20 and 45 GB for the 4X4). If convoar crashes while reading the JPEG 2000 textures, run it again with `--reencode` (see `MANUAL.md` § 3: only as a last resort).
 2. **Analyse** (read-only):
    `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python glb2tiles.py "J:\...\OAR\X.glb" --analyse`
 3. **Split.** `--output` is the folder where `X.tiles\`, `X.tiles.json` and `X.overview.glb` are written. `--exclude` removes from the split the objects whose name matches (safeguards: at most 24 triangles and 1 mesh), for example the delivery boxes of catalogues.
@@ -68,12 +68,12 @@ Useful keys: `seaY` (sea level, in m), `target` (`[x, y, z]`), `presenceUrl`, `c
 1. **Apply the patch and build** (the conversation gives the exact lines, each on one line):
    `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d"; git pull; python .\patch_NOM.py; if ($LASTEXITCODE -eq 0) { python build.py }`
    then the `git add …; git commit …; git push` line delivered with the patch, and, only when you decide on a release, `git tag v1.1.0; git push origin v1.1.0` (the number is the one in `VERSION`).
-2. **Copy the shell and the map** to the root of the site (`Sites\` layout, `MANUAL.md` § 29.8); the shell's `const LIB` line stays `./lib`:
+2. **Copy the shell and the map** to the root of the site (`Sites\` layout, `MANUAL.md` § 6.2); the shell's `const LIB` line stays `./lib`:
    `Copy-Item "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist\index.html" "P:\_OpenSim\SL&OS\Web_3d\Sites\index.html"; Copy-Item "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist\carte.html" "P:\_OpenSim\SL&OS\Web_3d\Sites\carte.html"`
 3. **Update each region** with `--update` (the config and the zones are kept). Give the path of the root shell, otherwise a useless shell and `lib` are written in the region's folder:
    `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python .\glb2html.py --update -o "P:\_OpenSim\SL&OS\Web_3d\Sites\houses\NOM.html" --shared-shell "P:\_OpenSim\SL&OS\Web_3d\Sites\index.html"`
    Region alone in its folder (shell next to it): `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python .\glb2html.py --update --shared-shell -o "P:\dossier\X.html"`. The `index.html` shell is renewed if it is older (the old one is kept under a dated name).
-4. Reload the page with Ctrl+F5. The bottom line of the help panel gives the version displayed (for example "glb2html 1.0.4 (31/10/2026)"): if it is old, the update did not happen. Each file has **its own** number, which changes only when the content of that file changes (`VERSIONS.json`, manual § 37.6): `python build.py` prints each file's number and marks those that changed in the batch.
+4. Reload the page with Ctrl+F5. The bottom line of the help panel gives the version displayed (for example "glb2html 1.0.4 (31/10/2026)"): if it is old, the update did not happen. Each file has **its own** number, which changes only when the content of that file changes (`VERSIONS.json`, manual § 13.2): `python build.py` prints each file's number and marks those that changed in the batch.
 5. **Restart the presence server** from `dist\` (procedure 6) after each new version: an old copy keeps working but lacks the new features (v47: map counters; v48: visit log).
 6. The tile split only needs to be redone if the conversation says so, for example for new information in the tiles.
 
@@ -81,12 +81,12 @@ Useful keys: `seaY` (sea level, in m), `target` (`[x, y, z]`), `presenceUrl`, `c
 
 | Need | Where |
 |---|---|
-| Place a portal, arrival, sign, link | viewer, `MANUAL.md` §§ 3 to 8 |
-| Arrival used when the page is opened without a link | an arrival named `default` (§ 4); an explicit `--target` keeps the framing |
-| Portal to another region | `MANUAL.md` § 6 |
-| Zone linked to an object of the model | `MANUAL.md` § 9 (as tiles: § 17 ter) |
-| Private zone (visible only with the "private" profile) | `MANUAL.md` § 10 |
-| Picture on a wall (`image` zone) | viewer, type "Picture (on a wall)", `MANUAL.md` § 37.1; step by step below |
+| Place a portal, arrival, sign, link | viewer, `MANUAL.md` chapter 5 |
+| Arrival used when the page is opened without a link | an arrival named `default` (§ 5.4); an explicit `--target` keeps the framing |
+| Portal to another region | `MANUAL.md` § 5.6 |
+| Zone linked to an object of the model | `MANUAL.md` § 5.9 (as tiles: § 5.14) |
+| Private zone (visible only with the "private" profile) | `MANUAL.md` § 5.10 |
+| Picture on a wall (`image` zone) | viewer, type "Picture (on a wall)", `MANUAL.md` § 5.11; step by step below |
 
 The zones of a tiled region are written in the model's original frame (no recentring). The viewer in tiles mode produces these coordinates directly; do not copy by hand coordinates from another GLB.
 
@@ -97,7 +97,7 @@ The zones of a tiled region are written in the model's original frame (no recent
 3. If you wrote `12` while only `12-Titre.jpg` exists, have the generator write the real name, running only the zones again:
    `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python .\glb2html.py -o "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.html" --zones-only --zones "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.zones.json"`
 4. Reload the page (F5): a replaced image or `12.txt` is picked up by itself. Opened from disk (`file://`), the page does not show images: serve it over `http` (online demo, web server, or `python -m http.server`).
-5. Optional, to make the picture clickable: fill in the viewer's "Link (page opened on click or E, optional)" field, or by hand `"link": "galerie.html"` in the zone of `X.zones.json` (an address relative to the open page, or `https://…`); a page rebuilt with 1.1.1 or later is required (`MANUAL.md` § 37.1).
+5. Optional, to make the picture clickable: fill in the viewer's "Link (page opened on click or E, optional)" field, or by hand `"link": "galerie.html"` in the zone of `X.zones.json` (an address relative to the open page, or `https://…`); a page rebuilt with 1.1.1 or later is required (`MANUAL.md` § 5.11).
 6. To find positions 1, 2, 3… without the viewer: in the page, Settings, "Image zone numbers (to find them)" box (unticked at every opening).
 
 ## 6. Presence server (positions, chat, moderation)
@@ -107,10 +107,10 @@ The zones of a tiled region are written in the model's original frame (no recent
    `python ".\presence_server.py" --log presence.log --log-ip raw --log-days 0`
    Chat history (v37): the last 200 messages are replayed to newcomers (`--history`); `--history-file chat.jsonl` keeps it between two restarts (messages are personal data, never an IP address in this file), `--history-days N` (30; 0 = keep everything) limits what is read back at startup.
 3. **Open the port** (8765 by default, `--port` to change it) on the router, towards the machine running the server.
-4. **Connect the page**: `--presence-url "ws://ADRESSE:8765"` when building, or the `presenceUrl` key of `X.config.json`. If the page is served over https, the address must use `wss://` (see `--cert` and `--key`, or a reverse proxy with `--proxy-header`). If your pages are opened through several addresses (`localhost`, network, public name), use `ws://*:8765`: the star takes the name the page was opened with (manual § 34.10).
+4. **Connect the page**: `--presence-url "ws://ADRESSE:8765"` when building, or the `presenceUrl` key of `X.config.json`. If the page is served over https, the address must use `wss://` (see `--cert` and `--key`, or a reverse proxy with `--proxy-header`). If your pages are opened through several addresses (`localhost`, network, public name), use `ws://*:8765`: the star takes the name the page was opened with (manual § 10.17).
 5. **Moderate** in the server console: `list` (visitors), `kick <no.|name> [reason]`, `ban <no.|name> [minutes] [reason]` (0 = permanent), `bans`, `unban <no. in bans>`, `pseudos` (lists the reserved names), `oublier <pseudo>` (releases a reserved name), `help`. A ban targets the visitor's key (if it is not anonymous) and their IP address: the exact IPv4 address, IPv6 by `/64` prefix (never a wider range).
-6. **Visit log** (v48): add `--visits visits.jsonl` to the start line; in the console, `rooms` lists the known rooms (exact case) and `visits-key ROOM` gives a room's key (shown only once). Send the creator their page address followed by `#visits` and the key (manual § 31).
-7. **Welcome a creator** (v51, manual § 34): add `--creators presence_creators.json` to the start line; in this file (copy of `docs\samples\presence_creators.sample.json`), keep an entry for yourself (`"prefix": ""`, your origins and `null`) and add theirs (`id`, origins of their pages). The creator sets `room` to `ID.NAME` (for example `alice.galerie`) and your `wss://` address in `presenceUrl` of their config. Check with `creators` in the console; key of their visits: `visits-key alice.galerie`; card on your map: `--register` without a glb (manual § 27.6).
+6. **Visit log** (v48): add `--visits visits.jsonl` to the start line; in the console, `rooms` lists the known rooms (exact case) and `visits-key ROOM` gives a room's key (shown only once). Send the creator their page address followed by `#visits` and the key (manual § 10).
+7. **Welcome a creator** (v51, manual § 10.10): add `--creators presence_creators.json` to the start line; in this file (copy of `docs\samples\presence_creators.sample.json`), keep an entry for yourself (`"prefix": ""`, your origins and `null`) and add theirs (`id`, origins of their pages). The creator sets `room` to `ID.NAME` (for example `alice.galerie`) and your `wss://` address in `presenceUrl` of their config. Check with `creators` in the console; key of their visits: `visits-key alice.galerie`; card on your map: `--register` without a glb (manual § 11.6).
 8. **Update**: stop the server (Ctrl+C) and run it again from the `presence_server.py` of the `dist` folder after `python build.py`. An old copy ignores new features (for example the chosen colour).
 9. **Permanent server on a VM**: a plain systemd service gives the moderation console no keyboard; the way that worked (a `tmux` session started by systemd) is described in § 11, "Debian 13 VM: permanent service with a moderation console".
 
@@ -118,15 +118,15 @@ IP addresses and chat messages are personal data: inform your visitors and limit
 
 ## 7. World map
 
-With the `Sites\` layout (one shell at the root, one folder per region, `MANUAL.md` § 29.8):
+With the `Sites\` layout (one shell at the root, one folder per region, `MANUAL.md` § 6.2):
 
 1. **Update `regions.json` from the folder** (v49):
    `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python .\glb2html.py --scan-sites "P:\_OpenSim\SL&OS\Web_3d\Sites" --dry-run`
-   then the same line without `--dry-run`. One card per region found, with its `NOM.jpg` thumbnail next to `NOM.config.json` (a 320-pixel square is recommended); the names, places and arrivals already recorded are kept; nothing is deleted (`MANUAL.md` § 32).
+   then the same line without `--dry-run`. One card per region found, with its `NOM.jpg` thumbnail next to `NOM.config.json` (a 320-pixel square is recommended); the names, places and arrivals already recorded are kept; nothing is deleted (`MANUAL.md` § 9.9).
 2. **Name and place the regions** once: `name`, `x`, `y` and `spawn` in `Sites\regions.json`, by hand or with the viewer ("Import regions.json", edit, "Export regions.json": the header and every field are kept since v50). The next scans keep them.
-3. **Show the map**: `carte.html` (copied to the root, procedure 4) reads `regions.json` again each time it opens, nothing to regenerate (`MANUAL.md` § 30.4). Open it through the web server, for example `http://localhost:8000/carte.html` after `cd "P:\_OpenSim\SL&OS\Web_3d\Sites"; python -m http.server 8000`. A "My nickname" field at the top adds `name=` to the region links.
+3. **Show the map**: `carte.html` (copied to the root, procedure 4) reads `regions.json` again each time it opens, nothing to regenerate (`MANUAL.md` § 9.7). Open it through the web server, for example `http://localhost:8000/carte.html` after `cd "P:\_OpenSim\SL&OS\Web_3d\Sites"; python -m http.server 8000`. A "My nickname" field at the top adds `name=` to the region links.
 
-Without a site folder: `--register regions.json` adds the region at each generation (`--region-name`, `--region-xy x,y`), and `--map-page carte.html` writes a standalone page that contains the list (`MANUAL.md` § 30.4).
+Without a site folder: `--register regions.json` adds the region at each generation (`--region-name`, `--region-xy x,y`), and `--map-page carte.html` writes a standalone page that contains the list (`MANUAL.md` § 9.7).
 
 With a single region, the map brings nothing: it is used to link several regions together.
 
@@ -154,7 +154,7 @@ With a single region, the map brings nothing: it is used to link several regions
 | "Couldn't load texture" errors | 0-byte images in tiles from before v31 | split again with glb2tiles v31 or later |
 | No chat | page built without `--presence-url` or without `--chat` | add the options with `--update`, restart the server |
 | The avatar colour does not change | old presence server | restart the `presence_server.py` of the `dist` folder |
-| Message "3D cannot be shown: WebGL is not available" | hardware acceleration off: recent Edge and Chrome refuse software rendering | open the page in Firefox; or Edge with `--enable-unsafe-swiftshader` in a dedicated profile; or turn acceleration back on; check `edge://gpu` (manual § 37.5) |
+| Message "3D cannot be shown: WebGL is not available" | hardware acceleration off: recent Edge and Chrome refuse software rendering | open the page in Firefox; or Edge with `--enable-unsafe-swiftshader` in a dedicated profile; or turn acceleration back on; check `edge://gpu` (manual § 7.60) |
 | A zone image does not appear | page opened from disk (`file://`), file missing from `medias/` and from the region folder, different name | serve the page over `http`; "Copy diagnostics": the "Image" line gives the target and the file read (or "hidden"); run `--zones-only` again (§ 5) |
 | A replaced image does not change | page or shell from before 1.0.3 (browser cache) | `--update`, then Ctrl+F5 (§ 4); after that F5 is enough |
 | Copy the help text | — | select with the mouse, Ctrl+C; otherwise, in the console: `copy(document.body.innerText)` |
@@ -187,7 +187,7 @@ For any bug report, paste the text of the status and help panels, and the consol
 | Phone, tablet (v46) | automatic touch mode ("Touch controls" setting): column of buttons, "Menu", drag a finger to look around, long press = tooltip |
 | Address parameters | separated by `&`; `#` is also accepted (`#name=Klaatou&lang=en` = `#name=Klaatou#lang=en`) |
 
-Details: `MANUAL.md` §§ 2, 21 and 22.
+Details: `MANUAL.md` chapter 7 (keys) and §§ 7.49 to 7.51 (language).
 
 ---
 
@@ -313,7 +313,7 @@ WantedBy=multi-user.target
 Then `systemctl daemon-reload` and `systemctl enable --now web3d-presence`. These are the copies of the two files of the author's VM.
 
 4. **Console**: under the VM's user (not `root`), `tmux attach -t presence`; from the PC, `ssh -t UTILISATEUR@ADRESSE_VM "tmux attach -t presence"` (copy and paste work); to leave without stopping the server: **Ctrl+B** then **D**; to stop it for good: `systemctl stop web3d-presence` (`root`).
-5. **Update the server** after a `python build.py` that changes `presence_server.py`: send the file from `dist\` with `scp`, then `systemctl restart web3d-presence`. Then type `version` in the console: the version and fingerprint shown must be those that `python build.py` listed for `presence_server.py` (manual § 37.6). The VM has **its own copy** of `presence_creators.json` and `presence_identities.json` (reserved names).
+5. **Update the server** after a `python build.py` that changes `presence_server.py`: send the file from `dist\` with `scp`, then `systemctl restart web3d-presence`. Then type `version` in the console: the version and fingerprint shown must be those that `python build.py` listed for `presence_server.py` (manual § 13.2). The VM has **its own copy** of `presence_creators.json` and `presence_identities.json` (reserved names).
 6. **Tried on 29/10/2026**: `reboot` (the `presence` session and the Funnel publication come back by themselves); `tmux kill-server` (the service comes back within a few seconds); a visitor from outside, from a GitHub Pages page.
 7. **Debian 13 pitfalls**:
    - the `python` package no longer exists: `python3`;
