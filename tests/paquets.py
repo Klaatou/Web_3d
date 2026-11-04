@@ -55,6 +55,7 @@ for nom in ("galerie-photos", "region-simple"):
     reg = json.loads((site / "default.json").read_text(encoding="utf-8"))["region"]
     rapport((site / f"{reg}.glb").is_file() and (site / f"{reg}.config.json").is_file(), f"{nom} : default.json designe « {reg} », avec son .glb et son .config.json")
     cfg = json.loads((site / f"{reg}.config.json").read_text(encoding="utf-8"))
+    rapport(cfg.get("version") == (ROOT / "VERSION").read_text(encoding="utf-8").strip(), f"{nom} : la version de la config est celle de la release (fenetre Aide)", (cfg.get("version"), (ROOT / "VERSION").read_text(encoding="utf-8").strip()))
     rapport(cfg.get("presenceUrl") == "" and cfg.get("chat") is False, f"{nom} : presence eteinte dans la config", (cfg.get("presenceUrl"), cfg.get("chat")))
     # 1.4.13 : la carte du paquet : une fiche (celle de la region), une vignette carree de 320 x 320 pixels
     rj = json.loads((site / "regions.json").read_text(encoding="utf-8")) if (site / "regions.json").is_file() else {}

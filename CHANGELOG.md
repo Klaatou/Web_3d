@@ -2,9 +2,17 @@
 
 Les dates sont au format jj/mm/aaaa.
 
-## Non publié (après la 1.5.0)
+## Non publié (après la 1.5.1)
 
 *(rien pour l'instant)*
+
+## 1.5.1 (04/11/2026)
+
+### 04/11/2026 : publication 1.5.1 : la version affichée par les paquets suit la release
+
+- **Publication** : la 1.5.1, décidée par Klaatou, corrige un détail de la 1.5.0 : la fenêtre Aide d'une région des deux paquets affichait une version ancienne (1.1.0 ou 1.1.1), celle qui était écrite dans la config au moment où le paquet avait été préparé. `fabriquer_paquets.py` écrit maintenant la version de la release dans la clé `version` de la config de chaque paquet, à chaque fabrication : plus rien à mettre à jour à la main. Test : `tests/paquets.py` (134 contrôles). `VERSION` passe de `1.5.0` à `1.5.1`. Aucun fichier de `dist\` ne change ; le manuel (§ 11.3) le dit.
+- **Notes de la release GitHub** : la puce ci-dessous, en anglais puis en français. À joindre : `galerie-photos.zip` et `region-simple.zip` (fabriqués par `python fabriquer_paquets.py`).
+- **Release** 1.5.1, decided by Klaatou, fixes a detail of 1.5.0: the Help window of the two packages showed an old version (1.1.0 or 1.1.1), the one written in the config when the package was prepared. `fabriquer_paquets.py` now writes the release version into the `version` key of each package's config at every build: nothing left to update by hand. Test: `tests/paquets.py` (134 checks). `VERSION` goes from `1.5.0` to `1.5.1`. No file of `dist\` changes; the manual (§ 11.3) says so.
 
 ## 1.5.0 (04/11/2026)
 
