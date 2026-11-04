@@ -383,7 +383,7 @@ async def main():
                 ctx = await br.new_context(locale="fr-FR", viewport={"width": 700, "height": 500})
                 self.pg = await ctx.new_page()
                 self.pg.on("pageerror", lambda e: self.errs.append(str(e)))
-                self.pg.on("console", lambda m: self.warns.append(m.text) if m.type in ("warning", "error") and not (m.location or {}).get("url", "").endswith(".about.txt") and not re.search(r"\.about\.[a-z]{2,3}\.txt$", (m.location or {}).get("url", "")) else None)   # 1.4.5 : le 404 d'un NOM.about.*.txt absent est journalise par le navigateur (essai voulu)
+                self.pg.on("console", lambda m: self.warns.append(m.text) if m.type in ("warning", "error") and not (m.location or {}).get("url", "").endswith(".about.txt") and not re.search(r"(\.about\.[a-z]{2,3}\.txt|/aide\.html)$", (m.location or {}).get("url", "")) else None)   # 1.4.5 et 1.4.11 : le 404 d'un NOM.about.*.txt ou de aide.html absent est journalise par le navigateur (essai voulu)
                 await self.pg.route("**/*.glb", self.route)
                 await self.pg.goto(url)
                 return self

@@ -4,24 +4,24 @@
   "version": "1.4.9 (03/11/2026)"
  },
  "glb-viewer.html": {
-  "hash": "f1e309546770ee07cd2efc3e4ccfdd77096b610ae93e44229a9df43f5b1b95b2",
-  "version": "1.4.10 (03/11/2026)"
+  "hash": "7090613c22df14a142872e5bb805c8b04df61c362a9bf14853566d45d8920964",
+  "version": "1.4.11 (03/11/2026)"
  },
  "glb2html.py": {
-  "hash": "9cbf2927d9b0f679ab821041263a94936cbb4899422330f74b5c14e293435734",
-  "version": "1.4.10 (03/11/2026)"
+  "hash": "6c19d3d55f51f5c28f6beeb95d0c319b9755332797bd841ca833941e5055abbb",
+  "version": "1.4.11 (03/11/2026)"
  },
  "glb2tiles.py": {
   "hash": "7b9bc8dac5ffae4a8d55cf6a849639017282e0f6f833c9919c83f87dbc2b795b",
   "version": "1.4.10 (03/11/2026)"
  },
  "index.html": {
-  "hash": "9f0bb66e1396c841a52408fe286f27d24bd42c6e116b3657ed922bcbec403d35",
-  "version": "1.4.10 (03/11/2026)"
+  "hash": "567f46d48f7af064ad87da023ee5da26b7fe1db9318ff13c38e77d0e721e0ee2",
+  "version": "1.4.11 (03/11/2026)"
  },
  "oar2glb.py": {
-  "hash": "757982a4fd7e9e1eaacb6603a2e96854cf12e4be60c9a6068c234cd2cb9528a8",
-  "version": "1.4.10 (03/11/2026)"
+  "hash": "9c45b40e4ce18b5624692ca2b478194e345d872d8dda2c228a11003a4da1e108",
+  "version": "1.4.11 (03/11/2026)"
  },
  "presence_server.py": {
   "hash": "b61282f1c18c85bbad7544f3652a80e4f709ffb9fb028501058ae03be4ba4adc",

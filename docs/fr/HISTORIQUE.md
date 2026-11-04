@@ -1,5 +1,7 @@
 # Retrouver chaque version
 
+
+> **Numérotation du manuel.** Les renvois « manuel § N » de ce fichier datent d'avant la refonte du manuel (03/11/2026) et suivent l'ancien plan ; la table de correspondance est dans `CLOUD_RAPPORT.md` (et le chapitre 13 du manuel résume ce que chaque version a apporté).
 Les premières versions ont toutes été faites le 18/10/2026. Cet historique a été **reconstitué après coup** à partir des sauvegardes de sources faites pendant la journée ; il est fidèle sur ce qui existe, mais incomplet.
 
 ## Ce qu'il faut savoir
@@ -135,6 +137,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 03/11/2026 |  | après 1.4.0 | Lot 1.4.8 : documents : manuel § 38, `PROCEDURES_SIMPLES.md`, note aux créateurs |
 | 03/11/2026 |  | après 1.4.0 | Lot 1.4.9 : à propos : liens cliquables, bouton « Aide des visiteurs », touche `?` dans le bouton de l'aide ; documents : `GUIDE.md`, `DEVELOPPEMENT.md`, procédures de l'hôte |
 | 03/11/2026 |  | après 1.4.0 | Lot 1.4.10 : chaque outil Python n'embarque que ses propres textes (`build.py`) ; « Chargement… » dans un cadre bien visible ; `tests/textes_outils.py` |
+| 03/11/2026 |  | après 1.4.0 | Lot 1.4.11 : manuel refait par thèmes en 13 chapitres (session cloud) ; lien « Aide des visiteurs » dans la fenêtre Aide ; `tests/samples.py` et commentaires du code suivent le nouveau plan |
 
 ## Commandes utiles
 

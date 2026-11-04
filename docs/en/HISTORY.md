@@ -1,5 +1,7 @@
 # Finding each version
 
+
+> **Manual numbering.** The "manual § N" references of this file date from before the manual was rebuilt (03/11/2026) and follow the old plan; the correspondence table is in `CLOUD_RAPPORT.md` (and chapter 13 of the manual summarises what each version brought).
 The first versions were all made on 18/10/2026. This history was **reconstructed afterwards** from the source backups made during the day; it is accurate about what exists, but incomplete.
 
 ## What you need to know
@@ -135,6 +137,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 03/11/2026 |  | after 1.4.0 | Batch 1.4.8 : documents: manual § 38, `PROCEDURES_SIMPLES.md`, creators note |
 | 03/11/2026 |  | after 1.4.0 | Batch 1.4.9 : about: clickable links, "Visitors' help" button, `?` key in the help button; documents: `GUIDE.md`, `DEVELOPPEMENT.md`, host procedures |
 | 03/11/2026 |  | after 1.4.0 | Batch 1.4.10: each Python tool embeds only its own texts (`build.py`); "Loading…" in a clearly visible frame; `tests/textes_outils.py` |
+| 03/11/2026 |  | after 1.4.0 | Batch 1.4.11: manual rebuilt by theme in 13 chapters (cloud session); "Visitors' help" link in the Help window; `tests/samples.py` and the code comments follow the new plan |
 
 ## Useful commands
 

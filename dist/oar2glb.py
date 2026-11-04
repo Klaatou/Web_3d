@@ -123,8 +123,8 @@ def i18n_add_common(ap):
         pass
 
 
-VERSION = "1.4.10 (03/11/2026)"      # remplacé par build.py (fichier VERSION) dans dist/oar2glb.py
-MARK = "ddb345df"      # empreinte du fichier fabriqué, inscrite par build.py ; reste telle quelle depuis tools/
+VERSION = "1.4.11 (03/11/2026)"      # remplacé par build.py (fichier VERSION) dans dist/oar2glb.py
+MARK = "17cc7c6b"      # empreinte du fichier fabriqué, inscrite par build.py ; reste telle quelle depuis tools/
 
 
 def version_tag():
@@ -1492,7 +1492,7 @@ TERRAIN_COUVERT_MIN = 0.95    # le terrain de convoar est gardé s'il couvre au 
 EAU_DEFAUT = 20.0             # WaterHeight par défaut d'OpenSim
 LECTURE = 8 * 1024 * 1024     # taille des lectures du GLB en mode --terrain-only
 PENTE_ROCHE = (32.0, 38.0)    # degrés : la roche apparaît à 32, pleine à 38 (environ 35)
-# palette (rouge, vert, bleu) : documentée dans docs/fr/MANUEL.md § 15
+# palette (rouge, vert, bleu) : documentée dans docs/fr/MANUEL.md § 3.3
 SABLE_SEC, SABLE_HUMIDE = (214, 196, 142), (166, 150, 104)
 HERBE_BASSE, HERBE_HAUTE, ROCHE = (98, 146, 66), (132, 140, 78), (122, 120, 116)
 
