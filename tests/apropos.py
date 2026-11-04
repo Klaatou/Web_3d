@@ -96,7 +96,7 @@ async def main():
             rapport(await ouvert(pg), "fr : le panneau s'ouvre a l'entree")
             d = await pg.evaluate("""() => { const b = document.getElementById('aboutBox'); return { role: b.getAttribute('role'), modal: b.getAttribute('aria-modal'), titre: document.getElementById('aboutTitle').textContent,
                 texte: document.getElementById('aboutText').textContent, ws: getComputedStyle(document.getElementById('aboutText')).whiteSpace, btn: !!document.getElementById('aboutBtn'), opt: !!document.getElementById('aboutOpt') }; }""")
-            rapport(d["role"] == "dialog" and d["modal"] == "true", "le panneau est un dialogue", d)
+            rapport(d["role"] == "dialog" and d["modal"] == "false", "le panneau est un dialogue non bloquant (1.4.12 : la page reste utilisable derriere)", d)
             rapport(d["titre"] == "Bienvenue sur la région" and d["texte"] == "Premier paragraphe en français.\n\nSecond paragraphe.", "fr : titre = premiere ligne, reste en paragraphes (fichier .fr.txt, pas le repli)", d)
             rapport(d["ws"] == "pre-wrap" and d["btn"] and d["opt"], "texte en pre-wrap ; bouton de l'aide et case des reglages presents", d)
             aide = await pg.evaluate("document.getElementById('helpBody').textContent")

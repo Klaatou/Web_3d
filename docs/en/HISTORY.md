@@ -138,6 +138,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 03/11/2026 |  | after 1.4.0 | Batch 1.4.9 : about: clickable links, "Visitors' help" button, `?` key in the help button; documents: `GUIDE.md`, `DEVELOPPEMENT.md`, host procedures |
 | 03/11/2026 |  | after 1.4.0 | Batch 1.4.10: each Python tool embeds only its own texts (`build.py`); "Loading…" in a clearly visible frame; `tests/textes_outils.py` |
 | 03/11/2026 |  | after 1.4.0 | Batch 1.4.11: manual rebuilt by theme in 13 chapters (cloud session); "Visitors' help" link in the Help window; `tests/samples.py` and the code comments follow the new plan |
+| 04/11/2026 |  | after 1.4.0 | Batch 1.4.12: the "About" panel no longer dims the page |
 
 ## Useful commands
 
