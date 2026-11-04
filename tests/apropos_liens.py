@@ -5,7 +5,8 @@ Trois sites servis par http.server, la meme region : « avec » (a propos + aide
 Verifie : les adresses http(s):// du texte deviennent des liens (nouvel onglet, rel noopener), la ponctuation finale reste du texte, le texte affiche est
 identique au fichier, une adresse javascript: et une balise <a> ecrite dans le texte restent du texte ; le bouton « Aide des visiteurs » n'existe qu'avec
 aide.html et ouvre aide.html dans un nouvel onglet ; le lien « Aide des visiteurs » de la fenetre Aide (touche H) existe avec aide.html, meme sans a propos, et
-disparait sans aide.html ; le bouton de l'aide dit « (touche ?) » ; aucune erreur JavaScript.
+disparait sans aide.html ; le bouton de l'aide dit « (touche ?) » ; le panneau n'assombrit pas la page (fond transparent, la page reste atteignable
+derriere, seul le cadre recoit la souris) ; aucune erreur JavaScript.
 
 Prerequis : pip install playwright ; python build.py avant. Variables facultatives : THREE_DIR, CHROMIUM.
 Lancer : python tests/apropos_liens.py
@@ -69,6 +70,11 @@ async def main():
                     rapport(await pg.evaluate("getComputedStyle(document.querySelector('#aboutText a')).textDecorationLine.includes('underline')"), "liens soulignes (pas seulement colores)")
                     vis = await pg.evaluate("(() => { const b = document.getElementById('aboutHelp'); return !b.hidden && b.textContent; })()")
                     rapport(vis == "Aide des visiteurs", "avec aide.html : bouton « Aide des visiteurs » visible", vis)
+                    fond = await pg.evaluate("""(() => { const o = document.getElementById('aboutOverlay'), b = document.getElementById('aboutBox'), cs = getComputedStyle(o);
+                        const r = b.getBoundingClientRect(), hors = document.elementFromPoint(3, 3), dedans = document.elementFromPoint(r.left + r.width / 2, r.top + 12);
+                        return { fond: cs.backgroundColor, evt: cs.pointerEvents, boite: getComputedStyle(b).pointerEvents, horsOverlay: !!hors && hors.id !== 'aboutOverlay' && !o.contains(hors), dedans: b.contains(dedans), modal: b.getAttribute('aria-modal') }; })()""")
+                    rapport(fond["fond"] in ("rgba(0, 0, 0, 0)", "transparent") and fond["evt"] == "none" and fond["boite"] == "auto" and fond["horsOverlay"] and fond["dedans"] and fond["modal"] == "false",
+                            "le panneau n'assombrit pas la page : fond transparent, page atteignable derriere, cadre cliquable", fond)
                     async with ctx.expect_page() as nouv:
                         await pg.click("#aboutHelp")
                     np = await nouv.value

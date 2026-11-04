@@ -41,8 +41,8 @@ body.padOn #bar{max-width:max(200px,calc(50vw - 90px))}   /* v46 : la barre pass
 #mapOverlay{position:fixed;inset:0;z-index:45;background:#000c;display:grid;place-items:center}
 #mapBox{background:#fff;color:#000;border:2px solid #000;border-radius:10px;padding:14px 16px;max-width:min(980px,94%);max-height:90%;overflow:auto;font:13px/1.4 ui-monospace,Consolas,monospace}
 #mapBox h2{margin:0 0 10px;font-size:15px}
-#aboutOverlay{position:fixed;inset:0;z-index:46;background:#000c;display:grid;place-items:center}
-#aboutBox{box-sizing:border-box;background:#fff;color:#000;border:2px solid #000;border-radius:10px;padding:14px 16px;width:min(640px,94%);max-height:90%;overflow:auto;font:13px/1.5 ui-monospace,Consolas,monospace}
+#aboutOverlay{position:fixed;inset:0;z-index:46;display:grid;place-items:center;pointer-events:none}   /* 1.4.12 : pas de fond sombre ; la page reste visible et utilisable derrière, seul le cadre reçoit la souris */
+#aboutBox{pointer-events:auto;box-shadow:0 4px 18px #0007;box-sizing:border-box;background:#fff;color:#000;border:2px solid #000;border-radius:10px;padding:14px 16px;width:min(640px,94%);max-height:90%;overflow:auto;font:13px/1.5 ui-monospace,Consolas,monospace}
 #aboutBox:focus{outline:none}
 #aboutBox h2{margin:0 0 10px;font-size:15px}
 #aboutText{white-space:pre-wrap;overflow-wrap:anywhere;margin:0 0 12px}
@@ -181,7 +181,7 @@ __I18N__
 <div id="view"></div>
 <div id="msg" data-i18n="page.loading">Chargement…</div>
 <div id="opts"><button id="optsBtn" hidden data-i18n="page.opts">Réglages</button><div id="optsPanel" hidden></div><div id="lightPanel" hidden></div><div id="hudR"></div></div>
-<div id="aboutOverlay" hidden><div id="aboutBox" role="dialog" aria-modal="true" aria-labelledby="aboutTitle" tabindex="-1"><h2 id="aboutTitle"></h2><div id="aboutText"></div><button type="button" id="aboutClose"></button><button type="button" id="aboutHide"></button><button type="button" id="aboutHelp" hidden></button></div></div>
+<div id="aboutOverlay" hidden><div id="aboutBox" role="dialog" aria-modal="false" aria-labelledby="aboutTitle" tabindex="-1"><h2 id="aboutTitle"></h2><div id="aboutText"></div><button type="button" id="aboutClose"></button><button type="button" id="aboutHide"></button><button type="button" id="aboutHelp" hidden></button></div></div>
 <div id="mapOverlay" hidden><div id="mapBox"><h2 data-i18n="page.map.title">Carte des mondes</h2><div id="mapGrid"></div><button id="mapClose" data-i18n="page.map.close">Fermer (Échap)</button></div></div>
 <div id="visitsOverlay" hidden><div id="visitsBox" role="dialog" aria-labelledby="visitsTitle"><h2 id="visitsTitle" data-i18n="page.visits.title">Journal des visites</h2><p data-i18n="page.visits.intro">Résumé des visites de cette région, pour son créateur. Entre la clé que l'hôte du serveur de présence t'a donnée.</p><div id="visitsForm"><label for="visitsKey" data-i18n="page.visits.key">Clé : </label><input id="visitsKey" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="40"> <button id="visitsGo" type="button" data-i18n="page.visits.show">Afficher</button><button id="visitsForget" type="button" hidden data-i18n="page.visits.forget">Oublier la clé</button></div><div id="visitsStatus" role="status" aria-live="polite"></div><div id="visitsOut"></div><button id="visitsCsv" type="button" hidden data-i18n="page.visits.csv">Télécharger (CSV)</button><button id="visitsClose" type="button" data-i18n="page.visits.close">Fermer (Échap)</button></div></div>
 <div id="nameTag" hidden></div>
@@ -1608,7 +1608,6 @@ ABOUT.ready.then(() => {
   document.getElementById('aboutHide').textContent = tr('page.about.hide');
   document.getElementById('aboutClose').onclick = aboutClose;
   document.getElementById('aboutHide').onclick = () => { aboutSetHidden(true); if (aboutOpt) aboutOpt.checked = false; aboutClose(); };
-  aboutOv.addEventListener('click', e => { if (e.target === aboutOv) aboutClose(); });
   // 1.4.9 : bouton « Aide des visiteurs » si aide.html existe à côté de la coquille (page des paquets) ; ouvre un nouvel onglet
   const ah = document.getElementById('aboutHelp');
   ah.textContent = tr('page.about.helpbtn'); ah.onclick = () => window.open(AIDE.url, '_blank', 'noopener');
