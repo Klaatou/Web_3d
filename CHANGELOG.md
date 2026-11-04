@@ -2,7 +2,19 @@
 
 Les dates sont au format jj/mm/aaaa.
 
-## Non publié (après la 1.4.0)
+## Non publié (après la 1.5.0)
+
+*(rien pour l'instant)*
+
+## 1.5.0 (04/11/2026)
+
+### 04/11/2026 : publication 1.5.0 : tuiles compressées, « À propos de la région », cartes des paquets, nouvelle documentation
+
+- **Publication** : la 1.5.0, décidée par Klaatou, réunit les lots notés « Non publié » depuis la 1.4.0 (décrits plus bas). `VERSION` passe de `1.4.13` à `1.5.0` (le numéro mineur monte : des fonctions ont été ajoutées).
+- **Nouveautés de la 1.5.0** : régions en tuiles : le nom de la tuile sous l'avatar s'affiche dans la fenêtre d'état (un élément par ligne), avec le poids réellement reçu ; `glb2tiles.py --compress` compresse les tuiles avec `gltfpack` (environ deux fois moins lourdes) ; page : panneau « À propos de la région » (fichier `NOM.about.<langue>.txt`, liens cliquables, touche `?`, case dans les Réglages), lien « Aide des visiteurs » dans la fenêtre Aide, message « Chargement… » dans un cadre bien visible, titre d'onglet réglable (clé `title`, `--title`) ; carte des mondes : `--scan-sites --prune-missing` retire les fiches introuvables ; chaque paquet (`galerie-photos.zip`, `region-simple.zip`) a sa propre carte avec sa vignette ; chaque outil Python n'embarque plus que ses propres textes ; documentation refaite : manuel par thèmes en 13 chapitres, guide « Créer et gérer sa région », procédures de l'hôte, développement. La conversion OAR vers GLB reste réservée à Windows.
+- **Notes de la release GitHub** : les deux puces ci-dessous, en anglais puis en français. À joindre : `galerie-photos.zip` et `region-simple.zip` (fabriqués par `python fabriquer_paquets.py`).
+- **Release** 1.5.0, decided by Klaatou, gathers the batches noted "Unpublished" since 1.4.0 (described below). `VERSION` goes from `1.4.13` to `1.5.0` (the minor number goes up: features were added).
+- **What is new in 1.5.0**: tiled regions: the name of the tile under the avatar is shown in the state window (one element per line), with the weight actually received; `glb2tiles.py --compress` compresses the tiles with `gltfpack` (about half the size); page: "About this region" panel (file `NOM.about.<language>.txt`, clickable links, `?` key, checkbox in Settings), "Visitors' help" link in the Help window, "Loading…" message in a clearly visible frame, adjustable tab title (`title` key, `--title`); world map: `--scan-sites --prune-missing` removes the cards that cannot be found; each package (`galerie-photos.zip`, `region-simple.zip`) has its own map with its thumbnail; each Python tool now embeds only its own texts; documentation rebuilt: manual by theme in 13 chapters, "Creating and managing a region" guide, the host's procedures, development. OAR to GLB conversion remains Windows-only.
 
 ### 04/11/2026 : version 1.4.13 : une carte dans chaque paquet
 
