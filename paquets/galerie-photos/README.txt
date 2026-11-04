@@ -18,6 +18,8 @@ Pour commencer
        http://localhost:8000/               la galerie
        http://localhost:8000/aide.html      l'aide des visiteurs (a adapter a votre galerie)
        http://localhost:8000/galerie.html   la documentation du createur : tout y est detaille
+       http://localhost:8000/carte.html     la carte de votre galerie (page de presentation : nom, vignette)
+       (la carte : remplacez site/vignette.jpg - carre, 320 x 320 pixels - et changez le nom affiche dans site/regions.json ; voir galerie.html, section 8)
   3. Dans la galerie 3D, l'aide s'ouvre en cliquant sur le petit panneau "?" au devant du comptoir.
   4. Remplacez les photos de site/medias/ : 1.jpg a 30.jpg, noms en MINUSCULES.
   5. Un autre nom que "galerie" ? Double-cliquez sur renommer-galerie.bat (macOS : renommer-galerie.command ; Linux : sh renommer-galerie.sh NOUVEAU_NOM).
@@ -46,6 +48,8 @@ To start
        http://localhost:8000/               the gallery
        http://localhost:8000/aide.html      the visitors' help (to adapt to your gallery)
        http://localhost:8000/galerie.html   the creator's documentation: everything is detailed there
+       http://localhost:8000/carte.html     the map of your gallery (a presentation page: name, thumbnail)
+       (map: replace site/vignette.jpg - square, 320 x 320 pixels - and change the displayed name in site/regions.json; see galerie.html, section 8)
   3. In the 3D gallery, the help opens by clicking the small "?" panel on the front of the counter.
   4. Replace the photos in site/medias/: 1.jpg to 30.jpg, LOWERCASE names.
   5. A name other than "galerie"? Double-click renommer-galerie.bat (macOS: renommer-galerie.command; Linux: sh renommer-galerie.sh NEW_NAME).

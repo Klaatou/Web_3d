@@ -19,6 +19,8 @@ Pour commencer
        http://localhost:8000/                la region
        http://localhost:8000/aide.html       l'aide des visiteurs (a adapter a votre region)
        http://localhost:8000/readme.html   la documentation du createur : tout y est detaille
+       http://localhost:8000/carte.html    la carte de votre region (page de presentation : nom, vignette)
+       (la carte : remplacez site/vignette.jpg - carre, 320 x 320 pixels - et changez le nom affiche dans site/regions.json ; voir readme.html, section 10)
   3. Dans la region 3D, l'aide s'ouvre en cliquant sur le petit panneau "?" du mur est de la maison
      d'exemple (visible en promenade). A REVOIR avec votre propre GLB : ce panneau flotterait dans le
      vide. Supprimez-le (remplacez le contenu de site/region.zones.json par []) ou deplacez-le avec le
@@ -50,6 +52,8 @@ To start
        http://localhost:8000/                the region
        http://localhost:8000/aide.html       the visitors' help (to adapt to your region)
        http://localhost:8000/readme.html   the creator's documentation: everything is detailed there
+       http://localhost:8000/carte.html    the map of your region (a presentation page: name, thumbnail)
+       (map: replace site/vignette.jpg - square, 320 x 320 pixels - and change the displayed name in site/regions.json; see readme.html, section 10)
   3. In the 3D region, the help opens by clicking the small "?" panel on the east wall of the example
      house (visible while walking). TO REVIEW with your own GLB: that panel would float in empty space.
      Delete it (replace the contents of site/region.zones.json with []) or move it with the viewer:

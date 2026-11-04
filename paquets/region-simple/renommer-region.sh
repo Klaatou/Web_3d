@@ -1,5 +1,5 @@
 #!/bin/sh
-# Renomme la region : fichiers de site/ (NOM.glb, NOM.config.json, NOM.zones.json), default.json et le salon de presence (cle "room").
+# Renomme la region : fichiers de site/ (NOM.glb, NOM.config.json, NOM.zones.json), default.json, le salon de presence (cle "room") et la fiche de la carte (regions.json).
 # Usage : sh renommer-region.sh NOUVEAU_NOM      (sans nom : il est demande)
 cd "$(dirname "$0")" || exit 1
 PY=$(command -v python3 || command -v python)
@@ -49,6 +49,13 @@ if os.path.exists(config):
     c2 = re.sub(r'"room"\s*:\s*"' + re.escape(ancien) + '"', lambda _: '"room": "' + nouveau + '"', c)
     if c2 != c:
         ecrire(config, c2); print("  salon de presence (room) mis a jour")
+regions = os.path.join(site, 'regions.json')
+if os.path.exists(regions):
+    r = lire(regions)
+    r2 = re.sub(r'("(?:id|room)"\s*:\s*")' + re.escape(ancien) + '"', lambda m: m.group(1) + nouveau + '"', r)
+    r2 = re.sub(r'(region=)' + re.escape(ancien) + r'(?![\w-])', lambda m: m.group(1) + nouveau, r2)
+    if r2 != r:
+        ecrire(regions, r2); print("  carte (regions.json) mise a jour")
 print("Termine. Rechargez la page (F5) ; le salon de presence s'appelle maintenant " + nouveau + ".")
 PYEOF
 exit $?

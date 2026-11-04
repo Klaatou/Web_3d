@@ -1,4 +1,4 @@
-# Web_3d manual (1.4.12)
+# Web_3d manual (1.4.13)
 
 > **Summary.** This manual follows the project from end to end, theme by theme: getting started, with the vocabulary (chapter 1), the tools (2), converting an OAR (3), measuring and cutting up a big region (4), the viewer and the zones (5), building the page (6), the page from the visitor's side (7), tiled regions (8), the world map (9), the presence server (10), the JSON file reference (11), troubleshooting (12) and, as an appendix, what each version brought (13). For **every option** of the tools, with its effect and the default values of its parameters, in French and English: `REFERENCE_OPTIONS.md` (generated from the tools by `gen_reference.py`). To **do a task step by step**: `PROCEDURES.md`. Language of the page and tools: § 7.49, § 7.51 and § 7.50.
 
@@ -1226,7 +1226,7 @@ In a region split into tiles, the Information / State window (key I) gives, each
 
 ## 9. World map
 
-The world map (`carte.html`) presents the regions of one site from `regions.json`, which is prepared in the viewer or with `glb2html.py --scan-sites`. Format of `regions.json`: § 11.6.
+The world map (`carte.html`) presents the regions of one site from `regions.json`, which is prepared in the viewer or with `glb2html.py --scan-sites`. Format of `regions.json`: § 11.6. The `galerie-photos.zip` and `region-simple.zip` packages have their own map, with a single region: `site/carte.html`, `site/regions.json` (the card) and `site/vignette.jpg` (320 x 320 pixels); their renaming script keeps the card up to date. It is a presentation page which the creator can complete with other cards.
 
 ### 9.1 World map
 

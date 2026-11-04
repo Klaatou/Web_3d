@@ -139,6 +139,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 03/11/2026 |  | après 1.4.0 | Lot 1.4.10 : chaque outil Python n'embarque que ses propres textes (`build.py`) ; « Chargement… » dans un cadre bien visible ; `tests/textes_outils.py` |
 | 03/11/2026 |  | après 1.4.0 | Lot 1.4.11 : manuel refait par thèmes en 13 chapitres (session cloud) ; lien « Aide des visiteurs » dans la fenêtre Aide ; `tests/samples.py` et commentaires du code suivent le nouveau plan |
 | 04/11/2026 |  | après 1.4.0 | Lot 1.4.12 : le panneau « À propos » ne grise plus la page |
+| 04/11/2026 |  | après 1.4.0 | Lot 1.4.13 : chaque paquet a sa carte (`carte.html`, `regions.json`, `vignette.jpg` 320 x 320) ; le script de renommage tient la fiche à jour |
 
 ## Commandes utiles
 

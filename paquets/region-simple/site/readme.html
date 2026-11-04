@@ -357,6 +357,10 @@ html[data-lang="fr"] tr[data-l="fr"],html[data-lang="en"] tr[data-l="en"]{displa
 <td>dans <code>MonIle.config.json</code> : <code>"room": "region"</code></td>
 <td><code>"room": "MonIle"</code></td>
 </tr>
+<tr>
+<td>dans <code>site\regions.json</code> : <code>"id"</code>, <code>"room"</code> et l'adresse (<code>region=region</code>)</td>
+<td>le nouveau nom à la place de l'ancien</td>
+</tr>
 </tbody>
 </table>
 <p><strong>À savoir.</strong>
@@ -366,6 +370,12 @@ html[data-lang="fr"] tr[data-l="fr"],html[data-lang="en"] tr[data-l="en"]{displa
 - Pour revenir au nom d'origine, relancez le script avec <code>region</code>.
 - À la main, ce sont exactement ces cinq changements. La page elle-même (<code>index.html</code>) n'est jamais modifiée.</p>
 <h2>10. Figurer sur une carte des mondes (facultatif)</h2>
+<p><strong>Votre paquet a déjà sa propre carte.</strong> Ouvrez <code>carte.html</code> (par exemple <code>http://localhost:8000/carte.html</code>) : elle affiche votre région sous forme d'une tuile cliquable, avec sa vignette. Même avec une seule région, c'est une <strong>page de présentation</strong> : mettez-la en ligne avec le reste du dossier <code>site</code> et donnez son adresse, ou faites-y un lien depuis votre propre page de présentation. Deux fichiers la règlent :</p>
+<ul>
+<li><code>site\regions.json</code> : la fiche (<code>name</code> : le nom affiché, 60 caractères au plus ; <code>x</code> et <code>y</code> : la place sur la grille ; <code>thumb</code> : la vignette). Pour présenter d'autres régions, ajoutez d'autres fiches de la même forme.</li>
+<li><code>site\vignette.jpg</code> : l'image de la tuile. Remplacez-la par une capture de votre région : <strong>carrée, 320 x 320 pixels</strong>, JPEG, quelques dizaines de Ko. Le viewer sait en fabriquer une (section « Carte des mondes », bouton « Capturer la vignette »).</li>
+</ul>
+<p>Le script de renommage (section 9) tient cette carte à jour. Ce qui suit concerne une carte <strong>commune à plusieurs créateurs</strong>, tenue par quelqu'un d'autre.</p>
 <p>Une <strong>carte des mondes</strong> est une page (<code>carte.html</code>) qui présente plusieurs régions sous forme de tuiles cliquables. Si quelqu'un tient une carte commune à plusieurs créateurs, voici ce qu'il faut lui transmettre pour que votre région y figure :</p>
 <table>
 <thead>
@@ -403,7 +413,7 @@ html[data-lang="fr"] tr[data-l="fr"],html[data-lang="en"] tr[data-l="en"]{displa
 </tr>
 </tbody>
 </table>
-<p>Tout cela tient en une fiche de quelques lignes (format <code>regions.json</code>, manuel § 27.6) :</p>
+<p>Tout cela tient en une fiche de quelques lignes (format <code>regions.json</code>, manuel § 11.6) :</p>
 <p><code>{"id": "MonIle", "name": "Mon île", "url": "https://monsite.exemple/index.html", "x": 1000, "y": 1001, "thumb": "https://monsite.exemple/vignette.jpg"}</code></p>
 <p>Pour que <strong>votre</strong> page ait elle aussi le bouton « Carte (M) », renseignez la clé <code>mapUrl</code> de <code>region.config.json</code> avec l'adresse du <code>regions.json</code> de la carte (une carte hébergée ailleurs doit autoriser sa lecture depuis votre site). Rien de tout cela n'est nécessaire pour une région seule.</p>
 </div>
@@ -710,6 +720,10 @@ html[data-lang="fr"] tr[data-l="fr"],html[data-lang="en"] tr[data-l="en"]{displa
 <td>in <code>MyIsland.config.json</code>: <code>"room": "region"</code></td>
 <td><code>"room": "MyIsland"</code></td>
 </tr>
+<tr>
+<td>in <code>site\regions.json</code>: <code>"id"</code>, <code>"room"</code> and the address (<code>region=region</code>)</td>
+<td>the new name instead of the old one</td>
+</tr>
 </tbody>
 </table>
 <p><strong>Good to know.</strong>
@@ -719,6 +733,12 @@ html[data-lang="fr"] tr[data-l="fr"],html[data-lang="en"] tr[data-l="en"]{displa
 - To go back to the original name, run the script again with <code>region</code>.
 - By hand, these are exactly the five changes. The page itself (<code>index.html</code>) is never modified.</p>
 <h2>10. Appearing on a world map (optional)</h2>
+<p><strong>Your package already has its own map.</strong> Open <code>carte.html</code> (for example <code>http://localhost:8000/carte.html</code>): it shows your region as a clickable tile, with its thumbnail. Even with a single region, it is a <strong>presentation page</strong>: put it online with the rest of the <code>site</code> folder and give its address, or link to it from your own presentation page. Two files set it:</p>
+<ul>
+<li><code>site\regions.json</code>: the card (<code>name</code>: the displayed name, 60 characters at most; <code>x</code> and <code>y</code>: the place on the grid; <code>thumb</code>: the thumbnail). To present other regions, add other cards of the same form.</li>
+<li><code>site\vignette.jpg</code>: the tile's image. Replace it with a capture of your region: <strong>square, 320 x 320 pixels</strong>, JPEG, a few tens of KB. The viewer can make one (section "World map", button "Capture the thumbnail").</li>
+</ul>
+<p>The renaming script (section 9) keeps this map up to date. What follows is about a map <strong>shared by several creators</strong>, kept by someone else.</p>
 <p>A <strong>world map</strong> is a page (<code>carte.html</code>) that shows several regions as clickable tiles. If someone keeps a map shared by several creators, here is what to send them so that your region appears on it:</p>
 <table>
 <thead>
@@ -756,7 +776,7 @@ html[data-lang="fr"] tr[data-l="fr"],html[data-lang="en"] tr[data-l="en"]{displa
 </tr>
 </tbody>
 </table>
-<p>All of this fits in a card of a few lines (<code>regions.json</code> format, manual § 27.6):</p>
+<p>All of this fits in a card of a few lines (<code>regions.json</code> format, manual § 11.6):</p>
 <p><code>{"id": "MyIsland", "name": "My island", "url": "https://mysite.example/index.html", "x": 1000, "y": 1001, "thumb": "https://mysite.example/thumbnail.jpg"}</code></p>
 <p>For <strong>your</strong> page to have the "Map (M)" button too, set the <code>mapUrl</code> key of <code>region.config.json</code> to the address of the map's <code>regions.json</code> (a map hosted elsewhere must allow it to be read from your site). None of this is needed for a region single one.</p>
 </div>

@@ -6,7 +6,7 @@ Usage :  python fabriquer_paquets.py                  (zips dans paquets-zip/ ; 
          python fabriquer_paquets.py --out DOSSIER    (sortie ailleurs que paquets-zip/)
 
 Chaque dossier de paquets/ (galerie-photos, region-simple...) contient les sources du paquet (notices, scripts, config, zones, GLB, images).
-Y sont ajoutes a la fabrication : site/index.html et site/favicon.ico (dist/), site/lib/three-X/ (ecrit par glb2html), presence/presence_server.py (dist/),
+Y sont ajoutes a la fabrication : site/index.html, site/carte.html et site/favicon.ico (dist/), site/lib/three-X/ (ecrit par glb2html), presence/presence_server.py (dist/),
 VERSION.txt ; la marque __VERSION_PRESENCE__ des notices est remplacee par la version du serveur de presence ; les .bat et .ps1 sont ecrits en CRLF ; les .sh et .command (Linux, macOS) restent en LF et sont marques executables (0755) dans le zip.
 Prerequis : python build.py (dist/ a jour : python tests/dist_a_jour.py).
 """
@@ -21,7 +21,7 @@ ap.add_argument("--vendor", type=pathlib.Path, help="racine d'un paquet npm thre
 ap.add_argument("--out", type=pathlib.Path, default=ROOT / "paquets-zip", help="dossier de sortie (defaut : paquets-zip/)")
 args = ap.parse_args()
 
-for f in ("index.html", "favicon.ico", "presence_server.py", "glb2html.py"):
+for f in ("index.html", "carte.html", "favicon.ico", "presence_server.py", "glb2html.py"):
     if not (DIST / f).is_file():
         sys.exit(f"ERREUR : dist/{f} introuvable : lance python build.py d'abord.")
 if not SRC.is_dir():
@@ -49,6 +49,7 @@ for paquet in sorted(p for p in SRC.iterdir() if p.is_dir()):
     (tmp / "site").mkdir(exist_ok=True)
     (tmp / "presence").mkdir(exist_ok=True)
     shutil.copy2(DIST / "index.html", tmp / "site" / "index.html")
+    shutil.copy2(DIST / "carte.html", tmp / "site" / "carte.html")   # 1.4.13 : la carte du paquet (page de presentation, avec regions.json et vignette.jpg)
     shutil.copy2(DIST / "favicon.ico", tmp / "site" / "favicon.ico")
     shutil.copy2(DIST / "presence_server.py", tmp / "presence" / "presence_server.py")
     glb2html.write_modular_lib(tmp / "site", args.vendor)

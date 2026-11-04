@@ -1,4 +1,4 @@
-# Renomme la region : fichiers de site\ (NOM.glb, NOM.config.json, NOM.zones.json), default.json et le salon de presence (cle "room").
+# Renomme la region : fichiers de site\ (NOM.glb, NOM.config.json, NOM.zones.json), default.json, le salon de presence (cle "room") et la fiche de la carte (regions.json).
 # Usage : renommer-region.bat NOUVEAU_NOM      (ou double-clic, le nom est alors demande)
 param([string]$Nouveau)
 $base = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -28,5 +28,12 @@ if (Test-Path -LiteralPath $config) {
   $c = [System.IO.File]::ReadAllText($config)
   $c2 = $c -replace ('"room"\s*:\s*"' + [regex]::Escape($ancien) + '"'), ('"room": "' + $Nouveau + '"')
   if ($c2 -ne $c) { [System.IO.File]::WriteAllText($config, $c2, $utf8); Write-Host "  salon de presence (room) mis a jour" }
+}
+$regions = Join-Path $site 'regions.json'
+if (Test-Path -LiteralPath $regions) {
+  $r = [System.IO.File]::ReadAllText($regions)
+  $r2 = $r -replace ('("(?:id|room)"\s*:\s*")' + [regex]::Escape($ancien) + '"'), ('${1}' + $Nouveau + '"')
+  $r2 = $r2 -replace ('(region=)' + [regex]::Escape($ancien) + '(?![\w-])'), ('${1}' + $Nouveau)
+  if ($r2 -ne $r) { [System.IO.File]::WriteAllText($regions, $r2, $utf8); Write-Host "  carte (regions.json) mise a jour" }
 }
 Write-Host "Termine. Rechargez la page (F5) ; le salon de presence s'appelle maintenant $Nouveau."

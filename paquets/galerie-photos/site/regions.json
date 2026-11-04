@@ -1,0 +1,16 @@
+{
+ "showUrl": false,
+ "regions": [
+  {
+   "id": "galerie",
+   "name": "Ma galerie",
+   "url": "index.html?region=galerie",
+   "x": 0,
+   "y": 0,
+   "spawn": "",
+   "room": "galerie",
+   "thumb": "vignette.jpg",
+   "presence": ""
+  }
+ ]
+}
