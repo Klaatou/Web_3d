@@ -70,7 +70,7 @@ def serveur(classe, dossier):
     return srv, srv.server_address[1]
 
 
-PIX = """() => { let r = null; window.__v.scene.traverse(n => { if (n.isMesh && !(n.userData && n.userData.caption) && n.material && n.material.map && n.material.map.image && n.material.map.image.width) { const c = document.createElement('canvas'); c.width = c.height = 1; const x = c.getContext('2d'); x.drawImage(n.material.map.image, 0, 0); r = Array.from(x.getImageData(0, 0, 1, 1).data).slice(0, 3); } }); return r; }"""
+PIX = """() => { let r = null; window.__v.scene.traverse(n => { if (n.isMesh && !(n.userData && (n.userData.caption || n.userData.back)) && n.material && n.material.map && n.material.map.image && n.material.map.image.width) { const c = document.createElement('canvas'); c.width = c.height = 1; const x = c.getContext('2d'); x.drawImage(n.material.map.image, 0, 0); r = Array.from(x.getImageData(0, 0, 1, 1).data).slice(0, 3); } }); return r; }"""
 LEGS = """() => { const o = []; window.__v.scene.traverse(n => { if (n.userData && n.userData.caption) o.push(n.userData.caption); }); return o.sort(); }"""
 MAXX = """() => { let m = -1e9; window.__v.model.traverse(n => { if (n.isMesh) { n.geometry.computeBoundingBox(); m = Math.max(m, n.geometry.boundingBox.max.x); } }); return Math.round(m); }"""
 

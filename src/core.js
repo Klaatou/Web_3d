@@ -1973,6 +1973,8 @@ function createViewer(container, cfg0, loader) {
     const i = b.indexOf('-');
     return i < 0 ? '' : b.slice(i + 1).replace(/_/g, ' ').trim();
   }
+  // plan a double face : un second plan, tourne de 180 degres, avec la meme image et le meme texte ; chacun n'est visible que de son cote (FrontSide), donc rien ne se lit en miroir par derriere
+  function backOf(mesh) { const b = new THREE.Mesh(mesh.geometry, mesh.material); b.rotation.y = Math.PI; b.userData.back = true; mesh.add(b); mesh.userData.bk = b; return b; }
   function captionPlane(text, w) {
     const W2 = 1024, H2 = 96, cv = document.createElement('canvas'); cv.width = W2; cv.height = H2;
     const g = cv.getContext('2d');
@@ -1982,12 +1984,12 @@ function createViewer(container, cfg0, loader) {
     while (px > 22 && g.measureText(text).width > W2 - 40) { px -= 4; g.font = px + 'px sans-serif'; }
     g.fillText(text, W2 / 2, H2 / 2);
     const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, w * H2 / W2), new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide, transparent: true }));
-    m.userData.caption = text; return m;
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, w * H2 / W2), new THREE.MeshBasicMaterial({ map: tex, transparent: true }));
+    backOf(m); m.userData.caption = text; return m;
   }
   function imagePlane(z) {
-    const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, transparent: true });
-    const pl = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat);
+    const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true });
+    const pl = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat); backOf(pl);
     const hOf = (iw, ih) => z.h > 0 ? z.h : z.w * (iw && ih ? ih / iw : 0.75);
     pl.scale.set(z.w, hOf(0, 0), 1);
     const capText = imageCaption(z.target); let cap = capText ? captionPlane(capText, z.w) : null;
@@ -1996,7 +1998,7 @@ function createViewer(container, cfg0, loader) {
     const dg = { id: z.id, target: z.target, loaded: '', cap: capText || '', src: capText ? 'name' : '', vis: () => !!(cap && cap.visible) }; pl.userData.diag = dg;   // lu par « Copier le diagnostic »
     const absent = () => {
       console.warn(tr('core.image.missing', z.target || '-'));
-      if (zoneEditor) { mat.map = boardTex(z.label || z.id, tr('core.image.missing', z.target || '-'), z.w, pl.scale.y); mat.needsUpdate = true; } else { pl.visible = false; if (cap) cap.visible = false; imgGone.add(z.id); for (const L of [zoneHit, zoneAll]) { const k = L.indexOf(pl); if (k >= 0) L.splice(k, 1); } }
+      if (zoneEditor) { mat.map = boardTex(z.label || z.id, tr('core.image.missing', z.target || '-'), z.w, pl.scale.y); mat.needsUpdate = true; } else { pl.visible = false; if (cap) cap.visible = false; imgGone.add(z.id); for (const L of [zoneHit, zoneAll]) for (const o of [pl, pl.userData.bk]) { const k = L.indexOf(o); if (k >= 0) L.splice(k, 1); } }
       dirty = true;
     };
     if (!z.target || /^\s*(javascript|vbscript):/i.test(z.target)) { absent(); return pl; }
@@ -2071,13 +2073,13 @@ function createViewer(container, cfg0, loader) {
       if (!link) { g.position.set(z.x, z.y, z.z); g.rotation.y = z.yaw; }
       if (z.type === 'image') {
         const pl = imagePlane(z); g.add(pl); if (pl.userData.cap) g.add(pl.userData.cap);
-        if (z.link && !zoneEditor && pl.visible) { pl.userData.zone = z; zoneAll.push(pl); zoneHit.push(pl); }   // tableau avec lien : cliquable (survol, clic, E) ; sans lien ou image absente : il ne reagit pas
-        if (zoneEditor) { pl.userData.zone = z; zoneAll.push(pl); const lab = makeLabel(z.label || z.id); lab.position.y = (z.h > 0 ? z.h : z.w * 0.75) / 2 + 0.3; lab.material.depthTest = false; lab.renderOrder = 999; g.add(lab); }   // etiquette toujours entiere : le mur peut avoir des reliefs devant elle
+        if (z.link && !zoneEditor && pl.visible) { pl.userData.zone = z; pl.userData.bk.userData.zone = z; zoneAll.push(pl, pl.userData.bk); zoneHit.push(pl, pl.userData.bk); }   // tableau avec lien : cliquable (survol, clic, E) ; sans lien ou image absente : il ne reagit pas
+        if (zoneEditor) { pl.userData.zone = z; pl.userData.bk.userData.zone = z; zoneAll.push(pl, pl.userData.bk); const lab = makeLabel(z.label || z.id); lab.position.y = (z.h > 0 ? z.h : z.w * 0.75) / 2 + 0.3; lab.material.depthTest = false; lab.renderOrder = 999; g.add(lab); }   // etiquette toujours entiere : le mur peut avoir des reliefs devant elle
         if (zoneNums && !zoneEditor) g.add(makeNumber(z));   // meme si l'image manque : le numero repere l'emplacement
         zoneGroup.add(g);
         continue;
       }
-      const kind = { url: tr('core.kind.url'), ha: tr('core.kind.ha'), portal: tr('core.kind.portal'), spawn: tr('core.kind.spawn') }[z.type];
+      const kind = z.type === 'url' && /^\s*hop:/i.test(z.target) ? tr('core.kind.hop') : { url: tr('core.kind.url'), ha: tr('core.kind.ha'), portal: tr('core.kind.portal'), spawn: tr('core.kind.spawn') }[z.type];   // lien hop:// : « Monde virtuel », pas « Lien web »
       const priv = zoneEditor && z.private ? tr('core.private') : '';
       const clickable = z.type !== 'spawn' && z.trigger !== 'enter';
       let main = null;
@@ -2110,8 +2112,8 @@ function createViewer(container, cfg0, loader) {
         // éditeur : le cylindre (portée de la zone) reste toujours visible, pour repérer et positionner ; le panneau s'y ajoute
         if (z.shape === 'board') {
           const sub = kind + (clickable ? tr('core.clickable') : '') + priv;
-          const plane = new THREE.Mesh(new THREE.PlaneGeometry(z.w, z.h), new THREE.MeshBasicMaterial({ map: boardTex(z.label || kind, sub, z.w, z.h), side: THREE.DoubleSide, fog: false }));
-          plane.position.y = 0.9 + z.h / 2; g.add(plane); main = plane;
+          const plane = new THREE.Mesh(new THREE.PlaneGeometry(z.w, z.h), new THREE.MeshBasicMaterial({ map: boardTex(z.label || kind, sub, z.w, z.h), fog: false }));
+          plane.position.y = 0.9 + z.h / 2; g.add(plane); main = plane; backOf(plane);
           const post = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.92, 0.1), new THREE.MeshStandardMaterial({ color: 0x333333 })); post.position.y = 0.46; g.add(post);
         }
         const rad = z.shape === 'board' ? Math.max(z.radius, 2) : z.radius;
@@ -2124,8 +2126,8 @@ function createViewer(container, cfg0, loader) {
         if (z.shape !== 'board') { const lab = makeLabel((z.label || kind) + priv); lab.position.y = 2.9; g.add(lab); }
       } else if (z.showName && z.shape === 'board') {
         // page exportée, « Toujours afficher le nom » : le panneau
-        const plane = new THREE.Mesh(new THREE.PlaneGeometry(z.w, z.h), new THREE.MeshBasicMaterial({ map: boardTex(z.label || kind, kind + (clickable ? tr('core.clickable') : ''), z.w, z.h), side: THREE.DoubleSide, fog: false }));
-        plane.position.y = 0.9 + z.h / 2; g.add(plane); main = plane; zoneLabs.push(plane);
+        const plane = new THREE.Mesh(new THREE.PlaneGeometry(z.w, z.h), new THREE.MeshBasicMaterial({ map: boardTex(z.label || kind, kind + (clickable ? tr('core.clickable') : ''), z.w, z.h), fog: false }));
+        plane.position.y = 0.9 + z.h / 2; g.add(plane); main = plane; backOf(plane); zoneLabs.push(plane);
         const post = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.92, 0.1), new THREE.MeshStandardMaterial({ color: 0x333333 })); post.position.y = 0.46; g.add(post); zoneLabs.push(post);
       } else {
         // page exportée, selon cfg.zoneMarker : « dot » (défaut) disque plat 0,4 m + anneau fin ; « range » anneau fin et net au rayon réel de la zone
@@ -2155,6 +2157,7 @@ function createViewer(container, cfg0, loader) {
       }
       coneFor(g, z);
       if (main) { main.userData.zone = z; zoneAll.push(main); if (clickable) zoneHit.push(main); }
+      if (main && main.userData.bk) { const b = main.userData.bk; b.userData.zone = z; zoneAll.push(b); if (clickable) zoneHit.push(b); }   // panneau : le plan arrière réagit comme le plan avant
       zoneGroup.add(g);
     }
     dirty = true;

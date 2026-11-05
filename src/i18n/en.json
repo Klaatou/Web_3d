@@ -58,6 +58,7 @@
  "core.kind.portal": "Portal",
  "core.kind.spawn": "Arrival",
  "core.kind.url": "Web link",
+ "core.kind.hop": "Virtual world",
  "core.left": "{0} left",
  "core.manual": "Full manual (online)",
  "core.ov.ignored": "overview ignored (address refused):",

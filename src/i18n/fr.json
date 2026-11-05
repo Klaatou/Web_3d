@@ -58,6 +58,7 @@
  "core.kind.portal": "Portail",
  "core.kind.spawn": "Arrivée",
  "core.kind.url": "Lien web",
+ "core.kind.hop": "Monde virtuel",
  "core.left": "{0} est parti",
  "core.manual": "Manuel complet (en ligne)",
  "core.ov.ignored": "vue d'ensemble ignorée (adresse refusée) :",
