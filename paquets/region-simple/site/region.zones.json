@@ -19,5 +19,26 @@
     "showName": false,
     "mesh": "",
     "link": "aide.html"
-  }
+ },
+{
+  "id": "zhop",
+  "type": "image",
+  "label": "",
+  "x": 9.1,
+  "y": 17.0,
+  "z": -18.1, 
+  "yaw": -3,
+  "shape": "ring",
+  "trigger": "click",
+  "radius": 2,
+  "w": 1.2,
+  "h": 0,
+  "target": "hop.jpg",
+  "spawn": "",
+  "confirm": false,
+  "private": false,
+  "showName": false,
+  "mesh": "",
+  "link": "hop://"
+ }
 ]
