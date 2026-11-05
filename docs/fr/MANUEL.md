@@ -574,21 +574,21 @@ Une seule coquille (par défaut `index.html`) sert toutes les régions d'un mêm
 dossier/
   index.html            la coquille, identique pour toutes les régions
   lib/three-0.160.0/    partagé
-  Ankh.glb   Ankh.config.json   Ankh.zones.json
+  region.glb   region.config.json   region.zones.json
   Jungle.glb Jungle.config.json Jungle.zones.json
 ```
 
 | Besoin                         | Commande (PowerShell, une seule ligne)                                                                                                                                 |
 | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Générer une région             | `python glb2html.py "Ankh.glb" --settings --shared-shell --register regions.json -o "Ankh.html"`                                                                       |
-| Autre nom de coquille          | `--shared-shell monde.html` (adresse `monde.html?region=Ankh`)                                                                                                         |
-| Changer un réglage             | `python glb2html.py --settings "Ankh.glb" --config-only --shared-shell --wave 2 -o "Ankh.html"`                                                                        |
-| Changer les zones seules       | `python glb2html.py -o "Ankh.html" --zones-only --zones zones.json`                                                                                                    |
-| Mettre à jour une région (v34) | `python glb2html.py --update -o "Ankh.html" --shared-shell --sea-y 12` : applique **seulement** les options données, garde le reste de la config et les zones (§ 6.15) |
+| Générer une région             | `python glb2html.py "region.glb" --settings --shared-shell --register regions.json -o "region.html"`                                                                       |
+| Autre nom de coquille          | `--shared-shell monde.html` (adresse `monde.html?region=region`)                                                                                                         |
+| Changer un réglage             | `python glb2html.py --settings "region.glb" --config-only --shared-shell --wave 2 -o "region.html"`                                                                        |
+| Changer les zones seules       | `python glb2html.py -o "region.html" --zones-only --zones zones.json`                                                                                                    |
+| Mettre à jour une région (v34) | `python glb2html.py --update -o "region.html" --shared-shell --sea-y 12` : applique **seulement** les options données, garde le reste de la config et les zones (§ 6.15) |
 
 Règles :
 
-- `-o` désigne la **région** : son nom sans extension donne NOM. `Ankh.html` n'est pas écrit ; sont écrits `Ankh.glb`, `Ankh.config.json`, `Ankh.zones.json`, plus `index.html` et `lib/three-0.160.0/` **s'ils sont absents**. Une coquille existante n'est jamais écrasée (les autres régions la partagent) : si elle diffère de celle de la version courante, le script avertit ; la supprimer pour la renouveler.
+- `-o` désigne la **région** : son nom sans extension donne NOM. `region.html` n'est pas écrit ; sont écrits `region.glb`, `region.config.json`, `region.zones.json`, plus `index.html` et `lib/three-0.160.0/` **s'ils sont absents**. Une coquille existante n'est jamais écrasée (les autres régions la partagent) : si elle diffère de celle de la version courante, le script avertit ; la supprimer pour la renouveler.
 - `--register` écrit l'adresse `index.html?region=NOM` dans `regions.json` (sauf `--region-url` ou fiche du `.reglages.json`). Les portails et la carte ajoutent `#spawn=…` après la query string : `index.html?region=NOM#spawn=default&name=…`. « ● vous êtes ici » reconnaît la région par son salon, puis par l'adresse complète (query string comprise).
 - **Sans paramètre `region`**, la coquille se comporte comme avant : elle déduit ses fichiers du nom de la page (`index.html` charge `index.config.json`, `index.glb`, `index.zones.json`). Les pages déjà publiées et leurs coquilles continuent donc de marcher, sans rien changer. Sans paramètre ni fichier correspondant, la page affiche « Erreur : … introuvable (HTTP 404) » avec le nom du fichier cherché.
 - **Sécurité.** NOM doit être un seul nom de fichier. Sont refusés, avec un message d'erreur dans la page et **aucune requête réseau** : un nom vide, contenant `/` `\` `:` `?` `#` ou `..` (même encodés dans l'adresse), ou commençant par un point. Sans cela, `?region=https://autre-site/x` ferait charger config, zones et modèle depuis un site étranger (portails piégés, webhooks Home Assistant envoyés ailleurs). Le script refuse de la même façon un `-o` dont le nom serait refusé.
@@ -1532,7 +1532,7 @@ Deux autres fichiers ont **exactement le format** de `NOM.zones.json` :
 - `zones.json`, les zones communes aux régions d'un dossier, lu quand une région n'a pas son propre `NOM.zones.json` (§ 11.12) ;
 - `NOM.zones.bak.json`, la copie de sécurité que le viewer laisse quand il enregistre les zones dans le dossier de la région.
 
-Dans les exemples, la région s'appelle `Region`. Pour une région « Ankh », on renomme `region.config.sample.json` en `Ankh.config.json` et on remplace `Region` par `Ankh` dans les valeurs qui le contiennent (`room`, `tiles`, les adresses). Les adresses des exemples sont écrites `ADRESSE` : il faut y mettre la sienne.
+Dans les exemples, la région s'appelle `Region`. Pour une région «nom region », on renomme `region.config.sample.json` en `nomregionregion.config.json` et on remplace `Region` par `region` dans les valeurs qui le contiennent (`room`, `tiles`, les adresses). Les adresses des exemples sont écrites `ADRESSE` : il faut y mettre la sienne.
 
 ### 11.2 Comment lire les tableaux
 

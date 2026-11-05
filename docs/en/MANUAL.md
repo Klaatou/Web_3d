@@ -574,21 +574,21 @@ A single shell (`index.html` by default) serves all the regions of the same fold
 dossier/
   index.html            the shell, identical for all regions
   lib/three-0.160.0/    shared
-  Ankh.glb   Ankh.config.json   Ankh.zones.json
+  region.glb   region.config.json   region.zones.json
   Jungle.glb Jungle.config.json Jungle.zones.json
 ```
 
 | Need                  | Command (PowerShell, a single line)                                                                                                                             |
 | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Generate a region     | `python glb2html.py "Ankh.glb" --settings --shared-shell --register regions.json -o "Ankh.html"`                                                                |
-| Another shell name    | `--shared-shell monde.html` (address `monde.html?region=Ankh`)                                                                                                  |
-| Change a setting      | `python glb2html.py --settings "Ankh.glb" --config-only --shared-shell --wave 2 -o "Ankh.html"`                                                                 |
-| Change only the zones | `python glb2html.py -o "Ankh.html" --zones-only --zones zones.json`                                                                                             |
-| Update a region (v34) | `python glb2html.py --update -o "Ankh.html" --shared-shell --sea-y 12`: applies **only** the options given, keeps the rest of the config and the zones (§ 6.15) |
+| Generate a region     | `python glb2html.py "region.glb" --settings --shared-shell --register regions.json -o "region.html"`                                                                |
+| Another shell name    | `--shared-shell monde.html` (address `monde.html?region=region`)                                                                                                  |
+| Change a setting      | `python glb2html.py --settings "region.glb" --config-only --shared-shell --wave 2 -o "region.html"`                                                                 |
+| Change only the zones | `python glb2html.py -o "region.html" --zones-only --zones zones.json`                                                                                             |
+| Update a region (v34) | `python glb2html.py --update -o "region.html" --shared-shell --sea-y 12`: applies **only** the options given, keeps the rest of the config and the zones (§ 6.15) |
 
 Rules:
 
-- `-o` designates the **region**: its name without extension gives NOM. `Ankh.html` is not written; written are `Ankh.glb`, `Ankh.config.json`, `Ankh.zones.json`, plus `index.html` and `lib/three-0.160.0/` **if they are missing**. An existing shell is never overwritten (the other regions share it): if it differs from the one of the current version, the script warns; delete it to renew it.
+- `-o` designates the **region**: its name without extension gives NOM. `region.html` is not written; written are `region.glb`, `region.config.json`, `region.zones.json`, plus `index.html` and `lib/three-0.160.0/` **if they are missing**. An existing shell is never overwritten (the other regions share it): if it differs from the one of the current version, the script warns; delete it to renew it.
 - `--register` writes the address `index.html?region=NOM` into `regions.json` (unless `--region-url` or a card in `.reglages.json`). Portals and the map add `#spawn=…` after the query string: `index.html?region=NOM#spawn=default&name=…`. "● you are here" recognises the region by its room, then by the full address (query string included).
 - **Without a `region` parameter**, the shell behaves as before: it deduces its files from the page's name (`index.html` loads `index.config.json`, `index.glb`, `index.zones.json`). Pages already published and their shells therefore keep working, without changing anything. Without a parameter or a matching file, the page shows "Error: … not found (HTTP 404)" with the name of the file looked for.
 - **Security.** NOM must be a single file name. Refused, with an error message in the page and **no network request**: an empty name, a name containing `/` `\` `:` `?` `#` or `..` (even encoded in the address), or starting with a dot. Without this, `?region=https://autre-site/x` would load config, zones and model from a foreign site (trapped portals, Home Assistant webhooks sent elsewhere). The script refuses in the same way an `-o` whose name would be refused.
@@ -1532,7 +1532,7 @@ Two other files have **exactly the format** of `NOM.zones.json`:
 - `zones.json`, the zones shared by the regions of a folder, read when a region has no `NOM.zones.json` of its own (§ 11.12);
 - `NOM.zones.bak.json`, the backup copy the viewer leaves when it saves the zones in the region's folder.
 
-In the samples, the region is called `Region`. For a region "Ankh", rename `region.config.sample.json` to `Ankh.config.json` and replace `Region` with `Ankh` in the values that contain it (`room`, `tiles`, the addresses). The addresses in the samples are written `ADRESSE`: put your own there.
+In the samples, the region is called `Region`. For a region "regionname", rename `region.config.sampleregion.json` to `regionname.config.json` and replace `Region` with `regionname` in the values that contain it (`room`, `tiles`, the addresses). The addresses in the samples are written `ADRESSE`: put your own there.
 
 ### 11.2 How to read the tables
 
