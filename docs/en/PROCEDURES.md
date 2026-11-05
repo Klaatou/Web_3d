@@ -355,3 +355,26 @@ Two packages can be downloaded from the repository's releases page: `galerie-pho
 4. At release time: `git tag vX.Y.Z` then `git push origin vX.Y.Z` (the number is the one in `VERSION`). On the repository's GitHub page: **Releases**, then **Draft a new release**. Choose the tag (**Choose a tag**), give the title (for example `1.2.0`) and paste the English notes from `CHANGELOG.md`. Drag the two zips from `paquets-zip\` into the **Attach binaries** area, then **Publish release**. The `README`'s `releases/latest` link then works.
 
 Changing a package means changing its sources in `paquets\` (for example the images in `paquets\galerie-photos\site\medias\`), never the zip. Rebuild the zips after every new version of the tools: they embed `index.html`, `lib\` and `presence_server.py`.
+
+## 13. Opening a `hop://` link: registering the protocol on Windows
+
+A web link zone, or a picture whose link (`link`) starts with `hop://`, opens the target world in the visitor's OpenSim or Second Life viewer (manual § 5.7.1 and § 5.11). The browser hands the address to Windows, which starts the program registered for `hop://`. **Without a registered program nothing happens**: it is done once, on **each** visitor's computer; the page cannot do it for them. The first time, the browser asks for confirmation.
+
+Example with Firestorm: it opened the target world after this registration (tried on 05/11/2026); with another viewer, **not tested** (the `-url` parameter is Firestorm's).
+
+1. Find the viewer's executable: right-click its shortcut, **Properties**, **Target** field (for example a `...\FirestormOS-Releasex64.exe`).
+2. In Notepad, write the file below, replacing `C:\\CHEMIN\\VERS\\VIEWER.exe` with that path, **every backslash doubled** (`C:\\Program Files\\...`), and save it as `hop.reg` (type "All files", not `.txt`).
+```
+Windows Registry Editor Version 5.00
+
+[HKEY_CURRENT_USER\Software\Classes\hop]
+@="URL:hop"
+"URL Protocol"=""
+
+[HKEY_CURRENT_USER\Software\Classes\hop\shell\open\command]
+@="\"C:\\CHEMIN\\VERS\\VIEWER.exe\" -url \"%1\""
+```
+3. Double-click `hop.reg`, accept the confirmation messages of Windows. It only writes under `HKEY_CURRENT_USER` (your account, no administrator needed).
+4. Try it: in the browser, click a `hop://` panel; confirm in the browser.
+
+To undo: delete the key `HKEY_CURRENT_USER\Software\Classes\hop` in `regedit`. Linux and macOS: not covered here.

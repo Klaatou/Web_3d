@@ -67,6 +67,10 @@ for nom in ("galerie-photos", "region-simple"):
     zf = site / f"{reg}.zones.json"
     zones = json.loads(zf.read_text(encoding="utf-8")) if zf.is_file() else []
     absentes = [z["target"] for z in zones if z.get("type") == "image" and not (site / "medias" / z["target"]).is_file()]
+    hop = [z for z in zones if z.get("target") == "hop.jpg"]
+    jh = (site / "medias" / "hop.jpg").read_bytes() if (site / "medias" / "hop.jpg").is_file() else b""
+    rapport(len(hop) == 1 and hop[0].get("type") == "image" and str(hop[0].get("link", "")).startswith("hop://") and jh[:2] == b"\xff\xd8" and jpeg_taille(jh) == (1200, 600),
+            f"{nom} : zone image « zhop » : lien hop://, image hop.jpg (« Lien vers OpenSim », JPEG de 1200 x 600)", (hop, jpeg_taille(jh)))
     rapport(not absentes, f"{nom} : chaque zone image a son fichier dans medias", absentes)
     # aide des visiteurs (aide.html), documentation du createur, zone d'aide, script de renommage
     doc = "galerie.html" if nom == "galerie-photos" else "readme.html"
@@ -75,12 +79,13 @@ for nom in ("galerie-photos", "region-simple"):
     dc = (site / doc).read_text(encoding="utf-8")
     rapport(dc.count("carte.html") >= 2 and dc.count("vignette.jpg") >= 2 and dc.count("regions.json</code>") >= 4 and "27.6" not in dc, f"{nom} : {doc} decrit la carte du paquet (FR et EN), le renommage de la fiche, et renvoie au manuel § 11.6", (dc.count("carte.html"), dc.count("vignette.jpg"), "27.6" in dc))
     rapport(f'href="{doc}"' in aide and 'id="doc-createur"' in aide, f"{nom} : aide.html commence par le cadre qui renvoie vers {doc}")
-    liens = [z for z in zones if z.get("link")]
+    liens = [z for z in zones if z.get("link") and z.get("target") != "hop.jpg"]
     rapport(len(liens) == 1 and liens[0]["link"] == "aide.html" and liens[0]["target"] == "aide.jpg", f"{nom} : une zone image « aide.jpg » ouvre aide.html", [(z["id"], z.get("link")) for z in liens])
     rapport(all((p / f).is_file() for f in (f"renommer-{'galerie' if nom == 'galerie-photos' else 'region'}.bat", f"renommer-{'galerie' if nom == 'galerie-photos' else 'region'}.ps1")), f"{nom} : script de renommage")
     rd = (p / "README.txt").read_text(encoding="utf-8")
     rapport("PARAMETRES" not in rd and not (p / "LISEZMOI.txt").exists(), f"{nom} : README.txt (plus de LISEZMOI.txt ni d'ancien document)")
     rapport("aide.html" in rd and doc in rd and "panneau" in rd and "carte.html" in rd and "vignette.jpg" in rd, f"{nom} : README.txt donne l'adresse de l'aide, celle de {doc}, celle de la carte (carte.html, vignette.jpg) et l'emplacement du panneau d'aide")
+    rapport("hop.jpg" in rd and "hop.jpg" in dc and "hop://" in dc and "yaw" in dc and "zhop" in dc and "PROCEDURES.md" in dc, f"{nom} : README.txt et {doc} expliquent comment personnaliser le panneau hop (image, position, yaw, lien)")
     # copie fidele du serveur de presence (fins de ligne ignorees)
     lf = lambda b: b.replace(b"\r\n", b"\n")
     rapport(lf((p / "presence" / "presence_server.py").read_bytes()) == lf((DIST / "presence_server.py").read_bytes()), f"{nom} : presence_server.py identique a dist/")
@@ -144,6 +149,7 @@ async def main():
                 rapport(len(tuiles) == 1 and tuiles[0]["href"].split("#")[0].rsplit("/", 1)[-1] == f"index.html?region={regn}" and tuiles[0]["href"].endswith("#spawn=default") and tuiles[0]["w"] == 320 and not cerrs, f"{nom} : carte.html : une tuile qui mene a la region, avec sa vignette (320 px) chargee", (tuiles, cerrs[:2]))
                 await cp.close()
                 if nom == "galerie-photos":
+                    await pg.evaluate("(() => { const b = document.getElementById('aboutClose'), o = document.getElementById('aboutOverlay'); if (b && o && !o.hidden) b.click(); })()")   # le paquet a un fichier about : le panneau « A propos » s'ouvre a l'entree et capterait le clic
                     await pg.keyboard.press("h"); await pg.wait_for_timeout(300)
                     sx, sy = await pg.evaluate("""([x, y, z]) => { const v = window.__v; v.camera.updateMatrixWorld(true); const p = v.camera.position.clone().set(x, y, z).project(v.camera), r = v.renderer.domElement.getBoundingClientRect(); return [r.left + (p.x + 1) / 2 * r.width, r.top + (1 - p.y) / 2 * r.height]; }""", [1.7, 12.26, 0.285])
                     await pg.mouse.move(sx, sy); await pg.wait_for_timeout(300); await pg.mouse.click(sx, sy); await pg.wait_for_timeout(600)

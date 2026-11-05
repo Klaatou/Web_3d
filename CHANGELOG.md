@@ -2,7 +2,12 @@
 
 Les dates sont au format jj/mm/aaaa.
 
-## Non publié (après la 1.5.1)
+## 1.6.0 (05/11/2026)
+
+### 05/11/2026 : publication 1.6.0 : `yaw` dans l'état, panneau « Lien vers OpenSim » dans les paquets, documents à jour
+
+- **Publication** : la 1.6.0, décidée par Klaatou, réunit les lots notés « Non publié » depuis la 1.5.1 (décrits plus bas : 1.5.2, 1.5.3, 1.5.4) et ajoute : **(1)** la ligne « Position avatar » de Informations / État se termine par le `yaw`, en radians, 2 décimales (`template.html`, `fr.json`, `en.json` : `page.state.pos.avatar`), même valeur que le `yaw` de « Copier ma position » et des zones ; en vue globale, la ligne « Position cible » n'a pas de `yaw` ; **(2)** les deux paquets ont la zone image `zhop` ajoutée par Klaatou (commit `b3b35b6`) ; le lot remplace la copie de `aide.jpg` par une vraie image `medias/hop.jpg` « Lien vers OpenSim » (1200 x 600) et ajoute une notice (README, `readme.html` § 8, `galerie.html` § 4) : relever la position à pied (« Copier ma position », format `xyz`), `y` = sol + hauteur du centre du tableau, `yaw` lu dans Informations / État, nom de l'image, adresse `hop://` ; **(3)** les documents en retard : manuel (§ 5.7.1, § 5.11, § 7.38, table des zones), `PROCEDURES` § 13 (enregistrer le protocole `hop://` sous Windows), `HISTORIQUE` / `HISTORY`. `VERSION` passe de `1.5.4` à `1.6.0` (le numéro mineur monte : des fonctions ont été ajoutées). Test nouveau : `tests/yaw_etat.py` ; `tests/paquets.py` contrôle la zone `zhop`, son image et les notices, et ferme le panneau « À propos de la région » (fichiers `galerie.about.fr.txt` et `galerie.about.en.txt` du paquet galerie, ouverts à l'entrée) avant de cliquer sur l'aide du comptoir : sans cela le clic tombait sur ce panneau.
+- **Notes de la release GitHub** (à joindre : `galerie-photos.zip` et `region-simple.zip`, fabriqués par `python fabriquer_paquets.py`) : **Release** 1.6.0. New: the "Position avatar" line of Information / Status now ends with the `yaw` (radians, 2 decimals), the value to copy into a zone; both packages ship an example "Lien vers OpenSim" panel (`hop://` link) with step-by-step instructions to change its image, position and address; zones accept `hop://` links, and signs, pictures and captions read correctly from both sides (1.5.2 to 1.5.4). Documents updated, including how a visitor registers the `hop://` protocol on Windows.
 
 ### 05/11/2026 : panneaux, tableaux et légendes lisibles des deux côtés ; libellé des liens `hop://`
 

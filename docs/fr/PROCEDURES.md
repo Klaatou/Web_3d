@@ -355,3 +355,26 @@ Deux paquets se téléchargent sur la page des versions du dépôt : `galerie-ph
 4. Au moment d'une publication : `git tag vX.Y.Z` puis `git push origin vX.Y.Z` (le numéro est celui de `VERSION`). Sur la page GitHub du dépôt : **Releases**, puis **Draft a new release**. Choisir l'étiquette (**Choose a tag**), donner le titre (par exemple `1.2.0`) et coller les notes anglaises du `CHANGELOG.md`. Glisser les deux zips de `paquets-zip\` dans la zone **Attach binaries**, puis **Publish release**. Le lien `releases/latest` du `README` fonctionne alors.
 
 Modifier un paquet, c'est modifier ses sources dans `paquets\` (par exemple les images de `paquets\galerie-photos\site\medias\`), jamais le zip. Refais les zips après chaque nouvelle version des outils : ils embarquent `index.html`, `lib\` et `presence_server.py`.
+
+## 13. Ouvrir un lien `hop://` : enregistrer le protocole sous Windows
+
+Une zone lien web, ou un tableau dont le lien (`link`) commence par `hop://`, ouvre le monde visé dans le viewer OpenSim ou Second Life du visiteur (manuel § 5.7.1 et § 5.11). Le navigateur passe l'adresse à Windows, qui lance le programme enregistré pour `hop://`. **Sans programme enregistré, rien ne se passe** : c'est à faire une fois, sur l'ordinateur de **chaque** visiteur, la page ne peut pas le faire à sa place. À la première ouverture, le navigateur demande une confirmation.
+
+Exemple avec Firestorm : il s'est ouvert sur le monde visé après cet enregistrement (essayé le 05/11/2026) ; avec un autre viewer, **non testé** (le paramètre `-url` est celui de Firestorm).
+
+1. Trouve l'exécutable du viewer : clic droit sur son raccourci, **Propriétés**, champ **Cible** (par exemple un `...\FirestormOS-Releasex64.exe`).
+2. Dans le Bloc-notes, écris le fichier ci-dessous en remplaçant `C:\\CHEMIN\\VERS\\VIEWER.exe` par ce chemin, **chaque barre oblique inverse doublée** (`C:\\Program Files\\...`), et enregistre-le sous `hop.reg` (type « Tous les fichiers », pas `.txt`).
+```
+Windows Registry Editor Version 5.00
+
+[HKEY_CURRENT_USER\Software\Classes\hop]
+@="URL:hop"
+"URL Protocol"=""
+
+[HKEY_CURRENT_USER\Software\Classes\hop\shell\open\command]
+@="\"C:\\CHEMIN\\VERS\\VIEWER.exe\" -url \"%1\""
+```
+3. Double-clique sur `hop.reg`, accepte les messages de confirmation de Windows. Cela écrit seulement dans `HKEY_CURRENT_USER` (ton compte, pas besoin d'être administrateur).
+4. Essaie : dans le navigateur, clique sur un panneau `hop://` ; confirme dans le navigateur.
+
+Pour annuler : supprimer la clé `HKEY_CURRENT_USER\Software\Classes\hop` dans `regedit`. Linux et macOS : non traités ici.

@@ -1,0 +1,2 @@
+"Creator" painting gallery
+(update the text in galerie.about.txt)

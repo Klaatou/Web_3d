@@ -355,7 +355,7 @@
  "page.state.mode.fly": "en vol",
  "page.state.mode.walk": "à pied",
  "page.state.mouse": "Souris : {0}",
- "page.state.pos.avatar": "Position avatar : x {0} · y {1} · z {2} m",
+ "page.state.pos.avatar": "Position avatar : x {0} · y {1} · z {2} m · yaw {3} rad",
  "page.state.pos.target": "Position cible (vue globale) : x {0} · y {1} · z {2} m",
  "page.state.run": " · course",
  "page.state.view": "Vue : {0}",

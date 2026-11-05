@@ -1,0 +1,2 @@
+Galerie de tableaux de "Créateur"
+(mettre à jour le texte dans galerie.about.txt)

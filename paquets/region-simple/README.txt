@@ -25,6 +25,8 @@ Pour commencer
      d'exemple (visible en promenade). A REVOIR avec votre propre GLB : ce panneau flotterait dans le
      vide. Supprimez-le (remplacez le contenu de site/region.zones.json par []) ou deplacez-le avec le
      viewer : voir readme.html, section 8.
+     Un second panneau, "Lien vers OpenSim" (lien hop://, image site/medias/hop.jpg), est un exemple a personnaliser :
+     readme.html, section 8, explique comment changer l'image, la position et l'adresse.
   4. Mettez VOTRE GLB dans le dossier site sous le nom region.glb (il remplace l'exemple), puis F5.
   5. Un autre nom que "region" ? Double-cliquez sur renommer-region.bat (macOS : renommer-region.command ; Linux : sh renommer-region.sh NOUVEAU_NOM).
 
@@ -58,6 +60,8 @@ To start
      house (visible while walking). TO REVIEW with your own GLB: that panel would float in empty space.
      Delete it (replace the contents of site/region.zones.json with []) or move it with the viewer:
      see readme.html, section 8.
+     A second panel, "Lien vers OpenSim" (hop:// link, image site/medias/hop.jpg), is an example to customise:
+     readme.html, section 8, explains how to change the image, the position and the address.
   4. Put YOUR GLB in the site folder under the name region.glb (it replaces the example), then F5.
   5. A name other than "region"? Double-click renommer-region.bat (macOS: renommer-region.command; Linux: sh renommer-region.sh NEW_NAME).
 

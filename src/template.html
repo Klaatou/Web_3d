@@ -910,10 +910,10 @@ if (C.walk) {
   fb.onclick = () => { viewer.toggleFly(); viewTick(); };
   gb.onclick = () => { viewer.grabMouse(); viewTick(); };
   // position à noter (m, une décimale) : l'avatar en promenade, sinon la cible de la vue globale (le cercle d'atterrissage)
-  const f1 = v => (Math.round(v * 10) / 10).toFixed(1);
+  const f1 = v => (Math.round(v * 10) / 10).toFixed(1), f2 = v => (Math.round(v * 100) / 100).toFixed(2);   // f2 : yaw en radians, 2 decimales (meme arrondi que le yaw de « Copier ma position »)
   const posTick = () => {
-    const w = viewer.walking ? viewer.getWalk().pos : null, t = viewer.controls.target;
-    setTxt(lp, tr(w ? 'page.state.pos.avatar' : 'page.state.pos.target', f1(w ? w[0] : t.x), f1(w ? w[1] : t.y), f1(w ? w[2] : t.z))); viewTick();
+    const gw = viewer.walking ? viewer.getWalk() : null, w = gw ? gw.pos : null, t = viewer.controls.target;
+    setTxt(lp, tr(w ? 'page.state.pos.avatar' : 'page.state.pos.target', f1(w ? w[0] : t.x), f1(w ? w[1] : t.y), f1(w ? w[2] : t.z), w ? f2(gw.yaw) : '')); viewTick();
   };
   posTick(); setInterval(posTick, 250);
   // « Aller à x, y, z » : mètres, repère du modèle d'origine en mode tuiles, repère de la page (modèle recentré) en mode GLB unique ; décimale « . » ou « , » (avec « ; » entre les nombres)
