@@ -2,7 +2,7 @@
 
 Ce dossier contient **un exemple de chaque fichier JSON** que la page, le viewer, les outils et le serveur de présence lisent ou écrivent. Un fichier JSON n'accepte pas de commentaires : le sens de chaque champ est expliqué dans `MANUEL.md` § 27. Ici, ce sont de **vrais fichiers, complets et valides**.
 
-**S'en servir** : copier l'exemple, le renommer, changer les valeurs. Dans les exemples la région s'appelle `Region` : pour une région « Ankh », `region.config.sample.json` devient `Ankh.config.json` et `Ankh` remplace `Region` dans les valeurs qui le contiennent (`room`, `tiles`, les adresses). Les adresses sont écrites `ADRESSE` : mets la tienne. Le test `tests/samples.py` vérifie que chaque exemple est accepté par le vrai code qui le lit : ils restent donc justes quand le code change.
+**S'en servir** : copier l'exemple, le renommer, changer les valeurs. Dans les exemples la région s'appelle `Region` : pour une région « Atoll », `region.config.sample.json` devient `Atoll.config.json` et `Atoll` remplace `Region` dans les valeurs qui le contiennent (`room`, `tiles`, les adresses). Les adresses sont écrites `ADRESSE` : mets la tienne. Le test `tests/samples.py` vérifie que chaque exemple est accepté par le vrai code qui le lit : ils restent donc justes quand le code change.
 
 ## Fichiers d'une région et du site
 

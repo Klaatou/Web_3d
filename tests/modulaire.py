@@ -93,7 +93,7 @@ run(tmp / "boite.glb", "-o", site / "boite.html", "--modular", "--zones", tmp / 
 coques = {nom: (site / f"{nom}.html").read_bytes() for nom in ("walk3", "draco", "meshopt", "boite")}
 rapport(len(set(coques.values())) == 1, "coquille identique pour toutes les régions (octet pour octet)", {k: len(v) for k, v in coques.items()})
 txt = coques["walk3"].decode("utf-8")
-rapport(all(n not in txt for n in ("walk3", "boite", "Ankh", "meshopt.glb", "draco.glb")) and "BOOT" in txt, "aucun nom de région écrit dans la coquille")
+rapport(all(n not in txt for n in ("walk3", "boite", "Atoll", "meshopt.glb", "draco.glb")) and "BOOT" in txt, "aucun nom de région écrit dans la coquille")
 lib = site / "lib" / "three-0.160.0"
 rapport(all((lib / f).is_file() for f in ("DRACOLoader.js", "meshopt_decoder.module.js", "draco/draco_decoder.wasm", "draco/draco_wasm_wrapper.js", "three.module.js")), "lib/ contient toujours Draco et Meshopt (même pour un .glb brut)")
 for nom in ("walk3", "boite"):

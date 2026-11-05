@@ -123,7 +123,7 @@ rapport(avant("py.presence.registre_illisible_0_demarrage_a_vide") not in sortie
         "identités et bannissements d'exemple : lus sans erreur", sortie[-600:])
 rapport(FR["py.presence.history_loaded"].replace("{0}", "3").replace("{1}", "0").split("(")[0].strip() in sortie, "historique d'exemple : 3 messages relus", sortie[-600:])
 idoc = json.loads(ids.read_text(encoding="utf-8"))
-rapport(idoc["salt"] == lire("presence_identities.sample.json")["salt"] and set(idoc["names"]) == {"jj", "alice"}, "identités : gardées telles quelles")
+rapport(idoc["salt"] == lire("presence_identities.sample.json")["salt"] and set(idoc["names"]) == {"klaat", "alice"}, "identités : gardées telles quelles")
 rapport(len(json.loads(bans.read_text(encoding="utf-8"))) == 2, "bannissements : gardés (aucun n'est expiré)")
 # v48 : journal des visites et clé d'exemple (clé ABCD-EFGH-JKMN, documentée au manuel § 27) ; --visits-days 0 : rien n'est purgé
 vis, vkeys = tmp / "visits.jsonl", tmp / "vkeys.json"

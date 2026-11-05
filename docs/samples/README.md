@@ -2,7 +2,7 @@
 
 This folder holds **one example of each JSON file** that the page, the viewer, the tools and the presence server read or write. A JSON file cannot hold comments: the meaning of each field is explained in `MANUAL.md` § 27. What you find here are **real files, complete and valid**.
 
-**Using them**: copy the example, rename it, change the values. In the examples the region is called `Region`: for a region "Ankh", `region.config.sample.json` becomes `Ankh.config.json` and `Ankh` replaces `Region` in the values that contain it (`room`, `tiles`, the addresses). The addresses are written `ADRESSE`: put yours. The `tests/samples.py` test checks that each example is accepted by the real code that reads it: they therefore stay correct when the code changes.
+**Using them**: copy the example, rename it, change the values. In the examples the region is called `Region`: for a region "Atoll", `region.config.sample.json` becomes `Atoll.config.json` and `Atoll` replaces `Region` in the values that contain it (`room`, `tiles`, the addresses). The addresses are written `ADRESSE`: put yours. The `tests/samples.py` test checks that each example is accepted by the real code that reads it: they therefore stay correct when the code changes.
 
 ## Files of a region and of the site
 

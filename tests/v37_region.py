@@ -32,26 +32,26 @@ print("--- 3.1 région par défaut : fabrication")
 d1 = site / "un"
 r = gen(d1, "Ile", "ile", "--shared-shell")
 rapport(lire(d1 / "default.json") == {"region": "Ile"}, "première région d'un dossier : default.json = {\"region\": \"Ile\"}", (d1 / "default.json").read_text())
-gen(d1, "Ankh", "ankh", "--shared-shell")
+gen(d1, "Atoll", "atoll", "--shared-shell")
 rapport(lire(d1 / "default.json") == {"region": "Ile"}, "une deuxième région ne change pas default.json")
 d2 = site / "deux"
 gen(d2, "Ile", "ile", "--shared-shell")
-gen(d2, "Ankh", "ankh", "--shared-shell", "--default")
-rapport(lire(d2 / "default.json") == {"region": "Ankh"}, "--default : la région devient la région par défaut même si default.json existe")
+gen(d2, "Atoll", "atoll", "--shared-shell", "--default")
+rapport(lire(d2 / "default.json") == {"region": "Atoll"}, "--default : la région devient la région par défaut même si default.json existe")
 html("-o", d2 / "Ile.html", "--shared-shell", "--maj", "--room", "ile")
-rapport(lire(d2 / "default.json") == {"region": "Ankh"}, "--maj ne touche pas default.json")
+rapport(lire(d2 / "default.json") == {"region": "Atoll"}, "--maj ne touche pas default.json")
 html("-o", d2 / "Ile.html", "--shared-shell", "--maj", "--default")
 rapport(lire(d2 / "default.json") == {"region": "Ile"}, "--maj --default l'écrase")
 # repli regions.json
 d3 = site / "trois"
 gen(d3, "Ile", "ile", "--shared-shell")
-gen(d3, "Ankh", "ankh", "--shared-shell", "--register", d3 / "regions.json", "--region-name", "Ankh")
+gen(d3, "Atoll", "atoll", "--shared-shell", "--register", d3 / "regions.json", "--region-name", "Atoll")
 (d3 / "default.json").unlink()
 reg = lire(d3 / "regions.json")
 reg.insert(0, {"id": "loin", "name": "Loin", "url": "https://autre.example/index.html?region=Zzz", "x": 0, "y": 0})
 reg.insert(1, {"id": "mauvais", "name": "Mauvais", "url": "index.html?region=..%2Fx", "x": 1, "y": 0})
 (d3 / "regions.json").write_text(json.dumps(reg), encoding="utf-8")
-rapport(any(e["url"] == "index.html?region=Ankh" for e in reg), "--register écrit index.html?region=Ankh", [e["url"] for e in reg])
+rapport(any(e["url"] == "index.html?region=Atoll" for e in reg), "--register écrit index.html?region=Atoll", [e["url"] for e in reg])
 # message d'erreur
 d4 = site / "quatre"
 gen(d4, "Ile", "ile", "--shared-shell")
@@ -95,7 +95,7 @@ for mauvais in (["--shared-shell", d6 / "index.html", "-o", site / "ailleurs" / 
 r = run(DIST / "glb2html.py", site / "sol.glb", "-o", d6 / "a:b" / "X.html", "--shared-shell", d6 / "index.html", *BASE, ok=False)
 rapport(r.returncode != 0, "segment contenant « : » refusé à la fabrication", r.stderr[-160:])
 
-NOMS = ["Ile", "a/b/Ile", "Île d'Ankh", "sous/dossier/Ile", "a b/c(1)/x-y_z.v2", "é/ü", "a/.cache/x", "a/../b", "../x", "/abs", "a//b", "a:b/c", "a\\b", "a/b?", "a/b#", "x/y.", ".caché", "a/..b/c", "a/ /c", "ab/c d", "a%2Fb"]
+NOMS = ["Ile", "a/b/Ile", "Île d'Atoll", "sous/dossier/Ile", "a b/c(1)/x-y_z.v2", "é/ü", "a/.cache/x", "a/../b", "../x", "/abs", "a//b", "a:b/c", "a\\b", "a/b?", "a/b#", "x/y.", ".caché", "a/..b/c", "a/ /c", "ab/c d", "a%2Fb"]
 attendu = {n: g2h.valid_region_name(n) for n in NOMS}
 rapport(attendu["a/b/Ile"] and attendu["é/ü"] and attendu["a b/c(1)/x-y_z.v2"] and not attendu["a/../b"] and not attendu["a:b/c"] and not attendu["/abs"] and not attendu["a\\b"] and not attendu["a/.cache/x"] and not attendu["a//b"], "règle Python : cas valides et refusés", attendu)
 
@@ -111,13 +111,13 @@ async def main():
         B = f"http://127.0.0.1:{port}/"
         try:
             print("--- 3.1 région par défaut dans le navigateur")
-            for rel, room, nom in (("un/index.html", "ile", "une seule région : adresse sans paramètre"), ("deux/index.html", "ile", "--default puis --maj --default : Ile"), ("trois/index.html", "ankh", "repli regions.json (adresses absolue et invalide ignorées) : Ankh")):
+            for rel, room, nom in (("un/index.html", "ile", "une seule région : adresse sans paramètre"), ("deux/index.html", "ile", "--default puis --maj --default : Ile"), ("trois/index.html", "atoll", "repli regions.json (adresses absolue et invalide ignorées) : Atoll")):
                 o = await Onglet(br).ouvrir(B + rel, init=STUB)
                 t = await o.ev("document.title")
                 rapport(t == room, f"{nom} → salon « {room} »", t)
                 await o.ctx.close()
-            o = await Onglet(br).ouvrir(B + "un/index.html?region=Ankh", init=STUB)
-            rapport(await o.ev("document.title") == "ankh", "?region=Ankh l'emporte sur default.json")
+            o = await Onglet(br).ouvrir(B + "un/index.html?region=Atoll", init=STUB)
+            rapport(await o.ev("document.title") == "atoll", "?region=Atoll l'emporte sur default.json")
             await o.ctx.close()
             # message d'erreur
             for rel in ("quatre/index.html", "cinq/index.html"):

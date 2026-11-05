@@ -97,7 +97,7 @@ async def partie_serveur():
     d = tmp / "cr"; d.mkdir()
     f = d / "presence_creators.json"
     base = {"creators": [
-        {"id": "jj", "prefix": "", "origins": [A + "/", "null"], "note": "hôte"},
+        {"id": "klaat", "prefix": "", "origins": [A + "/", "null"], "note": "hôte"},
         {"id": "alice", "origins": [B], "maxWalkers": 2, "maxRooms": 1},
         {"id": "bob", "origins": [C], "off": True},
         {"id": "mauvais id"},

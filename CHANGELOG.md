@@ -2,6 +2,12 @@
 
 Les dates sont au format jj/mm/aaaa.
 
+## Non publié (après la 1.6.0)
+
+### 05/11/2026 : plus de nom de région ni de pseudo personnels dans les exemples et les tests
+
+- **Constat de Klaatou** : un ancien nom de région d'exemple et un pseudo personnel figuraient dans des documents, des tests et des exemples du dépôt public. Ils sont remplacés par des noms neutres (`Atoll`, `klaat`) : `docs/samples/README.md` et `README.fr.md`, `src/i18n` (exemple de l'option `-o`, donc `REFERENCE_OPTIONS.md` et `dist\`), `tests/modulaire.py`, `tests/v37_region.py`, `tests/samples.py`, `tests/v51.py`, `CHANGELOG.md`. `VERSION` passe de `1.6.0` à `1.6.1`.
+
 ## 1.6.0 (05/11/2026)
 
 ### 05/11/2026 : publication 1.6.0 : `yaw` dans l'état, panneau « Lien vers OpenSim » dans les paquets, documents à jour
@@ -905,7 +911,7 @@ Les dates sont au format jj/mm/aaaa.
 - Tests : nouveau `tests/portail_interne.py` ; `tests/modulaire.py` attend le chargement réel des pages exportées au lieu d'un délai fixe (échouait sur une machine lente).
 
 ## v21 (19/10/2026)
-- Correctif viewer, « Lier à un élément » sur un gros modèle (Ankh) : le contour affiché était un énorme cube noir ou un petit cube sous la région, et le cercle d'atterrissage pouvait se déplacer.
+- Correctif viewer, « Lier à un élément » sur un gros modèle (Atoll) : le contour affiché était un énorme cube noir ou un petit cube sous la région, et le cercle d'atterrissage pouvait se déplacer.
 - Mode liaison exclusif : le noyau ignore clics, double-clics et survol pendant la liaison (le double-clic déclenchait l'atterrissage) ; il reste verrouillé 600 ms après une liaison réussie. Le mode se quitte en cliquant sur le bouton, en posant une zone ou en plaçant le trou.
 - On lie le mesh nommé touché (éléments traversables ignorés), non un parent. Boîte englobante calculée en coordonnées monde après mise à jour des matrices depuis la racine (`boxOfMeshes`). Boîte vide ou non finie : élément refusé.
 - Un élément de plus de 30 m est refusé avec un message ; le refus laisse le mode actif.
