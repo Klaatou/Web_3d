@@ -430,7 +430,7 @@ const softGpu = r => /Basic Render|SwiftShader|llvmpipe|softpipe|Software/i.test
 function diagText(viewer, extra) {
   const x = extra || {}, L = (k, v) => tr('core.diag.line', k, v), out = [tr('core.diag.title')];
   const nb = (v, d) => (Number.isFinite(v) ? i18nNum(v, d || 0) : '?');   // nombres à la manière de la langue (virgule en français)
-  out.push(L(tr('core.diag.version'), '1.5.2 (04/11/2026)' + (x.cfgVersion && x.cfgVersion !== '1.5.2 (04/11/2026)' ? ' ; ' + tr('core.diag.cfgver', x.cfgVersion) : '')));
+  out.push(L(tr('core.diag.version'), '1.5.3 (05/11/2026)' + (x.cfgVersion && x.cfgVersion !== '1.5.3 (05/11/2026)' ? ' ; ' + tr('core.diag.cfgver', x.cfgVersion) : '')));
   out.push(L(tr('core.diag.date'), new Date().toLocaleString(({ fr: 'fr-FR', en: 'en-GB' })[LANG]) + ' ; ' + tr('core.diag.uptime', nb(performance.now() / 1000))));
   out.push(L(tr('core.diag.page'), location.protocol + (location.host ? '//ADRESSE' : '//') + location.pathname + location.search));
   out.push(L(tr('core.diag.lang'), LANG + ' · ' + ((navigator.languages || []).join(',') || navigator.language || '?') + ' · ' + KB.layout().toUpperCase()));
@@ -3003,6 +3003,7 @@ if ((C.zones || []).length || C.zonesLive) {
       .catch(() => {});
   }
   const okUrl = u => { try { const x = new URL(u, location.href); return (x.protocol === 'http:' || x.protocol === 'https:' || (location.protocol === 'file:' && x.protocol === 'file:')) ? x : null; } catch (e) { return null; } };
+  const okLink = u => { try { const x = new URL(u, location.href); return x.protocol === 'hop:' ? x : okUrl(u); } catch (e) { return null; } };   // liens de zones url et image : http, https et hop (hypergrid OpenSim et SL) ; portails et commandes restent en http(s)
   const visitor = () => viewer.getName() || tr('page.visitor');
   const cool = {};
   const askConfirm = (text, yes) => {
@@ -3032,8 +3033,9 @@ if ((C.zones || []).length || C.zonesLive) {
       u.hash = 'spawn=' + encodeURIComponent(z.spawn || '') + '&name=' + encodeURIComponent(visitor());
       fade.classList.add('on'); setTimeout(() => { location.href = u.href; }, 480);
     } else if (z.type === 'url' || z.type === 'image') {   // tableau avec lien (zone image) : comme une zone url
-      const u = okUrl(z.type === 'image' ? z.link : z.target); if (!u) return toast(tr('page.zone.badlink', label));
-      window.open(u.href, '_blank', 'noopener,noreferrer'); toast(tr('page.zone.opening', label));
+      const u = okLink(z.type === 'image' ? z.link : z.target); if (!u) return toast(tr('page.zone.badlink', label));
+      if (u.protocol === 'hop:') window.open(u.href, '_self'); else window.open(u.href, '_blank', 'noopener,noreferrer');   // hop: navigation directe (le navigateur propose d'ouvrir le viewer), pas d'onglet vide
+      toast(tr('page.zone.opening', label));
     } else if (z.type === 'ha') {
       if (!okUrl(z.target)) return toast(tr('page.zone.badcmd', label));
       if (z.confirm) askConfirm(tr('page.zone.confirm', label), () => haSend(z)); else haSend(z);

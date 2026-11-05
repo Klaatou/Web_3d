@@ -16,8 +16,8 @@ Draco et Meshopt gérés automatiquement (décodeurs intégrés seulement si le 
 """
 from __future__ import annotations
 
-VERSION = "1.5.2 (04/11/2026)"
-SHELL_VERSION = "1.5.2 (04/11/2026)"   # numéro de version de la coquille (index.html) : écrit par build.py, ne change que si la coquille change
+VERSION = "1.5.3 (05/11/2026)"
+SHELL_VERSION = "1.5.3 (05/11/2026)"   # numéro de version de la coquille (index.html) : écrit par build.py, ne change que si la coquille change
 MAP_VERSION = "1.4.9 (03/11/2026)"       # numéro de version de la page de carte (carte.html) : idem
 
 import argparse
@@ -3808,6 +3808,7 @@ if ((C.zones || []).length || C.zonesLive) {
       .catch(() => {});
   }
   const okUrl = u => { try { const x = new URL(u, location.href); return (x.protocol === 'http:' || x.protocol === 'https:' || (location.protocol === 'file:' && x.protocol === 'file:')) ? x : null; } catch (e) { return null; } };
+  const okLink = u => { try { const x = new URL(u, location.href); return x.protocol === 'hop:' ? x : okUrl(u); } catch (e) { return null; } };   // liens de zones url et image : http, https et hop (hypergrid OpenSim et SL) ; portails et commandes restent en http(s)
   const visitor = () => viewer.getName() || tr('page.visitor');
   const cool = {};
   const askConfirm = (text, yes) => {
@@ -3837,8 +3838,9 @@ if ((C.zones || []).length || C.zonesLive) {
       u.hash = 'spawn=' + encodeURIComponent(z.spawn || '') + '&name=' + encodeURIComponent(visitor());
       fade.classList.add('on'); setTimeout(() => { location.href = u.href; }, 480);
     } else if (z.type === 'url' || z.type === 'image') {   // tableau avec lien (zone image) : comme une zone url
-      const u = okUrl(z.type === 'image' ? z.link : z.target); if (!u) return toast(tr('page.zone.badlink', label));
-      window.open(u.href, '_blank', 'noopener,noreferrer'); toast(tr('page.zone.opening', label));
+      const u = okLink(z.type === 'image' ? z.link : z.target); if (!u) return toast(tr('page.zone.badlink', label));
+      if (u.protocol === 'hop:') window.open(u.href, '_self'); else window.open(u.href, '_blank', 'noopener,noreferrer');   // hop: navigation directe (le navigateur propose d'ouvrir le viewer), pas d'onglet vide
+      toast(tr('page.zone.opening', label));
     } else if (z.type === 'ha') {
       if (!okUrl(z.target)) return toast(tr('page.zone.badcmd', label));
       if (z.confirm) askConfirm(tr('page.zone.confirm', label), () => haSend(z)); else haSend(z);

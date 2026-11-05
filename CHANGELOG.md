@@ -4,6 +4,12 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.5.1)
 
+### 05/11/2026 : zones url et image : liens `hop://` autorisés
+
+- **Constat de Klaatou** : une zone lien dont la cible est `hop://grid.virtual-worlds.zone:8002` ne s'ouvrait pas (le viewer, qui ne fait que prévisualiser, affichait seulement « [aperçu] Lien … déclenché »). **Cause** : `okUrl` (`template.html`) n'acceptait que `http:` et `https:` ; la page répondait « Lien invalide ». **Correctif** : `okLink`, pour les zones **url** et **image** (clé `link`) seulement, accepte aussi `hop:` ; un lien `hop:` s'ouvre par navigation directe (`window.open(..., '_self')`), sans onglet vide, le navigateur proposant d'ouvrir le viewer OpenSim ou SL. Inchangé : les portails, les commandes Home Assistant et la carte restent en `http`/`https` ; `ftp:`, `javascript:` et le reste restent refusés. `VERSION` : `1.5.3`. Changent en `dist\` : `glb2html.py`, `index.html`, `glb-viewer.html`.
+- **Tests** : `tests/lien_image.py` étendu (tableau et zone url avec lien `hop://` : ouverts, sans « Lien invalide » ; zone `ftp://` refusée ; portail vers `hop://` refusé ; sur la 1.5.2, 3 contrôles échouent). **Non testé ici** : l'ouverture réelle par un viewer OpenSim ou SL, Windows, Edge.
+- **Fixed**: `hop://` links are now accepted in url and image zones (they were refused as "Lien invalide"; only http and https were allowed). They open by direct navigation so the browser offers to launch the viewer. Portals, Home Assistant commands and the map still accept http and https only. Test `tests/lien_image.py` extended (fails on 1.5.2). Not tested here: opening in a real viewer, Windows, Edge.
+
 ### 04/11/2026 : chat : une sélection de texte dans le journal n'est plus effacée
 
 - **Constat de Klaatou** : impossible de copier un message du chat, la sélection se perdait. **Cause** : la page reconstruisait tout le journal chaque seconde (`setInterval(render, 1000)`, `template.html`), ce qui efface une sélection de texte. **Correctif** : le journal n'est touché que si la liste affichée change, et un message de plus s'ajoute au bout sans tout reconstruire ; dans le viewer, un message de plus s'ajoute au journal sans le réécrire. Rien ne change côté réseau : `render()` ne parle pas au serveur de présence. `VERSION` : `1.5.2`. Changent en `dist\` : `glb2html.py`, `index.html`, `glb-viewer.html`.

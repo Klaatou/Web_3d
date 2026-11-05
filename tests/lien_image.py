@@ -76,10 +76,15 @@ def image(id_, x, link=None, target="tableau.png", w=1.5, h=0, label="", y=17):
     return z
 
 
+HOP = "hop://grid.example.org:8002/Region/128/128/25"
 ZONES = [image("avec", 0, "cible.html", label="Essai"), image("sans", 3), image("mauvais", -3, "javascript:window.__pwn=1", label="Piege"),
          image("manque", 6, "cible.html", target="absent.png", w=1, h=1), image("abs", -6, "https://example.org/x", label="Absolu"),
          image("long", 8.5, "http://example.org/" + LONG, w=1),
-         {"id": "u", "type": "url", "label": "Lien url", "target": "https://example.org/u", "x": -8, "y": 15, "z": 0, "yaw": 0, "radius": 2}]
+         image("hopimg", -9, HOP, w=1, label="Hop image"),
+         {"id": "u", "type": "url", "label": "Lien url", "target": "https://example.org/u", "x": -8, "y": 15, "z": 0, "yaw": 0, "radius": 2},
+         {"id": "hopu", "type": "url", "label": "Lien hop", "target": HOP, "x": -12, "y": 15, "z": 0, "yaw": 0, "radius": 2},
+         {"id": "ftp", "type": "url", "label": "Lien ftp", "target": "ftp://example.org/f", "x": -16, "y": 15, "z": 0, "yaw": 0, "radius": 2},
+         {"id": "portail", "type": "portal", "label": "Portail hop", "target": HOP, "spawn": "default", "x": -20, "y": 15, "z": 0, "yaw": 0, "radius": 2}]
 
 
 async def ouvertes(pg):
@@ -123,6 +128,8 @@ async def page_exportee(br, base):
     rapport(await cliquer(pg, [6, 17, -4.98]) == [], "clic sur un tableau dont l'image est introuvable : rien ne s'ouvre (plan invisible, pas cliquable)", await ouvertes(pg))
     res = await cliquer(pg, [-3, 17, -4.98])
     rapport(res == [] and await pg.evaluate("window.__pwn") is None and "Lien invalide" in await pg.evaluate("document.body.innerText"), "lien javascript: refuse (rien d'execute ni d'ouvert, message « Lien invalide »)", (res, await pg.evaluate("window.__pwn")))
+    rapport(await cliquer(pg, [-9, 17, -4.98]) == [HOP], "clic sur un tableau dont le lien est hop:// : le lien est ouvert (navigation directe)", await ouvertes(pg))
+    rapport("Lien invalide" not in await pg.evaluate("document.getElementById('toast').textContent"), "tableau hop:// : pas de message « Lien invalide »", await pg.evaluate("document.getElementById('toast').textContent"))
     # promenade : invite et touche E
     await pg.keyboard.press("f"); await pg.wait_for_timeout(900)
     async def invite(x, z):
@@ -143,6 +150,15 @@ async def page_exportee(br, base):
     vis, txt = await invite(-8, 0)
     await pg.keyboard.press("e"); await pg.wait_for_timeout(350)
     rapport(vis and "Lien url" in txt and await ouvertes(pg) == ["https://example.org/u"], "contre-epreuve : une zone url garde invite et E", (vis, txt, await ouvertes(pg)))
+    vis, txt = await invite(-12, 0)
+    await pg.keyboard.press("e"); await pg.wait_for_timeout(350)
+    rapport(vis and await ouvertes(pg) == [HOP] and "Lien invalide" not in await pg.evaluate("document.getElementById('toast').textContent"), "zone url avec un lien hop:// : invite, E ouvre le lien", (vis, txt, await ouvertes(pg)))
+    vis, txt = await invite(-16, 0)
+    await pg.keyboard.press("e"); await pg.wait_for_timeout(350)
+    rapport(vis and await ouvertes(pg) == [] and "Lien invalide" in await pg.evaluate("document.getElementById('toast').textContent"), "zone url avec un lien ftp:// : E refuse le lien (seuls http, https et hop sont permis)", (vis, txt, await ouvertes(pg)))
+    vis, txt = await invite(-20, 0)
+    await pg.keyboard.press("e"); await pg.wait_for_timeout(1200)
+    rapport(await ouvertes(pg) == [] and "Portail sans destination valide" in await pg.evaluate("document.getElementById('toast').textContent"), "portail dont la destination est hop:// : refusee (un portail mene a une page, http ou https seulement)", (vis, txt, await ouvertes(pg)))
     rapport(not errs, "page exportee : aucune erreur JavaScript", errs)
     await pg.close()
 
