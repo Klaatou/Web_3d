@@ -4,6 +4,10 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.6.0)
 
+### 06/11/2026 : `iar2oar.py` (hors dépôt) et procédure pour extraire des objets d'un IAR
+
+- **Demande de Klaatou** : gérer des IAR (archives d'inventaire OpenSim) et en extraire des objets en GLB comme les bâtiments d'un OAR. **Ajout hors dépôt** : `iar2oar.py` (à côté d'`oar2glb.py`, sans rien importer d'eux) transforme un IAR en OAR minimal : une case de grille par objet (ou par objet combiné), objets combinés séparés en groupes, contenu des boîtes (`TaskInventory`) ajouté sur 3 niveaux, octet nul final des XML retiré, seuls meshes, textures et matériaux copiés. Essai sur un IAR de 34 éléments (25 avec asset objet, 275 assets objet au total, 1 182 groupes, 10 562 parties) : l'OAR produit est relu sans erreur par `oar_scan` d'`oar2glb.py`, puis converti en GLB avec convoar et ouvert dans Blender par Klaatou. Non pris en charge : attachements et vêtements ; pas de terrain. Les erreurs de texture de convoar de cet essai viennent de l'IAR (textures de 3 octets, cartes de matériaux absentes). **Documents** : `docs/fr/PROCEDURES_SIMPLES.md` et `docs/en/SIMPLE_PROCEDURES.md` § 6 (sous-section IAR), `REPRISE.md`. `VERSION` passe de `1.6.1` à `1.6.2`.
+
 ### 05/11/2026 : plus de nom de région ni de pseudo personnels dans les exemples et les tests
 
 - **Constat de Klaatou** : un ancien nom de région d'exemple et un pseudo personnel figuraient dans des documents, des tests et des exemples du dépôt public. Ils sont remplacés par des noms neutres (`Atoll`, `klaat`) : `docs/samples/README.md` et `README.fr.md`, `src/i18n` (exemple de l'option `-o`, donc `REFERENCE_OPTIONS.md` et `dist\`), `tests/modulaire.py`, `tests/v37_region.py`, `tests/samples.py`, `tests/v51.py`, `CHANGELOG.md`. `VERSION` passe de `1.6.0` à `1.6.1`.

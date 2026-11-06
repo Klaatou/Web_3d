@@ -72,6 +72,28 @@ python .\extraire_batiments.py "CHEMIN\NOM.oar" "CHEMIN\NOM.glb" --nom "Jewel Bo
 
 The other options (delivery boxes, neighbours, merging, extracting everything) are described at the top of the script.
 
+### Extract objects from an IAR (inventory)
+
+The script `iar2oar.py` (outside the repository, in `P:\_OpenSim\SL&OS\Web_3d`, next to `oar2glb.py`) turns an inventory archive (IAR) into a minimal OAR, which the rest is handled as a region: each inventory object gets a cell on a grid (the region grows in steps of 256 m if needed), combined objects are split into groups, the contents of boxes are added. See what the IAR contains (writes nothing; `--filtre REGEX` and `--sans-imbriques` narrow the list):
+
+```powershell
+cd "P:\_OpenSim\SL&OS\Web_3d"; python .\iar2oar.py "CHEMIN\NOM.iar" --liste
+```
+
+Make the OAR:
+
+```powershell
+python .\iar2oar.py "CHEMIN\NOM.iar" -o "CHEMIN\NOM.oar"
+```
+
+Make the GLB (`oar2glb.py` writes it next to the OAR, named `NOM.glb`; `--keep-invisible` keeps the transparent prims):
+
+```powershell
+python .\oar2glb.py "CHEMIN\NOM.oar" --convoar "CHEMIN\convoar.exe"
+```
+
+Then list and extract as above, with `NOM.oar` and `NOM.glb`. The texture errors from convoar ("could not fetch texture asset", "unhandled number of components") can come from the IAR itself (missing or empty assets, seen on the first IAR tried): the faces concerned are grey. Attachments and clothing are not supported.
+
 ## 7. Update the online demo
 
 To do when `index.html`, `carte.html` or the icon change. `ajout_og.py` (outside the repository) puts back into `index.html` the sharing preview tags (image and title shown when the link is shared); the path given is to be confirmed:

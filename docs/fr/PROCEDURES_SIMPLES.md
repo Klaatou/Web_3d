@@ -72,6 +72,28 @@ python .\extraire_batiments.py "CHEMIN\NOM.oar" "CHEMIN\NOM.glb" --nom "Jewel Bo
 
 Les autres options (boîtes de livraison, voisins, fusion, tout extraire) sont décrites en tête du script.
 
+### Extraire des objets d'un IAR (inventaire)
+
+Le script `iar2oar.py` (hors dépôt, dans `P:\_OpenSim\SL&OS\Web_3d`, à côté de `oar2glb.py`) transforme une archive d'inventaire (IAR) en OAR minimal, que la suite se traite comme une région : chaque objet de l'inventaire reçoit une case sur une grille (la région grandit par pas de 256 m si besoin), les objets combinés sont séparés en groupes, le contenu des boîtes est ajouté. Voir ce que contient l'IAR (n'écrit rien ; `--filtre REGEX` et `--sans-imbriques` limitent la liste) :
+
+```powershell
+cd "P:\_OpenSim\SL&OS\Web_3d"; python .\iar2oar.py "CHEMIN\NOM.iar" --liste
+```
+
+Fabriquer l'OAR :
+
+```powershell
+python .\iar2oar.py "CHEMIN\NOM.iar" -o "CHEMIN\NOM.oar"
+```
+
+Fabriquer le GLB (`oar2glb.py` l'écrit à côté de l'OAR, sous le nom `NOM.glb` ; `--keep-invisible` garde les prims transparents) :
+
+```powershell
+python .\oar2glb.py "CHEMIN\NOM.oar" --convoar "CHEMIN\convoar.exe"
+```
+
+Puis lister et extraire comme ci-dessus, avec `NOM.oar` et `NOM.glb`. Les erreurs de texture de convoar (« could not fetch texture asset », « unhandled number of components ») peuvent venir de l'IAR lui-même (assets absents ou vides, constaté sur le premier IAR essayé) : les faces concernées sont grises. Les attachements et les vêtements ne sont pas pris en charge.
+
 ## 7. Mettre à jour la démo en ligne
 
 À faire quand `index.html`, `carte.html` ou l'icône changent. `ajout_og.py` (hors dépôt) remet dans `index.html` les balises d'aperçu de partage (image et titre affichés quand on partage le lien) ; le chemin indiqué est à confirmer :
