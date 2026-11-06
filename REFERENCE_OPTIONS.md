@@ -172,6 +172,21 @@ Extrait d'une région OpenSim (un OAR et son GLB) un GLB par groupe d'objets, re
 | `--no-cache` | (aucune) / (none) |  | ne lit ni n'écrit le cache<br>neither reads nor writes the cache |
 | `--clear-cache` | (aucune) / (none) |  | supprime le cache (dossier extraire_batiments.cache du dossier courant) puis continue<br>deletes the cache (extraire_batiments.cache folder of the current folder) then continues |
 
+## iar2oar.py
+
+Transforme une archive d'inventaire OpenSim (IAR) en OAR minimal pour la chaîne habituelle.<br>Turns an OpenSim inventory archive (IAR) into a minimal OAR for the usual chain.
+
+| Option | Valeur / Value | Défaut / Default | Effet / Effect |
+|---|---|---|---|
+| `--lang` | CODE | `auto` | langue des messages et de l'aide : fr, en ou auto (défaut : langue du système ; variable d'environnement WEB3D_LANG équivalente). Disponibles : en, fr<br>language of the messages and of this help: fr, en or auto (default: the system's language; environment variable WEB3D_LANG is equivalent). Available: en, fr |
+| `--version` |  |  | afficher la version et quitter<br>show the version and exit |
+| `iar` (obligatoire / required) |  |  | archive d'inventaire OpenSim (.iar)<br>OpenSim inventory archive (.iar) |
+| `-o` / `--output` | SORTIE | `inventaire.oar` | OAR à écrire (défaut : inventaire.oar)<br>OAR to write (default: inventaire.oar) |
+| `--list` | (aucune) / (none) |  | liste les objets trouvés, n'écrit rien<br>lists the objects found, writes nothing |
+| `--filter` | FILTRE |  | garde les éléments d'inventaire dont le nom correspond (expression régulière, casse ignorée)<br>keeps the inventory items whose name matches (regular expression, case ignored) |
+| `--no-nested` | (aucune) / (none) |  | ignore les objets contenus dans d'autres (boîtes)<br>ignores the objects held inside others (boxes) |
+| `--margin` | MARGE | `4.0` | espace entre deux cases de la grille, en mètres (défaut 4)<br>space between two grid cells, in metres (default 4) |
+
 ## presence_server.py
 
 Serveur de présence : positions des visiteurs, chat, modération.<br>Presence server: visitor positions, chat, moderation.

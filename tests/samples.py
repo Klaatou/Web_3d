@@ -19,7 +19,7 @@ print("--- 0. aucun ancien nom (avant v43 / v44) dans l'aide, les messages et le
 import re
 ANCIENS = re.compile(r"(?<![\w-])--(maj|tile-max-mo|tile-max-tri|budget-tri|entier-poids|entier-etendue|seuil|seuil-tri|aberrant|bloc|exclure|exclure-max-tri|"
                      r"exclure-max-meshes|sans-references|sans-vue-ensemble|vue-ensemble-seule|ov-budget-tri|ov-seuil|ov-seuil-max|ov-terrain-pas|forcer|sortie|reperes|"
-                     r"terrain-seul|outils|verifier|glossaire|filtre|min-parties|boite|voisin|rayon|rayon-nom|parties-voisin|groupe|nom|tous|limite|simuler|oui|fusionner|sol|sans-cache|vider-cache)(?![\w-])|\btileMaxMo\b|\btileMaxTri\b|\bbudgetMo\b|\bwholeWeightMo\b|\bthresholdMo\b|\?tuiles=|\?rayon=|"
+                     r"terrain-seul|outils|verifier|glossaire|filtre|min-parties|boite|voisin|rayon|rayon-nom|parties-voisin|groupe|nom|tous|limite|simuler|oui|fusionner|sol|sans-cache|vider-cache|liste|sans-imbriques|marge)(?![\w-])|\btileMaxMo\b|\btileMaxTri\b|\bbudgetMo\b|\bwholeWeightMo\b|\bthresholdMo\b|\?tuiles=|\?rayon=|"
                      r"--terrain (oui|non)\b|--zone-marker (discret|portee|aucun)\b|--profile perso\b|\[maj\]")
 EXCEPTION = re.compile(r"avant la v4[34]|before v4[34]|ancien|old value|old name|accept")
 trouves = []
