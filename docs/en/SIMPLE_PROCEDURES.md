@@ -56,43 +56,45 @@ npx -y gltfpack -i ".\NOM.overview.glb" -o ".\sortie\NOM.overview.glb" -cc -kn -
 
 Then replace the files with those in `sortie`. Keep a backup first.
 
-## 6. Extract buildings from a region
+## 6. Extract objects from a region (buildings, furniture...)
 
-The script `extraire_batiments.py` (outside the repository, in `P:\_OpenSim\SL&OS\Web_3d`) outputs one GLB per building, recentred, with a `.json` that keeps its original position. It reads the OAR and the GLB made by `oar2glb.py`; the first reading is long, later ones come from a cache. List the groups of at least 5 parts:
+The script `extraire_batiments.py` (in `web_3d\dist`) outputs one GLB per object group of the OAR, recentred, with a `.json` that keeps its original position. Its name comes from the buildings of a big OAR of houses it was written for, but **it is an object extraction**: a group can be a house, a piece of furniture, a tree, a vehicle. In its messages and files, "building" reads "object". It reads the OAR and the GLB made by `oar2glb.py`; the first reading is long, later ones come from a cache.
 
-```powershell
-cd "P:\_OpenSim\SL&OS\Web_3d"; python .\extraire_batiments.py "CHEMIN\NOM.oar" "CHEMIN\NOM.glb" --list --min-parties 5
-```
-
-Extract by name (or `--groupe 12`, `--groupe 15,18,100-150`); `--sol 5` adds a test floor of 5 m around:
+Run the script **from the working folder** `P:\_OpenSim\SL&OS\Web_3d`, not from `dist\`: the output folder `batiments` and the cache folder `extraire_batiments.cache` are created where the command is run. List the groups of at least 5 parts:
 
 ```powershell
-python .\extraire_batiments.py "CHEMIN\NOM.oar" "CHEMIN\NOM.glb" --nom "Jewel Box House" -o "CHEMIN\batiments"
+cd "P:\_OpenSim\SL&OS\Web_3d"; python ".\web_3d\dist\extraire_batiments.py" "CHEMIN\NOM.oar" "CHEMIN\NOM.glb" --list --min-parts 5
 ```
 
-The other options (delivery boxes, neighbours, merging, extracting everything) are described at the top of the script.
+Extract by name (or `--group 12`, `--group 15,18,100-150`); `--ground 5` adds a test floor of 5 m around:
+
+```powershell
+python ".\web_3d\dist\extraire_batiments.py" "CHEMIN\NOM.oar" "CHEMIN\NOM.glb" --name "Jewel Box House" -o "CHEMIN\batiments"
+```
+
+The other options (delivery boxes, neighbours, merging, extracting everything): `--help` or `REFERENCE_OPTIONS.md`. The old French option names (`--groupe`, `--nom`, `--sol`...) are still accepted. The cache moves with the command; it is read again only if the OAR, the GLB, `glb2tiles.py` and `oar2glb.py` have not changed (path, size, date). If the script is copied alone somewhere else, `--tools FOLDER` (or the `WEB3D_TOOLS` variable) says where `glb2tiles.py` and `oar2glb.py` are.
 
 ### Extract objects from an IAR (inventory)
 
-The script `iar2oar.py` (outside the repository, in `P:\_OpenSim\SL&OS\Web_3d`, next to `oar2glb.py`) turns an inventory archive (IAR) into a minimal OAR, which the rest is handled as a region: each inventory object gets a cell on a grid (the region grows in steps of 256 m if needed), combined objects are split into groups, the contents of boxes are added. See what the IAR contains (writes nothing; `--filtre REGEX` and `--sans-imbriques` narrow the list):
+The script `iar2oar.py` (in `web_3d\dist`, next to `oar2glb.py`) turns an inventory archive (IAR) into a minimal OAR, which the rest handles as a region: each inventory object gets a cell on a grid (the region grows in steps of 256 m if needed), combined objects are split into groups, the contents of boxes are added. See what the IAR contains (writes nothing; `--filter REGEX` and `--no-nested` narrow the list):
 
 ```powershell
-cd "P:\_OpenSim\SL&OS\Web_3d"; python .\iar2oar.py "CHEMIN\NOM.iar" --liste
+cd "P:\_OpenSim\SL&OS\Web_3d"; python ".\web_3d\dist\iar2oar.py" "CHEMIN\NOM.iar" --list
 ```
 
 Make the OAR:
 
 ```powershell
-python .\iar2oar.py "CHEMIN\NOM.iar" -o "CHEMIN\NOM.oar"
+python ".\web_3d\dist\iar2oar.py" "CHEMIN\NOM.iar" -o "CHEMIN\NOM.oar"
 ```
 
 Make the GLB (`oar2glb.py` writes it next to the OAR, named `NOM.glb`; `--keep-invisible` keeps the transparent prims):
 
 ```powershell
-python .\oar2glb.py "CHEMIN\NOM.oar" --convoar "CHEMIN\convoar.exe"
+python ".\web_3d\dist\oar2glb.py" "CHEMIN\NOM.oar" --convoar "CHEMIN\convoar.exe"
 ```
 
-Then list and extract as above, with `NOM.oar` and `NOM.glb`. The texture errors from convoar ("could not fetch texture asset", "unhandled number of components") can come from the IAR itself (missing or empty assets, seen on the first IAR tried): the faces concerned are grey. Attachments and clothing are not supported.
+Then list and extract as above, with `NOM.oar` and `NOM.glb`. The old French option names (`--liste`, `--filtre`, `--sans-imbriques`, `--marge`, `--sortie`) are still accepted. The texture errors from convoar ("could not fetch texture asset", "unhandled number of components") can come from the IAR itself (missing or empty assets, seen on the first IAR tried): the faces concerned are grey. Attachments and clothing are not supported.
 
 ## 7. Update the online demo
 

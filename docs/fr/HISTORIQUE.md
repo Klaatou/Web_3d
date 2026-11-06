@@ -146,6 +146,11 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 05/11/2026 |  | après 1.5.1 | Lot 1.5.3 : les zones url et image acceptent les liens `hop://` |
 | 05/11/2026 |  | après 1.5.1 | Lot 1.5.4 : panneaux, tableaux et légendes lisibles des deux côtés ; sous-titre « Monde virtuel » |
 | 05/11/2026 |  | 1.6.0 | Publication 1.6.0 : `VERSION` 1.6.0 ; `CHANGELOG.md` ; le `yaw` dans « Position avatar », panneau d'exemple « Lien vers OpenSim » dans les deux paquets, documents à jour (manuel, procédures § 13) |
+| 05/11/2026 |  | après 1.6.0 | Lot 1.6.1 : noms neutres dans les exemples et les tests du dépôt public |
+| 06/11/2026 |  | après 1.6.0 | Lot 1.6.2 : procédure pour extraire des objets d'un IAR (documents) |
+| 06/11/2026 |  | après 1.6.0 | Lot 1.6.3 : `extraire_batiments.py` entre dans le dépôt (messages français et anglais, `--lang`, `--tools`, cache dans le dossier courant, options en anglais) |
+| 06/11/2026 |  | après 1.6.0 | Lot 1.6.4 : `iar2oar.py` entre dans le dépôt (messages français et anglais, `--lang`, options en anglais) |
+| 07/11/2026 |  | après 1.6.0 | Lot 1.6.5 : documents des deux scripts (procédures § 6, manuel § 3.7 et § 3.8, README, anciens noms § 11.11) |
 
 ## Commandes utiles
 

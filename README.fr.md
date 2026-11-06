@@ -30,6 +30,8 @@ Les manuels sont en français dans `docs/fr/` (`GUIDE.md` pour commencer, `MANUE
 | `presence_server.py`                     | Serveur WebSocket de présence, chat, modération, compteurs de visiteurs et journal des visites.                                                                                                                                                                           |
 | `oar2glb.py` ¹                           | Convertit une sauvegarde OpenSim (`.oar`) en `.glb` (convoar + réparation) ; `--terrain-only` ajoute le terrain complet des régions de plus de 256 m à un GLB existant.                                                                                                   |
 | `glb2tiles.py` (+ `glb-stats.py` à côté) | Découpe un GLB énorme en tuiles autonomes (`X.tiles/*.glb` + `X.tiles.json`) et fabrique une vue d'ensemble légère `X.overview.glb` ; `--analyse` mesure et recommande sans rien écrire ; `--exclude` écarte les « boîtes de livraison » d'un catalogue.                  |
+| `extraire_batiments.py` | Sort d'un OAR et de son GLB un GLB par groupe d'objets (maison, meuble, arbre...), recentré ; `--list` montre les groupes. |
+| `iar2oar.py` | Transforme une archive d'inventaire (IAR) en OAR minimal, pour la suite `oar2glb.py` puis `extraire_batiments.py`. |
 
 ¹ **Prérequis** :  **oar2glb.py** s'appuie sur le convertisseur externe **convoar.exe** \
   Téléchargement : https://github.com/Misterblue/convoar/tree/master/bin \

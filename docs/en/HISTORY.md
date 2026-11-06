@@ -146,6 +146,11 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 05/11/2026 |  | after 1.5.1 | Batch 1.5.3: url and image zones accept `hop://` links |
 | 05/11/2026 |  | after 1.5.1 | Batch 1.5.4: signs, pictures and captions readable from both sides; "Virtual world" subtitle |
 | 05/11/2026 |  | 1.6.0 | Release 1.6.0: `VERSION` 1.6.0; `CHANGELOG.md`; the `yaw` in "Position avatar", an example "Lien vers OpenSim" panel in both packages, documents up to date (manual, procedures § 13) |
+| 05/11/2026 |  | after 1.6.0 | Batch 1.6.1: neutral names in the examples and tests of the public repository |
+| 06/11/2026 |  | after 1.6.0 | Batch 1.6.2: procedure to extract objects from an IAR (documents) |
+| 06/11/2026 |  | after 1.6.0 | Batch 1.6.3: `extraire_batiments.py` enters the repository (French and English messages, `--lang`, `--tools`, cache in the current folder, options in English) |
+| 06/11/2026 |  | after 1.6.0 | Batch 1.6.4: `iar2oar.py` enters the repository (French and English messages, `--lang`, options in English) |
+| 07/11/2026 |  | after 1.6.0 | Batch 1.6.5: documents for both scripts (procedures § 6, manual § 3.7 and § 3.8, README, old names § 11.11) |
 
 ## Useful commands
 

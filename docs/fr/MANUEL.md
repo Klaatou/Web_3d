@@ -56,6 +56,8 @@ Les fichiers prêts à l'emploi sont déjà dans le dossier `dist/` du dépôt :
 | Fichier de `dist` | Rôle | Chapitre |
 | --- | --- | --- |
 | `oar2glb.py` | convertit un OAR en `.glb` et refait le terrain complet | 3 |
+| `extraire_batiments.py` | sort d'un OAR et de son `.glb` un `.glb` par groupe d'objets, recentré | 3 |
+| `iar2oar.py` | transforme un IAR (inventaire OpenSim) en OAR minimal | 3 |
 | `glb-stats.py` | mesure un `.glb` ; doit rester à côté de `glb2tiles.py` | 4 |
 | `glb2tiles.py` | découpe un `.glb` énorme en tuiles et fabrique `NOM.overview.glb` (la vue d'ensemble) | 4 |
 | `glb-viewer.html` | le viewer : on y ouvre un `.glb` pour le régler et y poser les zones | 5 |
@@ -159,6 +161,49 @@ Test : `python tests/terrain.py` (OAR et GLB synthétiques).
 ### 3.6 Diagnostic : `--diag`
 
 À lancer après une conversion faite avec `--keep`. Le journal est `oar2glb.diag.log`. Chaque partie de l'OAR donne une ligne : nom, UUID, racine ou enfant, riggé oui/non, échelle du prim, échelle de `bind_shape_matrix`, transparent oui/non, boîte racine d'animesh oui/non, et le nœud GLB trouvé avec la méthode (UUID du prim, UUID du mesh, nom + position). Les animaux et prims invisibles affichent en plus le résumé du `TextureEntry`, la matrice complète, le domaine de position et le matériau GLB. Une ligne « nœud introuvable » sur un animal ou un prim transparent signifie que le correctif ne s'appliquera pas à lui.
+
+### 3.7 Extraire des objets d'une région : `extraire_batiments.py`
+
+`tools/extraire_batiments.py` (fabriqué dans `dist/`) sort d'une région OpenSim, à partir de l'OAR et du GLB fabriqué par `oar2glb.py`, **un GLB par groupe d'objets**, recentré. Son nom vient des bâtiments d'un gros OAR de maisons pour lequel il a été écrit, mais **c'est une extraction d'objets** : un groupe peut être un bâtiment, un meuble, un arbre, un véhicule ; « bâtiment » se lit « objet » dans ses messages et ses fichiers. Il ne modifie ni l'OAR ni le GLB : il écrit seulement le dossier de sortie (`batiments` par défaut) et son cache.
+
+| Pour | Commande |
+| --- | --- |
+| Voir les groupes de l'OAR | `python extraire_batiments.py OAR GLB --list [--filter REGEX] [--min-parts N] [--box REGEX]` |
+| Voir, pour chaque boîte de livraison, le groupe voisin | `python extraire_batiments.py OAR GLB --list --box RAKis --neighbor` |
+| Extraire des groupes par leur numéro | `python extraire_batiments.py OAR GLB --group 12 --group 15,18,100-150 -o DOSSIER` |
+| Extraire par le nom | `python extraire_batiments.py OAR GLB --name "Jewel Box House"` |
+| Ajouter un sol d'essai de 5 m autour | `python extraire_batiments.py OAR GLB --group 12 --ground 5` |
+| Un seul fichier pour plusieurs groupes | `python extraire_batiments.py OAR GLB --group 12 --group 15 --merge "Maison et garage"` |
+| Dire combien de groupes seraient extraits | `python extraire_batiments.py OAR GLB --all --min-parts 5 --box RAKis --exclude Rail --dry-run` |
+
+- **Numéro d'un groupe** : son rang dans l'OAR ; il ne change pas tant que l'OAR est le même. Chaque groupe choisi donne `NNNN_nom.glb` et `NNNN_nom.json` ; avec `--merge`, tous les groupes choisis donnent un seul fichier nommé d'après l'argument.
+- **Recentrage** : le milieu de l'objet en x et z est à 0 et le sol à y = 0 (hauteur du terrain de l'OAR sous ce milieu, sinon le point le plus bas). Le `.json` voisin garde les coordonnées d'origine OpenSim (x, y du milieu, altitude du sol), la taille et les groupes.
+- **Sol d'essai** (`--ground MARGIN`) : une dalle plane de couleur unie, de 0,3 m d'épaisseur, dont le dessus est à -2 cm, qui dépasse de l'objet de `MARGIN` mètres ; on peut marcher dessus. Le nœud s'appelle « sol d'essai » (`extras.essai`), pour le retirer ensuite.
+- **Boîtes de livraison** : un cube de 1,2 m dont le nom correspond à `--box`. `--all` les saute ; `--neighbor` cherche le groupe voisin de chaque boîte, d'abord par le nom du bâtiment (celui de la boîte sans son suffixe, à moins de `--name-radius` mètres), sinon par la position seule (`--radius` mètres, groupes d'au moins `--neighbor-parts` parties) ; les trois distances par défaut (80, 25 et 5) sont des estimations à calibrer ; affichage seulement.
+- **`--all`** refuse de prendre les groupes d'une seule partie (rails, panneaux...) sans `--min-parts N` ou `--yes`.
+- **Cache** : la première fois, la lecture de l'OAR et la mesure du GLB sont longues ; leur résultat est gardé dans le dossier `extraire_batiments.cache`, créé **dans le dossier où la commande est lancée** (jamais à côté du script, pour ne rien écrire dans `dist/`), et relu tant que l'OAR, le GLB, `glb2tiles.py` et `oar2glb.py` n'ont pas changé (chemin, taille, date). On peut déplacer ce dossier avec sa commande. `--no-cache` l'ignore, `--clear-cache` le supprime. Les fichiers du cache sont des « pickle » : ne pas les récupérer d'une autre source.
+- **Les deux autres outils** : `glb2tiles.py` et `oar2glb.py` sont cherchés dans le dossier de `--tools`, sinon de la variable `WEB3D_TOOLS`, sinon à côté du script.
+- **Options et langue** : toutes les options sont dans `REFERENCE_OPTIONS.md` ; `--lang` et `WEB3D_LANG` : § 7.50 ; les anciens noms français restent acceptés : § 11.11.
+- **Non testé** : une vraie région depuis l'entrée du script dans le dépôt (essais sur un OAR et un GLB fabriqués par `tests/extraire_batiments.py`), Windows.
+
+### 3.8 Extraire des objets d'un IAR (inventaire) : `iar2oar.py`
+
+`tools/iar2oar.py` (fabriqué dans `dist/`) transforme une archive d'inventaire OpenSim (IAR) en **OAR minimal**, que la suite traite comme une région (`oar2glb.py`, puis `extraire_batiments.py`). Il ne modifie jamais l'IAR et n'importe rien d'`oar2glb.py` ni de `glb2tiles.py`.
+
+| Pour | Commande |
+| --- | --- |
+| Voir ce que contient l'IAR (n'écrit rien) | `python iar2oar.py MON.iar --list [--filter REGEX] [--no-nested]` |
+| Fabriquer l'OAR | `python iar2oar.py MON.iar -o inventaire.oar [--filter REGEX] [--no-nested] [--margin 4]` |
+| Puis fabriquer le GLB | `python oar2glb.py inventaire.oar` |
+| Puis lister et extraire | `python extraire_batiments.py inventaire.oar inventaire.glb --list` |
+
+- Chaque objet d'inventaire (asset `object.xml`) devient un ou plusieurs groupes de l'OAR ; le groupe porte le nom de l'élément d'inventaire (la racine de l'objet est renommée), pour que `--name` et `--filter` fonctionnent.
+- Un objet « combiné » (`CoalescedObject`) est séparé en ses groupes, qui gardent leur disposition relative.
+- Les objets contenus dans le contenu d'un autre (boîtes, `TaskInventory`) sont ajoutés aussi, jusqu'à 3 niveaux, une seule fois chacun ; leur nom est « parent / nom » ; `--no-nested` les ignore.
+- Les positions d'origine se chevauchent : chaque groupe (ou objet combiné) reçoit une case sur une grille, séparée de ses voisines par `--margin` mètres (4 par défaut), sans terrain (le sol d'un extrait est alors son point le plus bas). La taille de la région grandit par pas de 256 m si besoin. **Estimation** : l'étendue d'un groupe pour sa case est calculée avec les positions et les échelles des parties, sans les rotations.
+- L'octet nul qui termine les XML de l'IAR est retiré ; seuls les assets utiles à la 3D sont copiés (meshes, textures, matériaux).
+- **Non pris en charge** : attachements et vêtements (pas d'avatar). **Non testé** : convoar sur l'OAR produit par la version du dépôt, un vrai IAR (essais sur un IAR fabriqué par `tests/iar2oar.py`). Les erreurs de texture de convoar sur un IAR peuvent venir de l'IAR lui-même (assets absents ou vides) : les faces concernées sont grises.
+- Options, langue, anciens noms : comme au § 3.7.
 
 ## 4. Mesurer et découper une grosse région
 
@@ -1069,7 +1114,7 @@ Toute l'interface (aide, réglages, informations, invites, messages de chargemen
 
 ### 7.50 Langue des outils Python : `--lang`, `WEB3D_LANG`
 
-`glb2html.py`, `glb2tiles.py`, `oar2glb.py` et `presence_server.py` (et `glb-stats.py`, utilisé par `glb2tiles.py`) affichent leurs messages, leurs avertissements, leurs erreurs et leur aide (`--help`) en français ou en anglais. **Choix de la langue** : `--lang fr`, `--lang en` ou `--lang auto` (par défaut) ; sinon la variable d'environnement `WEB3D_LANG` ; sinon la langue du système ; sinon l'anglais. `--lang` l'emporte sur `WEB3D_LANG`. Les options elles-mêmes (`--budget`, `--exclude`…) et les commandes de modération du serveur (`liste`, `ejecter`, `bannir`, `bans`, `debannir`, `aide`) ne changent pas de langue. Les fichiers de sortie (JSON, journaux des outils) gardent leurs clés ; les journaux sont écrits dans la langue choisie.
+`glb2html.py`, `glb2tiles.py`, `oar2glb.py`, `extraire_batiments.py`, `iar2oar.py` et `presence_server.py` (et `glb-stats.py`, utilisé par `glb2tiles.py`) affichent leurs messages, leurs avertissements, leurs erreurs et leur aide (`--help`) en français ou en anglais. **Choix de la langue** : `--lang fr`, `--lang en` ou `--lang auto` (par défaut) ; sinon la variable d'environnement `WEB3D_LANG` ; sinon la langue du système ; sinon l'anglais. `--lang` l'emporte sur `WEB3D_LANG`. Les options elles-mêmes (`--budget`, `--exclude`…) et les commandes de modération du serveur (`liste`, `ejecter`, `bannir`, `bans`, `debannir`, `aide`) ne changent pas de langue. Les fichiers de sortie (JSON, journaux des outils) gardent leurs clés ; les journaux sont écrits dans la langue choisie.
 
 **Fichiers autonomes** : `build.py` intègre les textes de `src/i18n/*.json` (clés `py.*`) dans chaque outil de `dist\` (seulement les textes de cet outil et les textes communs, depuis la 1.4.10) : un outil copié seul sur une autre machine garde ses deux langues (c'est un choix de fabrication). Depuis les sources (`tools\`, `src\`), les outils lisent `i18n_py.py` et `i18n\` à côté d'eux ou dans `src\`. Ajouter une langue : § 7.51, aucun code à modifier. Une nouvelle option d'un outil doit avoir sa clé `py.*` dans **les deux** fichiers (`python tests/i18n.py` le vérifie) ; `python gen_reference.py` refait `REFERENCE_OPTIONS.md` (français puis anglais dans chaque case « Effet »), `python tests/doc_options.py` vérifie qu'aucune option n'y manque et qu'aucune description n'est vide.
 
@@ -1865,6 +1910,12 @@ Pour que tous les noms soient dans la même langue, la v43 a mis en anglais les 
 | `oar2glb.py`                           | `--reperes`, `--terrain-seul`, `--sortie`                          | `--markers`, `--terrain-only`, `--output`                      |
 | `oar2glb.py`                           | `--terrain oui`, `--terrain non`                                   | `--terrain yes`, `--terrain no`                                |
 | `glb-stats.py`                         | `--bloc`, `--sortie`                                               | `--block`, `--output`                                          |
+| `extraire_batiments.py` (1.6.3)        | `--filtre`, `--min-parties`, `--boite`                             | `--filter`, `--min-parts`, `--box`                             |
+| `extraire_batiments.py` (1.6.3)        | `--voisin`, `--rayon`, `--rayon-nom`, `--parties-voisin`           | `--neighbor`, `--radius`, `--name-radius`, `--neighbor-parts`  |
+| `extraire_batiments.py` (1.6.3)        | `--groupe`, `--nom`, `--tous`, `--exclure`, `--limite`             | `--group`, `--name`, `--all`, `--exclude`, `--limit`           |
+| `extraire_batiments.py` (1.6.3)        | `--simuler`, `--oui`, `--fusionner`, `--sol`                       | `--dry-run`, `--yes`, `--merge`, `--ground`                    |
+| `extraire_batiments.py` (1.6.3)        | `--sortie`, `--sans-cache`, `--vider-cache`                        | `--output`, `--no-cache`, `--clear-cache`                      |
+| `iar2oar.py` (1.6.4)                   | `--liste`, `--filtre`, `--sans-imbriques`, `--marge`, `--sortie`   | `--list`, `--filter`, `--no-nested`, `--margin`, `--output`    |
 | `gen_reference.py` (v44)               | `--outils`, `--sortie`, `--verifier`                               | `--tools`, `--output`, `--check`                               |
 | `verif_trad.py` (v44)                  | `--glossaire`                                                      | `--glossary`                                                   |
 | `NOM.config.json`                      | `tileMaxMo`, `tileMaxTri`                                          | `tileMaxMB`, `tileMaxTriangles`                                |
