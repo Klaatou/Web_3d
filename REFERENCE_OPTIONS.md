@@ -140,6 +140,38 @@ Convertit une sauvegarde de région OpenSim (.oar) en GLB, refait le terrain com
 | `--terrain-only` | GLB |  | ne pas lancer convoar : ajouter le terrain complet à ce GLB (écrit X-terrain.glb, l'original n'est jamais modifié)<br>do not run convoar: add the full terrain to this GLB (writes X-terrain.glb, the original is never modified) |
 | `--output` | OUTPUT |  | avec --terrain-only : fichier GLB de sortie (défaut : X-terrain.glb à côté de l'original)<br>with --terrain-only: output GLB file (default: X-terrain.glb beside the original) |
 
+## extraire_batiments.py
+
+Extrait d'une région OpenSim (un OAR et son GLB) un GLB par groupe d'objets, recentré.<br>Extracts from an OpenSim region (an OAR and its GLB) one re-centred GLB per object group.
+
+| Option | Valeur / Value | Défaut / Default | Effet / Effect |
+|---|---|---|---|
+| `--lang` | CODE | `auto` | langue des messages et de l'aide : fr, en ou auto (défaut : langue du système ; variable d'environnement WEB3D_LANG équivalente). Disponibles : en, fr<br>language of the messages and of this help: fr, en or auto (default: the system's language; environment variable WEB3D_LANG is equivalent). Available: en, fr |
+| `--version` |  |  | afficher la version et quitter<br>show the version and exit |
+| `oar` (facultatif / optional) |  |  | sauvegarde de région OpenSim (.oar)<br>OpenSim region backup (.oar) |
+| `glb` (facultatif / optional) |  |  | GLB fabriqué par oar2glb.py à partir de cet OAR<br>GLB made by oar2glb.py from this OAR |
+| `--tools` | FOLDER |  | dossier de glb2tiles.py et oar2glb.py (défaut : variable WEB3D_TOOLS, sinon le dossier de ce script)<br>folder of glb2tiles.py and oar2glb.py (default: WEB3D_TOOLS variable, otherwise the folder of this script) |
+| `--list` | (aucune) / (none) |  | liste les groupes de l'OAR<br>lists the groups of the OAR |
+| `--filter` | FILTRE |  | avec --list : garde les groupes dont le nom racine correspond (expression régulière, casse ignorée)<br>with --list: keeps the groups whose root name matches (regular expression, case ignored) |
+| `--min-parts` | MIN_PARTIES | `1` | nombre minimal de parties d'un groupe (défaut 1)<br>minimum number of parts of a group (default 1) |
+| `--box` | BOITE |  | marque (--list) ou saute (--all) les boîtes de livraison : cube de 1,2 m dont le nom correspond<br>marks (--list) or skips (--all) delivery boxes: 1.2 m cube whose name matches |
+| `--neighbor` | (aucune) / (none) |  | avec --list et --box : pour chaque boîte, le groupe voisin le plus proche en x et y et combien d'autres sont dans le rayon ; le nom passe avant la position : la boîte est appariée au groupe qui porte le même nom de bâtiment (nom de la boîte sans le suffixe RAKis Freebies), à moins de --name-radius mètres, sinon la position seule ; affichage seulement<br>with --list and --box: for each box, the nearest neighbour group in x and y and how many others are in the radius; the name comes before the position: the box is matched to the group with the same building name (box name without the RAKis Freebies suffix), within --name-radius metres, otherwise the position alone; display only |
+| `--radius` | RAYON | `25.0` | avec --neighbor : distance maximale en mètres, en x et y (défaut 25, estimation à calibrer)<br>with --neighbor: maximum distance in metres, in x and y (default 25, estimate to be calibrated) |
+| `--name-radius` | RAYON_NOM | `80.0` | avec --neighbor : distance maximale en mètres pour un voisin de même nom (défaut 80, estimation à calibrer)<br>with --neighbor: maximum distance in metres for a neighbour of the same name (default 80, estimate to be calibrated) |
+| `--neighbor-parts` | PARTIES_VOISIN | `5` | avec --neighbor : nombre minimal de parties d'un groupe voisin (défaut 5, estimation)<br>with --neighbor: minimum number of parts of a neighbour group (default 5, estimate) |
+| `--group` | GROUPE | `[]` | numéro(s) de groupe à extraire : 12, 12,15 ou un intervalle 100-150 (répétable)<br>group number(s) to extract: 12, 12,15 or a range 100-150 (repeatable) |
+| `--name` | NOM |  | extrait tous les groupes dont le nom racine correspond (expression régulière)<br>extracts every group whose root name matches (regular expression) |
+| `--all` | (aucune) / (none) |  | extrait tous les groupes (avec --min-parts, --box, --exclude, --limit)<br>extracts every group (with --min-parts, --box, --exclude, --limit) |
+| `--exclude` | EXCLURE | `[]` | avec --all : saute les groupes dont le nom correspond (répétable)<br>with --all: skips the groups whose name matches (repeatable) |
+| `--limit` | LIMITE |  | avec --all : ne prend que les N premiers<br>with --all: takes only the first N |
+| `--dry-run` | (aucune) / (none) |  | avec --all : dit seulement combien de groupes seraient extraits<br>with --all: only says how many groups would be extracted |
+| `--yes` | (aucune) / (none) |  | avec --all : accepte d'extraire aussi les groupes d'une seule partie<br>with --all: also accepts to extract single-part groups |
+| `--merge` | FUSIONNER |  | un seul fichier, de ce nom, pour tous les groupes choisis<br>a single file, with this name, for all the chosen groups |
+| `--ground` | MARGIN |  | ajoute un sol d'essai qui dépasse du bâtiment de MARGIN mètres<br>adds a test ground that sticks out of the building by MARGIN metres |
+| `-o` / `--output` | SORTIE | `batiments` | dossier de sortie (défaut : batiments)<br>output folder (default: batiments) |
+| `--no-cache` | (aucune) / (none) |  | ne lit ni n'écrit le cache<br>neither reads nor writes the cache |
+| `--clear-cache` | (aucune) / (none) |  | supprime le cache (dossier extraire_batiments.cache du dossier courant) puis continue<br>deletes the cache (extraire_batiments.cache folder of the current folder) then continues |
+
 ## presence_server.py
 
 Serveur de présence : positions des visiteurs, chat, modération.<br>Presence server: visitor positions, chat, moderation.

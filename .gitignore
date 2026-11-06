@@ -1,5 +1,6 @@
 # cache (dist/ est suivi par git : les fichiers prêts à l'emploi y sont)
 .cache/
+extraire_batiments.cache/
 __pycache__/
 *.pyc
 
