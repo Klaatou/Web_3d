@@ -161,6 +161,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 07/11/2026 |  | after 1.6.0 | Batch 1.6.15: animated GIFs animate on image zones (GIF decoder in the page) |
 | 07/11/2026 |  | after 1.6.0 | Batch 1.6.16: "Copy diagnostics" gives an "Animated GIFs" line |
 | 07/11/2026 |  | after 1.6.0 | Batch 1.6.17: the Status window shows the page version (`index.html`) and the configuration version |
+| 07/11/2026 |  | after 1.6.0 | Batch 1.6.18: documents: "Made with Web_3d" icon (§ 7.62), GIF in the GUIDE and the packages, `favicon.ico` in the package update, manual appendix completed up to 1.6.17, dead reference in `CREATORS.md` |
 
 ## Useful commands
 

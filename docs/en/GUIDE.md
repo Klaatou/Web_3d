@@ -44,7 +44,7 @@ Details: § 4.1 and § 4.2.
 
 ## 2. Placing the zones: the viewer `glb-viewer.html`
 
-The viewer opens in the browser; you open your `.glb` in it and place the zones: arrival point, portals, panels, links, images (chapter 5). It saves `NOM.zones.json`, to put next to the page.
+The viewer opens in the browser; you open your `.glb` in it and place the zones: arrival point, portals, panels, links, images (chapter 5). It saves `NOM.zones.json`, to put next to the page. An image can be an animated GIF (manual § 5.11).
 
 ## 3. Making the page: `glb2html.py`
 

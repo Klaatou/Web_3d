@@ -44,7 +44,7 @@ Détails : § 4.1 et § 4.2.
 
 ## 2. Poser les zones : le viewer `glb-viewer.html`
 
-Le viewer s'ouvre dans le navigateur ; on y ouvre son `.glb` et on y pose les zones : point d'arrivée, portails, panneaux, liens, images (chapitre 5). Il enregistre `NOM.zones.json`, à mettre à côté de la page.
+Le viewer s'ouvre dans le navigateur ; on y ouvre son `.glb` et on y pose les zones : point d'arrivée, portails, panneaux, liens, images (chapitre 5). Il enregistre `NOM.zones.json`, à mettre à côté de la page. Une image peut être un GIF animé (manuel § 5.11).
 
 ## 3. Fabriquer la page : `glb2html.py`
 

@@ -150,6 +150,7 @@ Pour un paquet (`galerie-photos.zip`, `region-simple.zip`) mis en ligne depuis u
 
 - **Ne pas écraser** : `NOM.config.json`, `NOM.zones.json`, `NOM.glb`, `medias\`, `regions.json`, `vignette.jpg`, `NOM.about.*.txt`, et `aide.html` si on l'a adaptée.
 - **`aide.html`** : à recopier depuis le nouveau zip seulement si vous ne l'avez pas modifiée (c'est elle qui porte les nouveaux textes d'aide) ; sinon, gardez la vôtre.
+- **`favicon.ico`** : le nouveau zip en contient un (le logo depuis la 1.6.14). Recopiez-le seulement si vous n'avez pas posé le vôtre : un `favicon.ico` déjà à côté de la page reste préféré à l'icône incorporée, donc l'onglet garderait l'ancienne icône.
 - **Paquet d'avant la 1.5.0** : la carte (`carte.html`) lit `regions.json` et `vignette.jpg`, qu'il n'avait pas ; sans eux elle dit « Impossible de lire regions.json ». Les copier aussi depuis le nouveau zip, puis les adapter.
 - **Dossier `lib\`** : seulement si le dossier `lib\three-…` du nouveau zip a un autre nom que le tien.
 - **Numéro affiché** (fenêtre État, touche I, ligne « Version ») : la « page » est la version d'`index.html` (elle suit votre copie) ; la « configuration » est la clé `version` de `NOM.config.json`, que vous pouvez changer à la main (le numéro est dans `VERSION.txt` du zip).

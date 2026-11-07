@@ -66,9 +66,12 @@ for nom in ("galerie-photos", "region-simple"):
     rapport(jb[:2] == b"\xff\xd8" and jpeg_taille(jb) == (320, 320) and len(jb) < 60 * 1024, f"{nom} : vignette.jpg : JPEG de 320 x 320 pixels, moins de 60 Ko", (jpeg_taille(jb), len(jb)))
     zf = site / f"{reg}.zones.json"
     zones = json.loads(zf.read_text(encoding="utf-8")) if zf.is_file() else []
-    absentes = [z["target"] for z in zones if z.get("type") == "image" and not (site / "medias" / z["target"]).is_file()]
-    hop = [z for z in zones if z.get("target") == "hop.jpg"]
-    jh = (site / "medias" / "hop.jpg").read_bytes() if (site / "medias" / "hop.jpg").is_file() else b""
+    def cible_fichier(t):   # 1.6.18 : une cible sans extension ("30") se resout comme dans la page : jpg, jpeg, png, webp, gif, avif, dans cet ordre, dans medias/ ; avec extension : ce fichier
+        if "." in t: return (site / "medias" / t) if (site / "medias" / t).is_file() else None
+        return next((site / "medias" / f"{t}.{e}" for e in ("jpg", "jpeg", "png", "webp", "gif", "avif") if (site / "medias" / f"{t}.{e}").is_file()), None)
+    absentes = [z["target"] for z in zones if z.get("type") == "image" and not cible_fichier(z["target"])]
+    hop = [z for z in zones if z.get("target") in ("hop", "hop.jpg")]
+    jh = cible_fichier("hop").read_bytes() if cible_fichier("hop") else b""
     rapport(len(hop) == 1 and hop[0].get("type") == "image" and str(hop[0].get("link", "")).startswith("hop://") and jh[:2] == b"\xff\xd8" and jpeg_taille(jh) == (1200, 600),
             f"{nom} : zone image « zhop » : lien hop://, image hop.jpg (« Lien vers OpenSim », JPEG de 1200 x 600)", (hop, jpeg_taille(jh)))
     rapport(not absentes, f"{nom} : chaque zone image a son fichier dans medias", absentes)
@@ -79,8 +82,8 @@ for nom in ("galerie-photos", "region-simple"):
     dc = (site / doc).read_text(encoding="utf-8")
     rapport(dc.count("carte.html") >= 2 and dc.count("vignette.jpg") >= 2 and dc.count("regions.json</code>") >= 4 and "27.6" not in dc, f"{nom} : {doc} decrit la carte du paquet (FR et EN), le renommage de la fiche, et renvoie au manuel § 11.6", (dc.count("carte.html"), dc.count("vignette.jpg"), "27.6" in dc))
     rapport(f'href="{doc}"' in aide and 'id="doc-createur"' in aide, f"{nom} : aide.html commence par le cadre qui renvoie vers {doc}")
-    liens = [z for z in zones if z.get("link") and z.get("target") != "hop.jpg"]
-    rapport(len(liens) == 1 and liens[0]["link"] == "aide.html" and liens[0]["target"] == "aide.jpg", f"{nom} : une zone image « aide.jpg » ouvre aide.html", [(z["id"], z.get("link")) for z in liens])
+    liens = [z for z in zones if z.get("link") and z.get("target") not in ("hop", "hop.jpg")]
+    rapport(len(liens) == 1 and liens[0]["link"] == "aide.html" and liens[0]["target"] in ("aide", "aide.jpg"), f"{nom} : une zone image « aide.jpg » ouvre aide.html", [(z["id"], z.get("link")) for z in liens])
     rapport(all((p / f).is_file() for f in (f"renommer-{'galerie' if nom == 'galerie-photos' else 'region'}.bat", f"renommer-{'galerie' if nom == 'galerie-photos' else 'region'}.ps1")), f"{nom} : script de renommage")
     rd = (p / "README.txt").read_text(encoding="utf-8")
     rapport("PARAMETRES" not in rd and not (p / "LISEZMOI.txt").exists(), f"{nom} : README.txt (plus de LISEZMOI.txt ni d'ancien document)")

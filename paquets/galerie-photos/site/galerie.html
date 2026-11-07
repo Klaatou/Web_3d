@@ -64,6 +64,7 @@ html[data-lang="fr"] tr[data-l="fr"],html[data-lang="en"] tr[data-l="en"]{displa
 <h2>1. Remplacer ou ajouter une image</h2>
 <ul>
 <li>Les images sont dans <code>medias/</code>. Le tableau n° 7 correspond au fichier <code>7.jpg</code>.</li>
+<li><b>GIF animé</b> : posez-le dans <code>medias/</code> sous le même numéro (<code>30.gif</code>) et retirez <code>30.jpg</code>. La zone 30 a pour cible <code>"30"</code> : la page essaie jpg, jpeg, png, webp, gif puis avif, dans cet ordre, donc le premier fichier trouvé gagne. Si une cible de <code>galerie.zones.json</code> porte une extension (<code>"30.jpg"</code>), elle désigne exactement ce fichier : changez-la en <code>"30.gif"</code>. Le GIF s'anime avec le <code>index.html</code> de la version 1.6.15 ou plus récente, sauf si le système du visiteur demande moins d'animations.</li>
 <li>Remplacez le fichier par une autre image <b>du même nom</b> : elle apparaît à la prochaine visite, sans vider le cache du navigateur.</li>
 <li>Formats essayés, dans cet ordre : <code>jpg, jpeg, png, webp, gif, avif</code>.</li>
 <li><b>Écrivez les noms en minuscules</b> (<code>2.jpg</code>, pas <code>2.JPG</code>) : sous Windows la casse ne compte pas, mais sur la plupart des hébergements <code>2.jpg</code> et <code>2.JPG</code> sont deux fichiers différents, et le tableau resterait vide.</li>
@@ -207,6 +208,7 @@ html[data-lang="fr"] tr[data-l="fr"],html[data-lang="en"] tr[data-l="en"]{displa
 <h2>1. Replace or add an image</h2>
 <ul>
 <li>Images live in <code>medias/</code>. Picture no. 7 is the file <code>7.jpg</code>.</li>
+<li><b>Animated GIF</b>: put it in <code>medias/</code> under the same number (<code>30.gif</code>) and remove <code>30.jpg</code>. Zone 30 has the target <code>"30"</code>: the page tries jpg, jpeg, png, webp, gif then avif, in that order, so the first file found wins. If a target in <code>galerie.zones.json</code> carries an extension (<code>"30.jpg"</code>), it points to exactly that file: change it to <code>"30.gif"</code>. The GIF animates with the <code>index.html</code> of version 1.6.15 or later, unless the visitor's system asks for less animation.</li>
 <li>Replace the file with another image <b>of the same name</b>: it shows up on the next visit, without clearing the browser cache.</li>
 <li>Formats tried, in this order: <code>jpg, jpeg, png, webp, gif, avif</code>.</li>
 <li><b>Use lowercase file names</b> (<code>2.jpg</code>, not <code>2.JPG</code>): Windows ignores case, but on most web hosts <code>2.jpg</code> and <code>2.JPG</code> are two different files, and the picture would stay empty.</li>

@@ -150,6 +150,7 @@ For a package (`galerie-photos.zip`, `region-simple.zip`) put online from an old
 
 - **Do not overwrite**: `NOM.config.json`, `NOM.zones.json`, `NOM.glb`, `medias\`, `regions.json`, `vignette.jpg`, `NOM.about.*.txt`, and `aide.html` if you adapted it.
 - **`aide.html`**: copy it from the new zip only if you have not changed it (it carries the new help texts); otherwise keep yours.
+- **`favicon.ico`**: the new zip contains one (the logo since 1.6.14). Copy it only if you have not placed your own: a `favicon.ico` already next to the page is still preferred to the embedded icon, so the tab would keep the old icon.
 - **Package from before 1.5.0**: the map (`carte.html`) reads `regions.json` and `vignette.jpg`, which it did not have; without them it says "Cannot read regions.json". Copy them too from the new zip, then adapt them.
 - **`lib\` folder**: only if the `lib\three-…` folder of the new zip has a different name from yours.
 - **Displayed number** (Status window, I key, "Version" line): the "page" is the version of `index.html` (it follows your copy); the "configuration" is the `version` key of `NOM.config.json`, which you can change by hand (the number is in `VERSION.txt` of the zip).

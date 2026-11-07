@@ -45,6 +45,7 @@ Mettre a jour un paquet deja publie (nouvelle version)
   Telechargez le nouveau zip, dezippez-le a part, puis copiez dans votre dossier site/ publie SEULEMENT index.html et carte.html. Publiez, puis Ctrl+F5 dans la page.
   Ne remplacez pas : la config (region.config.json), les zones (region.zones.json), le modele (region.glb), medias/, regions.json, vignette.jpg, ni aide.html si vous l'avez adaptee.
   Dossier lib/ : seulement si le nouveau zip a un autre dossier lib/three-... que le votre.
+  favicon.ico : recopiez-le seulement si vous n'avez pas pose le votre (un favicon.ico deja a cote de la page est prefere a l'icone incorporee).
   Version affichee (touche I, ligne "Version") : "page" est celle de index.html ; "configuration" est la cle "version" de region.config.json, a changer a la main si vous voulez (le numero est dans VERSION.txt du zip).
   Serveur de presence : remplacez presence/presence_server.py et relancez-le.
   Paquet d'avant la 1.5.0 : copiez aussi regions.json et vignette.jpg du nouveau zip et adaptez-les (la carte en a besoin).
@@ -92,6 +93,7 @@ Updating a package that is already published (new version)
   Download the new zip, unzip it somewhere else, then copy into your published site/ folder ONLY index.html and carte.html. Publish, then Ctrl+F5 in the page.
   Do not replace: the config (region.config.json), the zones (region.zones.json), the model (region.glb), medias/, regions.json, vignette.jpg, nor aide.html if you adapted it.
   lib/ folder: only if the new zip has a different lib/three-... folder from yours.
+  favicon.ico: copy it only if you have not placed your own (a favicon.ico already next to the page is preferred to the embedded icon).
   Displayed version (I key, "Version" line): "page" is that of index.html; "configuration" is the "version" key of region.config.json, to change by hand if you wish (the number is in VERSION.txt of the zip).
   Presence server: replace presence/presence_server.py and restart it.
   Package from before 1.5.0: also copy regions.json and vignette.jpg from the new zip and adapt them (the map needs them).
