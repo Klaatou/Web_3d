@@ -156,6 +156,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 07/11/2026 |  | after 1.6.0 | Batch 1.6.8: `README.txt` of the packages: the `carte.html` map is published with the site, you only need to adapt the thumbnail |
 | 07/11/2026 |  | after 1.6.0 | Batch 1.6.10: "Made with Web_3d" mention (link to the repository) at the bottom of `carte.html` and in the `aide.html` of the packages; procedure to update a package that is already published (procedures § 10) |
 | 07/11/2026 |  | after 1.6.0 | Batch 1.6.12: warning "do not unzip over a package already in place" (README, `README.txt` of the packages, procedures, release notes) |
+| 07/11/2026 |  | after 1.6.0 | Batch 1.6.13: "Made with Web_3d" icon (square, bottom right, bubble and link to the repository) on the page and the map |
 
 ## Useful commands
 

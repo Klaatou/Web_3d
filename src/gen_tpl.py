@@ -326,6 +326,12 @@ a.tile:hover{background:#eee}
 .cell small{font-size:11px;word-break:break-all;opacity:.8}
 footer{font-size:11px;opacity:.7}
 footer a{color:inherit}
+footer{padding-right:44px}   /* 1.6.13 : le texte du pied de page ne passe pas sous l'icône */
+#credit{position:fixed;right:12px;bottom:12px;z-index:12;width:32px;height:32px;box-sizing:border-box;display:block;border-radius:7px;box-shadow:0 0 0 1px #fff,0 0 0 2px #000;background:#001d55;line-height:0}   /* 1.6.13 : icône « Réalisé avec Web_3d » (carrée, pas plus haute que les boutons) ; le chat passe au-dessus ; image : src/credit.png */
+#credit img{display:block;width:100%;height:100%;border-radius:7px}
+#credit:focus-visible{outline:3px solid #000;outline-offset:3px}
+#creditTip{display:none;position:absolute;right:0;bottom:calc(100% + 8px);width:max-content;max-width:min(300px,calc(100vw - 24px));box-sizing:border-box;padding:5px 9px;background:#000;color:#fff;border:1px solid #fff;border-radius:6px;font:12px/1.4 ui-monospace,Consolas,monospace;pointer-events:none}
+#credit:hover #creditTip,#credit:focus-visible #creditTip{display:block}
 #who{margin:8px 0}
 #who input{font:inherit;width:200px;border:2px solid #000;border-radius:6px;padding:4px 6px}
 #who label.chk{display:inline-block;margin-left:12px}
@@ -353,6 +359,7 @@ __I18N__
 <div id="grid"></div>
 <footer id="foot"><span id="footText">glb2html __MAP_VERSION__</span> · <a data-i18n="map.credit" href="https://github.com/Klaatou/Web_3d" target="_blank" rel="noopener">Réalisé avec Web_3d</a></footer>
 </main>
+<a id="credit" href="https://github.com/Klaatou/Web_3d" target="_blank" rel="noopener" data-i18n-aria="common.credit.tip"><img src="__CREDIT_ICON__" alt="" width="32" height="32"><span id="creditTip" role="tooltip" data-i18n="common.credit.tip">Réalisé avec Web_3d : voir le projet sur GitHub</span></a>
 <script type="application/json" id="cfg">__CONFIG__</script>
 <script>
 (() => {

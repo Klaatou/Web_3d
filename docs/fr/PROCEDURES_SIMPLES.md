@@ -149,6 +149,7 @@ S'il n'a pas encore sa région en page web : lui envoyer `GUIDE.md`.
 Pour un paquet (`galerie-photos.zip`, `region-simple.zip`) mis en ligne depuis un zip plus ancien : télécharger le nouveau zip, le dézipper à part, puis copier dans le dossier `site` publié **seulement les pages HTML qui dépendent de la version** : `index.html` et `carte.html`. Publier, puis Ctrl+F5 dans la page.
 
 - **Ne pas écraser** : `NOM.config.json`, `NOM.zones.json`, `NOM.glb`, `medias\`, `regions.json`, `vignette.jpg`, `NOM.about.*.txt`, et `aide.html` si on l'a adaptée.
+- **`aide.html`** : à recopier depuis le nouveau zip seulement si vous ne l'avez pas modifiée (c'est elle qui porte les nouveaux textes d'aide) ; sinon, gardez la vôtre.
 - **Paquet d'avant la 1.5.0** : la carte (`carte.html`) lit `regions.json` et `vignette.jpg`, qu'il n'avait pas ; sans eux elle dit « Impossible de lire regions.json ». Les copier aussi depuis le nouveau zip, puis les adapter.
 - **Dossier `lib\`** : seulement si le dossier `lib\three-…` du nouveau zip a un autre nom que le tien.
 - **Numéro affiché** (fenêtre Informations, touche I) : c'est la clé `version` de `NOM.config.json` ; la changer à la main (le numéro est dans `VERSION.txt` du zip).

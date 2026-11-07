@@ -1,6 +1,7 @@
 {
  "_name": "Français",
  "common.auto": "Auto",
+ "common.credit.tip": "Réalisé avec Web_3d : voir le projet sur GitHub",
  "common.no": "non",
  "common.yes": "oui",
  "core.ban.until": " (jusqu'au {0})",

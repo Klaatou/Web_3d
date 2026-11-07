@@ -78,7 +78,8 @@ def inline_i18n_py(text, outil):
 I18N_RT_VIEWER = I18N_SRC.replace("__I18N_DATA__", jsonjs(VIEWER_I18N))
 
 core = (SRC / "core.js").read_text(encoding="utf-8")
-template = (SRC / "template.html").read_text(encoding="utf-8").replace("__CORE__", core).replace("__I18N__", I18N_RT)
+CREDIT_ICON = "data:image/png;base64," + base64.b64encode((SRC / "credit.png").read_bytes()).decode("ascii")   # 1.6.13 : image de l'icône « Réalisé avec Web_3d » (src/credit.png), injectée dans la page et la carte
+template = (SRC / "template.html").read_text(encoding="utf-8").replace("__CORE__", core).replace("__I18N__", I18N_RT).replace("__CREDIT_ICON__", CREDIT_ICON)
 draco_js = (SRC / "draco.js.txt").read_text(encoding="utf-8").rstrip("\n")
 meshopt_js = (SRC / "meshopt.js.txt").read_text(encoding="utf-8").rstrip("\n")
 for name, t in [("template", template), ("draco", draco_js), ("meshopt", meshopt_js)]:
@@ -126,7 +127,7 @@ def fabrique(ver):
     sortie = {}
     py = inline_i18n_py((SRC / "gen_tpl.py").read_text(encoding="utf-8"), "glb2html")
     py = py.replace("__HTML_TEMPLATE__", template).replace("__DRACO_JS__", draco_js).replace("__MESHOPT_JS__", meshopt_js)
-    py = py.replace("__I18N__", I18N_RT)
+    py = py.replace("__I18N__", I18N_RT).replace("__CREDIT_ICON__", CREDIT_ICON)
     py = py.replace("__VERSION__", ver["glb2html.py"]).replace("__SHELL_VERSION__", ver["index.html"]).replace("__MAP_VERSION__", ver["carte.html"])
     assert "__I18N" not in py
     sortie["glb2html.py"] = py
