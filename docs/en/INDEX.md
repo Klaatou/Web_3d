@@ -31,6 +31,7 @@ This page says **which document to read for what**. The French documents carry t
 | use somebody else's presence server | `CREATORS.md` |
 | open a `hop://` link | `PROCEDURES.md` § 13 |
 | build the ready-to-use packages (zips) | `PROCEDURES.md` § 12 |
+| update a package that is already published | `SIMPLE_PROCEDURES.md` § 10 |
 | understand a failure | `PROCEDURES.md` § 9; `MANUAL.md` § 12 |
 
 ## 3. References

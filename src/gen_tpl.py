@@ -325,6 +325,7 @@ a.tile:hover{background:#eee}
 .cell{display:flex;flex-direction:column;gap:4px;width:170px}
 .cell small{font-size:11px;word-break:break-all;opacity:.8}
 footer{font-size:11px;opacity:.7}
+footer a{color:inherit}
 #who{margin:8px 0}
 #who input{font:inherit;width:200px;border:2px solid #000;border-radius:6px;padding:4px 6px}
 #who label.chk{display:inline-block;margin-left:12px}
@@ -350,7 +351,7 @@ __I18N__
 <div id="tools"><label class="chk"><input type="checkbox" id="alert"> <span data-i18n="map.alert">Surveillance des arrivées (son et repère)</span></label> <small id="alertState"></small></div>
 <div id="total"></div>
 <div id="grid"></div>
-<footer id="foot">glb2html __MAP_VERSION__</footer>
+<footer id="foot"><span id="footText">glb2html __MAP_VERSION__</span> · <a data-i18n="map.credit" href="https://github.com/Klaatou/Web_3d" target="_blank" rel="noopener">Réalisé avec Web_3d</a></footer>
 </main>
 <script type="application/json" id="cfg">__CONFIG__</script>
 <script>
@@ -360,7 +361,7 @@ __I18N__
   const POLL_ALERT_MS = 5000;   // quand « Surveillance sonore » est cochee
   const C = JSON.parse(document.getElementById('cfg').textContent);
   let MAP = C.map || [];
-  applyI18n(); document.getElementById('foot').textContent = tr('map.footer', '__MAP_VERSION__');
+  applyI18n(); document.getElementById('footText').textContent = tr('map.footer', '__MAP_VERSION__');
   if (document.querySelector('h1[data-i18n]')) document.title = tr('map.title');
   const grid = document.getElementById('grid'), counts = {}, vis = {}, nms = {}, answered = {}, hasVis = {}, MAPKEY = new URLSearchParams(location.hash.replace(/^#/, '').replace(/#/g, '&')).get('pseudos') || '';   // #pseudos=CLE : la cle du serveur (--map-names-key) pour voir les pseudos
    let loadErr = '';

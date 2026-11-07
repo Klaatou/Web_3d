@@ -31,6 +31,7 @@ Cette page dit **quel document lire pour quoi**. Les documents anglais portent l
 | utiliser le serveur de présence de quelqu'un d'autre | `CREATEURS.md` |
 | ouvrir un lien `hop://` | `PROCEDURES.md` § 13 |
 | fabriquer les paquets prêts à l'emploi (zips) | `PROCEDURES.md` § 12 |
+| mettre à jour un paquet déjà publié | `PROCEDURES_SIMPLES.md` § 10 |
 | comprendre une panne | `PROCEDURES.md` § 9 ; `MANUEL.md` § 12 |
 
 ## 3. Références

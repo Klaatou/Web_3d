@@ -141,3 +141,17 @@ Ce que je fais ensuite :
 - Facultatif : `visits-key alice.NOM` donne la clé de son journal des visites, à lui envoyer avec l'adresse de sa page suivie de `#visits`.
 
 S'il n'a pas encore sa région en page web : lui envoyer `GUIDE.md`.
+
+## 10. Mettre à jour un paquet déjà publié
+
+**Ne dézippez pas le nouveau zip par-dessus votre dossier** : le zip contient la configuration, les zones et les images d'exemple, qui écraseraient les vôtres.
+
+Pour un paquet (`galerie-photos.zip`, `region-simple.zip`) mis en ligne depuis un zip plus ancien : télécharger le nouveau zip, le dézipper à part, puis copier dans le dossier `site` publié **seulement les pages HTML qui dépendent de la version** : `index.html` et `carte.html`. Publier, puis Ctrl+F5 dans la page.
+
+- **Ne pas écraser** : `NOM.config.json`, `NOM.zones.json`, `NOM.glb`, `medias\`, `regions.json`, `vignette.jpg`, `NOM.about.*.txt`, et `aide.html` si on l'a adaptée.
+- **Paquet d'avant la 1.5.0** : la carte (`carte.html`) lit `regions.json` et `vignette.jpg`, qu'il n'avait pas ; sans eux elle dit « Impossible de lire regions.json ». Les copier aussi depuis le nouveau zip, puis les adapter.
+- **Dossier `lib\`** : seulement si le dossier `lib\three-…` du nouveau zip a un autre nom que le tien.
+- **Numéro affiché** (fenêtre Informations, touche I) : c'est la clé `version` de `NOM.config.json` ; la changer à la main (le numéro est dans `VERSION.txt` du zip).
+- **Serveur de présence** : si tu l'héberges, remplacer `presence\presence_server.py` par celui du nouveau zip et le relancer.
+
+Essayé (07/11/2026, Chromium sous Linux) : l'`index.html` actuel ouvre sans erreur un paquet dont la config, les zones et `default.json` datent de la 1.2.3 ; sans `regions.json`, la carte affiche le message ci-dessus. Non essayé : Windows, les autres navigateurs, un départ d'une autre version que la 1.2.3.

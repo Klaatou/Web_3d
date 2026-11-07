@@ -108,6 +108,7 @@
  "map.badurl": "(adresse invalide)",
  "map.empty": "Aucune région dans la carte.",
  "map.footer": "glb2html {0} : chaque carte est un lien qui emmène directement dans la région, à son point d'arrivée.",
+ "map.credit": "Réalisé avec Web_3d",
  "map.needserver": "Ouverte depuis le disque, cette carte ne peut pas lire regions.json : servez-la par un serveur web (adresse en http ou https).",
  "map.nofile": "Impossible de lire {0} : aucune région à afficher.",
  "map.novisitor": "aucun visiteur",

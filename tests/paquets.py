@@ -147,6 +147,10 @@ async def main():
                 await cp.wait_for_timeout(800)
                 tuiles = await cp.evaluate("[...document.querySelectorAll('a.tile')].map(a => ({ href: a.getAttribute('href'), w: a.querySelector('img') ? a.querySelector('img').naturalWidth : -1, nom: a.innerText }))")
                 rapport(len(tuiles) == 1 and tuiles[0]["href"].split("#")[0].rsplit("/", 1)[-1] == f"index.html?region={regn}" and tuiles[0]["href"].endswith("#spawn=default") and tuiles[0]["w"] == 320 and not cerrs, f"{nom} : carte.html : une tuile qui mene a la region, avec sa vignette (320 px) chargee", (tuiles, cerrs[:2]))
+                liens = await cp.evaluate("[...document.querySelectorAll('#foot a')].map(a => a.getAttribute('href'))")   # 1.6.10 : mention de Web_3d en pied de la carte et dans aide.html
+                rapport(liens == ["https://github.com/Klaatou/Web_3d"], f"{nom} : carte.html : le pied de page renvoie au depot Web_3d", liens)
+                aide_txt = (cible[nom] / "site" / "aide.html").read_text(encoding="utf-8")
+                rapport(aide_txt.count('href="https://github.com/Klaatou/Web_3d"') == 2, f"{nom} : aide.html : la mention de Web_3d, en francais et en anglais", aide_txt.count('href="https://github.com/Klaatou/Web_3d"'))
                 await cp.close()
                 if nom == "galerie-photos":
                     await pg.evaluate("(() => { const b = document.getElementById('aboutClose'), o = document.getElementById('aboutOverlay'); if (b && o && !o.hidden) b.click(); })()")   # le paquet a un fichier about : le panneau « A propos » s'ouvre a l'entree et capterait le clic
@@ -154,7 +158,7 @@ async def main():
                     sx, sy = await pg.evaluate("""([x, y, z]) => { const v = window.__v; v.camera.updateMatrixWorld(true); const p = v.camera.position.clone().set(x, y, z).project(v.camera), r = v.renderer.domElement.getBoundingClientRect(); return [r.left + (p.x + 1) / 2 * r.width, r.top + (1 - p.y) / 2 * r.height]; }""", [1.7, 12.26, 0.285])
                     await pg.mouse.move(sx, sy); await pg.wait_for_timeout(300); await pg.mouse.click(sx, sy); await pg.wait_for_timeout(600)
                     op = await pg.evaluate("window.__opened")
-                    diag = await pg.evaluate("({ fenetre: [innerWidth, innerHeight, devicePixelRatio], about_ouvert: (document.getElementById('aboutOverlay') || {}).hidden === false, en_promenade: !!window.__v.walking })")   # 1.6.9 : de quoi comprendre un echec sans refaire l'essai
+                    diag = await pg.evaluate("([x, y]) => { const v = window.__v, zs = v.getZones ? v.getZones() : [], pk = v.zonePickAt ? v.zonePickAt(x, y) : null; return { fenetre: [innerWidth, innerHeight, devicePixelRatio], about_ouvert: (document.getElementById('aboutOverlay') || {}).hidden === false, en_promenade: !!v.walking, zones: zs.length, zone_sous_clic: pk ? pk.id : null, images: (v.imageDiag ? v.imageDiag() : []).map(d => d.id + ':' + (d.loaded || 'non charge')) }; }", [sx, sy])   # 1.6.11 : zones connues, zone sous le clic, images chargees
                     rapport(len(op) == 1 and op[0].endswith("/aide.html"), "galerie-photos : un clic sur le panneau d'aide du comptoir ouvre aide.html", {"ouvert": op, "clic": [round(sx), round(sy)], **diag})
                 else:
                     await pg.keyboard.press("f"); await pg.wait_for_function("window.__v.walking", timeout=10000); await pg.wait_for_timeout(800)

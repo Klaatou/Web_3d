@@ -141,3 +141,17 @@ What I do next:
 - Optional: `visits-key alice.NOM` gives the key of their visits log, to send with the address of their page followed by `#visits`.
 
 If their region is not yet in a web page: send them `GUIDE.md`.
+
+## 10. Update a package that is already published
+
+**Do not unzip the new zip over your folder**: the zip contains the example configuration, zones and images, which would overwrite yours.
+
+For a package (`galerie-photos.zip`, `region-simple.zip`) put online from an older zip: download the new zip, unzip it somewhere else, then copy into the published `site` folder **only the HTML pages that depend on the version**: `index.html` and `carte.html`. Publish, then Ctrl+F5 in the page.
+
+- **Do not overwrite**: `NOM.config.json`, `NOM.zones.json`, `NOM.glb`, `medias\`, `regions.json`, `vignette.jpg`, `NOM.about.*.txt`, and `aide.html` if you adapted it.
+- **Package from before 1.5.0**: the map (`carte.html`) reads `regions.json` and `vignette.jpg`, which it did not have; without them it says "Cannot read regions.json". Copy them too from the new zip, then adapt them.
+- **`lib\` folder**: only if the `lib\three-…` folder of the new zip has a different name from yours.
+- **Displayed number** (Information window, I key): it is the `version` key of `NOM.config.json`; change it by hand (the number is in `VERSION.txt` of the zip).
+- **Presence server**: if you host it, replace `presence\presence_server.py` with the one from the new zip and restart it.
+
+Tried (07/11/2026, Chromium on Linux): the current `index.html` opens without error a package whose config, zones and `default.json` date from 1.2.3; without `regions.json`, the map shows the message above. Not tried: Windows, other browsers, an update from a version other than 1.2.3.

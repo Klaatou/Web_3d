@@ -7,6 +7,8 @@ Une galerie de photos en 3D qui s'ouvre dans le navigateur, sans rien installer.
 Produite avec Web_3d (https://github.com/Klaatou/Web_3d, licence MIT).
 
 Pour commencer
+  (Vous avez deja ce paquet ? Ne dezippez pas le nouveau zip par-dessus votre dossier : il ecraserait votre config, vos zones et vos images.
+   Dezippez-le a part : voir "Mettre a jour un paquet deja publie" plus bas.)
   1. Windows : double-cliquez sur lancer-galerie.bat. Laissez ouverte la fenetre noire qui affiche
      "Galerie sur http://localhost:8000/ - fermez cette fenetre pour arreter." tant que vous regardez la
      galerie (le numero peut etre un autre que 8000 si 8000 est deja pris).
@@ -35,12 +37,22 @@ Dossiers
   lancer-galerie.sh, renommer-galerie.sh et les .command   les memes, pour Linux et macOS
 Double-cliquer sur site/index.html ne marche pas : un message demande un serveur web.
 
+Mettre a jour un paquet deja publie (nouvelle version)
+  Telechargez le nouveau zip, dezippez-le a part, puis copiez dans votre dossier site/ publie SEULEMENT index.html et carte.html. Publiez, puis Ctrl+F5 dans la page.
+  Ne remplacez pas : la config (galerie.config.json), les zones (galerie.zones.json), le modele (galerie.glb), medias/, regions.json, vignette.jpg, ni aide.html si vous l'avez adaptee.
+  Dossier lib/ : seulement si le nouveau zip a un autre dossier lib/three-... que le votre.
+  Version affichee (touche I) : cle "version" de galerie.config.json, a changer a la main (le numero est dans VERSION.txt du zip).
+  Serveur de presence : remplacez presence/presence_server.py et relancez-le.
+  Paquet d'avant la 1.5.0 : copiez aussi regions.json et vignette.jpg du nouveau zip et adaptez-les (la carte en a besoin).
+
 ENGLISH
 -------
 A 3D photo gallery that opens in the browser, nothing to install.
 Made with Web_3d (https://github.com/Klaatou/Web_3d, MIT licence).
 
 To start
+  (Already have this package? Do not unzip the new zip over your folder: it would overwrite your config, your zones and your images.
+   Unzip it somewhere else: see "Updating a package that is already published" below.)
   1. Windows: double-click lancer-galerie.bat. Keep open the black window that shows
      "Galerie sur http://localhost:8000/ - fermez cette fenetre pour arreter." while you look at the
      gallery (the number may differ from 8000 if 8000 is already taken).
@@ -68,3 +80,11 @@ Folders
   lancer-galerie.bat, renommer-galerie.bat   launcher and renaming (Windows)
   lancer-galerie.sh, renommer-galerie.sh and the .command files   the same, for Linux and macOS
 Double-clicking site/index.html does not work: a message asks for a web server.
+
+Updating a package that is already published (new version)
+  Download the new zip, unzip it somewhere else, then copy into your published site/ folder ONLY index.html and carte.html. Publish, then Ctrl+F5 in the page.
+  Do not replace: the config (galerie.config.json), the zones (galerie.zones.json), the model (galerie.glb), medias/, regions.json, vignette.jpg, nor aide.html if you adapted it.
+  lib/ folder: only if the new zip has a different lib/three-... folder from yours.
+  Displayed version (I key): the "version" key of galerie.config.json, to change by hand (the number is in VERSION.txt of the zip).
+  Presence server: replace presence/presence_server.py and restart it.
+  Package from before 1.5.0: also copy regions.json and vignette.jpg from the new zip and adapt them (the map needs them).
