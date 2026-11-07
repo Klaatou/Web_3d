@@ -159,6 +159,8 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 07/11/2026 |  | après 1.6.0 | Lot 1.6.13 : icône « Réalisé avec Web_3d » (carrée, bas à droite, bulle et lien vers le dépôt) sur la page et la carte |
 | 07/11/2026 |  | après 1.6.0 | Lot 1.6.14 : le logo devient l'icône par défaut des pages et le `favicon.ico` d'exemple |
 | 07/11/2026 |  | après 1.6.0 | Lot 1.6.15 : les GIF animés s'animent sur les zones image (décodeur GIF dans la page) |
+| 07/11/2026 |  | après 1.6.0 | Lot 1.6.16 : « Copier le diagnostic » donne une ligne « Animations GIF » |
+| 07/11/2026 |  | après 1.6.0 | Lot 1.6.17 : la fenêtre État affiche la version de la page (`index.html`) et celle de la configuration |
 
 ## Commandes utiles
 

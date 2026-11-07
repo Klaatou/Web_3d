@@ -129,7 +129,7 @@ async def main():
             errs = []
 
             async def ouvre(nom, reduit=False):
-                ctx = await br.new_context(viewport={"width": 900, "height": 600}, reduced_motion="reduce" if reduit else "no-preference")
+                ctx = await br.new_context(locale="fr-FR", viewport={"width": 900, "height": 600}, reduced_motion="reduce" if reduit else "no-preference")
                 pg = await ctx.new_page(); pg.on("pageerror", lambda e: errs.append(str(e)))
                 await pg.goto(f"http://127.0.0.1:{port}/{nom}.html")
                 await pg.wait_for_function("document.getElementById('msg') === null && window.__v && window.__v.model", timeout=60000)
@@ -146,6 +146,9 @@ async def main():
             await pg.wait_for_timeout(600)
             t2 = (await pg.evaluate("window.__v.animInfo()"))["ticks"]
             rapport(t2 - t1 >= 2, "l'image change dans la texture tant que le plan est visible (au moins 2 fois en 0,6 s)", (t1, t2))
+            await pg.click("#diagBtn"); await pg.wait_for_timeout(500)
+            lig = [l for l in (await pg.evaluate("document.getElementById('diagOut').value")).splitlines() if l.startswith("Animations GIF")]
+            rapport(len(lig) == 1 and "1 GIF anim" in lig[0] and lig[0].rstrip().endswith("non"), "« Copier le diagnostic » : la ligne Animations GIF donne 1 GIF decode et mouvement reduit : non", lig)
             fixe = await couleurs(pg, "b", n=6)
             rapport(set(fixe) == {"rouge"}, "le GIF d'une seule image reste fixe", fixe)
             await pg.context.close()
@@ -154,6 +157,9 @@ async def main():
             info = await pg.evaluate("window.__v.animInfo()")
             vus = await couleurs(pg, "a", n=8)
             t = (await pg.evaluate("window.__v.animInfo()"))["ticks"]
+            await pg.click("#diagBtn"); await pg.wait_for_timeout(500)
+            lig = [l for l in (await pg.evaluate("document.getElementById('diagOut').value")).splitlines() if l.startswith("Animations GIF")]
+            rapport(len(lig) == 1 and lig[0].rstrip().endswith("oui"), "« Copier le diagnostic » : avec « moins d'animations », la ligne dit mouvement reduit : oui", lig)
             rapport(info["planes"] == 1 and t == 0 and len(set(vus)) == 1, "reglage « moins d'animations » du systeme : le GIF reste sur sa premiere image", (info, t, vus))
             await pg.context.close()
 

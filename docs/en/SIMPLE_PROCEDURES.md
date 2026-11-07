@@ -152,7 +152,7 @@ For a package (`galerie-photos.zip`, `region-simple.zip`) put online from an old
 - **`aide.html`**: copy it from the new zip only if you have not changed it (it carries the new help texts); otherwise keep yours.
 - **Package from before 1.5.0**: the map (`carte.html`) reads `regions.json` and `vignette.jpg`, which it did not have; without them it says "Cannot read regions.json". Copy them too from the new zip, then adapt them.
 - **`lib\` folder**: only if the `lib\three-…` folder of the new zip has a different name from yours.
-- **Displayed number** (Information window, I key): it is the `version` key of `NOM.config.json`; change it by hand (the number is in `VERSION.txt` of the zip).
+- **Displayed number** (Status window, I key, "Version" line): the "page" is the version of `index.html` (it follows your copy); the "configuration" is the `version` key of `NOM.config.json`, which you can change by hand (the number is in `VERSION.txt` of the zip).
 - **Presence server**: if you host it, replace `presence\presence_server.py` with the one from the new zip and restart it.
 
 Tried (07/11/2026, Chromium on Linux): the current `index.html` opens without error a package whose config, zones and `default.json` date from 1.2.3; without `regions.json`, the map shows the message above. Not tried: Windows, other browsers, an update from a version other than 1.2.3.

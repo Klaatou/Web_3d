@@ -96,6 +96,10 @@ function diagText(viewer, extra) {
     out.push(L(tr('core.diag.fps'), tr('core.diag.fps.v', nb(s.rate, 1), s.causes.length ? s.causes.map(k => why[k]).join(', ') : tr('core.diag.cause.none'))));
   }
   if (viewer && viewer.imageDiag) for (const d of viewer.imageDiag().slice(0, 60)) out.push(L(tr('core.diag.image'), tr('core.diag.image.v', d.id, d.target || '\u2014', d.loaded || '\u2014', d.cap ? '\u00ab ' + d.cap + ' \u00bb (' + (d.src === 'txt' ? tr('core.diag.image.txt') : tr('core.diag.image.name')) + (d.vis ? '' : ', ' + tr('core.diag.image.hidden')) + ')' : '\u2014')));
+  if (viewer && viewer.animInfo && viewer.imageDiag && viewer.imageDiag().length) {   // 1.6.16 : GIF animes decodes, changements d'image, mouvement reduit demande au systeme
+    const a = viewer.animInfo(), red = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    out.push(L(tr('core.diag.anim'), tr('core.diag.anim.v', a.planes, a.ticks, red ? tr('common.yes') : tr('common.no'))));
+  }
   const pm = performance.memory;
   out.push(L(tr('core.diag.mem'), pm && pm.usedJSHeapSize ? tr('core.diag.mem.v', nb(pm.usedJSHeapSize / 1048576), nb(pm.jsHeapSizeLimit / 1048576)) : tr('core.diag.na')));
   if (viewer && viewer.tiled && viewer.tilesState) {

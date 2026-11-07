@@ -834,7 +834,7 @@ if (C.walk) {
     grp(tr('page.help.g.page'), [tr('page.help.h'), tr('page.help.i'), spawnList().length ? tr('page.help.l') : '', tr('page.help.o'), ABOUT.found ? tr('page.help.about') : '', hasMap ? tr('page.help.map') : '', tr('page.help.center'), tr('page.help.k')])
   ].filter(Boolean);
   const feat = tr('page.feat', C.panel !== false ? tr('page.feat.panel.yes') : tr('common.no'), on ? tr('page.feat.presence.yes', C.room) : tr('page.feat.presence.no'), on && C.chat ? tr('common.yes') : tr('common.no'),
-    on && C.spectate ? tr('common.yes') : (on ? tr('page.feat.spectate.no') : tr('common.no')), C.names ? tr('common.yes') : tr('page.feat.names.no'), C.version || '?');
+    on && C.spectate ? tr('common.yes') : (on ? tr('page.feat.spectate.no') : tr('common.no')), C.names ? tr('common.yes') : tr('page.feat.names.no'));
   const l1 = document.createElement('div'), l2 = document.createElement('div');
   l2.style.cssText = 'font-size:11px;margin-top:4px;opacity:.85'; l2.textContent = feat;
   const hbody = document.getElementById('helpBody'), hhead = document.getElementById('helpHead');
@@ -855,6 +855,7 @@ if (C.walk) {
   const sb = document.getElementById('stateInfo'), sbody = document.getElementById('stateBody'), shead = document.getElementById('stateHead');
   const mkLine = id => { const d = document.createElement('div'); d.id = id; sbody.append(d); return d; };
   const lv = mkLine('viewInfo'), lm = mkLine('modeInfo'), lmo = mkLine('mouseInfo'), lp = mkLine('posInfo'), lkb = mkLine('kbInfo');
+  mkLine('verInfo').textContent = tr('page.state.version', '__CORE_VERSION__', C.version || '?');   // 1.6.17 : version de la page (index.html, ou glb2html.py pour une page autonome) et de la configuration
   // v39 : bouton « Copier le diagnostic » sous le contenu de la fenêtre (reste visible quand elle est réduite) : lignes affichées + diagText (core.js) ;
   // si le navigateur refuse la copie, le texte s'affiche sélectionné dessous (Ctrl+C)
   {
