@@ -108,7 +108,7 @@ def analyser(texte):
     return r
 
 
-EQUIV = {"MANUAL.md": "MANUEL.md", "HISTORY.md": "HISTORIQUE.md"}   # noms des documents anglais -> français
+EQUIV = {"MANUAL.md": "MANUEL.md", "HISTORY.md": "HISTORIQUE.md", "OVERVIEW.md": "VUE_ENSEMBLE.md", "SIMPLE_PROCEDURES.md": "PROCEDURES_SIMPLES.md", "CREATORS.md": "CREATEURS.md", "DEVELOPMENT.md": "DEVELOPPEMENT.md"}   # noms des documents anglais -> français
 
 
 def equiv(x):
@@ -142,6 +142,7 @@ def main():
     t = analyser(pathlib.Path(a.traduction).read_text(encoding="utf-8"))
     for cle in ("inline", "blocs", "liens"):   # MANUAL.md dans la traduction = MANUEL.md dans l'original
         t[cle] = [equiv(x) for x in t[cle]]
+        o[cle] = [equiv(x) for x in o[cle]]   # les deux côtés : un document peut citer le nom de sa version dans l'autre langue
     err, avert = [], []
 
     if o["titres"] != t["titres"]:

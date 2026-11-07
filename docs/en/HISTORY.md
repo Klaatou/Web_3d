@@ -152,6 +152,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 06/11/2026 |  | after 1.6.0 | Batch 1.6.4: `iar2oar.py` enters the repository (French and English messages, `--lang`, options in English) |
 | 07/11/2026 |  | after 1.6.0 | Batch 1.6.5: documents for both scripts (procedures § 6, manual § 3.7 and § 3.8, README, old names § 11.11) |
 | 07/11/2026 |  | after 1.6.0 | Batch 1.6.6: feedback from a macOS tester (launcher, Firefox 159.0.1): the "not tried" texts of the packages and documents are corrected |
+| 07/11/2026 |  | after 1.6.0 | Batch 1.6.7: `INDEX.md` (which document to read for what); chapter 11 of the manual becomes `REFERENCE_JSON.md` (11.x numbering kept) |
 
 ## Useful commands
 

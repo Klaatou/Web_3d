@@ -31,7 +31,9 @@ An OpenSim region (`.oar` backup) becomes a **3D web page** you can walk around 
 ## 4. Where to read what
 
 - `README.md`: presentation and getting started.
+- `INDEX.md`: which document to read for what.
 - The manual: all the detail (zones, options, server, what's new by version).
+- `REFERENCE_JSON.md`: the meaning of each field of the JSON files.
 - The procedures: step by step (publishing, server, network).
 - `REFERENCE_OPTIONS.md`: all the options of the tools.
 - `CHANGELOG.md` and the history: what changed and when.

@@ -17,7 +17,7 @@ In both: unzip, read `README.txt`, double-click the launcher (Windows, macOS) or
 
 **web_3d** turns a region of an **OpenSim** virtual world (an **OAR** backup) into a web page that visitors can walk around, with nothing to install on their side. The OAR is converted to a **glTF** model (`.glb`), then displayed with **three.js** in a walkable web page: avatar, collisions, real-time visitors, chat, zones and portals, and a world map. The interface of the page, of the viewer and of the Python tools is available in **English and French** (see "Language" below).
 
-The manuals are in English in `docs/en/` (`GUIDE.md` to start, `MANUAL.md`, `PROCEDURES.md`, `HISTORY.md`) and in French in `docs/fr/`. All the options of every tool, in English and in French, are in [`REFERENCE_OPTIONS.md`](REFERENCE_OPTIONS.md); `python glb2html.py --help` (and the same for the other tools) prints them in the tools' language (see "Language" below).
+The manuals are in English in `docs/en/` (`INDEX.md` to find your way, `GUIDE.md` to start, `MANUAL.md`, `PROCEDURES.md`, `REFERENCE_JSON.md`, `HISTORY.md`) and in French in `docs/fr/`. All the options of every tool, in English and in French, are in [`REFERENCE_OPTIONS.md`](REFERENCE_OPTIONS.md); `python glb2html.py --help` (and the same for the other tools) prints them in the tools' language (see "Language" below).
 
 ## Files built
 
@@ -73,7 +73,7 @@ Recommended layout (manual § 6.2): at the root of the site, a single shell `ind
 
 `--modular` writes `Region.html` (a shell, identical for every region: it derives its files from its own name), `Region.glb`, `Region.config.json` (settings, read again on every F5), `Region.zones.json` (zones, read again on every F5) and `lib/three-0.160.0/`. With `--shared-shell`, one shell and one `lib/` serve several regions: `-o` names the region, and the shell and `lib/` are only written when missing. NAME must be a file name or a path of sub-folders (`a/b/nom`): addresses, `..`, an empty name or a name starting with a dot are refused without any network request.
 
-`--config-only` rewrites only the config, `--zones-only` only the zones. The viewer exports the same structure as a `.zip`, next to "Export standalone HTML" (a single page that opens from disk). Details: manual § 11.12, JSON file reference: § 11.
+`--config-only` rewrites only the config, `--zones-only` only the zones. The viewer exports the same structure as a `.zip`, next to "Export standalone HTML" (a single page that opens from disk). Details: `REFERENCE_JSON.md` § 11.12.
 
 ## Tiled regions
 
@@ -81,7 +81,7 @@ For a huge model, `glb2tiles.py` writes the tiles, and `glb2html.py --tiles X.ti
 
 ## World map
 
-`regions.json` is the map: a list of cards (name, address, X, Y, arrival point, room, presence server, thumbnail), or, since v47, an object `{"showUrl": ..., "regions": [...]}` with a header. It is fed in three ways, which all keep the header and the shape of the file: `--register` (the region being generated), `--scan-sites` (every region of a site, with their thumbnails) and the viewer's "Import / Export regions.json" buttons (v50). `carte.html` reads it again each time it opens; `--map-page` writes instead a standalone page that contains the list; `--map-url a.json,b.json` merges the maps of several owners. Each tile shows the number of visitors. Details: manual § 11.6, § 9, § 9.9 and § 9.13.
+`regions.json` is the map: a list of cards (name, address, X, Y, arrival point, room, presence server, thumbnail), or, since v47, an object `{"showUrl": ..., "regions": [...]}` with a header. It is fed in three ways, which all keep the header and the shape of the file: `--register` (the region being generated), `--scan-sites` (every region of a site, with their thumbnails) and the viewer's "Import / Export regions.json" buttons (v50). `carte.html` reads it again each time it opens; `--map-page` writes instead a standalone page that contains the list; `--map-url a.json,b.json` merges the maps of several owners. Each tile shows the number of visitors. Details: `REFERENCE_JSON.md` § 11.6, manual § 9, § 9.9 and § 9.13.
 
 ## The page
 

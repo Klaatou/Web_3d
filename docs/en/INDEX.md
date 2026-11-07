@@ -1,0 +1,52 @@
+# Documentation index
+
+This page says **which document to read for what**. The French documents carry the same content under other names: `VUE_ENSEMBLE.md`, `MANUEL.md`, `PROCEDURES_SIMPLES.md`, `CREATEURS.md`, `DEVELOPPEMENT.md` and `HISTORIQUE.md`; `GUIDE.md`, `PROCEDURES.md`, `REFERENCE_JSON.md` and `INDEX.md` keep the same name. The "§" numbers are those of the headings of the document quoted.
+
+## 1. Where to start
+
+1. `README.md` (at the root): what the project is and the quick start.
+2. `OVERVIEW.md`: what works, what has been tried or not, what remains to be done.
+3. `GUIDE.md`: the getting-started guide, from the region to the published page.
+
+## 2. By task
+
+| I want to… | Where to read |
+| --- | --- |
+| get a region in 3D with nothing to install | `GUIDE.md` § 1.1; `PROCEDURES.md` § 12 |
+| convert my OAR to GLB | `GUIDE.md` § 1.2; `MANUAL.md` § 3; `PROCEDURES.md` § 1 |
+| handle a heavy region (tiles) | `GUIDE.md` § 1.3; `MANUAL.md` § 4 and § 8; `PROCEDURES.md` § 2 |
+| compress a region already cut up | `MANUAL.md` § 4.2; `SIMPLE_PROCEDURES.md` § 5 |
+| extract objects (buildings, furniture...) from a region | `MANUAL.md` § 3.7; `SIMPLE_PROCEDURES.md` § 6 |
+| extract objects from an inventory (IAR) | `MANUAL.md` § 3.8; `SIMPLE_PROCEDURES.md` § 6 |
+| place zones (arrivals, portals, signs, pictures) | `GUIDE.md` § 2; `MANUAL.md` § 5; `PROCEDURES.md` § 5 |
+| build or update the page | `GUIDE.md` § 3; `MANUAL.md` § 6; `PROCEDURES.md` § 3, § 4 and § 8; `SIMPLE_PROCEDURES.md` § 1 |
+| set the tab title, rename a tiled region | `SIMPLE_PROCEDURES.md` § 2 and § 3 |
+| publish, update the online demo | `GUIDE.md` § 4; `SIMPLE_PROCEDURES.md` § 7 |
+| know what the visitor can do (keys, flight, chat) | `MANUAL.md` § 7; `PROCEDURES.md` § 10 |
+| link several regions with a world map | `MANUAL.md` § 9; `PROCEDURES.md` § 7; `SIMPLE_PROCEDURES.md` § 4 |
+| see other visitors, chat, moderate | `GUIDE.md` § 5; `MANUAL.md` § 10; `PROCEDURES.md` § 6 |
+| install the presence server on a VM | `SIMPLE_PROCEDURES.md` § 8; `PROCEDURES.md` § 11 |
+| make the presence server public without showing my IP address | `PROCEDURES.md` § 11 |
+| welcome a creator on my server | `SIMPLE_PROCEDURES.md` § 9; `MANUAL.md` § 10.10 |
+| use somebody else's presence server | `CREATORS.md` |
+| open a `hop://` link | `PROCEDURES.md` § 13 |
+| build the ready-to-use packages (zips) | `PROCEDURES.md` § 12 |
+| understand a failure | `PROCEDURES.md` § 9; `MANUAL.md` § 12 |
+
+## 3. References
+
+| I am looking for… | Where |
+| --- | --- |
+| all the options of every tool, in English and in French | `REFERENCE_OPTIONS.md` (at the root); the tool's `--help` |
+| the meaning of each field of a JSON file | `REFERENCE_JSON.md` |
+| a complete example of each JSON file | folder `docs/samples/` |
+| the French option names from before v43 | `REFERENCE_JSON.md` § 11.11 |
+
+## 4. The state of the project and the work on the code
+
+| I want to know… | Where |
+| --- | --- |
+| what has been tried, and what has not | `OVERVIEW.md` § 2 |
+| what changed, and when | `CHANGELOG.md` (at the root); `HISTORY.md`; `MANUAL.md` § 13 |
+| how to apply a delivery, build, test, publish a version | `DEVELOPMENT.md` |
+| the technical state to resume the work | `REPRISE.md` (at the root) |

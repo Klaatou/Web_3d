@@ -1,12 +1,12 @@
 # Exemples de fichiers (`docs/samples/`)
 
-Ce dossier contient **un exemple de chaque fichier JSON** que la page, le viewer, les outils et le serveur de présence lisent ou écrivent. Un fichier JSON n'accepte pas de commentaires : le sens de chaque champ est expliqué dans `MANUEL.md` § 27. Ici, ce sont de **vrais fichiers, complets et valides**.
+Ce dossier contient **un exemple de chaque fichier JSON** que la page, le viewer, les outils et le serveur de présence lisent ou écrivent. Un fichier JSON n'accepte pas de commentaires : le sens de chaque champ est expliqué dans `REFERENCE_JSON.md` (colonne « Référence » des tableaux ci-dessous). Ici, ce sont de **vrais fichiers, complets et valides**.
 
 **S'en servir** : copier l'exemple, le renommer, changer les valeurs. Dans les exemples la région s'appelle `Region` : pour une région « Atoll », `region.config.sample.json` devient `Atoll.config.json` et `Atoll` remplace `Region` dans les valeurs qui le contiennent (`room`, `tiles`, les adresses). Les adresses sont écrites `ADRESSE` : mets la tienne. Le test `tests/samples.py` vérifie que chaque exemple est accepté par le vrai code qui le lit : ils restent donc justes quand le code change.
 
 ## Fichiers d'une région et du site
 
-| Exemple | Fichier réel | À quoi il sert | Manuel |
+| Exemple | Fichier réel | À quoi il sert | Référence |
 | --- | --- | --- | --- |
 | `region.config.sample.json` | `NOM.config.json` | les réglages que la page lit au démarrage (mer, marche, chat, présence, carte, tuiles) ; écrit par `glb2html.py` ; à plat | § 11.3 |
 | `region.zones.sample.json` | `NOM.zones.json` | les zones : arrivées, portails, liens web, Home Assistant et images sur un mur (la zone `painting-1`, type `image`, avec sa clé facultative `link` : page ouverte au clic) | § 11.4 |
@@ -18,7 +18,7 @@ Ce dossier contient **un exemple de chaque fichier JSON** que la page, le viewer
 
 ## Fichiers du serveur de présence
 
-| Exemple | Fichier réel | À quoi il sert | Manuel |
+| Exemple | Fichier réel | À quoi il sert | Référence |
 | --- | --- | --- | --- |
 | `presence_identities.sample.json` | `presence_identities.json` | les pseudos réservés, gardés sous forme d'empreintes | § 11.10 |
 | `presence_bans.sample.json` | `presence_bans.json` | les bannissements posés par la commande `bannir` (clé et adresse en empreintes, fin éventuelle) | § 11.10 |

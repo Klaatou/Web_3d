@@ -31,7 +31,9 @@ Une région OpenSim (sauvegarde `.oar`) devient une **page web 3D** où l'on se 
 ## 4. Où lire quoi
 
 - `README.md` : présentation et démarrage.
+- `INDEX.md` : quel document lire pour quoi.
 - Le manuel : tout le détail (zones, options, serveur, nouveautés par version).
+- `REFERENCE_JSON.md` : le sens de chaque champ des fichiers JSON.
 - Les procédures : pas à pas (publier, serveur, réseau).
 - `REFERENCE_OPTIONS.md` : toutes les options des outils.
 - `CHANGELOG.md` et l'historique : ce qui a changé et quand.
