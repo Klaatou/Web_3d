@@ -1126,6 +1126,7 @@
  "viewer.zf.link.image": "Lien (page ouverte au clic ou à E, facultatif)",
  "viewer.zone.image.notwall": "Clique sur un mur (une surface verticale) pour poser une image.",
  "core.image.missing": "image introuvable : {0}",
+ "core.image.gifbig": "GIF trop lourd pour l'animation ({0} Mo décodés, 64 Mo au plus) : image fixe : {1}",
  "core.webgl.missing": "La 3D ne peut pas s'afficher : WebGL est indisponible dans ce navigateur.\nQuand l'accélération matérielle est coupée, les navigateurs récents (Edge, Chrome) refusent maintenant le rendu logiciel.\nPistes : ouvrir cette page dans Firefox ; ou lancer Edge avec l'option --enable-unsafe-swiftshader (de préférence dans un profil réservé à ces pages) ; ou réactiver l'accélération matérielle.\nPour vérifier : edge://gpu (ou chrome://gpu), ligne WebGL.",
  "viewer.kind.url": "Lien",
  "viewer.lang": "Langue / Language",

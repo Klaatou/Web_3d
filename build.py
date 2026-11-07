@@ -144,7 +144,7 @@ def fabrique(ver):
     sortie["glb-stats.py"] = inline_i18n_py((ROOT / "tools" / "glb-stats.py").read_text(encoding="utf-8"), "stats")   # fonctions communes de glb2tiles.py : doit rester à côté
     vv = ver["glb-viewer.html"]
     v = (SRC / "viewer_tpl.html").read_text(encoding="utf-8")
-    v = v.replace("__CORE__", core).replace("__I18N__", I18N_RT_VIEWER).replace("__CORE_VERSION__", vv)  # core avant le reste : pas de placeholder dedans
+    v = v.replace("__CORE__", core).replace("__I18N__", I18N_RT_VIEWER).replace("__CREDIT_ICON__", CREDIT_ICON).replace("__CORE_VERSION__", vv)  # core avant le reste : pas de placeholder dedans
     v = v.replace("__TEMPLATE_JSON__", jsq(template.replace("__CORE_VERSION__", vv))).replace("__PY_JSON__", jsq(py))   # glb2html.py intégré : identique à dist/glb2html.py (ses marqueurs restent)
     v = v.replace("__DRACO_JS_JSON__", jsq(draco_js)).replace("__MESHOPT_JS_JSON__", jsq(meshopt_js))
     v = v.replace("__LIBS_JSON__", json.dumps(libs)).replace("__IMPORTMAP_JSON__", json.dumps(importmap))

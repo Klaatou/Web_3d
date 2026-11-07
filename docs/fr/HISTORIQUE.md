@@ -157,6 +157,8 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 07/11/2026 |  | après 1.6.0 | Lot 1.6.10 : mention « Réalisé avec Web_3d » (lien vers le dépôt) au pied de `carte.html` et dans `aide.html` des paquets ; procédure de mise à jour d'un paquet déjà publié (procédures § 10) |
 | 07/11/2026 |  | après 1.6.0 | Lot 1.6.12 : avertissement « ne pas dézipper par-dessus un paquet déjà en place » (README, `README.txt` des paquets, procédures, notes de release) |
 | 07/11/2026 |  | après 1.6.0 | Lot 1.6.13 : icône « Réalisé avec Web_3d » (carrée, bas à droite, bulle et lien vers le dépôt) sur la page et la carte |
+| 07/11/2026 |  | après 1.6.0 | Lot 1.6.14 : le logo devient l'icône par défaut des pages et le `favicon.ico` d'exemple |
+| 07/11/2026 |  | après 1.6.0 | Lot 1.6.15 : les GIF animés s'animent sur les zones image (décodeur GIF dans la page) |
 
 ## Commandes utiles
 

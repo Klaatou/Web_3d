@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Tests : icone « 3D » des pages (coquille index.html, page autonome, carte.html, glb-viewer.html), remplacable par un fichier favicon.ico.
 
-Verifie : dist/favicon.ico est un vrai fichier ICO (16, 32, 48, 64 px) ; chaque page porte une icone SVG incorporee par defaut (elle se decode) ;
+Verifie : dist/favicon.ico est un vrai fichier ICO (16, 32, 48, 64 px) ; chaque page porte une icone PNG incorporee par defaut, le logo (elle se decode) ;
 quand un favicon.ico est place a cote de la page, la page l'adopte (l'icone devient ce fichier, il est servi et se decode), sans rien refaire.
 Prerequis : pip install playwright ; python build.py avant. Variables facultatives : THREE_DIR, CHROMIUM. Lancer : python tests/icone.py
 """
@@ -26,7 +26,7 @@ shutil.copy(DIST / "glb-viewer.html", site / "glb-viewer.html")
 (site / "regions.json").write_text("[]", encoding="utf-8")
 for nom in ("index.html", "Seule.html", "carte.html", "glb-viewer.html"):
     t = (site / nom).read_text(encoding="utf-8")
-    rapport('<link rel="icon" id="siteIcon" type="image/svg+xml" href="data:image/svg+xml,' in t and "%3E3D%3C" in t and 'i.src = "favicon.ico"' in t, f"{nom} : icone incorporee et recherche d'un favicon.ico a cote")
+    rapport('<link rel="icon" id="siteIcon" type="image/png" href="data:image/png;base64,' in t and "__CREDIT_ICON__" not in t and 'i.src = "favicon.ico"' in t, f"{nom} : icone incorporee et recherche d'un favicon.ico a cote")
 site2 = tmp / "site2"
 shutil.copytree(site, site2)
 shutil.copy(DIST / "favicon.ico", site2 / "favicon.ico")      # le seul geste : poser le fichier a cote des pages
@@ -58,7 +58,7 @@ async def main():
             o = await Onglet(br).ouvrir(base1 + url, locale="fr-FR", viewer=viewer)
             await asyncio.sleep(1.5)
             r = await o.ev(LIEN)
-            rapport(r["href"].startswith("data:image/svg+xml") and r["w"] > 0, f"{url} : icone incorporee, elle se decode (largeur {r['w']})")
+            rapport(r["href"].startswith("data:image/png") and r["w"] > 0, f"{url} : icone incorporee, elle se decode (largeur {r['w']})")
             rapport(not o.errs, f"{url} : aucune erreur de page", o.errs)
             await o.ctx.close()
         print("--- 3. avec un favicon.ico a cote : la page l'adopte")

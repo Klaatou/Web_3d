@@ -1,19 +1,19 @@
 {
  "carte.html": {
-  "hash": "0c00da68ba5070752f473394bae0506bc369a86a1a0c5b1482e56c4021868466",
-  "version": "1.6.13 (07/11/2026)"
+  "hash": "d801d1e86bd833274d125398e5ed7a2046d3de8a5a8937b3a4e274f9ce32232d",
+  "version": "1.6.15 (07/11/2026)"
  },
  "extraire_batiments.py": {
   "hash": "a967bc66b2c0a4ba7053691d418657702211538341bc7d51425e02fc276e6518",
   "version": "1.6.3 (06/11/2026)"
  },
  "glb-viewer.html": {
-  "hash": "5b5f01de89f3880a073694d71014a056eff8cb4c39b109e1739fd9fc27bec5e0",
-  "version": "1.6.13 (07/11/2026)"
+  "hash": "c180f059d3f192b46a2eaf4fca90bdd0e51310ad8d2e5ec8b48ab8d3c1cdab3b",
+  "version": "1.6.15 (07/11/2026)"
  },
  "glb2html.py": {
-  "hash": "b5462feb170f755082815b450a43edcea59061584f362394a7051d38dadbcf8c",
-  "version": "1.6.13 (07/11/2026)"
+  "hash": "97dba1702b4c80649a207e2eb79ac635a81871174f3274741956d4bbc0e31a81",
+  "version": "1.6.15 (07/11/2026)"
  },
  "glb2tiles.py": {
   "hash": "7b9bc8dac5ffae4a8d55cf6a849639017282e0f6f833c9919c83f87dbc2b795b",
@@ -24,8 +24,8 @@
   "version": "1.6.4 (06/11/2026)"
  },
  "index.html": {
-  "hash": "4f0af347611fd29dc88149d62175183eb71977e5f677b1c564117516377c9514",
-  "version": "1.6.13 (07/11/2026)"
+  "hash": "332c7c2d1914a939677bd3d99a106b394c216d2c4d37487d67b88ef1de6500ea",
+  "version": "1.6.15 (07/11/2026)"
  },
  "oar2glb.py": {
   "hash": "9c45b40e4ce18b5624692ca2b478194e345d872d8dda2c228a11003a4da1e108",

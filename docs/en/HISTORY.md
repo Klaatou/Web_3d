@@ -157,6 +157,8 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 07/11/2026 |  | after 1.6.0 | Batch 1.6.10: "Made with Web_3d" mention (link to the repository) at the bottom of `carte.html` and in the `aide.html` of the packages; procedure to update a package that is already published (procedures § 10) |
 | 07/11/2026 |  | after 1.6.0 | Batch 1.6.12: warning "do not unzip over a package already in place" (README, `README.txt` of the packages, procedures, release notes) |
 | 07/11/2026 |  | after 1.6.0 | Batch 1.6.13: "Made with Web_3d" icon (square, bottom right, bubble and link to the repository) on the page and the map |
+| 07/11/2026 |  | after 1.6.0 | Batch 1.6.14: the logo becomes the default page icon and the sample `favicon.ico` |
+| 07/11/2026 |  | after 1.6.0 | Batch 1.6.15: animated GIFs animate on image zones (GIF decoder in the page) |
 
 ## Useful commands
 

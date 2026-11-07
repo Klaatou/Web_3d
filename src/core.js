@@ -1961,6 +1961,97 @@ function createViewer(container, cfg0, loader) {
     try { return new URL(/^([a-z][a-z0-9+.\-]*:|\/)/i.test(t) ? t : (cfg.imageBase || '') + t, document.baseURI).href; } catch (_) { return t; }
   }
   // apercu depuis un dossier choisi (editeur) : f(cible) renvoie une adresse blob: ou null (alors adresse habituelle) ; hors editeur : aucun effet
+  // GIF anime (1.6.15) : un navigateur n'expose pas l'image courante d'un GIF anime (drawImage et la texture ne donnent que la premiere image : constate sous Chromium, meme pour une image affichee
+  // et animee a l'ecran), donc la page decode le GIF elle-meme (LZW, palettes, transparence, modes de disposition, entrelacement), garde les images composees et dessine l'image courante dans une
+  // texture canvas. Un GIF d'une seule image, ou dont les images decodees depassent 64 Mo, suit le chemin ordinaire (image fixe). animTick (boucle de rendu) change d'image d'apres les durees du
+  // fichier, au plus ~15 fois par seconde, pour les plans visibles (dans le champ, au moins 8 px de large, les 8 plus grands) ; rien si l'utilisateur demande moins d'animations (prefers-reduced-motion).
+  const animPlanes = new Map(), animFrustum = new THREE.Frustum(), animM = new THREE.Matrix4(), animP = new THREE.Vector3(); let animLast = 0, animTicks = 0;
+  function gifLzw(buf, mcs, n) {   // decompression LZW des indices de palette d'une image GIF
+    const clear = 1 << mcs, end = clear + 1, out = new Uint8Array(n), pre = new Int16Array(4096), suf = new Uint8Array(4096), stack = new Uint8Array(4097);
+    for (let i = 0; i < clear; i++) suf[i] = i;
+    let size = mcs + 1, next = end + 1, prev = -1, first = 0, bits = 0, nb = 0, pos = 0, o = 0;
+    while (o < n) {
+      while (nb < size && pos < buf.length) { bits |= buf[pos++] << nb; nb += 8; }
+      if (nb < size) break;
+      const code = bits & ((1 << size) - 1); bits >>= size; nb -= size;
+      if (code === clear) { size = mcs + 1; next = end + 1; prev = -1; continue; }
+      if (code === end) break;
+      if (prev === -1) { out[o++] = suf[code]; prev = code; first = code; continue; }
+      let c = code, sp = 0;
+      if (code >= next) { stack[sp++] = first; c = prev; }
+      while (c >= clear) { stack[sp++] = suf[c]; c = pre[c]; }
+      first = suf[c]; stack[sp++] = first;
+      while (sp > 0 && o < n) out[o++] = stack[--sp];
+      if (next < 4096) { pre[next] = prev; suf[next] = first; next++; if (next === (1 << size) && size < 12) size++; }
+      prev = code;
+    }
+    return out;
+  }
+  // { w, h, frames: [{ img: ImageData, ms }], total } ; null : pas un GIF, une seule image ou fichier abime ; { big: Mo } : images decodees trop lourdes
+  function decodeGif(u8, maxBytes) {
+    try {
+      if (u8.length < 14 || u8[0] !== 0x47 || u8[1] !== 0x49 || u8[2] !== 0x46) return null;
+      const w = u8[6] | u8[7] << 8, h = u8[8] | u8[9] << 8; if (!w || !h) return null;
+      let p = 13, gct = null; const fl = u8[10];
+      if (fl & 0x80) { const n = 1 << ((fl & 7) + 1); gct = u8.subarray(p, p + 3 * n); p += 3 * n; }
+      const frames = []; let gce = null, cv = new Uint8ClampedArray(w * h * 4), total = 0;
+      while (p < u8.length) {
+        const b = u8[p++];
+        if (b === 0x3B) break;
+        if (b === 0x21) {
+          const label = u8[p++];
+          if (label === 0xF9) gce = { disp: (u8[p + 1] >> 2) & 7, delay: u8[p + 2] | u8[p + 3] << 8, tr: (u8[p + 1] & 1) ? u8[p + 4] : -1 };
+          while (p < u8.length && u8[p]) p += u8[p] + 1; p++;
+        } else if (b === 0x2C) {
+          const x0 = u8[p] | u8[p + 1] << 8, y0 = u8[p + 2] | u8[p + 3] << 8, iw = u8[p + 4] | u8[p + 5] << 8, ih = u8[p + 6] | u8[p + 7] << 8, f = u8[p + 8]; p += 9;
+          let ct = gct; if (f & 0x80) { const n = 1 << ((f & 7) + 1); ct = u8.subarray(p, p + 3 * n); p += 3 * n; }
+          const mcs = u8[p++], parts = []; let len = 0;
+          while (p < u8.length && u8[p]) { parts.push(u8.subarray(p + 1, p + 1 + u8[p])); len += u8[p]; p += u8[p] + 1; } p++;
+          if ((frames.length + 1) * w * h * 4 > maxBytes) return { big: Math.ceil((frames.length + 1) * w * h * 4 / 1048576) };
+          const buf = new Uint8Array(len); let o = 0; for (const q of parts) { buf.set(q, o); o += q.length; }
+          const idx = gifLzw(buf, mcs, iw * ih), before = gce && gce.disp === 3 ? cv.slice() : null;
+          const rows = []; if (f & 0x40) { for (const [s, st] of [[0, 8], [4, 8], [2, 4], [1, 2]]) for (let r = s; r < ih; r += st) rows.push(r); } else for (let r = 0; r < ih; r++) rows.push(r);
+          const tr = gce ? gce.tr : -1;
+          for (let k = 0; k < idx.length; k++) {
+            const v = idx[k]; if (v === tr || !ct) continue;
+            const X = x0 + k % iw, Y = y0 + rows[Math.floor(k / iw)]; if (X >= w || Y >= h) continue;
+            const d = (Y * w + X) * 4; cv[d] = ct[v * 3]; cv[d + 1] = ct[v * 3 + 1]; cv[d + 2] = ct[v * 3 + 2]; cv[d + 3] = 255;
+          }
+          const ms = !gce || gce.delay <= 1 ? 100 : gce.delay * 10; total += ms;
+          frames.push({ img: new ImageData(cv.slice(), w, h), ms });
+          if (gce && gce.disp === 2) { for (let r = 0; r < ih; r++) for (let c = 0; c < iw; c++) { const X = x0 + c, Y = y0 + r; if (X < w && Y < h) cv.fill(0, (Y * w + X) * 4, (Y * w + X) * 4 + 4); } }
+          else if (before) cv = before;
+          gce = null;
+        } else break;
+      }
+      return frames.length > 1 ? { w, h, frames, total } : null;
+    } catch (_) { return null; }
+  }
+  const gifAnime = u => /^(blob|data):/i.test(u)
+    ? fetch(u).then(r => r.blob()).then(b => b.slice(0, 4).arrayBuffer().then(h => String.fromCharCode(...new Uint8Array(h)) === 'GIF8' ? b.arrayBuffer().then(a => decodeGif(new Uint8Array(a), 64 * 1048576)) : null)).catch(() => null)
+    : Promise.resolve(null);
+  function animTick(now) {
+    if (!animPlanes.size || now - animLast < 66) return;
+    animLast = now;
+    for (const pl of [...animPlanes.keys()]) { let o = pl; while (o.parent) o = o.parent; if (o !== scene) animPlanes.delete(pl); }   // zone retiree (reconstruction des zones) : son plan n'est plus dans la scene
+    if (!animPlanes.size || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+    camera.updateMatrixWorld(); animM.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse); animFrustum.setFromProjectionMatrix(animM);
+    const k = (renderer.domElement.clientHeight || 600) / 2 / Math.tan(THREE.MathUtils.degToRad(camera.fov || 50) / 2), cand = [];
+    for (const [pl, an] of animPlanes) {
+      if (!pl.visible || !animFrustum.intersectsObject(pl)) continue;
+      pl.getWorldPosition(animP);
+      const px = pl.scale.x * k / Math.max(animP.distanceTo(camera.position), 0.01);   // largeur du plan a l'ecran, en pixels
+      if (px >= 8) cand.push([px, pl, an]);
+    }
+    cand.sort((x, y) => y[0] - x[0]);
+    let n = 0;
+    for (const [, pl, an] of cand.slice(0, 8)) {   // au plus 8 plans a la fois, les plus grands
+      let t = (now - an.t0) % an.total, i = 0;
+      while (i < an.frames.length - 1 && t >= an.frames[i].ms) { t -= an.frames[i].ms; i++; }
+      if (i !== an.i) { an.g.putImageData(an.frames[i].img, 0, 0); an.i = i; pl.material.map.needsUpdate = true; n++; }
+    }
+    if (n) { dirty = true; animTicks++; }
+  }
   let imageResolver = null;
   function setImageResolver(f) { imageResolver = typeof f === 'function' ? f : null; if (zones.length) { buildZones(); dirty = true; } }
   // legende d'une image de zone : texte entre le premier « - » du nom de fichier et l'extension (« 1-Soleil_couchant.jpg » : « Soleil couchant »), « _ » devient espace
@@ -2002,12 +2093,25 @@ function createViewer(container, cfg0, loader) {
       dirty = true;
     };
     if (!z.target || /^\s*(javascript|vbscript):/i.test(z.target)) { absent(); return pl; }
-    const fromUrl = (u, tmp, fail, ok) => new THREE.TextureLoader().load(u, tex => {
-      if (tmp) URL.revokeObjectURL(u);
+    const setTex = (tex, iw, ih, ok) => {
       tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
       mat.map = tex; mat.needsUpdate = true;
-      pl.scale.y = hOf(tex.image.width, tex.image.height); place(); dirty = true; if (ok) ok();
+      pl.scale.y = hOf(iw, ih); place(); dirty = true; if (ok) ok();
+    };
+    const loadTex = (u, tmp, fail, ok) => new THREE.TextureLoader().load(u, tex => {
+      if (tmp) URL.revokeObjectURL(u);
+      setTex(tex, tex.image.width, tex.image.height, ok);
     }, undefined, () => { if (tmp) URL.revokeObjectURL(u); (fail || absent)(); });
+    // 1.6.15 : un GIF d'au moins deux images est decode par la page et dessine dans un canvas (voir animTick) ; sinon chemin ordinaire
+    const fromUrl = (u, tmp, fail, ok) => gifAnime(u).then(an => {
+      if (an && an.big) { console.warn(tr('core.image.gifbig', an.big, z.target)); an = null; }
+      if (!an) return loadTex(u, tmp, fail, ok);
+      if (tmp) URL.revokeObjectURL(u);
+      const cv = document.createElement('canvas'); cv.width = an.w; cv.height = an.h; an.g = cv.getContext('2d'); an.g.putImageData(an.frames[0].img, 0, 0);
+      const tex = new THREE.CanvasTexture(cv); tex.generateMipmaps = false; tex.minFilter = THREE.LinearFilter;
+      an.i = 0; an.t0 = performance.now(); animPlanes.set(pl, an); dg.anim = true;
+      setTex(tex, an.w, an.h, ok);
+    });
     // image toujours a jour (freshFetch) : une image remplacee sous le meme nom, plus vieille ou plus recente, apparait sans vider le cache du navigateur ;
     // une balise img n'offre aucun reglage de cache, d'ou fetch puis adresse blob: (liberee apres chargement par fromUrl)
     const fresh = (cand, fail, ok) => {
@@ -2364,6 +2468,7 @@ function createViewer(container, cfg0, loader) {
     if (TL.on) tilesTick(performance.now());
     presenceTick(dt, performance.now());
     landingTick(performance.now());
+    animTick(performance.now());
     if (seaMat && seaMat.uniforms) { seaMat.uniforms.uTime.value = clock.elapsedTime; dirty = true; }
     if (dirty || moved) {
       const now = performance.now(), fm = Number(cfg.fpsMax);
@@ -2374,7 +2479,7 @@ function createViewer(container, cfg0, loader) {
   });
 
   return {
-    scene, camera, renderer, controls, cfg, setCfg, setModel, loadBuffer, imageUrl, freshFetch, setImageResolver, frame, getCameraState, setZoom, renderStats,
+    scene, camera, renderer, controls, cfg, setCfg, setModel, loadBuffer, imageUrl, freshFetch, setImageResolver, animInfo: () => ({ planes: animPlanes.size, ticks: animTicks }), frame, getCameraState, setZoom, renderStats,
     get model() { return model; }, get sea() { return sea; }, set onCfg(f) { onCfg = f; }, set onWalk(f) { onWalk = f; }, set onPick(f) { onPick = f; }, set pickOrbit(v) { pickOrbit = !!v; }, set onPresence(f) { onPresence = f; }, set onChat(f) { onChat = f; }, set onPeer(f) { onPeer = f; },
     setZones, setZoneNumbers, zoneSelect, zonePickAt, findMeshes, imageDiag,
     // v36 : repères de portail (cônes) : affichés ou non (T), rappel, état pour les tests

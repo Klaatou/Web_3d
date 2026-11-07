@@ -1126,6 +1126,7 @@
  "viewer.zf.link.image": "Link (page opened on click or E, optional)",
  "viewer.zone.image.notwall": "Click on a wall (a vertical surface) to place a picture.",
  "core.image.missing": "image not found: {0}",
+ "core.image.gifbig": "GIF too heavy to animate ({0} MB decoded, 64 MB at most): still image: {1}",
  "core.webgl.missing": "3D cannot be shown: WebGL is not available in this browser.\nWhen hardware acceleration is off, recent browsers (Edge, Chrome) now refuse software rendering.\nWays out: open this page in Firefox; or start Edge with the --enable-unsafe-swiftshader option (preferably in a profile kept for these pages); or turn hardware acceleration back on.\nTo check: edge://gpu (or chrome://gpu), WebGL line.",
  "viewer.kind.url": "Link",
  "viewer.lang": "Language / Langue",
