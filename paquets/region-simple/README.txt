@@ -33,6 +33,7 @@ Pour commencer
 
 Dossiers
   site/       tout ce qui se publie : copiez le CONTENU de ce dossier sur un hebergement web
+              La carte (carte.html) est publiee avec le reste : une fois en ligne, elle est a l'adresse https://VOTRE-SITE/carte.html ; il suffit d'adapter la vignette site/vignette.jpg et le nom dans site/regions.json.
   presence/   le serveur de presence (facultatif : voir les autres visiteurs, chat)
   lancer-region.bat, renommer-region.bat   lanceur et renommage (Windows)
   lancer-region.sh, renommer-region.sh et les .command   les memes, pour Linux et macOS
@@ -69,6 +70,7 @@ To start
 
 Folders
   site/       everything that gets published: copy the CONTENTS of this folder to a web host
+              The map (carte.html) is published with the rest: once online, it is at https://YOUR-SITE/carte.html; you only need to adapt the thumbnail site/vignette.jpg and the name in site/regions.json.
   presence/   the presence server (optional: see other visitors, chat)
   lancer-region.bat, renommer-region.bat   launcher and renaming (Windows)
   lancer-region.sh, renommer-region.sh and the .command files   the same, for Linux and macOS

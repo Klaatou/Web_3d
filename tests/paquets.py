@@ -154,11 +154,13 @@ async def main():
                     sx, sy = await pg.evaluate("""([x, y, z]) => { const v = window.__v; v.camera.updateMatrixWorld(true); const p = v.camera.position.clone().set(x, y, z).project(v.camera), r = v.renderer.domElement.getBoundingClientRect(); return [r.left + (p.x + 1) / 2 * r.width, r.top + (1 - p.y) / 2 * r.height]; }""", [1.7, 12.26, 0.285])
                     await pg.mouse.move(sx, sy); await pg.wait_for_timeout(300); await pg.mouse.click(sx, sy); await pg.wait_for_timeout(600)
                     op = await pg.evaluate("window.__opened")
-                    rapport(len(op) == 1 and op[0].endswith("/aide.html"), "galerie-photos : un clic sur le panneau d'aide du comptoir ouvre aide.html", op)
+                    diag = await pg.evaluate("({ fenetre: [innerWidth, innerHeight, devicePixelRatio], about_ouvert: (document.getElementById('aboutOverlay') || {}).hidden === false, en_promenade: !!window.__v.walking })")   # 1.6.9 : de quoi comprendre un echec sans refaire l'essai
+                    rapport(len(op) == 1 and op[0].endswith("/aide.html"), "galerie-photos : un clic sur le panneau d'aide du comptoir ouvre aide.html", {"ouvert": op, "clic": [round(sx), round(sy)], **diag})
                 else:
                     await pg.keyboard.press("f"); await pg.wait_for_function("window.__v.walking", timeout=10000); await pg.wait_for_timeout(800)
                     pos = await pg.evaluate("window.__v.camera.position.toArray()")
-                    rapport(abs(pos[0]) < 0.01 and abs(pos[2]) < 0.01 and not (-14.5 < pos[0] < -4.5 and -10 < pos[2] < -2), "region-simple : le point d'arrivee en promenade est hors de la maison d'exemple", pos)
+                    cible_xz = json.loads((cible[nom] / "site" / "region.config.json").read_text(encoding="utf-8"))["target"]   # 1.6.9 : la promenade commence au point cible de la region (22,5 ; 18,5 depuis que la maison a ete deplacee), plus en (0, 0)
+                    rapport(abs(pos[0] - cible_xz[0]) < 0.01 and abs(pos[2] - cible_xz[2]) < 0.01 and not (-14.5 < pos[0] < -4.5 and -10 < pos[2] < -2), "region-simple : le point d'arrivee en promenade est le point cible de la region, hors de la maison d'exemple", pos)
                     await pg.evaluate("window.__v.teleportTo([20, 0, 30], 0)"); await pg.wait_for_timeout(1500)
                     y = await pg.evaluate("window.__v.camera.position.y")
                     rapport(abs(y - 16.7) < 0.3, "region-simple : en promenade, les yeux sont a 1,7 m au-dessus du sol (sol a 15 m)", y)
