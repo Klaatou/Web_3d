@@ -1167,7 +1167,7 @@ Quand la page n'arrive pas à joindre le serveur de présence, elle réessaie à
 
 ### 7.59 Navigateurs
 
-Essayé dans Chromium (`tests/v45_lib.py`). **Non essayé : Firefox et Safari.** Le fichier `tests/essai_importmap.html` (à ouvrir dans le navigateur ; résultat écrit en toutes lettres) vérifie qu'un navigateur accepte une table d'import construite par un script ; si l'essai échoue dans un navigateur, la coquille ne démarre pas dedans.
+Essayé dans Chromium (`tests/v45_lib.py`). **Firefox : un tiers a rapporté que la région s'affiche (Firefox 159.0.1, macOS Ventura 13.7.8, paquet `region-simple`) ; le reste n'a pas été essayé dans Firefox. Non essayé : Safari.** Le fichier `tests/essai_importmap.html` (à ouvrir dans le navigateur ; résultat écrit en toutes lettres) vérifie qu'un navigateur accepte une table d'import construite par un script ; si l'essai échoue dans un navigateur, la coquille ne démarre pas dedans.
 
 ### 7.60 Quand WebGL est indisponible
 

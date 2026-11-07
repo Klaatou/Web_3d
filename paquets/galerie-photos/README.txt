@@ -13,7 +13,8 @@ Pour commencer
      Linux et macOS : ouvrez un terminal dans ce dossier et tapez  sh lancer-galerie.sh  (il faut Python 3.7
      ou plus ; arret : Ctrl+C). macOS : on peut aussi double-cliquer sur lancer-galerie.command (la premiere
      fois : clic droit, Ouvrir). L'adresse http://localhost:8000/ s'affiche alors dans le terminal.
-     (Les lanceurs macOS n'ont pas encore ete essayes sur un Mac.)
+     (Meme lanceur que celui du paquet region-simple, qu'un testeur a essaye sous macOS Ventura
+     13.7.8 avec Firefox 159.0.1 : la region s'affiche. Ce paquet-ci n'a pas ete essaye separement.)
   2. La galerie s'ouvre dans le navigateur. Adresses utiles (avec le numero de la fenetre noire) :
        http://localhost:8000/               la galerie
        http://localhost:8000/aide.html      l'aide des visiteurs (a adapter a votre galerie)
@@ -45,7 +46,8 @@ To start
      Linux and macOS: open a terminal in this folder and type  sh lancer-galerie.sh  (Python 3.7 or later
      is needed; stop with Ctrl+C). macOS: you can also double-click lancer-galerie.command (the first time:
      right-click, Open). The address http://localhost:8000/ is then shown in the terminal.
-     (The macOS launchers have not been tried on a Mac yet.)
+     (Same launcher as the region-simple package, which a tester tried on macOS Ventura 13.7.8
+     with Firefox 159.0.1: the region is displayed. This package itself has not been tried separately.)
   2. The gallery opens in the browser. Useful addresses (with the number from the black window):
        http://localhost:8000/               the gallery
        http://localhost:8000/aide.html      the visitors' help (to adapt to your gallery)

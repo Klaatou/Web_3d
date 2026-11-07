@@ -151,6 +151,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 06/11/2026 |  | après 1.6.0 | Lot 1.6.3 : `extraire_batiments.py` entre dans le dépôt (messages français et anglais, `--lang`, `--tools`, cache dans le dossier courant, options en anglais) |
 | 06/11/2026 |  | après 1.6.0 | Lot 1.6.4 : `iar2oar.py` entre dans le dépôt (messages français et anglais, `--lang`, options en anglais) |
 | 07/11/2026 |  | après 1.6.0 | Lot 1.6.5 : documents des deux scripts (procédures § 6, manuel § 3.7 et § 3.8, README, anciens noms § 11.11) |
+| 07/11/2026 |  | après 1.6.0 | Lot 1.6.6 : retour d'un testeur sous macOS (lanceur, Firefox 159.0.1) : les textes « non essayé » des paquets et des documents sont corrigés |
 
 ## Commandes utiles
 

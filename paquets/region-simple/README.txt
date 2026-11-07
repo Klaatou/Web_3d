@@ -14,7 +14,8 @@ Pour commencer
      Linux et macOS : ouvrez un terminal dans ce dossier et tapez  sh lancer-region.sh  (il faut Python 3.7
      ou plus ; arret : Ctrl+C). macOS : on peut aussi double-cliquer sur lancer-region.command (la premiere
      fois : clic droit, Ouvrir). L'adresse http://localhost:8000/ s'affiche alors dans le terminal.
-     (Les lanceurs macOS n'ont pas encore ete essayes sur un Mac.)
+     (Lanceur macOS essaye par un testeur sous macOS Ventura 13.7.8, avec Firefox 159.0.1 :
+     la region s'affiche.)
   2. Adresses utiles (avec le numero de la fenetre noire) :
        http://localhost:8000/                la region
        http://localhost:8000/aide.html       l'aide des visiteurs (a adapter a votre region)
@@ -49,7 +50,8 @@ To start
      Linux and macOS: open a terminal in this folder and type  sh lancer-region.sh  (Python 3.7 or later
      is needed; stop with Ctrl+C). macOS: you can also double-click lancer-region.command (the first time:
      right-click, Open). The address http://localhost:8000/ is then shown in the terminal.
-     (The macOS launchers have not been tried on a Mac yet.)
+     (macOS launcher tried by a tester on macOS Ventura 13.7.8, with Firefox 159.0.1:
+     the region is displayed.)
   2. Useful addresses (with the number from the black window):
        http://localhost:8000/                the region
        http://localhost:8000/aide.html       the visitors' help (to adapt to your region)
