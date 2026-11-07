@@ -1387,7 +1387,7 @@ async def main():
     ap.add_argument("--visits-days", type=int, default=365, metavar="N", help=_tr("py.presence.help.visits_days"))
     ap.add_argument("--visits-names", action="store_true", help=_tr("py.presence.help.visits_names"))
     ap.add_argument("--map-names-key", metavar="SECRET", help=_tr("py.presence.help.map_names_key"))
-    ap.add_argument("--map-names", action="store_true", help=argparse.SUPPRESS)   # ancienne option (1.3.1) : sans effet, un avertissement le dit
+    ap.add_argument("--map-names", action="store_true", help=_tr("py.presence.help.map_names"))   # ancienne option (1.3.1) : sans effet, un avertissement le dit
     ap.add_argument("--visits-keys", default="presence_visits_keys.json", metavar="FILE", help=_tr("py.presence.help.visits_keys"))
     ap.add_argument("--creators", default="", metavar="FILE", help=_tr("py.presence.help.creators"))
     ap.add_argument("--cert", help=_tr("py.presence.certificat_tls_wss"))
