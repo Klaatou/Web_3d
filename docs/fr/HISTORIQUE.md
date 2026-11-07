@@ -163,6 +163,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 07/11/2026 |  | après 1.6.0 | Lot 1.6.17 : la fenêtre État affiche la version de la page (`index.html`) et celle de la configuration |
 | 07/11/2026 |  | après 1.6.0 | Lot 1.6.18 : documents : icône « Réalisé avec Web_3d » (§ 7.62), GIF dans le GUIDE et les paquets, `favicon.ico` dans la mise à jour d'un paquet, annexe du manuel complétée jusqu'à la 1.6.17, renvoi mort de `CREATEURS.md` |
 | 07/11/2026 |  | après 1.6.0 | Lot 1.6.19 : l'ancienne option `--map-names` a une description (fr et en) ; `REFERENCE_OPTIONS.md` régénéré |
+| 07/11/2026 |  | 1.7.0 | Publication 1.7.0 : `VERSION` 1.7.0 ; `CHANGELOG.md` ; réunit les lots 1.6.1 à 1.6.19 (scripts d'extraction dans le dépôt, icône et logo, GIF animés, documentation réorganisée, version de la page dans l'état) |
 
 ## Commandes utiles
 

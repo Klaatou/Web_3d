@@ -1651,7 +1651,8 @@ Le détail, version par version, est dans `HISTORIQUE.md` (récit) et `CHANGELOG
 | Ajouts de la 1.4 (lots 1.4.2 à 1.4.7) | La ligne des tuiles (§ 8.8); « À propos de la région » (§ 6.10); Compresser les tuiles : `glb2tiles.py --compress` (§ 4.2); Titre affiché : la clé `title` (§ 6.11); `--scan-sites --prune-missing` (§ 9.21); Essayé et non essayé (§ 6.17) |
 | Ajouts de la 1.4 (lots 1.4.8 à 1.4.13) | « À propos de la région » : liens cliquables et bouton « Aide des visiteurs » (§ 6.10); manuel refait par thèmes en 13 chapitres (§ 1.3); chaque outil Python n'embarque que ses propres textes (§ 7.50); cartes des paquets : `carte.html`, `regions.json`, `vignette.jpg` (`GUIDE.md`) |
 | Ajouts de la 1.5 (1.5.0 à 1.5.4) | Version affichée par les paquets : celle de la release (§ 13.2); zones `url` et `image` : liens `hop://` (chapitre 5); tableaux et légendes lisibles des deux côtés (§ 5.11) |
-| Ajouts de la 1.6 (1.6.0 à 1.6.17) | Panneau `zhop` « Lien vers OpenSim » des paquets (§ 5.11); `extraire_batiments.py` (§ 3.7) et `iar2oar.py` (§ 3.8); référence des fichiers JSON à part (`REFERENCE_JSON.md`) et `INDEX.md`; mise à jour d'un paquet déjà publié (`PROCEDURES_SIMPLES.md` § 10); icône « Réalisé avec Web_3d » (§ 7.62); logo en icône d'onglet (§ 6.9); GIF animés (§ 5.11); lignes « Animations GIF » et « Version : page … » du diagnostic (§ 7.53) |
+| Ajouts de la 1.6.0 | Panneau `zhop` « Lien vers OpenSim » des paquets (§ 5.11) |
+| Ajouts de la 1.7.0 (lots 1.6.1 à 1.6.19) | `extraire_batiments.py` (§ 3.7) et `iar2oar.py` (§ 3.8); référence des fichiers JSON à part (`REFERENCE_JSON.md`) et `INDEX.md`; mise à jour d'un paquet déjà publié (`PROCEDURES_SIMPLES.md` § 10); icône « Réalisé avec Web_3d » (§ 7.62); logo en icône d'onglet (§ 6.9); GIF animés (§ 5.11); lignes « Animations GIF » et « Version : page … » du diagnostic (§ 7.53) |
 
 Tout ce qui suit est dans la **1.1.0** (publiée le 31/10/2026). Le détail, lot par lot, est dans `CHANGELOG.md`.
 
