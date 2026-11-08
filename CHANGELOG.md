@@ -4,6 +4,11 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.7.0)
 
+### 08/11/2026 : README (fr et en) : le schéma « Comment ça marche » devient une image SVG
+
+- **Demande de Klaatou** : un schéma plus lisible que le dessin en texte, et exact sur le viewer, qui exporte aussi la page.
+- **Fait** : `docs/images/fonctionnement.en.svg` et `fonctionnement.fr.svg` (dessinés à la main, texte SVG modifiable ; fond blanc donc lisible en mode sombre ; rien n'est porté par la couleur seule : contour épais pour un outil, pointillés pour le facultatif, étapes numérotées, légende). Le schéma montre le modèle (GLB, tuiles facultatives), les deux façons de faire l'étape 3 (viewer interactif qui exporte la page ; `glb2html.py` en ligne de commande, indispensable pour une région en tuiles), la page et le serveur de présence facultatif. Le paragraphe sous le schéma est corrigé : le viewer ne fait pas que préparer, il exporte la page ; pour une région en tuiles il ne place que les zones. L'arbre d'un site reste en texte. Le test `tests/readme_liens.py` contrôle que les deux images existent. Rendu vérifié dans Chromium seulement, pas sur GitHub. Aucun fichier de `dist\` ne change.
+
 ### 08/11/2026 : README (fr et en) : schéma de la chaîne d'outils et arbre d'un site
 
 - **Demande de Klaatou** : montrer l'organisation des outils et celle d'un site (coquille à la racine, un dossier par région).

@@ -30,17 +30,9 @@ English | [Français](README.fr.md)
 
 ## How it works
 
-```
-OAR --oar2glb.py--> GLB --glb2tiles.py--> tiles + overview     (tiles: huge regions only)
-                     |                          |
-                     +------------+-------------+
-                                  v
- glb-viewer.html (settings, zones) --> glb2html.py --> web page: index.html + NOM.* + lib/
-                                                            ^
- presence_server.py (optional, separate program) -----------+   chat, visitors
-```
+![How it works: an OAR becomes a GLB, optionally cut into tiles; the viewer or glb2html.py builds the web page; the presence server is optional and separate](docs/images/fonctionnement.en.svg)
 
-`oar2glb.py` needs the external converter `convoar.exe` (see below). The viewer prepares the settings and the zones; `glb2html.py` builds the page from them. The presence server is not part of the page: the page connects to it.
+`oar2glb.py` needs the external converter `convoar.exe` (see below). The viewer sets the settings and the zones and exports the page (for a tiled region: only the zones, plus the command line to run); `glb2html.py` does the same job on the command line and is needed for tiled regions. The presence server is not part of the page: the page connects to it.
 
 ## Ready-to-use packages
 
