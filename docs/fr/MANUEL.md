@@ -1,4 +1,4 @@
-# Manuel de Web_3d (1.5.1)
+# Manuel de Web_3d (1.8.0)
 
 > **Résumé.** Ce manuel suit le projet de bout en bout, thème par thème : pour commencer, avec le vocabulaire (chapitre 1), les outils (2), convertir un OAR (3), mesurer et découper une grosse région (4), le viewer et les zones (5), fabriquer la page (6), la page côté visiteur (7), les régions en tuiles (8), la carte des mondes (9), le serveur de présence (10), la référence des fichiers JSON (11), le dépannage (12) et, en annexe, ce que chaque version a apporté (13). Pour **toutes les options** des outils, avec leur effet et les valeurs par défaut de leurs paramètres, en français et en anglais : `REFERENCE_OPTIONS.md` (générée depuis les outils par `gen_reference.py`). Pour **faire une tâche pas à pas** : `PROCEDURES.md`. Langue de la page et des outils : § 7.49, § 7.51 et § 7.50.
 
@@ -1692,7 +1692,7 @@ Le détail, version par version, est dans `HISTORIQUE.md` (récit) et `CHANGELOG
 | Ajouts de la 1.5 (1.5.0 à 1.5.4) | Version affichée par les paquets : celle de la release (§ 13.2); zones `url` et `image` : liens `hop://` (chapitre 5); tableaux et légendes lisibles des deux côtés (§ 5.11) |
 | Ajouts de la 1.6.0 | Panneau `zhop` « Lien vers OpenSim » des paquets (§ 5.11) |
 | Ajouts de la 1.7.0 (lots 1.6.1 à 1.6.19) | `extraire_batiments.py` (§ 3.7) et `iar2oar.py` (§ 3.8); référence des fichiers JSON à part (`REFERENCE_JSON.md`) et `INDEX.md`; mise à jour d'un paquet déjà publié (`PROCEDURES_SIMPLES.md` § 10); icône « Réalisé avec Web_3d » (§ 7.62); logo en icône d'onglet (§ 6.9); GIF animés (§ 5.11); lignes « Animations GIF » et « Version : page … » du diagnostic (§ 7.53) |
-| Ajouts de la 1.7 (lots 1.7.2 à 1.7.21) | `diag_carte.py` : diagnostic des pseudos de la carte (§ 9.22) ; essais réels de `extraire_batiments.py` et d'`iar2oar.py` (§ 3.7, § 3.8) ; GIF animés vérifiés sous Windows et Firefox (§ 5.11) ; schémas SVG du README (`DEVELOPPEMENT.md` § 6) ; lanceur graphique `web3d_gui.py` avec raccourcis Windows (§ 3.9) ; lien vers le serveur Discord |
+| Ajouts de la 1.8.0 (lots 1.7.1 à 1.7.22) | `diag_carte.py` : diagnostic des pseudos de la carte (§ 9.22) ; essais réels de `extraire_batiments.py` et d'`iar2oar.py` (§ 3.7, § 3.8) ; GIF animés vérifiés sous Windows et Firefox (§ 5.11) ; schémas SVG du README (`DEVELOPPEMENT.md` § 6) ; lanceur graphique `web3d_gui.py` avec raccourcis Windows (§ 3.9) ; lien vers le serveur Discord |
 
 Tout ce qui suit est dans la **1.1.0** (publiée le 31/10/2026). Le détail, lot par lot, est dans `CHANGELOG.md`.
 

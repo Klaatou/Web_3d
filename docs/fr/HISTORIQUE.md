@@ -185,6 +185,8 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 08/11/2026 |  | après 1.7.0 | Lot 1.7.19 : raccourcis avec l'icône du projet ; `textes_outils` ne bloque plus dans une console |
 | 08/11/2026 |  | après 1.7.0 | Lot 1.7.20 : lien vers le serveur Discord dans les README |
 | 08/11/2026 |  | après 1.7.0 | Lot 1.7.21 : documents : lanceur graphique (manuel § 3.9, procédures § 11, README, vue d'ensemble), image des raccourcis, nouveau lien Discord |
+| 08/11/2026 |  | après 1.7.0 | Lot 1.7.22 : `web3d_gui.py` : boutons Fichier et Dossier sur les champs de sortie et `--convoar` |
+| 08/11/2026 |  | 1.8.0 | Publication 1.8.0 : `VERSION` 1.8.0 ; `CHANGELOG.md` ; réunit les lots 1.7.1 à 1.7.22 (lanceur graphique `web3d_gui.py` et raccourcis Windows, `diag_carte.py`, README et documents refaits, lien Discord) |
 
 ## Commandes utiles
 

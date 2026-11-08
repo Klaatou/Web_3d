@@ -185,6 +185,8 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 08/11/2026 |  | after 1.7.0 | Batch 1.7.19: shortcuts with the project icon; `textes_outils` no longer blocks in a console |
 | 08/11/2026 |  | after 1.7.0 | Batch 1.7.20: link to the Discord server in the READMEs |
 | 08/11/2026 |  | after 1.7.0 | Batch 1.7.21: documents: graphical launcher (manual § 3.9, procedures § 11, README, overview), shortcuts picture, new Discord link |
+| 08/11/2026 |  | after 1.7.0 | Batch 1.7.22: `web3d_gui.py`: File and Folder buttons on the output fields and `--convoar` |
+| 08/11/2026 |  | 1.8.0 | Release 1.8.0: `VERSION` 1.8.0; `CHANGELOG.md`; gathers batches 1.7.1 to 1.7.22 (graphical launcher `web3d_gui.py` and Windows shortcuts, `diag_carte.py`, README and documents rewritten, Discord link) |
 
 ## Useful commands
 

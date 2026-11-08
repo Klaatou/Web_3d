@@ -1,6 +1,6 @@
 # Web 3d: overview on one page
 
-*State on 08/11/2026, version 1.7.21 (last release: 1.7.0, on 07/11/2026).*
+*State on 08/11/2026, version 1.8.0 (last release: 1.8.0, on 08/11/2026).*
 
 An OpenSim region (`.oar` backup) becomes a **3D web page** you can walk around in, with nothing to install. Repository: `github.com/Klaatou/Web_3d` (MIT licence). This page says where things stand; the detail is in the manual, the technical state in `REPRISE.md`.
 

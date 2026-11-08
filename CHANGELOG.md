@@ -2,7 +2,40 @@
 
 Les dates sont au format jj/mm/aaaa.
 
-## Non publié (après la 1.7.0)
+## Non publié (après la 1.8.0)
+
+## 1.8.0 (08/11/2026)
+
+### 08/11/2026 : publication 1.8.0 : lanceur graphique et raccourcis Windows, `diag_carte.py`, README et documents refaits
+
+- **Publication** : la 1.8.0, décidée par Klaatou le 08/11/2026, réunit les lots 1.7.1 à 1.7.22 (décrits plus bas, sous cette même rubrique). Nouveautés depuis la 1.7.0 : **(1)** `web3d_gui.py`, lanceur graphique des six outils (`glb2html`, `glb2tiles`, `oar2glb`, `extraire_batiments`, `iar2oar`, `diag_carte`) : liste d'outils, une ligne par option lue dans l'outil lui-même, aide de chaque option, ligne de commande, lancement et sortie, options répétables, `--tool`, boutons Fichier et Dossier ; **(2)** `--shortcuts` crée des raccourcis Windows sur le bureau (un pour la fenêtre, un par outil) avec l'icône du projet ; `--dry-run`, `--remove-shortcuts`, `--shortcuts-folder` ; **(3)** `diag_carte.py` entre dans `tools` et `dist` : il dit pourquoi la carte n'affiche pas les pseudos ; **(4)** README refaits (présentation, glossaire, schémas SVG, fonctions) avec un lien vers le serveur Discord ; **(5)** documents : manuel § 3.9 et § 9.22, procédures simples § 11, `DEVELOPPEMENT.md` § 6, `INDEX.md`, historiques, image des raccourcis ; **(6)** tests : `gui.py`, `diag_carte.py` et `readme_liens.py` nouveaux ; `v32`, `v37`, `textes_outils` et `tools_lang` corrigés (attentes de condition, entrée fermée, langue de Windows) ; **(7)** le nom du testeur macOS (NightshadeCeres, avec son accord) dans les documents. **Inchangés depuis la 1.7.0** : la page, le viewer, `glb2html.py`, `glb2tiles.py`, `oar2glb.py`, `extraire_batiments.py`, `iar2oar.py`, le serveur de présence (1.6.19) et les deux paquets (leurs zips écrivent seulement « Web_3d 1.8.0 » dans `VERSION.txt`).
+- **Notes de la release GitHub** (à joindre : `galerie-photos.zip` et `region-simple.zip`, fabriqués par `python fabriquer_paquets.py` après le passage de `VERSION` à 1.8.0), anglais puis français :
+
+  > The two packages are unchanged since 1.7.0 (only the version written in their `VERSION.txt` changes): if you already have one, there is nothing to update. If you do update, do not unzip over your folder: it would overwrite your config, zones and images. See docs/en/SIMPLE_PROCEDURES.md section 10.
+  >
+  > **Release** 1.8.0. New:
+  > - `web3d_gui.py`: a graphical launcher for the tools (`glb2html`, `glb2tiles`, `oar2glb`, `extraire_batiments`, `iar2oar`, `diag_carte`): choose the tool in a list, fill in the options (the help of each option shows under the pointer), see the resulting command, run it and read its output; `--tool NAME` opens it on one tool;
+  > - `python web3d_gui.py --shortcuts` creates Windows shortcuts on the desktop (one for the window, one per tool) with the Web_3d icon; `--dry-run` shows what would be done, `--remove-shortcuts` removes them;
+  > - `diag_carte.py`: tells you why the world map shows no nicknames (it queries the presence server with and without the key);
+  > - the READMEs are rewritten (introduction, glossary, diagrams, features) and link to the Discord server;
+  > - documentation: manual sections 3.9 (graphical launcher) and 9.22 (map nicknames), simple procedures section 11, `INDEX.md`;
+  > - the page, the viewer, the other tools, the presence server and the packages are unchanged since 1.7.0.
+  >
+  > Tested on Windows by Klaatou: the graphical launcher, the tool list, the file and folder pickers and the shortcuts. Reported earlier by NightshadeCeres: the macOS launcher and the region display work on macOS Ventura 13.7.8 with Firefox 159.0.1. Not tried: the graphical launcher on macOS and Linux, Safari.
+  >
+  > ---
+  >
+  > Les deux paquets n'ont pas changé depuis la 1.7.0 (seule la version écrite dans leur `VERSION.txt` change) : si vous en avez déjà un, il n'y a rien à mettre à jour. Si vous le faites, ne décompressez pas le contenu par-dessus votre dossier existant : cela écraserait vos fichiers de configuration, vos zones et vos images. Consultez la section 10 du fichier `docs/fr/PROCEDURES_SIMPLES.md`.
+  >
+  > Version 1.8.0. Nouveautés :
+  > - `web3d_gui.py` : un lanceur graphique des outils (`glb2html`, `glb2tiles`, `oar2glb`, `extraire_batiments`, `iar2oar`, `diag_carte`) : on choisit l'outil dans une liste, on remplit les options (l'aide de chaque option s'affiche sous le curseur), on voit la commande obtenue, on la lance et on lit sa sortie ; `--tool NOM` l'ouvre sur un outil ;
+  > - `python web3d_gui.py --shortcuts` crée des raccourcis Windows sur le bureau (un pour la fenêtre, un par outil) avec l'icône Web_3d ; `--dry-run` montre ce qui serait fait, `--remove-shortcuts` les supprime ;
+  > - `diag_carte.py` : dit pourquoi la carte des mondes n'affiche pas les pseudos (il interroge le serveur de présence avec et sans la clé) ;
+  > - les README sont refaits (présentation, glossaire, schémas, fonctions) et renvoient vers le serveur Discord ;
+  > - documentation : sections 3.9 (lanceur graphique) et 9.22 (pseudos de la carte) du manuel, section 11 des procédures simples, `INDEX.md` ;
+  > - la page, le viewer, les autres outils, le serveur de présence et les paquets n'ont pas changé depuis la 1.7.0.
+  >
+  > Testé sous Windows par Klaatou : le lanceur graphique, la liste des outils, les sélecteurs de fichier et de dossier, les raccourcis. Signalé plus tôt par NightshadeCeres : le lanceur macOS et l'affichage de la région fonctionnent sous macOS Ventura 13.7.8 avec Firefox 159.0.1. Non testés : le lanceur graphique sous macOS et Linux, Safari.
 
 ### 08/11/2026 : `web3d_gui.py` : boutons Fichier et Dossier sur les champs de sortie (lot 1.7.22)
 
