@@ -60,18 +60,18 @@ The manuals are in English in `docs/en/` (`INDEX.md` to find your way, `GUIDE.md
 
 ## Files built
 
-| Built file                                  | Role                                                                                                                                                                                                                                     |
-| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `glb-viewer.html`                           | Settings and export page: load a `.glb` (or the folder of a tiled region), adjust the sea, the hole, the camera, walking, the zones and the region card, then export (for a tiled region, only the zones: the viewer exports `NOM.zones.json` and writes the `glb2html.py` command line to run).      |
-| `glb2html.py`                               | The same job on the command line (offline, no browser): single page, modular page or shared shell, tiled regions, `--update` to update a published region, `--scan-sites` for the map of a whole site.                                   |
-| `index.html`                                | The shared shell, ready to copy to the root of a site.                                                                                                                                                                             |
-| `carte.html`                                | The world map page, identical for every site: it reads the `regions.json` next to it.                                                                                                                                              |
-| `presence_server.py`                        | WebSocket server for presence, chat, moderation, visitor counters and the visit log.                                                                                                                                                     |
-| `oar2glb.py`                              ¹ | Converts an OpenSim backup (`.oar`) to `.glb` (convoar + repair); `--terrain-only` adds the full terrain of regions over 256 m to an existing GLB.                                                                                       |
-| `glb2tiles.py` (+ `glb-stats.py` beside it) | Splits a huge GLB into self-contained tiles (`X.tiles/*.glb` + `X.tiles.json`) and builds a light overview `X.overview.glb`; `--analyse` measures and recommends without writing anything; `--exclude` drops catalogue "delivery boxes". |
-| `extraire_batiments.py` | Outputs from an OAR and its GLB one recentred GLB per object group (house, furniture, tree...); `--list` shows the groups. |
-| `iar2oar.py` | Turns an inventory archive (IAR) into a minimal OAR, for the chain `oar2glb.py` then `extraire_batiments.py`. |
-| `diag_carte.py` | Diagnoses why the world map shows no nicknames: asks the presence server with and without the key and says what is missing. |
+| Built file                                  | Role                                                                                                                                                                                                                                                                                             |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `glb-viewer.html`                           | Settings and export page: load a `.glb` (or the folder of a tiled region), adjust the sea, the hole, the camera, walking, the zones and the region card, then export (for a tiled region, only the zones: the viewer exports `NOM.zones.json` and writes the `glb2html.py` command line to run). |
+| `glb2html.py`                               | The same job on the command line (offline, no browser): single page, modular page or shared shell, tiled regions, `--update` to update a published region, `--scan-sites` for the map of a whole site.                                                                                           |
+| `index.html`                                | The shared shell, ready to copy to the root of a site.                                                                                                                                                                                                                                           |
+| `carte.html`                                | The world map page, identical for every site: it reads the `regions.json` next to it.                                                                                                                                                                                                            |
+| `presence_server.py`                        | WebSocket server for presence, chat, moderation, visitor counters and the visit log.                                                                                                                                                                                                             |
+| `oar2glb.py`                              ¹ | Converts an OpenSim backup (`.oar`) to `.glb` (convoar + repair); `--terrain-only` adds the full terrain of regions over 256 m to an existing GLB.                                                                                                                                               |
+| `glb2tiles.py` (+ `glb-stats.py` beside it) | Splits a huge GLB into self-contained tiles (`X.tiles/*.glb` + `X.tiles.json`) and builds a light overview `X.overview.glb`; `--analyse` measures and recommends without writing anything; `--exclude` drops catalogue "delivery boxes".                                                         |
+| `extraire_batiments.py`                     | Outputs from an OAR and its GLB one recentred GLB per object group (house, furniture, tree...); `--list` shows the groups.                                                                                                                                                                       |
+| `iar2oar.py`                                | Turns an inventory archive (IAR) into a minimal OAR, for the chain `oar2glb.py` then `extraire_batiments.py`.                                                                                                                                                                                    |
+| `diag_carte.py`                             | Diagnoses why the world map shows no nicknames: asks the presence server with and without the key and says what is missing.                                                                                                                                                                      |
 
 ¹ **Prerequisites**: **oar2glb.py** relies on the external converter **convoar.exe** \
 Download: https://github.com/Misterblue/convoar/tree/master/bin \
@@ -106,24 +106,11 @@ The full steps (OAR to page, tiled region, update, zones, public presence server
 
 Recommended layout (manual § 6.2): at the root of the site, a single shell `index.html` (copy of `dist/index.html`), the `lib/` folder, `regions.json` and `carte.html` (copy of `dist/carte.html`); then one folder per region with its `NOM.glb` (or its tiles), `NOM.config.json` and `NOM.zones.json`. A region opens at `index.html?region=dossier/NOM`. The site must be served over http/https (local test: `python -m http.server`).
 
-The same layout as a tree:
+The same layout, as in a file explorer:
 
-```
-SITE/                          what you publish on the web host
-|-- index.html                 the shell, the same for every region
-|-- carte.html                 the world map
-|-- regions.json               the cards of the map, one per region
-|-- default.json               the region opened when the address has no ?region=
-|-- lib/                       three.js, shared by all the regions
-|-- dossier/                   one folder per region (any name)
-|   |-- NOM.glb                the model (tiled region: NOM.tiles.json, NOM.overview.glb and NOM.tiles/)
-|   |-- NOM.config.json        the settings, read again at every F5
-|   |-- NOM.zones.json         the zones, read again at every F5
-|   `-- medias/                the pictures of the image zones
-`-- other-folder/              another region, same content
-```
+![Layout of a site shown like a file explorer: the shell, the map, the help and the settings at the root, then one folder per region with its model, its settings, its zones and its pictures](docs/images/site.en.svg)
 
-The region above opens at `index.html?region=dossier/NOM`.
+A region opens at `index.html?region=dossier/NOM`.
 
 - Update a region after a new version: `python glb2html.py --update -o "SITE/dossier/NOM.html" --shared-shell "SITE/index.html"` (the path of the root shell avoids writing a useless shell into the region's folder).
 - Update the map of the whole site: `python glb2html.py --scan-sites SITE --dry-run`, then without `--dry-run` (manual § 9.9).

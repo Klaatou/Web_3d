@@ -4,6 +4,11 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.7.0)
 
+### 08/11/2026 : README (fr et en) : schémas SVG corrigés, arbre du site en explorateur de fichiers
+
+- **Demande de Klaatou** : un arbre du site plus proche de ce qu'on voit dans l'explorateur, avec `aide.html` et les fichiers `about` ; prise en compte des remarques d'un relecteur sur le schéma.
+- **Fait** : `docs/images/site.en.svg` et `site.fr.svg` remplacent l'arbre en texte (fenêtre d'explorateur : chevrons, icônes de dossier et de fichier par type, colonnes « Nom » et « Rôle », accolade « une région » ; `aide.html` à la racine, `NOM.about.fr.txt` et `NOM.about.en.txt` dans le dossier de la région, d'après le manuel). Schéma « Comment ça marche » corrigé : entrée directe d'un `.glb` sans OAR, `NOM.tiles.json` ajouté aux tuiles (c'est lui que lit `glb2html.py --tiles`), étiquettes « GLB ou tuiles » sur les flèches vers le viewer et vers `glb2html.py`, étapes `3a` et `3b` séparées par « OU » avec les fichiers de réglages repris, viewer « exporte la page (sauf en tuiles) », cadre « Le modèle » en trait plein (le pointillé ne désigne plus que le facultatif). Aucun fichier de `dist\\` ne change.
+
 ### 08/11/2026 : README (fr et en) : le schéma « Comment ça marche » devient une image SVG
 
 - **Demande de Klaatou** : un schéma plus lisible que le dessin en texte, et exact sur le viewer, qui exporte aussi la page.

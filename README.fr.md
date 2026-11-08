@@ -106,24 +106,11 @@ Les étapes complètes (de l'OAR à la page, région en tuiles, mise à jour, zo
 
 Organisation conseillée (manuel § 6.2) : à la racine du site, une seule coquille `index.html` (copie de `dist/index.html`), le dossier `lib/`, `regions.json` et `carte.html` (copie de `dist/carte.html`) ; puis un dossier par région avec ses `NOM.glb` (ou ses tuiles), `NOM.config.json` et `NOM.zones.json`. Une région s'ouvre à `index.html?region=dossier/NOM`. Il faut servir le site en http/https (essai local : `python -m http.server`).
 
-La même disposition en arbre :
+La même disposition, comme dans un explorateur de fichiers :
 
-```
-SITE/                          ce que l'on publie sur l'hébergement web
-|-- index.html                 la coquille, la même pour toutes les régions
-|-- carte.html                 la carte des mondes
-|-- regions.json               les fiches de la carte, une par région
-|-- default.json               la région ouverte quand l'adresse n'a pas de ?region=
-|-- lib/                       three.js, commun à toutes les régions
-|-- dossier/                   un dossier par région (nom libre)
-|   |-- NOM.glb                le modèle (région en tuiles : NOM.tiles.json, NOM.overview.glb et NOM.tiles/)
-|   |-- NOM.config.json        les réglages, relus à chaque F5
-|   |-- NOM.zones.json         les zones, relues à chaque F5
-|   `-- medias/                les images des zones image
-`-- autre-dossier/             une autre région, même contenu
-```
+![Disposition d'un site présentée comme un explorateur de fichiers : la coquille, la carte, l'aide et les réglages à la racine, puis un dossier par région avec son modèle, ses réglages, ses zones et ses images](docs/images/site.fr.svg)
 
-La région ci-dessus s'ouvre à `index.html?region=dossier/NOM`.
+Une région s'ouvre à `index.html?region=dossier/NOM`.
 
 - Mettre à jour une région après une nouvelle version : `python glb2html.py --update -o "SITE/dossier/NOM.html" --shared-shell "SITE/index.html"` (le chemin de la coquille de la racine évite d'écrire une coquille inutile dans le dossier de la région).
 - Mettre à jour la carte de tout le site : `python glb2html.py --scan-sites SITE --dry-run`, puis sans `--dry-run` (manuel § 9.9).
