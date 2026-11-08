@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Test 1.7.14 : web3d_gui.py, lanceur graphique de glb2html.py (dist/web3d_gui.py).
+"""Test 1.7.14 puis 1.7.17 : web3d_gui.py, lanceur graphique des outils (dist/web3d_gui.py).
 
 Sans fenetre : les options sont lues dans glb2html.py ; chaque option donne une ligne de commande que le vrai parseur de glb2html.py accepte (toutes, une par une) ;
 valeurs : drapeau, oui/non, choix, nombre a virgule, valeur negative, argument sans nom, option sans valeur ; verification des champs.
@@ -35,10 +35,10 @@ rapport({"flag", "tri", "choix", "nombre", "chemin", "texte", "facultatif"} <= g
 rapport(all(c["aide"] for c in champs), "chaque option a un texte d'aide", [c["dest"] for c in champs if not c["aide"]])
 
 
-def accepte(argv):
+def accepte(argv, p=None):
     try:
         with contextlib.redirect_stderr(io.StringIO()), contextlib.redirect_stdout(io.StringIO()):
-            parser.parse_args(argv)
+            (p or parser).parse_args(argv)
         return True
     except SystemExit:
         return False
@@ -64,7 +64,41 @@ for c in champs:
             refus.append((c["dest"], v, argv))
 rapport(not refus, f"les {len(champs)} options, une par une : ligne acceptee par le vrai parseur de glb2html.py", refus[:3])
 
+# tous les outils de la liste : chaque option, seule (avec les arguments obligatoires), est acceptee par le vrai parseur de son outil
+for nom_outil, fichier in g.OUTILS:
+    p = g.lire_parser(DIST / fichier, "en")
+    rapport(p is not None, f"{fichier} : les options sont lues")
+    if p is None:
+        continue
+    cs = g.champs_depuis(p)
+    vus_o = {o for c in cs for o in c["options"]}
+    att_o = {o for a in p._actions for o in a.option_strings if o not in ("-h", "--help", "--version", "--lang")}
+    rapport(vus_o == att_o, f"{fichier} : chaque option a sa ligne, aucune en trop", sorted(vus_o ^ att_o)[:6])
+    base = {c["dest"]: "x" for c in cs if c["obligatoire"]}
+    refus_o = []
+    for c in cs:
+        gen = c["genre"]
+        if gen == "flag":
+            vals = [True]
+        elif gen == "tri":
+            vals = ["yes", "no"]
+        elif gen == "choix":
+            vals = c["choix"][:1]
+        elif gen == "facultatif":
+            vals = [("", True), ("essai", False)]
+        else:
+            vals = [c["defaut"] or ("1" if gen == "nombre" else "12" if gen == "multiple" else "essai")]
+        for v in vals:
+            argv = g.construire(cs, dict(base, **{c["dest"]: v}))
+            if not accepte(argv, p):
+                refus_o.append((c["dest"], v, argv))
+    rapport(not refus_o, f"{fichier} : les {len(cs)} options, une par une : ligne acceptee par le vrai parseur", refus_o[:3])
+
 par = {c["dest"]: c for c in champs}
+sp = par["spectate"]
+rapport(g.defaut_dans_aide(sp) and g.defaut_dans_aide(par["output"]) and not g.defaut_dans_aide(par["zones"]) and not g.defaut_dans_aide(par["walk"]),
+        "defaut decrit dans l'aide (--spectate, -o) signale ; pas de faux signalement")
+rapport("see the text above" in g.texte_aide(sp) and "no default" not in g.texte_aide(sp), "texte d'aide : « voir le texte ci-dessus » quand l'aide decrit le defaut", g.texte_aide(sp)[-120:])
 sel = [par[d] for d in ("input", "walk", "rotate", "sea_y", "zones_only", "settings", "zone_info_dist", "hole")]
 args = g.construire(sel, {"input": "a b.glb", "walk": "no", "rotate": "90", "sea_y": "-12,5", "zones_only": True, "settings": ("", True), "hole": "  "})
 rapport(args[0] == "a b.glb" and "--no-walk" in args and "--sea-y=-12.5" in args and "--settings" in args and "--zones-only" in args and "--hole" not in args and args[args.index("--rotate") + 1] == "90",
@@ -87,7 +121,7 @@ except Exception as e:
     print("\nRESULTAT :", "tout est passe" if not bad else f"{bad} echec(s)")
     sys.exit(1 if bad else 0)
 
-f = g.fenetre(chemin, champs, tk, ttk, filedialog)
+f = g.fenetre([(n, DIST / fn) for n, fn in g.OUTILS], tk, ttk, filedialog)
 r = f.root
 r.update()
 rapport(len(f.lignes) == len(champs), "la fenetre a une ligne par option", (len(f.lignes), len(champs)))
@@ -134,6 +168,15 @@ f.vars["sea_y"].set("abc")
 r.update()
 f.lancer()
 rapport(f.proc is None and "!" in f.etat.cget("text") and "sea-y" in f.etat.cget("text"), "un champ illisible empeche le lancement et le dit", f.etat.cget("text"))
+# changer d'outil : lignes refaites, option repetable (une ligne = une repetition)
+rapport(f.changer("extraire_batiments") and f.chemin.name == "extraire_batiments.py" and len(f.lignes) == len(f.champs) > 5, "la liste d'outils change l'outil affiche", (f.chemin.name, len(f.lignes)))
+grp = next(c for c in f.champs if "--group" in c["options"])
+f.vars[grp["dest"]].set("12\n15,18\n\n")
+f.vars[next(c["dest"] for c in f.champs if "--list" in c["options"])].set(True)
+r.update()
+cmd = f.cmd.get("1.0", "end").strip()
+rapport(cmd == "python extraire_batiments.py --list --group 12 --group 15,18", "option repetable : une ligne, une repetition ; ligne vide ignoree", cmd)
+rapport(f.changer("glb2html") and len(f.lignes) == len(champs) and f.cmd.get("1.0", "end").strip() == "python glb2html.py", "retour a glb2html : options remises a zero")
 r.destroy()
 print("\nRESULTAT :", "tout est passe" if not bad else f"{bad} echec(s)")
 sys.exit(1 if bad else 0)

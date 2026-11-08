@@ -1630,8 +1630,8 @@
  "py.diag.res_nokey": "RESULT: with the key, the server gives NO nickname. Three possible causes:\n  1. the server was not started with --map-names-key YOUR_KEY (the old --map-names option has no effect): check the launch line,\n     then the console at startup: it must say that nicknames are given to the maps that present the key;\n  2. the key typed here is not exactly the one used at launch (capitals, spaces, quotes);\n  3. the presence_server.py file of the server is too old a version.\n  (after 5 wrong keys in a minute the server stops listening: wait a minute before trying again)",
  "py.diag.res_nobody": "RESULT: the server is FINE (the key is accepted), but nobody is connected right now: no nickname to show.\n  -> open a region of this server in another browser (walk with the P key), then run this diagnosis again.",
  "py.diag.res_ok": "RESULT: the server is FINE: the key is accepted and nicknames are given.\n  If the map shows none, the problem is on the page side:\n  1. the carte.html file of the web server is not the up-to-date version: copy dist\\\\carte.html again (and dist\\\\index.html for the map opened with M);\n  2. the address you open must end with #pseudos=YOUR_KEY (for example .../carte.html#pseudos=YOUR_KEY);\n  3. a key with & + % # or spaces is misread in the address: use letters and digits;\n  4. reload the page bypassing the cache (Ctrl+F5).",
- "py.gui.desc": "web3d_gui.py {0}: graphical launcher for the Web_3d tools (for now: glb2html.py). One line per option, the help of each option, the resulting command, a button to run the tool and its output. The options are read from the tool itself: it is not modified.",
- "py.gui.epilog": "Examples:\n  python web3d_gui.py\n  python web3d_gui.py --lang fr\nNeeds tkinter. Paths are chosen with the File... and Folder... buttons; the help of the option under the pointer shows at the bottom.",
+ "py.gui.desc": "web3d_gui.py {0}: graphical launcher for the Web_3d tools (glb2html, glb2tiles, oar2glb, extraire_batiments, iar2oar, diag_carte). A list to choose the tool, one line per option, the help of each option, the resulting command, a button to run the tool and its output. The options are read from the tool itself: it is not modified.",
+ "py.gui.epilog": "Examples:\n  python web3d_gui.py\n  python web3d_gui.py --tool oar2glb\n  python web3d_gui.py --lang fr\nNeeds tkinter. Paths are chosen with the File... and Folder... buttons; the help of the option under the pointer shows at the bottom.",
  "py.gui.no_tk": "ERROR: tkinter not found. On Windows it is installed with Python (reinstall Python if needed); on Linux, install the python3-tk package.",
  "py.gui.no_tool": "ERROR: {0} not found (looked next to this script, then in the dist folder). Run 'python build.py' or copy web3d_gui.py next to {0}.",
  "py.gui.read_error": "ERROR: cannot read the options of {0}.",
@@ -1669,5 +1669,9 @@
  "py.gui.problem_required": "{0}: value required",
  "py.gui.problem_number": "{0}: unreadable number ({1})",
  "py.gui.problem_choice": "{0}: value not in the list ({1})",
- "py.gui.start_failed": "Cannot start the tool: {0}"
+ "py.gui.start_failed": "Cannot start the tool: {0}",
+ "py.gui.multi_hint": "Repeatable option: one value per line, the option is written once per line.",
+ "py.gui.help.tool": "tool shown at start (one of: {0})",
+ "py.gui.default_in_help": "default: see the help",
+ "py.gui.default_above": "Default value: see the text above."
 }

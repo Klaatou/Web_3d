@@ -4,6 +4,14 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.7.0)
 
+### 08/11/2026 : `web3d_gui.py` : tous les outils (lot 1.7.17)
+
+- **Demande de Klaatou** : étendre le lanceur graphique aux autres outils ; constat de Klaatou : `--spectate` et `-o` n'affichaient aucune valeur par défaut.
+- **Fait** : une liste « Outil » en haut de la fenêtre : `glb2html`, `glb2tiles`, `oar2glb`, `extraire_batiments`, `iar2oar`, `diag_carte` (les options de chacun sont lues dans l'outil, aucun outil n'est modifié) ; `--tool NOM` ouvre la fenêtre sur un outil (utile pour un raccourci). Option répétable (`--exclude`, `--group`) : un champ de plusieurs lignes, une ligne = une répétition de l'option. Boutons Fichier… et Dossier… aussi pour les arguments `oar`, `glb` et `iar`. Le changement d'outil est refusé pendant qu'un outil tourne.
+- **Défaut décrit dans l'aide** : quand une option n'a pas de valeur par défaut chiffrée mais que son texte d'aide en parle, la ligne affiche « défaut : voir l'aide » (au lieu de rien) et le panneau d'aide dit « voir le texte ci-dessus ». Cas : `--spectate` (actif dès qu'une `--presence-url` est donnée) et `-o` (« <nom> - Offline.html » à côté du `.glb`, et non le dossier de lancement).
+- **Test** : `tests/gui.py` : pour chacun des 6 outils, chaque option, seule, donne une ligne acceptée par le vrai parseur de l'outil ; option répétable ; changement d'outil ; défaut décrit dans l'aide. Une faute introduite volontairement (seule la première ligne répétée) est détectée.
+- **Limites** : lire les options de `oar2glb.py` écrit son journal `oar2glb.log` à côté de l'outil (comportement de cet outil, déjà vrai pour `gen_reference.py`) ; `presence_server.py` n'est pas dans la liste (serveur qui reste lancé). **Non testé** : sous Windows.
+
 ### 08/11/2026 : `tools_lang` : contrôle « langue du système inconnue » ignoré sous Windows (lot 1.7.16)
 
 - **Constat de Klaatou** : sous Windows en français, `tests/tools_lang.py` échoue sur « langue du système inconnue : anglais » (1 échec) ; les autres tests passent.

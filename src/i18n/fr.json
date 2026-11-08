@@ -1630,8 +1630,8 @@
  "py.diag.res_nokey": "RESULTAT : avec la clé, le serveur ne donne AUCUN pseudo. Trois causes possibles :\n  1. le serveur n'a pas été lancé avec --map-names-key VOTRE_CLE (l'ancienne option --map-names est sans effet) : vérifiez la ligne de lancement,\n     puis la console au démarrage : elle doit dire que les pseudos sont donnés aux cartes qui présentent la clé ;\n  2. la clé tapée ici n'est pas exactement celle du lancement (majuscules, espaces, guillemets) ;\n  3. le fichier presence_server.py du serveur est une version trop ancienne.\n  (après 5 clés fausses en une minute le serveur n'écoute plus : attendez une minute avant de réessayer)",
  "py.diag.res_nobody": "RESULTAT : le serveur est BON (la clé est acceptée), mais personne n'est connecté en ce moment : aucun pseudo à montrer.\n  -> ouvrez une région de ce serveur dans un autre navigateur (promenade avec la touche P), puis relancez ce diagnostic.",
  "py.diag.res_ok": "RESULTAT : le serveur est BON : la clé est acceptée et des pseudos sont donnés.\n  Si la carte n'en affiche pas, le problème est du côté de la page :\n  1. le fichier carte.html du serveur web n'est pas la version à jour : recopiez dist\\\\carte.html (et dist\\\\index.html pour la carte ouverte par M) ;\n  2. l'adresse ouverte doit se terminer par #pseudos=VOTRE_CLE (par exemple .../carte.html#pseudos=VOTRE_CLE) ;\n  3. une clé avec & + % # ou des espaces est mal lue dans l'adresse : prenez des lettres et des chiffres ;\n  4. rechargez la page en forçant le cache (Ctrl+F5).",
- "py.gui.desc": "web3d_gui.py {0} : lanceur graphique des outils Web_3d (pour l'instant : glb2html.py). Une ligne par option, l'aide de chaque option, la commande qui en résulte, un bouton pour lancer l'outil et sa sortie. Les options sont lues dans l'outil : il n'est pas modifié.",
- "py.gui.epilog": "Exemples :\n  python web3d_gui.py\n  python web3d_gui.py --lang en\nNécessite tkinter. Les chemins se choisissent avec les boutons Fichier… et Dossier… ; l'aide de l'option sous le curseur s'affiche en bas.",
+ "py.gui.desc": "web3d_gui.py {0} : lanceur graphique des outils Web_3d (glb2html, glb2tiles, oar2glb, extraire_batiments, iar2oar, diag_carte). Une liste pour choisir l'outil, une ligne par option, l'aide de chaque option, la commande qui en résulte, un bouton pour lancer l'outil et sa sortie. Les options sont lues dans l'outil : il n'est pas modifié.",
+ "py.gui.epilog": "Exemples :\n  python web3d_gui.py\n  python web3d_gui.py --tool oar2glb\n  python web3d_gui.py --lang en\nNécessite tkinter. Les chemins se choisissent avec les boutons Fichier… et Dossier… ; l'aide de l'option sous le curseur s'affiche en bas.",
  "py.gui.no_tk": "ERREUR : tkinter est introuvable. Sous Windows il est installé avec Python (réinstallez Python si besoin) ; sous Linux, installez le paquet python3-tk.",
  "py.gui.no_tool": "ERREUR : {0} est introuvable (cherché à côté de ce script, puis dans le dossier dist). Lancez 'python build.py' ou copiez web3d_gui.py à côté de {0}.",
  "py.gui.read_error": "ERREUR : impossible de lire les options de {0}.",
@@ -1669,5 +1669,9 @@
  "py.gui.problem_required": "{0} : valeur obligatoire",
  "py.gui.problem_number": "{0} : nombre illisible ({1})",
  "py.gui.problem_choice": "{0} : valeur hors de la liste ({1})",
- "py.gui.start_failed": "Impossible de lancer l'outil : {0}"
+ "py.gui.start_failed": "Impossible de lancer l'outil : {0}",
+ "py.gui.multi_hint": "Option répétable : une valeur par ligne, l'option est écrite une fois par ligne.",
+ "py.gui.help.tool": "outil affiché à l'ouverture (parmi : {0})",
+ "py.gui.default_in_help": "défaut : voir l'aide",
+ "py.gui.default_above": "Valeur par défaut : voir le texte ci-dessus."
 }

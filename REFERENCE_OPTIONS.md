@@ -201,12 +201,13 @@ Diagnostique les pseudos de la carte : interroge le serveur de présence comme l
 
 ## web3d_gui.py
 
-Lanceur graphique des outils : une ligne par option, l'aide de chaque option, la commande qui en résulte, un bouton pour lancer l'outil (pour l'instant : glb2html.py).<br>Graphical launcher for the tools: one line per option, the help of each option, the resulting command, a button to run the tool (for now: glb2html.py).
+Lanceur graphique des outils : une liste pour choisir l'outil, une ligne par option, l'aide de chaque option, la commande qui en résulte, un bouton pour lancer l'outil.<br>Graphical launcher for the tools: a list to choose the tool, one line per option, the help of each option, the resulting command, a button to run the tool.
 
 | Option | Valeur / Value | Défaut / Default | Effet / Effect |
 |---|---|---|---|
 | `--lang` | CODE | `auto` | langue des messages et de l'aide : fr, en ou auto (défaut : langue du système ; variable d'environnement WEB3D_LANG équivalente). Disponibles : en, fr<br>language of the messages and of this help: fr, en or auto (default: the system's language; environment variable WEB3D_LANG is equivalent). Available: en, fr |
 | `--version` |  |  | afficher la version et quitter<br>show the version and exit |
+| `--tool` | glb2html / glb2tiles / oar2glb / extraire_batiments / iar2oar / diag_carte | `glb2html` | outil affiché à l'ouverture (parmi : glb2html, glb2tiles, oar2glb, extraire_batiments, iar2oar, diag_carte)<br>tool shown at start (one of: glb2html, glb2tiles, oar2glb, extraire_batiments, iar2oar, diag_carte) |
 
 ## presence_server.py
 
