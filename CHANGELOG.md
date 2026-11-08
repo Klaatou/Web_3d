@@ -4,6 +4,11 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.7.0)
 
+### 08/11/2026 : `REPRISE.md` mis à jour pour la reprise dans une nouvelle conversation
+
+- **Demande de Klaatou** : reprise après 9 lots dans la même conversation (règle 22).
+- **Fait** : état au 08/11/2026 (`VERSION` 1.7.11, numéro de chaque fichier fabriqué dont `diag_carte.py` 1.7.7) ; nouveau paragraphe des lots 1.7.2 à 1.7.11 avec la décision sur les noms français et les notes du bac à sable ; § 6.1 « À faire et à rappeler » remis à jour (tests corrigés, GIF vérifié sous Windows et Firefox, sujet convoar à reprendre, documents en retard) ; les trois renvois à `CLOUD_RAPPORT.md` disent où le retrouver dans l'historique git. Mise à jour par passages (le fichier fait 111 Ko), pas en entier. Aucun fichier de `dist\\` ne change.
+
 ### 08/11/2026 : README (fr et en) : schémas SVG corrigés, arbre du site en explorateur de fichiers
 
 - **Demande de Klaatou** : un arbre du site plus proche de ce qu'on voit dans l'explorateur, avec `aide.html` et les fichiers `about` ; prise en compte des remarques d'un relecteur sur le schéma.
