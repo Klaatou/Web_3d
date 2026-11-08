@@ -8,6 +8,10 @@
 
 **[Essayer la démo en ligne](https://klaatou.github.io/Web_3d_demo/)** : deux régions reliées par des portails, et la carte des mondes (sans serveur de présence).
 
+**web_3d** transforme une région d'un monde virtuel **OpenSim** (sauvegarde **OAR**) en une page web que l'on parcourt à pied, sans installation côté visiteur : l'OAR est convertie en modèle **glTF** (`.glb`), puis affichée avec **three.js** dans une page web « promenable » (avatar, collisions, visiteurs en temps réel, chat, zones et portails, carte des mondes). L'interface de la page, du viewer et des outils existe en **français et en anglais** (voir « Langue » plus bas).
+
+**Trois mots** : une **OAR** est le fichier de sauvegarde d'une région OpenSim ; un **GLB** est un modèle 3D en un seul fichier `.glb` qu'un navigateur sait afficher ; les **tuiles** sont les morceaux dans lesquels on découpe une région énorme, chargés et déchargés autour de l'avatar pendant la marche.
+
 **Chez vous, sans lire toute la documentation** : deux paquets prêts à l'emploi sont à télécharger sur la [page des versions](https://github.com/Klaatou/Web_3d/releases/latest) :
 
 - **`region-simple.zip`** : votre région OpenSim (un fichier GLB) dans un navigateur. On met son GLB sous `site/region.glb` ; `renommer-region.bat` change le nom ; `site/readme.html` explique les réglages et comment obtenir un GLB depuis un OAR.
@@ -17,18 +21,16 @@
 
 Dans les deux : dézipper, lire `README.txt`, double-cliquer sur le lanceur (Windows, macOS) ou taper `sh lancer-region.sh` dans un terminal (Linux), puis copier le contenu de `site/` sur un hébergement pour publier. Un testeur a essayé le lanceur macOS (macOS Ventura 13.7.8, Firefox 159.0.1) avec `region-simple.zip` : la région s'affiche. Le serveur de présence, facultatif, est dans `presence/`. Les sources sont dans `paquets/` ; `python fabriquer_paquets.py` refait les zips (`docs/fr/PROCEDURES.md` § 12, ou `docs/en/PROCEDURES.md` en anglais). **Ne prenez pas « Download ZIP » sur la page du dépôt** : c'est le code source, sans `index.html` ni `lib/` ; les lanceurs le disent.
 
-**web_3d** transforme une région d'un monde virtuel **OpenSim** (sauvegarde **OAR**) en une page web que l'on parcourt à pied, sans installation côté visiteur : l'OAR est convertie en modèle **glTF** (`.glb`), puis affichée avec **three.js** dans une page web « promenable » (avatar, collisions, visiteurs en temps réel, chat, zones et portails, carte des mondes). L'interface de la page, du viewer et des outils existe en **français et en anglais** (voir « Langue » plus bas).
-
 Les manuels sont en français dans `docs/fr/` (`INDEX.md` pour s'y retrouver, `GUIDE.md` pour commencer, `MANUEL.md`, `PROCEDURES.md`, `REFERENCE_JSON.md`, `HISTORIQUE.md`) et en anglais dans `docs/en/`. Toutes les options de chaque outil, en français et en anglais : [`REFERENCE_OPTIONS.md`](REFERENCE_OPTIONS.md) ; `python glb2html.py --help` (et de même pour les autres outils) les affiche.
 
 ## Fichiers fabriqués
 
 | Fichier fabriqué                         | Rôle                                                                                                                                                                                                                                                                      |
 | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `glb-viewer.html`                        | Page de réglages et d'export : on charge un `.glb` (ou, depuis la v32, le dossier d'une région en tuiles), on règle la mer, le trou, la caméra, la promenade, les zones et la fiche de région, puis on exporte (région en tuiles : zones et ligne de commande seulement). |
+| `glb-viewer.html`                        | Page de réglages et d'export : on charge un `.glb` (ou le dossier d'une région en tuiles), on règle la mer, le trou, la caméra, la promenade, les zones et la fiche de région, puis on exporte (région en tuiles : zones et ligne de commande seulement). |
 | `glb2html.py`                            | Le même travail en ligne de commande (hors ligne, sans navigateur) : page unique, page modulaire ou coquille commune, régions en tuiles, `--update` pour mettre à jour une région publiée, `--scan-sites` pour la carte d'un site entier.                                 |
-| `index.html`                             | La coquille commune, prête à copier à la racine d'un site (v45).                                                                                                                                                                                                          |
-| `carte.html`                             | La page de la carte des mondes, identique pour tous les sites : elle lit `regions.json` à côté d'elle (v47).                                                                                                                                                              |
+| `index.html`                             | La coquille commune, prête à copier à la racine d'un site.                                                                                                                                                                                                          |
+| `carte.html`                             | La page de la carte des mondes, identique pour tous les sites : elle lit `regions.json` à côté d'elle.                                                                                                                                                              |
 | `presence_server.py`                     | Serveur WebSocket de présence, chat, modération, compteurs de visiteurs et journal des visites.                                                                                                                                                                           |
 | `oar2glb.py` ¹                           | Convertit une sauvegarde OpenSim (`.oar`) en `.glb` (convoar + réparation) ; `--terrain-only` ajoute le terrain complet des régions de plus de 256 m à un GLB existant.                                                                                                   |
 | `glb2tiles.py` (+ `glb-stats.py` à côté) | Découpe un GLB énorme en tuiles autonomes (`X.tiles/*.glb` + `X.tiles.json`) et fabrique une vue d'ensemble légère `X.overview.glb` ; `--analyse` mesure et recommande sans rien écrire ; `--exclude` écarte les « boîtes de livraison » d'un catalogue.                  |
@@ -83,16 +85,16 @@ Pour un modèle énorme, `glb2tiles.py` écrit les tuiles, et `glb2html.py --til
 
 ## Carte des mondes
 
-`regions.json` est la carte : une liste de fiches (nom, adresse, X, Y, arrivée, salon, serveur de présence, vignette), ou, depuis la v47, un objet `{"showUrl": ..., "regions": [...]}` avec un en-tête. Elle s'alimente de trois façons, qui gardent toutes l'en-tête et la forme du fichier : `--register` (la région en cours de génération), `--scan-sites` (toutes les régions d'un site, avec leurs vignettes) et les boutons « Importer / Exporter regions.json » du viewer (v50). `carte.html` la relit à chaque ouverture ; `--map-page` écrit à la place une page autonome qui contient la liste ; `--map-url a.json,b.json` fusionne les cartes de plusieurs propriétaires. Chaque tuile affiche le nombre de visiteurs. Détail : `REFERENCE_JSON.md` § 11.6, manuel § 9, § 9.9 et § 9.13.
+`regions.json` est la carte : une liste de fiches (nom, adresse, X, Y, arrivée, salon, serveur de présence, vignette), ou un objet `{"showUrl": ..., "regions": [...]}` avec un en-tête. Elle s'alimente de trois façons, qui gardent toutes l'en-tête et la forme du fichier : `--register` (la région en cours de génération), `--scan-sites` (toutes les régions d'un site, avec leurs vignettes) et les boutons « Importer / Exporter regions.json » du viewer. `carte.html` la relit à chaque ouverture ; `--map-page` écrit à la place une page autonome qui contient la liste ; `--map-url a.json,b.json` fusionne les cartes de plusieurs propriétaires. Chaque tuile affiche le nombre de visiteurs. Détail : `REFERENCE_JSON.md` § 11.6, manuel § 9, § 9.9 et § 9.13.
 
 ## La page
 
 - **Promenade** : avatar, collisions, course, saut, vol, trois vues (subjective, troisième personne, caméra libre), boussole, arrivées et portails, téléportation par la fenêtre Arrivées (L) ou par double-clic.
 - **Zones** : arrivées, portails, liens web, commandes Home Assistant et **images sur les murs** (fichiers déposés dans le sous-dossier `medias` de la région, légende dans le nom du fichier ou dans un fichier `.txt`) ; mode hébergé seulement (manuel § 5.11).
-- **Fenêtres** : Aide (H), Informations (I), Arrivées (L), Réglages (O), déplaçables et retenues par le navigateur (v41) ; bouton « Copier le diagnostic » (v39) ; « Journal des visites… » quand la page a un serveur de présence (v48).
-- **Commandes à l'écran** (v46) : ligne d'état, flèches 3 x 3 (touche K), mode tactile pour téléphone et tablette.
-- **Rendu léger** (v42) : résolution, images par seconde, vue d'ensemble seule, rayon des tuiles, anticrénelage (`--light`).
-- **Présence et chat** : visiteurs en temps réel, couleur d'avatar, chat avec historique, pseudo cité ; la page dit pourquoi la connexion s'est fermée (v45).
+- **Fenêtres** : Aide (H), Informations (I), Arrivées (L), Réglages (O), déplaçables et retenues par le navigateur ; bouton « Copier le diagnostic » ; « Journal des visites… » quand la page a un serveur de présence.
+- **Commandes à l'écran** : ligne d'état, flèches 3 x 3 (touche K), mode tactile pour téléphone et tablette.
+- **Rendu léger** : résolution, images par seconde, vue d'ensemble seule, rayon des tuiles, anticrénelage (`--light`).
+- **Présence et chat** : visiteurs en temps réel, couleur d'avatar, chat avec historique, pseudo cité ; la page dit pourquoi la connexion s'est fermée.
 
 ## Touches principales
 
@@ -115,7 +117,7 @@ Le réglage « Clavier » (Auto, AZERTY ou QWERTY) ne change que les lettres aff
 
 ## Serveur de présence
 
-Positions, chat (historique `--history-file`), modération depuis sa console (`liste`, `ejecter`, `bannir`, `bans`, `debannir`, `rooms`, `visits-key`, `creators`, `aide` ; alias anglais `list`, `kick`, `ban`, `unban`, `help`), compteurs de visiteurs pour la carte, journal des visites sans adresse IP (`--visits`, v48) que le créateur consulte avec `#visits` et sa clé, accueil d'autres créateurs (`--creators`, v51 : pages déclarées, salons réservés par un préfixe, manuel § 10.10). Le rendre public sans montrer son adresse IP : procédures § 11. Détail : manuel § 10.
+Positions, chat (historique `--history-file`), modération depuis sa console (`liste`, `ejecter`, `bannir`, `bans`, `debannir`, `rooms`, `visits-key`, `creators`, `aide` ; alias anglais `list`, `kick`, `ban`, `unban`, `help`), compteurs de visiteurs pour la carte, journal des visites sans adresse IP (`--visits`) que le créateur consulte avec `#visits` et sa clé, accueil d'autres créateurs (`--creators` : pages déclarées, salons réservés par un préfixe, manuel § 10.10). Le rendre public sans montrer son adresse IP : procédures § 11. Détail : manuel § 10.
 
 ## Langue
 

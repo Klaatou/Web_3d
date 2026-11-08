@@ -4,6 +4,11 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.7.0)
 
+### 08/11/2026 : README (fr et en) : présentation en tête, glossaire, étiquettes de version retirées
+
+- **Demande de Klaatou** : un README plus léger à l'entrée, dans les deux langues, sans toucher au reste.
+- **Fait** : le paragraphe qui dit ce qu'est web_3d passe juste après le lien de la démo, suivi de trois lignes de glossaire (OAR, GLB, tuiles) ; les étiquettes `vNN` du texte (tableau des fichiers, carte, fenêtres, commandes, rendu léger, journal des visites, hébergement) sont retirées, elles restent dans le CHANGELOG et l'historique ; la liste des tests `v23.py` à `v51.py` est conservée (ce sont des noms de fichiers). Aucun fichier de `dist\` ne change.
+
 ### 08/11/2026 : nouveau test `tests/readme_liens.py` : liens et images locaux des documents
 
 - **Cause** : le GIF de démonstration du README (`docs/images/PalmIsland_demo.gif`) avait été supprimé du dépôt le 07/11/2026 (commit `74fe691`, balayé par un `git add -A`) sans que rien ne le signale ; le README n'affichait plus l'image.

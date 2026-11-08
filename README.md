@@ -8,6 +8,10 @@ English | [Français](README.fr.md)
 
 **[Try the online demo](https://klaatou.github.io/Web_3d_demo/)**: two regions linked by portals, and the world map (no presence server).
 
+**web_3d** turns a region of an **OpenSim** virtual world (an **OAR** backup) into a web page that visitors can walk around, with nothing to install on their side. The OAR is converted to a **glTF** model (`.glb`), then displayed with **three.js** in a walkable web page: avatar, collisions, real-time visitors, chat, zones and portals, and a world map. The interface of the page, of the viewer and of the Python tools is available in **English and French** (see "Language" below).
+
+**Three terms**: an **OAR** is the backup file of an OpenSim region; a **GLB** is a 3D model in a single `.glb` file that a browser can display; **tiles** are the pieces a huge region is cut into, loaded and unloaded around the avatar while walking.
+
 **At home, without reading all the documentation**: two ready-to-use packages can be downloaded from the [releases page](https://github.com/Klaatou/Web_3d/releases/latest):
 
 - **`region-simple.zip`**: your OpenSim region (a GLB file) in a browser. You put your GLB under `site/region.glb`; `renommer-region.bat` changes the name; `site/readme.html` explains the settings and how to get a GLB from an OAR.
@@ -17,18 +21,16 @@ English | [Français](README.fr.md)
 
 In both: unzip, read `README.txt`, double-click the launcher (Windows, macOS) or type `sh lancer-region.sh` in a terminal (Linux), then copy the contents of `site/` to a web host to publish. A tester tried the macOS launcher (macOS Ventura 13.7.8, Firefox 159.0.1) with `region-simple.zip`: the region is displayed. The optional presence server is in `presence/`. The sources are in `paquets/`; `python fabriquer_paquets.py` rebuilds the zips (`docs/en/PROCEDURES.md` § 12, or `docs/fr/PROCEDURES.md` in French). **Do not use "Download ZIP" on the repository page**: it is the source code, without `index.html` or `lib/`; the launchers say so.
 
-**web_3d** turns a region of an **OpenSim** virtual world (an **OAR** backup) into a web page that visitors can walk around, with nothing to install on their side. The OAR is converted to a **glTF** model (`.glb`), then displayed with **three.js** in a walkable web page: avatar, collisions, real-time visitors, chat, zones and portals, and a world map. The interface of the page, of the viewer and of the Python tools is available in **English and French** (see "Language" below).
-
 The manuals are in English in `docs/en/` (`INDEX.md` to find your way, `GUIDE.md` to start, `MANUAL.md`, `PROCEDURES.md`, `REFERENCE_JSON.md`, `HISTORY.md`) and in French in `docs/fr/`. All the options of every tool, in English and in French, are in [`REFERENCE_OPTIONS.md`](REFERENCE_OPTIONS.md); `python glb2html.py --help` (and the same for the other tools) prints them in the tools' language (see "Language" below).
 
 ## Files built
 
 | Built file                                  | Role                                                                                                                                                                                                                                     |
 | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `glb-viewer.html`                           | Settings and export page: load a `.glb` (or, since v32, the folder of a tiled region), adjust the sea, the hole, the camera, walking, the zones and the region card, then export (for a tiled region: zones and command line only).      |
+| `glb-viewer.html`                           | Settings and export page: load a `.glb` (or the folder of a tiled region), adjust the sea, the hole, the camera, walking, the zones and the region card, then export (for a tiled region: zones and command line only).      |
 | `glb2html.py`                               | The same job on the command line (offline, no browser): single page, modular page or shared shell, tiled regions, `--update` to update a published region, `--scan-sites` for the map of a whole site.                                   |
-| `index.html`                                | The shared shell, ready to copy to the root of a site (v45).                                                                                                                                                                             |
-| `carte.html`                                | The world map page, identical for every site: it reads the `regions.json` next to it (v47).                                                                                                                                              |
+| `index.html`                                | The shared shell, ready to copy to the root of a site.                                                                                                                                                                             |
+| `carte.html`                                | The world map page, identical for every site: it reads the `regions.json` next to it.                                                                                                                                              |
 | `presence_server.py`                        | WebSocket server for presence, chat, moderation, visitor counters and the visit log.                                                                                                                                                     |
 | `oar2glb.py`                              ¹ | Converts an OpenSim backup (`.oar`) to `.glb` (convoar + repair); `--terrain-only` adds the full terrain of regions over 256 m to an existing GLB.                                                                                       |
 | `glb2tiles.py` (+ `glb-stats.py` beside it) | Splits a huge GLB into self-contained tiles (`X.tiles/*.glb` + `X.tiles.json`) and builds a light overview `X.overview.glb`; `--analyse` measures and recommends without writing anything; `--exclude` drops catalogue "delivery boxes". |
@@ -83,16 +85,16 @@ For a huge model, `glb2tiles.py` writes the tiles, and `glb2html.py --tiles X.ti
 
 ## World map
 
-`regions.json` is the map: a list of cards (name, address, X, Y, arrival point, room, presence server, thumbnail), or, since v47, an object `{"showUrl": ..., "regions": [...]}` with a header. It is fed in three ways, which all keep the header and the shape of the file: `--register` (the region being generated), `--scan-sites` (every region of a site, with their thumbnails) and the viewer's "Import / Export regions.json" buttons (v50). `carte.html` reads it again each time it opens; `--map-page` writes instead a standalone page that contains the list; `--map-url a.json,b.json` merges the maps of several owners. Each tile shows the number of visitors. Details: `REFERENCE_JSON.md` § 11.6, manual § 9, § 9.9 and § 9.13.
+`regions.json` is the map: a list of cards (name, address, X, Y, arrival point, room, presence server, thumbnail), or an object `{"showUrl": ..., "regions": [...]}` with a header. It is fed in three ways, which all keep the header and the shape of the file: `--register` (the region being generated), `--scan-sites` (every region of a site, with their thumbnails) and the viewer's "Import / Export regions.json" buttons. `carte.html` reads it again each time it opens; `--map-page` writes instead a standalone page that contains the list; `--map-url a.json,b.json` merges the maps of several owners. Each tile shows the number of visitors. Details: `REFERENCE_JSON.md` § 11.6, manual § 9, § 9.9 and § 9.13.
 
 ## The page
 
 - **Walking**: avatar, collisions, running, jumping, flying, three views (first person, third person, free camera), compass, arrival points and portals, teleport through the Arrivals window (L) or by double-click.
 - **Zones**: arrivals, portals, web links, Home Assistant commands and **pictures on walls** (files put in the region's `medias` subfolder, caption in the file name or in a `.txt` file); hosted mode only (manual § 5.11).
-- **Windows**: Help (H), Information (I), Arrivals (L), Settings (O), movable and remembered by the browser (v41); "Copy diagnostics" button (v39); "Visit log…" when the page has a presence server (v48).
-- **On-screen controls** (v46): status line, 3 x 3 arrows (K key), touch mode for phones and tablets.
-- **Light rendering** (v42): resolution, frames per second, overview only, tile radius, anti-aliasing (`--light`).
-- **Presence and chat**: real-time visitors, avatar colour, chat with history, cited nickname; the page says why the connection closed (v45).
+- **Windows**: Help (H), Information (I), Arrivals (L), Settings (O), movable and remembered by the browser; "Copy diagnostics" button; "Visit log…" when the page has a presence server.
+- **On-screen controls**: status line, 3 x 3 arrows (K key), touch mode for phones and tablets.
+- **Light rendering**: resolution, frames per second, overview only, tile radius, anti-aliasing (`--light`).
+- **Presence and chat**: real-time visitors, avatar colour, chat with history, cited nickname; the page says why the connection closed.
 
 ## Main keys
 
@@ -115,7 +117,7 @@ The "Keyboard" setting (Auto, AZERTY or QWERTY) only changes the letters shown i
 
 ## Presence server
 
-Positions, chat (history `--history-file`), moderation from its console (`liste`, `ejecter`, `bannir`, `bans`, `debannir`, `rooms`, `visits-key`, `creators`, `aide`; English aliases `list`, `kick`, `ban`, `unban`, `help`), visitor counters for the map, a visit log without IP addresses (`--visits`, v48) that the creator reads with `#visits` and their key, hosting of other creators (`--creators`, v51: declared pages, rooms reserved by a prefix, manual § 10.10). Making it public without showing its IP address: procedures § 11. Details: manual § 10.
+Positions, chat (history `--history-file`), moderation from its console (`liste`, `ejecter`, `bannir`, `bans`, `debannir`, `rooms`, `visits-key`, `creators`, `aide`; English aliases `list`, `kick`, `ban`, `unban`, `help`), visitor counters for the map, a visit log without IP addresses (`--visits`) that the creator reads with `#visits` and their key, hosting of other creators (`--creators`: declared pages, rooms reserved by a prefix, manual § 10.10). Making it public without showing its IP address: procedures § 11. Details: manual § 10.
 
 ## Language
 
