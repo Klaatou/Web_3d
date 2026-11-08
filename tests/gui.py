@@ -65,6 +65,7 @@ for c in champs:
 rapport(not refus, f"les {len(champs)} options, une par une : ligne acceptee par le vrai parseur de glb2html.py", refus[:3])
 
 # tous les outils de la liste : chaque option, seule (avec les arguments obligatoires), est acceptee par le vrai parseur de son outil
+genres_outil = {}
 for nom_outil, fichier in g.OUTILS:
     p = g.lire_parser(DIST / fichier, "en")
     rapport(p is not None, f"{fichier} : les options sont lues")
@@ -74,6 +75,7 @@ for nom_outil, fichier in g.OUTILS:
     vus_o = {o for c in cs for o in c["options"]}
     att_o = {o for a in p._actions for o in a.option_strings if o not in ("-h", "--help", "--version", "--lang")}
     rapport(vus_o == att_o, f"{fichier} : chaque option a sa ligne, aucune en trop", sorted(vus_o ^ att_o)[:6])
+    genres_outil[fichier] = {c["dest"]: c["genre"] for c in cs}
     base = {c["dest"]: "x" for c in cs if c["obligatoire"]}
     refus_o = []
     for c in cs:
@@ -94,6 +96,10 @@ for nom_outil, fichier in g.OUTILS:
                 refus_o.append((c["dest"], v, argv))
     rapport(not refus_o, f"{fichier} : les {len(cs)} options, une par une : ligne acceptee par le vrai parseur", refus_o[:3])
 
+chemins_attendus = [("glb2html.py", "input"), ("glb2html.py", "output"), ("glb2tiles.py", "glb"), ("glb2tiles.py", "sortie"), ("oar2glb.py", "oar"), ("oar2glb.py", "convoar"),
+                    ("oar2glb.py", "sortie"), ("extraire_batiments.py", "oar"), ("extraire_batiments.py", "glb"), ("extraire_batiments.py", "sortie"), ("iar2oar.py", "iar")]
+sans_boutons = [(f, d, genres_outil.get(f, {}).get(d)) for f, d in chemins_attendus if genres_outil.get(f, {}).get(d) != "chemin"]
+rapport(not sans_boutons, "les champs fichier ou dossier (entrees, sorties, convoar) ont les boutons Fichier et Dossier", sans_boutons)
 par = {c["dest"]: c for c in champs}
 sp = par["spectate"]
 rapport(g.defaut_dans_aide(sp) and g.defaut_dans_aide(par["output"]) and not g.defaut_dans_aide(par["zones"]) and not g.defaut_dans_aide(par["walk"]),

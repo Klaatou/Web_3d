@@ -32,7 +32,7 @@ MARK = "__MARK__"      # empreinte du fichier fabriqué, inscrite par build.py ;
 OUTILS = (("glb2html", "glb2html.py"), ("glb2tiles", "glb2tiles.py"), ("oar2glb", "oar2glb.py"), ("extraire_batiments", "extraire_batiments.py"),
           ("iar2oar", "iar2oar.py"), ("diag_carte", "diag_carte.py"))      # (nom, fichier) ; un outil de plus : une ligne ici
 MOTS_CHEMIN = ("FILE", "FOLDER", "DIR")      # un métavar qui contient l'un de ces mots, ou qui finit par .html / .json : un fichier ou un dossier
-DEST_CHEMIN = ("input", "o", "register", "thumb", "oar", "glb", "iar")      # arguments sans métavar qui sont des chemins
+DEST_CHEMIN = ("input", "o", "output", "sortie", "convoar", "register", "thumb", "oar", "glb", "iar")      # arguments sans métavar qui sont des chemins
 
 
 def version_tag():

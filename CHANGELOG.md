@@ -4,6 +4,12 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.7.0)
 
+### 08/11/2026 : `web3d_gui.py` : boutons Fichier et Dossier sur les champs de sortie (lot 1.7.22)
+
+- **Constat** (en répondant à Klaatou, qui trouvait que les sélecteurs marchaient bien) : les champs de **sortie** n'avaient pas les boutons Fichier… et Dossier… : `-o` de `glb2html.py`, `--output` de `glb2tiles.py` et d'`oar2glb.py`, `-o` d'`extraire_batiments.py`, et `--convoar` d'`oar2glb.py`. **Cause** : le lanceur reconnaît un chemin par son type, son métavar ou son nom (`DEST_CHEMIN`), et le nom interne de ces options (`output`, `sortie`, `convoar`) n'y figurait pas.
+- **Fait** : `output`, `sortie` et `convoar` ajoutés à `DEST_CHEMIN`. Les boutons proposent à la fois un fichier et un dossier, parce que plusieurs de ces champs acceptent l'un ou l'autre (`-o` de `glb2html.py` : « fichier .html, ou dossier ») ou un dossier (`glb2tiles.py`, `extraire_batiments.py`).
+- **Test** : `tests/gui.py` : onze champs fichier ou dossier (entrées, sorties, `convoar`) doivent avoir les boutons ; une faute volontaire (retirer `sortie`) est détectée.
+
 ### 08/11/2026 : documents du lanceur graphique, image des raccourcis, nouveau lien Discord (lot 1.7.21)
 
 - **Demande de Klaatou** : documenter le lanceur graphique ; ajouter son image des raccourcis ; mettre le lien Discord là où il est utile ; nouvelle invitation Discord sans expiration (l'ancienne est remplacée).
