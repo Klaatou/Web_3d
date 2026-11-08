@@ -4,6 +4,12 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.7.0)
 
+### 08/11/2026 : documents à jour (lot 1.7.12)
+
+- **Demande de Klaatou** : « il faut qu'on soit à jour » (règle 16, documents en retard).
+- **Fait** : `diag_carte.py` : nouveau § 9.22 du manuel (français et anglais), ligne du tableau du § 2, `--lang` au § 7.50, étape 4 de `PROCEDURES.md` § 7 et paragraphe de `PROCEDURES_SIMPLES.md` § 4 ; images du README : nouveau § 6 de `DEVELOPPEMENT.md` / `DEVELOPMENT.md` (SVG dessinés à la main, `tests/readme_liens.py`) ; `INDEX.md` : deux lignes ajoutées ; les mentions « non testé » de `extraire_batiments.py` (§ 3.7) et d'`iar2oar.py` (§ 3.8) deviennent « essayé par Klaatou » (constat de Klaatou le 08/11/2026) ; GIF animés : vérifiés par Klaatou sous Windows et sous Firefox (§ 5.11) ; `VUE_ENSEMBLE.md` et `OVERVIEW.md` remis à l'état du 08/11/2026 (version, outils d'extraction et de diagnostic, essais, reste à faire) ; annexe du manuel (§ 13 : ligne « Ajouts de la 1.7 » et § 13.3) ; `HISTORIQUE.md` et `HISTORY.md` : lignes des lots 1.7.2 à 1.7.12.
+- **Non fait** : `REPRISE.md` (livré seulement à la reprise, règle 23) ; aucun fichier de `dist\` ni `VERSIONS.json` ne change.
+
 ### 08/11/2026 : `REPRISE.md` mis à jour pour la reprise dans une nouvelle conversation
 
 - **Demande de Klaatou** : reprise après 9 lots dans la même conversation (règle 22).

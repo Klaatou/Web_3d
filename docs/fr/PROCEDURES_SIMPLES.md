@@ -42,6 +42,14 @@ Pour retirer aussi les fiches dont la région n'existe plus (les fiches externes
 python .\glb2html.py --scan-sites "P:\_OpenSim\SL&OS\Web_3d\Sites" --prune-missing --dry-run
 ```
 
+Si la carte n'affiche pas les pseudos, `diag_carte.py` interroge le serveur de présence avec et sans la clé et dit ce qui manque (il demande `pip install websockets` ; l'adresse du site, à la fin, n'est utile que si le serveur n'accepte que certains sites) :
+
+```powershell
+cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python .\diag_carte.py wss://ADRESSE CLE https://VOTRE-SITE
+```
+
+Codes de sortie : 0 serveur bon, 1 injoignable, 2 ancien serveur, 3 aucun pseudo avec la clé, 4 origine refusée (`MANUEL.md` § 9.22).
+
 ## 5. Compresser une grosse région déjà découpée
 
 Pour une région neuve, `--compress` de `glb2tiles.py` suffit (`GUIDE.md` § 1.3). Pour des tuiles déjà découpées et non compressées : à la main, depuis le dossier qui contient `NOM.tiles`, vers un dossier `sortie` (Node requis ; jamais recompresser un fichier déjà compressé) :

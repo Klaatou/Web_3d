@@ -24,6 +24,7 @@ Cette page dit **quel document lire pour quoi**. Les documents anglais portent l
 | publier, mettre à jour la démo en ligne | `GUIDE.md` § 4 ; `PROCEDURES_SIMPLES.md` § 7 |
 | savoir ce que le visiteur peut faire (touches, vol, chat) | `MANUEL.md` § 7 ; `PROCEDURES.md` § 10 |
 | relier plusieurs régions par une carte des mondes | `MANUEL.md` § 9 ; `PROCEDURES.md` § 7 ; `PROCEDURES_SIMPLES.md` § 4 |
+| comprendre pourquoi la carte n'affiche pas les pseudos | `MANUEL.md` § 9.22 ; `PROCEDURES.md` § 7 ; `PROCEDURES_SIMPLES.md` § 4 |
 | voir les autres visiteurs, chatter, modérer | `GUIDE.md` § 5 ; `MANUEL.md` § 10 ; `PROCEDURES.md` § 6 |
 | installer le serveur de présence sur une VM | `PROCEDURES_SIMPLES.md` § 8 ; `PROCEDURES.md` § 11 |
 | rendre le serveur de présence public sans montrer mon adresse IP | `PROCEDURES.md` § 11 |
@@ -49,5 +50,6 @@ Cette page dit **quel document lire pour quoi**. Les documents anglais portent l
 | --- | --- |
 | ce qui a été essayé, et ce qui ne l'a pas été | `VUE_ENSEMBLE.md` § 2 |
 | ce qui a changé, et quand | `CHANGELOG.md` (à la racine) ; `HISTORIQUE.md` ; `MANUEL.md` § 13 |
-| comment appliquer une livraison, fabriquer, tester, publier une version | `DEVELOPPEMENT.md` |
+| comment appliquer une livraison, fabriquer, tester, publier une version | `DEVELOPPEMENT.md` § 1 à § 5 |
+| comment modifier les schémas du README | `DEVELOPPEMENT.md` § 6 |
 | l'état technique pour reprendre le travail | `REPRISE.md` (à la racine) |

@@ -42,6 +42,14 @@ To also remove the cards whose region no longer exists (external cards are kept)
 python .\glb2html.py --scan-sites "P:\_OpenSim\SL&OS\Web_3d\Sites" --prune-missing --dry-run
 ```
 
+If the map shows no nicknames, `diag_carte.py` queries the presence server with and without the key and says what is missing (it needs `pip install websockets`; the site address at the end is only useful if the server only accepts some sites):
+
+```powershell
+cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python .\diag_carte.py wss://ADRESSE CLE https://VOTRE-SITE
+```
+
+Exit codes: 0 server fine, 1 unreachable, 2 old server, 3 no nickname with the key, 4 origin refused (`MANUAL.md` § 9.22).
+
 ## 5. Compress a big region already split
 
 For a new region, `--compress` of `glb2tiles.py` is enough (`GUIDE.md` § 1.3). For tiles already split and not compressed: by hand, from the folder that contains `NOM.tiles`, into a `sortie` folder (Node required; never recompress a file that is already compressed):

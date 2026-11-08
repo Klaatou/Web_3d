@@ -24,6 +24,7 @@ This page says **which document to read for what**. The French documents carry t
 | publish, update the online demo | `GUIDE.md` § 4; `SIMPLE_PROCEDURES.md` § 7 |
 | know what the visitor can do (keys, flight, chat) | `MANUAL.md` § 7; `PROCEDURES.md` § 10 |
 | link several regions with a world map | `MANUAL.md` § 9; `PROCEDURES.md` § 7; `SIMPLE_PROCEDURES.md` § 4 |
+| understand why the map shows no nicknames | `MANUAL.md` § 9.22; `PROCEDURES.md` § 7; `SIMPLE_PROCEDURES.md` § 4 |
 | see other visitors, chat, moderate | `GUIDE.md` § 5; `MANUAL.md` § 10; `PROCEDURES.md` § 6 |
 | install the presence server on a VM | `SIMPLE_PROCEDURES.md` § 8; `PROCEDURES.md` § 11 |
 | make the presence server public without showing my IP address | `PROCEDURES.md` § 11 |
@@ -49,5 +50,6 @@ This page says **which document to read for what**. The French documents carry t
 | --- | --- |
 | what has been tried, and what has not | `OVERVIEW.md` § 2 |
 | what changed, and when | `CHANGELOG.md` (at the root); `HISTORY.md`; `MANUAL.md` § 13 |
-| how to apply a delivery, build, test, publish a version | `DEVELOPMENT.md` |
+| how to apply a delivery, build, test, publish a version | `DEVELOPMENT.md` § 1 to § 5 |
+| how to edit the README diagrams | `DEVELOPMENT.md` § 6 |
 | the technical state to resume the work | `REPRISE.md` (at the root) |

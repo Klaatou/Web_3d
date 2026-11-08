@@ -47,3 +47,9 @@ python .\fabriquer_paquets.py; git tag vX.Y.Z; git push origin vX.Y.Z
 ```
 
 Then, on GitHub, create the release of the tag `vX.Y.Z` with the two zips of the `paquets-zip\` folder attached.
+
+## 6. README images
+
+The diagrams in `README.md` and `README.fr.md` are **hand-drawn SVGs** kept in `docs/images/`: `fonctionnement.fr.svg` and `fonctionnement.en.svg` (the tool chain, "How it works" section), `site.fr.svg` and `site.en.svg` (the tree of a site, as an explorer window). No script in the repository produces them: an SVG is text, so it is edited by hand (texts, positions, legend) and then looked at in a browser. The two languages are kept up to date together. Nothing in them is carried by colour alone (outlines, dotted lines, numbers, legend). The folder also holds the demonstration GIF (`PalmIsland_demo.gif`) and `carte.jpg`.
+
+Check: `python .\tests\readme_liens.py` verifies that every image and every relative link in the two READMEs and in the documents of `docs/` points to a file that exists (it was written after the demonstration GIF vanished, swept away by a `git add -A`). It does not judge the drawing: the rendering was only looked at in Chromium, not on GitHub.

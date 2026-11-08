@@ -126,6 +126,8 @@ With the `Sites\` layout (one shell at the root, one folder per region, `MANUAL.
 2. **Name and place the regions** once: `name`, `x`, `y` and `spawn` in `Sites\regions.json`, by hand or with the viewer ("Import regions.json", edit, "Export regions.json": the header and every field are kept since v50). The next scans keep them.
 3. **Show the map**: `carte.html` (copied to the root, procedure 4) reads `regions.json` again each time it opens, nothing to regenerate (`MANUAL.md` § 9.7). Open it through the web server, for example `http://localhost:8000/carte.html` after `cd "P:\_OpenSim\SL&OS\Web_3d\Sites"; python -m http.server 8000`. A "My nickname" field at the top adds `name=` to the region links.
 
+4. **If the map shows no nicknames**: `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python .\diag_carte.py wss://ADRESSE CLE https://VOTRE-SITE` (`pip install websockets` first; the site address is only useful if the server only accepts some sites). The tool queries the server with and without the key and says what is missing (`MANUAL.md` § 9.22).
+
 Without a site folder: `--register regions.json` adds the region at each generation (`--region-name`, `--region-xy x,y`), and `--map-page carte.html` writes a standalone page that contains the list (`MANUAL.md` § 9.7).
 
 With a single region, the map brings nothing: it is used to link several regions together.

@@ -165,6 +165,17 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 07/11/2026 |  | après 1.6.0 | Lot 1.6.19 : l'ancienne option `--map-names` a une description (fr et en) ; `REFERENCE_OPTIONS.md` régénéré |
 | 07/11/2026 |  | 1.7.0 | Publication 1.7.0 : `VERSION` 1.7.0 ; `CHANGELOG.md` ; réunit les lots 1.6.1 à 1.6.19 (scripts d'extraction dans le dépôt, icône et logo, GIF animés, documentation réorganisée, version de la page dans l'état) |
 | 07/11/2026 |  | après 1.7.0 | Lot 1.7.1 : notes de la release 1.7.0 du `CHANGELOG.md` alignées sur la description publiée |
+| 08/11/2026 |  | après 1.7.0 | Lot 1.7.2 : `tests/marque.py` : `--version` demandé en français ; cinq fichiers à marque (`extraire_batiments.py` et `iar2oar.py` ajoutés) |
+| 08/11/2026 |  | après 1.7.0 | Lot 1.7.3 : `tests/image_zone.py` : le message `file://` que Chromium écrit lui-même est ignoré |
+| 08/11/2026 |  | après 1.7.0 | Lot 1.7.4 : nouveau `tests/readme_liens.py` : images et liens relatifs des README et des documents |
+| 08/11/2026 |  | après 1.7.0 | Lot 1.7.5 : README fr et en : présentation en tête, glossaire, étiquettes de version retirées |
+| 08/11/2026 |  | après 1.7.0 | Lot 1.7.6 : README fr et en : fonctions, deux sortes de page, contenu des paquets, mise à jour |
+| 08/11/2026 |  | après 1.7.0 | Lot 1.7.7 : `diag_carte.py` entre dans `tools` et `dist` (messages fr et en, `--lang`, `--version`, test, README) |
+| 08/11/2026 |  | après 1.7.0 | Lot 1.7.8 : README fr et en : schéma de la chaîne d'outils et arbre d'un site |
+| 08/11/2026 |  | après 1.7.0 | Lot 1.7.9 : README fr et en : schéma « Comment ça marche » en SVG |
+| 08/11/2026 |  | après 1.7.0 | Lot 1.7.10 : README fr et en : arbre du site en explorateur de fichiers, schéma corrigé |
+| 08/11/2026 |  | après 1.7.0 | Lot 1.7.11 : `REPRISE.md` : état au 08/11/2026 |
+| 08/11/2026 |  | après 1.7.0 | Lot 1.7.12 : documents à jour : `diag_carte.py` (manuel § 9.22, procédures), schémas du README (`DEVELOPPEMENT.md` § 6), essais réels des scripts d'extraction, GIF vérifiés sous Windows et Firefox, vue d'ensemble au 08/11/2026 |
 
 ## Commandes utiles
 

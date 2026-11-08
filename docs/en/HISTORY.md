@@ -165,6 +165,17 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 07/11/2026 |  | after 1.6.0 | Batch 1.6.19: the old `--map-names` option has a description (fr and en); `REFERENCE_OPTIONS.md` regenerated |
 | 07/11/2026 |  | 1.7.0 | Release 1.7.0: `VERSION` 1.7.0; `CHANGELOG.md`; gathers batches 1.6.1 to 1.6.19 (extraction scripts in the repository, icon and logo, animated GIFs, reorganised documentation, page version in the status) |
 | 07/11/2026 |  | after 1.7.0 | Batch 1.7.1: the 1.7.0 release notes in `CHANGELOG.md` aligned with the published description |
+| 08/11/2026 |  | after 1.7.0 | Batch 1.7.2: `tests/marque.py`: `--version` asked in French; five files with a mark (`extraire_batiments.py` and `iar2oar.py` added) |
+| 08/11/2026 |  | after 1.7.0 | Batch 1.7.3: `tests/image_zone.py`: the `file://` message that Chromium writes itself is ignored |
+| 08/11/2026 |  | after 1.7.0 | Batch 1.7.4: new `tests/readme_liens.py`: images and relative links of the READMEs and the documents |
+| 08/11/2026 |  | after 1.7.0 | Batch 1.7.5: README fr and en: introduction first, glossary, version labels removed |
+| 08/11/2026 |  | after 1.7.0 | Batch 1.7.6: README fr and en: features, two kinds of page, package contents, update |
+| 08/11/2026 |  | after 1.7.0 | Batch 1.7.7: `diag_carte.py` enters `tools` and `dist` (fr and en messages, `--lang`, `--version`, test, README) |
+| 08/11/2026 |  | after 1.7.0 | Batch 1.7.8: README fr and en: tool chain diagram and tree of a site |
+| 08/11/2026 |  | after 1.7.0 | Batch 1.7.9: README fr and en: "How it works" diagram as SVG |
+| 08/11/2026 |  | after 1.7.0 | Batch 1.7.10: README fr and en: site tree as a file explorer, diagram corrected |
+| 08/11/2026 |  | after 1.7.0 | Batch 1.7.11: `REPRISE.md`: state on 08/11/2026 |
+| 08/11/2026 |  | after 1.7.0 | Batch 1.7.12: documents up to date: `diag_carte.py` (manual § 9.22, procedures), README diagrams (`DEVELOPMENT.md` § 6), real-life tries of the extraction scripts, GIFs checked on Windows and in Firefox, overview on 08/11/2026 |
 
 ## Useful commands
 

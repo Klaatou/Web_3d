@@ -60,6 +60,7 @@ The ready-to-use files are already in the repository's `dist/` folder: there is 
 | `oar2glb.py` | converts an OAR to `.glb` and rebuilds the full terrain | 3 |
 | `extraire_batiments.py` | outputs from an OAR and its `.glb` one recentred `.glb` per object group | 3 |
 | `iar2oar.py` | turns an IAR (OpenSim inventory) into a minimal OAR | 3 |
+| `diag_carte.py` | diagnoses why the map shows no nicknames (queries the presence server with and without the key) | 9 |
 | `glb-stats.py` | measures a `.glb`; must stay next to `glb2tiles.py` | 4 |
 | `glb2tiles.py` | cuts a huge `.glb` into tiles and makes `NOM.overview.glb` (the overview) | 4 |
 | `glb-viewer.html` | the viewer: you open a `.glb` in it to adjust it and place the zones | 5 |
@@ -186,7 +187,7 @@ Run it after a conversion made with `--keep`. The log is `oar2glb.diag.log`. Eac
 - **Cache**: the first time, reading the OAR and measuring the GLB are slow; the result is kept in the `extraire_batiments.cache` folder, created **in the folder where the command is run** (never next to the script, so nothing is written in `dist/`), and read again while the OAR, the GLB, `glb2tiles.py` and `oar2glb.py` have not changed (path, size, date). You can move this folder along with your command. `--no-cache` ignores it, `--clear-cache` deletes it. The cache files are pickles: do not take them from another source.
 - **The two other tools**: `glb2tiles.py` and `oar2glb.py` are looked up in the folder given by `--tools`, otherwise by the `WEB3D_TOOLS` variable, otherwise next to the script.
 - **Options and language**: all the options are in `REFERENCE_OPTIONS.md`; `--lang` and `WEB3D_LANG`: § 7.50; the old French names are still accepted: `REFERENCE_JSON.md` § 11.11.
-- **Not tested**: a real region since the script entered the repository (tried on an OAR and a GLB made by `tests/extraire_batiments.py`), Windows.
+- **Tried**: automatic tests on an OAR and a GLB made by `tests/extraire_batiments.py`; by Klaatou, on a real region, on Windows (08/11/2026).
 
 ### 3.8 Extract objects from an IAR (inventory): `iar2oar.py`
 
@@ -204,7 +205,7 @@ Run it after a conversion made with `--keep`. The log is `oar2glb.diag.log`. Eac
 - Objects held in the contents of another one (boxes, `TaskInventory`) are added too, up to 3 levels, once each; their name is "parent / name"; `--no-nested` ignores them.
 - The original positions overlap: each group (or coalesced object) gets a cell on a grid, separated from its neighbours by `--margin` metres (4 by default), without terrain (the ground of an extract is then its lowest point). The region size grows in steps of 256 m if needed. **Estimate**: the extent of a group for its cell is computed from the positions and scales of the parts, without rotations.
 - The null byte that ends the XML files of the IAR is removed; only the assets useful for 3D are copied (meshes, textures, materials).
-- **Not supported**: attachments and clothing (no avatar). **Not tested**: convoar on the OAR produced by the repository version, a real IAR (tried on an IAR made by `tests/iar2oar.py`). The convoar texture errors on an IAR can come from the IAR itself (missing or empty assets): the faces concerned are grey.
+- **Not supported**: attachments and clothing (no avatar). **Tried**: automatic tests on an IAR made by `tests/iar2oar.py`; by Klaatou, on a real IAR of 34 items (OAR produced, GLB made with convoar, opened in Blender, 06/11/2026), then with the version that entered the repository (08/11/2026). The convoar texture errors on an IAR can come from the IAR itself (missing or empty assets): the faces concerned are grey.
 - Options, language, old names: as in § 3.7.
 
 ## 4. Measuring and cutting up a big region
@@ -531,7 +532,7 @@ An `image` zone lays a picture flat against a wall of the model.
 - **Hosted mode only**: opened from disk (`file://`), the page cannot load the image (the browser refuses it as a WebGL texture) and shows nothing; a `data:` address works everywhere but makes the page heavier. Measured in Chromium.
 - **Missing image**: nothing in the exported page. In the editor: a panel "image not found: …" and, under the field, a line "Looked up at: …".
 - **Always up to date**: before each image, each caption file and each whole `.glb` of a modular page, the page sends a `HEAD` request without cache, builds a fingerprint (`ETag` or `Last-Modified`, plus the size) and reads the file at the address `file?v=fingerprint`: from the browser cache if the fingerprint is known (no re-download of an unchanged file), from the network otherwise. A replaced file, newer **or older** (an old folder put back with its old dates), is therefore picked up on reload (F5). Without a possible fingerprint (neither `ETag` nor `Last-Modified`, or `HEAD` refused), the page reloads the whole file at every opening; if `fetch` is impossible (another site without CORS, `file://`), it falls back to direct loading. Tiles, `index.html`, `lib/` and `favicon.ico` keep the browser's normal cache.
-- **Animated GIFs (1.6.15)**: a GIF of at least two frames animates in the page. Browsers do not expose the current frame of an animated GIF (seen in Chromium: drawing it on a canvas always gives the first frame, even for a GIF displayed and animating on screen): the page therefore decodes the GIF itself and draws the current frame into the texture, following the durations written in the file. It changes frame only while the plane is in the camera's view, at least 8 pixels wide on screen and among the 8 largest animated planes (about 15 changes per second at most); out of sight or too small, the page does not redraw for it. A single-frame GIF stays still, and so does a GIF whose decoded frames would exceed 64 MB (a warning is written to the console). If the system asks for less animation (`prefers-reduced-motion`), the GIF stays on its first frame. "Copy diagnostics" (§ 7.53) adds an "Animated GIFs" line: how many GIFs are decoded, how many frame changes have happened, and whether the system asks for less motion. Only images read by the page itself animate (relative files, `data:` addresses, folder chosen in the editor): an image from another site, loaded without CORS, stays still. Tried: the decoder, compared pixel for pixel with PIL (`tests/gif_decode.py`); the animation in Chromium on Linux, with a 1-pixel test GIF (`tests/gif_anim.py`). Not tried: Firefox, Safari, Windows, a large GIF in the browser; animated PNG and animated WebP are not handled.
+- **Animated GIFs (1.6.15)**: a GIF of at least two frames animates in the page. Browsers do not expose the current frame of an animated GIF (seen in Chromium: drawing it on a canvas always gives the first frame, even for a GIF displayed and animating on screen): the page therefore decodes the GIF itself and draws the current frame into the texture, following the durations written in the file. It changes frame only while the plane is in the camera's view, at least 8 pixels wide on screen and among the 8 largest animated planes (about 15 changes per second at most); out of sight or too small, the page does not redraw for it. A single-frame GIF stays still, and so does a GIF whose decoded frames would exceed 64 MB (a warning is written to the console). If the system asks for less animation (`prefers-reduced-motion`), the GIF stays on its first frame. "Copy diagnostics" (§ 7.53) adds an "Animated GIFs" line: how many GIFs are decoded, how many frame changes have happened, and whether the system asks for less motion. Only images read by the page itself animate (relative files, `data:` addresses, folder chosen in the editor): an image from another site, loaded without CORS, stays still. Tried: the decoder, compared pixel for pixel with PIL (`tests/gif_decode.py`); the animation in Chromium on Linux, with a 1-pixel test GIF (`tests/gif_anim.py`). By Klaatou: the animation shows on Windows and in Firefox (08/11/2026). Not tried: Safari, a large GIF in the browser; animated PNG and animated WebP are not handled.
 - **Diagnostics**: "Copy diagnostics" (§ 7.53) gives one line per image zone: the zone, its target, the file actually read (`medias` folder or region folder), and the caption with its source (file name or text file), or "hidden".
 - **Tests**: `tests/image_zone.py`, `image_legende.py`, `image_numero.py`, `image_medias.py`, `image_noms_gen.py`, `image_cache.py`, `image_cache_vieux.py`, `image_diag.py`, `image_dossier.py`, `lien_image.py` (picture link), `zones_numeros.py`, `pose_promenade.py`.
 - **Not tried**: image zone in a tiled region, wall with a slanted face, Windows and Edge in detail (the P key while walking was only tried in Chromium).
@@ -1117,7 +1118,7 @@ The whole interface (help, settings, information, prompts, loading and error mes
 
 ### 7.50 Language of the Python tools: `--lang`, `WEB3D_LANG`
 
-`glb2html.py`, `glb2tiles.py`, `oar2glb.py`, `extraire_batiments.py`, `iar2oar.py` and `presence_server.py` (and `glb-stats.py`, used by `glb2tiles.py`) show their messages, warnings, errors and help (`--help`) in French or in English. **Choice of language**: `--lang fr`, `--lang en` or `--lang auto` (default); otherwise the `WEB3D_LANG` environment variable; otherwise the system language; otherwise English. `--lang` takes precedence over `WEB3D_LANG`. The options themselves (`--budget`, `--exclude`…) and the moderation commands of the server (`list`, `kick`, `ban`, `bans`, `unban`, `help`, and their French equivalents) do not depend on the language. Output files (JSON, tool logs) keep their keys; the logs are written in the chosen language.
+`glb2html.py`, `glb2tiles.py`, `oar2glb.py`, `extraire_batiments.py`, `iar2oar.py`, `diag_carte.py` and `presence_server.py` (and `glb-stats.py`, used by `glb2tiles.py`) show their messages, warnings, errors and help (`--help`) in French or in English. **Choice of language**: `--lang fr`, `--lang en` or `--lang auto` (default); otherwise the `WEB3D_LANG` environment variable; otherwise the system language; otherwise English. `--lang` takes precedence over `WEB3D_LANG`. The options themselves (`--budget`, `--exclude`…) and the moderation commands of the server (`list`, `kick`, `ban`, `bans`, `unban`, `help`, and their French equivalents) do not depend on the language. Output files (JSON, tool logs) keep their keys; the logs are written in the chosen language.
 
 **Standalone files**: `build.py` embeds the texts of `src/i18n/*.json` (`py.*` keys) in each tool of `dist\` (only the texts of that tool and the common texts, since 1.4.10): a tool copied alone to another machine keeps its two languages (a build choice). From the sources (`tools\`, `src\`), the tools read `i18n_py.py` and `i18n\` next to them or in `src\`. Adding a language: § 7.51, no code to change. A new option of a tool must have its `py.*` key in **both** files (`python tests/i18n.py` checks it); `python gen_reference.py` regenerates `REFERENCE_OPTIONS.md` (French then English in each "Effect" cell), `python tests/doc_options.py` checks that no option is missing from it and that no description is empty.
 
@@ -1411,6 +1412,20 @@ The real sound (the test replaces `AudioContext`), Edge, Windows, a real phone, 
 
 `--prune-missing` removes from `regions.json` the local cards whose region is not found in the sites folder (external cards are kept). `--dry-run` shows the list without writing anything. Without this option, nothing is deleted: these cards are only reported.
 
+### 9.22 Diagnosing the map nicknames: `diag_carte.py`
+
+`tools/diag_carte.py` (built into `dist/`) says why the map shows no nicknames (§ 9.16). It queries the presence server the way the map does, **with the key and then without it**, and says what is missing. It changes nothing and needs the Python module `websockets` (`pip install websockets`).
+
+| To | Command |
+| --- | --- |
+| Query the server | `python diag_carte.py ws://ADRESSE:8765 CLE` |
+| Public server that only accepts some sites | `python diag_carte.py wss://ADRESSE CLE https://VOTRE-SITE` |
+
+- **The arguments**: the address of the presence server (`ws://` or `wss://`, the same as in the regions' configuration), the nicknames key (the server's `--map-names-key`) and, if the server only accepts some sites (`--origins`, `--creators`), the address of **your site**, without a path.
+- **Exit codes**: 0 server fine; 1 server unreachable; 2 old server (it gives the nicknames without a key); 3 no nickname with the key; 4 origin refused. An origin refusal is recognised by the HTTP 403 response or the 4003 close, never from the text of the error message (an unreachable server whose port number contains `403` is therefore no longer taken for a refusal).
+- **Language and version**: `--lang` and `WEB3D_LANG` (§ 7.50), `--version`.
+- **Tried**: automatic tests with a fake presence server (six cases, `tests/diag_carte.py`); by Klaatou, against a real presence server (08/11/2026).
+
 ## 10. Presence server
 
 The presence server (`presence_server.py`) shows the other visitors and carries the chat. This chapter covers starting it, moderation, the visit log and welcoming creators; setting up the public server is described in `PROCEDURES.md` § 11. Server files: `REFERENCE_JSON.md` § 11.10.
@@ -1653,6 +1668,7 @@ The detail, version by version, is in `HISTORY.md` (narrative) and `CHANGELOG.md
 | Additions of 1.5 (1.5.0 to 1.5.4) | Version shown by the packages: that of the release (§ 13.2); `url` and `image` zones: `hop://` links (chapter 5); pictures and captions readable from both sides (§ 5.11) |
 | Additions of 1.6.0 | The packages' `zhop` "Lien vers OpenSim" panel (§ 5.11) |
 | Additions of 1.7.0 (batches 1.6.1 to 1.6.19) | `extraire_batiments.py` (§ 3.7) and `iar2oar.py` (§ 3.8); JSON file reference as a separate document (`REFERENCE_JSON.md`) and `INDEX.md`; updating a package that is already published (`SIMPLE_PROCEDURES.md` § 10); "Made with Web_3d" icon (§ 7.62); logo as tab icon (§ 6.9); animated GIFs (§ 5.11); "Animated GIFs" and "Version: page …" lines of the diagnostics (§ 7.53) |
+| Additions of 1.7 (batches 1.7.2 to 1.7.12) | `diag_carte.py`: diagnosing the map nicknames (§ 9.22); real-life tries of `extraire_batiments.py` and `iar2oar.py` (§ 3.7, § 3.8); animated GIFs checked on Windows and in Firefox (§ 5.11); README SVG diagrams (`DEVELOPMENT.md` § 6) |
 
 Everything below is in **1.1.0** (released on 31/10/2026). The detail, batch by batch, is in `CHANGELOG.md`.
 
@@ -1673,3 +1689,4 @@ From **1.0.0** on (v52 became 1.0.0), versions follow the `X.Y.Z` scheme (major.
 - `docs/en/CREATORS.md` and `docs/fr/CREATEURS.md`: note to give to a creator hosted on a presence server (§ 10.13).
 - `PROCEDURES.md`: § 9.1, item 8 (black VM console screen); § 5.5 (add or replace an image); § 5.9 (WebGL, images); `web3d-presence.service` written with `UTILISATEUR`.
 - `docs/samples/`: the `painting-1` zone (type `image`) in `region.zones.sample.json`.
+- `README.md` and `README.fr.md`: reworked (introduction, glossary, features, two kinds of page, packages, SVG diagrams in `docs/images/`); `DEVELOPMENT.md` § 6 (README images); `diag_carte.py`: § 9.22, `PROCEDURES.md` § 7, `SIMPLE_PROCEDURES.md` § 4.
