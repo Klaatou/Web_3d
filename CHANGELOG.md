@@ -4,6 +4,11 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.7.0)
 
+### 08/11/2026 : `tests/image_zone.py` : message `file://` de Chromium ignoré
+
+- **Cause** : ouverte depuis le disque, la page demande les images par `fetch`, que le navigateur refuse ; la page gère le refus (`.catch`, aucune erreur JavaScript : `pageerror` reste vide), mais Chromium écrit lui-même dans la console « URL scheme 'file' is not supported ». Le filtre du test ne connaissait que « Failed to load resource » et « blocked by CORS ».
+- **Correctif** : ce message du navigateur est ajouté au filtre ; une vraie erreur de la page (`pageerror`) fait toujours échouer le test. Aucun fichier de `dist\` ne change.
+
 ### 08/11/2026 : `tests/marque.py` : cinq fichiers à marque, `--version` en français
 
 - **Cause 1** : `--version` suit la langue du système (« fingerprint » en anglais) alors que le test cherche « empreinte » ; le test passe maintenant `--lang fr`.

@@ -73,7 +73,7 @@ PROJ = """([x, y, z]) => { const v = window.__viewer; v.camera.updateMatrixWorld
 async def page_exportee(br, url, titre, attendu_charge):
     pg = await br.new_page(locale="fr-FR"); errs = []
     pg.on("pageerror", lambda e: errs.append(str(e)))
-    pg.on("console", lambda m: errs.append("console.error " + m.text) if m.type == "error" and "Failed to load resource" not in m.text and "blocked by CORS" not in m.text else None)
+    pg.on("console", lambda m: errs.append("console.error " + m.text) if m.type == "error" and "Failed to load resource" not in m.text and "blocked by CORS" not in m.text and 'URL scheme "file" is not supported' not in m.text else None)
     await pg.goto(url)
     await pg.wait_for_function("document.getElementById('msg') === null", timeout=60000)
     if attendu_charge:
