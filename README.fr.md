@@ -8,6 +8,8 @@
 
 **[Essayer la démo en ligne](https://klaatou.github.io/Web_3d_demo/)** : deux régions reliées par des portails, et la carte des mondes (Avec serveur de présence).
 
+**Questions, aide, nouvelles : [rejoindre le serveur Discord](https://discord.gg/hNpYKBd4).**
+
 **web_3d** transforme une région d'un monde virtuel **OpenSim** (sauvegarde **OAR**) en une page web que l'on parcourt à pied, sans installation côté visiteur : l'OAR devient un modèle **glTF** (`.glb`), que la page web_3d (`index.html`) affiche avec **three.js** dans un navigateur ordinaire. L'interface de la page, du viewer et des outils existe en **français et en anglais** (voir « Langue » plus bas).
 
 **Trois mots** : une **OAR** est le fichier de sauvegarde d'une région OpenSim ; un **GLB** est un modèle 3D en un seul fichier `.glb`, que la page web_3d affiche dans un navigateur ordinaire ; les **tuiles** sont les morceaux dans lesquels on découpe une région énorme, chargés et déchargés autour de l'avatar pendant la marche.

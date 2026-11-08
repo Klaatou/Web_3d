@@ -8,6 +8,8 @@ English | [Français](README.fr.md)
 
 **[Try the online demo](https://klaatou.github.io/Web_3d_demo/)**: two regions linked by portals, and the world map (With a presence server).
 
+**Questions, help, news: [join the Discord server](https://discord.gg/hNpYKBd4).**
+
 **web_3d** turns a region of an **OpenSim** virtual world (an **OAR** backup) into a web page that visitors can walk around, with nothing to install on their side: the OAR becomes a **glTF** model (`.glb`), which the web_3d page (`index.html`) displays with **three.js** in an ordinary browser. The interface of the page, of the viewer and of the Python tools is available in **English and French** (see "Language" below).
 
 **Three terms**: an **OAR** is the backup file of an OpenSim region; a **GLB** is a 3D model in a single `.glb` file, which the web_3d page displays in an ordinary browser; **tiles** are the pieces a huge region is cut into, loaded and unloaded around the avatar while walking.

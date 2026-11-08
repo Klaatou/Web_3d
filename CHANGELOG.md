@@ -4,6 +4,11 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.7.0)
 
+### 08/11/2026 : lien vers le serveur Discord dans les README (lot 1.7.20)
+
+- **Demande de Klaatou** : un lien vers son serveur Discord dans le dépôt.
+- **Fait** : une ligne sous le lien de la démo, en tête de `README.md` et de `README.fr.md` (« Questions, aide, nouvelles : rejoindre le serveur Discord »). Le lien est une invitation Discord publique ; elle n'a pas pu être ouverte ici : si l'invitation expire, le lien cesse de marcher (Discord permet de créer une invitation qui n'expire jamais).
+
 ### 08/11/2026 : raccourcis avec l'icône du projet, et `textes_outils` qui ne bloque plus dans une console (lot 1.7.19)
 
 - **Demande de Klaatou** : les raccourcis créés par `--shortcuts` (1.7.18) montrent l'icône de Python ; ils doivent avoir l'icône du projet.
