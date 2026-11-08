@@ -4,6 +4,13 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.7.0)
 
+### 08/11/2026 : `tools_lang` : contrôle « langue du système inconnue » ignoré sous Windows (lot 1.7.16)
+
+- **Constat de Klaatou** : sous Windows en français, `tests/tools_lang.py` échoue sur « langue du système inconnue : anglais » (1 échec) ; les autres tests passent.
+- **Cause** : `i18n_py.py` (`i18n_system_lang`) retombe sur la langue d'interface de Windows quand `LANG` ne donne aucune langue connue ; sur un Windows en français, l'aide sort donc en français. Ce repli existe depuis la v36, et `dist/glb2html.py` n'a pas changé dans le lot 1.7.14. Non reproduit ici : Linux n'a pas ce repli.
+- **Fait** : le test ignore ce seul contrôle (ligne `[IGNORE]`) quand il tourne sous Windows et que la langue d'interface de Windows est le français ou l'anglais ; ailleurs il est inchangé. Aucun fichier de `dist/` ne change.
+- **Non testé** : sous Windows ; la branche Windows a été essayée ici avec un faux `ctypes`.
+
 ### 08/11/2026 : nom du testeur macOS dans les documents (lot 1.7.15)
 
 - **Demande de Klaatou** : mettre le nom du testeur macOS dans la documentation. **Accord** : NightshadeCeres l'a donné sur le fil de discussion de la démo (« of course »), vu par Klaatou le 08/11/2026.

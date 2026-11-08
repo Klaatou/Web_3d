@@ -29,8 +29,22 @@ b = run("glb2html.py", "--help", env={"WEB3D_LANG": "en"} ) ; c = run("glb2html.
 rapport(bool(ACC.search(c)), "--lang prime sur WEB3D_LANG")
 d = run("glb2html.py", "--help", env={"LANG": "fr_FR.UTF-8"})
 rapport(bool(ACC.search(d)), "langue du système (LANG=fr_FR) : français")
-e = run("glb2html.py", "--help", env={"LANG": "de_DE.UTF-8"})
-rapport(not ACC.search(e), "langue du système inconnue : anglais")
+def langue_windows_connue():
+    """sous Windows, i18n_py retombe sur la langue d'interface de Windows quand LANG ne donne aucune langue connue : le contrôle « système inconnu »
+    ne peut pas être simulé si cette langue est le français ou l'anglais"""
+    if os.name != "nt":
+        return False
+    try:
+        import ctypes, locale
+        lid = ctypes.windll.kernel32.GetUserDefaultUILanguage()
+        return locale.windows_locale.get(lid, "").lower().replace("-", "_").split("_")[0] in ("fr", "en")
+    except Exception:
+        return False
+if langue_windows_connue():
+    print("[IGNORE] langue du système inconnue : anglais (sous Windows, repli sur la langue d'interface de Windows, connue ici : non simulable)")
+else:
+    e = run("glb2html.py", "--help", env={"LANG": "de_DE.UTF-8"})
+    rapport(not ACC.search(e), "langue du système inconnue : anglais")
 # un message d'erreur dans chaque langue
 m_fr = run("glb2html.py", "--lang", "fr", "inexistant.glb"); m_en = run("glb2html.py", "--lang", "en", "inexistant.glb")
 rapport("introuvable" in m_fr.lower() or "inexistant" in m_fr.lower(), "message d'erreur en français", m_fr[-200:])
