@@ -38,5 +38,9 @@
  "presence_server.py": {
   "hash": "b6c48ca2f3e9784cb46202b44b11f6d62825cd83f4d76d0d89fd5f7c51ebf0ea",
   "version": "1.6.19 (07/11/2026)"
+ },
+ "web3d_gui.py": {
+  "hash": "6fc98c8977253b2dd068dcca88cfd5d68f9acba7b4c7f71fe3d47e99673f9180",
+  "version": "1.7.14 (08/11/2026)"
  }
 }

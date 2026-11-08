@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fabrique glb2html.py, glb-viewer.html, presence_server.py, oar2glb.py, glb2tiles.py, extraire_batiments.py, iar2oar.py, diag_carte.py (et glb-stats.py) dans dist/ à partir de src/ et tools/.
+"""Fabrique glb2html.py, glb-viewer.html, presence_server.py, oar2glb.py, glb2tiles.py, extraire_batiments.py, iar2oar.py, diag_carte.py, web3d_gui.py (et glb-stats.py) dans dist/ à partir de src/ et tools/.
 
 Usage :  python build.py                  (télécharge three@0.160.0 depuis jsDelivr dans .cache/ au premier lancement)
          python build.py --vendor DOSSIER (racine d'un paquet npm three déjà présent : hors ligne)
@@ -119,7 +119,7 @@ def jsq(s):  # littéral JS sûr dans <script>
 # Principe : on fabrique tout avec un numéro neutre (NEUTRE), on empreinte chaque fichier, on compare à VERSIONS.json (dernière empreinte et numéro du lot
 # qui l'a modifié) ; seul un fichier dont l'empreinte a changé prend le numéro du lot courant (fichier VERSION) ; puis on refabrique avec les vrais numéros.
 NEUTRE = "0.0.0 (00/00/0000)"
-FICHIERS_VERSION = ["glb2html.py", "index.html", "carte.html", "glb-viewer.html", "presence_server.py", "oar2glb.py", "glb2tiles.py", "extraire_batiments.py", "iar2oar.py", "diag_carte.py"]
+FICHIERS_VERSION = ["glb2html.py", "index.html", "carte.html", "glb-viewer.html", "presence_server.py", "oar2glb.py", "glb2tiles.py", "extraire_batiments.py", "iar2oar.py", "diag_carte.py", "web3d_gui.py"]
 
 
 def fabrique(ver):
@@ -139,7 +139,7 @@ def fabrique(ver):
     sortie["carte.html"] = gen.build_map_shell()   # v47 : la page de carte universelle (lit regions.json à côté d'elle)
     shell_modules, shell_draco = gen.shell_lib_files()
     shell_lib = {"dir": gen.LIB_REL, "modules": shell_modules, "draco": shell_draco}
-    for nom, chemin, outil in (("presence_server.py", SRC / "presence_server.py", "presence"), ("oar2glb.py", ROOT / "tools" / "oar2glb.py", "oar2glb"), ("glb2tiles.py", ROOT / "tools" / "glb2tiles.py", "glb2tiles"), ("extraire_batiments.py", ROOT / "tools" / "extraire_batiments.py", "extraire"), ("iar2oar.py", ROOT / "tools" / "iar2oar.py", "iar2oar"), ("diag_carte.py", ROOT / "tools" / "diag_carte.py", "diag")):
+    for nom, chemin, outil in (("presence_server.py", SRC / "presence_server.py", "presence"), ("oar2glb.py", ROOT / "tools" / "oar2glb.py", "oar2glb"), ("glb2tiles.py", ROOT / "tools" / "glb2tiles.py", "glb2tiles"), ("extraire_batiments.py", ROOT / "tools" / "extraire_batiments.py", "extraire"), ("iar2oar.py", ROOT / "tools" / "iar2oar.py", "iar2oar"), ("diag_carte.py", ROOT / "tools" / "diag_carte.py", "diag"), ("web3d_gui.py", ROOT / "tools" / "web3d_gui.py", "gui")):
         sortie[nom] = inline_i18n_py(chemin.read_text(encoding="utf-8"), outil).replace("__VERSION__", ver[nom])   # glb2tiles.py : fonctions communes avec glb-stats.py, doit rester à côté
     sortie["glb-stats.py"] = inline_i18n_py((ROOT / "tools" / "glb-stats.py").read_text(encoding="utf-8"), "stats")   # fonctions communes de glb2tiles.py : doit rester à côté
     vv = ver["glb-viewer.html"]
@@ -174,7 +174,7 @@ for n in FICHIERS_VERSION:
         versions[n] = {"version": VERSION, "hash": h}
         modifies.append(n)
 sortie = fabrique(ver)
-for n in ("index.html", "carte.html", "presence_server.py", "oar2glb.py", "glb2tiles.py", "extraire_batiments.py", "iar2oar.py", "diag_carte.py"):   # contrôle : hors son numéro, un fichier est identique à sa fabrication neutre
+for n in ("index.html", "carte.html", "presence_server.py", "oar2glb.py", "glb2tiles.py", "extraire_batiments.py", "iar2oar.py", "diag_carte.py", "web3d_gui.py"):   # contrôle : hors son numéro, un fichier est identique à sa fabrication neutre
     assert sortie[n].replace(ver[n], NEUTRE) == neutre[n], n
 for n, t in sortie.items():
     (OUT / n).write_bytes(t.encode("utf-8"))   # octets : LF partout, meme sous Windows (write_text ecrirait du CRLF : avertissements de git, dist_a_jour)

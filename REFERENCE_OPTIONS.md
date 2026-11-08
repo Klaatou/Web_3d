@@ -199,6 +199,15 @@ Diagnostique les pseudos de la carte : interroge le serveur de présence comme l
 | `key` (obligatoire / required) | KEY |  | la clé des pseudos (--map-names-key du serveur)<br>the nicknames key (--map-names-key of the server) |
 | `origin` (facultatif / optional) | ORIGIN |  | l'adresse de VOTRE SITE, sans chemin (par exemple https://VOTRE-SITE), si le serveur n'accepte que certains sites (--origins, --creators)<br>the address of YOUR SITE, without a path (for example https://YOUR-SITE), if the server only accepts certain sites (--origins, --creators) |
 
+## web3d_gui.py
+
+Lanceur graphique des outils : une ligne par option, l'aide de chaque option, la commande qui en résulte, un bouton pour lancer l'outil (pour l'instant : glb2html.py).<br>Graphical launcher for the tools: one line per option, the help of each option, the resulting command, a button to run the tool (for now: glb2html.py).
+
+| Option | Valeur / Value | Défaut / Default | Effet / Effect |
+|---|---|---|---|
+| `--lang` | CODE | `auto` | langue des messages et de l'aide : fr, en ou auto (défaut : langue du système ; variable d'environnement WEB3D_LANG équivalente). Disponibles : en, fr<br>language of the messages and of this help: fr, en or auto (default: the system's language; environment variable WEB3D_LANG is equivalent). Available: en, fr |
+| `--version` |  |  | afficher la version et quitter<br>show the version and exit |
+
 ## presence_server.py
 
 Serveur de présence : positions des visiteurs, chat, modération.<br>Presence server: visitor positions, chat, moderation.

@@ -4,6 +4,14 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.7.0)
 
+### 08/11/2026 : lanceur graphique `web3d_gui.py` pour `glb2html.py` (lot 1.7.14)
+
+- **Demande de Klaatou** : une interface graphique pour les outils, d'abord pour `glb2html.py`, avec l'aide des options ; pas de prévisualisation 3D.
+- **Fait** : nouvel outil `tools/web3d_gui.py` (fabriqué dans `dist\\`, `tkinter` seulement, aucune autre dépendance). Une ligne par option de `glb2html.py` (70), lues dans l'outil lui-même par la technique de `gen_reference.py` : `glb2html.py` n'est pas modifié. L'aide de l'option s'affiche au survol et à l'entrée dans le champ ; filtre de recherche ; cases à cocher ; oui/non pour les options `--x` / `--no-x` ; listes pour les choix ; boutons Fichier… et Dossier… ; case « option seule » pour les options à valeur facultative ; virgule décimale acceptée ; valeur négative écrite `--option=-5` ; champ illisible marqué d'un « ! » (jamais par la couleur seule) et lancement refusé avec le message ; ligne de commande affichée et copiable ; bouton Lancer (Ctrl+Entrée) qui exécute l'outil et montre sa sortie ; bouton Arrêter. Textes français et anglais (`py.gui.*`). `build.py`, `gen_reference.py` et les tests `marque`, `textes_outils` et `tools_lang` connaissent le nouvel outil.
+- **Test** : nouveau `tests/gui.py`. Sans fenêtre : les 70 options, une par une, donnent une ligne que le vrai parseur de `glb2html.py` accepte ; construction de la ligne ; vérification des champs. Avec écran (`xvfb-run`) : fenêtre, commande, filtre, aide, lancement réel de l'outil. Deux fautes introduites volontairement (oui/non inversé, virgule décimale gardée) sont détectées.
+- **Non testé** : sous Windows (fenêtre, sélecteurs de fichier, presse-papiers, absence de fenêtre console) et sous macOS ; les sélecteurs de fichier ne sont pas ouverts par le test.
+- **Non fait** : manuel, procédures et README (règle 16, à la validation) ; les autres outils (une ligne dans `OUTILS` pour chacun) ; prévisualisation 3D.
+
 ### 08/11/2026 : tests `v37` et `v32` : attendre la condition, pas une durée (lot 1.7.13)
 
 - **Demande de Klaatou** : revoir les tests instables.
