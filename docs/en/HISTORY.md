@@ -164,6 +164,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 07/11/2026 |  | after 1.6.0 | Batch 1.6.18: documents: "Made with Web_3d" icon (§ 7.62), GIF in the GUIDE and the packages, `favicon.ico` in the package update, manual appendix completed up to 1.6.17, dead reference in `CREATORS.md` |
 | 07/11/2026 |  | after 1.6.0 | Batch 1.6.19: the old `--map-names` option has a description (fr and en); `REFERENCE_OPTIONS.md` regenerated |
 | 07/11/2026 |  | 1.7.0 | Release 1.7.0: `VERSION` 1.7.0; `CHANGELOG.md`; gathers batches 1.6.1 to 1.6.19 (extraction scripts in the repository, icon and logo, animated GIFs, reorganised documentation, page version in the status) |
+| 07/11/2026 |  | after 1.7.0 | Batch 1.7.1: the 1.7.0 release notes in `CHANGELOG.md` aligned with the published description |
 
 ## Useful commands
 
