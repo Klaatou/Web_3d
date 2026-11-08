@@ -25,6 +25,8 @@ Cette page dit **quel document lire pour quoi**. Les documents anglais portent l
 | savoir ce que le visiteur peut faire (touches, vol, chat) | `MANUEL.md` § 7 ; `PROCEDURES.md` § 10 |
 | relier plusieurs régions par une carte des mondes | `MANUEL.md` § 9 ; `PROCEDURES.md` § 7 ; `PROCEDURES_SIMPLES.md` § 4 |
 | comprendre pourquoi la carte n'affiche pas les pseudos | `MANUEL.md` § 9.22 ; `PROCEDURES.md` § 7 ; `PROCEDURES_SIMPLES.md` § 4 |
+| ouvrir les outils dans une fenêtre, créer des raccourcis sur le bureau | `MANUEL.md` § 3.9 ; `PROCEDURES_SIMPLES.md` § 11 |
+| poser une question, demander de l'aide | le serveur Discord : https://discord.gg/BDG9r5gXwr |
 | voir les autres visiteurs, chatter, modérer | `GUIDE.md` § 5 ; `MANUEL.md` § 10 ; `PROCEDURES.md` § 6 |
 | installer le serveur de présence sur une VM | `PROCEDURES_SIMPLES.md` § 8 ; `PROCEDURES.md` § 11 |
 | rendre le serveur de présence public sans montrer mon adresse IP | `PROCEDURES.md` § 11 |

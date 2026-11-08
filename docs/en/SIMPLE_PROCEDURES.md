@@ -165,3 +165,27 @@ For a package (`galerie-photos.zip`, `region-simple.zip`) put online from an old
 - **Presence server**: if you host it, replace `presence\presence_server.py` with the one from the new zip and restart it.
 
 Tried (07/11/2026, Chromium on Linux): the current `index.html` opens without error a package whose config, zones and `default.json` date from 1.2.3; without `regions.json`, the map shows the message above. Not tried: Windows, other browsers, an update from a version other than 1.2.3.
+
+## 11. Open the tools in a window, with shortcuts on the desktop
+
+To avoid typing a command: a window offers the six tools, with the help of every option (`MANUAL.md` § 3.9). From the root of the repository:
+
+```powershell
+python .\dist\web3d_gui.py
+```
+
+For shortcuts on the desktop (one for the window, one per tool), first what would be created, writing nothing:
+
+```powershell
+python .\dist\web3d_gui.py --shortcuts --dry-run
+```
+
+then, if the paths suit you:
+
+```powershell
+python .\dist\web3d_gui.py --shortcuts
+```
+
+![The seven shortcuts](../images/raccourcis.png)
+
+Running the same command again replaces the shortcuts. To remove them: `python .\dist\web3d_gui.py --remove-shortcuts`. Tried by Klaatou on Windows (08/11/2026).

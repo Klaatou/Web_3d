@@ -8,7 +8,7 @@ English | [Français](README.fr.md)
 
 **[Try the online demo](https://klaatou.github.io/Web_3d_demo/)**: two regions linked by portals, and the world map (With a presence server).
 
-**Questions, help, news: [join the Discord server](https://discord.gg/hNpYKBd4).**
+**Questions, help, news: [join the Discord server](https://discord.gg/BDG9r5gXwr).**
 
 **web_3d** turns a region of an **OpenSim** virtual world (an **OAR** backup) into a web page that visitors can walk around, with nothing to install on their side: the OAR becomes a **glTF** model (`.glb`), which the web_3d page (`index.html`) displays with **three.js** in an ordinary browser. The interface of the page, of the viewer and of the Python tools is available in **English and French** (see "Language" below).
 
@@ -74,6 +74,7 @@ The manuals are in English in `docs/en/` (`INDEX.md` to find your way, `GUIDE.md
 | `extraire_batiments.py`                     | Outputs from an OAR and its GLB one recentred GLB per object group (house, furniture, tree...); `--list` shows the groups.                                                                                                                                                                       |
 | `iar2oar.py`                                | Turns an inventory archive (IAR) into a minimal OAR, for the chain `oar2glb.py` then `extraire_batiments.py`.                                                                                                                                                                                    |
 | `diag_carte.py`                             | Diagnoses why the world map shows no nicknames: asks the presence server with and without the key and says what is missing.                                                                                                                                                                      |
+| `web3d_gui.py`                           | Opens the tools in a window: tool list, help of every option, command, run button; `--shortcuts` creates Windows shortcuts with the project icon. |
 
 ¹ **Prerequisites**: **oar2glb.py** relies on the external converter **convoar.exe** \
 Download: https://github.com/Misterblue/convoar/tree/master/bin \

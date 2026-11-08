@@ -176,6 +176,15 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 08/11/2026 |  | after 1.7.0 | Batch 1.7.10: README fr and en: site tree as a file explorer, diagram corrected |
 | 08/11/2026 |  | after 1.7.0 | Batch 1.7.11: `REPRISE.md`: state on 08/11/2026 |
 | 08/11/2026 |  | after 1.7.0 | Batch 1.7.12: documents up to date: `diag_carte.py` (manual § 9.22, procedures), README diagrams (`DEVELOPMENT.md` § 6), real-life tries of the extraction scripts, GIFs checked on Windows and in Firefox, overview on 08/11/2026 |
+| 08/11/2026 |  | after 1.7.0 | Batch 1.7.13: tests `v37` and `v32`: wait for the condition, not for a duration |
+| 08/11/2026 |  | after 1.7.0 | Batch 1.7.14: graphical launcher `web3d_gui.py` for `glb2html.py` |
+| 08/11/2026 |  | after 1.7.0 | Batch 1.7.15: name of the macOS tester in the documents, with their consent |
+| 08/11/2026 |  | after 1.7.0 | Batch 1.7.16: `tools_lang`: the "unknown system language" check is skipped on Windows |
+| 08/11/2026 |  | after 1.7.0 | Batch 1.7.17: `web3d_gui.py`: all the tools, repeatable option, default described in the help, `--tool` |
+| 08/11/2026 |  | after 1.7.0 | Batch 1.7.18: `web3d_gui.py`: Windows shortcuts (`--shortcuts`) |
+| 08/11/2026 |  | after 1.7.0 | Batch 1.7.19: shortcuts with the project icon; `textes_outils` no longer blocks in a console |
+| 08/11/2026 |  | after 1.7.0 | Batch 1.7.20: link to the Discord server in the READMEs |
+| 08/11/2026 |  | after 1.7.0 | Batch 1.7.21: documents: graphical launcher (manual § 3.9, procedures § 11, README, overview), shortcuts picture, new Discord link |
 
 ## Useful commands
 

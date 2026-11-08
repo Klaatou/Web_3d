@@ -165,3 +165,27 @@ Pour un paquet (`galerie-photos.zip`, `region-simple.zip`) mis en ligne depuis u
 - **Serveur de présence** : si tu l'héberges, remplacer `presence\presence_server.py` par celui du nouveau zip et le relancer.
 
 Essayé (07/11/2026, Chromium sous Linux) : l'`index.html` actuel ouvre sans erreur un paquet dont la config, les zones et `default.json` datent de la 1.2.3 ; sans `regions.json`, la carte affiche le message ci-dessus. Non essayé : Windows, les autres navigateurs, un départ d'une autre version que la 1.2.3.
+
+## 11. Ouvrir les outils dans une fenêtre, avec des raccourcis sur le bureau
+
+Pour ne pas taper de commande : une fenêtre propose les six outils, avec l'aide de chaque option (`MANUEL.md` § 3.9). Depuis la racine du dépôt :
+
+```powershell
+python .\dist\web3d_gui.py
+```
+
+Pour des raccourcis sur le bureau (un pour la fenêtre, un par outil), d'abord ce qui serait créé, sans rien écrire :
+
+```powershell
+python .\dist\web3d_gui.py --shortcuts --dry-run
+```
+
+puis, si les chemins conviennent :
+
+```powershell
+python .\dist\web3d_gui.py --shortcuts
+```
+
+![Les sept raccourcis](../images/raccourcis.png)
+
+Relancer la même commande remplace les raccourcis. Pour les retirer : `python .\dist\web3d_gui.py --remove-shortcuts`. Essayé par Klaatou sous Windows (08/11/2026).

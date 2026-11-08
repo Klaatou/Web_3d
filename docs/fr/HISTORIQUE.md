@@ -176,6 +176,15 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 08/11/2026 |  | après 1.7.0 | Lot 1.7.10 : README fr et en : arbre du site en explorateur de fichiers, schéma corrigé |
 | 08/11/2026 |  | après 1.7.0 | Lot 1.7.11 : `REPRISE.md` : état au 08/11/2026 |
 | 08/11/2026 |  | après 1.7.0 | Lot 1.7.12 : documents à jour : `diag_carte.py` (manuel § 9.22, procédures), schémas du README (`DEVELOPPEMENT.md` § 6), essais réels des scripts d'extraction, GIF vérifiés sous Windows et Firefox, vue d'ensemble au 08/11/2026 |
+| 08/11/2026 |  | après 1.7.0 | Lot 1.7.13 : tests `v37` et `v32` : attendre la condition, pas une durée |
+| 08/11/2026 |  | après 1.7.0 | Lot 1.7.14 : lanceur graphique `web3d_gui.py` pour `glb2html.py` |
+| 08/11/2026 |  | après 1.7.0 | Lot 1.7.15 : nom du testeur macOS dans les documents, avec son accord |
+| 08/11/2026 |  | après 1.7.0 | Lot 1.7.16 : `tools_lang` : contrôle « langue du système inconnue » ignoré sous Windows |
+| 08/11/2026 |  | après 1.7.0 | Lot 1.7.17 : `web3d_gui.py` : tous les outils, option répétable, défaut décrit dans l'aide, `--tool` |
+| 08/11/2026 |  | après 1.7.0 | Lot 1.7.18 : `web3d_gui.py` : raccourcis Windows (`--shortcuts`) |
+| 08/11/2026 |  | après 1.7.0 | Lot 1.7.19 : raccourcis avec l'icône du projet ; `textes_outils` ne bloque plus dans une console |
+| 08/11/2026 |  | après 1.7.0 | Lot 1.7.20 : lien vers le serveur Discord dans les README |
+| 08/11/2026 |  | après 1.7.0 | Lot 1.7.21 : documents : lanceur graphique (manuel § 3.9, procédures § 11, README, vue d'ensemble), image des raccourcis, nouveau lien Discord |
 
 ## Commandes utiles
 

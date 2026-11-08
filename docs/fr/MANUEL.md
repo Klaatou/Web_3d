@@ -61,6 +61,7 @@ Les fichiers prêts à l'emploi sont déjà dans le dossier `dist/` du dépôt :
 | `extraire_batiments.py` | sort d'un OAR et de son `.glb` un `.glb` par groupe d'objets, recentré | 3 |
 | `iar2oar.py` | transforme un IAR (inventaire OpenSim) en OAR minimal | 3 |
 | `diag_carte.py` | diagnostique pourquoi la carte n'affiche pas les pseudos (interroge le serveur de présence avec et sans la clé) | 9 |
+| `web3d_gui.py` | ouvre les outils dans une fenêtre : liste des outils, aide des options, lancement, raccourcis Windows | 3.9 |
 | `glb-stats.py` | mesure un `.glb` ; doit rester à côté de `glb2tiles.py` | 4 |
 | `glb2tiles.py` | découpe un `.glb` énorme en tuiles et fabrique `NOM.overview.glb` (la vue d'ensemble) | 4 |
 | `glb-viewer.html` | le viewer : on y ouvre un `.glb` pour le régler et y poser les zones | 5 |
@@ -207,6 +208,29 @@ Test : `python tests/terrain.py` (OAR et GLB synthétiques).
 - L'octet nul qui termine les XML de l'IAR est retiré ; seuls les assets utiles à la 3D sont copiés (meshes, textures, matériaux).
 - **Non pris en charge** : attachements et vêtements (pas d'avatar). **Essayé** : tests automatiques sur un IAR fabriqué par `tests/iar2oar.py` ; par Klaatou, sur un vrai IAR de 34 éléments (OAR produit, GLB fait avec convoar, ouvert dans Blender, 06/11/2026), puis avec la version entrée dans le dépôt (08/11/2026). Les erreurs de texture de convoar sur un IAR peuvent venir de l'IAR lui-même (assets absents ou vides) : les faces concernées sont grises.
 - Options, langue, anciens noms : comme au § 3.7.
+
+### 3.9 Lanceur graphique : `web3d_gui.py`
+
+`tools/web3d_gui.py` (fabriqué dans `dist/`) ouvre les outils dans une fenêtre, sans taper de commande : on choisit l'outil dans une liste, on remplit les options, il lance l'outil et montre sa sortie. Il lit les options dans l'outil lui-même (rien ne peut manquer, aucun outil n'est modifié). Il demande `tkinter` (livré avec Python sous Windows ; sous Linux, le paquet `python3-tk`).
+
+| Pour | Commande |
+| --- | --- |
+| Ouvrir la fenêtre | `python web3d_gui.py` |
+| L'ouvrir sur un outil | `python web3d_gui.py --tool oar2glb` |
+| Voir ce que créeraient les raccourcis, sans rien écrire | `python web3d_gui.py --shortcuts --dry-run` |
+| Créer les raccourcis | `python web3d_gui.py --shortcuts` |
+| Les supprimer | `python web3d_gui.py --remove-shortcuts` |
+
+- **Les outils** : `glb2html`, `glb2tiles`, `oar2glb`, `extraire_batiments`, `iar2oar`, `diag_carte` (`--tool NAME`). Le serveur de présence n'y est pas : il reste lancé, ce n'est pas une commande d'un instant.
+- **La fenêtre** : en haut, la liste des outils et un champ de recherche ; au milieu, une ligne par option (case à cocher, liste de choix, nombre, chemin avec les boutons Fichier… et Dossier…, « option seule » pour une valeur facultative, champ de plusieurs lignes pour une option répétable comme `--group` ou `--exclude`, oui/non pour les paires `--x` et `--no-x`) ; en bas, l'aide de l'option sous le curseur, la commande qui en résulte, les boutons Lancer (Ctrl+Entrée), Arrêter, Copier la commande et Tout effacer, puis la sortie de l'outil.
+- **Les champs à corriger** : un nombre illisible ou un choix hors de la liste est marqué d'un « ! » (jamais par la couleur seule), et Lancer le refuse en disant lequel.
+- **Les valeurs par défaut** : affichées à droite de la ligne. Quand l'aide de l'option décrit le défaut sans le chiffrer (`--spectate` : actif dès qu'une `--presence-url` est donnée ; `-o` : « <nom> - Offline.html » à côté du `.glb`), la ligne dit « défaut : voir l'aide ».
+- **Les raccourcis** (Windows) : `--shortcuts` crée sept fichiers `.lnk` sur le bureau, « Web_3d - lanceur » et un par outil. Ils lancent `pythonw.exe` (pas de fenêtre console noire) et portent l'icône du projet (`favicon.ico`, à côté du script). Relancer `--shortcuts` remplace les raccourcis existants ; `--shortcuts-folder FOLDER` choisit un autre dossier ; `--dry-run` dit ce qui serait fait. Si Python est déplacé ou réinstallé, relancer `--shortcuts`.
+
+![Les sept raccourcis sur le bureau Windows](../images/raccourcis.png)
+
+- **Langue et version** : `--lang` et `WEB3D_LANG` (§ 7.50), `--version`.
+- **Essayé** : tests automatiques sous Linux avec un écran virtuel (`tests/gui.py` : les options de chaque outil, une par une, acceptées par le vrai parseur de l'outil) ; par Klaatou sous Windows : la fenêtre, la liste des outils et les raccourcis avec l'icône du projet (08/11/2026). **Non essayé** : macOS, Linux avec un vrai écran, les sélecteurs de fichier.
 
 ## 4. Mesurer et découper une grosse région
 
@@ -1118,7 +1142,7 @@ Toute l'interface (aide, réglages, informations, invites, messages de chargemen
 
 ### 7.50 Langue des outils Python : `--lang`, `WEB3D_LANG`
 
-`glb2html.py`, `glb2tiles.py`, `oar2glb.py`, `extraire_batiments.py`, `iar2oar.py`, `diag_carte.py` et `presence_server.py` (et `glb-stats.py`, utilisé par `glb2tiles.py`) affichent leurs messages, leurs avertissements, leurs erreurs et leur aide (`--help`) en français ou en anglais. **Choix de la langue** : `--lang fr`, `--lang en` ou `--lang auto` (par défaut) ; sinon la variable d'environnement `WEB3D_LANG` ; sinon la langue du système ; sinon l'anglais. `--lang` l'emporte sur `WEB3D_LANG`. Les options elles-mêmes (`--budget`, `--exclude`…) et les commandes de modération du serveur (`liste`, `ejecter`, `bannir`, `bans`, `debannir`, `aide`) ne changent pas de langue. Les fichiers de sortie (JSON, journaux des outils) gardent leurs clés ; les journaux sont écrits dans la langue choisie.
+`glb2html.py`, `glb2tiles.py`, `oar2glb.py`, `extraire_batiments.py`, `iar2oar.py`, `diag_carte.py`, `web3d_gui.py` et `presence_server.py` (et `glb-stats.py`, utilisé par `glb2tiles.py`) affichent leurs messages, leurs avertissements, leurs erreurs et leur aide (`--help`) en français ou en anglais. **Choix de la langue** : `--lang fr`, `--lang en` ou `--lang auto` (par défaut) ; sinon la variable d'environnement `WEB3D_LANG` ; sinon la langue du système ; sinon l'anglais. `--lang` l'emporte sur `WEB3D_LANG`. Les options elles-mêmes (`--budget`, `--exclude`…) et les commandes de modération du serveur (`liste`, `ejecter`, `bannir`, `bans`, `debannir`, `aide`) ne changent pas de langue. Les fichiers de sortie (JSON, journaux des outils) gardent leurs clés ; les journaux sont écrits dans la langue choisie.
 
 **Fichiers autonomes** : `build.py` intègre les textes de `src/i18n/*.json` (clés `py.*`) dans chaque outil de `dist\` (seulement les textes de cet outil et les textes communs, depuis la 1.4.10) : un outil copié seul sur une autre machine garde ses deux langues (c'est un choix de fabrication). Depuis les sources (`tools\`, `src\`), les outils lisent `i18n_py.py` et `i18n\` à côté d'eux ou dans `src\`. Ajouter une langue : § 7.51, aucun code à modifier. Une nouvelle option d'un outil doit avoir sa clé `py.*` dans **les deux** fichiers (`python tests/i18n.py` le vérifie) ; `python gen_reference.py` refait `REFERENCE_OPTIONS.md` (français puis anglais dans chaque case « Effet »), `python tests/doc_options.py` vérifie qu'aucune option n'y manque et qu'aucune description n'est vide.
 
@@ -1668,7 +1692,7 @@ Le détail, version par version, est dans `HISTORIQUE.md` (récit) et `CHANGELOG
 | Ajouts de la 1.5 (1.5.0 à 1.5.4) | Version affichée par les paquets : celle de la release (§ 13.2); zones `url` et `image` : liens `hop://` (chapitre 5); tableaux et légendes lisibles des deux côtés (§ 5.11) |
 | Ajouts de la 1.6.0 | Panneau `zhop` « Lien vers OpenSim » des paquets (§ 5.11) |
 | Ajouts de la 1.7.0 (lots 1.6.1 à 1.6.19) | `extraire_batiments.py` (§ 3.7) et `iar2oar.py` (§ 3.8); référence des fichiers JSON à part (`REFERENCE_JSON.md`) et `INDEX.md`; mise à jour d'un paquet déjà publié (`PROCEDURES_SIMPLES.md` § 10); icône « Réalisé avec Web_3d » (§ 7.62); logo en icône d'onglet (§ 6.9); GIF animés (§ 5.11); lignes « Animations GIF » et « Version : page … » du diagnostic (§ 7.53) |
-| Ajouts de la 1.7 (lots 1.7.2 à 1.7.12) | `diag_carte.py` : diagnostic des pseudos de la carte (§ 9.22) ; essais réels de `extraire_batiments.py` et d'`iar2oar.py` (§ 3.7, § 3.8) ; GIF animés vérifiés sous Windows et Firefox (§ 5.11) ; schémas SVG du README (`DEVELOPPEMENT.md` § 6) |
+| Ajouts de la 1.7 (lots 1.7.2 à 1.7.21) | `diag_carte.py` : diagnostic des pseudos de la carte (§ 9.22) ; essais réels de `extraire_batiments.py` et d'`iar2oar.py` (§ 3.7, § 3.8) ; GIF animés vérifiés sous Windows et Firefox (§ 5.11) ; schémas SVG du README (`DEVELOPPEMENT.md` § 6) ; lanceur graphique `web3d_gui.py` avec raccourcis Windows (§ 3.9) ; lien vers le serveur Discord |
 
 Tout ce qui suit est dans la **1.1.0** (publiée le 31/10/2026). Le détail, lot par lot, est dans `CHANGELOG.md`.
 

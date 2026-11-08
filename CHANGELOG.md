@@ -4,6 +4,12 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.7.0)
 
+### 08/11/2026 : documents du lanceur graphique, image des raccourcis, nouveau lien Discord (lot 1.7.21)
+
+- **Demande de Klaatou** : documenter le lanceur graphique ; ajouter son image des raccourcis ; mettre le lien Discord là où il est utile ; nouvelle invitation Discord sans expiration (l'ancienne est remplacée).
+- **Fait** : manuel § 3.9 (lanceur `web3d_gui.py` : outils, fenêtre, champs à corriger, valeurs par défaut, raccourcis, essais), ligne dans le tableau du § 2, § 7.50, ligne « Ajouts de la 1.7 » de l'annexe, en français et en anglais ; `PROCEDURES_SIMPLES.md` § 11 (français et anglais) ; `INDEX.md` : deux lignes (fenêtre et raccourcis, poser une question) ; `README.md` et `README.fr.md` : ligne `web3d_gui.py` du tableau des fichiers fabriqués et nouveau lien Discord ; `VUE_ENSEMBLE.md` et `OVERVIEW.md` : version 1.7.21, `web3d_gui.py`, essais, lien Discord ; `HISTORIQUE.md` et `HISTORY.md` : lignes des lots 1.7.13 à 1.7.21 ; nouvelle image `docs/images/raccourcis.png` (capture de Klaatou : les sept raccourcis sur le bureau Windows).
+- **Non fait** : le lien Discord dans la fenêtre Aide de la page (changement de code, à décider) ; `REPRISE.md` (livré à la reprise).
+
 ### 08/11/2026 : lien vers le serveur Discord dans les README (lot 1.7.20)
 
 - **Demande de Klaatou** : un lien vers son serveur Discord dans le dépôt.

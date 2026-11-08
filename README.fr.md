@@ -8,7 +8,7 @@
 
 **[Essayer la démo en ligne](https://klaatou.github.io/Web_3d_demo/)** : deux régions reliées par des portails, et la carte des mondes (Avec serveur de présence).
 
-**Questions, aide, nouvelles : [rejoindre le serveur Discord](https://discord.gg/hNpYKBd4).**
+**Questions, aide, nouvelles : [rejoindre le serveur Discord](https://discord.gg/BDG9r5gXwr).**
 
 **web_3d** transforme une région d'un monde virtuel **OpenSim** (sauvegarde **OAR**) en une page web que l'on parcourt à pied, sans installation côté visiteur : l'OAR devient un modèle **glTF** (`.glb`), que la page web_3d (`index.html`) affiche avec **three.js** dans un navigateur ordinaire. L'interface de la page, du viewer et des outils existe en **français et en anglais** (voir « Langue » plus bas).
 
@@ -74,6 +74,7 @@ Les manuels sont en français dans `docs/fr/` (`INDEX.md` pour s'y retrouver, `G
 | `extraire_batiments.py`                  | Sort d'un OAR et de son GLB un GLB par groupe d'objets (maison, meuble, arbre...), recentré ; `--list` montre les groupes.                                                                                                                                                |
 | `iar2oar.py`                             | Transforme une archive d'inventaire (IAR) en OAR minimal, pour la suite `oar2glb.py` puis `extraire_batiments.py`.                                                                                                                                                        |
 | `diag_carte.py`                          | Diagnostique pourquoi la carte n'affiche pas les pseudos : interroge le serveur de présence avec et sans la clé et dit ce qui manque.                                                                                                                                     |
+| `web3d_gui.py`                           | Ouvre les outils dans une fenêtre : liste des outils, aide de chaque option, commande, bouton de lancement ; `--shortcuts` crée des raccourcis Windows avec l'icône du projet. |
 
 ¹ **Prérequis** :  **oar2glb.py** s'appuie sur le convertisseur externe **convoar.exe** \
   Téléchargement : https://github.com/Misterblue/convoar/tree/master/bin \

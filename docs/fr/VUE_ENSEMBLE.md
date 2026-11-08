@@ -1,12 +1,14 @@
 # Web 3d : vue d'ensemble en une page
 
-*État au 08/11/2026, version 1.7.12 (dernière publication : 1.7.0, le 07/11/2026).*
+*État au 08/11/2026, version 1.7.21 (dernière publication : 1.7.0, le 07/11/2026).*
 
 Une région OpenSim (sauvegarde `.oar`) devient une **page web 3D** où l'on se promène, sans rien installer. Dépôt : `github.com/Klaatou/Web_3d` (licence MIT). Cette page dit où on en est ; le détail est dans le manuel, l'état technique dans `REPRISE.md`.
 
+**Questions, aide, nouvelles** : [serveur Discord](https://discord.gg/BDG9r5gXwr).
+
 ## 1. Ce qui marche aujourd'hui
 
-- **Fabriquer** : `tools/oar2glb.py` (OAR vers GLB), `tools/glb2tiles.py` (découpe les régions énormes en tuiles et vue d'ensemble), `glb2html.py` (la page) ; `extraire_batiments.py` et `iar2oar.py` (sortent d'un OAR ou d'un IAR un GLB par groupe d'objets) ; `python build.py` assemble tout dans `dist\`.
+- **Fabriquer** : `tools/oar2glb.py` (OAR vers GLB), `tools/glb2tiles.py` (découpe les régions énormes en tuiles et vue d'ensemble), `glb2html.py` (la page) ; `extraire_batiments.py` et `iar2oar.py` (sortent d'un OAR ou d'un IAR un GLB par groupe d'objets) ; `web3d_gui.py` (ouvre tous ces outils dans une fenêtre, avec l'aide des options et des raccourcis Windows) ; `python build.py` assemble tout dans `dist\`.
 - **Se promener** : marche, course, saut, vol ; vue subjective, troisième personne, caméra libre ; collisions ; arrivées nommées, zones, portails vers une autre région ; commandes à l'écran et mode tactile.
 - **Être plusieurs** : le serveur de présence (`presence_server.py`) : avatars, chat, journal des visites, créateurs accueillis (`--creators`), modération en console.
 - **Relier les mondes** : la carte des mondes (`regions.json`), la page `carte.html` avec les visiteurs en direct et la surveillance des arrivées (son et repère), `--scan-sites` pour construire la liste depuis le dossier des sites ; `diag_carte.py` dit pourquoi la carte n'affiche pas les pseudos.
@@ -18,7 +20,7 @@ Une région OpenSim (sauvegarde `.oar`) devient une **page web 3D** où l'on se 
 
 ## 2. Ce qui a été essayé, et ce qui ne l'a pas été
 
-- **Essayé** : Chromium (tests automatiques), Edge et le téléphone de Klaatou (« un peu encombré sur un petit écran, mais ça marche »), la région de référence de 1 024 x 1 024 m en 106 tuiles, les derniers lots (icône, souris, touche G, carte, présence) sur la démo en ligne, le serveur de présence public sur une VM Debian 13 (Tailscale Funnel, page sur GitHub Pages, visiteur extérieur, redémarrages de la VM et du service), la zone `image` (tests automatiques ; par Klaatou sur une vraie région : les images s'affichent, le choix du dossier de la région marche) ; par Klaatou, `extraire_batiments.py` sur une vraie région, `iar2oar.py` sur un vrai IAR (puis convoar et Blender), `diag_carte.py` contre un vrai serveur de présence, et les GIF animés sous Windows et sous Firefox.
+- **Essayé** : Chromium (tests automatiques), Edge et le téléphone de Klaatou (« un peu encombré sur un petit écran, mais ça marche »), la région de référence de 1 024 x 1 024 m en 106 tuiles, les derniers lots (icône, souris, touche G, carte, présence) sur la démo en ligne, le serveur de présence public sur une VM Debian 13 (Tailscale Funnel, page sur GitHub Pages, visiteur extérieur, redémarrages de la VM et du service), la zone `image` (tests automatiques ; par Klaatou sur une vraie région : les images s'affichent, le choix du dossier de la région marche) ; par Klaatou, `extraire_batiments.py` sur une vraie région, `iar2oar.py` sur un vrai IAR (puis convoar et Blender), `diag_carte.py` contre un vrai serveur de présence, les GIF animés sous Windows et sous Firefox, et `web3d_gui.py` sous Windows (la fenêtre, la liste des outils, les raccourcis avec l'icône du projet).
 - **Essayé par un tiers (NightshadeCeres)** : Firefox 159.0.1 sous macOS Ventura 13.7.8, avec le lanceur `.command` du paquet `region-simple` : la région s'affiche (seul résultat rapporté). Le paquet `galerie-photos`, même lanceur, n'a pas été essayé séparément.
 - **Non essayé** : Safari, Firefox sous Windows et Linux ; Caddy et Cloudflare Tunnel (voies B et C) ; la voie D avec Apache ; `wss://` hors de Funnel ; un domaine à soi ; le son réel (les tests le simulent) ; un onglet de `carte.html` gardé longtemps en arrière-plan ; la zone `image` dans une région en tuiles ; le vrai sélecteur de dossier de l'éditeur sous Windows et Edge ; l'animation des GIF sous Safari (essayée sous Chromium, Windows et Firefox) ; l'icône « Réalisé avec Web_3d » sous Windows, Firefox, Safari et sur un vrai écran tactile.
 
