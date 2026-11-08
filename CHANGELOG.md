@@ -4,6 +4,11 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.7.0)
 
+### 08/11/2026 : nouveau test `tests/readme_liens.py` : liens et images locaux des documents
+
+- **Cause** : le GIF de démonstration du README (`docs/images/PalmIsland_demo.gif`) avait été supprimé du dépôt le 07/11/2026 (commit `74fe691`, balayé par un `git add -A`) sans que rien ne le signale ; le README n'affichait plus l'image.
+- **Correctif** : le test vérifie que chaque image et chaque lien relatif de `README.md`, `README.fr.md` et de `docs/**/*.md` pointe vers un fichier existant ; il ignore les liens http(s), les ancres et les blocs de code. Essai dans les deux sens : GIF présent, le test passe ; GIF retiré, il échoue sur les deux README. Aucun fichier de `dist\` ne change.
+
 ### 08/11/2026 : `tests/image_zone.py` : message `file://` de Chromium ignoré
 
 - **Cause** : ouverte depuis le disque, la page demande les images par `fetch`, que le navigateur refuse ; la page gère le refus (`.catch`, aucune erreur JavaScript : `pageerror` reste vide), mais Chromium écrit lui-même dans la console « URL scheme 'file' is not supported ». Le filtre du test ne connaissait que « Failed to load resource » et « blocked by CORS ».
