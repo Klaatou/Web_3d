@@ -110,6 +110,36 @@ rapport(len(pb) == 2 and {d for d, _t in pb} == {"rotate", "hole"}, "verifier : 
 rapport("python glb2html.py" in g.ligne_commande("glb2html.py", ["x.glb"]), "la ligne affichee commence par python glb2html.py")
 rapport("--walk" in g.texte_aide(par["walk"]) and "default" in g.texte_aide(par["walk"]), "texte d'aide : option, aide, valeur par defaut")
 
+# ------------------------------------------------------------- raccourcis (les .lnk ne se creent que sous Windows : ici, le plan, le script PowerShell et la suppression)
+import tempfile
+dos = pathlib.Path(tempfile.mkdtemp(prefix="w3d_rac_"))
+prevus = g.raccourcis_prevus(dos)
+rapport(len(prevus) == 1 + len(g.OUTILS) and prevus[0][0].name == "Web_3d - launcher.lnk" and prevus[1][1][1:] == ["--tool", g.OUTILS[0][0]] and prevus[0][1][1:] == [],
+        "raccourcis prevus : un pour la fenetre, un par outil, avec --tool", [(p.name, a[1:]) for p, a in prevus][:3])
+ps = g.script_powershell([(pathlib.Path("C:/Bureau d'Anne/x.lnk"), ["C:/a b/web3d_gui.py", "--tool", "glb2html"])], "C:/Python 3/pythonw.exe", "C:/a b")
+rapport("Bureau d''Anne" in ps and "$s.Arguments = '\"C:/a b/web3d_gui.py\" --tool glb2html'" in ps and "$s.TargetPath = 'C:/Python 3/pythonw.exe'" in ps and ps.count("$s.Save()") == 1 and "\r\n" in ps,
+        "script PowerShell : apostrophe doublee, arguments entre guillemets, un Save par raccourci", ps)
+
+
+def lance(*args):
+    tampon = io.StringIO()
+    with contextlib.redirect_stdout(tampon):
+        code = g.main(list(args))
+    return code, tampon.getvalue()
+
+
+code, sortie_rac = lance("--shortcuts", "--dry-run", "--shortcuts-folder", str(dos))
+rapport(code == 0 and sortie_rac.count("would be created:") == len(prevus) and not list(dos.glob("*.lnk")), "--shortcuts --dry-run : montre le plan, ne cree rien", (code, sortie_rac[:200]))
+if os.name != "nt":
+    code, sortie_rac = lance("--shortcuts", "--shortcuts-folder", str(dos))
+    rapport(code == 2 and not list(dos.glob("*.lnk")) and "only be created on Windows" in sortie_rac, "hors Windows : refus clair (code 2), rien d'ecrit", (code, sortie_rac[:200]))
+for nom in ("Web_3d - launcher.lnk", "Web_3d - glb2html.lnk", "autre.lnk"):
+    (dos / nom).write_text("x")
+code, sortie_rac = lance("--remove-shortcuts", "--dry-run", "--shortcuts-folder", str(dos))
+rapport(code == 0 and sortie_rac.count("would be removed") == 2 and len(list(dos.glob("*.lnk"))) == 3, "--remove-shortcuts --dry-run : rien n'est supprime", (code, sortie_rac[:200]))
+code, sortie_rac = lance("--remove-shortcuts", "--shortcuts-folder", str(dos))
+rapport(code == 0 and sorted(x.name for x in dos.glob("*.lnk")) == ["autre.lnk"], "--remove-shortcuts : seuls les raccourcis de web3d_gui sont supprimes", (code, sorted(x.name for x in dos.glob("*.lnk"))))
+
 # ------------------------------------------------------------- avec fenetre
 try:
     import tkinter as tk

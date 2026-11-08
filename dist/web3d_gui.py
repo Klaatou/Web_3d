@@ -6,14 +6,14 @@ Une liste pour choisir l'outil, puis une ligne par option, l'aide de l'option so
 Les options sont lues dans l'outil lui-même (rien ne peut manquer, l'outil n'est pas modifié). Nécessite tkinter (livré avec Python sous Windows).
 Tous les messages et l'aide : --lang fr|en|auto (python web3d_gui.py --help).
 """
-import argparse, contextlib, io, os, queue, re, runpy, subprocess, sys, threading
+import argparse, contextlib, io, os, queue, re, runpy, subprocess, sys, tempfile, threading
 from pathlib import Path
 
 # ---- langue des messages (v36) : textes intégrés par build.py (src/i18n/*.json, clés py.*) ; --lang fr|en|auto ou WEB3D_LANG ----
 import json as _json, locale as _locale, os as _os, pathlib as _pl, sys as _sys
 
 # fabrication (build.py) : la ligne suivante devient I18N_DATA = { "fr": {...}, "en": {...} }
-I18N_DATA = _json.loads(r'''{"en":{"_name":"English","py.common.help":"show this help message and exit","py.common.lang_help":"language of the messages and of this help: fr, en or auto (default: the system's language; environment variable WEB3D_LANG is equivalent). Available: {0}","py.common.optionals":"options","py.common.positionals":"arguments","py.common.version_mark":"{0}, fingerprint {1}","py.common.version":"show the version and exit","py.gui.desc":"web3d_gui.py {0}: graphical launcher for the Web_3d tools (glb2html, glb2tiles, oar2glb, extraire_batiments, iar2oar, diag_carte). A list to choose the tool, one line per option, the help of each option, the resulting command, a button to run the tool and its output. The options are read from the tool itself: it is not modified.","py.gui.epilog":"Examples:\n  python web3d_gui.py\n  python web3d_gui.py --tool oar2glb\n  python web3d_gui.py --lang fr\nNeeds tkinter. Paths are chosen with the File... and Folder... buttons; the help of the option under the pointer shows at the bottom.","py.gui.no_tk":"ERROR: tkinter not found. On Windows it is installed with Python (reinstall Python if needed); on Linux, install the python3-tk package.","py.gui.no_tool":"ERROR: {0} not found (looked next to this script, then in the dist folder). Run 'python build.py' or copy web3d_gui.py next to {0}.","py.gui.read_error":"ERROR: cannot read the options of {0}.","py.gui.title":"Web_3d: launcher ({0})","py.gui.tool":"Tool:","py.gui.search":"Search an option:","py.gui.count":"{0} option(s) shown out of {1}","py.gui.help_title":"Help for the option:","py.gui.help_none":"Move the pointer over an option, or click in its field: its help shows here.","py.gui.default":"default: {0}","py.gui.default_none":"no default value","py.gui.choices":"possible values: {0}","py.gui.positional":"Argument without an option name.","py.gui.optional_value":"The value is optional: tick \"option alone\" to write the option without a value.","py.gui.flag_on":"When ticked, the option is added to the command.","py.gui.tri_hint":"Choose \"yes\" or \"no\" to write the option or its opposite; \"(default)\" writes nothing.","py.gui.tri_default":"(default)","py.gui.tri_yes":"yes","py.gui.tri_no":"no","py.gui.alone":"option alone","py.gui.browse_file":"File...","py.gui.browse_dir":"Folder...","py.gui.command":"Command (to type in the tool's folder):","py.gui.copy":"Copy the command","py.gui.run":"Run (Ctrl+Enter)","py.gui.stop":"Stop","py.gui.reset":"Clear all","py.gui.output":"Tool output:","py.gui.status_ready":"Ready.","py.gui.status_running":"Running...","py.gui.status_done":"Finished, return code {0}.","py.gui.status_stopped":"Stop requested.","py.gui.status_copied":"Command copied.","py.gui.status_invalid":"To fix before running (lines marked \"!\"): {0}","py.gui.problem_required":"{0}: value required","py.gui.problem_number":"{0}: unreadable number ({1})","py.gui.problem_choice":"{0}: value not in the list ({1})","py.gui.start_failed":"Cannot start the tool: {0}","py.gui.multi_hint":"Repeatable option: one value per line, the option is written once per line.","py.gui.help.tool":"tool shown at start (one of: {0})","py.gui.default_in_help":"default: see the help","py.gui.default_above":"Default value: see the text above."},"fr":{"_name":"Français","py.common.help":"afficher ce message d'aide et quitter","py.common.lang_help":"langue des messages et de l'aide : fr, en ou auto (défaut : langue du système ; variable d'environnement WEB3D_LANG équivalente). Disponibles : {0}","py.common.optionals":"options","py.common.positionals":"arguments","py.common.version_mark":"{0}, empreinte {1}","py.common.version":"afficher la version et quitter","py.gui.desc":"web3d_gui.py {0} : lanceur graphique des outils Web_3d (glb2html, glb2tiles, oar2glb, extraire_batiments, iar2oar, diag_carte). Une liste pour choisir l'outil, une ligne par option, l'aide de chaque option, la commande qui en résulte, un bouton pour lancer l'outil et sa sortie. Les options sont lues dans l'outil : il n'est pas modifié.","py.gui.epilog":"Exemples :\n  python web3d_gui.py\n  python web3d_gui.py --tool oar2glb\n  python web3d_gui.py --lang en\nNécessite tkinter. Les chemins se choisissent avec les boutons Fichier… et Dossier… ; l'aide de l'option sous le curseur s'affiche en bas.","py.gui.no_tk":"ERREUR : tkinter est introuvable. Sous Windows il est installé avec Python (réinstallez Python si besoin) ; sous Linux, installez le paquet python3-tk.","py.gui.no_tool":"ERREUR : {0} est introuvable (cherché à côté de ce script, puis dans le dossier dist). Lancez 'python build.py' ou copiez web3d_gui.py à côté de {0}.","py.gui.read_error":"ERREUR : impossible de lire les options de {0}.","py.gui.title":"Web_3d : lanceur ({0})","py.gui.tool":"Outil :","py.gui.search":"Chercher une option :","py.gui.count":"{0} option(s) affichée(s) sur {1}","py.gui.help_title":"Aide de l'option :","py.gui.help_none":"Passe la souris sur une option, ou clique dans son champ : son aide s'affiche ici.","py.gui.default":"défaut : {0}","py.gui.default_none":"pas de valeur par défaut","py.gui.choices":"valeurs possibles : {0}","py.gui.positional":"Argument sans nom d'option.","py.gui.optional_value":"La valeur est facultative : coche « option seule » pour écrire l'option sans valeur.","py.gui.flag_on":"Cochée, l'option est ajoutée à la commande.","py.gui.tri_hint":"Choisis « oui » ou « non » pour écrire l'option ou son contraire ; « (défaut) » n'écrit rien.","py.gui.tri_default":"(défaut)","py.gui.tri_yes":"oui","py.gui.tri_no":"non","py.gui.alone":"option seule","py.gui.browse_file":"Fichier…","py.gui.browse_dir":"Dossier…","py.gui.command":"Commande (à taper dans le dossier de l'outil) :","py.gui.copy":"Copier la commande","py.gui.run":"Lancer (Ctrl+Entrée)","py.gui.stop":"Arrêter","py.gui.reset":"Tout effacer","py.gui.output":"Sortie de l'outil :","py.gui.status_ready":"Prêt.","py.gui.status_running":"En cours…","py.gui.status_done":"Terminé, code de retour {0}.","py.gui.status_stopped":"Arrêt demandé.","py.gui.status_copied":"Commande copiée.","py.gui.status_invalid":"À corriger avant de lancer (lignes marquées « ! ») : {0}","py.gui.problem_required":"{0} : valeur obligatoire","py.gui.problem_number":"{0} : nombre illisible ({1})","py.gui.problem_choice":"{0} : valeur hors de la liste ({1})","py.gui.start_failed":"Impossible de lancer l'outil : {0}","py.gui.multi_hint":"Option répétable : une valeur par ligne, l'option est écrite une fois par ligne.","py.gui.help.tool":"outil affiché à l'ouverture (parmi : {0})","py.gui.default_in_help":"défaut : voir l'aide","py.gui.default_above":"Valeur par défaut : voir le texte ci-dessus."}}''')
+I18N_DATA = _json.loads(r'''{"en":{"_name":"English","py.common.help":"show this help message and exit","py.common.lang_help":"language of the messages and of this help: fr, en or auto (default: the system's language; environment variable WEB3D_LANG is equivalent). Available: {0}","py.common.optionals":"options","py.common.positionals":"arguments","py.common.version_mark":"{0}, fingerprint {1}","py.common.version":"show the version and exit","py.gui.desc":"web3d_gui.py {0}: graphical launcher for the Web_3d tools (glb2html, glb2tiles, oar2glb, extraire_batiments, iar2oar, diag_carte). A list to choose the tool, one line per option, the help of each option, the resulting command, a button to run the tool and its output. The options are read from the tool itself: it is not modified.","py.gui.epilog":"Examples:\n  python web3d_gui.py\n  python web3d_gui.py --tool oar2glb\n  python web3d_gui.py --shortcuts --dry-run\n  python web3d_gui.py --shortcuts\n  python web3d_gui.py --lang fr\nNeeds tkinter. Paths are chosen with the File... and Folder... buttons; the help of the option under the pointer shows at the bottom.","py.gui.no_tk":"ERROR: tkinter not found. On Windows it is installed with Python (reinstall Python if needed); on Linux, install the python3-tk package.","py.gui.no_tool":"ERROR: {0} not found (looked next to this script, then in the dist folder). Run 'python build.py' or copy web3d_gui.py next to {0}.","py.gui.read_error":"ERROR: cannot read the options of {0}.","py.gui.title":"Web_3d: launcher ({0})","py.gui.tool":"Tool:","py.gui.search":"Search an option:","py.gui.count":"{0} option(s) shown out of {1}","py.gui.help_title":"Help for the option:","py.gui.help_none":"Move the pointer over an option, or click in its field: its help shows here.","py.gui.default":"default: {0}","py.gui.default_none":"no default value","py.gui.choices":"possible values: {0}","py.gui.positional":"Argument without an option name.","py.gui.optional_value":"The value is optional: tick \"option alone\" to write the option without a value.","py.gui.flag_on":"When ticked, the option is added to the command.","py.gui.tri_hint":"Choose \"yes\" or \"no\" to write the option or its opposite; \"(default)\" writes nothing.","py.gui.tri_default":"(default)","py.gui.tri_yes":"yes","py.gui.tri_no":"no","py.gui.alone":"option alone","py.gui.browse_file":"File...","py.gui.browse_dir":"Folder...","py.gui.command":"Command (to type in the tool's folder):","py.gui.copy":"Copy the command","py.gui.run":"Run (Ctrl+Enter)","py.gui.stop":"Stop","py.gui.reset":"Clear all","py.gui.output":"Tool output:","py.gui.status_ready":"Ready.","py.gui.status_running":"Running...","py.gui.status_done":"Finished, return code {0}.","py.gui.status_stopped":"Stop requested.","py.gui.status_copied":"Command copied.","py.gui.status_invalid":"To fix before running (lines marked \"!\"): {0}","py.gui.problem_required":"{0}: value required","py.gui.problem_number":"{0}: unreadable number ({1})","py.gui.problem_choice":"{0}: value not in the list ({1})","py.gui.start_failed":"Cannot start the tool: {0}","py.gui.multi_hint":"Repeatable option: one value per line, the option is written once per line.","py.gui.help.tool":"tool shown at start (one of: {0})","py.gui.default_in_help":"default: see the help","py.gui.default_above":"Default value: see the text above.","py.gui.help.shortcuts":"creates Windows shortcuts (.lnk) on the desktop: one for the window, one per tool; --dry-run shows what would be done","py.gui.help.remove_shortcuts":"removes the shortcuts created by --shortcuts (only those)","py.gui.help.shortcuts_folder":"folder of the shortcuts (default: the Windows desktop)","py.gui.help.dry_run":"with --shortcuts or --remove-shortcuts: says what would be done, without writing or deleting anything","py.gui.sc_name_all":"Web_3d - launcher","py.gui.sc_desc":"Graphical launcher for the Web_3d tools","py.gui.sc_windows_only":"Shortcuts (.lnk) can only be created on Windows. Here, --dry-run shows what would be done.","py.gui.sc_console":"pythonw.exe not found next to python.exe: the shortcuts will also open a black console window.","py.gui.sc_create":"to create: {0} -> {1}","py.gui.sc_would_create":"would be created: {0} -> {1}","py.gui.sc_removed":"removed: {0}","py.gui.sc_would_remove":"would be removed: {0}","py.gui.sc_ps_fail":"PowerShell could not create the shortcuts: {0}","py.gui.sc_summary_done":"{0} shortcut(s) created in {1}. If Python is moved or reinstalled, run --shortcuts again.","py.gui.sc_summary_dry":"{0} shortcut(s) would be created in {1} (nothing was written).","py.gui.sc_summary_remove":"{0} shortcut(s) concerned in {1}."},"fr":{"_name":"Français","py.common.help":"afficher ce message d'aide et quitter","py.common.lang_help":"langue des messages et de l'aide : fr, en ou auto (défaut : langue du système ; variable d'environnement WEB3D_LANG équivalente). Disponibles : {0}","py.common.optionals":"options","py.common.positionals":"arguments","py.common.version_mark":"{0}, empreinte {1}","py.common.version":"afficher la version et quitter","py.gui.desc":"web3d_gui.py {0} : lanceur graphique des outils Web_3d (glb2html, glb2tiles, oar2glb, extraire_batiments, iar2oar, diag_carte). Une liste pour choisir l'outil, une ligne par option, l'aide de chaque option, la commande qui en résulte, un bouton pour lancer l'outil et sa sortie. Les options sont lues dans l'outil : il n'est pas modifié.","py.gui.epilog":"Exemples :\n  python web3d_gui.py\n  python web3d_gui.py --tool oar2glb\n  python web3d_gui.py --shortcuts --dry-run\n  python web3d_gui.py --shortcuts\n  python web3d_gui.py --lang en\nNécessite tkinter. Les chemins se choisissent avec les boutons Fichier… et Dossier… ; l'aide de l'option sous le curseur s'affiche en bas.","py.gui.no_tk":"ERREUR : tkinter est introuvable. Sous Windows il est installé avec Python (réinstallez Python si besoin) ; sous Linux, installez le paquet python3-tk.","py.gui.no_tool":"ERREUR : {0} est introuvable (cherché à côté de ce script, puis dans le dossier dist). Lancez 'python build.py' ou copiez web3d_gui.py à côté de {0}.","py.gui.read_error":"ERREUR : impossible de lire les options de {0}.","py.gui.title":"Web_3d : lanceur ({0})","py.gui.tool":"Outil :","py.gui.search":"Chercher une option :","py.gui.count":"{0} option(s) affichée(s) sur {1}","py.gui.help_title":"Aide de l'option :","py.gui.help_none":"Passe la souris sur une option, ou clique dans son champ : son aide s'affiche ici.","py.gui.default":"défaut : {0}","py.gui.default_none":"pas de valeur par défaut","py.gui.choices":"valeurs possibles : {0}","py.gui.positional":"Argument sans nom d'option.","py.gui.optional_value":"La valeur est facultative : coche « option seule » pour écrire l'option sans valeur.","py.gui.flag_on":"Cochée, l'option est ajoutée à la commande.","py.gui.tri_hint":"Choisis « oui » ou « non » pour écrire l'option ou son contraire ; « (défaut) » n'écrit rien.","py.gui.tri_default":"(défaut)","py.gui.tri_yes":"oui","py.gui.tri_no":"non","py.gui.alone":"option seule","py.gui.browse_file":"Fichier…","py.gui.browse_dir":"Dossier…","py.gui.command":"Commande (à taper dans le dossier de l'outil) :","py.gui.copy":"Copier la commande","py.gui.run":"Lancer (Ctrl+Entrée)","py.gui.stop":"Arrêter","py.gui.reset":"Tout effacer","py.gui.output":"Sortie de l'outil :","py.gui.status_ready":"Prêt.","py.gui.status_running":"En cours…","py.gui.status_done":"Terminé, code de retour {0}.","py.gui.status_stopped":"Arrêt demandé.","py.gui.status_copied":"Commande copiée.","py.gui.status_invalid":"À corriger avant de lancer (lignes marquées « ! ») : {0}","py.gui.problem_required":"{0} : valeur obligatoire","py.gui.problem_number":"{0} : nombre illisible ({1})","py.gui.problem_choice":"{0} : valeur hors de la liste ({1})","py.gui.start_failed":"Impossible de lancer l'outil : {0}","py.gui.multi_hint":"Option répétable : une valeur par ligne, l'option est écrite une fois par ligne.","py.gui.help.tool":"outil affiché à l'ouverture (parmi : {0})","py.gui.default_in_help":"défaut : voir l'aide","py.gui.default_above":"Valeur par défaut : voir le texte ci-dessus.","py.gui.help.shortcuts":"crée des raccourcis Windows (.lnk) sur le bureau : un pour la fenêtre, un par outil ; --dry-run montre ce qui serait fait","py.gui.help.remove_shortcuts":"supprime les raccourcis créés par --shortcuts (seulement ceux-là)","py.gui.help.shortcuts_folder":"dossier des raccourcis (défaut : le bureau de Windows)","py.gui.help.dry_run":"avec --shortcuts ou --remove-shortcuts : dit ce qui serait fait, sans rien écrire ni supprimer","py.gui.sc_name_all":"Web_3d - lanceur","py.gui.sc_desc":"Lanceur graphique des outils Web_3d","py.gui.sc_windows_only":"Les raccourcis (.lnk) ne se créent que sous Windows. Ici, --dry-run montre ce qui serait fait.","py.gui.sc_console":"pythonw.exe est introuvable à côté de python.exe : les raccourcis ouvriront aussi une fenêtre console noire.","py.gui.sc_create":"à créer : {0} -> {1}","py.gui.sc_would_create":"serait créé : {0} -> {1}","py.gui.sc_removed":"supprimé : {0}","py.gui.sc_would_remove":"serait supprimé : {0}","py.gui.sc_ps_fail":"PowerShell n'a pas pu créer les raccourcis : {0}","py.gui.sc_summary_done":"{0} raccourci(s) créé(s) dans {1}. Si Python est déplacé ou réinstallé, relancez --shortcuts.","py.gui.sc_summary_dry":"{0} raccourci(s) seraient créés dans {1} (rien n'a été écrit).","py.gui.sc_summary_remove":"{0} raccourci(s) concerné(s) dans {1}."}}''')
 
 
 def _load():
@@ -110,8 +110,8 @@ def i18n_add_common(ap):
         pass
 
 
-VERSION = "1.7.17 (08/11/2026)"      # remplacé par build.py (fichier VERSION) dans dist/web3d_gui.py
-MARK = "90779c53"      # empreinte du fichier fabriqué, inscrite par build.py ; reste telle quelle depuis tools/
+VERSION = "1.7.18 (08/11/2026)"      # remplacé par build.py (fichier VERSION) dans dist/web3d_gui.py
+MARK = "a7b9b9bc"      # empreinte du fichier fabriqué, inscrite par build.py ; reste telle quelle depuis tools/
 
 OUTILS = (("glb2html", "glb2html.py"), ("glb2tiles", "glb2tiles.py"), ("oar2glb", "oar2glb.py"), ("extraire_batiments", "extraire_batiments.py"),
           ("iar2oar", "iar2oar.py"), ("diag_carte", "diag_carte.py"))      # (nom, fichier) ; un outil de plus : une ligne ici
@@ -626,13 +626,98 @@ def fenetre(outils, tk, ttk, filedialog, depart=None):
     return f
 
 
+# ---------------------------------------------------------------- raccourcis (Windows : fichiers .lnk sur le bureau)
+
+def dossier_bureau(dossier=None):
+    """le dossier demandé ; sinon le bureau de Windows (demandé à PowerShell : il suit une redirection OneDrive) ; à défaut ~/Desktop"""
+    if dossier:
+        return Path(dossier).expanduser()
+    if os.name == "nt":
+        try:
+            r = subprocess.run(["powershell", "-NoProfile", "-Command", "[Environment]::GetFolderPath('Desktop')"], capture_output=True, text=True, timeout=30)
+            if r.returncode == 0 and r.stdout.strip():
+                return Path(r.stdout.strip())
+        except (OSError, subprocess.SubprocessError):
+            pass
+    return Path.home() / "Desktop"
+
+
+def raccourcis_prevus(dossier):
+    """[(fichier .lnk, arguments)] : un raccourci pour la fenêtre (premier outil), puis un par outil trouvé à côté de ce script"""
+    ce_script = str(Path(__file__).resolve())
+    prevus = [(Path(dossier) / (_tr("py.gui.sc_name_all") + ".lnk"), [ce_script])]
+    for nom, fichier in OUTILS:
+        if trouver_outil(fichier) is not None:
+            prevus.append((Path(dossier) / ("Web_3d - " + nom + ".lnk"), [ce_script, "--tool", nom]))
+    return prevus
+
+
+def _ps(s):
+    """chaîne PowerShell entre apostrophes : l'apostrophe se double"""
+    return "'" + str(s).replace("'", "''") + "'"
+
+
+def script_powershell(prevus, programme, depart):
+    """texte du script PowerShell qui crée les raccourcis ; le programme est pythonw.exe (pas de fenêtre console)"""
+    lignes = ["$ErrorActionPreference = 'Stop'", "$sh = New-Object -ComObject WScript.Shell"]
+    for lnk, args in prevus:
+        lignes += ["$s = $sh.CreateShortcut(" + _ps(lnk) + ")", "$s.TargetPath = " + _ps(programme),
+                   "$s.Arguments = " + _ps(subprocess.list2cmdline(args)), "$s.WorkingDirectory = " + _ps(depart),
+                   "$s.Description = " + _ps(_tr("py.gui.sc_desc")), "$s.Save()"]
+    return "\r\n".join(lignes) + "\r\n"
+
+
+def gerer_raccourcis(creer, dossier, simuler):
+    """crée (ou, avec creer=False, supprime) les raccourcis ; rend le code de sortie : 0 bon, 1 échec, 2 pas sous Windows"""
+    if creer and os.name != "nt" and not simuler:
+        print(_tr("py.gui.sc_windows_only"))
+        return 2
+    dossier = dossier_bureau(dossier)
+    prevus = raccourcis_prevus(dossier)
+    if not creer:
+        n = 0
+        for lnk, _a in prevus:
+            if lnk.is_file():
+                n += 1
+                print(_tr("py.gui.sc_would_remove" if simuler else "py.gui.sc_removed", lnk))
+                if not simuler:
+                    lnk.unlink()
+        print(_tr("py.gui.sc_summary_remove", n, dossier))
+        return 0
+    programme = Path(sys.executable).with_name("pythonw.exe") if os.name == "nt" else Path(sys.executable)
+    if os.name == "nt" and not programme.is_file():
+        print(_tr("py.gui.sc_console"))
+        programme = Path(sys.executable)
+    for lnk, args in prevus:
+        print(_tr("py.gui.sc_would_create" if simuler else "py.gui.sc_create", lnk, subprocess.list2cmdline([str(programme)] + args)))
+    if simuler:
+        print(_tr("py.gui.sc_summary_dry", len(prevus), dossier))
+        return 0
+    dossier.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory() as tmp:
+        ps1 = Path(tmp) / "raccourcis.ps1"
+        ps1.write_text(script_powershell(prevus, programme, Path(__file__).resolve().parent), encoding="utf-8-sig")   # BOM : PowerShell 5 lit ainsi les accents des chemins
+        r = subprocess.run(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(ps1)], capture_output=True, text=True)
+    if r.returncode != 0:
+        print(_tr("py.gui.sc_ps_fail", (r.stderr or r.stdout).strip()))
+        return 1
+    print(_tr("py.gui.sc_summary_done", len(prevus), dossier))
+    return 0
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=_tr("py.gui.desc", version_tag()), epilog=_tr("py.gui.epilog"),
                                  formatter_class=argparse.RawDescriptionHelpFormatter, add_help=False)
     i18n_add_common(ap)
     ap.add_argument("--version", action="version", version=f"web3d_gui {version_tag()}", help=_tr("py.common.version"))
     ap.add_argument("--tool", choices=[n for n, _f in OUTILS], default=OUTILS[0][0], metavar="NAME", help=_tr("py.gui.help.tool", ", ".join(n for n, _f in OUTILS)))
+    ap.add_argument("--shortcuts", action="store_true", help=_tr("py.gui.help.shortcuts"))
+    ap.add_argument("--remove-shortcuts", action="store_true", help=_tr("py.gui.help.remove_shortcuts"))
+    ap.add_argument("--shortcuts-folder", metavar="FOLDER", help=_tr("py.gui.help.shortcuts_folder"))
+    ap.add_argument("--dry-run", action="store_true", help=_tr("py.gui.help.dry_run"))
     a = ap.parse_args(argv)
+    if a.shortcuts or a.remove_shortcuts:
+        return gerer_raccourcis(a.shortcuts and not a.remove_shortcuts, a.shortcuts_folder, a.dry_run)
     try:
         import tkinter as tk
         from tkinter import filedialog, ttk

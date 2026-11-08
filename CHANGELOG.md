@@ -4,6 +4,13 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.7.0)
 
+### 08/11/2026 : `web3d_gui.py` : raccourcis Windows (lot 1.7.18)
+
+- **Demande de Klaatou** : des raccourcis pour lancer l'interface, depuis le bureau ou ailleurs.
+- **Fait** : `python web3d_gui.py --shortcuts` crée sept raccourcis (`.lnk`) : « Web_3d - lanceur » (la fenêtre) et un par outil (`--tool NOM`). Ils lancent `pythonw.exe`, donc sans fenêtre console noire ; le programme est celui qui a exécuté le script (si Python est déplacé ou réinstallé, relancer `--shortcuts`). `--dry-run` montre le plan sans rien écrire ni supprimer ; `--remove-shortcuts` supprime ceux-là seulement ; `--shortcuts-folder DOSSIER` choisit un autre dossier ; sans dossier, le bureau est demandé à PowerShell (une redirection OneDrive est suivie). La création passe par un script PowerShell écrit en UTF-8 avec BOM (accents dans les chemins) et lancé avec `-ExecutionPolicy Bypass` pour ce seul appel. Textes français et anglais (`py.gui.*`).
+- **Test** : `tests/gui.py` : plan des raccourcis (un pour la fenêtre, un par outil), script PowerShell (apostrophe doublée, arguments entre guillemets), `--dry-run` (rien écrit), refus clair hors Windows, suppression (seuls les raccourcis de `web3d_gui.py` partent). Deux fautes introduites volontairement (apostrophe non doublée ; suppression de tout `.lnk`) sont détectées.
+- **Non testé** : la création réelle des `.lnk` (Windows seulement), la détection du bureau, le comportement quand une stratégie de groupe interdit PowerShell. **Non fait** : Linux et macOS.
+
 ### 08/11/2026 : `web3d_gui.py` : tous les outils (lot 1.7.17)
 
 - **Demande de Klaatou** : étendre le lanceur graphique aux autres outils ; constat de Klaatou : `--spectate` et `-o` n'affichaient aucune valeur par défaut.

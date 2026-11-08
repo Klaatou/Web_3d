@@ -6,7 +6,7 @@ Une liste pour choisir l'outil, puis une ligne par option, l'aide de l'option so
 Les options sont lues dans l'outil lui-même (rien ne peut manquer, l'outil n'est pas modifié). Nécessite tkinter (livré avec Python sous Windows).
 Tous les messages et l'aide : --lang fr|en|auto (python web3d_gui.py --help).
 """
-import argparse, contextlib, io, os, queue, re, runpy, subprocess, sys, threading
+import argparse, contextlib, io, os, queue, re, runpy, subprocess, sys, tempfile, threading
 from pathlib import Path
 
 # <<I18N_PY>>
@@ -542,13 +542,98 @@ def fenetre(outils, tk, ttk, filedialog, depart=None):
     return f
 
 
+# ---------------------------------------------------------------- raccourcis (Windows : fichiers .lnk sur le bureau)
+
+def dossier_bureau(dossier=None):
+    """le dossier demandé ; sinon le bureau de Windows (demandé à PowerShell : il suit une redirection OneDrive) ; à défaut ~/Desktop"""
+    if dossier:
+        return Path(dossier).expanduser()
+    if os.name == "nt":
+        try:
+            r = subprocess.run(["powershell", "-NoProfile", "-Command", "[Environment]::GetFolderPath('Desktop')"], capture_output=True, text=True, timeout=30)
+            if r.returncode == 0 and r.stdout.strip():
+                return Path(r.stdout.strip())
+        except (OSError, subprocess.SubprocessError):
+            pass
+    return Path.home() / "Desktop"
+
+
+def raccourcis_prevus(dossier):
+    """[(fichier .lnk, arguments)] : un raccourci pour la fenêtre (premier outil), puis un par outil trouvé à côté de ce script"""
+    ce_script = str(Path(__file__).resolve())
+    prevus = [(Path(dossier) / (_tr("py.gui.sc_name_all") + ".lnk"), [ce_script])]
+    for nom, fichier in OUTILS:
+        if trouver_outil(fichier) is not None:
+            prevus.append((Path(dossier) / ("Web_3d - " + nom + ".lnk"), [ce_script, "--tool", nom]))
+    return prevus
+
+
+def _ps(s):
+    """chaîne PowerShell entre apostrophes : l'apostrophe se double"""
+    return "'" + str(s).replace("'", "''") + "'"
+
+
+def script_powershell(prevus, programme, depart):
+    """texte du script PowerShell qui crée les raccourcis ; le programme est pythonw.exe (pas de fenêtre console)"""
+    lignes = ["$ErrorActionPreference = 'Stop'", "$sh = New-Object -ComObject WScript.Shell"]
+    for lnk, args in prevus:
+        lignes += ["$s = $sh.CreateShortcut(" + _ps(lnk) + ")", "$s.TargetPath = " + _ps(programme),
+                   "$s.Arguments = " + _ps(subprocess.list2cmdline(args)), "$s.WorkingDirectory = " + _ps(depart),
+                   "$s.Description = " + _ps(_tr("py.gui.sc_desc")), "$s.Save()"]
+    return "\r\n".join(lignes) + "\r\n"
+
+
+def gerer_raccourcis(creer, dossier, simuler):
+    """crée (ou, avec creer=False, supprime) les raccourcis ; rend le code de sortie : 0 bon, 1 échec, 2 pas sous Windows"""
+    if creer and os.name != "nt" and not simuler:
+        print(_tr("py.gui.sc_windows_only"))
+        return 2
+    dossier = dossier_bureau(dossier)
+    prevus = raccourcis_prevus(dossier)
+    if not creer:
+        n = 0
+        for lnk, _a in prevus:
+            if lnk.is_file():
+                n += 1
+                print(_tr("py.gui.sc_would_remove" if simuler else "py.gui.sc_removed", lnk))
+                if not simuler:
+                    lnk.unlink()
+        print(_tr("py.gui.sc_summary_remove", n, dossier))
+        return 0
+    programme = Path(sys.executable).with_name("pythonw.exe") if os.name == "nt" else Path(sys.executable)
+    if os.name == "nt" and not programme.is_file():
+        print(_tr("py.gui.sc_console"))
+        programme = Path(sys.executable)
+    for lnk, args in prevus:
+        print(_tr("py.gui.sc_would_create" if simuler else "py.gui.sc_create", lnk, subprocess.list2cmdline([str(programme)] + args)))
+    if simuler:
+        print(_tr("py.gui.sc_summary_dry", len(prevus), dossier))
+        return 0
+    dossier.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory() as tmp:
+        ps1 = Path(tmp) / "raccourcis.ps1"
+        ps1.write_text(script_powershell(prevus, programme, Path(__file__).resolve().parent), encoding="utf-8-sig")   # BOM : PowerShell 5 lit ainsi les accents des chemins
+        r = subprocess.run(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(ps1)], capture_output=True, text=True)
+    if r.returncode != 0:
+        print(_tr("py.gui.sc_ps_fail", (r.stderr or r.stdout).strip()))
+        return 1
+    print(_tr("py.gui.sc_summary_done", len(prevus), dossier))
+    return 0
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=_tr("py.gui.desc", version_tag()), epilog=_tr("py.gui.epilog"),
                                  formatter_class=argparse.RawDescriptionHelpFormatter, add_help=False)
     i18n_add_common(ap)
     ap.add_argument("--version", action="version", version=f"web3d_gui {version_tag()}", help=_tr("py.common.version"))
     ap.add_argument("--tool", choices=[n for n, _f in OUTILS], default=OUTILS[0][0], metavar="NAME", help=_tr("py.gui.help.tool", ", ".join(n for n, _f in OUTILS)))
+    ap.add_argument("--shortcuts", action="store_true", help=_tr("py.gui.help.shortcuts"))
+    ap.add_argument("--remove-shortcuts", action="store_true", help=_tr("py.gui.help.remove_shortcuts"))
+    ap.add_argument("--shortcuts-folder", metavar="FOLDER", help=_tr("py.gui.help.shortcuts_folder"))
+    ap.add_argument("--dry-run", action="store_true", help=_tr("py.gui.help.dry_run"))
     a = ap.parse_args(argv)
+    if a.shortcuts or a.remove_shortcuts:
+        return gerer_raccourcis(a.shortcuts and not a.remove_shortcuts, a.shortcuts_folder, a.dry_run)
     try:
         import tkinter as tk
         from tkinter import filedialog, ttk

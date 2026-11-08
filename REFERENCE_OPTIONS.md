@@ -208,6 +208,10 @@ Lanceur graphique des outils : une liste pour choisir l'outil, une ligne par opt
 | `--lang` | CODE | `auto` | langue des messages et de l'aide : fr, en ou auto (défaut : langue du système ; variable d'environnement WEB3D_LANG équivalente). Disponibles : en, fr<br>language of the messages and of this help: fr, en or auto (default: the system's language; environment variable WEB3D_LANG is equivalent). Available: en, fr |
 | `--version` |  |  | afficher la version et quitter<br>show the version and exit |
 | `--tool` | glb2html / glb2tiles / oar2glb / extraire_batiments / iar2oar / diag_carte | `glb2html` | outil affiché à l'ouverture (parmi : glb2html, glb2tiles, oar2glb, extraire_batiments, iar2oar, diag_carte)<br>tool shown at start (one of: glb2html, glb2tiles, oar2glb, extraire_batiments, iar2oar, diag_carte) |
+| `--shortcuts` | (aucune) / (none) |  | crée des raccourcis Windows (.lnk) sur le bureau : un pour la fenêtre, un par outil ; --dry-run montre ce qui serait fait<br>creates Windows shortcuts (.lnk) on the desktop: one for the window, one per tool; --dry-run shows what would be done |
+| `--remove-shortcuts` | (aucune) / (none) |  | supprime les raccourcis créés par --shortcuts (seulement ceux-là)<br>removes the shortcuts created by --shortcuts (only those) |
+| `--shortcuts-folder` | FOLDER |  | dossier des raccourcis (défaut : le bureau de Windows)<br>folder of the shortcuts (default: the Windows desktop) |
+| `--dry-run` | (aucune) / (none) |  | avec --shortcuts ou --remove-shortcuts : dit ce qui serait fait, sans rien écrire ni supprimer<br>with --shortcuts or --remove-shortcuts: says what would be done, without writing or deleting anything |
 
 ## presence_server.py
 
