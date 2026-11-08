@@ -28,6 +28,20 @@ English | [Français](README.fr.md)
 
 **What needs a server**: only the presence server needs more than a basic web host (it is a Python program, with the `websockets` package, that must run on a server). The page, the map, the pictures and the zones are plain files that any basic web host can serve (the demo is on GitHub Pages); only a Home Assistant zone calls your own Home Assistant.
 
+## How it works
+
+```
+OAR --oar2glb.py--> GLB --glb2tiles.py--> tiles + overview     (tiles: huge regions only)
+                     |                          |
+                     +------------+-------------+
+                                  v
+ glb-viewer.html (settings, zones) --> glb2html.py --> web page: index.html + NOM.* + lib/
+                                                            ^
+ presence_server.py (optional, separate program) -----------+   chat, visitors
+```
+
+`oar2glb.py` needs the external converter `convoar.exe` (see below). The viewer prepares the settings and the zones; `glb2html.py` builds the page from them. The presence server is not part of the page: the page connects to it.
+
 ## Ready-to-use packages
 
 Without reading all the documentation, two packages can be downloaded from the [releases page](https://github.com/Klaatou/Web_3d/releases/latest):
@@ -99,6 +113,25 @@ The full steps (OAR to page, tiled region, update, zones, public presence server
 ## A site: one shell, one folder per region
 
 Recommended layout (manual § 6.2): at the root of the site, a single shell `index.html` (copy of `dist/index.html`), the `lib/` folder, `regions.json` and `carte.html` (copy of `dist/carte.html`); then one folder per region with its `NOM.glb` (or its tiles), `NOM.config.json` and `NOM.zones.json`. A region opens at `index.html?region=dossier/NOM`. The site must be served over http/https (local test: `python -m http.server`).
+
+The same layout as a tree:
+
+```
+SITE/                          what you publish on the web host
+|-- index.html                 the shell, the same for every region
+|-- carte.html                 the world map
+|-- regions.json               the cards of the map, one per region
+|-- default.json               the region opened when the address has no ?region=
+|-- lib/                       three.js, shared by all the regions
+|-- dossier/                   one folder per region (any name)
+|   |-- NOM.glb                the model (tiled region: NOM.tiles.json, NOM.overview.glb and NOM.tiles/)
+|   |-- NOM.config.json        the settings, read again at every F5
+|   |-- NOM.zones.json         the zones, read again at every F5
+|   `-- medias/                the pictures of the image zones
+`-- other-folder/              another region, same content
+```
+
+The region above opens at `index.html?region=dossier/NOM`.
 
 - Update a region after a new version: `python glb2html.py --update -o "SITE/dossier/NOM.html" --shared-shell "SITE/index.html"` (the path of the root shell avoids writing a useless shell into the region's folder).
 - Update the map of the whole site: `python glb2html.py --scan-sites SITE --dry-run`, then without `--dry-run` (manual § 9.9).

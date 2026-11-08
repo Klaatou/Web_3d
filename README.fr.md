@@ -28,6 +28,20 @@
 
 **Ce qui demande un serveur** : seul le serveur de présence demande autre chose qu'un hébergement web de base (c'est un programme Python, avec le paquet `websockets`, qui doit tourner sur un serveur). La page, la carte, les images et les zones sont de simples fichiers que n'importe quel hébergement web de base peut servir (la démo est sur GitHub Pages) ; seule une zone Home Assistant appelle votre propre Home Assistant.
 
+## Comment ça marche
+
+```
+OAR --oar2glb.py--> GLB --glb2tiles.py--> tuiles + vue d'ensemble   (tuiles : régions énormes seulement)
+                     |                          |
+                     +------------+-------------+
+                                  v
+ glb-viewer.html (réglages, zones) --> glb2html.py --> page web : index.html + NOM.* + lib/
+                                                            ^
+ presence_server.py (facultatif, programme à part) ---------+   chat, visiteurs
+```
+
+`oar2glb.py` demande le convertisseur externe `convoar.exe` (voir plus bas). Le viewer prépare les réglages et les zones ; `glb2html.py` fabrique la page à partir de ceux-ci. Le serveur de présence ne fait pas partie de la page : c'est la page qui s'y connecte.
+
 ## Paquets prêts à l'emploi
 
 Sans lire toute la documentation, deux paquets sont à télécharger sur la [page des versions](https://github.com/Klaatou/Web_3d/releases/latest) :
@@ -99,6 +113,25 @@ Les étapes complètes (de l'OAR à la page, région en tuiles, mise à jour, zo
 ## Un site : une coquille, un dossier par région
 
 Organisation conseillée (manuel § 6.2) : à la racine du site, une seule coquille `index.html` (copie de `dist/index.html`), le dossier `lib/`, `regions.json` et `carte.html` (copie de `dist/carte.html`) ; puis un dossier par région avec ses `NOM.glb` (ou ses tuiles), `NOM.config.json` et `NOM.zones.json`. Une région s'ouvre à `index.html?region=dossier/NOM`. Il faut servir le site en http/https (essai local : `python -m http.server`).
+
+La même disposition en arbre :
+
+```
+SITE/                          ce que l'on publie sur l'hébergement web
+|-- index.html                 la coquille, la même pour toutes les régions
+|-- carte.html                 la carte des mondes
+|-- regions.json               les fiches de la carte, une par région
+|-- default.json               la région ouverte quand l'adresse n'a pas de ?region=
+|-- lib/                       three.js, commun à toutes les régions
+|-- dossier/                   un dossier par région (nom libre)
+|   |-- NOM.glb                le modèle (région en tuiles : NOM.tiles.json, NOM.overview.glb et NOM.tiles/)
+|   |-- NOM.config.json        les réglages, relus à chaque F5
+|   |-- NOM.zones.json         les zones, relues à chaque F5
+|   `-- medias/                les images des zones image
+`-- autre-dossier/             une autre région, même contenu
+```
+
+La région ci-dessus s'ouvre à `index.html?region=dossier/NOM`.
 
 - Mettre à jour une région après une nouvelle version : `python glb2html.py --update -o "SITE/dossier/NOM.html" --shared-shell "SITE/index.html"` (le chemin de la coquille de la racine évite d'écrire une coquille inutile dans le dossier de la région).
 - Mettre à jour la carte de tout le site : `python glb2html.py --scan-sites SITE --dry-run`, puis sans `--dry-run` (manuel § 9.9).

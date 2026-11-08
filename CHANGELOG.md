@@ -4,6 +4,11 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.7.0)
 
+### 08/11/2026 : README (fr et en) : schéma de la chaîne d'outils et arbre d'un site
+
+- **Demande de Klaatou** : montrer l'organisation des outils et celle d'un site (coquille à la racine, un dossier par région).
+- **Fait** : section « Comment ça marche » (OAR, `oar2glb.py`, GLB, `glb2tiles.py` pour les régions énormes, viewer pour les réglages et les zones, `glb2html.py`, page ; le serveur de présence est un programme à part auquel la page se connecte) ; arbre d'un site dans la section « Un site : une coquille, un dossier par région » (`index.html`, `carte.html`, `regions.json`, `default.json`, `lib/`, un dossier par région avec `NOM.glb` ou les fichiers de tuiles, `NOM.config.json`, `NOM.zones.json`, `medias/`), en texte simple, sans couleur, avec légendes en français et en anglais. Disposition relue dans le manuel § 6.2, § 6.7 et dans la section sur les zones image (dossier `medias` à côté du `.glb`). Aucun fichier de `dist\` ne change.
+
 ### 08/11/2026 : `diag_carte.py` entre dans le dépôt (tools, dist, messages fr/en, `--lang`, `--version`)
 
 - **Demande de Klaatou** : intégrer l'outil de diagnostic de la carte, qui traînait à la racine du dépôt sans être cité nulle part.
