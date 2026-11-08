@@ -4,6 +4,13 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.7.0)
 
+### 08/11/2026 : tests `v37` et `v32` : attendre la condition, pas une durée (lot 1.7.13)
+
+- **Demande de Klaatou** : revoir les tests instables.
+- **Cause** : `v37` lisait la boussole 250 ou 300 ms après un changement de cap, alors que la page la met à jour toutes les 100 ms (`compassTick`, `setInterval`) ; `v32` attendait 500 ms puis lisait la ligne des tuiles du viewer, remplie par `afterLoadTiles`, qui s'exécute après la fin de `loadTiles`. Sur un processeur lent (bac à sable à un seul cœur), la lecture arrivait avant la mise à jour : `v37` échouait sur « NE 45° » et `v32` sur deux contrôles, **même lancés seuls**.
+- **Fait** : les pauses fixes deviennent des attentes de la condition (10 s au plus pour la boussole, assistant `attendre_js` dans `tests/v37.py` ; `wait_for_function` dans `tests/v32.py`) ; toutes les lectures de la boussole de `v37` qui suivaient une pause fixe sont corrigées (cap de la vue globale, N 0°, les cinq caps, case décochée, rotation, anglais). Le contrôle qui suit dit toujours si la condition est vraie : un vrai défaut échoue encore. Aucun fichier de `dist\\` ne change.
+- **Mesuré** (bac à sable, Chromium, un cœur) : avant, `v37` et `v32` échouaient seuls ; après, ils passent. `v35`, `v36` et `v41` passent seuls et avec le processeur saturé par deux boucles : leur instabilité n'a pas été reproduite, ils ne sont pas modifiés. `image_dossier` échoue seul sur `main` : Chromium s'arrête (trace `int3` dans `chrome-headless-shell`) à l'ouverture de la seconde page du même contexte, aussi quand la première n'est pas fermée avant ; cause non élucidée, test non modifié.
+
 ### 08/11/2026 : documents à jour (lot 1.7.12)
 
 - **Demande de Klaatou** : « il faut qu'on soit à jour » (règle 16, documents en retard).

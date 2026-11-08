@@ -151,7 +151,7 @@ async def main():
         await pg.goto((DIST / "glb-viewer.html").as_uri())
         await pg.set_input_files("#fTiles", str(src))
         await pg.wait_for_function("window.__viewer.tiled && window.__viewer.tilesState().ready.length > 0 && window.__viewer.tilesState().overview.state === 'ready'", timeout=60000)
-        await pg.wait_for_timeout(500)
+        await pg.wait_for_function("document.getElementById('tilesInfoV').textContent.trim() !== ''", timeout=60000)   # remplie par afterLoadTiles, apres la fin de loadTiles
         info = await pg.inner_text("#tilesInfoV")
         rapport(f"{len(TILES)} tuile(s)" in info and "vue d'ensemble oui" in info and "références d'objets oui" in info and "aucun recentrage" in info, "région ouverte par le dossier : texte d'information", info)
         e0 = await ev("window.__viewer.tilesState()")

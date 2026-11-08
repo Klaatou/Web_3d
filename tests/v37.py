@@ -10,6 +10,16 @@ from h37 import *
 import h37
 
 FLOOR = 15
+JS_BOUSSOLE = "(a) => document.getElementById('compass').textContent === a"
+
+
+async def attendre_js(pg, expr, arg=None, delai=10000):
+    """attend que la condition soit vraie (10 s au plus) au lieu d'une pause fixe : la page met la boussole a jour toutes les 100 ms,
+    et un processeur lent retarde ce minuteur ; le controle qui suit dit si la condition est vraie"""
+    try:
+        await pg.wait_for_function(expr, arg=arg, timeout=delai)
+    except Exception:
+        pass
 print("--- 0. fabrication des pages")
 presence, pport = lancer_presence("--chat-burst", "100", "--chat-gap", "0.1")
 PURL = f"ws://127.0.0.1:{pport}"
@@ -116,22 +126,22 @@ async def main():
             print("--- 1.6 boussole")
             motif = re.compile(r"^(N|NE|E|SE|S|SO|O|NO) \d+°$")
             o = await Onglet(br).ouvrir(base_url + "Sol", init=STUB)
-            await o.pg.wait_for_timeout(300)
+            await attendre_js(o.pg, "(() => { const c = document.getElementById('compass'); return !c.hidden && c.textContent.trim() !== ''; })()")
             t = await o.txt("compass")
             rapport(bool(motif.match(t)) and not await o.ev("document.getElementById('compass').hidden"), "vue globale : cap de la caméra affiché", t)
             await o.walk((0, 15, 0), 0)
-            await o.pg.wait_for_timeout(300)
+            await attendre_js(o.pg, JS_BOUSSOLE, "N 0°")
             rapport(await o.txt("compass") == "N 0°", "avatar orienté vers -Z : « N 0° »", await o.txt("compass"))
             for yaw, att in ((-math.pi / 4, "NE 45°"), (-math.pi / 2, "E 90°"), (-math.pi, "S 180°"), (math.pi / 2, "O 270°"), (math.pi / 4, "NO 315°")):
                 await o.ev("(y) => window.__viewer.walkStart && 0", yaw)
                 await o.ev("([p, y]) => window.__viewer.teleportTo(p, y)", [[0, 15, 0], yaw])
                 await o.ticks(5)
-                await o.pg.wait_for_timeout(250)
+                await attendre_js(o.pg, JS_BOUSSOLE, att)
                 rapport(await o.txt("compass") == att, f"yaw {yaw:.2f} : « {att} »", await o.txt("compass"))
             await o.ev("document.getElementById('optsBtn').click()")
             rapport(await o.ev("document.getElementById('visCompass').checked"), "Réglages visiteur : case « Boussole » cochée par défaut")
             await o.ev("document.getElementById('visCompass').click()")
-            await o.pg.wait_for_timeout(300)
+            await attendre_js(o.pg, "document.getElementById('compass').hidden")
             rapport(await o.ev("document.getElementById('compass').hidden"), "case décochée : boussole masquée")
             await o.pg.reload(); await o.pg.wait_for_function("document.getElementById('msg') === null && window.__viewer", timeout=40000)
             await o.pg.wait_for_timeout(400)
@@ -139,12 +149,12 @@ async def main():
             await o.ctx.close()
             o = await Onglet(br).ouvrir(base_url + "Rot", init=STUB)
             await o.walk((0, 15, 0), 0)
-            await o.pg.wait_for_timeout(300)
+            await attendre_js(o.pg, JS_BOUSSOLE, "O 270°")
             rapport(await o.txt("compass") == "O 270°", "rotate 90 et --north 180, avatar vers -Z : 90 + 180 = « O 270° »", await o.txt("compass"))
             await o.ctx.close()
             o = await Onglet(br).ouvrir(base_url + "Sol#lang=en", init=STUB)
             await o.walk((0, 15, 0), math.pi / 2)
-            await o.pg.wait_for_timeout(300)
+            await attendre_js(o.pg, JS_BOUSSOLE, "W 270°")
             rapport(await o.txt("compass") == "W 270°", "anglais : « W 270° »", await o.txt("compass"))
             await o.ctx.close()
             o = await Onglet(br).ouvrir(base_url + "NoComp", init=STUB)
