@@ -4,6 +4,11 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.7.0)
 
+### 08/11/2026 : README (fr et en) : fonctions, deux sortes de page, contenu des paquets, mise à jour
+
+- **Demande de Klaatou** : présenter au néophyte ce que fait web_3d, la différence entre page autonome et page avec coquille, ce que contient un paquet et ce qui demande un serveur.
+- **Fait** : phrase du GLB corrigée (c'est la page web_3d qui l'affiche, dans un navigateur ordinaire) ; nouvelles sections « Ce que l'on peut faire », « Deux sortes de page » (la page autonome se partage en un seul fichier, avec ses limites : zones image depuis le disque, pas d'export autonome en tuiles), « Paquets prêts à l'emploi » ; seul le serveur de présence demande autre chose qu'un hébergement web de base ; contenu d'un paquet (`site/` se publie, `presence/` jamais sur un hébergement web, lanceurs `.bat` Windows, `.sh` Linux, `.command` macOS) ; essayer chez soi et publier présentés comme deux choses séparées ; mise à jour : `aide.html` recopié seulement s'il n'a pas été adapté ; viewer en région en tuiles : zones seulement, plus la ligne de commande écrite ; phrase fausse corrigée (« les fichiers de `dist/` ne sont pas versionnés ») ; dernière étiquette `v49` retirée. Aucun fichier de `dist\` ne change.
+
 ### 08/11/2026 : README (fr et en) : présentation en tête, glossaire, étiquettes de version retirées
 
 - **Demande de Klaatou** : un README plus léger à l'entrée, dans les deux langues, sans toucher au reste.

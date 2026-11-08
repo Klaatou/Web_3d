@@ -8,18 +8,47 @@ English | [Français](README.fr.md)
 
 **[Try the online demo](https://klaatou.github.io/Web_3d_demo/)**: two regions linked by portals, and the world map (With a presence server).
 
-**web_3d** turns a region of an **OpenSim** virtual world (an **OAR** backup) into a web page that visitors can walk around, with nothing to install on their side. The OAR is converted to a **glTF** model (`.glb`), then displayed with **three.js** in a walkable web page: avatar, collisions, real-time visitors, chat, zones and portals, and a world map. The interface of the page, of the viewer and of the Python tools is available in **English and French** (see "Language" below).
+**web_3d** turns a region of an **OpenSim** virtual world (an **OAR** backup) into a web page that visitors can walk around, with nothing to install on their side: the OAR becomes a **glTF** model (`.glb`), which the web_3d page (`index.html`) displays with **three.js** in an ordinary browser. The interface of the page, of the viewer and of the Python tools is available in **English and French** (see "Language" below).
 
-**Three terms**: an **OAR** is the backup file of an OpenSim region; a **GLB** is a 3D model in a single `.glb` file that a browser can display; **tiles** are the pieces a huge region is cut into, loaded and unloaded around the avatar while walking.
+**Three terms**: an **OAR** is the backup file of an OpenSim region; a **GLB** is a 3D model in a single `.glb` file, which the web_3d page displays in an ordinary browser; **tiles** are the pieces a huge region is cut into, loaded and unloaded around the avatar while walking.
 
-**At home, without reading all the documentation**: two ready-to-use packages can be downloaded from the [releases page](https://github.com/Klaatou/Web_3d/releases/latest):
+## What you can do
+
+- **Walk, run, jump and fly** in the region: first person, third person or free camera, with collisions; on-screen controls and touch mode for phones and tablets (see "Main keys").
+- **Visit a huge region**: it is cut into tiles that load around the avatar (see "Tiled regions").
+- **Place zones** in the model: arrival points, portals to another region, signs, web links, Home Assistant commands, and **pictures on walls** (JPEG, PNG, animated GIF).
+- **Be several**: see the other visitors and chat, with the optional presence server (see "Presence server").
+- **Link several regions** with a world map (`carte.html`): one card per region, each leading to it (see "World map").
+- **Set everything up** in the viewer (`glb-viewer.html`: sea, camera, walking, zones, region card), or directly in the JSON files (`NOM.config.json`, `NOM.zones.json`), which a page with a shell reads again at every F5.
+
+## Two kinds of page
+
+- **Standalone page**: a single `.html` file with everything inside, the model included. You can send it or give it to anyone: it opens from the disk, in a browser, with no web server and no other file. Limits: picture zones show nothing when opened from the disk (they need a web host), and a tiled region has no standalone export.
+- **Page with a shell**: a common page `index.html` (the shell) displays every region of the site; each region keeps its files next to it (`NOM.glb`, `NOM.config.json`, `NOM.zones.json`). It must be served over http/https: this is the form to publish, and the one to choose for several regions, the map and the presence server (see "A site: one shell, one folder per region" and "Modular mode and shared shell" below).
+
+**What needs a server**: only the presence server needs more than a basic web host (it is a Python program, with the `websockets` package, that must run on a server). The page, the map, the pictures and the zones are plain files that any basic web host can serve (the demo is on GitHub Pages); only a Home Assistant zone calls your own Home Assistant.
+
+## Ready-to-use packages
+
+Without reading all the documentation, two packages can be downloaded from the [releases page](https://github.com/Klaatou/Web_3d/releases/latest):
 
 - **`region-simple.zip`**: your OpenSim region (a GLB file) in a browser. You put your GLB under `site/region.glb`; `renommer-region.bat` changes the name; `site/readme.html` explains the settings and how to get a GLB from an OAR.
 - **`galerie-photos.zip`**: a 3D gallery of 30 photos. You replace the images in `site/medias/` (`1.jpg` to `30.jpg`); `site/galerie.html` documents everything, `renommer-galerie.bat` changes the name.
 
-**Already have one of these packages?** Do not unzip the new zip over your folder: it would overwrite your configuration, your zones and your images. Unzip it somewhere else and copy only `index.html` and `carte.html` (`SIMPLE_PROCEDURES.md` § 10).
+**What is in a package**:
 
-In both: unzip, read `README.txt`, double-click the launcher (Windows, macOS) or type `sh lancer-region.sh` in a terminal (Linux), then copy the contents of `site/` to a web host to publish. A tester tried the macOS launcher (macOS Ventura 13.7.8, Firefox 159.0.1) with `region-simple.zip`: the region is displayed. The optional presence server is in `presence/`. The sources are in `paquets/`; `python fabriquer_paquets.py` rebuilds the zips (`docs/en/PROCEDURES.md` § 12, or `docs/fr/PROCEDURES.md` in French). **Do not use "Download ZIP" on the repository page**: it is the source code, without `index.html` or `lib/`; the launchers say so.
+- `site/`: everything that is published. To put the region online, copy the **contents** of this folder to a web host.
+- `presence/`: the optional presence server: a program to run on a server, **not** a page. Do not upload it to a web host.
+- the launchers `lancer-region.*` (`lancer-galerie.*` for the gallery) and the renaming scripts `renommer-*`: tools for your own computer, never published. **`.bat` on Windows, `.sh` on Linux, `.command` on macOS.**
+
+**Two separate things**:
+
+1. *Try it on your computer*: on Windows, double-click the `.bat`; on macOS, double-click the `.command` (the first time: right click, Open); on Linux, type `sh lancer-region.sh` in a terminal (Linux and macOS need Python 3.7 or later). The launcher starts a small local web server: keep its window open while you look. Double-clicking `site/index.html` does not work: a message asks for a web server.
+2. *Publish*: copy the contents of `site/` to a web host. This is an alternative way to show your region, not a next step: the launcher is only for trying it at home.
+
+**Already have one of these packages?** Do not unzip the new zip over your folder: it would overwrite your configuration, your zones and your images. Unzip it somewhere else, then copy `index.html` and `carte.html` (always), and `aide.html` (the visitors' help, with the credit line and the new help texts) only if you have not adapted it; if you have, keep yours (`SIMPLE_PROCEDURES.md` § 10).
+
+A tester tried the macOS launcher (macOS Ventura 13.7.8, Firefox 159.0.1) with `region-simple.zip`: the region is displayed. The sources are in `paquets/`; `python fabriquer_paquets.py` rebuilds the zips (`docs/en/PROCEDURES.md` § 12, or `docs/fr/PROCEDURES.md` in French). **Do not use "Download ZIP" on the repository page**: it is the source code, without `index.html` or `lib/`; the launchers say so.
 
 The manuals are in English in `docs/en/` (`INDEX.md` to find your way, `GUIDE.md` to start, `MANUAL.md`, `PROCEDURES.md`, `REFERENCE_JSON.md`, `HISTORY.md`) and in French in `docs/fr/`. All the options of every tool, in English and in French, are in [`REFERENCE_OPTIONS.md`](REFERENCE_OPTIONS.md); `python glb2html.py --help` (and the same for the other tools) prints them in the tools' language (see "Language" below).
 
@@ -27,7 +56,7 @@ The manuals are in English in `docs/en/` (`INDEX.md` to find your way, `GUIDE.md
 
 | Built file                                  | Role                                                                                                                                                                                                                                     |
 | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `glb-viewer.html`                           | Settings and export page: load a `.glb` (or the folder of a tiled region), adjust the sea, the hole, the camera, walking, the zones and the region card, then export (for a tiled region: zones and command line only).      |
+| `glb-viewer.html`                           | Settings and export page: load a `.glb` (or the folder of a tiled region), adjust the sea, the hole, the camera, walking, the zones and the region card, then export (for a tiled region, only the zones: the viewer exports `NOM.zones.json` and writes the `glb2html.py` command line to run).      |
 | `glb2html.py`                               | The same job on the command line (offline, no browser): single page, modular page or shared shell, tiled regions, `--update` to update a published region, `--scan-sites` for the map of a whole site.                                   |
 | `index.html`                                | The shared shell, ready to copy to the root of a site.                                                                                                                                                                             |
 | `carte.html`                                | The world map page, identical for every site: it reads the `regions.json` next to it.                                                                                                                                              |
@@ -51,7 +80,7 @@ Python 3.9 or later is required.
 python build.py
 ```
 
-The result is in `dist/`. On first run three.js r160 is downloaded into `.cache/` (or use `python build.py --vendor DOSSIER` with an npm `three` package already unpacked). The files of `dist/` are not versioned. The build embeds the language files (`src/i18n/*.json`) in the pages and in each Python tool, so every tool in `dist/` is a standalone file.
+The result is in `dist/`. On first run three.js r160 is downloaded into `.cache/` (or use `python build.py --vendor DOSSIER` with an npm `three` package already unpacked). The files of `dist/` are versioned and rebuilt by `python build.py`. The build embeds the language files (`src/i18n/*.json`) in the pages and in each Python tool, so every tool in `dist/` is a standalone file.
 
 ## Use
 
@@ -71,7 +100,7 @@ The full steps (OAR to page, tiled region, update, zones, public presence server
 Recommended layout (manual § 6.2): at the root of the site, a single shell `index.html` (copy of `dist/index.html`), the `lib/` folder, `regions.json` and `carte.html` (copy of `dist/carte.html`); then one folder per region with its `NOM.glb` (or its tiles), `NOM.config.json` and `NOM.zones.json`. A region opens at `index.html?region=dossier/NOM`. The site must be served over http/https (local test: `python -m http.server`).
 
 - Update a region after a new version: `python glb2html.py --update -o "SITE/dossier/NOM.html" --shared-shell "SITE/index.html"` (the path of the root shell avoids writing a useless shell into the region's folder).
-- Update the map of the whole site: `python glb2html.py --scan-sites SITE --dry-run`, then without `--dry-run` (v49, manual § 9.9).
+- Update the map of the whole site: `python glb2html.py --scan-sites SITE --dry-run`, then without `--dry-run` (manual § 9.9).
 
 ## Modular mode and shared shell
 
