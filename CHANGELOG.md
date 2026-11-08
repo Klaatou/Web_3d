@@ -4,6 +4,13 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.8.0)
 
+### 08/11/2026 : `tests/gui.py` : plus de message Tcl « application has been destroyed » (lot 1.8.1)
+
+- **Constat de Klaatou** (Windows) : en lançant `tests/gui.py`, Tcl écrit « can't invoke "event" command: application has been destroyed » (procédure `ttk::ThemeChanged`) ; le test finit pourtant par « tout est passé ».
+- **Cause probable** (non reproduite ici : Tk 8.6.14 sous Linux n'écrit rien) : le test ouvrait une première fenêtre Tk pour vérifier qu'un écran existe, la détruisait aussitôt, puis ouvrait celle du lanceur ; une tâche de thème restée en attente de la première s'exécutait ensuite, sa fenêtre étant déjà détruite.
+- **Fait** : il n'y a plus de première fenêtre : le test crée directement la fenêtre du lanceur. Sans écran (erreur Tcl qui parle de « display »), il ignore la partie fenêtre comme avant ; toute autre erreur de la fenêtre est relancée, pas confondue avec l'absence d'écran. Aucun fichier de `dist/` ne change.
+- **Test** : sans écran : `[IGNORE]` et code 0 ; avec écran : les 55 contrôles ; une faute volontaire (option inconnue donnée à un widget) fait échouer le test au lieu d'être ignorée. **Non testé** : sous Windows (disparition du message).
+
 ## 1.8.0 (08/11/2026)
 
 ### 08/11/2026 : publication 1.8.0 : lanceur graphique et raccourcis Windows, `diag_carte.py`, README et documents refaits

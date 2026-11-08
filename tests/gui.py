@@ -150,17 +150,24 @@ code, sortie_rac = lance("--remove-shortcuts", "--shortcuts-folder", str(dos))
 rapport(code == 0 and sorted(x.name for x in dos.glob("*.lnk")) == ["autre.lnk"], "--remove-shortcuts : seuls les raccourcis de web3d_gui sont supprimes", (code, sorted(x.name for x in dos.glob("*.lnk"))))
 
 # ------------------------------------------------------------- avec fenetre
-try:
-    import tkinter as tk
-    from tkinter import ttk, filedialog
-    racine = tk.Tk()
-    racine.destroy()
-except Exception as e:
+def sans_fenetre(e):
     print(f"[IGNORE] partie fenetre : pas de tkinter ou pas d'ecran ({type(e).__name__}) ; lancer avec xvfb-run pour la faire")
     print("\nRESULTAT :", "tout est passe" if not bad else f"{bad} echec(s)")
     sys.exit(1 if bad else 0)
 
-f = g.fenetre([(n, DIST / fn) for n, fn in g.OUTILS], tk, ttk, filedialog)
+
+# une seule fenetre Tk : pas de fenetre d'essai ouverte puis detruite avant (sous Windows, une tache de theme en attente s'executait ensuite : erreur Tcl « application has been destroyed »)
+try:
+    import tkinter as tk
+    from tkinter import ttk, filedialog
+except ImportError as e:
+    sans_fenetre(e)
+try:
+    f = g.fenetre([(n, DIST / fn) for n, fn in g.OUTILS], tk, ttk, filedialog)
+except tk.TclError as e:
+    if "display" not in str(e).lower():      # une vraie erreur de la fenetre ne se confond pas avec l'absence d'ecran
+        raise
+    sans_fenetre(e)
 r = f.root
 r.update()
 rapport(len(f.lignes) == len(champs), "la fenetre a une ligne par option", (len(f.lignes), len(champs)))
