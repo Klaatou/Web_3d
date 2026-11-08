@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Marque (empreinte) de chaque fichier fabrique par build.py.
 
-Verifie : deux fabrications donnent les memes marques ; les trois fichiers qui l'affichent (presence_server.py, oar2glb.py, glb2tiles.py) la portent
+Verifie : deux fabrications donnent les memes marques ; les cinq fichiers qui l'affichent (presence_server.py, oar2glb.py, glb2tiles.py, extraire_batiments.py, iar2oar.py) la portent
 dans leur ligne MARK et la donnent avec --version ; la marque est bien les 8 premiers caracteres du SHA-256 du fichier dont la marque est vide ;
 les autres fichiers ont les 8 premiers caracteres de leur propre SHA-256 ; aucun repere « a remplacer » ne reste ; modifier UN fichier source
 ne change que la marque du fichier fabrique qui en vient.
@@ -14,6 +14,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 tmp = pathlib.Path(tempfile.mkdtemp(prefix="glb2html_marque_"))
 vend = ["--vendor", os.environ["THREE_DIR"]] if os.environ.get("THREE_DIR") else []
 echecs = 0
+MARQUES = ("presence_server.py", "oar2glb.py", "glb2tiles.py", "extraire_batiments.py", "iar2oar.py")
 
 
 def rapport(ok, titre, detail=""):
@@ -42,16 +43,16 @@ rapport(len(m1) >= 8 and m1 == m2, "deux fabrications : les memes marques pour l
 tous = sorted(p.name for p in (tmp / "d1").iterdir() if p.is_file())
 rapport(sorted(m1) == tous, "une marque pour chaque fichier fabrique", (sorted(m1), tous))
 rapport(all(b"__MARK__" not in (tmp / "d1" / n).read_bytes() for n in tous), "aucun repere a remplacer ne reste dans les fichiers fabriques")
-for nom in ("presence_server.py", "oar2glb.py", "glb2tiles.py"):
+for nom in MARQUES:
     txt = (tmp / "d1" / nom).read_text(encoding="utf-8")
     mm = re.search(r'^MARK = "([0-9a-f]{8})"', txt, re.M)
     vide = txt.replace('"%s"' % m1[nom], '""')
     calc = hashlib.sha256(vide.encode("utf-8")).hexdigest()[:8]
     rapport(bool(mm) and mm.group(1) == m1[nom] == calc, f"{nom} : la ligne MARK, la liste du build et le calcul (marque vide) donnent la meme marque", (mm and mm.group(1), m1[nom], calc))
-    v = subprocess.run([sys.executable, str(tmp / "d1" / nom), "--version"], capture_output=True, text=True, timeout=30)
+    v = subprocess.run([sys.executable, str(tmp / "d1" / nom), "--lang", "fr", "--version"], capture_output=True, text=True, timeout=30)
     rapport(v.returncode == 0 and ("empreinte " + m1[nom]) in v.stdout, f"{nom} --version donne l'empreinte", v.stdout + v.stderr[-100:])
 for nom in tous:
-    if nom not in ("presence_server.py", "oar2glb.py", "glb2tiles.py"):
+    if nom not in MARQUES:
         rapport(hashlib.sha256((tmp / "d1" / nom).read_bytes()).hexdigest()[:8] == m1[nom], f"{nom} : marque = 8 premiers caracteres de son SHA-256")
 # modifier un seul fichier source : une seule marque change
 copie = tmp / "depot"

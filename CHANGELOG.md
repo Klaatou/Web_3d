@@ -4,6 +4,12 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.7.0)
 
+### 08/11/2026 : `tests/marque.py` : cinq fichiers à marque, `--version` en français
+
+- **Cause 1** : `--version` suit la langue du système (« fingerprint » en anglais) alors que le test cherche « empreinte » ; le test passe maintenant `--lang fr`.
+- **Cause 2** : `extraire_batiments.py` et `iar2oar.py` portent une ligne `MARK` depuis les lots 1.6.3 et 1.6.4, mais le test les traitait encore comme des fichiers sans marque ; la liste des fichiers marqués (une constante `MARQUES`) en compte cinq.
+- Aucun fichier de `dist\` ne change. Le test n'avait pas été corrigé avant ce lot (échecs déjà présents sur `main`).
+
 ### 07/11/2026 : notes de la release 1.7.0 alignées sur la description publiée
 
 - **Demande de Klaatou** : le `CHANGELOG.md` reprend la description qu'il a publiée sur GitHub pour la 1.7.0 (listes, anglais puis français, avertissement « ne pas dézipper par-dessus », piège de l'ordre des extensions, précaution pour `aide.html`). **Fait** : le bloc « Notes de la release GitHub » de la 1.7.0 est remplacé par ce texte, en citation. **Une seule différence, signalée** : la puce « `carte.html` is published with the site » / « inclus dans la publication du site » laissait croire à une nouveauté de la 1.7.0, alors que la carte est dans les paquets depuis la v1.5.0 (`regions.json` et `vignette.jpg` y sont dans l'étiquette `v1.5.0`) ; ce qui est nouveau, c'est que les `README.txt` des paquets le disent. La puce est reformulée ainsi ici (et dans la puce « Publication » de la même entrée) ; la description de la release sur GitHub peut être corrigée de la même façon, en une ligne par langue. `VERSION` passe de `1.7.0` à `1.7.1` (compteur de lots ; pas une publication).
