@@ -49,7 +49,7 @@ for nom, (outil, source) in OUTILS.items():
                 manque.append(f"{lang}:{k}")
     rapport(not manque, f"{nom} : les {len(cites)} textes cites par la source sont presents en francais et en anglais", manque[:5])
     for lang in ("fr", "en"):
-        r = subprocess.run([sys.executable, str(DIST / nom), "--help"], capture_output=True, text=True, env=dict(os.environ, WEB3D_LANG=lang), timeout=60)
+        r = subprocess.run([sys.executable, str(DIST / nom), "--help"], capture_output=True, text=True, env=dict(os.environ, WEB3D_LANG=lang), timeout=60, stdin=subprocess.DEVNULL)   # glb2tiles.py et oar2glb.py attendent Entree a la fin quand l'entree est une console
         sortie = r.stdout + r.stderr
         rapport(r.returncode == 0 and "py." not in sortie and len(sortie) > 50, f"{nom} --help ({lang}) : marche, aucune cle brute", (r.returncode, sortie[-300:]))
 

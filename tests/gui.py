@@ -119,6 +119,8 @@ rapport(len(prevus) == 1 + len(g.OUTILS) and prevus[0][0].name == "Web_3d - laun
 ps = g.script_powershell([(pathlib.Path("C:/Bureau d'Anne/x.lnk"), ["C:/a b/web3d_gui.py", "--tool", "glb2html"])], "C:/Python 3/pythonw.exe", "C:/a b")
 rapport("Bureau d''Anne" in ps and "$s.Arguments = '\"C:/a b/web3d_gui.py\" --tool glb2html'" in ps and "$s.TargetPath = 'C:/Python 3/pythonw.exe'" in ps and ps.count("$s.Save()") == 1 and "\r\n" in ps,
         "script PowerShell : apostrophe doublee, arguments entre guillemets, un Save par raccourci", ps)
+ps_i = g.script_powershell([(pathlib.Path("C:/x.lnk"), ["C:/a/web3d_gui.py"])], "C:/P/pythonw.exe", "C:/a", "C:/a b/favicon.ico")
+rapport("$s.IconLocation = 'C:/a b/favicon.ico,0'" in ps_i and ps_i.index("IconLocation") < ps_i.index("$s.Save()") and "IconLocation" not in ps, "script PowerShell : l'icone du projet est posee avant Save, et seulement si elle existe", ps_i)
 
 
 def lance(*args):
@@ -130,6 +132,7 @@ def lance(*args):
 
 code, sortie_rac = lance("--shortcuts", "--dry-run", "--shortcuts-folder", str(dos))
 rapport(code == 0 and sortie_rac.count("would be created:") == len(prevus) and not list(dos.glob("*.lnk")), "--shortcuts --dry-run : montre le plan, ne cree rien", (code, sortie_rac[:200]))
+rapport("shortcut icon:" in sortie_rac and "favicon.ico" in sortie_rac, "--dry-run : dit quelle icone sera utilisee (favicon.ico de dist)", sortie_rac[:160])
 if os.name != "nt":
     code, sortie_rac = lance("--shortcuts", "--shortcuts-folder", str(dos))
     rapport(code == 2 and not list(dos.glob("*.lnk")) and "only be created on Windows" in sortie_rac, "hors Windows : refus clair (code 2), rien d'ecrit", (code, sortie_rac[:200]))

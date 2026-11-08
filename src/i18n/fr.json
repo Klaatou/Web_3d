@@ -1689,5 +1689,7 @@
  "py.gui.sc_ps_fail": "PowerShell n'a pas pu créer les raccourcis : {0}",
  "py.gui.sc_summary_done": "{0} raccourci(s) créé(s) dans {1}. Si Python est déplacé ou réinstallé, relancez --shortcuts.",
  "py.gui.sc_summary_dry": "{0} raccourci(s) seraient créés dans {1} (rien n'a été écrit).",
- "py.gui.sc_summary_remove": "{0} raccourci(s) concerné(s) dans {1}."
+ "py.gui.sc_summary_remove": "{0} raccourci(s) concerné(s) dans {1}.",
+ "py.gui.sc_icon": "icône des raccourcis : {0}",
+ "py.gui.sc_no_icon": "favicon.ico est introuvable : les raccourcis garderont l'icône de Python."
 }

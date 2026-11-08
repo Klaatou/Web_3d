@@ -558,6 +558,15 @@ def dossier_bureau(dossier=None):
     return Path.home() / "Desktop"
 
 
+def trouver_icone():
+    """l'icône du projet (favicon.ico, la même image que « Réalisé avec Web_3d ») : à côté de ce script (dist), sinon dans src/ ; None si absente"""
+    ici = Path(__file__).resolve().parent
+    for p in (ici / "favicon.ico", ici.parent / "dist" / "favicon.ico", ici.parent / "src" / "favicon.ico"):
+        if p.is_file():
+            return p
+    return None
+
+
 def raccourcis_prevus(dossier):
     """[(fichier .lnk, arguments)] : un raccourci pour la fenêtre (premier outil), puis un par outil trouvé à côté de ce script"""
     ce_script = str(Path(__file__).resolve())
@@ -573,13 +582,13 @@ def _ps(s):
     return "'" + str(s).replace("'", "''") + "'"
 
 
-def script_powershell(prevus, programme, depart):
-    """texte du script PowerShell qui crée les raccourcis ; le programme est pythonw.exe (pas de fenêtre console)"""
+def script_powershell(prevus, programme, depart, icone=None):
+    """texte du script PowerShell qui crée les raccourcis ; le programme est pythonw.exe (pas de fenêtre console) ; icone : fichier .ico (sinon l'icône de Python)"""
     lignes = ["$ErrorActionPreference = 'Stop'", "$sh = New-Object -ComObject WScript.Shell"]
     for lnk, args in prevus:
         lignes += ["$s = $sh.CreateShortcut(" + _ps(lnk) + ")", "$s.TargetPath = " + _ps(programme),
                    "$s.Arguments = " + _ps(subprocess.list2cmdline(args)), "$s.WorkingDirectory = " + _ps(depart),
-                   "$s.Description = " + _ps(_tr("py.gui.sc_desc")), "$s.Save()"]
+                   "$s.Description = " + _ps(_tr("py.gui.sc_desc"))] + (["$s.IconLocation = " + _ps(str(icone) + ",0")] if icone else []) + ["$s.Save()"]
     return "\r\n".join(lignes) + "\r\n"
 
 
@@ -604,6 +613,8 @@ def gerer_raccourcis(creer, dossier, simuler):
     if os.name == "nt" and not programme.is_file():
         print(_tr("py.gui.sc_console"))
         programme = Path(sys.executable)
+    icone = trouver_icone()
+    print(_tr("py.gui.sc_icon", icone) if icone else _tr("py.gui.sc_no_icon"))
     for lnk, args in prevus:
         print(_tr("py.gui.sc_would_create" if simuler else "py.gui.sc_create", lnk, subprocess.list2cmdline([str(programme)] + args)))
     if simuler:
@@ -612,7 +623,7 @@ def gerer_raccourcis(creer, dossier, simuler):
     dossier.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as tmp:
         ps1 = Path(tmp) / "raccourcis.ps1"
-        ps1.write_text(script_powershell(prevus, programme, Path(__file__).resolve().parent), encoding="utf-8-sig")   # BOM : PowerShell 5 lit ainsi les accents des chemins
+        ps1.write_text(script_powershell(prevus, programme, Path(__file__).resolve().parent, icone), encoding="utf-8-sig")   # BOM : PowerShell 5 lit ainsi les accents des chemins
         r = subprocess.run(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(ps1)], capture_output=True, text=True)
     if r.returncode != 0:
         print(_tr("py.gui.sc_ps_fail", (r.stderr or r.stdout).strip()))

@@ -4,6 +4,14 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.7.0)
 
+### 08/11/2026 : raccourcis avec l'icône du projet, et `textes_outils` qui ne bloque plus dans une console (lot 1.7.19)
+
+- **Demande de Klaatou** : les raccourcis créés par `--shortcuts` (1.7.18) montrent l'icône de Python ; ils doivent avoir l'icône du projet.
+- **Fait** : `$s.IconLocation` pointe vers `favicon.ico` (à côté de `web3d_gui.py` dans `dist/`, copié par `build.py`, sinon dans `src/`) : c'est exactement l'image 64 x 64 de l'icône « Réalisé avec Web_3d » (`src/credit.png`), dans un fichier `.ico` de quatre tailles (16, 32, 48, 64). Sans ce fichier, les raccourcis gardent l'icône de Python et le script le dit. `--dry-run` indique l'icône retenue. Pour les raccourcis déjà créés : relancer `--shortcuts` les remplace.
+- **Test** : `tests/gui.py` : l'icône est posée avant `Save` quand elle existe, et seulement dans ce cas ; `--dry-run` la nomme. **Non testé** : l'affichage de l'icône sous Windows (cache d'icônes de l'explorateur).
+- **Constat de Klaatou** : `tests/textes_outils.py` s'arrêtait sous Windows par `TimeoutExpired` (60 s) sur `glb2tiles.py --help`, deux fois de suite. **Cause** : à la fin de `glb2tiles.py` (et de `oar2glb.py`), l'outil attend Entrée (« Entrée pour fermer ») quand l'entrée standard est une console et que `--nopause` n'est pas donné, **même après `--help`** (`glb2tiles.py` ligne 2249 : le `SystemExit` de `--help` est rattrapé, puis la pause). Le test lançait l'outil sans fermer son entrée : il héritait de la console de Klaatou. Dans le bac à sable l'entrée n'est pas une console, d'où des tests verts. **Reproduit** ici avec un pseudo-terminal comme entrée : `glb2tiles.py --help` et `oar2glb.py --help` ne finissent pas ; avec `--nopause` ou une entrée fermée, ils finissent en 0,1 s ; `extraire_batiments.py`, `iar2oar.py`, `diag_carte.py`, `glb2html.py` et `web3d_gui.py` n'ont pas ce défaut.
+- **Fait** : `tests/textes_outils.py` lance les outils avec l'entrée fermée (`stdin=subprocess.DEVNULL`) ; les autres tests qui lancent ces deux outils ferment déjà l'entrée (`tools_lang.py`, `v37.py`) ou passent `--nopause`. Les outils ne sont pas modifiés (la pause est voulue pour les fenêtres ouvertes par double-clic).
+
 ### 08/11/2026 : `web3d_gui.py` : raccourcis Windows (lot 1.7.18)
 
 - **Demande de Klaatou** : des raccourcis pour lancer l'interface, depuis le bureau ou ailleurs.

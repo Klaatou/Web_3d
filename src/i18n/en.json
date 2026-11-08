@@ -1689,5 +1689,7 @@
  "py.gui.sc_ps_fail": "PowerShell could not create the shortcuts: {0}",
  "py.gui.sc_summary_done": "{0} shortcut(s) created in {1}. If Python is moved or reinstalled, run --shortcuts again.",
  "py.gui.sc_summary_dry": "{0} shortcut(s) would be created in {1} (nothing was written).",
- "py.gui.sc_summary_remove": "{0} shortcut(s) concerned in {1}."
+ "py.gui.sc_summary_remove": "{0} shortcut(s) concerned in {1}.",
+ "py.gui.sc_icon": "shortcut icon: {0}",
+ "py.gui.sc_no_icon": "favicon.ico not found: the shortcuts will keep Python's icon."
 }
