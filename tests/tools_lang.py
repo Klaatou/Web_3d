@@ -17,7 +17,7 @@ def run(tool, *args, env=None):
     e.update(env or {})
     r = subprocess.run([sys.executable, str(DIST / tool), *args], capture_output=True, text=True, encoding="utf-8", env=e, stdin=subprocess.DEVNULL)
     return r.stdout + r.stderr
-for tool in ("glb2html.py", "glb2tiles.py", "oar2glb.py", "presence_server.py", "extraire_batiments.py", "iar2oar.py"):
+for tool in ("glb2html.py", "glb2tiles.py", "oar2glb.py", "presence_server.py", "extraire_batiments.py", "iar2oar.py", "diag_carte.py"):
     en = run(tool, "--lang", "en", "--help"); fr = run(tool, "--lang", "fr", "--help")
     rapport("usage:" in en and "--lang" in en, f"{tool} --lang en --help s'affiche")
     rapport(not ACC.search(en), f"{tool} --lang en --help : aucune lettre accentuée française", [l for l in en.splitlines() if ACC.search(l)][:3])

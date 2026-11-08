@@ -3,6 +3,10 @@
   "hash": "6efc8d2d7f249204a4c5c23d8ecd6520dd89f4d5cb204ca79954ee1c9351ef4e",
   "version": "1.6.17 (07/11/2026)"
  },
+ "diag_carte.py": {
+  "hash": "7e3d79a5e356d5179b5079aa9f1bf532ac5d8df325366e5919423b966bff21b6",
+  "version": "1.7.7 (08/11/2026)"
+ },
  "extraire_batiments.py": {
   "hash": "a967bc66b2c0a4ba7053691d418657702211538341bc7d51425e02fc276e6518",
   "version": "1.6.3 (06/11/2026)"

@@ -4,6 +4,13 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.7.0)
 
+### 08/11/2026 : `diag_carte.py` entre dans le dépôt (tools, dist, messages fr/en, `--lang`, `--version`)
+
+- **Demande de Klaatou** : intégrer l'outil de diagnostic de la carte, qui traînait à la racine du dépôt sans être cité nulle part.
+- **Fait** : `diag_carte.py` passe de la racine à `tools/` (même mécanisme que `extraire_batiments.py` : ligne `MARK`, version, textes français et anglais dans `src/i18n`, `--lang`, `--version`, aide traduite), fabriqué dans `dist/` par `build.py` ; mêmes diagnostics et mêmes codes de sortie qu'avant (0 serveur bon, 1 injoignable, 2 ancien serveur, 3 aucun pseudo avec la clé, 4 origine refusée) ; l'exemple d'origine utilise `https://VOTRE-SITE` au lieu d'une adresse réelle ; ajouté à `build.py`, `gen_reference.py` (`REFERENCE_OPTIONS.md` régénéré), `tests/marque.py`, `tests/textes_outils.py`, `tests/tools_lang.py` et au tableau des fichiers des deux README ; nouveau test `tests/diag_carte.py` (faux serveur de présence : cas bon, ancien serveur, aucune clé, personne en ligne, injoignable, origine refusée, aide et version en français et en anglais). README anglais : les noms français `carte.html`, `lancer-*` et `renommer-*` sont traduits à leur première mention.
+- **Défaut corrigé au passage** : l'ancien script décidait « origine refusée » d'après les chiffres du message d'erreur (`403` ou `4003`) ; un serveur injoignable dont le numéro de port contient `403` (par exemple 54003) était donc pris pour un refus d'origine. Le refus est maintenant reconnu par la réponse HTTP 403 ou la fermeture 4003, jamais par le texte ; le test essaie un port en `403`.
+- **À compléter à la validation (règle 16)** : manuel et procédures (français et anglais) ne parlent pas encore de `diag_carte.py`.
+
 ### 08/11/2026 : README (fr et en) : fonctions, deux sortes de page, contenu des paquets, mise à jour
 
 - **Demande de Klaatou** : présenter au néophyte ce que fait web_3d, la différence entre page autonome et page avec coquille, ce que contient un paquet et ce qui demande un serveur.

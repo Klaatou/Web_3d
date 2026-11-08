@@ -187,6 +187,18 @@ Transforme une archive d'inventaire OpenSim (IAR) en OAR minimal pour la chaîne
 | `--no-nested` | (aucune) / (none) |  | ignore les objets contenus dans d'autres (boîtes)<br>ignores the objects held inside others (boxes) |
 | `--margin` | MARGE | `4.0` | espace entre deux cases de la grille, en mètres (défaut 4)<br>space between two grid cells, in metres (default 4) |
 
+## diag_carte.py
+
+Diagnostique les pseudos de la carte : interroge le serveur de présence comme la carte, avec et sans la clé, et dit ce qui manque.<br>Diagnoses the nicknames of the map: queries the presence server the way the map does, with and without the key, and says what is missing.
+
+| Option | Valeur / Value | Défaut / Default | Effet / Effect |
+|---|---|---|---|
+| `--lang` | CODE | `auto` | langue des messages et de l'aide : fr, en ou auto (défaut : langue du système ; variable d'environnement WEB3D_LANG équivalente). Disponibles : en, fr<br>language of the messages and of this help: fr, en or auto (default: the system's language; environment variable WEB3D_LANG is equivalent). Available: en, fr |
+| `--version` |  |  | afficher la version et quitter<br>show the version and exit |
+| `url` (obligatoire / required) | ws://HOST:PORT |  | adresse du serveur de présence (ws:// ou wss://), la même que dans la configuration de vos régions<br>address of the presence server (ws:// or wss://), the same as in the configuration of your regions |
+| `key` (obligatoire / required) | KEY |  | la clé des pseudos (--map-names-key du serveur)<br>the nicknames key (--map-names-key of the server) |
+| `origin` (facultatif / optional) | ORIGIN |  | l'adresse de VOTRE SITE, sans chemin (par exemple https://VOTRE-SITE), si le serveur n'accepte que certains sites (--origins, --creators)<br>the address of YOUR SITE, without a path (for example https://YOUR-SITE), if the server only accepts certain sites (--origins, --creators) |
+
 ## presence_server.py
 
 Serveur de présence : positions des visiteurs, chat, modération.<br>Presence server: visitor positions, chat, moderation.

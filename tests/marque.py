@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Marque (empreinte) de chaque fichier fabrique par build.py.
 
-Verifie : deux fabrications donnent les memes marques ; les cinq fichiers qui l'affichent (presence_server.py, oar2glb.py, glb2tiles.py, extraire_batiments.py, iar2oar.py) la portent
+Verifie : deux fabrications donnent les memes marques ; les six fichiers qui l'affichent (presence_server.py, oar2glb.py, glb2tiles.py, extraire_batiments.py, iar2oar.py, diag_carte.py) la portent
 dans leur ligne MARK et la donnent avec --version ; la marque est bien les 8 premiers caracteres du SHA-256 du fichier dont la marque est vide ;
 les autres fichiers ont les 8 premiers caracteres de leur propre SHA-256 ; aucun repere « a remplacer » ne reste ; modifier UN fichier source
 ne change que la marque du fichier fabrique qui en vient.
@@ -14,7 +14,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 tmp = pathlib.Path(tempfile.mkdtemp(prefix="glb2html_marque_"))
 vend = ["--vendor", os.environ["THREE_DIR"]] if os.environ.get("THREE_DIR") else []
 echecs = 0
-MARQUES = ("presence_server.py", "oar2glb.py", "glb2tiles.py", "extraire_batiments.py", "iar2oar.py")
+MARQUES = ("presence_server.py", "oar2glb.py", "glb2tiles.py", "extraire_batiments.py", "iar2oar.py", "diag_carte.py")
 
 
 def rapport(ok, titre, detail=""):

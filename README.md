@@ -18,7 +18,7 @@ English | [Français](README.fr.md)
 - **Visit a huge region**: it is cut into tiles that load around the avatar (see "Tiled regions").
 - **Place zones** in the model: arrival points, portals to another region, signs, web links, Home Assistant commands, and **pictures on walls** (JPEG, PNG, animated GIF).
 - **Be several**: see the other visitors and chat, with the optional presence server (see "Presence server").
-- **Link several regions** with a world map (`carte.html`): one card per region, each leading to it (see "World map").
+- **Link several regions** with a world map (`carte.html`, *carte* is French for map): one card per region, each leading to it (see "World map").
 - **Set everything up** in the viewer (`glb-viewer.html`: sea, camera, walking, zones, region card), or directly in the JSON files (`NOM.config.json`, `NOM.zones.json`), which a page with a shell reads again at every F5.
 
 ## Two kinds of page
@@ -39,7 +39,7 @@ Without reading all the documentation, two packages can be downloaded from the [
 
 - `site/`: everything that is published. To put the region online, copy the **contents** of this folder to a web host.
 - `presence/`: the optional presence server: a program to run on a server, **not** a page. Do not upload it to a web host.
-- the launchers `lancer-region.*` (`lancer-galerie.*` for the gallery) and the renaming scripts `renommer-*`: tools for your own computer, never published. **`.bat` on Windows, `.sh` on Linux, `.command` on macOS.**
+- the launchers `lancer-region.*` (*lancer* = launch; `lancer-galerie.*` for the gallery) and the renaming scripts `renommer-*` (*renommer* = rename): tools for your own computer, never published. **`.bat` on Windows, `.sh` on Linux, `.command` on macOS.**
 
 **Two separate things**:
 
@@ -65,6 +65,7 @@ The manuals are in English in `docs/en/` (`INDEX.md` to find your way, `GUIDE.md
 | `glb2tiles.py` (+ `glb-stats.py` beside it) | Splits a huge GLB into self-contained tiles (`X.tiles/*.glb` + `X.tiles.json`) and builds a light overview `X.overview.glb`; `--analyse` measures and recommends without writing anything; `--exclude` drops catalogue "delivery boxes". |
 | `extraire_batiments.py` | Outputs from an OAR and its GLB one recentred GLB per object group (house, furniture, tree...); `--list` shows the groups. |
 | `iar2oar.py` | Turns an inventory archive (IAR) into a minimal OAR, for the chain `oar2glb.py` then `extraire_batiments.py`. |
+| `diag_carte.py` | Diagnoses why the world map shows no nicknames: asks the presence server with and without the key and says what is missing. |
 
 ¹ **Prerequisites**: **oar2glb.py** relies on the external converter **convoar.exe** \
 Download: https://github.com/Misterblue/convoar/tree/master/bin \
