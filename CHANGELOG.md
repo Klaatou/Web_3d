@@ -4,6 +4,12 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.7.0)
 
+### 08/11/2026 : nom du testeur macOS dans les documents (lot 1.7.15)
+
+- **Demande de Klaatou** : mettre le nom du testeur macOS dans la documentation. **Accord** : NightshadeCeres l'a donné sur le fil de discussion de la démo (« of course »), vu par Klaatou le 08/11/2026.
+- **Fait** : le nom apparaît dans `README.md` et `README.fr.md` (avec un lien vers son profil), dans le manuel (Firefox, français et anglais), dans la vue d'ensemble (français et anglais) et dans l'entrée du 07/11/2026 de ce fichier. Les notes de la 1.7.0 restent anonymes : elles sont alignées sur la description déjà publiée.
+- **Exception à la règle 25** (aucun nom personnel dans le dépôt public) : seulement pour cette personne, avec son accord explicite.
+
 ### 08/11/2026 : lanceur graphique `web3d_gui.py` pour `glb2html.py` (lot 1.7.14)
 
 - **Demande de Klaatou** : une interface graphique pour les outils, d'abord pour `glb2html.py`, avec l'aide des options ; pas de prévisualisation 3D.
@@ -175,7 +181,7 @@ Les dates sont au format jj/mm/aaaa.
 
 ### 07/11/2026 : retour d'un testeur sous macOS (textes « non essayé » corrigés)
 
-- **Retour reçu** (fil de discussion de la démo) : un testeur a essayé les paquets sous **macOS Ventura 13.7.8 avec Firefox 159.0.1** : les zips s'ouvrent, le lanceur `.command` marche après « clic droit, Ouvrir » (avertissement de macOS, puis Ouvrir), la région s'affiche (le petit monde de `region-simple`). Il avait d'abord essayé de glisser `index.html` dans le navigateur, ce qui ne marche pas ; il a trouvé le README. Seul l'affichage est rapporté. **Corrigé** : la phrase « les lanceurs macOS n'ont pas encore été essayés sur un Mac » dans `paquets/region-simple/README.txt`, `paquets/region-simple/site/readme.html`, `paquets/galerie-photos/README.txt` et `paquets/galerie-photos/site/galerie.html` (français et anglais ; pour la galerie : même lanceur, **extrapolé, non essayé séparément**) ; « Non essayé : Firefox et Safari » dans `docs/fr/VUE_ENSEMBLE.md`, `docs/en/OVERVIEW.md`, `docs/fr/MANUEL.md` et `docs/en/MANUAL.md` (Safari et Firefox sous Windows et Linux restent non essayés) ; une phrase dans `README.md` et `README.fr.md` ; `HISTORIQUE` et `HISTORY`. Le testeur n'est pas nommé (accord à demander avant). **Les zips de la page des versions ne changent qu'à la prochaine publication** (décision de Klaatou). La conversion OAR vers GLB sous macOS reste non prévue (`GUIDE` § 1.2). Aucun code ni fichier de `dist\` modifié. `VERSION` passe de `1.6.5` à `1.6.6`.
+- **Retour reçu** (fil de discussion de la démo) : un testeur (NightshadeCeres, nommé depuis le 08/11/2026 avec son accord) a essayé les paquets sous **macOS Ventura 13.7.8 avec Firefox 159.0.1** : les zips s'ouvrent, le lanceur `.command` marche après « clic droit, Ouvrir » (avertissement de macOS, puis Ouvrir), la région s'affiche (le petit monde de `region-simple`). Il avait d'abord essayé de glisser `index.html` dans le navigateur, ce qui ne marche pas ; il a trouvé le README. Seul l'affichage est rapporté. **Corrigé** : la phrase « les lanceurs macOS n'ont pas encore été essayés sur un Mac » dans `paquets/region-simple/README.txt`, `paquets/region-simple/site/readme.html`, `paquets/galerie-photos/README.txt` et `paquets/galerie-photos/site/galerie.html` (français et anglais ; pour la galerie : même lanceur, **extrapolé, non essayé séparément**) ; « Non essayé : Firefox et Safari » dans `docs/fr/VUE_ENSEMBLE.md`, `docs/en/OVERVIEW.md`, `docs/fr/MANUEL.md` et `docs/en/MANUAL.md` (Safari et Firefox sous Windows et Linux restent non essayés) ; une phrase dans `README.md` et `README.fr.md` ; `HISTORIQUE` et `HISTORY`. Le testeur n'est pas nommé (accord à demander avant). **Les zips de la page des versions ne changent qu'à la prochaine publication** (décision de Klaatou). La conversion OAR vers GLB sous macOS reste non prévue (`GUIDE` § 1.2). Aucun code ni fichier de `dist\` modifié. `VERSION` passe de `1.6.5` à `1.6.6`.
 
 ### 07/11/2026 : documents de `extraire_batiments.py` et `iar2oar.py`
 
