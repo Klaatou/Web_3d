@@ -4,6 +4,12 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.8.0)
 
+### 08/11/2026 : `REPRISE.md` à jour et allégé, annexe de `REPRISE_ARCHIVE.md` (lot 1.8.3)
+
+- **Demande de Klaatou** : passer dans une nouvelle conversation avec un `REPRISE.md` à jour (règles 22 et 23) ; alléger le fichier (116 Ko).
+- **Fait** : `REPRISE.md` (69 Ko) : en-tête réécrit (état après la 1.8.0, numéros par fichier, liste des lots 1.7.12 à 1.8.3), § 2.1 et § 6 réécrits, décisions et pièges du 08/11/2026 ajoutés (convoar conservé, lanceur graphique, Discord, exception à la règle 25, publication 1.8.0 ; commandes et pièges du bac à sable) ; § 1, 2.2, 2.3, 3, 4, 5 et 7 gardés tels quels (quatre petites mises à jour : sections 2.2 et 3). Tout ce qui a quitté le fichier (ancien en-tête, ancien § 2.1, ancien § 6.1 à 6.2) est repris **mot pour mot** dans l'annexe de `REPRISE_ARCHIVE.md` (192 Ko) : aucune ligne n'est perdue, sauf une puce du § 2.2 modifiée sur place (version de la VM de présence).
+- **Contrôle** : mention du daltonisme et noms personnels absents du fichier (le seul nom propre ajouté est celui du testeur macOS, avec son accord).
+
 ### 08/11/2026 : `web3d_gui.py` : libellé de la commande plus clair (lot 1.8.2)
 
 - **Constat de Klaatou** : « Commande (à taper dans le dossier de l'outil) » laisse croire qu'il faut taper la commande ; certains ne verront pas le bouton Lancer.
