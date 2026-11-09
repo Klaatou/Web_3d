@@ -4,6 +4,10 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.8.0)
 
+### 08/11/2026 : `REPRISE.md` : la règle 25 est déjà à jour (lot 1.8.4)
+
+- **Erreur corrigée** : `REPRISE.md` (lot 1.8.3) disait que Klaatou devait mettre la règle 25 de `REGLES.md` à jour ; le `REGLES.md` du Projet contient déjà « plus NightshadeCeres (accord du 08/11/2026) ». Le § 5 le dit maintenant, et la puce correspondante du § 6.1 est retirée. Documents seulement ; aucun fichier de `dist/` ne change.
+
 ### 08/11/2026 : `REPRISE.md` à jour et allégé, annexe de `REPRISE_ARCHIVE.md` (lot 1.8.3)
 
 - **Demande de Klaatou** : passer dans une nouvelle conversation avec un `REPRISE.md` à jour (règles 22 et 23) ; alléger le fichier (116 Ko).
