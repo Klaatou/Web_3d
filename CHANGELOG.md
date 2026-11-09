@@ -4,6 +4,12 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.8.0)
 
+### 08/11/2026 : `web3d_gui.py` : libellé de la commande plus clair (lot 1.8.2)
+
+- **Constat de Klaatou** : « Commande (à taper dans le dossier de l'outil) » laisse croire qu'il faut taper la commande ; certains ne verront pas le bouton Lancer.
+- **Fait** : le libellé devient « Commande équivalente (à titre d'information : le bouton Lancer l'exécute pour vous) » (anglais : « Equivalent command (for information: the Run button runs it for you): »). Texte seulement (`py.gui.command`), en français et en anglais ; aucun code ne change.
+- **Non testé** : l'aspect de la fenêtre sous Windows (la ligne est plus longue qu'avant).
+
 ### 08/11/2026 : `tests/gui.py` : plus de message Tcl « application has been destroyed » (lot 1.8.1)
 
 - **Constat de Klaatou** (Windows) : en lançant `tests/gui.py`, Tcl écrit « can't invoke "event" command: application has been destroyed » (procédure `ttk::ThemeChanged`) ; le test finit pourtant par « tout est passé ».

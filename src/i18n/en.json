@@ -1654,7 +1654,7 @@
  "py.gui.alone": "option alone",
  "py.gui.browse_file": "File...",
  "py.gui.browse_dir": "Folder...",
- "py.gui.command": "Command (to type in the tool's folder):",
+ "py.gui.command": "Equivalent command (for information: the Run button runs it for you):",
  "py.gui.copy": "Copy the command",
  "py.gui.run": "Run (Ctrl+Enter)",
  "py.gui.stop": "Stop",

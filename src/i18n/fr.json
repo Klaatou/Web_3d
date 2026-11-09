@@ -1654,7 +1654,7 @@
  "py.gui.alone": "option seule",
  "py.gui.browse_file": "Fichier…",
  "py.gui.browse_dir": "Dossier…",
- "py.gui.command": "Commande (à taper dans le dossier de l'outil) :",
+ "py.gui.command": "Commande équivalente (à titre d'information : le bouton Lancer l'exécute pour vous) :",
  "py.gui.copy": "Copier la commande",
  "py.gui.run": "Lancer (Ctrl+Entrée)",
  "py.gui.stop": "Arrêter",
