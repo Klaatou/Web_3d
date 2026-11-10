@@ -1,4 +1,4 @@
-# Web_3d manual (1.8.0)
+# Web_3d manual (1.9.0)
 
 > **Summary.** This manual follows the project from end to end, theme by theme: getting started, with the vocabulary (chapter 1), the tools (2), converting an OAR (3), measuring and cutting up a big region (4), the viewer and the zones (5), building the page (6), the page from the visitor's side (7), tiled regions (8), the world map (9), the presence server (10), the JSON file reference (11), troubleshooting (12) and, as an appendix, what each version brought (13). For **every option** of the tools, with its effect and the default values of its parameters, in French and English: `docs/REFERENCE_OPTIONS.md` (generated from the tools by `gen_reference.py`). To **do a task step by step**: `PROCEDURES.md`. Language of the page and tools: § 7.49, § 7.51 and § 7.50.
 
@@ -79,6 +79,7 @@ For **every** option of each tool, with its effect and the default values of its
 
 ¹ **Prerequisites**: **oar2glb.py** relies on the external converter **convoar.exe**
   Already supplied in this repository, in `dist/convoar/` (copy of https://github.com/Misterblue/convoar/tree/master/dist, Apache-2.0, see `THIRD-PARTY.md`)
+  Copy without the `*.pdb` files and `NLog.xml`; tried by Klaatou on Windows (conversion of a small region, 10/11/2026).
   Without convoar.exe, oar2glb.py cannot perform the OAR → GLB conversion.
 
 ### 3.1 The commands (PowerShell, a single line)
@@ -231,7 +232,7 @@ Run it after a conversion made with `--keep`. The log is `oar2glb.diag.log`. Eac
 ![The seven shortcuts on the Windows desktop](../images/raccourcis.png)
 
 - **Language and version**: `--lang` and `WEB3D_LANG` (§ 7.50), `--version`.
-- **Tried**: automatic tests on Linux with a virtual display (`tests/gui.py`: the options of every tool, one by one, accepted by the tool's real parser; every example of every tool accepted by that parser and reloaded identically by the window); by Klaatou on Windows: the window, the tool list and the shortcuts with the project icon (08/11/2026). **Not tried**: macOS, Linux with a real display, the file pickers, the examples list on Windows.
+- **Tried**: automatic tests on Linux with a virtual display (`tests/gui.py`: the options of every tool, one by one, accepted by the tool's real parser; every example of every tool accepted by that parser and reloaded identically by the window); by Klaatou on Windows: the window, the tool list and the shortcuts with the project icon (08/11/2026), the examples list (10/11/2026). **Not tried**: macOS, Linux with a real display, the file pickers.
 
 ## 4. Measuring and cutting up a big region
 
@@ -1702,7 +1703,7 @@ The detail, version by version, is in `HISTORY.md` (narrative) and `CHANGELOG.md
 | Additions of 1.6.0 | The packages' `zhop` "Lien vers OpenSim" panel (§ 5.11) |
 | Additions of 1.7.0 (batches 1.6.1 to 1.6.19) | `extraire_batiments.py` (§ 3.7) and `iar2oar.py` (§ 3.8); JSON file reference as a separate document (`REFERENCE_JSON.md`) and `INDEX.md`; updating a package that is already published (`SIMPLE_PROCEDURES.md` § 10); "Made with Web_3d" icon (§ 7.62); logo as tab icon (§ 6.9); animated GIFs (§ 5.11); "Animated GIFs" and "Version: page …" lines of the diagnostics (§ 7.53) |
 | Additions of 1.8.0 (batches 1.7.1 to 1.7.22) | `diag_carte.py`: diagnosing the map nicknames (§ 9.22); real-life tries of `extraire_batiments.py` and `iar2oar.py` (§ 3.7, § 3.8); animated GIFs checked on Windows and in Firefox (§ 5.11); README SVG diagrams (`DEVELOPMENT.md` § 6); graphical launcher `web3d_gui.py` with Windows shortcuts (§ 3.9); link to the Discord server |
-| Additions of 1.8.x (batches 1.8.1 to 1.8.18, unpublished) | "Walk (P)" button that blinks (§ 7.63); Discord link in the help window (§ 7.64); no more black background when opening a tiled region by a link (§ 8.6); convoar supplied in `dist/convoar/` (§ 3); `build.py` regenerates `docs/REFERENCE_OPTIONS.md`; `deploy/` folder; basic-use examples list in the graphical launcher (§ 3.9) |
+| Additions of 1.9.0 (batches 1.8.1 to 1.8.18) | "Walk (P)" button that blinks (§ 7.63); Discord link in the help window (§ 7.64); no more black background when opening a tiled region by a link (§ 8.6); convoar supplied in `dist/convoar/` (§ 3); `build.py` regenerates `docs/REFERENCE_OPTIONS.md`; `deploy/` folder; basic-use examples list in the graphical launcher (§ 3.9) |
 
 Everything below is in **1.1.0** (released on 31/10/2026). The detail, batch by batch, is in `CHANGELOG.md`.
 

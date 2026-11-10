@@ -205,6 +205,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 10/11/2026 |  | after 1.8.0 | Batch 1.8.16: documents: manual § 7.63 and § 7.64, `dist/convoar/`, `deploy/`, tests under Windows (`DEVELOPMENT.md`), history |
 | 10/11/2026 |  | after 1.8.0 | Batch 1.8.17: graphical launcher: basic-use examples list for every tool (`EXEMPLES`, `lire_exemple`), `gui.py` test |
 | 10/11/2026 |  | after 1.8.0 | Batch 1.8.18: documents: manual § 3.9, simple procedures § 11, history |
+| 10/11/2026 |  | 1.9.0 | Release 1.9.0: `VERSION` 1.9.0; `CHANGELOG.md`; gathers batches 1.8.1 to 1.8.18 (blinking Walk button, Discord link in Help, no more black screen on a tiled region, convoar supplied, launcher examples list) |
 
 ## Useful commands
 

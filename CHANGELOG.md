@@ -2,7 +2,42 @@
 
 Les dates sont au format jj/mm/aaaa.
 
-## Non publié (après la 1.8.0)
+## Non publié (après la 1.9.0)
+
+## 1.9.0 (10/11/2026)
+
+### 10/11/2026 : publication 1.9.0 : bouton Promenade qui clignote, lien Discord dans l'Aide, plus d'écran noir sur tuiles, convoar fourni, liste d'exemples du lanceur
+
+- **Publication** : la 1.9.0, décidée par Klaatou le 10/11/2026, réunit les lots 1.8.1 à 1.8.18 (décrits plus bas, sous cette même rubrique). Nouveautés depuis la 1.8.0 : **(1)** en vue globale, le bouton « Promenade (P) » clignote après 8 s sans action (noir et blanc, jamais la couleur seule ; il s'arrête à la moindre action, et pour de bon après une première promenade) ; **(2)** lien vers le serveur Discord dans la fenêtre Aide ; **(3)** ouverture par un lien `#spawn=` ou `#pos=` sur une région en tuiles : plus d'écran noir, la vue globale reste visible pendant le chargement du sol ; **(4)** convoar fourni dans `dist\convoar\` (Windows seulement ; copie du dossier `dist` de son dépôt, sans les `*.pdb` ni `NLog.xml`, licences comprises), trouvé tout seul par `oar2glb.py` ; adresse de convoar corrigée dans les README, les manuels et l'outil ; **(5)** `web3d_gui.py` : une liste d'exemples d'usages de base pour chaque outil (elle remplit les champs) ; **(6)** `python build.py` refait `docs/REFERENCE_OPTIONS.md` ; ménage de la racine (dossier `deploy\`) ; tests corrigés sous Windows. Documents à jour (manuel § 3.9, § 7.63, § 7.64, procédures simples § 11, `DEVELOPPEMENT.md`). **Numéros par fichier fabriqué** : `index.html`, `glb2html.py`, `glb-viewer.html` 1.8.6 ; `carte.html` 1.8.5 ; `oar2glb.py` 1.8.11 ; `web3d_gui.py` 1.8.17 ; inchangés : `glb2tiles.py` 1.4.10, `extraire_batiments.py` 1.6.3, `iar2oar.py` 1.6.4, `diag_carte.py` 1.7.7, `presence_server.py` 1.6.19 (pas de `scp` vers la VM). **Essayé par Klaatou sous Windows** : le lanceur et sa liste d'exemples, une petite conversion avec le convoar allégé. **Non essayé** : Edge, Safari, le lanceur sous macOS et Linux avec un vrai écran, la région « Houses » avec le chargement sans écran noir.
+- **Notes de la release GitHub** (à joindre : `galerie-photos.zip` et `region-simple.zip`, fabriqués par `python fabriquer_paquets.py` après le passage de `VERSION` à 1.9.0), anglais puis français :
+
+  > The two packages contain the new `index.html` and `carte.html` (and the `region-simple` readme has the corrected convoar address). If you already have one, copy only `index.html` and `carte.html` into your folder: do not unzip over it, that would overwrite your config, zones and images. See docs/en/SIMPLE_PROCEDURES.md section 10.
+  >
+  > **Release** 1.9.0. New:
+  > - in the global view, the "Walk (P)" button blinks after a few seconds without action (it stops at the first action, and for good after a first walk);
+  > - the Help window links to the Discord server;
+  > - opening a tiled region with a `#spawn=` or `#pos=` link no longer shows a black screen: the global view stays visible while the ground loads;
+  > - convoar is now supplied in `dist/convoar/` (Windows only; copy of the `dist` folder of its repository, without debug symbols, licences included) and `oar2glb.py` finds it by itself; its address is corrected in the READMEs and manuals;
+  > - `web3d_gui.py` (graphical launcher): a list of basic-use examples for every tool; choosing one fills the fields;
+  > - `python build.py` regenerates `docs/REFERENCE_OPTIONS.md`; the repository root is tidied (`deploy/` folder); tests fixed under Windows;
+  > - documentation: manual sections 3.9, 7.63 and 7.64, simple procedures section 11, `DEVELOPMENT.md`.
+  >
+  > Tested on Windows by Klaatou: the graphical launcher and its examples list, a small conversion with the supplied convoar. The page changes were tested in Chromium under Linux. Not tried: Edge, Safari, the graphical launcher on macOS and on Linux with a real display.
+  >
+  > ---
+  >
+  > Les deux paquets contiennent le nouvel `index.html` et le nouveau `carte.html` (et le `readme.html` de `region-simple` donne la bonne adresse de convoar). Si vous en avez déjà un, copiez seulement `index.html` et `carte.html` dans votre dossier : ne décompressez pas le contenu par-dessus, cela écraserait vos fichiers de configuration, vos zones et vos images. Consultez la section 10 du fichier `docs/fr/PROCEDURES_SIMPLES.md`.
+  >
+  > Version 1.9.0. Nouveautés :
+  > - en vue globale, le bouton « Promenade (P) » clignote après quelques secondes sans action (il s'arrête à la moindre action, et pour de bon après une première promenade) ;
+  > - la fenêtre Aide renvoie vers le serveur Discord ;
+  > - l'ouverture d'une région en tuiles par un lien `#spawn=` ou `#pos=` n'affiche plus d'écran noir : la vue globale reste visible pendant le chargement du sol ;
+  > - convoar est désormais fourni dans `dist/convoar/` (Windows seulement ; copie du dossier `dist` de son dépôt, sans les symboles de débogage, licences comprises) et `oar2glb.py` le trouve tout seul ; son adresse est corrigée dans les README et les manuels ;
+  > - `web3d_gui.py` (lanceur graphique) : une liste d'exemples d'usages de base pour chaque outil ; en choisir un remplit les champs ;
+  > - `python build.py` refait `docs/REFERENCE_OPTIONS.md` ; ménage de la racine du dépôt (dossier `deploy/`) ; tests corrigés sous Windows ;
+  > - documentation : sections 3.9, 7.63 et 7.64 du manuel, section 11 des procédures simples, `DEVELOPPEMENT.md`.
+  >
+  > Testé sous Windows par Klaatou : le lanceur graphique et sa liste d'exemples, une petite conversion avec le convoar fourni. Les changements de la page ont été testés dans Chromium sous Linux. Non testés : Edge, Safari, le lanceur graphique sous macOS et sous Linux avec un vrai écran.
 
 ### 10/11/2026 : documents : la liste d'exemples du lanceur (lot 1.8.18)
 

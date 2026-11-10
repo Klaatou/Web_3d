@@ -1,4 +1,4 @@
-# Manuel de Web_3d (1.8.0)
+# Manuel de Web_3d (1.9.0)
 
 > **Résumé.** Ce manuel suit le projet de bout en bout, thème par thème : pour commencer, avec le vocabulaire (chapitre 1), les outils (2), convertir un OAR (3), mesurer et découper une grosse région (4), le viewer et les zones (5), fabriquer la page (6), la page côté visiteur (7), les régions en tuiles (8), la carte des mondes (9), le serveur de présence (10), la référence des fichiers JSON (11), le dépannage (12) et, en annexe, ce que chaque version a apporté (13). Pour **toutes les options** des outils, avec leur effet et les valeurs par défaut de leurs paramètres, en français et en anglais : `docs/REFERENCE_OPTIONS.md` (générée depuis les outils par `gen_reference.py`). Pour **faire une tâche pas à pas** : `PROCEDURES.md`. Langue de la page et des outils : § 7.49, § 7.51 et § 7.50.
 
@@ -79,6 +79,7 @@ Pour **toutes** les options de chaque outil, avec leur effet et les valeurs par 
 
 ¹ **Prérequis** :  **oar2glb.py** s'appuie sur le convertisseur externe **convoar.exe**
   Déjà fourni dans ce dépôt, dans `dist/convoar/` (copie de https://github.com/Misterblue/convoar/tree/master/dist, Apache-2.0, voir `THIRD-PARTY.md`)
+  Copie sans les fichiers `*.pdb` ni `NLog.xml` ; essayée par Klaatou sous Windows (conversion d'une petite région, 10/11/2026).
   Sans convoar.exe, oar2glb.py ne peut pas effectuer la conversion OAR → GLB.
 
 ### 3.1 Les commandes (PowerShell, une seule ligne)
@@ -231,7 +232,7 @@ Test : `python tests/terrain.py` (OAR et GLB synthétiques).
 ![Les sept raccourcis sur le bureau Windows](../images/raccourcis.png)
 
 - **Langue et version** : `--lang` et `WEB3D_LANG` (§ 7.50), `--version`.
-- **Essayé** : tests automatiques sous Linux avec un écran virtuel (`tests/gui.py` : les options de chaque outil, une par une, acceptées par le vrai parseur de l'outil ; chaque exemple de chaque outil accepté par ce parseur et rechargé à l'identique par la fenêtre) ; par Klaatou sous Windows : la fenêtre, la liste des outils et les raccourcis avec l'icône du projet (08/11/2026). **Non essayé** : macOS, Linux avec un vrai écran, les sélecteurs de fichier, la liste d'exemples sous Windows.
+- **Essayé** : tests automatiques sous Linux avec un écran virtuel (`tests/gui.py` : les options de chaque outil, une par une, acceptées par le vrai parseur de l'outil ; chaque exemple de chaque outil accepté par ce parseur et rechargé à l'identique par la fenêtre) ; par Klaatou sous Windows : la fenêtre, la liste des outils et les raccourcis avec l'icône du projet (08/11/2026), la liste d'exemples (10/11/2026). **Non essayé** : macOS, Linux avec un vrai écran, les sélecteurs de fichier.
 
 ## 4. Mesurer et découper une grosse région
 
@@ -1702,7 +1703,7 @@ Le détail, version par version, est dans `HISTORIQUE.md` (récit) et `CHANGELOG
 | Ajouts de la 1.6.0 | Panneau `zhop` « Lien vers OpenSim » des paquets (§ 5.11) |
 | Ajouts de la 1.7.0 (lots 1.6.1 à 1.6.19) | `extraire_batiments.py` (§ 3.7) et `iar2oar.py` (§ 3.8); référence des fichiers JSON à part (`REFERENCE_JSON.md`) et `INDEX.md`; mise à jour d'un paquet déjà publié (`PROCEDURES_SIMPLES.md` § 10); icône « Réalisé avec Web_3d » (§ 7.62); logo en icône d'onglet (§ 6.9); GIF animés (§ 5.11); lignes « Animations GIF » et « Version : page … » du diagnostic (§ 7.53) |
 | Ajouts de la 1.8.0 (lots 1.7.1 à 1.7.22) | `diag_carte.py` : diagnostic des pseudos de la carte (§ 9.22) ; essais réels de `extraire_batiments.py` et d'`iar2oar.py` (§ 3.7, § 3.8) ; GIF animés vérifiés sous Windows et Firefox (§ 5.11) ; schémas SVG du README (`DEVELOPPEMENT.md` § 6) ; lanceur graphique `web3d_gui.py` avec raccourcis Windows (§ 3.9) ; lien vers le serveur Discord |
-| Ajouts de la 1.8.x (lots 1.8.1 à 1.8.18, non publiés) | Bouton « Promenade (P) » qui clignote (§ 7.63) ; lien Discord dans la fenêtre d'aide (§ 7.64) ; plus de fond noir à l'ouverture par lien sur une région en tuiles (§ 8.6) ; convoar fourni dans `dist/convoar/` (§ 3) ; `build.py` refait `docs/REFERENCE_OPTIONS.md` ; dossier `deploy/` ; liste d'exemples d'usages de base dans le lanceur graphique (§ 3.9) |
+| Ajouts de la 1.9.0 (lots 1.8.1 à 1.8.18) | Bouton « Promenade (P) » qui clignote (§ 7.63) ; lien Discord dans la fenêtre d'aide (§ 7.64) ; plus de fond noir à l'ouverture par lien sur une région en tuiles (§ 8.6) ; convoar fourni dans `dist/convoar/` (§ 3) ; `build.py` refait `docs/REFERENCE_OPTIONS.md` ; dossier `deploy/` ; liste d'exemples d'usages de base dans le lanceur graphique (§ 3.9) |
 
 Tout ce qui suit est dans la **1.1.0** (publiée le 31/10/2026). Le détail, lot par lot, est dans `CHANGELOG.md`.
 
