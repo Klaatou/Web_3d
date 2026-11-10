@@ -4,6 +4,13 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.8.0)
 
+### 10/11/2026 : le bouton « Promenade (P) » clignote en vue globale, lien Discord dans l'Aide (lot 1.8.5)
+
+- **Demande de Klaatou** : indiquer de façon visible, en vue globale, qu'il faut taper P pour passer en promenade ; lien Discord dans la fenêtre Aide (décision attendue du § 6.1 de `REPRISE.md` : oui).
+- **Fait** (`src/template.html`) : en vue globale, après 8 s sans action (souris, molette, clavier, toucher), le bouton Promenade clignote (classe `pulse`, fond et texte noir/blanc en alternance, 1,2 s par cycle : pas de dépendance à la couleur, moins de 3 éclats par seconde). La moindre action l'arrête ; 8 s d'inactivité le relancent ; une fois entré en promenade, il ne clignote plus jusqu'au rechargement de la page ; le temps de chargement du modèle ne compte pas. Si le système demande un mouvement réduit : pas de clignotement, bordure épaisse. Le délai de 8 s est une estimation (constante `IDLE`). Le libellé reste « Promenade (P) ». Lien « Discord (questions, aide, nouveautés) » ajouté sous « Aide des visiteurs » dans la fenêtre Aide (`page.help.discord`, français et anglais), même adresse que les README.
+- **Test** : `tests/bouton_promenade.py` (délai, alternance noir/blanc, arrêt à l'action, reprise, arrêt après la promenade, mouvement réduit, lien Discord en français et en anglais). **Non testé** : Edge, Windows, écran tactile réel (la barre y est masquée).
+- **Note** : les deux commits du 10/11/2026 (sections « Where to start? » dans `README.md` et « Getting Started » dans `README.fr.md`, faits par Klaatou sur GitHub) ne touchent aucun code.
+
 ### 08/11/2026 : `REPRISE.md` : la règle 25 est déjà à jour (lot 1.8.4)
 
 - **Erreur corrigée** : `REPRISE.md` (lot 1.8.3) disait que Klaatou devait mettre la règle 25 de `REGLES.md` à jour ; le `REGLES.md` du Projet contient déjà « plus NightshadeCeres (accord du 08/11/2026) ». Le § 5 le dit maintenant, et la puce correspondante du § 6.1 est retirée. Documents seulement ; aucun fichier de `dist/` ne change.
