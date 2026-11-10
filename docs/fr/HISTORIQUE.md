@@ -211,6 +211,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 10/11/2026 |  | après 1.9.0 | Lot 1.9.3 : `CHANGELOG.md` : rubrique 1.8.0 traduite en anglais ; « décidée par Klaatou » retiré de l'entrée de publication 1.8.0 |
 | 10/11/2026 |  | après 1.9.0 | Lot 1.9.4 : documents : limite PBR de convoar (manuel § 3, README) |
 | 10/11/2026 |  | après 1.9.0 | Lot 1.9.5 : `CHANGELOG.md` : rubrique 1.7.0 traduite en anglais ; « décidée par Klaatou » retiré de l'entrée de publication 1.7.0 |
+| 10/11/2026 |  | après 1.9.0 | Lot 1.9.6 : `CHANGELOG.md` : rubrique 1.6.0 traduite en anglais ; « décidée par Klaatou » retiré de l'entrée de publication 1.6.0 |
 
 ## Commandes utiles
 

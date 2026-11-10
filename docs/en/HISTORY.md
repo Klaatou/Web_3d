@@ -211,6 +211,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 10/11/2026 |  | after 1.9.0 | Batch 1.9.3: `CHANGELOG.md`: 1.8.0 section translated into English; "decided by Klaatou" removed from the 1.8.0 release entry |
 | 10/11/2026 |  | after 1.9.0 | Batch 1.9.4: documents: convoar's PBR limitation (manual § 3, READMEs) |
 | 10/11/2026 |  | after 1.9.0 | Batch 1.9.5: `CHANGELOG.md`: 1.7.0 section translated into English; "decided by Klaatou" removed from the 1.7.0 release entry |
+| 10/11/2026 |  | after 1.9.0 | Batch 1.9.6: `CHANGELOG.md`: 1.6.0 section translated into English; "decided by Klaatou" removed from the 1.6.0 release entry |
 
 ## Useful commands
 
