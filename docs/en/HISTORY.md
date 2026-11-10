@@ -207,6 +207,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 10/11/2026 |  | after 1.8.0 | Batch 1.8.18: documents: manual § 3.9, simple procedures § 11, history |
 | 10/11/2026 |  | 1.9.0 | Release 1.9.0: `VERSION` 1.9.0; `CHANGELOG.md`; gathers batches 1.8.1 to 1.8.18 (blinking Walk button, Discord link in Help, no more black screen on a tiled region, convoar supplied, launcher examples list) |
 | 10/11/2026 |  | after 1.9.0 | Batch 1.9.1: `CHANGELOG.fr.md` created (the French history); `CHANGELOG.md` becomes the English version; the French documents' references updated |
+| 10/11/2026 |  | after 1.9.0 | Batch 1.9.2: `CHANGELOG.md` translated into English (header, 1.9.0 section); "decided by Klaatou" removed from the 1.9.0 release entry |
 
 ## Useful commands
 
