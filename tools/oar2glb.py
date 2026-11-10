@@ -46,12 +46,22 @@ MARK = "__MARK__"      # empreinte du fichier fabriqué, inscrite par build.py ;
 def version_tag():
     """version, suivie de l'empreinte du fichier quand build.py l'a inscrite"""
     return VERSION if MARK.startswith("__") else _tr("py.common.version_mark", VERSION, MARK)
-CONVOAR_URL = "https://github.com/Misterblue/convoar/tree/master/bin"
+CONVOAR_URL = "https://github.com/Misterblue/convoar/tree/master/dist"
 
 
 def default_convoar():
-    """convoar.exe quand --convoar n'est pas donné : variable CONVOAR, sinon convoar du PATH, sinon convoar.exe à côté de oar2glb.py"""
-    return os.environ.get("CONVOAR") or shutil.which("convoar") or str(Path(__file__).resolve().with_name("convoar.exe"))
+    """convoar.exe quand --convoar n'est pas donné : variable CONVOAR, sinon convoar du PATH, sinon convoar\\convoar.exe (copie fournie dans dist\\ du dépôt)
+    ou convoar.exe à côté de oar2glb.py ; si aucun n'existe, c'est convoar\\convoar.exe qui est cité dans le message d'erreur"""
+    if os.environ.get("CONVOAR"):
+        return os.environ["CONVOAR"]
+    trouve = shutil.which("convoar")
+    if trouve:
+        return trouve
+    ici = Path(__file__).resolve().parent
+    for p in (ici / "convoar" / "convoar.exe", ici / "convoar.exe"):
+        if p.exists():
+            return str(p)
+    return str(ici / "convoar" / "convoar.exe")
 
 LAUNCHER_CS = r"""
 using System; using System.Globalization; using System.IO; using System.Threading;

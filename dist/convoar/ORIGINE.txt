@@ -1,0 +1,12 @@
+convoar - copie de la distribution precompilee / copy of the prebuilt distribution
+
+Source          : https://github.com/Misterblue/convoar  (dossier / folder "dist")
+Commit          : be7abbedc0d7d295a76800b2fe2e1fc9a58a7934  (26/05/2022, version 2.0.6)
+Licence/License : Apache License 2.0 (fichier LICENSE). Licences des composants fournies par convoar : THIRDPARTYLICENSES/
+Modifications   : AUCUN fichier n'est modifie. Seuls manquent les fichiers de debogage (*.pdb, 15 fichiers) et la documentation
+                  XML de NLog (NLog.xml), inutiles a l'execution. / NO file is modified. Only the debug files (*.pdb, 15 files)
+                  and NLog's XML documentation (NLog.xml) are left out; they are not needed to run.
+Verification    : SHA256SUMS.txt donne l'empreinte SHA-256 de chaque fichier ; tests/convoar_dist.py la controle.
+                  SHA256SUMS.txt lists the SHA-256 of every file; tests/convoar_dist.py checks it.
+Fichiers fabriques a la premiere conversion (non suivis par git) : convoar_inv.cs, convoar_inv.exe, convoar_inv.exe.config
+Files made at the first conversion (not tracked by git): convoar_inv.cs, convoar_inv.exe, convoar_inv.exe.config

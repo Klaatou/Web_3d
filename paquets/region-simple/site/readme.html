@@ -73,7 +73,7 @@ html[data-lang="fr"] tr[data-l="fr"],html[data-lang="en"] tr[data-l="en"]{displa
 </ul>
 <h2>2. Obtenir un GLB depuis un OAR</h2>
 <ol>
-<li>Il faut Windows, Python 3.9 ou plus, et <code>convoar.exe</code> (l'outil qui convertit un OAR en fichiers 3D ; <code>oar2glb.py</code> le lance pour vous). Téléchargement de convoar : <a href="https://github.com/Misterblue/convoar/tree/master/bin">https://github.com/Misterblue/convoar/tree/master/bin</a>.</li>
+<li>Il faut Windows, Python 3.9 ou plus, et <code>convoar.exe</code> (l'outil qui convertit un OAR en fichiers 3D ; <code>oar2glb.py</code> le lance pour vous). convoar est déjà fourni dans le dossier <code>dist/convoar</code> du dépôt (source : <a href="https://github.com/Misterblue/convoar/tree/master/dist">https://github.com/Misterblue/convoar/tree/master/dist</a>).</li>
 <li><code>oar2glb.py</code> est dans le dossier <code>dist</code> du dépôt Web_3d (<a href="https://github.com/Klaatou/Web_3d/tree/main/dist">https://github.com/Klaatou/Web_3d/tree/main/dist</a>). Dans une fenêtre de commandes : <code>python oar2glb.py "C:\chemin\MaRegion.oar"</code>. Le GLB est écrit <strong>à côté de l'OAR</strong> (<code>MaRegion.glb</code>).</li>
 <li>Copiez-le dans <code>site\</code> sous le nom <code>region.glb</code>, puis rechargez la page.</li>
 <li>Ce paquet convient aux régions « légères » : en gros, un GLB de moins de 150 Mo et de 3 millions de triangles. <code>python glb2tiles.py MaRegion.glb --analyse</code> le vérifie sans rien écrire. Au-delà, il faut découper la région en tuiles : <code>docs/fr/PROCEDURES.md</code> § 2, hors de ce paquet.</li>
@@ -443,7 +443,7 @@ html[data-lang="fr"] tr[data-l="fr"],html[data-lang="en"] tr[data-l="en"]{displa
 </ul>
 <h2>2. Getting a GLB from an OAR</h2>
 <ol>
-<li>You need Windows, Python 3.9 or later, and <code>convoar.exe</code> (the tool that converts an OAR into 3D files; <code>oar2glb.py</code> runs it for you). Download convoar: <a href="https://github.com/Misterblue/convoar/tree/master/bin">https://github.com/Misterblue/convoar/tree/master/bin</a>.</li>
+<li>You need Windows, Python 3.9 or later, and <code>convoar.exe</code> (the tool that converts an OAR into 3D files; <code>oar2glb.py</code> runs it for you). convoar is already supplied in the repository's <code>dist/convoar</code> folder (source: <a href="https://github.com/Misterblue/convoar/tree/master/dist">https://github.com/Misterblue/convoar/tree/master/dist</a>).</li>
 <li><code>oar2glb.py</code> is in the Web_3d repository's <code>dist</code> folder (<a href="https://github.com/Klaatou/Web_3d/tree/main/dist">https://github.com/Klaatou/Web_3d/tree/main/dist</a>). In a command window: <code>python oar2glb.py "C:\path\MyRegion.oar"</code>. The GLB is written <strong>next to the OAR</strong> (<code>MyRegion.glb</code>).</li>
 <li>Copy it into <code>site\</code> under the name <code>region.glb</code>, then reload the page.</li>
 <li>This package suits "light" regions: roughly a GLB under 150 MB and 3 million triangles. <code>python glb2tiles.py MyRegion.glb --analyse</code> checks it without writing anything. Beyond that the region must be split into tiles: <code>docs/en/PROCEDURES.md</code> § 2, outside this package.</li>

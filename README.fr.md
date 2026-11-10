@@ -94,8 +94,8 @@ Les manuels sont en français dans `docs/fr/` (`INDEX.md` pour s'y retrouver, `G
 | `web3d_gui.py`                           | Ouvre les outils dans une fenêtre : liste des outils, aide de chaque option, commande, bouton de lancement ; `--shortcuts` crée des raccourcis Windows avec l'icône du projet. |
 
 ¹ **Prérequis** :  **oar2glb.py** s'appuie sur le convertisseur externe **convoar.exe** \
-  Téléchargement : https://github.com/Misterblue/convoar/tree/master/bin \
-  Sans convoar.exe, oar2glb.py ne peut pas effectuer la conversion OAR → GLB. Son emplacement s'indique avec `--convoar CHEMIN` (par défaut : la variable `CONVOAR`, sinon `convoar` du PATH, sinon `convoar.exe` à côté de `oar2glb.py`).
+  Déjà fourni dans ce dépôt, dans `dist/convoar/` (copie de https://github.com/Misterblue/convoar/tree/master/dist, Apache-2.0, voir `THIRD-PARTY.md`) \
+  Sans convoar.exe, oar2glb.py ne peut pas effectuer la conversion OAR → GLB. Son emplacement s'indique avec `--convoar CHEMIN` (par défaut : la variable `CONVOAR`, sinon `convoar` du PATH, sinon `convoar/convoar.exe` ou `convoar.exe` à côté de `oar2glb.py`).
 
 ## Fabriquer
 

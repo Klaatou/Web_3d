@@ -32,8 +32,8 @@
   "version": "1.8.6 (10/11/2026)"
  },
  "oar2glb.py": {
-  "hash": "9c45b40e4ce18b5624692ca2b478194e345d872d8dda2c228a11003a4da1e108",
-  "version": "1.4.11 (03/11/2026)"
+  "hash": "035b1538ddc5307f24334bb7f191c055ce4a60052602d2a0a5640f22855406b8",
+  "version": "1.8.11 (10/11/2026)"
  },
  "presence_server.py": {
   "hash": "b6c48ca2f3e9784cb46202b44b11f6d62825cd83f4d76d0d89fd5f7c51ebf0ea",

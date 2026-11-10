@@ -21,7 +21,7 @@ def rapport(ok, titre, detail=""):
 
 
 def liste(d):
-    return {p.relative_to(d).as_posix() for p in d.rglob("*") if p.is_file() and "__pycache__" not in p.parts and p.suffix not in (".pyc", ".log")}
+    return {p.relative_to(d).as_posix() for p in d.rglob("*") if p.is_file() and "__pycache__" not in p.parts and p.suffix not in (".pyc", ".log") and p.relative_to(d).parts[0] != "convoar"}   # dist/convoar : copie fournie, pas fabriquee par build.py
 
 
 tmp = pathlib.Path(tempfile.mkdtemp(prefix="glb2html_dist_"))

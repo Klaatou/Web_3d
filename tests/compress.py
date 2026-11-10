@@ -61,7 +61,7 @@ def gltfpack_dispo():
 src = tmp / "src"
 src.mkdir()
 glbfab.region(src / "Reg.glb", maisons=24, instances=40, petits=12)
-env_fr = dict(os.environ, WEB3D_LANG="fr")
+env_fr = dict(os.environ, WEB3D_LANG="fr", PYTHONIOENCODING="utf-8")   # Windows : la sortie d'un tube est en cp1252 sans cela (le test la lit en UTF-8)
 
 # ---- 1. gltfpack absent : echec propre, rien d'ecrit
 vide = tmp / "pasdetool"
@@ -83,7 +83,7 @@ if not gltfpack_dispo():
 ref, cmp_ = tmp / "ref", tmp / "cmp"
 r0 = tuiler(src / "Reg.glb", ref)
 r1 = tuiler(src / "Reg.glb", cmp_, "--compress", env=env_fr)
-rapport(r0.returncode == 0 and r1.returncode == 0, "reference et --compress : code 0", (r0.returncode, r1.returncode, (r1.stdout + r1.stderr)[-400:]))
+rapport(r0.returncode == 0 and r1.returncode == 0, "reference et --compress : code 0", (r0.returncode, r1.returncode, [l for l in (r1.stdout + r1.stderr).splitlines() if "erreur, original" in l], (r1.stdout + r1.stderr)[-300:]))
 idx_ref, idx_cmp = json.loads((ref / "Reg.tiles.json").read_text(encoding="utf-8")), json.loads((cmp_ / "Reg.tiles.json").read_text(encoding="utf-8"))
 fichiers = [f["file"] for f in idx_cmp["tiles"]] + ["Reg.overview.glb"]
 rapport(len(idx_cmp["tiles"]) >= 3, "la region est decoupee en plusieurs tuiles", len(idx_cmp["tiles"]))

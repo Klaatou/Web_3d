@@ -17,7 +17,7 @@ Dans chaque paquet, `lancer-…` ouvre la région (`.bat` sous Windows, `.sh` so
 
 Une sauvegarde de région OpenSim (`.oar`) devient un `.glb`, écrit à côté de l'OAR.
 
-- Il faut Python 3.8 ou plus et **convoar** : tout le dossier `dist` du dépôt `github.com/Misterblue/convoar` (`convoar.exe` seul ne marche pas, il a besoin des DLL de ce dossier), avec .NET Framework 4.8, déjà présent sous Windows 10 et 11.
+- Il faut Python 3.8 ou plus et **convoar**, déjà fourni dans `dist/convoar/` de ce dépôt (copie du dossier `dist` de `github.com/Misterblue/convoar`, sans les fichiers de débogage ; `convoar.exe` seul ne marche pas, il a besoin des DLL de ce dossier : si vous déplacez `oar2glb.py`, emportez ce dossier avec lui), avec .NET Framework 4.8, déjà présent sous Windows 10 et 11.
 - Linux et macOS : non prévu. convoar fonctionne avec Mono, mais `oar2glb.py` le lance par un petit programme fabriqué avec un outil de Windows ; ce cas n'est ni prévu ni essayé.
 
 ```powershell

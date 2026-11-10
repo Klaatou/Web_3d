@@ -8,7 +8,7 @@ visites, mais pas les exemples de docs/samples.
 
 Prerequis : pip install websockets ; python build.py avant. Lancer : python tests/correctifs_v52.py
 """
-import json, os, pathlib, socket, subprocess, sys, time
+import json, os, pathlib, socket, subprocess, sys, time, shutil
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from h37 import *
 import h37
@@ -16,7 +16,7 @@ import h37
 
 def serveur(pythonpath, *opts):
     port = port_libre()
-    env = dict(os.environ)
+    env = dict(os.environ, PYTHONIOENCODING="utf-8")   # Windows : la sortie d'un tube est en cp1252 sans cela (le test la lit en UTF-8)
     if pythonpath:
         env["PYTHONPATH"] = pythonpath
     proc = subprocess.Popen([sys.executable, str(DIST / "presence_server.py"), "--lang", "fr", "--host", "127.0.0.1", "--port", str(port), "--identities", "", "--log-ip", "raw", *opts],
@@ -67,7 +67,7 @@ else:
 print("--- 4. oar2glb : convoar introuvable")
 oar_vide = tmp / "vide.oar"
 oar_vide.write_bytes(b"")
-URL = "https://github.com/Misterblue/convoar/tree/master/bin"
+URL = "https://github.com/Misterblue/convoar/tree/master/dist"
 outil = str(DIST / "oar2glb.py")
 r = subprocess.run([sys.executable, outil, str(oar_vide), "--nopause", "--convoar", str(tmp / "absent" / "convoar.exe")], capture_output=True, text=True)
 sortie = r.stdout + r.stderr
@@ -77,9 +77,12 @@ r = subprocess.run([sys.executable, outil, str(oar_vide), "--nopause"], capture_
 rapport(str(tmp / "autre" / "convoar.exe") in r.stdout + r.stderr, "la variable CONVOAR est utilisee quand --convoar n'est pas donne", (r.stdout + r.stderr)[-200:])
 env = {k: v for k, v in os.environ.items() if k != "CONVOAR"}
 env["PATH"] = str(tmp)
-r = subprocess.run([sys.executable, outil, str(oar_vide), "--nopause"], capture_output=True, text=True, env=env)
-rapport(str(DIST / "convoar.exe") in r.stdout + r.stderr, "sans option ni variable ni PATH : convoar.exe a cote de oar2glb.py", (r.stdout + r.stderr)[-200:])
-aide = subprocess.run([sys.executable, outil, "--help"], capture_output=True, text=True).stdout
+isole = (tmp / "isole").resolve()
+isole.mkdir()
+shutil.copy(DIST / "oar2glb.py", isole / "oar2glb.py")   # copie sans dossier convoar a cote : celui de dist/ ne compte pas ici
+r = subprocess.run([sys.executable, str(isole / "oar2glb.py"), str(oar_vide), "--nopause"], capture_output=True, text=True, env=env)
+rapport(str(isole / "convoar" / "convoar.exe") in r.stdout + r.stderr, "sans option ni variable ni PATH ni convoar fourni : le message cite convoar/convoar.exe a cote de oar2glb.py", (r.stdout + r.stderr)[-200:])
+aide = subprocess.run([sys.executable, outil, "--help"], capture_output=True, text=True, stdin=subprocess.DEVNULL).stdout   # sans cela, oar2glb.py attend Entree dans une console (apres --help aussi)
 rapport("MOSES" not in aide and "CONVOAR" in aide and URL in aide, "l'aide : aucun chemin personnel, variable CONVOAR et adresse de telechargement")
 src = (pathlib.Path(__file__).resolve().parent.parent / "tools" / "oar2glb.py").read_text(encoding="utf-8")
 rapport("MOSES" not in src and "P:\\_OpenSim" not in src, "le code d'oar2glb.py ne contient plus de chemin personnel")

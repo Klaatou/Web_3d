@@ -38,3 +38,6 @@ patch_*.py
 paquets-zip/
 /paquets-sources.zip
 
+# convoar fourni dans dist/convoar : fichiers que oar2glb.py fabrique a la premiere conversion (lanceur compile avec csc.exe)
+dist/convoar/convoar_inv.*
+
