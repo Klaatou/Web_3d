@@ -214,6 +214,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 10/11/2026 |  | après 1.9.0 | Lot 1.9.6 : `CHANGELOG.md` : rubrique 1.6.0 traduite en anglais ; « décidée par Klaatou » retiré de l'entrée de publication 1.6.0 |
 | 10/11/2026 |  | après 1.9.0 | Lot 1.9.7 : `CHANGELOG.md` : rubriques 1.5.1 et 1.5.0 traduites en anglais ; « décidée par Klaatou » retiré des deux entrées de publication |
 | 10/11/2026 |  | après 1.9.0 | Lot 1.9.8 : `CHANGELOG.md` : rubriques 1.4.0 et 1.3.0 traduites en anglais ; « décidée par Klaatou » retiré des deux entrées de publication |
+| 10/11/2026 |  | après 1.9.0 | Lot 1.9.9 : `CHANGELOG.md` : rubriques 1.2.0 et 1.1.0 traduites en anglais ; « décidée par Klaatou » retiré des deux entrées de publication |
 
 ## Commandes utiles
 

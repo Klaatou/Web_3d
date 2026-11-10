@@ -214,6 +214,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 10/11/2026 |  | after 1.9.0 | Batch 1.9.6: `CHANGELOG.md`: 1.6.0 section translated into English; "decided by Klaatou" removed from the 1.6.0 release entry |
 | 10/11/2026 |  | after 1.9.0 | Batch 1.9.7: `CHANGELOG.md`: 1.5.1 and 1.5.0 sections translated into English; "decided by Klaatou" removed from the two release entries |
 | 10/11/2026 |  | after 1.9.0 | Batch 1.9.8: `CHANGELOG.md`: 1.4.0 and 1.3.0 sections translated into English; "decided by Klaatou" removed from the two release entries |
+| 10/11/2026 |  | after 1.9.0 | Batch 1.9.9: `CHANGELOG.md`: 1.2.0 and 1.1.0 sections translated into English; "decided by Klaatou" removed from the two release entries |
 
 ## Useful commands
 

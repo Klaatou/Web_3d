@@ -6,6 +6,13 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.9.0)
 
+### 10/11/2026 : `CHANGELOG.md` : rubriques 1.2.0 et 1.1.0 traduites en anglais (lot 1.9.9)
+
+- **Demande de Klaatou** : continuer la traduction du journal, par les rubriques 1.2.0 et 1.1.0.
+- **Fait** : les deux rubriques (entrées de publication et lots du 29/10/2026 au 01/11/2026, 1.0.1 à 1.1.8 et les entrées qui les précèdent) sont maintenant en anglais : les intertitres sont traduits ; ces entrées portaient déjà un jumeau anglais de chaque puce française, donc les puces françaises sont retirées ici (elles restent dans `CHANGELOG.fr.md`) et les puces anglaises gardées telles quelles ; les six lignes « Test » réduites à un nom de fichier et sans jumeau sont gardées, sous leur forme anglaise ; dans les deux entrées de publication, seules les notes anglaises de la release GitHub sont gardées et la formule « décidée par Klaatou » est retirée (ici et dans `CHANGELOG.md`) ; la note sous le titre dit maintenant que les rubriques de la 1.0.0 à la plus ancienne sont encore en français.
+- **Contrôle** : pour chaque lot, les puces anglaises gardées sont celles que le contrôle de langue (mots-outils, puis lecture) classe comme anglaises ; la seule ligne douteuse (1.1.1) est le jumeau français d'une puce anglaise et est retirée ; les identifiants techniques sont ceux du texte anglais existant (non retapés) ; aucun script ni test ne lit le journal ; aucun fichier de `dist/` ne change.
+- **En retard** : la traduction des rubriques de la 1.0.0 à la plus ancienne (1.0.0, puis les rubriques v52 à v14, à décider avec Klaatou) ; `REGLES.md` (règles 15 et 16 : une entrée dans chacun des deux fichiers) ; `REPRISE.md`.
+
 ### 10/11/2026 : `CHANGELOG.md` : rubriques 1.4.0 et 1.3.0 traduites en anglais (lot 1.9.8)
 
 - **Demande de Klaatou** : continuer la traduction du journal, par les rubriques 1.4.0 et 1.3.0.
@@ -747,7 +754,7 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 ## 1.2.0 (01/11/2026)
 
 ### 01/11/2026 : publication 1.2.0 : zones image cliquables, numéros, `dist/` et paquets prêts à l'emploi
-- **Publication** : la 1.2.0, décidée par Klaatou le 01/11/2026, réunit les lots 1.1.1 à 1.1.8 décrits plus bas. `VERSION` passe de `1.1.8` à `1.2.0` (le numéro mineur monte : des fonctions ont été ajoutées). Aucun fichier fabriqué ne change par rapport à la 1.1.8.
+- **Publication** : la 1.2.0 (01/11/2026) réunit les lots 1.1.1 à 1.1.8 décrits plus bas. `VERSION` passe de `1.1.8` à `1.2.0` (le numéro mineur monte : des fonctions ont été ajoutées). Aucun fichier fabriqué ne change par rapport à la 1.1.8.
 - **Nouveautés de la 1.2.0** : clé `link` d'une zone `image` (le clic ou E ouvre une page) ; numéros des zones image (case des Réglages, à plat) ; le clic de pose d'une zone marche aussi en promenade (viewer) ; `dist/` est suivi par git (test `tests/dist_a_jour.py`) ; `build.py` écrit du LF partout ; paquets prêts à l'emploi `galerie-photos.zip` et `region-simple.zip` (sources dans `paquets/`, script `fabriquer_paquets.py`).
 - **Documents** : manuel (ligne `link` du § 27.3, § 37.1), `PROCEDURES` (§§ 6 et 12), README, exemple de zones et README des exemples, vue d'ensemble, historiques, FR et EN.
 - **Notes de la release GitHub** : les trois puces anglaises ci-dessous. À joindre à la release : `galerie-photos.zip` et `region-simple.zip` (fabriqués par `python fabriquer_paquets.py`).
@@ -814,7 +821,7 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 ## 1.1.0 (31/10/2026)
 
 ### 31/10/2026 : publication 1.1.0 : documents bilingues à jour
-- **Publication** : la 1.1.0, décidée par Klaatou le 31/10/2026, réunit les lots 1.0.1 à 1.0.4 et ceux du 30/10/2026 décrits plus bas. `VERSION` passe de `1.0.4` à `1.1.0` (le numéro mineur monte : des fonctions ont été ajoutées). Aucun fichier fabriqué ne change : `VERSIONS.json` reste tel quel (`glb2html.py` et `glb-viewer.html` 1.0.4, `index.html` 1.0.3, `carte.html`, `presence_server.py`, `oar2glb.py`, `glb2tiles.py` 1.0.1).
+- **Publication** : la 1.1.0 (31/10/2026) réunit les lots 1.0.1 à 1.0.4 et ceux du 30/10/2026 décrits plus bas. `VERSION` passe de `1.0.4` à `1.1.0` (le numéro mineur monte : des fonctions ont été ajoutées). Aucun fichier fabriqué ne change : `VERSIONS.json` reste tel quel (`glb2html.py` et `glb-viewer.html` 1.0.4, `index.html` 1.0.3, `carte.html`, `presence_server.py`, `oar2glb.py`, `glb2tiles.py` 1.0.1).
 - **Nouveautés de la 1.1.0** : zone `image` (tableau sur un mur, posé par clic ; sous-dossier `medias` ; nom souple, mode « numéro seul » et `imageExts` ; légende dans le nom du fichier ou dans `12.txt` ; images, légendes et `.glb` toujours revalidés) ; éditeur : dossier de la région et aperçu des images ; `--solid-materials` (clé `solidMaterials`) ; pointeur : nom du bâtiment (objet racine) ; message clair quand WebGL est indisponible ; un numéro de version par fichier (`VERSIONS.json`) et marque de chaque fichier ; serveur de présence : console (séquences du terminal, commande `version`) et lignes « requête http » derrière un relais ; note pour les créateurs.
 - **Documents** : manuel § 37 (nouveau) et §§ 3, 27.3, 27.4, 34.4, 36.5 ; `PROCEDURES` §§ 4, 5, 9, 11 (la commande `version` se compare à la liste de `build.py`, plus au fichier `REVISION`) ; historiques ; README ; `docs/samples/README` ; vue d'ensemble ; `CLAUDE.md` ; `REPRISE.md` ; tout en français et en anglais. `REFERENCE_OPTIONS.md` n'a pas changé (la ligne `--solid-materials` y est déjà).
 - **Notes de la release GitHub** : les trois puces anglaises (Release, What is new, Documents) ci-dessous.
