@@ -174,6 +174,8 @@ Pour ne pas taper de commande : une fenêtre propose les six outils, avec l'aide
 python .\dist\web3d_gui.py
 ```
 
+Sous la liste des outils, la liste « Exemples » propose des usages de base de chaque outil : en choisir un remplit les champs ; il reste à remplacer les noms d'exemple par les tiens, puis à cliquer sur Lancer.
+
 Pour des raccourcis sur le bureau (un pour la fenêtre, un par outil), d'abord ce qui serait créé, sans rien écrire :
 
 ```powershell

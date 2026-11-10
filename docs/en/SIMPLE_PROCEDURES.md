@@ -174,6 +174,8 @@ To avoid typing a command: a window offers the six tools, with the help of every
 python .\dist\web3d_gui.py
 ```
 
+Under the tool list, the "Examples" list offers basic uses of each tool: choosing one fills the fields; all that is left is to replace the example names with your own, then click Run.
+
 For shortcuts on the desktop (one for the window, one per tool), first what would be created, writing nothing:
 
 ```powershell

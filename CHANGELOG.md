@@ -4,6 +4,13 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.8.0)
 
+### 10/11/2026 : documents : la liste d'exemples du lanceur (lot 1.8.18)
+
+- **Demande de Klaatou** : mettre les documents à jour (règle 16) après le lot 1.8.17.
+- **Fait, en français et en anglais** : manuel § 3.9 (la liste « Exemples » : ce qu'elle propose, qu'elle efface puis remplit les champs, qu'elle ne lance rien, son comportement pendant un lancement et au changement d'outil, la table `EXEMPLES`, le message d'un exemple qui ne correspond pas à l'outil installé ; ligne « Essayé » et « Non essayé » : la liste d'exemples n'a pas été essayée sous Windows), ligne de l'outil dans le tableau du § 3 et ligne « Ajouts de la 1.8.x » ; `PROCEDURES_SIMPLES.md` § 11 (une phrase) ; `HISTORIQUE.md` et `HISTORY.md` : lots 1.8.17 et 1.8.18. Aucun code ne change (`dist\` identique, `VERSIONS.json` aussi).
+- **Contrôle** : `python verif_trad.py` sur les trois couples modifiés : 0 erreur, mêmes avertissements qu'avant.
+- **En retard** : `REPRISE.md` (à refaire en fin de conversation).
+
 ### 10/11/2026 : liste d'exemples d'usages de base dans le lanceur graphique (lot 1.8.17)
 
 - **Demande de Klaatou** : revoir le lanceur graphique ; pour chaque outil, des exemples d'usages de base.

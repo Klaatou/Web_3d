@@ -203,6 +203,8 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 10/11/2026 |  | après 1.8.0 | Lot 1.8.14 : `console.py` lit la sortie du serveur pendant le test (tube de 4 Ko sous Windows) |
 | 10/11/2026 |  | après 1.8.0 | Lot 1.8.15 : `compress.py` montre l'erreur de gltfpack en cas d'échec |
 | 10/11/2026 |  | après 1.8.0 | Lot 1.8.16 : documents : § 7.63 et § 7.64 du manuel, `dist/convoar/`, `deploy/`, tests sous Windows (`DEVELOPPEMENT.md`), historique |
+| 10/11/2026 |  | après 1.8.0 | Lot 1.8.17 : lanceur graphique : liste d'exemples d'usages de base pour chaque outil (`EXEMPLES`, `lire_exemple`), test `gui.py` |
+| 10/11/2026 |  | après 1.8.0 | Lot 1.8.18 : documents : manuel § 3.9, procédures simples § 11, historique |
 
 ## Commandes utiles
 

@@ -61,7 +61,7 @@ The ready-to-use files are already in the repository's `dist/` folder: there is 
 | `extraire_batiments.py` | outputs from an OAR and its `.glb` one recentred `.glb` per object group | 3 |
 | `iar2oar.py` | turns an IAR (OpenSim inventory) into a minimal OAR | 3 |
 | `diag_carte.py` | diagnoses why the map shows no nicknames (queries the presence server with and without the key) | 9 |
-| `web3d_gui.py` | opens the tools in a window: tool list, option help, run button, Windows shortcuts | 3.9 |
+| `web3d_gui.py` | opens the tools in a window: tool list, basic-use examples, option help, run button, Windows shortcuts | 3.9 |
 | `glb-stats.py` | measures a `.glb`; must stay next to `glb2tiles.py` | 4 |
 | `glb2tiles.py` | cuts a huge `.glb` into tiles and makes `NOM.overview.glb` (the overview) | 4 |
 | `glb-viewer.html` | the viewer: you open a `.glb` in it to adjust it and place the zones | 5 |
@@ -222,7 +222,8 @@ Run it after a conversion made with `--keep`. The log is `oar2glb.diag.log`. Eac
 | Remove them | `python web3d_gui.py --remove-shortcuts` |
 
 - **The tools**: `glb2html`, `glb2tiles`, `oar2glb`, `extraire_batiments`, `iar2oar`, `diag_carte` (`--tool NAME`). The presence server is not in it: it keeps running, it is not a one-off command.
-- **The window**: at the top, the tool list and a search box; in the middle, one line per option (check box, list of choices, number, path with the File... and Folder... buttons, "option alone" for an optional value, a multi-line box for a repeatable option such as `--group` or `--exclude`, yes/no for the `--x` and `--no-x` pairs); at the bottom, the help of the option under the pointer, the resulting command, the Run (Ctrl+Enter), Stop, Copy the command and Clear all buttons, then the tool's output.
+- **The window**: at the top, the tool list and a search box, then the "Examples" list; in the middle, one line per option (check box, list of choices, number, path with the File... and Folder... buttons, "option alone" for an optional value, a multi-line box for a repeatable option such as `--group` or `--exclude`, yes/no for the `--x` and `--no-x` pairs); at the bottom, the help of the option under the pointer, the resulting command, the Run (Ctrl+Enter), Stop, Copy the command and Clear all buttons, then the tool's output.
+- **The examples**: the "Examples" list offers 2 to 6 basic uses of the tool shown (for `extraire_batiments`: list the groups, extract one by its number or by its name, merge several, simulate extracting everything). Choosing an example **clears the fields, then fills them**: the equivalent command updates and the help says to replace the example names (`Atoll.glb`, `ADRESSE`, `MA_CLE`...) with your own. Nothing runs by itself; you can edit the fields before clicking Run. The list is inactive while a tool runs and goes back to its prompt when you change tool. The examples are written in the `EXEMPLES` table of `web3d_gui.py` (titles in `src/i18n`, keys `py.gui.ex.*`); an example that does not match the options of the installed tool (an older version) shows a message instead of filling the fields.
 - **Fields to fix**: an unreadable number or a choice outside the list is marked with a "!" (never by colour alone), and Run refuses and says which one.
 - **Default values**: shown at the right of the line. When the option's help describes the default without a figure (`--spectate`: on as soon as a `--presence-url` is given; `-o`: "<name> - Offline.html" next to the `.glb`), the line says "default: see the help".
 - **Shortcuts** (Windows): `--shortcuts` creates seven `.lnk` files on the desktop, "Web_3d - launcher" and one per tool. They start `pythonw.exe` (no black console window) and carry the project icon (`favicon.ico`, next to the script). Running `--shortcuts` again replaces the existing shortcuts; `--shortcuts-folder FOLDER` picks another folder; `--dry-run` says what would be done. If Python is moved or reinstalled, run `--shortcuts` again.
@@ -230,7 +231,7 @@ Run it after a conversion made with `--keep`. The log is `oar2glb.diag.log`. Eac
 ![The seven shortcuts on the Windows desktop](../images/raccourcis.png)
 
 - **Language and version**: `--lang` and `WEB3D_LANG` (§ 7.50), `--version`.
-- **Tried**: automatic tests on Linux with a virtual display (`tests/gui.py`: the options of every tool, one by one, accepted by the tool's real parser); by Klaatou on Windows: the window, the tool list and the shortcuts with the project icon (08/11/2026). **Not tried**: macOS, Linux with a real display, the file pickers.
+- **Tried**: automatic tests on Linux with a virtual display (`tests/gui.py`: the options of every tool, one by one, accepted by the tool's real parser; every example of every tool accepted by that parser and reloaded identically by the window); by Klaatou on Windows: the window, the tool list and the shortcuts with the project icon (08/11/2026). **Not tried**: macOS, Linux with a real display, the file pickers, the examples list on Windows.
 
 ## 4. Measuring and cutting up a big region
 
@@ -1701,7 +1702,7 @@ The detail, version by version, is in `HISTORY.md` (narrative) and `CHANGELOG.md
 | Additions of 1.6.0 | The packages' `zhop` "Lien vers OpenSim" panel (§ 5.11) |
 | Additions of 1.7.0 (batches 1.6.1 to 1.6.19) | `extraire_batiments.py` (§ 3.7) and `iar2oar.py` (§ 3.8); JSON file reference as a separate document (`REFERENCE_JSON.md`) and `INDEX.md`; updating a package that is already published (`SIMPLE_PROCEDURES.md` § 10); "Made with Web_3d" icon (§ 7.62); logo as tab icon (§ 6.9); animated GIFs (§ 5.11); "Animated GIFs" and "Version: page …" lines of the diagnostics (§ 7.53) |
 | Additions of 1.8.0 (batches 1.7.1 to 1.7.22) | `diag_carte.py`: diagnosing the map nicknames (§ 9.22); real-life tries of `extraire_batiments.py` and `iar2oar.py` (§ 3.7, § 3.8); animated GIFs checked on Windows and in Firefox (§ 5.11); README SVG diagrams (`DEVELOPMENT.md` § 6); graphical launcher `web3d_gui.py` with Windows shortcuts (§ 3.9); link to the Discord server |
-| Additions of 1.8.x (batches 1.8.1 to 1.8.16, unpublished) | "Walk (P)" button that blinks (§ 7.63); Discord link in the help window (§ 7.64); no more black background when opening a tiled region by a link (§ 8.6); convoar supplied in `dist/convoar/` (§ 3); `build.py` regenerates `docs/REFERENCE_OPTIONS.md`; `deploy/` folder |
+| Additions of 1.8.x (batches 1.8.1 to 1.8.18, unpublished) | "Walk (P)" button that blinks (§ 7.63); Discord link in the help window (§ 7.64); no more black background when opening a tiled region by a link (§ 8.6); convoar supplied in `dist/convoar/` (§ 3); `build.py` regenerates `docs/REFERENCE_OPTIONS.md`; `deploy/` folder; basic-use examples list in the graphical launcher (§ 3.9) |
 
 Everything below is in **1.1.0** (released on 31/10/2026). The detail, batch by batch, is in `CHANGELOG.md`.
 

@@ -203,6 +203,8 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 10/11/2026 |  | after 1.8.0 | Batch 1.8.14: `console.py` reads the server's output during the test (4 KB pipe under Windows) |
 | 10/11/2026 |  | after 1.8.0 | Batch 1.8.15: `compress.py` shows gltfpack's error on failure |
 | 10/11/2026 |  | after 1.8.0 | Batch 1.8.16: documents: manual § 7.63 and § 7.64, `dist/convoar/`, `deploy/`, tests under Windows (`DEVELOPMENT.md`), history |
+| 10/11/2026 |  | after 1.8.0 | Batch 1.8.17: graphical launcher: basic-use examples list for every tool (`EXEMPLES`, `lire_exemple`), `gui.py` test |
+| 10/11/2026 |  | after 1.8.0 | Batch 1.8.18: documents: manual § 3.9, simple procedures § 11, history |
 
 ## Useful commands
 

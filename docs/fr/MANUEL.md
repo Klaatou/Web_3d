@@ -61,7 +61,7 @@ Les fichiers prêts à l'emploi sont déjà dans le dossier `dist/` du dépôt :
 | `extraire_batiments.py` | sort d'un OAR et de son `.glb` un `.glb` par groupe d'objets, recentré | 3 |
 | `iar2oar.py` | transforme un IAR (inventaire OpenSim) en OAR minimal | 3 |
 | `diag_carte.py` | diagnostique pourquoi la carte n'affiche pas les pseudos (interroge le serveur de présence avec et sans la clé) | 9 |
-| `web3d_gui.py` | ouvre les outils dans une fenêtre : liste des outils, aide des options, lancement, raccourcis Windows | 3.9 |
+| `web3d_gui.py` | ouvre les outils dans une fenêtre : liste des outils, exemples d'usages de base, aide des options, lancement, raccourcis Windows | 3.9 |
 | `glb-stats.py` | mesure un `.glb` ; doit rester à côté de `glb2tiles.py` | 4 |
 | `glb2tiles.py` | découpe un `.glb` énorme en tuiles et fabrique `NOM.overview.glb` (la vue d'ensemble) | 4 |
 | `glb-viewer.html` | le viewer : on y ouvre un `.glb` pour le régler et y poser les zones | 5 |
@@ -222,7 +222,8 @@ Test : `python tests/terrain.py` (OAR et GLB synthétiques).
 | Les supprimer | `python web3d_gui.py --remove-shortcuts` |
 
 - **Les outils** : `glb2html`, `glb2tiles`, `oar2glb`, `extraire_batiments`, `iar2oar`, `diag_carte` (`--tool NAME`). Le serveur de présence n'y est pas : il reste lancé, ce n'est pas une commande d'un instant.
-- **La fenêtre** : en haut, la liste des outils et un champ de recherche ; au milieu, une ligne par option (case à cocher, liste de choix, nombre, chemin avec les boutons Fichier… et Dossier…, « option seule » pour une valeur facultative, champ de plusieurs lignes pour une option répétable comme `--group` ou `--exclude`, oui/non pour les paires `--x` et `--no-x`) ; en bas, l'aide de l'option sous le curseur, la commande qui en résulte, les boutons Lancer (Ctrl+Entrée), Arrêter, Copier la commande et Tout effacer, puis la sortie de l'outil.
+- **La fenêtre** : en haut, la liste des outils et un champ de recherche, puis la liste « Exemples » ; au milieu, une ligne par option (case à cocher, liste de choix, nombre, chemin avec les boutons Fichier… et Dossier…, « option seule » pour une valeur facultative, champ de plusieurs lignes pour une option répétable comme `--group` ou `--exclude`, oui/non pour les paires `--x` et `--no-x`) ; en bas, l'aide de l'option sous le curseur, la commande qui en résulte, les boutons Lancer (Ctrl+Entrée), Arrêter, Copier la commande et Tout effacer, puis la sortie de l'outil.
+- **Les exemples** : la liste « Exemples » propose 2 à 6 usages de base de l'outil affiché (pour `extraire_batiments` : lister les groupes, en extraire un par son numéro ou par son nom, en réunir plusieurs, simuler l'extraction de tout). Choisir un exemple **efface les champs puis les remplit** : la commande équivalente se met à jour et l'aide dit de remplacer les noms d'exemple (`Atoll.glb`, `ADRESSE`, `MA_CLE`…) par les siens. Rien ne se lance tout seul ; on peut modifier les champs avant de cliquer sur Lancer. La liste est inactive pendant un lancement et revient à son invite quand on change d'outil. Les exemples sont écrits dans la table `EXEMPLES` de `web3d_gui.py` (titres dans `src/i18n`, clés `py.gui.ex.*`) ; un exemple qui ne correspond pas aux options de l'outil installé (version plus ancienne) affiche un message au lieu de remplir les champs.
 - **Les champs à corriger** : un nombre illisible ou un choix hors de la liste est marqué d'un « ! » (jamais par la couleur seule), et Lancer le refuse en disant lequel.
 - **Les valeurs par défaut** : affichées à droite de la ligne. Quand l'aide de l'option décrit le défaut sans le chiffrer (`--spectate` : actif dès qu'une `--presence-url` est donnée ; `-o` : « <nom> - Offline.html » à côté du `.glb`), la ligne dit « défaut : voir l'aide ».
 - **Les raccourcis** (Windows) : `--shortcuts` crée sept fichiers `.lnk` sur le bureau, « Web_3d - lanceur » et un par outil. Ils lancent `pythonw.exe` (pas de fenêtre console noire) et portent l'icône du projet (`favicon.ico`, à côté du script). Relancer `--shortcuts` remplace les raccourcis existants ; `--shortcuts-folder FOLDER` choisit un autre dossier ; `--dry-run` dit ce qui serait fait. Si Python est déplacé ou réinstallé, relancer `--shortcuts`.
@@ -230,7 +231,7 @@ Test : `python tests/terrain.py` (OAR et GLB synthétiques).
 ![Les sept raccourcis sur le bureau Windows](../images/raccourcis.png)
 
 - **Langue et version** : `--lang` et `WEB3D_LANG` (§ 7.50), `--version`.
-- **Essayé** : tests automatiques sous Linux avec un écran virtuel (`tests/gui.py` : les options de chaque outil, une par une, acceptées par le vrai parseur de l'outil) ; par Klaatou sous Windows : la fenêtre, la liste des outils et les raccourcis avec l'icône du projet (08/11/2026). **Non essayé** : macOS, Linux avec un vrai écran, les sélecteurs de fichier.
+- **Essayé** : tests automatiques sous Linux avec un écran virtuel (`tests/gui.py` : les options de chaque outil, une par une, acceptées par le vrai parseur de l'outil ; chaque exemple de chaque outil accepté par ce parseur et rechargé à l'identique par la fenêtre) ; par Klaatou sous Windows : la fenêtre, la liste des outils et les raccourcis avec l'icône du projet (08/11/2026). **Non essayé** : macOS, Linux avec un vrai écran, les sélecteurs de fichier, la liste d'exemples sous Windows.
 
 ## 4. Mesurer et découper une grosse région
 
@@ -1701,7 +1702,7 @@ Le détail, version par version, est dans `HISTORIQUE.md` (récit) et `CHANGELOG
 | Ajouts de la 1.6.0 | Panneau `zhop` « Lien vers OpenSim » des paquets (§ 5.11) |
 | Ajouts de la 1.7.0 (lots 1.6.1 à 1.6.19) | `extraire_batiments.py` (§ 3.7) et `iar2oar.py` (§ 3.8); référence des fichiers JSON à part (`REFERENCE_JSON.md`) et `INDEX.md`; mise à jour d'un paquet déjà publié (`PROCEDURES_SIMPLES.md` § 10); icône « Réalisé avec Web_3d » (§ 7.62); logo en icône d'onglet (§ 6.9); GIF animés (§ 5.11); lignes « Animations GIF » et « Version : page … » du diagnostic (§ 7.53) |
 | Ajouts de la 1.8.0 (lots 1.7.1 à 1.7.22) | `diag_carte.py` : diagnostic des pseudos de la carte (§ 9.22) ; essais réels de `extraire_batiments.py` et d'`iar2oar.py` (§ 3.7, § 3.8) ; GIF animés vérifiés sous Windows et Firefox (§ 5.11) ; schémas SVG du README (`DEVELOPPEMENT.md` § 6) ; lanceur graphique `web3d_gui.py` avec raccourcis Windows (§ 3.9) ; lien vers le serveur Discord |
-| Ajouts de la 1.8.x (lots 1.8.1 à 1.8.16, non publiés) | Bouton « Promenade (P) » qui clignote (§ 7.63) ; lien Discord dans la fenêtre d'aide (§ 7.64) ; plus de fond noir à l'ouverture par lien sur une région en tuiles (§ 8.6) ; convoar fourni dans `dist/convoar/` (§ 3) ; `build.py` refait `docs/REFERENCE_OPTIONS.md` ; dossier `deploy/` |
+| Ajouts de la 1.8.x (lots 1.8.1 à 1.8.18, non publiés) | Bouton « Promenade (P) » qui clignote (§ 7.63) ; lien Discord dans la fenêtre d'aide (§ 7.64) ; plus de fond noir à l'ouverture par lien sur une région en tuiles (§ 8.6) ; convoar fourni dans `dist/convoar/` (§ 3) ; `build.py` refait `docs/REFERENCE_OPTIONS.md` ; dossier `deploy/` ; liste d'exemples d'usages de base dans le lanceur graphique (§ 3.9) |
 
 Tout ce qui suit est dans la **1.1.0** (publiée le 31/10/2026). Le détail, lot par lot, est dans `CHANGELOG.md`.
 
