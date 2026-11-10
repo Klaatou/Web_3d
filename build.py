@@ -210,3 +210,40 @@ def marquer(dossier):
 print("marques (empreinte de chaque fichier fabriqué) :")
 for nom_f, m in marquer(OUT).items():
     print(f"  {nom_f:<22} {m}")
+
+
+# 1.8.9 : docs/REFERENCE_OPTIONS.md refait ici (sortie dist/ seulement), par gen_reference.py lance a part (aucun bruit, aucun fichier laisse dans dist/) ;
+# reecrit seulement si le contenu change hors la ligne de date ; un echec n'arrete pas le build
+if OUT.resolve() == (ROOT / "dist").resolve():
+    try:
+        import os, re, subprocess, tempfile
+        avant = {p.name for p in OUT.iterdir()}
+        tmpd = pathlib.Path(tempfile.mkdtemp(prefix="web3d_ref_"))
+        tmpf = tmpd / "REFERENCE_OPTIONS.md"
+        r = subprocess.run([sys.executable, str(ROOT / "gen_reference.py"), "--tools", str(OUT), "--output", str(tmpf)],
+                           capture_output=True, text=True, encoding="utf-8", errors="replace", cwd=str(ROOT),
+                           env=dict(os.environ, PYTHONIOENCODING="utf-8"))   # Windows : sortie d'un tube en cp1252 sans cela
+        for p in OUT.iterdir():   # journaux ecrits par les outils pendant la lecture de leurs options : retires
+            if p.name not in avant and p.suffix == ".log":
+                p.unlink()
+        if not tmpf.is_file():
+            raise RuntimeError(((r.stdout or "") + (r.stderr or "")).strip()[-300:] or "aucune sortie")
+        texte = tmpf.read_bytes().decode("utf-8").replace("\r\n", "\n")
+        tmpf.unlink()
+        tmpd.rmdir()
+        ref = ROOT / "docs" / "REFERENCE_OPTIONS.md"
+        sans_date = lambda t: re.sub(r"Générée le \d\d/\d\d/\d{4}", "Générée le", t)
+        ancien = ref.read_bytes().decode("utf-8").replace("\r\n", "\n") if ref.is_file() else None
+        if ancien is not None and sans_date(ancien) == sans_date(texte):
+            print("[OK] docs/REFERENCE_OPTIONS.md : à jour (inchangé)")
+        else:
+            ref.parent.mkdir(exist_ok=True)
+            ref.write_bytes(texte.encode("utf-8"))   # octets : LF partout, meme sous Windows
+            print("[OK] docs/REFERENCE_OPTIONS.md : refait (à commiter avec le lot)")
+        for ligne in r.stdout.splitlines():
+            if ligne.startswith("[manque]"):
+                print(ligne)
+    except Exception as e:
+        print(f"[AVERTISSEMENT] docs/REFERENCE_OPTIONS.md non refait : {e} (python gen_reference.py à la main)")
+else:
+    print("(docs/REFERENCE_OPTIONS.md non refait : sortie ailleurs que dist/)")

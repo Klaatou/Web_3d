@@ -4,6 +4,18 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.8.0)
 
+### 10/11/2026 : `build.py` et `tests/build_reference.py` : sortie des processus lue en UTF-8 sous Windows (lot 1.8.10)
+
+- **Constat de Klaatou** (Windows) : deux contrôles de `tests/build_reference.py` échouent (« relance sans changement », « date seule différente ») ; la console affiche « � jour (inchang�) ».
+- **Cause** (reproduite ici avec `PYTHONIOENCODING=cp1252`) : sous Windows, un processus Python dont la sortie va dans un tube écrit dans la page de code du système (cp1252), alors que le test lisait cette sortie en UTF-8 : « à jour (inchangé) » devenait illisible et n'était pas reconnu. `build.py` lisait de la même façon la sortie de `gen_reference.py` (lignes `[manque]`). Le fichier écrit, lui, était correct (UTF-8).
+- **Fait** : `build.py` et le test lancent leur processus fils avec `PYTHONIOENCODING=utf-8`. **Test dans les deux sens** : avec la sortie en cp1252 puis en UTF-8, le test passe en entier (il échouait en cp1252 avant). **Non testé** : Windows lui-même (à relancer chez Klaatou).
+
+### 10/11/2026 : `build.py` refait `docs/REFERENCE_OPTIONS.md` (lot 1.8.9)
+
+- **Demande de Klaatou** : que `gen_reference.py` soit lancé automatiquement par le build, au lieu d'une étape manuelle à ne pas oublier.
+- **Fait** (`build.py`) : à la fin du build, quand la sortie est le vrai `dist\`, la référence des options est refaite depuis `dist\` fraîchement fabriqué (« [OK] docs/REFERENCE_OPTIONS.md : refait ») et réécrite seulement si son contenu change hors la ligne « Générée le jj/mm/aaaa » (sinon « à jour (inchangé) » : pas de modification chaque jour). Écrite en octets, LF partout. Avec `--out` ailleurs que `dist\` : rien n'est écrit, comme `VERSIONS.json` (donc `tests/dist_a_jour.py` ne change rien). Une option sans description est signalée (`[manque]`) sans arrêter le build ; un échec de la génération (par exemple `websockets` absent pour lire `presence_server.py`) donne un avertissement, pas une erreur. Environ 1,5 s de plus (mesuré). `python gen_reference.py` reste utilisable à la main. `git add -A` prend le fichier avec le lot.
+- **Test** : nouveau `tests/build_reference.py` (copie du dépôt dans un dossier temporaire : fichier absent recréé, relance sans changement, date seule différente non réécrite, contenu différent réécrit, `--out` sans écriture). **Attention bac à sable** : Python 3.12 produit un texte un peu différent de celui de Klaatou ; les builds de vérification réécrivent le fichier, qui n'est jamais livré depuis le bac à sable. Manuels `MANUEL.md` § 7.50 et `MANUAL.md` : une phrase corrigée.
+
 ### 10/11/2026 : `REFERENCE_OPTIONS.md` déplacé dans `docs\` (lot 1.8.8)
 
 - **Demande de Klaatou** : ranger `REFERENCE_OPTIONS.md` (fichier généré, bilingue) avec les documents.
