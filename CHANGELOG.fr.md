@@ -6,6 +6,13 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.9.0)
 
+### 10/11/2026 : `CHANGELOG.md` : rubriques 1.5.1 et 1.5.0 traduites en anglais (lot 1.9.7)
+
+- **Demande de Klaatou** : continuer la traduction du journal, par les rubriques 1.5.1 et 1.5.0.
+- **Fait** : les deux rubriques (entrées de publication et lots 1.4.1 à 1.4.13) sont maintenant en anglais : les intertitres sont traduits ; ces entrées portaient déjà un jumeau anglais de chaque puce française, donc les puces françaises sont retirées ici (elles restent dans `CHANGELOG.fr.md`) et les puces anglaises gardées telles quelles ; dans les deux entrées de publication, seules les notes anglaises de la release GitHub sont gardées et la formule « décidée par Klaatou » est retirée (ici et dans `CHANGELOG.md`) ; la note sous le titre dit maintenant que les rubriques de la 1.4.0 à la plus ancienne sont encore en français.
+- **Contrôle** : pour chaque lot, le nombre de puces anglaises gardées égale le nombre de puces françaises retirées ; les identifiants techniques sont ceux du texte anglais existant (non retapés) ; aucun script ni test ne lit le journal ; aucun fichier de `dist/` ne change.
+- **En retard** : la traduction des rubriques de la 1.4.0 à la plus ancienne (1.4.0, 1.3.0, 1.2.0, 1.1.0, 1.0.0, puis les rubriques v52 à v14, à décider avec Klaatou) ; `REGLES.md` (règles 15 et 16 : une entrée dans chacun des deux fichiers) ; `REPRISE.md`.
+
 ### 10/11/2026 : `CHANGELOG.md` : rubrique 1.6.0 traduite en anglais (lot 1.9.6)
 
 - **Demande de Klaatou** : continuer la traduction du journal, par la rubrique 1.6.0.
@@ -509,7 +516,7 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ### 04/11/2026 : publication 1.5.1 : la version affichée par les paquets suit la release
 
-- **Publication** : la 1.5.1, décidée par Klaatou, corrige un détail de la 1.5.0 : la fenêtre Aide d'une région des deux paquets affichait une version ancienne (1.1.0 ou 1.1.1), celle qui était écrite dans la config au moment où le paquet avait été préparé. `fabriquer_paquets.py` écrit maintenant la version de la release dans la clé `version` de la config de chaque paquet, à chaque fabrication : plus rien à mettre à jour à la main. Test : `tests/paquets.py` (134 contrôles). `VERSION` passe de `1.5.0` à `1.5.1`. Aucun fichier de `dist\` ne change ; le manuel (§ 11.3) le dit.
+- **Publication** : la 1.5.1 (04/11/2026) corrige un détail de la 1.5.0 : la fenêtre Aide d'une région des deux paquets affichait une version ancienne (1.1.0 ou 1.1.1), celle qui était écrite dans la config au moment où le paquet avait été préparé. `fabriquer_paquets.py` écrit maintenant la version de la release dans la clé `version` de la config de chaque paquet, à chaque fabrication : plus rien à mettre à jour à la main. Test : `tests/paquets.py` (134 contrôles). `VERSION` passe de `1.5.0` à `1.5.1`. Aucun fichier de `dist\` ne change ; le manuel (§ 11.3) le dit.
 - **Notes de la release GitHub** : la puce ci-dessous, en anglais puis en français. À joindre : `galerie-photos.zip` et `region-simple.zip` (fabriqués par `python fabriquer_paquets.py`).
 - **Release** 1.5.1, decided by Klaatou, fixes a detail of 1.5.0: the Help window of the two packages showed an old version (1.1.0 or 1.1.1), the one written in the config when the package was prepared. `fabriquer_paquets.py` now writes the release version into the `version` key of each package's config at every build: nothing left to update by hand. Test: `tests/paquets.py` (134 checks). `VERSION` goes from `1.5.0` to `1.5.1`. No file of `dist\` changes; the manual (§ 11.3) says so.
 
@@ -517,7 +524,7 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ### 04/11/2026 : publication 1.5.0 : tuiles compressées, « À propos de la région », cartes des paquets, nouvelle documentation
 
-- **Publication** : la 1.5.0, décidée par Klaatou, réunit les lots notés « Non publié » depuis la 1.4.0 (décrits plus bas). `VERSION` passe de `1.4.13` à `1.5.0` (le numéro mineur monte : des fonctions ont été ajoutées).
+- **Publication** : la 1.5.0 (04/11/2026) réunit les lots notés « Non publié » depuis la 1.4.0 (décrits plus bas). `VERSION` passe de `1.4.13` à `1.5.0` (le numéro mineur monte : des fonctions ont été ajoutées).
 - **Nouveautés de la 1.5.0** : régions en tuiles : le nom de la tuile sous l'avatar s'affiche dans la fenêtre d'état (un élément par ligne), avec le poids réellement reçu ; `glb2tiles.py --compress` compresse les tuiles avec `gltfpack` (environ deux fois moins lourdes) ; page : panneau « À propos de la région » (fichier `NOM.about.<langue>.txt`, liens cliquables, touche `?`, case dans les Réglages), lien « Aide des visiteurs » dans la fenêtre Aide, message « Chargement… » dans un cadre bien visible, titre d'onglet réglable (clé `title`, `--title`) ; carte des mondes : `--scan-sites --prune-missing` retire les fiches introuvables ; chaque paquet (`galerie-photos.zip`, `region-simple.zip`) a sa propre carte avec sa vignette ; chaque outil Python n'embarque plus que ses propres textes ; documentation refaite : manuel par thèmes en 13 chapitres, guide « Créer et gérer sa région », procédures de l'hôte, développement. La conversion OAR vers GLB reste réservée à Windows.
 - **Notes de la release GitHub** : les deux puces ci-dessous, en anglais puis en français. À joindre : `galerie-photos.zip` et `region-simple.zip` (fabriqués par `python fabriquer_paquets.py`).
 - **Release** 1.5.0, decided by Klaatou, gathers the batches noted "Unpublished" since 1.4.0 (described below). `VERSION` goes from `1.4.13` to `1.5.0` (the minor number goes up: features were added).
