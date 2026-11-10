@@ -4,6 +4,13 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.8.0)
 
+### 10/11/2026 : ménage de la racine du dépôt (lot 1.8.7)
+
+- **Demande de Klaatou** : nettoyer le dépôt. Bilan : rien à supprimer (chaque fichier est cité par le code, les tests ou les documents).
+- **Fait** : `lance_presence.sh` et `web3d-presence.service` déplacés dans `deploy\` (modèles pour la VM : aucun test ne les cite, les documents n'en donnent que le nom) ; `ETUDE_MEGAREGION.md` déplacé dans `docs\fr\` ; mentions corrigées dans `docs/fr/VUE_ENSEMBLE.md` et `docs/en/OVERVIEW.md`. Aucun code ne change (`dist\` identique).
+- **Laissés à la racine** : `README.md`, `README.fr.md`, `LICENSE`, `THIRD-PARTY.md`, `CHANGELOG.md`, `VERSION`, `VERSIONS.json`, `build.py` (cité partout), `REPRISE.md` et `REPRISE_ARCHIVE.md` (règle 1 de `REGLES.md`), `REFERENCE_OPTIONS.md` (fichier généré, lu à la racine par `tests/doc_options.py`). `gen_reference.py`, `verif_trad.py` et `fabriquer_paquets.py` ne bougent pas : chacun calcule sa racine depuis son emplacement, quatre tests s'y réfèrent et une quarantaine de lignes de documents donnent leurs commandes ; un dossier `dev\` reste possible, en lot à part.
+- **En retard** : `REPRISE.md` cite encore `ETUDE_MEGAREGION.md` à la racine (à corriger à la prochaine reprise, règle 23).
+
 ### 10/11/2026 : arrivée par lien (`#spawn=`) sur une région en tuiles : plus d'écran noir, la vue globale reste visible (lot 1.8.6)
 
 - **Constat de Klaatou** : avec un lien `#spawn=default`, la fenêtre reste noire avec « Chargement du sol… N s » pendant tout le chargement d'une grosse région (Houses) ; depuis la vue globale, on voit la région.

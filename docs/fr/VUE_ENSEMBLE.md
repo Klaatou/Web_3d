@@ -29,7 +29,7 @@ Une région OpenSim (sauvegarde `.oar`) devient une **page web 3D** où l'on se 
 1. **Nom de domaine** : pour le site de présentation et pour un nom stable du serveur de présence.
 2. **Page de présentation** : GIF cliquable vers la démo, bouton pour l'essayer, contact, procédure de retrait, mentions légales.
 3. **Option pour retirer l'icône « Réalisé avec Web_3d »** (clé `credit`) : à décider dans quelques semaines.
-4. **Idées** : zones média restantes (musique, page), images en région en tuiles, insertion de GLB, livre d'or (facultatif, peut être externe) ; extraire chaque bâtiment d'un grand OAR en GLB séparé pour recomposer des régions (fait : `extraire_batiments.py`, la composition se fait dans Blender) ; méga-région (étude dans `ETUDE_MEGAREGION.md`, rien n'est codé) ; PNG et WebP animés.
+4. **Idées** : zones média restantes (musique, page), images en région en tuiles, insertion de GLB, livre d'or (facultatif, peut être externe) ; extraire chaque bâtiment d'un grand OAR en GLB séparé pour recomposer des régions (fait : `extraire_batiments.py`, la composition se fait dans Blender) ; méga-région (étude dans `docs/fr/ETUDE_MEGAREGION.md`, rien n'est codé) ; PNG et WebP animés.
 
 ## 4. Où lire quoi
 
