@@ -51,7 +51,7 @@ Cette page dit **quel document lire pour quoi**. Les documents anglais portent l
 | Je veux savoir… | Où |
 | --- | --- |
 | ce qui a été essayé, et ce qui ne l'a pas été | `VUE_ENSEMBLE.md` § 2 |
-| ce qui a changé, et quand | `CHANGELOG.md` (à la racine) ; `HISTORIQUE.md` ; `MANUEL.md` § 13 |
+| ce qui a changé, et quand | `CHANGELOG.fr.md` (à la racine) ; `HISTORIQUE.md` ; `MANUEL.md` § 13 |
 | comment appliquer une livraison, fabriquer, tester, publier une version | `DEVELOPPEMENT.md` § 1 à § 5 |
 | comment modifier les schémas du README | `DEVELOPPEMENT.md` § 6 |
 | l'état technique pour reprendre le travail | `REPRISE.md` (à la racine) |

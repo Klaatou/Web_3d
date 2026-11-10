@@ -323,7 +323,7 @@ But : en vue globale, voir **toute** la région ; en promenade, voir **au loin**
 - **Objets omis.** Ceux dont la plus grande dimension est sous `--ov-threshold` (3 m par défaut : à 600 m, distance à laquelle la vue d'ensemble fait l'essentiel de l'image, 3 m couvrent environ 8 pixels sur un écran de 1 080 pixels de haut avec le champ de vision de 38 degrés ; à 210 m, limite du rayon de chargement, 22 pixels). Ce choix vient d'un calcul de taille à l'écran, **pas d'une mesure sur ta région** : `--analyse` imprime le nombre d'instances et de triangles au-dessus de 1, 2, 3, 4, 8, 16, 32 et 64 m pour décider sur tes données. Si le budget est atteint, les **plus grands objets sont gardés d'abord** et le seuil effectif monte (`effectiveMinExtent`) ; au-delà de `--ov-threshold-max` la résolution baisse et le calcul est refait.
 - **Budgets** : 25 Mo et 1 500 000 triangles pour toute la région (`--ov-budget`, `--ov-budget-triangles`). Le rapport donne le poids, les triangles (dont le terrain), les objets gardés sur candidats, les objets omis (trop petits / par le budget / à squelette), les primitives translucides omises, les couleurs (moyennes de texture, illisibles, Pillow absent) et le temps.
 - **Le GLB n'est jamais chargé en entier** (même lecture par morceaux de 4 Mo au plus que pour les tuiles), avec une progression (« [vue d'ensemble : primitives] … ») ; les pièces de terrain sont lues une à une.
-- **Durée.** Débit mesuré sur des GLB synthétiques de taille croissante (0,5 ; 2 ; 8 ; 24 millions de triangles uniques) : environ 1,8 million de triangles uniques par seconde, linéaire (0,3 ; 1,2 ; 4,5 ; 13 s), soit 14 à 680 Mo de GLB pour 25 à 164 Mo de mémoire ; 20 000 petits meshes (4 millions de triangles, 40 000 instances) : 15 s, 377 Mo ; terrain de 1 024 m en 256 patches de 4 225 sommets : 3,6 s, 57 Mo. L'estimation pour la région de 1,3 Go est donnée dans `CHANGELOG.md` (v31).
+- **Durée.** Débit mesuré sur des GLB synthétiques de taille croissante (0,5 ; 2 ; 8 ; 24 millions de triangles uniques) : environ 1,8 million de triangles uniques par seconde, linéaire (0,3 ; 1,2 ; 4,5 ; 13 s), soit 14 à 680 Mo de GLB pour 25 à 164 Mo de mémoire ; 20 000 petits meshes (4 millions de triangles, 40 000 instances) : 15 s, 377 Mo ; terrain de 1 024 m en 256 patches de 4 225 sommets : 3,6 s, 57 Mo. L'estimation pour la région de 1,3 Go est donnée dans `CHANGELOG.fr.md` (v31).
 
 #### 4.1.7 Comment le découpage se décide
 
@@ -1674,7 +1674,7 @@ Test : `python tests/tuiles.py` (région synthétique de 16 tuiles, Chromium san
 
 ## 13. Annexe : ce que chaque version a apporté
 
-Le détail, version par version, est dans `HISTORIQUE.md` (récit) et `CHANGELOG.md` (liste complète, avec les tests). Le tableau ci-dessous dit seulement où chaque ajout se trouve aujourd'hui dans ce manuel.
+Le détail, version par version, est dans `HISTORIQUE.md` (récit) et `CHANGELOG.fr.md` (liste complète, avec les tests). Le tableau ci-dessous dit seulement où chaque ajout se trouve aujourd'hui dans ce manuel.
 
 | Version | Ce qu'elle a apporté (renvois au manuel) |
 | --- | --- |
@@ -1705,11 +1705,11 @@ Le détail, version par version, est dans `HISTORIQUE.md` (récit) et `CHANGELOG
 | Ajouts de la 1.8.0 (lots 1.7.1 à 1.7.22) | `diag_carte.py` : diagnostic des pseudos de la carte (§ 9.22) ; essais réels de `extraire_batiments.py` et d'`iar2oar.py` (§ 3.7, § 3.8) ; GIF animés vérifiés sous Windows et Firefox (§ 5.11) ; schémas SVG du README (`DEVELOPPEMENT.md` § 6) ; lanceur graphique `web3d_gui.py` avec raccourcis Windows (§ 3.9) ; lien vers le serveur Discord |
 | Ajouts de la 1.9.0 (lots 1.8.1 à 1.8.18) | Bouton « Promenade (P) » qui clignote (§ 7.63) ; lien Discord dans la fenêtre d'aide (§ 7.64) ; plus de fond noir à l'ouverture par lien sur une région en tuiles (§ 8.6) ; convoar fourni dans `dist/convoar/` (§ 3) ; `build.py` refait `docs/REFERENCE_OPTIONS.md` ; dossier `deploy/` ; liste d'exemples d'usages de base dans le lanceur graphique (§ 3.9) |
 
-Tout ce qui suit est dans la **1.1.0** (publiée le 31/10/2026). Le détail, lot par lot, est dans `CHANGELOG.md`.
+Tout ce qui suit est dans la **1.1.0** (publiée le 31/10/2026). Le détail, lot par lot, est dans `CHANGELOG.fr.md`.
 
 ### 13.1 Numérotation des versions
 
-À partir de la **1.0.0** (la v52 est devenue la 1.0.0), les versions suivent le schéma `X.Y.Z` (majeur.mineur.correctif). Une publication qui ajoute une fonction donne `1.1.0`, `1.2.0`... ; une publication de correctifs seuls donne `1.0.1` ; un changement qui casse l'existant (renommage sans alias, format de fichier incompatible) donne `2.0.0`. Le fichier `VERSION` s'écrit `1.1.0 (31/10/2026)` et l'étiquette Git `v1.1.0`. Une publication est **décidée par l'auteur**. Entre deux publications, `VERSION` prend un numéro de correctif à chaque lot livré (`1.0.1`, `1.0.2`...) : c'est le compteur de lots, décrit sous « Non publié » dans `CHANGELOG.md` ; à la publication, le numéro mineur monte si des fonctions ont été ajoutées (la 1.0.4 est devenue la 1.1.0). Chaque fichier fabriqué porte en plus **son propre numéro** (§ 13.2). Les étiquettes `v14` à `v52` restent dans l'historique ; `tests/vNN.py` et `patch_vNNx.py` gardent leurs noms.
+À partir de la **1.0.0** (la v52 est devenue la 1.0.0), les versions suivent le schéma `X.Y.Z` (majeur.mineur.correctif). Une publication qui ajoute une fonction donne `1.1.0`, `1.2.0`... ; une publication de correctifs seuls donne `1.0.1` ; un changement qui casse l'existant (renommage sans alias, format de fichier incompatible) donne `2.0.0`. Le fichier `VERSION` s'écrit `1.1.0 (31/10/2026)` et l'étiquette Git `v1.1.0`. Une publication est **décidée par l'auteur**. Entre deux publications, `VERSION` prend un numéro de correctif à chaque lot livré (`1.0.1`, `1.0.2`...) : c'est le compteur de lots, décrit sous « Non publié » dans `CHANGELOG.fr.md` ; à la publication, le numéro mineur monte si des fonctions ont été ajoutées (la 1.0.4 est devenue la 1.1.0). Chaque fichier fabriqué porte en plus **son propre numéro** (§ 13.2). Les étiquettes `v14` à `v52` restent dans l'historique ; `tests/vNN.py` et `patch_vNNx.py` gardent leurs noms.
 
 ### 13.2 Versions : un numéro par fichier, marque, commande `version`
 

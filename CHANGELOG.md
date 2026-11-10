@@ -2,7 +2,16 @@
 
 Les dates sont au format jj/mm/aaaa.
 
+French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md).
+
 ## Non publié (après la 1.9.0)
+
+### 10/11/2026 : `CHANGELOG.fr.md` created, `CHANGELOG.md` becomes the English version (batch 1.9.1)
+
+- **Requested by Klaatou**: the version history must be readable in French and in English; decided: two files, like `README.md` and `README.fr.md`.
+- **Done**: `CHANGELOG.fr.md` (copy of the current history, with a link to the English version). `CHANGELOG.md` will be the English version: translated piece by piece, the 1.9.0 section first, then 1.8.0, 1.7.0 and the following ones; until then the entries below this one remain in French. New entries are written in both files, with the same title and the same technical identifiers. The French documents that point to the history (manual, overview, index, `README.fr.md`, JSON reference) now point to `CHANGELOG.fr.md`; `HISTORIQUE.md` keeps `CHANGELOG.md` (names of the time). `verif_trad.py` treats `CHANGELOG.md` (quoted by an English document) and `CHANGELOG.fr.md` (quoted by its French counterpart) as the same name.
+- **Checked**: no script or test reads the history; no file in `dist/` changes.
+- **Behind**: the translation of `CHANGELOG.md` (next batches); `REGLES.md` (rules 15 and 16: one entry in each of the two files); `REPRISE.md`.
 
 ## 1.9.0 (10/11/2026)
 

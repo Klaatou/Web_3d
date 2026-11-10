@@ -108,7 +108,7 @@ def analyser(texte):
     return r
 
 
-EQUIV = {"MANUAL.md": "MANUEL.md", "HISTORY.md": "HISTORIQUE.md", "OVERVIEW.md": "VUE_ENSEMBLE.md", "SIMPLE_PROCEDURES.md": "PROCEDURES_SIMPLES.md", "CREATORS.md": "CREATEURS.md", "DEVELOPMENT.md": "DEVELOPPEMENT.md"}   # noms des documents anglais -> français
+EQUIV = {"MANUAL.md": "MANUEL.md", "HISTORY.md": "HISTORIQUE.md", "OVERVIEW.md": "VUE_ENSEMBLE.md", "SIMPLE_PROCEDURES.md": "PROCEDURES_SIMPLES.md", "CREATORS.md": "CREATEURS.md", "DEVELOPMENT.md": "DEVELOPPEMENT.md", "CHANGELOG.md": "CHANGELOG.fr.md"}   # noms des documents anglais -> français
 
 
 def equiv(x):

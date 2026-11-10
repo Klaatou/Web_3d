@@ -206,6 +206,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 10/11/2026 |  | après 1.8.0 | Lot 1.8.17 : lanceur graphique : liste d'exemples d'usages de base pour chaque outil (`EXEMPLES`, `lire_exemple`), test `gui.py` |
 | 10/11/2026 |  | après 1.8.0 | Lot 1.8.18 : documents : manuel § 3.9, procédures simples § 11, historique |
 | 10/11/2026 |  | 1.9.0 | Publication 1.9.0 : `VERSION` 1.9.0 ; `CHANGELOG.md` ; réunit les lots 1.8.1 à 1.8.18 (bouton Promenade qui clignote, lien Discord dans l'Aide, plus d'écran noir sur une région en tuiles, convoar fourni, liste d'exemples du lanceur) |
+| 10/11/2026 |  | après 1.9.0 | Lot 1.9.1 : `CHANGELOG.fr.md` créé (le journal en français) ; `CHANGELOG.md` devient la version anglaise ; renvois des documents français mis à jour |
 
 ## Commandes utiles
 

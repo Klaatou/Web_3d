@@ -375,7 +375,7 @@ Pour que tous les noms soient dans la même langue, la v43 a mis en anglais les 
 | adresse de la page                     | `?rayon=`                                                          | `?radius=`                                                     |
 | adresse du viewer                      | `?tuiles=`                                                         | `?tiles=`                                                      |
 
-Les deux outils de développement (`gen_reference.py`, `verif_trad.py`) ont suivi en v44, et les messages de `--update` commencent par `[update]`. Restent tels quels : `--analyse` (aussi de l'anglais britannique) et les valeurs qui sont des noms d'objets, comme `door, porte`. Dans l'aide des outils, les noms d'exemple des valeurs sont aussi en anglais (`FILE`, `PATH`, `NAME`, `DEGREES`, `SHELL.html`). L'historique (`CHANGELOG.md`, `HISTORIQUE.md`) garde les noms de l'époque.
+Les deux outils de développement (`gen_reference.py`, `verif_trad.py`) ont suivi en v44, et les messages de `--update` commencent par `[update]`. Restent tels quels : `--analyse` (aussi de l'anglais britannique) et les valeurs qui sont des noms d'objets, comme `door, porte`. Dans l'aide des outils, les noms d'exemple des valeurs sont aussi en anglais (`FILE`, `PATH`, `NAME`, `DEGREES`, `SHELL.html`). L'historique (`CHANGELOG.fr.md`, `HISTORIQUE.md`) garde les noms de l'époque.
 
 ## 11.12 Fichiers JSON d'une région modulaire
 
