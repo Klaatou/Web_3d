@@ -6,6 +6,13 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.9.0)
 
+### 10/11/2026 : `CHANGELOG.md` : rubriques 1.4.0 et 1.3.0 traduites en anglais (lot 1.9.8)
+
+- **Demande de Klaatou** : continuer la traduction du journal, par les rubriques 1.4.0 et 1.3.0.
+- **Fait** : les deux rubriques (entrées de publication et lots 1.2.1 à 1.3.5) sont maintenant en anglais : les intertitres sont traduits ; ces entrées portaient déjà un jumeau anglais de chaque puce française, donc les puces françaises sont retirées ici (elles restent dans `CHANGELOG.fr.md`) et les puces anglaises gardées telles quelles ; dans les deux entrées de publication, seules les notes anglaises de la release GitHub sont gardées et la formule « décidée par Klaatou » est retirée (ici et dans `CHANGELOG.md`) ; la note sous le titre dit maintenant que les rubriques de la 1.2.0 à la plus ancienne sont encore en français.
+- **Contrôle** : pour chaque lot, le nombre de puces anglaises gardées égale le nombre de puces françaises retirées ; les identifiants techniques sont ceux du texte anglais existant (non retapés) ; aucun script ni test ne lit le journal ; aucun fichier de `dist/` ne change.
+- **En retard** : la traduction des rubriques de la 1.2.0 à la plus ancienne (1.2.0, 1.1.0, 1.0.0, puis les rubriques v52 à v14, à décider avec Klaatou) ; `REGLES.md` (règles 15 et 16 : une entrée dans chacun des deux fichiers) ; `REPRISE.md`.
+
 ### 10/11/2026 : `CHANGELOG.md` : rubriques 1.5.1 et 1.5.0 traduites en anglais (lot 1.9.7)
 
 - **Demande de Klaatou** : continuer la traduction du journal, par les rubriques 1.5.1 et 1.5.0.
@@ -649,7 +656,7 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ### 02/11/2026 : publication 1.4.0 : pseudos de la carte, bip du chat, garde-fou des lanceurs
 
-- **Publication** : la 1.4.0, décidée par Klaatou, réunit les lots notés « Non publié » depuis la 1.3.0 (décrits plus bas). `VERSION` passe de `1.3.5` à `1.4.0` (le numéro mineur monte : des fonctions ont été ajoutées). Fichiers fabriqués qui changent par rapport à la 1.3.0 : `glb2html.py`, `index.html`, `carte.html`, `glb-viewer.html`, `presence_server.py`, `oar2glb.py` et `glb2tiles.py` ; les paquets (`paquets/`) changent aussi.
+- **Publication** : la 1.4.0 (02/11/2026) réunit les lots notés « Non publié » depuis la 1.3.0 (décrits plus bas). `VERSION` passe de `1.3.5` à `1.4.0` (le numéro mineur monte : des fonctions ont été ajoutées). Fichiers fabriqués qui changent par rapport à la 1.3.0 : `glb2html.py`, `index.html`, `carte.html`, `glb-viewer.html`, `presence_server.py`, `oar2glb.py` et `glb2tiles.py` ; les paquets (`paquets/`) changent aussi.
 - **Nouveautés de la 1.4.0** : carte des mondes : pseudos des promeneurs et des visiteurs en vue globale, protégés par une clé (`--map-names-key` du serveur de présence, `carte.html#pseudos=CLE`), nombres sans doublon (« 1 promeneur », « 2 visiteurs, dont 1 en promenade »), plusieurs `#` acceptés dans l'adresse de la carte ; chat : un bip à chaque message quand la page n'a pas le focus (réglage dans les sons) ; paquets : garde-fou des lanceurs contre le dossier source du dépôt (« Download ZIP »), `paquets/README.txt`.
 - **Notes de la release GitHub** : les deux puces ci-dessous, en anglais puis en français. À joindre : `galerie-photos.zip` et `region-simple.zip` (fabriqués par `python fabriquer_paquets.py`).
 - **Release** 1.4.0, decided by Klaatou, gathers the batches noted "Unpublished" since 1.3.0 (described below). `VERSION` goes from `1.3.5` to `1.4.0` (the minor number goes up: features were added). Built files that change compared to 1.3.0: `glb2html.py`, `index.html`, `carte.html`, `glb-viewer.html`, `presence_server.py`, `oar2glb.py` and `glb2tiles.py`; the packages (`paquets/`) change too.
@@ -697,7 +704,7 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 ## 1.3.0 (02/11/2026)
 
 ### 02/11/2026 : publication 1.3.0 : lanceurs Linux et macOS pour les paquets
-- **Publication** : la 1.3.0, décidée par Klaatou le 02/11/2026, réunit les lots 1.2.1 à 1.2.4 décrits plus bas ; la 1.2.3 avait déjà été publiée sur GitHub (les étiquettes 1.2.0 à 1.2.2 n'ont jamais existé). `VERSION` passe de `1.2.4` à `1.3.0` (le numéro mineur monte : des fonctions ont été ajoutées). Aucun fichier fabriqué ne change par rapport à la 1.2.3 : seuls les paquets, les tests et les documents changent.
+- **Publication** : la 1.3.0 (02/11/2026) réunit les lots 1.2.1 à 1.2.4 décrits plus bas ; la 1.2.3 avait déjà été publiée sur GitHub (les étiquettes 1.2.0 à 1.2.2 n'ont jamais existé). `VERSION` passe de `1.2.4` à `1.3.0` (le numéro mineur monte : des fonctions ont été ajoutées). Aucun fichier fabriqué ne change par rapport à la 1.2.3 : seuls les paquets, les tests et les documents changent.
 - **Nouveautés de la 1.3.0** : lanceurs et renommage pour Linux et macOS dans les deux paquets (`.sh`, `.command`), qui s'ajoutent aux scripts Windows ; les zips marquent ces fichiers exécutables ; documentation des trois systèmes. **Non essayé sous macOS.**
 - **Notes de la release GitHub** : les deux puces ci-dessous, en anglais puis en français. À joindre à la release : `galerie-photos.zip` et `region-simple.zip` (fabriqués par `python fabriquer_paquets.py`).
 - **Release**: 1.3.0, decided by Klaatou on 02/11/2026, gathers batches 1.2.1 to 1.2.4 described below; 1.2.3 had already been published on GitHub (tags 1.2.0 to 1.2.2 never existed). `VERSION` goes from `1.2.4` to `1.3.0` (the minor number goes up: features were added). No built file changes compared to 1.2.3: only the packages, tests and documents change.
