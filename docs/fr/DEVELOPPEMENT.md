@@ -20,6 +20,10 @@ Sans cette étape, `dist\` reste à l'ancienne version. `python build.py` affich
 python build.py; python .\tests\dist_a_jour.py
 ```
 
+`python build.py` refait aussi `docs/REFERENCE_OPTIONS.md` (seulement quand la sortie est `dist/`, et seulement si son contenu change hors la date) : `git add -A` le prend avec le lot.
+
+`dist/convoar/` (convoar, fourni, copie sans fichiers de débogage) n'est pas fabriqué par `build.py` : `tests/dist_a_jour.py` l'ignore, `.gitattributes` y met `-text` (git ne touche pas aux fins de ligne, sinon les empreintes de `SHA256SUMS.txt` ne correspondent plus), `.gitignore` écarte `convoar_inv.*` (le lanceur que `oar2glb.py` fabrique à la première conversion) et `tests/convoar_dist.py` contrôle les empreintes.
+
 ## 3. Publier sur GitHub
 
 La liste des fichiers s'affiche, puis tout part :
@@ -37,6 +41,10 @@ python .\tests\NOM.py
 ```
 
 La suite complète compte plus de 70 fichiers et dure longtemps. Échouent déjà dans le bac à sable et en session cloud : `doc_options`, `image_dossier`, `marque`.
+
+Tests ajoutés avec la 1.8.x : `bouton_promenade.py`, `demarrage_lien.py`, `build_reference.py` et `convoar_dist.py`.
+
+Sous Windows, un test qui lit la sortie d'un programme fils doit lancer ce programme avec `PYTHONIOENCODING=utf-8` (sinon sa sortie est en cp1252), fermer son entrée (`stdin=subprocess.DEVNULL`, sinon un outil attend Entrée) et, si ce programme écrit beaucoup dans sa console, la lire pendant le test (un tube Windows ne garde que 4 Ko) : `tests/build_reference.py`, `tests/console.py` et `tests/correctifs_v52.py` en sont des exemples.
 
 ## 5. Publier une version
 

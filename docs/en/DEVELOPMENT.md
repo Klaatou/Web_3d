@@ -20,6 +20,10 @@ Without this step, `dist\` stays at the old version. `python build.py` shows the
 python build.py; python .\tests\dist_a_jour.py
 ```
 
+`python build.py` also regenerates `docs/REFERENCE_OPTIONS.md` (only when the output is `dist/`, and only if its content changes apart from the date): `git add -A` takes it with the batch.
+
+`dist/convoar/` (convoar, supplied, a copy without debug files) is not built by `build.py`: `tests/dist_a_jour.py` ignores it, `.gitattributes` sets `-text` there (git does not touch line endings, otherwise the hashes of `SHA256SUMS.txt` no longer match), `.gitignore` leaves out `convoar_inv.*` (the launcher that `oar2glb.py` builds at the first conversion) and `tests/convoar_dist.py` checks the hashes.
+
 ## 3. Publish on GitHub
 
 The list of files is shown, then everything goes:
@@ -37,6 +41,10 @@ python .\tests\NOM.py
 ```
 
 The full suite has more than 70 files and takes long. Already failing in the sandbox and in cloud sessions: `doc_options`, `image_dossier`, `marque`.
+
+Tests added with 1.8.x: `bouton_promenade.py`, `demarrage_lien.py`, `build_reference.py` and `convoar_dist.py`.
+
+Under Windows, a test that reads the output of a child program must start it with `PYTHONIOENCODING=utf-8` (otherwise its output is in cp1252), close its input (`stdin=subprocess.DEVNULL`, otherwise a tool waits for Enter) and, if that program writes a lot to its console, read it during the test (a Windows pipe only keeps 4 KB): `tests/build_reference.py`, `tests/console.py` and `tests/correctifs_v52.py` are examples.
 
 ## 5. Publish a version
 

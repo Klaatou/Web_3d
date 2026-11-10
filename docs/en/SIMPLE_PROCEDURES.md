@@ -96,10 +96,10 @@ Make the OAR:
 python ".\web_3d\dist\iar2oar.py" "CHEMIN\NOM.iar" -o "CHEMIN\NOM.oar"
 ```
 
-Make the GLB (`oar2glb.py` writes it next to the OAR, named `NOM.glb`; `--keep-invisible` keeps the transparent prims):
+Make the GLB (`oar2glb.py` writes it next to the OAR, named `NOM.glb`; `--keep-invisible` keeps the transparent prims; convoar is supplied in `dist/convoar/`, no need to name it):
 
 ```powershell
-python ".\web_3d\dist\oar2glb.py" "CHEMIN\NOM.oar" --convoar "CHEMIN\convoar.exe"
+python ".\web_3d\dist\oar2glb.py" "CHEMIN\NOM.oar"
 ```
 
 Then list and extract as above, with `NOM.oar` and `NOM.glb`. The old French option names (`--liste`, `--filtre`, `--sans-imbriques`, `--marge`, `--sortie`) are still accepted. The texture errors from convoar ("could not fetch texture asset", "unhandled number of components") can come from the IAR itself (missing or empty assets, seen on the first IAR tried): the faces concerned are grey. Attachments and clothing are not supported.

@@ -187,6 +187,22 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 08/11/2026 |  | after 1.7.0 | Batch 1.7.21: documents: graphical launcher (manual § 3.9, procedures § 11, README, overview), shortcuts picture, new Discord link |
 | 08/11/2026 |  | after 1.7.0 | Batch 1.7.22: `web3d_gui.py`: File and Folder buttons on the output fields and `--convoar` |
 | 08/11/2026 |  | 1.8.0 | Release 1.8.0: `VERSION` 1.8.0; `CHANGELOG.md`; gathers batches 1.7.1 to 1.7.22 (graphical launcher `web3d_gui.py` and Windows shortcuts, `diag_carte.py`, README and documents rewritten, Discord link) |
+| 08/11/2026 |  | after 1.8.0 | Batch 1.8.1: `tests/gui.py`: a single Tk window (no more Tcl message under Windows) |
+| 08/11/2026 |  | after 1.8.0 | Batch 1.8.2: graphical launcher: label "Equivalent command (for information)" |
+| 08/11/2026 |  | after 1.8.0 | Batch 1.8.3: `REPRISE.md` lightened (appendix `REPRISE_ARCHIVE.md`) |
+| 08/11/2026 |  | after 1.8.0 | Batch 1.8.4: `REPRISE.md`: rule 25 is already up to date |
+| 10/11/2026 |  | after 1.8.0 | Batch 1.8.5: "Walk (P)" button that blinks in global view; Discord link in the help window (manual § 7.63, § 7.64) |
+| 10/11/2026 |  | after 1.8.0 | Batch 1.8.6: `#spawn=` link on a tiled region: no black background while loading (manual § 8.6) |
+| 10/11/2026 |  | after 1.8.0 | Batch 1.8.7: root cleanup: `deploy/`, the mega-region study in `docs/fr/` |
+| 10/11/2026 |  | after 1.8.0 | Batch 1.8.8: `REFERENCE_OPTIONS.md` in `docs/` |
+| 10/11/2026 |  | after 1.8.0 | Batch 1.8.9: `build.py` regenerates `docs/REFERENCE_OPTIONS.md`; test `build_reference.py` |
+| 10/11/2026 |  | after 1.8.0 | Batch 1.8.10: `build.py` and its test read the processes' output as UTF-8 under Windows |
+| 10/11/2026 |  | after 1.8.0 | Batch 1.8.11: convoar supplied in `dist/convoar/`; convoar's address fixed (`dist`, not `bin`); test `convoar_dist.py` |
+| 10/11/2026 |  | after 1.8.0 | Batch 1.8.12: three tests read the processes' output as UTF-8 under Windows |
+| 10/11/2026 |  | after 1.8.0 | Batch 1.8.13: `correctifs_v52` no longer hangs under Windows; `console.py` shows its output on failure |
+| 10/11/2026 |  | after 1.8.0 | Batch 1.8.14: `console.py` reads the server's output during the test (4 KB pipe under Windows) |
+| 10/11/2026 |  | after 1.8.0 | Batch 1.8.15: `compress.py` shows gltfpack's error on failure |
+| 10/11/2026 |  | after 1.8.0 | Batch 1.8.16: documents: manual § 7.63 and § 7.64, `dist/convoar/`, `deploy/`, tests under Windows (`DEVELOPMENT.md`), history |
 
 ## Useful commands
 

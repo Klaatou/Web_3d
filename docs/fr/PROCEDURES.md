@@ -22,7 +22,7 @@
 
 À choisir quand `glb2tiles --analyse` ne recommande pas de découpage (en gros : GLB sous 150 Mo et sous 3 millions de triangles).
 
-1. **Convertir l'OAR.** Le GLB est écrit à côté de l'OAR (`MaRegion.oar` donne `MaRegion.glb`). Le terrain complet est ajouté automatiquement si celui de convoar est incomplet.
+1. **Convertir l'OAR.** Le GLB est écrit à côté de l'OAR (`MaRegion.oar` donne `MaRegion.glb`). Le terrain complet est ajouté automatiquement si celui de convoar est incomplet. convoar est fourni dans `dist/convoar/` : `oar2glb.py` le trouve tout seul (Windows seulement ; `--convoar CHEMIN` pour en utiliser un autre).
    `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python oar2glb.py "J:\Download\Com\Chat\_Monde virtuel en ligne_\_OpenSim_\_Contenu_\OAR\MaRegion.oar"`
 2. **Vérifier si un découpage serait nécessaire** (lecture seule, n'écrit rien) :
    `python glb2tiles.py "J:\Download\Com\Chat\_Monde virtuel en ligne_\_OpenSim_\_Contenu_\OAR\MaRegion.glb" --analyse`
@@ -149,7 +149,7 @@ Avec une seule région, la carte n'apporte rien : elle sert à relier plusieurs 
 
 | Symptôme | Cause probable | À faire |
 |---|---|---|
-| Page noire avec `#spawn=…` | la tuile de l'arrivée se charge | depuis la v33, un texte « Chargement du sol… » doit s'afficher ; sinon, console (F12) et lignes `[tuile] …` |
+| Page noire avec `#spawn=…` | région en GLB unique (chargement court) ou `index.html` d'avant la 1.8.6 | une région en tuiles montre la vue globale avec « Chargement du sol… » ; sinon mettre `index.html` à jour (`PROCEDURES_SIMPLES.md` § 1), puis console (F12) et lignes `[tuile] …` |
 | « Chargement du sol… » qui dure | grosse tuile | patienter ; relever les lignes `[tuile] …` de la console |
 | Les zones n'apparaissent pas | fichier de zones ailleurs que dans le dossier de la page, zone privée, marqueur discret | vérifier `X.zones.json` dans le dossier servi, F5 en fenêtre privée, `--zone-marker range` |
 | Les réglages ne changent pas | coquille ancienne, cache | `--update`, puis Ctrl+F5 |

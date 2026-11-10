@@ -96,10 +96,10 @@ Fabriquer l'OAR :
 python ".\web_3d\dist\iar2oar.py" "CHEMIN\NOM.iar" -o "CHEMIN\NOM.oar"
 ```
 
-Fabriquer le GLB (`oar2glb.py` l'écrit à côté de l'OAR, sous le nom `NOM.glb` ; `--keep-invisible` garde les prims transparents) :
+Fabriquer le GLB (`oar2glb.py` l'écrit à côté de l'OAR, sous le nom `NOM.glb` ; `--keep-invisible` garde les prims transparents ; convoar est fourni dans `dist/convoar/`, inutile de le préciser) :
 
 ```powershell
-python ".\web_3d\dist\oar2glb.py" "CHEMIN\NOM.oar" --convoar "CHEMIN\convoar.exe"
+python ".\web_3d\dist\oar2glb.py" "CHEMIN\NOM.oar"
 ```
 
 Puis lister et extraire comme ci-dessus, avec `NOM.oar` et `NOM.glb`. Les anciens noms français des options (`--liste`, `--filtre`, `--sans-imbriques`, `--marge`, `--sortie`) restent acceptés. Les erreurs de texture de convoar (« could not fetch texture asset », « unhandled number of components ») peuvent venir de l'IAR lui-même (assets absents ou vides, constaté sur le premier IAR essayé) : les faces concernées sont grises. Les attachements et les vêtements ne sont pas pris en charge.

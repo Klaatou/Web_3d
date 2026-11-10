@@ -39,5 +39,7 @@ An OpenSim region (`.oar` backup) becomes a **3D web page** you can walk around 
 - `REFERENCE_JSON.md`: the meaning of each field of the JSON files.
 - The procedures: step by step (publishing, server, network).
 - `docs/REFERENCE_OPTIONS.md`: all the options of the tools.
+- `deploy/`: the templates for the presence server's VM (`lance_presence.sh`, `web3d-presence.service`).
+- `dist/convoar/`: convoar, the OAR converter of `oar2glb.py`, supplied (Windows only).
 - `CHANGELOG.md` and the history: what changed and when.
 - `REPRISE.md`: the technical state to resume the work.

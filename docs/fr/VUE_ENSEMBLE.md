@@ -39,5 +39,7 @@ Une région OpenSim (sauvegarde `.oar`) devient une **page web 3D** où l'on se 
 - `REFERENCE_JSON.md` : le sens de chaque champ des fichiers JSON.
 - Les procédures : pas à pas (publier, serveur, réseau).
 - `docs/REFERENCE_OPTIONS.md` : toutes les options des outils.
+- `deploy/` : les modèles pour la VM du serveur de présence (`lance_presence.sh`, `web3d-presence.service`).
+- `dist/convoar/` : convoar, le convertisseur d'OAR de `oar2glb.py`, fourni (Windows seulement).
 - `CHANGELOG.md` et l'historique : ce qui a changé et quand.
 - `REPRISE.md` : l'état technique pour reprendre le travail.

@@ -22,7 +22,7 @@
 
 Choose this when `glb2tiles --analyse` does not recommend splitting (roughly: GLB under 150 MB and under 3 million triangles).
 
-1. **Convert the OAR.** The GLB is written next to the OAR (`MaRegion.oar` gives `MaRegion.glb`). The complete terrain is added automatically if convoar's is incomplete.
+1. **Convert the OAR.** The GLB is written next to the OAR (`MaRegion.oar` gives `MaRegion.glb`). The complete terrain is added automatically if convoar's is incomplete. convoar is supplied in `dist/convoar/`: `oar2glb.py` finds it by itself (Windows only; `--convoar CHEMIN` to use another one).
    `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python oar2glb.py "J:\Download\Com\Chat\_Monde virtuel en ligne_\_OpenSim_\_Contenu_\OAR\MaRegion.oar"`
 2. **Check whether splitting would be needed** (read-only, writes nothing):
    `python glb2tiles.py "J:\Download\Com\Chat\_Monde virtuel en ligne_\_OpenSim_\_Contenu_\OAR\MaRegion.glb" --analyse`
@@ -149,7 +149,7 @@ With a single region, the map brings nothing: it is used to link several regions
 
 | Symptom | Likely cause | What to do |
 |---|---|---|
-| Black page with `#spawn=…` | the arrival's tile is loading | since v33, a "Loading the ground…" text should appear; otherwise, console (F12) and `[tile] …` lines |
+| Black page with `#spawn=…` | single-GLB region (short load) or an `index.html` older than 1.8.6 | a tiled region shows the global view with "Loading the ground…"; otherwise update `index.html` (`SIMPLE_PROCEDURES.md` § 1), then console (F12) and `[tile] …` lines |
 | "Loading the ground…" that lasts | large tile | wait; note the `[tile] …` lines of the console |
 | The zones do not appear | zone file elsewhere than in the page's folder, private zone, discreet marker | check `X.zones.json` in the served folder, F5 in a private window, `--zone-marker range` |
 | The settings do not change | old shell, cache | `--update`, then Ctrl+F5 |

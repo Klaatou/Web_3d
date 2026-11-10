@@ -4,6 +4,13 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.8.0)
 
+### 10/11/2026 : documents à jour pour la 1.8.x (lot 1.8.16)
+
+- **Demande de Klaatou** : mettre les documents à jour (règle 16) après les lots 1.8.1 à 1.8.15.
+- **Fait, en français et en anglais** : manuel : nouveaux § 7.63 (bouton « Promenade (P) » qui clignote) et § 7.64 (lien Discord de la fenêtre d'aide), phrase sur la fin du fond noir sur tuiles dans le § 8.6, ligne « Ajouts de la 1.8.x » du tableau des nouveautés ; `PROCEDURES.md` : convoar fourni (§ 1.1) et ligne « Page noire avec `#spawn=…` » du tableau de dépannage ; `PROCEDURES_SIMPLES.md` : plus d'option `--convoar` dans l'exemple ; `DEVELOPPEMENT.md` : `build.py` refait la référence des options, `dist/convoar/` (non fabriqué, `-text`, `convoar_inv.*` ignorés), tests ajoutés, règles des tests sous Windows (`PYTHONIOENCODING`, entrée fermée, sortie lue pendant le test) ; `VUE_ENSEMBLE.md` : `deploy/` et `dist/convoar/` ; `HISTORIQUE.md` : lots 1.8.1 à 1.8.16. Aucun code ne change (`dist\` identique).
+- **Contrôle** : `python verif_trad.py` sur les cinq couples modifiés (0 erreur exigée).
+- **En retard** : `REPRISE.md` (à refaire en fin de conversation).
+
 ### 10/11/2026 : `tests/compress.py` montre l'erreur de gltfpack en cas d'échec (lot 1.8.15)
 
 - **Constat de Klaatou** (Windows) : cinq contrôles de `tests/compress.py` échouent ; la compression de la première tuile (`T_1_0_0.glb`) donne une erreur de gltfpack dont le message, coupé à 400 caractères par le test, se termine par « sync.c, line 76 » ; les autres tuiles sont compressées. Les quatre autres échecs en découlent (fichier non compressé, non sauté à la relance).

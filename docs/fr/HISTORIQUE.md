@@ -187,6 +187,22 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 08/11/2026 |  | après 1.7.0 | Lot 1.7.21 : documents : lanceur graphique (manuel § 3.9, procédures § 11, README, vue d'ensemble), image des raccourcis, nouveau lien Discord |
 | 08/11/2026 |  | après 1.7.0 | Lot 1.7.22 : `web3d_gui.py` : boutons Fichier et Dossier sur les champs de sortie et `--convoar` |
 | 08/11/2026 |  | 1.8.0 | Publication 1.8.0 : `VERSION` 1.8.0 ; `CHANGELOG.md` ; réunit les lots 1.7.1 à 1.7.22 (lanceur graphique `web3d_gui.py` et raccourcis Windows, `diag_carte.py`, README et documents refaits, lien Discord) |
+| 08/11/2026 |  | après 1.8.0 | Lot 1.8.1 : `tests/gui.py` : une seule fenêtre Tk (plus de message Tcl sous Windows) |
+| 08/11/2026 |  | après 1.8.0 | Lot 1.8.2 : lanceur graphique : libellé « Commande équivalente (à titre d'information) » |
+| 08/11/2026 |  | après 1.8.0 | Lot 1.8.3 : `REPRISE.md` allégé (annexe `REPRISE_ARCHIVE.md`) |
+| 08/11/2026 |  | après 1.8.0 | Lot 1.8.4 : `REPRISE.md` : la règle 25 est déjà à jour |
+| 10/11/2026 |  | après 1.8.0 | Lot 1.8.5 : bouton « Promenade (P) » qui clignote en vue globale ; lien Discord dans la fenêtre d'aide (manuel § 7.63, § 7.64) |
+| 10/11/2026 |  | après 1.8.0 | Lot 1.8.6 : lien `#spawn=` sur une région en tuiles : plus de fond noir au chargement (manuel § 8.6) |
+| 10/11/2026 |  | après 1.8.0 | Lot 1.8.7 : ménage de la racine : `deploy/`, étude de la méga-région dans `docs/fr/` |
+| 10/11/2026 |  | après 1.8.0 | Lot 1.8.8 : `REFERENCE_OPTIONS.md` dans `docs/` |
+| 10/11/2026 |  | après 1.8.0 | Lot 1.8.9 : `build.py` refait `docs/REFERENCE_OPTIONS.md` ; test `build_reference.py` |
+| 10/11/2026 |  | après 1.8.0 | Lot 1.8.10 : `build.py` et son test lisent la sortie des processus en UTF-8 sous Windows |
+| 10/11/2026 |  | après 1.8.0 | Lot 1.8.11 : convoar fourni dans `dist/convoar/` ; adresse de convoar corrigée (`dist`, pas `bin`) ; test `convoar_dist.py` |
+| 10/11/2026 |  | après 1.8.0 | Lot 1.8.12 : trois tests lisent la sortie des processus en UTF-8 sous Windows |
+| 10/11/2026 |  | après 1.8.0 | Lot 1.8.13 : `correctifs_v52` ne reste plus bloqué sous Windows ; `console.py` montre sa sortie en cas d'échec |
+| 10/11/2026 |  | après 1.8.0 | Lot 1.8.14 : `console.py` lit la sortie du serveur pendant le test (tube de 4 Ko sous Windows) |
+| 10/11/2026 |  | après 1.8.0 | Lot 1.8.15 : `compress.py` montre l'erreur de gltfpack en cas d'échec |
+| 10/11/2026 |  | après 1.8.0 | Lot 1.8.16 : documents : § 7.63 et § 7.64 du manuel, `dist/convoar/`, `deploy/`, tests sous Windows (`DEVELOPPEMENT.md`), historique |
 
 ## Commandes utiles
 
