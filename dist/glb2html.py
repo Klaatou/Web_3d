@@ -16,8 +16,8 @@ Draco et Meshopt gérés automatiquement (décodeurs intégrés seulement si le 
 """
 from __future__ import annotations
 
-VERSION = "1.8.5 (10/11/2026)"
-SHELL_VERSION = "1.8.5 (10/11/2026)"   # numéro de version de la coquille (index.html) : écrit par build.py, ne change que si la coquille change
+VERSION = "1.8.6 (10/11/2026)"
+SHELL_VERSION = "1.8.6 (10/11/2026)"   # numéro de version de la coquille (index.html) : écrit par build.py, ne change que si la coquille change
 MAP_VERSION = "1.8.5 (10/11/2026)"       # numéro de version de la page de carte (carte.html) : idem
 
 import argparse
@@ -3878,7 +3878,8 @@ let bootOn = false, bootTimer = 0, lastWait = null;
 const waitText = w => (C.tiles ? tr('page.ground.loading') : tr('page.wait.region')) + (w && w.total ? ' ' + trn('page.wait.tiles', w.total, w.ready) : '')
   + (w ? tr('page.wait.secs', w.secs) : '') + (w && w.secs >= 60 ? tr('page.wait.long') : '');
 if (arrival) {
-  fade.classList.add('on'); bootOn = true;
+  if (!C.tiles) fade.classList.add('on');   // 1.8.6 : region en tuiles : pas de fond noir, la vue globale reste visible sous « Chargement du sol… » ; GLB unique : fondu noir comme avant
+  bootOn = true;
   const bootRender = () => { gw.textContent = waitText(lastWait || { secs: Math.floor((performance.now() - t0Boot) / 1000) }); gw.hidden = false; };
   bootRender(); bootTimer = setInterval(bootRender, 250);
 }

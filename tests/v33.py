@@ -256,7 +256,7 @@ async def main():
             await o.attendre("window.__viewer && !document.getElementById('groundWait').hidden", 20)
             txt = await o.ev("document.getElementById('groundWait').textContent")
             noir = await o.ev("document.getElementById('fade').classList.contains('on')")
-            rapport(noir and re.search(r"^Chargement du sol… .*\d+ s", txt) is not None, "écran noir : le texte « Chargement du sol… » est affiché dès le début, avec le temps écoulé", txt)
+            rapport(not noir and re.search(r"^Chargement du sol… .*\d+ s", txt) is not None, "pas d'écran noir (région en tuiles) : le texte « Chargement du sol… » est affiché dès le début, avec le temps écoulé", txt)
             try:
                 await o.attendre("/Chargement du sol… \\d+\\/\\d+ tuile/.test(document.getElementById('groundWait').textContent)", 20)
                 txt = await o.ev("document.getElementById('groundWait').textContent")
@@ -305,17 +305,17 @@ async def main():
             rapport(o.demandes.count(NOM(T_CHATEAU)) == 1, "réseau lent : la tuile n'est pas abandonnée puis redemandée", o.demandes)
             await o.fermer()
 
-            print("--- 1 ter. tuile retenue plus de 15 s : le noir est retiré, le texte reste, la promenade démarre dès qu'elle est prête")
+            print("--- 1 ter. tuile retenue plus de 15 s : le chargeur arrête d'attendre, le texte reste, la promenade démarre dès qu'elle est prête")
             o = Onglet(br)
             o.garde[NOM(T_CHATEAU)] = asyncio.Event()
             await o.ouvrir(base + "Lourde#spawn=chateau")
             await asyncio.sleep(3)
-            rapport(await o.ev("document.getElementById('fade').classList.contains('on') && !document.getElementById('groundWait').hidden"), "à 3 s : écran noir, avec le texte")
-            await o.attendre("!document.getElementById('fade').classList.contains('on')", 30)
+            rapport(await o.ev("!document.getElementById('fade').classList.contains('on') && !document.getElementById('groundWait').hidden"), "à 3 s : pas d'écran noir, avec le texte")
+            await o.attendre("document.getElementById('msg') === null", 40)
             t_noir = time.time() - o.t0
             etat = await o.ev("({ ov: window.__viewer.tilesState().overview, walking: window.__viewer.walking, gw: !document.getElementById('groundWait').hidden, txt: document.getElementById('groundWait').textContent })")
             rapport(14 <= t_noir <= 25 and etat["ov"]["state"] == "ready" and etat["ov"]["visible"] and not etat["walking"] and etat["gw"] and "Chargement du sol…" in etat["txt"],
-                    f"après {t_noir:.1f} s : noir retiré, vue d'ensemble visible, texte « Chargement du sol… » toujours là", etat)
+                    f"après {t_noir:.1f} s : fin de l'attente du chargeur, vue d'ensemble visible, texte « Chargement du sol… » toujours là", etat)
             m = re.search(r"(\d+) s", etat["txt"])
             rapport(m is not None and int(m.group(1)) >= 12, "le texte donne le temps écoulé", etat["txt"])
             o.garde[NOM(T_CHATEAU)].set()

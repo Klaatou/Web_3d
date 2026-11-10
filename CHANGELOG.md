@@ -4,6 +4,13 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.8.0)
 
+### 10/11/2026 : arrivée par lien (`#spawn=`) sur une région en tuiles : plus d'écran noir, la vue globale reste visible (lot 1.8.6)
+
+- **Constat de Klaatou** : avec un lien `#spawn=default`, la fenêtre reste noire avec « Chargement du sol… N s » pendant tout le chargement d'une grosse région (Houses) ; depuis la vue globale, on voit la région.
+- **Cause** (reproduite dans Chromium, région de 16 tuiles, tuiles retenues) : `template.html` posait le fond noir `#fade` dès l'ouverture quand le lien demande une arrivée ; il n'était retiré qu'après `viewer.loadBuffer`, qui attend la tuile de l'arrivée (15 s au plus, `core.js`). Mesure : vue d'ensemble prête à 4,7 s, écran noir (94 % de pixels sombres) jusqu'à l'arrivée de la tuile.
+- **Fait** (`src/template.html`) : région en tuiles : plus de fond noir au démarrage par lien ; la vue globale, puis la vue d'ensemble dès qu'elle est prête, restent visibles sous le cadre « Chargement du sol… n/m tuiles prêtes · N s », comme depuis la vue globale. La promenade démarre toujours dès que la tuile est prête ; le passage à l'avatar est net, comme avec la touche P. Région en GLB unique : fondu noir inchangé. La durée du chargement ne change pas, seul l'affichage change. **Décision de la v33 modifiée** (« jamais d'écran noir sans texte » : le texte reste, le noir disparaît pour les tuiles).
+- **Tests** : nouveau `tests/demarrage_lien.py` (tuiles : pas de noir, texte, promenade à l'arrivée des tuiles ; GLB unique : noir conservé) ; `tests/v33.py` : cinq lignes adaptées (le noir n'est plus attendu pour les tuiles). **Non testé** : Edge, Windows, vraie région Houses.
+
 ### 10/11/2026 : le bouton « Promenade (P) » clignote en vue globale, lien Discord dans l'Aide (lot 1.8.5)
 
 - **Demande de Klaatou** : indiquer de façon visible, en vue globale, qu'il faut taper P pour passer en promenade ; lien Discord dans la fenêtre Aide (décision attendue du § 6.1 de `REPRISE.md` : oui).
