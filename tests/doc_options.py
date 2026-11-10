@@ -25,7 +25,7 @@ for nom, fichier, _ in G.OUTILS:
         rapport(not vides, f"{fichier} ({lg}) : aucune description vide", vides[:5])
 def sans_date(t):
     return re.sub(r"Générée le \d\d/\d\d/\d{4}", "Générée le", t)
-repo = (ROOT / "REFERENCE_OPTIONS.md").read_text(encoding="utf-8")
+repo = (ROOT / "docs" / "REFERENCE_OPTIONS.md").read_text(encoding="utf-8")
 rapport(sans_date(repo) == sans_date(texte), "REFERENCE_OPTIONS.md est à jour (python gen_reference.py)")
 # bilingue : chaque ligne de tableau porte le français puis l'anglais séparés par <br>
 lignes = [l for l in texte.splitlines() if l.startswith("| `")]

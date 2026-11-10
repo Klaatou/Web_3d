@@ -41,7 +41,7 @@ Cette page dit **quel document lire pour quoi**. Les documents anglais portent l
 
 | Je cherche… | Où |
 | --- | --- |
-| toutes les options de chaque outil, en français et en anglais | `REFERENCE_OPTIONS.md` (à la racine) ; `--help` de l'outil |
+| toutes les options de chaque outil, en français et en anglais | `docs/REFERENCE_OPTIONS.md` ; `--help` de l'outil |
 | le sens de chaque champ d'un fichier JSON | `REFERENCE_JSON.md` |
 | un exemple complet de chaque fichier JSON | dossier `docs/samples/` |
 | les noms d'options français d'avant la v43 | `REFERENCE_JSON.md` § 11.11 |

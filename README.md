@@ -75,7 +75,7 @@ Without reading all the documentation, two packages can be downloaded from the [
 
 A tester, [NightshadeCeres](https://opensimworld.com/user/NightshadeCeres), tried the macOS launcher (macOS Ventura 13.7.8, Firefox 159.0.1) with `region-simple.zip`: the region is displayed. The sources are in `paquets/`; `python fabriquer_paquets.py` rebuilds the zips (`docs/en/PROCEDURES.md` § 12, or `docs/fr/PROCEDURES.md` in French). **Do not use "Download ZIP" on the repository page**: it is the source code, without `index.html` or `lib/`; the launchers say so.
 
-The manuals are in English in `docs/en/` (`INDEX.md` to find your way, `GUIDE.md` to start, `MANUAL.md`, `PROCEDURES.md`, `REFERENCE_JSON.md`, `HISTORY.md`) and in French in `docs/fr/`. All the options of every tool, in English and in French, are in [`REFERENCE_OPTIONS.md`](REFERENCE_OPTIONS.md); `python glb2html.py --help` (and the same for the other tools) prints them in the tools' language (see "Language" below).
+The manuals are in English in `docs/en/` (`INDEX.md` to find your way, `GUIDE.md` to start, `MANUAL.md`, `PROCEDURES.md`, `REFERENCE_JSON.md`, `HISTORY.md`) and in French in `docs/fr/`. All the options of every tool, in English and in French, are in [`docs/REFERENCE_OPTIONS.md`](docs/REFERENCE_OPTIONS.md); `python glb2html.py --help` (and the same for the other tools) prints them in the tools' language (see "Language" below).
 
 ## Files built
 

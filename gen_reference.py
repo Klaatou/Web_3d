@@ -4,8 +4,8 @@
 (glb2html, glb2tiles, oar2glb, presence_server), lue dans les outils eux-mêmes : rien ne peut manquer.
 
 Usage (depuis le dossier qui contient gen_reference.py ; le dossier des outils est dist\\) :
-    python gen_reference.py                       (outils dans .\\dist, sortie .\\REFERENCE_OPTIONS.md)
-    python gen_reference.py --tools "P:\\...\\dist" --output "P:\\...\\REFERENCE_OPTIONS.md"
+    python gen_reference.py                       (outils dans .\\dist, sortie .\\docs\\REFERENCE_OPTIONS.md)
+    python gen_reference.py --tools "P:\\...\\dist" --output "P:\\...\\docs\\REFERENCE_OPTIONS.md"
     python gen_reference.py --check docs/fr/MANUEL.md    (liste les options absentes de ce fichier)
 Anciens noms (avant la v44), toujours acceptés : --outils, --sortie, --verifier.
 
@@ -149,7 +149,7 @@ def generer(dossier: pathlib.Path):
 def main():
     ap = argparse.ArgumentParser(description="Écrit REFERENCE_OPTIONS.md depuis les outils.")
     ap.add_argument("--tools", dest="outils", metavar="FOLDER", default=None, help="dossier des outils (défaut : dist à côté du script)")
-    ap.add_argument("--output", dest="sortie", metavar="FILE", default=None, help="fichier écrit (défaut : REFERENCE_OPTIONS.md à côté du script)")
+    ap.add_argument("--output", dest="sortie", metavar="FILE", default=None, help="fichier écrit (défaut : docs/REFERENCE_OPTIONS.md à côté du script)")
     ap.add_argument("--check", dest="verifier", metavar="FILE.md", default=None, help="liste les options absentes de ce fichier (code retour 1 s'il en manque)")
     # v44 : anciens noms français toujours acceptés
     old = {"--outils": "--tools", "--sortie": "--output", "--verifier": "--check"}
@@ -158,7 +158,7 @@ def main():
     ici = pathlib.Path(__file__).resolve().parent
     dossier = pathlib.Path(a.outils) if a.outils else ici / "dist"
     texte, tout, manques = generer(dossier)
-    sortie = pathlib.Path(a.sortie) if a.sortie else ici / "REFERENCE_OPTIONS.md"
+    sortie = pathlib.Path(a.sortie) if a.sortie else ici / "docs" / "REFERENCE_OPTIONS.md"
     sortie.write_text(texte, encoding="utf-8")
     nb = sum(len(v) for v in tout.values())
     print(f"[ok] {nb} arguments décrits -> {sortie}")

@@ -41,7 +41,7 @@ This page says **which document to read for what**. The French documents carry t
 
 | I am looking for… | Where |
 | --- | --- |
-| all the options of every tool, in English and in French | `REFERENCE_OPTIONS.md` (at the root); the tool's `--help` |
+| all the options of every tool, in English and in French | `docs/REFERENCE_OPTIONS.md`; the tool's `--help` |
 | the meaning of each field of a JSON file | `REFERENCE_JSON.md` |
 | a complete example of each JSON file | folder `docs/samples/` |
 | the French option names from before v43 | `REFERENCE_JSON.md` § 11.11 |

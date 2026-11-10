@@ -67,7 +67,7 @@ python glb2html.py "CHEMIN\NOM.glb" --shared-shell -o "CHEMIN\site\NOM.html" --t
 | `--tiles` | région découpée en tuiles (§ 8) |
 | `--update` | remettre une page au niveau d'une nouvelle version des outils sans rien ressaisir |
 
-Toutes les options : `REFERENCE_OPTIONS.md`.
+Toutes les options : `docs/REFERENCE_OPTIONS.md`.
 
 ## 4. Publier
 

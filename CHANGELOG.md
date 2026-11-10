@@ -4,6 +4,12 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.8.0)
 
+### 10/11/2026 : `REFERENCE_OPTIONS.md` déplacé dans `docs\` (lot 1.8.8)
+
+- **Demande de Klaatou** : ranger `REFERENCE_OPTIONS.md` (fichier généré, bilingue) avec les documents.
+- **Fait** : le fichier va dans `docs\REFERENCE_OPTIONS.md` (`git mv`). `gen_reference.py` l'écrit maintenant là par défaut (docstring, aide de `--output` et sortie par défaut) ; `tests/doc_options.py` et `tests/samples.py` le cherchent là ; les mentions des deux README, des manuels, guides, index, vues d'ensemble, procédures et du `readme.html` du paquet `region-simple` donnent le nouveau chemin (`docs/REFERENCE_OPTIONS.md`). Le contenu du fichier ne change pas. Les anciennes mentions de l'historique (`CHANGELOG.md`, `HISTORIQUE.md`, `HISTORY.md`) restent telles quelles.
+- **En retard** : `REPRISE.md` et `REPRISE_ARCHIVE.md` citent encore le fichier à la racine (à corriger à la prochaine reprise, règle 23). Les paquets `region-simple.zip` et `galerie-photos.zip` ne contiennent le nouveau chemin qu'après la prochaine fabrication (`fabriquer_paquets.py`).
+
 ### 10/11/2026 : ménage de la racine du dépôt (lot 1.8.7)
 
 - **Demande de Klaatou** : nettoyer le dépôt. Bilan : rien à supprimer (chaque fichier est cité par le code, les tests ou les documents).

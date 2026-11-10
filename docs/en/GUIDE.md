@@ -67,7 +67,7 @@ python glb2html.py "CHEMIN\NOM.glb" --shared-shell -o "CHEMIN\site\NOM.html" --t
 | `--tiles` | region split into tiles (§ 8) |
 | `--update` | bring a page up to a new version of the tools without retyping anything |
 
-All the options: `REFERENCE_OPTIONS.md`.
+All the options: `docs/REFERENCE_OPTIONS.md`.
 
 ## 4. Publishing
 

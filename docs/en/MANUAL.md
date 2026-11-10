@@ -1,6 +1,6 @@
 # Web_3d manual (1.8.0)
 
-> **Summary.** This manual follows the project from end to end, theme by theme: getting started, with the vocabulary (chapter 1), the tools (2), converting an OAR (3), measuring and cutting up a big region (4), the viewer and the zones (5), building the page (6), the page from the visitor's side (7), tiled regions (8), the world map (9), the presence server (10), the JSON file reference (11), troubleshooting (12) and, as an appendix, what each version brought (13). For **every option** of the tools, with its effect and the default values of its parameters, in French and English: `REFERENCE_OPTIONS.md` (generated from the tools by `gen_reference.py`). To **do a task step by step**: `PROCEDURES.md`. Language of the page and tools: § 7.49, § 7.51 and § 7.50.
+> **Summary.** This manual follows the project from end to end, theme by theme: getting started, with the vocabulary (chapter 1), the tools (2), converting an OAR (3), measuring and cutting up a big region (4), the viewer and the zones (5), building the page (6), the page from the visitor's side (7), tiled regions (8), the world map (9), the presence server (10), the JSON file reference (11), troubleshooting (12) and, as an appendix, what each version brought (13). For **every option** of the tools, with its effect and the default values of its parameters, in French and English: `docs/REFERENCE_OPTIONS.md` (generated from the tools by `gen_reference.py`). To **do a task step by step**: `PROCEDURES.md`. Language of the page and tools: § 7.49, § 7.51 and § 7.50.
 
 ## 1. Getting started
 
@@ -71,7 +71,7 @@ The ready-to-use files are already in the repository's `dist/` folder: there is 
 | `presence_server.py` | the presence and chat server (needs the Python module `websockets`) | 10 |
 | `favicon.ico` | the pages' default icon | 6 |
 
-For **every** option of each tool, with its effect and the default values of its parameters: `REFERENCE_OPTIONS.md`.
+For **every** option of each tool, with its effect and the default values of its parameters: `docs/REFERENCE_OPTIONS.md`.
 
 ## 3. Convert an OAR to GLB (`tools/oar2glb.py`)
 
@@ -187,7 +187,7 @@ Run it after a conversion made with `--keep`. The log is `oar2glb.diag.log`. Eac
 - **`--all`** refuses to take single-part groups (rails, signs...) without `--min-parts N` or `--yes`.
 - **Cache**: the first time, reading the OAR and measuring the GLB are slow; the result is kept in the `extraire_batiments.cache` folder, created **in the folder where the command is run** (never next to the script, so nothing is written in `dist/`), and read again while the OAR, the GLB, `glb2tiles.py` and `oar2glb.py` have not changed (path, size, date). You can move this folder along with your command. `--no-cache` ignores it, `--clear-cache` deletes it. The cache files are pickles: do not take them from another source.
 - **The two other tools**: `glb2tiles.py` and `oar2glb.py` are looked up in the folder given by `--tools`, otherwise by the `WEB3D_TOOLS` variable, otherwise next to the script.
-- **Options and language**: all the options are in `REFERENCE_OPTIONS.md`; `--lang` and `WEB3D_LANG`: § 7.50; the old French names are still accepted: `REFERENCE_JSON.md` § 11.11.
+- **Options and language**: all the options are in `docs/REFERENCE_OPTIONS.md`; `--lang` and `WEB3D_LANG`: § 7.50; the old French names are still accepted: `REFERENCE_JSON.md` § 11.11.
 - **Tried**: automatic tests on an OAR and a GLB made by `tests/extraire_batiments.py`; by Klaatou, on a real region, on Windows (08/11/2026).
 
 ### 3.8 Extract objects from an IAR (inventory): `iar2oar.py`
@@ -637,7 +637,7 @@ The viewer (`glb-viewer.html`) has the same "**Language / Langue**" list as the 
 
 ## 6. Building the page (`glb2html.py`)
 
-`glb2html.py` builds the page from the `.glb`. Two forms (see the vocabulary, § 1.1): the **standalone** page, a single `.html` that contains everything; the page **with a shell** (`--shared-shell`), where a common `index.html` displays all the regions of the folder. All the options: `REFERENCE_OPTIONS.md`.
+`glb2html.py` builds the page from the `.glb`. Two forms (see the vocabulary, § 1.1): the **standalone** page, a single `.html` that contains everything; the page **with a shell** (`--shared-shell`), where a common `index.html` displays all the regions of the folder. All the options: `docs/REFERENCE_OPTIONS.md`.
 
 ### 6.1 Single shell for several regions (`--shared-shell`, v26)
 
@@ -1144,7 +1144,7 @@ The whole interface (help, settings, information, prompts, loading and error mes
 
 `glb2html.py`, `glb2tiles.py`, `oar2glb.py`, `extraire_batiments.py`, `iar2oar.py`, `diag_carte.py`, `web3d_gui.py` and `presence_server.py` (and `glb-stats.py`, used by `glb2tiles.py`) show their messages, warnings, errors and help (`--help`) in French or in English. **Choice of language**: `--lang fr`, `--lang en` or `--lang auto` (default); otherwise the `WEB3D_LANG` environment variable; otherwise the system language; otherwise English. `--lang` takes precedence over `WEB3D_LANG`. The options themselves (`--budget`, `--exclude`…) and the moderation commands of the server (`list`, `kick`, `ban`, `bans`, `unban`, `help`, and their French equivalents) do not depend on the language. Output files (JSON, tool logs) keep their keys; the logs are written in the chosen language.
 
-**Standalone files**: `build.py` embeds the texts of `src/i18n/*.json` (`py.*` keys) in each tool of `dist\` (only the texts of that tool and the common texts, since 1.4.10): a tool copied alone to another machine keeps its two languages (a build choice). From the sources (`tools\`, `src\`), the tools read `i18n_py.py` and `i18n\` next to them or in `src\`. Adding a language: § 7.51, no code to change. A new option of a tool must have its `py.*` key in **both** files (`python tests/i18n.py` checks it); `python gen_reference.py` regenerates `REFERENCE_OPTIONS.md` (French then English in each "Effect" cell), `python tests/doc_options.py` checks that no option is missing from it and that no description is empty.
+**Standalone files**: `build.py` embeds the texts of `src/i18n/*.json` (`py.*` keys) in each tool of `dist\` (only the texts of that tool and the common texts, since 1.4.10): a tool copied alone to another machine keeps its two languages (a build choice). From the sources (`tools\`, `src\`), the tools read `i18n_py.py` and `i18n\` next to them or in `src\`. Adding a language: § 7.51, no code to change. A new option of a tool must have its `py.*` key in **both** files (`python tests/i18n.py` checks it); `python gen_reference.py` regenerates `docs/REFERENCE_OPTIONS.md` (French then English in each "Effect" cell), `python tests/doc_options.py` checks that no option is missing from it and that no description is empty.
 
 ### 7.51 Add a language (without touching the code)
 

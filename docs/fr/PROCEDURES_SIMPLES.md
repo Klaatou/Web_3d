@@ -80,7 +80,7 @@ Extraire par nom (ou `--group 12`, `--group 15,18,100-150`) ; `--ground 5` ajout
 python ".\web_3d\dist\extraire_batiments.py" "CHEMIN\NOM.oar" "CHEMIN\NOM.glb" --name "Jewel Box House" -o "CHEMIN\batiments"
 ```
 
-Les autres options (boîtes de livraison, voisins, fusion, tout extraire) : `--help` ou `REFERENCE_OPTIONS.md`. Les anciens noms français des options (`--groupe`, `--nom`, `--sol`...) restent acceptés. Le cache se déplace avec la commande ; il n'est relu que si l'OAR, le GLB, `glb2tiles.py` et `oar2glb.py` n'ont pas changé (chemin, taille, date). Si le script est copié seul ailleurs, `--tools DOSSIER` (ou la variable `WEB3D_TOOLS`) indique où sont `glb2tiles.py` et `oar2glb.py`.
+Les autres options (boîtes de livraison, voisins, fusion, tout extraire) : `--help` ou `docs/REFERENCE_OPTIONS.md`. Les anciens noms français des options (`--groupe`, `--nom`, `--sol`...) restent acceptés. Le cache se déplace avec la commande ; il n'est relu que si l'OAR, le GLB, `glb2tiles.py` et `oar2glb.py` n'ont pas changé (chemin, taille, date). Si le script est copié seul ailleurs, `--tools DOSSIER` (ou la variable `WEB3D_TOOLS`) indique où sont `glb2tiles.py` et `oar2glb.py`.
 
 ### Extraire des objets d'un IAR (inventaire)
 

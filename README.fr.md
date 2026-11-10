@@ -75,7 +75,7 @@ Sans lire toute la documentation, deux paquets sont à télécharger sur la [pag
 
 Un testeur, [NightshadeCeres](https://opensimworld.com/user/NightshadeCeres), a essayé le lanceur macOS (macOS Ventura 13.7.8, Firefox 159.0.1) avec `region-simple.zip` : la région s'affiche. Les sources sont dans `paquets/` ; `python fabriquer_paquets.py` refait les zips (`docs/fr/PROCEDURES.md` § 12, ou `docs/en/PROCEDURES.md` en anglais). **Ne prenez pas « Download ZIP » sur la page du dépôt** : c'est le code source, sans `index.html` ni `lib/` ; les lanceurs le disent.
 
-Les manuels sont en français dans `docs/fr/` (`INDEX.md` pour s'y retrouver, `GUIDE.md` pour commencer, `MANUEL.md`, `PROCEDURES.md`, `REFERENCE_JSON.md`, `HISTORIQUE.md`) et en anglais dans `docs/en/`. Toutes les options de chaque outil, en français et en anglais : [`REFERENCE_OPTIONS.md`](REFERENCE_OPTIONS.md) ; `python glb2html.py --help` (et de même pour les autres outils) les affiche.
+Les manuels sont en français dans `docs/fr/` (`INDEX.md` pour s'y retrouver, `GUIDE.md` pour commencer, `MANUEL.md`, `PROCEDURES.md`, `REFERENCE_JSON.md`, `HISTORIQUE.md`) et en anglais dans `docs/en/`. Toutes les options de chaque outil, en français et en anglais : [`docs/REFERENCE_OPTIONS.md`](docs/REFERENCE_OPTIONS.md) ; `python glb2html.py --help` (et de même pour les autres outils) les affiche.
 
 ## Fichiers fabriqués
 
