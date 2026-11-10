@@ -23,6 +23,23 @@
 - **Relier plusieurs régions** par une carte des mondes (`carte.html`) : une fiche par région, qui y mène (voir « Carte des mondes »).
 - **Tout régler** dans le viewer (`glb-viewer.html` : mer, caméra, promenade, zones, fiche de région), ou directement dans les fichiers JSON (`NOM.config.json`, `NOM.zones.json`), qu'une page avec coquille relit à chaque F5.
 
+## Par où commencer ? (30 secondes)
+
+**1. Juste essayer** (rien à installer côté visiteur)  
+→ [Démo en ligne](https://klaatou.github.io/Web_3d_demo/)
+
+**2. Mettre ma propre région en ligne le plus simplement possible**  
+→ Télécharge le paquet **region-simple.zip** sur la [page des versions](https://github.com/Klaatou/Web_3d/releases/latest)  
+→ Mets ton fichier `.glb` à la place de `site/region.glb`  
+→ Lance `lancer-region.bat` (Windows) / `.command` (macOS) / `.sh` (Linux)
+
+**3. Convertir mon OAR OpenSim en GLB**  
+→ Voir `docs/fr/GUIDE.md` § 1.2 (nécessite convoar sous Windows pour l’instant)
+
+**4. Aller plus loin** (plusieurs régions, carte, présence, tuiles, zones…)  
+→ Commencer par `docs/fr/GUIDE.md`  
+→ Puis `docs/fr/INDEX.md` pour trouver exactement ce dont tu as besoin
+
 ## Deux sortes de page
 
 - **Page autonome** : un seul fichier `.html` qui contient tout, modèle compris. On peut l'envoyer ou la donner à n'importe qui : elle s'ouvre depuis le disque, dans un navigateur, sans serveur web ni autre fichier. Limites : les zones image n'affichent rien quand la page est ouverte depuis le disque (elles demandent un hébergement web), et une région en tuiles n'a pas d'export autonome.
@@ -172,7 +189,7 @@ Positions, chat (historique `--history-file`), modération depuis sa console (`l
 
 ## Développer
 
-`REPRISE.md` (à la racine) donne l'état du dépôt, les décisions et ce qui reste à faire ; `CHANGELOG.md` et `HISTORIQUE.md` le détail de chaque version. Tests : `python build.py`, puis les scripts de `tests/` : `smoke.py`, `i18n.py`, `samples.py`, `doc_options.py`, `tools_lang.py`, `modulaire.py`, `tuiles.py`, `glb2tiles.py`, `oar2glb.py`, `terrain.py` et un fichier par version (`v23.py` à `v51.py`). Les tests dans le navigateur demandent Playwright et Chromium ; variables `THREE_DIR` (paquet npm `three`, hors ligne) et `CHROMIUM` (exécutable).
+`REPRISE.md` (à la racine) donne l'état du dépôt, les décisions et ce qui reste à faire (principalement à l'usage de l'IA Claude); `CHANGELOG.md` et `HISTORIQUE.md` le détail de chaque version. Tests : `python build.py`, puis les scripts de `tests/` : `smoke.py`, `i18n.py`, `samples.py`, `doc_options.py`, `tools_lang.py`, `modulaire.py`, `tuiles.py`, `glb2tiles.py`, `oar2glb.py`, `terrain.py` et un fichier par version (`v23.py` à `v51.py`). Les tests dans le navigateur demandent Playwright et Chromium ; variables `THREE_DIR` (paquet npm `three`, hors ligne) et `CHROMIUM` (exécutable).
 
 ## Sécurité
 
