@@ -6,6 +6,13 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.9.0)
 
+### 10/11/2026 : `CHANGELOG.md` : rubrique 1.0.0 traduite en anglais ; fin de la traduction (lot 1.9.10)
+
+- **Demande de Klaatou** : arrêter la traduction à la rubrique 1.0.0.
+- **Fait** : la rubrique 1.0.0 (entrées du 25/10/2026 au 29/10/2026) est maintenant en anglais : les intertitres sont traduits ; ces entrées portaient déjà un jumeau anglais de chaque puce française, donc les puces françaises sont retirées ici (elles restent dans `CHANGELOG.fr.md`) et les puces anglaises gardées telles quelles. La note sous le titre ne dit plus « traduction en cours » : elle dit que les entrées d'avant la 1.0.0 (de la v52 à la v1) restent en français, telles qu'elles ont été écrites. Elles ne sont pas traduites (décision de Klaatou).
+- **Contrôle** : dans chaque lot, le nombre de puces anglaises gardées égale le nombre de puces françaises retirées (18 lots, tous équilibrés) ; les identifiants techniques sont ceux du texte anglais existant (non retapés) ; aucun script ni test ne lit le journal ; aucun fichier de `dist/` ne change.
+- **En retard** : `REGLES.md` (règles 15 et 16 : une entrée dans chacun des deux fichiers) ; `REPRISE.md` (le plan de traduction du § 6.1 est terminé : à retirer à la prochaine reprise).
+
 ### 10/11/2026 : `CHANGELOG.md` : rubriques 1.2.0 et 1.1.0 traduites en anglais (lot 1.9.9)
 
 - **Demande de Klaatou** : continuer la traduction du journal, par les rubriques 1.2.0 et 1.1.0.

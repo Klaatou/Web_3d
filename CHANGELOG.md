@@ -2,9 +2,16 @@
 
 Dates are in dd/mm/yyyy format.
 
-French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The sections from 1.0.0 down are still in French (translation in progress, piece by piece); the complete history in French is in `CHANGELOG.fr.md`.
+French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (v52 down to v1) are kept in French, as they were written; the complete history in French is in `CHANGELOG.fr.md`.
 
 ## Unreleased (after 1.9.0)
+
+### 10/11/2026: `CHANGELOG.md`: 1.0.0 section translated into English; end of the translation (batch 1.9.10)
+
+- **Requested by Klaatou**: stop the translation at the 1.0.0 section.
+- **Done**: the 1.0.0 section (entries of 25/10/2026 to 29/10/2026) is now in English: the headings are translated; these entries already carried an English twin of each French bullet, so the French bullets are removed here (they stay in `CHANGELOG.fr.md`) and the English ones are kept as they are. The note under the title no longer says "translation in progress": it now says that the entries before 1.0.0 (v52 down to v1) stay in French, as they were written. They are not translated (decision of Klaatou).
+- **Check**: in each batch, the number of kept English bullets equals the number of removed French bullets (18 batches, all balanced); technical identifiers are those of the existing English text (not retyped); no script or test reads the history; no file of `dist/` changes.
+- **Still to update**: `REGLES.md` (rules 15 and 16: one entry in each of the two files); `REPRISE.md` (the translation plan of § 6.1 is finished: to be removed at the next handover).
 
 ### 10/11/2026: `CHANGELOG.md`: 1.2.0 and 1.1.0 sections translated into English (batch 1.9.9)
 
@@ -805,77 +812,85 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The sections from 1.0.0 do
 
 - **Documents**: `web3d-presence.service` (repository root): `NOM_USER` becomes `UTILISATEUR`, as in `PROCEDURES` § 11 and `REPRISE.md`. No code change, no version number change.
 ## 1.0.0 (29/10/2026)
-### 29/10/2026 : numérotation 1.0.0, documents revus
-- **Numérotation** : la v52 devient la **1.0.0** (les étiquettes `v14` à `v52` restent). Schéma `X.Y.Z` (majeur.mineur.correctif) : une publication qui ajoute une fonction donne `1.1.0`, `1.2.0`... ; une publication de correctifs seuls donne `1.0.1` ; un changement qui casse l'existant (renommage sans alias, format de fichier incompatible) donne `2.0.0`. `VERSION` s'écrit `1.0.0 (29/10/2026)`, l'étiquette `v1.0.0`. `VERSION` et l'étiquette ne changent que lorsque Klaatou décide une publication ; les lots intermédiaires restent des entrées « Non publié ». Les noms de `patch_vNNx.py` et de `tests/vNN.py` ne changent pas. Manuel § 36.5.
+
+### 29/10/2026: 1.0.0 numbering, documents revised
+
 - **Numbering**: v52 becomes **1.0.0** (the `v14` to `v52` tags stay). `X.Y.Z` scheme (major.minor.patch): a release that adds a feature gives `1.1.0`, `1.2.0`...; a release of fixes only gives `1.0.1`; a change that breaks existing things (renaming without an alias, incompatible file format) gives `2.0.0`. `VERSION` is written `1.0.0 (29/10/2026)`, the tag `v1.0.0`. `VERSION` and the tag only change when Klaatou decides on a release; the intermediate batches stay "Unreleased" entries. The names of `patch_vNNx.py` and `tests/vNN.py` do not change. Manual § 36.5.
-- **Documents** : `PROCEDURES` (FR et EN) revues : en-tête, commande d'étiquette, exemple de version, touches G / V / M / R, bannissement (IPv4 exacte, IPv6 par `/64`), nouveau paragraphe « VM Debian 13 : service permanent avec console de modération » (essayé le 29/10/2026 : `reboot`, `tmux kill-server`) ; vue d'ensemble, titres du manuel, `CLAUDE.md` mis à jour ; nouveaux `docs/samples/README.fr.md` et `docs/samples/README.md` (présentation des 13 fichiers d'exemple, `tests/samples.py` les vérifie).
 - **Documents**: `PROCEDURES` (FR and EN) revised: header, tag command, version example, G / V / M / R keys, bans (exact IPv4, IPv6 by `/64`), new paragraph "Debian 13 VM: permanent service with a moderation console" (tried on 29/10/2026: `reboot`, `tmux kill-server`); overview, manual titles, `CLAUDE.md` updated; new `docs/samples/README.fr.md` and `docs/samples/README.md` (presentation of the 13 example files, checked by `tests/samples.py`).
-- **Documents** : `PROCEDURES` § 11 (FR et EN) : textes de `lance_presence.sh` et de l'unité `web3d-presence.service` de la VM Debian 13 (utilisateur et dossier remplacés par `UTILISATEUR`), `tmux` ajouté aux paquets `apt`.
 - **Documents**: `PROCEDURES` § 11 (FR and EN): texts of `lance_presence.sh` and of the `web3d-presence.service` unit of the Debian 13 VM (user and folder replaced by `UTILISATEUR`), `tmux` added to the `apt` packages.
-### 29/10/2026 : commande `pseudos`
-- **Serveur de présence** : la commande de console `pseudos [filtre]` (alias `names`, `noms`) liste les pseudos réservés : pseudo tel qu'écrit, code `#XXXX` du propriétaire, dernière venue, date de libération automatique, « (connecté) » si le propriétaire est en ligne ; le filtre garde les pseudos qui contiennent un morceau de texte. Complète `oublier <pseudo>`. `tests/oublier.py` étendu. Manuel § 36.2. **Relancer le serveur de présence.** Demande de Klaatou.
+
+### 29/10/2026: `pseudos` command
+
 - **Presence server**: the `pseudos [filtre]` console command (aliases `names`, `noms`) lists the reserved names: name as written, owner's `#XXXX` code, last seen, automatic release date, "(connected)" if the owner is online; the filter keeps the names containing a piece of text. Completes `oublier <pseudo>`. `tests/oublier.py` extended. Manual § 36.2. **Restart the presence server.** Requested by Klaatou.
-### 29/10/2026 : IPv6 par `/64`, commande `oublier`, arrêt des essais de connexion
-- **Serveur de présence, IPv6** : `--max-per-ip` et les bannissements (`bannir`) comptent maintenant l'IPv6 par préfixe `/64` (`ip_group`) : un abonné qui change la fin de son adresse ne les contourne plus. IPv4 inchangée ; une IPv4 écrite en IPv6 compte comme l'IPv4 ; un ancien bannissement garde son adresse exacte. La console et le journal gardent l'adresse complète. `tests/ipv6.py` (nouveau). Manuel § 36.3. **Relancer le serveur de présence.**
-- **Serveur de présence, commande `oublier <pseudo>`** : libère un pseudo réservé sans arrêter le serveur ni toucher à `presence_identities.json` (écrit au journal ; signale un propriétaire connecté). `tests/oublier.py` (nouveau). Manuel § 36.2.
-- **Page, essais de connexion** : après **5 essais** sans jamais s'être connectée (12 si la connexion avait été ouverte puis perdue), la page s'arrête au lieu de réessayer sans fin (`core.js`, constantes `PRES_TRIES_NEVER` et `PRES_TRIES_LOST`) ; la cartouche du pseudo dit « essais arrêtés : recharge la page pour réessayer ». `tests/essais_presence.py` (nouveau, une minute). Manuel § 36.4. Demandes de Klaatou.
+
+### 29/10/2026: IPv6 by `/64`, `oublier` command, connection attempts stop
+
 - **Presence server, IPv6**: `--max-per-ip` and bans (`bannir`) now count IPv6 by `/64` prefix (`ip_group`): a subscriber who changes the end of their address no longer dodges them. IPv4 unchanged; an IPv4 written as IPv6 counts as the IPv4; an old ban keeps its exact address. The console and the log keep the full address. `tests/ipv6.py` (new). Manual § 36.3. **Restart the presence server.**
 - **Presence server, `oublier <name>` command**: releases a reserved name without stopping the server or touching `presence_identities.json` (written to the log; says if the owner is connected). `tests/oublier.py` (new). Manual § 36.2.
 - **Page, connection attempts**: after **5 attempts** without ever connecting (12 if the connection had opened and was lost), the page stops instead of retrying forever (`core.js`, `PRES_TRIES_NEVER` and `PRES_TRIES_LOST` constants); the name box says "attempts stopped: reload the page to try again". `tests/essais_presence.py` (new, one minute). Manual § 36.4. Requested by Klaatou.
-### 29/10/2026 : `carte.html`, adresses sélectionnables
-- **`carte.html`** : l'adresse affichée par la case « Afficher les adresses » se trouvait **dans le lien** de la vignette : dans un lien, un clic-glissé ne sélectionne pas le texte (ce n'était pas le zoom, essai sans zoom identique). Elle s'affiche maintenant **sous la vignette, hors du lien** : sélectionnable et copiable ; le zoom au survol reste sur la vignette. Chaque tuile est entourée d'une cellule (`.cell`). **Un redessin de la grille effaçait aussi la sélection** (à chaque relevé du serveur de présence) : la grille n'est plus redessinée que si les données ont changé (signature `lastSig`), et jamais tant qu'un texte de la grille est sélectionné (`drawLater`). Le zoom ne disparaît donc plus à chaque relevé. `tests/v52.py` (section 10), `tests/v47.py` adapté. Demande de Klaatou.
+
+### 29/10/2026: `carte.html`, selectable addresses
+
 - **`carte.html`**: the address shown by the "Show addresses" checkbox was **inside the link** of the card: inside a link, a click-drag does not select text (it was not the zoom: a test without the zoom behaved the same). It is now shown **under the card, outside the link**: selectable and copyable; the hover zoom stays on the card. Each card is wrapped in a cell (`.cell`). **Redrawing the grid also cleared the selection** (at every presence-server poll): the grid is only redrawn when the data changed (`lastSig` signature), and never while text in the grid is selected (`drawLater`). The zoom no longer disappears at every poll. `tests/v52.py` (section 10), `tests/v47.py` adapted. Requested by Klaatou.
-### 29/10/2026 : icône « 3D » des pages, remplaçable par un fichier `favicon.ico`
-- **Toutes les pages** (coquille `index.html`, page autonome, `carte.html`, `glb-viewer.html`) : une icône « 3D » (texte blanc sur fond bleu foncé) est incorporée par défaut (petit SVG dans la balise `<link rel="icon">`) ; **si un fichier `favicon.ico` se trouve à côté de la page, elle l'adopte** : pour changer l'icône d'un site, il suffit de remplacer ce fichier, sans refaire aucune page. `python build.py` écrit un `favicon.ico` d'exemple dans `dist\` (16, 32, 48 et 64 px, à partir de `src/favicon.ico`) ; à copier avec `index.html`. Sans ce fichier, la page garde l'icône incorporée mais le serveur web voit une demande `favicon.ico` sans réponse (comme avant). Safari n'a pas été essayé. `tests/icone.py` (nouveau). Manuel § 36.1. **Pour la démo en ligne** : recopier `index.html`, `carte.html` et `favicon.ico` de `dist\`, relancer `ajout_og.py` (voir `REPRISE.md`, point 11).
+
+### 29/10/2026: "3D" icon of the pages, replaceable by a `favicon.ico` file
+
 - **All pages** (shell `index.html`, standalone page, `carte.html`, `glb-viewer.html`): a "3D" icon (white text on dark blue) is embedded by default (a small SVG in the `<link rel="icon">` tag); **if a `favicon.ico` file sits next to the page, it adopts it**: to change a site's icon, just replace that file, without rebuilding any page. `python build.py` writes a sample `favicon.ico` in `dist\` (16, 32, 48 and 64 px, from `src/favicon.ico`); copy it with `index.html`. Without that file the page keeps the embedded icon but the web server sees an unanswered `favicon.ico` request (as before). Safari was not tried. `tests/icone.py` (new). Manual § 36.1. **For the online demo**: copy `index.html`, `carte.html` and `favicon.ico` from `dist\`, rerun `ajout_og.py` (see `REPRISE.md`, point 11).
-### 28/10/2026 : la touche G devient une bascule
-- **Page et viewer (`core.js`)** : en promenade, **G** capture la souris si elle est libre et la **libère** si elle est capturée (`toggleMouse`). Le bouton « Capturer la souris » ne fait que capturer : un pointeur capturé ne peut pas cliquer, donc l'étiquette ne change pas. Textes de l'état et de l'aide, manuel (touches, § 19.4, pavé de flèches), `CLAUDE.md` et `tests/v34.py` adaptés. Demande de Klaatou.
+
+### 28/10/2026: the G key becomes a toggle
+
 - **Page and viewer (`core.js`)**: while walking, **G** captures the mouse if it is free and **releases** it if it is captured (`toggleMouse`). The "Capture the mouse" button only captures: a captured pointer cannot click, so its label does not change. Status and help texts, manual (keys, § 19.4, arrows pad), `CLAUDE.md` and `tests/v34.py` adapted. Requested by Klaatou.
-### 28/10/2026 : la souris ne se capture plus qu'à la demande
-- **Page et viewer (`core.js`)** : un clic dans la vue, en promenade, ne capture plus la souris (le premier clic la capturait). La capture est volontaire : touche **G** ou bouton « Capturer la souris ». Sans capture, un clic, un double-clic (téléportation) et un clic sur une zone fonctionnent à l'endroit du curseur, et glisser avec le bouton enfoncé tourne la vue (comme après un Échap). Textes de l'aide, de l'état et de la barre du viewer, manuel (touches, § 19.4, § 29), `CLAUDE.md` et `tests/v34.py` adaptés. Demande de Klaatou.
+
+### 28/10/2026: the mouse is captured only on request
+
 - **Page and viewer (`core.js`)**: a click in the view, while walking, no longer captures the mouse (the first click used to). Capturing is on purpose: the **G** key or the "Capture the mouse" button. Without capture, a click, a double-click (teleport) and a click on a zone work where the cursor is, and dragging with the button held turns the view (as after Esc). Help, status and viewer bar texts, manual (keys, § 19.4, § 29), `CLAUDE.md` and `tests/v34.py` adapted. Requested by Klaatou.
-### 28/10/2026 : serveur de présence, requêtes illisibles
-- **Serveur de présence** : une requête qui n'est pas du HTTP (sondage du Bureau à distance Windows `mstshash`, début d'une connexion TLS, octets quelconques) écrivait une trace complète (`InvalidMessage`, « did not receive a valid HTTP request »). Une ligne « requête illisible » la remplace : sorte reconnue et début de la requête, au plus une par minute, par adresse et par sorte. Constaté sur le serveur de Klaatou (sondages d'Internet). `tests/v51_vides.py` et `tests/v52_http.py` adaptés. Manuel § 35.5. **Relancer le serveur de présence.**
+
+### 28/10/2026: presence server, unreadable requests
+
 - **Presence server**: a request that is not HTTP (Windows Remote Desktop probe `mstshash`, start of a TLS connection, arbitrary bytes) wrote a full trace (`InvalidMessage`, "did not receive a valid HTTP request"). An "unreadable request" line replaces it: recognised kind and start of the request, at most one per minute, per address and per kind. Seen on Klaatou's server (probes from the Internet). `tests/v51_vides.py` and `tests/v52_http.py` adapted. Manual § 35.5. **Restart the presence server.**
-### 28/10/2026 : `carte.html` sans serveur de présence
-- **`carte.html`** : la case « Surveillance des arrivées (son et repère) » n'apparaît que si au moins une région a un serveur de présence (c'est le cas de la démo en ligne, qui n'en a pas). `tests/v52.py` (section 9) ; manuel § 35.2.
+
+### 28/10/2026: `carte.html` without a presence server
+
 - **`carte.html`**: the "Arrival alert (sound and marker)" checkbox only appears if at least one region has a presence server (the online demo has none). `tests/v52.py` (section 9); manual § 35.2.
-### 28/10/2026 : démo en ligne
-- **Démo** : dépôt séparé `Klaatou/Web_3d_demo` publié avec GitHub Pages (`https://klaatou.github.io/Web_3d_demo/`) : régions PalmIsland et Hobbit reliées par des portails à cible relative, carte des mondes, sans serveur de présence. **README FR et EN** : lien « Essayer la démo en ligne », GIF cliquable.
+
+### 28/10/2026: online demo
+
 - **Demo**: separate repository `Klaatou/Web_3d_demo` published with GitHub Pages (`https://klaatou.github.io/Web_3d_demo/`): PalmIsland and Hobbit regions linked by portals with relative targets, world map, no presence server. **README FR and EN**: "Try the online demo" link, clickable GIF.
-### 27/10/2026 : lien vers la source du GIF
-- **README FR et EN** : dans la légende du GIF, « Outworldz » renvoie à la page des OAR du site.
+
+### 27/10/2026: link to the GIF's source
+
 - **README FR and EN**: in the GIF caption, "Outworldz" links to the site's OAR page.
-### 27/10/2026 : GIF de démonstration dans les README
-- **README FR et EN** : GIF de la région PalmIsland (`docs/images/PalmIsland_demo.gif`) sous le titre, avec texte alternatif et légende (source : site Outworldz).
+
+### 27/10/2026: demonstration GIF in the READMEs
+
 - **README FR and EN**: GIF of the PalmIsland region (`docs/images/PalmIsland_demo.gif`) under the title, with alternative text and caption (source: Outworldz site).
-### 27/10/2026 : oar2glb, convoar introuvable
-- **`oar2glb.py`** : le chemin par défaut de `convoar.exe` n'est plus écrit dans le code (c'était un chemin personnel) : variable `CONVOAR`, sinon `convoar` du PATH, sinon `convoar.exe` à côté de `oar2glb.py`. Quand il est introuvable, le message dit à quoi il sert, donne l'adresse de téléchargement et l'option `--convoar CHEMIN`. Aide, manuel et README à jour ; `tests/correctifs_v52.py`.
+
+### 27/10/2026: oar2glb, convoar not found
+
 - **`oar2glb.py`**: the default path of `convoar.exe` is no longer written in the code (it was a personal path): the `CONVOAR` variable, otherwise `convoar` from the PATH, otherwise `convoar.exe` next to `oar2glb.py`. When it is not found, the message says what it is for, gives the download address and the `--convoar CHEMIN` option. Help, manual and README updated; `tests/correctifs_v52.py`.
-### 27/10/2026 : historique (tableau) et README
-- **Documents** : dans `docs/fr/HISTORIQUE.md` et `docs/en/HISTORY.md`, les lignes de la v49 à la v52 se trouvaient sous le titre « Commandes utiles », hors du tableau (qui s'arrêtait à la v48) : elles sont remises dans le tableau, avec les lignes « après v52 ». README FR et EN : `--convoar CHEMIN` dans la note du prérequis convoar.
+
+### 27/10/2026: history (table) and README
+
 - **Documents**: in `docs/fr/HISTORIQUE.md` and `docs/en/HISTORY.md`, the v49 to v52 rows were under the "Useful commands" heading, outside the table (which stopped at v48): they are back in the table, with the "after v52" rows. README FR and EN: `--convoar CHEMIN` in the convoar prerequisite note.
-### 27/10/2026 : historique à jour
-- **Documents** : `docs/fr/HISTORIQUE.md` et `docs/en/HISTORY.md` : lignes « après v52 » (vue d'ensemble, crédits, prérequis convoar, fins de ligne, lot correctif).
+
+### 27/10/2026: history up to date
+
 - **Documents**: `docs/fr/HISTORIQUE.md` and `docs/en/HISTORY.md`: "after v52" rows (overview, credits, convoar prerequisite, line endings, corrective batch).
-### 27/10/2026 : lot correctif après l'audit
-- **Serveur de présence** : plus aucun caractère de contrôle dans le journal (échappement de terminal, sonnerie) ; une requête HTTP pouvait les y faire entrer par son chemin depuis la ligne « requête http » de la v52. Créateurs : une origine `null` écrite sans guillemets est signalée et ignorée.
-- **`.gitignore`** : ajoute `*.zones.json` (les fichiers de zones réels, avec d'éventuelles adresses Home Assistant ; `zones*.json` ne les couvrait pas) et `*.jsonl` (historique du chat, journal des visites), sauf `docs/samples/*.jsonl`.
-- **Documents** : README FR et EN (Python 3.9 ou plus, fichiers à ne jamais committer, note convoar sur trois lignes) ; manuel § 20.8 (option inexistante retirée), § 34 (`null` entre guillemets), § 35.5 (journal sans caractère de contrôle).
-- **Tests** : `tests/portail_interne.py` et `tests/v24.py` écartent la proposition de rendu léger, le pavé de commandes et la fenêtre Informations, qui couvraient leur cible (v41, v42, v46) ; `tests/v33.py` vérifie la reconstruction des grilles à vitesse normale et attend le texte d'aide de la v40 ; nouveau `tests/correctifs_v52.py`. Code : imports en double et variables inutilisées retirés (`gen_tpl.py`, `oar2glb.py`, `glb-stats.py`).
+
+### 27/10/2026: corrective batch after the audit
+
 - **Presence server**: no control character left in the log (terminal escape, bell); since the v52 "http request" line an HTTP request could put them there through its path. Creators: an origin `null` written without quotes is reported and ignored.
 - **`.gitignore`**: adds `*.zones.json` (the real zone files, with possible Home Assistant addresses; `zones*.json` did not cover them) and `*.jsonl` (chat history, visit log), except `docs/samples/*.jsonl`.
 - **Documents**: README FR and EN (Python 3.9 or later, files never to commit, convoar note on three lines); manual § 20.8 (non-existent option removed), § 34 (`null` in quotes), § 35.5 (log without control characters).
 - **Tests**: `tests/portail_interne.py` and `tests/v24.py` dismiss the light rendering offer, the on-screen controls and the Information window, which covered their target (v41, v42, v46); `tests/v33.py` checks the grid rebuild at normal speed and expects the v40 help text; new `tests/correctifs_v52.py`. Code: duplicate imports and unused variables removed (`gen_tpl.py`, `oar2glb.py`, `glb-stats.py`).
 
-### 25/10/2026 : crédits dans les README
-- **README** : section « Crédits » (français et anglais).
+### 25/10/2026: credits in the READMEs
+
 - **README**: "Credits" section (French and English).
 
-### 25/10/2026 : vue d'ensemble en une page
-- **Documents** : `docs/fr/VUE_ENSEMBLE.md` et `docs/en/OVERVIEW.md` : ce qui marche, ce qui a été essayé ou non, ce qui reste à faire (essai depuis la VM, note pour les créateurs, souris, démo publique, numérotation, release), où lire quoi. Aucun changement de code ni de numéro de version.
-- **Documents**: `docs/fr/VUE_ENSEMBLE.md` and `docs/en/OVERVIEW.md`: what works, what has been tried or not, what is left to do (test from the VM, note for creators, mouse, public demo, numbering, release), where to read what. No code change, no version number change.
+### 25/10/2026: one-page overview
 
+- **Documents**: `docs/fr/VUE_ENSEMBLE.md` and `docs/en/OVERVIEW.md`: what works, what has been tried or not, what is left to do (test from the VM, note for creators, mouse, public demo, numbering, release), where to read what. No code change, no version number change.
 ## v52 (25/10/2026)
 ### 25/10/2026 : région en tuiles renommée, vue d'ensemble reliée aux tuiles
 - **Page et viewer (`core.js`, `loadOverview`)** : le fichier `X.overview.glb` porte dans chaque nœud le chemin de sa tuile tel qu'il était au découpage (`extras.tile`, « X.tiles/T_3_0_0.glb »). Après un renommage des dossiers et des chemins de l'index (le binaire restant intact), plus aucune cellule n'était reliée à sa tuile : la vue d'ensemble restait visible sous les tuiles détaillées et les surfaces se recouvraient (moirures, plaques sombres, surtout sur le terrain et les rochers). La cellule est maintenant retrouvée par le nom du fichier de la tuile quand le chemin complet ne correspond pas (nom unique dans une région ; sinon la cellule reste visible, jamais de trou). On peut renommer une région à la main sans régénérer la vue d'ensemble. `tests/v52_renom.py`.
