@@ -6,6 +6,15 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The sections from 1.7.0 do
 
 ## Unreleased (after 1.9.0)
 
+### 10/11/2026: documents: convoar does not recover PBR materials (batch 1.9.4)
+
+- **Requested by Klaatou**: say in the documents that, given convoar's age, no PBR material is recovered for the moment, and say whether going further can be considered.
+- **Done, in French and in English**: manual § 3: new note "Limitation: PBR materials" (convoar dates from May 2022; according to a reading of its code it does not read PBR materials; not measured; lead: read them from the OAR in `oar2glb.py`; nothing decided); one sentence in `README.md` and `README.fr.md`. No code changes (`dist\` identical).
+- **Basis** (reading of code, no measurement): `convoar/convoar.csproj:11` (.NET Framework 4.8), last commit of convoar on 26/05/2022, no handling of PBR or glTF materials in its code; in OpenSim, the face's material reference is in the `ExtraParams` parameter `0x80` (`PrimitiveBaseShape.cs:1094`, `:1367-1383`), the material assets are written as `*_prmat.dat` (`ArchiveConstants.cs:129`), the per-face overrides as `<MatOvrd>` (`SceneObjectSerializer.cs:622`, `:1886`); `oar_scan` reads none of these (`oar2glb.py:418`, `:459`).
+- **Not tested**: any real OAR with PBR (none available); the real output of convoar on PBR.
+- **Check**: `python verif_trad.py` on the manual pair; no new error on the README pair.
+- **Still to update**: `REPRISE.md` (note the subject at the next handover); translation of the sections from 1.7.0 down; `REGLES.md` (rules 15 and 16).
+
 ### 10/11/2026: `CHANGELOG.md`: 1.8.0 section translated into English (batch 1.9.3)
 
 - **Requested by Klaatou**: continue the translation of the history, with the 1.8.0 section.

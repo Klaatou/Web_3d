@@ -51,7 +51,7 @@
 
 ![Comment ça marche : une OAR devient un GLB, éventuellement découpé en tuiles ; le viewer ou glb2html.py fabrique la page web ; le serveur de présence est facultatif et à part](docs/images/fonctionnement.fr.svg)
 
-`oar2glb.py` demande le convertisseur externe `convoar.exe` (voir plus bas). Le viewer règle les réglages et les zones et exporte la page (région en tuiles : seulement les zones, avec la ligne de commande à lancer) ; `glb2html.py` fait le même travail en ligne de commande et est indispensable pour les régions en tuiles. Le serveur de présence ne fait pas partie de la page : c'est la page qui s'y connecte.
+`oar2glb.py` demande le convertisseur externe `convoar.exe` (voir plus bas). convoar ne reprend pas les matériaux PBR (voir le manuel, § 3). Le viewer règle les réglages et les zones et exporte la page (région en tuiles : seulement les zones, avec la ligne de commande à lancer) ; `glb2html.py` fait le même travail en ligne de commande et est indispensable pour les régions en tuiles. Le serveur de présence ne fait pas partie de la page : c'est la page qui s'y connecte.
 
 ## Paquets prêts à l'emploi
 

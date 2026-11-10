@@ -82,6 +82,8 @@ Pour **toutes** les options de chaque outil, avec leur effet et les valeurs par 
   Copie sans les fichiers `*.pdb` ni `NLog.xml` ; essayée par Klaatou sous Windows (conversion d'une petite région, 10/11/2026).
   Sans convoar.exe, oar2glb.py ne peut pas effectuer la conversion OAR → GLB.
 
+**Limite : matériaux PBR.** convoar date de mai 2022 (.NET Framework 4.8, bibliothèques OpenSim du dépôt de cette époque) ; le PBR est arrivé avec OpenSim 0.9.3. D'après la lecture de son code, convoar ne lit pas les matériaux PBR d'un OAR : une face en PBR ne garde, au mieux, que sa texture ou sa couleur classique dans le GLB. Ce n'est pas mesuré : aucun OAR contenant du PBR n'a pu être essayé. **Piste** : lire ces matériaux directement dans l'OAR depuis `oar2glb.py`, sans toucher à convoar (dans le code d'OpenSim, la face référence son matériau par un paramètre `ExtraParams`, et le matériau est un fichier `*_prmat.dat` de l'OAR). À étudier dès qu'un OAR 0.9.3 avec du PBR est disponible ; rien n'est décidé.
+
 ### 3.1 Les commandes (PowerShell, une seule ligne)
 
 Se placer d'abord dans le dossier du script : `cd "P:\_OpenSim\SL&OS\Web_3d"`.

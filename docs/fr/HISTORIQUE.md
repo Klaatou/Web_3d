@@ -209,6 +209,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 10/11/2026 |  | après 1.9.0 | Lot 1.9.1 : `CHANGELOG.fr.md` créé (le journal en français) ; `CHANGELOG.md` devient la version anglaise ; renvois des documents français mis à jour |
 | 10/11/2026 |  | après 1.9.0 | Lot 1.9.2 : `CHANGELOG.md` traduit en anglais (en-tête, rubrique 1.9.0) ; « décidée par Klaatou » retiré de l'entrée de publication 1.9.0 |
 | 10/11/2026 |  | après 1.9.0 | Lot 1.9.3 : `CHANGELOG.md` : rubrique 1.8.0 traduite en anglais ; « décidée par Klaatou » retiré de l'entrée de publication 1.8.0 |
+| 10/11/2026 |  | après 1.9.0 | Lot 1.9.4 : documents : limite PBR de convoar (manuel § 3, README) |
 
 ## Commandes utiles
 

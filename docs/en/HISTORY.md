@@ -209,6 +209,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 10/11/2026 |  | after 1.9.0 | Batch 1.9.1: `CHANGELOG.fr.md` created (the French history); `CHANGELOG.md` becomes the English version; the French documents' references updated |
 | 10/11/2026 |  | after 1.9.0 | Batch 1.9.2: `CHANGELOG.md` translated into English (header, 1.9.0 section); "decided by Klaatou" removed from the 1.9.0 release entry |
 | 10/11/2026 |  | after 1.9.0 | Batch 1.9.3: `CHANGELOG.md`: 1.8.0 section translated into English; "decided by Klaatou" removed from the 1.8.0 release entry |
+| 10/11/2026 |  | after 1.9.0 | Batch 1.9.4: documents: convoar's PBR limitation (manual § 3, READMEs) |
 
 ## Useful commands
 
