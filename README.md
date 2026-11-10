@@ -23,6 +23,23 @@ English | [Français](README.fr.md)
 - **Link several regions** with a world map (`carte.html`, *carte* is French for map): one card per region, each leading to it (see "World map").
 - **Set everything up** in the viewer (`glb-viewer.html`: sea, camera, walking, zones, region card), or directly in the JSON files (`NOM.config.json`, `NOM.zones.json`), which a page with a shell reads again at every F5.
 
+## Where to start? (30 seconds)
+
+**1. Just try it** (nothing to install for visitors)  
+→ [Online demo](https://klaatou.github.io/Web_3d_demo/)
+
+**2. Put my own region online the simplest way**  
+→ Download **region-simple.zip** from the [Releases page](https://github.com/Klaatou/Web_3d/releases/latest)  
+→ Replace `site/region.glb` with your `.glb`  
+→ Run `lancer-region.bat` (Windows) / `.command` (macOS) / `.sh` (Linux)
+
+**3. Convert my OpenSim OAR to GLB**  
+→ See `docs/en/GUIDE.md` § 1.2 (currently requires convoar on Windows)
+
+**4. Go further** (several regions, world map, presence, tiles, zones…)  
+→ Start with `docs/en/GUIDE.md`  
+→ Then `docs/en/INDEX.md` to find exactly what you need
+
 ## Two kinds of page
 
 - **Standalone page**: a single `.html` file with everything inside, the model included. You can send it or give it to anyone: it opens from the disk, in a browser, with no web server and no other file. Limits: picture zones show nothing when opened from the disk (they need a web host), and a tiled region has no standalone export.
@@ -172,7 +189,7 @@ Positions, chat (history `--history-file`), moderation from its console (`liste`
 
 ## Develop
 
-`REPRISE.md` (at the root, in French) gives the state of the repository, the decisions and what is left to do; `CHANGELOG.md` and `HISTORY.md` the details of each version. Tests: `python build.py`, then the scripts of `tests/`: `smoke.py`, `i18n.py`, `samples.py`, `doc_options.py`, `tools_lang.py`, `modulaire.py`, `tuiles.py`, `glb2tiles.py`, `oar2glb.py`, `terrain.py` and one file per version (`v23.py` to `v51.py`). Browser tests need Playwright and Chromium; variables `THREE_DIR` (npm `three` package, offline) and `CHROMIUM` (executable).
+`REPRISE.md` (at the root, in French) gives the state of the repository, the decisions and what is left to do (primarily used by the AI ​​Claude); `CHANGELOG.md` and `HISTORY.md` the details of each version. Tests: `python build.py`, then the scripts of `tests/`: `smoke.py`, `i18n.py`, `samples.py`, `doc_options.py`, `tools_lang.py`, `modulaire.py`, `tuiles.py`, `glb2tiles.py`, `oar2glb.py`, `terrain.py` and one file per version (`v23.py` to `v51.py`). Browser tests need Playwright and Chromium; variables `THREE_DIR` (npm `three` package, offline) and `CHROMIUM` (executable).
 
 ## Security
 
