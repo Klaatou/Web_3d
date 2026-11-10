@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """web3d_gui.py : lanceur graphique des outils Web_3d (glb2html, glb2tiles, oar2glb, extraire_batiments, iar2oar, diag_carte).
 
-Une liste pour choisir l'outil, puis une ligne par option, l'aide de l'option sous le curseur, la ligne de commande qui en résulte, un bouton pour lancer l'outil et sa sortie.
+Une liste pour choisir l'outil, une liste d'exemples d'usages de base (elle remplit les champs), puis une ligne par option, l'aide de l'option sous le curseur, la ligne de commande qui en résulte, un bouton pour lancer l'outil et sa sortie.
 Les options sont lues dans l'outil lui-même (rien ne peut manquer, l'outil n'est pas modifié). Nécessite tkinter (livré avec Python sous Windows).
 Tous les messages et l'aide : --lang fr|en|auto (python web3d_gui.py --help).
 """
@@ -33,6 +33,48 @@ OUTILS = (("glb2html", "glb2html.py"), ("glb2tiles", "glb2tiles.py"), ("oar2glb"
           ("iar2oar", "iar2oar.py"), ("diag_carte", "diag_carte.py"))      # (nom, fichier) ; un outil de plus : une ligne ici
 MOTS_CHEMIN = ("FILE", "FOLDER", "DIR")      # un métavar qui contient l'un de ces mots, ou qui finit par .html / .json : un fichier ou un dossier
 DEST_CHEMIN = ("input", "o", "output", "sortie", "convoar", "register", "thumb", "oar", "glb", "iar")      # arguments sans métavar qui sont des chemins
+
+# exemples d'usages de base, par outil : (clé du titre dans src/i18n, arguments comme dans une console) ; les noms (Atoll.glb, ADRESSE, MA_CLE...) sont à remplacer par les siens ;
+# tests/gui.py vérifie que le vrai parseur de chaque outil accepte chaque exemple et que la fenêtre le remet à l'identique
+EXEMPLES = {
+    "glb2html": (
+        ("py.gui.ex.glb2html.1", ["Atoll.glb"]),
+        ("py.gui.ex.glb2html.2", ["Atoll.glb", "-o", "Atoll.html", "--hole", "90", "--wave", "1.2", "--zoom", "1.3"]),
+        ("py.gui.ex.glb2html.3", ["Atoll.glb", "-o", "Atoll.html", "--shared-shell", "--presence-url", "ws://ADRESSE:8765"]),
+        ("py.gui.ex.glb2html.4", ["-o", "Atoll.html", "--update"]),
+        ("py.gui.ex.glb2html.5", ["Atoll.glb", "--no-sea"]),
+    ),
+    "glb2tiles": (
+        ("py.gui.ex.glb2tiles.1", ["Region.glb", "--analyse"]),
+        ("py.gui.ex.glb2tiles.2", ["Region.glb"]),
+        ("py.gui.ex.glb2tiles.3", ["Region.glb", "--budget", "32", "--budget-triangles", "1500000"]),
+        ("py.gui.ex.glb2tiles.4", ["Region.glb", "--overview-only"]),
+    ),
+    "oar2glb": (
+        ("py.gui.ex.oar2glb.1", ["Atoll.oar"]),
+        ("py.gui.ex.oar2glb.2", ["Atoll.oar", "--keep"]),
+        ("py.gui.ex.oar2glb.3", ["Atoll.oar", "--diag"]),
+        ("py.gui.ex.oar2glb.4", ["Atoll.oar", "--terrain-only", "Atoll.glb"]),
+    ),
+    "extraire_batiments": (
+        ("py.gui.ex.extraire_batiments.1", ["Atoll.oar", "Atoll.glb", "--list"]),
+        ("py.gui.ex.extraire_batiments.2", ["Atoll.oar", "Atoll.glb", "--list", "--filter", "House", "--min-parts", "5"]),
+        ("py.gui.ex.extraire_batiments.3", ["Atoll.oar", "Atoll.glb", "--group", "12", "-o", "batiments"]),
+        ("py.gui.ex.extraire_batiments.4", ["Atoll.oar", "Atoll.glb", "--name", "Jewel Box House", "-o", "batiments"]),
+        ("py.gui.ex.extraire_batiments.5", ["Atoll.oar", "Atoll.glb", "--group", "12", "--group", "15", "--merge", "Maison et garage"]),
+        ("py.gui.ex.extraire_batiments.6", ["Atoll.oar", "Atoll.glb", "--all", "--min-parts", "5", "--box", "RAKis", "--exclude", "Rail|Train", "--dry-run"]),
+    ),
+    "iar2oar": (
+        ("py.gui.ex.iar2oar.1", ["Inventaire.iar", "--list"]),
+        ("py.gui.ex.iar2oar.2", ["Inventaire.iar", "--list", "--filter", "House"]),
+        ("py.gui.ex.iar2oar.3", ["Inventaire.iar", "-o", "inventaire.oar"]),
+        ("py.gui.ex.iar2oar.4", ["Inventaire.iar", "-o", "inventaire.oar", "--filter", "House", "--no-nested", "--margin", "4"]),
+    ),
+    "diag_carte": (
+        ("py.gui.ex.diag_carte.1", ["ws://ADRESSE:8765", "MA_CLE"]),
+        ("py.gui.ex.diag_carte.2", ["wss://ADRESSE", "MA_CLE", "https://VOTRE-SITE"]),
+    ),
+}
 
 
 def version_tag():
@@ -227,6 +269,44 @@ def ligne_commande(fichier, args):
     return "python " + q([fichier] + list(args))
 
 
+def lire_exemple(champs, args):
+    """l'inverse de construire : les valeurs des champs pour une liste d'arguments de console ; ValueError si une option n'existe pas dans l'outil"""
+    par_option = {o: c for c in champs for o in c["options"]}
+    sans_nom = [c for c in champs if c["positionnel"]]
+    vals, k, i = {}, 0, 0
+    while i < len(args):
+        a, v = args[i], None
+        i += 1
+        if a.startswith("--") and "=" in a:
+            a, v = a.split("=", 1)
+        c = par_option.get(a)
+        if c is None:
+            if a.startswith("-") or k >= len(sans_nom):
+                raise ValueError(a)
+            vals[sans_nom[k]["dest"]] = a
+            k += 1
+            continue
+        d, genre = c["dest"], c["genre"]
+        if genre == "flag":
+            vals[d] = True
+        elif genre == "tri":
+            vals[d] = "no" if a.startswith("--no-") else "yes"
+        else:
+            if v is None:
+                if genre == "facultatif" and (i >= len(args) or args[i].startswith("-")):
+                    vals[d] = ("", True)
+                    continue
+                if i >= len(args):
+                    raise ValueError(a)
+                v = args[i]
+                i += 1
+            if genre == "multiple":
+                vals[d] = (vals[d] + "\n" if d in vals else "") + v
+            else:
+                vals[d] = (v, False) if genre == "facultatif" else v
+    return vals
+
+
 # ---------------------------------------------------------------- la fenêtre
 
 class _TexteVar:
@@ -273,6 +353,13 @@ def fenetre(outils, tk, ttk, filedialog, depart=None):
     ttk.Entry(haut, textvariable=f.filtre, width=28).pack(side="left", padx=4)
     f.compteur = ttk.Label(haut, text="")
     f.compteur.pack(side="left", padx=10)
+    ligne_ex = ttk.Frame(root, padding=(8, 0, 8, 4))
+    ligne_ex.pack(fill="x")
+    ttk.Label(ligne_ex, text=_tr("py.gui.examples")).pack(side="left")
+    f.exemple = tk.StringVar()
+    f.choix_exemple = ttk.Combobox(ligne_ex, textvariable=f.exemple, state="readonly", width=70)
+    f.choix_exemple.pack(side="left", padx=(4, 0), fill="x", expand=True)
+    f.liste_ex = []
 
     # ---- bas d'abord (pour qu'il garde sa place), puis le milieu qui s'étire
     bas = ttk.Frame(root, padding=(8, 4))
@@ -444,6 +531,9 @@ def fenetre(outils, tk, ttk, filedialog, depart=None):
         f.filtre.set("")      # avant le changement : le filtre se vide sur les lignes de l'outil précédent
         f.nom, f.chemin, f.champs = nom, chemin, champs
         f.outil.set(chemin.name)
+        f.liste_ex = [(_tr(cle), args) for cle, args in EXEMPLES.get(nom, ())]
+        f.choix_exemple.configure(values=[t for t, _a in f.liste_ex], state="readonly" if f.liste_ex else "disabled")
+        f.exemple.set(_tr("py.gui.examples_pick") if f.liste_ex else "")
         lignes_construire()
         ecrire(f.aide, _tr("py.gui.help_none"))
         ecrire(f.sortie, "")
@@ -474,6 +564,42 @@ def fenetre(outils, tk, ttk, filedialog, depart=None):
             else:
                 x.set("")
     f.b_reset.configure(command=effacer)
+    f.effacer = effacer
+
+    def appliquer(vals):
+        """remet dans les champs les valeurs rendues par lire_exemple"""
+        for c in f.champs:
+            if c["dest"] not in vals:
+                continue
+            v, x = vals[c["dest"]], f.vars[c["dest"]]
+            if c["genre"] == "flag":
+                x.set(bool(v))
+            elif c["genre"] == "tri":
+                x.set({"yes": _tr("py.gui.tri_yes"), "no": _tr("py.gui.tri_no")}.get(v, _tr("py.gui.tri_default")))
+            elif c["genre"] == "facultatif":
+                x[0].set(v[0])
+                x[1].set(bool(v[1]))
+            else:
+                x.set(v)
+
+    def choisir_exemple(_e=None):
+        i = f.choix_exemple.current()
+        if f.proc is not None or not 0 <= i < len(f.liste_ex):
+            return
+        titre, args = f.liste_ex[i]
+        try:
+            vals = lire_exemple(f.champs, args)
+        except ValueError as e:
+            f.etat.configure(text=_tr("py.gui.example_invalid", e))
+            return
+        effacer()
+        f.filtre.set("")
+        appliquer(vals)
+        ecrire(f.aide, titre + "\n" + _tr("py.gui.example_hint"))
+        f.etat.configure(text=_tr("py.gui.example_loaded"))
+        maj_commande()
+    f.choisir_exemple = choisir_exemple
+    f.choix_exemple.bind("<<ComboboxSelected>>", choisir_exemple)
 
     def lire(proc):
         for ligne in iter(proc.stdout.readline, b""):
@@ -491,6 +617,7 @@ def fenetre(outils, tk, ttk, filedialog, depart=None):
                     f.b_lancer.configure(state="normal")
                     f.b_stop.configure(state="disabled")
                     f.choix_outil.configure(state="readonly")
+                    f.choix_exemple.configure(state="readonly" if f.liste_ex else "disabled")
                     f.etat.configure(text=_tr("py.gui.status_done", x))
                     return
         except queue.Empty:
@@ -519,6 +646,7 @@ def fenetre(outils, tk, ttk, filedialog, depart=None):
         f.b_lancer.configure(state="disabled")
         f.b_stop.configure(state="normal")
         f.choix_outil.configure(state="disabled")
+        f.choix_exemple.configure(state="disabled")
         f.etat.configure(text=_tr("py.gui.status_running"))
         threading.Thread(target=lire, args=(f.proc,), daemon=True).start()
         root.after(80, pomper)

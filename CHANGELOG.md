@@ -4,6 +4,14 @@ Les dates sont au format jj/mm/aaaa.
 
 ## Non publié (après la 1.8.0)
 
+### 10/11/2026 : liste d'exemples d'usages de base dans le lanceur graphique (lot 1.8.17)
+
+- **Demande de Klaatou** : revoir le lanceur graphique ; pour chaque outil, des exemples d'usages de base.
+- **Constat** : les outils ont déjà un bloc « Exemples » dans leur aide (`py.*.epilog`), mais le lanceur ne lisait que les options : ces exemples n'étaient visibles qu'avec `--help`, et écrits pour la console.
+- **Fait** (`web3d_gui.py`) : une liste « Exemples » sous le choix de l'outil. Choisir un exemple efface les champs puis les remplit ; la commande équivalente se met à jour ; l'aide dit de remplacer les noms d'exemple (fichiers, adresse, clé) par les siens ; rien ne se lance tout seul. La liste est inactive pendant un lancement et revient à son invite quand on change d'outil. Table `EXEMPLES` : 5 exemples pour `glb2html`, 4 pour `glb2tiles`, 4 pour `oar2glb`, 6 pour `extraire_batiments`, 4 pour `iar2oar`, 2 pour `diag_carte` ; titres dans `src/i18n` (`py.gui.ex.*`, français et anglais), arguments écrits comme dans une console (noms d'exemple `Atoll.glb`, `ADRESSE`, `MA_CLE`). Fonction `lire_exemple` (l'inverse de `construire`, sans fenêtre) ; un exemple qui ne correspond pas aux options de l'outil installé affiche un message au lieu de planter.
+- **Test** (`tests/gui.py`) : chaque exemple de chaque outil est accepté par le vrai parseur de son outil et a un titre en français et en anglais ; `lire_exemple` puis `construire` redonnent la même analyse que l'exemple ; avec fenêtre : choisir chaque exemple des six outils donne la commande équivalente, efface ce qui était saisi avant et ne laisse aucun champ marqué « ! ». Aucun outil n'est modifié (seul `dist\web3d_gui.py` change).
+- **En retard** (règle 16, à faire à la validation de Klaatou) : manuel § 3.9 et procédures § 11 (la liste d'exemples), `HISTORIQUE.md`, `HISTORY.md` ; `REPRISE.md`.
+
 ### 10/11/2026 : documents à jour pour la 1.8.x (lot 1.8.16)
 
 - **Demande de Klaatou** : mettre les documents à jour (règle 16) après les lots 1.8.1 à 1.8.15.

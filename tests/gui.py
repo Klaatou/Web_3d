@@ -3,7 +3,8 @@
 
 Sans fenetre : les options sont lues dans glb2html.py ; chaque option donne une ligne de commande que le vrai parseur de glb2html.py accepte (toutes, une par une) ;
 valeurs : drapeau, oui/non, choix, nombre a virgule, valeur negative, argument sans nom, option sans valeur ; verification des champs.
-Avec fenetre (tkinter et un ecran, par exemple xvfb-run) : une ligne par option, ligne de commande, filtre, aide au survol, lancement de l'outil et sortie.
+Exemples (1.8.17) : chaque exemple de chaque outil est accepte par le vrai parseur de son outil, a un titre en francais et en anglais, et lire_exemple puis construire donnent la meme analyse que l'exemple.
+Avec fenetre (tkinter et un ecran, par exemple xvfb-run) : une ligne par option, ligne de commande, filtre, aide au survol, lancement de l'outil et sortie, liste d'exemples.
 Sans tkinter ou sans ecran, la partie fenetre est ignoree (dit clairement). Prerequis : python build.py avant. Lancer : python tests/gui.py
 """
 import argparse, contextlib, importlib.util, io, os, pathlib, sys, time
@@ -116,6 +117,46 @@ rapport(len(pb) == 2 and {d for d, _t in pb} == {"rotate", "hole"}, "verifier : 
 rapport("python glb2html.py" in g.ligne_commande("glb2html.py", ["x.glb"]), "la ligne affichee commence par python glb2html.py")
 rapport("--walk" in g.texte_aide(par["walk"]) and "default" in g.texte_aide(par["walk"]), "texte d'aide : option, aide, valeur par defaut")
 
+# ------------------------------------------------------------- exemples d'usages de base (sans fenetre)
+rapport(set(g.EXEMPLES) == {n for n, _f in g.OUTILS} and all(len(v) >= 2 for v in g.EXEMPLES.values()), "chaque outil de la liste a au moins 2 exemples, aucun exemple pour un outil inconnu", sorted(g.EXEMPLES))
+def titre(code, cle):
+    return g._DATA[code].get(cle)
+sans_titre = [(c, k) for v in g.EXEMPLES.values() for k, _a in v for c in ("fr", "en") if not titre(c, k)]
+rapport(not sans_titre, "chaque exemple a un titre en francais et en anglais", sans_titre[:4])
+rapport(len({titre("en", k) for v in g.EXEMPLES.values() for k, _a in v}) == sum(len(v) for v in g.EXEMPLES.values()), "les titres d'exemples sont tous differents")
+mauvais, reflet = [], []
+for nom_outil, fichier in g.OUTILS:
+    p_o = g.lire_parser(DIST / fichier, "en")
+    cs_o = g.champs_depuis(p_o)
+    for cle, args in g.EXEMPLES[nom_outil]:
+        if not accepte(args, p_o):
+            mauvais.append((fichier, cle, args))
+            continue
+        try:
+            retour = g.construire(cs_o, g.lire_exemple(cs_o, args))
+        except ValueError as e:
+            mauvais.append((fichier, cle, str(e)))
+            continue
+        with contextlib.redirect_stderr(io.StringIO()):
+            if vars(p_o.parse_args(args)) != vars(p_o.parse_args(retour)):
+                reflet.append((fichier, cle, args, retour))
+rapport(not mauvais, "les exemples de tous les outils sont acceptes par le vrai parseur de leur outil", mauvais[:3])
+rapport(not reflet, "lire_exemple puis construire redonnent la meme analyse que l'exemple (tous les outils)", reflet[:2])
+cs_h = champs
+rapport(g.lire_exemple(cs_h, ["a.glb", "--no-sea", "--shared-shell", "-o", "a.html", "--sea-y=-3", "--hole", "90"]) == {"input": "a.glb", "sea_enabled": "no", "shared_shell": ("", True), "output": "a.html", "sea_y": "-3", "hole": "90"},
+        "lire_exemple : positionnel, non, option seule, valeur negative, valeur")
+cs_e = g.champs_depuis(g.lire_parser(DIST / "extraire_batiments.py", "en"))
+rapport(g.lire_exemple(cs_e, ["a.oar", "a.glb", "--group", "12", "--group", "15", "--merge", "M G"])["groupe"] == "12\n15" and g.lire_exemple(cs_e, ["a.oar", "a.glb"]) == {"oar": "a.oar", "glb": "a.glb"},
+        "lire_exemple : option repetable sur plusieurs lignes, deux arguments sans nom dans l'ordre")
+refus_le = []
+for mauvais_args in (["a.glb", "--inconnue"], ["--hole"], ["a.glb", "b.glb"]):
+    try:
+        g.lire_exemple(cs_h, mauvais_args)
+        refus_le.append(mauvais_args)
+    except ValueError:
+        pass
+rapport(not refus_le, "lire_exemple : option inconnue, valeur manquante, argument en trop : ValueError", refus_le)
+
 # ------------------------------------------------------------- raccourcis (les .lnk ne se creent que sous Windows : ici, le plan, le script PowerShell et la suppression)
 import tempfile
 dos = pathlib.Path(tempfile.mkdtemp(prefix="w3d_rac_"))
@@ -223,6 +264,39 @@ r.update()
 cmd = f.cmd.get("1.0", "end").strip()
 rapport(cmd == "python extraire_batiments.py --list --group 12 --group 15,18", "option repetable : une ligne, une repetition ; ligne vide ignoree", cmd)
 rapport(f.changer("glb2html") and len(f.lignes) == len(champs) and f.cmd.get("1.0", "end").strip() == "python glb2html.py", "retour a glb2html : options remises a zero")
+# liste d'exemples : choisir un exemple remplit les champs, la commande affichee est celle de l'exemple (tous les outils)
+rapport(bool(f.liste_ex) and str(f.choix_exemple.cget("state")) == "readonly" and len(f.choix_exemple.cget("values")) == len(g.EXEMPLES["glb2html"]) and "basic" in f.exemple.get().lower(),
+        "la liste d'exemples propose ceux de l'outil et invite a choisir", (f.exemple.get(), len(f.liste_ex)))
+ecart = []
+for nom_outil, fichier in g.OUTILS:
+    f.changer(nom_outil)
+    r.update()
+    f.vars[next(iter(f.vars))].set("residu-a-effacer") if f.champs[0]["genre"] in ("chemin", "texte") else None
+    for i, (cle, args) in enumerate(g.EXEMPLES[nom_outil]):
+        f.choix_exemple.current(i)
+        f.choix_exemple.event_generate("<<ComboboxSelected>>")
+        r.update()
+        affichee = f.cmd.get("1.0", "end").strip()
+        import shlex
+        morceaux = shlex.split(affichee)
+        p_o = g.lire_parser(DIST / fichier, "en")
+        with contextlib.redirect_stderr(io.StringIO()):
+            ok = morceaux[:2] == ["python", fichier] and vars(p_o.parse_args(morceaux[2:])) == vars(p_o.parse_args(args))
+        if not ok or "residu" in affichee or "!" in "".join(m.cget("text") for m, _c in f.lignes.values()):
+            ecart.append((fichier, cle, affichee))
+rapport(not ecart, "choisir un exemple (les 6 outils, tous les exemples) : la commande affichee equivaut a l'exemple, le champ touche avant est efface, aucun champ a corriger", ecart[:2])
+f.changer("glb2html")
+f.choix_exemple.current(2)
+f.choix_exemple.event_generate("<<ComboboxSelected>>")
+r.update()
+rapport(f.vars["sea_enabled"].get() == "(default)" and f.vars["shared_shell"][1].get() is True and f.vars["presence_url"].get() == "ws://ADRESSE:8765" and "Example loaded." == f.etat.cget("text") and "Replace the example names" in f.aide.get("1.0", "end"),
+        "un exemple remplit les champs (option seule cochee, texte), dit qu'il est charge et que les noms sont a remplacer", (f.etat.cget("text"), f.aide.get("1.0", "end")[:120]))
+f.choix_exemple.current(4)
+f.choix_exemple.event_generate("<<ComboboxSelected>>")
+r.update()
+rapport(f.vars["sea_enabled"].get() == "no" and f.vars["presence_url"].get() == "" and f.vars["shared_shell"][1].get() is False, "un autre exemple efface le precedent puis remplit : oui/non, champs vides", (f.vars["sea_enabled"].get(), f.vars["presence_url"].get()))
+f.changer("diag_carte")
+rapport(f.exemple.get() != "" and "glb2html" not in f.cmd.get("1.0", "end"), "changer d'outil remet la liste d'exemples a son invite", f.exemple.get())
 r.destroy()
 print("\nRESULTAT :", "tout est passe" if not bad else f"{bad} echec(s)")
 sys.exit(1 if bad else 0)
