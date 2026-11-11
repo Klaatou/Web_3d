@@ -120,6 +120,18 @@ rapport(sans["pbrMetallicRoughness"]["roughnessFactor"] == 0.9 and "alphaMode" n
 rapport(g["materials"][g["meshes"][m2]["primitives"][1]["material"]]["pbrMetallicRoughness"]["metallicFactor"] == 0.2, "face 1 : matériau B (facteur seul, sans texture)")
 rapport("baseColorTexture" not in sans["pbrMetallicRoughness"] and "images" not in g, "sans textures fournies : facteurs seulement, aucune image ajoutée")
 
+# --- 6 ter. matériau par défaut d'OpenSim (absent de l'OAR) : seules les surcharges comptent ; UUID nul ignoré
+g, scan = fabrique()
+D = T.PBR_DEFAUT
+for p, ovr in zip(scan["groups"][0]["parts"], ({0: {"bc": [1.0, 0.0, 0.0, 1.0], "rf": 0.4}, 1: {"mf": 0.0}}, {}, {})):
+    p["pbr"] = {"faces": {0: D, 1: T.PBR_NUL}, "ovr": ovr, "nfaces": None}
+T.pbr_appliquer(g, scan, None, 0, textures={})
+mm = g["materials"][g["meshes"][g["nodes"][0]["mesh"]]["primitives"][0]["material"]]
+rapport(mm["pbrMetallicRoughness"] == {"baseColorFactor": [1.0, 0.0, 0.0, 1.0], "roughnessFactor": 0.4}, "matériau par défaut + surcharges bc, rf : couleur et rugosité, rien d'autre (défauts glTF = viewer)", mm)
+m2 = g["materials"][g["meshes"][g["nodes"][1]["mesh"]]["primitives"][0]["material"]]
+rapport(m2["pbrMetallicRoughness"] == {} and g["nodes"][1]["mesh"] == g["nodes"][2]["mesh"], "matériau par défaut sans surcharge : matériau vierge, copie partagée")
+rapport(g["meshes"][g["nodes"][1]["mesh"]]["primitives"][1]["material"] == 0, "UUID nul : face laissée telle que convoar l'a faite")
+
 # --- 6 bis. sphère entière : la primitive en plus (calotte de libomv) prend la face 0, pas la face 1
 g, scan = fabrique()
 for p in scan["groups"][0]["parts"]:

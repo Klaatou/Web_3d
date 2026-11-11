@@ -6,6 +6,16 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.9.0)
 
+### 11/11/2026: `oar2glb.py`: PBR: OpenSim's default material (batch 1.9.14)
+
+- **Reported by Klaatou**: on the whole sandbox region, many spheres stay beige (convoar's default texture).
+- **Diagnosis**: `inspecter_objets.py` (stand-alone, outside the repository) shows that most beige objects are not PBR at all (3,241 "Primitive" parts without `0x80` or `<MatOvrd>`: prototypes, sculpts, flexi prims), but that "Many PBRs" (97 parts, all with `0x80` and `<MatOvrd>`) were left beige in `region.glb` (15 nodes). OpenSim's default PBR material, `968cbad0-4dad-d64e-71b5-72bf13ad051a` (`OpenSim.Framework.Constants.DefaultMaterial`), is never written in an OAR; prims that cite it carry only their overrides. `pbr_appliquer` found no material for it, so those faces kept convoar's material and lost their overrides (`tex`, `bc`, `mf`, `rf`...). It is very probably the one material reported as missing in the full run (several boards cite it in the analysis report).
+- **Done** (`tools/oar2glb.py`): `PBR_DEFAUT` and `PBR_VIERGE`: the default material is a blank glTF material (white, metallic 1, roughness 1: the glTF defaults, which are also the Second Life viewer `LLGLTFMaterial` defaults, `llgltfmaterial.cpp` line 67) and the overrides apply to it. A null material UUID (no PBR on that face) is no longer counted as a missing material.
+- **Source checked** (Second Life viewer, `llgltfmaterial.cpp`): in a `tex` override a null UUID means "no override" and `ffffffff-ffff-ffff-ffff-ffffffffffff` means "remove the texture", as `pbr_slots` already did; this settles the 1.9.12 doubt in the code, not in a viewer.
+- **Check**: `tests/pbr_oar.py` (default material with overrides, without overrides, null UUID left as convoar made it): passes.
+- **Not tested**: a real conversion with these objects (my extracts do not contain them; the 20-object extract still hits convoar's unwritten `.buf` under Mono in the sandbox); Windows; that OpenSim viewers show the default material as blank white/metal 1/rough 1 (taken from the Second Life viewer defaults).
+- **Still open**: the cut-looking spheres of the top rows (not explained yet); documents as listed in the 1.9.12 entry.
+
 ### 11/11/2026: `oar2glb.py`: PBR: a whole sphere has one face (batch 1.9.13)
 
 - **Reported by Klaatou**: in the page, seen from behind the sphere boards, each sphere shows a disc with another texture.

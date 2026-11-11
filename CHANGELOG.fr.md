@@ -6,6 +6,16 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.9.0)
 
+### 11/11/2026 : `oar2glb.py` : PBR : le matériau par défaut d'OpenSim (lot 1.9.14)
+
+- **Constat de Klaatou** : sur la région entière du bac à sable, beaucoup de billes restent beiges (texture par défaut de convoar).
+- **Diagnostic** : `inspecter_objets.py` (autonome, hors du dépôt) montre que la plupart des objets beiges n'ont pas de PBR du tout (3 241 parties « Primitive » sans `0x80` ni `<MatOvrd>` : prototypes, sculpts, prims flexibles), mais que « Many PBRs » (97 parties, toutes avec `0x80` et `<MatOvrd>`) restaient beiges dans `region.glb` (15 nœuds). Le matériau PBR par défaut d'OpenSim, `968cbad0-4dad-d64e-71b5-72bf13ad051a` (`OpenSim.Framework.Constants.DefaultMaterial`), n'est jamais écrit dans un OAR ; les prims qui le citent n'ont que leurs surcharges. `pbr_appliquer` n'en trouvait aucun, donc ces faces gardaient le matériau de convoar et perdaient leurs surcharges (`tex`, `bc`, `mf`, `rf`...). C'est très probablement le matériau signalé absent dans l'essai complet (plusieurs tableaux le citent dans le rapport d'analyse).
+- **Fait** (`tools/oar2glb.py`) : `PBR_DEFAUT` et `PBR_VIERGE` : le matériau par défaut est un matériau glTF vierge (blanc, métal 1, rugosité 1 : les défauts du glTF, qui sont aussi ceux du viewer Second Life, `LLGLTFMaterial`, `llgltfmaterial.cpp` ligne 67) et les surcharges s'y appliquent. Un UUID de matériau nul (pas de PBR sur cette face) n'est plus compté comme matériau absent.
+- **Source vérifiée** (viewer Second Life, `llgltfmaterial.cpp`) : dans une surcharge `tex`, un UUID nul veut dire « pas de surcharge » et `ffffffff-ffff-ffff-ffff-ffffffffffff` « retire la texture », comme le faisait déjà `pbr_slots` ; cela règle le doute de la 1.9.12 dans le code, pas dans un viewer.
+- **Contrôle** : `tests/pbr_oar.py` (matériau par défaut avec surcharges, sans surcharges, UUID nul laissé comme convoar l'a fait) : passe.
+- **Non essayé** : une vraie conversion avec ces objets (mes extraits n'en contiennent pas ; l'extrait de 20 objets bute toujours sur le `.buf` non écrit par convoar sous Mono dans le bac à sable) ; Windows ; que les viewers OpenSim montrent le matériau par défaut en blanc, métal 1, rugosité 1 (pris des défauts du viewer Second Life).
+- **Reste ouvert** : les sphères d'apparence coupée des rangées du haut (pas encore expliquées) ; les documents de la liste de l'entrée 1.9.12.
+
 ### 11/11/2026 : `oar2glb.py` : PBR : une sphère entière a une seule face (lot 1.9.13)
 
 - **Constat de Klaatou** : dans la page, vu de derrière les tableaux de sphères, chaque sphère montre un disque d'une autre texture.

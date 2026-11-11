@@ -413,6 +413,10 @@ PBR_TEX_MAX = 512        # côté maximal des textures PBR, en pixels (--pbr-siz
 PBR_AM = {0: "OPAQUE", 1: "BLEND", 2: "MASK"}
 PBR_NUL = "00000000-0000-0000-0000-000000000000"
 PBR_EFFACE = "ffffffff-ffff-ffff-ffff-ffffffffffff"
+# matériau par défaut d'OpenSim (Constants.DefaultMaterial) : jamais écrit dans l'OAR ; les prims qui le citent n'ont que leurs surcharges
+# (<MatOvrd>). Valeurs du viewer Second Life (LLGLTFMaterial) : blanc, métal 1, rugosité 1, comme le glTF sans aucun champ.
+PBR_DEFAUT = "968cbad0-4dad-d64e-71b5-72bf13ad051a"
+PBR_VIERGE = {"asset": {"version": "2.0"}, "materials": [{}]}
 
 
 def pbr_extra_params(d):
@@ -1568,7 +1572,8 @@ def pbr_appliquer(g, scan, oar, taille_max, textures=None):
     # remplace, face par face, le matériau convoar des prims PBR : la primitive glTF j reçoit le matériau de la face j (convoar sort
     # une primitive par face qui a de la géométrie, dans l'ordre des faces ; une primitive au-delà du nombre de faces d'OpenSim reçoit
     # celui de la face 0). Un maillage partagé entre prims de matériaux différents est copié. textures : {UUID: octets JPEG 2000} (sinon relues dans l'OAR).
-    mats = scan.get("pbr_mats") or {}
+    mats = dict(scan.get("pbr_mats") or {})
+    mats.setdefault(PBR_DEFAUT, PBR_VIERGE)
     parts = [p for grp in scan["groups"] for p in grp["parts"] if p.get("pbr")]
     if not parts:
         return None
@@ -1602,7 +1607,7 @@ def pbr_appliquer(g, scan, oar, taille_max, textures=None):
             if u in mats:
                 neuf.append(st.materiau(u, p["pbr"]["ovr"].get(f)))
             else:
-                if u:
+                if u and u != PBR_NUL:
                     sans_mat.add(u)
                 neuf.append(pr.get("material"))
         if all(neuf[j] == prs[j].get("material") for j in range(len(prs))):
