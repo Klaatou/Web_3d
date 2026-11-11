@@ -18,7 +18,7 @@ In each package, `lancer-…` opens the region (`.bat` on Windows, `.sh` on Linu
 An OpenSim region backup (`.oar`) becomes a `.glb`, written next to the OAR.
 
 - You need Python 3.8 or later and **convoar**, already supplied in `dist/convoar/` of this repository (a copy of the `dist` folder of `github.com/Misterblue/convoar`, without the debug files; `convoar.exe` alone does not work, it needs the DLLs of that folder: if you move `oar2glb.py`, take that folder with it), with .NET Framework 4.8, already present on Windows 10 and 11.
-- Linux and macOS: not planned. convoar works with Mono, but `oar2glb.py` starts it through a small program built with a Windows tool; this case is neither planned nor tried.
+- Linux: `oar2glb.py` runs convoar with Mono (tried on Debian 13, small regions; packages to install: manual, § 3.11). macOS: not tried.
 
 ```powershell
 python oar2glb.py "CHEMIN\NOM.oar" --convoar "CHEMIN\convoar\dist\convoar.exe"

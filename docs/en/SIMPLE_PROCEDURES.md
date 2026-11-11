@@ -104,6 +104,8 @@ python ".\web_3d\dist\oar2glb.py" "CHEMIN\NOM.oar"
 
 Then list and extract as above, with `NOM.oar` and `NOM.glb`. The old French option names (`--liste`, `--filtre`, `--sans-imbriques`, `--marge`, `--sortie`) are still accepted. The texture errors from convoar ("could not fetch texture asset", "unhandled number of components") can come from the IAR itself (missing or empty assets, seen on the first IAR tried): the faces concerned are grey. Attachments and clothing are not supported.
 
+On Linux, the command is the same with `python3` and `mono` installed (manual, § 3.11). If the OAR contains PBR (OpenSim 0.9.3), `oar2glb.py` applies it; Pillow (`pip install pillow`) is needed for the textures, and `--pbr-size 256` lightens the GLB (manual, § 3.10).
+
 ## 7. Update the online demo
 
 To do when `index.html`, `carte.html` or the icon change. `ajout_og.py` (outside the repository) puts back into `index.html` the sharing preview tags (image and title shown when the link is shared); the path given is to be confirmed:

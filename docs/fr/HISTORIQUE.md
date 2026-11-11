@@ -216,6 +216,12 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 10/11/2026 |  | après 1.9.0 | Lot 1.9.8 : `CHANGELOG.md` : rubriques 1.4.0 et 1.3.0 traduites en anglais ; « décidée par Klaatou » retiré des deux entrées de publication |
 | 10/11/2026 |  | après 1.9.0 | Lot 1.9.9 : `CHANGELOG.md` : rubriques 1.2.0 et 1.1.0 traduites en anglais ; « décidée par Klaatou » retiré des deux entrées de publication |
 | 10/11/2026 |  | après 1.9.0 | Lot 1.9.10 : `CHANGELOG.md` : rubrique 1.0.0 traduite en anglais ; fin de la traduction (les entrées d'avant la 1.0.0 restent en français) |
+| 11/11/2026 |  | après 1.9.0 | Lot 1.9.11 : `oar2glb.py` lance `convoar.exe` avec Mono sous Linux (`commande_convoar`), `tests/mono_linux.py` |
+| 11/11/2026 |  | après 1.9.0 | Lot 1.9.12 : `oar2glb.py` applique les matériaux PBR d'OpenSim 0.9.3 au GLB (`pbr_appliquer`, `--no-pbr`, `--pbr-size`), `tests/pbr_oar.py` |
+| 11/11/2026 |  | après 1.9.0 | Lot 1.9.13 : PBR : une sphère entière a une seule face (`pbr_nb_faces`) |
+| 11/11/2026 |  | après 1.9.0 | Lot 1.9.14 : PBR : matériau par défaut d'OpenSim (`PBR_DEFAUT`), UUID nul ignoré |
+| 11/11/2026 |  | après 1.9.0 | Lot 1.9.15 : viewer : curseur « Hauteur de la mer » dans Réglages (`cfg.seaM`, `seaShift`), `tests/mer_hauteur.py` |
+| 11/11/2026 |  | après 1.9.0 | Lot 1.9.16 : documents : manuel § 3.10, § 3.11 et § 9.19, guide, README, procédures simples, index, historique |
 
 ## Commandes utiles
 

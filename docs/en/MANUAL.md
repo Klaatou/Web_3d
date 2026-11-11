@@ -79,10 +79,10 @@ For **every** option of each tool, with its effect and the default values of its
 
 ¹ **Prerequisites**: **oar2glb.py** relies on the external converter **convoar.exe**
   Already supplied in this repository, in `dist/convoar/` (copy of https://github.com/Misterblue/convoar/tree/master/dist, Apache-2.0, see `THIRD-PARTY.md`)
-  Copy without the `*.pdb` files and `NLog.xml`; tried by Klaatou on Windows (conversion of a small region, 10/11/2026).
+  Copy without the `*.pdb` files and `NLog.xml`; tried by Klaatou on Windows (conversion of a small region, 10/11/2026) and on Linux with Mono (§ 3.11).
   Without convoar.exe, oar2glb.py cannot perform the OAR → GLB conversion.
 
-**Limitation: PBR materials.** convoar dates from May 2022 (.NET Framework 4.8, OpenSim libraries of the repository of that time); PBR arrived with OpenSim 0.9.3. According to a reading of its code, convoar does not read the PBR materials of an OAR: a PBR face keeps, at best, its ordinary texture or colour in the GLB. This is not measured: no OAR containing PBR could be tried. **Lead**: read these materials directly from the OAR in `oar2glb.py`, without touching convoar (in OpenSim's code, the face references its material through an `ExtraParams` parameter, and the material is a `*_prmat.dat` file of the OAR). To be studied as soon as an OAR 0.9.3 with PBR is available; nothing is decided.
+**PBR materials.** convoar dates from May 2022 (.NET Framework 4.8, OpenSim libraries of that time) and does not read the OpenSim 0.9.3 PBR materials: a PBR face keeps, at best, its ordinary texture or colour. Since 1.9.12, `oar2glb.py` reads them itself from the OAR and applies them to the GLB, once convoar has run (§ 3.10; `--no-pbr` to skip).
 
 ### 3.1 The commands (PowerShell, a single line)
 
@@ -97,6 +97,8 @@ First go to the script's folder: `cd "P:\_OpenSim\SL&OS\Web_3d"`.
 | Check what the script sees, without changing anything                      | `python oar2glb.py "J:\...\NOM.oar" --diag`                                                 |
 | Same, naming the GLB or the `.gltf` to compare                             | `python oar2glb.py "J:\...\NOM.oar" --diag --glb "J:\...\NOM-GLTF\fichier.gltf"`              |
 | Do not wait for "Enter" at the end                                         | add `--nopause`                                                                           |
+| Without the OpenSim 0.9.3 PBR materials                                    | add `--no-pbr`                                                                   |
+| Smaller PBR textures (lighter GLB, less graphics memory)                   | add `--pbr-size 256`                                                             |
 | Add the complete terrain to an existing GLB, without running convoar again | `python oar2glb.py "J:\...\NOM.oar" --terrain-only "J:\...\NOM.glb"` (writes `NOM-terrain.glb`) |
 
 Before converting again, delete the old intermediate folder: `Remove-Item -Recurse -Force "J:\...\NOM-GLTF*"`.
@@ -118,6 +120,8 @@ Before converting again, delete the old intermediate folder: `Remove-Item -Recur
 | `--terrain-patch N`       | side of a terrain patch in metres, from 2 to 255; default 64                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `--terrain-only GLB`      | does not run convoar: adds the complete terrain to this GLB and writes `NOM-terrain.glb` next to it (the original is never modified)                                                                                                                                                                                                                                                                                                                                                                                                |
 | `--output FICHIER`        | with `--terrain-only`: output file instead of `NOM-terrain.glb` (never the original)                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `--no-pbr`                | do not apply the OpenSim 0.9.3 PBR materials (convoar ignores them: the prims then keep an ordinary material); see § 3.10 |
+| `--pbr-size N`            | maximum side, in pixels, of the PBR textures added to the GLB (default 512; 0 = original size); needs Pillow (`pip install pillow`); see § 3.10 |
 
 ### 3.3 Complete terrain for regions larger than 256 m (v29)
 
@@ -235,6 +239,48 @@ Run it after a conversion made with `--keep`. The log is `oar2glb.diag.log`. Eac
 
 - **Language and version**: `--lang` and `WEB3D_LANG` (§ 7.50), `--version`.
 - **Tried**: automatic tests on Linux with a virtual display (`tests/gui.py`: the options of every tool, one by one, accepted by the tool's real parser; every example of every tool accepted by that parser and reloaded identically by the window); by Klaatou on Windows: the window, the tool list and the shortcuts with the project icon (08/11/2026), the examples list (10/11/2026). **Not tried**: macOS, Linux with a real display, the file pickers.
+
+### 3.10 OpenSim 0.9.3 PBR materials (1.9.12 to 1.9.14)
+
+convoar (May 2022) does not read PBR materials. `oar2glb.py` reads them itself from the OAR and, once convoar has run, gives each face concerned its real glTF material: base colour, metallic and roughness, normal, occlusion, emissive, factors, alpha mode, double sided, and the object's own overrides. It is automatic when the OAR contains PBR; `--no-pbr` prevents it.
+
+**What is read from the OAR** (from OpenSim's code, then checked on a real OAR):
+
+| Where | What it is |
+| ----- | ---------- |
+| extra parameter `0x80` (`<ExtraParams>`) of the prim | one PBR material (UUID) per face |
+| `assets/UUID_prmat.dat` | the material: a binary LLSD header around a glTF 2.0 text (colour, metallic/roughness, normal, occlusion, emissive) |
+| `<MatOvrd>` | per-face overrides: `bc` base colour, `mf` metallic, `rf` roughness, `ec` emissive, `am` alpha mode, `ac` alpha cutoff, `ds` double sided, `tex` replacement textures, `ti` texture transforms (written as `KHR_texture_transform`) |
+| material `968cbad0-4dad-d64e-71b5-72bf13ad051a` | OpenSim's default material, never written in an OAR: taken as a blank material (white, metallic 1, roughness 1, like glTF and the Second Life viewer), to which the overrides apply |
+
+**Rules**
+
+- glTF primitive *j* gets the material of face *j* (convoar writes one primitive per face that has geometry, in face order).
+- A whole sphere has only **one** face in OpenSim. The small cap that convoar makes a second primitive gets the material of face 0 (otherwise it showed a disc of another texture). Hollow or cut spheres, and the other shapes, do not get this rule.
+- A mesh shared by prims with different materials is copied.
+- In a `tex` override, a null UUID means "no override" and `ffffffff-ffff-ffff-ffff-ffffffffffff` means "remove the texture" (from the Second Life viewer's code).
+
+**Textures.** The PBR textures (JPEG 2000 in the OAR) are read in a **second pass over the OAR**, decoded with **Pillow** (`pip install pillow`), reduced to `--pbr-size` pixels a side (512 by default; 0 keeps the original size), then stored in the GLB as JPEG (PNG if transparent). Without Pillow, the materials are applied without their textures, with a message. A region that shows about a thousand PBR materials gives a heavy GLB: `--pbr-size 256` lightens it, and also the graphics memory.
+
+**In the log**: `[PBR] N prim(s) with a PBR material, M material(s), K texture(s), B bytes added`, then, if needed, warnings: PBR prims without a node in the GLB, materials cited but missing from the OAR, textures missing or unreadable.
+
+**Tried**: a 1.45 GB sandbox OAR (794 objects, 7,240 textures), converted on Windows with `--pbr-size 256` in about 2 min 12 s (11/11/2026): 359 PBR prims, 291 materials, 1,007 textures, a 73.7 MB GLB; seen in Blender, in `glb-viewer.html` and in the page: normals, metal and reflections visible, spheres grey where OpenSim shows them grey. Klaatou saw the memory rise to 61 GB during the conversion, without it falling back afterwards: the origin is not established (no per-process reading). **Not tried**: tiles mode with this GLB; hollow or cut spheres; shapes other than spheres, cubes and cylinders; an OAR of this size on Linux; a side-by-side comparison with an OpenSim viewer (only screenshots looked at by eye).
+
+### 3.11 On Linux: convoar with Mono (1.9.11)
+
+On Linux, `oar2glb.py` runs `convoar.exe` with `mono` (absolute path, `LC_ALL=C` for numbers as `0.5`, and `LD_LIBRARY_PATH` starting with the folder of `convoar.exe` for the supplied openjpeg library). The `dist/convoar/` folder is the Windows one and is used as it is. A program without `.exe` (a script, `convoar` from the PATH) is run as before.
+
+Packages to install (Debian 13, Ubuntu), as `root`:
+
+```bash
+apt-get install mono-runtime libgdiplus libmono-system-drawing4.0-cil libmono-system-servicemodel4.0a-cil libmono-system-runtime-serialization4.0-cil
+```
+
+Without `mono`, `oar2glb.py` stops with this message and this list. Then: `python3 oar2glb.py ~/NOM.oar --nopause`. For the PBR textures: `pip install pillow`.
+
+**Why not the .NET 8 port of convoar.** Tried (`net8-pbr` forks, 11/11/2026), it starts on Linux but stops at the first `System.Drawing.Bitmap` (`PlatformNotSupportedException`: .NET 8 only accepts `System.Drawing.Common` on Windows). Mono, with the original `convoar.exe`, works.
+
+**Tried**: Debian 13 (Mono 6.12), small 4-object OAR: the GLB geometry is identical, byte for byte, to a conversion on Windows; the textures differ only by `libgdiplus`'s JPEG encoder (average difference about 3 out of 255). Ubuntu 24 (Mono 6.8), sandbox extracts with PBR. **Known limit**: on a 20-object extract, convoar under Mono did not write its `.buf` file (`BAssetStorage.cs:138`: `WriteAsync` without `await` in the original code); not fixed. **Not tried**: a large region on Linux; macOS (the `dllmap` of `OpenMetaverse.dll.config` expects a `.dylib` that is not supplied); the `lancer-*.sh` launchers.
 
 ## 4. Measuring and cutting up a big region
 
@@ -1439,6 +1485,8 @@ Hovering a card that has a thumbnail, **with a mouse only** (not with a finger),
 ### 9.19 "Show the sea" checkbox
 
 In Settings, before "Animated sea", only if the page has a sea (not made with `--no-sea`). Unticked: the sea disappears from the scene, "Animated sea" and "Waves" are greyed out. The choice is kept with the other settings (key `glb2html_opts_SALON`); "Default values" restores the page's own. Useful for a region without water made without `--no-sea` (the sea is on by default). The sea height is only used to place the water plane: hiding the sea changes no collision. A page made with `--no-sea` ignores an old remembered choice.
+
+**Sea height (1.9.15).** A line "Sea height: N m" (slider from -50 to 250 m) follows "Waves", with the checkbox. It is in metres in the region's own frame (OpenSim's water is at 20 m), applies live, is kept with the other settings (`seaM`, same key) and is greyed out when the sea is hidden; "Default values" restores the page's own. Why: the viewer recentres the loaded model (the mean of the mesh origins goes to y = 15) and both `--sea-y` and `seaY` are in that shifted frame; on a region where many objects are very high, the sea could end up above the terrain and hide the lower part of walls (seen on a sandbox, 11/11/2026: terrain around -2.8 m, sea at 10 m). The slider shows the page's value converted into the region's frame. `--sea-y` and `seaY` keep their meaning. In tiles mode there is no recentring (shift 0): read in the code, not tried.
 
 ### 9.20 Not tested (v52)
 

@@ -104,6 +104,8 @@ python ".\web_3d\dist\oar2glb.py" "CHEMIN\NOM.oar"
 
 Puis lister et extraire comme ci-dessus, avec `NOM.oar` et `NOM.glb`. Les anciens noms français des options (`--liste`, `--filtre`, `--sans-imbriques`, `--marge`, `--sortie`) restent acceptés. Les erreurs de texture de convoar (« could not fetch texture asset », « unhandled number of components ») peuvent venir de l'IAR lui-même (assets absents ou vides, constaté sur le premier IAR essayé) : les faces concernées sont grises. Les attachements et les vêtements ne sont pas pris en charge.
 
+Sous Linux, la commande est la même avec `python3` et `mono` installé (manuel, § 3.11). Si l'OAR contient du PBR (OpenSim 0.9.3), `oar2glb.py` l'applique ; il faut Pillow (`pip install pillow`) pour les textures, et `--pbr-size 256` allège le GLB (manuel, § 3.10).
+
 ## 7. Mettre à jour la démo en ligne
 
 À faire quand `index.html`, `carte.html` ou l'icône changent. `ajout_og.py` (hors dépôt) remet dans `index.html` les balises d'aperçu de partage (image et titre affichés quand on partage le lien) ; le chemin indiqué est à confirmer :

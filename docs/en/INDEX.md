@@ -26,6 +26,9 @@ This page says **which document to read for what**. The French documents carry t
 | link several regions with a world map | `MANUAL.md` § 9; `PROCEDURES.md` § 7; `SIMPLE_PROCEDURES.md` § 4 |
 | understand why the map shows no nicknames | `MANUAL.md` § 9.22; `PROCEDURES.md` § 7; `SIMPLE_PROCEDURES.md` § 4 |
 | open the tools in a window, create shortcuts on the desktop | `MANUAL.md` § 3.9; `SIMPLE_PROCEDURES.md` § 11 |
+| convert an OAR that contains PBR (OpenSim 0.9.3) | `MANUAL.md` § 3.10 |
+| convert an OAR on Linux (Mono) | `MANUAL.md` § 3.11 |
+| set the sea height in the page | `MANUAL.md` § 9.19 |
 | ask a question, get help | the Discord server: https://discord.gg/BDG9r5gXwr |
 | see other visitors, chat, moderate | `GUIDE.md` § 5; `MANUAL.md` § 10; `PROCEDURES.md` § 6 |
 | install the presence server on a VM | `SIMPLE_PROCEDURES.md` § 8; `PROCEDURES.md` § 11 |

@@ -6,6 +6,13 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.9.0)
 
+### 11/11/2026: documents: PBR, Linux with Mono, sea height (batch 1.9.16)
+
+- **Requested by Klaatou**: bring the documents up to date after batches 1.9.11 to 1.9.15 (list "still to update" of the 1.9.12 entry).
+- **Done**: manual (`MANUEL.md`, `MANUAL.md`): footnote and PBR paragraph of section 3, two rows in the command table and two in the option table of sections 3.1 and 3.2, new sections 3.10 (PBR) and 3.11 (Linux with Mono), paragraph "Sea height" in section 9.19; guide (Linux line); `README.md` and `README.fr.md` (PBR, Linux, `oar2glb.py` row); simple procedures (Linux and PBR paragraph); index (three rows); history (batches 1.9.11 to 1.9.16). French and English edited together.
+- **Check**: `tests/readme_liens.py`, `tests/apropos_liens.py`, `tests/dist_a_jour.py`: pass (no code changed).
+- **Not done**: the PBR picture in the README (waiting for the sandbox owner's agreement; the cropped file `pbr.jpg` is ready); `REPRISE.md` (delivered at the next resume, rule 23); the two stand-alone scripts `analyser_oar_pbr.py` and `inspecter_objets.py` stay outside the repository for now.
+
 ### 11/11/2026: viewer and page: sea height slider in Settings (batch 1.9.15)
 
 - **Reported by Klaatou**: on a whole sandbox region, the page cut the lower part of every wall and sphere board (the visitor, rising, flew through the sea plane); unchecking "Show the sea" showed everything.

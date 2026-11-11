@@ -34,7 +34,7 @@ English | [Français](README.fr.md)
 → Run `lancer-region.bat` (Windows) / `.command` (macOS) / `.sh` (Linux)
 
 **3. Convert my OpenSim OAR to GLB**  
-→ See `docs/en/GUIDE.md` § 1.2 (currently requires convoar on Windows)
+→ See `docs/en/GUIDE.md` § 1.2 (requires convoar: on Windows, or on Linux with Mono)
 
 **4. Go further** (several regions, world map, presence, tiles, zones…)  
 → Start with `docs/en/GUIDE.md`  
@@ -51,7 +51,7 @@ English | [Français](README.fr.md)
 
 ![How it works: an OAR becomes a GLB, optionally cut into tiles; the viewer or glb2html.py builds the web page; the presence server is optional and separate](docs/images/fonctionnement.en.svg)
 
-`oar2glb.py` needs the external converter `convoar.exe` (see below). convoar does not recover PBR materials (see the manual, § 3). The viewer sets the settings and the zones and exports the page (for a tiled region: only the zones, plus the command line to run); `glb2html.py` does the same job on the command line and is needed for tiled regions. The presence server is not part of the page: the page connects to it.
+`oar2glb.py` needs the external converter `convoar.exe` (see below). convoar does not recover PBR materials: `oar2glb.py` reads them itself from the OAR and applies them to the GLB (manual, § 3.10). The viewer sets the settings and the zones and exports the page (for a tiled region: only the zones, plus the command line to run); `glb2html.py` does the same job on the command line and is needed for tiled regions. The presence server is not part of the page: the page connects to it.
 
 ## Ready-to-use packages
 
@@ -86,7 +86,7 @@ The manuals are in English in `docs/en/` (`INDEX.md` to find your way, `GUIDE.md
 | `index.html`                                | The shared shell, ready to copy to the root of a site.                                                                                                                                                                                                                                           |
 | `carte.html`                                | The world map page, identical for every site: it reads the `regions.json` next to it.                                                                                                                                                                                                            |
 | `presence_server.py`                        | WebSocket server for presence, chat, moderation, visitor counters and the visit log.                                                                                                                                                                                                             |
-| `oar2glb.py`                              ¹ | Converts an OpenSim backup (`.oar`) to `.glb` (convoar + repair); `--terrain-only` adds the full terrain of regions over 256 m to an existing GLB.                                                                                                                                               |
+| `oar2glb.py`                              ¹ | Converts an OpenSim backup (`.oar`) to `.glb` (convoar + repair); `--terrain-only` adds the full terrain of regions over 256 m to an existing GLB; applies the OAR's PBR materials (OpenSim 0.9.3).                                                                                                                                               |
 | `glb2tiles.py` (+ `glb-stats.py` beside it) | Splits a huge GLB into self-contained tiles (`X.tiles/*.glb` + `X.tiles.json`) and builds a light overview `X.overview.glb`; `--analyse` measures and recommends without writing anything; `--exclude` drops catalogue "delivery boxes".                                                         |
 | `extraire_batiments.py`                     | Outputs from an OAR and its GLB one recentred GLB per object group (house, furniture, tree...); `--list` shows the groups.                                                                                                                                                                       |
 | `iar2oar.py`                                | Turns an inventory archive (IAR) into a minimal OAR, for the chain `oar2glb.py` then `extraire_batiments.py`.                                                                                                                                                                                    |
@@ -95,7 +95,7 @@ The manuals are in English in `docs/en/` (`INDEX.md` to find your way, `GUIDE.md
 
 ¹ **Prerequisites**: **oar2glb.py** relies on the external converter **convoar.exe** \
 Already supplied in this repository, in `dist/convoar/` (copy of https://github.com/Misterblue/convoar/tree/master/dist, Apache-2.0, see `THIRD-PARTY.md`) \
-Without convoar.exe, oar2glb.py cannot perform the OAR → GLB conversion. Its location is given with `--convoar CHEMIN` (default: the `CONVOAR` variable, otherwise `convoar` from the PATH, otherwise `convoar/convoar.exe` or `convoar.exe` next to `oar2glb.py`).
+Without convoar.exe, oar2glb.py cannot perform the OAR → GLB conversion. Its location is given with `--convoar CHEMIN` (default: the `CONVOAR` variable, otherwise `convoar` from the PATH, otherwise `convoar/convoar.exe` or `convoar.exe` next to `oar2glb.py`). On Linux, `oar2glb.py` runs convoar with Mono (manual, § 3.11).
 
 ## Build
 

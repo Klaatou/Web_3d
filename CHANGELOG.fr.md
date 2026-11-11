@@ -6,6 +6,13 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.9.0)
 
+### 11/11/2026 : documents : PBR, Linux avec Mono, hauteur de la mer (lot 1.9.16)
+
+- **Demande de Klaatou** : mettre les documents à jour après les lots 1.9.11 à 1.9.15 (liste « en retard » de l'entrée 1.9.12).
+- **Fait** : manuel (`MANUEL.md`, `MANUAL.md`) : note de bas de page et paragraphe PBR du § 3, deux lignes dans le tableau des commandes et deux dans celui des options (§ 3.1 et § 3.2), nouveaux § 3.10 (PBR) et § 3.11 (Linux avec Mono), paragraphe « Hauteur de la mer » du § 9.19 ; guide (ligne Linux) ; `README.md` et `README.fr.md` (PBR, Linux, ligne de `oar2glb.py`) ; procédures simples (paragraphe Linux et PBR) ; index (trois lignes) ; historique (lots 1.9.11 à 1.9.16). Français et anglais modifiés ensemble.
+- **Contrôle** : `tests/readme_liens.py`, `tests/apropos_liens.py`, `tests/dist_a_jour.py` : passent (aucun code modifié).
+- **Pas fait** : l'image PBR du README (en attente de l'accord du propriétaire du bac à sable ; le fichier recadré `pbr.jpg` est prêt) ; `REPRISE.md` (livré à la prochaine reprise, règle 23) ; les deux scripts autonomes `analyser_oar_pbr.py` et `inspecter_objets.py` restent hors du dépôt pour l'instant.
+
 ### 11/11/2026 : viewer et page : curseur de hauteur de la mer dans Réglages (lot 1.9.15)
 
 - **Constat de Klaatou** : sur une région entière du bac à sable, la page coupait le bas de tous les murs et tableaux de billes (le visiteur, en montant, traversait le plan de la mer) ; décocher « Afficher la mer » montrait tout.
