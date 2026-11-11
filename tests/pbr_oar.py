@@ -79,7 +79,12 @@ rapport(T.pbr_materiau(b"n'importe quoi") is None and T.pbr_materiau(prmat({"ass
 extra = base64.b64encode(d).decode()
 xml = "<Shape><ExtraParams>%s</ExtraParams><MatOvrd>%s</MatOvrd></Shape>" % (extra, matovrd([(0, "{'rf':r0.2}")]))
 pp = T.pbr_partie(ET.fromstring(xml))
-rapport(pp == {"faces": dict(entrees), "ovr": {0: {"rf": 0.2}}}, "partie : faces + surcharges depuis <Shape>", pp)
+rapport(pp == {"faces": dict(entrees), "ovr": {0: {"rf": 0.2}}, "nfaces": None}, "partie : faces + surcharges depuis <Shape>", pp)
+SPHERE = "<Shape><ProfileCurve>5</ProfileCurve><PathCurve>32</PathCurve><SculptEntry>false</SculptEntry><ExtraParams>%s</ExtraParams>%s</Shape>"
+rapport(T.pbr_partie(ET.fromstring(SPHERE % (extra, "")))["nfaces"] == 1, "sphère entière : 1 face (règle d'OpenSim)")
+for nom, champ in (("creuse", "<ProfileHollow>49500</ProfileHollow>"), ("coupée", "<PathEnd>5000</PathEnd>"), ("tordue", "<PathTwist>10</PathTwist>")):
+    rapport(T.pbr_partie(ET.fromstring(SPHERE.replace("<ExtraParams>", champ + "<ExtraParams>") % (extra, "")))["nfaces"] is None, "sphère " + nom + " : pas de règle")
+rapport(T.pbr_partie(ET.fromstring(SPHERE.replace("<PathCurve>32", "<PathCurve>16") % (extra, "")))["nfaces"] is None, "cube/cylindre : pas de règle")
 rapport(T.pbr_partie(ET.fromstring("<Shape><ExtraParams>AA==</ExtraParams></Shape>")) is None and T.pbr_partie(ET.fromstring("<Shape/>")) is None,
         "partie sans PBR : None")
 
@@ -114,6 +119,14 @@ sans = g["materials"][g["meshes"][m2]["primitives"][0]["material"]]
 rapport(sans["pbrMetallicRoughness"]["roughnessFactor"] == 0.9 and "alphaMode" not in sans, "sans surcharge : valeurs du matériau d'origine", sans)
 rapport(g["materials"][g["meshes"][m2]["primitives"][1]["material"]]["pbrMetallicRoughness"]["metallicFactor"] == 0.2, "face 1 : matériau B (facteur seul, sans texture)")
 rapport("baseColorTexture" not in sans["pbrMetallicRoughness"] and "images" not in g, "sans textures fournies : facteurs seulement, aucune image ajoutée")
+
+# --- 6 bis. sphère entière : la primitive en plus (calotte de libomv) prend la face 0, pas la face 1
+g, scan = fabrique()
+for p in scan["groups"][0]["parts"]:
+    p["pbr"]["nfaces"] = 1
+T.pbr_appliquer(g, scan, None, 0, textures={})
+mats_prims = [g["materials"][pr["material"]]["pbrMetallicRoughness"] for pr in g["meshes"][g["nodes"][1]["mesh"]]["primitives"]]
+rapport(mats_prims[0] == mats_prims[1] and mats_prims[0]["roughnessFactor"] == 0.9, "sphère entière : les 2 primitives ont le matériau de la face 0 (pas de disque à part)", mats_prims)
 
 # --- 7. avec de vraies textures (Pillow + JPEG 2000)
 try:

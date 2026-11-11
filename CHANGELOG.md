@@ -6,6 +6,15 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.9.0)
 
+### 11/11/2026: `oar2glb.py`: PBR: a whole sphere has one face (batch 1.9.13)
+
+- **Reported by Klaatou**: in the page, seen from behind the sphere boards, each sphere shows a disc with another texture.
+- **Diagnosis**: convoar (libomv) gives a whole sphere two glTF primitives (the sphere, 576 triangles, and a small cap, 48 triangles). The cap received the material that the OAR gives to face 1, whereas OpenSim counts ONE face for a whole sphere (`SceneObjectPart.GetNumberOfSides`: `SPHERE`, `ret = 1`, plus faces only for a cut, skew, twist or hollow).
+- **Done** (`tools/oar2glb.py`): the new `pbr_nb_faces` returns 1 for a whole sphere (half-circle profile, path 32 or 48, no cut, hollow, skew or twist, not a sculpt) and `None` for any other shape; `pbr_appliquer` gives a primitive beyond the OpenSim faces the material of face 0.
+- **Check**: `tests/pbr_oar.py` (whole, hollow, cut and twisted sphere, box/cylinder, and the two primitives sharing the face 0 material): passes. On the 3-object extract of the sandbox OAR (convoar under Mono, in the sandbox): 98 to 75 materials, 336 to 245 textures, GLB 22.1 to 16.9 MB; Chromium render from behind: the discs are gone.
+- **Not tested**: Windows; hollow or cut spheres (left as before: their extra faces can still show discs); other shapes for which libomv makes more faces than OpenSim (to be seen in the page); the look in a real OpenSim viewer.
+- **Still to update**: the documents listed in the 1.9.12 entry.
+
 ### 11/11/2026: `oar2glb.py`: OpenSim 0.9.3 PBR materials are applied to the GLB (batch 1.9.12)
 
 - **Requested by Klaatou**: convoar ignores PBR (it rebuilds an ordinary material from the old textures: metallic 0). A real OpenSim 0.9.3 region with PBR (a 1.45 GB sandbox OAR) was analysed first with the new stand-alone helper `analyser_oar_pbr.py` (outside the repository).

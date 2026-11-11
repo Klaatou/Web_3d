@@ -123,8 +123,8 @@ def i18n_add_common(ap):
         pass
 
 
-VERSION = "1.9.12 (11/11/2026)"      # remplacé par build.py (fichier VERSION) dans dist/oar2glb.py
-MARK = "a5ec75fe"      # empreinte du fichier fabriqué, inscrite par build.py ; reste telle quelle depuis tools/
+VERSION = "1.9.13 (11/11/2026)"      # remplacé par build.py (fichier VERSION) dans dist/oar2glb.py
+MARK = "5877ee8a"      # empreinte du fichier fabriqué, inscrite par build.py ; reste telle quelle depuis tools/
 
 
 def version_tag():
@@ -613,8 +613,26 @@ def pbr_matovrd(b64):
     return out
 
 
+def pbr_nb_faces(sh):
+    # nombre de faces d'OpenSim (SceneObjectPart.GetNumberOfSides) quand il est sûr : une sphère entière (profil demi-cercle, chemin
+    # 32 ou 48, ni coupe, ni creux, ni biais, ni torsion) n'a qu'UNE face ; ailleurs None (pas de règle). libomv, lui, découpe une
+    # petite calotte en seconde face : sans cette règle elle recevrait le matériau de la face 1 et ferait un disque à part.
+    try:
+        def num(k):
+            return int(float(_txt(sh, k) or 0))
+        if _txt(sh, "SculptEntry").lower() == "true" or (num("ProfileCurve") & 7) != 5 or num("PathCurve") not in (32, 48):
+            return None
+        if (num("PathBegin") > 0 or num("PathEnd") > 0 or num("PathSkew") != 0 or num("PathTwistBegin") != num("PathTwist")
+                or num("ProfileBegin") > 0 or num("ProfileEnd") > 0 or num("ProfileHollow") > 0):
+            return None
+        return 1
+    except ValueError:
+        return None
+
+
 def pbr_partie(sh):
-    # élément <Shape> d'une partie -> {"faces": {face: UUID du matériau}, "ovr": {face: surcharges}} ou None
+    # élément <Shape> d'une partie -> {"faces": {face: UUID du matériau}, "ovr": {face: surcharges}, "nfaces": nombre de faces sûr ou None}
+    # ou None
     ep = _txt(sh, "ExtraParams")
     if not ep:
         return None
@@ -625,7 +643,7 @@ def pbr_partie(sh):
     if not faces:
         return None
     mo = _txt(sh, "MatOvrd")
-    return {"faces": faces, "ovr": pbr_matovrd(mo) if mo else {}}
+    return {"faces": faces, "ovr": pbr_matovrd(mo) if mo else {}, "nfaces": pbr_nb_faces(sh)}
 
 
 def pbr_materiau(raw):
@@ -1632,8 +1650,8 @@ class Pbr:
 
 def pbr_appliquer(g, scan, oar, taille_max, textures=None):
     # remplace, face par face, le matériau convoar des prims PBR : la primitive glTF j reçoit le matériau de la face j (convoar sort
-    # une primitive par face qui a de la géométrie, dans l'ordre des faces). Un maillage partagé entre prims de matériaux différents
-    # est copié. textures : {UUID: octets JPEG 2000} (sinon relues dans l'OAR).
+    # une primitive par face qui a de la géométrie, dans l'ordre des faces ; une primitive au-delà du nombre de faces d'OpenSim reçoit
+    # celui de la face 0). Un maillage partagé entre prims de matériaux différents est copié. textures : {UUID: octets JPEG 2000} (sinon relues dans l'OAR).
     mats = scan.get("pbr_mats") or {}
     parts = [p for grp in scan["groups"] for p in grp["parts"] if p.get("pbr")]
     if not parts:
@@ -1661,10 +1679,12 @@ def pbr_appliquer(g, scan, oar, taille_max, textures=None):
         mi = node["mesh"]
         prs = g["meshes"][mi]["primitives"]
         neuf = []
+        nf = p["pbr"].get("nfaces")
         for j, pr in enumerate(prs):
-            u = p["pbr"]["faces"].get(j)
+            f = j if nf is None or j < nf else 0           # primitive en plus des faces d'OpenSim (calotte de sphère) : face 0
+            u = p["pbr"]["faces"].get(f)
             if u in mats:
-                neuf.append(st.materiau(u, p["pbr"]["ovr"].get(j)))
+                neuf.append(st.materiau(u, p["pbr"]["ovr"].get(f)))
             else:
                 if u:
                     sans_mat.add(u)

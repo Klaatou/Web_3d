@@ -6,6 +6,15 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.9.0)
 
+### 11/11/2026 : `oar2glb.py` : PBR : une sphère entière a une seule face (lot 1.9.13)
+
+- **Constat de Klaatou** : dans la page, vu de derrière les tableaux de sphères, chaque sphère montre un disque d'une autre texture.
+- **Diagnostic** : convoar (libomv) donne à une sphère entière deux primitives glTF (la sphère, 576 triangles, et une petite calotte, 48 triangles). La calotte recevait le matériau que l'OAR donne à la face 1, alors qu'OpenSim compte UNE seule face pour une sphère entière (`SceneObjectPart.GetNumberOfSides` : `SPHERE`, `ret = 1`, et des faces en plus seulement pour une coupe, un biais, une torsion ou un creux).
+- **Fait** (`tools/oar2glb.py`) : la nouvelle `pbr_nb_faces` rend 1 pour une sphère entière (profil demi-cercle, chemin 32 ou 48, ni coupe, ni creux, ni biais, ni torsion, pas un sculpt) et `None` pour toute autre forme ; `pbr_appliquer` donne à une primitive au-delà des faces d'OpenSim le matériau de la face 0.
+- **Contrôle** : `tests/pbr_oar.py` (sphère entière, creuse, coupée et tordue, cube/cylindre, et les deux primitives qui partagent le matériau de la face 0) : passe. Sur l'extrait de 3 objets de l'OAR du bac à sable (convoar sous Mono, dans le bac à sable) : de 98 à 75 matériaux, de 336 à 245 textures, GLB de 22,1 à 16,9 Mo ; rendu Chromium vu de derrière : les disques ont disparu.
+- **Non essayé** : Windows ; les sphères creuses ou coupées (laissées comme avant : leurs faces en plus peuvent encore montrer des disques) ; d'autres formes pour lesquelles libomv fait plus de faces qu'OpenSim (à voir dans la page) ; l'aspect dans un vrai viewer OpenSim.
+- **En retard** : les documents de la liste de l'entrée 1.9.12.
+
 ### 11/11/2026 : `oar2glb.py` : les matériaux PBR d'OpenSim 0.9.3 sont appliqués au GLB (lot 1.9.12)
 
 - **Demande de Klaatou** : convoar ignore le PBR (il refait un matériau ordinaire depuis les anciennes textures : métal à 0). Une vraie région OpenSim 0.9.3 avec du PBR (un OAR de bac à sable de 1,45 Go) a d'abord été analysée avec le nouvel outil autonome `analyser_oar_pbr.py` (hors du dépôt).
