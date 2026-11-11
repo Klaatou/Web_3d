@@ -621,12 +621,28 @@ def ensure_launcher(convoar):
     return launcher
 
 
+def commande_convoar(convoar):
+    """(debut de la commande, environnement ou None) : Windows : le lanceur convoar_inv.exe ; ailleurs, un convoar.exe passe par Mono
+    (LC_ALL=C : nombres en 0.5 ; LD_LIBRARY_PATH : bibliotheque openjpeg a cote de convoar.exe) ; un autre programme (script, convoar du PATH) est lance tel quel"""
+    if os.name == "nt":
+        return [str(ensure_launcher(convoar))], None
+    if str(convoar).lower().endswith(".exe"):
+        mono = shutil.which("mono")
+        if not mono:
+            sys.exit(_tr("py.oar2glb.erreur_mono_introuvable_0", convoar))
+        exe = Path(convoar).resolve()
+        env = dict(os.environ, LC_ALL="C")
+        env["LD_LIBRARY_PATH"] = str(exe.parent) + (os.pathsep + env["LD_LIBRARY_PATH"] if env.get("LD_LIBRARY_PATH") else "")
+        return [mono, str(exe)], env
+    return [str(Path(convoar))], None
+
+
 def run_convoar(convoar, oar, outdir):
-    exe = ensure_launcher(convoar) if os.name == "nt" else Path(convoar)
-    args = [str(exe), "--outputdir", outdir.name, oar.name]   # options AVANT le fichier
+    tete, env = commande_convoar(convoar)
+    args = tete + ["--outputdir", outdir.name, oar.name]   # options AVANT le fichier
     print(_tr("py.oar2glb.convoar"), " ".join(f'"{a}"' if " " in a else a for a in args))
     enc = "oem" if os.name == "nt" else "utf-8"
-    p = subprocess.Popen(args, cwd=oar.parent, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+    p = subprocess.Popen(args, cwd=oar.parent, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                          text=True, encoding=enc, errors="replace")
     for line in p.stdout:
         print(line.rstrip())

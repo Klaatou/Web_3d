@@ -782,6 +782,7 @@
  "py.oar2glb.erreur_csc_exe_net_framework_4": "[ERREUR] csc.exe (.NET Framework 4) introuvable",
  "py.oar2glb.erreur_gltf_invalide_0_ligne_1": "[ERREUR] .gltf invalide : {0}\n  ligne {1} : {2}",
  "py.oar2glb.erreur_la_sortie_ne_peut_pas": "[ERREUR] la sortie ne peut pas être le GLB d'origine (jamais écrasé)",
+ "py.oar2glb.erreur_mono_introuvable_0": "[ERREUR] Mono introuvable : sous Linux, convoar.exe ({0}) se lance avec Mono.\n  Debian ou Ubuntu : apt-get install mono-runtime libgdiplus libmono-system-drawing4.0-cil libmono-system-servicemodel4.0a-cil libmono-system-runtime-serialization4.0-cil\n  Essayé sur Debian 13 avec le convoar.exe fourni dans dist/convoar ; macOS : non essayé.",
  "py.oar2glb.erreur_reencode_demande_pillow_absent_de": "[ERREUR] --reencode demande Pillow, absent de ce Python ({0}).\n  Installe-le dans ce Python précis : & \"{1}\" -m pip install pillow",
  "py.oar2glb.erreur_terrain_patch_doit_etre_compris": "[ERREUR] --terrain-patch doit être compris entre 2 et 255 (indices 16 bits : (côté + 1)² sommets au plus 65 536)",
  "py.oar2glb.espace_libre_sur_0_1_1f": "\n  Espace libre sur {0} : {1:.1f} Go",

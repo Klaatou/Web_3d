@@ -6,6 +6,15 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.9.0)
 
+### 11/11/2026: `oar2glb.py`: on Linux, convoar.exe is run with Mono (batch 1.9.11)
+
+- **Requested by Klaatou**: offer the conversion on Linux. A .NET 8 port of convoar (his forks, branch `net8-pbr`) was tried first: on a Debian 13 VM it stops at the first `System.Drawing.Bitmap` (`PlatformNotSupportedException`, `Terrain.cs:91`), so it is not pursued.
+- **Reported by Klaatou**: the `convoar.exe` supplied in `dist/convoar`, run by hand with Mono on the same VM (`LC_ALL=C mono convoar.exe --outputdir ... region.oar`), wrote a `.gltf`, a `.buf` and three images (content not checked).
+- **Done**: `run_convoar` (`tools/oar2glb.py`) now goes through the new `commande_convoar`. Windows is unchanged (launcher `convoar_inv.exe`). Elsewhere, a `convoar.exe` is run with `mono`: path made absolute, `LC_ALL=C` (numbers as `0.5`), `LD_LIBRARY_PATH` starting with the folder of `convoar.exe` so that the supplied openjpeg library is found. A program without `.exe` (a script, or `convoar` found in the PATH) is run as before. Without `mono`: stop with a message that gives the Debian/Ubuntu packages (`py.oar2glb.erreur_mono_introuvable_0`, French and English).
+- **Check**: new `tests/mono_linux.py` with a fake `mono` (command, `LC_ALL`, `LD_LIBRARY_PATH`, working folder, relative path, `mono` missing, program without `.exe`): passes; the same test on the previous `oar2glb.py` fails (it tries to run the `.exe` directly); `tests/oar2glb.py` and `tests/i18n.py` pass.
+- **Not tested**: a whole conversion through `oar2glb.py` on Linux (only the manual run above); PBR (unchanged: convoar reads no PBR material, and the OAR used for the test was made by hand, not exported by OpenSim); macOS (the `dllmap` of `OpenMetaverse.dll.config` expects a `.dylib` that is not supplied); Windows.
+- **Still to update**: manual (section 3: Linux with Mono), simple procedures, README (Linux prerequisites), `HISTORY.md` and `HISTORIQUE.md`.
+
 ### 10/11/2026: `CHANGELOG.md`: 1.0.0 section translated into English; end of the translation (batch 1.9.10)
 
 - **Requested by Klaatou**: stop the translation at the 1.0.0 section.

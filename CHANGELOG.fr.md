@@ -6,6 +6,15 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.9.0)
 
+### 11/11/2026 : `oar2glb.py` : sous Linux, convoar.exe se lance avec Mono (lot 1.9.11)
+
+- **Demande de Klaatou** : proposer la conversion sous Linux. Un port .NET 8 de convoar (ses forks, branche `net8-pbr`) a d'abord été essayé : sur une VM Debian 13 il s'arrête au premier `System.Drawing.Bitmap` (`PlatformNotSupportedException`, `Terrain.cs:91`), donc il n'est pas poursuivi.
+- **Constat de Klaatou** : le `convoar.exe` fourni dans `dist/convoar`, lancé à la main avec Mono sur la même VM (`LC_ALL=C mono convoar.exe --outputdir ... region.oar`), a écrit un `.gltf`, un `.buf` et trois images (contenu non vérifié).
+- **Fait** : `run_convoar` (`tools/oar2glb.py`) passe maintenant par la nouvelle `commande_convoar`. Windows ne change pas (lanceur `convoar_inv.exe`). Ailleurs, un `convoar.exe` est lancé avec `mono` : chemin rendu absolu, `LC_ALL=C` (nombres en `0.5`), `LD_LIBRARY_PATH` commençant par le dossier de `convoar.exe` pour que la bibliothèque openjpeg fournie soit trouvée. Un programme sans `.exe` (un script, ou `convoar` trouvé dans le PATH) est lancé comme avant. Sans `mono` : arrêt avec un message qui donne les paquets Debian et Ubuntu (`py.oar2glb.erreur_mono_introuvable_0`, en français et en anglais).
+- **Contrôle** : nouveau `tests/mono_linux.py` avec un faux `mono` (commande, `LC_ALL`, `LD_LIBRARY_PATH`, dossier courant, chemin relatif, `mono` absent, programme sans `.exe`) : passe ; le même test sur l'ancien `oar2glb.py` échoue (il essaie de lancer le `.exe` directement) ; `tests/oar2glb.py` et `tests/i18n.py` passent.
+- **Non essayé** : une conversion complète par `oar2glb.py` sous Linux (seulement le lancement à la main ci-dessus) ; le PBR (inchangé : convoar ne lit aucun matériau PBR, et l'OAR du test était fait à la main, pas exporté par OpenSim) ; macOS (le `dllmap` de `OpenMetaverse.dll.config` attend un `.dylib` qui n'est pas fourni) ; Windows.
+- **En retard** : manuel (§ 3 : Linux avec Mono), procédures simples, README (prérequis Linux), `HISTORIQUE.md` et `HISTORY.md`.
+
 ### 10/11/2026 : `CHANGELOG.md` : rubrique 1.0.0 traduite en anglais ; fin de la traduction (lot 1.9.10)
 
 - **Demande de Klaatou** : arrêter la traduction à la rubrique 1.0.0.
