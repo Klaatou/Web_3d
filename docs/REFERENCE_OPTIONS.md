@@ -132,6 +132,8 @@ Convertit une sauvegarde de région OpenSim (.oar) en GLB, refait le terrain com
 | `--keep` | (aucune) / (none) |  | garder les fichiers intermédiaires<br>keep the intermediate files |
 | `--keep-invisible` | (aucune) / (none) |  | garder les prims entièrement transparents (retirés par défaut)<br>keep fully transparent prims (removed by default) |
 | `--markers` | (aucune) / (none) |  | ajouter un mât rouge de 15 m à chaque animal riggé posé (pour le retrouver dans le viewer)<br>add a red 15 m pole to each placed rigged animal (to find it in the viewer) |
+| `--no-pbr` | (aucune) / (none) |  | ne pas appliquer les matériaux PBR d'OpenSim 0.9.3 (convoar les ignore : les prims gardent alors un matériau ordinaire)<br>do not apply the OpenSim 0.9.3 PBR materials (convoar ignores them: the prims then keep an ordinary material) |
+| `--pbr-size` | N | `512` | côté maximal, en pixels, des textures PBR ajoutées au GLB (défaut 512 ; 0 = taille d'origine). Demande Pillow (pip install pillow)<br>maximum side, in pixels, of the PBR textures added to the GLB (default 512; 0 = original size). Needs Pillow (pip install pillow) |
 | `--diag` | (aucune) / (none) |  | ne rien modifier : lister les objets de l'OAR, leur skin et le nœud GLB correspondant<br>modify nothing: list the objects of the OAR, their skin and the matching GLB node |
 | `--glb` | GLB |  | avec --diag : GLB ou .gltf à comparer ; défaut : le .gltf du dossier <oar>-GLTF (conservé par --keep), sinon le .glb voisin<br>with --diag: GLB or .gltf to compare; default: the .gltf of the <oar>-GLTF folder (kept by --keep), otherwise the neighbouring .glb |
 | `--nopause` | (aucune) / (none) |  | ne pas attendre Entrée à la fin<br>do not wait for Enter at the end |

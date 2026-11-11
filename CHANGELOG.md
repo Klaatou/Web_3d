@@ -6,6 +6,16 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.9.0)
 
+### 11/11/2026: `oar2glb.py`: OpenSim 0.9.3 PBR materials are applied to the GLB (batch 1.9.12)
+
+- **Requested by Klaatou**: convoar ignores PBR (it rebuilds an ordinary material from the old textures: metallic 0). A real OpenSim 0.9.3 region with PBR (a 1.45 GB sandbox OAR) was analysed first with the new stand-alone helper `analyser_oar_pbr.py` (outside the repository).
+- **Formats read** (OpenSim `master` source, then checked on that OAR): `ExtraParams` type `0x80` of each prim (face, material UUID); `assets/UUID_prmat.dat` (LLSD binary header around a glTF 2.0 text); `<MatOvrd>` (per-face overrides in LLSD notation: `bc`, `mf`, `rf`, `ec`, `am`, `ac`, `ds`, `tex`, `ti`).
+- **Done** (`tools/oar2glb.py`): `oar_scan` reads the prims' PBR data and the `*_prmat.dat` assets; after `repair`, the new `pbr_appliquer` gives glTF primitive *j* the material of face *j* (convoar writes one primitive per face that has geometry, in face order): base colour, metallic/roughness, normal, occlusion (shares the metallic/roughness image, as in OpenSim), emissive, factors, alpha mode, double sided, and the overrides (`KHR_texture_transform` for `ti`). A mesh shared by prims with different materials is copied. The textures (JPEG 2000 in the OAR) are read in a second pass over the OAR, decoded with Pillow, reduced to 512 px and stored as JPEG (PNG when transparent). New options `--no-pbr` and `--pbr-size N` (0 = original size). Without Pillow: materials without textures, with a message.
+- **Check**: new `tests/pbr_oar.py` (formats, overrides, copied meshes, images in the final GLB, no-Pillow case): passes. On the 3-object extract of the sandbox OAR (74 PBR prims, 98 materials, 336 textures, 22 MB GLB), converted with the supplied `convoar.exe` under Mono in the sandbox: rendered in Chromium with three.js (normal maps, metal and gloss visible on the spheres); `glb2tiles.py --force` on that GLB keeps `KHR_texture_transform`.
+- **Not tested**: Windows (PBR step); a whole sandbox region (size and time of the second pass over a 1.45 GB OAR: estimation only); the meaning of a null texture UUID in a `tex` override (taken as "no override"; `ffffffff-ffff-ffff-ffff-ffffffffffff` as "remove the texture"); prims whose faces have no geometry (the primitive/face correspondence assumes none is skipped); alpha-blended PBR sorting in the viewer; viewer-side look of the metallic surfaces (they need light and reflections).
+- **Known, separate**: on the 20-object extract convoar (Mono, sandbox) leaves its `.buf` unwritten: its asset writer does not wait for the end of the writes (`BAssetStorage.cs:138`, `stream.WriteAsync(...)` without `await`); not fixed here.
+- **Still to update**: manual (section 3: PBR, `--no-pbr`, `--pbr-size`, Pillow), simple procedures, README, `HISTORY.md` and `HISTORIQUE.md`.
+
 ### 11/11/2026: `oar2glb.py`: on Linux, convoar.exe is run with Mono (batch 1.9.11)
 
 - **Requested by Klaatou**: offer the conversion on Linux. A .NET 8 port of convoar (his forks, branch `net8-pbr`) was tried first: on a Debian 13 VM it stops at the first `System.Drawing.Bitmap` (`PlatformNotSupportedException`, `Terrain.cs:91`), so it is not pursued.

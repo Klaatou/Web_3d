@@ -404,6 +404,159 @@ def _vec(el, path, keys="XYZ"):
         return None
 
 
+# ---------- PBR (matériaux glTF d'OpenSim 0.9.3) ----------
+# Formats lus dans le code d'OpenSim (PrimitiveBaseShape.cs, SceneObjectSerializer.cs, ArchiveConstants.cs) et vérifiés sur un OAR réel :
+#  - paramètre supplémentaire 0x80 de la prim (<ExtraParams>) : un matériau PBR (UUID) par face ;
+#  - assets/UUID_prmat.dat : le matériau (en-tête LLSD binaire autour d'un glTF 2.0 en texte) ;
+#  - <MatOvrd> : surcharges par face (LLSD « notation »).
+PBR_TEX_MAX = 512        # côté maximal des textures PBR, en pixels (--pbr-size) ; 0 = taille d'origine
+PBR_AM = {0: "OPAQUE", 1: "BLEND", 2: "MASK"}
+PBR_NUL = "00000000-0000-0000-0000-000000000000"
+PBR_EFFACE = "ffffffff-ffff-ffff-ffff-ffffffffffff"
+
+
+def pbr_extra_params(d):
+    # 1 octet = nombre de paramètres ; par paramètre : type (2 octets), taille (4 octets), données ;
+    # données du type 0x80 : 1 octet = nombre d'entrées, puis par entrée 1 octet de face et 16 octets d'UUID -> [(face, UUID)]
+    out = []
+    try:
+        i = 1
+        for _ in range(d[0]):
+            typ, taille = struct.unpack_from("<Hi", d, i)
+            debut = i + 6
+            if taille < 0 or debut + taille > len(d):
+                break
+            if typ == 0x80 and taille > 17:
+                n = d[debut]
+                if taille >= 1 + 17 * n:
+                    for k in range(n):
+                        q = debut + 1 + 17 * k
+                        out.append((d[q], str(uuid.UUID(bytes=bytes(d[q + 1:q + 17])))))
+            i = debut + taille
+    except Exception:
+        pass
+    return out
+
+
+def llsd_notation(s):
+    # LLSD « notation » : {'rf':r0.2,'tex':[!,u<uuid>],'ti':[{'o':[r0,r0]}]} -> dict, liste, nombre, texte, UUID (texte), None
+    n, p = len(s), [0]
+
+    def blancs():
+        while p[0] < n and s[p[0]] in " \t\r\n":
+            p[0] += 1
+
+    def texte(q):
+        p[0] += 1
+        out = []
+        while p[0] < n and s[p[0]] != q:
+            if s[p[0]] == "\\" and p[0] + 1 < n:
+                p[0] += 1
+            out.append(s[p[0]])
+            p[0] += 1
+        p[0] += 1
+        return "".join(out)
+
+    def nombre():
+        m = re.compile(r"[-+0-9.eE]+").match(s, p[0])
+        if not m:
+            raise ValueError(s[p[0]:p[0] + 10])
+        p[0] = m.end()
+        return m.group(0)
+
+    def valeur():
+        blancs()
+        c = s[p[0]]
+        if c in "{[":
+            fin = "}" if c == "{" else "]"
+            p[0] += 1
+            tab, out = c == "[", ([] if c == "[" else {})
+            while True:
+                blancs()
+                if s[p[0]] == fin:
+                    p[0] += 1
+                    return out
+                if s[p[0]] == ",":
+                    p[0] += 1
+                    continue
+                v = valeur()
+                if tab:
+                    out.append(v)
+                else:
+                    blancs()
+                    if s[p[0]] != ":":
+                        raise ValueError(s[p[0]:p[0] + 10])
+                    p[0] += 1
+                    out[v] = valeur()
+        if c in "'\"":
+            return texte(c)
+        if c == "!":
+            p[0] += 1
+            return None
+        if c == "u":
+            v = s[p[0] + 1:p[0] + 37].lower()
+            p[0] += 37
+            return v
+        if c in "rRdD":
+            p[0] += 1
+            return float(nombre())
+        if c in "iI":
+            p[0] += 1
+            return int(float(nombre()))
+        m = re.compile(r"[A-Za-z]+").match(s, p[0])
+        if m:
+            p[0] = m.end()
+            return m.group(0).lower() in ("t", "true", "1")
+        return float(nombre())
+    return valeur()
+
+
+def pbr_matovrd(b64):
+    # <MatOvrd> : base64 ; 1 octet = nombre d'entrées, puis par entrée : face (1 octet), longueur du texte (2 octets, poids faible
+    # d'abord), texte LLSD notation -> {face: dict}
+    out = {}
+    try:
+        d = base64.b64decode(b64)
+        i = 1
+        for _ in range(d[0]):
+            ln = d[i + 1] | (d[i + 2] << 8)
+            v = llsd_notation(d[i + 3:i + 3 + ln].decode("utf-8", "replace"))
+            if isinstance(v, dict):
+                out[d[i]] = v
+            i += 3 + ln
+    except Exception:
+        pass
+    return out
+
+
+def pbr_partie(sh):
+    # élément <Shape> d'une partie -> {"faces": {face: UUID du matériau}, "ovr": {face: surcharges}} ou None
+    ep = _txt(sh, "ExtraParams")
+    if not ep:
+        return None
+    try:
+        faces = dict(pbr_extra_params(base64.b64decode(ep)))
+    except Exception:
+        return None
+    if not faces:
+        return None
+    mo = _txt(sh, "MatOvrd")
+    return {"faces": faces, "ovr": pbr_matovrd(mo) if mo else {}}
+
+
+def pbr_materiau(raw):
+    # assets/*_prmat.dat : « <? LLSD/Binary ?> » puis une table LLSD dont la clé « data » est un glTF 2.0 (texte JSON)
+    try:
+        if raw[:2] == b"<?":
+            raw = raw[raw.index(b"\n") + 1:]
+        v, _ = llsd_bin(raw)
+        x = v["data"]
+        g = json.loads(x.decode("utf-8", "replace") if isinstance(x, bytes) else x)
+        return g if g.get("materials") else None
+    except Exception:
+        return None
+
+
 def parse_object(xml_bytes):
     # un fichier objects/*.xml -> liste de parties (la première est la racine)
     import xml.etree.ElementTree as ET
@@ -423,6 +576,7 @@ def parse_object(xml_bytes):
             "gpos": _vec(el, "GroupPosition"), "off": _vec(el, "OffsetPosition"),
             "rot": _vec(el, "RotationOffset", "XYZW"), "scale": _vec(el, "Scale"),
             "mesh": mesh, "invisible": part_invisible(tex_e), "tex": tex_summary(tex_e),
+            "pbr": pbr_partie(sh) if sh is not None else None,
         })
     return parts
 
@@ -430,6 +584,7 @@ def parse_object(xml_bytes):
 def oar_scan(oar, terrain_seul=False):
     # terrain_seul : ne lit que archive.xml, settings/ et terrains/ (ni objets ni meshes)
     size, groups, skins, terrain, water = (256.0, 256.0), [], {}, None, None
+    pbr_mats = {}
     with tarfile.open(oar, "r:*") as t:
         for m in t:
             if not m.isfile():
@@ -456,6 +611,10 @@ def oar_scan(oar, terrain_seul=False):
                     continue
                 if parts and parts[0]["gpos"]:
                     groups.append({"file": m.name, "parts": parts})
+            elif m.name.startswith("assets/") and m.name.endswith("_prmat.dat") and m.size <= 4194304:
+                mat = pbr_materiau(t.extractfile(m).read())
+                if mat:
+                    pbr_mats[m.name[7:43].lower()] = mat
             elif m.name.startswith("assets/") and m.name.endswith("_mesh.llmesh"):
                 raw = t.extractfile(m).read()
                 skin, err = llmesh_skin(raw)
@@ -484,7 +643,7 @@ def oar_scan(oar, terrain_seul=False):
                       o[2] + q[3] * tq[2] + (q[0] * tq[1] - q[1] * tq[0])]
                 p["wpos"] = [gp[k] + rv[k] for k in range(3)]
             p["gpos"] = gp
-    return {"size": size, "groups": groups, "skins": skins, "terrain": terrain, "water": water}
+    return {"size": size, "groups": groups, "skins": skins, "terrain": terrain, "water": water, "pbr_mats": pbr_mats}
 
 
 def oar_info(scan):
@@ -938,6 +1097,14 @@ class ExtraBuffer:
         g.setdefault("accessors", []).append({"bufferView": len(g["bufferViews"]) - 1, "componentType": ct, "count": len(idx), "type": "SCALAR"})
         return len(g["accessors"]) - 1
 
+    def add_blob(self, blob):
+        # octets quelconques (une image) : renvoie l'indice du bufferView
+        g = self.g
+        self.data += b"\x00" * ((4 - len(self.data) % 4) % 4)
+        g.setdefault("bufferViews", []).append({"buffer": self.idx, "byteOffset": len(self.data), "byteLength": len(blob)})
+        self.data += blob
+        return len(g["bufferViews"]) - 1
+
     def finish(self):
         if self.data:
             self.g.setdefault("buffers", []).append({"byteLength": len(self.data),
@@ -1219,6 +1386,228 @@ def repair(g, base, scan, keep_invisible, reperes=False):
         report_buried(g)
     print(_tr("py.oar2glb.correctif_0_mesh_es_rigge_s", n_rig, n_inv))
     return n_rig, n_inv
+
+
+# ---------- PBR : application au GLB ----------
+def pbr_slots(base, ovr):
+    # UUID des 4 textures d'un matériau (0 couleur de base, 1 normale, 2 métal/rugosité, 3 émissive) après surcharges ;
+    # l'occlusion partage la texture métal/rugosité (comme dans OpenSim et Second Life)
+    m0 = base["materials"][0]
+    p0 = m0.get("pbrMetallicRoughness") or {}
+    imgs, texs = base.get("images", []), base.get("textures", [])
+
+    def uid(ti):
+        try:
+            return str(imgs[texs[ti["index"]]["source"]]["uri"]).lower() if ti else None
+        except (KeyError, IndexError, TypeError):
+            return None
+    slots = [uid(p0.get("baseColorTexture")), uid(m0.get("normalTexture")), uid(p0.get("metallicRoughnessTexture")), uid(m0.get("emissiveTexture"))]
+    tex = (ovr or {}).get("tex")
+    for i in range(4):
+        if isinstance(tex, list) and i < len(tex) and isinstance(tex[i], str) and tex[i] != PBR_NUL:
+            slots[i] = None if tex[i] == PBR_EFFACE else tex[i]
+    return slots
+
+
+def pbr_pillow():
+    try:
+        import PIL.Image
+        return PIL.Image
+    except ImportError:
+        return None
+
+
+def pbr_image(data, taille_max):
+    # JPEG 2000 -> (octets JPEG ou PNG si transparence, type MIME), réduit à taille_max pixels de côté ; None si illisible
+    Image = pbr_pillow()
+    if Image is None:
+        return None
+    try:
+        im = Image.open(io.BytesIO(data))
+        if taille_max and im.format == "JPEG2000":
+            k = 0
+            while k < 5 and max(im.size) >> (k + 1) >= taille_max:
+                k += 1
+            if k:
+                im.reduce = k          # le décodeur JPEG 2000 sort directement l'image réduite
+        im.load()
+        if taille_max and max(im.size) > taille_max:
+            im.thumbnail((taille_max, taille_max), getattr(Image, "Resampling", Image).LANCZOS)
+        out = io.BytesIO()
+        rgba = im.convert("RGBA") if im.mode in ("RGBA", "LA", "PA") else None
+        if rgba is not None and rgba.getchannel("A").getextrema()[0] < 255:
+            rgba.save(out, "PNG")
+            return out.getvalue(), "image/png"
+        im.convert("RGB").save(out, "JPEG", quality=88)
+        return out.getvalue(), "image/jpeg"
+    except Exception:
+        return None
+
+
+def pbr_lire_textures(oar, voulus):
+    # {UUID: octets JPEG 2000} : seconde lecture de l'OAR, seulement les textures voulues
+    res = {}
+    with tarfile.open(oar, "r:*") as t:
+        for m in t:
+            if m.isfile() and m.name.startswith("assets/") and m.name.endswith("_texture.jp2") and m.name[7:43].lower() in voulus:
+                res[m.name[7:43].lower()] = t.extractfile(m).read()
+                if len(res) == len(voulus):
+                    break
+    return res
+
+
+def pbr_transform(t):
+    # {'o': décalage, 'r': rotation, 's': échelle} -> KHR_texture_transform ; None si identité
+    try:
+        o, r, s = t.get("o") or [0.0, 0.0], float(t.get("r") or 0.0), t.get("s") or [1.0, 1.0]
+        if list(map(float, o)) == [0.0, 0.0] and r == 0.0 and list(map(float, s)) == [1.0, 1.0]:
+            return None
+        return {"offset": [float(o[0]), float(o[1])], "rotation": r, "scale": [float(s[0]), float(s[1])]}
+    except (TypeError, ValueError, IndexError):
+        return None
+
+
+class Pbr:
+    # matériaux, textures et images PBR ajoutés à un GLB
+    def __init__(self, g, extra, mats, textures, taille_max):
+        self.g, self.extra, self.mats, self.textures, self.taille_max = g, extra, mats, textures, taille_max
+        self.tex_idx, self.mat_idx, self.absentes, self.transform = {}, {}, set(), False
+
+    def texture(self, u):
+        # indice glTF de la texture u (UUID), None si elle manque dans l'OAR ou ne se lit pas
+        if u not in self.tex_idx:
+            res, r = None, (pbr_image(self.textures[u], self.taille_max) if u in self.textures else None)
+            if r:
+                g = self.g
+                g.setdefault("images", []).append({"bufferView": self.extra.add_blob(r[0]), "mimeType": r[1]})
+                g.setdefault("textures", []).append({"source": len(g["images"]) - 1})
+                res = len(g["textures"]) - 1
+            else:
+                self.absentes.add(u)
+            self.tex_idx[u] = res
+        return self.tex_idx[u]
+
+    def materiau(self, u, ovr):
+        # indice du matériau glTF pour le matériau OpenSim u et les surcharges ovr (dict ou None)
+        cle = (u, json.dumps(ovr, sort_keys=True) if ovr else "")
+        if cle in self.mat_idx:
+            return self.mat_idx[cle]
+        base = self.mats[u]
+        m0 = base["materials"][0]
+        p0 = m0.get("pbrMetallicRoughness") or {}
+        ovr = ovr or {}
+        p1 = {k: p0[k] for k in ("baseColorFactor", "metallicFactor", "roughnessFactor") if k in p0}
+        m1 = {"name": "pbr-" + u[:8] + ("*" if ovr else "")}
+        for k in ("emissiveFactor", "alphaMode", "alphaCutoff", "doubleSided"):
+            if k in m0:
+                m1[k] = m0[k]
+        try:
+            if isinstance(ovr.get("bc"), list) and len(ovr["bc"]) == 4:
+                p1["baseColorFactor"] = [float(x) for x in ovr["bc"]]
+            if isinstance(ovr.get("ec"), list) and len(ovr["ec"]) == 3:
+                m1["emissiveFactor"] = [float(x) for x in ovr["ec"]]
+            for cle_o, cle_g in (("mf", "metallicFactor"), ("rf", "roughnessFactor")):
+                if isinstance(ovr.get(cle_o), (int, float)):
+                    p1[cle_g] = float(ovr[cle_o])
+            if isinstance(ovr.get("am"), int) and ovr["am"] in PBR_AM:
+                m1["alphaMode"] = PBR_AM[ovr["am"]]
+            if isinstance(ovr.get("ac"), (int, float)):
+                m1["alphaCutoff"] = float(ovr["ac"])
+            if isinstance(ovr.get("ds"), bool):
+                m1["doubleSided"] = ovr["ds"]
+        except (TypeError, ValueError):
+            pass
+        slots, ti = pbr_slots(base, ovr), ovr.get("ti")
+
+        def info(i):
+            ix = self.texture(slots[i]) if slots[i] else None
+            if ix is None:
+                return None
+            d = {"index": ix}
+            tr = pbr_transform(ti[i]) if isinstance(ti, list) and i < len(ti) and isinstance(ti[i], dict) else None
+            if tr:
+                d["extensions"] = {"KHR_texture_transform": tr}
+                self.transform = True
+            return d
+        bc, nm, mr, em = info(0), info(1), info(2), info(3)
+        if bc:
+            p1["baseColorTexture"] = bc
+        if mr:
+            p1["metallicRoughnessTexture"] = mr
+            if m0.get("occlusionTexture") is not None:
+                m1["occlusionTexture"] = dict(mr, **({"strength": m0["occlusionTexture"]["strength"]} if "strength" in m0["occlusionTexture"] else {}))
+        if nm:
+            m1["normalTexture"] = dict(nm, **({"scale": m0["normalTexture"]["scale"]} if "scale" in (m0.get("normalTexture") or {}) else {}))
+        if em:
+            m1["emissiveTexture"] = em
+        m1["pbrMetallicRoughness"] = p1
+        self.g.setdefault("materials", []).append(m1)
+        self.mat_idx[cle] = len(self.g["materials"]) - 1
+        return self.mat_idx[cle]
+
+
+def pbr_appliquer(g, scan, oar, taille_max, textures=None):
+    # remplace, face par face, le matériau convoar des prims PBR : la primitive glTF j reçoit le matériau de la face j (convoar sort
+    # une primitive par face qui a de la géométrie, dans l'ordre des faces). Un maillage partagé entre prims de matériaux différents
+    # est copié. textures : {UUID: octets JPEG 2000} (sinon relues dans l'OAR).
+    mats = scan.get("pbr_mats") or {}
+    parts = [p for grp in scan["groups"] for p in grp["parts"] if p.get("pbr")]
+    if not parts:
+        return None
+    match = match_nodes(g, scan)
+    voulus = set()
+    for p in parts:
+        for f, u in p["pbr"]["faces"].items():
+            if u in mats:
+                voulus |= {s for s in pbr_slots(mats[u], p["pbr"]["ovr"].get(f)) if s}
+    if textures is None:
+        textures = pbr_lire_textures(oar, voulus) if voulus and pbr_pillow() else {}
+    if voulus and pbr_pillow() is None:
+        print(_tr("py.oar2glb.pbr_pillow_absent"))
+    extra = ExtraBuffer(g)
+    st, clones, sans_noeud, sans_mat, n_prims = Pbr(g, extra, mats, textures, taille_max), {}, 0, set(), 0
+    for p in parts:
+        mt = match.get(p["uuid"])
+        if mt is None:
+            sans_noeud += 1
+            continue
+        node = g["nodes"][mt[0]]
+        if "mesh" not in node:
+            continue
+        mi = node["mesh"]
+        prs = g["meshes"][mi]["primitives"]
+        neuf = []
+        for j, pr in enumerate(prs):
+            u = p["pbr"]["faces"].get(j)
+            if u in mats:
+                neuf.append(st.materiau(u, p["pbr"]["ovr"].get(j)))
+            else:
+                if u:
+                    sans_mat.add(u)
+                neuf.append(pr.get("material"))
+        if all(neuf[j] == prs[j].get("material") for j in range(len(prs))):
+            continue
+        cle = (mi, tuple(neuf))
+        if cle not in clones:
+            me = dict(g["meshes"][mi])
+            me["primitives"] = [dict(pr, material=nm) if nm is not None else dict(pr) for pr, nm in zip(prs, neuf)]
+            g["meshes"].append(me)
+            clones[cle] = len(g["meshes"]) - 1
+        node["mesh"] = clones[cle]
+        n_prims += 1
+    extra.finish()
+    if st.transform:
+        g.setdefault("extensionsUsed", [])
+        if "KHR_texture_transform" not in g["extensionsUsed"]:
+            g["extensionsUsed"].append("KHR_texture_transform")
+    print(_tr("py.oar2glb.pbr_resume_0_1_2_3", n_prims, len(st.mat_idx), sum(1 for v in st.tex_idx.values() if v is not None), len(extra.data)))
+    if sans_noeud:
+        print(_tr("py.oar2glb.pbr_sans_noeud_0", sans_noeud))
+    if sans_mat:
+        print(_tr("py.oar2glb.pbr_materiau_absent_0", len(sans_mat)))
+    if st.absentes and pbr_pillow():
+        print(_tr("py.oar2glb.pbr_textures_absentes_0", len(st.absentes)))
+    return n_prims
 
 
 # ---------- --diag ----------
@@ -1714,6 +2103,8 @@ def main():
     ap.add_argument("--keep", action="store_true", help=_tr("py.oar2glb.garder_les_fichiers_intermediaires"))
     ap.add_argument("--keep-invisible", action="store_true", help=_tr("py.oar2glb.garder_les_prims_entierement_transparents_re"))
     ap.add_argument("--markers", dest="reperes", action="store_true", help=_tr("py.oar2glb.ajouter_un_mat_rouge_de_15"))
+    ap.add_argument("--no-pbr", dest="sans_pbr", action="store_true", help=_tr("py.oar2glb.help.no_pbr"))
+    ap.add_argument("--pbr-size", type=int, default=PBR_TEX_MAX, metavar="N", help=_tr("py.oar2glb.help.pbr_size", PBR_TEX_MAX))
     ap.add_argument("--diag", action="store_true", help=_tr("py.oar2glb.ne_rien_modifier_lister_les_objets"))
     ap.add_argument("--glb", help=_tr("py.oar2glb.avec_diag_glb_ou_gltf_a"))
     ap.add_argument("--nopause", action="store_true", help=_tr("py.oar2glb.ne_pas_attendre_entree_a_la"))
@@ -1793,6 +2184,8 @@ def main():
     if objs and any(not (0 <= o["pos"][0] <= 256 and 0 <= o["pos"][1] <= 256) for o in objs):
         fix_positions(g, objs)
     repair(g, outdir, scan, a.keep_invisible, a.reperes)
+    if not a.sans_pbr:
+        pbr_appliquer(g, scan, oar, a.pbr_size)
     n = drop_far(g, a.max, size)
     terrain_pipeline(g, scan, a.terrain, a.terrain_patch)      # après drop_far : les patches ne sont jamais retirés
     size = pack_glb(g, outdir, out)
