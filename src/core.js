@@ -349,6 +349,12 @@ function createViewer(container, cfg0, loader) {
   let home = null;   // v33 : point de retour { pos, yaw, forF } (arrivée « default » ou cible de départ)
   let model = null, modelRot = 0, fit = 1, sea = null, seaMat = null, dirty = true, foliageMats = [];
   let seaCx = 0, seaCz = 0;   // centre de la mer : l'origine, ou le centre de la région en mode tuiles
+  // v1.9.15 : hauteur de la mer dans le repère de la région (cfg.seaM, en m : curseur de Réglages). cfg.seaY est dans le repère APRÈS recentrage :
+  // setModel décale le modèle pour que la moyenne des origines de meshes soit à y = 15, ce qui dépend du modèle ; en mode tuiles il n'y a aucun
+  // recentrage (décalage 0). seaShift() = ce décalage vertical ; seaYNow() = hauteur de la mer dans la scène.
+  let modelShiftY = 0;
+  const seaShift = () => modelShiftY;
+  const seaYNow = () => (Number.isFinite(cfg.seaM) ? cfg.seaM + seaShift() : cfg.seaY);
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(cfg.skyColor);
@@ -413,7 +419,7 @@ function createViewer(container, cfg0, loader) {
       seaMat.polygonOffset = true; seaMat.polygonOffsetFactor = -2; seaMat.polygonOffsetUnits = -2;
       sea = new THREE.Mesh(geo, seaMat);
       sea.rotation.x = -Math.PI / 2;
-      sea.position.set(seaCx, cfg.seaY, seaCz);
+      sea.position.set(seaCx, seaYNow(), seaCz);
       sea.frustumCulled = false;
       sea.renderOrder = -10;
       sea.userData.isSea = true;
@@ -492,9 +498,11 @@ function createViewer(container, cfg0, loader) {
     root.traverse(o => { if (o.isMesh) { o.getWorldPosition(wp); sum.add(wp); cnt++; } });
     const center = cnt ? sum.divideScalar(cnt) : new THREE.Box3().setFromObject(root).getCenter(new THREE.Vector3());
     root.position.sub(center); root.position.y += 15;
+    modelShiftY = root.position.y;
     root.updateMatrixWorld(true);
     root.traverse(o => { if (o.isMesh) { o.updateMatrix(); o.matrixAutoUpdate = false; } });
     scene.add(root);
+    if (sea) sea.position.y = seaYNow();
     if (zones.length) { resolveLinks(); buildZones(); }
     const size = new THREE.Box3().setFromObject(root).getSize(new THREE.Vector3());
     fit = Math.max(size.x, size.y, size.z) / 2 / Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2) * 1.35 || 1;
@@ -585,7 +593,7 @@ function createViewer(container, cfg0, loader) {
     TL.tiles = []; TL.root = null; TL.gridQ = []; TL.pending = null; TL.forced = null; TL.anchor = null; TL.waitAt = null; TL.refIndex.clear(); TL.refs = false; TL.refsKnown = false; TL.linkSig = ''; TL.src = null;
     TL.on = false;
     scene.fog.near = BASE.fogNear; scene.fog.far = BASE.fogFar; camera.far = BASE.far; camera.updateProjectionMatrix(); controls.maxDistance = BASE.maxDist;
-    seaCx = seaCz = 0; if (sea) sea.position.set(0, cfg.seaY, 0);
+    seaCx = seaCz = 0; if (sea) sea.position.set(0, seaYNow(), 0);
     resolveLinks(); buildZones(); landY = null; landKey = ''; dirty = true;
   }
   const inTile = (t, x, z, m) => x >= t.box[0] - m && x <= t.box[2] + m && z >= t.box[1] - m && z <= t.box[3] + m;
@@ -841,7 +849,7 @@ function createViewer(container, cfg0, loader) {
     if (opts.force) {
       if (TL.root) closeTiles();
       if (model) { if (walking) walkStop(); scene.remove(model); disposeObject(model); model = null; }   // un GLB unique ouvert avant
-      TL.on = true;
+      TL.on = true; modelShiftY = 0;   // tuiles : repère d'origine, aucun recentrage
     }   // le viewer ouvre une région en tuiles sans champ « tiles » dans une configuration
     if (!TL.on) throw new Error(tr('core.tile.off'));
     if (!safeRel(rel)) throw new Error(tr('core.tile.badpath', rel));
@@ -904,7 +912,7 @@ function createViewer(container, cfg0, loader) {
       // pas de vue d'ensemble : la caméra se cadre sur le rayon de chargement, pas sur toute la région
       fit = Math.max(2 * TL.radius, 200) / 2 / tanH * 1.35;
     }
-    if (!ext.isEmpty()) { seaCx = (ext.min.x + ext.max.x) / 2; seaCz = (ext.min.z + ext.max.z) / 2; if (sea) sea.position.set(seaCx, cfg.seaY, seaCz); }
+    if (!ext.isEmpty()) { seaCx = (ext.min.x + ext.max.x) / 2; seaCz = (ext.min.z + ext.max.z) / 2; if (sea) sea.position.set(seaCx, seaYNow(), seaCz); }
     frame(cfg.camDir, opts.target || cfg.target, cfg.zoom);
     if (TL.anchor) { TL.anchor.tx = controls.target.x; TL.anchor.tz = controls.target.z; }
     if (!f) f = { x: controls.target.x, z: controls.target.z };
@@ -946,7 +954,7 @@ function createViewer(container, cfg0, loader) {
         seaMat.uniforms.uHoleCenter.value.set(cfg.holeX, -cfg.holeZ);
       }
     }
-    if (sea) sea.position.set(seaCx, cfg.seaY, seaCz);
+    if (sea) sea.position.set(seaCx, seaYNow(), seaCz);
     if ('zoneMarker' in p || 'showSpawns' in p) buildZones();
     if ('foliageCutout' in p) foliageMats.forEach(m => { m.alphaTest = cfg.foliageCutout; m.needsUpdate = true; });
     if ('solidMaterials' in p) {
@@ -2483,7 +2491,7 @@ function createViewer(container, cfg0, loader) {
   });
 
   return {
-    scene, camera, renderer, controls, cfg, setCfg, setModel, loadBuffer, imageUrl, freshFetch, setImageResolver, animInfo: () => ({ planes: animPlanes.size, ticks: animTicks }), frame, getCameraState, setZoom, renderStats,
+    scene, camera, renderer, controls, cfg, setCfg, seaShift, setModel, loadBuffer, imageUrl, freshFetch, setImageResolver, animInfo: () => ({ planes: animPlanes.size, ticks: animTicks }), frame, getCameraState, setZoom, renderStats,
     get model() { return model; }, get sea() { return sea; }, set onCfg(f) { onCfg = f; }, set onWalk(f) { onWalk = f; }, set onPick(f) { onPick = f; }, set pickOrbit(v) { pickOrbit = !!v; }, set onPresence(f) { onPresence = f; }, set onChat(f) { onChat = f; }, set onPeer(f) { onPeer = f; },
     setZones, setZoneNumbers, zoneSelect, zonePickAt, findMeshes, imageDiag,
     // v36 : repères de portail (cônes) : affichés ou non (T), rappel, état pour les tests

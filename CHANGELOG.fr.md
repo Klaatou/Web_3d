@@ -6,6 +6,15 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.9.0)
 
+### 11/11/2026 : viewer et page : curseur de hauteur de la mer dans Réglages (lot 1.9.15)
+
+- **Constat de Klaatou** : sur une région entière du bac à sable, la page coupait le bas de tous les murs et tableaux de billes (le visiteur, en montant, traversait le plan de la mer) ; décocher « Afficher la mer » montrait tout.
+- **Diagnostic** : `setModel` (`src/core.js`) recentre le modèle pour que la moyenne des origines de meshes soit à y = 15, et `seaY` est dans ce repère décalé. Sur ce GLB la moyenne est de 38,8 m (beaucoup d'origines de meshes sont bien au-dessus du sol), donc le modèle est descendu d'environ 24 m : terrain vers -2,8 m, mer au `seaY` de la page, 10 m, soit environ 13 m au-dessus du sol. La page « région simple » avait `seaY: 10`, réglé pour une petite région.
+- **Fait** : `src/core.js` : `cfg.seaM` (hauteur de la mer en mètres dans le repère propre de la région, celui de l'eau d'OpenSim : 20 m par défaut) et `seaShift()` (décalage vertical appliqué au modèle chargé ; 0 en mode tuiles, qui ne recentre pas) ; `seaYNow()` sert partout où la mer est placée (création, `setCfg`, `setModel`, tuiles). `src/template.html` : Réglages reçoit un curseur « Hauteur de la mer » (de -50 à 250 m, pas de 0,5) avec les autres lignes de la mer, appliqué en direct, retenu sur l'appareil comme les autres choix (`seaM`, même clé), grisé quand la mer est masquée, remis par « Valeurs d'origine ». Nouveaux textes `page.opt.seaY` et `page.opt.seaY.m` (français, anglais). `cfg.seaY` et `--sea-y` gardent leur sens (repère décalé) : les pages existantes ne changent pas.
+- **Contrôle** : nouveau `tests/mer_hauteur.py` (valeur de départ, le curseur déplace la mer, choix retenu après rechargement, valeurs d'origine, grisé, anglais, page `--no-sea`, aucune erreur de page) : passe, et échoue sur l'ancien `dist\` (pas de `seaShift`) ; `tests/v52.py`, `v42.py`, `v37.py`, `i18n.py` et `dist_a_jour.py` passent.
+- **Non essayé** : le mode tuiles avec le curseur (décalage 0 d'après la lecture du code, pas lancé) ; une vraie carte graphique, Edge, Windows.
+- **En retard** : manuel (Réglages, hauteur de la mer, le recentrage), procédures simples, `HISTORIQUE.md`, `HISTORY.md`, et la liste de l'entrée 1.9.12.
+
 ### 11/11/2026 : `oar2glb.py` : PBR : le matériau par défaut d'OpenSim (lot 1.9.14)
 
 - **Constat de Klaatou** : sur la région entière du bac à sable, beaucoup de billes restent beiges (texture par défaut de convoar).

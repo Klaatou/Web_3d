@@ -179,6 +179,8 @@
  "page.copy.fmt.aria": "Format of the copied position",
  "page.err.load": "Loading error: {0}",
  "page.feat": "This page — visitor settings: {0} · presence: {1} · chat: {2} · global view: {3} · names on click: {4}",
+ "page.opt.seaY": "Sea height: ",
+ "page.opt.seaY.m": "{0} m",
  "page.state.version": "Version: page {0} · configuration {1}",
  "page.feat.names.no": "no (option --names)",
  "page.feat.panel.yes": "yes (button at the top right)",

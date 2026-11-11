@@ -6,6 +6,15 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.9.0)
 
+### 11/11/2026: viewer and page: sea height slider in Settings (batch 1.9.15)
+
+- **Reported by Klaatou**: on a whole sandbox region, the page cut the lower part of every wall and sphere board (the visitor, rising, flew through the sea plane); unchecking "Show the sea" showed everything.
+- **Diagnosis**: `setModel` (`src/core.js`) recentres the model so that the mean of the mesh origins is at y = 15, and `seaY` is in that shifted frame. On this GLB the mean is 38.8 m (many mesh origins sit far above the ground), so the model went down by about 24 m: terrain at about -2.8 m, sea at the page's `seaY` of 10 m, about 13 m above the ground. The "simple region" page had `seaY: 10`, set for a small region.
+- **Done**: `src/core.js`: `cfg.seaM` (sea height in metres in the region's own frame, the one the OpenSim water uses: 20 m by default) and `seaShift()` (vertical shift applied to the loaded model; 0 in tiles mode, which does not recentre); `seaYNow()` is used wherever the sea is placed (creation, `setCfg`, `setModel`, tiles). `src/template.html`: Settings gets a "Sea height" slider (-50 to 250 m, step 0.5) with the other sea rows, applied live, kept on the device like the other choices (`seaM` in the same key), grayed when the sea is hidden, reset by "Original values". New texts `page.opt.seaY` and `page.opt.seaY.m` (French, English). `cfg.seaY` and `--sea-y` keep their meaning (shifted frame): existing pages do not change.
+- **Check**: new `tests/mer_hauteur.py` (start value, slider moves the sea, kept after reload, original values, grayed, English, `--no-sea` page, no page error): passes, and fails on the previous `dist\` (no `seaShift`); `tests/v52.py`, `v42.py`, `v37.py`, `i18n.py` and `dist_a_jour.py` pass.
+- **Not tested**: tiles mode with the slider (shift 0 from reading the code, not run); a real graphics card, Edge, Windows.
+- **Still to update**: manual (Settings, sea height, the recentring), simple procedures, `HISTORY.md`, `HISTORIQUE.md`, and the list of the 1.9.12 entry.
+
 ### 11/11/2026: `oar2glb.py`: PBR: OpenSim's default material (batch 1.9.14)
 
 - **Reported by Klaatou**: on the whole sandbox region, many spheres stay beige (convoar's default texture).
