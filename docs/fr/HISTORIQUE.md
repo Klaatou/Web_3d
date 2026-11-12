@@ -234,6 +234,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 12/11/2026 |  | après 1.10.0 | Lot 1.10.2 : outils : `errors="replace"` sur les flux de sortie de `glb2html`, `oar2glb`, `diag_carte` et du serveur de présence (sortie redirigée en cp1252) ; `tests/sortie_cp1252.py` |
 | 12/11/2026 |  | après 1.10.0 | Lot 1.10.3 : lanceur : icône de la fenêtre, `glb-stats` dans la liste ; `glb2tiles` et `oar2glb` : plus de pause après `--help` ; `tests/aide_sans_pause.py` |
 | 12/11/2026 |  | après 1.10.0 | Lot 1.10.4 : Python 3.14 : `glb2html` s'ouvre de nouveau (`metavar` retiré de `--sea` et `--anim`) ; le lanceur affiche la fonction de l'outil ; `tests/python_recent.py` |
+| 12/11/2026 |  | après 1.10.0 | Lot 1.10.5 : carte : champ « Clé des pseudos » mémorisé et ligne d'état de la clé (une clé refusée n'est plus renvoyée) ; `tests/carte_pseudos.py` |
 
 ## Commandes utiles
 

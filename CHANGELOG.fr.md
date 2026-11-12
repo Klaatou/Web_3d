@@ -6,6 +6,18 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.10.0)
 
+### 12/11/2026 : carte : champ « Clé des pseudos » mémorisé et ligne d'état de la clé (lot 1.10.5)
+
+- **Demandé par Klaatou** : une ligne d'état de la clé des pseudos et un champ « clé des pseudos » mémorisé dans le navigateur, pour ne plus manipuler `#pseudos=`.
+- **Fait** (`carte.html` : `src/gen_tpl.py` ; carte de la région, touche M : `src/template.html`) :
+  - **champ** « Clé des pseudos » sous la surveillance des arrivées : masqué, avec la case « Afficher la clé » ; la valeur est mémorisée dans le navigateur (`glb2html_map_key`, en clair) quand on la modifie ; champ vide : clé oubliée ; la rangée disparaît sans serveur de présence, comme la surveillance ;
+  - **priorité** : `#pseudos=` de l'adresse, sinon la clé mémorisée ; une clé lue dans l'adresse n'est pas mémorisée ; la carte de la région (touche M) reprend la clé mémorisée quand l'adresse n'en donne pas ;
+  - **ligne d'état** : « clé mémorisée dans ce navigateur (14 caractères) ; acceptée par le serveur ». La page sait si la clé est acceptée parce que le serveur ajoute `names` à sa réponse seulement avec la bonne clé (`presence_server.py`, `map_key_ok`). Verdicts : en attente, acceptée, non acceptée (fausse, trop d'essais, ou serveur sans clé), acceptée par une partie des serveurs seulement. La clé n'est jamais affichée, seulement sa longueur ;
+  - **changement de comportement** : une clé refusée par un serveur ne lui est plus renvoyée (jusqu'à ce qu'on la modifie ou qu'on recharge la page). Avant, la carte la renvoyait à chaque relevé (toutes les 10 s) ; avec une clé mémorisée devenue fausse, cela aurait écrit une ligne dans le journal du serveur à chaque relevé et usé les 5 essais par minute que le serveur accorde à chaque adresse. Le serveur n'est pas modifié.
+- **Contrôle** : `tests/carte_pseudos.py`, nouvelle section 7b (14 contrôles) : rangée et champ, « Afficher la clé », clé saisie acceptée par une partie des serveurs, mémorisée, renvoyée à chaque relevé, reprise après rechargement, carte de la région, champ vidé, mauvaise clé renvoyée une seule fois malgré plusieurs relevés, `#pseudos=` prioritaire sans écraser la clé mémorisée, anglais. Sur `main` d'origine la section échoue (pas de champ), avec le correctif tout passe. Passent aussi `i18n`, `credit`, `icone`, `samples`, `smoke`, `v34`, `v35`, `v36`, `v36_lang`, `v46`, `v47`, `v51_etoile`, `v52`, `paquets`, `dist_a_jour`, `marque`, `version_page`, `titre`.
+- **Non essayé** : Windows réel, Edge, Firefox, Safari (Chromium seulement). `presence_server.py` n'est pas modifié : rien à envoyer sur la VM. Pour la démo, `index.html` et `carte.html` changent.
+- **Reste à mettre à jour** (règle 16) : manuel (la carte : champ de la clé et ligne d'état) et procédures (clé des pseudos), en français et en anglais.
+
 ### 12/11/2026 : Python 3.14 : `glb2html.py` s'ouvre de nouveau ; le lanceur affiche la fonction de l'outil (lot 1.10.4)
 
 - **Constaté par Klaatou** : « par moment », le lanceur écrit « ERREUR : impossible de lire les options de glb2html.py (TypeError : BooleanOptionalAction.__init__() got … ». **Demandé** : que le lanceur affiche la fonction principale de l'outil choisi.

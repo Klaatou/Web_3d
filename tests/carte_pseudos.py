@@ -59,9 +59,12 @@ async def main():
         await c.send(json.dumps({"t": "rooms", "key": key} if key is not None else {"t": "rooms"}))
         m = json.loads(await asyncio.wait_for(c.recv(), 5)); await c.close(); return m
 
+    recus = []      # 1.10.5 : les cles recues par le faux serveur (None : requete sans cle)
+
     async def faux(ws):      # un serveur quelconque, qui donne des pseudos pièges avec la bonne clé
         m = json.loads(await ws.recv())
         if m.get("t") == "rooms":
+            recus.append(m.get("key"))
             rep = {"t": "rooms", "rooms": {"cz": 1}, "visitors": {"cz": 1}, "spectators": 0}
             if m.get("key") == CLE:
                 rep.update(names={"cz": ["<b>x</b>", "A<img src=x>"]}, viewers={"cz": ["<i>y</i>"]})
@@ -178,6 +181,80 @@ async def main():
                 rapport(tl["Beta"] == "2 visiteurs, dont 1 en promenade" and tl["Epsilon"] == "7 promeneurs" and tl["Phi"] == "1 visiteur", "carte de la région sans clé : seulement les nombres", tl)
             rapport(not o.errs, "aucune erreur de page", o.errs)
             await o.ctx.close()
+
+        print("--- 7b. clé des pseudos : champ, mémoire, état (1.10.5)")
+        ETAT = "document.getElementById('keyState').textContent"
+        AUTRES = "[...document.querySelectorAll('.tile span')].some(s => s.textContent.includes('autres'))"
+
+        async def saisir(o, v):
+            await o.pg.fill("#mapkey", v)
+            await o.pg.dispatch_event("#mapkey", "change")
+
+        async def lignes(o):
+            return {x["nom"]: x["ligne"] for x in await o.ev(TUILES)}
+
+        o, _ = await lire(BASE + "carte.html")
+        rapport(await o.ev(ETAT) == "" and await o.ev("() => !document.getElementById('keyrow').hidden && document.getElementById('mapkey').type === 'password' && document.getElementById('mapkey').value === ''"),
+                "sans clé : la rangée « Clé des pseudos » est là, champ masqué et vide, aucun état")
+        await o.ev("document.getElementById('keyshow').click()")
+        t1 = await o.ev("document.getElementById('mapkey').type")
+        await o.ev("document.getElementById('keyshow').click()")
+        rapport(t1 == "text" and await o.ev("document.getElementById('mapkey').type") == "password", "« Afficher la clé » montre le champ en clair, puis le masque de nouveau", t1)
+        await saisir(o, CLE)
+        await o.attendre(AUTRES, 25)
+        await o.attendre("document.getElementById('keyState').textContent.includes('une partie')", 25)
+        etat = await o.ev(ETAT)
+        rapport(etat == "clé saisie (14 caractères) ; acceptée par une partie des serveurs seulement", "clé saisie : état « acceptée par une partie des serveurs » (celui qui n'a pas l'option la refuse)", etat)
+        rapport(await o.ev("localStorage.getItem('glb2html_map_key')") == CLE, "la clé saisie est mémorisée dans ce navigateur")
+        L = await lignes(o)
+        rapport(L["Beta"] == "2 visiteurs, dont 1 en promenade\nAna\nen vue globale : Cléo" and L["Epsilon"] == "7 promeneurs\nW7, W6, W5, W4, W3 et 2 autres", "avec la clé du champ : les mêmes pseudos qu'avec #pseudos=", L["Beta"])
+        n0 = recus.count(CLE)
+        await o.ev("document.getElementById('alert').click()")      # relevé toutes les 5 s
+        await asyncio.sleep(6.5)
+        rapport(recus.count(CLE) - n0 >= 2, "une clé acceptée est renvoyée à chaque relevé", (n0, recus.count(CLE)))
+
+        await o.pg.reload()
+        await pret(o)
+        await o.attendre(AUTRES, 25)
+        await o.attendre("document.getElementById('keyState').textContent.includes('une partie')", 25)
+        rapport(await o.ev(ETAT) == "clé mémorisée dans ce navigateur (14 caractères) ; acceptée par une partie des serveurs seulement" and await o.ev("document.getElementById('mapkey').value") == CLE,
+                "après rechargement sans # : la clé mémorisée est reprise (champ rempli, pseudos, état « mémorisée »)", await o.ev(ETAT))
+
+        o2 = await Onglet(br).ouvrir(BASE + "index.html?region=Page#name=Zoe", ctx=o.ctx)      # même navigateur : la carte de la région (touche M) reprend la clé mémorisée
+        await o2.ev("document.getElementById('mapBtn').click()")
+        await o2.attendre("[...document.querySelectorAll('#mapGrid .mapTile')].some(b => b.textContent.includes('autres'))", 30)
+        tl = {b["nom"]: b["ligne"] for b in await o2.ev("() => [...document.querySelectorAll('#mapGrid .mapTile')].map(b => ({ nom: b.querySelector('b').textContent, ligne: (b.querySelector('span') || {}).textContent || '' }))")}
+        rapport(tl["Beta"] == "2 visiteurs, dont 1 en promenade\nAna\nen vue globale : Cléo", "la carte de la région (touche M) reprend la clé mémorisée par la carte", tl["Beta"])
+        await o2.pg.close()
+
+        await saisir(o, "")
+        await o.attendre("!document.body.textContent.includes('Cléo')", 15)
+        rapport(await o.ev(ETAT) == "" and await o.ev("localStorage.getItem('glb2html_map_key')") is None, "champ vidé : plus de pseudos, plus d'état, la clé est oubliée")
+
+        n0 = recus.count("MAUVAISE_CLE_1")
+        await saisir(o, "MAUVAISE_CLE_1")
+        await o.attendre("document.getElementById('keyState').textContent.includes('non acceptée')", 25)
+        etat = await o.ev(ETAT)
+        rapport(etat.startswith("clé saisie (14 caractères) ; non acceptée") and "elle n'est plus renvoyée" in etat, "mauvaise clé : état « non acceptée », avec la raison possible et ce qu'on peut faire", etat)
+        await asyncio.sleep(6.5)      # relevés toutes les 5 s (alerte cochée) : au moins un de plus
+        rapport(recus.count("MAUVAISE_CLE_1") - n0 == 1, "une clé refusée n'est plus renvoyée : une seule fois malgré plusieurs relevés", recus.count("MAUVAISE_CLE_1") - n0)
+        rapport(not o.errs, "aucune erreur de page", o.errs)
+
+        await o.pg.evaluate("localStorage.setItem('glb2html_map_key', 'AUTRE_CLE_0123')")
+        await o.pg.goto(BASE + "carte.html?v=2#pseudos=" + CLE)
+        await pret(o)
+        await o.attendre(AUTRES, 25)
+        await o.attendre("document.getElementById('keyState').textContent.includes('une partie')", 25)
+        rapport(await o.ev(ETAT) == "clé lue dans l'adresse (14 caractères) ; acceptée par une partie des serveurs seulement" and await o.ev("localStorage.getItem('glb2html_map_key')") == "AUTRE_CLE_0123",
+                "#pseudos= l'emporte sur la clé mémorisée et ne l'écrase pas", await o.ev(ETAT))
+        await o.ctx.close()
+
+        o, _ = await lire(BASE + "carte.html#pseudos=" + CLE, "en-GB")
+        await o.attendre("document.getElementById('keyState').textContent.includes('only some')", 25)
+        etat = await o.ev(ETAT)
+        rapport(etat == "key read from the address (14 characters); accepted by only some of the servers" and await o.ev("document.querySelector('#keyrow span').textContent") == "Names key: ", "anglais : textes du champ et de l'état", etat)
+        await o.ctx.close()
+
         await br.close()
     fs.close()
 

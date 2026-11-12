@@ -6,6 +6,18 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.10.0)
 
+### 12/11/2026: map: remembered "Names key" field and key status line (batch 1.10.5)
+
+- **Requested by Klaatou**: a status line for the names key and a "names key" field remembered in the browser, so that `#pseudos=` no longer has to be handled by hand.
+- **Done** (`carte.html`: `src/gen_tpl.py`; map of the region, key M: `src/template.html`):
+  - **field** "Names key" under the arrivals watch: hidden, with a "Show the key" box; the value is remembered in the browser (`glb2html_map_key`, in clear) when it is edited; empty field: key forgotten; the row disappears without a presence server, like the watch;
+  - **priority**: `#pseudos=` of the address, otherwise the remembered key; a key read from the address is not remembered; the map of the region (key M) takes the remembered key when the address gives none;
+  - **status line**: "key remembered in this browser (14 characters); accepted by the server". The page knows whether the key is accepted because the server adds `names` to its answer only with the right key (`presence_server.py`, `map_key_ok`). Verdicts: waiting, accepted, not accepted (wrong, too many tries, or a server without a key), accepted by only some of the servers. The key is never shown, only its length;
+  - **change of behaviour**: a key refused by a server is no longer sent to it (until it is edited or the page is reloaded). Before, the map sent it again at every poll (every 10 s); with a remembered key that had become wrong, this would have written a line in the server log at every poll and used up the 5 tries per minute the server grants to each address. The server is not modified.
+- **Check**: `tests/carte_pseudos.py`, new section 7b (14 checks): row and field, "Show the key", typed key accepted by only some of the servers, remembered, sent again at every poll, taken back after a reload, map of the region, field emptied, wrong key sent only once despite several polls, `#pseudos=` takes priority without overwriting the remembered key, English. On the original `main` the section fails (no field), with the fix all pass. `i18n`, `credit`, `icone`, `samples`, `smoke`, `v34`, `v35`, `v36`, `v36_lang`, `v46`, `v47`, `v51_etoile`, `v52`, `paquets`, `dist_a_jour`, `marque`, `version_page` and `titre` also pass.
+- **Not tried**: real Windows, Edge, Firefox, Safari (Chromium only). `presence_server.py` is not modified: nothing to send to the VM. For the demo, `index.html` and `carte.html` change.
+- **Still to update** (rule 16): manual (the map: key field and status line) and procedures (names key), in French and English.
+
 ### 12/11/2026: Python 3.14: `glb2html.py` opens again; the launcher shows the function of the tool (batch 1.10.4)
 
 - **Reported by Klaatou**: "at times", the launcher writes "ERREUR : impossible de lire les options de glb2html.py (TypeError : BooleanOptionalAction.__init__() got …" (ERROR: cannot read the options of glb2html.py). **Requested**: the launcher shows the main function of the chosen tool.

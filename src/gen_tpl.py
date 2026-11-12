@@ -339,6 +339,12 @@ footer{padding-right:44px}   /* 1.6.13 : le texte du pied de page ne passe pas s
 .tile span{font-size:12px;white-space:pre-line}
 #tools{margin:8px 0}
 #tools small{margin-left:8px}
+#keyrow{margin:8px 0}
+#keyrow input[type=password],#keyrow input[type=text]{font:inherit;width:200px;border:2px solid #000;border-radius:6px;padding:4px 6px}
+#keyrow label.chk{display:inline-block;margin-left:12px}
+#keyrow label.chk input{width:auto}
+#keyrow small{margin-left:8px}
+#keyState{display:block;margin:2px 0 0 0!important}
 #total{font-weight:bold;margin:4px 0}
 .tile.arr{outline:5px dashed #000;outline-offset:2px;background:#ffe9a8;animation:arrblink .9s steps(1,end) infinite}
 @keyframes arrblink{0%{outline-width:5px}50%{outline-width:0}}
@@ -355,6 +361,7 @@ __I18N__
 <h1 __TITLE_ATTR__>__TITLE__</h1>
 <div id="who"><label><span data-i18n="map.pseudo">Mon pseudo : </span><input id="pseudo" maxlength="24" placeholder="Visiteur" data-i18n-ph="map.visitor" autocomplete="nickname"></label> <small data-i18n="map.pseudo.note">mémorisé dans ce navigateur ; transmis aux régions que tu visites</small> <label class="chk"><input type="checkbox" id="showurl"> <span data-i18n="map.showurl">Afficher les adresses</span></label></div>
 <div id="tools"><label class="chk"><input type="checkbox" id="alert"> <span data-i18n="map.alert">Surveillance des arrivées (son et repère)</span></label> <small id="alertState"></small></div>
+<div id="keyrow"><label><span data-i18n="map.key">Clé des pseudos : </span><input id="mapkey" type="password" maxlength="200" autocomplete="off" spellcheck="false"></label> <label class="chk"><input type="checkbox" id="keyshow"> <span data-i18n="map.key.show">Afficher la clé</span></label> <small data-i18n="map.key.note">mémorisée dans ce navigateur ; champ vide : oubliée</small><small id="keyState"></small></div>
 <div id="total"></div>
 <div id="grid"></div>
 <footer id="foot"><span id="footText">glb2html __MAP_VERSION__</span> · <a data-i18n="map.credit" href="https://github.com/Klaatou/Web_3d" target="_blank" rel="noopener">Réalisé avec Web_3d</a></footer>
@@ -370,7 +377,26 @@ __I18N__
   let MAP = C.map || [];
   applyI18n(); document.getElementById('footText').textContent = tr('map.footer', '__MAP_VERSION__');
   if (document.querySelector('h1[data-i18n]')) document.title = tr('map.title');
-  const grid = document.getElementById('grid'), counts = {}, vis = {}, nms = {}, answered = {}, hasVis = {}, MAPKEY = new URLSearchParams(location.hash.replace(/^#/, '').replace(/#/g, '&')).get('pseudos') || '';   // #pseudos=CLE : la cle du serveur (--map-names-key) pour voir les pseudos
+  const grid = document.getElementById('grid'), counts = {}, vis = {}, nms = {}, answered = {}, hasVis = {};
+  // #pseudos=CLE : la cle du serveur (--map-names-key) pour voir les pseudos ; 1.10.5 : sans elle dans l'adresse, la cle du champ « Cle des pseudos », memorisee dans ce navigateur
+  let MAPKEY = new URLSearchParams(location.hash.replace(/^#/, '').replace(/#/g, '&')).get('pseudos') || '', keySrc = MAPKEY ? 'hash' : '';
+  try { if (!MAPKEY) { MAPKEY = (localStorage.getItem('glb2html_map_key') || '').slice(0, 200); if (MAPKEY) keySrc = 'stored'; } } catch (e) {}
+  const keyAns = {};   // 1.10.5 : par serveur, la cle envoyee a-t-elle ete acceptee ? (le serveur ajoute « names » a sa reponse avec la bonne cle seulement) ; une cle refusee n'est plus renvoyee a ce serveur
+  const keyIn = document.getElementById('mapkey'), keyState = document.getElementById('keyState');
+  const showKey = () => {
+    if (!MAPKEY) { keyState.textContent = ''; return; }
+    const v = Object.values(keyAns), ok = v.filter(x => x === true).length, no = v.filter(x => x === false).length;
+    keyState.textContent = tr('map.key.line', tr('map.key.read', tr('map.key.src.' + keySrc), trn('map.key.chars', MAPKEY.length)), !ok && !no ? tr('map.key.wait') : ok && !no ? tr('map.key.ok') : no && !ok ? tr('map.key.no') : tr('map.key.mixed'));
+  };
+  keyIn.value = MAPKEY;
+  keyIn.addEventListener('change', () => {
+    MAPKEY = keyIn.value.trim().slice(0, 200); keySrc = MAPKEY ? 'typed' : '';
+    for (const s of Object.keys(keyAns)) delete keyAns[s];
+    for (const s of Object.keys(nms)) delete nms[s];
+    try { if (MAPKEY) localStorage.setItem('glb2html_map_key', MAPKEY); else localStorage.removeItem('glb2html_map_key'); } catch (e) {}
+    showKey(); draw(); fetchCounts();
+  });
+  document.getElementById('keyshow').addEventListener('change', e => { keyIn.type = e.target.checked ? 'text' : 'password'; });
    let loadErr = '';
   // v34 : pseudo mémorisé (même clé que les régions) ; les liens des cartes reçoivent #name=PSEUDO
   const pin = document.getElementById('pseudo');
@@ -466,7 +492,7 @@ __I18N__
     }
     if (!list.length) grid.textContent = emptyText();
     tot.textContent = list.length ? trn('map.regions', list.length) + (totGot ? ' · ' + tr('map.total', countText(totOld ? -1 : totV, totW)) : '') : '';   // decompte des regions, puis le total
-    document.getElementById('tools').hidden = !MAP.some(r => r && srvOf(r));   // sans serveur de presence, la surveillance n'a rien a surveiller : la case disparait
+    document.getElementById('tools').hidden = document.getElementById('keyrow').hidden = !MAP.some(r => r && srvOf(r));   // sans serveur de presence, la surveillance n'a rien a surveiller : la case disparait
     if (zoomWas) reZoom();
   };
   document.addEventListener('selectionchange', () => { if (drawLater) { const s = window.getSelection(); if (!s || s.isCollapsed) { drawLater = false; draw(); } } });   // la selection est finie : on redessine
@@ -474,17 +500,17 @@ __I18N__
   const presUrl = u => String(u || '').trim().replace(/^(wss?:\/\/)(\*|0\.0\.0\.0)(?=[:/]|$)/i, (m, p, h) => p + (h === '*' ? (location.hostname || '127.0.0.1') : '127.0.0.1'));
   const queryServer = srv => {
     try {
-      const ws = new WebSocket(presUrl(srv)), to = setTimeout(() => { try { ws.close(); } catch (e) {} }, 4000);
-      ws.onopen = () => ws.send(JSON.stringify(MAPKEY ? { t: 'rooms', key: MAPKEY } : { t: 'rooms' }));
+      const ws = new WebSocket(presUrl(srv)), to = setTimeout(() => { try { ws.close(); } catch (e) {} }, 4000), keyNow = keyAns[srv] === false ? '' : MAPKEY;   // une cle refusee par ce serveur n'y est plus envoyee
+      ws.onopen = () => ws.send(JSON.stringify(keyNow ? { t: 'rooms', key: keyNow } : { t: 'rooms' }));
       ws.onmessage = ev => {
-        try { const m = JSON.parse(ev.data); if (m.t === 'rooms') { const before = beforeOf(srv); for (const o of [counts, vis, nms]) for (const k of Object.keys(o)) if (k.startsWith(srv + '|')) delete o[k]; for (const [room, n] of Object.entries(m.rooms || {})) counts[srv + '|' + room] = n; hasVis[srv] = !!(m.visitors && typeof m.visitors === 'object'); if (hasVis[srv]) for (const [room, n] of Object.entries(m.visitors)) vis[srv + '|' + room] = n; const ob = x => (x && typeof x === 'object' ? x : {}), cl = a => (Array.isArray(a) ? a.filter(x => typeof x === 'string' && x).slice(0, 20) : []); for (const room of new Set([...Object.keys(ob(m.names)), ...Object.keys(ob(m.viewers))])) nms[srv + '|' + room] = { w: cl(ob(m.names)[room]), v: cl(ob(m.viewers)[room]) }; answered[srv] = true; arrivals(srv, before); draw(); } } catch (e) {}
+        try { const m = JSON.parse(ev.data); if (m.t === 'rooms') { const before = beforeOf(srv); for (const o of [counts, vis, nms]) for (const k of Object.keys(o)) if (k.startsWith(srv + '|')) delete o[k]; for (const [room, n] of Object.entries(m.rooms || {})) counts[srv + '|' + room] = n; hasVis[srv] = !!(m.visitors && typeof m.visitors === 'object'); if (hasVis[srv]) for (const [room, n] of Object.entries(m.visitors)) vis[srv + '|' + room] = n; const ob = x => (x && typeof x === 'object' ? x : {}), cl = a => (Array.isArray(a) ? a.filter(x => typeof x === 'string' && x).slice(0, 20) : []); for (const room of new Set([...Object.keys(ob(m.names)), ...Object.keys(ob(m.viewers))])) nms[srv + '|' + room] = { w: cl(ob(m.names)[room]), v: cl(ob(m.viewers)[room]) }; answered[srv] = true; if (keyNow && keyNow === MAPKEY) { keyAns[srv] = !!m.names && typeof m.names === 'object' && !Array.isArray(m.names); showKey(); } arrivals(srv, before); draw(); } } catch (e) {}
         try { ws.close(); } catch (e) {}
       };
       ws.onclose = () => clearTimeout(to); ws.onerror = () => {};
     } catch (e) {}
   };
   const fetchCounts = () => { for (const srv of new Set(MAP.map(srvOf).filter(Boolean))) queryServer(srv); };
-  draw(); fetchCounts(); showAlert();
+  draw(); fetchCounts(); showAlert(); showKey();
   let tmr = 0;
   const tick = () => { clearTimeout(tmr); tmr = setTimeout(() => { fetchCounts(); tick(); }, al.checked ? POLL_ALERT_MS : POLL_MS); };   // v52 : delai relu a chaque tour et des que la case change
   tick();
