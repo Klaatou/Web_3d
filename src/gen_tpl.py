@@ -377,6 +377,8 @@ __I18N__
   const POLL_ALERT_MS = 5000;   // quand « Surveillance sonore » est cochee
   const C = JSON.parse(document.getElementById('cfg').textContent);
   let MAP = C.map || [];
+  const creditOff = () => { const c = document.getElementById('credit'); if (c) c.remove(); };   // 1.10.13 : « credit »: false (config de la page, ou en-tête de regions.json) : pas d'icône
+  if (C.credit === false) creditOff();
   applyI18n(); document.getElementById('footText').textContent = tr('map.footer', '__MAP_VERSION__');
   if (document.querySelector('h1[data-i18n]')) document.title = tr('map.title');
   const grid = document.getElementById('grid'), counts = {}, vis = {}, nms = {}, answered = {}, hasVis = {};
@@ -519,8 +521,8 @@ __I18N__
   if (C.mapUrl && /^https?:$/.test(location.protocol)) {
     const urls = String(C.mapUrl).split(',').map(s => s.trim()).filter(Boolean);
     Promise.allSettled(urls.map(u => fetch(new URL(u, location.href).href, { cache: 'no-store' }).then(r => r.ok ? r.json() : Promise.reject(new Error('http ' + r.status))))).then(res => {
-      const merged = [], seen = new Set(); let hdr = null, got = false;
-      for (const x of res) { const arr = x.status === 'fulfilled' ? regionsOf(x.value) : null; if (!arr) continue; got = true; if (hdr === null && typeof x.value.showUrl === 'boolean') hdr = x.value.showUrl;
+      const merged = [], seen = new Set(); let hdr = null, hdrC = null, got = false;
+      for (const x of res) { const arr = x.status === 'fulfilled' ? regionsOf(x.value) : null; if (!arr) continue; got = true; if (hdr === null && typeof x.value.showUrl === 'boolean') hdr = x.value.showUrl; if (hdrC === null && typeof x.value.credit === 'boolean') hdrC = x.value.credit;
        for (const r of arr) {
         if (!r || typeof r.name !== 'string' || typeof r.url !== 'string') continue;
         const e = { name: r.name.slice(0, 60), url: r.url.slice(0, 600), x: Number(r.x) | 0, y: Number(r.y) | 0, spawn: String(r.spawn || '').slice(0, 40), room: String(r.room || '').slice(0, 64), presence: /^wss?:\/\//i.test(String(r.presence || '')) ? String(r.presence).slice(0, 300) : '', thumb: safeThumb(r.thumb) ? String(r.thumb).slice(0, 200000) : '' };
@@ -528,6 +530,7 @@ __I18N__
        }
       }
       if (hdr !== null) C.showUrl = hdr;
+      if (hdrC === false) { C.credit = false; creditOff(); }
       su.checked = urlOn();
       if (merged.length) { MAP = merged; loadErr = ''; } else if (!got) loadErr = tr('map.nofile', urls.join(', '));
       draw(); if (merged.length) fetchCounts();
@@ -700,8 +703,10 @@ def scan_sites(root, dry, prune=False):
     reg.write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
 
 
-def write_map_page(path, entries, presence_url, map_url, title):
+def write_map_page(path, entries, presence_url, map_url, title, credit=True):
     cfg = {"map": clean_map(entries), "mapUrl": str(map_url or "")[:1200], "presenceUrl": fix_presence_url(presence_url), "showUrl": bool(entries.get("showUrl")) if isinstance(entries, dict) else False}
+    if not credit or (isinstance(entries, dict) and entries.get("credit") is False):     # 1.10.13 : sans l'icône « Réalisé avec Web_3d »
+        cfg["credit"] = False
     page = map_page_html(cfg, title)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(page, encoding="utf-8")
@@ -802,7 +807,7 @@ MESHOPT_JS = r"""__MESHOPT_JS__"""
 def build_cfg(name: str, *, title="", rotate=ROTATE, hole=HOLE_RADIUS, hole_fade=HOLE_FADE, hole_x=HOLE_X, hole_z=HOLE_Z, wave=WAVE_AMP,
                sea_y=SEA_Y, zoom=ZOOM_RATIO, cam_dir=CAM_DIR, target=TARGET, sea_enabled=SEA_ENABLED,
                anim_enabled=ANIM_ENABLED, retina=RETINA_ENABLED, light=LIGHT_ENABLED, foliage_cutout=FOLIAGE_CUTOUT,
-               sea_color=SEA_COLOR, sky_color=SKY_COLOR, sea_segments=SEA_SEGMENTS, walk=WALK_ENABLED, eye_height=EYE_HEIGHT, walk_speed=WALK_SPEED, walk_ignore=WALK_IGNORE, solid_materials=SOLID_MATERIALS, names=NAMES_ENABLED, presence_url=PRESENCE_URL, room=ROOM, chat=CHAT_ENABLED, chat_fade=CHAT_FADE, zones=None, profile=PROFILE, spectate=SPECTATE, panel=PANEL, zones_live=ZONES_LIVE, map_entries=None, map_url=MAP_URL, modular=False, zone_marker=ZONE_MARKER, show_spawns=SHOW_SPAWNS, zone_cone=ZONE_CONE, fly=FLY_ENABLED, zone_info_dist=ZONE_INFO_DIST, compass=COMPASS, north=NORTH_DEG, lib_url="", make_default=False, target_explicit=TARGET_EXPLICIT, tiles=None, tile_radius=TILE_RADIUS, tile_margin=TILE_MARGIN, tile_max_mo=TILE_MAX_MO, tile_max_tri=TILE_MAX_TRI, tile_concurrency=TILE_CONCURRENCY) -> dict:
+               sea_color=SEA_COLOR, sky_color=SKY_COLOR, sea_segments=SEA_SEGMENTS, walk=WALK_ENABLED, eye_height=EYE_HEIGHT, walk_speed=WALK_SPEED, walk_ignore=WALK_IGNORE, solid_materials=SOLID_MATERIALS, names=NAMES_ENABLED, presence_url=PRESENCE_URL, room=ROOM, chat=CHAT_ENABLED, chat_fade=CHAT_FADE, zones=None, profile=PROFILE, spectate=SPECTATE, panel=PANEL, zones_live=ZONES_LIVE, map_entries=None, map_url=MAP_URL, modular=False, zone_marker=ZONE_MARKER, show_spawns=SHOW_SPAWNS, zone_cone=ZONE_CONE, fly=FLY_ENABLED, zone_info_dist=ZONE_INFO_DIST, compass=COMPASS, north=NORTH_DEG, lib_url="", make_default=False, target_explicit=TARGET_EXPLICIT, tiles=None, tile_radius=TILE_RADIUS, tile_margin=TILE_MARGIN, tile_max_mo=TILE_MAX_MO, tile_max_tri=TILE_MAX_TRI, tile_concurrency=TILE_CONCURRENCY, credit=True) -> dict:
     """Le dictionnaire de réglages `cfg` : identique dans la page autonome et dans <page>.config.json (mode modulaire),
     sauf que le mode modulaire garde les zones hors de la config (fichier <page>.zones.json, relu à chaque ouverture)."""
     presence_url = fix_presence_url(presence_url)
@@ -823,6 +828,8 @@ def build_cfg(name: str, *, title="", rotate=ROTATE, hole=HOLE_RADIUS, hole_fade
         cfg["zones"], cfg["zonesLive"] = [], ""
         if title:   # 1.4.7 : titre affiche dans l'onglet (facultatif) ; sans lui, le titre est le salon (room)
             cfg["title"] = str(title).strip()[:60]
+    if not credit:   # 1.10.13 : sans l'icône « Réalisé avec Web_3d » ; clé présente seulement dans ce cas (sans elle, la config est celle d'avant)
+        cfg["credit"] = False
     if tiles:
         # mode tuiles : clés présentes seulement dans ce cas (sans « tiles », la config est celle d'avant)
         cfg.update({"tiles": str(tiles), "tileRadius": float(tile_radius), "tileMargin": float(tile_margin), "tileMaxMB": float(tile_max_mo),
@@ -1390,7 +1397,7 @@ MAJ_KEYS = {
     "spectate": ("spectate",), "panel": ("panel",), "map_url": ("mapUrl",), "room": ("room",), "title": ("title",), "sea_enabled": ("sea",), "anim_enabled": ("anim",), "retina": ("retina",), "light": ("light",),
     "zone_marker": ("zoneMarker",), "show_spawns": ("showSpawns",), "zone_cone": ("zoneCone",), "fly": ("fly",), "zone_info_dist": ("zoneInfoDist",), "compass": ("compass",), "north": ("northDeg",), "lib_url": ("libUrl",), "tile_radius": ("tileRadius",), "tile_margin": ("tileMargin",),
     "tile_max_mo": ("tileMaxMB",), "tile_max_tri": ("tileMaxTriangles",), "tile_concurrency": ("tileConcurrency",), "tiles": ("tiles",),
-    "map": ("map",), "register": ("map",),
+    "map": ("map",), "register": ("map",), "credit": ("credit",),
 }
 
 
@@ -1422,6 +1429,9 @@ def merge_maj_cfg(old: dict, new: dict, explicit) -> tuple:
         if k in new and old.get(k) != new[k]:
             changes.append((k, old.get(k), new[k]))
             out[k] = new[k]
+    if "credit" in keys and "credit" not in new and "credit" in old:     # 1.10.13 : --credit explicite : la clé disparaît (le défaut est « avec l'icône »)
+        changes.append(("credit", old["credit"], True))
+        out.pop("credit", None)
     if old.get("version") != VERSION:
         changes.append(("version", old.get("version"), VERSION))
     out["version"] = VERSION
@@ -1562,7 +1572,7 @@ def run_maj(a, kw, explicit, S_reg):
         entries = cfg.get("map") or []
         if clean_map(entries):
             mp = pathlib.Path(a.map_page)
-            write_map_page(mp if mp.is_absolute() else out.parent / mp, entries, cfg.get("presenceUrl", ""), cfg.get("mapUrl", ""), a.title or _tr("py.glb2html.carte_des_mondes"))
+            write_map_page(mp if mp.is_absolute() else out.parent / mp, entries, cfg.get("presenceUrl", ""), cfg.get("mapUrl", ""), a.title or _tr("py.glb2html.carte_des_mondes"), credit=a.credit)
         else:
             print(_tr("py.glb2html.avertissement_map_page_ignore_aucune_region"), file=sys.stderr)
     if a.register or a.map_page or a.thumb or a.map:
@@ -1686,6 +1696,7 @@ def main():
     ap.add_argument("--anim", dest="anim_enabled", action=argparse.BooleanOptionalAction, default=ANIM_ENABLED, help=_tr("py.glb2html.help.anim"))
     ap.add_argument("--retina", action=argparse.BooleanOptionalAction, default=RETINA_ENABLED, help=_tr("py.glb2html.haute_resolution_rendu_x2_minimum_supersampl"))
     ap.add_argument("--light", action=argparse.BooleanOptionalAction, default=LIGHT_ENABLED, help=_tr("py.glb2html.help.light"))
+    ap.add_argument("--credit", action=argparse.BooleanOptionalAction, default=True, help=_tr("py.glb2html.help.credit"))
     ap.add_argument("--title", help=_tr("py.glb2html.titre_de_la_page"))
     ap.add_argument("--vendor", type=pathlib.Path, help=_tr("py.glb2html.racine_d_un_paquet_npm_three"))
     a = ap.parse_args()
@@ -1767,7 +1778,7 @@ def main():
     kw = dict(rotate=a.rotate, hole=clamp(a.hole, 30, 600), hole_fade=max(0.0, a.hole_fade), hole_x=a.hole_x, hole_z=a.hole_z, wave=clamp(a.wave, 0, 10),
               sea_y=clamp(a.sea_y, -150, 60), zoom=clamp(a.zoom, 0.05, 100), cam_dir=a.cam_dir, target=a.target,
               foliage_cutout=clamp(a.foliage_cutout, 0, 1), sea_color=a.sea_color, sky_color=a.sky_color, sea_segments=int(clamp(a.sea_segments, 8, 1000)), walk=a.walk, walk_ignore=a.walk_ignore, solid_materials=a.solid_materials, zones_live=a.zones_live or "", map_entries=map_arg, map_url=a.map_url, names=a.names, presence_url=a.presence_url, room=a.room, chat=a.chat, chat_fade=clamp(a.chat_fade, 0, 3600), zones=zones_arg, profile=a.profile, spectate=a.spectate, panel=a.panel, eye_height=clamp(a.eye_height, 0.3, 5), walk_speed=clamp(a.walk_speed, 0.5, 30),
-              sea_enabled=a.sea_enabled, anim_enabled=a.anim_enabled, retina=a.retina, light=a.light, title=a.title,
+              sea_enabled=a.sea_enabled, anim_enabled=a.anim_enabled, retina=a.retina, light=a.light, credit=a.credit, title=a.title,
               zone_marker=a.zone_marker, show_spawns=a.show_spawns, zone_cone=a.zone_cone, fly=a.fly, zone_info_dist=clamp(a.zone_info_dist, 5, 500), compass=a.compass, north=a.north, lib_url=clean_lib_url(a.lib_url)[0], make_default=a.default,
               target_explicit=bool(tuple(a.target) != tuple(TARGET) or TARGET_EXPLICIT or getattr(a, "target_explicit", False)))
 
@@ -1826,7 +1837,7 @@ def main():
             print(_tr("py.glb2html.zones_0_non_modifie_donne_zones", zones_out.name))
         if a.map_page and kw.get("map_entries") is not None and clean_map(kw["map_entries"]):
             mp = pathlib.Path(a.map_page)
-            write_map_page(mp if mp.is_absolute() else out.parent / mp, kw["map_entries"], kw.get("presence_url", ""), kw.get("map_url", ""), a.title or _tr("py.glb2html.carte_des_mondes"))
+            write_map_page(mp if mp.is_absolute() else out.parent / mp, kw["map_entries"], kw.get("presence_url", ""), kw.get("map_url", ""), a.title or _tr("py.glb2html.carte_des_mondes"), credit=a.credit)
         sys.exit(0)
     if a.tiles:
         if a.input:
@@ -1868,7 +1879,7 @@ def main():
             entries = kw["map_entries"] if kw.get("map_entries") is not None else json.loads(MAP_JSON)
             if clean_map(entries):
                 mp = pathlib.Path(a.map_page)
-                write_map_page(mp if mp.is_absolute() else out.parent / mp, entries, kw.get("presence_url", ""), kw.get("map_url", ""), a.title or _tr("py.glb2html.carte_des_mondes"))
+                write_map_page(mp if mp.is_absolute() else out.parent / mp, entries, kw.get("presence_url", ""), kw.get("map_url", ""), a.title or _tr("py.glb2html.carte_des_mondes"), credit=a.credit)
             else:
                 print(_tr("py.glb2html.avertissement_map_page_ignore_aucune_region_2"), file=sys.stderr)
         sys.exit(0 if ok else 1)
@@ -1893,13 +1904,13 @@ def main():
         data = register_region(reg, entry)
         print(_tr("py.glb2html.carte_0_ajoutee_ou_mise_a", entry['name'], reg, len(map_regions(data))))
         if a.map_page:
-            write_map_page(pathlib.Path(a.map_page), data, a.presence_url, a.map_url, a.title or _tr("py.glb2html.carte_des_mondes"))
+            write_map_page(pathlib.Path(a.map_page), data, a.presence_url, a.map_url, a.title or _tr("py.glb2html.carte_des_mondes"), credit=a.credit)
         sys.exit(0)
     if a.map_page and not a.input:
         entries = map_arg if map_arg is not None else json.loads(MAP_JSON)
         if not clean_map(entries):
             sys.exit(_tr("py.glb2html.erreur_aucune_region_a_afficher_donne"))
-        write_map_page(pathlib.Path(a.map_page), entries, a.presence_url, a.map_url, a.title or _tr("py.glb2html.carte_des_mondes"))
+        write_map_page(pathlib.Path(a.map_page), entries, a.presence_url, a.map_url, a.title or _tr("py.glb2html.carte_des_mondes"), credit=a.credit)
         sys.exit(0)
     if not a.input:
         ap.error(_tr("py.glb2html.le_fichier_glb_ou_le_dossier"))
@@ -1941,7 +1952,7 @@ def main():
             print(_tr("py.glb2html.avertissement_map_page_ignore_aucune_region_2"), file=sys.stderr)
         else:
             mp = pathlib.Path(a.map_page)
-            write_map_page(mp if mp.is_absolute() else out.parent / mp, entries, kw.get("presence_url", ""), kw.get("map_url", ""), a.title or _tr("py.glb2html.carte_des_mondes"))
+            write_map_page(mp if mp.is_absolute() else out.parent / mp, entries, kw.get("presence_url", ""), kw.get("map_url", ""), a.title or _tr("py.glb2html.carte_des_mondes"), credit=a.credit)
     sys.exit(0 if ok else 1)
 
 

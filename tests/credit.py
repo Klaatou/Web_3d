@@ -7,7 +7,7 @@ la place (coin bas droit), la bulle (cachee, puis au survol, en francais et en a
 promenade), la carte, et l'ecran tactile (colonne de boutons au-dessus, icone cachee quand la saisie du chat occupe le bas).
 Prerequis : python build.py. Variables facultatives : THREE_DIR (racine d'un paquet npm three, hors ligne), CHROMIUM. Lancer : python tests/credit.py
 """
-import asyncio, os, pathlib, socket, subprocess, sys, tempfile, time, zipfile
+import asyncio, json, os, pathlib, shutil, socket, subprocess, sys, tempfile, time, zipfile
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 DEPOT = "https://github.com/Klaatou/Web_3d"
@@ -129,6 +129,52 @@ async def main():
               return [...rg.getClientRects()].filter(r => r.width > 0 && r.right > c.left - 2 && r.bottom > c.top && r.top < c.bottom).map(r => [Math.round(r.left), Math.round(r.right), Math.round(r.top)]); }""")
             rapport(sous == [], "carte etroite : le texte du pied de page ne passe pas sous l'icone", sous)
             await cn.close()
+            # ---- 1.10.13 : sans icone (credit: false dans la config de la page, dans l'en-tete de regions.json pour la carte)
+            s2 = tmp / "site2"
+            shutil.copytree(site, s2)
+            for nom_j in ("region.config.json", "regions.json"):
+                dj = json.loads((s2 / nom_j).read_text(encoding="utf-8"))
+                dj["credit"] = False
+                (s2 / nom_j).write_text(json.dumps(dj), encoding="utf-8")
+            proc2, port2 = serveur(s2)
+            time.sleep(1.5)
+            try:
+                b2 = f"http://127.0.0.1:{port2}/"
+                pn = await br.new_page(locale="fr-FR", viewport={"width": 1200, "height": 700}); nerrs = []
+                pn.on("pageerror", lambda e: nerrs.append(str(e)))
+                await pn.goto(b2 + "index.html")
+                await pn.wait_for_function("document.getElementById('msg') === null", timeout=90000)
+                await pn.wait_for_timeout(1500)
+                rapport(await pn.evaluate("!document.getElementById('credit')"), "sans icone : la page n'a pas l'icone (credit: false dans la config)")
+                rapport(await pn.evaluate("!!document.getElementById('bar')") and not nerrs, "sans icone : la page s'ouvre sans erreur JavaScript", nerrs[:2])
+                await pn.close()
+                cs = await br.new_page(locale="fr-FR", viewport={"width": 900, "height": 600}); serrs = []
+                cs.on("pageerror", lambda e: serrs.append(str(e)))
+                await cs.goto(b2 + "carte.html")
+                await cs.wait_for_function("document.querySelectorAll('a.tile').length > 0", timeout=20000)
+                await cs.wait_for_timeout(800)
+                rapport(await cs.evaluate("!document.getElementById('credit')"), "sans icone : la carte n'a pas l'icone (credit: false dans l'en-tete de regions.json)")
+                rapport(await cs.evaluate("!!document.querySelector('#foot a')") and not serrs, "sans icone : le lien du pied de page de la carte reste, sans erreur", serrs[:2])
+                await cs.close()
+            finally:
+                proc2.terminate()
+            # options de fabrication : --update, puis --map-page
+            s3 = tmp / "site3"
+            shutil.copytree(site, s3)
+            env_u = dict(os.environ, PYTHONUTF8="1")
+            def maj(*opt):
+                subprocess.run([sys.executable, str(ROOT / "dist" / "glb2html.py"), "--update", "-o", str(s3 / "region.html"), "--shared-shell", str(s3 / "index.html"), *opt],
+                               capture_output=True, text=True, cwd=ROOT, env=env_u)
+                return json.loads((s3 / "region.config.json").read_text(encoding="utf-8")).get("credit", "absent")
+            rapport(maj() == "absent", "glb2html --update sans option : pas de cle credit")
+            rapport(maj("--no-credit") is False, "glb2html --update --no-credit : credit: false dans la config")
+            rapport(maj() is False, "glb2html --update sans option : credit: false est garde")
+            rapport(maj("--credit") == "absent", "glb2html --update --credit : la cle disparait")
+            for opt_c, attendu in (("--no-credit", True), ("--credit", False)):
+                mp = tmp / ("map" + opt_c.replace("-", "") + ".html")
+                subprocess.run([sys.executable, str(ROOT / "dist" / "glb2html.py"), "--map-page", str(mp), "--map", str(site / "regions.json"), opt_c], capture_output=True, text=True, cwd=ROOT, env=env_u)
+                cfg_c = mp.read_text(encoding="utf-8") if mp.exists() else ""
+                rapport(mp.exists() and (('"credit":false' in cfg_c.replace(" ", "")) == attendu), f"glb2html --map-page {opt_c} : credit: false " + ("ecrit" if attendu else "absent"))
             await br.close()
     finally:
         proc.terminate()

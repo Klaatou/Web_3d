@@ -80,12 +80,12 @@ async def partie_serveur():
         await visite(port, "Bob", False, 1.5, "b" * 20)
         await visite(port, "Bob", False, 1.0, "b" * 20)                     # reconnexion : même visite
         await visite(port, "", True, 1.0, "a" * 20, marcher_apres=1.0)     # spectateur puis promeneur
-        await visite(port, "", True, 1.0, "c" * 20)                         # spectateur seul
+        await visite(port, "Eve", True, 1.0, "c" * 20)                      # spectateur seul (avec un pseudo : il ne doit pas etre note sans --visits-names)
         await asyncio.sleep(0.5)
         L = lignes(vf)
         rapport(len(L) == 4, "4 connexions écrites", L)
         texte = vf.read_text(encoding="utf-8")
-        rapport("127.0.0.1" not in texte and "Bob" not in texte and all("name" not in x for x in L), "jamais d'IP ; pas de pseudo sans --visits-names", texte)
+        rapport("127.0.0.1" not in texte and "Bob" not in texte and "Eve" not in texte and all("name" not in x for x in L), "jamais d'IP ; pas de pseudo sans --visits-names", texte)
         rapport(all(set(x) == {"room", "start", "dur", "walk", "v"} for x in L), "champs : room, start, dur, walk, v", L[:1])
         rapport(L[0]["v"] == L[1]["v"] and L[0]["v"] != L[2]["v"] and len(L[0]["v"]) == 10, "empreinte : même navigateur, même empreinte", L)
         rapport(L[2]["walk"] >= 1 and L[2]["walk"] < L[2]["dur"] + 1 and L[3]["walk"] == 0, "temps de promenade : spectateur puis promeneur, spectateur seul", L)
@@ -153,6 +153,10 @@ async def partie_serveur():
         await asyncio.sleep(0.5)
         L = lignes(d / "v.jsonl")
         rapport(L[-1].get("name") == "Ann", "--visits-names : pseudo du promeneur noté", L[-1])
+        await visite(port, "Zoe", True, 0.8, "z" * 20)                     # 1.10.13 : visiteur resté en vue globale
+        await asyncio.sleep(0.5)
+        L = lignes(d / "v.jsonl")
+        rapport(L[-1].get("name") == "Zoe", "--visits-names : pseudo d'un visiteur resté en vue globale noté", L[-1])
         r = await demander(port, m.group(1))
         rapport(r.get("ok") and r.get("names") is True and any(x.get("name") == "Ann" for x in r.get("recent", [])) and r.get("keep") == 1, "résumé avec pseudos", r)
     finally:

@@ -1223,8 +1223,12 @@ async def handler(ws):
         if not spectator:
             peer.name, _ = REG.resolve(uidh, msg.get("name"), persistent=not uidh.startswith("anon-"))
             peer.vname = peer.name
-        elif OPTS.map_names_key:
-            peer.label = clean_name(msg.get("name"))
+        elif OPTS.map_names_key or OPTS.visits_names:
+            nom_vue = clean_name(msg.get("name"))
+            if OPTS.map_names_key:
+                peer.label = nom_vue
+            if OPTS.visits_names:
+                peer.vname = nom_vue      # 1.10.13 : visiteur en vue globale : le pseudo que sa page envoie (non reserve), note au journal des visites ; remplace par le pseudo reserve s'il se met a marcher
         existing = [p.public() for p in walkers(room)]
         peers = ROOMS.setdefault(room, {})      # v51 : créé ici seulement (un refus plus haut ne laisse plus de salon vide)
         peers[pid] = peer

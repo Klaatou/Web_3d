@@ -6,6 +6,21 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.10.0)
 
+### 13/11/2026: visit log: nicknames of global-view visitors; `--no-credit` option (batch 1.10.13)
+
+- **Requested by Klaatou**: (1) the visit log should show nicknames, including those of visitors who never went into walking mode (the log is not public); (2) a parameter to remove the "Made with Web_3d" icon at the bottom right.
+- **Finding** (1): `--visits-names` already existed but only recorded walkers (`presence_server.py` sets `vname` when a visitor starts walking): a visitor who stayed in global view never had a nickname. The `lance_presence.sh` sent by Klaatou did not have the option at the start of the conversation. The log only writes a visit when it ends (disconnection): only visits that end after the restart have a nickname.
+- **Done**:
+  - **server** (`src/presence_server.py`): with `--visits-names`, the nickname the page of a global-view visitor sends in its `hello` is recorded (`clean_name`). It is **not reserved**: any browser can send one. If the visitor starts walking, the reserved nickname replaces it. Without the option nothing is recorded. Help text of `--visits-names` updated;
+  - **`glb2html.py --no-credit`** (default `--credit`): the region configuration gets `"credit": false` and the page does not add the icon (`src/template.html`). The key exists **only** in that case: the sample configuration and `tests/samples.py` do not change. `--update --no-credit` writes it, `--update` without option keeps it, `--update --credit` removes it (`merge_maj_cfg`);
+  - **map**: `--map-page FILE --no-credit` writes `credit: false` in the page configuration; the hosted map (`carte.html`) reads `"credit": false` at the root of `regions.json`, like `showUrl`;
+  - the text link "Made with Web_3d" in the footer of the map stays (only the corner icon is removed); the chat and the button column keep their place (bottom right);
+  - texts (`src/i18n`): `py.glb2html.help.credit` and `py.presence.help.visits_names`, in French and English.
+- **Check**: `tests/v48.py`: a named spectator is recorded with `--visits-names` (fails on the 1.10.12 code) and is not recorded without the option; `tests/credit.py`: 10 checks added (page and map without icon, no JavaScript error, footer link of the map kept, `--update` in the four cases, `--map-page` with and without the option), 6 fail on the 1.10.12 code, all pass with the fix. `i18n`, `samples`, `smoke`, `dist_a_jour`, `marque`, `version_page`, `textes_outils`, `gui`, `v47`, `carte_pseudos`, `v52`, `python_recent` also pass. File numbers after the build: `index.html`, `carte.html`, `glb-viewer.html`, `glb2html.py` and `presence_server.py` take 1.10.13, the others keep theirs.
+- **To do on the VM**: send `presence_server.py` from `dist\` with `scp`, then `systemctl restart web3d-presence` (without it, the VM server only writes the walkers' nicknames).
+- **Not tested**: Windows, Edge, Firefox, Safari; how long the icon stays visible before it is removed when the configuration loads (not measured).
+- **Still to update** (rule 16): manual (§ 10.3: visitors' nicknames; `--no-credit` and the `credit` key), `REFERENCE_JSON.md` (`credit` key of the configuration and of the `regions.json` header) and `CREATEURS.md`, in French and English; the demo (`index.html`, `carte.html`, `glb-viewer.html` and `glb2html.py` change).
+
 ### 13/11/2026: documents brought up to date for batches 1.10.3 to 1.10.11 (batch 1.10.12)
 
 - **Requested by Klaatou**: bring the late documents up to date (rule 16), at the resumption of 13/11/2026.

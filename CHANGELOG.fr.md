@@ -6,6 +6,21 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.10.0)
 
+### 13/11/2026 : journal des visites : pseudos des visiteurs en vue globale ; option `--no-credit` (lot 1.10.13)
+
+- **Demandé par Klaatou** : (1) que le journal des visites montre les pseudos, y compris ceux des visiteurs qui n'ont pas passé le mode promenade (le journal n'est pas public) ; (2) un paramètre pour ne pas avoir l'icône « Réalisé avec Web_3d » en bas à droite.
+- **Constat** (1) : `--visits-names` existait, mais ne notait que les promeneurs (`presence_server.py` pose `vname` à l'entrée en promenade) : un visiteur resté en vue globale n'avait jamais de pseudo. Le `lance_presence.sh` envoyé par Klaatou n'avait pas l'option au début de la conversation. Le journal n'écrit une visite qu'à sa fin (déconnexion) : seules les visites qui se terminent après le relancement ont un pseudo.
+- **Fait** :
+  - **serveur** (`src/presence_server.py`) : avec `--visits-names`, le pseudo que la page d'un visiteur en vue globale envoie dans son `hello` est noté (`clean_name`). Il n'est **pas réservé** : n'importe quel navigateur peut en envoyer un. S'il se met à marcher, le pseudo réservé le remplace. Sans l'option rien n'est noté. Texte d'aide de `--visits-names` mis à jour ;
+  - **`glb2html.py --no-credit`** (défaut `--credit`) : la configuration de la région reçoit `"credit": false` et la page n'ajoute pas l'icône (`src/template.html`). La clé n'existe **que** dans ce cas : la configuration d'exemple et `tests/samples.py` ne changent pas. `--update --no-credit` l'écrit, `--update` sans option la garde, `--update --credit` la retire (`merge_maj_cfg`) ;
+  - **carte** : `--map-page FILE --no-credit` écrit `credit: false` dans la configuration de la page ; la carte hébergée (`carte.html`) lit `"credit": false` à la racine de `regions.json`, comme `showUrl` ;
+  - le lien texte « Réalisé avec Web_3d » du pied de page de la carte reste (seule l'icône du coin est retirée) ; le chat et la colonne de boutons gardent leur place (bas à droite) ;
+  - textes (`src/i18n`) : `py.glb2html.help.credit` et `py.presence.help.visits_names`, en français et en anglais.
+- **Contrôle** : `tests/v48.py` : un spectateur nommé est noté avec `--visits-names` (échoue sur le code de la 1.10.12) et n'est pas noté sans l'option ; `tests/credit.py` : 10 contrôles ajoutés (page et carte sans icône, sans erreur JavaScript, lien du pied de la carte conservé, `--update` dans les quatre cas, `--map-page` avec et sans l'option), 6 échouent sur le code de la 1.10.12, tout passe avec le correctif. Passent aussi `i18n`, `samples`, `smoke`, `dist_a_jour`, `marque`, `version_page`, `textes_outils`, `gui`, `v47`, `carte_pseudos`, `v52`, `python_recent`. Numéros par fichier après le build : `index.html`, `carte.html`, `glb-viewer.html`, `glb2html.py` et `presence_server.py` prennent 1.10.13, les autres gardent le leur.
+- **À faire sur la VM** : envoyer `presence_server.py` de `dist\` par `scp`, puis `systemctl restart web3d-presence` (sans lui, le serveur de la VM n'écrit que les pseudos des promeneurs).
+- **Non essayé** : Windows, Edge, Firefox, Safari ; la durée pendant laquelle l'icône reste visible avant d'être retirée au chargement de la configuration (non mesurée).
+- **Reste à mettre à jour** (règle 16) : manuel (§ 10.3 : pseudos des visiteurs ; `--no-credit` et la clé `credit`), `REFERENCE_JSON.md` (clé `credit` de la configuration et de l'en-tête de `regions.json`) et `CREATEURS.md`, en français et en anglais ; la démo (`index.html`, `carte.html`, `glb-viewer.html` et `glb2html.py` changent).
+
 ### 13/11/2026 : documents à jour pour les lots 1.10.3 à 1.10.11 (lot 1.10.12)
 
 - **Demandé par Klaatou** : mettre à jour les documents en retard (règle 16), à la reprise du 13/11/2026.
