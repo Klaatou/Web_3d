@@ -28,20 +28,12 @@ for _s in (sys.stdout, sys.stderr):
 
 ICI = Path(__file__).resolve().parent
 RACINE = ICI.parent
-AIDES = {"h37", "glbfab", "tout"}          # modules d'aide importes par d'autres tests, et ce script : pas des tests
-# Chaque test est lance comme « python tests\\NOM.py » : meme environnement, meme dossier courant. Seule la sortie de CE processus est mise en
-# UTF-8 (pour que le journal soit lisible) : PAS par variable d'environnement (PYTHONIOENCODING, PYTHONUTF8), qui serait heritee par les
-# programmes que les tests lancent eux-memes et changerait leur encodage (les tests les lisent avec l'encodage par defaut de Windows).
-ENVELOPPE = ("import os, runpy, sys\n"
-             "for s in (sys.stdout, sys.stderr):\n"
-             "    try:\n"
-             "        s.reconfigure(encoding='utf-8', errors='replace')\n"
-             "    except Exception:\n"
-             "        pass\n"
-             "p = sys.argv[1]\n"
-             "sys.argv = [p]\n"
-             "sys.path.insert(0, os.path.dirname(p))\n"
-             "runpy.run_path(p, run_name='__main__')\n")
+AIDES = {"h37", "glbfab", "vider_tube", "tout"}          # modules d'aide importes par d'autres tests, et ce script : pas des tests
+# Environnement UTF-8, comme au premier passage complet sous Windows (83 tests OK). Sans ces deux variables, neuf tests de plus echouent : un
+# programme fils ecrit sa sortie dans l'encodage de la page de code de Windows (cp1252) ou en UTF-8 selon l'outil, et le test, qui la relit avec
+# l'encodage par defaut, ne retrouve pas ses accents ; un outil peut aussi planter sur un caractere comme la fleche « → » quand sa sortie va dans
+# un tube. Pour un test seul, sous Windows :   $env:PYTHONUTF8="1"; python .\tests\NOM.py
+ENVIRONNEMENT = dict(os.environ, PYTHONIOENCODING="utf-8", PYTHONUTF8="1")
 RX_ECHEC = re.compile(r"^\s*\[(ECHEC|ÉCHEC)\]", re.IGNORECASE | re.MULTILINE)
 RX_IGNORE = re.compile(r"^\s*\[IGNORE\]", re.IGNORECASE | re.MULTILINE)
 
@@ -54,8 +46,8 @@ def lancer(chemin, delai, dossier_logs):
     """(statut, secondes, sortie, nb_ignores)"""
     t0 = time.time()
     try:
-        r = subprocess.run([sys.executable, "-u", "-c", ENVELOPPE, str(chemin)], cwd=str(RACINE), stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                           stderr=subprocess.STDOUT, timeout=delai)
+        r = subprocess.run([sys.executable, "-u", str(chemin)], cwd=str(RACINE), stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                           stderr=subprocess.STDOUT, timeout=delai, env=ENVIRONNEMENT)
         sortie = r.stdout.decode("utf-8", "replace")
         statut = "OK" if r.returncode == 0 else "ECHEC"
         if r.returncode == 0 and RX_ECHEC.search(sortie):

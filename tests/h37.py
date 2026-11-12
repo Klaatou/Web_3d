@@ -1,5 +1,6 @@
 """Aide commune des tests v37 (copie des outils de tests/v36.py : fabrication, serveurs, onglet de navigateur)."""
 import asyncio, json, math, os, pathlib, re, socket, struct, subprocess, sys, tempfile, time
+from vider_tube import vider
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tests"))
@@ -57,6 +58,7 @@ def lancer_presence(*extra):
     port = port_libre()
     proc = subprocess.Popen([sys.executable, str(DIST / "presence_server.py"), "--host", "127.0.0.1", "--port", str(port), "--identities", "", *extra],
                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, cwd=tmp)
+    vider(proc)      # Windows : un tube non lu se remplit (4 Ko) et bloque le serveur
     attendre_port(port, proc, "presence_server")
     return proc, port
 

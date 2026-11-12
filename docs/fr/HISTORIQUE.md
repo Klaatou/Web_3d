@@ -228,6 +228,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 11/11/2026 |  | après 1.9.0 | Lot 1.9.20 : `tests/tout.py` lance chaque test dans le même environnement qu'un lancement direct |
 | 11/11/2026 |  | après 1.9.0 | Lot 1.9.21 : Windows : `oar2glb.py` accepte un convoar `.py` et ne trace plus d'erreur à sa pause ; tests `marque`, `v48`, `mono_linux` |
 | 11/11/2026 |  | après 1.9.0 | Lot 1.9.22 : tests : `oar2glb` réencode dans un interpréteur fils (Windows) ; `tout.py` montre la dernière trace d'erreur |
+| 11/11/2026 |  | après 1.9.0 | Lot 1.9.23 : tests : `tout.py` rétablit l'environnement UTF-8 (correction du lot 1.9.20) ; les serveurs de présence des tests ne se bloquent plus sur un tube plein (`tests/vider_tube.py`) |
 
 ## Commandes utiles
 

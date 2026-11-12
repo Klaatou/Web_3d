@@ -42,11 +42,11 @@ python .\tests\NOM.py
 
 The full suite has more than 70 files and takes long. Already failing in the sandbox and in cloud sessions: `doc_options`, `image_dossier`, `marque`.
 
-To run it in one go: `python .\tests\tout.py`. It runs each test one after the other, flags those that fail (return code, `[ECHEC]` line, timeout, suspicious error trace) and summarises everything; the full outputs are in `tests_logs\` (folder ignored by git). Options: `--liste`, `--seulement REGEX`, `--sauf REGEX`, `--reprendre` (skips the tests that passed last time), `--arreter`, `--delai N`.
+To run it in one go: `python .\tests\tout.py`. It runs each test one after the other, flags those that fail (return code, `[ECHEC]` line, timeout, suspicious error trace) and summarises everything; the full outputs are in `tests_logs\` (folder ignored by git). Options: `--liste`, `--seulement REGEX`, `--sauf REGEX`, `--reprendre` (skips the tests that passed last time), `--arreter`, `--delai N`. It sets `PYTHONUTF8=1` and `PYTHONIOENCODING=utf-8`: the suite assumes a UTF-8 environment (nine more tests fail without it, run of 12/11/2026). For one test on Windows: `$env:PYTHONUTF8="1"; python .\tests\NOM.py`.
 
 Tests added with 1.8.x: `bouton_promenade.py`, `demarrage_lien.py`, `build_reference.py` and `convoar_dist.py`.
 
-Under Windows, a test that reads the output of a child program must start it with `PYTHONIOENCODING=utf-8` (otherwise its output is in cp1252), close its input (`stdin=subprocess.DEVNULL`, otherwise a tool waits for Enter) and, if that program writes a lot to its console, read it during the test (a Windows pipe only keeps 4 KB): `tests/build_reference.py`, `tests/console.py` and `tests/correctifs_v52.py` are examples.
+Under Windows, a test that reads the output of a child program must start it with `PYTHONIOENCODING=utf-8` (otherwise its output is in cp1252), close its input (`stdin=subprocess.DEVNULL`, otherwise a tool waits for Enter) and, if that program writes a lot to its console, read it during the test (a Windows pipe only keeps 4 KB): `tests/build_reference.py`, `tests/console.py` and `tests/correctifs_v52.py` are examples. The presence servers started with a pipe go through `vider` of `tests/vider_tube.py`.
 
 ## 5. Publish a version
 

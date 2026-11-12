@@ -16,6 +16,7 @@ import asyncio, json, math, os, pathlib, re, shutil, socket, struct, subprocess,
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tests"))
 import glbfab
+from vider_tube import vider
 from glbfab import hauteur
 
 DIST, DATA = ROOT / "dist", ROOT / "tests" / "data"
@@ -65,6 +66,7 @@ def lancer_presence(*extra, script=None):
     port = port_libre()
     proc = subprocess.Popen([sys.executable, str(script or DIST / "presence_server.py"), "--host", "127.0.0.1", "--port", str(port), "--identities", "", *extra],
                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, cwd=tmp)
+    vider(proc)      # Windows : un tube non lu se remplit (4 Ko) et bloque le serveur
     for _ in range(80):
         try:
             socket.create_connection(("127.0.0.1", port), timeout=0.2).close()
