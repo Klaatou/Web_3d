@@ -42,7 +42,7 @@ To also remove the cards whose region no longer exists (external cards are kept)
 python .\glb2html.py --scan-sites "P:\_OpenSim\SL&OS\Web_3d\Sites" --prune-missing --dry-run
 ```
 
-If the map shows no nicknames, `diag_carte.py` queries the presence server with and without the key and says what is missing (it needs `pip install websockets`; the site address at the end is only useful if the server only accepts some sites):
+The names key is typed in the collapsed "Names key" block at the bottom of `carte.html`: the browser keeps it (`MANUAL.md` § 9.16). If the map shows no nicknames, `diag_carte.py` queries the presence server with and without the key and says what is missing (it needs `pip install websockets`; the site address at the end is only useful if the server only accepts some sites):
 
 ```powershell
 cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python .\diag_carte.py wss://ADRESSE CLE https://VOTRE-SITE
@@ -170,7 +170,7 @@ Tried (07/11/2026, Chromium on Linux): the current `index.html` opens without er
 
 ## 11. Open the tools in a window, with shortcuts on the desktop
 
-To avoid typing a command: a window offers the six tools, with the help of every option (`MANUAL.md` § 3.9). From the root of the repository:
+To avoid typing a command: a window offers the seven tools, with the help of every option (`MANUAL.md` § 3.9). From the root of the repository:
 
 ```powershell
 python .\dist\web3d_gui.py
@@ -190,6 +190,6 @@ then, if the paths suit you:
 python .\dist\web3d_gui.py --shortcuts
 ```
 
-![The seven shortcuts](../images/raccourcis.png)
+![The shortcuts (screenshot from before `glb-stats`: seven shortcuts; there are eight since 1.10.3)](../images/raccourcis.png)
 
 Running the same command again replaces the shortcuts. To remove them: `python .\dist\web3d_gui.py --remove-shortcuts`. Tried by Klaatou on Windows (08/11/2026).

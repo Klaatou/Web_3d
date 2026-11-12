@@ -42,7 +42,7 @@ Pour retirer aussi les fiches dont la région n'existe plus (les fiches externes
 python .\glb2html.py --scan-sites "P:\_OpenSim\SL&OS\Web_3d\Sites" --prune-missing --dry-run
 ```
 
-Si la carte n'affiche pas les pseudos, `diag_carte.py` interroge le serveur de présence avec et sans la clé et dit ce qui manque (il demande `pip install websockets` ; l'adresse du site, à la fin, n'est utile que si le serveur n'accepte que certains sites) :
+La clé des pseudos se saisit dans le bloc replié « Clé des pseudos », en bas de `carte.html` : le navigateur la garde (`MANUEL.md` § 9.16). Si la carte n'affiche pas les pseudos, `diag_carte.py` interroge le serveur de présence avec et sans la clé et dit ce qui manque (il demande `pip install websockets` ; l'adresse du site, à la fin, n'est utile que si le serveur n'accepte que certains sites) :
 
 ```powershell
 cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python .\diag_carte.py wss://ADRESSE CLE https://VOTRE-SITE
@@ -170,7 +170,7 @@ Essayé (07/11/2026, Chromium sous Linux) : l'`index.html` actuel ouvre sans err
 
 ## 11. Ouvrir les outils dans une fenêtre, avec des raccourcis sur le bureau
 
-Pour ne pas taper de commande : une fenêtre propose les six outils, avec l'aide de chaque option (`MANUEL.md` § 3.9). Depuis la racine du dépôt :
+Pour ne pas taper de commande : une fenêtre propose les sept outils, avec l'aide de chaque option (`MANUEL.md` § 3.9). Depuis la racine du dépôt :
 
 ```powershell
 python .\dist\web3d_gui.py
@@ -190,6 +190,6 @@ puis, si les chemins conviennent :
 python .\dist\web3d_gui.py --shortcuts
 ```
 
-![Les sept raccourcis](../images/raccourcis.png)
+![Les raccourcis (capture d'avant `glb-stats` : sept raccourcis ; il y en a huit depuis la 1.10.3)](../images/raccourcis.png)
 
 Relancer la même commande remplace les raccourcis. Pour les retirer : `python .\dist\web3d_gui.py --remove-shortcuts`. Essayé par Klaatou sous Windows (08/11/2026).

@@ -6,6 +6,17 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.10.0)
 
+### 13/11/2026: documents brought up to date for batches 1.10.3 to 1.10.11 (batch 1.10.12)
+
+- **Requested by Klaatou**: bring the late documents up to date (rule 16), at the resumption of 13/11/2026.
+- **Done** (documents only: no code changes, `dist\` and `VERSIONS.json` identical, so no built file changes its number):
+  - `MANUEL.md` and `MANUAL.md`: § 3.9 (seven tools with `glb-stats`, the "Function" line, the window icon, eight shortcuts, the image caption, Python 3.10 to 3.14 and the 3.14 defect fixed in 1.10.4); no more "Enter" pause after `--help` (tables of `oar2glb.py` and `glb2tiles.py`); § 7.46 ("Original values"); § 7.53 (the diagnostic in a window); **new § 7.65** (metal reflections: slider, 0 % by default, the offer at 60 %, "Original values", the diagnostic line, cost, estimates); § 9.16 (the collapsed "Names key" block, a refused key no longer sent); § 13 ("Additions after 1.10.0" row);
+  - `PROCEDURES_SIMPLES.md` and `SIMPLE_PROCEDURES.md` (§ 11: seven tools, image caption; names key), `PROCEDURES.md` (names key), `INDEX.md` (two lines), `HISTORIQUE.md` and `HISTORY.md` (one line);
+  - in the English manual the slider and the button carry the name of the English interface ("Metal reflections", "Default values"); `HISTORY.md` still says "Original values" in the old batch 1.10.11 line, left as it is.
+- **Check**: `verif_trad.py` on the five modified pairs (manual, procedures, simple procedures, index, history): 0 errors; the first try had two errors (`glb2html_opts_SALON` and `glb2html_metal_asked_SALON` written `ROOM` in English), fixed; build with `--vendor`: `dist\` and `VERSIONS.json` unchanged; `readme_liens`, `apropos_liens`, `lien_image`, `i18n`, `samples`, `dist_a_jour`, `marque` pass. `doc_options` fails (1 failure) with or without this batch: same result on the original `main` in the sandbox (Python 3.12 writes the `--x`/`--no-x` options differently); `docs/REFERENCE_OPTIONS.md`, rewritten by the sandbox build, was put back to the state of `main`. Facts quoted were re-read in `src/` (slider 0 to 200 in steps of 5, polled every 2 s for 60 tries, window 820 px and 90 % of the screen at most, text area height 80 % at most, browser keys) and in `tools/web3d_gui.py` (`for nom, fichier in OUTILS`, seven tools).
+- **Not tested**: Windows (window icon, eight shortcuts: read in the code, not run); how the new paragraphs render on GitHub.
+- **Still to update**: the image `docs/images/raccourcis.png` still shows seven shortcuts (the caption says so): a new screenshot is needed from Klaatou on Windows; the demo (`index.html`, `carte.html`, `glb-viewer.html`, `glb2html.py` have changed since 1.10.0).
+
 ### 12/11/2026: "Original values" also brings back the reflections offer (batch 1.10.11)
 
 - **Reported by Klaatou**: after putting the reflections back to 0 % with the slider, the bar that spots the PBR metals does not come back, and he has no way to call it again.

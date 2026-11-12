@@ -6,6 +6,17 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.10.0)
 
+### 13/11/2026 : documents à jour pour les lots 1.10.3 à 1.10.11 (lot 1.10.12)
+
+- **Demandé par Klaatou** : mettre à jour les documents en retard (règle 16), à la reprise du 13/11/2026.
+- **Fait** (documents seulement : aucun code ne change, `dist\` et `VERSIONS.json` identiques, donc aucun fichier fabriqué ne change de numéro) :
+  - `MANUEL.md` et `MANUAL.md` : § 3.9 (sept outils avec `glb-stats`, ligne « Fonction », icône de la fenêtre, huit raccourcis, légende de l'image, Python 3.10 à 3.14 et le défaut de 3.14 corrigé en 1.10.4) ; plus de pause « Entrée » après `--help` (tableaux de `oar2glb.py` et de `glb2tiles.py`) ; § 7.46 (« Valeurs d'origine ») ; § 7.53 (le diagnostic dans une fenêtre) ; **nouveau § 7.65** (reflets métalliques : curseur, 0 % par défaut, proposition à 60 %, « Valeurs d'origine », ligne du diagnostic, coût, estimations) ; § 9.16 (bloc replié « Clé des pseudos », clé refusée non renvoyée) ; § 13 (ligne « Ajouts après la 1.10.0 ») ;
+  - `PROCEDURES_SIMPLES.md` et `SIMPLE_PROCEDURES.md` (§ 11 : sept outils, légende de l'image ; clé des pseudos), `PROCEDURES.md` (clé des pseudos), `INDEX.md` (deux lignes), `HISTORIQUE.md` et `HISTORY.md` (une ligne) ;
+  - dans le manuel anglais, le curseur et le bouton portent le nom de l'interface anglaise (« Metal reflections », « Default values ») ; `HISTORY.md` dit encore « Original values » dans l'ancienne ligne du lot 1.10.11, laissée telle quelle.
+- **Contrôle** : `verif_trad.py` sur les cinq couples modifiés (manuel, procédures, procédures simples, index, historique) : 0 erreur ; sur le premier essai, deux erreurs (`glb2html_opts_SALON` et `glb2html_metal_asked_SALON` écrits `ROOM` en anglais) corrigées ; build avec `--vendor` : `dist\` et `VERSIONS.json` inchangés ; passent `readme_liens`, `apropos_liens`, `lien_image`, `i18n`, `samples`, `dist_a_jour`, `marque`. `doc_options` échoue (1 échec) avec ou sans ce lot : même résultat sur `main` d'origine dans le bac à sable (Python 3.12 écrit autrement les options `--x`/`--no-x`) ; `docs/REFERENCE_OPTIONS.md`, réécrit par le build du bac à sable, a été remis à l'état de `main`. Faits cités relus dans `src/` (curseur 0 à 200 par pas de 5, relevé toutes les 2 s pendant 60 essais, fenêtre de 820 px et 90 % de l'écran au plus, hauteur de la zone de texte 80 % au plus, clés du navigateur) et dans `tools/web3d_gui.py` (`for nom, fichier in OUTILS`, sept outils).
+- **Non essayé** : Windows (icône de la fenêtre, huit raccourcis : lus dans le code, pas exécutés) ; le rendu des nouveaux paragraphes sur GitHub.
+- **Reste à mettre à jour** : l'image `docs/images/raccourcis.png` montre encore sept raccourcis (la légende le dit) : capture à refaire chez Klaatou sous Windows ; la démo (`index.html`, `carte.html`, `glb-viewer.html`, `glb2html.py` ont changé depuis la 1.10.0).
+
 ### 12/11/2026 : « Valeurs d'origine » remet aussi la proposition des reflets (lot 1.10.11)
 
 - **Constaté par Klaatou** : après avoir remis les reflets à 0 % avec le curseur, la barre qui repère les métaux PBR ne revient pas, et il n'a aucun moyen de la rappeler.

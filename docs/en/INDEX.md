@@ -28,6 +28,8 @@ This page says **which document to read for what**. The French documents carry t
 | open the tools in a window, create shortcuts on the desktop | `MANUAL.md` § 3.9; `SIMPLE_PROCEDURES.md` § 11 |
 | convert an OAR that contains PBR (OpenSim 0.9.3) | `MANUAL.md` § 3.10 |
 | convert an OAR on Linux (Mono) | `MANUAL.md` § 3.11 |
+| set the metal reflections (PBR) in the page | `MANUAL.md` § 7.65 |
+| type the names key of the map | `MANUAL.md` § 9.16 |
 | set the sea height in the page | `MANUAL.md` § 9.19 |
 | ask a question, get help | the Discord server: https://discord.gg/BDG9r5gXwr |
 | see other visitors, chat, moderate | `GUIDE.md` § 5; `MANUAL.md` § 10; `PROCEDURES.md` § 6 |
