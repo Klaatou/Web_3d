@@ -6,6 +6,15 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.10.0)
 
+### 12/11/2026 : « Valeurs d'origine » remet aussi la proposition des reflets (lot 1.10.11)
+
+- **Constaté par Klaatou** : après avoir remis les reflets à 0 % avec le curseur, la barre qui repère les métaux PBR ne revient pas, et il n'a aucun moyen de la rappeler.
+- **Cause** (`src/template.html`) : toucher au curseur vaut réponse et est retenu pour la région (`glb2html_metal_asked_<région>`, lot 1.10.10), et rien ne l'effaçait.
+- **Fait** : « Valeurs d'origine » (Réglages) efface aussi cette réponse, remet les reflets à 0 % et la page repropose aussitôt les reflets si la région contient des métaux. Sans autre manipulation dans le navigateur.
+- **Contrôle** : `tests/reflets_metal.py` (section 8) : après un réglage du curseur, rechargement sans barre, puis « Valeurs d'origine » : reflets à 0 %, réponse effacée et barre de retour. Sur le code de la 1.10.10 ce contrôle échoue, avec le correctif tout passe. Passent aussi `mer_hauteur`, `v36`, `v36_lang`, `v42`, `v45_lib`, `v46`, `v52`, `smoke`, `samples`, `i18n`, `tuiles`, `dist_a_jour`, `marque`, `version_page`, `credit`, `icone`.
+- **Non essayé** : Windows réel, Edge, Firefox, Safari (Chromium sous Linux seulement).
+- **Reste à mettre à jour** (règle 16) : manuel (Réglages : « Valeurs d'origine » remet aussi la proposition des reflets), en français et en anglais ; la démo (`index.html`, `glb-viewer.html`, `glb2html.py` changent).
+
 ### 12/11/2026 : fenêtre du diagnostic ajustée ; la page propose les reflets quand elle voit des métaux PBR (lot 1.10.10)
 
 - **Constaté et demandé par Klaatou** (capture) : la fenêtre du diagnostic n'est pas de la taille de ce qu'elle montre (lignes coupées, barre horizontale) et ne se redimensionne que verticalement ; et `index.html` doit repérer les PBR et proposer d'activer un certain pourcentage de reflets.

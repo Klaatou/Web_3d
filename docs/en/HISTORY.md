@@ -240,6 +240,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 12/11/2026 |  | after 1.10.0 | Batch 1.10.8: diagnostic: "Metal reflections" line (setting, metallic materials loaded, with reflections); `tests/reflets_metal.py` |
 | 12/11/2026 |  | after 1.10.0 | Batch 1.10.9: diagnostic shown in a window as well as copied (page and viewer); correction of a conclusion of batch 1.10.8; `tests/v39.py` |
 | 12/11/2026 |  | after 1.10.0 | Batch 1.10.10: diagnostic window the size of its text and resizable; the page offers the reflections when it sees PBR metals (default of the reflections: 0 %); `tests/reflets_metal.py`, `tests/v39.py` |
+| 12/11/2026 |  | after 1.10.0 | Batch 1.10.11: "Original values" also brings back the reflections offer; `tests/reflets_metal.py` |
 
 ## Useful commands
 

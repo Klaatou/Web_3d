@@ -6,6 +6,15 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.10.0)
 
+### 12/11/2026: "Original values" also brings back the reflections offer (batch 1.10.11)
+
+- **Reported by Klaatou**: after putting the reflections back to 0 % with the slider, the bar that spots the PBR metals does not come back, and he has no way to call it again.
+- **Cause** (`src/template.html`): touching the slider counts as an answer and is remembered for the region (`glb2html_metal_asked_<region>`, batch 1.10.10), and nothing cleared it.
+- **Done**: "Original values" (Settings) also clears this answer, puts the reflections back to 0 % and the page offers the reflections again at once if the region contains metals. No other manipulation in the browser.
+- **Check**: `tests/reflets_metal.py` (section 8): after a slider setting, a reload without the bar, then "Original values": reflections at 0 %, answer cleared and the bar is back. On the 1.10.10 code this check fails, with the fix all pass. `mer_hauteur`, `v36`, `v36_lang`, `v42`, `v45_lib`, `v46`, `v52`, `smoke`, `samples`, `i18n`, `tuiles`, `dist_a_jour`, `marque`, `version_page`, `credit` and `icone` also pass.
+- **Not tried**: real Windows, Edge, Firefox, Safari (Chromium under Linux only).
+- **Still to update** (rule 16): manual (Settings: "Original values" also brings back the reflections offer), in French and English; the demo (`index.html`, `glb-viewer.html` and `glb2html.py` change).
+
 ### 12/11/2026: diagnostic window adjusted; the page offers the reflections when it sees PBR metals (batch 1.10.10)
 
 - **Reported and requested by Klaatou** (screenshot): the diagnostic window is not the size of what it shows (cut lines, horizontal bar) and can only be resized vertically; and `index.html` must spot the PBR materials and offer to turn on a certain percentage of reflections.

@@ -16,8 +16,8 @@ Draco et Meshopt gérés automatiquement (décodeurs intégrés seulement si le 
 """
 from __future__ import annotations
 
-VERSION = "1.10.10 (12/11/2026)"
-SHELL_VERSION = "1.10.10 (12/11/2026)"   # numéro de version de la coquille (index.html) : écrit par build.py, ne change que si la coquille change
+VERSION = "1.10.11 (12/11/2026)"
+SHELL_VERSION = "1.10.11 (12/11/2026)"   # numéro de version de la coquille (index.html) : écrit par build.py, ne change que si la coquille change
 MAP_VERSION = "1.10.10 (12/11/2026)"       # numéro de version de la page de carte (carte.html) : idem
 
 import argparse
@@ -4322,6 +4322,7 @@ function compassTick() {
 if (C.compass !== false) setInterval(compassTick, 100);
 const METAL_ASKED = 'glb2html_metal_asked_' + (C.room || 'x'), METAL_SUGGEST = 60;   // 1.10.10 : la page propose les reflets metalliques ; la reponse est retenue par region
 let metalAskApply = p => viewer.setCfg({ metalEnv: p });      // le panneau Reglages le remplace : il retient aussi le choix
+let metalAskAgain = () => {};      // 1.10.11 : « Valeurs d'origine » efface la reponse et la page repropose les reflets (defini plus bas)
 if (C.panel !== false) {
   const ob = document.getElementById('optsBtn'), op = document.getElementById('optsPanel');
   ob.title = tr('page.win.o.tip');   // v41 : bulle (rôle et touche)
@@ -4464,7 +4465,7 @@ if (C.panel !== false) {
     const ll = mk('label'); ll.append(mk('span', { textContent: tr('page.opt.lang') }), selL); op.append(ll);
   }
   const rst = mk('button', { textContent: tr('page.opt.reset') });
-  rst.onclick = () => { Object.assign(st, base); apply(); lightReset(); };   // v42 : le rendu léger revient aussi aux valeurs de la page
+  rst.onclick = () => { Object.assign(st, base); apply(); lightReset(); try { localStorage.removeItem(METAL_ASKED); } catch (e) {} metalAskAgain(); };   // v42 : le rendu léger revient aussi aux valeurs de la page ; 1.10.11 : les reflets aussi (la page les repropose)
   op.append(rst, mk('small', { id: 'optsNote', textContent: tr('page.opt.note') }));   // v42 : la note reste tout en bas (la section Disposition s'insère avant)
   sync(); ob.hidden = false;
   ob.onclick = () => { op.hidden = !op.hidden; if (!op.hidden) sync(); };
@@ -4501,7 +4502,9 @@ if (!LIGHT.asked && !LIGHT.st.on && softGpu(viewer.renderer)) {
     document.body.append(box);
     return true;
   };
-  if (!check()) { const iv = setInterval(() => { if (check()) clearInterval(iv); }, 2000); }
+  const start = () => { tries = 0; if (!check()) { const iv = setInterval(() => { if (check()) clearInterval(iv); }, 2000); } };
+  metalAskAgain = start;
+  start();
 }
 if (C.walk) {
   const wb = document.getElementById('walkBtn'), wh = document.getElementById('walkHint');

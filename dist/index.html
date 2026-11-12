@@ -469,7 +469,7 @@ function diagShow(text, status, select) {
 function diagText(viewer, extra) {
   const x = extra || {}, L = (k, v) => tr('core.diag.line', k, v), out = [tr('core.diag.title')];
   const nb = (v, d) => (Number.isFinite(v) ? i18nNum(v, d || 0) : '?');   // nombres à la manière de la langue (virgule en français)
-  out.push(L(tr('core.diag.version'), '1.10.10 (12/11/2026)' + (x.cfgVersion && x.cfgVersion !== '1.10.10 (12/11/2026)' ? ' ; ' + tr('core.diag.cfgver', x.cfgVersion) : '')));
+  out.push(L(tr('core.diag.version'), '1.10.11 (12/11/2026)' + (x.cfgVersion && x.cfgVersion !== '1.10.11 (12/11/2026)' ? ' ; ' + tr('core.diag.cfgver', x.cfgVersion) : '')));
   out.push(L(tr('core.diag.date'), new Date().toLocaleString(({ fr: 'fr-FR', en: 'en-GB' })[LANG]) + ' ; ' + tr('core.diag.uptime', nb(performance.now() / 1000))));
   out.push(L(tr('core.diag.page'), location.protocol + (location.host ? '//ADRESSE' : '//') + location.pathname + location.search));
   out.push(L(tr('core.diag.lang'), LANG + ' · ' + ((navigator.languages || []).join(',') || navigator.language || '?') + ' · ' + KB.layout().toUpperCase()));
@@ -3481,6 +3481,7 @@ function compassTick() {
 if (C.compass !== false) setInterval(compassTick, 100);
 const METAL_ASKED = 'glb2html_metal_asked_' + (C.room || 'x'), METAL_SUGGEST = 60;   // 1.10.10 : la page propose les reflets metalliques ; la reponse est retenue par region
 let metalAskApply = p => viewer.setCfg({ metalEnv: p });      // le panneau Reglages le remplace : il retient aussi le choix
+let metalAskAgain = () => {};      // 1.10.11 : « Valeurs d'origine » efface la reponse et la page repropose les reflets (defini plus bas)
 if (C.panel !== false) {
   const ob = document.getElementById('optsBtn'), op = document.getElementById('optsPanel');
   ob.title = tr('page.win.o.tip');   // v41 : bulle (rôle et touche)
@@ -3623,7 +3624,7 @@ if (C.panel !== false) {
     const ll = mk('label'); ll.append(mk('span', { textContent: tr('page.opt.lang') }), selL); op.append(ll);
   }
   const rst = mk('button', { textContent: tr('page.opt.reset') });
-  rst.onclick = () => { Object.assign(st, base); apply(); lightReset(); };   // v42 : le rendu léger revient aussi aux valeurs de la page
+  rst.onclick = () => { Object.assign(st, base); apply(); lightReset(); try { localStorage.removeItem(METAL_ASKED); } catch (e) {} metalAskAgain(); };   // v42 : le rendu léger revient aussi aux valeurs de la page ; 1.10.11 : les reflets aussi (la page les repropose)
   op.append(rst, mk('small', { id: 'optsNote', textContent: tr('page.opt.note') }));   // v42 : la note reste tout en bas (la section Disposition s'insère avant)
   sync(); ob.hidden = false;
   ob.onclick = () => { op.hidden = !op.hidden; if (!op.hidden) sync(); };
@@ -3660,7 +3661,9 @@ if (!LIGHT.asked && !LIGHT.st.on && softGpu(viewer.renderer)) {
     document.body.append(box);
     return true;
   };
-  if (!check()) { const iv = setInterval(() => { if (check()) clearInterval(iv); }, 2000); }
+  const start = () => { tries = 0; if (!check()) { const iv = setInterval(() => { if (check()) clearInterval(iv); }, 2000); } };
+  metalAskAgain = start;
+  start();
 }
 if (C.walk) {
   const wb = document.getElementById('walkBtn'), wh = document.getElementById('walkHint');
@@ -3715,7 +3718,7 @@ if (C.walk) {
   const sb = document.getElementById('stateInfo'), sbody = document.getElementById('stateBody'), shead = document.getElementById('stateHead');
   const mkLine = id => { const d = document.createElement('div'); d.id = id; sbody.append(d); return d; };
   const lv = mkLine('viewInfo'), lm = mkLine('modeInfo'), lmo = mkLine('mouseInfo'), lp = mkLine('posInfo'), lkb = mkLine('kbInfo');
-  mkLine('verInfo').textContent = tr('page.state.version', '1.10.10 (12/11/2026)', C.version || '?');   // 1.6.17 : version de la page (index.html, ou glb2html.py pour une page autonome) et de la configuration
+  mkLine('verInfo').textContent = tr('page.state.version', '1.10.11 (12/11/2026)', C.version || '?');   // 1.6.17 : version de la page (index.html, ou glb2html.py pour une page autonome) et de la configuration
   // v39 : bouton « Copier le diagnostic » sous le contenu de la fenêtre (reste visible quand elle est réduite) : lignes affichées + diagText (core.js) ;
   // si le navigateur refuse la copie, le texte s'affiche sélectionné dessous (Ctrl+C)
   {

@@ -243,6 +243,12 @@ async def main():
         rapport(not await o.ev("!!document.getElementById('metalAsk')"), "toucher au curseur vaut reponse : la barre disparait")
         await o.pg.reload(); await o.attendre(PRET, 40); await o.pg.wait_for_timeout(2500)
         rapport(not await o.ev("!!document.getElementById('metalAsk')") and abs(await o.ev("window.__viewer.cfg.metalEnv") - 25) < 1e-9, "apres rechargement : pas de question, le choix 25 % est repris")
+        await o.ev("document.getElementById('optsBtn').click()")
+        await o.ev("[...document.querySelectorAll('#optsPanel button')].find(x => x.textContent.includes(\"Valeurs d'origine\")).click()")
+        await o.attendre("!!document.getElementById('metalAsk')", 10)
+        rapport(await o.ev("window.__viewer.cfg.metalEnv") == 0 and await o.ev("!!document.getElementById('metalAsk')") and await o.ev("Object.keys(localStorage).filter(k => k.startsWith('glb2html_metal_asked_')).length") == 0,
+                "« Valeurs d'origine » : reflets a 0 %, la reponse retenue est effacee et la proposition revient")
+        await o.ev("document.getElementById('metalAskNo').click()")
         await o.ctx.close()
 
         o = await Onglet(br).ouvrir(BASE + "Plat.html", locale="fr-FR")
