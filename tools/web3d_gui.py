@@ -349,7 +349,7 @@ def fenetre(outils, tk, ttk, filedialog, depart=None):
         pass
     f = F()
     f.root, f.vars, f.lignes, f.proc, f.file = root, {}, {}, None, queue.Queue()
-    f.nom, f.chemin, f.champs, f.cache = None, None, [], {}
+    f.nom, f.chemin, f.champs, f.cache, f.desc = None, None, [], {}, {}
 
     # ---- haut : choix de l'outil, recherche et compteur
     haut = ttk.Frame(root, padding=(8, 6))
@@ -363,6 +363,9 @@ def fenetre(outils, tk, ttk, filedialog, depart=None):
     ttk.Entry(haut, textvariable=f.filtre, width=28).pack(side="left", padx=4)
     f.compteur = ttk.Label(haut, text="")
     f.compteur.pack(side="left", padx=10)
+    f.fonction = ttk.Label(root, text="", justify="left", anchor="w", wraplength=960, padding=(8, 0, 8, 4))      # la fonction principale de l'outil choisi
+    f.fonction.pack(fill="x")
+    root.bind("<Configure>", lambda e: f.fonction.configure(wraplength=max(300, root.winfo_width() - 24)) if e.widget is root else None)
     ligne_ex = ttk.Frame(root, padding=(8, 0, 8, 4))
     ligne_ex.pack(fill="x")
     ttk.Label(ligne_ex, text=_tr("py.gui.examples")).pack(side="left")
@@ -538,9 +541,11 @@ def fenetre(outils, tk, ttk, filedialog, depart=None):
                 f.outil.set(f.chemin.name if f.chemin else "")
                 return False
             champs = f.cache[nom] = champs_depuis(parser)
+            f.desc[nom] = fonction_principale(parser.description)
         f.filtre.set("")      # avant le changement : le filtre se vide sur les lignes de l'outil précédent
         f.nom, f.chemin, f.champs = nom, chemin, champs
         f.outil.set(chemin.name)
+        f.fonction.configure(text=(_tr("py.gui.function") + " " + f.desc[nom]) if f.desc.get(nom) else "")
         f.liste_ex = [(_tr(cle), args) for cle, args in EXEMPLES.get(nom, ())]
         f.choix_exemple.configure(values=[t for t, _a in f.liste_ex], state="readonly" if f.liste_ex else "disabled")
         f.exemple.set(_tr("py.gui.examples_pick") if f.liste_ex else "")
@@ -694,6 +699,13 @@ def dossier_bureau(dossier=None):
         except (OSError, subprocess.SubprocessError):
             pass
     return Path.home() / "Desktop"
+
+
+def fonction_principale(description):
+    """la fonction de l'outil, d'après la description de son parseur, sans le début « nom 1.10.3 (jj/mm/aaaa), empreinte ab12cd34 : » ; '' si la description est vide"""
+    t = " ".join((description or "").split())
+    m = re.match(r"^[^:]{0,120}?\s*:\s+(.+)$", t)
+    return (m.group(1) if m else t).strip()
 
 
 def appliquer_icone(root):

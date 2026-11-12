@@ -6,6 +6,15 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.10.0)
 
+### 12/11/2026 : Python 3.14 : `glb2html.py` s'ouvre de nouveau ; le lanceur affiche la fonction de l'outil (lot 1.10.4)
+
+- **Constaté par Klaatou** : « par moment », le lanceur écrit « ERREUR : impossible de lire les options de glb2html.py (TypeError : BooleanOptionalAction.__init__() got … ». **Demandé** : que le lanceur affiche la fonction principale de l'outil choisi.
+- **Cause** (reproduite avec Python 3.14.6) : `--sea` et `--anim` passaient `metavar` à `argparse.BooleanOptionalAction` (`src/gen_tpl.py`). Python 3.12 le déclare déprécié, la 3.14 le refuse : `TypeError: BooleanOptionalAction.__init__() got an unexpected keyword argument 'metavar'`. Le défaut n'était pas dans le lanceur : `python glb2html.py` s'arrêtait de la même façon sous 3.14. Que le lanceur de Klaatou tourne parfois sous 3.14 est une déduction tirée du message d'erreur ; la version de Python qu'il utilise n'a pas été relevée. L'aide ne change pas sans `metavar` (mesuré : même ligne d'usage `[--sea | --no-sea]`). Les six autres outils s'ouvraient déjà sous 3.14.
+- **Fait** : retrait des deux `metavar` ; nouvelle ligne « Fonction : … » sous le choix de l'outil du lanceur (`fonction_principale` reprend la description de l'outil sans son début « nom, version, empreinte : » ; retour à la ligne selon la largeur de la fenêtre ; texte `py.gui.function` en français et en anglais).
+- **Contrôle** : nouveau `tests/python_recent.py` : (1) lecture du code, aucun `BooleanOptionalAction` ne reçoit `metavar`, `type` ni `choices` ; (2) `--help` des six outils avec les avertissements « déprécié » traités comme des erreurs ; (3) `WEB3D_PYTHONS` : autres interpréteurs. Sur `main` d'origine 3 échecs (lecture du code, avertissement sous 3.12, `TypeError` sous 3.14), avec le correctif tous passent, y compris avec de vrais Python 3.10, 3.11, 3.13 et 3.14. `tests/gui.py` : 4 contrôles de la ligne « Fonction ». Sous Python 3.14 passent : page fabriquée par `glb2html.py`, `gui` (83), `diag_carte`, `oar2glb`, `glb2tiles`, `textes_outils`, `i18n`, `console`, `tools_lang`, `correctifs_v52`, `sortie_cp1252`, `aide_sans_pause`. Sous 3.12 passent `gui`, `smoke`, `v52`, `v45_lib`, `marque`, `dist_a_jour`, `samples`, `build_reference`.
+- **Non essayé** : Windows réel ; le navigateur sous Python 3.14 (Playwright non installé pour cette version : `smoke` et `v52` n'ont tourné que sous 3.12) ; le serveur de présence sous 3.14 seulement par `console` et `diag_carte`.
+- **Reste à mettre à jour** (règle 16) : manuel § 3.9 (la ligne « Fonction ») et la mention des versions de Python essayées (3.10 à 3.14), en français et en anglais.
+
 ### 12/11/2026 : lanceur : icône de la fenêtre, `glb-stats` dans la liste, plus de pause « Entrée » après `--help` (lot 1.10.3)
 
 - **Demandé par Klaatou** : (1) donner l'icône du projet à la fenêtre du lanceur graphique ; (2) mettre `glb-stats.py` dans la liste des outils du lanceur ; (3) que `glb2tiles.py` et `oar2glb.py` n'attendent plus Entrée après `--help`, à condition que rien d'autre ne change.

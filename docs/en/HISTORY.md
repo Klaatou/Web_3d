@@ -233,6 +233,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 12/11/2026 |  | after 1.10.0 | Batch 1.10.1: documents: Firefox tried by Klaatou with the regions and the maps (overview, manual) |
 | 12/11/2026 |  | after 1.10.0 | Batch 1.10.2: tools: `errors="replace"` on the output streams of `glb2html`, `oar2glb`, `diag_carte` and the presence server (output redirected in cp1252); `tests/sortie_cp1252.py` |
 | 12/11/2026 |  | after 1.10.0 | Batch 1.10.3: launcher: window icon, `glb-stats` in the list; `glb2tiles` and `oar2glb`: no more pause after `--help`; `tests/aide_sans_pause.py` |
+| 12/11/2026 |  | after 1.10.0 | Batch 1.10.4: Python 3.14: `glb2html` opens again (`metavar` removed from `--sea` and `--anim`); the launcher shows the function of the tool; `tests/python_recent.py` |
 
 ## Useful commands
 

@@ -16,7 +16,7 @@ Draco et Meshopt gérés automatiquement (décodeurs intégrés seulement si le 
 """
 from __future__ import annotations
 
-VERSION = "1.10.2 (12/11/2026)"
+VERSION = "1.10.4 (12/11/2026)"
 SHELL_VERSION = "1.9.15 (11/11/2026)"   # numéro de version de la coquille (index.html) : écrit par build.py, ne change que si la coquille change
 MAP_VERSION = "1.9.15 (11/11/2026)"       # numéro de version de la page de carte (carte.html) : idem
 
@@ -6145,8 +6145,8 @@ def main():
     ap.add_argument("--fly", action=argparse.BooleanOptionalAction, default=FLY_ENABLED, help=_tr("py.glb2html.vol_en_promenade_touche_f_ou"))
     ap.add_argument("--update", dest="maj", action="store_true", help=_tr("py.glb2html.met_a_jour_une_region_deja"))
     ap.add_argument("--room", default=ROOM, help=_tr("py.glb2html.salon_de_presence_defaut_nom_du"))
-    ap.add_argument("--sea", metavar="SEA", dest="sea_enabled", action=argparse.BooleanOptionalAction, default=SEA_ENABLED, help=_tr("py.glb2html.help.sea"))
-    ap.add_argument("--anim", metavar="ANIM", dest="anim_enabled", action=argparse.BooleanOptionalAction, default=ANIM_ENABLED, help=_tr("py.glb2html.help.anim"))
+    ap.add_argument("--sea", dest="sea_enabled", action=argparse.BooleanOptionalAction, default=SEA_ENABLED, help=_tr("py.glb2html.help.sea"))
+    ap.add_argument("--anim", dest="anim_enabled", action=argparse.BooleanOptionalAction, default=ANIM_ENABLED, help=_tr("py.glb2html.help.anim"))
     ap.add_argument("--retina", action=argparse.BooleanOptionalAction, default=RETINA_ENABLED, help=_tr("py.glb2html.haute_resolution_rendu_x2_minimum_supersampl"))
     ap.add_argument("--light", action=argparse.BooleanOptionalAction, default=LIGHT_ENABLED, help=_tr("py.glb2html.help.light"))
     ap.add_argument("--title", help=_tr("py.glb2html.titre_de_la_page"))

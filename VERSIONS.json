@@ -12,12 +12,12 @@
   "version": "1.6.3 (06/11/2026)"
  },
  "glb-viewer.html": {
-  "hash": "48ccf0b8e3634193898faba62ebdc84c471d9b5e1a14f611b67737f37a657b76",
-  "version": "1.10.2 (12/11/2026)"
+  "hash": "2961c364ce6156c8c680e354e76bd17ce91a2de819dea7b4db9878bfdeb9cc50",
+  "version": "1.10.4 (12/11/2026)"
  },
  "glb2html.py": {
-  "hash": "54116c78a659795556f90a1072727d710b8fe590c86e1e1e18e6baae936619d2",
-  "version": "1.10.2 (12/11/2026)"
+  "hash": "df731baf3bed308af1a6a17b409a964a54469000502bed9074d56cca064b13a9",
+  "version": "1.10.4 (12/11/2026)"
  },
  "glb2tiles.py": {
   "hash": "83963b7045e78d1ce8be271d88337f5e9fb26c8218a1f4612bca8f5c92de188a",
@@ -40,7 +40,7 @@
   "version": "1.10.2 (12/11/2026)"
  },
  "web3d_gui.py": {
-  "hash": "bc9eef88aaac144c2cf3f76aa0e4759236536498061887524512df3b69e69cca",
-  "version": "1.10.3 (12/11/2026)"
+  "hash": "f1dc12b41e6c6fdddc0ceb9ae5dcb37f028d7034b019e1d90532bd7783e1ef4a",
+  "version": "1.10.4 (12/11/2026)"
  }
 }

@@ -338,6 +338,18 @@ f.choix_exemple.current(4)
 f.choix_exemple.event_generate("<<ComboboxSelected>>")
 r.update()
 rapport(f.vars["sea_enabled"].get() == "no" and f.vars["presence_url"].get() == "" and f.vars["shared_shell"][1].get() is False, "un autre exemple efface le precedent puis remplit : oui/non, champs vides", (f.vars["sea_enabled"].get(), f.vars["presence_url"].get()))
+# ------------------------------------------------------------- 1.10.4 : la fonction principale de l'outil s'affiche
+import re as _re
+vues = {}
+for nom_outil, fichier in g.OUTILS:
+    f.changer(nom_outil)
+    r.update()
+    vues[nom_outil] = f.fonction.cget("text")
+rapport(all(t.startswith("Function: ") and len(t) > 40 for t in vues.values()), "chaque outil affiche sa fonction principale sous le choix de l'outil", {k: v[:50] for k, v in vues.items() if not (v.startswith("Function: ") and len(v) > 40)})
+rapport(not any(_re.search(r"empreinte|fingerprint|\d+\.\d+\.\d+ \(", t) for t in vues.values()), "la fonction n'a ni le numero de version ni l'empreinte du debut de la description", vues)
+rapport(len(set(vues.values())) == len(vues), "chaque outil a sa propre fonction affichee", vues)
+rapport(g.fonction_principale("") == "" and g.fonction_principale(None) == "" and g.fonction_principale("sans prefixe ni deux-points") == "sans prefixe ni deux-points"
+        and g.fonction_principale("x.py 1.0.0 (01/01/2026), empreinte ab12 : fait ceci : et cela.") == "fait ceci : et cela.", "fonction_principale : vide, sans prefixe, et deux-points dans la phrase")
 f.changer("diag_carte")
 rapport(f.exemple.get() != "" and "glb2html" not in f.cmd.get("1.0", "end"), "changer d'outil remet la liste d'exemples a son invite", f.exemple.get())
 r.destroy()

@@ -6,6 +6,15 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.10.0)
 
+### 12/11/2026: Python 3.14: `glb2html.py` opens again; the launcher shows the function of the tool (batch 1.10.4)
+
+- **Reported by Klaatou**: "at times", the launcher writes "ERREUR : impossible de lire les options de glb2html.py (TypeError : BooleanOptionalAction.__init__() got …" (ERROR: cannot read the options of glb2html.py). **Requested**: the launcher shows the main function of the chosen tool.
+- **Cause** (reproduced with Python 3.14.6): `--sea` and `--anim` passed `metavar` to `argparse.BooleanOptionalAction` (`src/gen_tpl.py`). Python 3.12 declares it deprecated, 3.14 refuses it: `TypeError: BooleanOptionalAction.__init__() got an unexpected keyword argument 'metavar'`. The defect was not in the launcher: `python glb2html.py` stopped the same way under 3.14. That Klaatou's launcher sometimes runs under 3.14 is a deduction from the error message; the Python version he uses was not read. The help does not change without `metavar` (measured: same usage line `[--sea | --no-sea]`). The other six tools already opened under 3.14.
+- **Done**: both `metavar` removed; new "Function: …" line under the tool choice of the launcher (`fonction_principale` takes the description of the tool without its beginning "name, version, fingerprint:"; wraps to the window width; text `py.gui.function` in French and English).
+- **Check**: new `tests/python_recent.py`: (1) reading the code, no `BooleanOptionalAction` receives `metavar`, `type` or `choices`; (2) `--help` of the six tools with "deprecated" warnings treated as errors; (3) `WEB3D_PYTHONS`: other interpreters. On the original `main` 3 checks fail (code reading, warning under 3.12, `TypeError` under 3.14), with the fix all pass, including real Python 3.10, 3.11, 3.13 and 3.14. `tests/gui.py`: 4 checks of the "Function" line. Under Python 3.14 pass: page built by `glb2html.py`, `gui` (83), `diag_carte`, `oar2glb`, `glb2tiles`, `textes_outils`, `i18n`, `console`, `tools_lang`, `correctifs_v52`, `sortie_cp1252`, `aide_sans_pause`. Under 3.12 pass `gui`, `smoke`, `v52`, `v45_lib`, `marque`, `dist_a_jour`, `samples`, `build_reference`.
+- **Not tried**: real Windows; the browser under Python 3.14 (Playwright not installed for that version: `smoke` and `v52` ran only under 3.12); the presence server under 3.14 only through `console` and `diag_carte`.
+- **Still to update** (rule 16): manual § 3.9 (the "Function" line) and the mention of the Python versions tried (3.10 to 3.14), in French and English.
+
 ### 12/11/2026: launcher: window icon, `glb-stats` in the list, no more "Enter" pause after `--help` (batch 1.10.3)
 
 - **Requested by Klaatou**: (1) give the project icon to the window of the graphical launcher; (2) put `glb-stats.py` in the launcher's list of tools; (3) `glb2tiles.py` and `oar2glb.py` no longer wait for Enter after `--help`, provided nothing else changes.

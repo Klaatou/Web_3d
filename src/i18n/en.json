@@ -1653,6 +1653,7 @@
  "py.gui.help_title": "Help for the option:",
  "py.gui.help_none": "Move the pointer over an option, or click in its field: its help shows here.",
  "py.gui.examples": "Examples:",
+ "py.gui.function": "Function:",
  "py.gui.examples_pick": "(pick a basic use: it fills the fields below)",
  "py.gui.example_loaded": "Example loaded.",
  "py.gui.example_hint": "Replace the example names (files, address, key) with your own, then click Run. You can edit the fields first.",
