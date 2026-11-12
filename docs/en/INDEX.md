@@ -29,6 +29,7 @@ This page says **which document to read for what**. The French documents carry t
 | convert an OAR that contains PBR (OpenSim 0.9.3) | `MANUAL.md` § 3.10 |
 | convert an OAR on Linux (Mono) | `MANUAL.md` § 3.11 |
 | set the metal reflections (PBR) in the page | `MANUAL.md` § 7.65 |
+| remove the "Made with Web_3d" icon | `MANUAL.md` § 7.62 |
 | type the names key of the map | `MANUAL.md` § 9.16 |
 | set the sea height in the page | `MANUAL.md` § 9.19 |
 | ask a question, get help | the Discord server: https://discord.gg/BDG9r5gXwr |

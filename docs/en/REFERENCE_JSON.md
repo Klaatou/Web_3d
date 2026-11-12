@@ -79,6 +79,7 @@ Positions are in meters, in the page's frame: x towards the east, y upwards, z t
 | --------------- | -------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
 | `retina`        | yes / no | `false`             | high resolution (sharper, about four times heavier)                                                                                         | `--retina`, `--no-retina` |
 | `light`         | yes / no | `false`             | the page opens in light rendering as long as the visitor has chosen nothing (§ 7.45)                                                          | `--light`, `--no-light`   |
+| `credit` | yes / no | (absent: yes) | `false` removes the "Made with Web_3d" icon (§ 7.62); the key is only written in that case | `--credit`, `--no-credit` |
 | `foliageCutout` | number   | `0.12`              | transparency threshold of foliage (from 0 to 0.5): higher, the leaf edges are cut more                                                      | `--foliage-cutout`        |
 | `solidMaterials` | text     | `""`                | materials drawn solid (§ 6.13): names or pieces of names separated by commas, `=name` for an exact name; empty = nothing changes            | `--solid-materials`       |
 | `names`         | yes / no | `false`             | shows the name of the building (root object) and of the element aimed at (§ 7.61)                                                                                                       | `--names`, `--no-names`   |
@@ -195,6 +196,7 @@ A **list** of regions (plain form), or, since v47, an **object** with a header: 
 | Header field | Type    | Default | What it does                                                                                                                                                 | Option |
 | ------------ | ------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------ |
 | `showUrl`    | boolean | `false` | shows the address under each tile of the map page; the checkbox on the map page, once ticked or unticked by the visitor, wins (choice kept by their browser) | —      |
+| `credit`     | boolean | (absent: yes) | `false` removes the "Made with Web_3d" icon from the hosted `carte.html` (§ 7.62); standalone map: `--map-page` with `--no-credit` | —      |
 | `regions`    | list    | —       | the region cards (next table)                                                                                                                                | —      |
 
 `--register` and `--scan-sites` keep the header and the shape of the file (list or object). So does the viewer since v50: "Import regions.json" accepts both shapes, "Export regions.json" gives back the imported shape with its header, and every card keeps all its fields (§ 9.13).

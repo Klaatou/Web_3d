@@ -242,6 +242,9 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 12/11/2026 |  | après 1.10.0 | Lot 1.10.10 : fenêtre du diagnostic de la taille du texte et redimensionnable ; la page propose les reflets quand elle voit des métaux PBR (défaut des reflets : 0 %) ; `tests/reflets_metal.py`, `tests/v39.py` |
 | 12/11/2026 |  | après 1.10.0 | Lot 1.10.11 : « Valeurs d'origine » remet aussi la proposition des reflets ; `tests/reflets_metal.py` |
 | 13/11/2026 |  | après 1.10.0 | Lot 1.10.12 : documents : manuel § 3.9, § 7.46, § 7.53, § 7.65 (nouveau), § 9.16 et § 13, procédures et index pour les lots 1.10.3 à 1.10.11 |
+| 13/11/2026 |  | après 1.10.0 | Lot 1.10.13 : journal des visites : pseudos des visiteurs restés en vue globale (`--visits-names`) ; `glb2html.py --no-credit` (`credit: false`, carte comprise) ; `tests/v48.py`, `tests/credit.py` |
+| 13/11/2026 |  | après 1.10.0 | Lot 1.10.14 : reflets : la mer n'est plus comptée comme matériau métallique (`metalInfo`) ; `tests/reflets_metal.py` |
+| 13/11/2026 |  | après 1.10.0 | Lot 1.10.15 : documents des lots 1.10.13 et 1.10.14 : manuel § 3.9, § 7.62, § 7.65, § 10.3 et § 13, `REFERENCE_JSON.md`, `CREATEURS.md`, procédures, index ; image des huit raccourcis |
 
 ## Commandes utiles
 

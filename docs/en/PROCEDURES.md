@@ -274,7 +274,7 @@ WantedBy=multi-user.target
 ### Debian 13 VM: permanent service with a moderation console (tried on 29/10/2026)
 Way A on a Debian 13 VM (VMware, NAT network), published through Tailscale Funnel, page published on GitHub Pages. The service must start by itself **and** keep the moderation console (typed commands), which a plain systemd service cannot offer for lack of a keyboard.
 1. **Install**: `python3`, `python3-websockets` and `tmux` come from `apt` (no virtual environment); Tailscale (`tailscale up`); publication with `tailscale funnel --bg 8765`. The origin of the page (`https://NOMDUSITE.github.io`) is declared in the VM's `presence_creators.json` (`--creators` option, no `--origins`).
-2. **Server options**: `--host 127.0.0.1 --port 8765 --proxy-header X-Forwarded-For --log presence.log --log-ip raw --log-days 0 --history-file chat.jsonl --history-days 0 --visits visits.jsonl --creators presence_creators.json`. The author's choice: `--log-ip raw` and no time limit (strangers' IP addresses and messages are personal data, see "Keep in mind"; the server's defaults: `--log-ip hash` and 30 days).
+2. **Server options**: `--host 127.0.0.1 --port 8765 --proxy-header X-Forwarded-For --log presence.log --log-ip raw --log-days 0 --history-file chat.jsonl --history-days 0 --visits visits.jsonl --creators presence_creators.json --visits-names`. The author's choice: `--log-ip raw`, `--visits-names` (nicknames in the visit log, which is not public) and no time limit (strangers' IP addresses and messages are personal data, see "Keep in mind"; the server's defaults: `--log-ip hash` and 30 days).
 3. **Start-up**: a systemd unit (`web3d-presence.service`, `Type=forking`, `Restart=always`, `RestartSec=5`) starts a `tmux` session named `presence` that runs a `lance_presence.sh` script. That script is a loop that restarts `presence_server.py` 5 seconds after it stops. The server thus keeps its console in the `tmux` session.
 
 `lance_presence.sh`, in the server's folder (here `/home/UTILISATEUR/presence`, next to `presence_server.py`), made executable with `chmod +x lance_presence.sh`:
@@ -285,7 +285,7 @@ Way A on a Debian 13 VM (VMware, NAT network), published through Tailscale Funne
 # A ranger dans le dossier du serveur (a cote de presence_server.py), rendre executable : chmod +x lance_presence.sh
 cd "$(dirname "$0")" || exit 1
 while true; do
-  python3 presence_server.py --host 127.0.0.1 --port 8765 --proxy-header X-Forwarded-For --log presence.log --log-ip raw --log-days 0 --history-file chat.jsonl --history-days 0 --visits visits.jsonl --creators presence_creators.json
+  python3 presence_server.py --host 127.0.0.1 --port 8765 --proxy-header X-Forwarded-For --log presence.log --log-ip raw --log-days 0 --history-file chat.jsonl --history-days 0 --visits visits.jsonl --creators presence_creators.json --visits-names
   echo "Serveur arrete (code $?). Relance dans 5 secondes (pour l'arreter pour de bon : systemctl stop web3d-presence)."
   sleep 5
 done

@@ -190,6 +190,6 @@ then, if the paths suit you:
 python .\dist\web3d_gui.py --shortcuts
 ```
 
-![The shortcuts (screenshot from before `glb-stats`: seven shortcuts; there are eight since 1.10.3)](../images/raccourcis.png)
+![The eight shortcuts](../images/raccourcis.png)
 
 Running the same command again replaces the shortcuts. To remove them: `python .\dist\web3d_gui.py --remove-shortcuts`. Tried by Klaatou on Windows (08/11/2026).

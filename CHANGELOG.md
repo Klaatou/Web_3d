@@ -6,6 +6,17 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.10.0)
 
+### 13/11/2026: documents brought up to date for batches 1.10.13 and 1.10.14; image of the eight shortcuts (batch 1.10.15)
+
+- **Requested by Klaatou**: bring the documents up to date (rule 16); his screenshot of the Windows desktop shows the eight shortcuts, the launcher window with its icon and the "Function" line.
+- **Done** (documents only: no code changes, `dist\` and `VERSIONS.json` identical, no built file changes its number):
+  - `MANUEL.md` and `MANUAL.md`: § 3.9 (the image caption, and "Tried by Klaatou on Windows" for the window icon, `glb-stats`, the "Function" line and the eight shortcuts); § 7.62 (removing the icon: `--no-credit`, `--update`, `--map-page`, the `regions.json` header, the footer link of the map that stays); § 7.65 (the sea is no longer counted); § 10.3 (nicknames of visitors who stayed in global view, not reserved; a visit is only written when it ends; the loop of `lance_presence.sh` keeps its command line: restart the `tmux` session); § 13;
+  - `REFERENCE_JSON.md`: `credit` key of the configuration and of the `regions.json` header; `CREATORS.md`; `PROCEDURES.md` (§ 11: `--visits-names` in both start lines and in "The author's choice"; the map key does not enter the repository); `SIMPLE_PROCEDURES.md` and `PROCEDURES_SIMPLES.md` (caption); `INDEX.md`; `HISTORY.md` and `HISTORIQUE.md` (batches 1.10.13 to 1.10.15);
+  - **image** `docs/images/raccourcis.png`: replaced by Klaatou's screenshot, cropped to the eight desktop icons (delivered separately, outside the patch).
+- **Check**: `verif_trad.py` on the seven modified pairs (manual, procedures, simple procedures, index, history, creators, JSON reference): 0 errors, as before the batch; build with `--vendor`: `dist\` and `VERSIONS.json` unchanged; `readme_liens`, `apropos_liens`, `lien_image`, `i18n`, `samples`, `dist_a_jour`, `marque` pass; `doc_options` not run (it fails in the sandbox with or without the document batches); `docs/REFERENCE_OPTIONS.md`, rewritten by the sandbox build, put back to the state of `main`.
+- **Not tested**: how the new paragraphs render on GitHub; the taskbar (the window icon is only seen in the title bar).
+- **Still to update**: the demo (batches 1.10.13 and 1.10.14 change `index.html`, `carte.html`, `glb-viewer.html`, `glb2html.py`); `REPRISE.md` (delivered at the resumption, rule 23).
+
 ### 13/11/2026: reflections: the sea is no longer counted as a metallic material (batch 1.10.14)
 
 - **Reported by Klaatou** (screenshot and diagnostic of the `ShowRoom3D` demo, page 1.10.11): the page offers the reflections ("This region contains 1 metallic (PBR) material") although the region has no PBR (it predates the PBR extraction). The diagnostic says "Metal reflections: 0 % ; metallic materials loaded: 1 of 16, of which 0 with reflections".

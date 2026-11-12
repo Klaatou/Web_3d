@@ -242,6 +242,9 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 12/11/2026 |  | after 1.10.0 | Batch 1.10.10: diagnostic window the size of its text and resizable; the page offers the reflections when it sees PBR metals (default of the reflections: 0 %); `tests/reflets_metal.py`, `tests/v39.py` |
 | 12/11/2026 |  | after 1.10.0 | Batch 1.10.11: "Original values" also brings back the reflections offer; `tests/reflets_metal.py` |
 | 13/11/2026 |  | after 1.10.0 | Batch 1.10.12: documents: manual § 3.9, § 7.46, § 7.53, § 7.65 (new), § 9.16 and § 13, procedures and index for batches 1.10.3 to 1.10.11 |
+| 13/11/2026 |  | after 1.10.0 | Batch 1.10.13: visit log: nicknames of visitors who stayed in global view (`--visits-names`); `glb2html.py --no-credit` (`credit: false`, map included); `tests/v48.py`, `tests/credit.py` |
+| 13/11/2026 |  | after 1.10.0 | Batch 1.10.14: reflections: the sea is no longer counted as a metallic material (`metalInfo`); `tests/reflets_metal.py` |
+| 13/11/2026 |  | after 1.10.0 | Batch 1.10.15: documents for batches 1.10.13 and 1.10.14: manual § 3.9, § 7.62, § 7.65, § 10.3 and § 13, `REFERENCE_JSON.md`, `CREATORS.md`, procedures, index; image of the eight shortcuts |
 
 ## Useful commands
 

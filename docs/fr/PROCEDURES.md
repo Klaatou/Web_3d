@@ -274,7 +274,7 @@ WantedBy=multi-user.target
 ### VM Debian 13 : service permanent avec console de modération (essayé le 29/10/2026)
 Voie A sur une VM Debian 13 (VMware, réseau NAT), publication par Tailscale Funnel, page publiée sur GitHub Pages. Le service doit démarrer seul **et** garder la console de modération (commandes tapées), qu'un service systemd seul ne peut pas offrir faute de clavier.
 1. **Installer** : `python3`, `python3-websockets` et `tmux` viennent d'`apt` (pas d'environnement virtuel) ; Tailscale (`tailscale up`) ; publication par `tailscale funnel --bg 8765`. L'origine de la page (`https://NOMDUSITE.github.io`) est déclarée dans le `presence_creators.json` de la VM (option `--creators`, sans `--origins`).
-2. **Options du serveur** : `--host 127.0.0.1 --port 8765 --proxy-header X-Forwarded-For --log presence.log --log-ip raw --log-days 0 --history-file chat.jsonl --history-days 0 --visits visits.jsonl --creators presence_creators.json`. Choix de l'auteur : `--log-ip raw` et conservation sans limite (adresses IP et messages d'inconnus sont des données personnelles, voir « À garder en tête » ; défauts du serveur : `--log-ip hash` et 30 jours).
+2. **Options du serveur** : `--host 127.0.0.1 --port 8765 --proxy-header X-Forwarded-For --log presence.log --log-ip raw --log-days 0 --history-file chat.jsonl --history-days 0 --visits visits.jsonl --creators presence_creators.json --visits-names`. Choix de l'auteur : `--log-ip raw`, `--visits-names` (pseudos dans le journal des visites, qui n'est pas public) et conservation sans limite (adresses IP et messages d'inconnus sont des données personnelles, voir « À garder en tête » ; défauts du serveur : `--log-ip hash` et 30 jours).
 3. **Démarrage** : une unité systemd (`web3d-presence.service`, `Type=forking`, `Restart=always`, `RestartSec=5`) lance une session `tmux` nommée `presence` qui exécute un script `lance_presence.sh`. Ce script est une boucle qui relance `presence_server.py` 5 secondes après son arrêt. Le serveur garde ainsi sa console dans la session `tmux`.
 
 `lance_presence.sh`, dans le dossier du serveur (ici `/home/UTILISATEUR/presence`, à côté de `presence_server.py`), rendu exécutable par `chmod +x lance_presence.sh` :
@@ -285,7 +285,7 @@ Voie A sur une VM Debian 13 (VMware, réseau NAT), publication par Tailscale Fun
 # A ranger dans le dossier du serveur (a cote de presence_server.py), rendre executable : chmod +x lance_presence.sh
 cd "$(dirname "$0")" || exit 1
 while true; do
-  python3 presence_server.py --host 127.0.0.1 --port 8765 --proxy-header X-Forwarded-For --log presence.log --log-ip raw --log-days 0 --history-file chat.jsonl --history-days 0 --visits visits.jsonl --creators presence_creators.json
+  python3 presence_server.py --host 127.0.0.1 --port 8765 --proxy-header X-Forwarded-For --log presence.log --log-ip raw --log-days 0 --history-file chat.jsonl --history-days 0 --visits visits.jsonl --creators presence_creators.json --visits-names
   echo "Serveur arrete (code $?). Relance dans 5 secondes (pour l'arreter pour de bon : systemctl stop web3d-presence)."
   sleep 5
 done

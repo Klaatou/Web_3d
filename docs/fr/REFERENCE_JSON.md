@@ -79,6 +79,7 @@ Les positions sont en mètres, dans le repère de la page : x vers l'est, y vers
 | --------------- | --------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
 | `retina`        | oui / non | `false`            | haute résolution (plus net, environ quatre fois plus lourd)                                                                                        | `--retina`, `--no-retina` |
 | `light`         | oui / non | `false`            | la page s'ouvre en rendu léger tant que le visiteur n'a rien choisi (§ 7.45)                                                                         | `--light`, `--no-light`   |
+| `credit` | oui / non | (absente : oui) | `false` retire l'icône « Réalisé avec Web_3d » (§ 7.62) ; la clé n'est écrite que dans ce cas | `--credit`, `--no-credit` |
 | `foliageCutout` | nombre    | `0.12`             | seuil de transparence des feuillages (de 0 à 0.5) : plus haut, les bords des feuilles sont plus découpés                                           | `--foliage-cutout`        |
 | `solidMaterials` | texte     | `""`               | matériaux rendus pleins (§ 6.13) : noms ou morceaux de noms séparés par des virgules, `=nom` pour un nom exact ; vide = rien ne change             | `--solid-materials`       |
 | `names`         | oui / non | `false`            | affiche le nom du bâtiment (objet racine) et de l'élément visé (§ 7.61)                                                                                                                 | `--names`, `--no-names`   |
@@ -195,6 +196,7 @@ Une **liste** de régions (forme simple), ou, depuis la v47, un **objet** avec u
 | Champ de l'en-tête | Type    | Défaut  | Ce qu'il fait                                                                                                                                                             | Option |
 | ------------------ | ------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
 | `showUrl`          | booléen | `false` | affiche l'adresse sous chaque tuile de la page carte ; la case de la page carte, une fois cochée ou décochée par le visiteur, l'emporte (choix retenu par son navigateur) | —      |
+| `credit`           | booléen | (absent : oui) | `false` retire l'icône « Réalisé avec Web_3d » de `carte.html` hébergée (§ 7.62) ; carte autonome : `--map-page` avec `--no-credit` | —      |
 | `regions`          | liste   | —       | les fiches de régions (tableau suivant)                                                                                                                                   | —      |
 
 `--register` et `--scan-sites` gardent l'en-tête et la forme du fichier (liste ou objet). Le viewer aussi depuis la v50 : « Importer regions.json » accepte les deux formes, « Exporter regions.json » rend la forme importée avec son en-tête, et chaque fiche garde tous ses champs (§ 9.13).

@@ -6,6 +6,17 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.10.0)
 
+### 13/11/2026 : documents à jour pour les lots 1.10.13 et 1.10.14 ; image des huit raccourcis (lot 1.10.15)
+
+- **Demandé par Klaatou** : mettre les documents à jour (règle 16) ; sa capture du bureau Windows montre les huit raccourcis, la fenêtre du lanceur avec son icône et la ligne « Fonction ».
+- **Fait** (documents seulement : aucun code ne change, `dist\` et `VERSIONS.json` identiques, aucun fichier fabriqué ne change de numéro) :
+  - `MANUEL.md` et `MANUAL.md` : § 3.9 (la légende de l'image, et « Essayé par Klaatou sous Windows » pour l'icône de la fenêtre, `glb-stats`, la ligne « Fonction » et les huit raccourcis) ; § 7.62 (retirer l'icône : `--no-credit`, `--update`, `--map-page`, en-tête de `regions.json`, le lien du pied de la carte qui reste) ; § 7.65 (la mer n'est plus comptée) ; § 10.3 (pseudos des visiteurs restés en vue globale, non réservés ; une visite n'est écrite qu'à sa fin ; la boucle de `lance_presence.sh` garde sa ligne de commande : relancer la session `tmux`) ; § 13 ;
+  - `REFERENCE_JSON.md` : clé `credit` de la configuration et de l'en-tête de `regions.json` ; `CREATEURS.md` ; `PROCEDURES.md` (§ 11 : `--visits-names` dans les deux lignes de lancement et dans « Choix de l'auteur » ; la clé de la carte n'entre pas dans le dépôt) ; `PROCEDURES_SIMPLES.md` et `SIMPLE_PROCEDURES.md` (légende) ; `INDEX.md` ; `HISTORIQUE.md` et `HISTORY.md` (lots 1.10.13 à 1.10.15) ;
+  - **image** `docs/images/raccourcis.png` : remplacée par la capture de Klaatou, découpée sur les huit icônes du bureau (livrée à part, hors du patch).
+- **Contrôle** : `verif_trad.py` sur les sept couples modifiés (manuel, procédures, procédures simples, index, historique, créateurs, référence JSON) : 0 erreur, comme avant le lot ; build avec `--vendor` : `dist\` et `VERSIONS.json` inchangés ; passent `readme_liens`, `apropos_liens`, `lien_image`, `i18n`, `samples`, `dist_a_jour`, `marque` ; `doc_options` non lancé (il échoue dans le bac à sable avec ou sans les lots de documents) ; `docs/REFERENCE_OPTIONS.md`, réécrit par le build du bac à sable, remis à l'état de `main`.
+- **Non essayé** : le rendu des nouveaux paragraphes sur GitHub ; la barre des tâches (l'icône de la fenêtre n'est vue que dans la barre de titre).
+- **Reste à mettre à jour** : la démo (les lots 1.10.13 et 1.10.14 changent `index.html`, `carte.html`, `glb-viewer.html`, `glb2html.py`) ; `REPRISE.md` (livré à la reprise, règle 23).
+
 ### 13/11/2026 : reflets : la mer n'est plus comptée comme un matériau métallique (lot 1.10.14)
 
 - **Constaté par Klaatou** (capture et diagnostic de la démo `ShowRoom3D`, page 1.10.11) : la page propose les reflets (« Cette région contient 1 matériau métallique (PBR) ») alors que la région n'a pas de PBR (elle date d'avant l'extraction des PBR). Le diagnostic dit « Reflets métalliques : 0 % ; matériaux métalliques chargés : 1 sur 16, dont 0 avec reflets ».

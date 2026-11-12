@@ -29,6 +29,7 @@ Cette page dit **quel document lire pour quoi**. Les documents anglais portent l
 | convertir un OAR qui contient du PBR (OpenSim 0.9.3) | `MANUEL.md` § 3.10 |
 | convertir un OAR sous Linux (Mono) | `MANUEL.md` § 3.11 |
 | régler les reflets des métaux (PBR) dans la page | `MANUEL.md` § 7.65 |
+| retirer l'icône « Réalisé avec Web_3d » | `MANUEL.md` § 7.62 |
 | saisir la clé des pseudos de la carte | `MANUEL.md` § 9.16 |
 | régler la hauteur de la mer dans la page | `MANUEL.md` § 9.19 |
 | poser une question, demander de l'aide | le serveur Discord : https://discord.gg/BDG9r5gXwr |

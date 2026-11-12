@@ -49,7 +49,7 @@ The host can give you a key for your room (`visits-key alice.galerie` in their c
 
 - **The server log** (`--log`): one line per event, with the room, the nickname and **the text of every chat message**. The IP address is hidden by default (`--log-ip hash`), in clear with `--log-ip raw`, absent with `--log-ip none`. Retention: `--log-days` (30 days by default, `0` = no limit).
 - **The chat history** (`--history-file`): nickname, text, room and time, never an IP address. The last 200 messages of a room are replayed to newcomers (`--history`). Retention: `--history-days` (30 days by default, `0` = no limit).
-- **The visit log** (`--visits`): room, arrival, duration, walk time, browser fingerprint; never an IP address; the nickname only with `--visits-names`. Retention: `--visits-days` (365 days by default).
+- **The visit log** (`--visits`): room, arrival, duration, walk time, browser fingerprint; never an IP address; the nickname only with `--visits-names` (walkers and visitors who stayed in global view; a global-view visitor's nickname is not reserved). Retention: `--visits-days` (365 days by default).
 - **The nickname registry**: each browser has a random key; the first one to take a nickname keeps it, the following ones get `NAME#CODE`.
 
 IP addresses, nicknames and messages are personal data: plan to inform your visitors. The exact rule depends on the country, check it on your side.

@@ -49,7 +49,7 @@ L'hôte peut te donner une clé pour ton salon (`visits-key alice.galerie` dans 
 
 - **Le journal du serveur** (`--log`) : une ligne par évènement, avec le salon, le pseudo et **le texte de chaque message du chat**. L'adresse IP y est masquée par défaut (`--log-ip hash`), en clair avec `--log-ip raw`, absente avec `--log-ip none`. Conservation : `--log-days` (30 jours par défaut, `0` = sans limite).
 - **L'historique du chat** (`--history-file`) : pseudo, texte, salon et heure, jamais d'adresse IP. Les 200 derniers messages d'un salon sont rejoués aux nouveaux arrivants (`--history`). Conservation : `--history-days` (30 jours par défaut, `0` = sans limite).
-- **Le journal des visites** (`--visits`) : salon, arrivée, durée, temps de promenade, empreinte du navigateur ; jamais d'adresse IP ; le pseudo seulement avec `--visits-names`. Conservation : `--visits-days` (365 jours par défaut).
+- **Le journal des visites** (`--visits`) : salon, arrivée, durée, temps de promenade, empreinte du navigateur ; jamais d'adresse IP ; le pseudo seulement avec `--visits-names` (promeneurs et visiteurs restés en vue globale ; le pseudo d'un visiteur en vue globale n'est pas réservé). Conservation : `--visits-days` (365 jours par défaut).
 - **Le registre des pseudos** : chaque navigateur a une clé aléatoire ; le premier qui prend un pseudo le garde, les suivants reçoivent `NAME#CODE`.
 
 Adresses IP, pseudos et messages sont des données personnelles : prévois d'informer tes visiteurs. La règle exacte dépend du pays, à vérifier de ton côté.
