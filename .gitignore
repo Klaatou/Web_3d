@@ -29,6 +29,10 @@ regions.json
 REGLES.md
 _bak/
 patch_*.py
+
+# scripts autonomes (messages en français seulement, hors règles i18n) : hors du dépôt tant qu'ils ne sont pas devenus de vrais outils
+inspecter_objets.py
+analyser_oar_pbr.py
 *.zones.json
 *.jsonl
 !docs/samples/*.jsonl

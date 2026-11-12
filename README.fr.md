@@ -53,6 +53,10 @@
 
 `oar2glb.py` demande le convertisseur externe `convoar.exe` (voir plus bas). convoar ne reprend pas les matériaux PBR : `oar2glb.py` les lit lui-même dans l'OAR et les applique au GLB (manuel, § 3.10). Le viewer règle les réglages et les zones et exporte la page (région en tuiles : seulement les zones, avec la ligne de commande à lancer) ; `glb2html.py` fait le même travail en ligne de commande et est indispensable pour les régions en tuiles. Le serveur de présence ne fait pas partie de la page : c'est la page qui s'y connecte.
 
+![Matériaux PBR d'OpenSim 0.9.3 dans la page : sphères avec reliefs, métal et reflets](docs/images/pbr.jpg)
+
+*Matériaux PBR d'OpenSim 0.9.3 (reliefs, métal, reflets) dans la page, après conversion par `oar2glb.py`. Région de test : le bac à sable de la grille [BloodMoon Pack](https://bloodmoonpack.com/grid/), avec l'accord de son propriétaire.*
+
 ## Paquets prêts à l'emploi
 
 Sans lire toute la documentation, deux paquets sont à télécharger sur la [page des versions](https://github.com/Klaatou/Web_3d/releases/latest) :
@@ -202,3 +206,5 @@ Licence MIT (fichier `LICENSE`). three.js (MIT) et les décodeurs embarqués : v
 ## Crédits
 
 Conçu, dirigé et testé par Klaatou ; le code et les documents ont été écrits en grande partie avec Claude (Anthropic), un assistant d'IA.
+
+Les essais des matériaux PBR (image ci-dessus, manuel § 3.10) ont été faits sur le bac à sable de la grille [BloodMoon Pack](https://bloodmoonpack.com/grid/), dont les données de test sont publiées ici avec l'accord de son propriétaire.

@@ -6,6 +6,14 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.9.0)
 
+### 11/11/2026 : README : image PBR et crédit de la grille du bac à sable ; deux fichiers égarés hors du dépôt (lot 1.9.18)
+
+- **Demande de Klaatou** : utiliser l'image PBR, avec l'accord du propriétaire du bac à sable, en créditant sa grille par un lien et en disant que les données de test viennent de ce bac à sable.
+- **Fait** : `docs/images/pbr.jpg` (1600 x 900, 215 Ko, recadrée d'une capture de la page ; elle avait été commitée à la racine du dépôt par le `git add -A` du lot 1.9.17 et se déplace avec `git mv`) ; image et légende dans les deux README après le paragraphe sur `oar2glb.py` ; crédit dans la rubrique « Crédits » des deux README et mention au § 3.10 du manuel (« Essayé »). Le lien `https://bloodmoonpack.com/grid/` est un lien public volontaire vers un tiers, comme ceux d'Outworldz et de NightshadeCeres déjà dans le README ; aucun nom de personne n'est écrit (règle 25).
+- **Aussi** : `inspecter_objets.py` avait été commité à la racine du dépôt par le même `git add -A` ; il sort de git (`git rm --cached`, la copie locale reste) et `inspecter_objets.py` et `analyser_oar_pbr.py` entrent dans `.gitignore`. Ils restent des scripts autonomes (messages en français seulement, hors règles i18n), hors du dépôt tant qu'ils ne sont pas devenus de vrais outils : décision en attente.
+- **Contrôle** : `tests/readme_liens.py`, `tests/apropos_liens.py`, `tests/dist_a_jour.py` passent ; `verif_trad.py` donne le même résultat qu'avant sur le README et le manuel.
+- **Non essayé** : l'aspect de l'image sur GitHub.
+
 ### 11/11/2026 : `oar2glb.py` et `web3d_gui.py` : le lanceur ne pouvait pas ouvrir oar2glb sans console ; exemple PBR (lot 1.9.17)
 
 - **Constat de Klaatou** : le lanceur graphique n'ouvre pas la partie oar2glb, ni par la liste des outils ni par son raccourci du bureau.

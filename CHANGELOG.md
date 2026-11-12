@@ -6,6 +6,14 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.9.0)
 
+### 11/11/2026: README: PBR picture and credit to the sandbox's grid; two stray files out of the repository (batch 1.9.18)
+
+- **Requested by Klaatou**: use the PBR picture, with the agreement of the sandbox's owner, crediting his grid with a link and saying that the test data come from that sandbox.
+- **Done**: `docs/images/pbr.jpg` (1600 x 900, 215 KB, cropped from a screenshot of the page; it had been committed at the repository root by `git add -A` in batch 1.9.17 and is moved with `git mv`); picture and caption in both READMEs after the paragraph on `oar2glb.py`; credit in the "Credits" section of both READMEs and a mention in manual section 3.10 ("Tried"). The link `https://bloodmoonpack.com/grid/` is a deliberate public link to a third party, like the Outworldz and NightshadeCeres links already in the README; no name of a person is written (rule 25).
+- **Also**: `inspecter_objets.py` had been committed at the repository root by the same `git add -A`; it is removed from git (`git rm --cached`, the local copy stays) and `inspecter_objets.py` and `analyser_oar_pbr.py` are added to `.gitignore`. They stay stand-alone scripts (French-only messages, outside the i18n rules), kept out of the repository until they become proper tools: decision pending.
+- **Check**: `tests/readme_liens.py`, `tests/apropos_liens.py`, `tests/dist_a_jour.py` pass; `verif_trad.py` gives the same result as before on the README and the manual.
+- **Not tested**: how the picture looks on GitHub.
+
 ### 11/11/2026: `oar2glb.py` and `web3d_gui.py`: the launcher could not open oar2glb without a console; PBR example (batch 1.9.17)
 
 - **Reported by Klaatou**: the graphical launcher does not open the oar2glb part, neither from the tool list nor from its desktop shortcut.

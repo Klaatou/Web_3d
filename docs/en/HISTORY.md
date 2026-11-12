@@ -222,6 +222,8 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 11/11/2026 |  | after 1.9.0 | Batch 1.9.14: PBR: OpenSim's default material (`PBR_DEFAUT`), null UUID ignored |
 | 11/11/2026 |  | after 1.9.0 | Batch 1.9.15: viewer: "Sea height" slider in Settings (`cfg.seaM`, `seaShift`), `tests/mer_hauteur.py` |
 | 11/11/2026 |  | after 1.9.0 | Batch 1.9.16: documents: manual § 3.10, § 3.11 and § 9.19, guide, README, simple procedures, index, history |
+| 11/11/2026 |  | after 1.9.0 | Batch 1.9.17: the graphical launcher opens `oar2glb` without a console (`Tee`, `lire_parser`), PBR example |
+| 11/11/2026 |  | after 1.9.0 | Batch 1.9.18: PBR picture of the README (`docs/images/pbr.jpg`) and credit of the sandbox's grid; two stand-alone scripts kept out of the repository |
 
 ## Useful commands
 
