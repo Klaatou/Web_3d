@@ -16,7 +16,7 @@ Draco et Meshopt gérés automatiquement (décodeurs intégrés seulement si le 
 """
 from __future__ import annotations
 
-VERSION = "1.9.15 (11/11/2026)"
+VERSION = "1.10.2 (12/11/2026)"
 SHELL_VERSION = "1.9.15 (11/11/2026)"   # numéro de version de la coquille (index.html) : écrit par build.py, ne change que si la coquille change
 MAP_VERSION = "1.9.15 (11/11/2026)"       # numéro de version de la page de carte (carte.html) : idem
 
@@ -6409,5 +6409,10 @@ def main():
 
 
 if __name__ == "__main__":
+    for _s in (sys.stdout, sys.stderr):      # sortie dans un tube ou un fichier (Windows, cp1252) : un caractere hors de la page de code est remplace, il n'arrete pas l'outil
+        try:
+            _s.reconfigure(errors="replace")
+        except Exception:
+            pass
     sys.argv = old_options(sys.argv)
     main()

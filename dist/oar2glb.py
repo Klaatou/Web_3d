@@ -123,8 +123,8 @@ def i18n_add_common(ap):
         pass
 
 
-VERSION = "1.9.21 (11/11/2026)"      # remplacé par build.py (fichier VERSION) dans dist/oar2glb.py
-MARK = "69b14909"      # empreinte du fichier fabriqué, inscrite par build.py ; reste telle quelle depuis tools/
+VERSION = "1.10.2 (12/11/2026)"      # remplacé par build.py (fichier VERSION) dans dist/oar2glb.py
+MARK = "95071c0b"      # empreinte du fichier fabriqué, inscrite par build.py ; reste telle quelle depuis tools/
 
 
 def version_tag():
@@ -2340,6 +2340,11 @@ if __name__ == "__main__":
     if "--version" in sys.argv[1:]:      # ni journal ni pause « Entrée »
         print(_tr("py.oar2glb.oar2glb_0_2", version_tag()))
         sys.exit(0)
+    for _s in (sys.__stdout__, sys.__stderr__):      # sortie dans un tube ou un fichier (Windows, cp1252) : un caractere hors de la page de code est remplace, il n'arrete pas l'outil
+        try:
+            _s.reconfigure(errors="replace")
+        except Exception:
+            pass
     log = Path(__file__).resolve().with_name("oar2glb.diag.log" if "--diag" in sys.argv else "oar2glb.log")
     lf = open(log, "w", encoding="utf-8")
     sys.stdout, sys.stderr = Tee(sys.__stdout__, lf), Tee(sys.__stderr__, lf)

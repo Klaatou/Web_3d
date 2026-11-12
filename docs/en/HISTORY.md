@@ -231,6 +231,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 11/11/2026 |  | after 1.9.0 | Batch 1.9.23: tests: `tout.py` restores the UTF-8 environment (correction of batch 1.9.20); the tests' presence servers no longer block on a full pipe (`tests/vider_tube.py`) |
 | 12/11/2026 |  | 1.10.0 | Release 1.10.0: `VERSION` 1.10.0; `CHANGELOG.md`; gathers batches 1.9.1 to 1.9.23 (OpenSim 0.9.3 PBR materials, conversion on Linux with Mono, "Sea height" slider, graphical launcher fixed, `tests/tout.py`) |
 | 12/11/2026 |  | after 1.10.0 | Batch 1.10.1: documents: Firefox tried by Klaatou with the regions and the maps (overview, manual) |
+| 12/11/2026 |  | after 1.10.0 | Batch 1.10.2: tools: `errors="replace"` on the output streams of `glb2html`, `oar2glb`, `diag_carte` and the presence server (output redirected in cp1252); `tests/sortie_cp1252.py` |
 
 ## Useful commands
 

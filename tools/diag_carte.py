@@ -96,4 +96,9 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
+    for _s in (sys.stdout, sys.stderr):      # sortie dans un tube ou un fichier (Windows, cp1252) : un caractere hors de la page de code est remplace, il n'arrete pas l'outil
+        try:
+            _s.reconfigure(errors="replace")
+        except Exception:
+            pass
     sys.exit(main())

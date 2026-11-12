@@ -108,8 +108,8 @@ def i18n_add_common(ap):
         pass
 
 
-VERSION = "1.7.7 (08/11/2026)"      # remplacé par build.py (fichier VERSION) dans dist/diag_carte.py
-MARK = "f093d6ae"      # empreinte du fichier fabriqué, inscrite par build.py ; reste telle quelle depuis tools/
+VERSION = "1.10.2 (12/11/2026)"      # remplacé par build.py (fichier VERSION) dans dist/diag_carte.py
+MARK = "8e3103b7"      # empreinte du fichier fabriqué, inscrite par build.py ; reste telle quelle depuis tools/
 
 
 def version_tag():
@@ -180,4 +180,9 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
+    for _s in (sys.stdout, sys.stderr):      # sortie dans un tube ou un fichier (Windows, cp1252) : un caractere hors de la page de code est remplace, il n'arrete pas l'outil
+        try:
+            _s.reconfigure(errors="replace")
+        except Exception:
+            pass
     sys.exit(main())

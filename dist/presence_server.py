@@ -29,8 +29,8 @@ est refusée avec une raison que la page affiche. Sans --creators, tout le monde
 """
 from __future__ import annotations
 
-VERSION = "1.6.19 (07/11/2026)"
-MARK = "1c5e6443"      # empreinte du fichier fabrique, calculee et inscrite par build.py ; reste telle quelle si on lance src/
+VERSION = "1.10.2 (12/11/2026)"
+MARK = "f36d9e96"      # empreinte du fichier fabrique, calculee et inscrite par build.py ; reste telle quelle si on lance src/
 
 import argparse
 import asyncio
@@ -1480,7 +1480,7 @@ async def main():
     if OPTS.map_names_key is not None and len(OPTS.map_names_key) < MAP_KEY_MIN:
         ap.error(_tr("py.presence.map_key_short", MAP_KEY_MIN))
     try:
-        sys.stdout.reconfigure(line_buffering=True)
+        sys.stdout.reconfigure(line_buffering=True, errors="replace")
     except (AttributeError, ValueError):
         pass
     OPTS.log = here(OPTS.log)

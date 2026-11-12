@@ -1396,7 +1396,7 @@ async def main():
     if OPTS.map_names_key is not None and len(OPTS.map_names_key) < MAP_KEY_MIN:
         ap.error(_tr("py.presence.map_key_short", MAP_KEY_MIN))
     try:
-        sys.stdout.reconfigure(line_buffering=True)
+        sys.stdout.reconfigure(line_buffering=True, errors="replace")
     except (AttributeError, ValueError):
         pass
     OPTS.log = here(OPTS.log)

@@ -6,6 +6,14 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.10.0)
 
+### 12/11/2026 : outils : un caractère hors de la page de code n'arrête plus l'outil quand sa sortie est redirigée (lot 1.10.2)
+
+- **Point connu** (notes de la 1.10.0) : `glb2html.py` s'arrêtait sur `→` quand sa sortie va dans un tube ou un fichier Windows en cp1252 (`> journal.txt`).
+- **Cause** : `sys.stdout` est encodé avec la page de code de la console ou du fichier, en mode strict ; `print` d'un caractère qu'elle ne connaît pas lève `UnicodeEncodeError`. `sys.stderr` n'est pas concerné (Python l'écrit en `backslashreplace`). Même défaut dans `oar2glb.py` (le `Tee` écrit sur `sys.__stdout__`), `diag_carte.py` et le serveur de présence (un pseudo ou un chemin hors cp1252 dans une ligne du journal).
+- **Fait** : `errors="replace"` sur les flux de sortie, comme `extraire_batiments.py` et `iar2oar.py` le faisaient déjà : dans le bloc `__main__` de `glb2html.py` (`src/gen_tpl.py`) et de `diag_carte.py`, sur `sys.__stdout__` et `sys.__stderr__` avant le `Tee` de `oar2glb.py`, et sur `sys.stdout` de `presence_server.py`. Le caractère impossible à écrire devient `?` ; avec un flux UTF-8 rien ne change. `glb2tiles.py` et `glb-stats.py` écrivent déjà en UTF-8 : inchangés. Le lanceur graphique n'est pas concerné.
+- **Contrôle** : nouveau `tests/sortie_cp1252.py` (12 contrôles : les quatre outils, sortie en cp1252 puis en UTF-8). Sur `main` d'origine 8 contrôles échouent (les quatre outils plantent sur `UnicodeEncodeError`), avec le correctif tous passent ; en UTF-8 la flèche est conservée dans les deux cas.
+- **Non essayé** : Windows réel (le cp1252 est simulé par `PYTHONIOENCODING=cp1252` sous Linux). Serveur de présence de la VM : seule la sortie de la console change, l'envoi du fichier est facultatif.
+
 ### 12/11/2026 : documents : Firefox essayé par Klaatou avec les régions et les cartes (lot 1.10.1)
 
 - **Constat de Klaatou** : Firefox a été essayé avec les régions et les cartes ; les documents disaient encore « non essayé » ou ne rapportaient que le résultat d'un tiers.

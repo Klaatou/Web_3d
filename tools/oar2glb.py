@@ -2256,6 +2256,11 @@ if __name__ == "__main__":
     if "--version" in sys.argv[1:]:      # ni journal ni pause « Entrée »
         print(_tr("py.oar2glb.oar2glb_0_2", version_tag()))
         sys.exit(0)
+    for _s in (sys.__stdout__, sys.__stderr__):      # sortie dans un tube ou un fichier (Windows, cp1252) : un caractere hors de la page de code est remplace, il n'arrete pas l'outil
+        try:
+            _s.reconfigure(errors="replace")
+        except Exception:
+            pass
     log = Path(__file__).resolve().with_name("oar2glb.diag.log" if "--diag" in sys.argv else "oar2glb.log")
     lf = open(log, "w", encoding="utf-8")
     sys.stdout, sys.stderr = Tee(sys.__stdout__, lf), Tee(sys.__stderr__, lf)

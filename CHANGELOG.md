@@ -6,6 +6,14 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.10.0)
 
+### 12/11/2026: tools: a character outside the code page no longer stops the tool when its output is redirected (batch 1.10.2)
+
+- **Known issue** (1.10.0 notes): `glb2html.py` stopped on `→` when its output goes into a pipe or a Windows cp1252 file (`> journal.txt`).
+- **Cause**: `sys.stdout` is encoded with the code page of the console or the file, in strict mode; `print` of a character it does not know raises `UnicodeEncodeError`. `sys.stderr` is not concerned (Python writes it with `backslashreplace`). Same defect in `oar2glb.py` (the `Tee` writes to `sys.__stdout__`), `diag_carte.py` and the presence server (a nickname or a path outside cp1252 in a log line).
+- **Done**: `errors="replace"` on the output streams, as `extraire_batiments.py` and `iar2oar.py` already did: in the `__main__` block of `glb2html.py` (`src/gen_tpl.py`) and of `diag_carte.py`, on `sys.__stdout__` and `sys.__stderr__` before the `Tee` of `oar2glb.py`, and on `sys.stdout` of `presence_server.py`. A character that cannot be written becomes `?`; with a UTF-8 stream nothing changes. `glb2tiles.py` and `glb-stats.py` already write in UTF-8: unchanged. The graphical launcher is not concerned.
+- **Check**: new `tests/sortie_cp1252.py` (12 checks: the four tools, output in cp1252 then in UTF-8). On the original `main` 8 checks fail (the four tools crash on `UnicodeEncodeError`), with the fix all pass; in UTF-8 the arrow is kept in both cases.
+- **Not tried**: real Windows (cp1252 is simulated with `PYTHONIOENCODING=cp1252` under Linux). Presence server on the VM: only the console output changes, copying the file is optional.
+
 ### 12/11/2026: documents: Firefox was tried by Klaatou with the regions and the maps (batch 1.10.1)
 
 - **Reported by Klaatou**: Firefox has been tried with the regions and the maps; the documents still said "not tried" or reported only a third party's result.
