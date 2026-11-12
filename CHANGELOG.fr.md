@@ -6,6 +6,13 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.10.0)
 
+### 12/11/2026 : documents : Firefox essayé par Klaatou avec les régions et les cartes (lot 1.10.1)
+
+- **Constat de Klaatou** : Firefox a été essayé avec les régions et les cartes ; les documents disaient encore « non essayé » ou ne rapportaient que le résultat d'un tiers.
+- **Fait** : `VUE_ENSEMBLE.md` et `OVERVIEW.md` : nouvelle ligne « Essayé par Klaatou dans Firefox » (affichage des régions et des cartes, 12/11/2026, sur son PC, version non notée) et la ligne « Non essayé » dit maintenant Firefox sous Linux au lieu de Windows et Linux (le PC de Klaatou tourne sous Windows : déduit du reste du projet, à corriger si c'est faux) ; `MANUEL.md` et `MANUAL.md` : la phrase sur Firefox à propos de la bibliothèque modulaire cite son résultat avant celui du tiers. Les lignes sur l'animation des GIF (déjà « essayée sous Firefox ») et sur l'icône « Réalisé avec Web_3d » (non essayée sous Firefox) ne changent pas.
+- **Contrôle** : `verif_trad.py` sur les trois couples (manuel, vue d'ensemble, historique) : même résultat qu'avant ; `dist_a_jour.py` et `readme_liens.py` passent.
+- **Non essayé** : rien de nouveau (documents seulement) ; la version de Firefox et le système de cet essai ne sont pas notés.
+
 ## 1.10.0 (12/11/2026)
 
 ### 12/11/2026 : publication 1.10.0 : matériaux PBR, Linux avec Mono, hauteur de la mer

@@ -1245,7 +1245,7 @@ When the page cannot reach the presence server, it retries at increasing interva
 
 ### 7.59 Browsers
 
-Tried in Chromium (`tests/v45_lib.py`). **Firefox: a third party (NightshadeCeres) reported that the region is displayed (Firefox 159.0.1, macOS Ventura 13.7.8, `region-simple` package); the rest has not been tried in Firefox. Not tried: Safari.** The `tests/essai_importmap.html` file (open it in the browser; the result is written in plain words) checks that a browser accepts an import map built by a script; if the test fails in a browser, the shell does not start in it.
+Tried in Chromium (`tests/v45_lib.py`). **Firefox: Klaatou tried the display of regions and maps (12/11/2026); a third party (NightshadeCeres) also reported that the region is displayed (Firefox 159.0.1, macOS Ventura 13.7.8, `region-simple` package); the rest has not been tried in Firefox. Not tried: Safari.** The `tests/essai_importmap.html` file (open it in the browser; the result is written in plain words) checks that a browser accepts an import map built by a script; if the test fails in a browser, the shell does not start in it.
 
 ### 7.60 When WebGL is unavailable
 

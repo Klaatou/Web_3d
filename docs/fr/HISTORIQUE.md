@@ -230,6 +230,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 11/11/2026 |  | après 1.9.0 | Lot 1.9.22 : tests : `oar2glb` réencode dans un interpréteur fils (Windows) ; `tout.py` montre la dernière trace d'erreur |
 | 11/11/2026 |  | après 1.9.0 | Lot 1.9.23 : tests : `tout.py` rétablit l'environnement UTF-8 (correction du lot 1.9.20) ; les serveurs de présence des tests ne se bloquent plus sur un tube plein (`tests/vider_tube.py`) |
 | 12/11/2026 |  | 1.10.0 | Publication 1.10.0 : `VERSION` 1.10.0 ; `CHANGELOG.md` ; réunit les lots 1.9.1 à 1.9.23 (matériaux PBR d'OpenSim 0.9.3, conversion sous Linux avec Mono, curseur « Hauteur de la mer », lanceur graphique corrigé, `tests/tout.py`) |
+| 12/11/2026 |  | après 1.10.0 | Lot 1.10.1 : documents : Firefox essayé par Klaatou avec les régions et les cartes (vue d'ensemble, manuel) |
 
 ## Commandes utiles
 

@@ -6,6 +6,13 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.10.0)
 
+### 12/11/2026: documents: Firefox was tried by Klaatou with the regions and the maps (batch 1.10.1)
+
+- **Reported by Klaatou**: Firefox has been tried with the regions and the maps; the documents still said "not tried" or reported only a third party's result.
+- **Done**: `VUE_ENSEMBLE.md` and `OVERVIEW.md`: new line "Tried by Klaatou in Firefox" (display of regions and maps, 12/11/2026, on his PC, version not noted) and the "Not tried" line now says Firefox on Linux instead of Windows and Linux (the PC of Klaatou runs Windows: assumed from the rest of the project, to be corrected if wrong); `MANUEL.md` and `MANUAL.md`: the Firefox sentence about the modular library names his result before the third party's. The lines about the GIF animation (already "tried in Firefox") and the "Made with Web_3d" icon (not tried in Firefox) are unchanged.
+- **Check**: `verif_trad.py` on the three pairs (manual, overview, history): same result as before; `dist_a_jour.py` and `readme_liens.py` pass.
+- **Not tried**: nothing new (documents only); the Firefox version and the system of that try are not noted.
+
 ## 1.10.0 (12/11/2026)
 
 ### 12/11/2026: release 1.10.0: PBR materials, Linux with Mono, sea height
