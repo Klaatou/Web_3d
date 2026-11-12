@@ -239,6 +239,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 12/11/2026 |  | après 1.10.0 | Lot 1.10.7 : viewer : reflets métalliques (environnement des seuls métaux, 60 % avec carte graphique, 0 % en rendu logiciel) et curseur « Reflets métalliques » ; `tests/reflets_metal.py` |
 | 12/11/2026 |  | après 1.10.0 | Lot 1.10.8 : diagnostic : ligne « Reflets métalliques » (réglage, matériaux métalliques chargés, avec reflets) ; `tests/reflets_metal.py` |
 | 12/11/2026 |  | après 1.10.0 | Lot 1.10.9 : diagnostic affiché dans une fenêtre en plus d'être copié (page et viewer) ; correction d'une conclusion du lot 1.10.8 ; `tests/v39.py` |
+| 12/11/2026 |  | après 1.10.0 | Lot 1.10.10 : fenêtre du diagnostic de la taille du texte et redimensionnable ; la page propose les reflets quand elle voit des métaux PBR (défaut des reflets : 0 %) ; `tests/reflets_metal.py`, `tests/v39.py` |
 
 ## Commandes utiles
 

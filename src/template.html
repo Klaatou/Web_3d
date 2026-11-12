@@ -98,8 +98,8 @@ body.padOn #bar{max-width:max(200px,calc(50vw - 90px))}   /* v46 : la barre pass
 #lightPanel input[type=range]{width:130px}
 #lightPanel button{font:inherit;padding:2px 8px;border:1px solid #000;border-radius:6px;background:#fff;cursor:pointer}
 #lightPanel small{display:block;margin-top:6px;opacity:.8;contain:inline-size}
-#lightAsk{position:fixed;bottom:56px;left:50%;transform:translateX(-50%);z-index:41;font:13px/1.4 ui-monospace,Consolas,monospace;background:#fff;color:#000;border:2px solid #000;border-radius:6px;padding:8px 12px;width:max-content;max-width:min(340px,90vw);box-sizing:border-box}
-#lightAsk button{font:inherit;margin-left:8px;padding:2px 10px;border:1px solid #000;border-radius:6px;background:#fff;cursor:pointer}
+#lightAsk,#metalAsk{position:fixed;bottom:56px;left:50%;transform:translateX(-50%);z-index:41;font:13px/1.4 ui-monospace,Consolas,monospace;background:#fff;color:#000;border:2px solid #000;border-radius:6px;padding:8px 12px;width:max-content;max-width:min(340px,90vw);box-sizing:border-box}
+#lightAsk button,#metalAsk button{font:inherit;margin-left:8px;padding:2px 10px;border:1px solid #000;border-radius:6px;background:#fff;cursor:pointer}
 #toast{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:40;font:13px/1.4 ui-monospace,Consolas,monospace;background:#000;color:#fff;border-radius:6px;padding:8px 14px;max-width:90%}
 #zonePrompt{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);z-index:30;font:13px/1.4 ui-monospace,Consolas,monospace;background:#000;color:#fff;border-radius:6px;padding:6px 12px}
 #fade{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .45s;z-index:50}
@@ -144,6 +144,8 @@ body:not(.touch) #padRun{font-size:10px;letter-spacing:-.3px}
 #pad svg{width:55%;height:55%;pointer-events:none}
 @media (max-width:1360px){body:not(.touch) #statusLine{top:40px;bottom:auto}body:not(.touch) #pad{bottom:12px}}
 body.padOn:not(.touch) #lightAsk{bottom:192px}
+#metalAsk{bottom:112px}
+body.padOn:not(.touch) #metalAsk{bottom:248px}
 body.padOn:not(.touch) #zonePrompt{bottom:220px}
 #tcol{position:fixed;right:12px;bottom:58px;z-index:12;pointer-events:none;display:flex;flex-direction:column;gap:8px}
 #tcol button,#tmenu button{pointer-events:auto;min-width:76px;min-height:48px;font:bold 12px/1.2 ui-monospace,Consolas,monospace;background:#fffffff0;color:#000;border:2px solid #000;border-radius:10px;padding:4px 6px;cursor:pointer;touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
@@ -169,6 +171,7 @@ body.touch #pad button{border-width:2px;border-radius:10px;font-size:12px}
 body.touch #pad button.held,body.touch #pad button[aria-pressed=true]{border-width:4px}
 body.touch #zonePrompt{bottom:auto;top:var(--ttop,140px)}
 body.touch #lightAsk{bottom:auto;top:var(--ttop,140px)}
+body.touch #metalAsk{bottom:auto;top:calc(var(--ttop,140px) + 56px)}
 body.touch #chat{top:var(--ttop,140px);bottom:auto;width:min(380px,42vw)}
 body.touch #chatLog:not(.open){max-height:25vh;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end}
 body.touch.chatOpen #chat{left:8px;right:8px;width:auto;top:auto;bottom:8px}
@@ -659,6 +662,8 @@ function compassTick() {
   compassEl.hidden = false;
 }
 if (C.compass !== false) setInterval(compassTick, 100);
+const METAL_ASKED = 'glb2html_metal_asked_' + (C.room || 'x'), METAL_SUGGEST = 60;   // 1.10.10 : la page propose les reflets metalliques ; la reponse est retenue par region
+let metalAskApply = p => viewer.setCfg({ metalEnv: p });      // le panneau Reglages le remplace : il retient aussi le choix
 if (C.panel !== false) {
   const ob = document.getElementById('optsBtn'), op = document.getElementById('optsPanel');
   ob.title = tr('page.win.o.tip');   // v41 : bulle (rôle et touche)
@@ -681,7 +686,8 @@ if (C.panel !== false) {
   cbAnim.onchange = () => { st.anim = cbAnim.checked; apply(); };
   rgWave.oninput = () => { st.wave = parseFloat(rgWave.value); apply(); };
   rgSea.oninput = () => { st.seaM = parseFloat(rgSea.value); apply(); };
-  rgMetal.oninput = () => { st.metal = parseFloat(rgMetal.value); apply(); };
+  rgMetal.oninput = () => { st.metal = parseFloat(rgMetal.value); apply(); try { localStorage.setItem(METAL_ASKED, '1'); } catch (e) {} const ma = document.getElementById('metalAsk'); if (ma) ma.remove(); };   // toucher au curseur vaut reponse
+  metalAskApply = p => { st.metal = p; apply(); };
   op.append(lab(tr('page.opt.retina'), cbRetina));
   {
     // v42 : case « Rendu léger » (préréglage) et ses réglages fins, dans une sous-fenêtre à gauche de Réglages, modifiables en direct
@@ -817,6 +823,27 @@ if (!LIGHT.asked && !LIGHT.st.on && softGpu(viewer.renderer)) {
   yes.onclick = () => { box.remove(); lightApply(LIGHT.preset); toast(tr('page.light.done')); };
   no.onclick = () => { box.remove(); LIGHT.save(); };
   document.body.append(box);
+}
+// 1.10.10 : la region contient des metaux PBR et les reflets sont a 0 % : la page propose de les activer, une seule fois par region (un « oui », un « non » ou un reglage du curseur est retenu).
+// Les tuiles arrivent peu a peu : on regarde toutes les 2 s pendant 2 minutes.
+{
+  let tries = 0;
+  const asked = () => { try { return localStorage.getItem(METAL_ASKED) === '1'; } catch (e) { return false; } };
+  const mark = () => { try { localStorage.setItem(METAL_ASKED, '1'); } catch (e) {} };
+  const check = () => {
+    if (asked() || document.getElementById('metalAsk') || Number(viewer.cfg.metalEnv) > 0) return true;
+    const k = viewer.metalInfo();
+    if (k.metal <= 0) return ++tries > 60;
+    const box = document.createElement('div'); box.id = 'metalAsk';
+    const yes = Object.assign(document.createElement('button'), { type: 'button', id: 'metalAskYes', textContent: tr('page.modal.yes') });
+    const no = Object.assign(document.createElement('button'), { type: 'button', id: 'metalAskNo', textContent: tr('page.metal.no') });
+    box.append(Object.assign(document.createElement('span'), { id: 'metalAskText', textContent: trn('page.metal.ask', k.metal, METAL_SUGGEST) + (softGpu(viewer.renderer) ? tr('page.metal.ask.soft') : '') }), yes, no);
+    yes.onclick = () => { box.remove(); mark(); metalAskApply(METAL_SUGGEST); toast(tr('page.metal.done', METAL_SUGGEST)); };
+    no.onclick = () => { box.remove(); mark(); };
+    document.body.append(box);
+    return true;
+  };
+  if (!check()) { const iv = setInterval(() => { if (check()) clearInterval(iv); }, 2000); }
 }
 if (C.walk) {
   const wb = document.getElementById('walkBtn'), wh = document.getElementById('walkHint');

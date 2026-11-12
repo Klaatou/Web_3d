@@ -3,13 +3,13 @@
 
 Pourquoi : un materiau metallique (metalness 1) ne recoit pas la lumiere d'ambiance, il ne reflete que son environnement, et la scene n'en avait pas :
 les metaux PBR d'OpenSim etaient bien plus sombres dans la page que dans Blender (mesure : sphere grise metallique de rugosite 0,7 : 52 sur 255 vue de face, la meme non metallique 114).
-Le viewer donne maintenant un petit environnement filtre aux SEULS materiaux metalliques ; cfg.metalEnv (%) regle l'intensite, 0 = aucun reflet et aucun cout : 60 par defaut avec une carte graphique, 0 en rendu logiciel (mesure : une surface metallique avec reflets coute environ 3 fois plus par image sous SwiftShader) ;
+Le viewer donne maintenant un petit environnement filtre aux SEULS materiaux metalliques ; cfg.metalEnv (%) regle l'intensite, 0 = aucun reflet et aucun cout (defaut ; mesure : une surface metallique avec reflets coute environ 3 fois plus par image sous SwiftShader) ; la page PROPOSE 60 % quand elle voit des metaux (section 8, 1.10.10) ;
 un curseur « Reflets metalliques » de Reglages le regle.
 
 Verifie : trois spheres (non metallique, metallique rugosite 0,7, metallique rugosite 0,3) ; materiaux metalliques avec envMap et intensite 0,6, le non metallique
 sans environnement ; clarte mesuree sur une capture d'ecran (un metal a au moins 1,6 fois sa clarte sans reflet, le non metallique ne bouge pas, a 200 % plus clair qu'a 60 %) ;
 le curseur (valeur de depart, 0 = aucun reflet, retenu apres rechargement, « Valeurs d'origine ») ; l'environnement partage survit au remplacement du modele ;
-mode tuiles : les materiaux metalliques des tuiles ont l'environnement ; francais et anglais ; aucune erreur de page.
+mode tuiles : les materiaux metalliques des tuiles ont l'environnement ; la proposition (oui, non, curseur, region sans metal, tuiles, anglais) ; francais et anglais ; aucune erreur de page.
 Vrai navigateur graphique, Edge, Windows et comparaison avec Blender ou un viewer OpenSim : non testes ici.
 
 Prerequis : pip install playwright websockets ; python build.py avant. Variables facultatives : THREE_DIR, CHROMIUM. Lancer : python tests/reflets_metal.py
@@ -20,7 +20,7 @@ from h37 import *
 import h37
 
 
-def spheres_glb(chemin):
+def spheres_glb(chemin, metal=True):
     """trois spheres de rayon 1 (normales justes), alignees sur x : non metallique, metallique rugosite 0,7, metallique rugosite 0,3"""
     nlat, nlon = 16, 24
     pos, nor, idx = [], [], []
@@ -42,7 +42,7 @@ def spheres_glb(chemin):
     blob = b"".join(struct.pack("<3f", *p) for p in pos) + b"".join(struct.pack("<3f", *n) for n in nor) + struct.pack("<%dH" % len(idx), *idx)
     blob += b"\0" * (-len(blob) % 4)
     npos = len(pos)
-    mats = [(0.0, 0.7), (1.0, 0.7), (1.0, 0.3)]
+    mats = [(0.0, 0.7), (1.0, 0.7), (1.0, 0.3)] if metal else [(0.0, 0.7)] * 3
     g = {"asset": {"version": "2.0"}, "buffers": [{"byteLength": len(blob)}],
          "bufferViews": [{"buffer": 0, "byteOffset": 0, "byteLength": npos * 12, "target": 34962},
                          {"buffer": 0, "byteOffset": npos * 12, "byteLength": npos * 12, "target": 34962},
@@ -62,8 +62,10 @@ print("--- 0. fabrication des pages")
 site = tmp / "site"; site.mkdir()
 src = tmp / "src"; src.mkdir()
 spheres_glb(site / "metal.glb")
+spheres_glb(site / "plat.glb", metal=False)      # trois spheres sans aucun metal
 spheres_glb(src / "Metal.glb")
 html(site / "metal.glb", "-o", site / "Metal.html", "--no-sea")
+html(site / "plat.glb", "-o", site / "Plat.html", "--no-sea")
 run(DIST / "glb2tiles.py", src / "Metal.glb", "--forcer", "--budget-tri", "700", "--min", "4", "--nopause", "--sans-references")
 html("-o", site / "Tuilee.html", "--shared-shell", "--tiles", src / "Metal.tiles.json", "--no-sea")
 http, hport = serveur(site)
@@ -112,11 +114,7 @@ async def main():
         print("--- 1. materiaux : seuls les metaux recoivent l'environnement")
         o = await Onglet(br).ouvrir(BASE + "Metal.html", locale="fr-FR")
         rapport(await o.ev("window.__viewer.cfg.metalEnv") == 0 and not await o.ev("window.__viewer.metalEnvReady()") and not any(x["env"] for x in (await o.ev(MATS)).values()),
-                "rendu logiciel (SwiftShader ici) : reflets a 0 % par defaut, aucun environnement cree, aucun cout")
-        noms = ["ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 3060 Direct3D11 vs_5_0 ps_5_0, D3D11)", "Mesa Intel(R) UHD Graphics 620", "Apple M2",
-                "ANGLE (Microsoft, Microsoft Basic Render Driver Direct3D11 vs_5_0 ps_5_0, D3D11)", "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero)), SwiftShader driver)", "llvmpipe (LLVM 15.0.7, 256 bits)"]
-        par_defaut = await o.ev("(n) => n.map(x => window.__viewer.metalEnvDefault(x))", noms)
-        rapport(par_defaut == [60, 60, 60, 0, 0, 0], "valeur par defaut selon le moteur : 60 % avec une carte graphique, 0 % en rendu logiciel (Basic Render, SwiftShader, llvmpipe)", par_defaut)
+                "reflets a 0 % par defaut : aucun environnement cree, aucun cout (la page propose de les activer, voir la section 8)")
         await o.ev("window.__viewer.setCfg({ metalEnv: 60 })")
         m = await o.ev(MATS)
         rapport(all(m[k]["env"] and abs(m[k]["k"] - 0.6) < 1e-9 for k in ("S1", "S2")) and not m["S0"]["env"], "reflets a 60 % : metaux avec envMap et intensite 0,6 ; non metallique : aucun environnement", m)
@@ -212,6 +210,58 @@ async def main():
         o = await Onglet(br).ouvrir(BASE + "Metal.html", locale="en-US")
         t = await diag(o)
         rapport("Metal reflections" in t and "0 % ; metallic materials loaded: 2 of 3, of which 0 with reflections" in t, "anglais : « Metal reflections ... 2 of 3 »", [l for l in t.splitlines() if "eflections" in l])
+        await o.ctx.close()
+
+        print("--- 8. la page propose les reflets quand elle voit des metaux (1.10.10)")
+        BARRE = "document.getElementById('metalAsk') && document.getElementById('metalAskText').textContent"
+        SOFT = " Rendu sans carte graphique : cela peut ralentir."      # SwiftShader : rendu logiciel
+        o = await Onglet(br).ouvrir(BASE + "Metal.html", locale="fr-FR")
+        await o.attendre("!!document.getElementById('metalAsk')", 15)
+        texte = await o.ev(BARRE)
+        rapport(texte == "Cette région contient 2 matériaux métalliques (PBR). Activer les reflets à 60 % ?" + SOFT, "2 metaux vus, reflets a 0 % : la barre propose 60 % (et previent d'un ralentissement en rendu logiciel)", texte)
+        await o.ev("document.getElementById('metalAskYes').click()")
+        m = await o.ev(MATS)
+        st = json.loads(await o.ev("localStorage.getItem(Object.keys(localStorage).find(k => k.startsWith('glb2html_opts_')))"))
+        rapport(not await o.ev("!!document.getElementById('metalAsk')") and abs(await o.ev("window.__viewer.cfg.metalEnv") - 60) < 1e-9 and all(m[k]["env"] for k in ("S1", "S2")) and st.get("metal") == 60,
+                "« Oui » : la barre disparait, reflets a 60 % sur les metaux, choix memorise avec les reglages", (m, st))
+        await o.pg.reload(); await o.attendre(PRET, 40); await o.pg.wait_for_timeout(2500)
+        rapport(not await o.ev("!!document.getElementById('metalAsk')") and abs(await o.ev("window.__viewer.cfg.metalEnv") - 60) < 1e-9, "apres rechargement : pas de nouvelle question, reflets toujours a 60 %")
+        rapport(not o.errs, "aucune erreur de page", o.errs)
+        await o.ctx.close()
+
+        o = await Onglet(br).ouvrir(BASE + "Metal.html", locale="fr-FR")
+        await o.attendre("!!document.getElementById('metalAsk')", 15)
+        await o.ev("document.getElementById('metalAskNo').click()")
+        await o.pg.reload(); await o.attendre(PRET, 40); await o.pg.wait_for_timeout(2500)
+        rapport(not await o.ev("!!document.getElementById('metalAsk')") and await o.ev("window.__viewer.cfg.metalEnv") == 0, "« Non » : retenu, plus de question au rechargement, reflets a 0 %")
+        await o.ctx.close()
+
+        o = await Onglet(br).ouvrir(BASE + "Metal.html", locale="fr-FR")
+        await o.attendre("!!document.getElementById('metalAsk')", 15)
+        await o.ev("document.getElementById('optsBtn').click()")
+        await o.ev(REGLER, ["Reflets métalliques", 25])
+        rapport(not await o.ev("!!document.getElementById('metalAsk')"), "toucher au curseur vaut reponse : la barre disparait")
+        await o.pg.reload(); await o.attendre(PRET, 40); await o.pg.wait_for_timeout(2500)
+        rapport(not await o.ev("!!document.getElementById('metalAsk')") and abs(await o.ev("window.__viewer.cfg.metalEnv") - 25) < 1e-9, "apres rechargement : pas de question, le choix 25 % est repris")
+        await o.ctx.close()
+
+        o = await Onglet(br).ouvrir(BASE + "Plat.html", locale="fr-FR")
+        await o.pg.wait_for_timeout(5000)
+        rapport(not await o.ev("!!document.getElementById('metalAsk')") and await o.ev("window.__viewer.metalInfo().metal") == 0, "region sans metal : aucune proposition")
+        await o.ctx.close()
+
+        o = await Onglet(br).ouvrir(BASE + "Metal.html", locale="en-US")
+        await o.attendre("!!document.getElementById('metalAsk')", 15)
+        texte = await o.ev(BARRE)
+        rapport(texte == "This region contains 2 metallic (PBR) materials. Turn on the reflections at 60 %? Rendering without a graphics card: this may slow things down.", "anglais : texte de la proposition", texte)
+        await o.ctx.close()
+
+        o = await Onglet(br).ouvrir(BASE + "index.html?region=Tuilee", locale="fr-FR")
+        await o.attendre("window.__viewer.tilesState().total > 0 && window.__viewer.tilesState().ready.length > 0", 40)
+        await o.attendre("!!document.getElementById('metalAsk')", 20)
+        await o.ev("document.getElementById('metalAskYes').click()")
+        mets = await o.ev(METAUX)
+        rapport(len(mets) >= 2 and all(v["env"] for v in mets), "mode tuiles : la proposition apparait quand les tuiles metalliques sont chargees ; « Oui » donne les reflets", mets)
         await o.ctx.close()
         await br.close()
 

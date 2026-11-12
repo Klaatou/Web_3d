@@ -6,6 +6,17 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.10.0)
 
+### 12/11/2026 : fenêtre du diagnostic ajustée ; la page propose les reflets quand elle voit des métaux PBR (lot 1.10.10)
+
+- **Constaté et demandé par Klaatou** (capture) : la fenêtre du diagnostic n'est pas de la taille de ce qu'elle montre (lignes coupées, barre horizontale) et ne se redimensionne que verticalement ; et `index.html` doit repérer les PBR et proposer d'activer un certain pourcentage de reflets.
+- **Fait** :
+  - **fenêtre du diagnostic** (`src/core.js`, `diagShow`) : largeur selon le contenu (820 px au plus, 90 % de l'écran), redimensionnable dans **les deux sens** (`resize: both`, coin en bas à droite), lignes longues **repliées** (`white-space: pre-wrap` : plus de barre horizontale), hauteur de la taille du texte jusqu'à 80 % de l'écran ;
+  - **proposition des reflets** (`src/template.html`) : quand la région contient des matériaux métalliques (`metalInfo`) et que les reflets sont à 0 %, une barre `#metalAsk`, du style de la proposition du rendu léger, dit « Cette région contient N matériaux métalliques (PBR). Activer les reflets à 60 % ? » avec Oui et Non (en rendu sans carte graphique elle ajoute « cela peut ralentir »). **Une seule fois par région** : Oui, Non ou un réglage du curseur sont retenus (`glb2html_metal_asked_<région>`) ; Oui règle le curseur à 60 % et le mémorise avec les autres réglages. Les tuiles arrivant peu à peu, la page regarde toutes les 2 s pendant 2 minutes. Textes `page.metal.*` en français et en anglais ;
+  - **changement de comportement** : le défaut des reflets est maintenant **0 % partout** (lot 1.10.7 : 60 % avec une carte graphique, 0 % sinon) ; c'est la proposition qui les active, avec l'accord du visiteur. Le 60 % reste une estimation.
+- **Contrôle** : `tests/reflets_metal.py`, nouvelle section 8 (10 contrôles : la barre et son texte avec 2 métaux, Oui, rechargement, Non, curseur, région sans métal, anglais, mode tuiles) ; `tests/v39.py` : taille et redimensionnement de la fenêtre. Sur le code de la 1.10.9 les deux échouent, avec le correctif tout passe. Passent aussi `v36`, `v36_lang`, `v40`, `v42`, `v45`, `v46`, `v47`, `v52`, `image_diag`, `gif_anim`, `version_page`, `i18n`, `smoke`, `samples`, `tuiles`, `mer_hauteur`, `paquets`, `dist_a_jour`, `marque`, `credit`, `icone`.
+- **Non essayé** : Windows réel, Edge, Firefox, Safari ; l'aspect de la barre sur un écran tactile ou avec le pavé affiché (positions réglées d'après celles du rendu léger, sans les voir) ; deux barres ensemble (rendu léger et reflets).
+- **Reste à mettre à jour** (règle 16) : manuel (Réglages : « Reflets métalliques » et la proposition ; le diagnostic dans une fenêtre), en français et en anglais ; la démo (`index.html`, `carte.html`, `glb-viewer.html`, `glb2html.py` changent).
+
 ### 12/11/2026 : diagnostic : affiché dans une fenêtre en plus d'être copié, et correction d'une conclusion du lot 1.10.8 (lot 1.10.9)
 
 - **Demandé par Klaatou** : que le diagnostic s'affiche dans une fenêtre en plus d'être placé dans le presse-papiers.

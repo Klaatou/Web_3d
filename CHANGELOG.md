@@ -6,6 +6,17 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.10.0)
 
+### 12/11/2026: diagnostic window adjusted; the page offers the reflections when it sees PBR metals (batch 1.10.10)
+
+- **Reported and requested by Klaatou** (screenshot): the diagnostic window is not the size of what it shows (cut lines, horizontal bar) and can only be resized vertically; and `index.html` must spot the PBR materials and offer to turn on a certain percentage of reflections.
+- **Done**:
+  - **diagnostic window** (`src/core.js`, `diagShow`): width follows the content (820 px at most, 90 % of the screen), resizable in **both directions** (`resize: both`, bottom-right corner), long lines **wrapped** (`white-space: pre-wrap`: no more horizontal bar), height of the size of the text up to 80 % of the screen;
+  - **reflections offer** (`src/template.html`): when the region contains metallic materials (`metalInfo`) and the reflections are at 0 %, a `#metalAsk` bar, in the style of the light-rendering offer, says "This region contains N metallic (PBR) materials. Turn on the reflections at 60 %?" with Yes and No (without a graphics card it adds "this may slow things down"). **Once per region**: Yes, No or a slider setting is remembered (`glb2html_metal_asked_<region>`); Yes sets the slider to 60 % and remembers it with the other settings. As the tiles arrive little by little, the page looks every 2 s for 2 minutes. Texts `page.metal.*` in French and English;
+  - **change of behaviour**: the default of the reflections is now **0 % everywhere** (batch 1.10.7: 60 % with a graphics card, 0 % otherwise); the offer is what turns them on, with the visitor's consent. The 60 % remains an estimate.
+- **Check**: `tests/reflets_metal.py`, new section 8 (10 checks: the bar and its text with 2 metals, Yes, reload, No, slider, region without metal, English, tile mode); `tests/v39.py`: size and resizing of the window. On the 1.10.9 code both fail, with the fix all pass. `v36`, `v36_lang`, `v40`, `v42`, `v45`, `v46`, `v47`, `v52`, `image_diag`, `gif_anim`, `version_page`, `i18n`, `smoke`, `samples`, `tuiles`, `mer_hauteur`, `paquets`, `dist_a_jour`, `marque`, `credit` and `icone` also pass.
+- **Not tried**: real Windows, Edge, Firefox, Safari; the look of the bar on a touch screen or with the pad shown (positions set from those of the light rendering, without seeing them); two bars together (light rendering and reflections).
+- **Still to update** (rule 16): manual (Settings: "Metal reflections" and the offer; the diagnostic in a window), in French and English; the demo (`index.html`, `carte.html`, `glb-viewer.html` and `glb2html.py` change).
+
 ### 12/11/2026: diagnostic: shown in a window as well as copied, and correction of a conclusion of batch 1.10.8 (batch 1.10.9)
 
 - **Requested by Klaatou**: the diagnostic should be shown in a window in addition to being placed in the clipboard.

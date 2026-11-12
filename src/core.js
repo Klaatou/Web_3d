@@ -71,22 +71,20 @@ function gpuName(r) {
 // v42 : rendu sans carte graphique (moteur logiciel) : la page propose le rendu léger
 const softName = n => /Basic Render|SwiftShader|llvmpipe|softpipe|Software/i.test(n);
 const softGpu = r => softName(gpuName(r));
-// 1.10.7 : reflets metalliques par defaut : 60 % avec une carte graphique, 0 % en rendu logiciel (mesure : sur une surface metallique l'image coute environ 3 fois plus, 9 puis 25 ms a 1440 x 900 sous SwiftShader)
-const metalEnvDefault = n => softName(n) ? 0 : 60;
 // 1.10.9 : fenetre du diagnostic : le texte est affiche, selectionnable, EN PLUS d'etre copie dans le presse-papiers (page et viewer). Une seule fenetre (#diagWin),
 // dont le champ de texte est #diagOut ; Echap ou la croix la ferme ; un nouvel appel met le texte et le message a jour. select : le texte est selectionne (copie refusee).
 function diagShow(text, status, select) {
   let w = document.getElementById('diagWin');
   if (!w) {
     w = document.createElement('div'); w.id = 'diagWin'; w.setAttribute('role', 'dialog'); w.setAttribute('aria-label', tr('core.diag.win.title'));
-    w.style.cssText = 'position:fixed;z-index:80;left:50%;top:50%;transform:translate(-50%,-50%);box-sizing:border-box;width:min(820px,94vw);max-height:92vh;display:flex;flex-direction:column;gap:6px;padding:8px 10px;background:#fff;color:#000;border:2px solid #000;border-radius:8px;box-shadow:0 8px 28px #000a;font:12px/1.4 ui-monospace,Consolas,monospace';
+    w.style.cssText = 'position:fixed;z-index:80;left:50%;top:50%;transform:translate(-50%,-50%);box-sizing:border-box;width:fit-content;max-width:96vw;max-height:94vh;display:flex;flex-direction:column;gap:6px;padding:8px 10px;background:#fff;color:#000;border:2px solid #000;border-radius:8px;box-shadow:0 8px 28px #000a;font:12px/1.4 ui-monospace,Consolas,monospace';
     const head = document.createElement('div'), ti = document.createElement('b'), st = document.createElement('span'), x = document.createElement('button'), ta = document.createElement('textarea');
     head.style.cssText = 'display:flex;align-items:center;gap:8px'; ti.textContent = tr('core.diag.win.title');
     st.id = 'diagStatus'; st.style.cssText = 'flex:1;min-width:0';
     x.type = 'button'; x.id = 'diagClose'; x.textContent = '\u00d7'; x.title = tr('core.diag.win.close'); x.setAttribute('aria-label', tr('core.diag.win.close'));
     x.style.cssText = 'font:inherit;font-size:16px;line-height:1;padding:0 8px;border:1px solid #000;border-radius:4px;background:#fff;color:#000;cursor:pointer';
     ta.id = 'diagOut'; ta.readOnly = true; ta.spellcheck = false; ta.setAttribute('aria-label', tr('core.diag.win.title'));
-    ta.style.cssText = 'display:block;width:100%;box-sizing:border-box;height:min(520px,66vh);resize:vertical;font:inherit;white-space:pre;overflow:auto';
+    ta.style.cssText = 'display:block;width:min(820px,90vw);box-sizing:border-box;resize:both;font:inherit;white-space:pre-wrap;overflow:auto';
     const close = () => { w.style.display = 'none'; };
     x.onclick = close;
     w.addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); e.preventDefault(); close(); } });
@@ -95,6 +93,7 @@ function diagShow(text, status, select) {
   w.style.display = 'flex';
   const ta = document.getElementById('diagOut');
   ta.value = text; document.getElementById('diagStatus').textContent = status || '';
+  ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight + 4, Math.round(innerHeight * 0.8)) + 'px';      // la hauteur suit le texte (jusqu'a 80 % de l'ecran) ; le coin la change ensuite, dans les deux sens
   ta.focus(); if (select) ta.select(); else ta.setSelectionRange(0, 0);
 }
 // texte du diagnostic ; extra = { cfgVersion, lines } : version de la configuration de la région, lignes d'état propres à la page ou au viewer
@@ -397,7 +396,7 @@ function createViewer(container, cfg0, loader) {
   renderer.toneMapping = THREE.NoToneMapping;
   renderer.shadowMap.enabled = false;
   container.appendChild(renderer.domElement);
-  if (!Number.isFinite(cfg.metalEnv)) cfg.metalEnv = metalEnvDefault(gpuName(renderer));      // 1.10.7 : reflets metalliques, en % (voir metalApply)
+  if (!Number.isFinite(cfg.metalEnv)) cfg.metalEnv = 0;      // 1.10.7 : reflets metalliques, en % (voir metalApply) ; 1.10.10 : 0 par defaut, la page PROPOSE de les activer quand la region a des metaux
 
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.target.fromArray(cfg.target);
@@ -508,7 +507,8 @@ function createViewer(container, cfg0, loader) {
   // 1.10.7 : reflets metalliques. Un materiau metallique (metalness 1) ne recoit pas la lumiere d'ambiance : il ne reflete que son environnement, et la scene n'en a pas.
   // Mesure (Chromium, three 0.160.0, memes lumieres que la page) : une sphere grise metallique de rugosite 0,7 donne 52 sur 255, la meme non metallique 114.
   // Un petit decor (ciel, horizon clair, sol chaud, un point lumineux) est filtre une fois (PMREM) et donne aux SEULS materiaux metalliques : le reste ne change pas.
-  // cfg.metalEnv : intensite en % (0 = aucun reflet, et aucun cout). Defaut : metalEnvDefault (60 avec une carte graphique : ESTIMATION a ajuster en regardant de vrais OAR PBR ; 0 en rendu logiciel). Curseur « Reflets metalliques » de Reglages.
+  // cfg.metalEnv : intensite en % (0 = aucun reflet, et aucun cout ; defaut). Curseur « Reflets metalliques » de Reglages ; la page propose 60 % (ESTIMATION a ajuster en regardant de vrais OAR PBR) quand elle voit des metaux (metalInfo).
+  // Mesure du cout : sur une surface metallique l'image coute environ 3 fois plus sous SwiftShader (9 puis 25 ms a 1440 x 900).
   // Mesure du curseur : metal gris de rugosite 0,7 vu de dessus, 52 sur 255 sans reflet, 107 a 60 % ; le meme objet non metallique, 249.
   let metalEnvTex = null;
   const METAL_MIN = 0.05;
@@ -2556,7 +2556,7 @@ function createViewer(container, cfg0, loader) {
   });
 
   return {
-    scene, camera, renderer, controls, cfg, setCfg, seaShift, metalEnvReady: () => !!metalEnvTex, metalEnvDefault, metalInfo, setModel, loadBuffer, imageUrl, freshFetch, setImageResolver, animInfo: () => ({ planes: animPlanes.size, ticks: animTicks }), frame, getCameraState, setZoom, renderStats,
+    scene, camera, renderer, controls, cfg, setCfg, seaShift, metalEnvReady: () => !!metalEnvTex, metalInfo, setModel, loadBuffer, imageUrl, freshFetch, setImageResolver, animInfo: () => ({ planes: animPlanes.size, ticks: animTicks }), frame, getCameraState, setZoom, renderStats,
     get model() { return model; }, get sea() { return sea; }, set onCfg(f) { onCfg = f; }, set onWalk(f) { onWalk = f; }, set onPick(f) { onPick = f; }, set pickOrbit(v) { pickOrbit = !!v; }, set onPresence(f) { onPresence = f; }, set onChat(f) { onChat = f; }, set onPeer(f) { onPeer = f; },
     setZones, setZoneNumbers, zoneSelect, zonePickAt, findMeshes, imageDiag,
     // v36 : repères de portail (cônes) : affichés ou non (T), rappel, état pour les tests

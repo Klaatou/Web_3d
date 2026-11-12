@@ -100,8 +100,9 @@ async def main():
         foc = await o.ev("document.activeElement && document.activeElement.id")
         rapport(foc != "diagBtn" or toast.startswith("Copie impossible"), "le bouton ne garde pas le focus", foc)
         # 1.10.9 : le diagnostic s'affiche dans une fenetre, en plus d'etre copie
-        w = await o.ev("(() => { const w = document.getElementById('diagWin'), ta = document.getElementById('diagOut'); return w && { vis: getComputedStyle(w).display !== 'none', st: document.getElementById('diagStatus').textContent, foc: document.activeElement && document.activeElement.id, h: w.getBoundingClientRect().height, vh: innerHeight, texte: ta.value.startsWith('Diagnostic Web 3d') }; })()")
+        w = await o.ev("(() => { const w = document.getElementById('diagWin'), ta = document.getElementById('diagOut'); return w && { vis: getComputedStyle(w).display !== 'none', st: document.getElementById('diagStatus').textContent, foc: document.activeElement && document.activeElement.id, h: w.getBoundingClientRect().height, vh: innerHeight, texte: ta.value.startsWith('Diagnostic Web 3d'), rs: getComputedStyle(ta).resize, ws: getComputedStyle(ta).whiteSpace, fit: ta.scrollHeight <= ta.clientHeight + 2 || ta.clientHeight >= innerHeight * 0.79 }; })()")
         rapport(bool(w) and w["vis"] and w["st"] == toast and w["foc"] == "diagOut" and w["h"] <= w["vh"] and w["texte"], "le diagnostic s'affiche dans une fenetre (copie reussie ou non) : texte, meme message que la copie, tient dans l'ecran", w)
+        rapport(w["rs"] == "both" and w["ws"] == "pre-wrap" and w["fit"], "fenetre : redimensionnable dans les deux sens, lignes longues repliees, hauteur de la taille du texte (ou 80 % de l'ecran)", w)
         await o.ev("document.getElementById('diagClose').click()")
         rapport(not await o.ev("getComputedStyle(document.getElementById('diagWin')).display !== 'none'"), "la croix ferme la fenetre")
         await o.ev("document.getElementById('diagBtn').click()"); await o.pg.wait_for_timeout(400)
