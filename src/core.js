@@ -69,7 +69,10 @@ function gpuName(r) {
   return gpu;
 }
 // v42 : rendu sans carte graphique (moteur logiciel) : la page propose le rendu léger
-const softGpu = r => /Basic Render|SwiftShader|llvmpipe|softpipe|Software/i.test(gpuName(r));
+const softName = n => /Basic Render|SwiftShader|llvmpipe|softpipe|Software/i.test(n);
+const softGpu = r => softName(gpuName(r));
+// 1.10.7 : reflets metalliques par defaut : 60 % avec une carte graphique, 0 % en rendu logiciel (mesure : sur une surface metallique l'image coute environ 3 fois plus, 9 puis 25 ms a 1440 x 900 sous SwiftShader)
+const metalEnvDefault = n => softName(n) ? 0 : 60;
 // texte du diagnostic ; extra = { cfgVersion, lines } : version de la configuration de la région, lignes d'état propres à la page ou au viewer
 function diagText(viewer, extra) {
   const x = extra || {}, L = (k, v) => tr('core.diag.line', k, v), out = [tr('core.diag.title')];
@@ -369,6 +372,7 @@ function createViewer(container, cfg0, loader) {
   renderer.toneMapping = THREE.NoToneMapping;
   renderer.shadowMap.enabled = false;
   container.appendChild(renderer.domElement);
+  if (!Number.isFinite(cfg.metalEnv)) cfg.metalEnv = metalEnvDefault(gpuName(renderer));      // 1.10.7 : reflets metalliques, en % (voir metalApply)
 
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.target.fromArray(cfg.target);
@@ -468,11 +472,41 @@ function createViewer(container, cfg0, loader) {
           }
         }
         if (m.isMeshStandardMaterial && !m.roughness) m.roughness = 0.75;
+        metalApply(m);
         m.needsUpdate = true;
       }
       o.castShadow = o.receiveShadow = false;
       o.renderOrder = foliageMesh ? 2 : 0;
     });
+  }
+
+  // 1.10.7 : reflets metalliques. Un materiau metallique (metalness 1) ne recoit pas la lumiere d'ambiance : il ne reflete que son environnement, et la scene n'en a pas.
+  // Mesure (Chromium, three 0.160.0, memes lumieres que la page) : une sphere grise metallique de rugosite 0,7 donne 52 sur 255, la meme non metallique 114.
+  // Un petit decor (ciel, horizon clair, sol chaud, un point lumineux) est filtre une fois (PMREM) et donne aux SEULS materiaux metalliques : le reste ne change pas.
+  // cfg.metalEnv : intensite en % (0 = aucun reflet, et aucun cout). Defaut : metalEnvDefault (60 avec une carte graphique : ESTIMATION a ajuster en regardant de vrais OAR PBR ; 0 en rendu logiciel). Curseur « Reflets metalliques » de Reglages.
+  // Mesure du curseur : metal gris de rugosite 0,7 vu de dessus, 52 sur 255 sans reflet, 107 a 60 % ; le meme objet non metallique, 249.
+  let metalEnvTex = null;
+  const METAL_MIN = 0.05;
+  function metalEnvMap() {
+    if (metalEnvTex) return metalEnvTex;
+    const sc = new THREE.Scene(), geo = new THREE.SphereGeometry(50, 32, 16), pos = geo.attributes.position, col = [];
+    const top = new THREE.Color(0x9fc5ff), hor = new THREE.Color(0xffffff), bot = new THREE.Color(0x8a7a60), c = new THREE.Color();
+    for (let i = 0; i < pos.count; i++) { const y = pos.getY(i) / 50; c.copy(hor); c.lerp(y >= 0 ? top : bot, Math.pow(Math.abs(y), y >= 0 ? 0.6 : 0.5)); col.push(c.r, c.g, c.b); }
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+    const dome = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide })); sc.add(dome);
+    const sun = new THREE.Mesh(new THREE.CircleGeometry(9, 24), new THREE.MeshBasicMaterial({ color: new THREE.Color(8, 7.6, 7), side: THREE.DoubleSide }));   // sans point lumineux, un metal brillant ressemble a une bille grise
+    sun.position.set(30, 40, 20); sun.lookAt(0, 0, 0); sc.add(sun);
+    const pm = new THREE.PMREMGenerator(renderer);
+    metalEnvTex = pm.fromScene(sc, 0.02).texture; pm.dispose();
+    geo.dispose(); dome.material.dispose(); sun.geometry.dispose(); sun.material.dispose();
+    return metalEnvTex;
+  }
+  function metalApply(m) {
+    if (!m || !m.isMeshStandardMaterial) return;
+    const k = Math.min(200, Math.max(0, Number(cfg.metalEnv) || 0)) / 100;
+    const want = k > 0 && m.metalness > METAL_MIN;
+    if (want) { const t = metalEnvMap(); if (m.envMap !== t) { m.envMap = t; m.needsUpdate = true; } m.envMapIntensity = k; }
+    else if (metalEnvTex && m.envMap === metalEnvTex) { m.envMap = null; m.needsUpdate = true; }
   }
 
   function frame(camDir = cfg.camDir, target = cfg.target, zoom = cfg.zoom) {
@@ -957,6 +991,7 @@ function createViewer(container, cfg0, loader) {
     if (sea) sea.position.set(seaCx, seaYNow(), seaCz);
     if ('zoneMarker' in p || 'showSpawns' in p) buildZones();
     if ('foliageCutout' in p) foliageMats.forEach(m => { m.alphaTest = cfg.foliageCutout; m.needsUpdate = true; });
+    if ('metalEnv' in p) { scene.traverse(o => { if (o.isMesh && o.material) for (const m of (Array.isArray(o.material) ? o.material : [o.material])) metalApply(m); }); dirty = true; }
     if ('solidMaterials' in p) {
       const tk = parseIgnore(cfg.solidMaterials);
       scene.traverse(o => { if (o.isMesh && o.material) for (const m of (Array.isArray(o.material) ? o.material : [o.material])) if (m && !foliageMats.includes(m)) solidApply(m, tk); });
@@ -2491,7 +2526,7 @@ function createViewer(container, cfg0, loader) {
   });
 
   return {
-    scene, camera, renderer, controls, cfg, setCfg, seaShift, setModel, loadBuffer, imageUrl, freshFetch, setImageResolver, animInfo: () => ({ planes: animPlanes.size, ticks: animTicks }), frame, getCameraState, setZoom, renderStats,
+    scene, camera, renderer, controls, cfg, setCfg, seaShift, metalEnvReady: () => !!metalEnvTex, metalEnvDefault, setModel, loadBuffer, imageUrl, freshFetch, setImageResolver, animInfo: () => ({ planes: animPlanes.size, ticks: animTicks }), frame, getCameraState, setZoom, renderStats,
     get model() { return model; }, get sea() { return sea; }, set onCfg(f) { onCfg = f; }, set onWalk(f) { onWalk = f; }, set onPick(f) { onPick = f; }, set pickOrbit(v) { pickOrbit = !!v; }, set onPresence(f) { onPresence = f; }, set onChat(f) { onChat = f; }, set onPeer(f) { onPeer = f; },
     setZones, setZoneNumbers, zoneSelect, zonePickAt, findMeshes, imageDiag,
     // v36 : repères de portail (cônes) : affichés ou non (T), rappel, état pour les tests

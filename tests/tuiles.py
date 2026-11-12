@@ -340,7 +340,8 @@ async def main():
             await o.ev("window.__viewer.controls.target.set(9000, 20, 9000)")
             await o.attendre("window.__viewer.tilesState().ready.length === 0 && window.__viewer.tilesState().inflight === 0", 20)
             mem = await o.ev("({ g: window.__viewer.renderer.info.memory.geometries, t: window.__viewer.renderer.info.memory.textures, n: window.__viewer.model.children.length })")
-            rapport(mem["n"] == 0 and mem["g"] == base_mem["g"] and mem["t"] == base_mem["t"], "tout déchargé : groupes 0, géométries et textures revenues au niveau de base", (mem, base_mem))
+            env = 1 if await o.ev("window.__viewer.metalEnvReady()") else 0      # 1.10.7 : l'environnement des reflets metalliques est une ressource partagee, creee une fois, qui reste
+            rapport(mem["n"] == 0 and mem["g"] == base_mem["g"] and mem["t"] == base_mem["t"] + env, "tout déchargé : groupes 0, géométries et textures revenues au niveau de base (plus l'environnement partagé des reflets, s'il existe)", (mem, base_mem, env))
             await o.ev("window.__viewer.controls.target.set(%f, 20, %f)" % (tx, tz))
             await o.attendre("window.__viewer.tilesState().ready.length > 0", 30)
             rapport(not o.errs, "rechargement après décharge complète : aucune erreur JavaScript", o.errs)
