@@ -237,6 +237,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 12/11/2026 |  | après 1.10.0 | Lot 1.10.5 : carte : champ « Clé des pseudos » mémorisé et ligne d'état de la clé (une clé refusée n'est plus renvoyée) ; `tests/carte_pseudos.py` |
 | 12/11/2026 |  | après 1.10.0 | Lot 1.10.6 : carte : la clé des pseudos devient discrète (bloc replié en bas de page) ; `tests/carte_pseudos.py` |
 | 12/11/2026 |  | après 1.10.0 | Lot 1.10.7 : viewer : reflets métalliques (environnement des seuls métaux, 60 % avec carte graphique, 0 % en rendu logiciel) et curseur « Reflets métalliques » ; `tests/reflets_metal.py` |
+| 12/11/2026 |  | après 1.10.0 | Lot 1.10.8 : diagnostic : ligne « Reflets métalliques » (réglage, matériaux métalliques chargés, avec reflets) ; `tests/reflets_metal.py` |
 
 ## Commandes utiles
 

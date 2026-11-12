@@ -22,6 +22,8 @@
  "core.diag.cause.walk": "promenade",
  "core.diag.fps": "Images rendues par seconde (5 s)",
  "core.diag.fps.v": "{0} ; rendu continu dû à : {1}",
+ "core.diag.metal": "Reflets métalliques",
+ "core.diag.metal.v": "{0} % ; matériaux métalliques chargés : {1} sur {2}, dont {3} avec reflets",
  "core.diag.light": "Rendu léger",
  "core.diag.light.nolimit": "sans limite",
  "core.diag.light.v": "résolution {0} % ; images/s au plus : {1} ; vue d'ensemble seule : {2} ; rayon des tuiles : {3} ; anticrénelage : {4}",

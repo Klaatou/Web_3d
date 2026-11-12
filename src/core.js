@@ -98,6 +98,7 @@ function diagText(viewer, extra) {
     const why = { sea: tr('core.diag.cause.sea'), peers: tr('core.diag.cause.peers'), walk: tr('core.diag.cause.walk'), tiles: tr('core.diag.cause.tiles') };
     out.push(L(tr('core.diag.fps'), tr('core.diag.fps.v', nb(s.rate, 1), s.causes.length ? s.causes.map(k => why[k]).join(', ') : tr('core.diag.cause.none'))));
   }
+  if (viewer && viewer.metalInfo) { const k = viewer.metalInfo(); out.push(L(tr('core.diag.metal'), tr('core.diag.metal.v', nb(k.pct), k.metal, k.total, k.env))); }   // 1.10.8 : reflets metalliques : reglage, materiaux metalliques charges, ceux qui ont les reflets
   if (viewer && viewer.imageDiag) for (const d of viewer.imageDiag().slice(0, 60)) out.push(L(tr('core.diag.image'), tr('core.diag.image.v', d.id, d.target || '\u2014', d.loaded || '\u2014', d.cap ? '\u00ab ' + d.cap + ' \u00bb (' + (d.src === 'txt' ? tr('core.diag.image.txt') : tr('core.diag.image.name')) + (d.vis ? '' : ', ' + tr('core.diag.image.hidden')) + ')' : '\u2014')));
   if (viewer && viewer.animInfo && viewer.imageDiag && viewer.imageDiag().length) {   // 1.6.16 : GIF animes decodes, changements d'image, mouvement reduit demande au systeme
     const a = viewer.animInfo(), red = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -500,6 +501,11 @@ function createViewer(container, cfg0, loader) {
     metalEnvTex = pm.fromScene(sc, 0.02).texture; pm.dispose();
     geo.dispose(); dome.material.dispose(); sun.geometry.dispose(); sun.material.dispose();
     return metalEnvTex;
+  }
+  function metalInfo() {      // 1.10.8 : pour le diagnostic : reglage, materiaux metalliques charges, dont ceux qui ont l'environnement
+    const seen = new Set(); let metal = 0, env = 0;
+    scene.traverse(o => { if (o.isMesh && o.material) for (const m of (Array.isArray(o.material) ? o.material : [o.material])) if (m && m.isMeshStandardMaterial && !seen.has(m)) { seen.add(m); if (m.metalness > METAL_MIN) { metal++; if (metalEnvTex && m.envMap === metalEnvTex) env++; } } });
+    return { pct: Number(cfg.metalEnv) || 0, metal, total: seen.size, env };
   }
   function metalApply(m) {
     if (!m || !m.isMeshStandardMaterial) return;
@@ -2526,7 +2532,7 @@ function createViewer(container, cfg0, loader) {
   });
 
   return {
-    scene, camera, renderer, controls, cfg, setCfg, seaShift, metalEnvReady: () => !!metalEnvTex, metalEnvDefault, setModel, loadBuffer, imageUrl, freshFetch, setImageResolver, animInfo: () => ({ planes: animPlanes.size, ticks: animTicks }), frame, getCameraState, setZoom, renderStats,
+    scene, camera, renderer, controls, cfg, setCfg, seaShift, metalEnvReady: () => !!metalEnvTex, metalEnvDefault, metalInfo, setModel, loadBuffer, imageUrl, freshFetch, setImageResolver, animInfo: () => ({ planes: animPlanes.size, ticks: animTicks }), frame, getCameraState, setZoom, renderStats,
     get model() { return model; }, get sea() { return sea; }, set onCfg(f) { onCfg = f; }, set onWalk(f) { onWalk = f; }, set onPick(f) { onPick = f; }, set pickOrbit(v) { pickOrbit = !!v; }, set onPresence(f) { onPresence = f; }, set onChat(f) { onChat = f; }, set onPeer(f) { onPeer = f; },
     setZones, setZoneNumbers, zoneSelect, zonePickAt, findMeshes, imageDiag,
     // v36 : repères de portail (cônes) : affichés ou non (T), rappel, état pour les tests

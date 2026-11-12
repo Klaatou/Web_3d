@@ -6,6 +6,14 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.10.0)
 
+### 12/11/2026 : diagnostic : ligne « Reflets métalliques » (lot 1.10.8)
+
+- **Demandé par Klaatou** : après son essai du curseur (effet d'éclairage bien visible devant les sphères du sandbox complet), une ligne dans le diagnostic pour savoir si une région contient des métaux et si le curseur agit. **Mesure de Klaatou** (rendu logiciel, devant les sphères du sandbox) : 15 images par seconde avec 0 % comme avec 60 % : aucun coût mesurable dans cette scène. Le défaut de 0 % en rendu logiciel (lot 1.10.7) est inchangé ; à rediscuter avec d'autres mesures.
+- **Fait** (`src/core.js`, `diagText` et `metalInfo`) : le diagnostic copié par « Copier le diagnostic » contient « Reflets métalliques : N % ; matériaux métalliques chargés : A sur B, dont C avec reflets ». A, B et C comptent les matériaux standard uniques de la scène (en mode tuiles, seulement ceux déjà chargés) ; « métallique » veut dire `metalness` supérieure à 0,05, comme pour les reflets. Textes `core.diag.metal` et `core.diag.metal.v` en français et en anglais.
+- **Contrôle** : `tests/reflets_metal.py`, nouvelle section 7 (3 contrôles : 2 matériaux métalliques sur 3 à 0 %, puis 2 avec reflets à 60 %, puis l'anglais) ; sur le code de la 1.10.7 les 3 échouent. Passent aussi `image_diag`, `v39`, `v40`, `v42`, `v45`, `v46`, `gif_anim`, `version_page`, `i18n`, `smoke`, `samples`, `tuiles`, `dist_a_jour`, `marque`.
+- **Non essayé** : Windows, Edge (Chromium seulement) ; la ligne sur une région en tuiles dont les tuiles sont encore en chargement.
+- **Reste à mettre à jour** (règle 16) : manuel (la ligne du diagnostic), en français et en anglais ; la démo (`index.html`, `carte.html`, `glb-viewer.html`, `glb2html.py` changent).
+
 ### 12/11/2026 : viewer : reflets métalliques et curseur « Reflets métalliques » dans Réglages (lot 1.10.7)
 
 - **Constaté et accepté par Klaatou** : les métaux PBR sont plus sombres dans la page que dans Blender ; il a accepté la proposition d'un environnement donné aux seuls matériaux métalliques, réglable dans Réglages.

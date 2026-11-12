@@ -6,6 +6,14 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.10.0)
 
+### 12/11/2026: diagnostic: "Metal reflections" line (batch 1.10.8)
+
+- **Requested by Klaatou**: after trying the slider (lighting effect clearly visible in front of the spheres of the complete sandbox), a line in the diagnostic to know whether a region contains metals and whether the slider acts. **Klaatou's measurement** (software rendering, in front of the sandbox spheres): 15 frames per second with 0 % as with 60 %: no measurable cost in this scene. The 0 % default with software rendering (batch 1.10.7) is unchanged; to be discussed again with more measurements.
+- **Done** (`src/core.js`, `diagText` and `metalInfo`): the diagnostic copied by "Copy the diagnostic" contains "Metal reflections: N %; metallic materials loaded: A of B, of which C with reflections". A, B and C count the unique standard materials of the scene (in tile mode, only those already loaded); "metallic" means `metalness` above 0.05, as for the reflections. Texts `core.diag.metal` and `core.diag.metal.v` in French and English.
+- **Check**: `tests/reflets_metal.py`, new section 7 (3 checks: 2 metallic materials out of 3 at 0 %, then 2 with reflections at 60 %, then English); on the 1.10.7 code all 3 fail. `image_diag`, `v39`, `v40`, `v42`, `v45`, `v46`, `gif_anim`, `version_page`, `i18n`, `smoke`, `samples`, `tuiles`, `dist_a_jour` and `marque` also pass.
+- **Not tried**: Windows, Edge (Chromium only); the line on a tiled region whose tiles are still loading.
+- **Still to update** (rule 16): manual (the diagnostic line), in French and English; the demo (`index.html`, `carte.html`, `glb-viewer.html` and `glb2html.py` change).
+
 ### 12/11/2026: viewer: metal reflections and "Metal reflections" slider in Settings (batch 1.10.7)
 
 - **Reported and accepted by Klaatou**: PBR metals are darker in the page than in Blender; he accepted the proposal of an environment given only to the metallic materials, adjustable in Settings.

@@ -195,6 +195,24 @@ async def main():
         rapport(len(mets) >= 2 and not any(v["env"] for v in mets), "tuiles : metalEnv = 0 retire l'environnement", mets)
         rapport(not o.errs, "aucune erreur de page", o.errs)
         await o.ctx.close()
+
+        print("--- 7. ligne « Reflets metalliques » du diagnostic (1.10.8)")
+        async def diag(o):
+            await o.ev("document.getElementById('diagBtn').click()")
+            await o.pg.wait_for_timeout(400)
+            return await o.ev("document.getElementById('diagOut').value")
+        o = await Onglet(br).ouvrir(BASE + "Metal.html", locale="fr-FR")
+        t = await diag(o)
+        rapport("Reflets métalliques : 0 % ; matériaux métalliques chargés : 2 sur 3, dont 0 avec reflets" in t, "diagnostic (rendu logiciel, 0 %) : 2 materiaux metalliques sur 3, aucun avec reflets", [l for l in t.splitlines() if "flets" in l])
+        await o.ev("window.__viewer.setCfg({ metalEnv: 60 })")
+        t = await diag(o)
+        rapport("Reflets métalliques : 60 % ; matériaux métalliques chargés : 2 sur 3, dont 2 avec reflets" in t, "a 60 % : 2 materiaux sur 3 ont les reflets", [l for l in t.splitlines() if "flets" in l])
+        rapport(not o.errs, "aucune erreur de page", o.errs)
+        await o.ctx.close()
+        o = await Onglet(br).ouvrir(BASE + "Metal.html", locale="en-US")
+        t = await diag(o)
+        rapport("Metal reflections" in t and "0 % ; metallic materials loaded: 2 of 3, of which 0 with reflections" in t, "anglais : « Metal reflections ... 2 of 3 »", [l for l in t.splitlines() if "eflections" in l])
+        await o.ctx.close()
         await br.close()
 
 

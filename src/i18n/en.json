@@ -22,6 +22,8 @@
  "core.diag.cause.walk": "walk mode",
  "core.diag.fps": "Frames rendered per second (5 s)",
  "core.diag.fps.v": "{0}; continuous rendering caused by: {1}",
+ "core.diag.metal": "Metal reflections",
+ "core.diag.metal.v": "{0} % ; metallic materials loaded: {1} of {2}, of which {3} with reflections",
  "core.diag.light": "Light rendering",
  "core.diag.light.nolimit": "no limit",
  "core.diag.light.v": "resolution {0}%; max frames/s: {1}; overview only: {2}; tile radius: {3}; antialiasing: {4}",
