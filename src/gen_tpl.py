@@ -339,7 +339,9 @@ footer{padding-right:44px}   /* 1.6.13 : le texte du pied de page ne passe pas s
 .tile span{font-size:12px;white-space:pre-line}
 #tools{margin:8px 0}
 #tools small{margin-left:8px}
-#keyrow{margin:8px 0}
+#keyrow{margin:16px 0 8px;font-size:12px}
+#keyrow summary{cursor:pointer;opacity:.7;width:max-content}
+#keyrow .keybody{margin-top:6px}
 #keyrow input[type=password],#keyrow input[type=text]{font:inherit;width:200px;border:2px solid #000;border-radius:6px;padding:4px 6px}
 #keyrow label.chk{display:inline-block;margin-left:12px}
 #keyrow label.chk input{width:auto}
@@ -361,9 +363,9 @@ __I18N__
 <h1 __TITLE_ATTR__>__TITLE__</h1>
 <div id="who"><label><span data-i18n="map.pseudo">Mon pseudo : </span><input id="pseudo" maxlength="24" placeholder="Visiteur" data-i18n-ph="map.visitor" autocomplete="nickname"></label> <small data-i18n="map.pseudo.note">mémorisé dans ce navigateur ; transmis aux régions que tu visites</small> <label class="chk"><input type="checkbox" id="showurl"> <span data-i18n="map.showurl">Afficher les adresses</span></label></div>
 <div id="tools"><label class="chk"><input type="checkbox" id="alert"> <span data-i18n="map.alert">Surveillance des arrivées (son et repère)</span></label> <small id="alertState"></small></div>
-<div id="keyrow"><label><span data-i18n="map.key">Clé des pseudos : </span><input id="mapkey" type="password" maxlength="200" autocomplete="off" spellcheck="false"></label> <label class="chk"><input type="checkbox" id="keyshow"> <span data-i18n="map.key.show">Afficher la clé</span></label> <small data-i18n="map.key.note">mémorisée dans ce navigateur ; champ vide : oubliée</small><small id="keyState"></small></div>
 <div id="total"></div>
 <div id="grid"></div>
+<details id="keyrow"><summary data-i18n="map.key.title">Clé des pseudos</summary><div class="keybody"><label><span data-i18n="map.key">Clé des pseudos : </span><input id="mapkey" type="password" maxlength="200" autocomplete="off" spellcheck="false"></label> <label class="chk"><input type="checkbox" id="keyshow"> <span data-i18n="map.key.show">Afficher la clé</span></label> <small data-i18n="map.key.note">mémorisée dans ce navigateur ; champ vide : oubliée</small><small id="keyState"></small></div></details>
 <footer id="foot"><span id="footText">glb2html __MAP_VERSION__</span> · <a data-i18n="map.credit" href="https://github.com/Klaatou/Web_3d" target="_blank" rel="noopener">Réalisé avec Web_3d</a></footer>
 </main>
 <a id="credit" href="https://github.com/Klaatou/Web_3d" target="_blank" rel="noopener" data-i18n-aria="common.credit.tip"><img src="__CREDIT_ICON__" alt="" width="32" height="32"><span id="creditTip" role="tooltip" data-i18n="common.credit.tip">Réalisé avec Web_3d : voir le projet sur GitHub</span></a>

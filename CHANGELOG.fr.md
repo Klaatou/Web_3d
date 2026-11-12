@@ -6,6 +6,14 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.10.0)
 
+### 12/11/2026 : carte : la clé des pseudos devient discrète, en bas de page et repliée (lot 1.10.6)
+
+- **Demandé par Klaatou** : les informations sur la clé des pseudos doivent être plus discrètes : en fin de page ou sur demande, par un bouton discret.
+- **Fait** (`src/gen_tpl.py`, `carte.html`) : la rangée « Clé des pseudos » (champ, « Afficher la clé », note, ligne d'état) n'est plus sous la surveillance des arrivées. Elle est dans un bloc `<details>` placé **sous la grille, avant le pied de page**, **replié par défaut** : seul le titre « Clé des pseudos » se voit, en petit et atténué ; un clic (ou Entrée sur le titre) ouvre le bloc. Il reste replié à chaque ouverture de la page, même avec une clé mémorisée ou lue dans l'adresse (la clé continue de servir sans qu'on l'ouvre). Rien d'autre ne change : mémorisation, priorité de `#pseudos=`, ligne d'état, clé refusée non renvoyée, carte de la région (touche M). Le bloc disparaît toujours sans serveur de présence. Texte `map.key.title` en français et en anglais.
+- **Contrôle** : `tests/carte_pseudos.py`, section 7b adaptée (15 contrôles) : bloc replié par défaut, sous la grille et avant le pied de page, titre seul visible, champ non affiché tant que le bloc est fermé, replié de nouveau après rechargement, puis les contrôles de la 1.10.5 sur le bloc ouvert. Sur la structure de la 1.10.5 les deux nouveaux contrôles de structure échouent, avec le correctif tout passe. Passent aussi `i18n`, `credit`, `icone`, `samples`, `smoke`, `v36_lang`, `v47`, `v51_etoile`, `v52`, `dist_a_jour`, `marque`, `paquets`.
+- **Non essayé** : Windows réel, Edge, Firefox, Safari (Chromium seulement) ; l'apparence du titre replié (mesurée seulement par sa présence et sa visibilité, pas à l'œil). `index.html` et `carte.html` changent : à recopier dans la démo.
+- **Reste à mettre à jour** (règle 16) : manuel (la carte : le bloc replié « Clé des pseudos ») et procédures, en français et en anglais.
+
 ### 12/11/2026 : carte : champ « Clé des pseudos » mémorisé et ligne d'état de la clé (lot 1.10.5)
 
 - **Demandé par Klaatou** : une ligne d'état de la clé des pseudos et un champ « clé des pseudos » mémorisé dans le navigateur, pour ne plus manipuler `#pseudos=`.

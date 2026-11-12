@@ -116,6 +116,7 @@
  "map.nofile": "Impossible de lire {0} : aucune région à afficher.",
  "map.novisitor": "aucun visiteur",
  "map.key": "Clé des pseudos : ",
+ "map.key.title": "Clé des pseudos",
  "map.key.show": "Afficher la clé",
  "map.key.note": "mémorisée dans ce navigateur ; champ vide : oubliée",
  "map.key.src.hash": "lue dans l'adresse",

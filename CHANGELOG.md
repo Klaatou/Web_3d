@@ -6,6 +6,14 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.10.0)
 
+### 12/11/2026: map: the names key becomes discreet, at the bottom of the page and folded (batch 1.10.6)
+
+- **Requested by Klaatou**: the information about the names key must be more discreet: at the end of the page or on request, through a discreet button.
+- **Done** (`src/gen_tpl.py`, `carte.html`): the "Names key" row (field, "Show the key", note, status line) is no longer under the arrivals watch. It is in a `<details>` block placed **under the grid, before the footer**, **folded by default**: only the title "Names key" shows, small and dimmed; a click (or Enter on the title) opens the block. It stays folded each time the page is opened, even with a remembered key or one read from the address (the key keeps working without opening it). Nothing else changes: remembering, priority of `#pseudos=`, status line, refused key not sent again, map of the region (key M). The block still disappears without a presence server. Text `map.key.title` in French and English.
+- **Check**: `tests/carte_pseudos.py`, section 7b adapted (15 checks): block folded by default, under the grid and before the footer, only the title visible, field not displayed while the block is closed, folded again after a reload, then the 1.10.5 checks on the open block. On the 1.10.5 structure the two new structure checks fail, with the fix all pass. `i18n`, `credit`, `icone`, `samples`, `smoke`, `v36_lang`, `v47`, `v51_etoile`, `v52`, `dist_a_jour`, `marque` and `paquets` also pass.
+- **Not tried**: real Windows, Edge, Firefox, Safari (Chromium only); the look of the folded title (measured only by its presence and visibility, not by eye). `index.html` and `carte.html` change: to copy into the demo.
+- **Still to update** (rule 16): manual (the map: the folded "Names key" block) and procedures, in French and English.
+
 ### 12/11/2026: map: remembered "Names key" field and key status line (batch 1.10.5)
 
 - **Requested by Klaatou**: a status line for the names key and a "names key" field remembered in the browser, so that `#pseudos=` no longer has to be handled by hand.

@@ -195,7 +195,12 @@ async def main():
 
         o, _ = await lire(BASE + "carte.html")
         rapport(await o.ev(ETAT) == "" and await o.ev("() => !document.getElementById('keyrow').hidden && document.getElementById('mapkey').type === 'password' && document.getElementById('mapkey').value === ''"),
-                "sans clé : la rangée « Clé des pseudos » est là, champ masqué et vide, aucun état")
+                "sans clé : le bloc « Clé des pseudos » est là, champ masqué et vide, aucun état")
+        rapport(await o.ev("() => { const k = document.getElementById('keyrow'), g = document.getElementById('grid'), f = document.getElementById('foot'); return k.tagName === 'DETAILS' && !k.open && !!(g.compareDocumentPosition(k) & 4) && !!(k.compareDocumentPosition(f) & 4); }")
+                and await o.ev("document.querySelector('#keyrow summary').textContent") == "Clé des pseudos",
+                "discret : replié par défaut, sous la grille et avant le pied de page, seul le titre « Clé des pseudos » se voit")
+        rapport(not await o.pg.is_visible("#mapkey") and await o.pg.is_visible("#keyrow summary"), "replié : le champ n'est pas affiché, seul le titre l'est")
+        await o.ev("document.getElementById('keyrow').open = true")
         await o.ev("document.getElementById('keyshow').click()")
         t1 = await o.ev("document.getElementById('mapkey').type")
         await o.ev("document.getElementById('keyshow').click()")
@@ -217,6 +222,8 @@ async def main():
         await pret(o)
         await o.attendre(AUTRES, 25)
         await o.attendre("document.getElementById('keyState').textContent.includes('une partie')", 25)
+        rapport(await o.ev("() => !document.getElementById('keyrow').open"), "après rechargement : le bloc est de nouveau replié, même avec une clé mémorisée")
+        await o.ev("document.getElementById('keyrow').open = true")
         rapport(await o.ev(ETAT) == "clé mémorisée dans ce navigateur (14 caractères) ; acceptée par une partie des serveurs seulement" and await o.ev("document.getElementById('mapkey').value") == CLE,
                 "après rechargement sans # : la clé mémorisée est reprise (champ rempli, pseudos, état « mémorisée »)", await o.ev(ETAT))
 
@@ -252,7 +259,7 @@ async def main():
         o, _ = await lire(BASE + "carte.html#pseudos=" + CLE, "en-GB")
         await o.attendre("document.getElementById('keyState').textContent.includes('only some')", 25)
         etat = await o.ev(ETAT)
-        rapport(etat == "key read from the address (14 characters); accepted by only some of the servers" and await o.ev("document.querySelector('#keyrow span').textContent") == "Names key: ", "anglais : textes du champ et de l'état", etat)
+        rapport(etat == "key read from the address (14 characters); accepted by only some of the servers" and await o.ev("document.querySelector('#keyrow span').textContent") == "Names key: " and await o.ev("document.querySelector('#keyrow summary').textContent") == "Names key", "anglais : titre, champ et état", etat)
         await o.ctx.close()
 
         await br.close()

@@ -235,6 +235,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 12/11/2026 |  | after 1.10.0 | Batch 1.10.3: launcher: window icon, `glb-stats` in the list; `glb2tiles` and `oar2glb`: no more pause after `--help`; `tests/aide_sans_pause.py` |
 | 12/11/2026 |  | after 1.10.0 | Batch 1.10.4: Python 3.14: `glb2html` opens again (`metavar` removed from `--sea` and `--anim`); the launcher shows the function of the tool; `tests/python_recent.py` |
 | 12/11/2026 |  | after 1.10.0 | Batch 1.10.5: map: remembered "Names key" field and key status line (a refused key is no longer sent again); `tests/carte_pseudos.py` |
+| 12/11/2026 |  | after 1.10.0 | Batch 1.10.6: map: the names key becomes discreet (folded block at the bottom of the page); `tests/carte_pseudos.py` |
 
 ## Useful commands
 
