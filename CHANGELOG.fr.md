@@ -6,6 +6,13 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.9.0)
 
+### 11/11/2026 : README et manuel : crédit « Merci à son propriétaire, Vlad » ; `tests/tout.py` (lot 1.9.19)
+
+- **Demande de Klaatou** : le propriétaire de la sandbox a accepté d'être nommé (son pseudo, Vlad). Le crédit dit maintenant « sandbox » (même en français) et « Merci à son propriétaire, Vlad » au lieu de « avec l'accord de son propriétaire » : README (légende et Crédits), manuel § 3.10, § 3.11 et § 9.19. Règle 25 : exception explicite, comme NightshadeCeres ; `REGLES.md` est mis à jour par Klaatou (règle 25 : « plus Vlad (accord du jj/mm/aaaa) »).
+- **Fait** : nouveau `tests/tout.py`, qui lance chaque test de `tests\` l'un après l'autre et signale les échecs : `ECHEC` (code de retour non nul, ou une ligne `[ECHEC]` avec le code 0), `DELAI` (délai dépassé), `SUSPECT` (trace d'erreur affichée par un test qui se dit réussi) ; les parties `[IGNORE]` sont comptées. Sorties complètes dans `tests_logs\NOM.log`, résumé dans `tests_logs\resume.txt` (le dossier se cache de git). Options `--liste`, `--seulement`, `--sauf`, `--reprendre`, `--arreter`, `--delai`. Décrit dans `DEVELOPPEMENT.md` et `DEVELOPMENT.md`. Les deux scripts autonomes (hors du dépôt) affichent maintenant toute leur description avec `--help`.
+- **Contrôle** : `tout.py` essayé sur 7 faux tests (réussite, échec, échec masqué par un code 0, trop lent, plantage, partie ignorée, trace suspecte : tous détectés, code de retour 1) et sur 5 vrais tests (tous OK) ; `readme_liens.py`, `dist_a_jour.py` passent ; `verif_trad.py` donne le même résultat qu'avant sur le manuel.
+- **Non essayé** : Windows ; la durée complète de la suite.
+
 ### 11/11/2026 : README : image PBR et crédit de la grille du bac à sable ; deux fichiers égarés hors du dépôt (lot 1.9.18)
 
 - **Demande de Klaatou** : utiliser l'image PBR, avec l'accord du propriétaire du bac à sable, en créditant sa grille par un lien et en disant que les données de test viennent de ce bac à sable.

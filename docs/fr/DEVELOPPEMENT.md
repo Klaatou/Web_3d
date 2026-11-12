@@ -42,6 +42,8 @@ python .\tests\NOM.py
 
 La suite complète compte plus de 70 fichiers et dure longtemps. Échouent déjà dans le bac à sable et en session cloud : `doc_options`, `image_dossier`, `marque`.
 
+Pour la lancer d'un coup : `python .\tests\tout.py`. Elle lance chaque test l'un après l'autre, signale ceux qui échouent (code de retour, ligne `[ECHEC]`, délai dépassé, trace d'erreur suspecte) et résume le tout ; les sorties complètes sont dans `tests_logs\` (dossier ignoré par git). Options : `--liste`, `--seulement REGEX`, `--sauf REGEX`, `--reprendre` (saute les tests réussis au dernier passage), `--arreter`, `--delai N`.
+
 Tests ajoutés avec la 1.8.x : `bouton_promenade.py`, `demarrage_lien.py`, `build_reference.py` et `convoar_dist.py`.
 
 Sous Windows, un test qui lit la sortie d'un programme fils doit lancer ce programme avec `PYTHONIOENCODING=utf-8` (sinon sa sortie est en cp1252), fermer son entrée (`stdin=subprocess.DEVNULL`, sinon un outil attend Entrée) et, si ce programme écrit beaucoup dans sa console, la lire pendant le test (un tube Windows ne garde que 4 Ko) : `tests/build_reference.py`, `tests/console.py` et `tests/correctifs_v52.py` en sont des exemples.

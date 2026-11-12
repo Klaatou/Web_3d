@@ -6,6 +6,13 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.9.0)
 
+### 11/11/2026: README and manual: credit worded "Thanks to its owner, Vlad"; `tests/tout.py` (batch 1.9.19)
+
+- **Requested by Klaatou**: the sandbox's owner agreed to be named (his pseudonym, Vlad). The credit now says "sandbox" (even in French) and "Thanks to its owner, Vlad" instead of "with the owner's agreement": README (caption and Credits), manual sections 3.10, 3.11 and 9.19. Rule 25: an explicit exception, like NightshadeCeres; `REGLES.md` is updated by Klaatou (rule 25: "plus Vlad (agreement of dd/mm/yyyy)").
+- **Done**: new `tests/tout.py` runs every test of `tests\` one by one and reports the failures: `ECHEC` (return code not 0, or an `[ECHEC]` line with return code 0), `DELAI` (timeout), `SUSPECT` (an error trace printed by a test that says it passed); the `[IGNORE]` parts are counted. Full outputs in `tests_logs\NAME.log`, summary in `tests_logs\resume.txt` (the folder hides itself from git). Options `--liste`, `--seulement`, `--sauf`, `--reprendre`, `--arreter`, `--delai`. Described in `DEVELOPPEMENT.md` and `DEVELOPMENT.md`. The two stand-alone scripts (outside the repository) now print their whole description with `--help`.
+- **Check**: `tout.py` tried on 7 fake tests (success, failure, failure hidden behind return code 0, too slow, crash, ignored part, suspicious trace: all detected, return code 1) and on 5 real tests (all OK); `readme_liens.py`, `dist_a_jour.py` pass; `verif_trad.py` gives the same result as before on the manual.
+- **Not tested**: Windows; the full duration of the suite.
+
 ### 11/11/2026: README: PBR picture and credit to the sandbox's grid; two stray files out of the repository (batch 1.9.18)
 
 - **Requested by Klaatou**: use the PBR picture, with the agreement of the sandbox's owner, crediting his grid with a link and saying that the test data come from that sandbox.

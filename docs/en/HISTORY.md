@@ -224,6 +224,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 11/11/2026 |  | after 1.9.0 | Batch 1.9.16: documents: manual § 3.10, § 3.11 and § 9.19, guide, README, simple procedures, index, history |
 | 11/11/2026 |  | after 1.9.0 | Batch 1.9.17: the graphical launcher opens `oar2glb` without a console (`Tee`, `lire_parser`), PBR example |
 | 11/11/2026 |  | after 1.9.0 | Batch 1.9.18: PBR picture of the README (`docs/images/pbr.jpg`) and credit of the sandbox's grid; two stand-alone scripts kept out of the repository |
+| 11/11/2026 |  | after 1.9.0 | Batch 1.9.19: credit "Thanks to its owner, Vlad" (README, manual), `tests/tout.py` (the whole suite in one command) |
 
 ## Useful commands
 

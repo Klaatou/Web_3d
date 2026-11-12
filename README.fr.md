@@ -55,7 +55,7 @@
 
 ![Matériaux PBR d'OpenSim 0.9.3 dans la page : sphères avec reliefs, métal et reflets](docs/images/pbr.jpg)
 
-*Matériaux PBR d'OpenSim 0.9.3 (reliefs, métal, reflets) dans la page, après conversion par `oar2glb.py`. Région de test : le bac à sable de la grille [BloodMoon Pack](https://bloodmoonpack.com/grid/), avec l'accord de son propriétaire.*
+*Matériaux PBR d'OpenSim 0.9.3 (reliefs, métal, reflets) dans la page, après conversion par `oar2glb.py`. Région de test : la sandbox de la grille [BloodMoon Pack](https://bloodmoonpack.com/grid/). Merci à son propriétaire, Vlad.*
 
 ## Paquets prêts à l'emploi
 
@@ -207,4 +207,4 @@ Licence MIT (fichier `LICENSE`). three.js (MIT) et les décodeurs embarqués : v
 
 Conçu, dirigé et testé par Klaatou ; le code et les documents ont été écrits en grande partie avec Claude (Anthropic), un assistant d'IA.
 
-Les essais des matériaux PBR (image ci-dessus, manuel § 3.10) ont été faits sur le bac à sable de la grille [BloodMoon Pack](https://bloodmoonpack.com/grid/), dont les données de test sont publiées ici avec l'accord de son propriétaire.
+Les essais des matériaux PBR (image ci-dessus, manuel § 3.10) ont été faits sur la sandbox de la grille [BloodMoon Pack](https://bloodmoonpack.com/grid/), dont les données de test sont publiées ici. Merci à son propriétaire, Vlad.

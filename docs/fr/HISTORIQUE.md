@@ -224,6 +224,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 11/11/2026 |  | après 1.9.0 | Lot 1.9.16 : documents : manuel § 3.10, § 3.11 et § 9.19, guide, README, procédures simples, index, historique |
 | 11/11/2026 |  | après 1.9.0 | Lot 1.9.17 : le lanceur graphique ouvre `oar2glb` sans console (`Tee`, `lire_parser`), exemple PBR |
 | 11/11/2026 |  | après 1.9.0 | Lot 1.9.18 : image PBR du README (`docs/images/pbr.jpg`) et crédit de la grille du bac à sable ; deux scripts autonomes hors du dépôt |
+| 11/11/2026 |  | après 1.9.0 | Lot 1.9.19 : crédit « Merci à son propriétaire, Vlad » (README, manuel), `tests/tout.py` (toute la suite en une commande) |
 
 ## Commandes utiles
 
