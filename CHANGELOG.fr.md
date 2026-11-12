@@ -6,6 +6,14 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.9.0)
 
+### 11/11/2026 : `oar2glb.py` et `web3d_gui.py` : le lanceur ne pouvait pas ouvrir oar2glb sans console ; exemple PBR (lot 1.9.17)
+
+- **Constat de Klaatou** : le lanceur graphique n'ouvre pas la partie oar2glb, ni par la liste des outils ni par son raccourci du bureau.
+- **Diagnostic** : les raccourcis lancent `pythonw.exe`, qui n'a pas de console : `sys.__stdout__` et `sys.__stderr__` valent `None`. Au démarrage, `oar2glb.py` double la vraie console dans son journal (`Tee(sys.__stdout__, lf)`), donc sa première ligne affichée levait `AttributeError: 'NoneType' object has no attribute 'write'`, avant `parse_args` ; `lire_parser` (`web3d_gui.py`) n'attrapait que `SystemExit`, donc l'erreur laissait la fenêtre muette. Reproduit en mettant les deux flux à `None` : seul `oar2glb.py` échoue parmi les six outils, et déjà en 1.9.10 (les lots PBR n'y sont pour rien).
+- **Fait** : `Tee` (`tools/oar2glb.py`) ignore un flux absent. `lire_parser` (`tools/web3d_gui.py`) attrape maintenant toute erreur de l'outil avant son `parse_args`, ne rend pas de parser et garde la raison dans `lire_parser.erreur` ; la ligne d'état l'affiche après le message « impossible de lire les options » existant. Nouvel exemple pour oar2glb dans le lanceur : `Atoll.oar --pbr-size 256` (`py.gui.ex.oar2glb.5`, français et anglais).
+- **Contrôle** : `tests/gui.py` (lancé avec `xvfb-run` et Tk dans le bac à sable, partie fenêtre comprise) : trois nouveaux contrôles (les six outils lus sans console, un outil qui plante avant son `parse_args`, la raison effacée après une bonne lecture) passent, et le premier échoue sur l'ancien `dist\` ; `tests/i18n.py`, `oar2glb.py`, `pbr_oar.py`, `mono_linux.py`, `dist_a_jour.py` passent.
+- **Non essayé** : Windows et un vrai `pythonw.exe` (l'absence de console est simulée) ; lancer une conversion depuis le lanceur.
+
 ### 11/11/2026 : documents : PBR, Linux avec Mono, hauteur de la mer (lot 1.9.16)
 
 - **Demande de Klaatou** : mettre les documents à jour après les lots 1.9.11 à 1.9.15 (liste « en retard » de l'entrée 1.9.12).

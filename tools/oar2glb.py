@@ -2223,7 +2223,8 @@ def main():
 
 
 class Tee:
-    def __init__(self, *s): self.s = s
+    # un flux absent (None) est ignoré : sous pythonw.exe (raccourcis du lanceur graphique) il n'y a pas de console, sys.__stdout__ vaut None
+    def __init__(self, *s): self.s = [t for t in s if t is not None]
     def write(self, x):
         for t in self.s:
             t.write(x); t.flush()

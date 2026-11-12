@@ -55,6 +55,7 @@ EXEMPLES = {
         ("py.gui.ex.oar2glb.2", ["Atoll.oar", "--keep"]),
         ("py.gui.ex.oar2glb.3", ["Atoll.oar", "--diag"]),
         ("py.gui.ex.oar2glb.4", ["Atoll.oar", "--terrain-only", "Atoll.glb"]),
+        ("py.gui.ex.oar2glb.5", ["Atoll.oar", "--pbr-size", "256"]),
     ),
     "extraire_batiments": (
         ("py.gui.ex.extraire_batiments.1", ["Atoll.oar", "Atoll.glb", "--list"]),
@@ -93,8 +94,10 @@ def trouver_outil(fichier):
 
 
 def lire_parser(chemin, langue=None):
-    """exécute l'outil jusqu'à son parse_args, récupère le parser, n'exécute rien d'autre"""
+    """exécute l'outil jusqu'à son parse_args, récupère le parser, n'exécute rien d'autre ; une erreur de l'outil avant son parse_args
+    ne remonte pas (la fenêtre resterait muette) : le parser vaut alors None et lire_parser.erreur dit pourquoi"""
     pris = {}
+    lire_parser.erreur = ""
 
     def faux(self, *a, **k):
         pris["p"] = self
@@ -115,6 +118,8 @@ def lire_parser(chemin, langue=None):
                 runpy.run_path(str(chemin), run_name="__main__")
             except SystemExit:
                 pass
+            except Exception as e:
+                lire_parser.erreur = f"{type(e).__name__} : {e}"
     finally:
         argparse.ArgumentParser.parse_args, argparse.ArgumentParser.parse_known_args = orig_pa, orig_pka
         sys.argv, sys.path[:] = argv, path
@@ -524,7 +529,7 @@ def fenetre(outils, tk, ttk, filedialog, depart=None):
         if champs is None:
             parser = lire_parser(chemin, I18N_LANG)
             if parser is None:
-                f.etat.configure(text=_tr("py.gui.read_error", chemin.name))
+                f.etat.configure(text=_tr("py.gui.read_error", chemin.name) + (" (" + lire_parser.erreur + ")" if getattr(lire_parser, "erreur", "") else ""))
                 f.outil.set(f.chemin.name if f.chemin else "")
                 return False
             champs = f.cache[nom] = champs_depuis(parser)

@@ -32,15 +32,15 @@
   "version": "1.9.15 (11/11/2026)"
  },
  "oar2glb.py": {
-  "hash": "be6981d0ca482c3a6c732c17ced5321d6677b63258a4efe38665403ede8ed4a4",
-  "version": "1.9.14 (11/11/2026)"
+  "hash": "ab734082a340dbef5f645f3e2bc2ae3e9e506f1513fcf5f6a10e01d103676381",
+  "version": "1.9.17 (11/11/2026)"
  },
  "presence_server.py": {
   "hash": "b6c48ca2f3e9784cb46202b44b11f6d62825cd83f4d76d0d89fd5f7c51ebf0ea",
   "version": "1.6.19 (07/11/2026)"
  },
  "web3d_gui.py": {
-  "hash": "fdc248130526623863493cbb0f4435483eb65e711e287e5eeee11e92b6934787",
-  "version": "1.8.17 (10/11/2026)"
+  "hash": "8c3500cca0dc0ac89949016f2fa74544be137e484495b3162489cbab1e450339",
+  "version": "1.9.17 (11/11/2026)"
  }
 }

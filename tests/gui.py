@@ -117,6 +117,31 @@ rapport(len(pb) == 2 and {d for d, _t in pb} == {"rotate", "hole"}, "verifier : 
 rapport("python glb2html.py" in g.ligne_commande("glb2html.py", ["x.glb"]), "la ligne affichee commence par python glb2html.py")
 rapport("--walk" in g.texte_aide(par["walk"]) and "default" in g.texte_aide(par["walk"]), "texte d'aide : option, aide, valeur par defaut")
 
+# ------------------------------------------------------------- 1.9.17 : sans console (pythonw.exe), et outil qui plante avant son parse_args
+# Les raccourcis du lanceur utilisent pythonw.exe : pas de console, sys.__stdout__ et sys.__stderr__ valent None. oar2glb.py doublait
+# sys.__stdout__ dans son journal et plantait a sa premiere ligne affichee : le lanceur ne pouvait pas ouvrir ses options.
+_so, _se = sys.__stdout__, sys.__stderr__
+sans = []
+for _nom, _fichier in g.OUTILS:
+    sys.__stdout__ = sys.__stderr__ = None
+    try:
+        _p = g.lire_parser(DIST / _fichier, "en")
+    except BaseException as _e:
+        _p, g.lire_parser.erreur = None, repr(_e)
+    finally:
+        sys.__stdout__, sys.__stderr__ = _so, _se
+    if _p is None:
+        sans.append((_fichier, getattr(g.lire_parser, "erreur", "")))
+rapport(not sans, "sans console (pythonw.exe) : les options de chaque outil sont lues", sans)
+import tempfile
+with tempfile.TemporaryDirectory() as _d:
+    _faux = pathlib.Path(_d) / "outil_casse.py"
+    _faux.write_text("raise RuntimeError('boum')\n", encoding="ascii")
+    _p = g.lire_parser(_faux, "en")
+    rapport(_p is None and "RuntimeError" in g.lire_parser.erreur and "boum" in g.lire_parser.erreur,
+            "outil qui plante avant son parse_args : pas d'exception dans le lanceur, raison gardee pour le message", (_p, g.lire_parser.erreur))
+rapport(g.lire_parser(DIST / "glb2html.py", "en") is not None and g.lire_parser.erreur == "", "lecture reussie ensuite : raison remise a vide")
+
 # ------------------------------------------------------------- exemples d'usages de base (sans fenetre)
 rapport(set(g.EXEMPLES) == {n for n, _f in g.OUTILS} and all(len(v) >= 2 for v in g.EXEMPLES.values()), "chaque outil de la liste a au moins 2 exemples, aucun exemple pour un outil inconnu", sorted(g.EXEMPLES))
 def titre(code, cle):

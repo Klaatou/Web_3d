@@ -123,8 +123,8 @@ def i18n_add_common(ap):
         pass
 
 
-VERSION = "1.9.14 (11/11/2026)"      # remplacé par build.py (fichier VERSION) dans dist/oar2glb.py
-MARK = "012daa96"      # empreinte du fichier fabriqué, inscrite par build.py ; reste telle quelle depuis tools/
+VERSION = "1.9.17 (11/11/2026)"      # remplacé par build.py (fichier VERSION) dans dist/oar2glb.py
+MARK = "58531b67"      # empreinte du fichier fabriqué, inscrite par build.py ; reste telle quelle depuis tools/
 
 
 def version_tag():
@@ -2307,7 +2307,8 @@ def main():
 
 
 class Tee:
-    def __init__(self, *s): self.s = s
+    # un flux absent (None) est ignoré : sous pythonw.exe (raccourcis du lanceur graphique) il n'y a pas de console, sys.__stdout__ vaut None
+    def __init__(self, *s): self.s = [t for t in s if t is not None]
     def write(self, x):
         for t in self.s:
             t.write(x); t.flush()

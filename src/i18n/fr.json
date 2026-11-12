@@ -1670,6 +1670,7 @@
  "py.gui.ex.oar2glb.2": "Convertir en gardant les fichiers intermédiaires",
  "py.gui.ex.oar2glb.3": "Diagnostic seul : ne modifie rien, ne lance pas convoar",
  "py.gui.ex.oar2glb.4": "Ajouter le terrain complet à un GLB existant (sans convoar)",
+ "py.gui.ex.oar2glb.5": "Convertir une région qui a des matériaux PBR, textures PBR de 256 px (GLB plus léger)",
  "py.gui.ex.extraire_batiments.1": "Lister les groupes de l'OAR",
  "py.gui.ex.extraire_batiments.2": "Lister en filtrant par nom, groupes de 5 parties au moins",
  "py.gui.ex.extraire_batiments.3": "Extraire un groupe par son numéro",

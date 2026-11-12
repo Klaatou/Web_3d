@@ -6,6 +6,14 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.9.0)
 
+### 11/11/2026: `oar2glb.py` and `web3d_gui.py`: the launcher could not open oar2glb without a console; PBR example (batch 1.9.17)
+
+- **Reported by Klaatou**: the graphical launcher does not open the oar2glb part, neither from the tool list nor from its desktop shortcut.
+- **Diagnosis**: the shortcuts run `pythonw.exe`, which has no console: `sys.__stdout__` and `sys.__stderr__` are `None`. At start, `oar2glb.py` doubles the real console into its log (`Tee(sys.__stdout__, lf)`), so its first printed line raised `AttributeError: 'NoneType' object has no attribute 'write'`, before `parse_args`; `lire_parser` (`web3d_gui.py`) only caught `SystemExit`, so the error left the window silent. Reproduced by setting both streams to `None`: only `oar2glb.py` fails among the six tools, and already in 1.9.10 (not caused by the PBR batches).
+- **Done**: `Tee` (`tools/oar2glb.py`) ignores a missing stream. `lire_parser` (`tools/web3d_gui.py`) now catches any error of the tool before its `parse_args`, returns no parser and keeps the reason in `lire_parser.erreur`; the status line shows it after the existing "cannot read the options" message. New example for oar2glb in the launcher: `Atoll.oar --pbr-size 256` (`py.gui.ex.oar2glb.5`, French and English).
+- **Check**: `tests/gui.py` (run with `xvfb-run` and Tk in the sandbox, window part included): three new checks (the six tools read without a console, a tool that fails before its `parse_args`, the reason cleared after a good read) pass, and the first one fails on the previous `dist\`; `tests/i18n.py`, `oar2glb.py`, `pbr_oar.py`, `mono_linux.py`, `dist_a_jour.py` pass.
+- **Not tested**: Windows and a real `pythonw.exe` (the missing console is simulated); running a conversion from the launcher.
+
 ### 11/11/2026: documents: PBR, Linux with Mono, sea height (batch 1.9.16)
 
 - **Requested by Klaatou**: bring the documents up to date after batches 1.9.11 to 1.9.15 (list "still to update" of the 1.9.12 entry).
