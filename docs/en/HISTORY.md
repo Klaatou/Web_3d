@@ -225,6 +225,9 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 11/11/2026 |  | after 1.9.0 | Batch 1.9.17: the graphical launcher opens `oar2glb` without a console (`Tee`, `lire_parser`), PBR example |
 | 11/11/2026 |  | after 1.9.0 | Batch 1.9.18: PBR picture of the README (`docs/images/pbr.jpg`) and credit of the sandbox's grid; two stand-alone scripts kept out of the repository |
 | 11/11/2026 |  | after 1.9.0 | Batch 1.9.19: credit "Thanks to its owner, Vlad" (README, manual), `tests/tout.py` (the whole suite in one command) |
+| 11/11/2026 |  | after 1.9.0 | Batch 1.9.20: `tests/tout.py` runs each test in the same environment as a direct run |
+| 11/11/2026 |  | after 1.9.0 | Batch 1.9.21: Windows: `oar2glb.py` accepts a `.py` convoar and no longer prints a trace at its pause; tests `marque`, `v48`, `mono_linux` |
+| 11/11/2026 |  | after 1.9.0 | Batch 1.9.22: tests: `oar2glb` re-encodes in a child interpreter (Windows); `tout.py` shows the last traceback |
 
 ## Useful commands
 

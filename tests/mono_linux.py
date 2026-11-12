@@ -24,6 +24,12 @@ def rapport(ok, nom, detail=""):
     print(("[OK]    " if ok else "[ECHEC] ") + nom + ("" if ok else "  " + str(detail)), flush=True)
 
 
+# --- Windows (simule par le parametre windows=True, donc essayable partout) : seul un .exe passe par le lanceur convoar_inv.exe
+t, e = T.commande_convoar("C:/x/convoar_fake.py", windows=True)
+rapport(t == [sys.executable, str(pathlib.Path("C:/x/convoar_fake.py"))] and e is None, "Windows : un script .py est lance avec python (le lanceur convoar_inv.exe demande un vrai .exe)", t)
+t, e = T.commande_convoar("C:/x/convoar.cmd", windows=True)
+rapport(t == [str(pathlib.Path("C:/x/convoar.cmd"))] and e is None, "Windows : un .cmd (ou tout autre programme) est lance tel quel", t)
+
 if os.name == "nt":
     print("[IGNORE] sous Windows : convoar passe par le lanceur convoar_inv.exe (autre chemin)")
     sys.exit(0)

@@ -31,7 +31,7 @@ def fabriquer(racine, sortie):
     for l in r.stdout.splitlines():
         if l.startswith("marques"):
             vu = True
-        elif vu and l.strip():
+        elif vu and re.fullmatch(r"\s+\S+\s+[0-9a-f]{8}", l):      # « nom  empreinte » ; les lignes suivantes de build.py (« [OK] ... ») sont ignorees
             nom, m = l.split()
             marques[nom] = m
     return marques

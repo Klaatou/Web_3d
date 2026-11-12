@@ -444,7 +444,13 @@ with tarfile.open(reenc_src, "w:gz") as t:
     for nom, data in ((f"assets/{u_ok}_texture.jp2", j2k((200, 30, 30))), (f"assets/{u_bad}_texture.jp2", cassee),
                       (f"assets/{u_sc}_texture.jp2", cassee), ("objects/sculpt.xml", sculpt_xml)):
         ti = tarfile.TarInfo(nom); ti.size = len(data); t.addfile(ti, io.BytesIO(data))
-T.reencode_oar(reenc_src, reenc_dst)
+# Windows (et macOS) demarrent les processus du reencodage « a neuf » (spawn) : ils re-importent le module principal. Ce fichier est un script sans
+# garde « __main__ » : il se re-executerait en entier dans chaque processus fils (RuntimeError « bootstrapping phase », puis BrokenProcessPool).
+# reencode_oar tourne donc dans un interpreteur « -c », dont le module principal n'a pas de fichier a re-importer.
+r = subprocess.run([sys.executable, "-c", "import pathlib, sys; sys.path.insert(0, sys.argv[1]); import oar2glb as T; T.reencode_oar(pathlib.Path(sys.argv[2]), pathlib.Path(sys.argv[3]))",
+                    str(TOOL.parent), str(reenc_src), str(reenc_dst)], capture_output=True, text=True, timeout=300)
+print(r.stdout, end="")
+rapport(r.returncode == 0, "réencodage : processus fils terminé sans erreur", (r.stdout[-300:], r.stderr[-600:]))
 with tarfile.open(reenc_dst) as t:
     out = {m.name: t.extractfile(m).read() for m in t if m.isfile()}
 def lisible(d):

@@ -124,12 +124,15 @@ async def partie_serveur():
         await ws.send(json.dumps({"t": "hello", "room": "galerie", "name": "Zoe", "uid": "z" * 20, "spectator": False}))
         await ws.recv()
         await asyncio.sleep(1)
-        proc.send_signal(signal.SIGINT)
-        for _ in range(100):            # attente sans bloquer la boucle : le client doit répondre à la fermeture du serveur
-            if proc.poll() is not None:
-                break
-            await asyncio.sleep(0.1)
-        rapport(len(lignes(vf)) == 5, "arrêt propre (Ctrl+C) : la visite en cours est écrite", len(lignes(vf)))
+        if os.name == "nt":
+            print("[IGNORE] arrêt propre (Ctrl+C) : un processus fils ne reçoit pas SIGINT sous Windows ; partie non essayée ici (à voir à la main : Ctrl+C dans la console du serveur)")
+        else:
+            proc.send_signal(signal.SIGINT)
+            for _ in range(100):            # attente sans bloquer la boucle : le client doit répondre à la fermeture du serveur
+                if proc.poll() is not None:
+                    break
+                await asyncio.sleep(0.1)
+            rapport(len(lignes(vf)) == 5, "arrêt propre (Ctrl+C) : la visite en cours est écrite", len(lignes(vf)))
     finally:
         if proc.poll() is None:
             proc.kill()

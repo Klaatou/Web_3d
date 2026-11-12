@@ -6,6 +6,36 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.9.0)
 
+### 11/11/2026: tests: `oar2glb` can run on Windows (re-encoding in a child interpreter); `tout.py` shows the last traceback (batch 1.9.22)
+
+- **Reported by Klaatou**: re-run of the five failed tests on Windows: `marque`, `terrain`, `textes_outils` and `v48` pass (`v48` with one `[IGNORE]`); `oar2glb` still fails after 52 s, its summary stopping at "2 textures to re-encode on 8 cores".
+- **Diagnosis** (reproduced on Linux by forcing the `spawn` start method, which is the one Windows and macOS use): `tests/oar2glb.py` calls `T.reencode_oar(...)` in its own process, and `reencode_oar` starts 8 worker processes. With `spawn`, each worker re-imports the main module, here the test file, which has no `if __name__ == "__main__"` guard: the whole test runs again in every worker, which fails with `RuntimeError ... bootstrapping phase` and then `BrokenProcessPool`. `oar2glb.py --reencode` itself is not concerned (the tool has its guard). `tout.py` hid the traceback: the output of a child process is buffered when it goes to a pipe, so the traceback (standard error) came before the end of the standard output in the log, and the summary only showed the last lines.
+- **Done**: `tests/oar2glb.py` runs `reencode_oar` in an interpreter started with `-c` (its main module has no file to re-import), checks its return code and still checks the re-encoded files. `tests/tout.py` starts each test with `python -u` (unbuffered for that one process only, no environment variable) so that the log is in order, and its summary now shows the lines `[ECHEC]` then the last `Traceback` block (24 lines at most).
+- **Check**: `tests/oar2glb.py` passes on Linux, also when the main process is forced to `spawn` (before: `RuntimeError` and `BrokenProcessPool`); `reencode_oar` run from `-c` with `spawn` forced writes its OAR; `tout.py` tried on fake tests (an output followed by an exception, a test that uses a `spawn` pool with its guard) and on three real tests. No other test uses a process pool.
+- **Not tested**: Windows, which decides: the re-run of `oar2glb` there.
+
+### 11/11/2026: Windows: `oar2glb.py` accepts a `.py` convoar and no longer prints a trace at its pause; tests `marque`, `v48`, `mono_linux` (batch 1.9.21)
+
+- **Reported by Klaatou**: the first full run of the suite on Windows with `tests/tout.py` (21 min 49 s, 95 tests): 83 OK, 12 to look at. Causes found, one by one:
+  - `oar2glb` and `terrain`: the tests give oar2glb a fake convoar written in Python. On Windows, `run_convoar` always built the launcher `convoar_inv.exe`, which needs a real `.exe` (`pe_platform` read a 271-byte `.py` as a PE file). The code was the same in 1.9.10 (`exe = ensure_launcher(convoar) if os.name == "nt"`): these two tests could never pass on Windows.
+  - `textes_outils`: `oar2glb.py --help` ended with the "Press Enter" pause. On Windows `isatty()` is true for NUL (the empty input of a test), so `input()` raised `EOFError` and printed a trace; `glb2tiles.py` already caught it.
+  - `marque`: the test read every line after "marques" of the output of `build.py` as "name hash"; the line "[OK] docs/REFERENCE_OPTIONS.md: refait" broke it. It also failed in the sandbox (listed in `DEVELOPPEMENT.md`).
+  - `v48`: the test stops the presence server with `SIGINT`, which a child process does not receive on Windows.
+  - `v51_vides` and `v52_http`: reproduced here with websockets 16.0 (the version of the Windows run); both pass with 17.4. With 16.0 the presence server does not filter the "empty connection" and "http request" log lines. Not corrected in this batch, and not caused by the batches since 1.9.0.
+  - `v33`, `v34`, `v36`, `v37`, `v37_chat`: websocket handshake timeouts, or the page never reaches "online". Not reproduced here (they pass here, also with websockets 16.0): to be investigated with the Windows logs.
+- **Done**: `commande_convoar(convoar, windows=None)` (`tools/oar2glb.py`): on Windows a `.exe` goes through the launcher as before, a `.py` script is run with `sys.executable`, any other program as it is (the parameter lets the tests try this branch anywhere). The pause of `oar2glb.py` catches `EOFError`, like `glb2tiles.py`. Tests: `marque` only reads the "name  hash" lines; `v48` skips the clean-stop part on Windows with an `[IGNORE]` line; `mono_linux` gets two checks of the Windows branch.
+- **Check**: on Linux (sandbox): `mono_linux`, `oar2glb`, `terrain`, `textes_outils`, `marque` (it failed here before), `v48`, `gui`, `i18n`, `pbr_oar` and `dist_a_jour` pass.
+- **Not tested**: Windows, which decides: the re-run of `oar2glb`, `terrain`, `textes_outils`, `marque` and `v48` there. The `.exe` branch on Windows is unchanged.
+- **Still open**: the presence tests above; websockets 16.0.
+
+### 11/11/2026: `tests/tout.py`: each test is started in the same environment as `python .\tests\NAME.py` (batch 1.9.20)
+
+- **Reported by Klaatou**: during the first full run on Windows, four tests failed within a few seconds: `marque`, `oar2glb`, `terrain` and `textes_outils` (the first three pass here in the sandbox; `marque` already fails in the sandbox and the cloud, as listed in `DEVELOPPEMENT.md`).
+- **Cause suspected (to be confirmed by the re-run)**: `tout.py` forced `PYTHONIOENCODING=utf-8` and `PYTHONUTF8=1` in the environment of every test. These variables are inherited by the programs that the tests start themselves (`subprocess.run(..., text=True)`), which the tests read with Windows' default encoding: their text could be decoded differently from a normal `python .\tests\NAME.py` run. The variable is a design mistake in any case: the run must look like the one described in `DEVELOPPEMENT.md`.
+- **Done**: `tests/tout.py` no longer sets any variable. Each test is run through a small wrapper (`python -c ... runpy.run_path`) that only switches the output of that one process to UTF-8, so that the log is readable; `sys.argv`, `__file__`, `__main__` and the import of the neighbouring modules (`h37`, `glbfab`) are the same as in a direct run.
+- **Check**: tried on 4 fake tests (success, failure, too slow, a test that imports a neighbouring module; no environment variable seen by the test, accents kept in the log) and on 8 real tests (`i18n`, `mer_hauteur`, `oar2glb`, `pbr_oar`, `terrain`, `textes_outils`, `gui`, `v52`: all OK here); syntax checked for Python 3.8.
+- **Not tested**: Windows (the point of the correction): the re-run of the four failed tests there decides whether this was the cause.
+
 ### 11/11/2026: README and manual: credit worded "Thanks to its owner, Vlad"; `tests/tout.py` (batch 1.9.19)
 
 - **Requested by Klaatou**: the sandbox's owner agreed to be named (his pseudonym, Vlad). The credit now says "sandbox" (even in French) and "Thanks to its owner, Vlad" instead of "with the owner's agreement": README (caption and Credits), manual sections 3.10, 3.11 and 9.19. Rule 25: an explicit exception, like NightshadeCeres; `REGLES.md` is updated by Klaatou (rule 25: "plus Vlad (agreement of dd/mm/yyyy)").

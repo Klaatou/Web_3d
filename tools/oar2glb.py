@@ -802,11 +802,16 @@ def ensure_launcher(convoar):
     return launcher
 
 
-def commande_convoar(convoar):
-    """(debut de la commande, environnement ou None) : Windows : le lanceur convoar_inv.exe ; ailleurs, un convoar.exe passe par Mono
-    (LC_ALL=C : nombres en 0.5 ; LD_LIBRARY_PATH : bibliotheque openjpeg a cote de convoar.exe) ; un autre programme (script, convoar du PATH) est lance tel quel"""
-    if os.name == "nt":
-        return [str(ensure_launcher(convoar))], None
+def commande_convoar(convoar, windows=None):
+    """(debut de la commande, environnement ou None) : Windows : un convoar.exe passe par le lanceur convoar_inv.exe (il demande un vrai .exe),
+    un script .py par python, tout autre programme tel quel ; ailleurs, un convoar.exe passe par Mono
+    (LC_ALL=C : nombres en 0.5 ; LD_LIBRARY_PATH : bibliotheque openjpeg a cote de convoar.exe) ; un autre programme (script, convoar du PATH) est lance tel quel.
+    windows=None : le systeme courant (le parametre sert aux tests)"""
+    if (os.name == "nt") if windows is None else windows:
+        suffixe = Path(convoar).suffix.lower()
+        if suffixe == ".exe":
+            return [str(ensure_launcher(convoar))], None
+        return ([sys.executable, str(Path(convoar))] if suffixe == ".py" else [str(Path(convoar))]), None
     if str(convoar).lower().endswith(".exe"):
         mono = shutil.which("mono")
         if not mono:
@@ -2268,5 +2273,8 @@ if __name__ == "__main__":
         code = 1
     print(_tr("py.oar2glb.log_0", log))
     if "--nopause" not in sys.argv and "--terrain-only" not in sys.argv and sys.stdin and sys.stdin.isatty():
-        input(_tr("py.oar2glb.entree_pour_fermer"))
+        try:
+            input(_tr("py.oar2glb.entree_pour_fermer"))
+        except EOFError:        # sous Windows, NUL (entree vide d'un script ou d'un test) se dit « console » : pas de trace d'erreur (comme glb2tiles.py)
+            pass
     sys.exit(code)

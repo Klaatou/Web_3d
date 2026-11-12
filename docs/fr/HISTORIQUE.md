@@ -225,6 +225,9 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 11/11/2026 |  | après 1.9.0 | Lot 1.9.17 : le lanceur graphique ouvre `oar2glb` sans console (`Tee`, `lire_parser`), exemple PBR |
 | 11/11/2026 |  | après 1.9.0 | Lot 1.9.18 : image PBR du README (`docs/images/pbr.jpg`) et crédit de la grille du bac à sable ; deux scripts autonomes hors du dépôt |
 | 11/11/2026 |  | après 1.9.0 | Lot 1.9.19 : crédit « Merci à son propriétaire, Vlad » (README, manuel), `tests/tout.py` (toute la suite en une commande) |
+| 11/11/2026 |  | après 1.9.0 | Lot 1.9.20 : `tests/tout.py` lance chaque test dans le même environnement qu'un lancement direct |
+| 11/11/2026 |  | après 1.9.0 | Lot 1.9.21 : Windows : `oar2glb.py` accepte un convoar `.py` et ne trace plus d'erreur à sa pause ; tests `marque`, `v48`, `mono_linux` |
+| 11/11/2026 |  | après 1.9.0 | Lot 1.9.22 : tests : `oar2glb` réencode dans un interpréteur fils (Windows) ; `tout.py` montre la dernière trace d'erreur |
 
 ## Commandes utiles
 

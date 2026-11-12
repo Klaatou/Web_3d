@@ -14,7 +14,7 @@ Un test est en ECHEC si : son code de retour n'est pas 0 ; ou il affiche une lig
 Il est SUSPECT s'il reussit mais affiche une trace d'erreur Python (« Traceback »). « partie(s) ignoree(s) » compte les lignes « [IGNORE] »
 (un test qui saute une partie faute de navigateur, d'ecran ou de module) : ce n'est pas un echec, mais la partie n'a pas ete essayee.
 
-Chaque test ecrit sa sortie complete dans tests_logs\\NOM.log ; le resume est dans tests_logs\\resume.txt. Le dossier tests_logs est ignore par git.
+Chaque test tourne en sortie non tamponnee (python -u pour ce seul processus) : le journal est dans l'ordre. Il ecrit sa sortie complete dans tests_logs\\NOM.log ; le resume est dans tests_logs\\resume.txt. Le dossier tests_logs est ignore par git.
 Prerequis des tests eux-memes : voir docs\\fr\\DEVELOPPEMENT.md (Chromium et playwright, websockets, python build.py avant). Code de retour : 0 si tout passe, 1 sinon.
 """
 import argparse, json, os, re, subprocess, sys, time
@@ -29,6 +29,19 @@ for _s in (sys.stdout, sys.stderr):
 ICI = Path(__file__).resolve().parent
 RACINE = ICI.parent
 AIDES = {"h37", "glbfab", "tout"}          # modules d'aide importes par d'autres tests, et ce script : pas des tests
+# Chaque test est lance comme « python tests\\NOM.py » : meme environnement, meme dossier courant. Seule la sortie de CE processus est mise en
+# UTF-8 (pour que le journal soit lisible) : PAS par variable d'environnement (PYTHONIOENCODING, PYTHONUTF8), qui serait heritee par les
+# programmes que les tests lancent eux-memes et changerait leur encodage (les tests les lisent avec l'encodage par defaut de Windows).
+ENVELOPPE = ("import os, runpy, sys\n"
+             "for s in (sys.stdout, sys.stderr):\n"
+             "    try:\n"
+             "        s.reconfigure(encoding='utf-8', errors='replace')\n"
+             "    except Exception:\n"
+             "        pass\n"
+             "p = sys.argv[1]\n"
+             "sys.argv = [p]\n"
+             "sys.path.insert(0, os.path.dirname(p))\n"
+             "runpy.run_path(p, run_name='__main__')\n")
 RX_ECHEC = re.compile(r"^\s*\[(ECHEC|ÉCHEC)\]", re.IGNORECASE | re.MULTILINE)
 RX_IGNORE = re.compile(r"^\s*\[IGNORE\]", re.IGNORECASE | re.MULTILINE)
 
@@ -39,11 +52,10 @@ def duree(s):
 
 def lancer(chemin, delai, dossier_logs):
     """(statut, secondes, sortie, nb_ignores)"""
-    env = dict(os.environ, PYTHONIOENCODING="utf-8", PYTHONUTF8="1")
     t0 = time.time()
     try:
-        r = subprocess.run([sys.executable, str(chemin)], cwd=str(RACINE), stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                           stderr=subprocess.STDOUT, timeout=delai, env=env)
+        r = subprocess.run([sys.executable, "-u", "-c", ENVELOPPE, str(chemin)], cwd=str(RACINE), stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                           stderr=subprocess.STDOUT, timeout=delai)
         sortie = r.stdout.decode("utf-8", "replace")
         statut = "OK" if r.returncode == 0 else "ECHEC"
         if r.returncode == 0 and RX_ECHEC.search(sortie):
@@ -59,10 +71,15 @@ def lancer(chemin, delai, dossier_logs):
 
 
 def fin_de_sortie(sortie, n=14):
+    """lignes [ECHEC] d'abord, puis le DERNIER bloc « Traceback » (jusqu'a 24 lignes) s'il y en a un, sinon la fin de la sortie"""
     lignes = [l for l in sortie.splitlines() if l.strip()]
     echecs = [l for l in lignes if RX_ECHEC.match(l)]
-    reste = [l for l in lignes if l not in echecs][-max(3, n - len(echecs)):]
-    return (echecs[:8] + ([""] if echecs else []) + reste)[-n:]
+    trace = [i for i, l in enumerate(lignes) if l.startswith("Traceback (most recent call last)")]
+    if trace:
+        bloc = lignes[trace[-1]:trace[-1] + 24]
+    else:
+        bloc = [l for l in lignes if l not in echecs][-max(3, n - len(echecs)):]
+    return echecs[:8] + ([""] if echecs else []) + bloc
 
 
 def main():
