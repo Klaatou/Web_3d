@@ -6,6 +6,17 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.10.0)
 
+### 12/11/2026: launcher: window icon, `glb-stats` in the list, no more "Enter" pause after `--help` (batch 1.10.3)
+
+- **Requested by Klaatou**: (1) give the project icon to the window of the graphical launcher; (2) put `glb-stats.py` in the launcher's list of tools; (3) `glb2tiles.py` and `oar2glb.py` no longer wait for Enter after `--help`, provided nothing else changes.
+- **Done**:
+  - **icon**: `appliquer_icone` (`web3d_gui.py`). Under Windows `iconbitmap` sets `favicon.ico` (the file of the shortcuts); elsewhere Tk cannot read ICO, Pillow reads it and `iconphoto` sets it (without Pillow the default icon stays). Never an error: a missing icon does not stop the launcher;
+  - **`glb-stats`**: one line in `OUTILS`, two examples (`py.gui.ex.glb_stats.1` and `.2`, in French and English), the text of `py.gui.desc`; `--shortcuts` therefore creates one more shortcut (eight in all: the window and seven tools);
+  - **pause**: `glb2tiles.py` and `oar2glb.py` no longer ask for Enter when the command line contains `--help` or `-h`. The rest is unchanged: a normal run still waits for Enter in a console, `--nopause`, `--version` and `--terrain-only` as before; `extraire_batiments.py` and `iar2oar.py` had no pause.
+- **Check**: new `tests/aide_sans_pause.py` (8 checks, fake terminal `pty`): on the original `main` 4 checks fail (`--help` and `-h` of both tools wait for Enter), with the fix all pass; opposite direction: without `--help` the tool still waits for Enter. `tests/gui.py`: 4 icon checks (found, applied, missing, window without icon support) and `glb-stats` (options read, one by one, examples); passed under `xvfb-run` with Pillow. `textes_outils`, `i18n`, `tools_lang`, `oar2glb`, `glb2tiles`, `correctifs_v52`, `console`, `dist_a_jour`, `marque`, `samples` and `build_reference` also pass.
+- **Not tried**: real Windows (`iconbitmap`, taskbar icon, the new shortcut), macOS. The pause check under Windows (`pty` does not exist there): the test says so and skips it.
+- **Still to update** (rule 16): manual § 3.9 and `SIMPLE_PROCEDURES` § 5 ("six tools"; the "seven shortcuts" images become eight), in French and English.
+
 ### 12/11/2026: tools: a character outside the code page no longer stops the tool when its output is redirected (batch 1.10.2)
 
 - **Known issue** (1.10.0 notes): `glb2html.py` stopped on `→` when its output goes into a pipe or a Windows cp1252 file (`> journal.txt`).

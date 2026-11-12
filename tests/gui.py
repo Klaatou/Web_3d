@@ -236,6 +236,24 @@ except tk.TclError as e:
     sans_fenetre(e)
 r = f.root
 r.update()
+# ------------------------------------------------------------- 1.10.3 : icone du projet donnee a la fenetre
+ico = g.trouver_icone()
+rapport(ico is not None and ico.name == "favicon.ico", "l'icone du projet (favicon.ico) est trouvee a cote de web3d_gui.py", ico)
+try:
+    import PIL
+    pil = True
+except ImportError:
+    pil = False
+if sys.platform.startswith("win") or pil:
+    rapport(g.appliquer_icone(r) is True and (sys.platform.startswith("win") or hasattr(r, "_icone_img")), "l'icone est appliquee a la fenetre (iconbitmap sous Windows, iconphoto avec Pillow ailleurs)")
+else:
+    print("[IGNORE] icone de la fenetre : Pillow absent (pip install pillow), seule l'icone par defaut reste")
+_vrai = g.trouver_icone
+g.trouver_icone = lambda: None
+rapport(g.appliquer_icone(r) is False, "icone introuvable : False, la fenetre s'ouvre quand meme")
+g.trouver_icone = _vrai
+rapport(g.appliquer_icone(type("Fenetre", (), {})()) is False, "fenetre sans iconbitmap ni iconphoto : False, pas d'erreur")
+rapport("glb-stats" in {n for n, _f in g.OUTILS} and g.trouver_outil("glb-stats.py") is not None, "glb-stats est dans la liste des outils et se trouve a cote du lanceur")
 rapport(len(f.lignes) == len(champs), "la fenetre a une ligne par option", (len(f.lignes), len(champs)))
 rapport(f.cmd.get("1.0", "end").strip() == "python glb2html.py", "au depart la commande est vide d'options", f.cmd.get("1.0", "end"))
 f.vars["input"].set("C:/regions/Atoll.glb")

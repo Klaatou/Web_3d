@@ -30,7 +30,7 @@ VERSION = "__VERSION__"      # remplacé par build.py (fichier VERSION) dans dis
 MARK = "__MARK__"      # empreinte du fichier fabriqué, inscrite par build.py ; reste telle quelle depuis tools/
 
 OUTILS = (("glb2html", "glb2html.py"), ("glb2tiles", "glb2tiles.py"), ("oar2glb", "oar2glb.py"), ("extraire_batiments", "extraire_batiments.py"),
-          ("iar2oar", "iar2oar.py"), ("diag_carte", "diag_carte.py"))      # (nom, fichier) ; un outil de plus : une ligne ici
+          ("iar2oar", "iar2oar.py"), ("diag_carte", "diag_carte.py"), ("glb-stats", "glb-stats.py"))      # (nom, fichier) ; un outil de plus : une ligne ici
 MOTS_CHEMIN = ("FILE", "FOLDER", "DIR")      # un métavar qui contient l'un de ces mots, ou qui finit par .html / .json : un fichier ou un dossier
 DEST_CHEMIN = ("input", "o", "output", "sortie", "convoar", "register", "thumb", "oar", "glb", "iar")      # arguments sans métavar qui sont des chemins
 
@@ -74,6 +74,10 @@ EXEMPLES = {
     "diag_carte": (
         ("py.gui.ex.diag_carte.1", ["ws://ADRESSE:8765", "MA_CLE"]),
         ("py.gui.ex.diag_carte.2", ["wss://ADRESSE", "MA_CLE", "https://VOTRE-SITE"]),
+    ),
+    "glb-stats": (
+        ("py.gui.ex.glb_stats.1", ["Region.glb"]),
+        ("py.gui.ex.glb_stats.2", ["Region.glb", "--block", "128", "--output", "mesures.txt"]),
     ),
 }
 
@@ -336,6 +340,7 @@ def fenetre(outils, tk, ttk, filedialog, depart=None):
     """crée la fenêtre ; outils = [(nom, chemin du fichier)] ; rend un objet : .root, .champs, .vars, .valeurs(), .changer(nom), .lancer() ..."""
     chemins = dict(outils)
     root = tk.Tk()
+    appliquer_icone(root)
     root.title(_tr("py.gui.title", version_tag()))
     root.geometry("1000x760")
     root.minsize(760, 520)
@@ -689,6 +694,27 @@ def dossier_bureau(dossier=None):
         except (OSError, subprocess.SubprocessError):
             pass
     return Path.home() / "Desktop"
+
+
+def appliquer_icone(root):
+    """donne l'icône du projet (favicon.ico) à la fenêtre ; rend True si elle est appliquée. Windows : iconbitmap (l'ICO est lu tel quel) ;
+    ailleurs : Tk ne lit pas l'ICO, l'image est lue par Pillow s'il est là (sinon l'icône par défaut reste). Jamais d'erreur : une icône manquante n'arrête pas le lanceur"""
+    ico = trouver_icone()
+    if ico is None:
+        return False
+    try:
+        if sys.platform.startswith("win"):
+            root.iconbitmap(default=str(ico))
+            return True
+        from PIL import Image, ImageTk
+        with Image.open(str(ico)) as im:
+            im.load()
+            photo = ImageTk.PhotoImage(im.convert("RGBA"), master=root)
+        root.iconphoto(True, photo)
+        root._icone_img = photo      # Tk ne garde pas l'image : sans cette référence elle disparaît
+        return True
+    except Exception:
+        return False
 
 
 def trouver_icone():

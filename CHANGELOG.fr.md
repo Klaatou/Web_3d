@@ -6,6 +6,17 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.10.0)
 
+### 12/11/2026 : lanceur : icône de la fenêtre, `glb-stats` dans la liste, plus de pause « Entrée » après `--help` (lot 1.10.3)
+
+- **Demandé par Klaatou** : (1) donner l'icône du projet à la fenêtre du lanceur graphique ; (2) mettre `glb-stats.py` dans la liste des outils du lanceur ; (3) que `glb2tiles.py` et `oar2glb.py` n'attendent plus Entrée après `--help`, à condition que rien d'autre ne change.
+- **Fait** :
+  - **icône** : `appliquer_icone` (`web3d_gui.py`). Sous Windows `iconbitmap` pose `favicon.ico` (le fichier des raccourcis) ; ailleurs Tk ne lit pas l'ICO, Pillow le lit et `iconphoto` le pose (sans Pillow l'icône par défaut reste). Jamais d'erreur : une icône absente n'arrête pas le lanceur ;
+  - **`glb-stats`** : une ligne dans `OUTILS`, deux exemples (`py.gui.ex.glb_stats.1` et `.2`, en français et en anglais), le texte de `py.gui.desc` ; `--shortcuts` crée donc un raccourci de plus (huit en tout : la fenêtre et sept outils) ;
+  - **pause** : `glb2tiles.py` et `oar2glb.py` ne demandent plus Entrée quand la ligne contient `--help` ou `-h`. Le reste est inchangé : un passage normal attend toujours Entrée dans une console, `--nopause`, `--version` et `--terrain-only` comme avant ; `extraire_batiments.py` et `iar2oar.py` n'avaient pas de pause.
+- **Contrôle** : nouveau `tests/aide_sans_pause.py` (8 contrôles, faux terminal `pty`) : sur `main` d'origine 4 échecs (`--help` et `-h` des deux outils attendent Entrée), avec le correctif tous passent ; sens opposé : sans `--help` l'outil attend toujours Entrée. `tests/gui.py` : 4 contrôles d'icône (trouvée, appliquée, absente, fenêtre sans icône possible) et `glb-stats` (options lues, une par une, exemples) ; passé sous `xvfb-run` avec Pillow. Passent aussi `textes_outils`, `i18n`, `tools_lang`, `oar2glb`, `glb2tiles`, `correctifs_v52`, `console`, `dist_a_jour`, `marque`, `samples`, `build_reference`.
+- **Non essayé** : Windows réel (`iconbitmap`, icône dans la barre des tâches, nouveaux raccourcis), macOS. La pause sous Windows (`pty` n'existe pas) : le test le dit et l'ignore.
+- **Reste à mettre à jour** (règle 16) : manuel § 3.9 et `PROCEDURES_SIMPLES` § 5 (« six outils » ; les images « sept raccourcis » deviennent huit), en français et en anglais.
+
 ### 12/11/2026 : outils : un caractère hors de la page de code n'arrête plus l'outil quand sa sortie est redirigée (lot 1.10.2)
 
 - **Point connu** (notes de la 1.10.0) : `glb2html.py` s'arrêtait sur `→` quand sa sortie va dans un tube ou un fichier Windows en cp1252 (`> journal.txt`).

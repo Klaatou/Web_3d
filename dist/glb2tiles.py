@@ -158,8 +158,8 @@ def i18n_add_common(ap):
         pass
 
 
-VERSION = "1.4.10 (03/11/2026)"      # remplacé par build.py (fichier VERSION) dans dist/glb2tiles.py
-MARK = "5ce4eff3"      # empreinte du fichier fabriqué, inscrite par build.py ; reste telle quelle depuis tools/
+VERSION = "1.10.3 (12/11/2026)"      # remplacé par build.py (fichier VERSION) dans dist/glb2tiles.py
+MARK = "dafd4287"      # empreinte du fichier fabriqué, inscrite par build.py ; reste telle quelle depuis tools/
 
 
 def version_tag():
@@ -2330,7 +2330,7 @@ if __name__ == "__main__":
         log(traceback.format_exc())
         code = 1
     print(_tr("py.glb2tiles.log_0", journal))
-    if "--nopause" not in sys.argv and sys.stdin and sys.stdin.isatty():      # ni console (script, tâche planifiée) : pas de pause
+    if "--nopause" not in sys.argv and "--help" not in sys.argv and "-h" not in sys.argv and sys.stdin and sys.stdin.isatty():      # ni console (script, tâche planifiée), ni aide (--help) : pas de pause
         try:
             input(_tr("py.glb2tiles.entree_pour_fermer"))
         except EOFError:

@@ -20,8 +20,8 @@
   "version": "1.10.2 (12/11/2026)"
  },
  "glb2tiles.py": {
-  "hash": "7b9bc8dac5ffae4a8d55cf6a849639017282e0f6f833c9919c83f87dbc2b795b",
-  "version": "1.4.10 (03/11/2026)"
+  "hash": "83963b7045e78d1ce8be271d88337f5e9fb26c8218a1f4612bca8f5c92de188a",
+  "version": "1.10.3 (12/11/2026)"
  },
  "iar2oar.py": {
   "hash": "02085f4c445fa0d074fe9303f39ed320d6400b913cec23973620a5b01e348c35",
@@ -32,15 +32,15 @@
   "version": "1.9.15 (11/11/2026)"
  },
  "oar2glb.py": {
-  "hash": "3affe64cdbe88284e6054a56f1290af7cb21ed7ca02e2794a8ca1dd72cd8a366",
-  "version": "1.10.2 (12/11/2026)"
+  "hash": "fd75720b83da0cfa5aeff597eb88034d5a96725ebbd294101e54410d1cfcd7a7",
+  "version": "1.10.3 (12/11/2026)"
  },
  "presence_server.py": {
   "hash": "a05f26f0c56546acbd59038df92b628ef523aa91ad87b9e1b0c0169f50819bc4",
   "version": "1.10.2 (12/11/2026)"
  },
  "web3d_gui.py": {
-  "hash": "8c3500cca0dc0ac89949016f2fa74544be137e484495b3162489cbab1e450339",
-  "version": "1.9.17 (11/11/2026)"
+  "hash": "bc9eef88aaac144c2cf3f76aa0e4759236536498061887524512df3b69e69cca",
+  "version": "1.10.3 (12/11/2026)"
  }
 }

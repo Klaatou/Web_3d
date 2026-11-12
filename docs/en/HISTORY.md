@@ -232,6 +232,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 12/11/2026 |  | 1.10.0 | Release 1.10.0: `VERSION` 1.10.0; `CHANGELOG.md`; gathers batches 1.9.1 to 1.9.23 (OpenSim 0.9.3 PBR materials, conversion on Linux with Mono, "Sea height" slider, graphical launcher fixed, `tests/tout.py`) |
 | 12/11/2026 |  | after 1.10.0 | Batch 1.10.1: documents: Firefox tried by Klaatou with the regions and the maps (overview, manual) |
 | 12/11/2026 |  | after 1.10.0 | Batch 1.10.2: tools: `errors="replace"` on the output streams of `glb2html`, `oar2glb`, `diag_carte` and the presence server (output redirected in cp1252); `tests/sortie_cp1252.py` |
+| 12/11/2026 |  | after 1.10.0 | Batch 1.10.3: launcher: window icon, `glb-stats` in the list; `glb2tiles` and `oar2glb`: no more pause after `--help`; `tests/aide_sans_pause.py` |
 
 ## Useful commands
 

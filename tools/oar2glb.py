@@ -2277,7 +2277,7 @@ if __name__ == "__main__":
         traceback.print_exc()
         code = 1
     print(_tr("py.oar2glb.log_0", log))
-    if "--nopause" not in sys.argv and "--terrain-only" not in sys.argv and sys.stdin and sys.stdin.isatty():
+    if "--nopause" not in sys.argv and "--terrain-only" not in sys.argv and "--help" not in sys.argv and "-h" not in sys.argv and sys.stdin and sys.stdin.isatty():      # pas de pause non plus après l'aide (--help)
         try:
             input(_tr("py.oar2glb.entree_pour_fermer"))
         except EOFError:        # sous Windows, NUL (entree vide d'un script ou d'un test) se dit « console » : pas de trace d'erreur (comme glb2tiles.py)
