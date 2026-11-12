@@ -875,11 +875,9 @@ if (C.walk) {
   // v39 : bouton « Copier le diagnostic » sous le contenu de la fenêtre (reste visible quand elle est réduite) : lignes affichées + diagText (core.js) ;
   // si le navigateur refuse la copie, le texte s'affiche sélectionné dessous (Ctrl+C)
   {
-    const row = document.createElement('div'), bd = document.createElement('button'), dout = document.createElement('textarea');
+    const row = document.createElement('div'), bd = document.createElement('button');
     row.id = 'diagRow'; bd.type = 'button'; bd.id = 'diagBtn'; bd.textContent = tr('core.diag.btn'); bd.title = tr('core.diag.tip');
     bd.style.cssText = 'font:inherit;margin-top:4px;padding:2px 8px;border:1px solid #000;border-radius:4px;background:#fff;color:#000;cursor:pointer';
-    dout.id = 'diagOut'; dout.readOnly = true; dout.rows = 8; dout.hidden = true; dout.setAttribute('aria-label', tr('core.diag.btn'));
-    dout.style.cssText = 'display:block;width:100%;box-sizing:border-box;font:inherit;margin-top:4px';
     bd.onmousedown = e => e.preventDefault();   // le bouton ne garde pas le focus : Espace et Entrée restent à la promenade et au chat
     bd.onclick = async () => {
       const lines = [...sbody.children].filter(e => !e.hidden && e.textContent).map(e => e.textContent);
@@ -888,8 +886,9 @@ if (C.walk) {
       { const co = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);   // v46 : commandes tactiles
         lines.push(tr('core.diag.line', tr('page.diag.touch'), tr('page.diag.touch.v', CTL.touch ? tr('common.yes') : tr('common.no'), VIS.touch, co ? tr('common.yes') : tr('common.no'), navigator.maxTouchPoints || 0))); }
       const t = diagText(viewer, { cfgVersion: C.version, lines });
-      dout.value = t;
-      toast((await copyText(t, dout)) ? tr('core.diag.copied') : tr('page.toast.copyfail'));
+      diagShow(t, '', false);      // 1.10.9 : le texte s'affiche tout de suite dans la fenetre du diagnostic, puis le message de copie la complete
+      const ok = await copyText(t, null), msg = ok ? tr('core.diag.copied') : tr('page.toast.copyfail');
+      diagShow(t, msg, !ok); toast(msg);
     };
     row.append(bd);
     if (C.presenceUrl) {   // v48 : journal des visites, pour le créateur de la région (la clé reste nécessaire)
@@ -900,7 +899,7 @@ if (C.walk) {
       bv.onclick = () => VISITS.open();
       row.append(bv);
     }
-    row.append(dout); sb.append(row);
+    sb.append(row);
   }
   const setTxt = (el, t) => { if (el.textContent !== t) el.textContent = t; };
   const fb = document.getElementById('flyBtn'), gb = document.getElementById('grabBtn');

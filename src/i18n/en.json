@@ -54,6 +54,8 @@
  "core.diag.times": "Tile timings",
  "core.diag.times.v": "first ready at {0} s, last at {1} s; per tile (median / maximum): total {2} ms, download {3} ms, parsing {4} ms",
  "core.diag.tip": "Copies the page's technical status and its latest errors, to paste into a help request. No server address, nickname or key is copied.",
+ "core.diag.win.title": "Diagnostic",
+ "core.diag.win.close": "Close the diagnostic (Esc)",
  "core.diag.title": "Web 3d diagnostics",
  "core.diag.uptime": "open for {0} s",
  "core.diag.version": "Version",

@@ -99,6 +99,15 @@ async def main():
         rapport(toast in ("Diagnostic copié", "Copie impossible : le texte est sélectionné, fais Ctrl+C"), "message après la copie", toast)
         foc = await o.ev("document.activeElement && document.activeElement.id")
         rapport(foc != "diagBtn" or toast.startswith("Copie impossible"), "le bouton ne garde pas le focus", foc)
+        # 1.10.9 : le diagnostic s'affiche dans une fenetre, en plus d'etre copie
+        w = await o.ev("(() => { const w = document.getElementById('diagWin'), ta = document.getElementById('diagOut'); return w && { vis: getComputedStyle(w).display !== 'none', st: document.getElementById('diagStatus').textContent, foc: document.activeElement && document.activeElement.id, h: w.getBoundingClientRect().height, vh: innerHeight, texte: ta.value.startsWith('Diagnostic Web 3d') }; })()")
+        rapport(bool(w) and w["vis"] and w["st"] == toast and w["foc"] == "diagOut" and w["h"] <= w["vh"] and w["texte"], "le diagnostic s'affiche dans une fenetre (copie reussie ou non) : texte, meme message que la copie, tient dans l'ecran", w)
+        await o.ev("document.getElementById('diagClose').click()")
+        rapport(not await o.ev("getComputedStyle(document.getElementById('diagWin')).display !== 'none'"), "la croix ferme la fenetre")
+        await o.ev("document.getElementById('diagBtn').click()"); await o.pg.wait_for_timeout(400)
+        rapport(await o.ev("getComputedStyle(document.getElementById('diagWin')).display !== 'none'"), "un nouveau clic sur le bouton la rouvre")
+        await o.pg.keyboard.press("Escape"); await o.pg.wait_for_timeout(150)
+        rapport(not await o.ev("getComputedStyle(document.getElementById('diagWin')).display !== 'none'"), "Echap ferme la fenetre")
         rapport(not o.errs or all("essai" in e or "non attrapée" in e for e in o.errs), "aucune autre erreur JavaScript", o.errs)
         await o.ctx.close()
 
@@ -107,6 +116,8 @@ async def main():
         t = await diag(o)
         b = await o.txt("diagBtn")
         rapport(b == "Copy diagnostics" and t.startswith("Web 3d diagnostics") and "Graphics card: " in t and "Recent errors and warnings (" in t, "textes en anglais", (b, t[:200]))
+        tx = await o.ev("[document.querySelector('#diagWin b').textContent, document.getElementById('diagClose').title]")
+        rapport(tx == ["Diagnostic", "Close the diagnostic (Esc)"], "fenetre du diagnostic : titre et croix en anglais", tx)
         await o.ctx.close()
 
         if TILES.is_file():
@@ -129,10 +140,11 @@ async def main():
         val = await o.ev("document.getElementById('diagOut').value")
         rapport(b == "Copier le diagnostic", "viewer : bouton présent", b)
         rapport(st in ("Diagnostic copié", "Copie impossible : le texte est sélectionné, fais Ctrl+C"), "viewer : message après la copie", st)
-        if st.startswith("Copie impossible"):
-            rapport(val.startswith("Diagnostic Web 3d") and f"Version : {VER_V}" in val, "viewer : texte affiché sélectionné", val[:200])
-        else:
-            rapport(val == "", "viewer : copie réussie, rien d'affiché")
+        rapport(val.startswith("Diagnostic Web 3d") and f"Version : {VER_V}" in val, "viewer : le texte du diagnostic est affiche dans la fenetre (copie reussie ou non)", val[:200])
+        wv = await o.ev("(() => { const w = document.getElementById('diagWin'); return w && { vis: getComputedStyle(w).display !== 'none', st: document.getElementById('diagStatus').textContent }; })()")
+        rapport(bool(wv) and wv["vis"] and wv["st"] == st, "viewer : fenetre visible avec le meme message que la copie", (wv, st))
+        await o.ev("document.getElementById('diagClose').click()")
+        rapport(not await o.ev("getComputedStyle(document.getElementById('diagWin')).display !== 'none'"), "viewer : la croix ferme la fenetre")
         await o.ctx.close()
         await br.close()
 

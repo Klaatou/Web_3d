@@ -58,7 +58,6 @@ __I18N__
     <small style="margin:0 0 6px">glb-viewer __VERSION__</small>
     <div class="btns"><button id="bDiag" class="wide" data-i18n="core.diag.btn" data-i18n-title="core.diag.tip">Copier le diagnostic</button></div>
     <div style="margin:0 0 6px"><a id="manualLink" target="_blank" rel="noopener" data-i18n="core.manual">Manuel complet (en ligne)</a></div>
-    <textarea id="diagOut" readonly hidden rows="8" aria-label="Copier le diagnostic" data-i18n-aria="core.diag.btn" style="width:100%;box-sizing:border-box;font:12px ui-monospace,Consolas,monospace"></textarea>
     <div class="row"><label for="langSel" data-i18n="viewer.lang">Langue / Language</label><select id="langSel" style="grid-column:1/-1;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;width:100%"></select></div>
     <div class="row"><label for="kbSel" data-i18n="viewer.kb">Disposition du clavier (aide de la promenade)</label><select id="kbSel" style="grid-column:1/-1;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;width:100%"></select></div>
     <h2 data-i18n="viewer.set.title">Réglages mémorisés</h2>
@@ -881,7 +880,9 @@ $('manualLink').href = manualUrl();   // v40 : manuel sur GitHub dans la langue 
 $('bDiag').onclick = async () => {
   const lines = ['stat', 'setInfo', 'tilesInfoV', 'tilesLoad'].map($).filter(e => e && !e.hidden && e.textContent.trim()).map(e => e.textContent.trim());
   const t = diagText(viewer, { lines });
-  setStatus((await copyRaw(t, $('diagOut'))) ? tr('core.diag.copied') : tr('page.toast.copyfail'));
+  diagShow(t, '', false);      // 1.10.9 : le texte s'affiche dans la fenetre du diagnostic, puis le message de copie la complete
+  const ok = await copyRaw(t, null), msg = ok ? tr('core.diag.copied') : tr('page.toast.copyfail');
+  diagShow(t, msg, !ok); setStatus(msg);
 };
 coordInfo();
 // clic sur le modèle = nouvelle cible

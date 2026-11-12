@@ -54,6 +54,8 @@
  "core.diag.times": "Durées des tuiles",
  "core.diag.times.v": "première prête à {0} s, dernière à {1} s ; par tuile (médiane / maximum) : total {2} ms, téléchargement {3} ms, analyse {4} ms",
  "core.diag.tip": "Copie l'état technique de la page et ses dernières erreurs, à coller dans une demande d'aide. Aucune adresse de serveur, aucun pseudo ni clé n'est copié.",
+ "core.diag.win.title": "Diagnostic",
+ "core.diag.win.close": "Fermer le diagnostic (Échap)",
  "core.diag.title": "Diagnostic Web 3d",
  "core.diag.uptime": "ouverte depuis {0} s",
  "core.diag.version": "Version",

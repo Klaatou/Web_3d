@@ -73,6 +73,30 @@ const softName = n => /Basic Render|SwiftShader|llvmpipe|softpipe|Software/i.tes
 const softGpu = r => softName(gpuName(r));
 // 1.10.7 : reflets metalliques par defaut : 60 % avec une carte graphique, 0 % en rendu logiciel (mesure : sur une surface metallique l'image coute environ 3 fois plus, 9 puis 25 ms a 1440 x 900 sous SwiftShader)
 const metalEnvDefault = n => softName(n) ? 0 : 60;
+// 1.10.9 : fenetre du diagnostic : le texte est affiche, selectionnable, EN PLUS d'etre copie dans le presse-papiers (page et viewer). Une seule fenetre (#diagWin),
+// dont le champ de texte est #diagOut ; Echap ou la croix la ferme ; un nouvel appel met le texte et le message a jour. select : le texte est selectionne (copie refusee).
+function diagShow(text, status, select) {
+  let w = document.getElementById('diagWin');
+  if (!w) {
+    w = document.createElement('div'); w.id = 'diagWin'; w.setAttribute('role', 'dialog'); w.setAttribute('aria-label', tr('core.diag.win.title'));
+    w.style.cssText = 'position:fixed;z-index:80;left:50%;top:50%;transform:translate(-50%,-50%);box-sizing:border-box;width:min(820px,94vw);max-height:92vh;display:flex;flex-direction:column;gap:6px;padding:8px 10px;background:#fff;color:#000;border:2px solid #000;border-radius:8px;box-shadow:0 8px 28px #000a;font:12px/1.4 ui-monospace,Consolas,monospace';
+    const head = document.createElement('div'), ti = document.createElement('b'), st = document.createElement('span'), x = document.createElement('button'), ta = document.createElement('textarea');
+    head.style.cssText = 'display:flex;align-items:center;gap:8px'; ti.textContent = tr('core.diag.win.title');
+    st.id = 'diagStatus'; st.style.cssText = 'flex:1;min-width:0';
+    x.type = 'button'; x.id = 'diagClose'; x.textContent = '\u00d7'; x.title = tr('core.diag.win.close'); x.setAttribute('aria-label', tr('core.diag.win.close'));
+    x.style.cssText = 'font:inherit;font-size:16px;line-height:1;padding:0 8px;border:1px solid #000;border-radius:4px;background:#fff;color:#000;cursor:pointer';
+    ta.id = 'diagOut'; ta.readOnly = true; ta.spellcheck = false; ta.setAttribute('aria-label', tr('core.diag.win.title'));
+    ta.style.cssText = 'display:block;width:100%;box-sizing:border-box;height:min(520px,66vh);resize:vertical;font:inherit;white-space:pre;overflow:auto';
+    const close = () => { w.style.display = 'none'; };
+    x.onclick = close;
+    w.addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); e.preventDefault(); close(); } });
+    head.append(ti, st, x); w.append(head, ta); document.body.appendChild(w);
+  }
+  w.style.display = 'flex';
+  const ta = document.getElementById('diagOut');
+  ta.value = text; document.getElementById('diagStatus').textContent = status || '';
+  ta.focus(); if (select) ta.select(); else ta.setSelectionRange(0, 0);
+}
 // texte du diagnostic ; extra = { cfgVersion, lines } : version de la configuration de la région, lignes d'état propres à la page ou au viewer
 function diagText(viewer, extra) {
   const x = extra || {}, L = (k, v) => tr('core.diag.line', k, v), out = [tr('core.diag.title')];
