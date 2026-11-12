@@ -6,6 +6,15 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.10.0)
 
+### 13/11/2026: reflections: the sea is no longer counted as a metallic material (batch 1.10.14)
+
+- **Reported by Klaatou** (screenshot and diagnostic of the `ShowRoom3D` demo, page 1.10.11): the page offers the reflections ("This region contains 1 metallic (PBR) material") although the region has no PBR (it predates the PBR extraction). The diagnostic says "Metal reflections: 0 % ; metallic materials loaded: 1 of 16, of which 0 with reflections".
+- **Cause** (`src/core.js`, `metalInfo`): the count walks the whole scene, **sea included**. When the sea is a standard material it has `metalness: 0.1` (`core.js:444`), above the `METAL_MIN` threshold of 0.05: it counted as a metal, and the page offered reflections on any region with a sea. The tests of batches 1.10.7 to 1.10.11 were all made with `--no-sea`: they could not see it. Read in the package's `galerie.glb`: 15 materials, none with a `metallicFactor` above 0.05; with the sea, 16: consistent with "1 of 16" (the `ShowRoom3D` GLB itself was not read). The `pbrmat-…` name of a material (seen in the tooltip) is not written by any of our tools (code search): it does not prove the material is PBR.
+- **Done**: `metalInfo` ignores the sea material (`m !== seaMat`): no false offer and no false diagnostic line; the region's materials are counted as before. The diagnostic total no longer counts the sea (here "0 of 15").
+- **Check**: `tests/reflets_metal.py`: two pages with a sea (animated and not animated) and no metal at all: no offer, no metallic material counted, and the scene does contain a standard material with `metalness` above 0.05 (the sea). On the 1.10.13 code both checks fail, with the fix everything passes. `smoke`, `i18n`, `dist_a_jour`, `marque`, `version_page`, `image_diag`, `v39`, `v42`, `mer_hauteur` also pass. File numbers: `index.html`, `glb-viewer.html` and `glb2html.py` take 1.10.14; `carte.html` and `presence_server.py` keep 1.10.13 (nothing to send to the VM).
+- **Not tested**: Windows, Edge; the `ShowRoom3D` region itself.
+- **Still to update** (rule 16): manual § 7.65 (the count excludes the sea), in French and English; the demo (`index.html`, `glb-viewer.html` and `glb2html.py` change).
+
 ### 13/11/2026: visit log: nicknames of global-view visitors; `--no-credit` option (batch 1.10.13)
 
 - **Requested by Klaatou**: (1) the visit log should show nicknames, including those of visitors who never went into walking mode (the log is not public); (2) a parameter to remove the "Made with Web_3d" icon at the bottom right.

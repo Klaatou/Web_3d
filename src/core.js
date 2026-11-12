@@ -526,9 +526,9 @@ function createViewer(container, cfg0, loader) {
     geo.dispose(); dome.material.dispose(); sun.geometry.dispose(); sun.material.dispose();
     return metalEnvTex;
   }
-  function metalInfo() {      // 1.10.8 : pour le diagnostic : reglage, materiaux metalliques charges, dont ceux qui ont l'environnement
+  function metalInfo() {      // 1.10.8 : pour le diagnostic : reglage, materiaux metalliques charges, dont ceux qui ont l'environnement ; 1.10.14 : sans la mer (materiau de la page, metalness 0,1 quand elle n'est pas animee)
     const seen = new Set(); let metal = 0, env = 0;
-    scene.traverse(o => { if (o.isMesh && o.material) for (const m of (Array.isArray(o.material) ? o.material : [o.material])) if (m && m.isMeshStandardMaterial && !seen.has(m)) { seen.add(m); if (m.metalness > METAL_MIN) { metal++; if (metalEnvTex && m.envMap === metalEnvTex) env++; } } });
+    scene.traverse(o => { if (o.isMesh && o.material) for (const m of (Array.isArray(o.material) ? o.material : [o.material])) if (m && m.isMeshStandardMaterial && m !== seaMat && !seen.has(m)) { seen.add(m); if (m.metalness > METAL_MIN) { metal++; if (metalEnvTex && m.envMap === metalEnvTex) env++; } } });
     return { pct: Number(cfg.metalEnv) || 0, metal, total: seen.size, env };
   }
   function metalApply(m) {

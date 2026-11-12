@@ -66,6 +66,8 @@ spheres_glb(site / "plat.glb", metal=False)      # trois spheres sans aucun meta
 spheres_glb(src / "Metal.glb")
 html(site / "metal.glb", "-o", site / "Metal.html", "--no-sea")
 html(site / "plat.glb", "-o", site / "Plat.html", "--no-sea")
+html(site / "plat.glb", "-o", site / "PlatMer.html")                      # 1.10.14 : avec la mer (animee par defaut)
+html(site / "plat.glb", "-o", site / "PlatMerFixe.html", "--no-anim")     # 1.10.14 : mer non animee = materiau standard, metalness 0,1
 run(DIST / "glb2tiles.py", src / "Metal.glb", "--forcer", "--budget-tri", "700", "--min", "4", "--nopause", "--sans-references")
 html("-o", site / "Tuilee.html", "--shared-shell", "--tiles", src / "Metal.tiles.json", "--no-sea")
 http, hport = serveur(site)
@@ -255,6 +257,13 @@ async def main():
         await o.pg.wait_for_timeout(5000)
         rapport(not await o.ev("!!document.getElementById('metalAsk')") and await o.ev("window.__viewer.metalInfo().metal") == 0, "region sans metal : aucune proposition")
         await o.ctx.close()
+        for nom_m, titre_m in (("PlatMer.html", "avec la mer"), ("PlatMerFixe.html", "avec la mer non animee")):      # 1.10.14 : la mer n'est pas un materiau de la region
+            o = await Onglet(br).ouvrir(BASE + nom_m, locale="fr-FR")
+            await o.pg.wait_for_timeout(5000)
+            if nom_m == "PlatMerFixe.html":
+                rapport(await o.ev("(() => { let n = 0; window.__viewer.scene.traverse(x => { if (x.isMesh && x.material && x.material.isMeshStandardMaterial && x.material.metalness > 0.05) n++; }); return n; })()") >= 1, "mer non animee : la scene a bien un materiau standard de metalness > 0,05 (la mer)")
+            rapport(not await o.ev("!!document.getElementById('metalAsk')") and await o.ev("window.__viewer.metalInfo().metal") == 0, f"region sans metal {titre_m} : aucune proposition, aucun materiau metallique compte")
+            await o.ctx.close()
 
         o = await Onglet(br).ouvrir(BASE + "Metal.html", locale="en-US")
         await o.attendre("!!document.getElementById('metalAsk')", 15)

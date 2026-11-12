@@ -6,6 +6,15 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.10.0)
 
+### 13/11/2026 : reflets : la mer n'est plus comptée comme un matériau métallique (lot 1.10.14)
+
+- **Constaté par Klaatou** (capture et diagnostic de la démo `ShowRoom3D`, page 1.10.11) : la page propose les reflets (« Cette région contient 1 matériau métallique (PBR) ») alors que la région n'a pas de PBR (elle date d'avant l'extraction des PBR). Le diagnostic dit « Reflets métalliques : 0 % ; matériaux métalliques chargés : 1 sur 16, dont 0 avec reflets ».
+- **Cause** (`src/core.js`, `metalInfo`) : le décompte parcourt toute la scène, **mer comprise**. Quand la mer est un matériau standard, elle a `metalness: 0.1` (`core.js:444`), au-dessus du seuil `METAL_MIN` de 0,05 : elle comptait pour un métal, et la page proposait des reflets sur toute région avec mer. Les tests des lots 1.10.7 à 1.10.11 étaient tous faits avec `--no-sea` : ils ne pouvaient pas le voir. Lu dans `galerie.glb` du paquet : 15 matériaux, aucun `metallicFactor` supérieur à 0,05 ; avec la mer, 16 : cohérent avec « 1 sur 16 » (le GLB de `ShowRoom3D` lui-même n'a pas été lu). Le nom `pbrmat-…` d'un matériau (vu dans l'infobulle) n'est écrit par aucun de nos outils (recherche dans le code) : il ne prouve pas que le matériau est PBR.
+- **Fait** : `metalInfo` ignore le matériau de la mer (`m !== seaMat`) : plus de proposition ni de ligne de diagnostic fausse ; les matériaux de la région sont comptés comme avant. Le total du diagnostic ne compte plus la mer (ici « 0 sur 15 »).
+- **Contrôle** : `tests/reflets_metal.py` : deux pages avec mer (animée et non animée) et sans aucun métal : aucune proposition, aucun matériau métallique compté, et la scène contient bien un matériau standard de `metalness` supérieure à 0,05 (la mer). Sur le code de la 1.10.13 les deux contrôles échouent, avec le correctif tout passe. Passent aussi `smoke`, `i18n`, `dist_a_jour`, `marque`, `version_page`, `image_diag`, `v39`, `v42`, `mer_hauteur`. Numéros par fichier : `index.html`, `glb-viewer.html` et `glb2html.py` prennent 1.10.14 ; `carte.html` et `presence_server.py` gardent 1.10.13 (rien à envoyer sur la VM).
+- **Non essayé** : Windows, Edge ; la région `ShowRoom3D` elle-même.
+- **Reste à mettre à jour** (règle 16) : manuel § 7.65 (le décompte exclut la mer), en français et en anglais ; la démo (`index.html`, `glb-viewer.html` et `glb2html.py` changent).
+
 ### 13/11/2026 : journal des visites : pseudos des visiteurs en vue globale ; option `--no-credit` (lot 1.10.13)
 
 - **Demandé par Klaatou** : (1) que le journal des visites montre les pseudos, y compris ceux des visiteurs qui n'ont pas passé le mode promenade (le journal n'est pas public) ; (2) un paramètre pour ne pas avoir l'icône « Réalisé avec Web_3d » en bas à droite.

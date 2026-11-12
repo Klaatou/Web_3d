@@ -470,7 +470,7 @@ function diagShow(text, status, select) {
 function diagText(viewer, extra) {
   const x = extra || {}, L = (k, v) => tr('core.diag.line', k, v), out = [tr('core.diag.title')];
   const nb = (v, d) => (Number.isFinite(v) ? i18nNum(v, d || 0) : '?');   // nombres à la manière de la langue (virgule en français)
-  out.push(L(tr('core.diag.version'), '1.10.13 (13/11/2026)' + (x.cfgVersion && x.cfgVersion !== '1.10.13 (13/11/2026)' ? ' ; ' + tr('core.diag.cfgver', x.cfgVersion) : '')));
+  out.push(L(tr('core.diag.version'), '1.10.14 (13/11/2026)' + (x.cfgVersion && x.cfgVersion !== '1.10.14 (13/11/2026)' ? ' ; ' + tr('core.diag.cfgver', x.cfgVersion) : '')));
   out.push(L(tr('core.diag.date'), new Date().toLocaleString(({ fr: 'fr-FR', en: 'en-GB' })[LANG]) + ' ; ' + tr('core.diag.uptime', nb(performance.now() / 1000))));
   out.push(L(tr('core.diag.page'), location.protocol + (location.host ? '//ADRESSE' : '//') + location.pathname + location.search));
   out.push(L(tr('core.diag.lang'), LANG + ' · ' + ((navigator.languages || []).join(',') || navigator.language || '?') + ' · ' + KB.layout().toUpperCase()));
@@ -896,9 +896,9 @@ function createViewer(container, cfg0, loader) {
     geo.dispose(); dome.material.dispose(); sun.geometry.dispose(); sun.material.dispose();
     return metalEnvTex;
   }
-  function metalInfo() {      // 1.10.8 : pour le diagnostic : reglage, materiaux metalliques charges, dont ceux qui ont l'environnement
+  function metalInfo() {      // 1.10.8 : pour le diagnostic : reglage, materiaux metalliques charges, dont ceux qui ont l'environnement ; 1.10.14 : sans la mer (materiau de la page, metalness 0,1 quand elle n'est pas animee)
     const seen = new Set(); let metal = 0, env = 0;
-    scene.traverse(o => { if (o.isMesh && o.material) for (const m of (Array.isArray(o.material) ? o.material : [o.material])) if (m && m.isMeshStandardMaterial && !seen.has(m)) { seen.add(m); if (m.metalness > METAL_MIN) { metal++; if (metalEnvTex && m.envMap === metalEnvTex) env++; } } });
+    scene.traverse(o => { if (o.isMesh && o.material) for (const m of (Array.isArray(o.material) ? o.material : [o.material])) if (m && m.isMeshStandardMaterial && m !== seaMat && !seen.has(m)) { seen.add(m); if (m.metalness > METAL_MIN) { metal++; if (metalEnvTex && m.envMap === metalEnvTex) env++; } } });
     return { pct: Number(cfg.metalEnv) || 0, metal, total: seen.size, env };
   }
   function metalApply(m) {
@@ -3719,7 +3719,7 @@ if (C.walk) {
   const sb = document.getElementById('stateInfo'), sbody = document.getElementById('stateBody'), shead = document.getElementById('stateHead');
   const mkLine = id => { const d = document.createElement('div'); d.id = id; sbody.append(d); return d; };
   const lv = mkLine('viewInfo'), lm = mkLine('modeInfo'), lmo = mkLine('mouseInfo'), lp = mkLine('posInfo'), lkb = mkLine('kbInfo');
-  mkLine('verInfo').textContent = tr('page.state.version', '1.10.13 (13/11/2026)', C.version || '?');   // 1.6.17 : version de la page (index.html, ou glb2html.py pour une page autonome) et de la configuration
+  mkLine('verInfo').textContent = tr('page.state.version', '1.10.14 (13/11/2026)', C.version || '?');   // 1.6.17 : version de la page (index.html, ou glb2html.py pour une page autonome) et de la configuration
   // v39 : bouton « Copier le diagnostic » sous le contenu de la fenêtre (reste visible quand elle est réduite) : lignes affichées + diagText (core.js) ;
   // si le navigateur refuse la copie, le texte s'affiche sélectionné dessous (Ctrl+C)
   {
