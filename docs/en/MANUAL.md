@@ -1,4 +1,4 @@
-# Web_3d manual (1.9.0)
+# Web_3d manual (1.10.0)
 
 > **Summary.** This manual follows the project from end to end, theme by theme: getting started, with the vocabulary (chapter 1), the tools (2), converting an OAR (3), measuring and cutting up a big region (4), the viewer and the zones (5), building the page (6), the page from the visitor's side (7), tiled regions (8), the world map (9), the presence server (10), the JSON file reference (11), troubleshooting (12) and, as an appendix, what each version brought (13). For **every option** of the tools, with its effect and the default values of its parameters, in French and English: `docs/REFERENCE_OPTIONS.md` (generated from the tools by `gen_reference.py`). To **do a task step by step**: `PROCEDURES.md`. Language of the page and tools: § 7.49, § 7.51 and § 7.50.
 
@@ -280,7 +280,7 @@ Without `mono`, `oar2glb.py` stops with this message and this list. Then: `pytho
 
 **Why not the .NET 8 port of convoar.** Tried (`net8-pbr` forks, 11/11/2026), it starts on Linux but stops at the first `System.Drawing.Bitmap` (`PlatformNotSupportedException`: .NET 8 only accepts `System.Drawing.Common` on Windows). Mono, with the original `convoar.exe`, works.
 
-**Tried**: Debian 13 (Mono 6.12), small 4-object OAR: the GLB geometry is identical, byte for byte, to a conversion on Windows; the textures differ only by `libgdiplus`'s JPEG encoder (average difference about 3 out of 255). Ubuntu 24 (Mono 6.8), extracts of the BloodMoon Pack sandbox, with PBR. **Known limit**: on a 20-object extract, convoar under Mono did not write its `.buf` file (`BAssetStorage.cs:138`: `WriteAsync` without `await` in the original code); not fixed. **Not tried**: a large region on Linux; macOS (the `dllmap` of `OpenMetaverse.dll.config` expects a `.dylib` that is not supplied); the `lancer-*.sh` launchers.
+**Tried**: Debian 13 (Mono 6.12) with a small 4-object OAR: the GLB geometry is identical, byte for byte, to a conversion on Windows (only `libgdiplus`'s JPEG encoder changes the textures slightly); Ubuntu 24 (Mono 6.8) with extracts of the BloodMoon Pack sandbox, PBR included. **Your feedback is welcome** (other distributions, large regions, macOS) to validate this route completely. Known point: on a 20-object extract, convoar under Mono did not write its `.buf` file (`BAssetStorage.cs:138`, `WriteAsync` without `await` in the original code); not fixed.
 
 ## 4. Measuring and cutting up a big region
 
@@ -1754,6 +1754,7 @@ The detail, version by version, is in `HISTORY.md` (narrative) and `CHANGELOG.md
 | Additions of 1.7.0 (batches 1.6.1 to 1.6.19) | `extraire_batiments.py` (§ 3.7) and `iar2oar.py` (§ 3.8); JSON file reference as a separate document (`REFERENCE_JSON.md`) and `INDEX.md`; updating a package that is already published (`SIMPLE_PROCEDURES.md` § 10); "Made with Web_3d" icon (§ 7.62); logo as tab icon (§ 6.9); animated GIFs (§ 5.11); "Animated GIFs" and "Version: page …" lines of the diagnostics (§ 7.53) |
 | Additions of 1.8.0 (batches 1.7.1 to 1.7.22) | `diag_carte.py`: diagnosing the map nicknames (§ 9.22); real-life tries of `extraire_batiments.py` and `iar2oar.py` (§ 3.7, § 3.8); animated GIFs checked on Windows and in Firefox (§ 5.11); README SVG diagrams (`DEVELOPMENT.md` § 6); graphical launcher `web3d_gui.py` with Windows shortcuts (§ 3.9); link to the Discord server |
 | Additions of 1.9.0 (batches 1.8.1 to 1.8.18) | "Walk (P)" button that blinks (§ 7.63); Discord link in the help window (§ 7.64); no more black background when opening a tiled region by a link (§ 8.6); convoar supplied in `dist/convoar/` (§ 3); `build.py` regenerates `docs/REFERENCE_OPTIONS.md`; `deploy/` folder; basic-use examples list in the graphical launcher (§ 3.9) |
+| Additions of 1.10.0 (batches 1.9.1 to 1.9.23) | OpenSim 0.9.3 PBR materials applied by `oar2glb.py`: `--no-pbr`, `--pbr-size` (§ 3.10); conversion on Linux with Mono (§ 3.11); "Sea height" slider in Settings (§ 9.19); the graphical launcher opens `oar2glb` without a console; `tests/tout.py` (the whole suite in one command, `DEVELOPMENT.md`); `CHANGELOG.fr.md` and `CHANGELOG.md` (English) |
 
 Everything below is in **1.1.0** (released on 31/10/2026). The detail, batch by batch, is in `CHANGELOG.md`.
 

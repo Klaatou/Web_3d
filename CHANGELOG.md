@@ -4,7 +4,91 @@ Dates are in dd/mm/yyyy format.
 
 French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (v52 down to v1) are kept in French, as they were written; the complete history in French is in `CHANGELOG.fr.md`.
 
-## Unreleased (after 1.9.0)
+## Unreleased (after 1.10.0)
+
+## 1.10.0 (12/11/2026)
+
+### 12/11/2026: release 1.10.0: PBR materials, Linux with Mono, sea height
+
+- **Release**: 1.10.0 (12/11/2026), decided by Klaatou, gathers batches 1.9.1 to 1.9.23 (described below, in this same section). The minor number goes up: functions were added since 1.9.0.
+- **New since 1.9.0**:
+  - **(1)** OpenSim 0.9.3 PBR materials: `oar2glb.py` reads them in the OAR and applies them to the GLB (manual § 3.10; `--no-pbr`, `--pbr-size N`; Pillow needed for the textures).
+  - **(2)** Conversion on Linux: `oar2glb.py` runs convoar with Mono (manual § 3.11).
+  - **(3)** "Sea height" slider in the Settings of the page (manual § 9.19).
+  - **(4)** The graphical launcher opens `oar2glb` again from its shortcuts (it did not open without a console); PBR example in its list.
+  - **(5)** `tests/tout.py`: the whole test suite in one command (`DEVELOPPEMENT.md`); `CHANGELOG.fr.md` created and `CHANGELOG.md` becomes the English version; PBR picture and credit in the README; documents up to date.
+- **Version numbers per built file**: `index.html`, `glb2html.py`, `glb-viewer.html`, `carte.html` 1.9.15 ; `oar2glb.py` 1.9.21 ; `web3d_gui.py` 1.9.17 ; unchanged: `glb2tiles.py` 1.4.10, `extraire_batiments.py` 1.6.3, `iar2oar.py` 1.6.4, `diag_carte.py` 1.7.7, `presence_server.py` 1.6.19 (no `scp` to the VM).
+- **Tried by Klaatou on Windows**: the conversion of a real 1.45 GB sandbox OAR with PBR (`--pbr-size 256`), the result in Blender and in the viewer, the sea slider, the launcher, the whole test suite (93 tests out of 95; `v51_vides` and `v52_http` fail with websockets 16.0, which only adds noise to the presence server's log). **Tried**: Linux with Mono, on Debian 13 (Klaatou) and Ubuntu 24 (sandbox), small regions. **Not tried**: Edge, macOS, a large region on Linux, the sea slider in tiles mode.
+- **Known points** (to correct later, probably in 1.10.1): `glb2html.py` stops on `→` when its output goes to a Windows pipe or file in cp1252; without `--pbr-size` a region with many PBR materials gives a heavy GLB; under Mono, convoar did not write its `.buf` on a 20-object extract.
+- **GitHub release notes** (to attach: `galerie-photos.zip` and `region-simple.zip`, built by `python fabriquer_paquets.py` after `VERSION` is set to 1.10.0), English then French:
+
+  > **Web_3d 1.10.0: PBR materials, Linux, sea height**
+  >
+  > ### What's new
+  >
+  > **1. OpenSim 0.9.3 PBR materials**
+  > - OARs that contain PBR materials are converted with their real materials: colour, metallic and roughness, relief (normal), occlusion, emissive, and each object's own settings.
+  > - It is automatic. `--no-pbr` to skip it; `--pbr-size 256` for smaller textures (lighter GLB).
+  > - Pillow is needed for the textures: `pip install pillow`.
+  > - Tried on the BloodMoon Pack grid's sandbox (1.45 GB). Thanks to its owner, Vlad.
+  >
+  > **2. Conversion on Linux**
+  > - `oar2glb.py` runs convoar with Mono. The packages to install are in the manual, § 3.11.
+  > - Tried on Debian 13 and Ubuntu 24. **Your feedback is welcome** (other distributions, large regions) to validate it completely.
+  >
+  > **3. Web page: sea height**
+  > - New "Sea height" slider in Settings.
+  > - It fixes the case where the sea hid the lower part of buildings on some large regions.
+  > - Existing pages do not change.
+  >
+  > **4. Graphical launcher**
+  > - `oar2glb` opens again from the launcher and its shortcuts (it did not open without a console).
+  > - New PBR example in the list.
+  >
+  > **5. Documentation**
+  > - Manual: § 3.10 (PBR), § 3.11 (Linux), § 9.19 (sea).
+  > - README with a PBR picture.
+  > - Changelog in French (`CHANGELOG.fr.md`) and in English (`CHANGELOG.md`).
+  >
+  > ### Updating
+  >
+  > - If you already have one of the packages, copy only `index.html` and `carte.html` into your folder.
+  > - Do not unzip the new zip over it: that would overwrite your configuration, zones and images.
+  >
+  > ---
+  >
+  > **Web_3d 1.10.0 : matériaux PBR, Linux, hauteur de la mer**
+  >
+  > ### Nouveautés
+  >
+  > **1. Matériaux PBR d'OpenSim 0.9.3**
+  > - Les OAR qui contiennent des matériaux PBR sont convertis avec leurs vrais matériaux : couleur, métal et rugosité, relief (normale), occlusion, émissif, et les réglages propres à chaque objet.
+  > - C'est automatique. `--no-pbr` pour s'en passer ; `--pbr-size 256` pour des textures plus petites (GLB plus léger).
+  > - Pillow est nécessaire pour les textures : `pip install pillow`.
+  > - Essayé sur la sandbox de la grille BloodMoon Pack (1,45 Go). Merci à son propriétaire, Vlad.
+  >
+  > **2. Conversion sous Linux**
+  > - `oar2glb.py` lance convoar avec Mono. Les paquets à installer sont dans le manuel, § 3.11.
+  > - Essayé sur Debian 13 et Ubuntu 24. **Vos retours sont les bienvenus** (autres distributions, grandes régions) pour le valider complètement.
+  >
+  > **3. Page web : hauteur de la mer**
+  > - Nouveau curseur « Hauteur de la mer » dans Réglages.
+  > - Il règle le cas où la mer cachait le bas des bâtiments sur certaines grandes régions.
+  > - Les pages existantes ne changent pas.
+  >
+  > **4. Lanceur graphique**
+  > - `oar2glb` s'ouvre de nouveau depuis le lanceur et ses raccourcis (il ne s'ouvrait pas sans console).
+  > - Nouvel exemple PBR dans la liste.
+  >
+  > **5. Documentation**
+  > - Manuel : § 3.10 (PBR), § 3.11 (Linux), § 9.19 (mer).
+  > - README avec une image PBR.
+  > - Journal des modifications en français (`CHANGELOG.fr.md`) et en anglais (`CHANGELOG.md`).
+  >
+  > ### Mise à jour
+  >
+  > - Si vous avez déjà un des paquets, copiez seulement `index.html` et `carte.html` dans votre dossier.
+  > - Ne dézippez pas le nouveau zip par-dessus : cela écraserait votre configuration, vos zones et vos images.
 
 ### 11/11/2026: tests: UTF-8 environment restored in `tout.py` (correction of batch 1.9.20); the presence servers of the tests no longer block on a full pipe (batch 1.9.23)
 

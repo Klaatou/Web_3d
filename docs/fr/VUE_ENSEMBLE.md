@@ -1,6 +1,6 @@
 # Web 3d : vue d'ensemble en une page
 
-*État au 10/11/2026, version 1.9.0 (dernière publication : 1.9.0, le 10/11/2026).*
+*État au 12/11/2026, version 1.10.0 (dernière publication : 1.10.0, le 12/11/2026).*
 
 Une région OpenSim (sauvegarde `.oar`) devient une **page web 3D** où l'on se promène, sans rien installer. Dépôt : `github.com/Klaatou/Web_3d` (licence MIT). Cette page dit où on en est ; le détail est dans le manuel, l'état technique dans `REPRISE.md`.
 
