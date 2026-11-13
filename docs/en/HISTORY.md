@@ -245,6 +245,8 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 13/11/2026 |  | after 1.10.0 | Batch 1.10.13: visit log: nicknames of visitors who stayed in global view (`--visits-names`); `glb2html.py --no-credit` (`credit: false`, map included); `tests/v48.py`, `tests/credit.py` |
 | 13/11/2026 |  | after 1.10.0 | Batch 1.10.14: reflections: the sea is no longer counted as a metallic material (`metalInfo`); `tests/reflets_metal.py` |
 | 13/11/2026 |  | after 1.10.0 | Batch 1.10.15: documents for batches 1.10.13 and 1.10.14: manual § 3.9, § 7.62, § 7.65, § 10.3 and § 13, `REFERENCE_JSON.md`, `CREATORS.md`, procedures, index; image of the eight shortcuts |
+| 13/11/2026 |  | after 1.10.0 | Batch 1.10.16: web link zones triggered by walking into them (`trigger` `enter` / `both`), `cone` key per zone, editor lists; `REFERENCE_JSON.md`; `tests/zones_url_cone.py` |
+| 13/11/2026 |  | after 1.10.0 | Batch 1.10.17: documents for batch 1.10.16: manual § 5.7.1, § 5.8, § 7.17, E and T keys, procedures § 13, overview, README; Sandbox_BMoG demo (PBR, hop zone to BloodMoon) |
 
 ## Useful commands
 

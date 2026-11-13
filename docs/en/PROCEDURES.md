@@ -360,7 +360,7 @@ Changing a package means changing its sources in `paquets\` (for example the ima
 
 ## 13. Opening a `hop://` link: registering the protocol on Windows
 
-A web link zone, or a picture whose link (`link`) starts with `hop://`, opens the target world in the visitor's OpenSim or Second Life viewer (manual § 5.7.1 and § 5.11). The browser hands the address to Windows, which starts the program registered for `hop://`. **Without a registered program nothing happens**: it is done once, on **each** visitor's computer; the page cannot do it for them. The first time, the browser asks for confirmation.
+A web link zone, or a picture whose link (`link`) starts with `hop://`, opens the target world in the visitor's OpenSim or Second Life viewer (manual § 5.7.1 and § 5.11). The browser hands the address to Windows, which starts the program registered for `hop://`. **Without a registered program nothing happens**: it is done once, on **each** visitor's computer; the page cannot do it for them. The first time, the browser asks for confirmation. To have it fire as soon as the visitor walks onto the zone, set its "Trigger" to "both" or "walking into it" (manual § 5.7.1, since 1.10.16).
 
 Example with Firestorm: it opened the target world after this registration (tried on 05/11/2026); with another viewer, **not tested** (the `-url` parameter is Firestorm's).
 

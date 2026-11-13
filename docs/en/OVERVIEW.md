@@ -16,7 +16,7 @@ An OpenSim region (`.oar` backup) becomes a **3D web page** you can walk around 
 - **Exhibition pictures**: an `image` zone lays a picture on a wall; the files go in the region's `medias` subfolder, with no new conversion and no need to go through OpenSim; caption in the file name or in a `.txt` file; an image zone can open a page on click (`link`), and a Settings box shows the zone numbers to find the positions.
 - **Animations, links, about**: an animated GIF animates in the page; the `url` and `image` zones also open a `hop://` link (virtual world); an "About the region" panel opens on entry (`?` key).
 - **Ready-to-use packages**: `galerie-photos.zip` (a 3D gallery of 30 photos) and `region-simple.zip` (a region from a GLB), to download from the releases page; each opens with a double-click (Windows, macOS) or a command (Linux), with an optional presence server; sources in `paquets/`.
-- **Online demo**: `https://klaatou.github.io/Web_3d_demo/` (several regions linked by portals, world map, presence).
+- **Online demo**: `https://klaatou.github.io/Web_3d_demo/` (several regions linked by portals, world map, presence), including **Sandbox_BMoG**, a region of the BloodMoon Pack OpenSim grid (thanks to Vlad, its owner) that shows OpenSim 0.9.3 PBR materials and their new lighting, with a `hop://` jump circle to the same region in the grid.
 
 ## 2. What has been tried, and what has not
 

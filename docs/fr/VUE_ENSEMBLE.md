@@ -16,7 +16,7 @@ Une région OpenSim (sauvegarde `.oar`) devient une **page web 3D** où l'on se 
 - **Images d'exposition** : une zone `image` plaque une image sur un mur ; on dépose les fichiers dans le sous-dossier `medias` de la région, sans refaire la conversion ni passer par OpenSim ; légende dans le nom du fichier ou dans un fichier `.txt` ; une zone image peut ouvrir une page au clic (`link`), et une case des Réglages affiche les numéros des zones pour repérer les emplacements.
 - **Animations, liens, à propos** : un GIF animé s'anime dans la page ; les zones `url` et `image` ouvrent aussi un lien `hop://` (monde virtuel) ; un panneau « À propos de la région » s'ouvre à l'entrée (touche `?`).
 - **Paquets prêts à l'emploi** : `galerie-photos.zip` (galerie de 30 photos en 3D) et `region-simple.zip` (une région à partir d'un GLB), à télécharger sur la page des versions ; chacun s'ouvre d'un double-clic (Windows, macOS) ou d'une commande (Linux), avec un serveur de présence facultatif ; sources dans `paquets/`.
-- **Démo en ligne** : `https://klaatou.github.io/Web_3d_demo/` (plusieurs régions reliées par des portails, carte des mondes, présence).
+- **Démo en ligne** : `https://klaatou.github.io/Web_3d_demo/` (plusieurs régions reliées par des portails, carte des mondes, présence), dont **Sandbox_BMoG**, une région de la grille OpenSim BloodMoon Pack (merci à Vlad, son propriétaire) qui montre les matériaux PBR d'OpenSim 0.9.3 et leur nouvel éclairage, avec un cercle de saut `hop://` vers la même région de la grille.
 
 ## 2. Ce qui a été essayé, et ce qui ne l'a pas été
 

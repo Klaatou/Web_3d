@@ -360,7 +360,7 @@ Modifier un paquet, c'est modifier ses sources dans `paquets\` (par exemple les 
 
 ## 13. Ouvrir un lien `hop://` : enregistrer le protocole sous Windows
 
-Une zone lien web, ou un tableau dont le lien (`link`) commence par `hop://`, ouvre le monde visé dans le viewer OpenSim ou Second Life du visiteur (manuel § 5.7.1 et § 5.11). Le navigateur passe l'adresse à Windows, qui lance le programme enregistré pour `hop://`. **Sans programme enregistré, rien ne se passe** : c'est à faire une fois, sur l'ordinateur de **chaque** visiteur, la page ne peut pas le faire à sa place. À la première ouverture, le navigateur demande une confirmation.
+Une zone lien web, ou un tableau dont le lien (`link`) commence par `hop://`, ouvre le monde visé dans le viewer OpenSim ou Second Life du visiteur (manuel § 5.7.1 et § 5.11). Le navigateur passe l'adresse à Windows, qui lance le programme enregistré pour `hop://`. **Sans programme enregistré, rien ne se passe** : c'est à faire une fois, sur l'ordinateur de **chaque** visiteur, la page ne peut pas le faire à sa place. À la première ouverture, le navigateur demande une confirmation. Pour qu'il parte dès qu'on marche sur la zone, règle son « Déclenchement » sur « les deux » ou « en marchant dedans » (manuel § 5.7.1, depuis la 1.10.16).
 
 Exemple avec Firestorm : il s'est ouvert sur le monde visé après cet enregistrement (essayé le 05/11/2026) ; avec un autre viewer, **non testé** (le paramètre `-url` est celui de Firestorm).
 

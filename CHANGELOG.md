@@ -6,6 +6,16 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.10.0)
 
+### 13/11/2026: documents for batch 1.10.16; Sandbox_BMoG demo announced (batch 1.10.17)
+
+- **Asked by Klaatou** (batch 1.10.16 works on his side): bring the documents up to date, with the presentation of the Sandbox_BMoG demo.
+- **Done** (documents only: no code changes, `dist\` and `VERSIONS.json` identical, no built file changes number):
+  - `MANUEL.md` and `MANUAL.md`: § 5.7.1 (a web link zone also fires when you walk onto it; for a `hop://`: same tab, browser confirmation; a web address opens in a new tab that the browser may block for lack of a click, **not tried**), § 5.8 (trigger: portals and web links), E and T keys and the gestures table, § 7.17 (`cone` key per zone, editor list), the additions-after-1.10.0 table;
+  - `PROCEDURES.md` § 13 (set "Trigger" to "both" or "walking into it"); `VUE_ENSEMBLE.md` and `OVERVIEW.md`, `README.fr.md` and `README.md`: the Sandbox_BMoG demo (a region of the BloodMoon Pack OpenSim grid, thanks to Vlad; OpenSim 0.9.3 PBR materials and their new lighting; `hop://` jump circle to the same region in the grid); `HISTORIQUE.md` and `HISTORY.md`: batches 1.10.16 and 1.10.17.
+- **Checks**: `verif_trad.py` on the four modified pairs (manual, procedures, history, overview): 0 errors, and the same number of warnings as `main` before the batch; passing: `readme_liens`, `apropos_liens`, `lien_image`, `i18n`, `marque`, `dist_a_jour`; build with `--vendor`: `dist\` and `VERSIONS.json` unchanged; `docs/REFERENCE_OPTIONS.md`, rewritten by the sandbox build, restored to the state of `main`. `git grep` for forbidden names (rule 25): none.
+- **Not tried**: how the new paragraphs render on GitHub; `doc_options` (it fails in the sandbox with or without this batch).
+- **Still to update**: the demo (`index.html`, `glb-viewer.html`, `glb2html.py` from batch 1.10.16 to copy into the demo repository, Sandbox_BMoG's `zones.json` as `url` / `both`); `REPRISE.md` (rule 23).
+
 ### 13/11/2026: "link" zones triggered by walking onto them; marker (cone) adjustable zone by zone, `cone` key (batch 1.10.16)
 
 - **Asked by Klaatou**: a ring zone that opens a `hop://` to the OpenSim region (the sandbox demo), triggered **also by walking onto it**, with the marker cone above it, **adjustable zone by zone in the JSON** (not only with the T key).

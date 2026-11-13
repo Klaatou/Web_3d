@@ -6,6 +6,16 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.10.0)
 
+### 13/11/2026 : documents du lot 1.10.16 ; démo Sandbox_BMoG annoncée (lot 1.10.17)
+
+- **Demandé par Klaatou** (le lot 1.10.16 marche chez lui) : mettre les documents à jour, avec la présentation de la démo Sandbox_BMoG.
+- **Fait** (documents seulement : aucun code ne change, `dist\` et `VERSIONS.json` identiques, aucun fichier fabriqué ne change de numéro) :
+  - `MANUEL.md` et `MANUAL.md` : § 5.7.1 (une zone lien web se déclenche aussi en marchant dessus ; pour un `hop://` : même onglet, confirmation du navigateur ; une adresse web s'ouvre dans un nouvel onglet que le navigateur peut bloquer faute de clic, **non essayé**), § 5.8 (déclenchement : portails et liens web), touches E et T et tableau des gestes, § 7.17 (clé `cone` par zone, liste de l'éditeur), tableau des ajouts après la 1.10.0 ;
+  - `PROCEDURES.md` § 13 (régler « Déclenchement » sur « les deux » ou « en marchant dedans ») ; `VUE_ENSEMBLE.md` et `OVERVIEW.md`, `README.fr.md` et `README.md` : la démo Sandbox_BMoG (région de la grille OpenSim BloodMoon Pack, merci à Vlad ; matériaux PBR d'OpenSim 0.9.3 et leur nouvel éclairage ; cercle de saut `hop://` vers la même région de la grille) ; `HISTORIQUE.md` et `HISTORY.md` : lots 1.10.16 et 1.10.17.
+- **Contrôle** : `verif_trad.py` sur les quatre couples modifiés (manuel, procédures, historique, vue d'ensemble) : 0 erreur, et le même nombre d'avertissements que sur `main` avant le lot ; passent `readme_liens`, `apropos_liens`, `lien_image`, `i18n`, `marque`, `dist_a_jour` ; build avec `--vendor` : `dist\` et `VERSIONS.json` inchangés ; `docs/REFERENCE_OPTIONS.md`, réécrit par le build du bac à sable, remis à l'état de `main`. `git grep` des noms interdits (règle 25) : aucun.
+- **Non essayé** : le rendu des nouveaux paragraphes sur GitHub ; `doc_options` (il échoue dans le bac à sable avec ou sans ce lot).
+- **Reste à mettre à jour** : la démo (`index.html`, `glb-viewer.html`, `glb2html.py` du lot 1.10.16 à recopier dans le dépôt de démo, `zones.json` de Sandbox_BMoG en `url` / `both`) ; `REPRISE.md` (règle 23).
+
 ### 13/11/2026 : zones « lien » déclenchées en marchant dessus ; repère (cône) réglable zone par zone, clé `cone` (lot 1.10.16)
 
 - **Demandé par Klaatou** : une zone en cercle qui ouvre un `hop://` vers la région OpenSim (démo du bac à sable), déclenchée **aussi en marchant dessus**, avec le cône de repérage au-dessus, **réglable zone par zone dans le JSON** (pas seulement par la touche T).

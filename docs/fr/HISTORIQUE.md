@@ -245,6 +245,8 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 13/11/2026 |  | après 1.10.0 | Lot 1.10.13 : journal des visites : pseudos des visiteurs restés en vue globale (`--visits-names`) ; `glb2html.py --no-credit` (`credit: false`, carte comprise) ; `tests/v48.py`, `tests/credit.py` |
 | 13/11/2026 |  | après 1.10.0 | Lot 1.10.14 : reflets : la mer n'est plus comptée comme matériau métallique (`metalInfo`) ; `tests/reflets_metal.py` |
 | 13/11/2026 |  | après 1.10.0 | Lot 1.10.15 : documents des lots 1.10.13 et 1.10.14 : manuel § 3.9, § 7.62, § 7.65, § 10.3 et § 13, `REFERENCE_JSON.md`, `CREATEURS.md`, procédures, index ; image des huit raccourcis |
+| 13/11/2026 |  | après 1.10.0 | Lot 1.10.16 : zones lien web déclenchées en marchant dedans (`trigger` `enter` / `both`), clé `cone` par zone, listes de l'éditeur ; `REFERENCE_JSON.md` ; `tests/zones_url_cone.py` |
+| 13/11/2026 |  | après 1.10.0 | Lot 1.10.17 : documents du lot 1.10.16 : manuel § 5.7.1, § 5.8, § 7.17, touches E et T, procédures § 13, vue d'ensemble, README ; démo Sandbox_BMoG (PBR, zone de saut vers BloodMoon) |
 
 ## Commandes utiles
 

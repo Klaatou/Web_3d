@@ -6,7 +6,7 @@ English | [Français](README.fr.md)
 
 *Demo region PalmIsland (source: [Outworldz](https://www.outworldz.com/cgi/freesculpts.plx?q=OAR-)): walking in a web page, with nothing to install.*
 
-**[Try the online demo](https://klaatou.github.io/Web_3d_demo/)**: two regions linked by portals, and the world map (With a presence server).
+**[Try the online demo](https://klaatou.github.io/Web_3d_demo/)**: two regions linked by portals, and the world map (With a presence server). Latest addition: **[Sandbox_BMoG](https://klaatou.github.io/Web_3d_demo/index.html?region=Sandbox_BMoG/Sandbox_BMoG#spawn=default)**, a region of the BloodMoon Pack OpenSim grid (thanks to Vlad, its owner), to show OpenSim 0.9.3 PBR materials and their new lighting; a circle in the middle opens a `hop://` link to the same region in the grid.
 
 **Questions, help, news: [join the Discord server](https://discord.gg/BDG9r5gXwr).**
 
