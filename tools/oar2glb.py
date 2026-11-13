@@ -410,6 +410,7 @@ def _vec(el, path, keys="XYZ"):
 #  - assets/UUID_prmat.dat : le matériau (en-tête LLSD binaire autour d'un glTF 2.0 en texte) ;
 #  - <MatOvrd> : surcharges par face (LLSD « notation »).
 PBR_TEX_MAX = 512        # côté maximal des textures PBR, en pixels (--pbr-size) ; 0 = taille d'origine
+TEX_QUALITE = 85         # qualité JPEG des textures ordinaires réduites (--tex-quality)
 PBR_AM = {0: "OPAQUE", 1: "BLEND", 2: "MASK"}
 PBR_NUL = "00000000-0000-0000-0000-000000000000"
 PBR_EFFACE = "ffffffff-ffff-ffff-ffff-ffffffffffff"
@@ -1471,6 +1472,36 @@ def pbr_image(data, taille_max):
         return None
 
 
+TEX_STATS = {"total": 0, "reduites": 0, "avant": 0, "apres": 0}
+
+
+def tex_reduire(data, taille_max, qualite):
+    # textures ordinaires (--tex-size) : octets de l'image réduits à taille_max pixels de côté au plus (JPEG, ou PNG si elle a de la transparence) ;
+    # (octets, True) si elle a été réduite ; (les octets d'origine, False) si elle est déjà assez petite ou illisible
+    Image = pbr_pillow()
+    if Image is None:
+        return data, False
+    try:
+        im = Image.open(io.BytesIO(data))
+        im.load()
+        if max(im.size) <= taille_max:
+            return data, False
+        if im.mode == "P":                 # la palette ne se rééchantillonne pas : on passe en couleurs d'abord
+            im = im.convert("RGBA" if "transparency" in im.info else "RGB")
+        elif im.mode == "PA":
+            im = im.convert("RGBA")
+        im.thumbnail((taille_max, taille_max), getattr(Image, "Resampling", Image).LANCZOS)
+        out = io.BytesIO()
+        rgba = im.convert("RGBA") if im.mode in ("RGBA", "LA") else None
+        if rgba is not None and rgba.getchannel("A").getextrema()[0] < 255:
+            rgba.save(out, "PNG", optimize=True)          # transparence gardée : le feuillage et les grilles restent découpés
+        else:
+            im.convert("RGB").save(out, "JPEG", quality=qualite)
+        return out.getvalue(), True
+    except Exception:
+        return data, False
+
+
 def pbr_lire_textures(oar, voulus):
     # {UUID: octets JPEG 2000} : seconde lecture de l'OAR, seulement les textures voulues
     res = {}
@@ -1817,7 +1848,8 @@ def pad4(b, fill=b"\x00"):
     return b + fill * ((4 - len(b) % 4) % 4)
 
 
-def pack_glb(g, base, out):
+def pack_glb(g, base, out, tex=None):
+    # tex : (côté maximal en pixels, qualité JPEG) pour réduire les textures ordinaires (--tex-size), ou None
     blob, offs = bytearray(), []
     for b in g.get("buffers", []):
         offs.append(len(blob))
@@ -1830,6 +1862,14 @@ def pack_glb(g, base, out):
         if "uri" not in img:
             continue
         data = read_uri(img["uri"], base, image=True)
+        TEX_STATS["total"] += 1
+        if tex:
+            avant = len(data)
+            data, reduite = tex_reduire(data, tex[0], tex[1])
+            if reduite:
+                TEX_STATS["reduites"] += 1
+                TEX_STATS["avant"] += avant
+                TEX_STATS["apres"] += len(data)
         img["mimeType"] = "image/png" if data[:4] == b"\x89PNG" else "image/jpeg"
         g["bufferViews"].append({"buffer": 0, "byteOffset": len(blob), "byteLength": len(data)})
         img["bufferView"] = len(g["bufferViews"]) - 1
@@ -2135,6 +2175,8 @@ def main():
     ap.add_argument("--markers", dest="reperes", action="store_true", help=_tr("py.oar2glb.ajouter_un_mat_rouge_de_15"))
     ap.add_argument("--no-pbr", dest="sans_pbr", action="store_true", help=_tr("py.oar2glb.help.no_pbr"))
     ap.add_argument("--pbr-size", type=int, default=PBR_TEX_MAX, metavar="N", help=_tr("py.oar2glb.help.pbr_size", PBR_TEX_MAX))
+    ap.add_argument("--tex-size", type=int, default=0, metavar="N", help=_tr("py.oar2glb.help.tex_size"))
+    ap.add_argument("--tex-quality", type=int, default=TEX_QUALITE, metavar="Q", help=_tr("py.oar2glb.help.tex_quality", TEX_QUALITE))
     ap.add_argument("--diag", action="store_true", help=_tr("py.oar2glb.ne_rien_modifier_lister_les_objets"))
     ap.add_argument("--glb", help=_tr("py.oar2glb.avec_diag_glb_ou_gltf_a"))
     ap.add_argument("--nopause", action="store_true", help=_tr("py.oar2glb.ne_pas_attendre_entree_a_la"))
@@ -2147,6 +2189,10 @@ def main():
     a.convoar = a.convoar or default_convoar()
     if not 2 <= a.terrain_patch <= 255:
         sys.exit(_tr("py.oar2glb.erreur_terrain_patch_doit_etre_compris"))
+    if a.tex_size and not 16 <= a.tex_size <= 8192:
+        sys.exit(_tr("py.oar2glb.erreur_tex_size"))
+    if not 1 <= a.tex_quality <= 95:
+        sys.exit(_tr("py.oar2glb.erreur_tex_quality"))
 
     oar = Path(a.oar).resolve()
     if not oar.exists():
@@ -2167,6 +2213,8 @@ def main():
         glb = Path(a.glb) if a.glb else (auto[-1] if auto else oar.with_suffix(".glb"))
         diag(scan, read_glb_json(glb) if glb.exists() else None, glb.name, glb.parent if glb.suffix.lower() == ".gltf" else None)
         return
+    if a.tex_size and pbr_pillow() is None:
+        sys.exit(_tr("py.oar2glb.erreur_tex_pillow"))
     if not Path(a.convoar).exists():
         sys.exit(_tr("py.oar2glb.erreur_convoar_introuvable_0_utilise_convoar", a.convoar, CONVOAR_URL))
     scan = oar_scan(oar)
@@ -2218,7 +2266,9 @@ def main():
         pbr_appliquer(g, scan, oar, a.pbr_size)
     n = drop_far(g, a.max, size)
     terrain_pipeline(g, scan, a.terrain, a.terrain_patch)      # après drop_far : les patches ne sont jamais retirés
-    size = pack_glb(g, outdir, out)
+    size = pack_glb(g, outdir, out, (a.tex_size, a.tex_quality) if a.tex_size else None)
+    if a.tex_size:
+        print(_tr("py.oar2glb.tex_reduites", TEX_STATS["reduites"], TEX_STATS["total"], a.tex_size, TEX_STATS["avant"] / 1048576, TEX_STATS["apres"] / 1048576, a.tex_quality))
     report_missing(outdir, len(g.get("images", [])))
     print(_tr("py.oar2glb.ok_0_1_1f_mo_2", out, size/1048576, len(g.get('meshes', [])), len(g.get('images', [])), n))
     if not a.keep:

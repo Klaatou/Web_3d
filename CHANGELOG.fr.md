@@ -6,6 +6,14 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.10.0)
 
+### 13/11/2026 : `oar2glb.py --tex-size` : réduire les textures ordinaires du GLB (lot 1.10.20)
+
+- **Besoin** (boutique d'OAR qui voudrait montrer ses régions dans le navigateur) : la page télécharge le GLB, donc toute personne qui ouvre la page peut l'enregistrer avec ses textures ; aucun outil n'offrait de réduire les textures ordinaires (`--pbr-size` ne touche que les textures PBR). Cela ne protège pas la géométrie ; cela rend le GLB plus léger (non mesuré) et les textures moins utiles à qui le télécharge.
+- **Fait** : deux options dans `oar2glb.py`. `--tex-size N` (défaut 0 : rien ne change) : une texture ordinaire dont le plus grand côté dépasse N pixels est réduite au moment de l'emballage du GLB, en gardant ses proportions ; JPEG, ou PNG si elle a de la transparence (feuillages, grilles : ils restent découpés) ; une texture déjà assez petite ou illisible garde ses octets d'origine. `--tex-quality Q` (1 à 95, défaut 85) : qualité du JPEG. N doit valoir 0 ou être compris entre 16 et 8192 ; Pillow est demandé (message clair avant toute conversion s'il manque). Le compte rendu dit combien de textures ont été réduites et le poids avant et après. Les textures PBR ne sont pas concernées (`--pbr-size`).
+- **Contrôle** : nouveau `tests/tex_size.py` (30 contrôles : réduction d'une grande texture opaque et d'une grande texture à transparence, palette avec transparence, RGBA tout opaque, petite texture et octets illisibles inchangés, emballage avec et sans réduction, conversion complète avec OAR minimal et faux convoar, valeurs refusées, Pillow absent). Sens opposé : transparence perdue exprès, puis réduction supprimée exprès : 6 contrôles échouent à chaque fois, code restauré. Passent aussi : `oar2glb`, `pbr_oar`, `i18n`, `tools_lang`, `aide_sans_pause`, `sortie_cp1252`.
+- **Non essayé** : un vrai OAR avec le vrai convoar ; Windows ; le temps et la mémoire avec des milliers de textures (non mesurés) ; l'aspect des textures réduites dans la page ; l'affichage des deux options dans le lanceur graphique (il lit l'analyseur de `oar2glb.py`).
+- **Reste à mettre à jour** (règle 16) : manuel (options de `oar2glb.py`), procédures, historiques ; `REFERENCE_OPTIONS.md` est refait par `build.py` (à commiter avec le lot) ; `REPRISE.md` (règle 23).
+
 ### 13/11/2026 : test de l'éditeur de zones du viewer, menus Déclenchement et Cône (lot 1.10.19)
 
 - **Constat** : l'éditeur de zones du viewer (`glb-viewer.html`) propose, pour une zone `url`, un menu « Déclenchement » (`trigger`) et un menu « Repère (cône) » (`cone`) depuis le lot 1.10.16 ; aucun test ne les faisait tourner (« non essayé » dans l'entrée 1.10.16).
