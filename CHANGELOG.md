@@ -6,6 +6,14 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.10.0)
 
+### 13/11/2026: test of the viewer's zone editor, Trigger and Cone menus (batch 1.10.19)
+
+- **Finding**: the viewer's zone editor (`glb-viewer.html`) has offered, for a `url` zone, a "Trigger" menu (`trigger`) and a "Marker (cone)" menu (`cone`) since batch 1.10.16; no test ran them ("not tried" in the 1.10.16 entry).
+- **Done** (test only: no code changes, `dist\` and `VERSIONS.json` identical): new `tests/editeur_cone.py` (headless Chromium). A zone opened by clicking its title, as with the mouse: "on click" + cone "always" gives `trigger` `click` and `cone` `true`; "when walking into it" + "never" gives `enter` and `cone` `false`; "depending on the trigger" removes the `cone` key; "both" is saved. The viewer shows no cone at all (editor mode, intended since v36: `coneFor` returns false while the editor is active): checked. End to end: the zones the editor outputs, given to `glb2html.py`, give a page with the cone of the "on click + always" and "when walking into it + depending on the trigger" zones, and without the cone of "when walking into it + never" and "on click + depending on the trigger". No JavaScript error.
+- **Checks**: the test passes on `main`; opposite direction: the Cone menu broken on purpose in a copy of `dist\glb-viewer.html` (it no longer writes `cone`): 3 checks fail, copy restored. `smoke` and `dist_a_jour` pass. Klaatou also saw the `url` zone with a cone and `hop://` work on his side (demo and local), and `zones_url_cone.py` pass on Windows, in Edge and in Comet.
+- **Not tried**: Windows, Edge, Firefox, Safari for `editeur_cone.py` itself (Chromium on Linux only); an https `url` zone triggered by walking into it (the browser may block opening a tab without a click).
+- **Still to update**: nothing for this batch; `REPRISE.md` (rule 23): the "`therejs` topic" line of § 6.2 is wrong (fixed on GitHub), to remove at the next handover.
+
 ### 13/11/2026: tests `v35` and `v36`: wait for the state instead of a 300 ms pause (batch 1.10.18)
 
 - **Finding**: `tests/v35.py` failed intermittently on "a second click expands them" (about one run in three or four in the sandbox, including on the original `main`; seen once during batch 1.10.16). The page was not at fault.

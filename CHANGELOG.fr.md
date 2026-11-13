@@ -6,6 +6,14 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.10.0)
 
+### 13/11/2026 : test de l'éditeur de zones du viewer, menus Déclenchement et Cône (lot 1.10.19)
+
+- **Constat** : l'éditeur de zones du viewer (`glb-viewer.html`) propose, pour une zone `url`, un menu « Déclenchement » (`trigger`) et un menu « Repère (cône) » (`cone`) depuis le lot 1.10.16 ; aucun test ne les faisait tourner (« non essayé » dans l'entrée 1.10.16).
+- **Fait** (test seulement : aucun code ne change, `dist\` et `VERSIONS.json` identiques) : nouveau `tests/editeur_cone.py` (Chromium sans tête). Une zone ouverte par un clic sur son titre, comme à la souris : « au clic » + cône « toujours » donne `trigger` `click` et `cone` `true` ; « en marchant dedans » + « jamais » donne `enter` et `cone` `false` ; « selon le déclenchement » retire la clé `cone` ; « les deux » est enregistré. Le viewer n'affiche aucun cône (mode éditeur, voulu depuis la v36 : `coneFor` retourne faux quand l'éditeur est actif) : vérifié. Bout en bout : les zones sorties de l'éditeur, données à `glb2html.py`, donnent une page avec le cône des zones « au clic + toujours » et « en marchant dedans + selon le déclenchement », et sans celui de « en marchant dedans + jamais » et « au clic + selon le déclenchement ». Aucune erreur JavaScript.
+- **Contrôle** : le test passe sur `main` ; sens opposé : menu « Cône » cassé exprès dans une copie de `dist\glb-viewer.html` (il n'écrit plus `cone`) : 3 contrôles échouent, copie restaurée. `smoke` et `dist_a_jour` passent. Klaatou a aussi vu la zone `url` avec cône et `hop://` marcher chez lui (démo et local), et `zones_url_cone.py` passer sous Windows, dans Edge et dans Comet.
+- **Non essayé** : Windows, Edge, Firefox, Safari pour `editeur_cone.py` lui-même (Chromium sous Linux seulement) ; une zone `url` https déclenchée en marchant dedans (le navigateur peut bloquer l'ouverture d'un onglet sans clic).
+- **Reste à mettre à jour** : rien pour ce lot ; `REPRISE.md` (règle 23) : la ligne « topic `therejs` » du § 6.2 est fausse (corrigé sur GitHub), à retirer à la prochaine reprise.
+
 ### 13/11/2026 : tests `v35` et `v36` : attendre l'état au lieu d'une pause de 300 ms (lot 1.10.18)
 
 - **Constat** : `tests/v35.py` échouait de façon intermittente sur « un second clic les déplie » (une fois sur trois ou quatre dans le bac à sable, y compris sur `main` d'origine ; vu une fois pendant le lot 1.10.16). La page n'était pas en cause.
