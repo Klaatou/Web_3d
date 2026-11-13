@@ -6,6 +6,16 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.10.0)
 
+### 13/11/2026 : `oar2glb.py` : `--tex-size` et `--tex-quality` indépendants, aide réécrite (lot 1.10.21)
+
+- **Constat** (Klaatou) : l'aide de `--tex-size` ne donnait ni les valeurs possibles de N ni la conséquence sur la qualité ; et `--tex-quality` n'agissait que sur les textures réduites par `--tex-size`, sans que ce soit dit : seul, il ne faisait rien. Or compresser sans changer les dimensions est un réglage à part.
+- **Fait** : les deux options sont indépendantes. `--tex-size N` change le nombre de pixels (0 = rien, sinon de 16 à 8192). `--tex-quality Q` (1 à 95) compresse en JPEG sans changer les dimensions. Seul, `--tex-quality` recompresse toutes les textures opaques ; une texture dont la version compressée n'est pas plus légère garde ses octets d'origine. Avec les deux : les textures trop grandes sont réduites puis compressées à la qualité demandée, les autres textures opaques sont recompressées. Une texture transparente reste en PNG : réduite si elle est trop grande, jamais recompressée. Avec `--tex-size` seul, la qualité est 85, comme dans le lot 1.10.20.
+- **Changement de comportement par rapport à 1.10.20** : `--tex-quality` seul n'avait aucun effet, il recompresse maintenant ; avec les deux options, les textures opaques plus petites que N sont maintenant recompressées (avant, seules les textures réduites l'étaient).
+- **Aide** : réécrite en français et en anglais (valeurs de N avec exemples, plage de la qualité, effet sur le poids et sur l'aspect, textures transparentes, textures PBR) ; le compte rendu a un message par cas (taille seule, qualité seule, les deux) ; le message d'erreur de Pillow cite les deux options.
+- **Contrôle** : `tests/tex_size.py` adapté et complété (51 contrôles : taille seule, qualité seule, les deux ; l'original gardé quand la recompression n'allège pas ; texture transparente jamais recompressée ; emballage et conversion complète ; valeurs refusées ; Pillow absent ; l'aide donne 0, 16 à 8192 et 1 à 95). Sens opposé : qualité seule rendue sans effet (10 contrôles échouent), garde de l'original supprimée (1), recompression des transparentes permise (5) ; code restauré. Passent aussi : `oar2glb`, `pbr_oar`, `i18n`, `tools_lang`, `aide_sans_pause`, `sortie_cp1252`.
+- **Non essayé** : un vrai OAR avec le vrai convoar ; Windows ; le poids gagné par la qualité seule sur de vraies textures (non mesuré) ; l'aspect dans la page ; le temps et la mémoire avec des milliers de textures.
+- **Reste à mettre à jour** (règle 16) : manuel (§ 3.1, § 3.2, § 3.10, annexe § 13), historiques, procédures ; `REFERENCE_OPTIONS.md` est refait par `build.py` (à commiter avec le lot) ; `REPRISE.md` (règle 23).
+
 ### 13/11/2026 : `oar2glb.py --tex-size` : réduire les textures ordinaires du GLB (lot 1.10.20)
 
 - **Besoin** (boutique d'OAR qui voudrait montrer ses régions dans le navigateur) : la page télécharge le GLB, donc toute personne qui ouvre la page peut l'enregistrer avec ses textures ; aucun outil n'offrait de réduire les textures ordinaires (`--pbr-size` ne touche que les textures PBR). Cela ne protège pas la géométrie ; cela rend le GLB plus léger (non mesuré) et les textures moins utiles à qui le télécharge.

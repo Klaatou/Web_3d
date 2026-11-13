@@ -1476,27 +1476,36 @@ TEX_STATS = {"total": 0, "reduites": 0, "avant": 0, "apres": 0}
 
 
 def tex_reduire(data, taille_max, qualite):
-    # textures ordinaires (--tex-size) : octets de l'image réduits à taille_max pixels de côté au plus (JPEG, ou PNG si elle a de la transparence) ;
-    # (octets, True) si elle a été réduite ; (les octets d'origine, False) si elle est déjà assez petite ou illisible
+    # textures ordinaires (--tex-size, --tex-quality). taille_max : côté maximal en pixels, 0 = pas de réduction des pixels ;
+    # qualite : qualité JPEG, None = pas de recompression (une texture réduite est alors rangée en JPEG de qualité TEX_QUALITE).
+    # Une texture plus grande que taille_max est ramenée à taille_max ; avec une qualité, toute texture opaque est aussi recompressée en JPEG
+    # (l'original est gardé si le résultat n'est pas plus léger). Une texture transparente reste en PNG : réduite si elle est trop grande,
+    # jamais recompressée. Rend (octets, True) si l'image a changé ; (les octets d'origine, False) sinon, ou si elle est illisible.
     Image = pbr_pillow()
     if Image is None:
         return data, False
     try:
         im = Image.open(io.BytesIO(data))
         im.load()
-        if max(im.size) <= taille_max:
+        grande = bool(taille_max) and max(im.size) > taille_max
+        if not grande and qualite is None:
             return data, False
         if im.mode == "P":                 # la palette ne se rééchantillonne pas : on passe en couleurs d'abord
             im = im.convert("RGBA" if "transparency" in im.info else "RGB")
         elif im.mode == "PA":
             im = im.convert("RGBA")
-        im.thumbnail((taille_max, taille_max), getattr(Image, "Resampling", Image).LANCZOS)
+        if grande:
+            im.thumbnail((taille_max, taille_max), getattr(Image, "Resampling", Image).LANCZOS)
         out = io.BytesIO()
         rgba = im.convert("RGBA") if im.mode in ("RGBA", "LA") else None
         if rgba is not None and rgba.getchannel("A").getextrema()[0] < 255:
+            if not grande:
+                return data, False         # transparente et pas trop grande : jamais recompressée (le JPEG n'a pas de transparence)
             rgba.save(out, "PNG", optimize=True)          # transparence gardée : le feuillage et les grilles restent découpés
-        else:
-            im.convert("RGB").save(out, "JPEG", quality=qualite)
+            return out.getvalue(), True
+        im.convert("RGB").save(out, "JPEG", quality=TEX_QUALITE if qualite is None else qualite)
+        if not grande and len(out.getvalue()) >= len(data):
+            return data, False             # la recompression n'allège pas cette texture : l'original est gardé
         return out.getvalue(), True
     except Exception:
         return data, False
@@ -1849,7 +1858,7 @@ def pad4(b, fill=b"\x00"):
 
 
 def pack_glb(g, base, out, tex=None):
-    # tex : (côté maximal en pixels, qualité JPEG) pour réduire les textures ordinaires (--tex-size), ou None
+    # tex : (côté maximal en pixels ou 0, qualité JPEG ou None) pour réduire et/ou recompresser les textures ordinaires (--tex-size, --tex-quality), ou None
     blob, offs = bytearray(), []
     for b in g.get("buffers", []):
         offs.append(len(blob))
@@ -2176,7 +2185,7 @@ def main():
     ap.add_argument("--no-pbr", dest="sans_pbr", action="store_true", help=_tr("py.oar2glb.help.no_pbr"))
     ap.add_argument("--pbr-size", type=int, default=PBR_TEX_MAX, metavar="N", help=_tr("py.oar2glb.help.pbr_size", PBR_TEX_MAX))
     ap.add_argument("--tex-size", type=int, default=0, metavar="N", help=_tr("py.oar2glb.help.tex_size"))
-    ap.add_argument("--tex-quality", type=int, default=TEX_QUALITE, metavar="Q", help=_tr("py.oar2glb.help.tex_quality", TEX_QUALITE))
+    ap.add_argument("--tex-quality", type=int, default=None, metavar="Q", help=_tr("py.oar2glb.help.tex_quality", TEX_QUALITE))
     ap.add_argument("--diag", action="store_true", help=_tr("py.oar2glb.ne_rien_modifier_lister_les_objets"))
     ap.add_argument("--glb", help=_tr("py.oar2glb.avec_diag_glb_ou_gltf_a"))
     ap.add_argument("--nopause", action="store_true", help=_tr("py.oar2glb.ne_pas_attendre_entree_a_la"))
@@ -2191,7 +2200,7 @@ def main():
         sys.exit(_tr("py.oar2glb.erreur_terrain_patch_doit_etre_compris"))
     if a.tex_size and not 16 <= a.tex_size <= 8192:
         sys.exit(_tr("py.oar2glb.erreur_tex_size"))
-    if not 1 <= a.tex_quality <= 95:
+    if a.tex_quality is not None and not 1 <= a.tex_quality <= 95:
         sys.exit(_tr("py.oar2glb.erreur_tex_quality"))
 
     oar = Path(a.oar).resolve()
@@ -2213,7 +2222,7 @@ def main():
         glb = Path(a.glb) if a.glb else (auto[-1] if auto else oar.with_suffix(".glb"))
         diag(scan, read_glb_json(glb) if glb.exists() else None, glb.name, glb.parent if glb.suffix.lower() == ".gltf" else None)
         return
-    if a.tex_size and pbr_pillow() is None:
+    if (a.tex_size or a.tex_quality is not None) and pbr_pillow() is None:
         sys.exit(_tr("py.oar2glb.erreur_tex_pillow"))
     if not Path(a.convoar).exists():
         sys.exit(_tr("py.oar2glb.erreur_convoar_introuvable_0_utilise_convoar", a.convoar, CONVOAR_URL))
@@ -2266,9 +2275,16 @@ def main():
         pbr_appliquer(g, scan, oar, a.pbr_size)
     n = drop_far(g, a.max, size)
     terrain_pipeline(g, scan, a.terrain, a.terrain_patch)      # après drop_far : les patches ne sont jamais retirés
-    size = pack_glb(g, outdir, out, (a.tex_size, a.tex_quality) if a.tex_size else None)
-    if a.tex_size:
-        print(_tr("py.oar2glb.tex_reduites", TEX_STATS["reduites"], TEX_STATS["total"], a.tex_size, TEX_STATS["avant"] / 1048576, TEX_STATS["apres"] / 1048576, a.tex_quality))
+    tex = (a.tex_size, a.tex_quality) if (a.tex_size or a.tex_quality is not None) else None
+    size = pack_glb(g, outdir, out, tex)
+    if tex:
+        n, tot, av, ap_ = TEX_STATS["reduites"], TEX_STATS["total"], TEX_STATS["avant"] / 1048576, TEX_STATS["apres"] / 1048576
+        if a.tex_quality is None:
+            print(_tr("py.oar2glb.tex_reduites", n, tot, a.tex_size, av, ap_, TEX_QUALITE))
+        elif not a.tex_size:
+            print(_tr("py.oar2glb.tex_recompressees", n, tot, a.tex_quality, av, ap_))
+        else:
+            print(_tr("py.oar2glb.tex_reduites_recompressees", n, tot, a.tex_size, a.tex_quality, av, ap_))
     report_missing(outdir, len(g.get("images", [])))
     print(_tr("py.oar2glb.ok_0_1_1f_mo_2", out, size/1048576, len(g.get('meshes', [])), len(g.get('images', [])), n))
     if not a.keep:

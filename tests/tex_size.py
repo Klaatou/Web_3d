@@ -6,10 +6,12 @@ petite texture, octets illisibles -> octets d'origine) ; pack_glb sans reduction
 Bout en bout : le faux convoar fournit un glTF avec une grande texture opaque, une grande texture a transparence et une petite ; avec --tex-size
 les deux grandes sont reduites (type MIME, taille en pixels, alpha gardee), la petite ne change pas, le GLB est plus leger ; sans l'option le GLB
 garde les octets d'origine ; valeurs refusees (--tex-size 5, --tex-quality 0), Pillow absent : message clair avant toute conversion.
+--tex-size (pixels) et --tex-quality (compression JPEG) sont independants : la qualite seule recompresse les textures opaques a leur taille ; avec les
+deux, les textures trop grandes sont reduites puis compressees et les autres opaques recompressees ; une texture transparente n'est jamais recompressee.
 Prerequis : pip install pillow. Lancer : python tests/tex_size.py
 """
 import os as _os_lang; _os_lang.environ["WEB3D_LANG"] = "fr"
-import io, json, pathlib, struct, subprocess, sys, tarfile, tempfile
+import io, json, pathlib, random, struct, subprocess, sys, tarfile, tempfile
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 TOOL = ROOT / "tools" / "oar2glb.py"
@@ -32,12 +34,15 @@ def octets(im, fmt, **kw):
 
 
 def degrade(w, h, mode="RGB"):
-    """image de test : degrade et bruit deterministe (compressible, pas unie)"""
+    """image de test : degrade doux avec un leger bruit deterministe (comme une photo : le PNG est lourd, le JPEG beaucoup moins)"""
+    rnd = random.Random(w * 1000 + h)
     im = Image.new("RGB", (w, h))
     px = im.load()
+    ok = lambda v: min(255, max(0, v))
     for y in range(h):
         for x in range(w):
-            px[x, y] = ((x * 255) // max(w - 1, 1), (y * 255) // max(h - 1, 1), (x * 7 + y * 13) % 256)
+            r, g, b = (x * 255) // max(w - 1, 1), (y * 255) // max(h - 1, 1), ((x + y) * 255) // max(w + h - 2, 1)
+            px[x, y] = (ok(r + rnd.randint(-8, 8)), ok(g + rnd.randint(-8, 8)), ok(b + rnd.randint(-8, 8)))
     return im
 
 
@@ -85,14 +90,38 @@ d, red = T.tex_reduire(rgba_plein, 64, 85)
 rapport(red and lire(d).format == "JPEG", "RGBA entierement opaque : JPEG (pas de transparence a garder)", lire(d).format)
 
 petite = octets(degrade(64, 64), "PNG")
-d, red = T.tex_reduire(petite, 128, 85)
+d, red = T.tex_reduire(petite, 128, None)
 rapport(d == petite and not red, "texture deja assez petite : octets d'origine, non reduite")
-d, red = T.tex_reduire(opaque, 512, 85)
+d, red = T.tex_reduire(opaque, 512, None)
 rapport(d == opaque and not red, "taille egale a la limite : octets d'origine, non reduite")
 d, red = T.tex_reduire(b"pas une image", 128, 85)
 rapport(d == b"pas une image" and not red, "octets illisibles : rendus tels quels, sans erreur")
 fort = len(T.tex_reduire(opaque, 128, 95)[0]); faible = len(T.tex_reduire(opaque, 128, 30)[0])
 rapport(faible < fort, "la qualite agit sur la taille du JPEG", (faible, fort))
+
+# ---------- unites : taille seule, qualite seule, les deux (independantes) ----------
+d, red = T.tex_reduire(opaque, 128, None)
+rapport(red and lire(d).format == "JPEG" and max(lire(d).size) == 128, "taille seule : texture reduite en JPEG (qualite par defaut)", (red, lire(d).format))
+d, red = T.tex_reduire(opaque, 0, 40)
+im = lire(d)
+rapport(red and im.format == "JPEG" and im.size == (512, 384) and len(d) < len(opaque), "qualite seule : JPEG aux dimensions d'origine, plus leger que l'original", (red, im.format, im.size, len(d), len(opaque)))
+q95 = octets(degrade(256, 256), "JPEG", quality=95)
+d, red = T.tex_reduire(q95, 0, 20)
+rapport(red and len(d) < len(q95), "qualite seule : un JPEG d'origine est recompresse plus bas", (red, len(d), len(q95)))
+q20 = octets(degrade(256, 256), "JPEG", quality=20)
+d, red = T.tex_reduire(q20, 0, 95)
+rapport(d == q20 and not red, "qualite seule : si la version recompressee n'est pas plus legere, l'original est garde", (len(d), len(q20)))
+d, red = T.tex_reduire(alpha, 0, 40)
+rapport(d == alpha and not red, "qualite seule : une texture transparente n'est jamais recompressee")
+d, red = T.tex_reduire(petite, 128, 40)
+im = lire(d)
+rapport(red and im.format == "JPEG" and im.size == (64, 64) and len(d) < len(petite), "taille et qualite : une texture sous la limite est recompressee a ses dimensions", (red, im.format, im.size))
+d, red = T.tex_reduire(opaque, 128, 40)
+d85, _ = T.tex_reduire(opaque, 128, 85)
+rapport(red and max(lire(d).size) == 128 and len(d) < len(d85), "taille et qualite : une texture trop grande est reduite puis compressee a la qualite demandee", (len(d), len(d85)))
+d, red = T.tex_reduire(alpha, 128, 40)
+im = lire(d)
+rapport(red and im.format == "PNG" and im.size == (128, 128), "taille et qualite : une texture transparente trop grande est reduite en PNG (pas de JPEG)", (red, im.format, im.size))
 
 # ---------- unite : pack_glb (avec et sans reduction) ----------
 base = tmp / "pack"; base.mkdir()
@@ -119,13 +148,22 @@ js, blob = lire_glb(tmp / "sans.glb")
 tel = all(blob[js["bufferViews"][i["bufferView"]]["byteOffset"]:][:js["bufferViews"][i["bufferView"]]["byteLength"]] == o for i, o in zip(js["images"], (opaque, alpha, petite)))
 rapport(tel and T.TEX_STATS["reduites"] == 0 and T.TEX_STATS["total"] == 3, "pack_glb sans reduction : les trois images gardent leurs octets d'origine", T.TEX_STATS)
 T.TEX_STATS.update(total=0, reduites=0, avant=0, apres=0)
-T.pack_glb(gltf_pack(), base, tmp / "avec.glb", (128, 85))
+T.pack_glb(gltf_pack(), base, tmp / "avec.glb", (128, None))
 js, blob = lire_glb(tmp / "avec.glb")
 ims = [lire(blob[js["bufferViews"][i["bufferView"]]["byteOffset"]:][:js["bufferViews"][i["bufferView"]]["byteLength"]]) for i in js["images"]]
 rapport([i["mimeType"] for i in js["images"]] == ["image/jpeg", "image/png", "image/png"] and [max(i.size) for i in ims] == [128, 128, 64],
         "pack_glb avec reduction : types MIME et tailles (JPEG 128, PNG 128, petite PNG 64 inchangee)", ([i["mimeType"] for i in js["images"]], [i.size for i in ims]))
 rapport(T.TEX_STATS["reduites"] == 2 and T.TEX_STATS["total"] == 3 and T.TEX_STATS["apres"] < T.TEX_STATS["avant"], "pack_glb : decompte (2 reduites sur 3, octets en moins)", T.TEX_STATS)
 rapport((tmp / "avec.glb").stat().st_size < (tmp / "sans.glb").stat().st_size, "pack_glb : le GLB reduit est plus leger")
+
+T.TEX_STATS.update(total=0, reduites=0, avant=0, apres=0)
+T.pack_glb(gltf_pack(), base, tmp / "qual.glb", (0, 40))
+js, blob = lire_glb(tmp / "qual.glb")
+parts = [blob[js["bufferViews"][i["bufferView"]]["byteOffset"]:][:js["bufferViews"][i["bufferView"]]["byteLength"]] for i in js["images"]]
+ims = [lire(x) for x in parts]
+rapport([i["mimeType"] for i in js["images"]] == ["image/jpeg", "image/png", "image/jpeg"] and [i.size for i in ims] == [(512, 384), (512, 512), (64, 64)] and parts[1] == alpha,
+        "pack_glb qualite seule : opaques recompressees a leurs dimensions, transparente inchangee", ([i["mimeType"] for i in js["images"]], [i.size for i in ims]))
+rapport(T.TEX_STATS["reduites"] == 2 and T.TEX_STATS["apres"] < T.TEX_STATS["avant"], "pack_glb qualite seule : 2 images modifiees sur 3, octets en moins", T.TEX_STATS)
 
 # ---------- bout en bout : OAR minimal, faux convoar ----------
 FAKE = '''#!/usr/bin/env python3
@@ -189,18 +227,51 @@ if glb2.exists() and glb1.exists():
     rapport("[textures] 2 sur 3" in r2.stdout, "bout en bout : le compte rendu dit 2 textures sur 3 reduites", r2.stdout[-400:])
     rapport(len(js["images"]) == 3 and len(js["materials"]) == 3, "bout en bout : meme nombre d'images et de materiaux", (len(js["images"]), len(js["materials"])))
 
+oar3, fake3 = fabriquer(tmp / "e3")
+r3 = lancer(oar3, fake3, "--tex-quality", "40")
+glb3 = oar3.with_suffix(".glb")
+rapport(r3.returncode == 0 and glb3.exists(), "bout en bout --tex-quality 40 seul : conversion reussie", (r3.returncode, (r3.stdout + r3.stderr)[-500:]))
+if glb3.exists() and glb1.exists():
+    js, blob = lire_glb(glb3)
+    parts = [blob[js["bufferViews"][i["bufferView"]]["byteOffset"]:][:js["bufferViews"][i["bufferView"]]["byteLength"]] for i in js["images"]]
+    ims = [lire(x) for x in parts]
+    rapport([i["mimeType"] for i in js["images"]] == ["image/jpeg", "image/png", "image/jpeg"] and [i.size for i in ims] == [(512, 384), (512, 512), (64, 64)] and parts[1] == alpha,
+            "bout en bout --tex-quality 40 seul : dimensions d'origine, JPEG pour les opaques, texture transparente inchangee", ([i["mimeType"] for i in js["images"]], [i.size for i in ims]))
+    rapport(glb3.stat().st_size < glb1.stat().st_size, "bout en bout --tex-quality 40 seul : le GLB est plus leger", (glb3.stat().st_size, glb1.stat().st_size))
+    rapport("[textures] 2 sur 3 recompress" in r3.stdout, "bout en bout --tex-quality 40 seul : le compte rendu dit 2 textures sur 3 recompressees", r3.stdout[-400:])
+
+oar4, fake4 = fabriquer(tmp / "e4")
+r4 = lancer(oar4, fake4, "--tex-size", "128", "--tex-quality", "40")
+glb4 = oar4.with_suffix(".glb")
+rapport(r4.returncode == 0 and glb4.exists(), "bout en bout --tex-size 128 --tex-quality 40 : conversion reussie", (r4.returncode, (r4.stdout + r4.stderr)[-500:]))
+if glb4.exists() and glb2.exists():
+    js, blob = lire_glb(glb4)
+    ims = [(i["mimeType"], lire(blob[js["bufferViews"][i["bufferView"]]["byteOffset"]:][:js["bufferViews"][i["bufferView"]]["byteLength"]])) for i in js["images"]]
+    rapport([m for m, _ in ims] == ["image/jpeg", "image/png", "image/jpeg"] and [i.size for _, i in ims] == [(128, 96), (128, 128), (64, 64)],
+            "bout en bout les deux : opaque reduite en JPEG, transparente reduite en PNG, petite opaque recompressee", [(m, i.size) for m, i in ims])
+    rapport(glb4.stat().st_size < glb2.stat().st_size, "bout en bout les deux : plus leger que la taille seule", (glb4.stat().st_size, glb2.stat().st_size))
+    rapport("[textures] 3 sur 3 modifi" in r4.stdout, "bout en bout les deux : le compte rendu dit 3 textures sur 3 modifiees", r4.stdout[-400:])
+
 # ---------- valeurs refusees, Pillow absent ----------
 for opt, val in (("--tex-size", "5"), ("--tex-size", "9000"), ("--tex-size", "-1"), ("--tex-quality", "0"), ("--tex-quality", "96")):
     o, f = fabriquer(tmp / ("v" + opt[2:5] + val.replace("-", "m")))
-    r = lancer(o, f, opt, val, *(["--tex-size", "128"] if opt == "--tex-quality" else []))
+    r = lancer(o, f, opt, val)
     rapport(r.returncode != 0 and "[ERREUR]" in (r.stdout + r.stderr) and not o.with_suffix(".glb").exists(), f"{opt} {val} refuse avant toute conversion", (r.returncode, (r.stdout + r.stderr)[-200:]))
 o, f = fabriquer(tmp / "sanspil")
 code = ("import sys, runpy; sys.modules['PIL'] = None; sys.modules['PIL.Image'] = None; sys.argv = %r; runpy.run_path(%r, run_name='__main__')"
         % ([str(TOOL), str(o), "--convoar", str(f), "--nopause", "--no-pbr", "--tex-size", "128"], str(TOOL)))
 r = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, cwd=tmp)
 rapport(r.returncode != 0 and "Pillow" in (r.stdout + r.stderr) and not o.with_suffix(".glb").exists(), "Pillow absent : message clair, aucune conversion", (r.returncode, (r.stdout + r.stderr)[-300:]))
+o, f = fabriquer(tmp / "sanspil2")
+code = ("import sys, runpy; sys.modules['PIL'] = None; sys.modules['PIL.Image'] = None; sys.argv = %r; runpy.run_path(%r, run_name='__main__')"
+        % ([str(TOOL), str(o), "--convoar", str(f), "--nopause", "--no-pbr", "--tex-quality", "40"], str(TOOL)))
+r = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, cwd=tmp)
+rapport(r.returncode != 0 and "Pillow" in (r.stdout + r.stderr) and not o.with_suffix(".glb").exists(), "Pillow absent avec --tex-quality seul : message clair, aucune conversion", (r.returncode, (r.stdout + r.stderr)[-300:]))
 r = subprocess.run([sys.executable, str(TOOL), "--help"], capture_output=True, text=True, cwd=tmp, stdin=subprocess.DEVNULL)
-rapport("--tex-size" in r.stdout and "--tex-quality" in r.stdout, "l'aide cite --tex-size et --tex-quality")
+aide = " ".join(r.stdout.split())
+rapport("--tex-size" in aide and "--tex-quality" in aide, "l'aide cite --tex-size et --tex-quality")
+rapport("de 16 à 8192" in aide and "0 (défaut)" in aide, "l'aide donne les valeurs de N : 0 (défaut), de 16 à 8192", aide[aide.find("--tex-size N"):][:300])
+rapport("de 1 (" in aide and "à 95 (" in aide and "sans changer leurs dimensions" in aide, "l'aide donne la plage de la qualite (1 à 95) et dit qu'elle ne change pas les dimensions", aide[aide.find("--tex-quality Q"):][:300])
 
 print("\nRÉSULTAT : " + ("tout est passé" if not bad else f"ÉCHEC ({bad})"))
 sys.exit(1 if bad else 0)
