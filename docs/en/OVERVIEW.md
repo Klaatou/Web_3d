@@ -8,7 +8,7 @@ An OpenSim region (`.oar` backup) becomes a **3D web page** you can walk around 
 
 ## 1. What works today
 
-- **Building**: `tools/oar2glb.py` (OAR to GLB), `tools/glb2tiles.py` (splits huge regions into tiles and an overview), `glb2html.py` (the page); `extraire_batiments.py` and `iar2oar.py` (take one GLB per group of objects out of an OAR or an IAR); `web3d_gui.py` (opens all these tools in a window, with the help of the options and Windows shortcuts); `python build.py` puts everything in `dist\`.
+- **Building**: `tools/oar2glb.py` (OAR to GLB), `tools/glb2tiles.py` (splits huge regions into tiles and an overview), `glb2html.py` (the page); `extraire_batiments.py` and `iar2oar.py` (take one GLB per group of objects out of an OAR or an IAR); `oars2site.py` (a folder of OARs becomes a web site); `web3d_gui.py` (opens all these tools in a window, with the help of the options and Windows shortcuts); `python build.py` puts everything in `dist\`.
 - **Walking around**: walking, running, jumping, flying; first person, third person, free camera; collisions; named arrivals, zones, portals to another region; on-screen controls and touch mode.
 - **Being several**: the presence server (`presence_server.py`): avatars, chat, visit log, hosted creators (`--creators`), console moderation.
 - **Linking the worlds**: the world map (`regions.json`), the `carte.html` page with live visitors and the arrival alert (sound and marker), `--scan-sites` to build the list from the sites folder; `diag_carte.py` says why the map shows no nicknames.

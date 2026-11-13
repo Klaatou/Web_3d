@@ -15,7 +15,7 @@ import ast, os, pathlib, subprocess, sys
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 bad = 0
 OUTILS = [ROOT / "src" / "gen_tpl.py", ROOT / "tools" / "oar2glb.py", ROOT / "tools" / "glb2tiles.py", ROOT / "tools" / "glb-stats.py",
-          ROOT / "tools" / "extraire_batiments.py", ROOT / "tools" / "iar2oar.py"]      # diag_carte.py et le serveur de presence : websockets, pas d'option en cause
+          ROOT / "tools" / "extraire_batiments.py", ROOT / "tools" / "iar2oar.py", ROOT / "tools" / "oars2site.py"]      # diag_carte.py et le serveur de presence : websockets, pas d'option en cause
 RETIRES = {"metavar", "type", "choices"}
 
 

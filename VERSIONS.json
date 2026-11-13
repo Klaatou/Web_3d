@@ -35,6 +35,10 @@
   "hash": "a3f82fd9e5e083e8152b1e1978259ffd37337335bf420606c94d3b50044eff66",
   "version": "1.10.23 (13/11/2026)"
  },
+ "oars2site.py": {
+  "hash": "aa474cb796be2d94710ef331415b194e5ed294e1a0010eb66fcfa31fcb1a3dd8",
+  "version": "1.10.24 (13/11/2026)"
+ },
  "presence_server.py": {
   "hash": "5f72a2b7bb7d231e73848f25ce816bbcfe22ce1a1750c9ba2f7e8cbe9f2f8c16",
   "version": "1.10.13 (13/11/2026)"

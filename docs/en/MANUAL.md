@@ -60,6 +60,7 @@ The ready-to-use files are already in the repository's `dist/` folder: there is 
 | `oar2glb.py` | converts an OAR to `.glb` and rebuilds the full terrain | 3 |
 | `extraire_batiments.py` | outputs from an OAR and its `.glb` one recentred `.glb` per object group | 3 |
 | `iar2oar.py` | turns an IAR (OpenSim inventory) into a minimal OAR | 3 |
+| `oars2site.py` | turns a folder of OARs into a web site, one region after the other (separate document: CONVERT_OARS.md) | separate document |
 | `diag_carte.py` | diagnoses why the map shows no nicknames (queries the presence server with and without the key) | 9 |
 | `web3d_gui.py` | opens the tools in a window: tool list, basic-use examples, option help, run button, Windows shortcuts | 3.9 |
 | `glb-stats.py` | measures a `.glb`; must stay next to `glb2tiles.py` | 4 |

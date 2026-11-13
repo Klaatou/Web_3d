@@ -8,7 +8,7 @@ Une région OpenSim (sauvegarde `.oar`) devient une **page web 3D** où l'on se 
 
 ## 1. Ce qui marche aujourd'hui
 
-- **Fabriquer** : `tools/oar2glb.py` (OAR vers GLB), `tools/glb2tiles.py` (découpe les régions énormes en tuiles et vue d'ensemble), `glb2html.py` (la page) ; `extraire_batiments.py` et `iar2oar.py` (sortent d'un OAR ou d'un IAR un GLB par groupe d'objets) ; `web3d_gui.py` (ouvre tous ces outils dans une fenêtre, avec l'aide des options et des raccourcis Windows) ; `python build.py` assemble tout dans `dist\`.
+- **Fabriquer** : `tools/oar2glb.py` (OAR vers GLB), `tools/glb2tiles.py` (découpe les régions énormes en tuiles et vue d'ensemble), `glb2html.py` (la page) ; `extraire_batiments.py` et `iar2oar.py` (sortent d'un OAR ou d'un IAR un GLB par groupe d'objets) ; `oars2site.py` (un dossier d'OAR devient un site web) ; `web3d_gui.py` (ouvre tous ces outils dans une fenêtre, avec l'aide des options et des raccourcis Windows) ; `python build.py` assemble tout dans `dist\`.
 - **Se promener** : marche, course, saut, vol ; vue subjective, troisième personne, caméra libre ; collisions ; arrivées nommées, zones, portails vers une autre région ; commandes à l'écran et mode tactile.
 - **Être plusieurs** : le serveur de présence (`presence_server.py`) : avatars, chat, journal des visites, créateurs accueillis (`--creators`), modération en console.
 - **Relier les mondes** : la carte des mondes (`regions.json`), la page `carte.html` avec les visiteurs en direct et la surveillance des arrivées (son et repère), `--scan-sites` pour construire la liste depuis le dossier des sites ; `diag_carte.py` dit pourquoi la carte n'affiche pas les pseudos.

@@ -24,7 +24,7 @@ def rapport(ok, nom, detail=""):
 
 OUTILS = {"glb2html.py": ("glb2html", ROOT / "src" / "gen_tpl.py"), "glb2tiles.py": ("glb2tiles", ROOT / "tools" / "glb2tiles.py"),
           "oar2glb.py": ("oar2glb", ROOT / "tools" / "oar2glb.py"), "presence_server.py": ("presence", ROOT / "src" / "presence_server.py"),
-          "glb-stats.py": ("stats", ROOT / "tools" / "glb-stats.py"), "extraire_batiments.py": ("extraire", ROOT / "tools" / "extraire_batiments.py"), "iar2oar.py": ("iar2oar", ROOT / "tools" / "iar2oar.py"), "diag_carte.py": ("diag", ROOT / "tools" / "diag_carte.py"), "web3d_gui.py": ("gui", ROOT / "tools" / "web3d_gui.py")}
+          "glb-stats.py": ("stats", ROOT / "tools" / "glb-stats.py"), "extraire_batiments.py": ("extraire", ROOT / "tools" / "extraire_batiments.py"), "iar2oar.py": ("iar2oar", ROOT / "tools" / "iar2oar.py"), "oars2site.py": ("oars2site", ROOT / "tools" / "oars2site.py"), "diag_carte.py": ("diag", ROOT / "tools" / "diag_carte.py"), "web3d_gui.py": ("gui", ROOT / "tools" / "web3d_gui.py")}
 RX_DATA = re.compile(r"I18N_DATA = _json\.loads\(r'''(.*?)'''\)", re.S)
 RX_CLE = re.compile(r"""["'](py\.[A-Za-z0-9_]+\.[A-Za-z0-9_.]*)""")
 

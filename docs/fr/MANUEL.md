@@ -60,6 +60,7 @@ Les fichiers prêts à l'emploi sont déjà dans le dossier `dist/` du dépôt :
 | `oar2glb.py` | convertit un OAR en `.glb` et refait le terrain complet | 3 |
 | `extraire_batiments.py` | sort d'un OAR et de son `.glb` un `.glb` par groupe d'objets, recentré | 3 |
 | `iar2oar.py` | transforme un IAR (inventaire OpenSim) en OAR minimal | 3 |
+| `oars2site.py` | transforme un dossier d'OAR en site web, une région après l'autre (document à part : CONVERTIR_OARS.md) | document à part |
 | `diag_carte.py` | diagnostique pourquoi la carte n'affiche pas les pseudos (interroge le serveur de présence avec et sans la clé) | 9 |
 | `web3d_gui.py` | ouvre les outils dans une fenêtre : liste des outils, exemples d'usages de base, aide des options, lancement, raccourcis Windows | 3.9 |
 | `glb-stats.py` | mesure un `.glb` ; doit rester à côté de `glb2tiles.py` | 4 |

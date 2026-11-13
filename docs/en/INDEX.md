@@ -1,6 +1,6 @@
 # Documentation index
 
-This page says **which document to read for what**. The French documents carry the same content under other names: `VUE_ENSEMBLE.md`, `MANUEL.md`, `PROCEDURES_SIMPLES.md`, `CREATEURS.md`, `DEVELOPPEMENT.md` and `HISTORIQUE.md`; `GUIDE.md`, `PROCEDURES.md`, `REFERENCE_JSON.md` and `INDEX.md` keep the same name. The "§" numbers are those of the headings of the document quoted.
+This page says **which document to read for what**. The French documents carry the same content under other names: `VUE_ENSEMBLE.md`, `MANUEL.md`, `PROCEDURES_SIMPLES.md`, `CREATEURS.md`, `DEVELOPPEMENT.md`, `CONVERTIR_OARS.md` and `HISTORIQUE.md`; `GUIDE.md`, `PROCEDURES.md`, `REFERENCE_JSON.md` and `INDEX.md` keep the same name. The "§" numbers are those of the headings of the document quoted.
 
 ## 1. Where to start
 
@@ -18,6 +18,7 @@ This page says **which document to read for what**. The French documents carry t
 | compress a region already cut up | `MANUAL.md` § 4.2; `SIMPLE_PROCEDURES.md` § 5 |
 | extract objects (buildings, furniture...) from a region | `MANUAL.md` § 3.7; `SIMPLE_PROCEDURES.md` § 6 |
 | extract objects from an inventory (IAR) | `MANUAL.md` § 3.8; `SIMPLE_PROCEDURES.md` § 6 |
+| turn a folder of OARs into a web site, one region after the other | `CONVERT_OARS.md` |
 | place zones (arrivals, portals, signs, pictures) | `GUIDE.md` § 2; `MANUAL.md` § 5; `PROCEDURES.md` § 5 |
 | build or update the page | `GUIDE.md` § 3; `MANUAL.md` § 6; `PROCEDURES.md` § 3, § 4 and § 8; `SIMPLE_PROCEDURES.md` § 1 |
 | set the tab title, rename a tiled region | `SIMPLE_PROCEDURES.md` § 2 and § 3 |

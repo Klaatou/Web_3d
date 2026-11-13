@@ -1,6 +1,6 @@
 # Index de la documentation
 
-Cette page dit **quel document lire pour quoi**. Les documents anglais portent le même contenu sous d'autres noms : `OVERVIEW.md`, `MANUAL.md`, `SIMPLE_PROCEDURES.md`, `CREATORS.md`, `DEVELOPMENT.md` et `HISTORY.md` ; `GUIDE.md`, `PROCEDURES.md`, `REFERENCE_JSON.md` et `INDEX.md` gardent le même nom. Les numéros « § » sont ceux des titres du document cité.
+Cette page dit **quel document lire pour quoi**. Les documents anglais portent le même contenu sous d'autres noms : `OVERVIEW.md`, `MANUAL.md`, `SIMPLE_PROCEDURES.md`, `CREATORS.md`, `DEVELOPMENT.md`, `CONVERT_OARS.md` et `HISTORY.md` ; `GUIDE.md`, `PROCEDURES.md`, `REFERENCE_JSON.md` et `INDEX.md` gardent le même nom. Les numéros « § » sont ceux des titres du document cité.
 
 ## 1. Par où commencer
 
@@ -18,6 +18,7 @@ Cette page dit **quel document lire pour quoi**. Les documents anglais portent l
 | compresser une région déjà découpée | `MANUEL.md` § 4.2 ; `PROCEDURES_SIMPLES.md` § 5 |
 | extraire des objets (bâtiments, meubles...) d'une région | `MANUEL.md` § 3.7 ; `PROCEDURES_SIMPLES.md` § 6 |
 | extraire des objets d'un inventaire (IAR) | `MANUEL.md` § 3.8 ; `PROCEDURES_SIMPLES.md` § 6 |
+| convertir un dossier d'OAR en site web, une région après l'autre | `CONVERTIR_OARS.md` |
 | poser des zones (arrivées, portails, panneaux, images) | `GUIDE.md` § 2 ; `MANUEL.md` § 5 ; `PROCEDURES.md` § 5 |
 | fabriquer ou mettre à jour la page | `GUIDE.md` § 3 ; `MANUEL.md` § 6 ; `PROCEDURES.md` § 3, § 4 et § 8 ; `PROCEDURES_SIMPLES.md` § 1 |
 | fixer le titre de l'onglet, renommer une région en tuiles | `PROCEDURES_SIMPLES.md` § 2 et § 3 |
