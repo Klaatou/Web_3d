@@ -6,6 +6,20 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.10.0)
 
+### 13/11/2026: "link" zones triggered by walking onto them; marker (cone) adjustable zone by zone, `cone` key (batch 1.10.16)
+
+- **Asked by Klaatou**: a ring zone that opens a `hop://` to the OpenSim region (the sandbox demo), triggered **also by walking onto it**, with the marker cone above it, **adjustable zone by zone in the JSON** (not only with the T key).
+- **Finding**: his zone (type `portal` with a `link` key) did nothing: `link` is read only for the `image` type (`core.js:1960`), and a portal does not read `hop:` (`okUrl`). With the `url` type and the `hop://` in `target`, click and E worked, but walking onto it did not: `trigger` was forced to `click` for every type other than `portal` (`core.js:1959`, `gen_tpl.py:205`), entering a zone counted only for `portal` (`core.js:1286`, `1335`, `2446`), and the cone existed only for a portal or a trigger other than `click` (`core.js:1987`).
+- **Done**:
+  - a `url` zone accepts `trigger`: `click` (as before), `enter` or `both`; the address then opens when you walk into the zone (a `hop://` in the same tab: the browser asks for confirmation); `ha` stays always on click;
+  - optional **`cone`** key (`true` or `false`): `true` puts a cone even on an "on click" zone, `false` never puts one (even on a portal), absent: as before (cone for a portal or an `enter` / `both` trigger); the T key still hides all cones; the key is written only when it is `true` or `false`; no effect on an arrival (`--show-spawns`) or a picture;
+  - viewer editor: a "Trigger" list for `url` zones, and a "Marker (cone) above the zone" list (follows the trigger / always / never); French and English texts;
+  - `docs/fr/REFERENCE_JSON.md` and `docs/en/REFERENCE_JSON.md`: `trigger`, new `cone` row, `zoneCone`.
+- **For Klaatou's zone**: `"type": "url"`, `"target": "hop://…"`, `"trigger": "both"` (or `"enter"`), `"shape": "ring"`, and `"cone": true` for the cone whatever the trigger; remove `link`.
+- **Checks**: new `tests/zones_url_cone.py` (8 checks: trigger kept, `ha` on click, `cone` key, list of cones, walking into a `both` `url` zone opens the `hop://` in the same tab, E on an on-click `url` zone, walking through it does not open it); on the original `main` 4 checks fail, with the fix everything passes. Also passing: `smoke`, `i18n`, `samples`, `dist_a_jour`, `marque`, `version_page`, `portail_interne`, `image_zone`, `v36`; `verif_trad` on `REFERENCE_JSON`: 0 errors. `v35`: one failure ("a second click expands them") on one run, absent on the rerun, and present on the original `main`: unstable, unrelated to this batch. Full suite not run. Per-file numbers: `glb2html.py`, `index.html` and `glb-viewer.html` take 1.10.16; `carte.html`, `presence_server.py` and the others keep theirs (nothing to send to the VM).
+- **Not tried**: Windows, Edge; the viewer editor (the two lists); a real OpenSim viewer registered for `hop://`.
+- **Still to update** (rule 16): the manual (`url` zones: trigger, cone; § 5 and the T key), `HISTORIQUE.md` / `HISTORY.md`; the demo (`index.html`, `glb-viewer.html`, `glb2html.py` change); `REPRISE.md` (rule 23).
+
 ### 13/11/2026: documents brought up to date for batches 1.10.13 and 1.10.14; image of the eight shortcuts (batch 1.10.15)
 
 - **Requested by Klaatou**: bring the documents up to date (rule 16); his screenshot of the Windows desktop shows the eight shortcuts, the launcher window with its icon and the "Function" line.

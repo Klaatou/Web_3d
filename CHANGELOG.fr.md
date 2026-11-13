@@ -6,6 +6,20 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.10.0)
 
+### 13/11/2026 : zones « lien » déclenchées en marchant dessus ; repère (cône) réglable zone par zone, clé `cone` (lot 1.10.16)
+
+- **Demandé par Klaatou** : une zone en cercle qui ouvre un `hop://` vers la région OpenSim (démo du bac à sable), déclenchée **aussi en marchant dessus**, avec le cône de repérage au-dessus, **réglable zone par zone dans le JSON** (pas seulement par la touche T).
+- **Constat** : sa zone (type `portal` avec une clé `link`) ne faisait rien : `link` n'est lue que pour le type `image` (`core.js:1960`), et un portail ne lit pas `hop:` (`okUrl`). Avec le type `url` et le `hop://` dans `target`, le clic et E marchaient, mais pas la marche dessus : `trigger` était forcé à `click` pour tout type autre que `portal` (`core.js:1959`, `gen_tpl.py:205`), l'entrée dans la zone ne comptait que pour `portal` (`core.js:1286`, `1335`, `2446`) et le cône n'existait que pour un portail ou un déclenchement autre que `click` (`core.js:1987`).
+- **Fait** :
+  - une zone `url` accepte `trigger` : `click` (comme avant), `enter` ou `both` ; l'adresse s'ouvre alors quand on entre dans la zone (un `hop://` dans le même onglet : le navigateur demande confirmation) ; `ha` reste toujours au clic ;
+  - clé **`cone`** facultative (`true` ou `false`) : `true` met un cône même sur une zone « au clic », `false` n'en met jamais (même sur un portail), absente : comme avant (cône pour un portail ou un déclenchement `enter` / `both`) ; la touche T masque toujours tous les cônes ; la clé n'est écrite que si elle vaut `true` ou `false` ; sans effet sur une arrivée (`--show-spawns`) et un tableau ;
+  - éditeur du viewer : liste « Déclenchement » pour les zones `url`, et liste « Repère (cône) au-dessus de la zone » (selon le déclenchement / toujours / jamais) ; textes français et anglais ;
+  - `docs/fr/REFERENCE_JSON.md` et `docs/en/REFERENCE_JSON.md` : `trigger`, nouvelle ligne `cone`, `zoneCone`.
+- **Pour la zone de Klaatou** : `"type": "url"`, `"target": "hop://…"`, `"trigger": "both"` (ou `"enter"`), `"shape": "ring"`, et `"cone": true` si on veut le cône quel que soit le déclenchement ; supprimer `link`.
+- **Contrôle** : nouveau `tests/zones_url_cone.py` (8 contrôles : déclenchement conservé, `ha` au clic, clé `cone`, liste des cônes, entrée dans une zone `url` `both` qui ouvre le `hop://` dans le même onglet, E sur une zone `url` au clic, la traverser ne l'ouvre pas) ; sur `main` d'origine 4 contrôles échouent, avec le correctif tout passe. Passent aussi `smoke`, `i18n`, `samples`, `dist_a_jour`, `marque`, `version_page`, `portail_interne`, `image_zone`, `v36` ; `verif_trad` sur `REFERENCE_JSON` : 0 erreur. `v35` : un échec (« un second clic les déplie ») à une passe, absent à la relance, et présent sur `main` d'origine : instable, sans rapport avec ce lot. Suite complète non lancée. Numéros par fichier : `glb2html.py`, `index.html` et `glb-viewer.html` prennent 1.10.16 ; `carte.html`, `presence_server.py` et les autres gardent leur numéro (rien à renvoyer sur la VM).
+- **Non essayé** : Windows, Edge ; l'éditeur du viewer (les deux listes) ; un vrai viewer OpenSim enregistré pour `hop://`.
+- **Reste à mettre à jour** (règle 16) : manuel (zones `url` : déclenchement, cône ; § 5 et touche T), `HISTORIQUE.md` / `HISTORY.md` ; la démo (`index.html`, `glb-viewer.html`, `glb2html.py` changent) ; `REPRISE.md` (règle 23).
+
 ### 13/11/2026 : documents à jour pour les lots 1.10.13 et 1.10.14 ; image des huit raccourcis (lot 1.10.15)
 
 - **Demandé par Klaatou** : mettre les documents à jour (règle 16) ; sa capture du bureau Windows montre les huit raccourcis, la fenêtre du lanceur avec son icône et la ligne « Fonction ».

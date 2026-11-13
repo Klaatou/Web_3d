@@ -470,7 +470,7 @@ function diagShow(text, status, select) {
 function diagText(viewer, extra) {
   const x = extra || {}, L = (k, v) => tr('core.diag.line', k, v), out = [tr('core.diag.title')];
   const nb = (v, d) => (Number.isFinite(v) ? i18nNum(v, d || 0) : '?');   // nombres à la manière de la langue (virgule en français)
-  out.push(L(tr('core.diag.version'), '1.10.14 (13/11/2026)' + (x.cfgVersion && x.cfgVersion !== '1.10.14 (13/11/2026)' ? ' ; ' + tr('core.diag.cfgver', x.cfgVersion) : '')));
+  out.push(L(tr('core.diag.version'), '1.10.16 (13/11/2026)' + (x.cfgVersion && x.cfgVersion !== '1.10.16 (13/11/2026)' ? ' ; ' + tr('core.diag.cfgver', x.cfgVersion) : '')));
   out.push(L(tr('core.diag.date'), new Date().toLocaleString(({ fr: 'fr-FR', en: 'en-GB' })[LANG]) + ' ; ' + tr('core.diag.uptime', nb(performance.now() / 1000))));
   out.push(L(tr('core.diag.page'), location.protocol + (location.host ? '//ADRESSE' : '//') + location.pathname + location.search));
   out.push(L(tr('core.diag.lang'), LANG + ' · ' + ((navigator.languages || []).join(',') || navigator.language || '?') + ' · ' + KB.layout().toUpperCase()));
@@ -1653,7 +1653,7 @@ function createViewer(container, cfg0, loader) {
     walking = true;
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
     zoneInside.clear(); nearZone = null;
-    for (const z of zones) if (z.type === 'portal' && z.trigger !== 'click' && !zoneOff(z) && zoneDist(z).d <= z.radius) zoneInside.add(z.id);
+    for (const z of zones) if (zoneEntrant(z) && z.trigger !== 'click' && !zoneOff(z) && zoneDist(z).d <= z.radius) zoneInside.add(z.id);
     walkStep(0); dirty = true;
     presenceEnter();
     if (onWalk) onWalk(true);
@@ -1702,7 +1702,7 @@ function createViewer(container, cfg0, loader) {
     if (Number.isFinite(yaw)) { W.yaw = yaw; W.tyaw = yaw; }
     W.pitch = 0; W.vy = 0; W.grounded = true;
     zoneInside.clear(); nearZone = null; if (onNear) onNear(null);
-    for (const q of zones) if (q.type === 'portal' && q.trigger !== 'click' && !zoneOff(q) && zoneDist(q).d <= q.radius) zoneInside.add(q.id);
+    for (const q of zones) if (zoneEntrant(q) && q.trigger !== 'click' && !zoneOff(q) && zoneDist(q).d <= q.radius) zoneInside.add(q.id);
     walkStep(0); dirty = true;
     return true;
   }
@@ -2314,6 +2314,7 @@ function createViewer(container, cfg0, loader) {
   }
   const ZONE_TYPES = ['url', 'ha', 'portal', 'spawn', 'image'];
   const slug = s => String(s || '').toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
+  function zoneEntrant(z) { return z.type === 'portal' || z.type === 'url'; }   // zones qui se declenchent aussi en marchant dedans (trigger enter ou both) : portail et lien (hop:// compris)
   function cleanZone(z, i) {
     const num = (v, d, lo, hi) => { v = Number(v); return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d; };
     const type = ZONE_TYPES.includes(z.type) ? z.type : 'portal';
@@ -2326,7 +2327,8 @@ function createViewer(container, cfg0, loader) {
       target: String(z.target || '').slice(0, 600), spawn: slug(z.spawn), confirm: !!z.confirm, private: !!z.private, showName: !!z.showName,
       mesh: type === 'spawn' || img ? '' : String(z.mesh || '').replace(/[\u0000-\u001f]/g, '').slice(0, 200)
     };
-    if (type !== 'portal') o.trigger = 'click';
+    if (type !== 'portal' && type !== 'url') o.trigger = 'click';
+    if (typeof z.cone === 'boolean' && type !== 'spawn' && !img) o.cone = z.cone;   // repere (cone) facultatif : vrai = toujours, faux = jamais ; absent = selon le declenchement ; ecrit seulement s'il est vrai ou faux
     if (img) { const lk = String(z.link || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 600); if (lk) o.link = lk; }   // lien facultatif d'un tableau : page ouverte au clic ou a E ; ecrit seulement s'il est rempli
     return o;
   }
@@ -2354,7 +2356,7 @@ function createViewer(container, cfg0, loader) {
   let onCones = null;
   function coneFor(g, z, box) {
     if (zoneEditor) return false;
-    if (!(z.type === 'spawn' ? cfg.showSpawns : (z.type === 'portal' || z.trigger !== 'click'))) return false;
+    if (!(z.type === 'spawn' ? cfg.showSpawns : (typeof z.cone === 'boolean' ? z.cone : (z.type === 'portal' || z.trigger !== 'click')))) return false;
     const geo = new THREE.ConeGeometry(0.175, 0.5, 16);
     const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0xe8e8e8, fog: false }));
     m.rotation.x = Math.PI;   // pointe vers le bas
@@ -2813,7 +2815,7 @@ function createViewer(container, cfg0, loader) {
     for (const z of zones) {
       if (z.type === 'spawn' || zoneOff(z) || (z.type === 'image' && (!z.link || imgGone.has(z.id)))) continue;   // un tableau sans lien n'est pas une zone proche (pas d'invite « clic ou E »)
       const { d, dy } = zoneDist(z);
-      if (z.type === 'portal' && z.trigger !== 'click') {
+      if (zoneEntrant(z) && z.trigger !== 'click') {
         const inside = d <= z.radius && dy > -1.5 && dy < 3.5, was = zoneInside.has(z.id);
         if (inside && !was) { zoneInside.add(z.id); fireZone(z, 'enter'); }
         else if (!inside && was) zoneInside.delete(z.id);
@@ -3719,7 +3721,7 @@ if (C.walk) {
   const sb = document.getElementById('stateInfo'), sbody = document.getElementById('stateBody'), shead = document.getElementById('stateHead');
   const mkLine = id => { const d = document.createElement('div'); d.id = id; sbody.append(d); return d; };
   const lv = mkLine('viewInfo'), lm = mkLine('modeInfo'), lmo = mkLine('mouseInfo'), lp = mkLine('posInfo'), lkb = mkLine('kbInfo');
-  mkLine('verInfo').textContent = tr('page.state.version', '1.10.14 (13/11/2026)', C.version || '?');   // 1.6.17 : version de la page (index.html, ou glb2html.py pour une page autonome) et de la configuration
+  mkLine('verInfo').textContent = tr('page.state.version', '1.10.16 (13/11/2026)', C.version || '?');   // 1.6.17 : version de la page (index.html, ou glb2html.py pour une page autonome) et de la configuration
   // v39 : bouton « Copier le diagnostic » sous le contenu de la fenêtre (reste visible quand elle est réduite) : lignes affichées + diagText (core.js) ;
   // si le navigateur refuse la copie, le texte s'affiche sélectionné dessous (Ctrl+C)
   {

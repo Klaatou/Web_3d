@@ -16,8 +16,8 @@ Draco et Meshopt gérés automatiquement (décodeurs intégrés seulement si le 
 """
 from __future__ import annotations
 
-VERSION = "1.10.14 (13/11/2026)"
-SHELL_VERSION = "1.10.14 (13/11/2026)"   # numéro de version de la coquille (index.html) : écrit par build.py, ne change que si la coquille change
+VERSION = "1.10.16 (13/11/2026)"
+SHELL_VERSION = "1.10.16 (13/11/2026)"   # numéro de version de la coquille (index.html) : écrit par build.py, ne change que si la coquille change
 MAP_VERSION = "1.10.13 (13/11/2026)"       # numéro de version de la page de carte (carte.html) : idem
 
 import argparse
@@ -286,7 +286,7 @@ def clean_zones(zones, profile):
             "id": _slug(z.get("id")) or f"z{i + 1}", "type": t, "label": str(z.get("label") or "")[:60],
             "x": num(z.get("x"), 0, -1e5, 1e5), "y": num(z.get("y"), 0, -1e5, 1e5), "z": num(z.get("z"), 0, -1e5, 1e5),
             "yaw": num(z.get("yaw"), 0, -7, 7), "shape": "board" if z.get("shape") == "board" else "ring",
-            "trigger": (z.get("trigger") if z.get("trigger") in ("click", "enter", "both") else "click") if t == "portal" else "click",
+            "trigger": (z.get("trigger") if z.get("trigger") in ("click", "enter", "both") else "click") if t in ("portal", "url") else "click",
             "radius": num(z.get("radius"), 2, 0.5, 50), "w": num(z.get("w"), 1.2 if img else 2.4, 0.1 if img else 0.5, 10), "h": num(z.get("h"), 0, 0, 6) if img else num(z.get("h"), 1.2, 0.3, 6),
             "target": str(resolve_image_name(z.get("target")) if img else (z.get("target") or ""))[:600], "spawn": _slug(z.get("spawn")),
             "confirm": bool(z.get("confirm")), "private": bool(z.get("private")), "showName": bool(z.get("showName")),
@@ -296,6 +296,8 @@ def clean_zones(zones, profile):
             lk = re.sub(r"[\x00-\x1f]", "", str(z.get("link") or "")).strip()[:600]
             if lk:
                 d["link"] = lk
+        if isinstance(z.get("cone"), bool) and t not in ("spawn", "image"):   # repere facultatif : ecrit seulement s'il est vrai ou faux, comme core.js
+            d["cone"] = z["cone"]
         out.append(d)
     return out
 
@@ -2507,7 +2509,7 @@ function createViewer(container, cfg0, loader) {
     walking = true;
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
     zoneInside.clear(); nearZone = null;
-    for (const z of zones) if (z.type === 'portal' && z.trigger !== 'click' && !zoneOff(z) && zoneDist(z).d <= z.radius) zoneInside.add(z.id);
+    for (const z of zones) if (zoneEntrant(z) && z.trigger !== 'click' && !zoneOff(z) && zoneDist(z).d <= z.radius) zoneInside.add(z.id);
     walkStep(0); dirty = true;
     presenceEnter();
     if (onWalk) onWalk(true);
@@ -2556,7 +2558,7 @@ function createViewer(container, cfg0, loader) {
     if (Number.isFinite(yaw)) { W.yaw = yaw; W.tyaw = yaw; }
     W.pitch = 0; W.vy = 0; W.grounded = true;
     zoneInside.clear(); nearZone = null; if (onNear) onNear(null);
-    for (const q of zones) if (q.type === 'portal' && q.trigger !== 'click' && !zoneOff(q) && zoneDist(q).d <= q.radius) zoneInside.add(q.id);
+    for (const q of zones) if (zoneEntrant(q) && q.trigger !== 'click' && !zoneOff(q) && zoneDist(q).d <= q.radius) zoneInside.add(q.id);
     walkStep(0); dirty = true;
     return true;
   }
@@ -3168,6 +3170,7 @@ function createViewer(container, cfg0, loader) {
   }
   const ZONE_TYPES = ['url', 'ha', 'portal', 'spawn', 'image'];
   const slug = s => String(s || '').toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
+  function zoneEntrant(z) { return z.type === 'portal' || z.type === 'url'; }   // zones qui se declenchent aussi en marchant dedans (trigger enter ou both) : portail et lien (hop:// compris)
   function cleanZone(z, i) {
     const num = (v, d, lo, hi) => { v = Number(v); return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d; };
     const type = ZONE_TYPES.includes(z.type) ? z.type : 'portal';
@@ -3180,7 +3183,8 @@ function createViewer(container, cfg0, loader) {
       target: String(z.target || '').slice(0, 600), spawn: slug(z.spawn), confirm: !!z.confirm, private: !!z.private, showName: !!z.showName,
       mesh: type === 'spawn' || img ? '' : String(z.mesh || '').replace(/[\u0000-\u001f]/g, '').slice(0, 200)
     };
-    if (type !== 'portal') o.trigger = 'click';
+    if (type !== 'portal' && type !== 'url') o.trigger = 'click';
+    if (typeof z.cone === 'boolean' && type !== 'spawn' && !img) o.cone = z.cone;   // repere (cone) facultatif : vrai = toujours, faux = jamais ; absent = selon le declenchement ; ecrit seulement s'il est vrai ou faux
     if (img) { const lk = String(z.link || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 600); if (lk) o.link = lk; }   // lien facultatif d'un tableau : page ouverte au clic ou a E ; ecrit seulement s'il est rempli
     return o;
   }
@@ -3208,7 +3212,7 @@ function createViewer(container, cfg0, loader) {
   let onCones = null;
   function coneFor(g, z, box) {
     if (zoneEditor) return false;
-    if (!(z.type === 'spawn' ? cfg.showSpawns : (z.type === 'portal' || z.trigger !== 'click'))) return false;
+    if (!(z.type === 'spawn' ? cfg.showSpawns : (typeof z.cone === 'boolean' ? z.cone : (z.type === 'portal' || z.trigger !== 'click')))) return false;
     const geo = new THREE.ConeGeometry(0.175, 0.5, 16);
     const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0xe8e8e8, fog: false }));
     m.rotation.x = Math.PI;   // pointe vers le bas
@@ -3667,7 +3671,7 @@ function createViewer(container, cfg0, loader) {
     for (const z of zones) {
       if (z.type === 'spawn' || zoneOff(z) || (z.type === 'image' && (!z.link || imgGone.has(z.id)))) continue;   // un tableau sans lien n'est pas une zone proche (pas d'invite « clic ou E »)
       const { d, dy } = zoneDist(z);
-      if (z.type === 'portal' && z.trigger !== 'click') {
+      if (zoneEntrant(z) && z.trigger !== 'click') {
         const inside = d <= z.radius && dy > -1.5 && dy < 3.5, was = zoneInside.has(z.id);
         if (inside && !was) { zoneInside.add(z.id); fireZone(z, 'enter'); }
         else if (!inside && was) zoneInside.delete(z.id);

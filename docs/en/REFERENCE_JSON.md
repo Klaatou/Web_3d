@@ -118,7 +118,7 @@ Positions are in meters, in the page's frame: x towards the east, y upwards, z t
 | `imageExts`    | text     | `"jpg,jpeg,png,webp,gif,avif"` | extensions tried, in order, for an image name without an extension (§ 5.11); optional key, absent from the file the generator writes | —                                   |
 | `mediaDir`     | text     | `"medias"` | subfolder of the images and text files of `image` zones (§ 5.11); `""` = none; optional key, absent from the file the generator writes | —                                   |
 | `zoneMarker`   | text     | `"dot"`    | marker of portals and free zones: `"dot"` small disc, `"range"` ring at the zone's real radius, `"none"` nothing | `--zone-marker`                     |
-| `zoneCone`     | yes / no | `true`     | small cone above the portals (T key)                                                                             | `--zone-cone`, `--no-zone-cone`     |
+| `zoneCone`     | yes / no | `true`     | small cone above the portals and the links triggered by walking into them (T key); adjustable zone by zone with the `cone` key                                                                             | `--zone-cone`, `--no-zone-cone`     |
 | `showSpawns`   | yes / no | `false`    | also draws the arrivals                                                                                          | `--show-spawns`, `--no-show-spawns` |
 | `zoneInfoDist` | number   | `150`      | distance in meters (from 5 to 500) up to which zones react to hovering and clicking in walk mode                 | `--zone-info-dist`                  |
 
@@ -156,7 +156,7 @@ There are **five kinds** of zones (`type` field): `"spawn"` (arrival), `"portal"
 | `x`, `y`, `z` | number   | `0`           | position in meters                                                                                                                                            |
 | `yaw`         | number   | `0`           | orientation in radians: direction of the gaze on arrival, or front of the sign                                                                                |
 | `shape`       | text     | `"ring"`      | `"ring"` (ring on the ground) or `"board"` (sign on a post)                                                                                                   |
-| `trigger`     | text     | `"click"`     | portals only: `"click"` (click or E), `"enter"` (walking into it) or `"both"` (both). The other kinds are always `"click"`                                    |
+| `trigger`     | text     | `"click"`     | portals and links (`"url"`, `hop://` included): `"click"` (click or E), `"enter"` (walking into it) or `"both"` (both). The other kinds are always `"click"`                                    |
 | `radius`      | number   | `2`           | radius of the zone in meters (from 0.5 to 50)                                                                                                                 |
 | `w`, `h`      | number   | `2.4`, `1.2`  | width and height of the sign in meters; for `image`: 1.2 wide by default, height 0 = from the image                                                                                                                        |
 | `target`      | text     | `""`          | portal: address of the destination region, or empty for a point of the same region; link: address of the web page; command: address called; image: file name or address of the image                    |
@@ -165,6 +165,7 @@ There are **five kinds** of zones (`type` field): `"spawn"` (arrival), `"portal"
 | `confirm`     | yes / no | `false`       | asks for a confirmation before acting                                                                                                                         |
 | `private`     | yes / no | `false`       | private zone: absent from public pages (`public` profile)                                                                                                     |
 | `showName`    | yes / no | `false`       | writes the `label` above the zone in walk mode                                                                                                                |
+| `cone`        | yes / no | (absent: follows the trigger) | marker (cone) above the zone: `true` always shows it, even for an "on click" zone; `false` never shows it; absent: a cone for the portals and the links triggered by walking into them (`"enter"` or `"both"`). The T key hides all cones. No effect on an arrival (`--show-spawns`) or on a picture; the key is written only when it is `true` or `false` |
 | `mesh`        | text     | `""`          | zone **linked to an object** of the model: its name, or `name#number` when several objects have that name; the object becomes clickable. Never for an arrival |
 
 The sample contains nine zones, one for each case:

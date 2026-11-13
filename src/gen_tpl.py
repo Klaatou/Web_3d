@@ -202,7 +202,7 @@ def clean_zones(zones, profile):
             "id": _slug(z.get("id")) or f"z{i + 1}", "type": t, "label": str(z.get("label") or "")[:60],
             "x": num(z.get("x"), 0, -1e5, 1e5), "y": num(z.get("y"), 0, -1e5, 1e5), "z": num(z.get("z"), 0, -1e5, 1e5),
             "yaw": num(z.get("yaw"), 0, -7, 7), "shape": "board" if z.get("shape") == "board" else "ring",
-            "trigger": (z.get("trigger") if z.get("trigger") in ("click", "enter", "both") else "click") if t == "portal" else "click",
+            "trigger": (z.get("trigger") if z.get("trigger") in ("click", "enter", "both") else "click") if t in ("portal", "url") else "click",
             "radius": num(z.get("radius"), 2, 0.5, 50), "w": num(z.get("w"), 1.2 if img else 2.4, 0.1 if img else 0.5, 10), "h": num(z.get("h"), 0, 0, 6) if img else num(z.get("h"), 1.2, 0.3, 6),
             "target": str(resolve_image_name(z.get("target")) if img else (z.get("target") or ""))[:600], "spawn": _slug(z.get("spawn")),
             "confirm": bool(z.get("confirm")), "private": bool(z.get("private")), "showName": bool(z.get("showName")),
@@ -212,6 +212,8 @@ def clean_zones(zones, profile):
             lk = re.sub(r"[\x00-\x1f]", "", str(z.get("link") or "")).strip()[:600]
             if lk:
                 d["link"] = lk
+        if isinstance(z.get("cone"), bool) and t not in ("spawn", "image"):   # repere facultatif : ecrit seulement s'il est vrai ou faux, comme core.js
+            d["cone"] = z["cone"]
         out.append(d)
     return out
 

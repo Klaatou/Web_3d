@@ -515,8 +515,10 @@ function renderZoneList() {
         d.appendChild(inp(tr('viewer.zf.target'), 'text', z.target, v => upd({ target: v })));
         d.appendChild(inp(tr('viewer.zf.spawn'), 'text', z.spawn, v => upd({ spawn: v })));
         d.appendChild(inp(tr('viewer.zf.trigger'), 'select', z.trigger, v => upd({ trigger: v }, true), [['enter', tr('viewer.zf.trig.enter')], ['click', tr('viewer.zf.trig.click')], ['both', tr('viewer.zf.trig.both')]]));
-      } else if (z.type === 'url') d.appendChild(inp(tr('viewer.zf.url'), 'text', z.target, v => upd({ target: v })));
-      else { d.appendChild(inp(tr('viewer.zf.ha'), 'text', z.target, v => upd({ target: v }))); d.appendChild(inp(tr('viewer.zf.confirm'), 'checkbox', z.confirm, v => upd({ confirm: v }))); }
+      } else if (z.type === 'url') {
+        d.appendChild(inp(tr('viewer.zf.url'), 'text', z.target, v => upd({ target: v })));
+        d.appendChild(inp(tr('viewer.zf.trigger'), 'select', z.trigger, v => upd({ trigger: v }, true), [['enter', tr('viewer.zf.trig.enter')], ['click', tr('viewer.zf.trig.click')], ['both', tr('viewer.zf.trig.both')]]));
+      } else { d.appendChild(inp(tr('viewer.zf.ha'), 'text', z.target, v => upd({ target: v }))); d.appendChild(inp(tr('viewer.zf.confirm'), 'checkbox', z.confirm, v => upd({ confirm: v }))); }
       const lk = document.createElement('small'); lk.style.margin = '6px 0 2px';
       lk.textContent = !z.mesh ? tr('viewer.link.none') : tr('viewer.link.linked', z.mesh) + (viewer.meshInfo(z.mesh) ? tr('viewer.link.info', viewer.meshInfo(z.mesh).count, viewer.meshInfo(z.mesh).size.map(v => v.toFixed(2)).join(' × ')) : (tilesMode ? tr('viewer.link.unloaded') : tr('viewer.link.missing')));
       d.appendChild(lk);
@@ -529,6 +531,7 @@ function renderZoneList() {
       if (!z.mesh) d.appendChild(inp(tr('viewer.zf.shape'), 'select', z.shape, v => upd({ shape: v }, true), [['ring', tr('viewer.zf.shape.ring')], ['board', tr('viewer.zf.shape.board')]]));
       d.appendChild(inp(z.mesh ? tr('viewer.zf.r.link') : (z.shape === 'board' ? tr('viewer.zf.r.board') : tr('viewer.zf.r.ring')), 'number', z.radius, v => upd({ radius: v })));
       if (z.shape === 'board' && !z.mesh) { d.appendChild(inp(tr('viewer.zf.w'), 'number', z.w, v => upd({ w: v }))); d.appendChild(inp(tr('viewer.zf.h'), 'number', z.h, v => upd({ h: v }))); }
+      d.appendChild(inp(tr('viewer.zf.cone'), 'select', typeof z.cone === 'boolean' ? (z.cone ? 'on' : 'off') : 'auto', v => upd({ cone: v === 'on' ? true : (v === 'off' ? false : undefined) }, true), [['auto', tr('viewer.zf.cone.auto')], ['on', tr('viewer.zf.cone.on')], ['off', tr('viewer.zf.cone.off')]]));
       d.appendChild(inp(tr('viewer.zf.showname'), 'checkbox', z.showName, v => upd({ showName: v })));
       d.appendChild(inp(tr('viewer.zf.private'), 'checkbox', z.private, v => upd({ private: v }, true)));
     }

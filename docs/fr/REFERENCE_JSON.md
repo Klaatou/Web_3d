@@ -118,7 +118,7 @@ Les positions sont en mètres, dans le repère de la page : x vers l'est, y vers
 | `imageExts`    | texte     | `"jpg,jpeg,png,webp,gif,avif"` | extensions essayées, dans l'ordre, pour un nom d'image sans extension (§ 5.11) ; clé facultative, absente du fichier écrit par le générateur | —                                   |
 | `mediaDir`     | texte     | `"medias"` | sous-dossier des images et des fichiers texte des zones `image` (§ 5.11) ; `""` = aucun ; clé facultative, absente du fichier écrit par le générateur | —                                   |
 | `zoneMarker`   | texte     | `"dot"`    | repère des portails et zones libres : `"dot"` petit disque, `"range"` anneau au rayon réel de la zone, `"none"` rien | `--zone-marker`                     |
-| `zoneCone`     | oui / non | `true`     | petit cône au-dessus des portails (touche T)                                                                         | `--zone-cone`, `--no-zone-cone`     |
+| `zoneCone`     | oui / non | `true`     | petit cône au-dessus des portails et des liens déclenchés en marchant dedans (touche T) ; réglable zone par zone par la clé `cone`                                                                         | `--zone-cone`, `--no-zone-cone`     |
 | `showSpawns`   | oui / non | `false`    | dessine aussi les arrivées                                                                                           | `--show-spawns`, `--no-show-spawns` |
 | `zoneInfoDist` | nombre    | `150`      | distance en mètres (de 5 à 500) jusqu'où les zones répondent au survol et au clic en promenade                       | `--zone-info-dist`                  |
 
@@ -156,7 +156,7 @@ Il existe **cinq sortes** de zones (champ `type`) : `"spawn"` (arrivée), `"port
 | `x`, `y`, `z` | nombre    | `0`           | position en mètres                                                                                                                                       |
 | `yaw`         | nombre    | `0`           | orientation en radians : sens du regard à l'arrivée, ou face du panneau                                                                                  |
 | `shape`       | texte     | `"ring"`      | `"ring"` (anneau au sol) ou `"board"` (panneau sur un poteau)                                                                                            |
-| `trigger`     | texte     | `"click"`     | portails seulement : `"click"` (clic ou E), `"enter"` (en marchant dedans) ou `"both"` (les deux). Les autres sortes sont toujours `"click"`             |
+| `trigger`     | texte     | `"click"`     | portails et liens (`"url"`, `hop://` compris) : `"click"` (clic ou E), `"enter"` (en marchant dedans) ou `"both"` (les deux). Les autres sortes sont toujours `"click"`             |
 | `radius`      | nombre    | `2`           | rayon de la zone en mètres (de 0.5 à 50)                                                                                                                 |
 | `w`, `h`      | nombre    | `2.4`, `1.2`  | largeur et hauteur du panneau en mètres ; pour `image` : 1,2 de large par défaut, hauteur 0 = d'après l'image                                                                                                                  |
 | `target`      | texte     | `""`          | portail : adresse de la région d'arrivée, ou vide pour un point de la même région ; lien : adresse de la page web ; commande : adresse appelée ; image : nom du fichier ou adresse de l'image           |
@@ -165,6 +165,7 @@ Il existe **cinq sortes** de zones (champ `type`) : `"spawn"` (arrivée), `"port
 | `confirm`     | oui / non | `false`       | demande une confirmation avant d'agir                                                                                                                    |
 | `private`     | oui / non | `false`       | zone privée : absente des pages publiques (profil `public`)                                                                                              |
 | `showName`    | oui / non | `false`       | écrit le `label` au-dessus de la zone en promenade                                                                                                       |
+| `cone`        | oui / non | (absente : selon le déclenchement) | repère (cône) au-dessus de la zone : `true` le montre toujours, même pour une zone « au clic » ; `false` ne le montre jamais ; absente : un cône pour les portails et les liens déclenchés en marchant dedans (`"enter"` ou `"both"`). La touche T masque tous les cônes. Sans effet sur une arrivée (`--show-spawns`) ni sur un tableau ; la clé n'est écrite que si elle vaut `true` ou `false` |
 | `mesh`        | texte     | `""`          | zone **liée à un objet** du modèle : son nom, ou `nom#numéro` quand plusieurs objets portent ce nom ; l'objet devient cliquable. Jamais pour une arrivée |
 
 L'exemple contient neuf zones, une de chaque cas :
