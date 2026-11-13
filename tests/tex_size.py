@@ -211,7 +211,7 @@ if glb1.exists():
     js, blob = lire_glb(glb1)
     tel = [blob[js["bufferViews"][i["bufferView"]]["byteOffset"]:][:js["bufferViews"][i["bufferView"]]["byteLength"]] for i in js["images"]]
     rapport(tel == [opaque, alpha, petite], "bout en bout sans option : les textures gardent leurs octets d'origine", [len(x) for x in tel])
-    rapport("[textures]" not in r1.stdout, "bout en bout sans option : aucune ligne « textures » dans le compte rendu")
+    rapport("réduite(s)" not in r1.stdout and "recompressée(s)" not in r1.stdout and "modifiée(s)" not in r1.stdout, "bout en bout sans option : aucun compte rendu de réduction (seul le tableau des tailles s'affiche)")
 
 oar2, fake2 = fabriquer(tmp / "e2")
 r2 = lancer(oar2, fake2, "--tex-size", "128")

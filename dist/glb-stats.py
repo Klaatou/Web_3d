@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """glb-stats.py : analyse rapide d'un GLB, quelle que soit sa taille.
 
-Lit uniquement l'en-tête JSON du fichier (jamais les données binaires ni les textures) : quelques secondes
-et très peu de mémoire, même pour un GLB de plusieurs Go.
+Lit l'en-tête JSON du fichier et le début de chaque image (pour en connaître la taille en pixels), jamais la géométrie ni les pixels
+des textures : quelques secondes et très peu de mémoire, même pour un GLB de plusieurs Go.
 
 Usage : python glb-stats.py "Region.glb" [--block 256] [--output rapport.txt]
 
 Donne : poids par catégorie, instances de meshes, étendue de la région, objets plus grands qu'un bloc,
 et la répartition par blocs carrés (nœuds, triangles, Mo de textures, Mo de géométrie) pour juger d'un
-découpage en tuiles. Plan horizontal = X et Z (glTF est Y vers le haut).
+découpage en tuiles, puis les tailles des textures (nombre et poids par tranche de plus grand côté, images PBR à part).
+Plan horizontal = X et Z (glTF est Y vers le haut).
 """
 import argparse
 import collections
@@ -21,7 +22,7 @@ import sys
 import json as _json, locale as _locale, os as _os, pathlib as _pl, sys as _sys
 
 # fabrication (build.py) : la ligne suivante devient I18N_DATA = { "fr": {...}, "en": {...} }
-I18N_DATA = _json.loads(r'''{"en":{"_name":"English","py.common.help":"show this help message and exit","py.common.lang_help":"language of the messages and of this help: fr, en or auto (default: the system's language; environment variable WEB3D_LANG is equivalent). Available: {0}","py.common.optionals":"options","py.common.positionals":"arguments","py.common.version_mark":"{0}, fingerprint {1}","py.common.version":"show the version and exit","py.stats.0_16_mediane_1_1f_90":"{0:>16}: median {1:,.1f} | 90 % of blocks under {2:,.1f} | maximum {3:,.1f}","py.stats.attention_geometrie_compressee_0_les_mo":"Warning: compressed geometry ({0}): the MB of geometry above are the decoded size, not the file's.","py.stats.aucun_mesh_positionnable_accessors_sans_min":"No placeable mesh (accessors without min/max?).","py.stats.bloc_0_1_2_1f_mo":"  block {0},{1}: {2:.1f} MB of geometry, {3} triangles, {4} instances, {5:.1f} MB of textures","py.stats.blocs_de_0_0f_m_1":"== Blocks of {0:.0f} m: {1} non-empty (instance center; geometry and textures without duplicates within the block) ==","py.stats.ce_fichier_n_est_pas_un":"This file is not a GLB.","py.stats.cote_des_blocs_en_metres_defaut":"block side in meters (default 256)","py.stats.cout_de_la_reutilisation_entre_blocs":"== Cost of reuse between blocks ==","py.stats.desc":"glb-stats.py: quick analysis of a GLB, whatever its size. Reads only the JSON header (never the binary data or the textures): a few seconds and very little memory.","py.stats.ecrit_aussi_le_rapport_dans_ce":"also writes the report to this file (UTF-8)","py.stats.etendue":"== Extent ==","py.stats.fichier_0_1_1f_mo_en":"File: {0} ({1:,.1f} MB; JSON header read: {2:,.1f} MB)","py.stats.geometrie_accessors_uniques_0_1f_mo":"Geometry (unique accessors): {0:,.1f} MB | Embedded textures: {1:,.1f} MB | Rest: {2:,.1f} MB","py.stats.geometrie_mo":"geometry (MB)","py.stats.geometrie_utilisee_par_plusieurs_blocs_0":"Geometry used by several blocks: {0:,.1f} MB ({1:.0f} % of the total) | textures used by several blocks: {2:,.1f} MB ({3:.0f} % of the total): size of a shared library loaded once.","py.stats.help.glb":"the .glb file to analyze","py.stats.le_premier_bloc_du_glb_n":"The first GLB chunk is not JSON.","py.stats.les_5_blocs_les_plus_lourds":"The 5 blocks heaviest in geometry:","py.stats.meshes_reutilises_plusieurs_fois_0_materiaux":"Meshes reused several times: {0} | materials: {1} | textures (images): {2} (used: {3})","py.stats.nud_0_1_2_0f_m":"  - node {0} \"{1}\": {2:.0f} m, {3} mesh(es)","py.stats.nuds_parcourus_0_meshes_1_utilises":"Nodes visited: {0} | meshes: {1} (used: {2}) | mesh instances: {3}","py.stats.objets_racine_0_plus_grands_qu":"Root objects: {0} | larger than a {1:.0f} m block: {2}","py.stats.poids_estime_octets_lus_dans_l":"== Estimated weight (bytes read from the header, without decoding) ==","py.stats.somme_des_blocs_geometrie_0_1f":"Sum of blocks: geometry {0:,.1f} MB (against {1:,.1f} MB without duplicates across the whole file): difference = extra cost if shared meshes are duplicated in each block.","py.stats.sommets_uniques_0_sommets_rendus_instances":"Unique vertices: {0:,} | rendered vertices (instances included): {1:,} | rendered triangles: {2:,}","py.stats.taux_de_reutilisation_sommets_rendus_uniques":"Reuse ratio (rendered / unique vertices): {0:.1f}","py.stats.x_0_1f_a_1_1f":"X: {0:.1f} to {1:.1f} ({2:.0f} m) | Z: {3:.1f} to {4:.1f} ({5:.0f} m) | height Y: {6:.1f} to {7:.1f}"},"fr":{"_name":"Français","py.common.help":"afficher ce message d'aide et quitter","py.common.lang_help":"langue des messages et de l'aide : fr, en ou auto (défaut : langue du système ; variable d'environnement WEB3D_LANG équivalente). Disponibles : {0}","py.common.optionals":"options","py.common.positionals":"arguments","py.common.version_mark":"{0}, empreinte {1}","py.common.version":"afficher la version et quitter","py.stats.0_16_mediane_1_1f_90":"{0:>16} : médiane {1:,.1f} | 90 % des blocs sous {2:,.1f} | maximum {3:,.1f}","py.stats.attention_geometrie_compressee_0_les_mo":"Attention : géométrie compressée ({0}) : les Mo de géométrie ci-dessus sont la taille décodée, pas celle du fichier.","py.stats.aucun_mesh_positionnable_accessors_sans_min":"Aucun mesh positionnable (accessors sans min/max ?).","py.stats.bloc_0_1_2_1f_mo":"  bloc {0},{1} : {2:.1f} Mo de géométrie, {3} triangles, {4} instances, {5:.1f} Mo de textures","py.stats.blocs_de_0_0f_m_1":"== Blocs de {0:.0f} m : {1} non vides (centre des instances ; géométrie et textures sans doublon dans le bloc) ==","py.stats.ce_fichier_n_est_pas_un":"Ce fichier n'est pas un GLB.","py.stats.cote_des_blocs_en_metres_defaut":"côté des blocs en mètres (défaut 256)","py.stats.cout_de_la_reutilisation_entre_blocs":"== Coût de la réutilisation entre blocs ==","py.stats.desc":"glb-stats.py : analyse rapide d'un GLB, quelle que soit sa taille. Lit uniquement l'en-tête JSON (jamais les données binaires ni les textures) : quelques secondes et très peu de mémoire.","py.stats.ecrit_aussi_le_rapport_dans_ce":"écrit aussi le rapport dans ce fichier (UTF-8)","py.stats.etendue":"== Étendue ==","py.stats.fichier_0_1_1f_mo_en":"Fichier : {0} ({1:,.1f} Mo ; en-tête JSON lu : {2:,.1f} Mo)","py.stats.geometrie_accessors_uniques_0_1f_mo":"Géométrie (accessors uniques) : {0:,.1f} Mo | Textures embarquées : {1:,.1f} Mo | Reste : {2:,.1f} Mo","py.stats.geometrie_mo":"géométrie (Mo)","py.stats.geometrie_utilisee_par_plusieurs_blocs_0":"Géométrie utilisée par plusieurs blocs : {0:,.1f} Mo ({1:.0f} % du total) | textures utilisées par plusieurs blocs : {2:,.1f} Mo ({3:.0f} % du total) : taille d'une bibliothèque commune chargée une fois.","py.stats.help.glb":"fichier .glb à analyser","py.stats.le_premier_bloc_du_glb_n":"Le premier bloc du GLB n'est pas du JSON.","py.stats.les_5_blocs_les_plus_lourds":"Les 5 blocs les plus lourds en géométrie :","py.stats.meshes_reutilises_plusieurs_fois_0_materiaux":"Meshes réutilisés plusieurs fois : {0} | matériaux : {1} | textures (images) : {2} (utilisées : {3})","py.stats.nud_0_1_2_0f_m":"  - nœud {0} « {1} » : {2:.0f} m, {3} mesh(es)","py.stats.nuds_parcourus_0_meshes_1_utilises":"Nœuds parcourus : {0} | meshes : {1} (utilisés : {2}) | instances de meshes : {3}","py.stats.objets_racine_0_plus_grands_qu":"Objets racine : {0} | plus grands qu'un bloc de {1:.0f} m : {2}","py.stats.poids_estime_octets_lus_dans_l":"== Poids estimé (octets lus dans l'en-tête, sans décoder) ==","py.stats.somme_des_blocs_geometrie_0_1f":"Somme des blocs : géométrie {0:,.1f} Mo (contre {1:,.1f} Mo sans doublon dans tout le fichier) : écart = surcoût si les meshes partagés sont dupliqués dans chaque bloc.","py.stats.sommets_uniques_0_sommets_rendus_instances":"Sommets uniques : {0:,} | sommets rendus (instances comprises) : {1:,} | triangles rendus : {2:,}","py.stats.taux_de_reutilisation_sommets_rendus_uniques":"Taux de réutilisation (sommets rendus / uniques) : {0:.1f}","py.stats.x_0_1f_a_1_1f":"X : {0:.1f} à {1:.1f} ({2:.0f} m) | Z : {3:.1f} à {4:.1f} ({5:.0f} m) | hauteur Y : {6:.1f} à {7:.1f}"}}''')
+I18N_DATA = _json.loads(r'''{"en":{"_name":"English","py.common.help":"show this help message and exit","py.common.lang_help":"language of the messages and of this help: fr, en or auto (default: the system's language; environment variable WEB3D_LANG is equivalent). Available: {0}","py.common.optionals":"options","py.common.positionals":"arguments","py.common.version_mark":"{0}, fingerprint {1}","py.common.version":"show the version and exit","py.stats.0_16_mediane_1_1f_90":"{0:>16}: median {1:,.1f} | 90 % of blocks under {2:,.1f} | maximum {3:,.1f}","py.stats.attention_geometrie_compressee_0_les_mo":"Warning: compressed geometry ({0}): the MB of geometry above are the decoded size, not the file's.","py.stats.aucun_mesh_positionnable_accessors_sans_min":"No placeable mesh (accessors without min/max?).","py.stats.bloc_0_1_2_1f_mo":"  block {0},{1}: {2:.1f} MB of geometry, {3} triangles, {4} instances, {5:.1f} MB of textures","py.stats.blocs_de_0_0f_m_1":"== Blocks of {0:.0f} m: {1} non-empty (instance center; geometry and textures without duplicates within the block) ==","py.stats.ce_fichier_n_est_pas_un":"This file is not a GLB.","py.stats.cote_des_blocs_en_metres_defaut":"block side in meters (default 256)","py.stats.cout_de_la_reutilisation_entre_blocs":"== Cost of reuse between blocks ==","py.stats.desc":"glb-stats.py: quick analysis of a GLB, whatever its size. Reads the JSON header and the start of each image (to know its size in pixels), never the geometry or the pixels of the textures: a few seconds and very little memory.","py.stats.ecrit_aussi_le_rapport_dans_ce":"also writes the report to this file (UTF-8)","py.stats.etendue":"== Extent ==","py.stats.fichier_0_1_1f_mo_en":"File: {0} ({1:,.1f} MB; JSON header read: {2:,.1f} MB)","py.stats.geometrie_accessors_uniques_0_1f_mo":"Geometry (unique accessors): {0:,.1f} MB | Embedded textures: {1:,.1f} MB | Rest: {2:,.1f} MB","py.stats.geometrie_mo":"geometry (MB)","py.stats.geometrie_utilisee_par_plusieurs_blocs_0":"Geometry used by several blocks: {0:,.1f} MB ({1:.0f} % of the total) | textures used by several blocks: {2:,.1f} MB ({3:.0f} % of the total): size of a shared library loaded once.","py.stats.help.glb":"the .glb file to analyze","py.stats.le_premier_bloc_du_glb_n":"The first GLB chunk is not JSON.","py.stats.les_5_blocs_les_plus_lourds":"The 5 blocks heaviest in geometry:","py.stats.meshes_reutilises_plusieurs_fois_0_materiaux":"Meshes reused several times: {0} | materials: {1} | textures (images): {2} (used: {3})","py.stats.nud_0_1_2_0f_m":"  - node {0} \"{1}\": {2:.0f} m, {3} mesh(es)","py.stats.nuds_parcourus_0_meshes_1_utilises":"Nodes visited: {0} | meshes: {1} (used: {2}) | mesh instances: {3}","py.stats.objets_racine_0_plus_grands_qu":"Root objects: {0} | larger than a {1:.0f} m block: {2}","py.stats.poids_estime_octets_lus_dans_l":"== Estimated weight (bytes read from the header, without decoding) ==","py.stats.somme_des_blocs_geometrie_0_1f":"Sum of blocks: geometry {0:,.1f} MB (against {1:,.1f} MB without duplicates across the whole file): difference = extra cost if shared meshes are duplicated in each block.","py.stats.sommets_uniques_0_sommets_rendus_instances":"Unique vertices: {0:,} | rendered vertices (instances included): {1:,} | rendered triangles: {2:,}","py.stats.taux_de_reutilisation_sommets_rendus_uniques":"Reuse ratio (rendered / unique vertices): {0:.1f}","py.stats.tex_aucune":"No image in this GLB.","py.stats.tex_ordinaires":"Ordinary textures: {0}, {1:.1f} MB (largest side: {2} px); --tex-size and --tex-quality act on them","py.stats.tex_pbr":"PBR material images: {0}, {1:.1f} MB (largest side: {2} px); --tex-size does not touch them","py.stats.tex_titre":"Texture sizes (images of the GLB)","py.stats.tex_tranche_derniere":"over {0} px","py.stats.tex_tranche_inconnue":"size not read","py.stats.tex_tranche_ligne":"    {0}: {1} images, {2:.1f} MB","py.stats.tex_tranche_milieu":"{0} to {1} px","py.stats.tex_tranche_premiere":"up to {0} px","py.stats.x_0_1f_a_1_1f":"X: {0:.1f} to {1:.1f} ({2:.0f} m) | Z: {3:.1f} to {4:.1f} ({5:.0f} m) | height Y: {6:.1f} to {7:.1f}"},"fr":{"_name":"Français","py.common.help":"afficher ce message d'aide et quitter","py.common.lang_help":"langue des messages et de l'aide : fr, en ou auto (défaut : langue du système ; variable d'environnement WEB3D_LANG équivalente). Disponibles : {0}","py.common.optionals":"options","py.common.positionals":"arguments","py.common.version_mark":"{0}, empreinte {1}","py.common.version":"afficher la version et quitter","py.stats.0_16_mediane_1_1f_90":"{0:>16} : médiane {1:,.1f} | 90 % des blocs sous {2:,.1f} | maximum {3:,.1f}","py.stats.attention_geometrie_compressee_0_les_mo":"Attention : géométrie compressée ({0}) : les Mo de géométrie ci-dessus sont la taille décodée, pas celle du fichier.","py.stats.aucun_mesh_positionnable_accessors_sans_min":"Aucun mesh positionnable (accessors sans min/max ?).","py.stats.bloc_0_1_2_1f_mo":"  bloc {0},{1} : {2:.1f} Mo de géométrie, {3} triangles, {4} instances, {5:.1f} Mo de textures","py.stats.blocs_de_0_0f_m_1":"== Blocs de {0:.0f} m : {1} non vides (centre des instances ; géométrie et textures sans doublon dans le bloc) ==","py.stats.ce_fichier_n_est_pas_un":"Ce fichier n'est pas un GLB.","py.stats.cote_des_blocs_en_metres_defaut":"côté des blocs en mètres (défaut 256)","py.stats.cout_de_la_reutilisation_entre_blocs":"== Coût de la réutilisation entre blocs ==","py.stats.desc":"glb-stats.py : analyse rapide d'un GLB, quelle que soit sa taille. Lit l'en-tête JSON et le début de chaque image (pour en connaître la taille en pixels), jamais la géométrie ni les pixels des textures : quelques secondes et très peu de mémoire.","py.stats.ecrit_aussi_le_rapport_dans_ce":"écrit aussi le rapport dans ce fichier (UTF-8)","py.stats.etendue":"== Étendue ==","py.stats.fichier_0_1_1f_mo_en":"Fichier : {0} ({1:,.1f} Mo ; en-tête JSON lu : {2:,.1f} Mo)","py.stats.geometrie_accessors_uniques_0_1f_mo":"Géométrie (accessors uniques) : {0:,.1f} Mo | Textures embarquées : {1:,.1f} Mo | Reste : {2:,.1f} Mo","py.stats.geometrie_mo":"géométrie (Mo)","py.stats.geometrie_utilisee_par_plusieurs_blocs_0":"Géométrie utilisée par plusieurs blocs : {0:,.1f} Mo ({1:.0f} % du total) | textures utilisées par plusieurs blocs : {2:,.1f} Mo ({3:.0f} % du total) : taille d'une bibliothèque commune chargée une fois.","py.stats.help.glb":"fichier .glb à analyser","py.stats.le_premier_bloc_du_glb_n":"Le premier bloc du GLB n'est pas du JSON.","py.stats.les_5_blocs_les_plus_lourds":"Les 5 blocs les plus lourds en géométrie :","py.stats.meshes_reutilises_plusieurs_fois_0_materiaux":"Meshes réutilisés plusieurs fois : {0} | matériaux : {1} | textures (images) : {2} (utilisées : {3})","py.stats.nud_0_1_2_0f_m":"  - nœud {0} « {1} » : {2:.0f} m, {3} mesh(es)","py.stats.nuds_parcourus_0_meshes_1_utilises":"Nœuds parcourus : {0} | meshes : {1} (utilisés : {2}) | instances de meshes : {3}","py.stats.objets_racine_0_plus_grands_qu":"Objets racine : {0} | plus grands qu'un bloc de {1:.0f} m : {2}","py.stats.poids_estime_octets_lus_dans_l":"== Poids estimé (octets lus dans l'en-tête, sans décoder) ==","py.stats.somme_des_blocs_geometrie_0_1f":"Somme des blocs : géométrie {0:,.1f} Mo (contre {1:,.1f} Mo sans doublon dans tout le fichier) : écart = surcoût si les meshes partagés sont dupliqués dans chaque bloc.","py.stats.sommets_uniques_0_sommets_rendus_instances":"Sommets uniques : {0:,} | sommets rendus (instances comprises) : {1:,} | triangles rendus : {2:,}","py.stats.taux_de_reutilisation_sommets_rendus_uniques":"Taux de réutilisation (sommets rendus / uniques) : {0:.1f}","py.stats.tex_aucune":"Aucune image dans ce GLB.","py.stats.tex_ordinaires":"Textures ordinaires : {0}, {1:.1f} Mo (plus grand côté : {2} px) ; --tex-size et --tex-quality agissent sur elles","py.stats.tex_pbr":"Images de matériaux PBR : {0}, {1:.1f} Mo (plus grand côté : {2} px) ; --tex-size ne les touche pas","py.stats.tex_titre":"Tailles des textures (images du GLB)","py.stats.tex_tranche_derniere":"plus de {0} px","py.stats.tex_tranche_inconnue":"taille non lue","py.stats.tex_tranche_ligne":"    {0} : {1} images, {2:.1f} Mo","py.stats.tex_tranche_milieu":"{0} à {1} px","py.stats.tex_tranche_premiere":"jusqu'à {0} px","py.stats.x_0_1f_a_1_1f":"X : {0:.1f} à {1:.1f} ({2:.0f} m) | Z : {3:.1f} à {4:.1f} ({5:.0f} m) | hauteur Y : {6:.1f} à {7:.1f}"}}''')
 
 
 def _load():
@@ -254,6 +255,110 @@ def modele(g):
             "tri_rendus": tri_rendus}
 
 
+TEX_BORNES = (256, 512, 1024, 2048)      # tranches du tableau des tailles de textures (plus grand côté, en pixels)
+
+
+def taille_image(lire, longueur):
+    # (largeur, hauteur) lue dans l'en-tête d'une image PNG, JPEG, GIF ou BMP, sans la décoder ; None si le format n'est pas reconnu.
+    # lire(position, nombre) rend les octets demandés ; longueur : taille de l'image. À garder identique dans oar2glb.py et glb-stats.py.
+    t = lire(0, 32)
+    if t[:8] == b"\x89PNG\r\n\x1a\n" and len(t) >= 24:
+        return struct.unpack(">II", t[16:24])
+    if t[:6] in (b"GIF87a", b"GIF89a") and len(t) >= 10:
+        return struct.unpack("<HH", t[6:10])
+    if t[:2] == b"BM" and len(t) >= 26:
+        w, h = struct.unpack("<ii", t[18:26])
+        return abs(w), abs(h)
+    if t[:2] == b"\xff\xd8":
+        pos = 2
+        while pos + 4 <= longueur:
+            e = lire(pos, 4)
+            if len(e) < 4 or e[0] != 0xFF:
+                return None
+            marq = e[1]
+            if marq == 0xFF:                                            # octet de remplissage
+                pos += 1
+            elif marq in (0x01, 0xD8) or 0xD0 <= marq <= 0xD7:          # marqueurs sans longueur
+                pos += 2
+            elif marq == 0xD9:                                          # fin d'image avant toute taille
+                return None
+            elif 0xC0 <= marq <= 0xCF and marq not in (0xC4, 0xC8, 0xCC):
+                s = lire(pos + 5, 4)
+                if len(s) < 4:
+                    return None
+                h, w = struct.unpack(">HH", s)
+                return w, h
+            else:
+                pos += 2 + struct.unpack(">H", e[2:4])[0]
+    return None
+
+
+def tex_tranches(tailles):
+    # tailles : [(plus grand côté en pixels ou None, octets)] -> [(bas, haut, nombre, octets)] des tranches non vides (haut None : au-delà de la
+    # dernière borne), puis (None, None, nombre, octets) pour les images dont la taille n'a pas pu être lue
+    res = []
+    bornes = (0,) + TEX_BORNES + (None,)
+    for bas, haut in zip(bornes[:-1], bornes[1:]):
+        lot = [o for c, o in tailles if c is not None and c > bas and (haut is None or c <= haut)]
+        if bas == 0:
+            lot = [o for c, o in tailles if c is not None and c <= haut]
+        if lot:
+            res.append((bas, haut, len(lot), sum(lot)))
+    inconnues = [o for c, o in tailles if c is None]
+    if inconnues:
+        res.append((None, None, len(inconnues), sum(inconnues)))
+    return res
+
+
+def tableau_textures(chemin, g, njson):
+    """Tailles en pixels des images du GLB, lues dans l'en-tête de chaque image (jamais décodées) ; les images des matériaux PBR (pbr-...) à part."""
+    imgs, texs, mats, bvs = g.get("images", []), g.get("textures", []), g.get("materials", []), g.get("bufferViews", [])
+    out = ["== " + _tr("py.stats.tex_titre") + " =="]
+    if not imgs:
+        return out + [_tr("py.stats.tex_aucune")]
+    pbr = set()
+    for m in mats:
+        if str(m.get("name", "")).startswith("pbr-"):
+            refs = [(m.get("pbrMetallicRoughness") or {}).get("baseColorTexture"), (m.get("pbrMetallicRoughness") or {}).get("metallicRoughnessTexture"),
+                    m.get("normalTexture"), m.get("occlusionTexture"), m.get("emissiveTexture")]
+            for r in refs:
+                ti = r.get("index") if isinstance(r, dict) else None
+                if isinstance(ti, int) and 0 <= ti < len(texs) and isinstance(texs[ti].get("source"), int):
+                    pbr.add(texs[ti]["source"])
+    debut = 28 + njson                       # début des données binaires : en-tête (12) + bloc JSON (8 + njson) + en-tête du bloc binaire (8)
+    ordinaires, du_pbr = [], []
+    with open(chemin, "rb") as f:
+        for i, im in enumerate(imgs):
+            bv = bvs[im["bufferView"]] if isinstance(im.get("bufferView"), int) and 0 <= im["bufferView"] < len(bvs) else None
+            if bv is None:
+                lot = (None, 0)              # image hors du GLB (adresse ou fichier à côté) : taille non lue
+            else:
+                base, n = debut + bv.get("byteOffset", 0), bv.get("byteLength", 0)
+
+                def lire(p, k, base=base, n=n):
+                    f.seek(base + p)
+                    return f.read(max(0, min(k, n - p)))
+                c = taille_image(lire, n)
+                lot = (max(c) if c else None, n)
+            (du_pbr if i in pbr else ordinaires).append(lot)
+    for lots, cle in ((ordinaires, "py.stats.tex_ordinaires"), (du_pbr, "py.stats.tex_pbr")):
+        if not lots:
+            continue
+        connues = [c for c, _ in lots if c]
+        out.append(_tr(cle, len(lots), sum(o for _, o in lots) / 1048576, max(connues) if connues else "?"))
+        for bas, haut, n, octets in tex_tranches(lots):
+            if bas is None:
+                lib = _tr("py.stats.tex_tranche_inconnue")
+            elif bas == 0:
+                lib = _tr("py.stats.tex_tranche_premiere", haut)
+            elif haut is None:
+                lib = _tr("py.stats.tex_tranche_derniere", bas)
+            else:
+                lib = _tr("py.stats.tex_tranche_milieu", bas + 1, haut)
+            out.append(_tr("py.stats.tex_tranche_ligne", lib, n, octets / 1048576))
+    return out
+
+
 def rapport(chemin, bloc=256.0, g=None, njson=0):
     """Rapport texte (liste de lignes) ; `g` et `njson` : JSON déjà lu (sinon relu depuis `chemin`)."""
     taille = os.path.getsize(chemin)
@@ -366,7 +471,8 @@ def main():
         sys.stdout.reconfigure(encoding="utf-8")
     except Exception:
         pass
-    texte = "\n".join(rapport(a.glb, a.bloc))
+    g, njson = lire_json(a.glb)
+    texte = "\n".join(rapport(a.glb, a.bloc, g, njson) + [""] + tableau_textures(a.glb, g, njson))
     print(texte)
     if a.sortie:
         with open(a.sortie, "w", encoding="utf-8") as f:

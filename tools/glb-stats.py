@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """glb-stats.py : analyse rapide d'un GLB, quelle que soit sa taille.
 
-Lit uniquement l'en-tête JSON du fichier (jamais les données binaires ni les textures) : quelques secondes
-et très peu de mémoire, même pour un GLB de plusieurs Go.
+Lit l'en-tête JSON du fichier et le début de chaque image (pour en connaître la taille en pixels), jamais la géométrie ni les pixels
+des textures : quelques secondes et très peu de mémoire, même pour un GLB de plusieurs Go.
 
 Usage : python glb-stats.py "Region.glb" [--block 256] [--output rapport.txt]
 
 Donne : poids par catégorie, instances de meshes, étendue de la région, objets plus grands qu'un bloc,
 et la répartition par blocs carrés (nœuds, triangles, Mo de textures, Mo de géométrie) pour juger d'un
-découpage en tuiles. Plan horizontal = X et Z (glTF est Y vers le haut).
+découpage en tuiles, puis les tailles des textures (nombre et poids par tranche de plus grand côté, images PBR à part).
+Plan horizontal = X et Z (glTF est Y vers le haut).
 """
 import argparse
 import collections
@@ -170,6 +171,110 @@ def modele(g):
             "tri_rendus": tri_rendus}
 
 
+TEX_BORNES = (256, 512, 1024, 2048)      # tranches du tableau des tailles de textures (plus grand côté, en pixels)
+
+
+def taille_image(lire, longueur):
+    # (largeur, hauteur) lue dans l'en-tête d'une image PNG, JPEG, GIF ou BMP, sans la décoder ; None si le format n'est pas reconnu.
+    # lire(position, nombre) rend les octets demandés ; longueur : taille de l'image. À garder identique dans oar2glb.py et glb-stats.py.
+    t = lire(0, 32)
+    if t[:8] == b"\x89PNG\r\n\x1a\n" and len(t) >= 24:
+        return struct.unpack(">II", t[16:24])
+    if t[:6] in (b"GIF87a", b"GIF89a") and len(t) >= 10:
+        return struct.unpack("<HH", t[6:10])
+    if t[:2] == b"BM" and len(t) >= 26:
+        w, h = struct.unpack("<ii", t[18:26])
+        return abs(w), abs(h)
+    if t[:2] == b"\xff\xd8":
+        pos = 2
+        while pos + 4 <= longueur:
+            e = lire(pos, 4)
+            if len(e) < 4 or e[0] != 0xFF:
+                return None
+            marq = e[1]
+            if marq == 0xFF:                                            # octet de remplissage
+                pos += 1
+            elif marq in (0x01, 0xD8) or 0xD0 <= marq <= 0xD7:          # marqueurs sans longueur
+                pos += 2
+            elif marq == 0xD9:                                          # fin d'image avant toute taille
+                return None
+            elif 0xC0 <= marq <= 0xCF and marq not in (0xC4, 0xC8, 0xCC):
+                s = lire(pos + 5, 4)
+                if len(s) < 4:
+                    return None
+                h, w = struct.unpack(">HH", s)
+                return w, h
+            else:
+                pos += 2 + struct.unpack(">H", e[2:4])[0]
+    return None
+
+
+def tex_tranches(tailles):
+    # tailles : [(plus grand côté en pixels ou None, octets)] -> [(bas, haut, nombre, octets)] des tranches non vides (haut None : au-delà de la
+    # dernière borne), puis (None, None, nombre, octets) pour les images dont la taille n'a pas pu être lue
+    res = []
+    bornes = (0,) + TEX_BORNES + (None,)
+    for bas, haut in zip(bornes[:-1], bornes[1:]):
+        lot = [o for c, o in tailles if c is not None and c > bas and (haut is None or c <= haut)]
+        if bas == 0:
+            lot = [o for c, o in tailles if c is not None and c <= haut]
+        if lot:
+            res.append((bas, haut, len(lot), sum(lot)))
+    inconnues = [o for c, o in tailles if c is None]
+    if inconnues:
+        res.append((None, None, len(inconnues), sum(inconnues)))
+    return res
+
+
+def tableau_textures(chemin, g, njson):
+    """Tailles en pixels des images du GLB, lues dans l'en-tête de chaque image (jamais décodées) ; les images des matériaux PBR (pbr-...) à part."""
+    imgs, texs, mats, bvs = g.get("images", []), g.get("textures", []), g.get("materials", []), g.get("bufferViews", [])
+    out = ["== " + _tr("py.stats.tex_titre") + " =="]
+    if not imgs:
+        return out + [_tr("py.stats.tex_aucune")]
+    pbr = set()
+    for m in mats:
+        if str(m.get("name", "")).startswith("pbr-"):
+            refs = [(m.get("pbrMetallicRoughness") or {}).get("baseColorTexture"), (m.get("pbrMetallicRoughness") or {}).get("metallicRoughnessTexture"),
+                    m.get("normalTexture"), m.get("occlusionTexture"), m.get("emissiveTexture")]
+            for r in refs:
+                ti = r.get("index") if isinstance(r, dict) else None
+                if isinstance(ti, int) and 0 <= ti < len(texs) and isinstance(texs[ti].get("source"), int):
+                    pbr.add(texs[ti]["source"])
+    debut = 28 + njson                       # début des données binaires : en-tête (12) + bloc JSON (8 + njson) + en-tête du bloc binaire (8)
+    ordinaires, du_pbr = [], []
+    with open(chemin, "rb") as f:
+        for i, im in enumerate(imgs):
+            bv = bvs[im["bufferView"]] if isinstance(im.get("bufferView"), int) and 0 <= im["bufferView"] < len(bvs) else None
+            if bv is None:
+                lot = (None, 0)              # image hors du GLB (adresse ou fichier à côté) : taille non lue
+            else:
+                base, n = debut + bv.get("byteOffset", 0), bv.get("byteLength", 0)
+
+                def lire(p, k, base=base, n=n):
+                    f.seek(base + p)
+                    return f.read(max(0, min(k, n - p)))
+                c = taille_image(lire, n)
+                lot = (max(c) if c else None, n)
+            (du_pbr if i in pbr else ordinaires).append(lot)
+    for lots, cle in ((ordinaires, "py.stats.tex_ordinaires"), (du_pbr, "py.stats.tex_pbr")):
+        if not lots:
+            continue
+        connues = [c for c, _ in lots if c]
+        out.append(_tr(cle, len(lots), sum(o for _, o in lots) / 1048576, max(connues) if connues else "?"))
+        for bas, haut, n, octets in tex_tranches(lots):
+            if bas is None:
+                lib = _tr("py.stats.tex_tranche_inconnue")
+            elif bas == 0:
+                lib = _tr("py.stats.tex_tranche_premiere", haut)
+            elif haut is None:
+                lib = _tr("py.stats.tex_tranche_derniere", bas)
+            else:
+                lib = _tr("py.stats.tex_tranche_milieu", bas + 1, haut)
+            out.append(_tr("py.stats.tex_tranche_ligne", lib, n, octets / 1048576))
+    return out
+
+
 def rapport(chemin, bloc=256.0, g=None, njson=0):
     """Rapport texte (liste de lignes) ; `g` et `njson` : JSON déjà lu (sinon relu depuis `chemin`)."""
     taille = os.path.getsize(chemin)
@@ -282,7 +387,8 @@ def main():
         sys.stdout.reconfigure(encoding="utf-8")
     except Exception:
         pass
-    texte = "\n".join(rapport(a.glb, a.bloc))
+    g, njson = lire_json(a.glb)
+    texte = "\n".join(rapport(a.glb, a.bloc, g, njson) + [""] + tableau_textures(a.glb, g, njson))
     print(texte)
     if a.sortie:
         with open(a.sortie, "w", encoding="utf-8") as f:

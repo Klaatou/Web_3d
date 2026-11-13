@@ -1511,6 +1511,83 @@ def tex_reduire(data, taille_max, qualite):
         return data, False
 
 
+TEX_BORNES = (256, 512, 1024, 2048)      # tranches du tableau des tailles de textures (plus grand côté, en pixels)
+
+
+def taille_image(lire, longueur):
+    # (largeur, hauteur) lue dans l'en-tête d'une image PNG, JPEG, GIF ou BMP, sans la décoder ; None si le format n'est pas reconnu.
+    # lire(position, nombre) rend les octets demandés ; longueur : taille de l'image. À garder identique dans oar2glb.py et glb-stats.py.
+    t = lire(0, 32)
+    if t[:8] == b"\x89PNG\r\n\x1a\n" and len(t) >= 24:
+        return struct.unpack(">II", t[16:24])
+    if t[:6] in (b"GIF87a", b"GIF89a") and len(t) >= 10:
+        return struct.unpack("<HH", t[6:10])
+    if t[:2] == b"BM" and len(t) >= 26:
+        w, h = struct.unpack("<ii", t[18:26])
+        return abs(w), abs(h)
+    if t[:2] == b"\xff\xd8":
+        pos = 2
+        while pos + 4 <= longueur:
+            e = lire(pos, 4)
+            if len(e) < 4 or e[0] != 0xFF:
+                return None
+            marq = e[1]
+            if marq == 0xFF:                                            # octet de remplissage
+                pos += 1
+            elif marq in (0x01, 0xD8) or 0xD0 <= marq <= 0xD7:          # marqueurs sans longueur
+                pos += 2
+            elif marq == 0xD9:                                          # fin d'image avant toute taille
+                return None
+            elif 0xC0 <= marq <= 0xCF and marq not in (0xC4, 0xC8, 0xCC):
+                s = lire(pos + 5, 4)
+                if len(s) < 4:
+                    return None
+                h, w = struct.unpack(">HH", s)
+                return w, h
+            else:
+                pos += 2 + struct.unpack(">H", e[2:4])[0]
+    return None
+
+
+def tex_tranches(tailles):
+    # tailles : [(plus grand côté en pixels ou None, octets)] -> [(bas, haut, nombre, octets)] des tranches non vides (haut None : au-delà de la
+    # dernière borne), puis (None, None, nombre, octets) pour les images dont la taille n'a pas pu être lue
+    res = []
+    bornes = (0,) + TEX_BORNES + (None,)
+    for bas, haut in zip(bornes[:-1], bornes[1:]):
+        lot = [o for c, o in tailles if c is not None and c > bas and (haut is None or c <= haut)]
+        if bas == 0:
+            lot = [o for c, o in tailles if c is not None and c <= haut]
+        if lot:
+            res.append((bas, haut, len(lot), sum(lot)))
+    inconnues = [o for c, o in tailles if c is None]
+    if inconnues:
+        res.append((None, None, len(inconnues), sum(inconnues)))
+    return res
+
+
+TEX_TAILLES = []         # (plus grand côté en pixels ou None, octets) de chaque texture ordinaire emballée, avant toute réduction
+
+
+def tex_tableau(tailles):
+    # lignes du tableau des tailles des textures ordinaires (celles de convoar), avant toute réduction par --tex-size ou --tex-quality
+    if not tailles:
+        return []
+    connues = [c for c, _ in tailles if c]
+    lignes = [_tr("py.oar2glb.tex_tableau", len(tailles), sum(o for _, o in tailles) / 1048576, max(connues) if connues else "?")]
+    for bas, haut, n, octets in tex_tranches(tailles):
+        if bas is None:
+            lib = _tr("py.oar2glb.tex_tranche_inconnue")
+        elif bas == 0:
+            lib = _tr("py.oar2glb.tex_tranche_premiere", haut)
+        elif haut is None:
+            lib = _tr("py.oar2glb.tex_tranche_derniere", bas)
+        else:
+            lib = _tr("py.oar2glb.tex_tranche_milieu", bas + 1, haut)
+        lignes.append(_tr("py.oar2glb.tex_tranche_ligne", lib, n, octets / 1048576))
+    return lignes
+
+
 def pbr_lire_textures(oar, voulus):
     # {UUID: octets JPEG 2000} : seconde lecture de l'OAR, seulement les textures voulues
     res = {}
@@ -1872,6 +1949,8 @@ def pack_glb(g, base, out, tex=None):
             continue
         data = read_uri(img["uri"], base, image=True)
         TEX_STATS["total"] += 1
+        cote = taille_image(lambda p, k, d=data: d[p:p + k], len(data))
+        TEX_TAILLES.append((max(cote) if cote else None, len(data)))
         if tex:
             avant = len(data)
             data, reduite = tex_reduire(data, tex[0], tex[1])
@@ -2277,6 +2356,8 @@ def main():
     terrain_pipeline(g, scan, a.terrain, a.terrain_patch)      # après drop_far : les patches ne sont jamais retirés
     tex = (a.tex_size, a.tex_quality) if (a.tex_size or a.tex_quality is not None) else None
     size = pack_glb(g, outdir, out, tex)
+    for ligne_tex in tex_tableau(TEX_TAILLES):
+        print(ligne_tex)
     if tex:
         n, tot, av, ap_ = TEX_STATS["reduites"], TEX_STATS["total"], TEX_STATS["avant"] / 1048576, TEX_STATS["apres"] / 1048576
         if a.tex_quality is None:
