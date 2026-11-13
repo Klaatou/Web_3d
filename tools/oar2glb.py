@@ -19,7 +19,7 @@ Usage :  python oar2glb.py --version
  6. Empaquetage en un seul .glb (buffers + textures intégrés), pur Python.
 Sortie : MaRegion.glb à côté de l'OAR.
 """
-import argparse, base64, io, json, math, os, re, shutil, struct, subprocess, sys, tarfile, time, traceback, uuid, zlib
+import argparse, base64, io, json, math, os, re, shutil, struct, subprocess, sys, tarfile, tempfile, time, traceback, uuid, zlib
 from pathlib import Path
 
 # <<I18N_PY>>
@@ -2250,11 +2250,146 @@ def terrain_seul(glb, scan, out, mode, P, chunk=LECTURE):
     return mesures
 
 
+def images_pbr(g):
+    # indices des images des matériaux PBR (pbr-...) : --pbr-size les règle ; --tex-size, --tex-quality et --tex-only n'y touchent pas.
+    # À garder identique à la lecture de tableau_textures() dans glb-stats.py.
+    texs = g.get("textures", [])
+    res = set()
+    for m in g.get("materials", []):
+        if str(m.get("name", "")).startswith("pbr-"):
+            pm = m.get("pbrMetallicRoughness") or {}
+            for r in (pm.get("baseColorTexture"), pm.get("metallicRoughnessTexture"), m.get("normalTexture"), m.get("occlusionTexture"), m.get("emissiveTexture")):
+                ti = r.get("index") if isinstance(r, dict) else None
+                if isinstance(ti, int) and 0 <= ti < len(texs) and isinstance(texs[ti].get("source"), int):
+                    res.add(texs[ti]["source"])
+    return res
+
+
+def tex_seul(glb, out, taille, qualite, chunk=LECTURE):
+    """Applique --tex-size (taille) et/ou --tex-quality (qualite) aux textures ordinaires d'un GLB déjà fait, sans le charger en entier :
+    chaque image est lue puis réduite, le JSON est réécrit, les autres données binaires sont recopiées par morceaux. Le GLB d'origine n'est jamais
+    modifié. Rend un dict de mesures, ou None si rien n'est écrit."""
+    t0 = time.time()
+    with open(glb, "rb") as f:
+        total_fichier = os.fstat(f.fileno()).st_size
+        mag, ver, _ = struct.unpack("<4sII", f.read(12))
+        if mag != b"glTF" or ver != 2:
+            sys.exit(_tr("py.oar2glb.erreur_0_n_est_pas_un_2", glb))
+        chunks, pos = [], 12
+        while pos + 8 <= total_fichier:
+            f.seek(pos)
+            ln, kind = struct.unpack("<I4s", f.read(8))
+            chunks.append((kind, pos + 8, ln))
+            pos += 8 + ln + (-ln % 4)
+        if not chunks or chunks[0][0] != b"JSON":
+            sys.exit(_tr("py.oar2glb.erreur_0_le_premier_chunk_n", glb))
+        f.seek(chunks[0][1])
+        g = json.loads(f.read(chunks[0][2]).decode("utf-8"))
+        binc = next((c for c in chunks if c[0] == b"BIN\x00"), None)
+        autres = [c for c in chunks[1:] if c is not binc]
+        if binc is None or not g.get("buffers") or "uri" in g["buffers"][0]:
+            sys.exit(_tr("py.oar2glb.erreur_0_le_tampon_0_n", glb))
+        vues = g.get("bufferViews", [])
+        pbr = images_pbr(g)
+        par_vue = {}                                   # vue -> indices des images qui l'utilisent (seules les vues du tampon 0)
+        for i, im in enumerate(g.get("images", [])):
+            bv = im.get("bufferView")
+            if isinstance(bv, int) and 0 <= bv < len(vues) and vues[bv].get("buffer", 0) == 0:
+                par_vue.setdefault(bv, []).append(i)
+        spool = tempfile.SpooledTemporaryFile(max_size=256 * 1048576)      # octets des images modifiées (en mémoire jusqu'à 256 Mo, puis sur disque)
+        nouveaux = {}                                  # vue -> (position dans spool, longueur, type MIME)
+        tailles = []                                   # (plus grand côté ou None, octets) d'origine des textures ordinaires
+        avant = apres = 0
+        pas = max(1, len(par_vue) // 10)
+        for k, (bv, idxs) in enumerate(sorted(par_vue.items()), 1):
+            if any(i in pbr for i in idxs):
+                continue
+            v = vues[bv]
+            ln = v.get("byteLength", 0)
+            f.seek(binc[1] + v.get("byteOffset", 0))
+            data = f.read(ln)
+            if len(data) < ln:
+                sys.exit(_tr("py.oar2glb.erreur_0_tronque", glb))
+            cote = taille_image(lambda p, n, d=data: d[p:p + n], len(data))
+            tailles.append((max(cote) if cote else None, ln))
+            nd, change = tex_reduire(data, taille, qualite)
+            if change:
+                nouveaux[bv] = (spool.tell(), len(nd), "image/png" if nd[:4] == b"\x89PNG" else "image/jpeg")
+                spool.write(nd)
+                avant += ln
+                apres += len(nd)
+            if len(par_vue) > 200 and k % pas == 0:
+                print(_tr("py.oar2glb.tex_seul_progres", k, len(par_vue)), flush=True)
+        for ligne_tex in tex_tableau(tailles):
+            print(ligne_tex)
+        if not nouveaux:
+            spool.close()
+            return None
+        # nouvelle disposition des données binaires : chaque vue du tampon 0 (et chaque zone EXT_meshopt_compression du tampon 0), alignée sur 4 octets
+        zones = []                                     # (dict portant byteOffset/byteLength, vue d'origine ou None, ancien décalage, ancienne longueur)
+        for i, v in enumerate(vues):
+            if v.get("buffer", 0) == 0:
+                zones.append((v, i, v.get("byteOffset", 0), v.get("byteLength", 0)))
+            ext = (v.get("extensions") or {}).get("EXT_meshopt_compression")
+            if isinstance(ext, dict) and ext.get("buffer", 0) == 0:
+                zones.append((ext, None, ext.get("byteOffset", 0), ext.get("byteLength", 0)))
+        plan, base = [], 0
+        for d, i, ancien, ln in zones:
+            base += -base % 4
+            nl = nouveaux[i][1] if i in nouveaux else ln
+            plan.append((d, i, ancien, ln, base, nl))
+            base += nl
+        bin_total = base + (-base % 4)
+        for d, i, ancien, ln, nouveau, nl in plan:
+            d["byteOffset"], d["byteLength"] = nouveau, nl
+        for bv, (_, _, mime) in nouveaux.items():
+            for i in par_vue[bv]:
+                g["images"][i]["mimeType"] = mime
+        g["buffers"][0]["byteLength"] = bin_total
+        js = pad4(json.dumps(g, separators=(",", ":")).encode("utf-8"), b" ")
+        total = 12 + 8 + len(js) + 8 + bin_total + sum(8 + c[2] + (-c[2] % 4) for c in autres)
+        part = Path(str(out) + ".part")
+        try:
+            with open(part, "wb") as o:
+                o.write(struct.pack("<4sII", b"glTF", 2, total))
+                o.write(struct.pack("<I4s", len(js), b"JSON") + js)
+                o.write(struct.pack("<I4s", bin_total, b"BIN\x00"))
+                ecrit = 0
+
+                def copier(src, debut, longueur):
+                    src.seek(debut)
+                    while longueur > 0:
+                        d = src.read(min(chunk, longueur))
+                        if not d:
+                            sys.exit(_tr("py.oar2glb.erreur_0_tronque", glb))
+                        o.write(d)
+                        longueur -= len(d)
+                for d, i, ancien, ln, nouveau, nl in plan:
+                    o.write(b"\x00" * (nouveau - ecrit))
+                    if i is not None and i in nouveaux:
+                        copier(spool, nouveaux[i][0], nl)
+                    else:
+                        copier(f, binc[1] + ancien, ln)
+                    ecrit = nouveau + nl
+                o.write(b"\x00" * (bin_total - ecrit))
+                for kind, debut, ln in autres:
+                    o.write(struct.pack("<I4s", ln, kind))
+                    copier(f, debut, ln)
+                    o.write(b"\x00" * (-ln % 4))
+            os.replace(part, out)
+        finally:
+            part.unlink(missing_ok=True)
+            spool.close()
+    mesures = {"images": len(tailles), "modifiees": len(nouveaux), "avant": avant, "apres": apres, "glb_avant": total_fichier, "glb_apres": os.path.getsize(out), "secondes": time.time() - t0}
+    print(_tr("py.oar2glb.tex_seul_bilan", len(nouveaux), len(tailles), avant / 1048576, apres / 1048576, total_fichier / 1048576, mesures["glb_apres"] / 1048576, mesures["secondes"]))
+    return mesures
+
+
 def main():
     ap = argparse.ArgumentParser(description=_tr("py.oar2glb.desc", VERSION), epilog=_tr("py.oar2glb.epilog"), formatter_class=argparse.RawDescriptionHelpFormatter, add_help=False)
     i18n_add_common(ap)
     ap.add_argument("--version", action="version", version=f"oar2glb {version_tag()}", help=_tr("py.common.version"))
-    ap.add_argument("oar", help=_tr("py.oar2glb.help.oar"))
+    ap.add_argument("oar", nargs="?", help=_tr("py.oar2glb.help.oar"))
     ap.add_argument("--reencode", action="store_true", help=_tr("py.oar2glb.reencoder_les_textures_j2k_avant_convoar"))
     ap.add_argument("--max", type=float, default=600.0, help=_tr("py.oar2glb.hauteur_max_m_d_un_objet"))
     ap.add_argument("--convoar", help=_tr("py.oar2glb.help.convoar"))
@@ -2273,6 +2408,7 @@ def main():
     ap.add_argument("--terrain-patch", type=int, default=TERRAIN_PATCH, help=_tr("py.oar2glb.cote_d_un_patch_de_terrain", TERRAIN_PATCH))
     ap.add_argument("--terrain-only", dest="terrain_seul", metavar="GLB", help=_tr("py.oar2glb.ne_pas_lancer_convoar_ajouter_le"))
     ap.add_argument("--output", metavar="OUTPUT", dest="sortie", help=_tr("py.oar2glb.avec_terrain_seul_fichier_glb_de"))
+    ap.add_argument("--tex-only", dest="tex_seul", metavar="GLB", help=_tr("py.oar2glb.help.tex_only"))
     a = ap.parse_args()
     a.convoar = a.convoar or default_convoar()
     if not 2 <= a.terrain_patch <= 255:
@@ -2282,6 +2418,25 @@ def main():
     if a.tex_quality is not None and not 1 <= a.tex_quality <= 95:
         sys.exit(_tr("py.oar2glb.erreur_tex_quality"))
 
+    if a.tex_seul:
+        if a.terrain_seul:
+            sys.exit(_tr("py.oar2glb.erreur_tex_only_et_terrain_only"))
+        if not (a.tex_size or a.tex_quality is not None):
+            sys.exit(_tr("py.oar2glb.erreur_tex_only_sans_option"))
+        if pbr_pillow() is None:
+            sys.exit(_tr("py.oar2glb.erreur_tex_pillow"))
+        glb = Path(a.tex_seul).resolve()
+        if not glb.is_file():
+            sys.exit(_tr("py.oar2glb.erreur_0_introuvable", glb))
+        suffixe = ("-tex%d" % a.tex_size if a.tex_size else "") + ("-q%d" % a.tex_quality if a.tex_quality is not None else "")
+        out = Path(a.sortie).resolve() if a.sortie else glb.with_name(glb.stem + suffixe + ".glb")
+        if out == glb:
+            sys.exit(_tr("py.oar2glb.erreur_la_sortie_ne_peut_pas"))
+        r = tex_seul(glb, out, a.tex_size, a.tex_quality)
+        print(f"[OK] {out}" if r else _tr("py.oar2glb.tex_seul_rien"))
+        return
+    if not a.oar:
+        sys.exit(_tr("py.oar2glb.erreur_oar_obligatoire"))
     oar = Path(a.oar).resolve()
     if not oar.exists():
         sys.exit(_tr("py.oar2glb.erreur_0_introuvable", oar))
@@ -2424,7 +2579,7 @@ if __name__ == "__main__":
         traceback.print_exc()
         code = 1
     print(_tr("py.oar2glb.log_0", log))
-    if "--nopause" not in sys.argv and "--terrain-only" not in sys.argv and "--help" not in sys.argv and "-h" not in sys.argv and sys.stdin and sys.stdin.isatty():      # pas de pause non plus après l'aide (--help)
+    if "--nopause" not in sys.argv and "--terrain-only" not in sys.argv and "--tex-only" not in sys.argv and "--help" not in sys.argv and "-h" not in sys.argv and sys.stdin and sys.stdin.isatty():      # pas de pause non plus après l'aide (--help)
         try:
             input(_tr("py.oar2glb.entree_pour_fermer"))
         except EOFError:        # sous Windows, NUL (entree vide d'un script ou d'un test) se dit « console » : pas de trace d'erreur (comme glb2tiles.py)
