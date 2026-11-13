@@ -188,6 +188,15 @@ async def tip(pg):
     return await pg.evaluate("(() => { const e = document.getElementById('zoneTip'); return e && !e.hidden ? e.innerText : null; })()")
 
 
+async def attendre(o, expr, arg=None):
+    """1.10.18 : attend la condition au lieu d'une pause fixe (le titre agit 250 ms apres le clic, plus tard si la page est lente) ;
+    si elle ne vient pas en 8 s, le controle qui suit la signale"""
+    try:
+        await o.pg.wait_for_function(expr, arg=arg, timeout=8000)
+    except Exception:
+        pass
+
+
 async def main():
     from playwright.async_api import async_playwright
     async with async_playwright() as p:
@@ -220,7 +229,7 @@ async def main():
             for tete, corps, nom in (("helpHead", "helpBody", "aide"), ("stateHead", "stateBody", "état")):
                 rapport(await o.ev("(c) => !document.getElementById(c).hidden", corps), f"{nom} : dépliée au départ")
                 await o.pg.click("#" + tete)
-                await o.pg.wait_for_timeout(300)   # v41 : à la souris, le titre replie 250 ms après le clic (un double-clic ne replie pas)
+                await attendre(o, "([t, c]) => document.getElementById(c).hidden && document.getElementById(t).getAttribute('aria-expanded') === 'false'", [tete, corps])   # 1.10.18
                 rapport(await o.ev("([t, c]) => document.getElementById(c).hidden && document.getElementById(t).getAttribute('aria-expanded') === 'false' && document.getElementById(t).textContent.startsWith('▸')", [tete, corps]), f"{nom} : un clic sur le titre la replie (flèche et aria-expanded, pas de couleur)")
             rapport(await o.ev("!document.getElementById('walkHint').hidden && !document.getElementById('stateInfo').hidden"), "repliés, les panneaux restent là (seul le titre)")
             await o.pg.reload()
@@ -228,9 +237,9 @@ async def main():
             await o.walk()
             rapport(await o.ev("document.getElementById('helpBody').hidden && document.getElementById('stateBody').hidden"), "l'état replié est mémorisé après rechargement")
             await o.pg.click("#helpHead")
-            await o.pg.wait_for_timeout(300)   # v41 : à la souris, le titre replie 250 ms après le clic (un double-clic ne replie pas)
+            await attendre(o, "!document.getElementById('helpBody').hidden")   # 1.10.18
             await o.pg.click("#stateHead")
-            await o.pg.wait_for_timeout(300)   # v41 : à la souris, le titre replie 250 ms après le clic (un double-clic ne replie pas)
+            await attendre(o, "!document.getElementById('stateBody').hidden")
             rapport(await o.ev("!document.getElementById('helpBody').hidden && !document.getElementById('stateBody').hidden"), "un second clic les déplie")
             await o.pg.reload()
             await o.pg.wait_for_function("document.getElementById('msg') === null && window.__viewer", timeout=40000)

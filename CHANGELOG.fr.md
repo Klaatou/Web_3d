@@ -6,6 +6,14 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.10.0)
 
+### 13/11/2026 : tests `v35` et `v36` : attendre l'état au lieu d'une pause de 300 ms (lot 1.10.18)
+
+- **Constat** : `tests/v35.py` échouait de façon intermittente sur « un second clic les déplie » (une fois sur trois ou quatre dans le bac à sable, y compris sur `main` d'origine ; vu une fois pendant le lot 1.10.16). La page n'était pas en cause.
+- **Cause** : à la souris, le titre d'un panneau repliable n'agit que 250 ms après le clic, pour qu'un double-clic ne replie pas (`template.html:1167`) ; le test attendait 300 ms fixes puis lisait l'état. Sur le Chromium logiciel, la page peut agir plus tard : le test lisait avant. Mesuré sur la section isolée : quand l'échec se produit, les deux clics sont espacés de 360 ms, le navigateur compte 1 pour chacun (pas de double-clic, aucun `dblclick`), et une lecture 1,5 s plus tard montre les deux panneaux dépliés. Même défaut que celui du lot 1.7.13 (pause fixe au lieu d'attendre la condition).
+- **Fait** (tests seulement : aucun code ne change, `dist\` et `VERSIONS.json` identiques) : une fonction `attendre` dans `tests/v35.py` et `tests/v36.py` attend l'état voulu (8 s au plus ; si la condition ne vient pas, le contrôle qui suit l'échoue comme avant) à la place des six pauses de 300 ms : trois dans `v35.py`, trois dans `v36.py` (même classe de défaut).
+- **Contrôle** : section isolée de `v35` (jusqu'à « un second clic les déplie ») relancée 8 fois : 8 réussites ; avant le correctif, environ 3 échecs sur 4 relances. `v35` complet : 2 passes, tout passe ; `v36` complet : 2 passes, tout passe. Sens opposé : avec le repli de la page volontairement cassé (essai temporaire, remis à l'état de `main`), `v35` échoue sur le repli (trois contrôles), le test détecte donc toujours un vrai défaut. `dist_a_jour` passe, build avec `--vendor` : `dist\` et `VERSIONS.json` inchangés.
+- **Non essayé** : Windows, Edge. Le même motif (pause fixe) peut exister dans d'autres tests ; seuls ceux qui portent le commentaire « v41 : à la souris, le titre replie 250 ms après le clic » ont été repris (recherche dans `tests/`).
+
 ### 13/11/2026 : documents du lot 1.10.16 ; démo Sandbox_BMoG annoncée (lot 1.10.17)
 
 - **Demandé par Klaatou** (le lot 1.10.16 marche chez lui) : mettre les documents à jour, avec la présentation de la démo Sandbox_BMoG.

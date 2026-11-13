@@ -206,6 +206,15 @@ def dist_h(a, b):
     return math.hypot(a[0] - b[0], a[2] - b[2])
 
 
+async def attendre(o, expr, arg=None):
+    """1.10.18 : attend la condition au lieu d'une pause fixe (le titre agit 250 ms apres le clic, plus tard si la page est lente) ;
+    si elle ne vient pas en 8 s, le controle qui suit la signale"""
+    try:
+        await o.pg.wait_for_function(expr, arg=arg, timeout=8000)
+    except Exception:
+        pass
+
+
 async def main():
     from playwright.async_api import async_playwright
     import websockets, websockets.asyncio.client
@@ -361,7 +370,7 @@ async def main():
                 await o.touche(touche)
                 rapport(await etat() == [False, False], f"{nom} : masquée -> déployée")
                 await o.pg.click("#" + ("helpHead" if wrap == "walkHint" else "stateHead"))
-                await o.pg.wait_for_timeout(300)   # v41 : à la souris, le titre replie 250 ms après le clic (un double-clic ne replie pas)
+                await attendre(o, "(c) => document.getElementById(c).hidden", "helpBody" if wrap == "walkHint" else "stateBody")   # 1.10.18
                 rapport(await etat() == [False, True], f"{nom} : clic sur le titre -> réduite")
                 await o.touche(touche)
                 rapport(await etat() == [False, False], f"{nom} : réduite -> DÉPLOYÉE (pas masquée)")
@@ -370,13 +379,13 @@ async def main():
                 rapport(await etat() == [False, False], f"{nom} : déployée -> masquée -> déployée")
                 # réduit mémorisé
                 await o.pg.click("#" + ("helpHead" if wrap == "walkHint" else "stateHead"))
-                await o.pg.wait_for_timeout(300)   # v41 : à la souris, le titre replie 250 ms après le clic (un double-clic ne replie pas)
+                await attendre(o, "(c) => document.getElementById(c).hidden", "helpBody" if wrap == "walkHint" else "stateBody")
             await o.pg.reload()
             await o.pg.wait_for_function("document.getElementById('msg') === null && window.__viewer", timeout=40000)
             await o.walk((0, 0, 0), 0)
             rapport(await o.ev("document.getElementById('helpBody').hidden && document.getElementById('stateBody').hidden && !document.getElementById('walkHint').hidden"), "réduit reste mémorisé après rechargement")
             await o.pg.click("#helpHead"); await o.pg.click("#stateHead")
-            await o.pg.wait_for_timeout(300)   # v41 : à la souris, le titre replie 250 ms après le clic (un double-clic ne replie pas)
+            await attendre(o, "!document.getElementById('helpBody').hidden && !document.getElementById('stateBody').hidden")   # 1.10.18
             await o.touche("KeyH"); await o.touche("KeyI")
             await o.pg.reload()
             await o.pg.wait_for_function("document.getElementById('msg') === null && window.__viewer", timeout=40000)

@@ -6,6 +6,14 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.10.0)
 
+### 13/11/2026: tests `v35` and `v36`: wait for the state instead of a 300 ms pause (batch 1.10.18)
+
+- **Finding**: `tests/v35.py` failed intermittently on "a second click expands them" (about one run in three or four in the sandbox, including on the original `main`; seen once during batch 1.10.16). The page was not at fault.
+- **Cause**: with the mouse, the title of a collapsible panel acts only 250 ms after the click, so that a double-click does not collapse it (`template.html:1167`); the test waited a fixed 300 ms and then read the state. On the software-rendered Chromium the page can act later: the test read too early. Measured on the isolated section: when the failure happens, the two clicks are 360 ms apart, the browser counts 1 for each (no double-click, no `dblclick`), and a read 1.5 s later shows both panels expanded. Same defect as batch 1.7.13 (fixed pause instead of waiting for the condition).
+- **Done** (tests only: no code changes, `dist\` and `VERSIONS.json` identical): an `attendre` function in `tests/v35.py` and `tests/v36.py` waits for the wanted state (8 s at most; if the condition does not come, the check that follows fails as before) in place of the six 300 ms pauses: three in `v35.py`, three in `v36.py` (same class of defect).
+- **Checks**: isolated section of `v35` (up to "a second click expands them") rerun 8 times: 8 passes; before the fix, about 3 failures in 4 runs. Full `v35`: 2 passes, everything passes; full `v36`: 2 passes, everything passes. Opposite direction: with the page's collapse deliberately broken (temporary trial, restored to the state of `main`), `v35` fails on the collapse (three checks), so the test still detects a real defect. `dist_a_jour` passes, build with `--vendor`: `dist\` and `VERSIONS.json` unchanged.
+- **Not tried**: Windows, Edge. The same pattern (fixed pause) may exist in other tests; only those carrying the comment "v41: with the mouse, the title collapses 250 ms after the click" were fixed (search in `tests/`).
+
 ### 13/11/2026: documents for batch 1.10.16; Sandbox_BMoG demo announced (batch 1.10.17)
 
 - **Asked by Klaatou** (batch 1.10.16 works on his side): bring the documents up to date, with the presentation of the Sandbox_BMoG demo.
