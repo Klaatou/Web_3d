@@ -6,6 +6,14 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.10.0)
 
+### 14/11/2026 : lanceur sans bouton Dossier pour un seul fichier ; tests de `websockets` 16 (lot 1.10.31)
+
+- **Lanceur** (`tools/web3d_gui.py`) : `--water-from` (métavar `OAR`), `--terrain-only` et `--tex-only` (métavar `GLB`) désignent toujours **un** fichier : `fichier_seul` retire leur bouton Dossier (les sorties, `convoar` et les autres champs de chemin gardent Fichier et Dossier). `tests/gui.py` : un contrôle de plus ; sens opposé (`fichier_seul` toujours faux) : un échec.
+- **Tests de `websockets` 16** (constat de Klaatou, `websockets` 16.0, passage de la suite) : `v51_vides` et `v52_http` échouaient (« rien à filtrer »), `http_proxy` sautait ses contrôles. **Cause** : ces trois tests tenaient `websockets` 16 pour une version qui n'écrit plus la trace des connexions vides et des requêtes HTTP ; mesuré : la **16.0 l'écrit encore** (comme la 14 et la 15), la **17.4 ne l'écrit plus**. Le serveur est inchangé (il filtre cette trace, `aucune trace` passait déjà) ; les tests prennent maintenant 14 à 16 pour les anciennes versions (`correctifs_v52` : message). Échec identique sur le `main` d'avant 1.10.28 avec la 16.0 : sans rapport avec le lot 1.10.28. **Conséquence** : `http_proxy` (dernière adresse de l'en-tête, lot 1.10.28) n'avait jamais tourné avec la 16.0 ; il tourne maintenant et passe.
+- **Documents** : manuel § 10.16, § 10.18 et § 10.24 (français et anglais) : « 14 à 16 » au lieu de « 14 et 15 ».
+- **Contrôle** : avec `websockets` 16.0 puis 17.4 : `v51_vides`, `v52_http`, `http_proxy` passent ; avec la 16.0 : `correctifs_v52` passe ; `gui`, `dist_a_jour`.
+- **Non essayé** : la partie fenêtre de `tests/gui.py` (pas de tkinter dans le bac à sable) ; Windows ; une `websockets` 14 ou 15 (`WS_OLD`) ; `presence_server.py` ne change pas (pas de `scp` vers la VM).
+
 ### 14/11/2026 : lanceur : boutons Fichier et Dossier pour les paramètres `OAR` et `GLB` (lot 1.10.30)
 
 - **Cause** : `web3d_gui.py` (`champs_depuis` pour le genre du champ, et la création de la ligne pour les boutons) ne reconnaissait un fichier que par un mot du métavar (`FILE`, `FOLDER`, `DIR`), `.html` / `.json` ou deux listes de noms. `--water-from` (métavar `OAR`), `--terrain-only` et `--tex-only` (métavar `GLB`) n'en faisaient pas partie : champ texte sans boutons. Deux endroits décidaient séparément, avec le même critère recopié.

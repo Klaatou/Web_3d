@@ -6,6 +6,14 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.10.0)
 
+### 14/11/2026: launcher without a Folder button for a single file; `websockets` 16 tests (batch 1.10.31)
+
+- **Launcher** (`tools/web3d_gui.py`): `--water-from` (metavar `OAR`), `--terrain-only` and `--tex-only` (metavar `GLB`) always name **one** file: `fichier_seul` removes their Folder button (outputs, `convoar` and the other path fields keep File and Folder). `tests/gui.py`: one more check; opposite direction (`fichier_seul` always false): one failure.
+- **`websockets` 16 tests** (Klaatou's finding, `websockets` 16.0, suite run): `v51_vides` and `v52_http` failed ("nothing to filter"), `http_proxy` skipped its checks. **Cause**: these three tests took `websockets` 16 for a version that no longer writes the trace of empty connections and HTTP requests; measured: **16.0 still writes it** (like 14 and 15), **17.4 no longer does**. The server is unchanged (it filters that trace, `aucune trace` already passed); the tests now take 14 to 16 as the old versions (`correctifs_v52`: message). Same failure on the `main` before 1.10.28 with 16.0: unrelated to batch 1.10.28. **Consequence**: `http_proxy` (last address of the header, batch 1.10.28) had never run with 16.0; it now runs and passes.
+- **Documents**: manual sections 10.16, 10.18 and 10.24 (French and English): "14 to 16" instead of "14 and 15".
+- **Check**: with `websockets` 16.0 then 17.4: `v51_vides`, `v52_http`, `http_proxy` pass; with 16.0: `correctifs_v52` passes; `gui`, `dist_a_jour`.
+- **Not tried**: the window part of `tests/gui.py` (no tkinter in the sandbox); Windows; `websockets` 14 or 15 (`WS_OLD`); `presence_server.py` does not change (no `scp` to the VM).
+
 ### 14/11/2026: launcher: Browse buttons for the `OAR` and `GLB` parameters (batch 1.10.30)
 
 - **Cause**: `web3d_gui.py` (`champs_depuis` for the field kind, and the row creation for the buttons) recognised a file only by a word of the metavar (`FILE`, `FOLDER`, `DIR`), `.html` / `.json` or two name lists. `--water-from` (metavar `OAR`), `--terrain-only` and `--tex-only` (metavar `GLB`) were not among them: text field without buttons. Two places decided separately, with the same criterion copied.

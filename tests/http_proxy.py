@@ -5,8 +5,8 @@ Avant : ces lignes (EmptyConnFilter, empty_conn_ip) donnaient toujours l'adresse
 connexions WebSocket donnaient la vraie (remote_ip). Verifie : avec --proxy-header, la requete HTTP est attribuee a la DERNIERE adresse de l'en-tete
 (1.10.28 : la seule ecrite par le relais ; avant, la premiere, qu'un client peut ecrire lui-meme) ;
 sans l'en-tete dans la requete, a celle du relais ; sans --proxy-header, l'en-tete est ignore ; le client recoit toujours 426.
-websockets 14 et 15 seulement ecrivent la ligne (voir v52_http.py) : avec une version plus recente, rien a verifier ici.
-Avec la version installee, puis, si WS_OLD donne un dossier contenant websockets 14 ou 15 (pip install --target DOSSIER "websockets==15.0.1"), avec celle-ci.
+websockets 14 a 16 seulement ecrivent la ligne (voir v52_http.py) : avec une version plus recente, rien a verifier ici.
+Avec la version installee, puis, si WS_OLD donne un dossier contenant websockets 14, 15 ou 16 (pip install --target DOSSIER "websockets==15.0.1"), avec celle-ci.
 
 Prerequis : pip install websockets ; python build.py avant. Lancer : python tests/http_proxy.py
 """
@@ -41,7 +41,7 @@ def essai(pythonpath, nom):
     ver = subprocess.run([sys.executable, "-c", "import websockets; print(websockets.__version__)"], capture_output=True, text=True,
                          env=dict(os.environ, **({"PYTHONPATH": pythonpath} if pythonpath else {}))).stdout.strip()
     print(f"--- {nom} (websockets {ver})")
-    if ver.split(".")[0] not in ("14", "15"):
+    if ver.split(".")[0] not in ("14", "15", "16"):
         print("(cette version n'ecrit pas la ligne « requête http » : rien a verifier ici)")
         return
     xff = "X-Forwarded-For: 203.0.113.7, 10.0.0.1\r\n"
@@ -61,6 +61,6 @@ for var in ("WS_OLD", "WS_OLD2"):
     if os.environ.get(var):
         essai(os.environ[var], f"ancienne version ({var})")
 if not os.environ.get("WS_OLD"):
-    print("(WS_OLD absent : websockets 14 ou 15 non essaye)")
+    print("(WS_OLD absent : websockets 14, 15 ou 16 non essaye)")
 print("\nRÉSULTAT : " + ("tout est passé" if not h37.resultat() else f"{h37.resultat()} échec(s)"))
 sys.exit(1 if h37.resultat() else 0)

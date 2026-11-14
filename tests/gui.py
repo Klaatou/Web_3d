@@ -110,6 +110,11 @@ for nom_outil, fichier in g.OUTILS:
         boutons[(fichier, c["dest"])] = g.a_boutons_fichier(c)
 rapport(all(boutons.get(k) for k in [("glb2html.py", "water_from"), ("oar2glb.py", "terrain_seul"), ("oar2glb.py", "tex_seul"), ("glb2html.py", "input")]),
         "--water-from, --terrain-only, --tex-only et l'entree de glb2html ont les boutons Fichier et Dossier", {k: v for k, v in boutons.items() if k[1] in ("water_from", "terrain_seul", "tex_seul")})
+seuls = {k: g.fichier_seul(c) for nom_outil, fichier in g.OUTILS for c in (g.champs_depuis(g.lire_parser(DIST / fichier, "en")) or []) for k in [(fichier, c["dest"])]}
+rapport(all(seuls.get(k) for k in [("glb2html.py", "water_from"), ("oar2glb.py", "terrain_seul"), ("oar2glb.py", "tex_seul")])
+        and not any(seuls.get(k) for k in [("glb2html.py", "output"), ("oar2glb.py", "sortie"), ("oar2glb.py", "convoar")]),
+        "1.10.31 : --water-from, --terrain-only et --tex-only n'ont que le bouton Fichier ; les sorties et convoar gardent Fichier et Dossier",
+        {k: v for k, v in seuls.items() if k[1] in ("water_from", "terrain_seul", "tex_seul", "output", "sortie", "convoar")})
 rapport(not boutons.get(("glb2html.py", "lib_url")) and not boutons.get(("glb2html.py", "title")) and not boutons.get(("glb2tiles.py", "exclude")),
         "--lib-url (PATH), --title et --exclude restent des champs sans boutons", [k for k in (("glb2html.py", "lib_url"), ("glb2html.py", "title"), ("glb2tiles.py", "exclude")) if boutons.get(k)])
 rapport(all(not g.a_boutons_fichier(c) for c in champs if c["genre"] in ("flag", "tri", "choix", "nombre")), "aucun drapeau, choix ou nombre n'a de boutons Fichier et Dossier")

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Tests v51 (suite, livrée d'abord en v52) : connexions ouvertes puis fermées sans requête (vrai presence_server.py).
 
-websockets 14 et 15 écrivaient une trace complète (« opening handshake failed », EOFError) pour chaque connexion TCP fermée sans requête
+websockets 14 à 16 écrivaient une trace complète (« opening handshake failed », EOFError) pour chaque connexion TCP fermée sans requête
 (préconnexion d'un navigateur, test de port, robot). Vérifie : aucune trace ; une seule ligne « vide » avec l'adresse pour 5 connexions
 (au plus une par minute et par adresse) ; une requête illisible donne une ligne courte ; un visiteur normal est toujours accueilli.
-Avec la version de websockets installée, puis, si la variable WS_OLD donne un dossier contenant websockets 14 ou 15
+Avec la version de websockets installée, puis, si la variable WS_OLD donne un dossier contenant websockets 14, 15 ou 16
 (pip install --target DOSSIER "websockets==14.2"), avec cette version.
 
 Prérequis : pip install websockets ; python build.py avant. Lancer : python tests/v51_vides.py
@@ -45,7 +45,7 @@ def essai(pythonpath, nom):
     vides = [l for l in out.splitlines() if "| vide" in l]
     trace_eof = "stream ends after 0 bytes" in out
     rapport(not trace_eof, "aucune trace pour les connexions sans requête", out[-800:])
-    old = ver.split(".")[0] in ("14", "15")      # 13 et avant (serveur legacy) et 16 et après : rien à filtrer
+    old = ver.split(".")[0] in ("14", "15", "16")      # 13 et avant (serveur legacy) et 17 et après : rien à filtrer (16.0 écrit la trace : mesuré le 14/11/2026)
     if old:
         rapport(len(vides) == 1 and "ip 127.0.0.1" in vides[0] and "connexion ouverte puis fermée sans requête" in vides[0],
                 "une seule ligne « vide » avec l'adresse pour 5 connexions", vides)

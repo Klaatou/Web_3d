@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Tests v52 (suite) : requete HTTP ordinaire sur le port du serveur de presence (vrai presence_server.py).
 
-websockets 14 et 15 ecrivaient une trace complete (« opening handshake failed », InvalidUpgrade, « invalid Connection header: keep-alive ») pour une requete
+websockets 14 a 16 ecrivaient une trace complete (« opening handshake failed », InvalidUpgrade, « invalid Connection header: keep-alive ») pour une requete
 HTTP qui n'ouvre pas de WebSocket (navigateur qui ouvre l'adresse du serveur, robot, test), alors que le client recoit bien « 426 Upgrade Required ».
 Verifie : le client recoit toujours 426 ; aucune trace ; une seule ligne « requete http » (adresse, chemin, hote, agent, raison) pour 3 requetes
 (au plus une par minute et par adresse) ; une requete illisible donne une ligne courte ; un visiteur normal est toujours accueilli.
-Avec la version de websockets installee, puis, si WS_OLD donne un dossier contenant websockets 14 ou 15 (pip install --target DOSSIER "websockets==14.2"),
-avec cette version. Les versions recentes (16 et apres) n'ecrivent pas cette trace : rien a filtrer, aucune ligne.
+Avec la version de websockets installee, puis, si WS_OLD donne un dossier contenant websockets 14, 15 ou 16 (pip install --target DOSSIER "websockets==14.2"),
+avec cette version. Les versions recentes (17 et apres) n'ecrivent pas cette trace : rien a filtrer, aucune ligne.
 
 Prerequis : pip install websockets ; python build.py avant. Lancer : python tests/v52_http.py
 """
@@ -55,7 +55,7 @@ def essai(pythonpath, nom):
     rapport(all(r.startswith("HTTP/1.1 426") for r in reps), "le client recoit toujours « 426 Upgrade Required »", reps)
     rapport(m.get("t") == "welcome", "visiteur normal accueilli", m)
     lignes = [l for l in out.splitlines() if "| requête http" in l]
-    old = ver.split(".")[0] in ("14", "15")      # 13 et avant (serveur legacy) et 16 et apres : rien a filtrer
+    old = ver.split(".")[0] in ("14", "15", "16")      # 13 et avant (serveur legacy) et 17 et apres : rien a filtrer (16.0 ecrit la trace : mesure le 14/11/2026)
     if old:
         rapport(len(lignes) == 1, "une seule ligne « requête http » pour 3 requetes", lignes)
         l = lignes[0] if lignes else ""

@@ -110,8 +110,8 @@ def i18n_add_common(ap):
         pass
 
 
-VERSION = "1.10.30 (14/11/2026)"      # remplacé par build.py (fichier VERSION) dans dist/web3d_gui.py
-MARK = "adb5beaf"      # empreinte du fichier fabriqué, inscrite par build.py ; reste telle quelle depuis tools/
+VERSION = "1.10.31 (14/11/2026)"      # remplacé par build.py (fichier VERSION) dans dist/web3d_gui.py
+MARK = "c6d866fc"      # empreinte du fichier fabriqué, inscrite par build.py ; reste telle quelle depuis tools/
 
 OUTILS = (("glb2html", "glb2html.py"), ("glb2tiles", "glb2tiles.py"), ("oar2glb", "oar2glb.py"), ("extraire_batiments", "extraire_batiments.py"),
           ("iar2oar", "iar2oar.py"), ("diag_carte", "diag_carte.py"), ("glb-stats", "glb-stats.py"))      # (nom, fichier) ; un outil de plus : une ligne ici
@@ -129,6 +129,11 @@ def metavar_chemin(mv):
 def a_boutons_fichier(c):
     """vrai si le champ c (dictionnaire de champs_depuis) reçoit les boutons Fichier et Dossier"""
     return c["genre"] in ("chemin", "facultatif") and (c["genre"] == "chemin" or c["ptype"] or metavar_chemin(c["metavar"]))
+
+
+def fichier_seul(c):
+    """vrai si le champ c désigne toujours UN fichier (métavar OAR, GLB, IAR) : le bouton Dossier n'a alors aucun sens (1.10.31)"""
+    return (c["metavar"] or "").upper() in MV_CHEMIN
 
 # exemples d'usages de base, par outil : (clé du titre dans src/i18n, arguments comme dans une console) ; les noms (Atoll.glb, ADRESSE, MA_CLE...) sont à remplacer par les siens ;
 # tests/gui.py vérifie que le vrai parseur de chaque outil accepte chaque exemple et que la fenêtre le remet à l'identique
@@ -594,7 +599,8 @@ def fenetre(outils, tk, ttk, filedialog, depart=None):
             if a_boutons_fichier(c):
                 vv = var[0] if isinstance(var, tuple) else var
                 ttk.Button(extra, text=_tr("py.gui.browse_file"), command=lambda v=vv: choisir(v, False)).pack(side="left", padx=2)
-                ttk.Button(extra, text=_tr("py.gui.browse_dir"), command=lambda v=vv: choisir(v, True)).pack(side="left", padx=2)
+                if not fichier_seul(c):
+                    ttk.Button(extra, text=_tr("py.gui.browse_dir"), command=lambda v=vv: choisir(v, True)).pack(side="left", padx=2)
             w.grid(row=i, column=2, sticky="we" if c["genre"] in ("texte", "chemin", "facultatif", "multiple") else "w")
             cases += [w, extra]
             dfl = ttk.Label(grille, text=(_tr("py.gui.default", c["defaut"]) if c["defaut"] != "" else _tr("py.gui.default_in_help") if defaut_dans_aide(c) else ""), foreground="#555555", wraplength=180, justify="left")

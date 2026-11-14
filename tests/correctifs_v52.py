@@ -40,7 +40,7 @@ if os.environ.get("WS_OLD"):
     rapport(len(lignes) == 1 and b"ROUGE" in lignes[0], "la requete donne bien sa ligne « requête http »", lignes)
     rapport(not any(c in out for c in (b"\x1b", b"\x07")), "aucun caractere d'echappement ni de sonnerie dans le journal", [l[:120] for l in lignes])
 else:
-    print("(WS_OLD absent : websockets 14 ou 15 non essaye, la ligne « requête http » n'existe qu'avec eux)")
+    print("(WS_OLD absent : websockets 14, 15 ou 16 non essaye, la ligne « requête http » n'existe qu'avec eux)")
 
 print("--- 2. createurs : origine null sans guillemets")
 cr = tmp / "createurs.json"

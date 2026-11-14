@@ -1650,7 +1650,7 @@ Windows, Edge, `wss://` behind Funnel, a creator's page on another domain.
 
 ### 10.16 Empty connections
 
-A connection opened on the presence server port then closed without sending anything (browser preconnection, port test, robot) filled the console with a long "opening handshake failed" trace with versions 14 and 15 of `websockets`. Since v51, it gives a short "empty" line in the console and in `presence.log`, with the caller's address (masked according to `--log-ip`) and the number of empty connections, at most one line per minute and per address. It is harmless; other `websockets` errors are still shown in full.
+A connection opened on the presence server port then closed without sending anything (browser preconnection, port test, robot) filled the console with a long "opening handshake failed" trace with versions 14 to 16 of `websockets`. Since v51, it gives a short "empty" line in the console and in `presence.log`, with the caller's address (masked according to `--log-ip`) and the number of empty connections, at most one line per minute and per address. It is harmless; other `websockets` errors are still shown in full.
 
 `tests/v51_vides.py`: with the installed version, then with an old version given by the `WS_OLD` variable (tried here with 13.1, 14.2 and 15.0.1). Not tested: Windows, Edge.
 
@@ -1666,7 +1666,7 @@ The star works everywhere: `--presence-url`, `presenceUrl` of `NOM.config.json`,
 
 ### 10.18 Presence server: ordinary HTTP requests
 
-With `websockets` 14 and 15, an ordinary HTTP request on the server port (a browser opening its address, a robot, a test) wrote a full trace ("opening handshake failed", `InvalidUpgrade`, "invalid Connection header: keep-alive"), although the client does get "426 Upgrade Required". The log now writes an `http request` line instead: address, path, host, agent and reason, at most one per minute and per address. It says who came. Any control character (terminal escape, bell) is replaced with a space, in this line and in the whole log. An unreadable request (Windows Remote Desktop probe, encrypted connection on this port, arbitrary bytes) also gives a single "unreadable request" line with the recognised kind and the start of the request, at most one per minute, per address and per kind. Other errors are still shown in full. **Restart the presence server** from `dist\`. Recent versions of `websockets` (17.3 tried) do not write this trace: nothing to filter.
+With `websockets` 14 to 16, an ordinary HTTP request on the server port (a browser opening its address, a robot, a test) wrote a full trace ("opening handshake failed", `InvalidUpgrade`, "invalid Connection header: keep-alive"), although the client does get "426 Upgrade Required". The log now writes an `http request` line instead: address, path, host, agent and reason, at most one per minute and per address. It says who came. Any control character (terminal escape, bell) is replaced with a space, in this line and in the whole log. An unreadable request (Windows Remote Desktop probe, encrypted connection on this port, arbitrary bytes) also gives a single "unreadable request" line with the recognised kind and the start of the request, at most one per minute, per address and per kind. Other errors are still shown in full. **Restart the presence server** from `dist\`. Recent versions of `websockets` (17.3 tried) do not write this trace: nothing to filter.
 
 ### 10.19 Names: the `oublier` command
 
@@ -1699,7 +1699,7 @@ The existing `--log-ip` option accepts `hash` (default: 8-character fingerprint)
 ### 10.24 Presence server: console and "http request" lines
 
 - The sequences the terminal sends into the console (replies from `tmux`, arrows, wheel, text colour) are removed from the line before it runs: before, they made the first commands after `tmux attach` answer "unknown command". `version` command (§ 10.12). Test: `tests/console.py`.
-- Behind a relay (`--proxy-header`, for example Tailscale Funnel), the "http request" lines now give the visitor's address and not the relay's. The "empty connection" and "unreadable request" lines keep the relay's address (`127.0.0.1`: **never ban it**). Visible with `websockets` 14 and 15. Test: `tests/http_proxy.py`.
+- Behind a relay (`--proxy-header`, for example Tailscale Funnel), the "http request" lines now give the visitor's address and not the relay's. The "empty connection" and "unreadable request" lines keep the relay's address (`127.0.0.1`: **never ban it**). Visible with `websockets` 14 to 16 (17 no longer writes this trace). Test: `tests/http_proxy.py`.
 - Since 1.10.28, with `--proxy-header`, the address kept (log, per-address limit, bans) is the **last** one of the header: the only one written by the trusted relay. nginx, Caddy and Cloudflare append the client's address to the end of a header the client may have sent itself; Tailscale overwrites it. Before, the first address was taken, and a client could choose it. Test: `tests/presence_noms.py`.
 
 ## 11. JSON file reference (v43)
