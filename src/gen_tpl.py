@@ -123,7 +123,7 @@ DRACO_LIBS = {
 MESHOPT_FILES = {"three/addons/libs/meshopt_decoder.module.js": "examples/jsm/libs/meshopt_decoder.module.js"}
 
 
-ZONE_TYPES = ("url", "ha", "portal", "spawn", "image")
+ZONE_TYPES = ("url", "ha", "portal", "spawn", "image", "cast")   # cast (1.10.32) : radio, flux Icecast / SHOUTcast joue en promenade a portee
 IMG_EXTS = (".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif", ".bmp")
 MEDIA_DIR = "medias"   # sous-dossier des medias de la region (cle mediaDir de la config cote page ; ici toujours « medias »)
 IMG_DIR = [None]   # dossier ou se cherchent les images des zones « image » (celui de la page), pose par main() ; None : aucune recherche
@@ -204,16 +204,16 @@ def clean_zones(zones, profile):
             "x": num(z.get("x"), 0, -1e5, 1e5), "y": num(z.get("y"), 0, -1e5, 1e5), "z": num(z.get("z"), 0, -1e5, 1e5),
             "yaw": num(z.get("yaw"), 0, -7, 7), "shape": "board" if z.get("shape") == "board" else "ring",
             "trigger": (z.get("trigger") if z.get("trigger") in ("click", "enter", "both") else "click") if t in ("portal", "url") else "click",
-            "radius": num(z.get("radius"), 2, 0.5, 50), "w": num(z.get("w"), 1.2 if img else 2.4, 0.1 if img else 0.5, 10), "h": num(z.get("h"), 0, 0, 6) if img else num(z.get("h"), 1.2, 0.3, 6),
+            "radius": num(z.get("radius"), 20 if t == "cast" else 2, 0.5, 200 if t == "cast" else 50), "w": num(z.get("w"), 1.2 if img else 2.4, 0.1 if img else 0.5, 10), "h": num(z.get("h"), 0, 0, 6) if img else num(z.get("h"), 1.2, 0.3, 6),
             "target": str(resolve_image_name(z.get("target")) if img else (z.get("target") or ""))[:600], "spawn": _slug(z.get("spawn")),
             "confirm": bool(z.get("confirm")), "private": bool(z.get("private")), "showName": bool(z.get("showName")),
-            "mesh": "" if t in ("spawn", "image") else re.sub(r"[\x00-\x1f]", "", str(z.get("mesh") or ""))[:200],
+            "mesh": "" if t in ("spawn", "image", "cast") else re.sub(r"[\x00-\x1f]", "", str(z.get("mesh") or ""))[:200],
         }
         if img:   # lien facultatif d'un tableau (page ouverte au clic ou a E) : ecrit seulement s'il est rempli, comme core.js
             lk = re.sub(r"[\x00-\x1f]", "", str(z.get("link") or "")).strip()[:600]
             if lk:
                 d["link"] = lk
-        if isinstance(z.get("cone"), bool) and t not in ("spawn", "image"):   # repere facultatif : ecrit seulement s'il est vrai ou faux, comme core.js
+        if isinstance(z.get("cone"), bool) and t not in ("spawn", "image", "cast"):   # repere facultatif : ecrit seulement s'il est vrai ou faux, comme core.js
             d["cone"] = z["cone"]
         out.append(d)
     return out

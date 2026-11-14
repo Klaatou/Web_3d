@@ -1313,6 +1313,7 @@ function createViewer(container, cfg0, loader) {
     landKey = '';
     W.grid = null; dirty = true;
     zoneInside.clear(); if (nearZone) { nearZone = null; if (onNear) onNear(null); }
+    castReset();
     DODGE.pending = null;
     presenceLeave();
     if (zoneLabs.length) zoneLabelTick();
@@ -1857,6 +1858,8 @@ function createViewer(container, cfg0, loader) {
   const zoneGroup = new THREE.Group(); scene.add(zoneGroup);
   let selId = null;
   let zones = [], zoneHit = [], zoneAll = [], zoneInside = new Set(), nearZone = null, zoneEditor = false, selBox = null, onZone = null, onNear = null;
+  let castCur = null, castGain = 0, onCast = null;   // 1.10.32 : zone radio (type cast) la plus proche a portee et son gain (1 au centre, 0 au bord) ; onCast(zone|null, gain) a chaque changement
+  function castReset() { const was = castCur; castCur = null; castGain = 0; if (was && onCast) onCast(null, 0); }
   const imgGone = new Set();   // ids des tableaux dont l'image est introuvable (page exportee) : ni cliquables ni zone proche
   let zoneNums = false;   // reperage des zones image : un gros numero devant chacune (jamais memorise ; voir setZoneNumbers)
   // zones liées à un élément du modèle (champ mesh = nom exact) : id de zone -> { meshes, box } ; mesh 3D -> zone
@@ -1917,7 +1920,7 @@ function createViewer(container, cfg0, loader) {
   let tipEl = null;
   function zoneTipText(z) {
     const name = z.label || z.id;
-    if (z.type === 'url') return [name, z.target];
+    if (z.type === 'url' || z.type === 'cast') return [name, z.target];
     if (z.type === 'image') return [name, z.link || ''];
     if (z.type === 'ha') return [name, tr('core.tip.cmd', name)];
     return [name, tr('core.tip.region', (String(z.target || '').trim() || tr('core.tip.thisregion')) + (z.spawn ? ' #' + z.spawn : ''))];
@@ -1942,7 +1945,7 @@ function createViewer(container, cfg0, loader) {
     tipEl.style.left = Math.max(4, Math.min(innerWidth - w - 4, cx + 14)) + 'px';
     tipEl.style.top = Math.max(4, Math.min(innerHeight - h - 4, cy + 18)) + 'px';
   }
-  const ZONE_TYPES = ['url', 'ha', 'portal', 'spawn', 'image'];
+  const ZONE_TYPES = ['url', 'ha', 'portal', 'spawn', 'image', 'cast'];   // cast (1.10.32) : radio, flux Icecast / SHOUTcast joue en promenade a portee, volume selon la distance
   const slug = s => String(s || '').toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
   function zoneEntrant(z) { return z.type === 'portal' || z.type === 'url'; }   // zones qui se declenchent aussi en marchant dedans (trigger enter ou both) : portail et lien (hop:// compris)
   function cleanZone(z, i) {
@@ -1953,12 +1956,12 @@ function createViewer(container, cfg0, loader) {
       id: slug(z.id) || ('z' + (i + 1)), type, label: String(z.label || '').slice(0, 60),
       x: num(z.x, 0, -1e5, 1e5), y: num(z.y, 0, -1e5, 1e5), z: num(z.z, 0, -1e5, 1e5), yaw: num(z.yaw, 0, -7, 7),
       shape: z.shape === 'board' ? 'board' : 'ring', trigger: ['click', 'enter', 'both'].includes(z.trigger) ? z.trigger : 'click',
-      radius: num(z.radius, 2, 0.5, 50), w: num(z.w, img ? 1.2 : 2.4, img ? 0.1 : 0.5, 10), h: img ? num(z.h, 0, 0, 6) : num(z.h, 1.2, 0.3, 6),
+      radius: num(z.radius, type === 'cast' ? 20 : 2, 0.5, type === 'cast' ? 200 : 50), w: num(z.w, img ? 1.2 : 2.4, img ? 0.1 : 0.5, 10), h: img ? num(z.h, 0, 0, 6) : num(z.h, 1.2, 0.3, 6),
       target: String(z.target || '').slice(0, 600), spawn: slug(z.spawn), confirm: !!z.confirm, private: !!z.private, showName: !!z.showName,
-      mesh: type === 'spawn' || img ? '' : String(z.mesh || '').replace(/[\u0000-\u001f]/g, '').slice(0, 200)
+      mesh: type === 'spawn' || type === 'cast' || img ? '' : String(z.mesh || '').replace(/[\u0000-\u001f]/g, '').slice(0, 200)
     };
     if (type !== 'portal' && type !== 'url') o.trigger = 'click';
-    if (typeof z.cone === 'boolean' && type !== 'spawn' && !img) o.cone = z.cone;   // repere (cone) facultatif : vrai = toujours, faux = jamais ; absent = selon le declenchement ; ecrit seulement s'il est vrai ou faux
+    if (typeof z.cone === 'boolean' && type !== 'spawn' && type !== 'cast' && !img) o.cone = z.cone;   // repere (cone) facultatif : vrai = toujours, faux = jamais ; absent = selon le declenchement ; ecrit seulement s'il est vrai ou faux
     if (img) { const lk = String(z.link || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 600); if (lk) o.link = lk; }   // lien facultatif d'un tableau : page ouverte au clic ou a E ; ecrit seulement s'il est rempli
     return o;
   }
@@ -2262,9 +2265,9 @@ function createViewer(container, cfg0, loader) {
         zoneGroup.add(g);
         continue;
       }
-      const kind = z.type === 'url' && /^\s*hop:/i.test(z.target) ? tr('core.kind.hop') : { url: tr('core.kind.url'), ha: tr('core.kind.ha'), portal: tr('core.kind.portal'), spawn: tr('core.kind.spawn') }[z.type];   // lien hop:// : « Monde virtuel », pas « Lien web »
+      const kind = z.type === 'url' && /^\s*hop:/i.test(z.target) ? tr('core.kind.hop') : { url: tr('core.kind.url'), ha: tr('core.kind.ha'), portal: tr('core.kind.portal'), spawn: tr('core.kind.spawn'), cast: tr('core.kind.cast') }[z.type];   // lien hop:// : « Monde virtuel », pas « Lien web »
       const priv = zoneEditor && z.private ? tr('core.private') : '';
-      const clickable = z.type !== 'spawn' && z.trigger !== 'enter';
+      const clickable = z.type !== 'spawn' && z.type !== 'cast' && z.trigger !== 'enter';   // radio : ni clic ni invite, elle joue toute seule a portee
       let main = null;
       if (link) {
         // zone liée à un élément : l'élément est la zone (cliquable, E à moins de radius m). Aucun objet ajouté dans la page exportée.
@@ -2356,7 +2359,7 @@ function createViewer(container, cfg0, loader) {
       if (TL.on && TL.refsKnown && !TL.refs && z.mesh && z.type !== 'spawn') { console.warn(tilesNoRefs(z)); return false; }
       return true;
     });
-    nearZone = null; zoneInside.clear();
+    nearZone = null; zoneInside.clear(); castReset();
     resolveLinks();
     buildZones();
     return zones.map(z => Object.assign({}, z));
@@ -2441,8 +2444,13 @@ function createViewer(container, cfg0, loader) {
   }
   function zoneTick() {
     if (!zones.length) return;
-    let best = null, bd = 1e9;
+    let best = null, bd = 1e9, cast = null, cd = 1e9;
     for (const z of zones) {
+      if (z.type === 'cast') {   // radio : la plus proche dont on est a portee (en x et z ; de 4 m sous la zone a 8 m au-dessus)
+        const { d, dy } = zoneDist(z);
+        if (d <= z.radius && dy > -4 && dy < 8 && d < cd) { cast = z; cd = d; }
+        continue;
+      }
       if (z.type === 'spawn' || zoneOff(z) || (z.type === 'image' && (!z.link || imgGone.has(z.id)))) continue;   // un tableau sans lien n'est pas une zone proche (pas d'invite « clic ou E »)
       const { d, dy } = zoneDist(z);
       if (zoneEntrant(z) && z.trigger !== 'click') {
@@ -2456,6 +2464,8 @@ function createViewer(container, cfg0, loader) {
       }
     }
     if (best !== nearZone) { nearZone = best; if (onNear) onNear(best); }
+    const cg = cast ? Math.max(0.05, 1 - cd / cast.radius) : 0;
+    if (cast !== castCur || Math.abs(cg - castGain) > 0.01) { castCur = cast; castGain = cg; if (onCast) onCast(cast, cg); }
   }
   // v36 : E déclenche la zone proche (déclenchement « clic » ou « both »), comme avant la v35 ; E ne fait rien d'autre
   window.addEventListener('keydown', e => {
@@ -2591,7 +2601,7 @@ function createViewer(container, cfg0, loader) {
     // boîte (monde) de l'élément de ce nom : { min, max, center, count } ou null
     meshInfo(name) { const m = findMeshes(name); const b = m.length ? refBox(name, m) : null; if (!b) return null; return { min: b.min.toArray(), max: b.max.toArray(), center: b.getCenter(new THREE.Vector3()).toArray(), size: b.getSize(new THREE.Vector3()).toArray(), count: m.length }; },
     set linkMode(v) { linkLock = !!v; },
-    isTraversable(o) { return isIgnoredMesh(o, parseIgnore(cfg.walkIgnore)); }, getZones() { return zones.map(z => Object.assign({}, z)); }, set onZone(f) { onZone = f; }, set onNear(f) { onNear = f; },
+    isTraversable(o) { return isIgnoredMesh(o, parseIgnore(cfg.walkIgnore)); }, getZones() { return zones.map(z => Object.assign({}, z)); }, set onZone(f) { onZone = f; }, set onNear(f) { onNear = f; }, set onCast(f) { onCast = f; },
     captureTop(size = 320, hide = []) {
       if (!model) return null;
       const box = new THREE.Box3().setFromObject(model), c = box.getCenter(new THREE.Vector3()), sz = box.getSize(new THREE.Vector3());

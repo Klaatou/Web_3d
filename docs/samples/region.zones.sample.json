@@ -179,5 +179,25 @@
   "private": false,
   "showName": false,
   "mesh": ""
+ },
+ {
+  "id": "dance-floor",
+  "type": "cast",
+  "label": "Dance floor radio",
+  "x": 60,
+  "y": 22,
+  "z": -30,
+  "yaw": 0,
+  "shape": "ring",
+  "trigger": "click",
+  "radius": 25,
+  "w": 2.4,
+  "h": 1.2,
+  "target": "https://ice1.somafm.com/groovesalad-128-mp3",
+  "spawn": "",
+  "confirm": false,
+  "private": false,
+  "showName": false,
+  "mesh": ""
  }
 ]

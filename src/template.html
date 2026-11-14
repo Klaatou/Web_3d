@@ -605,11 +605,11 @@ const VISITS = (() => {   // v48 : aussi ouvert par le bouton « Journal des vis
 // réglages visiteur mémorisés dans ce navigateur : couleur de l'avatar (null = tirée au hasard par le serveur), pseudo cité (gras, clignotement),
 // sons (général, volume, citation, arrivée, départ), disposition du clavier. v36 : les anciens réglages du bip (clé « sound ») sont ignorés.
 const VIS = (() => {
-  const d = { color: null, compass: true, histMax: 200, bold: true, blink: true, sounds: true, volume: 50, soundCite: true, soundMsg: true, soundJoin: true, soundLeave: true, layout: 'auto', pad: true, touch: 'auto' };
+  const d = { color: null, compass: true, histMax: 200, bold: true, blink: true, sounds: true, volume: 50, soundCite: true, soundMsg: true, soundJoin: true, soundLeave: true, radio: true, layout: 'auto', pad: true, touch: 'auto' };
   try {
     const s = JSON.parse(localStorage.getItem('glb2html_visitor') || '{}');
     if (Number.isInteger(s.color) && s.color >= 0 && s.color <= 0xFFFFFF) d.color = s.color;
-    for (const k of ['compass', 'bold', 'blink', 'sounds', 'soundCite', 'soundMsg', 'soundJoin', 'soundLeave', 'pad']) if (typeof s[k] === 'boolean') d[k] = s[k];
+    for (const k of ['compass', 'bold', 'blink', 'sounds', 'soundCite', 'soundMsg', 'soundJoin', 'soundLeave', 'radio', 'pad']) if (typeof s[k] === 'boolean') d[k] = s[k];
     if (['auto', 'on', 'off'].includes(s.touch)) d.touch = s.touch;   // v46 : commandes tactiles (auto = écran tactile détecté)
     if (Number.isFinite(s.histMax)) d.histMax = Math.max(20, Math.min(2000, Math.round(s.histMax)));
     if (Number.isFinite(s.volume)) d.volume = Math.max(0, Math.min(100, Math.round(s.volume)));
@@ -649,8 +649,42 @@ const SND = (() => {
     } catch (e) { return false; }
   };
   const limited = k => { const now = performance.now(); if (now - last[k] < 2000) return false; if (play(k === 'join' ? [[660, 0.08], [880, 0.08]] : k === 'msg' ? [[988, 0.12]] : [[880, 0.08], [660, 0.08]])) { last[k] = now; return true; } return false; };
-  return { cite: () => play([[880, 0.16]]), msg: () => limited('msg'), join: () => limited('join'), leave: () => limited('leave'), sample: () => play([[880, 0.16]]) };
+  return { cite: () => play([[880, 0.16]]), msg: () => limited('msg'), join: () => limited('join'), leave: () => limited('leave'), sample: () => play([[880, 0.16]]), acted: () => acted };
 })();
+// 1.10.32 : zones radio (type cast) : le flux (Icecast / SHOUTcast) de la zone a portée joue en promenade, volume = (1 - distance / portée) x volume des Sons ;
+// une seule zone à la fois (core.js choisit la plus proche) ; hors portée ou en vue globale : le flux est arrêté (plus téléchargé) ; le navigateur n'autorise
+// le son qu'après une première action du visiteur ; un flux illisible (format, réseau, mélange http dans une page https) est dit dans le bloc d'état
+let radioTxt = () => {};   // ligne « Radio » du bloc d'état (définie avec le bloc)
+const RADIO = (() => {
+  let a = null, cur = null, gain = 0, src = '';
+  const bad = new Set();
+  const label = () => cur ? (cur.label || cur.id) : '';
+  const lvl = () => VIS.sounds && VIS.radio ? Math.max(0, Math.min(1, gain * VIS.volume / 100)) : 0;
+  const stop = () => { if (!a || !src) return; src = ''; a.pause(); a.removeAttribute('src'); a.load(); };
+  const ensure = () => {
+    if (a) return a;
+    a = new Audio(); a.preload = 'none';
+    a.addEventListener('error', () => { if (!cur || !src) return; bad.add(cur.id); stop(); radioTxt(tr('page.radio.error', label())); toast(tr('page.radio.error', label())); });
+    a.addEventListener('playing', () => { if (cur) radioTxt(tr('page.radio.playing', label())); });
+    a.addEventListener('waiting', () => { if (cur) radioTxt(tr('page.radio.waiting', label())); });
+    return a;
+  };
+  const refresh = () => {
+    const v = lvl();
+    if (!cur) { stop(); radioTxt(''); return; }
+    if (bad.has(cur.id)) { stop(); radioTxt(tr('page.radio.error', label())); return; }
+    if (v <= 0) { stop(); radioTxt(tr('page.radio.off', label())); return; }
+    const el = ensure(); el.volume = v;
+    if (src !== cur.target) { stop(); src = cur.target; el.src = src; }
+    if (!el.paused) return;
+    if (!SND.acted()) { radioTxt(tr('page.radio.click', label())); return; }
+    radioTxt(tr('page.radio.waiting', label()));
+    el.play().catch(e => { if (e && e.name === 'NotAllowedError') radioTxt(tr('page.radio.click', label())); });
+  };
+  for (const ev of ['pointerdown', 'keydown', 'touchstart']) addEventListener(ev, () => { if (cur && (!a || a.paused)) refresh(); }, true);   // après la première action : le flux démarre (SND a déjà noté l'action : il écoute avant)
+  return { set(z, g) { const ch = !cur !== !z || (z && cur && z.id !== cur.id); cur = z; gain = g; if (ch) refresh(); else if (a && src && !a.paused) a.volume = lvl(); }, refresh, playing: () => !!(a && src && !a.paused), level: () => (a && src ? a.volume : 0) };
+})();
+if (C.walk) viewer.onCast = (z, g) => RADIO.set(z, g);
 viewer.setMyColor(VIS.color);
 if (C.presenceUrl && C.walk) viewer.onPeer = kind => { if (kind === 'join' && VIS.soundJoin) SND.join(); else if (kind === 'leave' && VIS.soundLeave) SND.leave(); };
 // v37 : boussole en haut au centre : point cardinal et degrés (« NE 45° »), sans dépendre de la couleur ; masquée par la case des réglages visiteur ou --no-compass
@@ -768,19 +802,19 @@ if (C.panel !== false) {
       const cb = mk('input', { type: 'checkbox', id }); cb.checked = VIS[k]; cb.onchange = () => { VIS[k] = cb.checked; visSave(); }; op.append(lab(t, cb));
     }
   }
-  if (C.presenceUrl && C.walk) {
-    // v36 : sons. Case générale + volume, puis une case par événement
+  if (C.walk) {
+    // v36 : sons. Case générale + volume, puis une case par événement (celles de la présence seulement avec un serveur ; la radio des zones, 1.10.32, toujours)
     const cbS = mk('input', { type: 'checkbox', id: 'visSounds' }), rgV = mk('input', { type: 'range', min: 0, max: 100, step: 1, id: 'visVolume' }), vV = mk('span');
     const subs = [];
     const syncS = () => { cbS.checked = VIS.sounds; rgV.value = VIS.volume; vV.textContent = String(VIS.volume); rgV.disabled = !VIS.sounds; for (const c of subs) c.disabled = !VIS.sounds; };
-    cbS.onchange = () => { VIS.sounds = cbS.checked; visSave(); syncS(); };
-    rgV.oninput = () => { VIS.volume = parseInt(rgV.value, 10); vV.textContent = String(VIS.volume); visSave(); };
+    cbS.onchange = () => { VIS.sounds = cbS.checked; visSave(); syncS(); RADIO.refresh(); };
+    rgV.oninput = () => { VIS.volume = parseInt(rgV.value, 10); vV.textContent = String(VIS.volume); visSave(); RADIO.refresh(); };
     rgV.onchange = () => { SND.sample(); };
     op.append(lab(tr('page.opt.sounds'), cbS));
     const wv = mk('label'); wv.append(rgV, mk('span', { textContent: tr('page.opt.volume') }), vV); op.append(wv);
-    for (const [k, t, id, need] of [['soundCite', tr('page.opt.sound.cite'), 'visSoundCite', C.chat], ['soundMsg', tr('page.opt.sound.msg'), 'visSoundMsg', C.chat], ['soundJoin', tr('page.opt.sound.join'), 'visSoundJoin', true], ['soundLeave', tr('page.opt.sound.leave'), 'visSoundLeave', true]]) {
+    for (const [k, t, id, need] of [['soundCite', tr('page.opt.sound.cite'), 'visSoundCite', C.chat && !!C.presenceUrl], ['soundMsg', tr('page.opt.sound.msg'), 'visSoundMsg', C.chat && !!C.presenceUrl], ['soundJoin', tr('page.opt.sound.join'), 'visSoundJoin', !!C.presenceUrl], ['soundLeave', tr('page.opt.sound.leave'), 'visSoundLeave', !!C.presenceUrl], ['radio', tr('page.opt.sound.radio'), 'visRadio', true]]) {
       if (!need) continue;
-      const cb = mk('input', { type: 'checkbox', id }); cb.checked = VIS[k]; cb.onchange = () => { VIS[k] = cb.checked; visSave(); }; subs.push(cb); op.append(lab(t, cb));
+      const cb = mk('input', { type: 'checkbox', id }); cb.checked = VIS[k]; cb.onchange = () => { VIS[k] = cb.checked; visSave(); if (k === 'radio') RADIO.refresh(); }; subs.push(cb); op.append(lab(t, cb));
     }
     syncS();
   }
@@ -901,7 +935,8 @@ if (C.walk) {
   // v34 : bloc d'état (texte sélectionnable, distinct de l'aide) : vue, mode (à pied / en vol), souris, position, tuiles
   const sb = document.getElementById('stateInfo'), sbody = document.getElementById('stateBody'), shead = document.getElementById('stateHead');
   const mkLine = id => { const d = document.createElement('div'); d.id = id; sbody.append(d); return d; };
-  const lv = mkLine('viewInfo'), lm = mkLine('modeInfo'), lmo = mkLine('mouseInfo'), lp = mkLine('posInfo'), lkb = mkLine('kbInfo');
+  const lv = mkLine('viewInfo'), lm = mkLine('modeInfo'), lmo = mkLine('mouseInfo'), lp = mkLine('posInfo'), lkb = mkLine('kbInfo'), lrd = mkLine('radioInfo');
+  lrd.hidden = true; radioTxt = t => { lrd.hidden = !t; if (lrd.textContent !== (t || '')) lrd.textContent = t || ''; };   // 1.10.32 : « ♪ Radio : … » tant qu'une zone radio est à portée (le diagnostic la reprend)
   mkLine('verInfo').textContent = tr('page.state.version', '__CORE_VERSION__', C.version || '?');   // 1.6.17 : version de la page (index.html, ou glb2html.py pour une page autonome) et de la configuration
   // v39 : bouton « Copier le diagnostic » sous le contenu de la fenêtre (reste visible quand elle est réduite) : lignes affichées + diagText (core.js) ;
   // si le navigateur refuse la copie, le texte s'affiche sélectionné dessous (Ctrl+C)
