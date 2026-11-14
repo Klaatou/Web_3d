@@ -6,6 +6,14 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.10.0)
 
+### 14/11/2026: radio zone: the cause of an unreadable stream in the "Radio" line, retry on coming back into the zone (batch 1.10.33)
+
+- **Finding** (Klaatou): the same radio zone plays on a page served locally and says "stream unreadable" on the demo (GitHub Pages), while the stream opens in a tab. The page dropped the cause of the `<audio>` `error` event; a failed zone stayed blocked until the page was reloaded.
+- **Done** (`src/template.html`, `RADIO`): the line "♪ Radio: NAME: stream unreadable (CAUSE)" and the message give the code (`MEDIA_ERR_ABORTED`, `MEDIA_ERR_NETWORK`, `MEDIA_ERR_DECODE`, `MEDIA_ERR_SRC_NOT_SUPPORTED`) and the browser's message; the diagnostic includes the line. `https` page with an `http:` stream: the page says so (`page.radio.mixed`) instead of letting the browser refuse silently. A zone's cause is forgotten when leaving its range: the stream is tried again on return. Viewer: "Try the stream" also gives the code and the message.
+- **Check**: `tests/zone_cast.py`: the line contains `MEDIA_ERR_`, leaving the failed zone, return: a new request to the server (request count); `i18n`, `dist_a_jour`. Per-file numbers after the build: `index.html`, `carte.html`, `glb-viewer.html` and `glb2html.py` take 1.10.33, the others keep theirs.
+- **Not tried**: the demo case itself (not reachable from here: the line will tell the cause); mixed content (no `https` page in the sandbox); Windows, Edge.
+- **Still to update** (rule 16): as batch 1.10.32; the demo (`index.html`, `carte.html`, `glb-viewer.html`, `glb2html.py` change); `REPRISE.md` (rule 23).
+
 ### 14/11/2026: radio zones: an Icecast / SHOUTcast stream plays while walking within range (batch 1.10.32)
 
 - **Done**: new zone type **`cast`** (`src/core.js`, `src/gen_tpl.py`, `ZONE_TYPES`): `target` = stream address (`https://` preferably: an `https` page refuses an `http` stream), `radius` = range (0.5 to **200 m**; the other types stay at 50), ring on the ground; no click, no "E" prompt, no link to an element, no cone. While walking, `zoneTick` keeps the nearest radio zone within range (in x and z; from 4 m below the zone to 8 m above) and its gain `1 - distance / range` (0.05 at least), and calls `onCast(zone, gain)` at every change; `null` out of range, in global view and when the zones are reloaded.

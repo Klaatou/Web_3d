@@ -561,7 +561,7 @@ let castAudio = null, castT = 0;   // 1.10.32 : essai d'un flux radio depuis l'Ã
 function castTry(url) {
   if (!castAudio) {
     castAudio = new Audio(); castAudio.preload = 'none';
-    castAudio.addEventListener('error', () => { if (castAudio.getAttribute('src')) setStatus(tr('viewer.zf.cast.fail', castAudio.error ? 'MEDIA_ERR_' + castAudio.error.code : '?')); });
+    castAudio.addEventListener('error', () => { if (castAudio.getAttribute('src')) setStatus(tr('viewer.zf.cast.fail', castAudio.error ? ({ 1: 'MEDIA_ERR_ABORTED', 2: 'MEDIA_ERR_NETWORK', 3: 'MEDIA_ERR_DECODE', 4: 'MEDIA_ERR_SRC_NOT_SUPPORTED' }[castAudio.error.code] || 'MEDIA_ERR_' + castAudio.error.code) + (castAudio.error.message ? ' : ' + castAudio.error.message : '') : '?')); });
     castAudio.addEventListener('playing', () => setStatus(tr('viewer.zf.cast.playing')));
   }
   const stop = () => { castAudio.pause(); castAudio.removeAttribute('src'); castAudio.load(); };

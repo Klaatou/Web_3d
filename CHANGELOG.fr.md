@@ -6,6 +6,14 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.10.0)
 
+### 14/11/2026 : zone radio : la cause d'un flux illisible dans la ligne « Radio », réessai au retour dans la zone (lot 1.10.33)
+
+- **Constat** (Klaatou) : la même zone radio joue sur une page servie en local et donne « flux illisible » sur la démo (GitHub Pages), alors que le flux s'ouvre dans un onglet. La page jetait la cause de l'événement `error` de `<audio>` ; une zone en erreur restait bloquée jusqu'au rechargement.
+- **Fait** (`src/template.html`, `RADIO`) : la ligne « ♪ Radio : NOM : flux illisible (CAUSE) » et le message donnent le code (`MEDIA_ERR_ABORTED`, `MEDIA_ERR_NETWORK`, `MEDIA_ERR_DECODE`, `MEDIA_ERR_SRC_NOT_SUPPORTED`) et le message du navigateur ; le diagnostic reprend la ligne. Page `https` avec un flux `http:` : la page le dit (`page.radio.mixed`) au lieu de laisser le navigateur refuser en silence. La cause d'une zone est oubliée quand on sort de sa portée : le flux est réessayé au retour. Viewer : « Essayer le flux » donne aussi le code et le message.
+- **Contrôle** : `tests/zone_cast.py` : la ligne contient `MEDIA_ERR_`, sortie de la zone en erreur, retour : nouvelle demande au serveur (compte des requêtes) ; `i18n`, `dist_a_jour`. Numéros par fichier après le build : `index.html`, `carte.html`, `glb-viewer.html` et `glb2html.py` prennent 1.10.33, les autres gardent le leur.
+- **Non essayé** : le cas de la démo lui-même (pas joignable d'ici : la ligne dira la cause) ; le contenu mixte (pas de page `https` dans le bac à sable) ; Windows, Edge.
+- **Reste à mettre à jour** (règle 16) : comme le lot 1.10.32 ; la démo (`index.html`, `carte.html`, `glb-viewer.html`, `glb2html.py` changent) ; `REPRISE.md` (règle 23).
+
 ### 14/11/2026 : zones radio : un flux Icecast / SHOUTcast joue en promenade à portée (lot 1.10.32)
 
 - **Fait** : nouveau type de zone **`cast`** (`src/core.js`, `src/gen_tpl.py`, `ZONE_TYPES`) : `target` = adresse du flux (`https://` de préférence : une page `https` refuse un flux `http`), `radius` = portée (0,5 à **200 m** ; les autres types restent à 50), anneau au sol ; ni clic, ni invite « E », ni lien à un élément, ni cône. En promenade, `zoneTick` retient la zone radio la plus proche dont on est à portée (en x et z ; de 4 m sous la zone à 8 m au-dessus) et son gain `1 - distance / portée` (0,05 au moins), et appelle `onCast(zone, gain)` à chaque changement ; `null` hors portée, en vue globale et quand les zones sont rechargées.

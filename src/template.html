@@ -657,14 +657,16 @@ const SND = (() => {
 let radioTxt = () => {};   // ligne « Radio » du bloc d'état (définie avec le bloc)
 const RADIO = (() => {
   let a = null, cur = null, gain = 0, src = '';
-  const bad = new Set();
+  const bad = new Map();   // zone id -> cause de l'echec (code MEDIA_ERR_* et message du navigateur) ; oubliee quand on sort de la portee : reessai au retour
+  const ERR = { 1: 'MEDIA_ERR_ABORTED', 2: 'MEDIA_ERR_NETWORK', 3: 'MEDIA_ERR_DECODE', 4: 'MEDIA_ERR_SRC_NOT_SUPPORTED' };
+  const cause = () => a && a.error ? (ERR[a.error.code] || 'MEDIA_ERR_' + a.error.code) + (a.error.message ? ' : ' + a.error.message : '') : '?';
   const label = () => cur ? (cur.label || cur.id) : '';
   const lvl = () => VIS.sounds && VIS.radio ? Math.max(0, Math.min(1, gain * VIS.volume / 100)) : 0;
   const stop = () => { if (!a || !src) return; src = ''; a.pause(); a.removeAttribute('src'); a.load(); };
   const ensure = () => {
     if (a) return a;
     a = new Audio(); a.preload = 'none';
-    a.addEventListener('error', () => { if (!cur || !src) return; bad.add(cur.id); stop(); radioTxt(tr('page.radio.error', label())); toast(tr('page.radio.error', label())); });
+    a.addEventListener('error', () => { if (!cur || !src) return; const c = cause(); bad.set(cur.id, c); stop(); radioTxt(tr('page.radio.error', label(), c)); toast(tr('page.radio.error', label(), c)); });
     a.addEventListener('playing', () => { if (cur) radioTxt(tr('page.radio.playing', label())); });
     a.addEventListener('waiting', () => { if (cur) radioTxt(tr('page.radio.waiting', label())); });
     return a;
@@ -672,7 +674,8 @@ const RADIO = (() => {
   const refresh = () => {
     const v = lvl();
     if (!cur) { stop(); radioTxt(''); return; }
-    if (bad.has(cur.id)) { stop(); radioTxt(tr('page.radio.error', label())); return; }
+    if (bad.has(cur.id)) { stop(); radioTxt(tr('page.radio.error', label(), bad.get(cur.id))); return; }
+    if (location.protocol === 'https:' && /^\s*http:/i.test(cur.target)) { bad.set(cur.id, tr('page.radio.mixed')); stop(); radioTxt(tr('page.radio.error', label(), bad.get(cur.id))); toast(tr('page.radio.error', label(), bad.get(cur.id))); return; }   // contenu mixte : le navigateur refuserait sans rien dire d'utile
     if (v <= 0) { stop(); radioTxt(tr('page.radio.off', label())); return; }
     const el = ensure(); el.volume = v;
     if (src !== cur.target) { stop(); src = cur.target; el.src = src; }
@@ -682,7 +685,7 @@ const RADIO = (() => {
     el.play().catch(e => { if (e && e.name === 'NotAllowedError') radioTxt(tr('page.radio.click', label())); });
   };
   for (const ev of ['pointerdown', 'keydown', 'touchstart']) addEventListener(ev, () => { if (cur && (!a || a.paused)) refresh(); }, true);   // après la première action : le flux démarre (SND a déjà noté l'action : il écoute avant)
-  return { set(z, g) { const ch = !cur !== !z || (z && cur && z.id !== cur.id); cur = z; gain = g; if (ch) refresh(); else if (a && src && !a.paused) a.volume = lvl(); }, refresh, playing: () => !!(a && src && !a.paused), level: () => (a && src ? a.volume : 0) };
+  return { set(z, g) { const ch = !cur !== !z || (z && cur && z.id !== cur.id); if (ch && cur) bad.delete(cur.id); cur = z; gain = g; if (ch) refresh(); else if (a && src && !a.paused) a.volume = lvl(); }, refresh, playing: () => !!(a && src && !a.paused), level: () => (a && src ? a.volume : 0) };
 })();
 if (C.walk) viewer.onCast = (z, g) => RADIO.set(z, g);
 viewer.setMyColor(VIS.color);

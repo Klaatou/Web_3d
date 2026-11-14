@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Test des zones radio (type cast, 1.10.32) : le flux de la zone a portee joue en promenade, volume selon la distance, une seule zone a la fois,
+"""Test des zones radio (type cast, 1.10.32 ; 1.10.33 : cause de l'echec dans la ligne, reessai au retour dans la zone) : le flux de la zone a portee joue en promenade, volume selon la distance, une seule zone a la fois,
 arret hors portee et en vue globale, case « Radio des zones » de Reglages, flux illisible dit dans le bloc d'etat, zone ni cliquable ni « invite E »,
 portee jusqu'a 200 m (les autres zones restent a 50) ; le viewer propose le type.
 
@@ -43,9 +43,20 @@ def wav(path, secondes=40):
     path.write_bytes(b"RIFF" + struct.pack("<I", 36 + n) + b"WAVEfmt " + struct.pack("<IHHIIHH", 16, 1, 1, 8000, 8000, 1, 8) + b"data" + struct.pack("<I", n) + data)
 
 
+DEMANDES = []   # chemins demandes au serveur (compte des reessais)
+
+
+class Handler(http.server.SimpleHTTPRequestHandler):
+    def log_message(self, *a):
+        pass
+
+    def do_GET(self):
+        DEMANDES.append(self.path)
+        super().do_GET()
+
+
 def serveur(dossier):
-    h = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(dossier))
-    h.log_message = lambda *a: None
+    h = functools.partial(Handler, directory=str(dossier))
     srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), h)
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     return srv
@@ -143,7 +154,16 @@ async def main():
             await pg.wait_for_function("/illisible/.test(document.getElementById('radioInfo').textContent)", timeout=15000)
         except Exception:
             pass
-        rapport("illisible" in await info() and not await playing(), "flux illisible : la ligne le dit, rien ne joue", await info())
+        rapport("illisible" in await info() and "MEDIA_ERR_" in await info() and not await playing(), "flux illisible : la ligne le dit avec la cause (code MEDIA_ERR_*), rien ne joue", await info())
+        n1 = DEMANDES.count("/absent.mp3")
+        await pg.evaluate("window.__v.teleportTo([-30, 15, 12], 0)"); await pg.wait_for_timeout(400)
+        rapport(await info() == "", "sortie de la zone en erreur : ligne cachee", await info())
+        await pg.evaluate("window.__v.teleportTo([-30, 15, 1], 0)")
+        try:
+            await pg.wait_for_function("/illisible/.test(document.getElementById('radioInfo').textContent)", timeout=15000)
+        except Exception:
+            pass
+        rapport(DEMANDES.count("/absent.mp3") > n1 and "illisible" in await info(), "retour dans la zone : le flux est reessaye (nouvelle demande au serveur)", (n1, DEMANDES.count("/absent.mp3"), await info()))
         # vue globale : arret
         await pg.evaluate("window.__v.teleportTo([30, 15, 1], 0)")
         try:
