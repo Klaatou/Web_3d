@@ -384,7 +384,7 @@ def log(kind, room, who, extra=""):
 
 class Peer:
     __slots__ = ("id", "ws", "name", "color", "p", "yaw", "last", "ip", "chat_times", "spectator", "uidh", "t0", "zone_t", "room", "color_t", "hist_t",
-                 "wall0", "walk_s", "walk0", "vname", "label", "name_t")
+                 "wall0", "walk_s", "walk0", "vname", "label", "name_t", "radio", "radio_t")
 
     def __init__(self, pid, ws, name, color, ip, spectator, uidh, room):
         self.id, self.ws, self.name, self.color, self.ip = pid, ws, name, color, ip
@@ -395,6 +395,7 @@ class Peer:
         self.wall0, self.walk_s, self.vname = time.time(), 0.0, ""      # v48 : journal des visites
         self.walk0 = None if spectator else self.t0
         self.label = ""      # pseudo d'affichage pour la carte d'un visiteur en vue globale (seulement avec --map-names-key)
+        self.radio, self.radio_t = "", 0.0      # 1.10.34 : flux radio écouté (adresse autorisée), heure de la dernière demande
 
     def walk_mark(self, walking):
         """v48 : début ou fin de promenade (temps de promenade du journal des visites)"""
@@ -509,6 +510,113 @@ class Registry:
 # ----------------------------------------------------------------- créateurs (v51)
 CREATORS = None          # None : sans --creators (tout le monde est accepté) ; sinon la liste des créateurs valides du fichier
 CR_STAT = {"mtime": None, "checked": 0.0}
+
+# 1.10.34 : titre du morceau des zones radio. --radios FICHIER = liste JSON des adresses de flux autorisées (le serveur n'interroge jamais une autre
+# adresse : une page ne peut pas lui faire lire n'importe quoi). La page envoie {t: "radio", url} en entrant dans une zone radio (url vide en sortant) ;
+# le serveur lit le titre DANS le flux (en-tête Icy-MetaData: 1, bloc de métadonnées après icy-metaint octets, puis fermeture : Icecast, SHOUTcast),
+# toutes les --radios-every secondes tant qu'au moins un visiteur écoute ce flux, et envoie {t: "radio", url, title} à chaque changement.
+RADIOS_OK = []           # adresses autorisées (fichier --radios)
+RADIOS_STAT = {"mtime": None, "checked": 0.0}
+RADIOS = {}              # url -> {"title": str, "peers": {Peer}, "task": Task|None}
+RADIO_MAX_META = 1 << 20     # icy-metaint au plus (1 Mo) : au-delà le flux est tenu pour sans titre
+
+
+def radios_reload(force=False):
+    """relit le fichier --radios s'il a changé (au plus une fois toutes les 2 s) ; fichier absent ou illisible : liste vide"""
+    global RADIOS_OK
+    if not OPTS.radios:
+        return
+    now = time.monotonic()
+    if not force and now - RADIOS_STAT["checked"] < 2:
+        return
+    RADIOS_STAT["checked"] = now
+    try:
+        mt = os.path.getmtime(OPTS.radios)
+    except OSError:
+        if RADIOS_STAT["mtime"] != "missing" or force:
+            print(_tr("py.presence.radios.missing", OPTS.radios))
+        RADIOS_STAT["mtime"], RADIOS_OK = "missing", []
+        return
+    if mt == RADIOS_STAT["mtime"] and not force:
+        return
+    RADIOS_STAT["mtime"] = mt
+    try:
+        with open(OPTS.radios, encoding="utf-8") as f:
+            lst = json.load(f)
+        if not isinstance(lst, list):
+            raise ValueError("liste attendue")
+        RADIOS_OK = [u.strip() for u in lst if isinstance(u, str) and re.match(r"^https?://", u.strip(), re.I)]
+    except (OSError, ValueError) as e:
+        print(_tr("py.presence.radios.bad", OPTS.radios, e))
+
+
+def radio_title_sync(url):
+    """titre courant du flux (StreamTitle des métadonnées ICY), '' si le flux n'en donne pas ; jamais d'exception"""
+    import urllib.request
+    try:
+        req = urllib.request.Request(url, headers={"Icy-MetaData": "1", "User-Agent": "Web_3d-presence/" + version_tag().split(" ")[0], "Accept": "*/*"})
+        with urllib.request.urlopen(req, timeout=8) as r:
+            mi = r.headers.get("icy-metaint")
+            if not mi or not mi.strip().isdigit() or int(mi) <= 0 or int(mi) > RADIO_MAX_META:
+                return ""
+            mi = int(mi)
+            skipped = 0
+            while skipped < mi:
+                chunk = r.read(min(65536, mi - skipped))
+                if not chunk:
+                    return ""
+                skipped += len(chunk)
+            n = r.read(1)
+            if not n:
+                return ""
+            meta = r.read(n[0] * 16).decode("utf-8", "replace")
+    except Exception:
+        return ""
+    m = re.search(r"StreamTitle='(.*?)';", meta)
+    return clean_text(m.group(1), 200) if m else ""
+
+
+async def radio_poll(url):
+    """relève le titre du flux tant qu'un visiteur l'écoute ; envoie le titre aux écoutants quand il change"""
+    st = RADIOS[url]
+    first = True
+    try:
+        while st["peers"]:
+            title = await asyncio.to_thread(radio_title_sync, url)
+            if title != st["title"] or first:
+                st["title"] = title
+                first = False
+                for p in list(st["peers"]):
+                    await send_safe(p.ws, json.dumps({"t": "radio", "url": url, "title": title}, ensure_ascii=False, separators=(",", ":")))
+            await asyncio.sleep(OPTS.radios_every)
+    finally:
+        st["task"] = None
+        if not st["peers"]:
+            RADIOS.pop(url, None)
+
+
+def radio_leave(peer):
+    if peer.radio and peer.radio in RADIOS:
+        RADIOS[peer.radio]["peers"].discard(peer)
+    peer.radio = ""
+
+
+async def radio_ask(peer, url):
+    """la page entre (url) dans une zone radio ou en sort (url vide) : titre tout de suite si le flux est connu, puis à chaque changement"""
+    radio_leave(peer)
+    if not url:
+        return
+    radios_reload()
+    if url not in RADIOS_OK:
+        await send_safe(peer.ws, json.dumps({"t": "radio", "url": url}, ensure_ascii=False, separators=(",", ":")))
+        return
+    st = RADIOS.setdefault(url, {"title": "", "peers": set(), "task": None})
+    st["peers"].add(peer)
+    peer.radio = url
+    if st["task"] is None or st["task"].done():
+        st["task"] = asyncio.create_task(radio_poll(url))
+    else:
+        await send_safe(peer.ws, json.dumps({"t": "radio", "url": url, "title": st["title"]}, ensure_ascii=False, separators=(",", ":")))
 CR_ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,32}$")
 
 
@@ -1340,10 +1448,17 @@ async def handler(ws):
                     continue
                 peer.zone_t = now
                 log(_tr("py.presence.zone"), room, peer.who(), f"{clean_text(m.get('type'), 12)} « {clean_text(m.get('label') or m.get('id'), 60)} »")
+            elif t == "radio":      # 1.10.34 : titre du morceau d'une zone radio (adresses de --radios seulement)
+                now = time.monotonic()
+                if now - peer.radio_t < 1:
+                    continue
+                peer.radio_t = now
+                await radio_ask(peer, str(m.get("url") or "").strip()[:600])
     except (websockets.ConnectionClosed, asyncio.TimeoutError, ValueError):
         pass
     finally:
         if peer is not None and room in ROOMS:
+            radio_leave(peer)
             ROOMS[room].pop(peer.id, None)
             if not peer.spectator:
                 await broadcast(room, {"t": "leave", "id": peer.id})
@@ -1407,6 +1522,8 @@ async def main():
     ap.add_argument("--map-names", action="store_true", help=_tr("py.presence.help.map_names"))   # ancienne option (1.3.1) : sans effet, un avertissement le dit
     ap.add_argument("--visits-keys", default="presence_visits_keys.json", metavar="FILE", help=_tr("py.presence.help.visits_keys"))
     ap.add_argument("--creators", default="", metavar="FILE", help=_tr("py.presence.help.creators"))
+    ap.add_argument("--radios", default="", metavar="FILE", help=_tr("py.presence.help.radios"))
+    ap.add_argument("--radios-every", type=int, default=30, metavar="N", help=_tr("py.presence.help.radios_every"))
     ap.add_argument("--cert", help=_tr("py.presence.certificat_tls_wss"))
     ap.add_argument("--key", help=_tr("py.presence.cle_privee_tls"))
     OPTS = ap.parse_args()
@@ -1423,12 +1540,15 @@ async def main():
     OPTS.visits = here(OPTS.visits) if OPTS.visits else ""
     OPTS.visits_keys = here(OPTS.visits_keys) if OPTS.visits_keys else ""
     OPTS.creators = here(OPTS.creators) if OPTS.creators else ""
+    OPTS.radios = here(OPTS.radios) if OPTS.radios else ""
+    OPTS.radios_every = max(5, OPTS.radios_every)
     REG = Registry(OPTS.identities or None, OPTS.name_ttl_days, [x for x in OPTS.reserved.split(",")], OPTS.max_names)
     setup_log()
     bans_load()
     hist_load()
     vkeys_load()
     creators_reload(force=True)
+    radios_reload(force=True)
     if OPTS.visits:
         try:
             visits_purge()
@@ -1460,6 +1580,7 @@ async def main():
             LOG.info(_tr("py.presence.serveur_journal_0_registre_des_noms", OPTS.log or '(aucun : option --log)', OPTS.identities or '(en mémoire)'))
             if OPTS.visits:
                 LOG.info(_tr("py.presence.visits_on", OPTS.visits, OPTS.visits_days, _tr("py.presence.visits.yes") if OPTS.visits_names else _tr("py.presence.visits.no")))
+            LOG.info(_tr("py.presence.radios_on", len(RADIOS_OK), OPTS.radios, OPTS.radios_every) if OPTS.radios else _tr("py.presence.radios_off"))
             if OPTS.map_names_key:
                 LOG.info(_tr("py.presence.map_names_on"))
             if OPTS.map_names:

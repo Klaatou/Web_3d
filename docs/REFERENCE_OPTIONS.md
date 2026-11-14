@@ -285,6 +285,8 @@ Serveur de présence : positions des visiteurs, chat, modération.<br>Presence s
 | `--map-names` | (aucune) / (none) |  | ancienne option (1.3.1), sans effet (un avertissement le dit) : utiliser --map-names-key SECRET<br>old option (1.3.1), no effect (a warning says so): use --map-names-key SECRET |
 | `--visits-keys` | FILE | `presence_visits_keys.json` | fichier des clés d'accès au journal des visites (empreintes seulement, chemin relatif au dossier du script)<br>file of the visit log access keys (fingerprints only, path relative to the script's folder) |
 | `--creators` | FILE | (vide) / (empty) | fichier des créateurs autorisés (origines de leurs pages, préfixe de salon, limites ; relu à chaud, chemin relatif au dossier du script) ; absent : tout le monde est accepté<br>file of allowed creators (origins of their pages, room prefix, limits; re-read on change, path relative to the script's folder); absent: everyone is accepted |
+| `--radios` | FILE | (vide) / (empty) | fichier JSON : liste des adresses de flux radio dont le serveur lit le titre du morceau pour les pages (zones radio) ; sans l'option, aucun titre<br>JSON file: list of radio stream addresses whose track title the server reads for the pages (radio zones); without the option, no title |
+| `--radios-every` | N | `30` | avec --radios : secondes entre deux lectures du titre d'un flux écouté (défaut 30, 5 au moins)<br>with --radios: seconds between two readings of a listened stream's title (default 30, 5 at least) |
 | `--cert` | CERT |  | certificat TLS (wss://)<br>TLS certificate (wss://) |
 | `--key` | KEY |  | clé privée TLS<br>TLS private key |
 

@@ -1697,6 +1697,7 @@ function createViewer(container, cfg0, loader) {
       P.serverColor = Number.isInteger(m.color) && m.color >= 0 && m.color <= 0xFFFFFF ? m.color : null;
       if (m.name) setMyName(m.name);
       if (m.role === 'spectator' && walking && P.ws) P.ws.send(JSON.stringify({ t: 'role', walker: true, name: P.name }));
+      if (radioWant && P.ws) P.ws.send(JSON.stringify({ t: 'radio', url: radioWant }));   // reconnexion : le titre de la radio écoutée
       if (onChat && cfg.chat !== false) (m.history || []).forEach(h => onChat({ id: h.id, name: cleanName(h.name) || '?', text: String(h.text || '').slice(0, 200), self: false, history: true, n: Number.isFinite(h.n) ? h.n : undefined, ts: Number.isFinite(h.t) ? h.t : undefined }));
     }
     else if (m.t === 'join') { const had = P.peers.has(m.id) || m.id === P.id; addPeer(m); pStatus('online'); if (onChat && cfg.chat !== false) onChat({ system: true, text: tr('core.joined', cleanName(m.name) || '?') }); if (!had && onPeer) onPeer('join', cleanName(m.name) || '?'); }   // v36 : onPeer = visiteur EN PROMENADE qui arrive ou part (jamais moi, jamais la liste initiale)
@@ -1710,6 +1711,7 @@ function createViewer(container, cfg0, loader) {
       if (onHistory && cfg.chat !== false) onHistory({ more: m.more === true, msgs: (Array.isArray(m.msgs) ? m.msgs : []).slice(0, 100).map(h => ({ id: h.id, name: cleanName(h.name) || '?', text: String(h.text || '').slice(0, 200), self: false, history: true, n: Number.isFinite(h.n) ? h.n : undefined, ts: Number.isFinite(h.t) ? h.t : undefined })) });
     }
     else if (m.t === 'notice') { if (onChat && cfg.chat !== false) onChat({ system: true, text: String(m.text || '').slice(0, 120) }); }
+    else if (m.t === 'radio') { if (onRadio) onRadio(String(m.url || ''), String(m.title || '').slice(0, 200)); }   // 1.10.34 : titre du morceau d'un flux radio (serveur --radios)
     else if (m.t === 'pos') {
       const q = P.peers.get(m.id);
       if (q && Array.isArray(m.p) && m.p.every(Number.isFinite)) {
@@ -1858,7 +1860,7 @@ function createViewer(container, cfg0, loader) {
   const zoneGroup = new THREE.Group(); scene.add(zoneGroup);
   let selId = null;
   let zones = [], zoneHit = [], zoneAll = [], zoneInside = new Set(), nearZone = null, zoneEditor = false, selBox = null, onZone = null, onNear = null;
-  let castCur = null, castGain = 0, onCast = null;   // 1.10.32 : zone radio (type cast) la plus proche a portee et son gain (1 au centre, 0 au bord) ; onCast(zone|null, gain) a chaque changement
+  let castCur = null, castGain = 0, onCast = null, onRadio = null, radioWant = '';   // radioWant : flux dont la page veut le titre (redemandé à la reconnexion)   // 1.10.32 : zone radio (type cast) la plus proche a portee et son gain (1 au centre, 0 au bord) ; onCast(zone|null, gain) a chaque changement
   function castReset() { const was = castCur; castCur = null; castGain = 0; if (was && onCast) onCast(null, 0); }
   const imgGone = new Set();   // ids des tableaux dont l'image est introuvable (page exportee) : ni cliquables ni zone proche
   let zoneNums = false;   // reperage des zones image : un gros numero devant chacune (jamais memorise ; voir setZoneNumbers)
@@ -2601,7 +2603,7 @@ function createViewer(container, cfg0, loader) {
     // boîte (monde) de l'élément de ce nom : { min, max, center, count } ou null
     meshInfo(name) { const m = findMeshes(name); const b = m.length ? refBox(name, m) : null; if (!b) return null; return { min: b.min.toArray(), max: b.max.toArray(), center: b.getCenter(new THREE.Vector3()).toArray(), size: b.getSize(new THREE.Vector3()).toArray(), count: m.length }; },
     set linkMode(v) { linkLock = !!v; },
-    isTraversable(o) { return isIgnoredMesh(o, parseIgnore(cfg.walkIgnore)); }, getZones() { return zones.map(z => Object.assign({}, z)); }, set onZone(f) { onZone = f; }, set onNear(f) { onNear = f; }, set onCast(f) { onCast = f; },
+    isTraversable(o) { return isIgnoredMesh(o, parseIgnore(cfg.walkIgnore)); }, getZones() { return zones.map(z => Object.assign({}, z)); }, set onZone(f) { onZone = f; }, set onNear(f) { onNear = f; }, set onCast(f) { onCast = f; }, set onRadio(f) { onRadio = f; }, radioAsk(url) { radioWant = String(url || ''); if (P.ws && P.ws.readyState === 1 && P.id) P.ws.send(JSON.stringify({ t: 'radio', url: radioWant })); },
     captureTop(size = 320, hide = []) {
       if (!model) return null;
       const box = new THREE.Box3().setFromObject(model), c = box.getCenter(new THREE.Vector3()), sz = box.getSize(new THREE.Vector3());

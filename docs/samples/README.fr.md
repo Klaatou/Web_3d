@@ -26,6 +26,7 @@ Ce dossier contient **un exemple de chaque fichier JSON** que la page, le viewer
 | `visits.sample.jsonl` | fichier de `--visits` | le journal des visites, une ligne par visite, sans adresse IP | § 11.10 |
 | `presence_visits_keys.sample.json` | `presence_visits_keys.json` | les clés (en empreintes) qui donnent accès au journal des visites d'un salon, commande `visits-key` | § 11.10 |
 | `presence_creators.sample.json` | `presence_creators.json` | les créateurs accueillis (`--creators`) ; écrit à la main | § 10.10 |
+| `presence_radios.sample.json` | `presence_radios.json` | les adresses de flux radio dont le serveur lit le titre du morceau pour les zones radio (`--radios`) ; écrit à la main | § 10 |
 
 ## Ce qui ne va jamais dans le dépôt des outils
 

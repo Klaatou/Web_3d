@@ -38,23 +38,23 @@ Le nom de la région vient du nom du fichier, réduit aux lettres, chiffres, `_`
 
 ## 4. Les options principales
 
-| Option | Effet |
-| --- | --- |
-| `--only` | expression régulière : seulement les OAR dont le nom correspond |
-| `--tex-size` | réduit les textures ordinaires à N pixels de côté au plus (§ 5) |
-| `--tex-quality` | compresse les textures ordinaires en JPEG de qualité Q (§ 5) |
-| `--pbr-size` | côté maximal des textures PBR (défaut 512) |
-| `--split` | `auto` (défaut : `glb2tiles.py` décide), `never` (un seul GLB) ou `always` (des tuiles) |
-| `--thumbs` | dossier de vignettes `NOM.jpg`, `NOM.png` ou `NOM.webp` pour la carte des mondes |
-| `--force` | refait les régions déjà converties (écrase leur config et leurs zones) |
-| `--reuse-glb` | utilise un `NOM.glb` déjà présent à côté de l'OAR au lieu de lancer `oar2glb.py` |
-| `--keep-work` | garde les fichiers de travail de chaque région |
-| `--work` | dossier de travail et de journaux (défaut : à côté du site) |
-| `--timeout-min` | arrête une étape après ce nombre de minutes |
-| `--vendor` | dossier local de three.js, pour travailler hors ligne |
-| `--tools` | dossier des trois outils (défaut : à côté du script, puis `dist`) |
-| `--oar2glb-arg`, `--html-arg` | argument supplémentaire transmis à `oar2glb.py` ou à `glb2html.py` (répétable) |
-| `--lang` | langue des messages : `fr`, `en` ou `auto` |
+| Option                        | Effet                                                                                   |
+| ----------------------------- | --------------------------------------------------------------------------------------- |
+| `--only`                      | expression régulière : seulement les OAR dont le nom correspond                         |
+| `--tex-size`                  | réduit les textures ordinaires à N pixels de côté au plus (§ 5)                         |
+| `--tex-quality`               | compresse les textures ordinaires en JPEG de qualité Q (§ 5)                            |
+| `--pbr-size`                  | côté maximal des textures PBR (défaut 512)                                              |
+| `--split`                     | `auto` (défaut : `glb2tiles.py` décide), `never` (un seul GLB) ou `always` (des tuiles) |
+| `--thumbs`                    | dossier de vignettes `NOM.jpg`, `NOM.png` ou `NOM.webp` pour la carte des mondes        |
+| `--force`                     | refait les régions déjà converties (écrase leur config et leurs zones)                  |
+| `--reuse-glb`                 | utilise un `NOM.glb` déjà présent à côté de l'OAR au lieu de lancer `oar2glb.py`        |
+| `--keep-work`                 | garde les fichiers de travail de chaque région                                          |
+| `--work`                      | dossier de travail et de journaux (défaut : à côté du site)                             |
+| `--timeout-min`               | arrête une étape après ce nombre de minutes                                             |
+| `--vendor`                    | dossier local de three.js, pour travailler hors ligne                                   |
+| `--tools`                     | dossier des trois outils (défaut : à côté du script, puis `dist`)                       |
+| `--oar2glb-arg`, `--html-arg` | argument supplémentaire transmis à `oar2glb.py` ou à `glb2html.py` (répétable)          |
+| `--lang`                      | langue des messages : `fr`, `en` ou `auto`                                              |
 
 Toutes les options, avec leurs valeurs par défaut : `docs/REFERENCE_OPTIONS.md`.
 

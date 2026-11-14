@@ -16,8 +16,8 @@ Draco et Meshopt gérés automatiquement (décodeurs intégrés seulement si le 
 """
 from __future__ import annotations
 
-VERSION = "1.10.33 (14/11/2026)"
-SHELL_VERSION = "1.10.33 (14/11/2026)"   # numéro de version de la coquille (index.html) : écrit par build.py, ne change que si la coquille change
+VERSION = "1.10.34 (14/11/2026)"
+SHELL_VERSION = "1.10.34 (14/11/2026)"   # numéro de version de la coquille (index.html) : écrit par build.py, ne change que si la coquille change
 MAP_VERSION = "1.10.33 (14/11/2026)"       # numéro de version de la page de carte (carte.html) : idem
 
 import argparse
@@ -2924,6 +2924,7 @@ function createViewer(container, cfg0, loader) {
       P.serverColor = Number.isInteger(m.color) && m.color >= 0 && m.color <= 0xFFFFFF ? m.color : null;
       if (m.name) setMyName(m.name);
       if (m.role === 'spectator' && walking && P.ws) P.ws.send(JSON.stringify({ t: 'role', walker: true, name: P.name }));
+      if (radioWant && P.ws) P.ws.send(JSON.stringify({ t: 'radio', url: radioWant }));   // reconnexion : le titre de la radio écoutée
       if (onChat && cfg.chat !== false) (m.history || []).forEach(h => onChat({ id: h.id, name: cleanName(h.name) || '?', text: String(h.text || '').slice(0, 200), self: false, history: true, n: Number.isFinite(h.n) ? h.n : undefined, ts: Number.isFinite(h.t) ? h.t : undefined }));
     }
     else if (m.t === 'join') { const had = P.peers.has(m.id) || m.id === P.id; addPeer(m); pStatus('online'); if (onChat && cfg.chat !== false) onChat({ system: true, text: tr('core.joined', cleanName(m.name) || '?') }); if (!had && onPeer) onPeer('join', cleanName(m.name) || '?'); }   // v36 : onPeer = visiteur EN PROMENADE qui arrive ou part (jamais moi, jamais la liste initiale)
@@ -2937,6 +2938,7 @@ function createViewer(container, cfg0, loader) {
       if (onHistory && cfg.chat !== false) onHistory({ more: m.more === true, msgs: (Array.isArray(m.msgs) ? m.msgs : []).slice(0, 100).map(h => ({ id: h.id, name: cleanName(h.name) || '?', text: String(h.text || '').slice(0, 200), self: false, history: true, n: Number.isFinite(h.n) ? h.n : undefined, ts: Number.isFinite(h.t) ? h.t : undefined })) });
     }
     else if (m.t === 'notice') { if (onChat && cfg.chat !== false) onChat({ system: true, text: String(m.text || '').slice(0, 120) }); }
+    else if (m.t === 'radio') { if (onRadio) onRadio(String(m.url || ''), String(m.title || '').slice(0, 200)); }   // 1.10.34 : titre du morceau d'un flux radio (serveur --radios)
     else if (m.t === 'pos') {
       const q = P.peers.get(m.id);
       if (q && Array.isArray(m.p) && m.p.every(Number.isFinite)) {
@@ -3085,7 +3087,7 @@ function createViewer(container, cfg0, loader) {
   const zoneGroup = new THREE.Group(); scene.add(zoneGroup);
   let selId = null;
   let zones = [], zoneHit = [], zoneAll = [], zoneInside = new Set(), nearZone = null, zoneEditor = false, selBox = null, onZone = null, onNear = null;
-  let castCur = null, castGain = 0, onCast = null;   // 1.10.32 : zone radio (type cast) la plus proche a portee et son gain (1 au centre, 0 au bord) ; onCast(zone|null, gain) a chaque changement
+  let castCur = null, castGain = 0, onCast = null, onRadio = null, radioWant = '';   // radioWant : flux dont la page veut le titre (redemandé à la reconnexion)   // 1.10.32 : zone radio (type cast) la plus proche a portee et son gain (1 au centre, 0 au bord) ; onCast(zone|null, gain) a chaque changement
   function castReset() { const was = castCur; castCur = null; castGain = 0; if (was && onCast) onCast(null, 0); }
   const imgGone = new Set();   // ids des tableaux dont l'image est introuvable (page exportee) : ni cliquables ni zone proche
   let zoneNums = false;   // reperage des zones image : un gros numero devant chacune (jamais memorise ; voir setZoneNumbers)
@@ -3828,7 +3830,7 @@ function createViewer(container, cfg0, loader) {
     // boîte (monde) de l'élément de ce nom : { min, max, center, count } ou null
     meshInfo(name) { const m = findMeshes(name); const b = m.length ? refBox(name, m) : null; if (!b) return null; return { min: b.min.toArray(), max: b.max.toArray(), center: b.getCenter(new THREE.Vector3()).toArray(), size: b.getSize(new THREE.Vector3()).toArray(), count: m.length }; },
     set linkMode(v) { linkLock = !!v; },
-    isTraversable(o) { return isIgnoredMesh(o, parseIgnore(cfg.walkIgnore)); }, getZones() { return zones.map(z => Object.assign({}, z)); }, set onZone(f) { onZone = f; }, set onNear(f) { onNear = f; }, set onCast(f) { onCast = f; },
+    isTraversable(o) { return isIgnoredMesh(o, parseIgnore(cfg.walkIgnore)); }, getZones() { return zones.map(z => Object.assign({}, z)); }, set onZone(f) { onZone = f; }, set onNear(f) { onNear = f; }, set onCast(f) { onCast = f; }, set onRadio(f) { onRadio = f; }, radioAsk(url) { radioWant = String(url || ''); if (P.ws && P.ws.readyState === 1 && P.id) P.ws.send(JSON.stringify({ t: 'radio', url: radioWant })); },
     captureTop(size = 320, hide = []) {
       if (!model) return null;
       const box = new THREE.Box3().setFromObject(model), c = box.getCenter(new THREE.Vector3()), sz = box.getSize(new THREE.Vector3());
@@ -4334,38 +4336,41 @@ const SND = (() => {
 // le son qu'après une première action du visiteur ; un flux illisible (format, réseau, mélange http dans une page https) est dit dans le bloc d'état
 let radioTxt = () => {};   // ligne « Radio » du bloc d'état (définie avec le bloc)
 const RADIO = (() => {
-  let a = null, cur = null, gain = 0, src = '';
+  let a = null, cur = null, gain = 0, src = '', shown = '';
+  const titles = new Map();   // 1.10.34 : url du flux -> titre du morceau (serveur de présence --radios) ; '' = inconnu
   const bad = new Map();   // zone id -> cause de l'echec (code MEDIA_ERR_* et message du navigateur) ; oubliee quand on sort de la portee : reessai au retour
   const ERR = { 1: 'MEDIA_ERR_ABORTED', 2: 'MEDIA_ERR_NETWORK', 3: 'MEDIA_ERR_DECODE', 4: 'MEDIA_ERR_SRC_NOT_SUPPORTED' };
   const cause = () => a && a.error ? (ERR[a.error.code] || 'MEDIA_ERR_' + a.error.code) + (a.error.message ? ' : ' + a.error.message : '') : '?';
   const label = () => cur ? (cur.label || cur.id) : '';
+  const show = key => { shown = key; radioTxt(key ? tr(key, label(), cur && bad.get(cur.id)) + (key === 'page.radio.playing' && cur && titles.get(cur.target) ? ' \u2014 ' + titles.get(cur.target) : '') : ''); };   // la ligne « Radio » ; le titre suit le nom quand le flux joue
   const lvl = () => VIS.sounds && VIS.radio ? Math.max(0, Math.min(1, gain * VIS.volume / 100)) : 0;
   const stop = () => { if (!a || !src) return; src = ''; a.pause(); a.removeAttribute('src'); a.load(); };
   const ensure = () => {
     if (a) return a;
     a = new Audio(); a.preload = 'none';
-    a.addEventListener('error', () => { if (!cur || !src) return; const c = cause(); bad.set(cur.id, c); stop(); radioTxt(tr('page.radio.error', label(), c)); toast(tr('page.radio.error', label(), c)); });
-    a.addEventListener('playing', () => { if (cur) radioTxt(tr('page.radio.playing', label())); });
-    a.addEventListener('waiting', () => { if (cur) radioTxt(tr('page.radio.waiting', label())); });
+    a.addEventListener('error', () => { if (!cur || !src) return; const c = cause(); bad.set(cur.id, c); stop(); show('page.radio.error'); toast(tr('page.radio.error', label(), c)); });
+    a.addEventListener('playing', () => { if (cur) show('page.radio.playing'); });
+    a.addEventListener('waiting', () => { if (cur) show('page.radio.waiting'); });
     return a;
   };
   const refresh = () => {
     const v = lvl();
-    if (!cur) { stop(); radioTxt(''); return; }
-    if (bad.has(cur.id)) { stop(); radioTxt(tr('page.radio.error', label(), bad.get(cur.id))); return; }
-    if (location.protocol === 'https:' && /^\s*http:/i.test(cur.target)) { bad.set(cur.id, tr('page.radio.mixed')); stop(); radioTxt(tr('page.radio.error', label(), bad.get(cur.id))); toast(tr('page.radio.error', label(), bad.get(cur.id))); return; }   // contenu mixte : le navigateur refuserait sans rien dire d'utile
-    if (v <= 0) { stop(); radioTxt(tr('page.radio.off', label())); return; }
+    if (!cur) { stop(); show(''); return; }
+    if (bad.has(cur.id)) { stop(); show('page.radio.error'); return; }
+    if (location.protocol === 'https:' && /^\s*http:/i.test(cur.target)) { bad.set(cur.id, tr('page.radio.mixed')); stop(); show('page.radio.error'); toast(tr('page.radio.error', label(), bad.get(cur.id))); return; }   // contenu mixte : le navigateur refuserait sans rien dire d'utile
+    if (v <= 0) { stop(); show('page.radio.off'); return; }
     const el = ensure(); el.volume = v;
     if (src !== cur.target) { stop(); src = cur.target; el.src = src; }
     if (!el.paused) return;
-    if (!SND.acted()) { radioTxt(tr('page.radio.click', label())); return; }
-    radioTxt(tr('page.radio.waiting', label()));
-    el.play().catch(e => { if (e && e.name === 'NotAllowedError') radioTxt(tr('page.radio.click', label())); });
+    if (!SND.acted()) { show('page.radio.click'); return; }
+    show('page.radio.waiting');
+    el.play().catch(e => { if (e && e.name === 'NotAllowedError') show('page.radio.click'); });
   };
   for (const ev of ['pointerdown', 'keydown', 'touchstart']) addEventListener(ev, () => { if (cur && (!a || a.paused)) refresh(); }, true);   // après la première action : le flux démarre (SND a déjà noté l'action : il écoute avant)
-  return { set(z, g) { const ch = !cur !== !z || (z && cur && z.id !== cur.id); if (ch && cur) bad.delete(cur.id); cur = z; gain = g; if (ch) refresh(); else if (a && src && !a.paused) a.volume = lvl(); }, refresh, playing: () => !!(a && src && !a.paused), level: () => (a && src ? a.volume : 0) };
+  return { set(z, g) { const ch = !cur !== !z || (z && cur && z.id !== cur.id); if (ch && cur) bad.delete(cur.id); cur = z; gain = g; if (ch) { refresh(); viewer.radioAsk(z ? z.target : ''); } else if (a && src && !a.paused) a.volume = lvl(); },
+    title(url, t) { titles.set(url, t); if (cur && cur.target === url && shown) show(shown); }, refresh, playing: () => !!(a && src && !a.paused), level: () => (a && src ? a.volume : 0) };
 })();
-if (C.walk) viewer.onCast = (z, g) => RADIO.set(z, g);
+if (C.walk) { viewer.onCast = (z, g) => RADIO.set(z, g); viewer.onRadio = (url, t) => RADIO.title(url, t); }
 viewer.setMyColor(VIS.color);
 if (C.presenceUrl && C.walk) viewer.onPeer = kind => { if (kind === 'join' && VIS.soundJoin) SND.join(); else if (kind === 'leave' && VIS.soundLeave) SND.leave(); };
 // v37 : boussole en haut au centre : point cardinal et degrés (« NE 45° »), sans dépendre de la couleur ; masquée par la case des réglages visiteur ou --no-compass

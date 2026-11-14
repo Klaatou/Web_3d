@@ -26,6 +26,7 @@ This folder holds **one example of each JSON file** that the page, the viewer, t
 | `visits.sample.jsonl` | file of `--visits` | the visit log, one line per visit, no IP address | § 11.10 |
 | `presence_visits_keys.sample.json` | `presence_visits_keys.json` | the keys (as fingerprints) that give access to a room's visit log, `visits-key` command | § 11.10 |
 | `presence_creators.sample.json` | `presence_creators.json` | the hosted creators (`--creators`); written by hand | § 10.10 |
+| `presence_radios.sample.json` | `presence_radios.json` | the radio stream addresses whose track title the server reads for the radio zones (`--radios`); written by hand | § 10 |
 
 ## What never goes into the tools' repository
 
