@@ -158,8 +158,8 @@ def i18n_add_common(ap):
         pass
 
 
-VERSION = "1.10.3 (12/11/2026)"      # remplacé par build.py (fichier VERSION) dans dist/glb2tiles.py
-MARK = "dafd4287"      # empreinte du fichier fabriqué, inscrite par build.py ; reste telle quelle depuis tools/
+VERSION = "1.10.26 (14/11/2026)"      # remplacé par build.py (fichier VERSION) dans dist/glb2tiles.py
+MARK = "ee5101ef"      # empreinte du fichier fabriqué, inscrite par build.py ; reste telle quelle depuis tools/
 
 
 def version_tag():
@@ -2117,6 +2117,9 @@ def main(argv=None, log_path=None):
                "extent": {"min": lo, "max": hi}, "params": P.dict(), "warnings": avert,
                "roots": {"whole": ent, "split": len(plan.racines) - ent},
                "duplication": round(dup, 3), "nodeRefs": 1 if P.references else 0, "replacedImages": {"distinct": img_dist, "occurrences": img_occ, "grey": GRIS_IMAGE}, "tiles": fiches}
+        eau = ((plan.glb.g.get("asset") or {}).get("extras") or {}).get("waterHeight")      # 1.10.26 : niveau d'eau inscrit par oar2glb.py, repris pour la mer automatique des pages
+        if isinstance(eau, (int, float)) and not isinstance(eau, bool) and math.isfinite(eau):
+            doc["waterHeight"] = float(eau)
         if P.exclure:
             doc["excluded"] = {"patterns": P.exclure_motifs, "maxTriangles": P.exclure_max_tri, "maxMeshes": P.exclure_max_meshes,
                                "count": len(plan.exclus), "triangles": sum(x["tri"] for x in plan.exclus), "bytesSaved": plan.octets_exclus, "bytesShared": plan.octets_partages,

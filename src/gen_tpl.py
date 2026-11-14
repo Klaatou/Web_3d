@@ -29,6 +29,7 @@ import pathlib
 import re
 import shutil
 import struct
+import tarfile
 import time
 import sys
 import urllib.parse
@@ -729,7 +730,7 @@ def settings_defaults(S):
             pass
     vec = lambda v: tuple(float(x) for x in list(v)[:3]) if len(v) >= 3 else (_ for _ in ()).throw(ValueError())
     for k, dest, conv in (("rotate", "rotate", int), ("hole", "hole", float), ("holeFade", "hole_fade", float), ("holeX", "hole_x", float), ("holeZ", "hole_z", float),
-                          ("wave", "wave", float), ("seaY", "sea_y", float), ("seaSegments", "sea_segments", int), ("seaColor", "sea_color", int),
+                          ("wave", "wave", float), ("seaY", "sea_y", float), ("seaM", "sea_m", float), ("seaSegments", "sea_segments", int), ("seaColor", "sea_color", int),
                           ("skyColor", "sky_color", int), ("foliageCutout", "foliage_cutout", float), ("anim", "anim_enabled", bool),
                           ("sea", "sea_enabled", bool), ("retina", "retina", bool), ("light", "light", bool), ("walk", "walk", bool), ("eyeHeight", "eye_height", float),
                           ("walkSpeed", "walk_speed", float), ("walkIgnore", "walk_ignore", str), ("solidMaterials", "solid_materials", str), ("names", "names", bool), ("chat", "chat", bool),
@@ -807,7 +808,7 @@ MESHOPT_JS = r"""__MESHOPT_JS__"""
 
 
 def build_cfg(name: str, *, title="", rotate=ROTATE, hole=HOLE_RADIUS, hole_fade=HOLE_FADE, hole_x=HOLE_X, hole_z=HOLE_Z, wave=WAVE_AMP,
-               sea_y=SEA_Y, zoom=ZOOM_RATIO, cam_dir=CAM_DIR, target=TARGET, sea_enabled=SEA_ENABLED,
+               sea_y=SEA_Y, sea_m=None, zoom=ZOOM_RATIO, cam_dir=CAM_DIR, target=TARGET, sea_enabled=SEA_ENABLED,
                anim_enabled=ANIM_ENABLED, retina=RETINA_ENABLED, light=LIGHT_ENABLED, foliage_cutout=FOLIAGE_CUTOUT,
                sea_color=SEA_COLOR, sky_color=SKY_COLOR, sea_segments=SEA_SEGMENTS, walk=WALK_ENABLED, eye_height=EYE_HEIGHT, walk_speed=WALK_SPEED, walk_ignore=WALK_IGNORE, solid_materials=SOLID_MATERIALS, names=NAMES_ENABLED, presence_url=PRESENCE_URL, room=ROOM, chat=CHAT_ENABLED, chat_fade=CHAT_FADE, zones=None, profile=PROFILE, spectate=SPECTATE, panel=PANEL, zones_live=ZONES_LIVE, map_entries=None, map_url=MAP_URL, modular=False, zone_marker=ZONE_MARKER, show_spawns=SHOW_SPAWNS, zone_cone=ZONE_CONE, fly=FLY_ENABLED, zone_info_dist=ZONE_INFO_DIST, compass=COMPASS, north=NORTH_DEG, lib_url="", make_default=False, target_explicit=TARGET_EXPLICIT, tiles=None, tile_radius=TILE_RADIUS, tile_margin=TILE_MARGIN, tile_max_mo=TILE_MAX_MO, tile_max_tri=TILE_MAX_TRI, tile_concurrency=TILE_CONCURRENCY, credit=True) -> dict:
     """Le dictionnaire de réglages `cfg` : identique dans la page autonome et dans <page>.config.json (mode modulaire),
@@ -815,6 +816,7 @@ def build_cfg(name: str, *, title="", rotate=ROTATE, hole=HOLE_RADIUS, hole_fade
     presence_url = fix_presence_url(presence_url)
     cfg = {
         "rotate": clean_rotate(rotate), "hole": float(hole), "holeFade": float(hole_fade), "holeX": float(hole_x), "holeZ": float(hole_z), "wave": float(wave), "seaY": float(sea_y),
+        **({"seaM": round(clamp(float(sea_m), -50, 250), 3)} if sea_m is not None else {}),      # 1.10.26 : mer en repère de la région (absente : seaY, repère de la page)
         "zoom": float(zoom), "camDir": list(map(float, cam_dir)), "target": list(map(float, target)),
         "sea": bool(sea_enabled), "anim": bool(anim_enabled), "retina": bool(retina), "light": bool(light),
         "foliageCutout": float(foliage_cutout), "seaSize": SEA_SIZE, "seaSegments": int(sea_segments),
@@ -1280,6 +1282,47 @@ def safe_rel_path(p) -> bool:
     return bool(p) and len(p) < 400 and not re.match(r"[/\\]", p) and not re.search(r"[\\:?#\x00-\x1f]", p) and not any(x in ("", "..") for x in p.split("/"))
 
 
+def glb_json_header(path):
+    """JSON d'un .glb (premier bloc seulement : le fichier n'est pas lu en entier), ou None"""
+    try:
+        with open(path, "rb") as f:
+            tete = f.read(20)
+            if len(tete) < 20 or tete[:4] != b"glTF":
+                return None
+            ln = struct.unpack("<I", tete[12:16])[0]
+            return json.loads(f.read(ln).decode("utf-8"))
+    except (OSError, ValueError):
+        return None
+
+
+def water_from_glb(path):
+    """1.10.26 : niveau d'eau (m, repère de la région) inscrit par oar2glb.py dans asset.extras du GLB, ou None"""
+    g = glb_json_header(path)
+    extras = ((g or {}).get("asset") or {}).get("extras") if isinstance(g, dict) else None
+    v = extras.get("waterHeight") if isinstance(extras, dict) else None
+    return float(v) if isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v) else None
+
+
+def water_from_oar(path):
+    """--water-from : WaterHeight lu dans les fichiers settings/*.xml d'un OAR (archive tar compressée) ; arrête avec un message clair sinon"""
+    try:
+        with tarfile.open(path, "r:*") as t:
+            for m in t:
+                if m.isfile() and m.name.startswith("settings/") and m.name.endswith(".xml"):
+                    mw = re.search(r"<WaterHeight>\s*([-+0-9.eE]+)\s*</WaterHeight>", t.extractfile(m).read().decode("utf-8", "replace"))
+                    if mw:
+                        try:
+                            v = float(mw.group(1))
+                        except ValueError:
+                            continue
+                        if math.isfinite(v):
+                            print(_tr("py.glb2html.eau_lue_dans_0", v, m.name))
+                            return v
+    except (OSError, tarfile.TarError) as e:
+        sys.exit(_tr("py.glb2html.erreur_water_from_illisible", path, e))
+    sys.exit(_tr("py.glb2html.erreur_water_from_aucun_waterheight", path))
+
+
 def read_tiles_index(path: pathlib.Path):
     """Lit X.tiles.json (écrit par glb2tiles.py) ; arrête avec un message clair si le fichier n'est pas utilisable."""
     try:
@@ -1392,7 +1435,7 @@ def write_config(cfg_path: pathlib.Path, name: str, kw):
 
 # --update : option de la ligne de commande (dest argparse) -> clés de la config qu'elle remplace. Les autres clés de la config existante sont gardées telles quelles.
 MAJ_KEYS = {
-    "rotate": ("rotate",), "hole": ("hole",), "hole_fade": ("holeFade",), "hole_x": ("holeX",), "hole_z": ("holeZ",), "wave": ("wave",), "sea_y": ("seaY",),
+    "rotate": ("rotate",), "hole": ("hole",), "hole_fade": ("holeFade",), "hole_x": ("holeX",), "hole_z": ("holeZ",), "wave": ("wave",), "sea_y": ("seaY",), "sea_m": ("seaM",), "water_from": ("seaM",),
     "zoom": ("zoom",), "cam_dir": ("camDir",), "target": ("target", "targetExplicit"), "foliage_cutout": ("foliageCutout",), "sea_color": ("seaColor",),
     "sky_color": ("skyColor",), "sea_segments": ("seaSegments",), "walk": ("walk",), "eye_height": ("eyeHeight",), "walk_speed": ("walkSpeed",),
     "walk_ignore": ("walkIgnore",), "solid_materials": ("solidMaterials",), "names": ("names",), "presence_url": ("presenceUrl",), "chat": ("chat",), "chat_fade": ("chatFade",), "profile": ("profile",),
@@ -1431,6 +1474,9 @@ def merge_maj_cfg(old: dict, new: dict, explicit) -> tuple:
         if k in new and old.get(k) != new[k]:
             changes.append((k, old.get(k), new[k]))
             out[k] = new[k]
+    if "seaY" in keys and "seaM" not in keys and "seaM" in out:      # 1.10.26 : --sea-y explicite : la mer revient au repère de la page, seaM disparaît
+        changes.append(("seaM", out["seaM"], None))
+        out.pop("seaM")
     if "credit" in keys and "credit" not in new and "credit" in old:     # 1.10.13 : --credit explicite : la clé disparaît (le défaut est « avec l'icône »)
         changes.append(("credit", old["credit"], True))
         out.pop("credit", None)
@@ -1641,6 +1687,8 @@ def main():
     ap.add_argument("--hole-z", type=float, default=HOLE_Z, help=_tr("py.glb2html.position_z_du_centre_du_trou"))
     ap.add_argument("--wave", type=float, default=WAVE_AMP, help=_tr("py.glb2html.amplitude_vagues_0_10"))
     ap.add_argument("--sea-y", type=float, default=SEA_Y, help=_tr("py.glb2html.hauteur_mer_150_60"))
+    ap.add_argument("--sea-m", type=float, default=None, metavar="M", help=_tr("py.glb2html.help.sea_m"))
+    ap.add_argument("--water-from", metavar="OAR", help=_tr("py.glb2html.help.water_from"))
     ap.add_argument("--zoom", type=float, default=ZOOM_RATIO, help=_tr("py.glb2html.ratio_de_cadrage_1_cadrage_auto"))
     ap.add_argument("--cam-dir", type=vec3, default=CAM_DIR, help=_tr("py.glb2html.direction_camera_x_y_z"))
     ap.add_argument("--target", type=vec3, default=TARGET, help=_tr("py.glb2html.cible_camera_x_y_z"))
@@ -1777,8 +1825,18 @@ def main():
             sys.exit(_tr("py.glb2html.erreur_0_illisible_1", zf, e))
         print(_tr("py.glb2html.zones_0_zone_s_lue_s", len(zones_arg) if isinstance(zones_arg, list) else 0, zf))
 
+    sea_m_val = None        # 1.10.26 : mer en repère de la région (seaM, comme le curseur de Réglages) ; --water-from et --sea-m priment, puis le niveau d'eau du GLB (sauf --sea-y)
+    if a.water_from:
+        sea_m_val = water_from_oar(a.water_from)
+    elif a.sea_m is not None:
+        sea_m_val = clamp(a.sea_m, -50, 250)
+    elif a.sea_y == SEA_Y and not a.maj and a.input and str(a.input).lower().endswith(".glb"):
+        eau = water_from_glb(a.input)
+        if eau is not None:
+            sea_m_val = clamp(eau, -50, 250)
+            print(_tr("py.glb2html.mer_auto_lue_dans_le_glb", eau))
     kw = dict(rotate=a.rotate, hole=clamp(a.hole, 30, 600), hole_fade=max(0.0, a.hole_fade), hole_x=a.hole_x, hole_z=a.hole_z, wave=clamp(a.wave, 0, 10),
-              sea_y=clamp(a.sea_y, -150, 60), zoom=clamp(a.zoom, 0.05, 100), cam_dir=a.cam_dir, target=a.target,
+              sea_y=clamp(a.sea_y, -150, 60), sea_m=sea_m_val, zoom=clamp(a.zoom, 0.05, 100), cam_dir=a.cam_dir, target=a.target,
               foliage_cutout=clamp(a.foliage_cutout, 0, 1), sea_color=a.sea_color, sky_color=a.sky_color, sea_segments=int(clamp(a.sea_segments, 8, 1000)), walk=a.walk, walk_ignore=a.walk_ignore, solid_materials=a.solid_materials, zones_live=a.zones_live or "", map_entries=map_arg, map_url=a.map_url, names=a.names, presence_url=a.presence_url, room=a.room, chat=a.chat, chat_fade=clamp(a.chat_fade, 0, 3600), zones=zones_arg, profile=a.profile, spectate=a.spectate, panel=a.panel, eye_height=clamp(a.eye_height, 0.3, 5), walk_speed=clamp(a.walk_speed, 0.5, 30),
               sea_enabled=a.sea_enabled, anim_enabled=a.anim_enabled, retina=a.retina, light=a.light, credit=a.credit, title=a.title,
               zone_marker=a.zone_marker, show_spawns=a.show_spawns, zone_cone=a.zone_cone, fly=a.fly, zone_info_dist=clamp(a.zone_info_dist, 5, 500), compass=a.compass, north=a.north, lib_url=clean_lib_url(a.lib_url)[0], make_default=a.default,
@@ -1861,6 +1919,9 @@ def main():
         if a.sea_y == SEA_Y:
             kw["sea_y"] = 20.0
             print(_tr("py.glb2html.tuiles_hauteur_de_la_mer_par"))
+        if kw.get("sea_m") is None and a.sea_y == SEA_Y and not a.maj and isinstance(tdoc.get("waterHeight"), (int, float)) and math.isfinite(tdoc["waterHeight"]):
+            kw["sea_m"] = clamp(tdoc["waterHeight"], -50, 250)      # 1.10.26 : niveau d'eau de l'OAR inscrit par glb2tiles.py ; en tuiles le repère est celui de la région (aucun recentrage)
+            print(_tr("py.glb2html.mer_auto_lue_dans_l_index_des_tuiles", tdoc["waterHeight"]))
         kw.update(tile_radius=clamp(a.tile_radius, 10, 5000), tile_margin=clamp(a.tile_margin, 0, 5000), tile_max_mo=clamp(a.tile_max_mo, 1, 100000),
                   tile_max_tri=int(clamp(a.tile_max_tri, 1000, 10**9)), tile_concurrency=int(clamp(a.tile_concurrency, 1, 16)))
         if a.shared_shell and not valid_region_name(region_of(a.shared_shell, out) or ""):

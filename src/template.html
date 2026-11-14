@@ -670,7 +670,7 @@ if (C.panel !== false) {
   const ob = document.getElementById('optsBtn'), op = document.getElementById('optsPanel');
   ob.title = tr('page.win.o.tip');   // v41 : bulle (rôle et touche)
   const key = 'glb2html_opts_' + (C.room || 'x');
-  const base = { retina: !!C.retina, sea: !!C.sea, anim: !!C.anim, wave: Number(C.wave), seaM: null, metal: viewer.cfg.metalEnv };   // seaM : hauteur de la mer choisie dans Réglages (repère de la région), null = celle de la page
+  const base = { retina: !!C.retina, sea: !!C.sea, anim: !!C.anim, wave: Number(C.wave), seaM: Number.isFinite(C.seaM) ? C.seaM : null, metal: viewer.cfg.metalEnv };   // seaM : hauteur de la mer choisie dans Réglages (repère de la région), null = celle de la page
   const st = Object.assign({}, base);
   try { const s = JSON.parse(localStorage.getItem(key) || '{}'); if (typeof s.retina === 'boolean') st.retina = s.retina; if (C.sea && typeof s.sea === 'boolean') st.sea = s.sea; if (typeof s.anim === 'boolean') st.anim = s.anim; if (Number.isFinite(s.wave)) st.wave = Math.min(10, Math.max(0, s.wave)); if (Number.isFinite(s.seaM)) st.seaM = Math.min(250, Math.max(-50, s.seaM)); if (Number.isFinite(s.metal)) st.metal = Math.min(200, Math.max(0, s.metal)); } catch (e) {}
   const mk = (tag, props) => Object.assign(document.createElement(tag), props || {});

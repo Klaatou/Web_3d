@@ -2509,6 +2509,11 @@ def main():
         pbr_appliquer(g, scan, oar, a.pbr_size)
     n = drop_far(g, a.max, size)
     terrain_pipeline(g, scan, a.terrain, a.terrain_patch)      # après drop_far : les patches ne sont jamais retirés
+    eau, origine = terrain_eau(scan)         # 1.10.26 : le niveau d'eau de l'OAR est inscrit dans le GLB (asset.extras) : les pages l'utilisent pour placer la mer
+    g.setdefault("asset", {}).setdefault("extras", {}).update({"waterHeight": float(eau), "waterSource": "oar" if scan.get("water") else "default"})
+    print(_tr("py.oar2glb.eau_inscrite", eau, origine))
+    if not scan.get("water"):
+        print(_tr("py.oar2glb.eau_attention_defaut"))
     tex = (a.tex_size, a.tex_quality) if (a.tex_size or a.tex_quality is not None) else None
     size = pack_glb(g, outdir, out, tex)
     for ligne_tex in tex_tableau(TEX_TAILLES):

@@ -20,7 +20,9 @@ Fabrique la page web d'une région (GLB unique ou tuiles), met une région à jo
 | `--hole-x` | HOLE_X | `0.0` | position X du centre du trou (monde)<br>X position of the hole center (world) |
 | `--hole-z` | HOLE_Z | `0.0` | position Z du centre du trou (monde)<br>Z position of the hole center (world) |
 | `--wave` | WAVE | `0.5` | amplitude vagues 0..10<br>wave amplitude 0..10 |
-| `--sea-y` | SEA_Y | `-50.0` | hauteur mer -150..60<br>sea height -150..60 |
+| `--sea-y` | SEA_Y | `-50.0` | hauteur de la mer -150..60, dans le repère de la page (décalé par le viewer selon la région) ; --sea-m (repère de la région) ou le niveau automatique évitent ce décalage<br>sea height -150..60, in the page's frame (shifted by the viewer depending on the region); --sea-m (region frame) or the automatic level avoid that shift |
+| `--sea-m` | M |  | hauteur de la mer en mètres, dans le repère de la région comme le curseur de Réglages (-50..250) ; l'eau d'OpenSim est à 20 m par défaut. Sans --sea-y ni --sea-m, la page prend le niveau d'eau que oar2glb.py a inscrit dans le GLB<br>sea height in metres, in the region's frame like the Settings slider (-50..250); OpenSim's water is at 20 m by default. Without --sea-y or --sea-m, the page takes the water level that oar2glb.py wrote into the GLB |
+| `--water-from` | OAR |  | lit le niveau d'eau (WaterHeight) dans le fichier OAR indiqué et l'écrit en seaM : pour corriger la mer d'une région déjà convertie avec --update, sans la reconvertir (peut prendre du temps sur un gros OAR)<br>reads the water level (WaterHeight) in the given OAR file and writes it as seaM: to fix the sea of an already converted region with --update, without converting it again (can take a while on a large OAR) |
 | `--zoom` | ZOOM | `1.0` | ratio de cadrage (1 = cadrage auto)<br>framing ratio (1 = automatic framing) |
 | `--cam-dir` | CAM_DIR | `(0.0, 0.25, 1.0)` | direction caméra x,y,z<br>camera direction x,y,z |
 | `--target` | TARGET | `(0.0, 15.0, 0.0)` | cible caméra x,y,z<br>camera target x,y,z |
