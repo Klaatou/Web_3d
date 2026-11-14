@@ -6,6 +6,14 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.10.0)
 
+### 14/11/2026: launcher: Browse buttons for the `OAR` and `GLB` parameters (batch 1.10.30)
+
+- **Cause**: `web3d_gui.py` (`champs_depuis` for the field kind, and the row creation for the buttons) recognised a file only by a word of the metavar (`FILE`, `FOLDER`, `DIR`), `.html` / `.json` or two name lists. `--water-from` (metavar `OAR`), `--terrain-only` and `--tex-only` (metavar `GLB`) were not among them: text field without buttons. Two places decided separately, with the same criterion copied.
+- **Done**: `metavar_chemin` (exact metavars `OAR`, `GLB`, `IAR` besides the words) and `a_boutons_fichier`, used in both places. `--lib-url` (metavar `PATH`, also accepts a web address) stays a text field.
+- **Check**: `tests/gui.py`: three fields added to the expected fields and three checks (buttons on the three fields, `--lib-url`, `--title` and `--exclude` without buttons, no flag or number with buttons); opposite direction (`MV_CHEMIN` emptied): two failures; `dist_a_jour`.
+- **Not tried**: the window part of `tests/gui.py` (no tkinter in the sandbox) and Windows.
+- **Remains to update** (rule 16): nothing (manual section 3.9 describes the buttons in general); `REPRISE.md` (rule 23).
+
 ### 14/11/2026: documents for batch 1.10.28 (batch 1.10.29)
 
 - **Done**: manual (French and English): section 10.19 (nickname registry bounded by `--max-names`, at most one nickname change every 2 s), section 10.24 (last address of the relay header with `--proxy-header`), additions row of section 13 (batches 1.10.18 to 1.10.29); `PROCEDURES.md` (Funnel, French and English: last address of the header); histories (batches 1.10.28 and 1.10.29). No code changes (`dist\` and `VERSIONS.json` identical).

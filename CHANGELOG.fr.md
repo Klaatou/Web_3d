@@ -6,6 +6,14 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.10.0)
 
+### 14/11/2026 : lanceur : boutons Fichier et Dossier pour les paramètres `OAR` et `GLB` (lot 1.10.30)
+
+- **Cause** : `web3d_gui.py` (`champs_depuis` pour le genre du champ, et la création de la ligne pour les boutons) ne reconnaissait un fichier que par un mot du métavar (`FILE`, `FOLDER`, `DIR`), `.html` / `.json` ou deux listes de noms. `--water-from` (métavar `OAR`), `--terrain-only` et `--tex-only` (métavar `GLB`) n'en faisaient pas partie : champ texte sans boutons. Deux endroits décidaient séparément, avec le même critère recopié.
+- **Fait** : `metavar_chemin` (métavars exacts `OAR`, `GLB`, `IAR` en plus des mots) et `a_boutons_fichier`, utilisées aux deux endroits. `--lib-url` (métavar `PATH`, accepte aussi une adresse web) reste un champ texte.
+- **Contrôle** : `tests/gui.py` : trois champs ajoutés aux champs attendus et trois contrôles (boutons des trois champs, `--lib-url`, `--title` et `--exclude` sans boutons, aucun drapeau ni nombre avec boutons) ; sens opposé (`MV_CHEMIN` vidé) : deux échecs ; `dist_a_jour`.
+- **Non essayé** : la partie fenêtre de `tests/gui.py` (pas de tkinter dans le bac à sable) et Windows.
+- **Reste à mettre à jour** (règle 16) : rien (manuel § 3.9 décrit les boutons en général) ; `REPRISE.md` (règle 23).
+
 ### 14/11/2026 : documents du lot 1.10.28 (lot 1.10.29)
 
 - **Fait** : manuel (français et anglais) : § 10.19 (registre des pseudos borné par `--max-names`, un changement de pseudo toutes les 2 s au plus), § 10.24 (dernière adresse de l'en-tête du relais avec `--proxy-header`), ligne des ajouts du § 13 (lots 1.10.18 à 1.10.29) ; `PROCEDURES.md` (Funnel, français et anglais : dernière adresse de l'en-tête) ; historiques (lots 1.10.28 et 1.10.29). Aucun code ne change (`dist\` et `VERSIONS.json` identiques).

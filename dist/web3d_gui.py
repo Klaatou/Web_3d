@@ -110,13 +110,25 @@ def i18n_add_common(ap):
         pass
 
 
-VERSION = "1.10.4 (12/11/2026)"      # remplacé par build.py (fichier VERSION) dans dist/web3d_gui.py
-MARK = "7a8bde99"      # empreinte du fichier fabriqué, inscrite par build.py ; reste telle quelle depuis tools/
+VERSION = "1.10.30 (14/11/2026)"      # remplacé par build.py (fichier VERSION) dans dist/web3d_gui.py
+MARK = "adb5beaf"      # empreinte du fichier fabriqué, inscrite par build.py ; reste telle quelle depuis tools/
 
 OUTILS = (("glb2html", "glb2html.py"), ("glb2tiles", "glb2tiles.py"), ("oar2glb", "oar2glb.py"), ("extraire_batiments", "extraire_batiments.py"),
           ("iar2oar", "iar2oar.py"), ("diag_carte", "diag_carte.py"), ("glb-stats", "glb-stats.py"))      # (nom, fichier) ; un outil de plus : une ligne ici
 MOTS_CHEMIN = ("FILE", "FOLDER", "DIR")      # un métavar qui contient l'un de ces mots, ou qui finit par .html / .json : un fichier ou un dossier
 DEST_CHEMIN = ("input", "o", "output", "sortie", "convoar", "register", "thumb", "oar", "glb", "iar")      # arguments sans métavar qui sont des chemins
+MV_CHEMIN = ("OAR", "GLB", "IAR")      # 1.10.30 : métavars exacts qui désignent un fichier (--water-from OAR, --terrain-only GLB, --tex-only GLB) ; « PATH » reste un champ texte (--lib-url accepte aussi une adresse web)
+
+
+def metavar_chemin(mv):
+    """vrai si le métavar d'une option désigne un fichier ou un dossier (un seul endroit pour le genre du champ et pour les boutons Fichier / Dossier)"""
+    mv = mv or ""
+    return any(k in mv.upper() for k in MOTS_CHEMIN) or mv.upper() in MV_CHEMIN or mv.lower().endswith((".html", ".json"))
+
+
+def a_boutons_fichier(c):
+    """vrai si le champ c (dictionnaire de champs_depuis) reçoit les boutons Fichier et Dossier"""
+    return c["genre"] in ("chemin", "facultatif") and (c["genre"] == "chemin" or c["ptype"] or metavar_chemin(c["metavar"]))
 
 # exemples d'usages de base, par outil : (clé du titre dans src/i18n, arguments comme dans une console) ; les noms (Atoll.glb, ADRESSE, MA_CLE...) sont à remplacer par les siens ;
 # tests/gui.py vérifie que le vrai parseur de chaque outil accepte chaque exemple et que la fenêtre le remet à l'identique
@@ -254,7 +266,7 @@ def champs_depuis(parser):
             genre = "choix"
         elif a.type is float or a.type is int:
             genre = "nombre"
-        elif a.type is Path or any(k in mv.upper() for k in MOTS_CHEMIN) or mv.lower().endswith((".html", ".json")) or a.dest in DEST_CHEMIN:
+        elif a.type is Path or metavar_chemin(mv) or a.dest in DEST_CHEMIN:
             genre = "chemin"
         else:
             genre = "texte"
@@ -579,7 +591,7 @@ def fenetre(outils, tk, ttk, filedialog, depart=None):
             else:
                 var = tk.StringVar(value="")
                 w = ttk.Entry(grille, textvariable=var, width=14 if c["genre"] == "nombre" else 40)
-            if c["genre"] in ("chemin", "facultatif") and (c["genre"] == "chemin" or c["ptype"] or any(k in c["metavar"].upper() for k in MOTS_CHEMIN) or c["metavar"].lower().endswith((".html", ".json"))):
+            if a_boutons_fichier(c):
                 vv = var[0] if isinstance(var, tuple) else var
                 ttk.Button(extra, text=_tr("py.gui.browse_file"), command=lambda v=vv: choisir(v, False)).pack(side="left", padx=2)
                 ttk.Button(extra, text=_tr("py.gui.browse_dir"), command=lambda v=vv: choisir(v, True)).pack(side="left", padx=2)

@@ -98,9 +98,21 @@ for nom_outil, fichier in g.OUTILS:
     rapport(not refus_o, f"{fichier} : les {len(cs)} options, une par une : ligne acceptee par le vrai parseur", refus_o[:3])
 
 chemins_attendus = [("glb2html.py", "input"), ("glb2html.py", "output"), ("glb2tiles.py", "glb"), ("glb2tiles.py", "sortie"), ("oar2glb.py", "oar"), ("oar2glb.py", "convoar"),
-                    ("oar2glb.py", "sortie"), ("extraire_batiments.py", "oar"), ("extraire_batiments.py", "glb"), ("extraire_batiments.py", "sortie"), ("iar2oar.py", "iar")]
+                    ("oar2glb.py", "sortie"), ("extraire_batiments.py", "oar"), ("extraire_batiments.py", "glb"), ("extraire_batiments.py", "sortie"), ("iar2oar.py", "iar"),
+                    ("glb2html.py", "water_from"), ("oar2glb.py", "terrain_seul"), ("oar2glb.py", "tex_seul")]      # 1.10.30 : metavars OAR et GLB
 sans_boutons = [(f, d, genres_outil.get(f, {}).get(d)) for f, d in chemins_attendus if genres_outil.get(f, {}).get(d) != "chemin"]
 rapport(not sans_boutons, "les champs fichier ou dossier (entrees, sorties, convoar) ont les boutons Fichier et Dossier", sans_boutons)
+# 1.10.30 : la decision des boutons Fichier / Dossier (a_boutons_fichier) est la meme que le genre ; --lib-url (PATH, accepte une adresse web) reste un champ texte
+boutons = {}
+for nom_outil, fichier in g.OUTILS:
+    p_o = g.lire_parser(DIST / fichier, "en")
+    for c in (g.champs_depuis(p_o) if p_o is not None else []):
+        boutons[(fichier, c["dest"])] = g.a_boutons_fichier(c)
+rapport(all(boutons.get(k) for k in [("glb2html.py", "water_from"), ("oar2glb.py", "terrain_seul"), ("oar2glb.py", "tex_seul"), ("glb2html.py", "input")]),
+        "--water-from, --terrain-only, --tex-only et l'entree de glb2html ont les boutons Fichier et Dossier", {k: v for k, v in boutons.items() if k[1] in ("water_from", "terrain_seul", "tex_seul")})
+rapport(not boutons.get(("glb2html.py", "lib_url")) and not boutons.get(("glb2html.py", "title")) and not boutons.get(("glb2tiles.py", "exclude")),
+        "--lib-url (PATH), --title et --exclude restent des champs sans boutons", [k for k in (("glb2html.py", "lib_url"), ("glb2html.py", "title"), ("glb2tiles.py", "exclude")) if boutons.get(k)])
+rapport(all(not g.a_boutons_fichier(c) for c in champs if c["genre"] in ("flag", "tri", "choix", "nombre")), "aucun drapeau, choix ou nombre n'a de boutons Fichier et Dossier")
 par = {c["dest"]: c for c in champs}
 sp = par["spectate"]
 rapport(g.defaut_dans_aide(sp) and g.defaut_dans_aide(par["output"]) and not g.defaut_dans_aide(par["zones"]) and not g.defaut_dans_aide(par["walk"]),
