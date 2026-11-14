@@ -1888,5 +1888,11 @@
  "py.gui.sc_summary_dry": "{0} raccourci(s) seraient créés dans {1} (rien n'a été écrit).",
  "py.gui.sc_summary_remove": "{0} raccourci(s) concerné(s) dans {1}.",
  "py.gui.sc_icon": "icône des raccourcis : {0}",
- "py.gui.sc_no_icon": "favicon.ico est introuvable : les raccourcis garderont l'icône de Python."
+ "py.gui.sc_no_icon": "favicon.ico est introuvable : les raccourcis garderont l'icône de Python.",
+ "py.presence.help.idle_walk": "minutes sans position après lesquelles un promeneur devient muet : ni compté ni montré aux autres, de retour à sa première position (défaut 3 ; 0 = jamais)",
+ "py.presence.idle_since": "muet (aucune position depuis {0} min) : retiré de l'affichage et des comptes",
+ "py.presence.idle_back": "de retour (position reçue)",
+ "py.presence.idle_on": "promeneur muet après {0:g} min sans position (--idle-walk)",
+ "py.presence.idle_off": "promeneurs muets : jamais (--idle-walk 0)",
+ "py.presence.role.idle": "muet"
 }

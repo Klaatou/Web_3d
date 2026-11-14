@@ -384,7 +384,7 @@ def log(kind, room, who, extra=""):
 
 class Peer:
     __slots__ = ("id", "ws", "name", "color", "p", "yaw", "last", "ip", "chat_times", "spectator", "uidh", "t0", "zone_t", "room", "color_t", "hist_t",
-                 "wall0", "walk_s", "walk0", "vname", "label", "name_t", "radio", "radio_t")
+                 "wall0", "walk_s", "walk0", "vname", "label", "name_t", "radio", "radio_t", "idle")
 
     def __init__(self, pid, ws, name, color, ip, spectator, uidh, room):
         self.id, self.ws, self.name, self.color, self.ip = pid, ws, name, color, ip
@@ -396,6 +396,7 @@ class Peer:
         self.walk0 = None if spectator else self.t0
         self.label = ""      # pseudo d'affichage pour la carte d'un visiteur en vue globale (seulement avec --map-names-key)
         self.radio, self.radio_t = "", 0.0      # 1.10.34 : flux radio écouté (adresse autorisée), heure de la dernière demande
+        self.idle = False      # 1.10.37 : promeneur muet (aucune position depuis --idle-walk minutes) : ni compté ni montré, garde sa place
 
     def walk_mark(self, walking):
         """v48 : début ou fin de promenade (temps de promenade du journal des visites)"""
@@ -732,7 +733,7 @@ def creator_full(cr):
     if cr is None:
         return False
     cur = next((c for c in CREATORS or () if c["id"] == cr["id"]), cr)
-    return bool(cur["maxWalkers"]) and sum(len(walkers(r)) for r in creator_rooms(cur["id"])) >= cur["maxWalkers"]
+    return bool(cur["maxWalkers"]) and sum(len(walkers(r, True)) for r in creator_rooms(cur["id"])) >= cur["maxWalkers"]
 
 
 def creators_command():
@@ -1089,7 +1090,7 @@ async def run_command(line):
             print(_tr("py.presence.nobody"))
         for p in peers:
             dur = int(time.monotonic() - p.t0)
-            print(_tr("py.presence.list_line", p.id, p.name or _tr("py.presence.spectator_paren"), _tr("py.presence.role.spectator") if p.spectator else _tr("py.presence.role.walker"), p.room, dur // 60, dur % 60, p.ip))
+            print(_tr("py.presence.list_line", p.id, p.name or _tr("py.presence.spectator_paren"), _tr("py.presence.role.spectator") if p.spectator else (_tr("py.presence.role.idle") if p.idle else _tr("py.presence.role.walker")), p.room, dur // 60, dur % 60, p.ip))
     elif cmd in ("ejecter", "éjecter", "kick", "k", "bannir", "ban", "b"):
         ban = cmd in ("bannir", "ban", "b")
         target, _, tail = rest.partition(" ")
@@ -1198,8 +1199,32 @@ async def broadcast(room, msg, exclude=None):
         await asyncio.gather(*(send_safe(p.ws, text) for p in peers))
 
 
-def walkers(room):
-    return [p for p in ROOMS.get(room, {}).values() if not p.spectator]
+def walkers(room, idle=False):
+    """promeneurs du salon ; sans idle, les promeneurs muets (1.10.37) n'en font pas partie (comptes, liste envoyee aux nouveaux, carte) ;
+    avec idle=True, ils comptent (places de --max-per-room et des createurs : un muet garde la sienne tant qu'il est connecte)"""
+    return [p for p in ROOMS.get(room, {}).values() if not p.spectator and (idle or not p.idle)]
+
+
+async def idle_walker(peer, now):
+    """1.10.37 : le promeneur n'a envoye aucune position depuis --idle-walk minutes (page en arriere-plan) : il devient muet"""
+    minutes = int((now - max(peer.last, peer.walk0 or peer.t0)) // 60)
+    peer.idle = True
+    peer.walk_mark(False)
+    await broadcast(peer.room, {"t": "leave", "id": peer.id}, exclude=peer)
+    log(_tr("py.presence.ev.walk"), peer.room, peer.who(), _tr("py.presence.idle_since", minutes))
+
+
+async def idle_loop():
+    """1.10.37 : controle periodique des promeneurs muets (jamais si --idle-walk 0)"""
+    limite = OPTS.idle_walk * 60
+    pas = max(1.0, min(20.0, limite / 3))
+    while True:
+        await asyncio.sleep(pas)
+        now = time.monotonic()
+        for room in list(ROOMS):
+            for p in list(ROOMS.get(room, {}).values()):
+                if not p.spectator and not p.idle and p.walk0 is not None and now - max(p.last, p.walk0) > limite:
+                    await idle_walker(p, now)
 
 
 MAP_NAMES_MAX = 20
@@ -1336,7 +1361,7 @@ async def handler(ws):
                 await ws.send(json.dumps({"t": "full"}))
                 log(_tr("py.presence.ev.refuse"), room, f"ip {ip_for_log(ip)}", _tr("py.presence.trop_de_spectateurs"))
                 return
-        elif len(walkers(room)) >= OPTS.max_per_room or sum(len(r) for r in ROOMS.values()) >= OPTS.max_total or creator_full(cr):
+        elif len(walkers(room, True)) >= OPTS.max_per_room or sum(len(r) for r in ROOMS.values()) >= OPTS.max_total or creator_full(cr):
             await ws.send(json.dumps({"t": "full"}))
             log(_tr("py.presence.ev.refuse"), room, f"ip {ip_for_log(ip)}", _tr("py.presence.salon_plein"))
             return
@@ -1372,7 +1397,7 @@ async def handler(ws):
             if t == "role":
                 want_walker = bool(m.get("walker"))
                 if want_walker and peer.spectator:
-                    if len(walkers(room)) >= OPTS.max_per_room or creator_full(cr):
+                    if len(walkers(room, True)) >= OPTS.max_per_room or creator_full(cr):
                         await send_safe(ws, json.dumps({"t": "full"}))
                         continue
                     await become_walker(peer, m.get("name"))
@@ -1382,9 +1407,11 @@ async def handler(ws):
                     await broadcast(room, dict(peer.public(), t="join"), exclude=peer)
                     log(_tr("py.presence.ev.walk"), room, peer.who(), _tr("py.presence.debut"))
                 elif not want_walker and not peer.spectator:
+                    etait_muet, peer.idle = peer.idle, False
                     peer.spectator, peer.p = True, None
                     peer.walk_mark(False)
-                    await broadcast(room, {"t": "leave", "id": pid}, exclude=peer)
+                    if not etait_muet:      # 1.10.37 : les autres ont deja recu « leave » quand il est devenu muet
+                        await broadcast(room, {"t": "leave", "id": pid}, exclude=peer)
                     log(_tr("py.presence.ev.walk"), room, peer.who(), _tr("py.presence.ev.end"))
                     peer.label = peer.name if OPTS.map_names_key else ""
                     peer.name = ""
@@ -1410,6 +1437,12 @@ async def handler(ws):
                 if p is None or isinstance(yaw, bool) or not isinstance(yaw, (int, float)) or not math.isfinite(yaw):
                     continue
                 peer.last, peer.p, peer.yaw = now, p, round(float(yaw), 2)
+                if peer.idle:      # 1.10.37 : retour d'un promeneur muet : de nouveau compte et montre
+                    peer.idle = False
+                    peer.walk_mark(True)
+                    await broadcast(room, dict(peer.public(), t="join"), exclude=peer)
+                    log(_tr("py.presence.ev.walk"), room, peer.who(), _tr("py.presence.idle_back"))
+                    continue
                 await broadcast(room, {"t": "pos", "id": pid, "p": p, "yaw": peer.yaw}, exclude=peer)
             elif t == "chat":
                 text = clean_text(m.get("text"), OPTS.max_chat)
@@ -1467,7 +1500,7 @@ async def handler(ws):
         if peer is not None and room in ROOMS:
             radio_leave(peer)
             ROOMS[room].pop(peer.id, None)
-            if not peer.spectator:
+            if not peer.spectator and not peer.idle:      # 1.10.37 : un muet a deja ete annonce parti
                 await broadcast(room, {"t": "leave", "id": peer.id})
             dur = int(time.monotonic() - peer.t0)
             log(_tr("py.presence.deconnexion"), room, peer.who(), _tr("py.presence.duree_0_min_1_02d_s", dur // 60, dur % 60))
@@ -1513,6 +1546,7 @@ async def main():
     ap.add_argument("--identities", default="presence_identities.json", help=_tr("py.presence.registre_des_noms_reserves_vide_en"))
     ap.add_argument("--name-ttl-days", type=int, default=365, help=_tr("py.presence.un_nom_non_utilise_depuis_ce"))
     ap.add_argument("--max-names", type=int, default=10000, help=_tr("py.presence.help.max_names"))
+    ap.add_argument("--idle-walk", type=float, default=3.0, metavar="MIN", help=_tr("py.presence.help.idle_walk"))
     ap.add_argument("--reserved", default="", help=_tr("py.presence.noms_interdits_a_la_reservation_separes"))
     ap.add_argument("--log", help=_tr("py.presence.fichier_de_journal_tourne_chaque_nuit"))
     ap.add_argument("--history-file", default="", metavar="FILE", help=_tr("py.presence.history_file"))
@@ -1549,6 +1583,7 @@ async def main():
     OPTS.creators = here(OPTS.creators) if OPTS.creators else ""
     OPTS.radios = here(OPTS.radios) if OPTS.radios else ""
     OPTS.radios_every = max(5, OPTS.radios_every)
+    OPTS.idle_walk = max(0.0, OPTS.idle_walk) if math.isfinite(OPTS.idle_walk) else 3.0
     REG = Registry(OPTS.identities or None, OPTS.name_ttl_days, [x for x in OPTS.reserved.split(",")], OPTS.max_names)
     setup_log()
     bans_load()
@@ -1568,6 +1603,7 @@ async def main():
     origins = [o.strip() for o in OPTS.origins.split(",")] if OPTS.origins else None
     flusher = asyncio.create_task(flush_loop())
     console = asyncio.create_task(console_loop())
+    idler = asyncio.create_task(idle_loop()) if OPTS.idle_walk > 0 else None
     stop = asyncio.Event()
     try:
         asyncio.get_running_loop().add_signal_handler(signal.SIGTERM, stop.set)
@@ -1588,6 +1624,7 @@ async def main():
             if OPTS.visits:
                 LOG.info(_tr("py.presence.visits_on", OPTS.visits, OPTS.visits_days, _tr("py.presence.visits.yes") if OPTS.visits_names else _tr("py.presence.visits.no")))
             LOG.info(_tr("py.presence.radios_on", len(RADIOS_OK), OPTS.radios, OPTS.radios_every) if OPTS.radios else _tr("py.presence.radios_off"))
+            LOG.info(_tr("py.presence.idle_on", OPTS.idle_walk) if OPTS.idle_walk > 0 else _tr("py.presence.idle_off"))
             if OPTS.map_names_key:
                 LOG.info(_tr("py.presence.map_names_on"))
             if OPTS.map_names:
@@ -1599,6 +1636,8 @@ async def main():
     finally:
         flusher.cancel()
         console.cancel()
+        if idler:
+            idler.cancel()
         REG.save()
 
 

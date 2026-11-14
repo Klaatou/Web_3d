@@ -1888,5 +1888,11 @@
  "py.gui.sc_summary_dry": "{0} shortcut(s) would be created in {1} (nothing was written).",
  "py.gui.sc_summary_remove": "{0} shortcut(s) concerned in {1}.",
  "py.gui.sc_icon": "shortcut icon: {0}",
- "py.gui.sc_no_icon": "favicon.ico not found: the shortcuts will keep Python's icon."
+ "py.gui.sc_no_icon": "favicon.ico not found: the shortcuts will keep Python's icon.",
+ "py.presence.help.idle_walk": "minutes without a position after which a walker goes silent: neither counted nor shown to others, back at the first position (default 3; 0 = never)",
+ "py.presence.idle_since": "silent (no position for {0} min): removed from display and counts",
+ "py.presence.idle_back": "back (position received)",
+ "py.presence.idle_on": "walker silent after {0:g} min without a position (--idle-walk)",
+ "py.presence.idle_off": "silent walkers: never (--idle-walk 0)",
+ "py.presence.role.idle": "silent"
 }
