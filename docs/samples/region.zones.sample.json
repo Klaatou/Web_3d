@@ -193,7 +193,7 @@
   "radius": 25,
   "w": 2.4,
   "h": 1.2,
-  "target": "https://ice1.somafm.com/groovesalad-128-mp3",
+  "target": "https://ADRESSE/flux",
   "spawn": "",
   "confirm": false,
   "private": false,

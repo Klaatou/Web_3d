@@ -227,3 +227,11 @@ python .\oar2glb.py --tex-only "J:\...\NOM.glb" --tex-size 1024
 ```
 
 Regarde le résultat (`NOM-tex1024.glb`), puis copie le fichier retenu à la place du GLB de la région dans le site. `--tex-quality 60` ajoute une compression JPEG plus forte sans changer les pixels ; les textures transparentes ne sont réduites que par `--tex-size`. Détails : manuel § 3.12. Essayé (13/11/2026, faux convoar et GLB faits à la main) : non essayé sur un vrai GLB de plusieurs centaines de Mo.
+
+## 14. Mettre une radio dans une région
+
+Une zone « Radio » fait jouer un flux Icecast ou SHOUTcast (le même qu'une « music URL » de parcelle OpenSim) aux visiteurs qui passent à portée en promenade (`MANUEL.md` § 5.19).
+
+1. Dans le viewer : type « Radio (flux Icecast / SHOUTcast à portée) », clic au sol, puis l'adresse du flux (en `https://`, sinon une page hébergée en `https` la refuse), le bouton « Essayer le flux (5 s) », la portée (20 m par défaut). Exporter les zones comme d'habitude.
+2. Avant de choisir une radio : vérifier qu'elle accepte la lecture depuis un site (certaines répondent 403 à une page tierce : la page dit « flux refusé ou illisible ») et que tu as le droit de la diffuser.
+3. Le titre du morceau (facultatif) : sur le serveur de présence, un fichier `presence_radios.json` (liste JSON des adresses de flux) et l'option `--radios presence_radios.json` (`MANUEL.md` § 10.25). Radio qui n'écrit pas ses titres dans le flux : pas de titre, le nom de la zone seul.

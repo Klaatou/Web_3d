@@ -227,3 +227,11 @@ python .\oar2glb.py --tex-only "J:\...\NOM.glb" --tex-size 1024
 ```
 
 Look at the result (`NOM-tex1024.glb`), then copy the chosen file over the region's GLB in the site. `--tex-quality 60` adds a stronger JPEG compression without changing the pixels; transparent textures are only reduced by `--tex-size`. Details: manual § 3.12. Tried (13/11/2026, fake convoar and hand-made GLBs): not tried on a real GLB of several hundred MB.
+
+## 14. Put a radio in a region
+
+A "Radio" zone plays an Icecast or SHOUTcast stream (the same as an OpenSim parcel "music URL") to the visitors who come within range in walk mode (`MANUAL.md` § 5.19).
+
+1. In the viewer: type "Radio (Icecast / SHOUTcast stream within range)", click on the ground, then the stream address (as `https://`, otherwise a page hosted over `https` refuses it), the "Try the stream (5 s)" button, the range (20 m by default). Export the zones as usual.
+2. Before choosing a radio: check that it accepts playback from a site (some answer 403 to a third-party page: the page says "stream refused or unreadable") and that you are allowed to broadcast it.
+3. The track title (optional): on the presence server, a `presence_radios.json` file (JSON list of stream addresses) and the `--radios presence_radios.json` option (`MANUAL.md` § 10.25). A radio that does not write its titles in the stream: no title, the zone's name only.

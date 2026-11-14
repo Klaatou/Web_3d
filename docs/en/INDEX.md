@@ -22,6 +22,7 @@ This page says **which document to read for what**. The French documents carry t
 | fix the sea of an already published region | `SIMPLE_PROCEDURES.md` § 12; `MANUAL.md` § 3.13 |
 | lighten the textures of a region | `SIMPLE_PROCEDURES.md` § 13; `MANUAL.md` § 3.12 |
 | place zones (arrivals, portals, signs, pictures) | `GUIDE.md` § 2; `MANUAL.md` § 5; `PROCEDURES.md` § 5 |
+| put a radio in a region (`cast` zone, track title) | `SIMPLE_PROCEDURES.md` § 14; `MANUAL.md` § 5.19 and § 10.25 |
 | build or update the page | `GUIDE.md` § 3; `MANUAL.md` § 6; `PROCEDURES.md` § 3, § 4 and § 8; `SIMPLE_PROCEDURES.md` § 1 |
 | set the tab title, rename a tiled region | `SIMPLE_PROCEDURES.md` § 2 and § 3 |
 | publish, update the online demo | `GUIDE.md` § 4; `SIMPLE_PROCEDURES.md` § 7 |

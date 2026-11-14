@@ -259,6 +259,13 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 14/11/2026 |  | after 1.10.0 | Batch 1.10.27: documents for batches 1.10.18 to 1.10.26: manual § 3.1, § 3.2, § 3.12 and § 3.13 (new), § 9.19, § 13, `REFERENCE_JSON.md`, procedures § 12 and § 13, index, overview |
 | 14/11/2026 |  | after 1.10.0 | Batch 1.10.28: presence server: bounded nickname registry (`--max-names`), at most one nickname change every 2 s, last address of the relay header (`--proxy-header`); `tests/presence_noms.py` |
 | 14/11/2026 |  | after 1.10.0 | Batch 1.10.29: documents for batch 1.10.28: manual § 10.19, § 10.24 and § 13, `PROCEDURES.md` (Funnel), histories |
+| 14/11/2026 |  | after 1.10.0 | Batch 1.10.30: launcher: File and Folder buttons for the `OAR` and `GLB` parameters |
+| 14/11/2026 |  | after 1.10.0 | Batch 1.10.31: launcher: no Folder button for a single file; `websockets` 16 tests |
+| 14/11/2026 |  | after 1.10.0 | Batch 1.10.32: radio zones (`cast`): Icecast / SHOUTcast stream played while walking within range, volume by distance, "Zone radio" box; `tests/zone_cast.py` |
+| 14/11/2026 |  | after 1.10.0 | Batch 1.10.33: radio zone: the cause of an unreadable stream in the "Radio" line, retry on coming back into the zone |
+| 14/11/2026 |  | after 1.10.0 | Batch 1.10.34: track title read in the stream by the presence server (`--radios`, `--radios-every`); `tests/radio_titre.py` |
+| 14/11/2026 |  | after 1.10.0 | Batch 1.10.35: server: `KeyError` on two simultaneous disconnections; radio title log; cone by default on a radio zone |
+| 14/11/2026 |  | after 1.10.0 | Batch 1.10.36: documents for batches 1.10.30 to 1.10.35: manual § 5.19, § 7.66, § 10.25 and § 13 (new), `REFERENCE_JSON.md`, procedures § 11, simple procedures § 14, samples, index, overview, README; texts "stream refused or unreadable" and "empty title in the stream" |
 
 ## Useful commands
 

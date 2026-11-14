@@ -14,6 +14,7 @@ An OpenSim region (`.oar` backup) becomes a **3D web page** you can walk around 
 - **Linking the worlds**: the world map (`regions.json`), the `carte.html` page with live visitors and the arrival alert (sound and marker), `--scan-sites` to build the list from the sites folder; `diag_carte.py` says why the map shows no nicknames.
 - **Settings**: the Settings window (high resolution, light rendering, sea, sounds, window layout); French and English.
 - **Exhibition pictures**: an `image` zone lays a picture on a wall; the files go in the region's `medias` subfolder, with no new conversion and no need to go through OpenSim; caption in the file name or in a `.txt` file; an image zone can open a page on click (`link`), and a Settings box shows the zone numbers to find the positions.
+- **Radio**: a `cast` zone plays an Icecast or SHOUTcast stream (the same as a parcel "music URL") to the visitors within range while walking, volume by distance; the presence server can read the track title in the stream (`--radios`).
 - **Animations, links, about**: an animated GIF animates in the page; the `url` and `image` zones also open a `hop://` link (virtual world); an "About the region" panel opens on entry (`?` key).
 - **Ready-to-use packages**: `galerie-photos.zip` (a 3D gallery of 30 photos) and `region-simple.zip` (a region from a GLB), to download from the releases page; each opens with a double-click (Windows, macOS) or a command (Linux), with an optional presence server; sources in `paquets/`.
 - **Online demo**: `https://klaatou.github.io/Web_3d_demo/` (several regions linked by portals, world map, presence), including **Sandbox_BMoG**, a region of the BloodMoon Pack OpenSim grid (thanks to Vlad, its owner) that shows OpenSim 0.9.3 PBR materials and their new lighting, with a `hop://` jump circle to the same region in the grid.
@@ -30,7 +31,7 @@ An OpenSim region (`.oar` backup) becomes a **3D web page** you can walk around 
 1. **Domain name**: for the presentation site and for a stable name for the presence server.
 2. **Presentation page**: clickable GIF leading to the demo, a button to try it, contact, removal procedure, legal notices.
 3. **Option to remove the "Made with Web_3d" icon** (key `credit`): to be decided in a few weeks.
-4. **Ideas**: remaining media zones (music, page), pictures in a tiled region, GLB insertion, guest book (optional, can be external); extract each building of a large OAR into a separate GLB to recompose regions (done: `extraire_batiments.py`, the composition is done in Blender); mega-region (study in `docs/fr/ETUDE_MEGAREGION.md`, in French, nothing coded); animated PNG and WebP.
+4. **Ideas**: remaining media zones (page, video on a screen; music is done: radio zone), pictures in a tiled region, GLB insertion, guest book (optional, can be external); extract each building of a large OAR into a separate GLB to recompose regions (done: `extraire_batiments.py`, the composition is done in Blender); mega-region (study in `docs/fr/ETUDE_MEGAREGION.md`, in French, nothing coded); animated PNG and WebP.
 
 ## 4. Where to read what
 

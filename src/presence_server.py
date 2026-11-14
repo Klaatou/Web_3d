@@ -573,7 +573,10 @@ def radio_title_sync(url):
     except Exception as e:
         return "", f"{type(e).__name__}: {e}"
     m = re.search(r"StreamTitle='(.*?)';", meta)
-    return (clean_text(m.group(1), 200), "") if m else ("", _tr("py.presence.radio.notitle", clean_text(meta, 80)))
+    if not m:
+        return "", _tr("py.presence.radio.notitle", clean_text(meta, 80))
+    titre = clean_text(m.group(1), 200)
+    return (titre, "") if titre else ("", _tr("py.presence.radio.empty"))   # 1.10.36 : titre vide = la radio n'ecrit pas ses titres dans le flux
 
 
 async def radio_poll(url):

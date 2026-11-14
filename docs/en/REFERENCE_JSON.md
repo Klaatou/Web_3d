@@ -21,6 +21,7 @@ A JSON file does not accept comments. The explanations are therefore here, and t
 | `--visits` file (for example `visits.jsonl`)     | `visits.sample.jsonl`              | `presence_server.py`                        | `presence_server.py`                                |
 | `presence_visits_keys.json`                      | `presence_visits_keys.sample.json` | `presence_server.py` (`visits-key` command) | `presence_server.py`                                |
 | `presence_creators.json`                         | `presence_creators.sample.json`    | by hand (§ 10.10)                              | `presence_server.py` (`--creators`)                 |
+| `presence_radios.json`                           | `presence_radios.sample.json`      | by hand (§ 10.25)                              | `presence_server.py` (`--radios`)                   |
 
 Two other files have **exactly the format** of `NOM.zones.json`:
 
@@ -147,29 +148,29 @@ The light rendering settings chosen by a visitor (resolution, frames per second,
 
 A **list** of zones, read again at each opening of the page. Each zone has the fields below; a missing field takes its default value, and a value outside the limits is brought back within them.
 
-There are **five kinds** of zones (`type` field): `"spawn"` (arrival), `"portal"` (portal), `"url"` (web link), `"ha"` (command) and `"image"` (picture on a wall, § 5.11). "Private", "linked to an object" and "name shown" are not kinds: they are boxes (`private`, `mesh`, `showName`) valid for all kinds.
+There are **six kinds** of zones (`type` field): `"spawn"` (arrival), `"portal"` (portal), `"url"` (web link), `"ha"` (command), `"image"` (picture on a wall, § 5.11) and `"cast"` (radio: stream within range, § 5.19). "Private", "linked to an object" and "name shown" are not kinds: they are boxes (`private`, `mesh`, `showName`) valid for all kinds.
 
 | Field         | Type     | Default       | What it does                                                                                                                                                  |
 | ------------- | -------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `id`          | text     | `z1`, `z2`... | short, unique name: lowercase letters, digits, `-` and `_`, 40 characters at most. The `default` arrival is the region's entry point                          |
-| `type`        | text     | `"portal"`    | `"spawn"`, `"portal"`, `"url"`, `"ha"` or `"image"`                                                                                                                      |
+| `type`        | text     | `"portal"`    | `"spawn"`, `"portal"`, `"url"`, `"ha"`, `"image"` or `"cast"`                                                                                                                      |
 | `label`       | text     | `""`          | name shown (tooltip, sign), 60 characters at most                                                                                                             |
 | `x`, `y`, `z` | number   | `0`           | position in meters                                                                                                                                            |
 | `yaw`         | number   | `0`           | orientation in radians: direction of the gaze on arrival, or front of the sign                                                                                |
 | `shape`       | text     | `"ring"`      | `"ring"` (ring on the ground) or `"board"` (sign on a post)                                                                                                   |
 | `trigger`     | text     | `"click"`     | portals and links (`"url"`, `hop://` included): `"click"` (click or E), `"enter"` (walking into it) or `"both"` (both). The other kinds are always `"click"`                                    |
-| `radius`      | number   | `2`           | radius of the zone in meters (from 0.5 to 50)                                                                                                                 |
+| `radius`      | number   | `2`           | radius of the zone in meters (from 0.5 to 50); radio (`cast`): sound range, 20 by default, up to 200                                                                                                                 |
 | `w`, `h`      | number   | `2.4`, `1.2`  | width and height of the sign in meters; for `image`: 1.2 wide by default, height 0 = from the image                                                                                                                        |
-| `target`      | text     | `""`          | portal: address of the destination region, or empty for a point of the same region; link: address of the web page; command: address called; image: file name or address of the image                    |
+| `target`      | text     | `""`          | portal: address of the destination region, or empty for a point of the same region; link: address of the web page; command: address called; image: file name or address of the image; radio: stream address (`https://…`) |
 | `link`        | text     | `""`          | image only, optional: page opened on click or E in front of the picture (an `http(s)` or `hop://` address, or a path relative to the open page, for example `galerie.html`); at most 600 characters; the key is only written when filled in (§ 5.11) |
 | `spawn`       | text     | `""`          | portal: `id` of the targeted arrival (empty = `default`)                                                                                                      |
 | `confirm`     | yes / no | `false`       | asks for a confirmation before acting                                                                                                                         |
 | `private`     | yes / no | `false`       | private zone: absent from public pages (`public` profile)                                                                                                     |
 | `showName`    | yes / no | `false`       | writes the `label` above the zone in walk mode                                                                                                                |
-| `cone`        | yes / no | (absent: follows the trigger) | marker (cone) above the zone: `true` always shows it, even for an "on click" zone; `false` never shows it; absent: a cone for the portals and the links triggered by walking into them (`"enter"` or `"both"`). The T key hides all cones. No effect on an arrival (`--show-spawns`) or on a picture; the key is written only when it is `true` or `false` |
+| `cone`        | yes / no | (absent: follows the trigger) | marker (cone) above the zone: `true` always shows it, even for an "on click" zone; `false` never shows it; absent: a cone for the portals, the radios and the links triggered by walking into them (`"enter"` or `"both"`). The T key hides all cones. No effect on an arrival (`--show-spawns`) or on a picture; the key is written only when it is `true` or `false` |
 | `mesh`        | text     | `""`          | zone **linked to an object** of the model: its name, or `name#number` when several objects have that name; the object becomes clickable. Never for an arrival |
 
-The sample contains nine zones, one for each case:
+The sample contains ten zones, one for each case:
 
 | `id`              | Kind    | What it shows                                                                                 |
 | ----------------- | ------- | --------------------------------------------------------------------------------------------- |
@@ -182,6 +183,7 @@ The sample contains nine zones, one for each case:
 | `door-info`       | link    | linked to the model's `Door#2` object                                                         |
 | `back-home`       | portal  | name shown above the zone (`showName`)                                                        |
 | `painting-1`      | image   | picture on a wall: file `paintings/painting-1.jpg`, height from the image                     |
+| `dance-floor`     | radio   | stream `https://ADRESSE/flux` played within 25 m while walking (§ 5.19)                       |
 
 In a tiled region, a linked zone finds its object thanks to the `extras.ref` tag that `glb2tiles.py` writes in the objects of the tiles. This tag is in the tiles' `.glb` files, **not** in `NOM.zones.json`.
 
@@ -332,6 +334,8 @@ Visits older than `--visits-days` days (365 by default) are removed at startup a
 | Field   | Type   | What it contains                                                                                                                                                                                                      |
 | ------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `rooms` | object | for each room: `salt` (random salt), `hash` (SHA-256 fingerprint of the salt followed by the key in upper case, without dashes or spaces), `added` (creation, in seconds since 1970). The key itself is never written |
+
+**`presence_radios.json`** (`--radios` option, 1.10.34): a **list** of radio stream addresses (`https://…`), written by hand and reread without restarting the server (§ 10.25). The server reads the track title of these streams only; any other address asked by a page stays without a title.
 
 **`presence_creators.json`** (`--creators` option, v51): the hosted creators, written by hand and re-read without restarting the server (§ 10.10). An object `{"creators": [...]}`; for each creator:
 

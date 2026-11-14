@@ -18,7 +18,7 @@
 
 - **Marcher, courir, sauter et voler** dans la région : vue à la première personne, à la troisième ou caméra libre, avec collisions ; commandes à l'écran et mode tactile pour téléphones et tablettes (voir « Touches principales »).
 - **Visiter une région énorme** : elle est découpée en tuiles qui se chargent autour de l'avatar (voir « Régions en tuiles »).
-- **Placer des zones** dans le modèle : points d'arrivée, portails vers une autre région, panneaux, liens web, commandes Home Assistant, et **images sur les murs** (JPEG, PNG, GIF animé).
+- **Placer des zones** dans le modèle : points d'arrivée, portails vers une autre région, panneaux, liens web, commandes Home Assistant, **images sur les murs** (JPEG, PNG, GIF animé) et **radio** (un flux Icecast / SHOUTcast joué à portée en promenade).
 - **Être plusieurs** : voir les autres visiteurs et discuter, avec le serveur de présence facultatif (voir « Serveur de présence »).
 - **Relier plusieurs régions** par une carte des mondes (`carte.html`) : une fiche par région, qui y mène (voir « Carte des mondes »).
 - **Tout régler** dans le viewer (`glb-viewer.html` : mer, caméra, promenade, zones, fiche de région), ou directement dans les fichiers JSON (`NOM.config.json`, `NOM.zones.json`), qu'une page avec coquille relit à chaque F5.

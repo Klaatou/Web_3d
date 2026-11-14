@@ -18,7 +18,7 @@ English | [Français](README.fr.md)
 
 - **Walk, run, jump and fly** in the region: first person, third person or free camera, with collisions; on-screen controls and touch mode for phones and tablets (see "Main keys").
 - **Visit a huge region**: it is cut into tiles that load around the avatar (see "Tiled regions").
-- **Place zones** in the model: arrival points, portals to another region, signs, web links, Home Assistant commands, and **pictures on walls** (JPEG, PNG, animated GIF).
+- **Place zones** in the model: arrival points, portals to another region, signs, web links, Home Assistant commands, **pictures on walls** (JPEG, PNG, animated GIF) and **radio** (an Icecast / SHOUTcast stream played within range while walking).
 - **Be several**: see the other visitors and chat, with the optional presence server (see "Presence server").
 - **Link several regions** with a world map (`carte.html`, *carte* is French for map): one card per region, each leading to it (see "World map").
 - **Set everything up** in the viewer (`glb-viewer.html`: sea, camera, walking, zones, region card), or directly in the JSON files (`NOM.config.json`, `NOM.zones.json`), which a page with a shell reads again at every F5.

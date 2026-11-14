@@ -22,6 +22,7 @@ Cette page dit **quel document lire pour quoi**. Les documents anglais portent l
 | corriger la mer d'une région déjà publiée | `PROCEDURES_SIMPLES.md` § 12 ; `MANUEL.md` § 3.13 |
 | alléger les textures d'une région | `PROCEDURES_SIMPLES.md` § 13 ; `MANUEL.md` § 3.12 |
 | poser des zones (arrivées, portails, panneaux, images) | `GUIDE.md` § 2 ; `MANUEL.md` § 5 ; `PROCEDURES.md` § 5 |
+| mettre une radio dans une région (zone `cast`, titre du morceau) | `PROCEDURES_SIMPLES.md` § 14 ; `MANUEL.md` § 5.19 et § 10.25 |
 | fabriquer ou mettre à jour la page | `GUIDE.md` § 3 ; `MANUEL.md` § 6 ; `PROCEDURES.md` § 3, § 4 et § 8 ; `PROCEDURES_SIMPLES.md` § 1 |
 | fixer le titre de l'onglet, renommer une région en tuiles | `PROCEDURES_SIMPLES.md` § 2 et § 3 |
 | publier, mettre à jour la démo en ligne | `GUIDE.md` § 4 ; `PROCEDURES_SIMPLES.md` § 7 |

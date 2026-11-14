@@ -259,6 +259,13 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 14/11/2026 |  | après 1.10.0 | Lot 1.10.27 : documents des lots 1.10.18 à 1.10.26 : manuel § 3.1, § 3.2, § 3.12 et § 3.13 (nouveaux), § 9.19, § 13, `REFERENCE_JSON.md`, procédures § 12 et § 13, index, vue d'ensemble |
 | 14/11/2026 |  | après 1.10.0 | Lot 1.10.28 : serveur de présence : registre des pseudos borné (`--max-names`), un changement de pseudo toutes les 2 s au plus, dernière adresse de l'en-tête du relais (`--proxy-header`) ; `tests/presence_noms.py` |
 | 14/11/2026 |  | après 1.10.0 | Lot 1.10.29 : documents du lot 1.10.28 : manuel § 10.19, § 10.24 et § 13, `PROCEDURES.md` (Funnel), historiques |
+| 14/11/2026 |  | après 1.10.0 | Lot 1.10.30 : lanceur : boutons Fichier et Dossier pour les paramètres `OAR` et `GLB` |
+| 14/11/2026 |  | après 1.10.0 | Lot 1.10.31 : lanceur : pas de bouton Dossier pour un seul fichier ; tests de `websockets` 16 |
+| 14/11/2026 |  | après 1.10.0 | Lot 1.10.32 : zones radio (`cast`) : flux Icecast / SHOUTcast joué en promenade à portée, volume par distance, case « Radio des zones » ; `tests/zone_cast.py` |
+| 14/11/2026 |  | après 1.10.0 | Lot 1.10.33 : zone radio : la cause d'un flux illisible dans la ligne « Radio », réessai au retour dans la zone |
+| 14/11/2026 |  | après 1.10.0 | Lot 1.10.34 : titre du morceau lu dans le flux par le serveur de présence (`--radios`, `--radios-every`) ; `tests/radio_titre.py` |
+| 14/11/2026 |  | après 1.10.0 | Lot 1.10.35 : serveur : `KeyError` à deux déconnexions simultanées ; journal des titres de radio ; cône par défaut sur une zone radio |
+| 14/11/2026 |  | après 1.10.0 | Lot 1.10.36 : documents des lots 1.10.30 à 1.10.35 : manuel § 5.19, § 7.66, § 10.25 et § 13 (nouveaux), `REFERENCE_JSON.md`, procédures § 11, procédures simples § 14, exemples, index, vue d'ensemble, README ; textes « flux refusé ou illisible » et « titre vide dans le flux » |
 
 ## Commandes utiles
 

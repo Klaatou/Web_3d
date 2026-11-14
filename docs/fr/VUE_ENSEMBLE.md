@@ -14,6 +14,7 @@ Une région OpenSim (sauvegarde `.oar`) devient une **page web 3D** où l'on se 
 - **Relier les mondes** : la carte des mondes (`regions.json`), la page `carte.html` avec les visiteurs en direct et la surveillance des arrivées (son et repère), `--scan-sites` pour construire la liste depuis le dossier des sites ; `diag_carte.py` dit pourquoi la carte n'affiche pas les pseudos.
 - **Régler** : la fenêtre Réglages (haute résolution, rendu léger, mer, sons, disposition des fenêtres) ; français et anglais.
 - **Images d'exposition** : une zone `image` plaque une image sur un mur ; on dépose les fichiers dans le sous-dossier `medias` de la région, sans refaire la conversion ni passer par OpenSim ; légende dans le nom du fichier ou dans un fichier `.txt` ; une zone image peut ouvrir une page au clic (`link`), et une case des Réglages affiche les numéros des zones pour repérer les emplacements.
+- **Radio** : une zone `cast` fait jouer un flux Icecast ou SHOUTcast (le même qu'une « music URL » de parcelle) aux visiteurs à portée en promenade, volume selon la distance ; le serveur de présence peut lire le titre du morceau dans le flux (`--radios`).
 - **Animations, liens, à propos** : un GIF animé s'anime dans la page ; les zones `url` et `image` ouvrent aussi un lien `hop://` (monde virtuel) ; un panneau « À propos de la région » s'ouvre à l'entrée (touche `?`).
 - **Paquets prêts à l'emploi** : `galerie-photos.zip` (galerie de 30 photos en 3D) et `region-simple.zip` (une région à partir d'un GLB), à télécharger sur la page des versions ; chacun s'ouvre d'un double-clic (Windows, macOS) ou d'une commande (Linux), avec un serveur de présence facultatif ; sources dans `paquets/`.
 - **Démo en ligne** : `https://klaatou.github.io/Web_3d_demo/` (plusieurs régions reliées par des portails, carte des mondes, présence), dont **Sandbox_BMoG**, une région de la grille OpenSim BloodMoon Pack (merci à Vlad, son propriétaire) qui montre les matériaux PBR d'OpenSim 0.9.3 et leur nouvel éclairage, avec un cercle de saut `hop://` vers la même région de la grille.
@@ -30,7 +31,7 @@ Une région OpenSim (sauvegarde `.oar`) devient une **page web 3D** où l'on se 
 1. **Nom de domaine** : pour le site de présentation et pour un nom stable du serveur de présence.
 2. **Page de présentation** : GIF cliquable vers la démo, bouton pour l'essayer, contact, procédure de retrait, mentions légales.
 3. **Option pour retirer l'icône « Réalisé avec Web_3d »** (clé `credit`) : à décider dans quelques semaines.
-4. **Idées** : zones média restantes (musique, page), images en région en tuiles, insertion de GLB, livre d'or (facultatif, peut être externe) ; extraire chaque bâtiment d'un grand OAR en GLB séparé pour recomposer des régions (fait : `extraire_batiments.py`, la composition se fait dans Blender) ; méga-région (étude dans `docs/fr/ETUDE_MEGAREGION.md`, rien n'est codé) ; PNG et WebP animés.
+4. **Idées** : zones média restantes (page, vidéo sur un écran ; la musique est faite : zone radio), images en région en tuiles, insertion de GLB, livre d'or (facultatif, peut être externe) ; extraire chaque bâtiment d'un grand OAR en GLB séparé pour recomposer des régions (fait : `extraire_batiments.py`, la composition se fait dans Blender) ; méga-région (étude dans `docs/fr/ETUDE_MEGAREGION.md`, rien n'est codé) ; PNG et WebP animés.
 
 ## 4. Où lire quoi
 
