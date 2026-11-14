@@ -2,7 +2,8 @@
 """Adresse des lignes « requête http » derriere un relais (--proxy-header) : vrai presence_server.py.
 
 Avant : ces lignes (EmptyConnFilter, empty_conn_ip) donnaient toujours l'adresse du relais (127.0.0.1 derriere Tailscale Funnel), alors que les
-connexions WebSocket donnaient la vraie (remote_ip). Verifie : avec --proxy-header, la requete HTTP est attribuee a la premiere adresse de l'en-tete ;
+connexions WebSocket donnaient la vraie (remote_ip). Verifie : avec --proxy-header, la requete HTTP est attribuee a la DERNIERE adresse de l'en-tete
+(1.10.28 : la seule ecrite par le relais ; avant, la premiere, qu'un client peut ecrire lui-meme) ;
 sans l'en-tete dans la requete, a celle du relais ; sans --proxy-header, l'en-tete est ignore ; le client recoit toujours 426.
 websockets 14 et 15 seulement ecrivent la ligne (voir v52_http.py) : avec une version plus recente, rien a verifier ici.
 Avec la version installee, puis, si WS_OLD donne un dossier contenant websockets 14 ou 15 (pip install --target DOSSIER "websockets==15.0.1"), avec celle-ci.
@@ -45,8 +46,8 @@ def essai(pythonpath, nom):
         return
     xff = "X-Forwarded-For: 203.0.113.7, 10.0.0.1\r\n"
     rep, l = requete(pythonpath, True, xff)
-    rapport(rep.startswith("HTTP/1.1 426") and len(l) == 1 and "ip 203.0.113.7 " in l[0] and "127.0.0.1" not in l[0].split("GET")[0],
-            "--proxy-header : la ligne donne la premiere adresse de l'en-tete", l)
+    rapport(rep.startswith("HTTP/1.1 426") and len(l) == 1 and "ip 10.0.0.1 " in l[0] and "203.0.113.7" not in l[0].split("GET")[0],
+            "--proxy-header : la ligne donne la derniere adresse de l'en-tete (celle du relais, pas celle que le client ecrit)", l)
     rep, l = requete(pythonpath, True, "")
     rapport(len(l) == 1 and "ip 127.0.0.1 " in l[0], "--proxy-header sans l'en-tete dans la requete : adresse du relais", l)
     rep, l = requete(pythonpath, False, xff)

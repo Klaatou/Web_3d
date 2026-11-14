@@ -6,6 +6,12 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.10.0)
 
+### 14/11/2026: presence server: bounded nickname registry, last address of the proxy header (batch 1.10.28)
+
+- **`presence_server.py`** (`src/presence_server.py`, `Registry`, `Peer`, `remote_ip`, `empty_conn_ip`): (a) a script could register nicknames without end (any 16-character `uid` is "persistent", the `name` message had no minimum delay, and every new nickname rewrote `presence_identities.json`): new option **`--max-names N`** (default 10000; beyond, a newcomer keeps a suffixed, non-reserved name) and at most one nickname change every 2 s per connection; (b) with **`--proxy-header`**, the address kept is now the **last** one of the header (the only one written by the trusted relay: nginx, Caddy and Cloudflare append the client address to a header the client may have sent itself; `tailscale serve` overwrites it, so the demo VM was not affected). Before, a client could appear under any address in the log and bypass the per-address limit and the address bans.
+- Tests: `tests/http_proxy.py` (last address), new `tests/presence_noms.py` (3 checks: nickname change rate, registry cap with `--max-names 3`, last address of the header on a WebSocket connection; all 3 fail on the original `main`, run with `SANS_MAXNAMES=1` since `--max-names` does not exist there).
+- Texts: `py.presence.help.max_names` (fr, en). Remains to update: manual (section 10, `--max-names`, proxy header), `PROCEDURES.md` section 11 (nothing changes for the VM).
+
 ### 14/11/2026: documents for batches 1.10.18 to 1.10.26 (batch 1.10.27)
 
 - **Done**: manual (French and English): command lines of § 3.1 and options of § 3.2 (`--tex-size`, `--tex-quality`, `--tex-only`, `--nopause` and `--output` completed), new § 3.12 (lightening the textures and reading their sizes) and new § 3.13 (the OAR's water level places the sea of the pages), § 9.19 (sea in tiles mode checked, slider start), `--update --water-from` line of the commands table, tiles index example (`waterHeight`) and default sea in tiles mode, appendix § 13 (line for batches 1.10.18 to 1.10.27); `REFERENCE_JSON.md` (`seaM`, `waterHeight`); `PROCEDURES.md` (useful keys); simple procedures § 12 (fix the sea of an already published region) and § 13 (lighten the textures); index (two lines); `CONVERTIR_OARS.md` and `CONVERT_OARS.md` (the sea); histories (batches 1.10.18 to 1.10.27).

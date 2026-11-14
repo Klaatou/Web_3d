@@ -1572,6 +1572,7 @@
  "py.presence.visits_on": "serveur : journal des visites {0} (conservé {1} jours, 0 = tous ; pseudos : {2})",
  "py.presence.map_names_on": "serveur : les pseudos sont donnés aux cartes qui présentent la clé --map-names-key (5 clés refusées par minute et par adresse au plus)",
  "py.presence.help.map_names_key": "donne le pseudo des promeneurs et des visiteurs en vue globale aux cartes ouvertes avec cette clé (carte.html#pseudos=CLÉ ; 8 caractères au moins)",
+ "py.presence.help.max_names": "pseudos réservés au plus dans le registre (défaut 10000) : au-delà, un nouveau venu garde un nom suffixé (#code), non réservé",
  "py.presence.help.map_names": "ancienne option (1.3.1), sans effet (un avertissement le dit) : utiliser --map-names-key SECRET",
  "py.presence.map_key_short": "--map-names-key : la clé doit avoir {0} caractères au moins",
  "py.presence.map_names_old": "--map-names n'existe plus : les pseudos de la carte sont protégés par une clé (--map-names-key SECRET) ; aucun pseudo n'est donné",

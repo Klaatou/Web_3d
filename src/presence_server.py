@@ -312,8 +312,8 @@ def empty_conn_ip():
                 if OPTS is not None and OPTS.proxy_header:
                     h = getattr(getattr(c, "request", None), "headers", None)
                     v = h.get(OPTS.proxy_header) if h is not None else None
-                    if v and v.split(",")[0].strip():
-                        ip = v.split(",")[0].strip()[:64]
+                    if proxy_ip(v):
+                        ip = proxy_ip(v)
                 return ip
         except Exception:
             pass
@@ -384,12 +384,12 @@ def log(kind, room, who, extra=""):
 
 class Peer:
     __slots__ = ("id", "ws", "name", "color", "p", "yaw", "last", "ip", "chat_times", "spectator", "uidh", "t0", "zone_t", "room", "color_t", "hist_t",
-                 "wall0", "walk_s", "walk0", "vname", "label")
+                 "wall0", "walk_s", "walk0", "vname", "label", "name_t")
 
     def __init__(self, pid, ws, name, color, ip, spectator, uidh, room):
         self.id, self.ws, self.name, self.color, self.ip = pid, ws, name, color, ip
         self.spectator, self.uidh, self.room = spectator, uidh, room
-        self.p, self.yaw, self.last, self.zone_t, self.color_t, self.hist_t = None, 0.0, 0.0, 0.0, 0.0, 0.0
+        self.p, self.yaw, self.last, self.zone_t, self.color_t, self.hist_t, self.name_t = None, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
         self.chat_times = []
         self.t0 = time.monotonic()
         self.wall0, self.walk_s, self.vname = time.time(), 0.0, ""      # v48 : journal des visites
@@ -417,10 +417,11 @@ class Peer:
 
 # ----------------------------------------------------------------- registre des noms
 class Registry:
-    """Nom -> clé de navigateur (hachée). Persistant. Un nom inutilisé depuis --name-ttl-days est libéré."""
+    """Nom -> clé de navigateur (hachée). Persistant. Un nom inutilisé depuis --name-ttl-days est libéré.
+    1.10.28 : au plus `limit` pseudos reserves (--max-names) : au-dela, un nouveau venu garde un nom suffixe (#code), non reserve."""
 
-    def __init__(self, path, ttl_days, reserved):
-        self.path, self.ttl, self.dirty = path, ttl_days * 86400, False
+    def __init__(self, path, ttl_days, reserved, limit=10000):
+        self.path, self.ttl, self.dirty, self.limit = path, ttl_days * 86400, False, max(0, int(limit))
         self.reserved = {norm_name(x) for x in reserved if norm_name(x)}
         self.salt, self.names, self.users = secrets.token_hex(8), {}, {}
         if path and os.path.exists(path):
@@ -469,7 +470,7 @@ class Registry:
             self.users[uidh]["name"] = base
             self.dirty = True
             return base, True
-        if owner is None and key not in self.reserved and persistent:
+        if owner is None and key not in self.reserved and persistent and (len(self.names) < self.limit or self.names.get(self.users.get(uidh, {}).get("key")) == uidh):
             prev = self.users.get(uidh, {}).get("key")
             if prev and prev != key and self.names.get(prev) == uidh:
                 del self.names[prev]
@@ -1132,14 +1133,21 @@ def ws_origin(ws):
         return ""
 
 
+def proxy_ip(v):
+    """1.10.28 : la DERNIERE adresse de l'en-tete du relais (--proxy-header) : la seule ecrite par le relais de confiance ; un client peut
+    envoyer lui-meme un en-tete, que nginx, Caddy ou Cloudflare completent en fin de liste (tailscale serve l'ecrase). '' sans adresse"""
+    parts = [x.strip() for x in str(v or "").split(",") if x.strip()]
+    return parts[-1][:64] if parts else ""
+
+
 def remote_ip(ws):
     if OPTS is not None and OPTS.proxy_header:
         try:
             req = getattr(ws, "request", None)
             headers = getattr(req, "headers", None) or getattr(ws, "request_headers", None)
             v = headers.get(OPTS.proxy_header) if headers is not None else None
-            if v:
-                return v.split(",")[0].strip()[:64]
+            if proxy_ip(v):
+                return proxy_ip(v)
         except Exception:
             pass
     try:
@@ -1316,6 +1324,10 @@ async def handler(ws):
                 older = [e for e in HISTORY.get(room, ()) if e["n"] < before]
                 await send_safe(ws, json.dumps({"t": "history", "msgs": older[-cnt:], "more": len(older) > cnt}, separators=(",", ":")))
             elif t == "name":
+                now = time.monotonic()
+                if now - peer.name_t < 2.0:      # 1.10.28 : un changement de pseudo toutes les 2 s au plus (chaque pseudo nouveau reecrit le registre)
+                    continue
+                peer.name_t = now
                 old = peer.name
                 peer.name, _ = REG.resolve(peer.uidh, m.get("name"), persistent=not peer.uidh.startswith("anon-"))
                 if peer.name != old:
@@ -1378,6 +1390,7 @@ async def main():
     ap.add_argument("--history", type=int, default=200, help=_tr("py.presence.derniers_messages_rejoues_aux_nouveaux_arriv"))
     ap.add_argument("--identities", default="presence_identities.json", help=_tr("py.presence.registre_des_noms_reserves_vide_en"))
     ap.add_argument("--name-ttl-days", type=int, default=365, help=_tr("py.presence.un_nom_non_utilise_depuis_ce"))
+    ap.add_argument("--max-names", type=int, default=10000, help=_tr("py.presence.help.max_names"))
     ap.add_argument("--reserved", default="", help=_tr("py.presence.noms_interdits_a_la_reservation_separes"))
     ap.add_argument("--log", help=_tr("py.presence.fichier_de_journal_tourne_chaque_nuit"))
     ap.add_argument("--history-file", default="", metavar="FILE", help=_tr("py.presence.history_file"))
@@ -1410,7 +1423,7 @@ async def main():
     OPTS.visits = here(OPTS.visits) if OPTS.visits else ""
     OPTS.visits_keys = here(OPTS.visits_keys) if OPTS.visits_keys else ""
     OPTS.creators = here(OPTS.creators) if OPTS.creators else ""
-    REG = Registry(OPTS.identities or None, OPTS.name_ttl_days, [x for x in OPTS.reserved.split(",")])
+    REG = Registry(OPTS.identities or None, OPTS.name_ttl_days, [x for x in OPTS.reserved.split(",")], OPTS.max_names)
     setup_log()
     bans_load()
     hist_load()

@@ -40,8 +40,8 @@
   "version": "1.10.25 (14/11/2026)"
  },
  "presence_server.py": {
-  "hash": "5f72a2b7bb7d231e73848f25ce816bbcfe22ce1a1750c9ba2f7e8cbe9f2f8c16",
-  "version": "1.10.13 (13/11/2026)"
+  "hash": "71ee84bbf6e9e7bc14c9b1825e5c60ac9359f6cf6960d608bd438497333a438c",
+  "version": "1.10.28 (14/11/2026)"
  },
  "web3d_gui.py": {
   "hash": "f1dc12b41e6c6fdddc0ceb9ae5dcb37f028d7034b019e1d90532bd7783e1ef4a",
