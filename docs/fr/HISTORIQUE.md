@@ -266,6 +266,8 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 14/11/2026 |  | après 1.10.0 | Lot 1.10.34 : titre du morceau lu dans le flux par le serveur de présence (`--radios`, `--radios-every`) ; `tests/radio_titre.py` |
 | 14/11/2026 |  | après 1.10.0 | Lot 1.10.35 : serveur : `KeyError` à deux déconnexions simultanées ; journal des titres de radio ; cône par défaut sur une zone radio |
 | 14/11/2026 |  | après 1.10.0 | Lot 1.10.36 : documents des lots 1.10.30 à 1.10.35 : manuel § 5.19, § 7.66, § 10.25 et § 13 (nouveaux), `REFERENCE_JSON.md`, procédures § 11, procédures simples § 14, exemples, index, vue d'ensemble, README ; textes « flux refusé ou illisible » et « titre vide dans le flux » |
+| 15/11/2026 |  | après 1.10.0 | Lot 1.10.37 : serveur : promeneur muet (aucune position depuis `--idle-walk` minutes) ni compté ni montré, de retour à sa première position ; `tests/promeneur_muet.py` |
+| 15/11/2026 |  | après 1.10.0 | Lot 1.10.38 : documents du lot 1.10.37 : manuel § 10.26 (nouveau) et § 13, procédures § 11 (`--idle-walk 0` sur la VM), historiques |
 
 ## Commandes utiles
 

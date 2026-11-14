@@ -6,6 +6,12 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.10.0)
 
+### 15/11/2026: documents for batch 1.10.37: silent walker (batch 1.10.38)
+
+- **Done**: manual (French and English): new § 10.26 (`--idle-walk`, what a silent walker is, what they keep, log lines, "silent" role of `liste`, the author's choice), additions line of § 13 (batches 1.10.30 to 1.10.38); `PROCEDURES.md` § 11 (French and English): `--idle-walk 0` in the server options and in `lance_presence.sh` (Klaatou's decision: a radio listener in the background stays counted as present); histories (batches 1.10.37 and 1.10.38). No code changes (`dist\` and `VERSIONS.json` identical). `deploy\lance_presence.sh` is not touched by this batch: Klaatou changed it himself.
+- **Checks**: `verif_trad.py` on the three pairs touched (manual, procedures, histories); `dist_a_jour`.
+- **Still to update** (rule 16): nothing known; `REPRISE.md` (rule 23).
+
 ### 15/11/2026: server: silent walker (no position for `--idle-walk` minutes) neither counted nor shown (batch 1.10.37)
 
 - **Observation** (Klaatou, 14/11/2026): a visitor stayed "present" walking on the demo without moving or answering. Their page, open on another machine, was in the background: the browser freezes the animation loop, from which the page sends its positions (`src/core.js`, at most one per second), but the connection stays; the server had no timeout on the last received position (`peer.last` only served the 40 ms rate).

@@ -6,6 +6,12 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.10.0)
 
+### 15/11/2026 : documents du lot 1.10.37 : promeneur muet (lot 1.10.38)
+
+- **Fait** : manuel (français et anglais) : nouveau § 10.26 (`--idle-walk`, ce qu'est un promeneur muet, ce qu'il garde, lignes du journal, rôle « muet » de `liste`, choix de l'auteur), ligne des ajouts du § 13 (lots 1.10.30 à 1.10.38) ; `PROCEDURES.md` § 11 (français et anglais) : `--idle-walk 0` dans les options du serveur et dans `lance_presence.sh` (décision de Klaatou : un auditeur de radio en arrière-plan reste compté présent) ; historiques (lots 1.10.37 et 1.10.38). Aucun code ne change (`dist\` et `VERSIONS.json` identiques). `deploy\lance_presence.sh` n'est pas touché par ce lot : Klaatou l'a modifié lui-même.
+- **Contrôle** : `verif_trad.py` sur les trois paires touchées (manuel, procédures, historiques) ; `dist_a_jour`.
+- **Reste à mettre à jour** (règle 16) : rien de connu ; `REPRISE.md` (règle 23).
+
 ### 15/11/2026 : serveur : promeneur muet (aucune position depuis `--idle-walk` minutes) ni compté ni montré (lot 1.10.37)
 
 - **Constat** (Klaatou, 14/11/2026) : un visiteur restait « présent » en promenade sur la démo sans bouger ni répondre. Sa page, ouverte sur une autre machine, était en arrière-plan : le navigateur gèle la boucle d'animation, d'où la page envoie ses positions (`src/core.js`, au plus une par seconde), mais la connexion reste ; le serveur n'avait aucun délai sur la dernière position reçue (`peer.last` ne servait qu'à la cadence de 40 ms).

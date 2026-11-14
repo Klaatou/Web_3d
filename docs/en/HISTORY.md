@@ -266,6 +266,8 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 14/11/2026 |  | after 1.10.0 | Batch 1.10.34: track title read in the stream by the presence server (`--radios`, `--radios-every`); `tests/radio_titre.py` |
 | 14/11/2026 |  | after 1.10.0 | Batch 1.10.35: server: `KeyError` on two simultaneous disconnections; radio title log; cone by default on a radio zone |
 | 14/11/2026 |  | after 1.10.0 | Batch 1.10.36: documents for batches 1.10.30 to 1.10.35: manual § 5.19, § 7.66, § 10.25 and § 13 (new), `REFERENCE_JSON.md`, procedures § 11, simple procedures § 14, samples, index, overview, README; texts "stream refused or unreadable" and "empty title in the stream" |
+| 15/11/2026 |  | after 1.10.0 | Batch 1.10.37: server: silent walker (no position for `--idle-walk` minutes) neither counted nor shown, back at the first position; `tests/promeneur_muet.py` |
+| 15/11/2026 |  | after 1.10.0 | Batch 1.10.38: documents for batch 1.10.37: manual § 10.26 (new) and § 13, procedures § 11 (`--idle-walk 0` on the VM), histories |
 
 ## Useful commands
 
