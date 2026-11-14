@@ -6,6 +6,12 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.10.0)
 
+### 14/11/2026: documents for batch 1.10.28 (batch 1.10.29)
+
+- **Done**: manual (French and English): section 10.19 (nickname registry bounded by `--max-names`, at most one nickname change every 2 s), section 10.24 (last address of the relay header with `--proxy-header`), additions row of section 13 (batches 1.10.18 to 1.10.29); `PROCEDURES.md` (Funnel, French and English: last address of the header); histories (batches 1.10.28 and 1.10.29). No code changes (`dist\` and `VERSIONS.json` identical).
+- **Check**: `verif_trad.py` without error on the three touched pairs (manual, procedures, histories); `dist_a_jour`.
+- **Remains to update** (rule 16): `REPRISE.md` (rule 23).
+
 ### 14/11/2026: presence server: bounded nickname registry, last address of the proxy header (batch 1.10.28)
 
 - **`presence_server.py`** (`src/presence_server.py`, `Registry`, `Peer`, `remote_ip`, `empty_conn_ip`): (a) a script could register nicknames without end (any 16-character `uid` is "persistent", the `name` message had no minimum delay, and every new nickname rewrote `presence_identities.json`): new option **`--max-names N`** (default 10000; beyond, a newcomer keeps a suffixed, non-reserved name) and at most one nickname change every 2 s per connection; (b) with **`--proxy-header`**, the address kept is now the **last** one of the header (the only one written by the trusted relay: nginx, Caddy and Cloudflare append the client address to a header the client may have sent itself; `tailscale serve` overwrites it, so the demo VM was not affected). Before, a client could appear under any address in the log and bypass the per-address limit and the address bans.

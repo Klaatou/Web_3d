@@ -210,7 +210,7 @@ Details: `MANUAL.md` chapter 7 (keys) and §§ 7.49 to 7.51 (language).
 
 Results of the 24/10/2026 test:
 - the WebSocket goes through Funnel (response 101);
-- with `--proxy-header X-Forwarded-For`, the log shows the visitor's real IP;
+- with `--proxy-header X-Forwarded-For`, the log shows the visitor's real IP (since 1.10.28: the last address of the header, the one the relay writes);
 - a visitor outside the network walked around through Funnel;
 - on devices where Tailscale is active, the connection is blocked if the page comes from another address (see the rule above);
 - a detour through the machine's `hosts` file did not work.

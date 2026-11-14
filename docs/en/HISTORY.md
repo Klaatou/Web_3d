@@ -257,6 +257,8 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 14/11/2026 |  | after 1.10.0 | Batch 1.10.25: `oars2site.py` copies `carte.html` and leaves no half-made folder; `tests/oars2site.py` |
 | 14/11/2026 |  | after 1.10.0 | Batch 1.10.26: automatic sea: the OAR's water level in the GLB, key `seaM`, `--sea-m`, `--water-from`; `tests/mer_auto.py` |
 | 14/11/2026 |  | after 1.10.0 | Batch 1.10.27: documents for batches 1.10.18 to 1.10.26: manual § 3.1, § 3.2, § 3.12 and § 3.13 (new), § 9.19, § 13, `REFERENCE_JSON.md`, procedures § 12 and § 13, index, overview |
+| 14/11/2026 |  | after 1.10.0 | Batch 1.10.28: presence server: bounded nickname registry (`--max-names`), at most one nickname change every 2 s, last address of the relay header (`--proxy-header`); `tests/presence_noms.py` |
+| 14/11/2026 |  | after 1.10.0 | Batch 1.10.29: documents for batch 1.10.28: manual § 10.19, § 10.24 and § 13, `PROCEDURES.md` (Funnel), histories |
 
 ## Useful commands
 

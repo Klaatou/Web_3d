@@ -6,6 +6,12 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.10.0)
 
+### 14/11/2026 : documents du lot 1.10.28 (lot 1.10.29)
+
+- **Fait** : manuel (français et anglais) : § 10.19 (registre des pseudos borné par `--max-names`, un changement de pseudo toutes les 2 s au plus), § 10.24 (dernière adresse de l'en-tête du relais avec `--proxy-header`), ligne des ajouts du § 13 (lots 1.10.18 à 1.10.29) ; `PROCEDURES.md` (Funnel, français et anglais : dernière adresse de l'en-tête) ; historiques (lots 1.10.28 et 1.10.29). Aucun code ne change (`dist\` et `VERSIONS.json` identiques).
+- **Contrôle** : `verif_trad.py` sans erreur sur les trois paires touchées (manuel, procédures, historiques) ; `dist_a_jour`.
+- **Reste à mettre à jour** (règle 16) : `REPRISE.md` (règle 23).
+
 ### 14/11/2026 : serveur de présence : registre des pseudos borné, dernière adresse de l'en-tête du relais (lot 1.10.28)
 
 - **`presence_server.py`** (`src/presence_server.py`, `Registry`, `Peer`, `remote_ip`, `empty_conn_ip`) : (a) un script pouvait inscrire des pseudos sans fin (tout `uid` de 16 caractères est « persistant », le message `name` n'avait aucun délai minimal, et chaque pseudo nouveau réécrivait `presence_identities.json`) : nouvelle option **`--max-names N`** (défaut 10000 ; au-delà, un nouveau venu garde un nom suffixé, non réservé) et au plus un changement de pseudo toutes les 2 s par connexion ; (b) avec **`--proxy-header`**, l'adresse retenue est maintenant la **dernière** de l'en-tête (la seule écrite par le relais de confiance : nginx, Caddy et Cloudflare ajoutent l'adresse du client à la fin d'un en-tête que le client a pu envoyer lui-même ; `tailscale serve` l'écrase : la VM de la démo n'était pas touchée). Avant, un client pouvait apparaître sous une adresse de son choix dans le journal et contourner la limite par adresse et les bannissements par adresse.

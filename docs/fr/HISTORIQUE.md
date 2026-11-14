@@ -257,6 +257,8 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 14/11/2026 |  | après 1.10.0 | Lot 1.10.25 : `oars2site.py` copie `carte.html` et ne laisse pas de dossier à moitié fait ; `tests/oars2site.py` |
 | 14/11/2026 |  | après 1.10.0 | Lot 1.10.26 : mer automatique : niveau d'eau de l'OAR dans le GLB, clé `seaM`, `--sea-m`, `--water-from` ; `tests/mer_auto.py` |
 | 14/11/2026 |  | après 1.10.0 | Lot 1.10.27 : documents des lots 1.10.18 à 1.10.26 : manuel § 3.1, § 3.2, § 3.12 et § 3.13 (nouveaux), § 9.19, § 13, `REFERENCE_JSON.md`, procédures § 12 et § 13, index, vue d'ensemble |
+| 14/11/2026 |  | après 1.10.0 | Lot 1.10.28 : serveur de présence : registre des pseudos borné (`--max-names`), un changement de pseudo toutes les 2 s au plus, dernière adresse de l'en-tête du relais (`--proxy-header`) ; `tests/presence_noms.py` |
+| 14/11/2026 |  | après 1.10.0 | Lot 1.10.29 : documents du lot 1.10.28 : manuel § 10.19, § 10.24 et § 13, `PROCEDURES.md` (Funnel), historiques |
 
 ## Commandes utiles
 

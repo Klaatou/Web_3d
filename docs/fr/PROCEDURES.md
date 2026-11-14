@@ -210,7 +210,7 @@ Détail : `MANUEL.md` chapitre 7 (touches) et §§ 7.49 à 7.51 (langue).
 
 Résultats de l'essai du 24/10/2026 :
 - le WebSocket traverse Funnel (réponse 101) ;
-- avec `--proxy-header X-Forwarded-For`, le journal montre la vraie IP du visiteur ;
+- avec `--proxy-header X-Forwarded-For`, le journal montre la vraie IP du visiteur (depuis la 1.10.28 : la dernière adresse de l'en-tête, celle que le relais écrit) ;
 - un visiteur extérieur au réseau s'est promené par Funnel ;
 - sur les appareils où Tailscale est actif, la connexion est bloquée si la page vient d'une autre adresse (voir la règle plus haut) ;
 - un détour par le fichier `hosts` de la machine n'a pas marché.
