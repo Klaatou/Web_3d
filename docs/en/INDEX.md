@@ -19,6 +19,8 @@ This page says **which document to read for what**. The French documents carry t
 | extract objects (buildings, furniture...) from a region | `MANUAL.md` § 3.7; `SIMPLE_PROCEDURES.md` § 6 |
 | extract objects from an inventory (IAR) | `MANUAL.md` § 3.8; `SIMPLE_PROCEDURES.md` § 6 |
 | turn a folder of OARs into a web site, one region after the other | `CONVERT_OARS.md` |
+| fix the sea of an already published region | `SIMPLE_PROCEDURES.md` § 12; `MANUAL.md` § 3.13 |
+| lighten the textures of a region | `SIMPLE_PROCEDURES.md` § 13; `MANUAL.md` § 3.12 |
 | place zones (arrivals, portals, signs, pictures) | `GUIDE.md` § 2; `MANUAL.md` § 5; `PROCEDURES.md` § 5 |
 | build or update the page | `GUIDE.md` § 3; `MANUAL.md` § 6; `PROCEDURES.md` § 3, § 4 and § 8; `SIMPLE_PROCEDURES.md` § 1 |
 | set the tab title, rename a tiled region | `SIMPLE_PROCEDURES.md` § 2 and § 3 |

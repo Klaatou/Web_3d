@@ -30,6 +30,7 @@ In the site folder:
 
 - `index.html`, `lib/`, `default.json` and `regions.json` at the root: the shared shell, created once then kept up to date; `regions.json` feeds the world map;
 - `carte.html` at the root: the world map page, copied at the start if it does not exist (a map already there is never overwritten);
+- each region's sea comes from the OAR's water level (key `seaM` of `NOM.config.json`, manual § 3.13); an OAR without `WaterHeight` keeps 20 m, with a warning in the log;
 - one folder per region, `NOM/`, with `NOM.config.json`, `NOM.zones.json` and the GLB: `NOM.glb`, or `NOM.tiles.json`, `NOM.tiles/` and `NOM.overview.glb` when `glb2tiles.py` decides that tiles are needed (heavy regions);
 - a region is then at the address `index.html?region=NOM/NOM`, served by any static web server.
 

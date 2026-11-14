@@ -247,6 +247,16 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 13/11/2026 |  | après 1.10.0 | Lot 1.10.15 : documents des lots 1.10.13 et 1.10.14 : manuel § 3.9, § 7.62, § 7.65, § 10.3 et § 13, `REFERENCE_JSON.md`, `CREATEURS.md`, procédures, index ; image des huit raccourcis |
 | 13/11/2026 |  | après 1.10.0 | Lot 1.10.16 : zones lien web déclenchées en marchant dedans (`trigger` `enter` / `both`), clé `cone` par zone, listes de l'éditeur ; `REFERENCE_JSON.md` ; `tests/zones_url_cone.py` |
 | 13/11/2026 |  | après 1.10.0 | Lot 1.10.17 : documents du lot 1.10.16 : manuel § 5.7.1, § 5.8, § 7.17, touches E et T, procédures § 13, vue d'ensemble, README ; démo Sandbox_BMoG (PBR, zone de saut vers BloodMoon) |
+| 13/11/2026 |  | après 1.10.0 | Lot 1.10.18 : tests v35 et v36 : attendre l'état au lieu d'une pause de 300 ms |
+| 13/11/2026 |  | après 1.10.0 | Lot 1.10.19 : menus « Déclenchement » et « Repère (cône) » de l'éditeur de zones testés ; `tests/editeur_cone.py` |
+| 13/11/2026 |  | après 1.10.0 | Lot 1.10.20 : `oar2glb.py --tex-size` (réduire les textures ordinaires) ; `tests/tex_size.py` |
+| 13/11/2026 |  | après 1.10.0 | Lot 1.10.21 : `--tex-size` et `--tex-quality` indépendants, aide réécrite ; `tests/tex_size.py` |
+| 13/11/2026 |  | après 1.10.0 | Lot 1.10.22 : tableau des tailles de textures (`oar2glb.py`, `glb-stats.py`) ; `tests/tex_tableau.py` |
+| 13/11/2026 |  | après 1.10.0 | Lot 1.10.23 : `oar2glb.py --tex-only` (alléger les textures d'un GLB déjà fait) ; `tests/tex_seul.py` |
+| 13/11/2026 |  | après 1.10.0 | Lot 1.10.24 : nouvel outil `oars2site.py` (un dossier d'OAR devient un site web), CONVERTIR_OARS.md ; `tests/oars2site.py` |
+| 14/11/2026 |  | après 1.10.0 | Lot 1.10.25 : `oars2site.py` copie `carte.html` et ne laisse pas de dossier à moitié fait ; `tests/oars2site.py` |
+| 14/11/2026 |  | après 1.10.0 | Lot 1.10.26 : mer automatique : niveau d'eau de l'OAR dans le GLB, clé `seaM`, `--sea-m`, `--water-from` ; `tests/mer_auto.py` |
+| 14/11/2026 |  | après 1.10.0 | Lot 1.10.27 : documents des lots 1.10.18 à 1.10.26 : manuel § 3.1, § 3.2, § 3.12 et § 3.13 (nouveaux), § 9.19, § 13, `REFERENCE_JSON.md`, procédures § 12 et § 13, index, vue d'ensemble |
 
 ## Commandes utiles
 

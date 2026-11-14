@@ -30,6 +30,7 @@ Dans le dossier du site :
 
 - `index.html`, `lib/`, `default.json` et `regions.json` à la racine : la coquille commune, créée une fois puis tenue à jour ; `regions.json` alimente la carte des mondes ;
 - `carte.html` à la racine : la page de la carte des mondes, copiée au début si elle n'existe pas (une carte déjà là n'est jamais écrasée) ;
+- la mer de chaque région vient du niveau d'eau de l'OAR (clé `seaM` de `NOM.config.json`, manuel § 3.13) ; un OAR sans `WaterHeight` garde 20 m, avec un avertissement dans le journal ;
 - un dossier par région, `NOM/`, avec `NOM.config.json`, `NOM.zones.json` et le GLB : `NOM.glb`, ou `NOM.tiles.json`, `NOM.tiles/` et `NOM.overview.glb` quand `glb2tiles.py` décide qu'il faut des tuiles (régions lourdes) ;
 - une région est ensuite à l'adresse `index.html?region=NOM/NOM`, servie par n'importe quel serveur web statique.
 

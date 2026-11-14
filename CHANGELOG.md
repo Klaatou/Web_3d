@@ -6,6 +6,13 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.10.0)
 
+### 14/11/2026: documents for batches 1.10.18 to 1.10.26 (batch 1.10.27)
+
+- **Done**: manual (French and English): command lines of § 3.1 and options of § 3.2 (`--tex-size`, `--tex-quality`, `--tex-only`, `--nopause` and `--output` completed), new § 3.12 (lightening the textures and reading their sizes) and new § 3.13 (the OAR's water level places the sea of the pages), § 9.19 (sea in tiles mode checked, slider start), `--update --water-from` line of the commands table, tiles index example (`waterHeight`) and default sea in tiles mode, appendix § 13 (line for batches 1.10.18 to 1.10.27); `REFERENCE_JSON.md` (`seaM`, `waterHeight`); `PROCEDURES.md` (useful keys); simple procedures § 12 (fix the sea of an already published region) and § 13 (lighten the textures); index (two lines); `CONVERTIR_OARS.md` and `CONVERT_OARS.md` (the sea); histories (batches 1.10.18 to 1.10.27).
+- **Checks**: `verif_trad.py` without error on the seven pairs touched (manual, `REFERENCE_JSON.md`, `PROCEDURES.md`, simple procedures, index, `oars2site.py` manual, histories); a first version of the history had an error (a document name as inline code in French only), fixed. `apropos_liens` and `readme_liens` pass; `doc_options` fails as on `main` (same check: `REFERENCE_OPTIONS.md` is regenerated differently by the sandbox's Python 3.12; Klaatou's build redoes it). No code changes: `dist\` is not touched. The file names, values and results written in the documents come from the tests (fake convoar, hand-made GLBs, Chromium).
+- **Not tried**: the PowerShell loop of § 12 of the procedures (marked "not tried" in the text); the "not tried" points of the documented batches (a real OAR, Windows, a real shop region).
+- **Still to update** (rule 16): nothing known for batches 1.10.18 to 1.10.26; `REPRISE.md` (rule 23).
+
 ### 14/11/2026: automatic sea: the OAR's water level becomes the sea height of the pages (batch 1.10.26)
 
 - **Finding** (Klaatou, about a region of an OAR shop whose sea cut through the buildings): a page's sea had no link with the region. `oar2glb.py` read the OAR's `WaterHeight` (20 by default) but only used it to colour the terrain; pages received a constant (`seaY` -50 for a single GLB, 20 in tiles mode), in the frame recentred by the viewer, whose shift depends on each region. The Settings "Sea height" slider is in the region's frame but belongs to each visitor; the config only had `seaY`, in the other frame: two frames for the same sea.

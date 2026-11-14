@@ -193,3 +193,37 @@ python .\dist\web3d_gui.py --shortcuts
 ![Les huit raccourcis](../images/raccourcis.png)
 
 Relancer la même commande remplace les raccourcis. Pour les retirer : `python .\dist\web3d_gui.py --remove-shortcuts`. Essayé par Klaatou sous Windows (08/11/2026).
+
+## 12. Corriger la mer d'une région déjà publiée
+
+Depuis la 1.10.26, une conversion place la mer d'après le niveau d'eau de l'OAR. Pour une région publiée avant, ou dont la mer paraît trop haute ou trop basse, sans la reconvertir (la commande lit le niveau d'eau dans l'OAR et l'écrit dans la config de la région ; ses zones ne bougent pas) :
+
+```powershell
+cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python .\glb2html.py --update -o "P:\_OpenSim\SL&OS\Web_3d\Sites\houses\houses.html" --shared-shell "P:\_OpenSim\SL&OS\Web_3d\Sites\index.html" --water-from "J:\...\houses.oar"
+```
+
+Ensuite Ctrl+F5 dans la page. Sans l'OAR sous la main, donne la hauteur toi-même avec `--sea-m 9` à la place de `--water-from ...` : le nombre est celui que le curseur « Hauteur de la mer » de Réglages indique quand la mer paraît juste (même repère). Le choix fait avec ce curseur reste propre à chaque visiteur (dans son navigateur) : seule la config corrige la page pour tout le monde.
+
+Pour tout un dossier d'OAR dont chacun a une région du même nom dans le site (non essayé) :
+
+```powershell
+Get-ChildItem "J:\...\OAR" -Filter *.oar | ForEach-Object { $n = $_.BaseName; python .\glb2html.py --update -o "P:\...\Sites\$n\$n.html" --shared-shell "P:\...\Sites\index.html" --water-from $_.FullName }
+```
+
+Un OAR sans `WaterHeight` est refusé avec un message : la boucle continue, et ces régions-là se règlent avec `--sea-m`. Essayé (14/11/2026, Chromium sous Linux, `tests/mer_auto.py`) : la commande unique.
+
+## 13. Alléger les textures d'une région déjà convertie
+
+Pour choisir la valeur sans deviner, lis le tableau des tailles : `oar2glb.py` l'affiche à la fin de chaque conversion, et `glb-stats.py` le donne pour un GLB déjà fait :
+
+```powershell
+python .\glb-stats.py "J:\...\NOM.glb"
+```
+
+Puis essaie des valeurs sans refaire la conversion : chaque essai écrit un nouveau fichier à côté, l'original n'est jamais modifié :
+
+```powershell
+python .\oar2glb.py --tex-only "J:\...\NOM.glb" --tex-size 1024
+```
+
+Regarde le résultat (`NOM-tex1024.glb`), puis copie le fichier retenu à la place du GLB de la région dans le site. `--tex-quality 60` ajoute une compression JPEG plus forte sans changer les pixels ; les textures transparentes ne sont réduites que par `--tex-size`. Détails : manuel § 3.12. Essayé (13/11/2026, faux convoar et GLB faits à la main) : non essayé sur un vrai GLB de plusieurs centaines de Mo.

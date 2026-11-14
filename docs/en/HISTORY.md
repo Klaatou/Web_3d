@@ -247,6 +247,16 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 13/11/2026 |  | after 1.10.0 | Batch 1.10.15: documents for batches 1.10.13 and 1.10.14: manual § 3.9, § 7.62, § 7.65, § 10.3 and § 13, `REFERENCE_JSON.md`, `CREATORS.md`, procedures, index; image of the eight shortcuts |
 | 13/11/2026 |  | after 1.10.0 | Batch 1.10.16: web link zones triggered by walking into them (`trigger` `enter` / `both`), `cone` key per zone, editor lists; `REFERENCE_JSON.md`; `tests/zones_url_cone.py` |
 | 13/11/2026 |  | after 1.10.0 | Batch 1.10.17: documents for batch 1.10.16: manual § 5.7.1, § 5.8, § 7.17, E and T keys, procedures § 13, overview, README; Sandbox_BMoG demo (PBR, hop zone to BloodMoon) |
+| 13/11/2026 |  | after 1.10.0 | Batch 1.10.18: tests v35 and v36: wait for the state instead of a 300 ms pause |
+| 13/11/2026 |  | after 1.10.0 | Batch 1.10.19: the "Trigger" and "Marker (cone)" menus of the zone editor tested; `tests/editeur_cone.py` |
+| 13/11/2026 |  | after 1.10.0 | Batch 1.10.20: `oar2glb.py --tex-size` (reduce the ordinary textures); `tests/tex_size.py` |
+| 13/11/2026 |  | after 1.10.0 | Batch 1.10.21: independent `--tex-size` and `--tex-quality`, help rewritten; `tests/tex_size.py` |
+| 13/11/2026 |  | after 1.10.0 | Batch 1.10.22: texture size table (`oar2glb.py`, `glb-stats.py`); `tests/tex_tableau.py` |
+| 13/11/2026 |  | after 1.10.0 | Batch 1.10.23: `oar2glb.py --tex-only` (lighten the textures of an existing GLB); `tests/tex_seul.py` |
+| 13/11/2026 |  | after 1.10.0 | Batch 1.10.24: new tool `oars2site.py` (a folder of OARs becomes a web site), CONVERT_OARS.md; `tests/oars2site.py` |
+| 14/11/2026 |  | after 1.10.0 | Batch 1.10.25: `oars2site.py` copies `carte.html` and leaves no half-made folder; `tests/oars2site.py` |
+| 14/11/2026 |  | after 1.10.0 | Batch 1.10.26: automatic sea: the OAR's water level in the GLB, key `seaM`, `--sea-m`, `--water-from`; `tests/mer_auto.py` |
+| 14/11/2026 |  | after 1.10.0 | Batch 1.10.27: documents for batches 1.10.18 to 1.10.26: manual § 3.1, § 3.2, § 3.12 and § 3.13 (new), § 9.19, § 13, `REFERENCE_JSON.md`, procedures § 12 and § 13, index, overview |
 
 ## Useful commands
 

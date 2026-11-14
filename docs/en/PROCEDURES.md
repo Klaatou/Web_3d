@@ -56,7 +56,7 @@ To link a zone to an object of the tiled region, the tiles must have been split 
 
 **One value: edit the config file and reload.** The page reads `X.config.json` again at each opening, without cache.
 `notepad "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.config.json"`
-Useful keys: `seaY` (sea level, in m), `target` (`[x, y, z]`), `presenceUrl`, `chat` (`true` or `false`), `zoneInfoDist`, `tileRadius`, `tileMaxMB`, `tileMaxTriangles`. The JSON is strict: keep the commas and the quotes. **Colours are stored there as decimal numbers** (`seaColor` 3840729 is `3a9ad9`): to change them, use `--update` instead.
+Useful keys: `seaY` (sea level, in m, the page's frame), `seaM` (the sea in metres of the region's frame, which wins: manual § 3.13), `target` (`[x, y, z]`), `presenceUrl`, `chat` (`true` or `false`), `zoneInfoDist`, `tileRadius`, `tileMaxMB`, `tileMaxTriangles`. The JSON is strict: keep the commas and the quotes. **Colours are stored there as decimal numbers** (`seaColor` 3840729 is `3a9ad9`): to change them, use `--update` instead.
 
 **Several values, or a colour: `--update`.** It applies only the options you write, and keeps the rest of the config and the zone file.
 `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python glb2html.py --update --shared-shell -o "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.html" --sea-y 10`

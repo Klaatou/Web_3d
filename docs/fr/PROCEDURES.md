@@ -56,7 +56,7 @@ Pour lier une zone à un objet de la région en tuiles, les tuiles doivent avoir
 
 **Une valeur : modifier le fichier de config et recharger.** La page relit `X.config.json` à chaque ouverture, sans cache.
 `notepad "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.config.json"`
-Clés utiles : `seaY` (hauteur de la mer, en m), `target` (`[x, y, z]`), `presenceUrl`, `chat` (`true` ou `false`), `zoneInfoDist`, `tileRadius`, `tileMaxMB`, `tileMaxTriangles`. Le JSON est strict : garde les virgules et les guillemets. **Les couleurs y sont des nombres décimaux** (`seaColor` 3840729 vaut `3a9ad9`) : pour les changer, passe plutôt par `--update`.
+Clés utiles : `seaY` (hauteur de la mer, en m, repère de la page), `seaM` (la mer en mètres du repère de la région, qui l'emporte : manuel § 3.13), `target` (`[x, y, z]`), `presenceUrl`, `chat` (`true` ou `false`), `zoneInfoDist`, `tileRadius`, `tileMaxMB`, `tileMaxTriangles`. Le JSON est strict : garde les virgules et les guillemets. **Les couleurs y sont des nombres décimaux** (`seaColor` 3840729 vaut `3a9ad9`) : pour les changer, passe plutôt par `--update`.
 
 **Plusieurs valeurs, ou une couleur : `--update`.** Il applique seulement les options que tu écris, garde tout le reste de la config et le fichier de zones.
 `cd "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist"; python glb2html.py --update --shared-shell -o "P:\_OpenSim\SL&OS\Web_3d\tuiles\X.html" --sea-y 10`

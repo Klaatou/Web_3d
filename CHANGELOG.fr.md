@@ -6,6 +6,13 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.10.0)
 
+### 14/11/2026 : documents des lots 1.10.18 à 1.10.26 (lot 1.10.27)
+
+- **Fait** : manuel (français et anglais) : lignes de commandes du § 3.1 et options du § 3.2 (`--tex-size`, `--tex-quality`, `--tex-only`, `--nopause` et `--output` complétés), nouveau § 3.12 (alléger les textures et lire leurs tailles) et nouveau § 3.13 (le niveau d'eau de l'OAR place la mer des pages), § 9.19 (mer en tuiles vérifiée, départ du curseur), ligne `--update --water-from` de la table des commandes, exemple d'index des tuiles (`waterHeight`) et mer par défaut en tuiles, annexe § 13 (ligne des lots 1.10.18 à 1.10.27) ; `REFERENCE_JSON.md` (`seaM`, `waterHeight`) ; `PROCEDURES.md` (clés utiles) ; procédures simples § 12 (corriger la mer d'une région déjà publiée) et § 13 (alléger les textures) ; index (deux lignes) ; `CONVERTIR_OARS.md` et `CONVERT_OARS.md` (la mer) ; historiques (lots 1.10.18 à 1.10.27).
+- **Contrôle** : `verif_trad.py` sans erreur sur les sept paires touchées (manuel, `REFERENCE_JSON.md`, `PROCEDURES.md`, procédures simples, index, mode d'emploi de `oars2site.py`, historiques) ; une première version de l'historique avait une erreur (un nom de document en code en ligne seulement en français), corrigée. `apropos_liens` et `readme_liens` passent ; `doc_options` échoue comme sur `main` (même contrôle : `REFERENCE_OPTIONS.md` est régénéré autrement par le Python 3.12 du bac à sable ; le build de Klaatou le refait). Aucun code ne change : `dist\` n'est pas touché. Les noms de fichiers, valeurs et résultats écrits dans les documents viennent des tests (faux convoar, GLB faits à la main, Chromium).
+- **Non essayé** : la boucle PowerShell du § 12 des procédures (signalée « non essayé » dans le texte) ; les points « non essayé » des lots documentés (un vrai OAR, Windows, une vraie région de boutique).
+- **Reste à mettre à jour** (règle 16) : rien de connu pour les lots 1.10.18 à 1.10.26 ; `REPRISE.md` (règle 23).
+
 ### 14/11/2026 : mer automatique : le niveau d'eau de l'OAR devient la hauteur de la mer des pages (lot 1.10.26)
 
 - **Constat** (Klaatou, à propos d'une région d'une boutique d'OAR dont la mer coupait les bâtiments) : la mer d'une page n'avait aucun lien avec la région. `oar2glb.py` lisait le `WaterHeight` de l'OAR (20 par défaut) mais ne s'en servait que pour colorer le terrain ; les pages recevaient une constante (`seaY` -50 pour un GLB seul, 20 en mode tuiles), dans le repère recentré par le viewer dont le décalage dépend de chaque région. Le curseur « Hauteur de la mer » de Réglages est en repère région mais propre à chaque visiteur ; la config n'avait que `seaY`, dans l'autre repère : deux repères pour une même mer.
