@@ -5,7 +5,8 @@ Un dossier de quatre OAR (dont un nom a espace, un qui echoue, un dont le GLB ex
 site complet (coquille, lib, default.json, regions.json), journaux et fichiers de travail hors du site, rapport JSON, OAR et GLB d'entree intacts ; second passage :
 les regions faites sont sautees ; --force avec tuiles puis retour a un GLB seul (aucun ancien fichier) ; vignettes ; --tex-size, --tex-quality ; --keep-work ; --reuse-glb ;
 --dry-run (rien d'ecrit) ; controle de version de oar2glb.py ; erreurs (dossier absent, vide, noms en double, outils introuvables, valeurs refusees) ; delai depasse ;
-langues (--lang fr, --lang en, journaux dans la meme langue) ; --version.
+langues (--lang fr, --lang en, journaux dans la meme langue) ; --version ; carte.html copiee au debut si elle manque (jamais ecrasee) ; echec de glb2html sans
+dossier a moitie fait (une region deja la reste intacte).
 Prerequis : pip install pillow ; python build.py ; variable THREE_DIR hors ligne. Lancer : python tests/oars2site.py
 """
 import os as _os_lang; _os_lang.environ["WEB3D_LANG"] = "fr"
@@ -165,6 +166,30 @@ rapport(r.returncode == 0 and (site / "Alpha" / "Alpha.tiles.json").exists() and
 r = lancer("--only", "^Alpha$", "--force", "--split", "never", "--lang", "en")
 reste = sorted(p.name for p in (site / "Alpha").iterdir())
 rapport(r.returncode == 0 and (site / "Alpha" / "Alpha.glb").exists() and not any("tiles" in n or "overview" in n for n in reste), "--force --split never : retour a un GLB seul, aucune ancienne tuile ni vue d'ensemble", reste)
+
+# ---------- carte.html ; echec de glb2html ----------
+carte_dist = DIST / "carte.html"
+rapport((site / "carte.html").exists() and sha(site / "carte.html") == sha(carte_dist), "carte.html : copiee a la racine du site (celle de dist)")
+(site / "carte.html").write_text("ma carte a moi", encoding="utf-8")
+r = lancer("--only", "^Alpha$", "--force", "--lang", "en")
+rapport(r.returncode == 0 and (site / "carte.html").read_text(encoding="utf-8") == "ma carte a moi" and "carte.html copied" not in r.stdout, "carte.html deja presente : jamais ecrasee, pas de message de copie", (r.returncode, r.stdout[-300:]))
+(site / "carte.html").unlink()
+r = lancer("--only", "^Alpha$", "--lang", "en")
+rapport(r.returncode == 0 and sha(site / "carte.html") == sha(carte_dist) and "carte.html copied into the site" in r.stdout, "carte.html supprimee : recopiee au passage suivant, avec son message", (r.returncode, r.stdout[-300:]))
+r = lancer("--dry-run", "--lang", "en", cible=tmp / "site_dry")
+rapport(r.returncode == 0 and "to copy: carte.html" in r.stdout and not (tmp / "site_dry").exists(), "--dry-run : annonce la copie de carte.html, n'ecrit rien", (r.returncode, r.stdout[-300:]))
+sans_carte = tmp / "outils_sans_carte"; sans_carte.mkdir()
+for n in ("glb2html.py", "glb2tiles.py", "oar2glb.py", "glb-stats.py"):
+    shutil.copy(DIST / n, sans_carte / n)
+r = lancer("--only", "^Alpha$", "--lang", "en", cible=tmp / "site_sans_carte", tools=sans_carte)
+rapport(r.returncode == 0 and "carte.html not found" in r.stdout and not (tmp / "site_sans_carte" / "carte.html").exists() and (tmp / "site_sans_carte" / "Alpha" / "Alpha.glb").exists(), "outils sans carte.html : avertissement, la conversion continue, pas de carte", (r.returncode, r.stdout[-400:]))
+vide = tmp / "vendor_vide"; vide.mkdir()      # three.js absent : glb2html echoue apres avoir cree le dossier de la region
+r = lancer("--only", "^Alpha$", "--lang", "en", "--vendor", str(vide), cible=tmp / "site_echec")
+rapport(r.returncode == 1 and "glb2html failed" in r.stdout and not (tmp / "site_echec" / "Alpha").exists(), "glb2html echoue sur une region nouvelle : aucun dossier a moitie fait dans le site", (r.returncode, r.stdout[-300:], sorted(p.name for p in (tmp / "site_echec").iterdir()) if (tmp / "site_echec").exists() else None))
+avant = {n: sha(site / "Alpha" / n) for n in ("Alpha.glb", "Alpha.config.json", "Alpha.zones.json")}
+r = lancer("--only", "^Alpha$", "--force", "--lang", "en", "--html-arg=--option-inexistante")      # le site a deja sa lib : l'echec vient de l'option refusee par glb2html
+apres = {n: sha(site / "Alpha" / n) for n in ("Alpha.glb", "Alpha.config.json", "Alpha.zones.json") if (site / "Alpha" / n).exists()}
+rapport(r.returncode == 1 and apres == avant, "glb2html echoue sur une region deja la : ses fichiers restent tels quels (rien supprime avant la reussite)", (r.returncode, avant, apres))
 
 # ---------- vignettes, textures ----------
 miniatures = tmp / "vignettes"; miniatures.mkdir()

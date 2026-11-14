@@ -22,13 +22,14 @@ To see what would be done, without writing anything:
 python .\oars2site.py "P:\chemin\OAR" "P:\chemin\site" --dry-run
 ```
 
-The OARs are processed one at a time, never in parallel. An OAR that is already converted (its `NOM.config.json` is newer than the OAR) is skipped; an OAR that fails is noted in its log and the next one goes on. The exit code is 1 if at least one OAR failed.
+The OARs are processed one at a time, never in parallel. An OAR that is already converted (its `NOM.config.json` is newer than the OAR) is skipped; an OAR that fails is noted in its log, leaves no half-made folder if the region is new, and the next one goes on. The exit code is 1 if at least one OAR failed.
 
 ## 3. What is produced
 
 In the site folder:
 
 - `index.html`, `lib/`, `default.json` and `regions.json` at the root: the shared shell, created once then kept up to date; `regions.json` feeds the world map;
+- `carte.html` at the root: the world map page, copied at the start if it does not exist (a map already there is never overwritten);
 - one folder per region, `NOM/`, with `NOM.config.json`, `NOM.zones.json` and the GLB: `NOM.glb`, or `NOM.tiles.json`, `NOM.tiles/` and `NOM.overview.glb` when `glb2tiles.py` decides that tiles are needed (heavy regions);
 - a region is then at the address `index.html?region=NOM/NOM`, served by any static web server.
 
@@ -96,5 +97,5 @@ For paid OARs, it is therefore up to you to decide what you accept to show:
 ## 8. Limits and what is not tried
 
 - A single load measurement: an OAR of 1.45 GB took about 2 min 12 s with `--pbr-size 256`, under Windows, and memory rose to 61 GB (cause not established). Run the largest OARs first as a trial, one at a time.
-- Tried with a fake convoar only: a folder of OARs converted into a site, an OAR skipped, a failure that does not block the others, tiles then back to a single GLB, thumbnails, texture options, languages, a time limit exceeded.
+- Tried with a fake convoar only: a folder of OARs converted into a site, an OAR skipped, a failure that does not block the others, tiles then back to a single GLB, thumbnails, `carte.html` copied, a `glb2html.py` failure without a half-made folder, texture options, languages, a time limit exceeded.
 - Not tried: a real OAR with the real convoar, Windows, macOS, and a large region through the tiles path.

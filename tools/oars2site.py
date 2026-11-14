@@ -158,19 +158,24 @@ def convertir(oar, a, outils, site, travail, journal):
             mode, entree = "tiles", ["--tiles", str(tuiles)]
     rep["mode"] = mode
     dest = site / nom
-    if dest.exists():                    # un passage précédent a pu utiliser l'autre mode : jamais d'ancien GLB complet (ni d'anciennes tuiles) dans le site
-        for v in (dest / (nom + ".glb"), dest / (nom + ".overview.glb"), dest / (nom + ".tiles.json")):
-            if v.exists():
-                v.unlink()
-        shutil.rmtree(dest / (nom + ".tiles"), ignore_errors=True)
+    existait = dest.exists()
     cmd = [py, str(outils / "glb2html.py")] + entree + ["--shared-shell", str(site / "index.html"), "-o", str(site / nom / (nom + ".html"))]
     if a.vendor:
         cmd += ["--vendor", a.vendor]
     cmd += a.html_arg
     code, _ = lancer(cmd, journal, tr)
     if code or not config.exists():
+        if not existait:                 # région nouvelle : pas de dossier à moitié fait dans le site (une région déjà là reste telle quelle)
+            shutil.rmtree(dest, ignore_errors=True)
         rep["message"] = _tr("py.oars2site.msg_glb2html_echec", code)
         return rep
+    if mode == "glb":                    # un passage précédent a pu utiliser l'autre mode : jamais d'ancien GLB complet (ni d'anciennes tuiles) dans le site
+        for v in (dest / (nom + ".overview.glb"), dest / (nom + ".tiles.json")):
+            if v.exists():
+                v.unlink()
+        shutil.rmtree(dest / (nom + ".tiles"), ignore_errors=True)
+    elif (dest / (nom + ".glb")).exists():
+        (dest / (nom + ".glb")).unlink()
     if a.thumbs:
         for ext in (".jpg", ".png", ".webp"):
             v = Path(a.thumbs) / (nom + ext)
@@ -244,9 +249,18 @@ def main(argv=None):
         for o in oars:
             fait = (site / nom_region(o) / (nom_region(o) + ".config.json")).exists() and not a.force
             print(_tr("py.oars2site.dry_saute", o.name, site, nom_region(o)) if fait else _tr("py.oars2site.dry_convertir", o.name, site, nom_region(o)))
+        if not (site / "carte.html").exists():
+            print(_tr("py.oars2site.dry_carte", site))
         return 0
     site.mkdir(parents=True, exist_ok=True)
     (travail / "logs").mkdir(parents=True, exist_ok=True)
+    carte = site / "carte.html"
+    if not carte.exists():               # la page de la carte des mondes : copiée au début si elle manque, jamais écrasée
+        if (outils / "carte.html").is_file():
+            shutil.copy2(outils / "carte.html", carte)
+            print(_tr("py.oars2site.carte_copiee"))
+        else:
+            print(_tr("py.oars2site.carte_absente", outils))
     rapport = []
     for k, o in enumerate(oars, 1):
         journal = Journal(travail / "logs" / (nom_region(o) + ".log"))

@@ -22,13 +22,14 @@ Pour voir ce qui serait fait, sans rien écrire :
 python .\oars2site.py "P:\chemin\OAR" "P:\chemin\site" --dry-run
 ```
 
-Les OAR sont traités un par un, jamais en parallèle. Un OAR déjà converti (son `NOM.config.json` est plus récent que l'OAR) est sauté ; un OAR qui échoue est noté dans son journal et le suivant continue. Le code de sortie est 1 si au moins un OAR a échoué.
+Les OAR sont traités un par un, jamais en parallèle. Un OAR déjà converti (son `NOM.config.json` est plus récent que l'OAR) est sauté ; un OAR qui échoue est noté dans son journal, ne laisse pas de dossier à moitié fait si la région est nouvelle, et le suivant continue. Le code de sortie est 1 si au moins un OAR a échoué.
 
 ## 3. Ce qui est produit
 
 Dans le dossier du site :
 
 - `index.html`, `lib/`, `default.json` et `regions.json` à la racine : la coquille commune, créée une fois puis tenue à jour ; `regions.json` alimente la carte des mondes ;
+- `carte.html` à la racine : la page de la carte des mondes, copiée au début si elle n'existe pas (une carte déjà là n'est jamais écrasée) ;
 - un dossier par région, `NOM/`, avec `NOM.config.json`, `NOM.zones.json` et le GLB : `NOM.glb`, ou `NOM.tiles.json`, `NOM.tiles/` et `NOM.overview.glb` quand `glb2tiles.py` décide qu'il faut des tuiles (régions lourdes) ;
 - une région est ensuite à l'adresse `index.html?region=NOM/NOM`, servie par n'importe quel serveur web statique.
 
@@ -96,5 +97,5 @@ Pour des OAR payants, c'est donc à toi de décider ce que tu acceptes de montre
 ## 8. Limites et ce qui n'est pas essayé
 
 - Une seule mesure de charge : un OAR de 1,45 Go a pris environ 2 min 12 s avec `--pbr-size 256`, sous Windows, et la mémoire est montée à 61 Go (cause non établie). Lance les plus gros OAR d'abord en essai, un à la fois.
-- Essayé avec un faux convoar seulement : dossier d'OAR converti en site, OAR sauté, échec qui ne bloque pas les autres, tuiles puis retour à un GLB seul, vignettes, options de textures, langues, délai dépassé.
+- Essayé avec un faux convoar seulement : dossier d'OAR converti en site, OAR sauté, échec qui ne bloque pas les autres, tuiles puis retour à un GLB seul, vignettes, `carte.html` copiée, échec de `glb2html.py` sans dossier à moitié fait, options de textures, langues, délai dépassé.
 - Non essayé : un vrai OAR avec le vrai convoar, Windows, macOS, et une grande région par le chemin des tuiles.
