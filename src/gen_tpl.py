@@ -213,7 +213,7 @@ def clean_zones(zones, profile):
             lk = re.sub(r"[\x00-\x1f]", "", str(z.get("link") or "")).strip()[:600]
             if lk:
                 d["link"] = lk
-        if isinstance(z.get("cone"), bool) and t not in ("spawn", "image", "cast"):   # repere facultatif : ecrit seulement s'il est vrai ou faux, comme core.js
+        if isinstance(z.get("cone"), bool) and t not in ("spawn", "image"):   # repere facultatif : ecrit seulement s'il est vrai ou faux, comme core.js
             d["cone"] = z["cone"]
         out.append(d)
     return out

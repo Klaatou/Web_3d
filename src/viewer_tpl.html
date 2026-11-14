@@ -515,6 +515,7 @@ function renderZoneList() {
       d.appendChild(inp(tr('viewer.zf.cast'), 'text', z.target, v => upd({ target: v })));
       const bt2 = document.createElement('button'); bt2.className = 'wide'; bt2.textContent = tr('viewer.zf.cast.try'); bt2.onclick = () => castTry(z.target); d.appendChild(bt2);
       d.appendChild(inp(tr('viewer.zf.r.cast'), 'number', z.radius, v => upd({ radius: v }, true)));
+      d.appendChild(inp(tr('viewer.zf.cone'), 'select', typeof z.cone === 'boolean' ? (z.cone ? 'on' : 'off') : 'auto', v => upd({ cone: v === 'on' ? true : (v === 'off' ? false : undefined) }, true), [['auto', tr('viewer.zf.cone.auto')], ['on', tr('viewer.zf.cone.on')], ['off', tr('viewer.zf.cone.off')]]));   // 1.10.35 : cone par defaut
     } else if (z.type !== 'spawn') {
       if (z.type === 'portal') {
         d.appendChild(inp(tr('viewer.zf.target'), 'text', z.target, v => upd({ target: v })));

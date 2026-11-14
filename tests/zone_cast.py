@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Test des zones radio (type cast, 1.10.32 ; 1.10.33 : cause de l'echec dans la ligne, reessai au retour dans la zone) : le flux de la zone a portee joue en promenade, volume selon la distance, une seule zone a la fois,
+"""Test des zones radio (type cast, 1.10.32 ; 1.10.33 : cause de l'echec dans la ligne, reessai au retour dans la zone ; 1.10.35 : cone par defaut) : le flux de la zone a portee joue en promenade, volume selon la distance, une seule zone a la fois,
 arret hors portee et en vue globale, case « Radio des zones » de Reglages, flux illisible dit dans le bloc d'etat, zone ni cliquable ni « invite E »,
 portee jusqu'a 200 m (les autres zones restent a 50) ; le viewer propose le type.
 
@@ -104,6 +104,8 @@ async def main():
         rapport(zs["grande"]["radius"] == 150 and zs["lien"]["radius"] == 50 and zs["salle"]["radius"] == 10, "portee : jusqu'a 200 m pour une radio, 50 pour les autres",
                 {k: z["radius"] for k, z in zs.items()})
         rapport(all(z["type"] == "cast" and z["mesh"] == "" and z["trigger"] == "click" for k, z in zs.items() if k != "lien"), "zone radio : type conserve, jamais liee a un element")
+        cones = sorted(c["id"] for c in await pg.evaluate("window.__v.getCones()"))
+        rapport("salle" in cones and "bar" in cones and "lien" not in cones, "zone radio : un cone par defaut (1.10.35), pas pour la zone url au clic", cones)
         info = lambda: pg.evaluate("(() => { const e = document.getElementById('radioInfo'); return e.hidden ? '' : e.textContent; })()")
         playing = lambda: pg.evaluate("window.__r.playing()")
         level = lambda: pg.evaluate("window.__r.level()")

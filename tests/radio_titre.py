@@ -106,7 +106,8 @@ async def main():
     pres = subprocess.Popen([sys.executable, str(DIST / "presence_server.py"), "--host", "127.0.0.1", "--port", str(pport),
                              "--identities", str(tmp / "id.json"), "--bans", str(tmp / "bans.json"), "--radios", str(tmp / "radios.json"), "--radios-every", "5"],
                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    threading.Thread(target=lambda: [None for _ in pres.stdout], daemon=True).start()   # vide le tube (Windows : 4 Ko)
+    JOURNAL = []
+    threading.Thread(target=lambda: [JOURNAL.append(l.decode("utf-8", "replace")) for l in pres.stdout], daemon=True).start()   # vide le tube (Windows : 4 Ko) et garde le journal
     Z = lambda i, x, z, **k: dict({"id": i, "type": "cast", "label": "Zone " + i, "x": x, "y": 15, "z": z, "radius": 6}, **k)
     zones = [Z("salle", 0, 0, target=flux), Z("inconnue", 20, 0, target=f"http://127.0.0.1:{iport}/autre.wav")]
     (tmp / "z.json").write_text(json.dumps(zones), encoding="utf-8")
@@ -163,8 +164,22 @@ async def main():
             await pg.wait_for_timeout(1500)
             t = await info()
             rapport("Zone inconnue" in t and "—" not in t and "morceau" not in t, "adresse hors de --radios : le flux joue, pas de titre", t)
+            await pg.wait_for_timeout(500)
+            j = "".join(JOURNAL)
+            rapport("titre demandé pour http://127.0.0.1" in j and "Premier morceau" in j and "Second morceau" in j and "hors de --radios" in j,
+                    "journal du serveur (1.10.35) : demande, titres lus, adresse hors liste", [l.strip()[:110] for l in JOURNAL if "radio" in l][:6])
             rapport(not errs, "aucune erreur JavaScript", errs)
             await br.close()
+        # 1.10.35 : deconnexions simultanees de tout un salon (arret du serveur, coupure) : plus de KeyError dans le finally du handler
+        import websockets.asyncio.client
+        cls = []
+        for i in range(6):
+            c = await websockets.asyncio.client.connect(f"ws://127.0.0.1:{pport}"); cls.append(c)
+            await c.send(json.dumps({"t": "hello", "room": "r2", "uid": os.urandom(12).hex(), "spectator": False, "name": f"V{i}"})); await c.recv()
+        await asyncio.gather(*(c.close() for c in cls))
+        await asyncio.sleep(1.5)
+        j = "".join(JOURNAL)
+        rapport("Traceback" not in j and "KeyError" not in j and pres.poll() is None, "six deconnexions en meme temps : pas de KeyError, serveur toujours la", [l.strip()[:100] for l in JOURNAL if "Error" in l][:3])
     finally:
         pres.terminate(); web.terminate(); ice.close()
     print("\nRESULTAT : " + ("tout est passe" if not echecs else f"ECHEC ({echecs})"))

@@ -470,7 +470,7 @@ function diagShow(text, status, select) {
 function diagText(viewer, extra) {
   const x = extra || {}, L = (k, v) => tr('core.diag.line', k, v), out = [tr('core.diag.title')];
   const nb = (v, d) => (Number.isFinite(v) ? i18nNum(v, d || 0) : '?');   // nombres à la manière de la langue (virgule en français)
-  out.push(L(tr('core.diag.version'), '1.10.34 (14/11/2026)' + (x.cfgVersion && x.cfgVersion !== '1.10.34 (14/11/2026)' ? ' ; ' + tr('core.diag.cfgver', x.cfgVersion) : '')));
+  out.push(L(tr('core.diag.version'), '1.10.35 (14/11/2026)' + (x.cfgVersion && x.cfgVersion !== '1.10.35 (14/11/2026)' ? ' ; ' + tr('core.diag.cfgver', x.cfgVersion) : '')));
   out.push(L(tr('core.diag.date'), new Date().toLocaleString(({ fr: 'fr-FR', en: 'en-GB' })[LANG]) + ' ; ' + tr('core.diag.uptime', nb(performance.now() / 1000))));
   out.push(L(tr('core.diag.page'), location.protocol + (location.host ? '//ADRESSE' : '//') + location.pathname + location.search));
   out.push(L(tr('core.diag.lang'), LANG + ' · ' + ((navigator.languages || []).join(',') || navigator.language || '?') + ' · ' + KB.layout().toUpperCase()));
@@ -2333,7 +2333,7 @@ function createViewer(container, cfg0, loader) {
       mesh: type === 'spawn' || type === 'cast' || img ? '' : String(z.mesh || '').replace(/[\u0000-\u001f]/g, '').slice(0, 200)
     };
     if (type !== 'portal' && type !== 'url') o.trigger = 'click';
-    if (typeof z.cone === 'boolean' && type !== 'spawn' && type !== 'cast' && !img) o.cone = z.cone;   // repere (cone) facultatif : vrai = toujours, faux = jamais ; absent = selon le declenchement ; ecrit seulement s'il est vrai ou faux
+    if (typeof z.cone === 'boolean' && type !== 'spawn' && !img) o.cone = z.cone;   // radio (1.10.35) : cone par defaut, cone: false pour le retirer   // repere (cone) facultatif : vrai = toujours, faux = jamais ; absent = selon le declenchement ; ecrit seulement s'il est vrai ou faux
     if (img) { const lk = String(z.link || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 600); if (lk) o.link = lk; }   // lien facultatif d'un tableau : page ouverte au clic ou a E ; ecrit seulement s'il est rempli
     return o;
   }
@@ -2361,7 +2361,7 @@ function createViewer(container, cfg0, loader) {
   let onCones = null;
   function coneFor(g, z, box) {
     if (zoneEditor) return false;
-    if (!(z.type === 'spawn' ? cfg.showSpawns : (typeof z.cone === 'boolean' ? z.cone : (z.type === 'portal' || z.trigger !== 'click')))) return false;
+    if (!(z.type === 'spawn' ? cfg.showSpawns : (typeof z.cone === 'boolean' ? z.cone : (z.type === 'portal' || z.type === 'cast' || z.trigger !== 'click')))) return false;
     const geo = new THREE.ConeGeometry(0.175, 0.5, 16);
     const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0xe8e8e8, fog: false }));
     m.rotation.x = Math.PI;   // pointe vers le bas
@@ -3774,7 +3774,7 @@ if (C.walk) {
   const mkLine = id => { const d = document.createElement('div'); d.id = id; sbody.append(d); return d; };
   const lv = mkLine('viewInfo'), lm = mkLine('modeInfo'), lmo = mkLine('mouseInfo'), lp = mkLine('posInfo'), lkb = mkLine('kbInfo'), lrd = mkLine('radioInfo');
   lrd.hidden = true; radioTxt = t => { lrd.hidden = !t; if (lrd.textContent !== (t || '')) lrd.textContent = t || ''; };   // 1.10.32 : « ♪ Radio : … » tant qu'une zone radio est à portée (le diagnostic la reprend)
-  mkLine('verInfo').textContent = tr('page.state.version', '1.10.34 (14/11/2026)', C.version || '?');   // 1.6.17 : version de la page (index.html, ou glb2html.py pour une page autonome) et de la configuration
+  mkLine('verInfo').textContent = tr('page.state.version', '1.10.35 (14/11/2026)', C.version || '?');   // 1.6.17 : version de la page (index.html, ou glb2html.py pour une page autonome) et de la configuration
   // v39 : bouton « Copier le diagnostic » sous le contenu de la fenêtre (reste visible quand elle est réduite) : lignes affichées + diagText (core.js) ;
   // si le navigateur refuse la copie, le texte s'affiche sélectionné dessous (Ctrl+C)
   {

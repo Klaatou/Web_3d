@@ -551,29 +551,29 @@ def radios_reload(force=False):
 
 
 def radio_title_sync(url):
-    """titre courant du flux (StreamTitle des métadonnées ICY), '' si le flux n'en donne pas ; jamais d'exception"""
+    """(titre courant du flux : StreamTitle des métadonnées ICY, ou '' ; raison : '' si tout va bien, sinon pourquoi il n'y a pas de titre) ; jamais d'exception"""
     import urllib.request
     try:
         req = urllib.request.Request(url, headers={"Icy-MetaData": "1", "User-Agent": "Web_3d-presence/" + version_tag().split(" ")[0], "Accept": "*/*"})
         with urllib.request.urlopen(req, timeout=8) as r:
             mi = r.headers.get("icy-metaint")
             if not mi or not mi.strip().isdigit() or int(mi) <= 0 or int(mi) > RADIO_MAX_META:
-                return ""
+                return "", _tr("py.presence.radio.nometa", mi or "-")
             mi = int(mi)
             skipped = 0
             while skipped < mi:
                 chunk = r.read(min(65536, mi - skipped))
                 if not chunk:
-                    return ""
+                    return "", _tr("py.presence.radio.short", skipped, mi)
                 skipped += len(chunk)
             n = r.read(1)
             if not n:
-                return ""
+                return "", _tr("py.presence.radio.short", skipped, mi)
             meta = r.read(n[0] * 16).decode("utf-8", "replace")
-    except Exception:
-        return ""
+    except Exception as e:
+        return "", f"{type(e).__name__}: {e}"
     m = re.search(r"StreamTitle='(.*?)';", meta)
-    return clean_text(m.group(1), 200) if m else ""
+    return (clean_text(m.group(1), 200), "") if m else ("", _tr("py.presence.radio.notitle", clean_text(meta, 80)))
 
 
 async def radio_poll(url):
@@ -582,7 +582,10 @@ async def radio_poll(url):
     first = True
     try:
         while st["peers"]:
-            title = await asyncio.to_thread(radio_title_sync, url)
+            title, why = await asyncio.to_thread(radio_title_sync, url)
+            if title != st["title"] or first or why != st.get("why", ""):
+                log(_tr("py.presence.radio"), "-", clean_text(url, 120), _tr("py.presence.radio.title", title) if title else _tr("py.presence.radio.none", why))
+            st["why"] = why
             if title != st["title"] or first:
                 st["title"] = title
                 first = False
@@ -607,6 +610,7 @@ async def radio_ask(peer, url):
     if not url:
         return
     radios_reload()
+    log(_tr("py.presence.radio"), peer.room, peer.who(), _tr("py.presence.radio.ask", clean_text(url, 120)) if url in RADIOS_OK else _tr("py.presence.radio.notlisted", clean_text(url, 120)))
     if url not in RADIOS_OK:
         await send_safe(peer.ws, json.dumps({"t": "radio", "url": url}, ensure_ascii=False, separators=(",", ":")))
         return
@@ -1465,8 +1469,8 @@ async def handler(ws):
             dur = int(time.monotonic() - peer.t0)
             log(_tr("py.presence.deconnexion"), room, peer.who(), _tr("py.presence.duree_0_min_1_02d_s", dur // 60, dur % 60))
             visit_write(peer)
-            if not ROOMS[room]:
-                del ROOMS[room]
+            if not ROOMS.get(room):      # 1.10.35 : deux deconnexions en meme temps (arret du serveur) : l'autre finally a pu supprimer le salon pendant le broadcast
+                ROOMS.pop(room, None)
                 if not OPTS.history_file:
                     HISTORY.pop(room, None)
         if counted and PER_IP.get(ipk):

@@ -1963,7 +1963,7 @@ function createViewer(container, cfg0, loader) {
       mesh: type === 'spawn' || type === 'cast' || img ? '' : String(z.mesh || '').replace(/[\u0000-\u001f]/g, '').slice(0, 200)
     };
     if (type !== 'portal' && type !== 'url') o.trigger = 'click';
-    if (typeof z.cone === 'boolean' && type !== 'spawn' && type !== 'cast' && !img) o.cone = z.cone;   // repere (cone) facultatif : vrai = toujours, faux = jamais ; absent = selon le declenchement ; ecrit seulement s'il est vrai ou faux
+    if (typeof z.cone === 'boolean' && type !== 'spawn' && !img) o.cone = z.cone;   // radio (1.10.35) : cone par defaut, cone: false pour le retirer   // repere (cone) facultatif : vrai = toujours, faux = jamais ; absent = selon le declenchement ; ecrit seulement s'il est vrai ou faux
     if (img) { const lk = String(z.link || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 600); if (lk) o.link = lk; }   // lien facultatif d'un tableau : page ouverte au clic ou a E ; ecrit seulement s'il est rempli
     return o;
   }
@@ -1991,7 +1991,7 @@ function createViewer(container, cfg0, loader) {
   let onCones = null;
   function coneFor(g, z, box) {
     if (zoneEditor) return false;
-    if (!(z.type === 'spawn' ? cfg.showSpawns : (typeof z.cone === 'boolean' ? z.cone : (z.type === 'portal' || z.trigger !== 'click')))) return false;
+    if (!(z.type === 'spawn' ? cfg.showSpawns : (typeof z.cone === 'boolean' ? z.cone : (z.type === 'portal' || z.type === 'cast' || z.trigger !== 'click')))) return false;
     const geo = new THREE.ConeGeometry(0.175, 0.5, 16);
     const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0xe8e8e8, fog: false }));
     m.rotation.x = Math.PI;   // pointe vers le bas
