@@ -678,6 +678,8 @@ class Plan:
         self.insts = []
         self.exclus = []        # objets racine retirés par --exclude : {"nom", "tri", "meshes", "cles", "imgs"}
         self.gardes = 0         # noms qui correspondent à --exclude mais conservés par les garde-fous
+        self.doublons_terrain = []      # 1.11.12 : « Terrain » de convoar encore posé sous les patches « Terrain i,j » (extras.terrain) : jamais tuilé
+        a_patches = any(isinstance(self.nodes[r].get("extras"), dict) and self.nodes[r]["extras"].get("terrain") for r in self.racines_ids)
         for r in self.racines_ids:
             rac = Racine()
             rac.id, rac.nodes = r, self.noeuds_racine[r]
@@ -709,6 +711,11 @@ class Plan:
                 continue
             rac.cles, rac.imgs = frozenset(cles), frozenset(imgs)
             rac.tri = sum(i.tri for i in rac.insts)
+            if a_patches and not rac.terrain and self.nodes[r].get("name") == "Terrain" and "mesh" in self.nodes[r]:
+                # même garde-fou que oar2glb.terrain_doublon : deux sols au même niveau se disputent l'écran (sol rayé), et la vue d'ensemble
+                # les classe en « objet » (pas d'extras.terrain) : sa version simplifiée, grande et sombre, recouvre les patches
+                self.doublons_terrain.append({"nom": "Terrain", "tri": rac.tri, "cles": rac.cles, "imgs": rac.imgs})
+                continue
             if self.P.exclure:
                 # décision sur le nom, le nombre de triangles et le nombre de meshes de l'objet racine ; JAMAIS sur l'étendue
                 # (la boîte d'un petit mesh qui partage un tampon de sommets est gonflée)
@@ -737,6 +744,11 @@ class Plan:
             ek |= x["cles"]
             ei |= x["imgs"]
         self.octets_exclus = sum(self.cb[k] for k in ek - ks) + sum(self.img_oct[i] for i in ei - im)
+        dk, di = set(), set()
+        for x in self.doublons_terrain:
+            dk |= x["cles"]
+            di |= x["imgs"]
+        self.octets_doublons = sum(self.cb[k] for k in dk - ks) + sum(self.img_oct[i] for i in di - im)
         # géométrie et images des exclus que des objets conservés utilisent aussi (même primitive, même texture) : retirer l'objet ne les économise pas
         self.octets_partages = sum(self.cb[k] for k in ek & ks) + sum(self.img_oct[i] for i in ei & im)
 
@@ -1257,7 +1269,7 @@ def quantile(v, q):
 def recommandation(glb, plan, tuiles):
     P = plan.P
     tri = sum(i.tri for i in plan.insts)
-    taille = glb.taille - getattr(plan, "octets_exclus", 0)        # sans les objets exclus
+    taille = glb.taille - getattr(plan, "octets_exclus", 0) - getattr(plan, "octets_doublons", 0)        # sans les objets exclus ni le terrain en double
     if mo(taille) <= P.seuil_mo and tri <= P.seuil_tri:
         return False, (_tr("py.glb2tiles.recommandation_pas_de_decoupage_necessaire_0", mo(taille), P.seuil_mo, fmt(tri), fmt(P.seuil_tri)))
     geo_u = sum(plan.cb[k] for k in {k for u in plan.unites for k in u.cles})
@@ -1335,6 +1347,8 @@ def rapport_analyse(glb, plan, tuiles):
     ent = sum(1 for r in plan.racines if r.entier)
     skin = sum(1 for r in plan.racines if r.skin)
     out.extend(lignes_exclusions(plan))
+    if plan.doublons_terrain:
+        out.append(_tr("py.glb2tiles.terrain_doublon_0_1", len(plan.doublons_terrain), fmt(sum(x["tri"] for x in plan.doublons_terrain)), mo(plan.octets_doublons)))
     out.append(ligne_images(plan, tuiles))
     out.append(_tr("py.glb2tiles.objets_racine_0_gardes_entiers_1", len(plan.racines), ent, skin, len(plan.racines) - ent))
     avert = plan.avertissements + signalements(plan) + plan.hors_budget(tuiles)

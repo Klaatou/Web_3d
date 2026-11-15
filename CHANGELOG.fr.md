@@ -6,6 +6,14 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.11.0)
 
+### 15/11/2026 : glb2tiles : le « Terrain » de convoar n'est pas tuilé quand les patches « Terrain i,j » sont là
+
+- **Constat** (région du bateau, site d'un tiers, sol encore rayé crème/marine mer coupée, alors que le doublon avait été retiré de la tuile) : la vue d'ensemble `region.overview.glb` (lue directement : 177 triangles de 26 m à y = 1,0000, couleur (3,16,29), sur x 12 à 252, z -12 à -252 de la cellule du bateau) est au même niveau que les cases de sable de 4 m des patches. Sans le fichier d'overview, le sol est propre.
+- **Cause** : le nœud `Terrain` de convoar (16 384 sommets, matériau texturé) n'a pas `extras.terrain` ; `vue_ensemble` le traite donc comme un objet : simplifié en grands triangles, coloré par la moyenne de sa texture (un bleu très foncé), posé sur les patches. Mesuré sur la tuile d'origine : l'ancien code donne 200 triangles sombres dans l'overview, le nouveau 0. De plus, tuiler un GLB qui avait les deux terrains mettait les deux dans les tuiles.
+- **Correctif** (`tools/glb2tiles.py`, `construire_racines`) : si au moins une racine porte `extras.terrain` et qu'une racine nommée exactement `Terrain` a encore un mesh et pas d'`extras.terrain`, cette racine n'est pas tuilée (même règle que `terrain_doublon` d'`oar2glb.py`) : ni dans les tuiles, ni dans l'overview. Sans patches, rien ne change. Le rapport du plan donne une ligne : nombre, triangles, Mo gagnés. Indépendant de `--exclude` (compteur à part).
+- **Test** : `tests/glb2tiles.py`, 2 vérifications (avec patches : `Terrain` dans aucune tuile, le patch y est ; sans patches : `Terrain` gardé). La première échoue avec l'ancien code. La vérification du journal de `dist` dans le même fichier lit maintenant la sortie de l'outil en UTF-8 (l'outil écrit en UTF-8 exprès ; elle était lue avec la page de code Windows et ne pouvait pas passer). **Non couvert** : les tuiles et overviews déjà faits ne sont pas réparés : retuiler depuis le `region.glb` complet réparé.
+- **Change en `dist\`** après `python build.py` : `glb2tiles.py`. `VERSION` : `1.11.12`.
+
 ### 15/11/2026 : oar2glb : jamais deux terrains superposés dans le GLB
 
 - **Constat** (GLB d'une région du site d'un tiers) : le sol de la page était rayé, crème et vert qui se disputent l'écran. Le GLB contenait le nœud `Terrain` de convoar **avec son maillage** et les 16 patches `Terrain i,j` de `oar2glb.py`, au même niveau.

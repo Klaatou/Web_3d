@@ -6,6 +6,14 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.11.0)
 
+### 15/11/2026: glb2tiles: the convoar `Terrain` is not tiled when the `Terrain i,j` patches are there
+
+- **Report** (ship region of a third party's site, ground still striped cream/navy with the sea off, although the duplicate had been removed from the tile): the overview `region.overview.glb` (read directly: 177 triangles of 26 m at y = 1.0000, colour (3,16,29), over x 12 to 252, z -12 to -252 of the ship's cell) lies at the same level as the 4 m sand cells of the patches. With the overview file removed, the ground is clean.
+- **Cause**: the convoar `Terrain` node (16 384 vertices, textured material) has no `extras.terrain`, so `vue_ensemble` treats it as an object: simplified into large triangles, coloured with the texture average (a very dark blue), laid over the patches. Measured on the original tile: the old code gives 200 dark triangles in the overview, the new one 0. Also, tiling a GLB that had both terrains put both in the tiles.
+- **Fix** (`tools/glb2tiles.py`, `construire_racines`): if at least one root carries `extras.terrain` and a root named exactly `Terrain` still has a mesh and no `extras.terrain`, that root is not tiled (same rule as `terrain_doublon` of `oar2glb.py`): neither in the tiles nor in the overview. Without patches nothing changes. The plan report gives one line: number, triangles, MB saved. Unrelated to `--exclude` (separate counter).
+- **Test**: `tests/glb2tiles.py`, 2 checks (with patches: `Terrain` in no tile, the patch is there; without patches: `Terrain` kept). The first fails with the old code. The `dist` journal check of the same file now reads the tool's output as UTF-8 (the tool writes UTF-8 on purpose; it was read with the Windows code page and could not pass there). **Not covered**: tiles and overviews already made are not repaired: tile again from the repaired complete `region.glb`.
+- **Changes in `dist\`** after `python build.py`: `glb2tiles.py`. `VERSION`: `1.11.12`.
+
 ### 15/11/2026: oar2glb: never two overlapping terrains in the GLB
 
 - **Report** (GLB of a region on a third party's site): the page's ground was striped, cream and green fighting for the screen. The GLB held convoar's `Terrain` node **with its mesh** and the 16 `Terrain i,j` patches of `oar2glb.py`, at the same level.

@@ -754,6 +754,7 @@
  "py.glb2tiles.ne_pas_ecrire_x_overview_glb": "ne pas écrire X.overview.glb (vue d'ensemble légère de toute la région)",
  "py.glb2tiles.nud_0": "nœud {0}",
  "py.glb2tiles.nud_0_mesh_1_inexistant": "Nœud {0} : mesh {1} inexistant.",
+ "py.glb2tiles.terrain_doublon_0_1": "[terrain] {0} « Terrain » de convoar posé sous les patches « Terrain i,j » : non tuilé ({1} triangles, {2:.1f} Mo gagnés ; sol rayé et vue d'ensemble sombre sinon)",
  "py.glb2tiles.objets_exclus_exclure_au_plus_0": "Objets exclus (--exclude, au plus {0} triangles et {1} mesh(es) par objet racine) : {2} | triangles retirés : {3} | octets gagnés : {4} ({5:.1f} Mo)",
  "py.glb2tiles.objets_omis_0_trop_petits_etendue": "  objets omis : {0} trop petits (étendue sous le seuil), {1} par le budget, {2} avec squelette ; primitives translucides omises : {3}",
  "py.glb2tiles.objets_racine_0_gardes_entiers_1": "Objets racine : {0} | gardés entiers : {1} (dont {2} avec skin) | répartis instance par instance : {3}",

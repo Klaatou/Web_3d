@@ -601,7 +601,7 @@ if dist.is_file():
     copie.mkdir()
     shutil.copy(dist, copie / "glb2tiles.py")
     shutil.copy(ROOT / "dist" / "glb-stats.py", copie / "glb-stats.py")
-    r = subprocess.run([sys.executable, str(copie / "glb2tiles.py"), str(tmp / "leger" / "leger.glb"), "--analyse", "--nopause"], capture_output=True, text=True, cwd=tmp, timeout=60)
+    r = subprocess.run([sys.executable, str(copie / "glb2tiles.py"), str(tmp / "leger" / "leger.glb"), "--analyse", "--nopause"], capture_output=True, text=True, encoding="utf-8", errors="replace", cwd=tmp, timeout=60)
     lignes_log = (copie / "glb2tiles.log").read_text(encoding="utf-8").splitlines()
     rapport(r.returncode == 0 and (r.stdout.splitlines() or [""])[0].startswith("[glb2tiles] " + vfile) and (lignes_log or [""])[0].startswith("[glb2tiles] " + vfile) and
             "pas de découpage nécessaire" in r.stdout, "le journal commence par la version (dist, lancé hors du dépôt)", (r.stdout[:200], lignes_log[:2], r.stderr[-300:]))
@@ -620,6 +620,36 @@ shutil.copy(TOOL, copie2 / "glb2tiles.py")
 copie_i18n(copie2)
 r = subprocess.run([sys.executable, str(copie2 / "glb2tiles.py"), str(tmp / "leger" / "leger.glb"), "--analyse", "--nopause"], capture_output=True, text=True, cwd=tmp, timeout=60)
 rapport(r.returncode != 0 and "glb-stats.py introuvable" in r.stdout, "sans glb-stats.py à côté : message clair", (r.returncode, r.stdout[-300:]))
+
+# ---------- 1.11.12 : « Terrain » de convoar sous les patches « Terrain i,j » : jamais tuilé (ni dans les tuiles, ni dans la vue d'ensemble) ----------
+def sol(b, x0, z0, cote, y, nom, terrain):
+    v = [(x0, y, z0), (x0 + cote, y, z0), (x0, y, z0 + cote), (x0 + cote, y, z0 + cote)]
+    m = b.mesh(b.positions(v), b.indices([0, 2, 1, 1, 2, 3]), b.normales(4), b.couleurs(4) if terrain else None)
+    k = b.noeud(nom, mesh=m, racine=True)
+    if terrain:
+        b.j["nodes"][k]["extras"] = {"terrain": True}
+    return k
+
+
+for avec_patch in (True, False):
+    dd = tmp / ("doublon_oui" if avec_patch else "doublon_non")
+    dd.mkdir()
+    b = B()
+    sol(b, 0, 0, 200, 1.0, "Terrain", False)
+    if avec_patch:
+        sol(b, 0, 0, 64, 1.0, "Terrain 0,0", True)
+    for i in range(30):
+        b.noeud("Maison %d" % i, mesh=b.mesh(b.positions([(10 * i, 1, 5), (10 * i + 4, 1, 5), (10 * i, 5, 5)]), b.indices([0, 1, 2])), racine=True)
+    b.ecrire(str(dd / "sol.glb"))
+    r = subprocess.run([sys.executable, str(TOOL), str(dd / "sol.glb"), "--force", "--budget", "0.001", "--nopause"], capture_output=True, text=True, cwd=tmp, timeout=120)
+    noms = []
+    for f in sorted((dd / "sol.tiles").glob("*.glb")) if (dd / "sol.tiles").exists() else []:
+        raw = f.read_bytes()
+        noms += [n.get("name") for n in json.loads(raw[20:20 + struct.unpack("<I", raw[12:16])[0]]).get("nodes", [])]
+    if avec_patch:
+        rapport(r.returncode == 0 and noms and "Terrain" not in noms and "Terrain 0,0" in noms, "avec patches : le « Terrain » de convoar n'est dans aucune tuile, le patch y est", (r.returncode, noms[:6], r.stdout[-300:]))
+    else:
+        rapport(r.returncode == 0 and "Terrain" in noms, "sans patches : le « Terrain » de convoar est gardé (rien n'est retiré à tort)", (r.returncode, noms[:6], r.stdout[-300:]))
 
 if os.environ.get("GLB2TILES_GARDER"):      # garder les fichiers pour les ouvrir (ex. validateur glTF)
     print("fichiers gardés dans", tmp)
