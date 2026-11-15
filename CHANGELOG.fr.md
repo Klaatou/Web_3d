@@ -6,6 +6,12 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.11.0)
 
+### 15/11/2026 : documents : zones audio, formats, son distant et `tracks`
+
+- **Demande de Klaatou** : corriger la documentation des zones audio.
+- **Manuel** (`MANUEL.md` et `MANUAL.md`, § 5.20) : « le mp3 et le m4a/aac sont lus partout » (jamais vérifié) remplacé par « selon le navigateur » (essayé par Klaatou : `.aac`) ; nouveau : un son distant en `https://` est accepté, une page en `https` refuse un son en `http` (contenu mixte), le site distant doit accepter d'être joué depuis un autre site (non essayé), `tracks` se saisit à la main dans `NOM.zones.json` (pas de champ dans le viewer). **`REFERENCE_JSON.md`** (clé `tracks`) et historiques (FR et EN).
+- **Aucun changement de code**. `VERSION` : `1.11.9`.
+
 ### 15/11/2026 : icone des onglets sans l'anneau jaune
 
 - **Demande de Klaatou** : l'icone est bien en bas a droite des pages, mais on ne voit rien dans les onglets du navigateur ; retirer l'anneau jaune pour avoir la sphere plus grosse.

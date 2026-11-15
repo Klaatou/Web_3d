@@ -275,6 +275,9 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 15/11/2026 |  | after 1.11.0 | Batch 1.11.4: local audio zones (`audio` type): sound files of a folder played in a loop within range, alphabetical order, `playlist.json` (`glb2html.py --audio-list`, viewer button), exclusive "Zone radio" / "Zone music" boxes; `tests/zone_audio.py` |
 | 15/11/2026 |  | after 1.11.0 | Batch 1.11.5: documents of 1.11.4: manual § 5.20, § 7.66, appendix; `REFERENCE_JSON.md` (`folder`, `tracks`); tutorials `SIMPLE_PROCEDURES.md` § 14 (radio) and § 15 (playlist); index, overview, README |
 | 15/11/2026 |  | after 1.11.0 | Batch 1.11.6: corrected tutorials (playlist made only once) and new `SIMPLE_PROCEDURES.md` § 16: update the zones of a region already online (import, export, replace `NOM.zones.json`, publish) |
+| 15/11/2026 |  | after 1.11.0 | Batch 1.11.7: reflections message: "shiny or metallic materials" (instead of "metallic (PBR)") |
+| 15/11/2026 |  | after 1.11.0 | Batch 1.11.8: tab icon without the yellow ring (`favicon.ico` only) |
+| 15/11/2026 |  | after 1.11.0 | Batch 1.11.9: documents: audio zones (formats depend on the browser, remote sound over `https`, `tracks` entered by hand) |
 
 ## Useful commands
 

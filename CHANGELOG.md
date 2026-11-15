@@ -6,6 +6,12 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.11.0)
 
+### 15/11/2026: documents: audio zones, formats, remote sound and `tracks`
+
+- **Klaatou's request**: correct the audio zones documentation.
+- **Manual** (`MANUEL.md` and `MANUAL.md`, § 5.20): "mp3 and m4a/aac play everywhere" (never checked) replaced by "depends on the browser" (tried by Klaatou: `.aac`); new: a remote sound over `https://` is accepted, a page served over `https` refuses an `http` sound (mixed content), the remote site must accept being played from another site (not tried), `tracks` is entered by hand in `NOM.zones.json` (no field in the viewer). **`REFERENCE_JSON.md`** (`tracks` key) and histories (FR and EN).
+- **No code changes**. `VERSION`: `1.11.9`.
+
 ### 15/11/2026: tab icon without the yellow ring
 
 - **Klaatou's request**: the icon is fine at the bottom right of the pages, but nothing can be seen in the browser tabs; remove the yellow ring to get a bigger sphere.
