@@ -6,6 +6,13 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.11.0)
 
+### 15/11/2026: new project icon ("Web 3D" globe)
+
+- **Klaatou's request**: replace the project icon with the "Web 3D" globe (everywhere it is used).
+- **Replaced**: `src/favicon.ico` (a real ICO file, 16, 32, 48 and 64 px, transparent background) and `src/credit.png` (64 px, the "Made with Web_3d" icon and the icon embedded in the pages: the same image). The supplied file was a PNG named `.ico`: converted to ICO.
+- **Change in `dist\` after `python build.py`**: `favicon.ico`, `index.html`, `glb2html.py`, `glb-viewer.html`, `carte.html` (the PNG icon is embedded in the pages). `VERSION`: `1.11.2`.
+- **Note**: at 16 px (browser tab) the "Web 3D" text is not readable, only the globe and the ring show; pages already built keep the old embedded icon until they are rebuilt (`glb2html.py --update`); a `favicon.ico` placed next to a page is still preferred to the embedded icon.
+
 ### 15/11/2026: foldable chat block (B key), bold help, radio title requested only when listened to
 
 - **Klaatou's request**: be able to fold the chat, have it unfold by itself when someone writes, arrives or leaves, and have the help show keys and titles in bold; then, seen in the presence server console: with the radio unchecked in Settings, the server kept reading the stream title every 30 s for nobody.

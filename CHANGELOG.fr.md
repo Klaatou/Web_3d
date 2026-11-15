@@ -6,6 +6,13 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.11.0)
 
+### 15/11/2026 : nouvelle icone du projet (globe « Web 3D »)
+
+- **Demande de Klaatou** : remplacer l'icone du projet par le globe « Web 3D » (partout ou elle sert).
+- **Remplace** : `src/favicon.ico` (vrai fichier ICO, 16, 32, 48 et 64 px, fond transparent) et `src/credit.png` (64 px, icone « Realise avec Web_3d » et icone incorporee des pages : c'est la meme image). Le fichier fourni etait un PNG nomme `.ico` : converti en ICO.
+- **Changent en `dist\` apres `python build.py`** : `favicon.ico`, `index.html`, `glb2html.py`, `glb-viewer.html`, `carte.html` (l'icone PNG est incorporee dans les pages). `VERSION` : `1.11.2`.
+- **A savoir** : a 16 px (onglet) le texte « Web 3D » n'est pas lisible, on voit le globe et l'anneau ; les pages deja fabriquees gardent l'ancienne icone incorporee tant qu'elles ne sont pas refaites (`glb2html.py --update`) ; un `favicon.ico` pose a cote d'une page reste prefere a l'icone incorporee.
+
 ### 15/11/2026 : bloc de chat repliable (touche B), aide en gras, titre de la radio demandé seulement si on l'écoute
 
 - **Demande de Klaatou** : pouvoir replier le chat, qu'il se déplie seul quand quelqu'un écrit, arrive ou part, et que l'aide mette en gras les touches et les titres ; puis, constat dans la console du serveur de présence : avec la radio décochée dans les Réglages, le serveur continuait de lire le titre du flux toutes les 30 s pour personne.
