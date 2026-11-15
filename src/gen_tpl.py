@@ -339,7 +339,7 @@ MAP_PAGE_TEMPLATE = r"""<!DOCTYPE html>
 <style>
 [hidden]{display:none!important}
 body{margin:0;background:#fff;color:#000;font:14px/1.5 ui-monospace,Consolas,monospace}
-main{max-width:1000px;margin:0 auto;padding:20px}
+main{max-width:none;margin:0 auto;padding:20px}
 h1{font-size:20px;margin:0 0 4px}
 #grid{display:grid;gap:12px;justify-content:start;margin:16px 0}
 .tile{box-sizing:border-box;display:flex;flex-direction:column;gap:4px;width:170px;padding:6px;border:2px solid #000;border-radius:8px;background:#fff;color:#000;text-decoration:none}

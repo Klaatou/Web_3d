@@ -6,6 +6,14 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.11.0)
 
+### 15/11/2026: world map: the grid follows the page width
+
+- **Klaatou's report**: `carte.html` shows the thumbnails in rows of 5, however wide the page is; when the page is made narrower the number of columns adapts.
+- **Cause**: `main{max-width:1000px}` (`src/gen_tpl.py`, style of the map page) capped the usable area at 960 px; 5 thumbnails of 170 px with their 12 px gaps take 898, a sixth would need 1090. Measured in Chromium before the fix (14 regions): 4 columns at 800 px, 5 at 1300 px, 5 at 1900 px.
+- **Fix**: `main{max-width:none}`: in automatic layout (regions without distinct positions) the grid shows as many columns as fit. The title and the footer keep the room they take. The position layout (distinct `x`, `y`) still follows the coordinates and does not change.
+- **Test**: `tests/carte_largeur.py` (new, 3 checks: 800 px, 1900 px, growth). Fails before the fix (5 columns at 1900 px), passes after.
+- **Changes in `dist\`** after `python build.py`: `carte.html`, `glb-viewer.html` and `glb2html.py` (they embed the map template, including the standalone `--map-page`). `VERSION`: `1.11.10`. **Not tried**: Edge and Windows.
+
 ### 15/11/2026: documents: audio zones, formats, remote sound and `tracks`
 
 - **Klaatou's request**: correct the audio zones documentation.

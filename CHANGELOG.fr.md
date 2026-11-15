@@ -6,6 +6,14 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.11.0)
 
+### 15/11/2026 : carte des mondes : la grille suit la largeur de la page
+
+- **Constat de Klaatou** : `carte.html` montre les vignettes par rangs de 5, aussi large que soit la page ; quand on la réduit, le nombre de colonnes s'adapte.
+- **Cause** : `main{max-width:1000px}` (`src/gen_tpl.py`, style de la page de carte) plafonnait la zone utile à 960 px ; 5 vignettes de 170 px et leurs espaces de 12 px en prennent 898, une sixième en demanderait 1090. Mesuré dans Chromium avant le correctif (14 régions) : 4 colonnes à 800 px, 5 à 1300 px, 5 à 1900 px.
+- **Correctif** : `main{max-width:none}` : en disposition automatique (régions sans position distincte), la grille affiche autant de colonnes qu'il en tient. Le titre et le pied de page gardent la place qu'ils prennent. La disposition par positions (`x`, `y` distincts) suit toujours les coordonnées et ne change pas.
+- **Test** : `tests/carte_largeur.py` (nouveau, 3 contrôles : 800 px, 1900 px, croissance). Échoue avant le correctif (5 colonnes à 1900 px), passe après.
+- **Change en `dist\`** après `python build.py` : `carte.html`, `glb-viewer.html` et `glb2html.py` (ils embarquent le gabarit de la carte, dont la carte autonome `--map-page`). `VERSION` : `1.11.10`. **Non essayé** : Edge et Windows.
+
 ### 15/11/2026 : documents : zones audio, formats, son distant et `tracks`
 
 - **Demande de Klaatou** : corriger la documentation des zones audio.
