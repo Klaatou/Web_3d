@@ -6,6 +6,11 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.11.0)
 
+### 15/11/2026: reflections message: "shiny or metallic"
+
+- **Klaatou's request**: the bar said "metallic (PBR) materials" for PalmIsland, an old OAR without PBR. Found in the GLB: 27 of 210 materials carry a `metallicFactor` of 0.25, 0.5 or 0.75 (the shiny materials of old OARs); the page's count is exact, the word "PBR" was misleading.
+- **Text** (`src/i18n`, FR and EN): "This region contains N shiny or metallic material(s). Turn on the reflections at 60 %?". **Test**: `tests/reflets_metal.py` (two expected texts). **Manual** § 7.65 (FR and EN): the message and the PalmIsland case. The detection does not change.
+
 ### 15/11/2026: tutorials corrected, and "update the zones of a region already online"
 
 - **Klaatou's remark**: after the `--audio-list` command, the tutorial still made him click "Update the list" in the viewer (both do the same thing: my tutorial asked for both); publishing was too short; a beginner needs the export and the update of an existing region in detail.

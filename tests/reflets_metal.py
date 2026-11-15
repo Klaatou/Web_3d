@@ -220,7 +220,7 @@ async def main():
         o = await Onglet(br).ouvrir(BASE + "Metal.html", locale="fr-FR")
         await o.attendre("!!document.getElementById('metalAsk')", 15)
         texte = await o.ev(BARRE)
-        rapport(texte == "Cette région contient 2 matériaux métalliques (PBR). Activer les reflets à 60 % ?" + SOFT, "2 metaux vus, reflets a 0 % : la barre propose 60 % (et previent d'un ralentissement en rendu logiciel)", texte)
+        rapport(texte == "Cette région contient 2 matériaux brillants ou métalliques. Activer les reflets à 60 % ?" + SOFT, "2 metaux vus, reflets a 0 % : la barre propose 60 % (et previent d'un ralentissement en rendu logiciel)", texte)
         await o.ev("document.getElementById('metalAskYes').click()")
         m = await o.ev(MATS)
         st = json.loads(await o.ev("localStorage.getItem(Object.keys(localStorage).find(k => k.startsWith('glb2html_opts_')))"))
@@ -268,7 +268,7 @@ async def main():
         o = await Onglet(br).ouvrir(BASE + "Metal.html", locale="en-US")
         await o.attendre("!!document.getElementById('metalAsk')", 15)
         texte = await o.ev(BARRE)
-        rapport(texte == "This region contains 2 metallic (PBR) materials. Turn on the reflections at 60 %? Rendering without a graphics card: this may slow things down.", "anglais : texte de la proposition", texte)
+        rapport(texte == "This region contains 2 shiny or metallic materials. Turn on the reflections at 60 %? Rendering without a graphics card: this may slow things down.", "anglais : texte de la proposition", texte)
         await o.ctx.close()
 
         o = await Onglet(br).ouvrir(BASE + "index.html?region=Tuilee", locale="fr-FR")

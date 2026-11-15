@@ -6,6 +6,11 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.11.0)
 
+### 15/11/2026 : message des reflets : « brillants ou métalliques »
+
+- **Demande de Klaatou** : la barre disait « matériaux métalliques (PBR) » pour PalmIsland, un ancien OAR sans PBR. Constaté dans le GLB : 27 matériaux sur 210 portent un `metallicFactor` de 0,25, 0,5 ou 0,75 (les matériaux brillants des anciens OAR) ; le compte de la page est exact, c'est le mot « PBR » qui trompait.
+- **Texte** (`src/i18n`, FR et EN) : « Cette région contient N matériau(x) brillant(s) ou métallique(s). Activer les reflets à 60 % ? » (`This region contains N shiny or metallic material(s). Turn on the reflections at 60 %?`). **Test** : `tests/reflets_metal.py` (deux textes attendus). **Manuel** § 7.65 (FR et EN) : le message et le cas PalmIsland. La détection ne change pas.
+
 ### 15/11/2026 : tutoriels corrigés, et « mettre à jour les zones d'une région déjà en ligne »
 
 - **Remarque de Klaatou** : après la commande `--audio-list`, le tutoriel faisait quand même cliquer « Mettre à jour la liste » dans le viewer (les deux font la même chose : mon tutoriel demandait les deux) ; la mise en ligne était trop succincte ; un débutant a besoin de l'exportation et de la mise à jour d'une région existante en détail.
