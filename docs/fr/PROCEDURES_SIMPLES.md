@@ -230,8 +230,36 @@ Regarde le résultat (`NOM-tex1024.glb`), puis copie le fichier retenu à la pla
 
 ## 14. Mettre une radio dans une région
 
-Une zone « Radio » fait jouer un flux Icecast ou SHOUTcast (le même qu'une « music URL » de parcelle OpenSim) aux visiteurs qui passent à portée en promenade (`MANUEL.md` § 5.19).
+**Je veux que les visiteurs entendent une webradio quand ils passent à un endroit de ma région.** Une zone « Radio » fait jouer un flux Icecast ou SHOUTcast (le même qu'une « music URL » de parcelle OpenSim) à ceux qui passent à portée en promenade (`MANUEL.md` § 5.19).
 
-1. Dans le viewer : type « Radio (flux Icecast / SHOUTcast à portée) », clic au sol, puis l'adresse du flux (en `https://`, sinon une page hébergée en `https` la refuse), le bouton « Essayer le flux (5 s) », la portée (20 m par défaut). Exporter les zones comme d'habitude.
-2. Avant de choisir une radio : vérifier qu'elle accepte la lecture depuis un site (certaines répondent 403 à une page tierce : la page dit « flux refusé ou illisible ») et que tu as le droit de la diffuser.
-3. Le titre du morceau (facultatif) : sur le serveur de présence, un fichier `presence_radios.json` (liste JSON des adresses de flux) et l'option `--radios presence_radios.json` (`MANUEL.md` § 10.25). Radio qui n'écrit pas ses titres dans le flux : pas de titre, le nom de la zone seul.
+Il te faut : l'adresse d'un flux radio, la région avec son fichier de zones `NOM.zones.json` (ou une région sans zone : le viewer en crée), Edge ou Chrome pour le viewer.
+
+1. **Choisir le flux.** L'adresse doit commencer par `https://` (une page en `https` refuse un flux `http`). Colle-la dans un onglet : si le son démarre, le flux est lisible. Certaines radios refusent d'être jouées depuis un autre site (réponse 403 : la page dira « flux refusé ou illisible ») : prends une radio dont le propriétaire accepte la diffusion sur un site, et vérifie que tu as le droit de la diffuser.
+2. **Ouvrir le viewer** (`glb-viewer.html`), charger le GLB de la région, puis ses zones (`NOM.zones.json`) si elles existent déjà.
+3. **Poser la zone.** Dans le menu des types, choisir « Radio (flux Icecast / SHOUTcast à portée) », puis cliquer au sol à l'endroit voulu (ou, en promenade, touche P). Le repère (cône) montre qu'une radio est là.
+4. **Remplir ses champs** : « Adresse du flux » (coller l'adresse), puis le bouton **« Essayer le flux (5 s) »** : il doit dire « Flux : lecture » ; sinon « Flux illisible (cause) ». Un nom (`label`) et la portée en mètres (20 par défaut, jusqu'à 200 ; le son baisse avec la distance).
+5. **Enregistrer les zones** : « Choisir le dossier de la région » puis enregistrer dans ce dossier (`MANUEL.md` § 5.15), ou exporter `NOM.zones.json` et le copier à la place de l'ancien.
+6. **Mettre en ligne.** Région avec la coquille commune : `NOM.zones.json` dans le dossier de la région suffit, la page le relit à chaque ouverture. Page autonome : refabriquer la page avec `--zones NOM.zones.json`.
+7. **Essayer** : ouvrir la page, passer en promenade (touche F), marcher dans la portée. Un premier clic ou une touche est nécessaire (règle du navigateur). La ligne « ♪ Radio : NOM » du bloc État (touche I) dit ce qui se passe. Le volume est celui de la case « Sons » de Réglages.
+8. **Le titre du morceau (facultatif).** Sur le serveur de présence, un fichier `presence_radios.json` (liste JSON des adresses de flux) et l'option `--radios presence_radios.json` (`MANUEL.md` § 10.25). Radio qui n'écrit pas ses titres dans le flux : pas de titre, le nom de la zone seul.
+
+Un flux qui ne joue pas : `MANUEL.md` § 5.19, « La radio ne joue pas ? ».
+
+## 15. Mettre une playlist de mes propres sons (mp3...) dans une région
+
+**Je veux que les visiteurs entendent ma musique (des fichiers mp3, ogg, wav...) quand ils passent à un endroit.** Une zone « Musique » joue les fichiers d'un dossier, dans l'ordre alphabétique, en boucle (`MANUEL.md` § 5.20).
+
+Il te faut : tes fichiers son (dont tu as les droits), la région avec son dossier (celui du `.glb`), Edge ou Chrome pour le viewer.
+
+1. **Préparer le dossier.** Dans le dossier de la région, créer un sous-dossier `audio` (ou `medias\audio`, si la région a un dossier `medias`) et y mettre les fichiers. **Numéroter les noms pour fixer l'ordre** : `01-intro.mp3`, `02-vagues.mp3`, `03-finale.mp3`. Sans numéros, l'ordre est alphabétique ; les nombres comptent comme des nombres (`2` avant `10`).
+2. **Faire la liste de lecture** (`playlist.json`), l'une des deux façons, au choix :
+   - en ligne de commande, depuis le dossier `dist` : `python .\glb2html.py --audio-list "CHEMIN\NOM\audio"` (ajouter `--dry-run` pour voir sans écrire) ;
+   - ou dans le viewer, à l'étape 4 ci-dessous : bouton « Mettre à jour la liste (playlist.json) ».
+3. **Ouvrir le viewer** (`glb-viewer.html`), charger le GLB de la région puis ses zones.
+4. **Poser la zone.** Type « Musique (fichiers son d'un dossier, joués en boucle à portée) », clic au sol (ou touche P en promenade). Dans « Dossier des pistes », écrire seulement le nom du sous-dossier : `audio`. Cliquer **« Mettre à jour la liste (playlist.json) »** : la première fois le viewer demande le dossier de la région (celui du `.glb`) ; il dit ensuite « Liste écrite : N fichier(s) son dans audio/playlist.json ». Le bouton **« Essayer la première piste (5 s) »** vérifie qu'un son se lit. Régler la portée (20 m par défaut, jusqu'à 200).
+5. **Enregistrer les zones** (`MANUEL.md` § 5.15) : la zone ne contient que `"folder": "audio"`, pas les sons.
+6. **Mettre en ligne** : le dossier `audio` entier (sons **et** `playlist.json`) avec le reste de la région, et `NOM.zones.json` (page autonome : refabriquer avec `--zones NOM.zones.json`).
+7. **Essayer** : ouvrir la page, passer en promenade (touche F), entrer dans la portée : la ligne « ♪ Musique : NOM — piste » du bloc État (touche I) donne la piste en cours. Un clic ou une touche est nécessaire la première fois. Le volume baisse quand on s'éloigne, la lecture s'arrête hors portée et reprend à la piste quittée.
+8. **Plus tard** : si tu ajoutes, retires ou renommes un son, **refaire la liste** (étape 2) ; la page la relit à chaque entrée dans la zone, sans refaire la page.
+
+Radio **ou** musique : dans Réglages, les cases « Radio des zones » et « Musique des zones » s'excluent. Rien ne joue ? `MANUEL.md` § 5.20, « Ça ne joue pas ? ».

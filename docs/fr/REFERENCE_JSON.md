@@ -148,26 +148,28 @@ Les réglages du rendu léger choisis par un visiteur (résolution, images par s
 
 Une **liste** de zones, relue à chaque ouverture de la page. Chaque zone a les champs ci-dessous ; un champ absent prend sa valeur par défaut, et une valeur hors des limites est ramenée dans les limites.
 
-Il existe **six sortes** de zones (champ `type`) : `"spawn"` (arrivée), `"portal"` (portail), `"url"` (lien web), `"ha"` (commande), `"image"` (tableau sur un mur, § 5.11) et `"cast"` (radio : flux à portée, § 5.19). « Privée », « liée à un objet » et « nom affiché » ne sont pas des sortes : ce sont des cases (`private`, `mesh`, `showName`) valables pour toutes les sortes.
+Il existe **sept sortes** de zones (champ `type`) : `"spawn"` (arrivée), `"portal"` (portail), `"url"` (lien web), `"ha"` (commande), `"image"` (tableau sur un mur, § 5.11), `"cast"` (radio : flux à portée, § 5.19) et `"audio"` (musique : fichiers son d'un dossier à portée, § 5.20). « Privée », « liée à un objet » et « nom affiché » ne sont pas des sortes : ce sont des cases (`private`, `mesh`, `showName`) valables pour toutes les sortes.
 
 | Champ         | Type      | Défaut        | Ce qu'il fait                                                                                                                                            |
 | ------------- | --------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `id`          | texte     | `z1`, `z2`... | nom court et unique : lettres minuscules, chiffres, `-` et `_`, 40 caractères au plus. L'arrivée `default` est le point d'entrée de la région            |
-| `type`        | texte     | `"portal"`    | `"spawn"`, `"portal"`, `"url"`, `"ha"`, `"image"` ou `"cast"`                                                                                                                 |
+| `type`        | texte     | `"portal"`    | `"spawn"`, `"portal"`, `"url"`, `"ha"`, `"image"`, `"cast"` ou `"audio"`                                                                                                                 |
 | `label`       | texte     | `""`          | nom affiché (infobulle, panneau), 60 caractères au plus                                                                                                  |
 | `x`, `y`, `z` | nombre    | `0`           | position en mètres                                                                                                                                       |
 | `yaw`         | nombre    | `0`           | orientation en radians : sens du regard à l'arrivée, ou face du panneau                                                                                  |
 | `shape`       | texte     | `"ring"`      | `"ring"` (anneau au sol) ou `"board"` (panneau sur un poteau)                                                                                            |
 | `trigger`     | texte     | `"click"`     | portails et liens (`"url"`, `hop://` compris) : `"click"` (clic ou E), `"enter"` (en marchant dedans) ou `"both"` (les deux). Les autres sortes sont toujours `"click"`             |
-| `radius`      | nombre    | `2`           | rayon de la zone en mètres (de 0.5 à 50) ; radio (`cast`) : portée du son, 20 par défaut, jusqu'à 200                                                                                                                 |
+| `radius`      | nombre    | `2`           | rayon de la zone en mètres (de 0.5 à 50) ; radio (`cast`) et musique (`audio`) : portée du son, 20 par défaut, jusqu'à 200                                                                                                                 |
 | `w`, `h`      | nombre    | `2.4`, `1.2`  | largeur et hauteur du panneau en mètres ; pour `image` : 1,2 de large par défaut, hauteur 0 = d'après l'image                                                                                                                  |
 | `target`      | texte     | `""`          | portail : adresse de la région d'arrivée, ou vide pour un point de la même région ; lien : adresse de la page web ; commande : adresse appelée ; image : nom du fichier ou adresse de l'image ; radio : adresse du flux (`https://…`) |
 | `link`        | texte     | `""`          | image seulement, facultatif : page ouverte au clic ou à E devant le tableau (adresse `http(s)` ou `hop://`, ou chemin relatif à la page ouverte, par exemple `galerie.html`) ; 600 caractères au plus ; la clé n'est écrite que si elle est remplie (§ 5.11) |
+| `folder`      | texte     | `""`          | musique (`audio`) seulement : sous-dossier des fichiers son, relatif au dossier de la région (par exemple `"audio"`) ; cherché dans `medias` d'abord (clé `mediaDir`), 200 caractères au plus, sans `..` ; la page y lit `playlist.json` (`{"tracks": [...]}` ou un tableau de noms), faite par `glb2html.py --audio-list` ou par le bouton du viewer (§ 5.20) |
+| `tracks`      | liste     | (absente)     | musique (`audio`) seulement, facultatif : noms de fichiers (relatifs à la région) ou adresses `http(s)://`, 500 au plus, joués dans l'ordre écrit à la place de `playlist.json` ; la clé n'est écrite que si elle est remplie (§ 5.20) |
 | `spawn`       | texte     | `""`          | portail : `id` de l'arrivée visée (vide = `default`)                                                                                                     |
 | `confirm`     | oui / non | `false`       | demande une confirmation avant d'agir                                                                                                                    |
 | `private`     | oui / non | `false`       | zone privée : absente des pages publiques (profil `public`)                                                                                              |
 | `showName`    | oui / non | `false`       | écrit le `label` au-dessus de la zone en promenade                                                                                                       |
-| `cone`        | oui / non | (absente : selon le déclenchement) | repère (cône) au-dessus de la zone : `true` le montre toujours, même pour une zone « au clic » ; `false` ne le montre jamais ; absente : un cône pour les portails, les radios et les liens déclenchés en marchant dedans (`"enter"` ou `"both"`). La touche T masque tous les cônes. Sans effet sur une arrivée (`--show-spawns`) ni sur un tableau ; la clé n'est écrite que si elle vaut `true` ou `false` |
+| `cone`        | oui / non | (absente : selon le déclenchement) | repère (cône) au-dessus de la zone : `true` le montre toujours, même pour une zone « au clic » ; `false` ne le montre jamais ; absente : un cône pour les portails, les radios, les musiques et les liens déclenchés en marchant dedans (`"enter"` ou `"both"`). La touche T masque tous les cônes. Sans effet sur une arrivée (`--show-spawns`) ni sur un tableau ; la clé n'est écrite que si elle vaut `true` ou `false` |
 | `mesh`        | texte     | `""`          | zone **liée à un objet** du modèle : son nom, ou `nom#numéro` quand plusieurs objets portent ce nom ; l'objet devient cliquable. Jamais pour une arrivée |
 
 L'exemple contient dix zones, une de chaque cas :
@@ -184,6 +186,7 @@ L'exemple contient dix zones, une de chaque cas :
 | `back-home`       | portail  | nom affiché au-dessus de la zone (`showName`)                                                  |
 | `painting-1`      | image    | tableau sur un mur : fichier `paintings/painting-1.jpg`, hauteur d'après l'image               |
 | `dance-floor`     | radio    | flux `https://ADRESSE/flux` joué à moins de 25 m en promenade (§ 5.19)                        |
+| `ambiance`        | musique | fichiers son du dossier `audio` (avec `audio/playlist.json`), joués à moins de 20 m en promenade (§ 5.20) |
 
 Dans une région en tuiles, une zone liée retrouve son objet grâce à l'étiquette `extras.ref` que `glb2tiles.py` écrit dans les objets des tuiles. Cette étiquette est dans les fichiers `.glb` des tuiles, **pas** dans `NOM.zones.json`.
 

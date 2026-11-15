@@ -230,8 +230,36 @@ Look at the result (`NOM-tex1024.glb`), then copy the chosen file over the regio
 
 ## 14. Put a radio in a region
 
-A "Radio" zone plays an Icecast or SHOUTcast stream (the same as an OpenSim parcel "music URL") to the visitors who come within range in walk mode (`MANUAL.md` § 5.19).
+**I want visitors to hear a web radio when they pass by a spot in my region.** A "Radio" zone plays an Icecast or SHOUTcast stream (the same as an OpenSim parcel "music URL") to those who come within range in walk mode (`MANUAL.md` § 5.19).
 
-1. In the viewer: type "Radio (Icecast / SHOUTcast stream within range)", click on the ground, then the stream address (as `https://`, otherwise a page hosted over `https` refuses it), the "Try the stream (5 s)" button, the range (20 m by default). Export the zones as usual.
-2. Before choosing a radio: check that it accepts playback from a site (some answer 403 to a third-party page: the page says "stream refused or unreadable") and that you are allowed to broadcast it.
-3. The track title (optional): on the presence server, a `presence_radios.json` file (JSON list of stream addresses) and the `--radios presence_radios.json` option (`MANUAL.md` § 10.25). A radio that does not write its titles in the stream: no title, the zone's name only.
+You need: the address of a radio stream, the region with its zones file `NOM.zones.json` (or a region without zones: the viewer creates them), Edge or Chrome for the viewer.
+
+1. **Choose the stream.** The address must start with `https://` (a page served over `https` refuses an `http` stream). Paste it in a tab: if the sound starts, the stream is readable. Some radios refuse to be played from another site (answer 403: the page will say "stream refused or unreadable"): take a radio whose owner accepts being played on a site, and check that you are allowed to broadcast it.
+2. **Open the viewer** (`glb-viewer.html`), load the region's GLB, then its zones (`NOM.zones.json`) if they already exist.
+3. **Place the zone.** In the types menu, choose "Radio (Icecast / SHOUTcast stream within range)", then click on the ground where you want it (or, while walking, the P key). The marker (cone) shows that a radio is there.
+4. **Fill in its fields**: "Stream address" (paste the address), then the **"Try the stream (5 s)"** button: it must say "Stream: playing"; otherwise "Stream unreadable (cause)". A name (`label`) and the range in meters (20 by default, up to 200; the sound falls with distance).
+5. **Save the zones**: "Choose the region folder", then save in that folder (`MANUAL.md` § 5.15), or export `NOM.zones.json` and copy it over the old one.
+6. **Publish.** Region with the shared shell: `NOM.zones.json` in the region folder is enough, the page reads it again at each opening. Standalone page: rebuild the page with `--zones NOM.zones.json`.
+7. **Try it**: open the page, switch to walk mode (F key), walk into the range. A first click or key is needed (browser rule). The "♪ Radio: NAME" line of the State block (I key) says what is happening. The volume is the "Sounds" box of Settings.
+8. **The track title (optional).** On the presence server, a `presence_radios.json` file (JSON list of stream addresses) and the `--radios presence_radios.json` option (`MANUAL.md` § 10.25). A radio that does not write its titles in the stream: no title, the zone's name alone.
+
+A stream that does not play: `MANUAL.md` § 5.19, "The radio does not play?".
+
+## 15. Put a playlist of my own sounds (mp3...) in a region
+
+**I want visitors to hear my music (mp3, ogg, wav files...) when they pass by a spot.** A "Music" zone plays the files of a folder, in alphabetical order, in a loop (`MANUAL.md` § 5.20).
+
+You need: your sound files (that you have the rights to), the region with its folder (the one of the `.glb`), Edge or Chrome for the viewer.
+
+1. **Prepare the folder.** In the region folder, create an `audio` sub-folder (or `medias\audio`, if the region has a `medias` folder) and put the files in it. **Number the names to fix the order**: `01-intro.mp3`, `02-vagues.mp3`, `03-finale.mp3`. Without numbers, the order is alphabetical; numbers count as numbers (`2` before `10`).
+2. **Make the playlist** (`playlist.json`), either way:
+   - on the command line, from the `dist` folder: `python .\glb2html.py --audio-list "CHEMIN\NOM\audio"` (add `--dry-run` to see without writing);
+   - or in the viewer, at step 4 below: "Update the list (playlist.json)" button.
+3. **Open the viewer** (`glb-viewer.html`), load the region's GLB, then its zones.
+4. **Place the zone.** Type "Music (sound files of a folder, played in a loop within range)", click on the ground (or P key while walking). In "Tracks folder", write only the sub-folder name: `audio`. Click **"Update the list (playlist.json)"**: the first time the viewer asks for the region folder (the one of the `.glb`); it then says "List written: N sound file(s) in audio/playlist.json". The **"Try the first track (5 s)"** button checks that a sound plays. Set the range (20 m by default, up to 200).
+5. **Save the zones** (`MANUAL.md` § 5.15): the zone only holds `"folder": "audio"`, not the sounds.
+6. **Publish**: the whole `audio` folder (sounds **and** `playlist.json`) with the rest of the region, and `NOM.zones.json` (standalone page: rebuild with `--zones NOM.zones.json`).
+7. **Try it**: open the page, switch to walk mode (F key), enter the range: the "♪ Music: NAME — track" line of the State block (I key) gives the current track. A click or key is needed the first time. The volume falls as you move away, playback stops out of range and resumes at the track that was left.
+8. **Later**: if you add, remove or rename a sound, **redo the list** (step 2); the page reads it again each time the zone is entered, no page rebuild.
+
+Radio **or** music: in Settings, the "Zone radio" and "Zone music" boxes exclude each other. Nothing plays? `MANUAL.md` § 5.20, "Does not play?".

@@ -272,6 +272,8 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 15/11/2026 |  | après 1.11.0 | Lot 1.11.1 : bloc de chat repliable (touche B), aide : touches et titres en gras, titre de la radio demandé seulement si on l'écoute ; `tests/chat_replie.py` |
 | 15/11/2026 |  | après 1.11.0 | Lot 1.11.2 : nouvelle icône du projet (globe « Web 3D ») : `src/favicon.ico` et `src/credit.png` |
 | 15/11/2026 |  | après 1.11.0 | Lot 1.11.3 : documents des lots 1.11.1 et 1.11.2 : manuel § 5.19, § 7.1, § 7.2, § 7.25, § 7.39, § 10.25 et § 13, README, historiques |
+| 15/11/2026 |  | après 1.11.0 | Lot 1.11.4 : zones audio locales (type `audio`) : fichiers son d'un dossier joués en boucle à portée, ordre alphabétique, `playlist.json` (`glb2html.py --audio-list`, bouton du viewer), cases « Radio des zones » / « Musique des zones » exclusives ; `tests/zone_audio.py` |
+| 15/11/2026 |  | après 1.11.0 | Lot 1.11.5 : documents de la 1.11.4 : manuel § 5.20, § 7.66, annexe ; `REFERENCE_JSON.md` (`folder`, `tracks`) ; tutoriels `PROCEDURES_SIMPLES.md` § 14 (radio) et § 15 (playlist) ; index, vue d'ensemble, README |
 
 ## Commandes utiles
 

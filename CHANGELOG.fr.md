@@ -6,6 +6,14 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.11.0)
 
+### 15/11/2026 : documents du lot 1.11.4 (zones audio) et tutoriels pas à pas
+
+- **Demande de Klaatou** : les documents des zones audio, avec des tutoriels complets « je veux mettre une radio » et « je veux implanter une playlist ».
+- **Manuel** (`MANUEL.md` et `MANUAL.md`) : nouveau § 5.20 (zone `audio` : dossier, ordre, `playlist.json` par la commande ou le bouton du viewer, `tracks`, portée et volume, radio ou musique, « ça ne joue pas ? », mise en ligne, essayé / non essayé) ; § 7.66 : ligne « Musique » et case « Musique des zones » ; `--audio-list` dans le tableau des outils ; ligne « Ajouts de la 1.11.4 » de l'annexe.
+- **Tutoriels** (`PROCEDURES_SIMPLES.md` et `SIMPLE_PROCEDURES.md`) : § 14 « Mettre une radio dans une région » refait pas à pas (choisir le flux, poser, essayer, enregistrer, mettre en ligne, réessayer, titre) ; nouveau § 15 « Mettre une playlist de mes propres sons dans une région ».
+- **`REFERENCE_JSON.md`** (FR et EN) : sept sortes de zones, `type`, `radius`, `cone`, nouvelles clés `folder` et `tracks`, exemple `ambiance`. **Index, vue d'ensemble, README, historiques** (FR et EN).
+- **Aucun changement de code** (`dist\` et `VERSIONS.json` identiques). `VERSION` : `1.11.5`. **Pas fait** : un bouton du lanceur pour `--audio-list` (absent du lot 1.11.4 aussi). **Reste à mettre à jour** : rien de connu.
+
 ### 15/11/2026 : zones audio locales (nouveau type de zone `audio`)
 
 - **Demande de Klaatou** : jouer des fichiers son (mp3 ou autres formats) d'un dossier, comme une playlist, en se promenant près d'une zone.

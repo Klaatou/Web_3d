@@ -6,6 +6,14 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.11.0)
 
+### 15/11/2026: documents for batch 1.11.4 (audio zones) and step-by-step tutorials
+
+- **Klaatou's request**: the documents of the audio zones, with complete tutorials "I want to put a radio" and "I want to put a playlist".
+- **Manual** (`MANUEL.md` and `MANUAL.md`): new § 5.20 (`audio` zone: folder, order, `playlist.json` by command or viewer button, `tracks`, range and volume, radio or music, "does not play?", publishing, tried / not tried); § 7.66: "Music" line and "Zone music" box; `--audio-list` in the tools table; "Additions of 1.11.4" row of the appendix.
+- **Tutorials** (`PROCEDURES_SIMPLES.md` and `SIMPLE_PROCEDURES.md`): § 14 "Put a radio in a region" rewritten step by step (choose the stream, place, try, save, publish, try again, title); new § 15 "Put a playlist of my own sounds in a region".
+- **`REFERENCE_JSON.md`** (FR and EN): seven kinds of zones, `type`, `radius`, `cone`, new keys `folder` and `tracks`, example `ambiance`. **Index, overview, README, histories** (FR and EN).
+- **No code changes** (`dist\` and `VERSIONS.json` identical). `VERSION`: `1.11.5`. **Not done**: a button of the launcher for `--audio-list` (not in batch 1.11.4 either). **Still to update**: nothing known.
+
 ### 15/11/2026: local audio zones (new `audio` zone type)
 
 - **Klaatou's request**: play sound files (mp3 or other formats) from a folder as a playlist when walking near a zone.
