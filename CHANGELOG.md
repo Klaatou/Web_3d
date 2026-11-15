@@ -6,6 +6,13 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.11.0)
 
+### 15/11/2026: tab icon without the yellow ring
+
+- **Klaatou's request**: the icon is fine at the bottom right of the pages, but nothing can be seen in the browser tabs; remove the yellow ring to get a bigger sphere.
+- **Replaced**: `src/favicon.ico` only (ICO 16, 32, 48 and 64 px, transparent background): the sphere alone, cropped, fills the whole square (the useful image only filled 43 of 64 pixels); a yellow arc remains in front of the sphere. `src/credit.png` (the "Made with Web_3d" icon at the bottom right) does not change.
+- **To do after `python build.py`**: `dist\favicon.ico` changes; **copy this file next to each published `index.html`** (the page uses it for the tab; without it, it takes the embedded PNG icon, with the ring). The desktop shortcuts (`web3d_gui.py --shortcuts`) use it too, but Explorer keeps the old image in its cache (see `ie4uinit.exe -show`). `VERSION`: `1.11.8`.
+- **Not tried**: the look in a real Edge or Chrome tab on Windows (seen only as enlarged images, light and dark backgrounds).
+
 ### 15/11/2026: reflections message: "shiny or metallic"
 
 - **Klaatou's request**: the bar said "metallic (PBR) materials" for PalmIsland, an old OAR without PBR. Found in the GLB: 27 of 210 materials carry a `metallicFactor` of 0.25, 0.5 or 0.75 (the shiny materials of old OARs); the page's count is exact, the word "PBR" was misleading.

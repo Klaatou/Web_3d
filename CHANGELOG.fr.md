@@ -6,6 +6,13 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.11.0)
 
+### 15/11/2026 : icone des onglets sans l'anneau jaune
+
+- **Demande de Klaatou** : l'icone est bien en bas a droite des pages, mais on ne voit rien dans les onglets du navigateur ; retirer l'anneau jaune pour avoir la sphere plus grosse.
+- **Remplace** : `src/favicon.ico` seulement (ICO 16, 32, 48 et 64 px, fond transparent) : la sphere seule, recadree, occupe tout le carre (l'image utile n'en occupait que 43 sur 64 pixels) ; un arc jaune reste devant la sphere. `src/credit.png` (icone « Realise avec Web_3d » en bas a droite) ne change pas.
+- **A faire apres `python build.py`** : `dist\favicon.ico` change ; **copier ce fichier a cote de chaque `index.html` publie** (la page l'utilise pour l'onglet ; sans lui, elle prend l'icone PNG incorporee, avec l'anneau). Les raccourcis du bureau (`web3d_gui.py --shortcuts`) la prennent aussi, mais l'Explorateur garde l'ancienne image en cache (voir `ie4uinit.exe -show`). `VERSION` : `1.11.8`.
+- **Non essaye** : l'aspect dans un vrai onglet Edge ou Chrome sous Windows (vu seulement en images agrandies, fonds clair et sombre).
+
 ### 15/11/2026 : message des reflets : « brillants ou métalliques »
 
 - **Demande de Klaatou** : la barre disait « matériaux métalliques (PBR) » pour PalmIsland, un ancien OAR sans PBR. Constaté dans le GLB : 27 matériaux sur 210 portent un `metallicFactor` de 0,25, 0,5 ou 0,75 (les matériaux brillants des anciens OAR) ; le compte de la page est exact, c'est le mot « PBR » qui trompait.
