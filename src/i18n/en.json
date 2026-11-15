@@ -924,6 +924,7 @@
  "py.oar2glb.sommets_du_glb_axes_opensim_x": "      GLB vertices (OpenSim axes x, y, z): from {0} to {1}, i.e. {2} m, {3} vertices",
  "py.oar2glb.sommets_du_glb_illisibles_0": "      unreadable GLB vertices ({0})",
  "py.oar2glb.terrain_0": "[terrain] {0}",
+ "py.oar2glb.terrain_0_doublon_maillage": "[terrain] {0} convoar \"Terrain\" node(s) still had their mesh on top of the patches (striped ground): mesh removed",
  "py.oar2glb.terrain_0_nud_s_terrain_de": "[terrain] {0} convoar \"Terrain\" node(s) removed from the scene",
  "py.oar2glb.terrain_0_nud_s_terrain_retire": "[terrain] {0} \"Terrain\" node(s) removed from the scene (their data stay in the GLB, unused); {1:.1f} MB read, in chunks of at most {2} KB",
  "py.oar2glb.terrain_attention_carte_de_0_x": "[terrain] warning: map of {0} x {1} samples for a region of {2:g} x {3:g} m",

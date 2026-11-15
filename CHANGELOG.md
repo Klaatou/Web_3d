@@ -6,6 +6,14 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.11.0)
 
+### 15/11/2026: oar2glb: never two overlapping terrains in the GLB
+
+- **Report** (GLB of a region on a third party's site): the page's ground was striped, cream and green fighting for the screen. The GLB held convoar's `Terrain` node **with its mesh** and the 16 `Terrain i,j` patches of `oar2glb.py`, at the same level.
+- **Guard**: `terrain_doublon` (`oar2glb.py`), called after `terrain_pipeline`: if `Terrain i,j` patches are in the GLB, the mesh of any convoar `Terrain` node that still has it is removed (same rule as `remove_node`), with the message "[terrain] N convoar "Terrain" node(s) still had their mesh on top of the patches (striped ground): mesh removed". Without patches, or without a `Terrain` node: nothing changes. **Not covered**: `--terrain-only` (a GLB already made is repaired with the separate tool `glb_terrain_fix.py`, outside the repository).
+- **Cause not established**: the current code already removes that mesh when it adds the patches; we do not know which step put both terrains together in this GLB.
+- **Checked**: on the real GLB, `terrain_doublon` gives the same nodes and the same scene as `glb_terrain_fix.py`. **Test**: `tests/terrain.py`, six checks added (duplicate removed and patch kept, message, second pass without effect, convoar terrain alone untouched, patches alone untouched, node with children).
+- **Changes in `dist\`** after `python build.py`: `oar2glb.py`. `VERSION`: `1.11.11`. **Not tried**: a full conversion with the real convoar.
+
 ### 15/11/2026: world map: the grid follows the page width
 
 - **Klaatou's report**: `carte.html` shows the thumbnails in rows of 5, however wide the page is; when the page is made narrower the number of columns adapts.

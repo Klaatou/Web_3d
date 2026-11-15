@@ -2171,6 +2171,18 @@ def terrain_pipeline(g, scan, mode, P):
         print(_tr("py.oar2glb.terrain_0_nud_s_terrain_de", len(anciens)))
 
 
+def terrain_doublon(g):
+    # 1.11.11 : quand les patches "Terrain i,j" sont la, un noeud "Terrain" de convoar qui a encore son maillage se superpose a eux
+    # au meme niveau (sol raye : sable et herbe se disputent l'ecran) ; on retire ce maillage, comme terrain_pipeline le fait d'habitude
+    if not any(str(x.get("name", "")).startswith("Terrain ") and x.get("extras", {}).get("terrain") for x in g.get("nodes", [])):
+        return
+    restes = [i for i, x in enumerate(g.get("nodes", [])) if x.get("name") == "Terrain" and "mesh" in x]
+    for i in restes:
+        remove_node(g, i)
+    if restes:
+        print(_tr("py.oar2glb.terrain_0_doublon_maillage", len(restes)))
+
+
 def terrain_seul(glb, scan, out, mode, P, chunk=LECTURE):
     """Ajoute les patches à un GLB existant sans le charger : en-tête JSON réécrit, chunk binaire recopié par morceaux,
     nouveaux tampons ajoutés à la fin. Retourne un dict de mesures, ou None si rien n'est écrit."""
@@ -2509,6 +2521,7 @@ def main():
         pbr_appliquer(g, scan, oar, a.pbr_size)
     n = drop_far(g, a.max, size)
     terrain_pipeline(g, scan, a.terrain, a.terrain_patch)      # après drop_far : les patches ne sont jamais retirés
+    terrain_doublon(g)                       # 1.11.11 : jamais deux terrains superposes dans le GLB
     eau, origine = terrain_eau(scan)         # 1.10.26 : le niveau d'eau de l'OAR est inscrit dans le GLB (asset.extras) : les pages l'utilisent pour placer la mer
     g.setdefault("asset", {}).setdefault("extras", {}).update({"waterHeight": float(eau), "waterSource": "oar" if scan.get("water") else "default"})
     print(_tr("py.oar2glb.eau_inscrite", eau, origine))

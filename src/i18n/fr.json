@@ -924,6 +924,7 @@
  "py.oar2glb.sommets_du_glb_axes_opensim_x": "      sommets du GLB (axes OpenSim x, y, z) : de {0} à {1} soit {2} m, {3} sommets",
  "py.oar2glb.sommets_du_glb_illisibles_0": "      sommets du GLB illisibles ({0})",
  "py.oar2glb.terrain_0": "[terrain] {0}",
+ "py.oar2glb.terrain_0_doublon_maillage": "[terrain] {0} nœud(s) « Terrain » de convoar avait encore son maillage au-dessus des patches (sol rayé) : maillage retiré",
  "py.oar2glb.terrain_0_nud_s_terrain_de": "[terrain] {0} nœud(s) « Terrain » de convoar retiré(s) de la scène",
  "py.oar2glb.terrain_0_nud_s_terrain_retire": "[terrain] {0} nœud(s) « Terrain » retiré(s) de la scène (leurs données restent dans le GLB, inutilisées) ; {1:.1f} Mo lus, par morceaux de {2} Ko au plus",
  "py.oar2glb.terrain_attention_carte_de_0_x": "[terrain] attention : carte de {0} x {1} échantillons pour une région de {2:g} x {3:g} m",

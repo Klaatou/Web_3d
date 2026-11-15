@@ -6,6 +6,14 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.11.0)
 
+### 15/11/2026 : oar2glb : jamais deux terrains superposés dans le GLB
+
+- **Constat** (GLB d'une région du site d'un tiers) : le sol de la page était rayé, crème et vert qui se disputent l'écran. Le GLB contenait le nœud `Terrain` de convoar **avec son maillage** et les 16 patches `Terrain i,j` de `oar2glb.py`, au même niveau.
+- **Garde-fou** : `terrain_doublon` (`oar2glb.py`), appelé après `terrain_pipeline` : si des patches `Terrain i,j` sont dans le GLB, le maillage de tout nœud `Terrain` de convoar qui l'a encore est retiré (même règle que `remove_node`), avec le message « [terrain] N nœud(s) « Terrain » de convoar avait encore son maillage au-dessus des patches (sol rayé) : maillage retiré ». Sans patches, ou sans nœud `Terrain` : rien ne change. **Non couvert** : `--terrain-only` (un GLB déjà fait se répare avec l'outil séparé `glb_terrain_fix.py`, hors dépôt).
+- **Cause non établie** : le code actuel retire déjà ce maillage quand il ajoute les patches ; on ne sait pas par quelle étape des deux terrains se sont retrouvés ensemble dans ce GLB.
+- **Vérifié** : sur le GLB réel, `terrain_doublon` donne les mêmes nœuds et la même scène que `glb_terrain_fix.py`. **Test** : `tests/terrain.py`, six contrôles ajoutés (doublon retiré et patch gardé, message, seconde passe sans effet, terrain de convoar seul non touché, patches seuls non touchés, nœud avec enfants).
+- **Change en `dist\`** après `python build.py` : `oar2glb.py`. `VERSION` : `1.11.11`. **Non essayé** : une conversion complète avec le vrai convoar.
+
 ### 15/11/2026 : carte des mondes : la grille suit la largeur de la page
 
 - **Constat de Klaatou** : `carte.html` montre les vignettes par rangs de 5, aussi large que soit la page ; quand on la réduit, le nombre de colonnes s'adapte.

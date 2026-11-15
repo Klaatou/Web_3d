@@ -397,6 +397,48 @@ if doc_p.is_file():
     rapport(len(doc["tiles"]) > 1 and sorted(vus) == sorted(P) and set(vus.values()) == {1}, f"{len(doc['tiles'])} tuiles : chaque patch dans une seule tuile", {k: v for k, v in vus.items() if v != 1} or len(vus))
     rapport(ok_nu and tri == attendu, "aucun patch coupé : mêmes triangles qu'avant le découpage", (tri, attendu))
 
+# terrain en double (1.11.11) : patches "Terrain i,j" et noeud "Terrain" de convoar avec son maillage, au meme niveau
+import contextlib
+
+
+def gdoublon(patchs=True, conv=True, enfants=False):
+    g = {"scenes": [{"nodes": []}], "nodes": [], "meshes": [{}, {}]}
+
+    def noeud(n):
+        g["nodes"].append(n)
+        return len(g["nodes"]) - 1
+    if conv:
+        c = noeud({"name": "Terrain", "mesh": 0})
+        g["scenes"][0]["nodes"].append(c)
+        if enfants:
+            g["nodes"][c]["children"] = [noeud({"name": "enfant", "mesh": 1})]
+    if patchs:
+        g["scenes"][0]["nodes"].append(noeud({"name": "Terrain 0,0", "mesh": 1, "extras": {"terrain": True}}))
+    return g
+
+
+def appel(g):
+    s = io.StringIO()
+    with contextlib.redirect_stdout(s):
+        T.terrain_doublon(g)
+    return s.getvalue()
+
+
+g = gdoublon()
+sortie = appel(g)
+rapport("mesh" not in g["nodes"][0] and 0 not in g["scenes"][0]["nodes"] and 1 in g["scenes"][0]["nodes"] and "mesh" in g["nodes"][1],
+        "doublon : le maillage du Terrain de convoar est retire, le patch reste", g)
+rapport("1 n" in sortie and "maillage" in sortie, "doublon : un message dit combien de noeuds", sortie)
+rapport(appel(g) == "", "doublon : une seconde passe ne fait rien", g)
+g = gdoublon(patchs=False)
+rapport(appel(g) == "" and g["nodes"][0].get("mesh") == 0 and 0 in g["scenes"][0]["nodes"], "sens oppose : terrain de convoar seul (sans patches) : non touche", g)
+g = gdoublon(conv=False)
+rapport(appel(g) == "" and g["nodes"][0].get("mesh") == 1, "sens oppose : patches seuls : non touches", g)
+g = gdoublon(enfants=True)
+appel(g)
+rapport("mesh" not in g["nodes"][0] and g["nodes"][0]["children"] == [1] and g["nodes"][1].get("mesh") == 1 and 0 in g["scenes"][0]["nodes"],
+        "doublon : un Terrain qui a des enfants garde ses enfants (comme remove_node)", g)
+
 shutil.rmtree(tmp, ignore_errors=True) if "--garder" not in sys.argv else print("fichiers gardés dans", tmp)
 print("\n" + ("TOUT PASSE" if not bad else f"{bad} ÉCHEC(S)"))
 sys.exit(1 if bad else 0)
