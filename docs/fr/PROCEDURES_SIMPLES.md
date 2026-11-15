@@ -232,16 +232,15 @@ Regarde le résultat (`NOM-tex1024.glb`), puis copie le fichier retenu à la pla
 
 **Je veux que les visiteurs entendent une webradio quand ils passent à un endroit de ma région.** Une zone « Radio » fait jouer un flux Icecast ou SHOUTcast (le même qu'une « music URL » de parcelle OpenSim) à ceux qui passent à portée en promenade (`MANUEL.md` § 5.19).
 
-Il te faut : l'adresse d'un flux radio, la région avec son fichier de zones `NOM.zones.json` (ou une région sans zone : le viewer en crée), Edge ou Chrome pour le viewer.
+Il te faut : l'adresse d'un flux radio, ta région déjà en ligne (ou prête à l'être), Edge ou Chrome pour le viewer.
 
 1. **Choisir le flux.** L'adresse doit commencer par `https://` (une page en `https` refuse un flux `http`). Colle-la dans un onglet : si le son démarre, le flux est lisible. Certaines radios refusent d'être jouées depuis un autre site (réponse 403 : la page dira « flux refusé ou illisible ») : prends une radio dont le propriétaire accepte la diffusion sur un site, et vérifie que tu as le droit de la diffuser.
-2. **Ouvrir le viewer** (`glb-viewer.html`), charger le GLB de la région, puis ses zones (`NOM.zones.json`) si elles existent déjà.
+2. **Ouvrir le viewer** (`glb-viewer.html`), ouvrir le `.glb` de la région, puis **importer ses zones actuelles** (« Importer zones (.json) », fichier `NOM.zones.json` de la région), sinon l'export de l'étape 5 ne contiendrait que la nouvelle zone (`PROCEDURES_SIMPLES.md` § 16, étapes 1 et 2).
 3. **Poser la zone.** Dans le menu des types, choisir « Radio (flux Icecast / SHOUTcast à portée) », puis cliquer au sol à l'endroit voulu (ou, en promenade, touche P). Le repère (cône) montre qu'une radio est là.
 4. **Remplir ses champs** : « Adresse du flux » (coller l'adresse), puis le bouton **« Essayer le flux (5 s) »** : il doit dire « Flux : lecture » ; sinon « Flux illisible (cause) ». Un nom (`label`) et la portée en mètres (20 par défaut, jusqu'à 200 ; le son baisse avec la distance).
-5. **Enregistrer les zones** : « Choisir le dossier de la région » puis enregistrer dans ce dossier (`MANUEL.md` § 5.15), ou exporter `NOM.zones.json` et le copier à la place de l'ancien.
-6. **Mettre en ligne.** Région avec la coquille commune : `NOM.zones.json` dans le dossier de la région suffit, la page le relit à chaque ouverture. Page autonome : refabriquer la page avec `--zones NOM.zones.json`.
-7. **Essayer** : ouvrir la page, passer en promenade (touche F), marcher dans la portée. Un premier clic ou une touche est nécessaire (règle du navigateur). La ligne « ♪ Radio : NOM » du bloc État (touche I) dit ce qui se passe. Le volume est celui de la case « Sons » de Réglages.
-8. **Le titre du morceau (facultatif).** Sur le serveur de présence, un fichier `presence_radios.json` (liste JSON des adresses de flux) et l'option `--radios presence_radios.json` (`MANUEL.md` § 10.25). Radio qui n'écrit pas ses titres dans le flux : pas de titre, le nom de la zone seul.
+5. **Exporter, remplacer le fichier de zones de la région, publier** : c'est la procédure du **§ 16** (exporter, renommer en `NOM.zones.json`, copier dans le dossier de la région, essayer chez soi, publier). Rien d'autre à copier pour une radio : le son vient du flux.
+6. **Essayer en ligne** : ouvrir la page (F5 ou Ctrl+F5), passer en promenade (touche F), marcher dans la portée. Un premier clic ou une touche est nécessaire (règle du navigateur). La ligne « ♪ Radio : NOM » du bloc État (touche I) dit ce qui se passe. Le volume est celui de la case « Sons » de Réglages.
+7. **Le titre du morceau (facultatif).** Sur le serveur de présence, un fichier `presence_radios.json` (liste JSON des adresses de flux) et l'option `--radios presence_radios.json` (`MANUEL.md` § 10.25). Radio qui n'écrit pas ses titres dans le flux : pas de titre, le nom de la zone seul.
 
 Un flux qui ne joue pas : `MANUEL.md` § 5.19, « La radio ne joue pas ? ».
 
@@ -249,17 +248,37 @@ Un flux qui ne joue pas : `MANUEL.md` § 5.19, « La radio ne joue pas ? ».
 
 **Je veux que les visiteurs entendent ma musique (des fichiers mp3, ogg, wav...) quand ils passent à un endroit.** Une zone « Musique » joue les fichiers d'un dossier, dans l'ordre alphabétique, en boucle (`MANUEL.md` § 5.20).
 
-Il te faut : tes fichiers son (dont tu as les droits), la région avec son dossier (celui du `.glb`), Edge ou Chrome pour le viewer.
+Il te faut : tes fichiers son (dont tu as les droits), le dossier de ta région (celui où est le `.glb`), Edge ou Chrome pour le viewer.
 
-1. **Préparer le dossier.** Dans le dossier de la région, créer un sous-dossier `audio` (ou `medias\audio`, si la région a un dossier `medias`) et y mettre les fichiers. **Numéroter les noms pour fixer l'ordre** : `01-intro.mp3`, `02-vagues.mp3`, `03-finale.mp3`. Sans numéros, l'ordre est alphabétique ; les nombres comptent comme des nombres (`2` avant `10`).
-2. **Faire la liste de lecture** (`playlist.json`), l'une des deux façons, au choix :
-   - en ligne de commande, depuis le dossier `dist` : `python .\glb2html.py --audio-list "CHEMIN\NOM\audio"` (ajouter `--dry-run` pour voir sans écrire) ;
-   - ou dans le viewer, à l'étape 4 ci-dessous : bouton « Mettre à jour la liste (playlist.json) ».
-3. **Ouvrir le viewer** (`glb-viewer.html`), charger le GLB de la région puis ses zones.
-4. **Poser la zone.** Type « Musique (fichiers son d'un dossier, joués en boucle à portée) », clic au sol (ou touche P en promenade). Dans « Dossier des pistes », écrire seulement le nom du sous-dossier : `audio`. Cliquer **« Mettre à jour la liste (playlist.json) »** : la première fois le viewer demande le dossier de la région (celui du `.glb`) ; il dit ensuite « Liste écrite : N fichier(s) son dans audio/playlist.json ». Le bouton **« Essayer la première piste (5 s) »** vérifie qu'un son se lit. Régler la portée (20 m par défaut, jusqu'à 200).
-5. **Enregistrer les zones** (`MANUEL.md` § 5.15) : la zone ne contient que `"folder": "audio"`, pas les sons.
-6. **Mettre en ligne** : le dossier `audio` entier (sons **et** `playlist.json`) avec le reste de la région, et `NOM.zones.json` (page autonome : refabriquer avec `--zones NOM.zones.json`).
-7. **Essayer** : ouvrir la page, passer en promenade (touche F), entrer dans la portée : la ligne « ♪ Musique : NOM — piste » du bloc État (touche I) donne la piste en cours. Un clic ou une touche est nécessaire la première fois. Le volume baisse quand on s'éloigne, la lecture s'arrête hors portée et reprend à la piste quittée.
-8. **Plus tard** : si tu ajoutes, retires ou renommes un son, **refaire la liste** (étape 2) ; la page la relit à chaque entrée dans la zone, sans refaire la page.
+1. **Préparer le dossier des sons.** Dans le dossier de la région, créer un sous-dossier `audio` (ou `medias\audio`, si la région a un dossier `medias`) et y mettre les fichiers. **Numéroter les noms pour fixer l'ordre** : `01-intro.mp3`, `02-vagues.mp3`, `03-finale.mp3`. Sans numéros, l'ordre est alphabétique ; les nombres comptent comme des nombres (`2` avant `10`).
+2. **Faire la liste de lecture** (`playlist.json`), avec la ligne de commande, depuis le dossier `dist` des outils : `python .\glb2html.py --audio-list "CHEMIN\NOM\audio"`, où `CHEMIN\NOM` est le dossier de la région. Elle écrit `playlist.json` dans le dossier `audio` : c'est la liste que la page lit. Ajouter `--dry-run` pour voir sans écrire. *Variante sans ligne de commande* : le bouton « Mettre à jour la liste (playlist.json) » de la fiche de la zone (étape 3) fait exactement la même chose ; inutile de faire les deux.
+3. **Poser la zone dans le viewer.** Ouvrir `glb-viewer.html`, ouvrir le `.glb` de la région, **importer ses zones actuelles** (« Importer zones (.json) », `NOM.zones.json`). Type « Musique (fichiers son d'un dossier, joués en boucle à portée) », clic au sol (ou touche P en promenade). Dans « Dossier des pistes », écrire seulement le nom du sous-dossier : `audio`. Régler la portée (20 m par défaut, jusqu'à 200). Facultatif : « Essayer la première piste (5 s) » vérifie qu'un son se lit (le viewer demande d'abord le dossier de la région, une fois).
+4. **Exporter, remplacer le fichier de zones de la région** : procédure du **§ 16**. La zone ne contient que `"folder": "audio"`, pas les sons.
+5. **Mettre en ligne les sons** : copier le dossier `audio` **entier** (les sons **et** `playlist.json`) dans le dossier de la région sur l'hébergement, à côté de `NOM.glb`, avec le même fichier `NOM.zones.json` que celui du § 16. Sans le dossier `audio` en ligne, la ligne « ♪ Musique » dira « liste de lecture introuvable ».
+6. **Essayer en ligne** : ouvrir la page (F5 ou Ctrl+F5), passer en promenade (touche F), entrer dans la portée : la ligne « ♪ Musique : NOM — piste » du bloc État (touche I) donne la piste en cours. Un clic ou une touche est nécessaire la première fois. Le volume baisse quand on s'éloigne, la lecture s'arrête hors portée et reprend à la piste quittée.
+7. **Plus tard** : si tu ajoutes, retires ou renommes un son, **refaire la liste** (étape 2) et recopier le dossier `audio` en ligne ; la page relit la liste à chaque entrée dans la zone, sans refaire la page ni le fichier de zones.
 
 Radio **ou** musique : dans Réglages, les cases « Radio des zones » et « Musique des zones » s'excluent. Rien ne joue ? `MANUEL.md` § 5.20, « Ça ne joue pas ? ».
+
+## 16. Mettre à jour les zones d'une région déjà en ligne
+
+**Je veux ajouter, déplacer ou retirer une zone (arrivée, portail, panneau, image, radio, musique) dans une région déjà publiée.** Les zones d'une région sont dans un seul fichier, `NOM.zones.json` (NOM = nom du `.glb` sans extension, en minuscules). On le **modifie dans le viewer**, on l'**exporte**, on **remplace** celui de la région, on **republie**. La page n'est pas à refaire (cas A ci-dessous).
+
+**Quel est ton cas ?** Regarde le dossier de la région :
+
+- **A. Coquille commune** (le cas des paquets et de la démo) : la région s'ouvre par `index.html?region=NOM` et son dossier contient `NOM.glb`, `NOM.config.json` et `NOM.zones.json`. **C'est le cas décrit ci-dessous.**
+- **B. Région en tuiles** : un `NOM.tiles.json` et des tuiles à la place du `.glb`. Le viewer a un bouton **« Enregistrer les zones dans le dossier de la région »** (Edge ou Chrome) qui écrit `NOM.zones.json` à ta place et garde l'ancien sous `NOM.zones.bak.json` (`MANUEL.md` § 5.15) : fais les étapes 1 à 3, puis ce bouton au lieu des étapes 4 et 5, et continue à l'étape 6.
+- **C. Page autonome** (un seul fichier `NOM.html`, sans `NOM.zones.json` à côté) : les zones sont dans la page. Refabrique la page avec la même commande qu'à l'origine, en donnant les zones exportées : `--zones zones.json` (`MANUEL.md` § 6).
+
+**Les étapes (cas A)**
+
+1. **Ouvrir le viewer** : le fichier `glb-viewer.html` (dossier `dist` des outils) s'ouvre dans Edge ou Chrome par double-clic. Ouvrir le `.glb` de la région.
+2. **Reprendre les zones déjà posées** : bouton **« Importer zones (.json) »**, puis le `NOM.zones.json` **actuel** de la région. **Ne pas sauter cette étape** : le fichier exporté à l'étape 4 contient seulement ce qui est dans le viewer à ce moment ; sans l'import, les zones existantes disparaîtraient de la région.
+3. **Modifier** : ajouter une zone (type, clic au sol ou touche P en promenade), ouvrir sa fiche pour la régler, ou la supprimer (`MANUEL.md` § 5.2). Pour une image : les fichiers se mettent dans le sous-dossier `medias` de la région (`MANUEL.md` § 5.11) ; pour une musique : le dossier `audio` (§ 15) ; une radio : rien à copier.
+4. **Exporter** : bouton **« Exporter zones (.json) »**. Le navigateur télécharge un fichier nommé `zones.json` dans son dossier de téléchargements.
+5. **Remplacer le fichier de la région** : d'abord **garder une copie** de l'ancien `NOM.zones.json` (par exemple le renommer `NOM.zones.avant.json`). Puis renommer le fichier téléchargé en **`NOM.zones.json`** (exactement le nom de l'ancien) et le copier dans le dossier de la région, à la place de l'ancien. Garder le nom exact : la page ne cherche que celui-là.
+6. **Essayer chez soi avant de publier** : depuis le dossier du site, `python -m http.server 8000`, puis ouvrir `http://localhost:8000/index.html?region=NOM`. La page relit `NOM.zones.json` à chaque ouverture : **F5 suffit**, sans refaire la page (sauf si tu changes aussi les options de la page, qui sont dans `NOM.config.json`).
+7. **Publier** : copier sur l'hébergement, en remplaçant, **seulement ce qui a changé** : `NOM.zones.json`, et selon ce que tu as ajouté le dossier `audio`, les images de `medias`. Avec GitHub Pages, depuis le dossier du site : `git add -A`, `git commit -m "zones"`, `git push` (une commande par ligne), puis attendre une à deux minutes.
+8. **Vérifier en ligne** : ouvrir l'adresse publique, **Ctrl+F5** (le navigateur garde parfois l'ancien fichier), passer en promenade (touche F) et aller à la zone.
+
+Une erreur ? Remettre l'ancien fichier (la copie de l'étape 5) à la place de `NOM.zones.json` et republier.

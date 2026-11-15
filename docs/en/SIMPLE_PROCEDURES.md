@@ -232,16 +232,15 @@ Look at the result (`NOM-tex1024.glb`), then copy the chosen file over the regio
 
 **I want visitors to hear a web radio when they pass by a spot in my region.** A "Radio" zone plays an Icecast or SHOUTcast stream (the same as an OpenSim parcel "music URL") to those who come within range in walk mode (`MANUAL.md` § 5.19).
 
-You need: the address of a radio stream, the region with its zones file `NOM.zones.json` (or a region without zones: the viewer creates them), Edge or Chrome for the viewer.
+You need: the address of a radio stream, your region already online (or ready to be), Edge or Chrome for the viewer.
 
 1. **Choose the stream.** The address must start with `https://` (a page served over `https` refuses an `http` stream). Paste it in a tab: if the sound starts, the stream is readable. Some radios refuse to be played from another site (answer 403: the page will say "stream refused or unreadable"): take a radio whose owner accepts being played on a site, and check that you are allowed to broadcast it.
-2. **Open the viewer** (`glb-viewer.html`), load the region's GLB, then its zones (`NOM.zones.json`) if they already exist.
+2. **Open the viewer** (`glb-viewer.html`), open the region's `.glb`, then **import its current zones** ("Import zones (.json)", the region's `NOM.zones.json` file), otherwise the export of step 5 would only hold the new zone (`SIMPLE_PROCEDURES.md` § 16, steps 1 and 2).
 3. **Place the zone.** In the types menu, choose "Radio (Icecast / SHOUTcast stream within range)", then click on the ground where you want it (or, while walking, the P key). The marker (cone) shows that a radio is there.
 4. **Fill in its fields**: "Stream address" (paste the address), then the **"Try the stream (5 s)"** button: it must say "Stream: playing"; otherwise "Stream unreadable (cause)". A name (`label`) and the range in meters (20 by default, up to 200; the sound falls with distance).
-5. **Save the zones**: "Choose the region folder", then save in that folder (`MANUAL.md` § 5.15), or export `NOM.zones.json` and copy it over the old one.
-6. **Publish.** Region with the shared shell: `NOM.zones.json` in the region folder is enough, the page reads it again at each opening. Standalone page: rebuild the page with `--zones NOM.zones.json`.
-7. **Try it**: open the page, switch to walk mode (F key), walk into the range. A first click or key is needed (browser rule). The "♪ Radio: NAME" line of the State block (I key) says what is happening. The volume is the "Sounds" box of Settings.
-8. **The track title (optional).** On the presence server, a `presence_radios.json` file (JSON list of stream addresses) and the `--radios presence_radios.json` option (`MANUAL.md` § 10.25). A radio that does not write its titles in the stream: no title, the zone's name alone.
+5. **Export, replace the region's zones file, publish**: this is the procedure of **§ 16** (export, rename to `NOM.zones.json`, copy into the region folder, try at home, publish). Nothing else to copy for a radio: the sound comes from the stream.
+6. **Try it online**: open the page (F5 or Ctrl+F5), switch to walk mode (F key), walk into the range. A first click or key is needed (browser rule). The "♪ Radio: NAME" line of the State block (I key) says what is happening. The volume is the "Sounds" box of Settings.
+7. **The track title (optional).** On the presence server, a `presence_radios.json` file (JSON list of stream addresses) and the `--radios presence_radios.json` option (`MANUAL.md` § 10.25). A radio that does not write its titles in the stream: no title, the zone's name alone.
 
 A stream that does not play: `MANUAL.md` § 5.19, "The radio does not play?".
 
@@ -249,17 +248,37 @@ A stream that does not play: `MANUAL.md` § 5.19, "The radio does not play?".
 
 **I want visitors to hear my music (mp3, ogg, wav files...) when they pass by a spot.** A "Music" zone plays the files of a folder, in alphabetical order, in a loop (`MANUAL.md` § 5.20).
 
-You need: your sound files (that you have the rights to), the region with its folder (the one of the `.glb`), Edge or Chrome for the viewer.
+You need: your sound files (that you have the rights to), your region's folder (the one holding the `.glb`), Edge or Chrome for the viewer.
 
-1. **Prepare the folder.** In the region folder, create an `audio` sub-folder (or `medias\audio`, if the region has a `medias` folder) and put the files in it. **Number the names to fix the order**: `01-intro.mp3`, `02-vagues.mp3`, `03-finale.mp3`. Without numbers, the order is alphabetical; numbers count as numbers (`2` before `10`).
-2. **Make the playlist** (`playlist.json`), either way:
-   - on the command line, from the `dist` folder: `python .\glb2html.py --audio-list "CHEMIN\NOM\audio"` (add `--dry-run` to see without writing);
-   - or in the viewer, at step 4 below: "Update the list (playlist.json)" button.
-3. **Open the viewer** (`glb-viewer.html`), load the region's GLB, then its zones.
-4. **Place the zone.** Type "Music (sound files of a folder, played in a loop within range)", click on the ground (or P key while walking). In "Tracks folder", write only the sub-folder name: `audio`. Click **"Update the list (playlist.json)"**: the first time the viewer asks for the region folder (the one of the `.glb`); it then says "List written: N sound file(s) in audio/playlist.json". The **"Try the first track (5 s)"** button checks that a sound plays. Set the range (20 m by default, up to 200).
-5. **Save the zones** (`MANUAL.md` § 5.15): the zone only holds `"folder": "audio"`, not the sounds.
-6. **Publish**: the whole `audio` folder (sounds **and** `playlist.json`) with the rest of the region, and `NOM.zones.json` (standalone page: rebuild with `--zones NOM.zones.json`).
-7. **Try it**: open the page, switch to walk mode (F key), enter the range: the "♪ Music: NAME — track" line of the State block (I key) gives the current track. A click or key is needed the first time. The volume falls as you move away, playback stops out of range and resumes at the track that was left.
-8. **Later**: if you add, remove or rename a sound, **redo the list** (step 2); the page reads it again each time the zone is entered, no page rebuild.
+1. **Prepare the sounds folder.** In the region folder, create an `audio` sub-folder (or `medias\audio`, if the region has a `medias` folder) and put the files in it. **Number the names to fix the order**: `01-intro.mp3`, `02-vagues.mp3`, `03-finale.mp3`. Without numbers, the order is alphabetical; numbers count as numbers (`2` before `10`).
+2. **Make the playlist** (`playlist.json`), with the command line, from the tools' `dist` folder: `python .\glb2html.py --audio-list "CHEMIN\NOM\audio"`, where `CHEMIN\NOM` is the region folder. It writes `playlist.json` in the `audio` folder: that is the list the page reads. Add `--dry-run` to see without writing. *Variant without the command line*: the "Update the list (playlist.json)" button of the zone's sheet (step 3) does exactly the same; no need to do both.
+3. **Place the zone in the viewer.** Open `glb-viewer.html`, open the region's `.glb`, **import its current zones** ("Import zones (.json)", `NOM.zones.json`). Type "Music (sound files of a folder, played in a loop within range)", click on the ground (or P key while walking). In "Tracks folder", write only the sub-folder name: `audio`. Set the range (20 m by default, up to 200). Optional: "Try the first track (5 s)" checks that a sound plays (the viewer first asks for the region folder, once).
+4. **Export, replace the region's zones file**: procedure of **§ 16**. The zone only holds `"folder": "audio"`, not the sounds.
+5. **Put the sounds online**: copy the **whole** `audio` folder (the sounds **and** `playlist.json`) into the region folder on the host, next to `NOM.glb`, together with the same `NOM.zones.json` as in § 16. Without the `audio` folder online, the "♪ Music" line will say "playlist not found".
+6. **Try it online**: open the page (F5 or Ctrl+F5), switch to walk mode (F key), enter the range: the "♪ Music: NAME — track" line of the State block (I key) gives the current track. A click or key is needed the first time. The volume falls as you move away, playback stops out of range and resumes at the track that was left.
+7. **Later**: if you add, remove or rename a sound, **redo the list** (step 2) and copy the `audio` folder online again; the page reads the list each time the zone is entered, no page rebuild and no new zones file.
 
 Radio **or** music: in Settings, the "Zone radio" and "Zone music" boxes exclude each other. Nothing plays? `MANUAL.md` § 5.20, "Does not play?".
+
+## 16. Update the zones of a region already online
+
+**I want to add, move or remove a zone (arrival, portal, sign, picture, radio, music) in an already published region.** A region's zones are in a single file, `NOM.zones.json` (NOM = name of the `.glb` without extension, in lower case). You **edit it in the viewer**, **export** it, **replace** the region's one, and **publish again**. The page does not have to be rebuilt (case A below).
+
+**Which case is yours?** Look at the region folder:
+
+- **A. Shared shell** (the case of the packages and of the demo): the region opens with `index.html?region=NOM` and its folder holds `NOM.glb`, `NOM.config.json` and `NOM.zones.json`. **This is the case described below.**
+- **B. Tiled region**: a `NOM.tiles.json` and tiles instead of the `.glb`. The viewer has a button **"Save the zones in the region folder"** (Edge or Chrome) that writes `NOM.zones.json` for you and keeps the old one as `NOM.zones.bak.json` (`MANUAL.md` § 5.15): do steps 1 to 3, then this button instead of steps 4 and 5, and go on at step 6.
+- **C. Standalone page** (a single `NOM.html` file, no `NOM.zones.json` next to it): the zones are inside the page. Rebuild the page with the same command as the first time, giving the exported zones: `--zones zones.json` (`MANUAL.md` § 6).
+
+**The steps (case A)**
+
+1. **Open the viewer**: the `glb-viewer.html` file (tools' `dist` folder) opens in Edge or Chrome by double-click. Open the region's `.glb`.
+2. **Take the zones already placed**: **"Import zones (.json)"** button, then the region's **current** `NOM.zones.json`. **Do not skip this step**: the file exported at step 4 only holds what is in the viewer at that moment; without the import, the existing zones would vanish from the region.
+3. **Edit**: add a zone (type, click on the ground or P key while walking), open its sheet to set it, or delete it (`MANUAL.md` § 5.2). For a picture: the files go in the region's `medias` sub-folder (`MANUAL.md` § 5.11); for music: the `audio` folder (§ 15); a radio: nothing to copy.
+4. **Export**: **"Export zones (.json)"** button. The browser downloads a file named `zones.json` into its downloads folder.
+5. **Replace the region's file**: first **keep a copy** of the old `NOM.zones.json` (for example rename it `NOM.zones.avant.json`). Then rename the downloaded file to **`NOM.zones.json`** (exactly the old one's name) and copy it into the region folder, in place of the old one. Keep the exact name: the page only looks for that one.
+6. **Try at home before publishing**: from the site folder, `python -m http.server 8000`, then open `http://localhost:8000/index.html?region=NOM`. The page reads `NOM.zones.json` again at each opening: **F5 is enough**, no page rebuild (unless you also change the page options, which are in `NOM.config.json`).
+7. **Publish**: copy to the host, replacing, **only what changed**: `NOM.zones.json`, and depending on what you added the `audio` folder, the pictures of `medias`. With GitHub Pages, from the site folder: `git add -A`, `git commit -m "zones"`, `git push` (one command per line), then wait a minute or two.
+8. **Check online**: open the public address, **Ctrl+F5** (the browser sometimes keeps the old file), switch to walk mode (F key) and go to the zone.
+
+A mistake? Put the old file back (the copy of step 5) in place of `NOM.zones.json` and publish again.

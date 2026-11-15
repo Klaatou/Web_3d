@@ -6,6 +6,12 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.11.0)
 
+### 15/11/2026 : tutoriels corrigés, et « mettre à jour les zones d'une région déjà en ligne »
+
+- **Remarque de Klaatou** : après la commande `--audio-list`, le tutoriel faisait quand même cliquer « Mettre à jour la liste » dans le viewer (les deux font la même chose : mon tutoriel demandait les deux) ; la mise en ligne était trop succincte ; un débutant a besoin de l'exportation et de la mise à jour d'une région existante en détail.
+- **`PROCEDURES_SIMPLES.md` et `SIMPLE_PROCEDURES.md`** : § 14 (radio) et § 15 (playlist) refaits : la liste de lecture se fait **une seule fois** (commande, ou bouton en variante), les zones existantes sont importées avant d'en ajouter une, la mise en ligne renvoie au nouveau **§ 16 « Mettre à jour les zones d'une région déjà en ligne »** : quel est ton cas (coquille commune, tuiles, page autonome), import des zones actuelles (sinon elles disparaissent de l'export), modification, export (`zones.json`), copie de l'ancien puis renommage en `NOM.zones.json` et remplacement, essai chez soi, publication de ce qui a changé seulement, vérification en ligne, retour en arrière.
+- **Manuel** (§ 5.20) et **index** : renvois aux § 15 et § 16 ; historiques (FR et EN). **Aucun changement de code**. `VERSION` : `1.11.6`.
+
 ### 15/11/2026 : documents du lot 1.11.4 (zones audio) et tutoriels pas à pas
 
 - **Demande de Klaatou** : les documents des zones audio, avec des tutoriels complets « je veux mettre une radio » et « je veux implanter une playlist ».

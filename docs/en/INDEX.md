@@ -24,6 +24,7 @@ This page says **which document to read for what**. The French documents carry t
 | place zones (arrivals, portals, signs, pictures) | `GUIDE.md` § 2; `MANUAL.md` § 5; `PROCEDURES.md` § 5 |
 | put a radio in a region (`cast` zone, track title) | `SIMPLE_PROCEDURES.md` § 14 (step by step); `MANUAL.md` § 5.19 and § 10.25 |
 | put my own music (mp3...) in a region (`audio` zone, playlist) | `SIMPLE_PROCEDURES.md` § 15; `MANUAL.md` § 5.20 |
+| update the zones of a region already online (export, replace `NOM.zones.json`, publish) | `SIMPLE_PROCEDURES.md` § 16; `MANUAL.md` § 5.15 |
 | build or update the page | `GUIDE.md` § 3; `MANUAL.md` § 6; `PROCEDURES.md` § 3, § 4 and § 8; `SIMPLE_PROCEDURES.md` § 1 |
 | set the tab title, rename a tiled region | `SIMPLE_PROCEDURES.md` § 2 and § 3 |
 | publish, update the online demo | `GUIDE.md` § 4; `SIMPLE_PROCEDURES.md` § 7 |

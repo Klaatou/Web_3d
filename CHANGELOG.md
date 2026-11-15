@@ -6,6 +6,12 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.11.0)
 
+### 15/11/2026: tutorials corrected, and "update the zones of a region already online"
+
+- **Klaatou's remark**: after the `--audio-list` command, the tutorial still made him click "Update the list" in the viewer (both do the same thing: my tutorial asked for both); publishing was too short; a beginner needs the export and the update of an existing region in detail.
+- **`SIMPLE_PROCEDURES.md` and `PROCEDURES_SIMPLES.md`**: § 14 (radio) and § 15 (playlist) rewritten: the playlist is made **once** (command, or button as a variant), the existing zones are imported before adding one, publishing points to the new **§ 16 "Update the zones of a region already online"**: which case is yours (shared shell, tiles, standalone page), import of the current zones (otherwise they vanish from the export), edit, export (`zones.json`), keep a copy then rename to `NOM.zones.json` and replace, try at home, publish only what changed, check online, go back.
+- **Manual** (§ 5.20) and **indexes**: pointers to § 15 and § 16; histories (FR and EN). **No code changes**. `VERSION`: `1.11.6`.
+
 ### 15/11/2026: documents for batch 1.11.4 (audio zones) and step-by-step tutorials
 
 - **Klaatou's request**: the documents of the audio zones, with complete tutorials "I want to put a radio" and "I want to put a playlist".

@@ -274,6 +274,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 15/11/2026 |  | after 1.11.0 | Batch 1.11.3: documents for batches 1.11.1 and 1.11.2: manual § 5.19, § 7.1, § 7.2, § 7.25, § 7.39, § 10.25 and § 13, README, histories |
 | 15/11/2026 |  | after 1.11.0 | Batch 1.11.4: local audio zones (`audio` type): sound files of a folder played in a loop within range, alphabetical order, `playlist.json` (`glb2html.py --audio-list`, viewer button), exclusive "Zone radio" / "Zone music" boxes; `tests/zone_audio.py` |
 | 15/11/2026 |  | after 1.11.0 | Batch 1.11.5: documents of 1.11.4: manual § 5.20, § 7.66, appendix; `REFERENCE_JSON.md` (`folder`, `tracks`); tutorials `SIMPLE_PROCEDURES.md` § 14 (radio) and § 15 (playlist); index, overview, README |
+| 15/11/2026 |  | after 1.11.0 | Batch 1.11.6: corrected tutorials (playlist made only once) and new `SIMPLE_PROCEDURES.md` § 16: update the zones of a region already online (import, export, replace `NOM.zones.json`, publish) |
 
 ## Useful commands
 
