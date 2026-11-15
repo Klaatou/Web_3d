@@ -269,6 +269,9 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 15/11/2026 |  | after 1.10.0 | Batch 1.10.37: server: silent walker (no position for `--idle-walk` minutes) neither counted nor shown, back at the first position; `tests/promeneur_muet.py` |
 | 15/11/2026 |  | after 1.10.0 | Batch 1.10.38: documents for batch 1.10.37: manual § 10.26 (new) and § 13, procedures § 11 (`--idle-walk 0` on the VM), histories |
 | 15/11/2026 |  | 1.11.0 | Release 1.11.0: `VERSION` 1.11.0; `CHANGELOG.fr.md` and `CHANGELOG.md`; gathers batches 1.10.1 to 1.10.38 (radio zones with titles, metallic reflections, lighter textures, automatic sea, `oars2site.py`, launcher, map, presence server: bounded nicknames, silent walker) |
+| 15/11/2026 |  | after 1.11.0 | Batch 1.11.1: foldable chat block (B key), help: keys and titles in bold, radio title requested only when listened to; `tests/chat_replie.py` |
+| 15/11/2026 |  | after 1.11.0 | Batch 1.11.2: new project icon ("Web 3D" globe): `src/favicon.ico` and `src/credit.png` |
+| 15/11/2026 |  | after 1.11.0 | Batch 1.11.3: documents for batches 1.11.1 and 1.11.2: manual § 5.19, § 7.1, § 7.2, § 7.25, § 7.39, § 10.25 and § 13, README, histories |
 
 ## Useful commands
 

@@ -179,6 +179,7 @@ Pour un modèle énorme, `glb2tiles.py` écrit les tuiles, et `glb2html.py --til
 | **T**                                                         | repères de portail (cônes)                                                                                                    |
 | **G**                                                         | reprendre la souris après **Échap**                                                                                           |
 | **Entrée**                                                    | écrire dans le chat                                                                                                           |
+| **B**                                                         | replier / déplier le bloc de chat                                                                                             |
 
 Le réglage « Clavier » (Auto, AZERTY ou QWERTY) ne change que les lettres affichées dans l'aide ; les touches physiques restent les mêmes. Tableau complet : manuel § 7.1 et § 7.2.
 

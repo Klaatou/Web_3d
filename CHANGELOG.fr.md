@@ -6,6 +6,14 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.11.0)
 
+### 15/11/2026 : documents des lots 1.11.1 et 1.11.2
+
+- **Demande de Klaatou** : mettre à jour les documents en retard pour la 1.11.1 (et l'icône de la 1.11.2).
+- **Manuel** (`MANUEL.md` et `MANUAL.md`) : touche **B** dans les tableaux des touches (§ 7.1 et § 7.2) ; bloc de chat repliable (§ 7.25) ; aide : touches et titres en gras, ligne « B » du groupe Chat (§ 7.39) ; titre de la radio demandé seulement si on l'écoute, demandes espacées d'au moins 1,5 s (§ 5.19 et § 10.25) ; ligne « Ajouts de la 1.11.1 et de la 1.11.2 » de l'annexe (§ 13).
+- **README** (`README.md` et `README.fr.md`) : ligne « B » du tableau des touches. **Historiques** (`HISTORIQUE.md` et `HISTORY.md`) : trois lignes (lots 1.11.1 à 1.11.3).
+- **Essayé par Klaatou** (15/11/2026) : la touche B, le dépli à l'arrivée d'un visiteur, l'aide en gras ; son système et son navigateur ne sont pas notés. **Non essayé** : écran tactile réel (« Fermer » qui replie le bloc).
+- **Aucun code ne change** (`dist\` et `VERSIONS.json` identiques). `VERSION` : `1.11.3`. **Reste à mettre à jour** : rien de connu.
+
 ### 15/11/2026 : nouvelle icone du projet (globe « Web 3D »)
 
 - **Demande de Klaatou** : remplacer l'icone du projet par le globe « Web 3D » (partout ou elle sert).

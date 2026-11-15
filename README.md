@@ -179,6 +179,7 @@ For a huge model, `glb2tiles.py` writes the tiles, and `glb2html.py --tiles X.ti
 | **T**                                                       | portal markers (cones)                                                                              |
 | **G**                                                       | grab the mouse again after **Esc**                                                                  |
 | **Enter**                                                   | write in the chat                                                                                   |
+| **B**                                                       | fold / unfold the chat block                                                                        |
 
 The "Keyboard" setting (Auto, AZERTY or QWERTY) only changes the letters shown in the help; the physical keys stay the same. Full table: manual § 7.1 and § 7.2.
 

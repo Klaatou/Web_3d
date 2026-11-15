@@ -269,6 +269,9 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 15/11/2026 |  | après 1.10.0 | Lot 1.10.37 : serveur : promeneur muet (aucune position depuis `--idle-walk` minutes) ni compté ni montré, de retour à sa première position ; `tests/promeneur_muet.py` |
 | 15/11/2026 |  | après 1.10.0 | Lot 1.10.38 : documents du lot 1.10.37 : manuel § 10.26 (nouveau) et § 13, procédures § 11 (`--idle-walk 0` sur la VM), historiques |
 | 15/11/2026 |  | 1.11.0 | Publication 1.11.0 : `VERSION` 1.11.0 ; `CHANGELOG.fr.md` et `CHANGELOG.md` ; réunit les lots 1.10.1 à 1.10.38 (zones radio avec titres, reflets métalliques, textures allégées, mer automatique, `oars2site.py`, lanceur, carte, serveur de présence : pseudos bornés, promeneur muet) |
+| 15/11/2026 |  | après 1.11.0 | Lot 1.11.1 : bloc de chat repliable (touche B), aide : touches et titres en gras, titre de la radio demandé seulement si on l'écoute ; `tests/chat_replie.py` |
+| 15/11/2026 |  | après 1.11.0 | Lot 1.11.2 : nouvelle icône du projet (globe « Web 3D ») : `src/favicon.ico` et `src/credit.png` |
+| 15/11/2026 |  | après 1.11.0 | Lot 1.11.3 : documents des lots 1.11.1 et 1.11.2 : manuel § 5.19, § 7.1, § 7.2, § 7.25, § 7.39, § 10.25 et § 13, README, historiques |
 
 ## Commandes utiles
 

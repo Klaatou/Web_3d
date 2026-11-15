@@ -6,6 +6,14 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.11.0)
 
+### 15/11/2026: documents for batches 1.11.1 and 1.11.2
+
+- **Klaatou's request**: bring the documents that were behind for 1.11.1 up to date (and the 1.11.2 icon).
+- **Manual** (`MANUEL.md` and `MANUAL.md`): **B** key in the key tables (§ 7.1 and § 7.2); foldable chat block (§ 7.25); help: keys and titles in bold, "B" line of the Chat group (§ 7.39); radio title requested only when listened to, requests spaced at least 1.5 s apart (§ 5.19 and § 10.25); "Additions of 1.11.1 and 1.11.2" row of the appendix (§ 13).
+- **README** (`README.md` and `README.fr.md`): "B" row of the key table. **Histories** (`HISTORIQUE.md` and `HISTORY.md`): three rows (batches 1.11.1 to 1.11.3).
+- **Tried by Klaatou** (15/11/2026): the B key, the unfolding when a visitor arrives, the bold help; his system and browser are not noted. **Not tried**: a real touch screen ("Close" folding the block).
+- **No code changes** (`dist\` and `VERSIONS.json` identical). `VERSION`: `1.11.3`. **Still to update**: nothing known.
+
 ### 15/11/2026: new project icon ("Web 3D" globe)
 
 - **Klaatou's request**: replace the project icon with the "Web 3D" globe (everywhere it is used).
