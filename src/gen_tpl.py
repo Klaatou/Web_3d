@@ -123,7 +123,7 @@ DRACO_LIBS = {
 MESHOPT_FILES = {"three/addons/libs/meshopt_decoder.module.js": "examples/jsm/libs/meshopt_decoder.module.js"}
 
 
-ZONE_TYPES = ("url", "ha", "portal", "spawn", "image", "cast")   # cast (1.10.32) : radio, flux Icecast / SHOUTcast joue en promenade a portee
+ZONE_TYPES = ("url", "ha", "portal", "spawn", "image", "cast", "audio")   # cast (1.10.32) : radio, flux Icecast / SHOUTcast joue en promenade a portee
 IMG_EXTS = (".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif", ".bmp")
 MEDIA_DIR = "medias"   # sous-dossier des medias de la region (cle mediaDir de la config cote page ; ici toujours « medias »)
 IMG_DIR = [None]   # dossier ou se cherchent les images des zones « image » (celui de la page), pose par main() ; None : aucune recherche
@@ -183,6 +183,19 @@ def _slug(s):
     return re.sub(r"^-+|-+$", "", re.sub(r"[^a-z0-9_-]+", "-", str(s or "").lower()))[:40]
 
 
+AUDIO_EXTS = (".mp3", ".ogg", ".oga", ".opus", ".wav", ".m4a", ".aac", ".flac", ".weba", ".webm")   # 1.11.4 : fichiers son gardes par --audio-list
+
+
+def audio_name(s):
+    """Nom d'une piste d'une zone audio (comme audioName de core.js) : fichier relatif sans « .. », chemin /... ou adresse http(s) ; '' sinon."""
+    if not isinstance(s, str):
+        return ""
+    s = re.sub(r"[\x00-\x1f]", "", s).replace("\\", "/").strip()[:300]
+    if not s or ".." in s.split("/"):
+        return ""
+    return "" if re.match(r"^[a-z][a-z0-9+.\-]*:", s, re.I) and not re.match(r"^https?:", s, re.I) else s
+
+
 def clean_zones(zones, profile):
     """Valide les zones ; le profil 'public' retire toutes les zones privées (leurs adresses ne sont jamais écrites dans la page)."""
     def num(v, d, lo, hi):
@@ -204,15 +217,23 @@ def clean_zones(zones, profile):
             "x": num(z.get("x"), 0, -1e5, 1e5), "y": num(z.get("y"), 0, -1e5, 1e5), "z": num(z.get("z"), 0, -1e5, 1e5),
             "yaw": num(z.get("yaw"), 0, -7, 7), "shape": "board" if z.get("shape") == "board" else "ring",
             "trigger": (z.get("trigger") if z.get("trigger") in ("click", "enter", "both") else "click") if t in ("portal", "url") else "click",
-            "radius": num(z.get("radius"), 20 if t == "cast" else 2, 0.5, 200 if t == "cast" else 50), "w": num(z.get("w"), 1.2 if img else 2.4, 0.1 if img else 0.5, 10), "h": num(z.get("h"), 0, 0, 6) if img else num(z.get("h"), 1.2, 0.3, 6),
+            "radius": num(z.get("radius"), 20 if t in ("cast", "audio") else 2, 0.5, 200 if t in ("cast", "audio") else 50), "w": num(z.get("w"), 1.2 if img else 2.4, 0.1 if img else 0.5, 10), "h": num(z.get("h"), 0, 0, 6) if img else num(z.get("h"), 1.2, 0.3, 6),
             "target": str(resolve_image_name(z.get("target")) if img else (z.get("target") or ""))[:600], "spawn": _slug(z.get("spawn")),
             "confirm": bool(z.get("confirm")), "private": bool(z.get("private")), "showName": bool(z.get("showName")),
-            "mesh": "" if t in ("spawn", "image", "cast") else re.sub(r"[\x00-\x1f]", "", str(z.get("mesh") or ""))[:200],
+            "mesh": "" if t in ("spawn", "image", "cast", "audio") else re.sub(r"[\x00-\x1f]", "", str(z.get("mesh") or ""))[:200],
         }
         if img:   # lien facultatif d'un tableau (page ouverte au clic ou a E) : ecrit seulement s'il est rempli, comme core.js
             lk = re.sub(r"[\x00-\x1f]", "", str(z.get("link") or "")).strip()[:600]
             if lk:
                 d["link"] = lk
+        if t == "audio":   # 1.11.4 : dossier des pistes et liste facultative ; ecrits seulement s'ils sont remplis, comme core.js
+            fd = re.sub(r"[\x00-\x1f]", "", str(z.get("folder") or "")).replace("\\", "/").strip("/").strip()[:200]
+            if fd and ".." not in fd.split("/"):
+                d["folder"] = fd
+            if isinstance(z.get("tracks"), list):
+                tk = [x for x in (audio_name(s) for s in z["tracks"]) if x][:500]
+                if tk:
+                    d["tracks"] = tk
         if isinstance(z.get("cone"), bool) and t not in ("spawn", "image"):   # repere facultatif : ecrit seulement s'il est vrai ou faux, comme core.js
             d["cone"] = z["cone"]
         out.append(d)
@@ -618,6 +639,28 @@ def build_map_shell():
 
 SCAN_SKIP = {"lib", "_bak", "node_modules"}
 SCAN_IMG = (".jpg", ".jpeg", ".png", ".webp")
+
+
+def audio_list(folder, dry):
+    """1.11.4 --audio-list : ecrit FOLDER/playlist.json, les fichiers son du dossier (pas des sous-dossiers) par ordre alphabetique sans tenir compte
+    des majuscules, les nombres compares comme des nombres (2-x avant 10-x). Un site heberge ne peut pas lister un dossier : la page lit ce fichier.
+    Ne touche ni a la page ni aux zones. Avec --dry-run : affiche sans ecrire."""
+    folder = pathlib.Path(folder).expanduser()
+    if not folder.is_dir():
+        sys.exit(_tr("py.glb2html.audio.nofolder", folder))
+    cle = lambda n: [int(t) if i % 2 else t.lower() for i, t in enumerate(re.split(r"([0-9]+)", n))]   # comme natKey du viewer
+    names = sorted((p.name for p in folder.iterdir() if p.is_file() and not p.name.startswith(".") and p.suffix.lower() in AUDIO_EXTS), key=cle)
+    for i, n in enumerate(names, 1):
+        print(f"  {i:3d}. {n}")
+    if not names:
+        print(_tr("py.glb2html.audio.none", folder, " ".join(AUDIO_EXTS)), file=sys.stderr)
+    dest = folder / "playlist.json"
+    texte = json.dumps({"tracks": names}, ensure_ascii=False, indent=2) + "\n"
+    if dry:
+        print(_tr("py.glb2html.audio.dry", len(names), dest))
+        return
+    dest.write_bytes(texte.encode("utf-8"))
+    print(_tr("py.glb2html.audio.done", len(names), dest))
 
 
 def scan_sites(root, dry, prune=False):
@@ -1713,6 +1756,7 @@ def main():
     ap.add_argument("--map-url", default=MAP_URL, help=_tr("py.glb2html.adresse_s_de_regions_json_partage"))
     ap.add_argument("--register", help=_tr("py.glb2html.fichier_regions_json_a_mettre_a"))
     ap.add_argument("--scan-sites", metavar="FOLDER", help=_tr("py.glb2html.scan.help"))
+    ap.add_argument("--audio-list", metavar="FOLDER", help=_tr("py.glb2html.audio.help"))   # 1.11.4 : playlist.json d'un dossier de sons (zones audio)
     ap.add_argument("--dry-run", action="store_true", help=_tr("py.glb2html.scan.dryhelp"))
     ap.add_argument("--prune-missing", action="store_true", help=_tr("py.glb2html.scan.prunehelp"))
     ap.add_argument("--region-name", help=_tr("py.glb2html.nom_affiche_dans_la_carte_defaut"))
@@ -1946,6 +1990,9 @@ def main():
             else:
                 print(_tr("py.glb2html.avertissement_map_page_ignore_aucune_region_2"), file=sys.stderr)
         sys.exit(0 if ok else 1)
+    if a.audio_list and not a.input:   # 1.11.4 : liste de lecture d'un dossier de sons (zones audio)
+        audio_list(a.audio_list, a.dry_run)
+        sys.exit(0)
     if a.prune_missing and not a.scan_sites:
         ap.error(_tr("py.glb2html.scan.prunenoscan"))
     if a.scan_sites and not a.input:   # v49 : mise à jour de regions.json depuis le dossier des sites

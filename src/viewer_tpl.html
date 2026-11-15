@@ -272,7 +272,7 @@ for (const r of ROWS) {
   }
   if (r[0] === 'zones') {
     const box = add('<div id="zonesBox"></div>');
-    box.innerHTML = '<div class="row"><label>' + tr('viewer.zone.type') + '</label><select id="zNewType" style="grid-column:1/-1;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;width:100%"><option value="portal">' + tr('viewer.zone.t.portal') + '</option><option value="url">' + tr('viewer.zone.t.url') + '</option><option value="ha">' + tr('viewer.zone.t.ha') + '</option><option value="spawn">' + tr('viewer.zone.t.spawn') + '</option><option value="image">' + tr('viewer.zone.t.image') + '</option><option value="cast">' + tr('viewer.zone.t.cast') + '</option></select></div>' +
+    box.innerHTML = '<div class="row"><label>' + tr('viewer.zone.type') + '</label><select id="zNewType" style="grid-column:1/-1;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;width:100%"><option value="portal">' + tr('viewer.zone.t.portal') + '</option><option value="url">' + tr('viewer.zone.t.url') + '</option><option value="ha">' + tr('viewer.zone.t.ha') + '</option><option value="spawn">' + tr('viewer.zone.t.spawn') + '</option><option value="image">' + tr('viewer.zone.t.image') + '</option><option value="cast">' + tr('viewer.zone.t.cast') + '</option><option value="audio">' + tr('viewer.zone.t.audio') + '</option></select></div>' +
       '<div class="btns"><button id="bZoneAdd" class="wide"></button></div><small>' + tr('viewer.zone.pnote') + '</small>' +
       '<div id="zoneList"></div>' +
       '<div class="btns"><button id="bZoneExp">' + tr('viewer.zone.exp') + '</button><button id="bZoneImp">' + tr('viewer.zone.imp') + '</button></div>' +
@@ -448,6 +448,7 @@ function zoneDefaults(type) {
   const base = { type, label: '', shape: 'ring', trigger: 'click', radius: 2, w: 2.4, h: 1.2, target: '', spawn: '', confirm: false, private: false, showName: false, yaw: 0, mesh: '' };
   if (type === 'portal') return Object.assign(base, { label: tr('viewer.kind.portal'), trigger: 'enter' });
   if (type === 'image') return Object.assign(base, { label: tr('viewer.kind.image'), w: 1.2, h: 0 });
+  if (type === 'audio') return Object.assign(base, { label: tr('viewer.kind.audio'), radius: 20, folder: 'audio' });   // 1.11.4 : musique (fichiers son d'un dossier, joues en boucle)
   if (type === 'cast') return Object.assign(base, { label: tr('viewer.kind.cast'), radius: 20, target: 'https://' });   // 1.10.32 : radio (flux Icecast / SHOUTcast)
   if (type === 'url') return Object.assign(base, { label: tr('viewer.kind.url'), shape: 'board', target: 'https://' });
   if (type === 'ha') return Object.assign(base, { label: tr('viewer.kind.ha'), shape: 'board', target: 'http://homeassistant.local:8123/api/webhook/', private: true, confirm: true });
@@ -483,7 +484,7 @@ function renderZoneList() {
   viewer.getZones().forEach((z, idx) => {
     const d = document.createElement('details'); d.open = z.id === zoneSel; d.style.cssText = 'border:1px solid #000;border-radius:6px;padding:4px 8px;margin:6px 0';
     const s = document.createElement('summary'); s.style.cursor = 'pointer';
-    s.textContent = ({ url: tr('viewer.kind.url'), ha: tr('viewer.kind.ha'), portal: tr('viewer.kind.portal'), spawn: tr('viewer.kind.spawn'), image: tr('viewer.kind.image'), cast: tr('viewer.kind.cast') }[z.type]) + ' : ' + (z.label || z.id) + (z.private ? tr('viewer.private') : '');
+    s.textContent = ({ url: tr('viewer.kind.url'), ha: tr('viewer.kind.ha'), portal: tr('viewer.kind.portal'), spawn: tr('viewer.kind.spawn'), image: tr('viewer.kind.image'), cast: tr('viewer.kind.cast'), audio: tr('viewer.kind.audio') }[z.type]) + ' : ' + (z.label || z.id) + (z.private ? tr('viewer.private') : '');
     s.onclick = () => { setTimeout(() => { if (d.open) { zoneSel = z.id; viewer.zoneSelect(z.id); } }, 0); };
     d.appendChild(s);
     const upd = (patch, rerender) => { const list = viewer.getZones(); Object.assign(list[idx], patch); zonesSync(list, rerender); };
@@ -516,6 +517,12 @@ function renderZoneList() {
       const bt2 = document.createElement('button'); bt2.className = 'wide'; bt2.textContent = tr('viewer.zf.cast.try'); bt2.onclick = () => castTry(z.target); d.appendChild(bt2);
       d.appendChild(inp(tr('viewer.zf.r.cast'), 'number', z.radius, v => upd({ radius: v }, true)));
       d.appendChild(inp(tr('viewer.zf.cone'), 'select', typeof z.cone === 'boolean' ? (z.cone ? 'on' : 'off') : 'auto', v => upd({ cone: v === 'on' ? true : (v === 'off' ? false : undefined) }, true), [['auto', tr('viewer.zf.cone.auto')], ['on', tr('viewer.zf.cone.on')], ['off', tr('viewer.zf.cone.off')]]));   // 1.10.35 : cone par defaut
+    } else if (z.type === 'audio') {   // 1.11.4 : musique : dossier des pistes, mise a jour de la liste (playlist.json), essai de 5 s, portee, repere
+      d.appendChild(inp(tr('viewer.zf.audio.folder'), 'text', z.folder || '', v => upd({ folder: v })));
+      const bl = document.createElement('button'); bl.className = 'wide'; bl.textContent = tr('viewer.zf.audio.list'); bl.onclick = () => updateAudioList(z); d.appendChild(bl);
+      const bt3 = document.createElement('button'); bt3.className = 'wide'; bt3.textContent = tr('viewer.zf.audio.try'); bt3.onclick = () => audioTry(z); d.appendChild(bt3);
+      d.appendChild(inp(tr('viewer.zf.r.audio'), 'number', z.radius, v => upd({ radius: v }, true)));
+      d.appendChild(inp(tr('viewer.zf.cone'), 'select', typeof z.cone === 'boolean' ? (z.cone ? 'on' : 'off') : 'auto', v => upd({ cone: v === 'on' ? true : (v === 'off' ? false : undefined) }, true), [['auto', tr('viewer.zf.cone.auto')], ['on', tr('viewer.zf.cone.on')], ['off', tr('viewer.zf.cone.off')]]));
     } else if (z.type !== 'spawn') {
       if (z.type === 'portal') {
         d.appendChild(inp(tr('viewer.zf.target'), 'text', z.target, v => upd({ target: v })));
@@ -572,7 +579,7 @@ function castTry(url) {
   castT = setTimeout(() => { stop(); setStatus(tr('viewer.zf.cast.stopped')); }, 5000);
 }
 viewer.onZone = (z, how) => {
-  setStatus(tr('viewer.preview.fired', { url: tr('viewer.kind.url'), ha: tr('viewer.kind.ha'), portal: tr('viewer.kind.portal'), spawn: tr('viewer.kind.spawn'), image: tr('viewer.kind.image'), cast: tr('viewer.kind.cast') }[z.type], z.label || z.id, how, (z.type === 'image' ? z.link : z.target) || tr('viewer.preview.notarget'), z.spawn ? ' #' + z.spawn : ''));
+  setStatus(tr('viewer.preview.fired', { url: tr('viewer.kind.url'), ha: tr('viewer.kind.ha'), portal: tr('viewer.kind.portal'), spawn: tr('viewer.kind.spawn'), image: tr('viewer.kind.image'), cast: tr('viewer.kind.cast'), audio: tr('viewer.kind.audio') }[z.type], z.label || z.id, how, (z.type === 'image' ? z.link : z.target) || tr('viewer.preview.notarget'), z.spawn ? ' #' + z.spawn : ''));
   // aperçu : un portail sans destination déplace dans la région vers son point d'arrivée
   if (z.type === 'portal' && !String(z.target || '').trim() && viewer.walking) {
     const id = z.spawn || 'default', s = viewer.getZones().find(q => q.type === 'spawn' && q.id === id);
@@ -1168,6 +1175,55 @@ async function chooseImagesDir() {
     if (e && e.name === 'WrongFolder') return say(tr('viewer.zdir.nothing', e.message));
     say(e && (e.name === 'SecurityError' || e.name === 'NotAllowedError') ? tr('viewer.zdir.denied') : tr('viewer.zimgdir.failed', e && e.message ? e.message : e));
   }
+}
+// 1.11.4 : zones audio : le dossier des pistes est un sous-dossier du dossier de la region (<mediaDir>/<dossier> d'abord, puis <dossier>) ; la liste de lecture est le fichier playlist.json
+// qu'il contient (une page hebergee ne peut pas lister un dossier) ; meme ordre que glb2html.py --audio-list : alphabetique sans tenir compte des majuscules, nombres compares comme des nombres
+const AUDIO_EXT_RE = /\.(mp3|ogg|oga|opus|wav|m4a|aac|flac|weba|webm)$/i;
+const natKey = n => String(n).split(/([0-9]+)/).map((t, i) => i % 2 ? Number(t) : t.toLowerCase());
+const natCmp = (x, y) => { const a = natKey(x), b = natKey(y), n = Math.min(a.length, b.length); for (let i = 0; i < n; i++) { if (a[i] < b[i]) return -1; if (a[i] > b[i]) return 1; } return a.length - b.length; };
+async function audioFolderIn(dir, folder) {   // { handle, path } ou null
+  const md = String(cfg.mediaDir === undefined ? 'medias' : (cfg.mediaDir || '')).replace(/^[\\/]+|[\\/]+$/g, '');
+  for (const base of md ? [md + '/' + folder, folder] : [folder]) {
+    try { let h = dir; for (const p of String(base).split('/').filter(Boolean)) h = await h.getDirectoryHandle(p); return { handle: h, path: base }; } catch (e) {}
+  }
+  return null;
+}
+async function audioFilesIn(h) { const out = []; for await (const [n, e] of h.entries()) if (e.kind === 'file' && !n.startsWith('.') && AUDIO_EXT_RE.test(n)) out.push(n); return out.sort(natCmp); }
+async function updateAudioList(z) {
+  const say = t => setStatus(t);
+  if (!String(z.folder || '').trim()) return say(tr('viewer.zf.audio.nofolder'));
+  if (typeof window.showDirectoryPicker !== 'function') return say(tr('viewer.zdir.noapi'));
+  if (!loadedName) return say(tr('viewer.zimgdir.nofile'));
+  try {
+    let dir = zonesDirHandle;
+    if (!dir) { try { dir = await idbDirs('readonly', st => st.get(baseName)); } catch (e) { dir = null; } }
+    if (dir && typeof dir.queryPermission === 'function') {
+      let p = await dir.queryPermission({ mode: 'readwrite' });
+      if (p !== 'granted' && typeof dir.requestPermission === 'function') p = await dir.requestPermission({ mode: 'readwrite' });
+      if (p !== 'granted') dir = null;
+    }
+    if (!dir) dir = await window.showDirectoryPicker({ id: 'glb2html-region', mode: 'readwrite' });
+    try { await dir.getFileHandle(loadedName); } catch (e) { zonesDirHandle = null; throw Object.assign(new Error(tr('viewer.zdir.wrong', loadedName)), { name: 'WrongFolder' }); }
+    zonesDirHandle = dir; try { await idbDirs('readwrite', st => st.put(dir, baseName)); } catch (e) {}
+    const f = await audioFolderIn(dir, String(z.folder).trim());
+    if (!f) return say(tr('viewer.zf.audio.nodir', z.folder, dir.name));
+    const names = await audioFilesIn(f.handle);
+    await writeInDir(f.handle, 'playlist.json', JSON.stringify({ tracks: names }, null, 2) + '\n');
+    say(names.length ? tr('viewer.zf.audio.written', names.length, f.path + '/playlist.json') : tr('viewer.zf.audio.writtenempty', f.path + '/playlist.json'));
+  } catch (e) {
+    if (e && e.name === 'AbortError') return say(tr('viewer.zdir.abort'));
+    if (e && e.name === 'WrongFolder') return say(tr('viewer.zdir.nothing', e.message));
+    say(e && (e.name === 'SecurityError' || e.name === 'NotAllowedError') ? tr('viewer.zdir.denied') : tr('viewer.zf.audio.failed', e && e.message ? e.message : e));
+  }
+}
+async function audioTry(z) {   // essai de 5 s de la premiere piste du dossier (lue dans le dossier de la region deja autorise : rien n'est demande)
+  const dir = await regionDirQuiet();
+  if (!dir) return setStatus(tr('viewer.zf.audio.nodirpick'));
+  const f = await audioFolderIn(dir, String(z.folder || '').trim());
+  if (!f) return setStatus(tr('viewer.zf.audio.nodir', z.folder || '', dir.name));
+  const names = await audioFilesIn(f.handle);
+  if (!names.length) return setStatus(tr('viewer.zf.audio.empty', f.path));
+  castTry(URL.createObjectURL(await (await f.handle.getFileHandle(names[0])).getFile()));
 }
 async function saveZonesToDir() {
   const zname = baseName + '.zones.json', text = JSON.stringify(cfg.zones, null, 1), info = $('zDirInfo');

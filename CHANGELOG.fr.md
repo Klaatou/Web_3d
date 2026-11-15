@@ -6,6 +6,15 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.11.0)
 
+### 15/11/2026 : zones audio locales (nouveau type de zone `audio`)
+
+- **Demande de Klaatou** : jouer des fichiers son (mp3 ou autres formats) d'un dossier, comme une playlist, en se promenant près d'une zone.
+- **Nouveau type de zone `audio`** : un sous-dossier de fichiers son (`"folder": "audio"`) sert de playlist ; les fichiers sont joués dans l'ordre alphabétique (nombres comparés comme des nombres : `2` avant `10`, majuscules ignorées), en boucle, tant que le visiteur marche dans la portée (1 à 200 m). Volume = (1 - distance / portée) x volume des Sons ; seule la zone audio la plus proche joue. La zone n'est jamais liée à un élément et n'a pas d'invite « clic ou E ». Formats : mp3, ogg, oga, opus, wav, m4a, aac, flac, weba, webm.
+- **Liste de lecture** : un hébergement statique ne peut pas lister un dossier, la page lit donc `playlist.json` (`{"tracks": [...]}`, un simple tableau est accepté) dans le dossier, cherché comme les images (dossier de la région, sous-dossier `medias` d'abord). Une zone peut porter à la place un tableau `tracks` facultatif (noms ou adresses http(s)). Une piste illisible est sautée ; une liste absente, vide ou illisible est dite dans la nouvelle ligne « Musique ».
+- **Produire `playlist.json`** : `python glb2html.py --audio-list "CHEMIN\NOM\audio"` (avec `--dry-run` aussi), ou le bouton « Mettre à jour la liste » de la zone dans le viewer (Chrome/Edge, dossier de la région connecté) ; les deux donnent le même ordre.
+- **Radio et musique exclusives** : deux cases dans Réglages, « Radio des zones » et « Musique des zones » ; cocher l'une décoche l'autre. Les deux cochées (par défaut) : la plus forte des deux zones l'emporte, la radio à égalité.
+- **Test** : `tests/zone_audio.py` (commande, page dans Chromium avec des pistes WAV, viewer avec un dossier simulé). Pas encore essayé par Klaatou ; lecture MP3 non essayée dans le bac à sable (pas de décodeur MP3). **Documents** : dans un lot ultérieur.
+
 ### 15/11/2026 : documents des lots 1.11.1 et 1.11.2
 
 - **Demande de Klaatou** : mettre à jour les documents en retard pour la 1.11.1 (et l'icône de la 1.11.2).

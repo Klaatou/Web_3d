@@ -6,6 +6,15 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.11.0)
 
+### 15/11/2026: local audio zones (new `audio` zone type)
+
+- **Klaatou's request**: play sound files (mp3 or other formats) from a folder as a playlist when walking near a zone.
+- **New zone type `audio`**: a sub-folder of sound files (`"folder": "audio"`) is the playlist; files are played in alphabetical order (numbers compared as numbers: `2` before `10`, case ignored), in a loop, while the visitor walks inside the range (1 to 200 m). Volume = (1 - distance / radius) x Sounds volume; only the nearest audio zone plays. The zone is never linked to an element and has no "click or E" prompt. Formats: mp3, ogg, oga, opus, wav, m4a, aac, flac, weba, webm.
+- **Playlist**: a static host cannot list a folder, so the page reads `playlist.json` (`{"tracks": [...]}`, a plain array is accepted) in the folder, searched like images (region folder, `medias` sub-folder first). A zone may carry an optional `tracks` array instead (names or http(s) addresses). An unreadable track is skipped; a missing, empty or unreadable list is said in the new "Music" line.
+- **Producing `playlist.json`**: `python glb2html.py --audio-list "PATH\NAME\audio"` (also with `--dry-run`), or the viewer button "Update the list" of the zone (Chrome/Edge, region folder connected); both give the same order.
+- **Radio and music exclusive**: two checkboxes in Settings, "Zone radio" and "Zone music"; ticking one unticks the other. Both ticked (default): the stronger of the two zones wins, the radio on a tie.
+- **Test**: `tests/zone_audio.py` (command, page in Chromium with WAV tracks, viewer with a simulated folder). Not tried by Klaatou yet; MP3 playback not tried in the sandbox (no MP3 decoder there). **Documents**: in one later batch.
+
 ### 15/11/2026: documents for batches 1.11.1 and 1.11.2
 
 - **Klaatou's request**: bring the documents that were behind for 1.11.1 up to date (and the 1.11.2 icon).

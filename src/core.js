@@ -1313,7 +1313,7 @@ function createViewer(container, cfg0, loader) {
     landKey = '';
     W.grid = null; dirty = true;
     zoneInside.clear(); if (nearZone) { nearZone = null; if (onNear) onNear(null); }
-    castReset();
+    castReset(); audioReset();
     DODGE.pending = null;
     presenceLeave();
     if (zoneLabs.length) zoneLabelTick();
@@ -1862,6 +1862,8 @@ function createViewer(container, cfg0, loader) {
   let zones = [], zoneHit = [], zoneAll = [], zoneInside = new Set(), nearZone = null, zoneEditor = false, selBox = null, onZone = null, onNear = null;
   let castCur = null, castGain = 0, onCast = null, onRadio = null, radioWant = '';   // radioWant : flux dont la page veut le titre (redemandé à la reconnexion)   // 1.10.32 : zone radio (type cast) la plus proche a portee et son gain (1 au centre, 0 au bord) ; onCast(zone|null, gain) a chaque changement
   function castReset() { const was = castCur; castCur = null; castGain = 0; if (was && onCast) onCast(null, 0); }
+  let audCur = null, audGain = 0, onAudio = null;   // 1.11.4 : zone audio (type audio) la plus proche a portee et son gain, comme la radio ; onAudio(zone|null, gain) a chaque changement
+  function audioReset() { const was = audCur; audCur = null; audGain = 0; if (was && onAudio) onAudio(null, 0); }
   const imgGone = new Set();   // ids des tableaux dont l'image est introuvable (page exportee) : ni cliquables ni zone proche
   let zoneNums = false;   // reperage des zones image : un gros numero devant chacune (jamais memorise ; voir setZoneNumbers)
   // zones liées à un élément du modèle (champ mesh = nom exact) : id de zone -> { meshes, box } ; mesh 3D -> zone
@@ -1923,6 +1925,7 @@ function createViewer(container, cfg0, loader) {
   function zoneTipText(z) {
     const name = z.label || z.id;
     if (z.type === 'url' || z.type === 'cast') return [name, z.target];
+    if (z.type === 'audio') return [name, z.folder || ''];
     if (z.type === 'image') return [name, z.link || ''];
     if (z.type === 'ha') return [name, tr('core.tip.cmd', name)];
     return [name, tr('core.tip.region', (String(z.target || '').trim() || tr('core.tip.thisregion')) + (z.spawn ? ' #' + z.spawn : ''))];
@@ -1947,9 +1950,16 @@ function createViewer(container, cfg0, loader) {
     tipEl.style.left = Math.max(4, Math.min(innerWidth - w - 4, cx + 14)) + 'px';
     tipEl.style.top = Math.max(4, Math.min(innerHeight - h - 4, cy + 18)) + 'px';
   }
-  const ZONE_TYPES = ['url', 'ha', 'portal', 'spawn', 'image', 'cast'];   // cast (1.10.32) : radio, flux Icecast / SHOUTcast joue en promenade a portee, volume selon la distance
+  const ZONE_TYPES = ['url', 'ha', 'portal', 'spawn', 'image', 'cast', 'audio'];   // audio (1.11.4) : fichiers son d'un dossier joues en boucle a portee ; cast (1.10.32) : radio, flux Icecast / SHOUTcast joue en promenade a portee, volume selon la distance
   const slug = s => String(s || '').toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
   function zoneEntrant(z) { return z.type === 'portal' || z.type === 'url'; }   // zones qui se declenchent aussi en marchant dedans (trigger enter ou both) : portail et lien (hop:// compris)
+  // 1.11.4 : nom d'une piste : fichier relatif (sans « .. »), chemin /… ou adresse http(s) ; '' si autre chose (javascript:, data:, ...)
+  function audioName(s) {
+    if (typeof s !== 'string') return '';
+    s = s.replace(/[\u0000-\u001f]/g, '').replace(/\\/g, '/').trim().slice(0, 300);
+    if (!s || s.split('/').includes('..')) return '';
+    return /^[a-z][a-z0-9+.\-]*:/i.test(s) && !/^https?:/i.test(s) ? '' : s;
+  }
   function cleanZone(z, i) {
     const num = (v, d, lo, hi) => { v = Number(v); return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d; };
     const type = ZONE_TYPES.includes(z.type) ? z.type : 'portal';
@@ -1958,12 +1968,17 @@ function createViewer(container, cfg0, loader) {
       id: slug(z.id) || ('z' + (i + 1)), type, label: String(z.label || '').slice(0, 60),
       x: num(z.x, 0, -1e5, 1e5), y: num(z.y, 0, -1e5, 1e5), z: num(z.z, 0, -1e5, 1e5), yaw: num(z.yaw, 0, -7, 7),
       shape: z.shape === 'board' ? 'board' : 'ring', trigger: ['click', 'enter', 'both'].includes(z.trigger) ? z.trigger : 'click',
-      radius: num(z.radius, type === 'cast' ? 20 : 2, 0.5, type === 'cast' ? 200 : 50), w: num(z.w, img ? 1.2 : 2.4, img ? 0.1 : 0.5, 10), h: img ? num(z.h, 0, 0, 6) : num(z.h, 1.2, 0.3, 6),
+      radius: num(z.radius, type === 'cast' || type === 'audio' ? 20 : 2, 0.5, type === 'cast' || type === 'audio' ? 200 : 50), w: num(z.w, img ? 1.2 : 2.4, img ? 0.1 : 0.5, 10), h: img ? num(z.h, 0, 0, 6) : num(z.h, 1.2, 0.3, 6),
       target: String(z.target || '').slice(0, 600), spawn: slug(z.spawn), confirm: !!z.confirm, private: !!z.private, showName: !!z.showName,
-      mesh: type === 'spawn' || type === 'cast' || img ? '' : String(z.mesh || '').replace(/[\u0000-\u001f]/g, '').slice(0, 200)
+      mesh: type === 'spawn' || type === 'cast' || type === 'audio' || img ? '' : String(z.mesh || '').replace(/[\u0000-\u001f]/g, '').slice(0, 200)
     };
     if (type !== 'portal' && type !== 'url') o.trigger = 'click';
     if (typeof z.cone === 'boolean' && type !== 'spawn' && !img) o.cone = z.cone;   // radio (1.10.35) : cone par defaut, cone: false pour le retirer   // repere (cone) facultatif : vrai = toujours, faux = jamais ; absent = selon le declenchement ; ecrit seulement s'il est vrai ou faux
+    if (type === 'audio') {   // 1.11.4 : dossier des pistes (sous-dossier de la region) et liste facultative ecrite dans la zone ; ecrits seulement s'ils sont remplis
+      const fd = String(z.folder || '').replace(/[\u0000-\u001f]/g, '').replace(/\\/g, '/').replace(/^\/+|\/+$/g, '').trim().slice(0, 200);
+      if (fd && !fd.split('/').includes('..')) o.folder = fd;
+      if (Array.isArray(z.tracks)) { const tk = z.tracks.map(audioName).filter(Boolean).slice(0, 500); if (tk.length) o.tracks = tk; }
+    }
     if (img) { const lk = String(z.link || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 600); if (lk) o.link = lk; }   // lien facultatif d'un tableau : page ouverte au clic ou a E ; ecrit seulement s'il est rempli
     return o;
   }
@@ -1991,7 +2006,7 @@ function createViewer(container, cfg0, loader) {
   let onCones = null;
   function coneFor(g, z, box) {
     if (zoneEditor) return false;
-    if (!(z.type === 'spawn' ? cfg.showSpawns : (typeof z.cone === 'boolean' ? z.cone : (z.type === 'portal' || z.type === 'cast' || z.trigger !== 'click')))) return false;
+    if (!(z.type === 'spawn' ? cfg.showSpawns : (typeof z.cone === 'boolean' ? z.cone : (z.type === 'portal' || z.type === 'cast' || z.type === 'audio' || z.trigger !== 'click')))) return false;
     const geo = new THREE.ConeGeometry(0.175, 0.5, 16);
     const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0xe8e8e8, fog: false }));
     m.rotation.x = Math.PI;   // pointe vers le bas
@@ -2043,6 +2058,35 @@ function createViewer(container, cfg0, loader) {
     t = String(t || '').trim();
     if (!t) return '';
     try { return new URL(/^([a-z][a-z0-9+.\-]*:|\/)/i.test(t) ? t : (cfg.imageBase || '') + t, document.baseURI).href; } catch (_) { return t; }
+  }
+  // 1.11.4 : pistes d'une zone audio : [{ name, url }] dans l'ordre de la liste. Liste = z.tracks (ecrite dans la zone), sinon <dossier>/playlist.json
+  // (tableau de noms ou { "tracks": [...] }, ecrit par glb2html.py --audio-list ou par le viewer). Un site heberge ne peut pas lister un dossier : la liste est un fichier.
+  // Dossiers cherches comme les images : <mediaDir>/<folder>/ d'abord, puis <folder>/, a partir du dossier de la region (cfg.imageBase). Refus : Error(cause)
+  async function audioTracks(z) {
+    const cl = s => String(s || '').replace(/^[\\/]+|[\\/]+$/g, '');
+    const md = cl(cfg.mediaDir === undefined ? 'medias' : (cfg.mediaDir || '')), fd = cl(z.folder), sub = fd ? fd + '/' : '';
+    const dirs = md ? [md + '/' + sub, sub] : [sub];
+    const abs = t => /^([a-z][a-z0-9+.\-]*:|\/)/i.test(t);
+    const enc = t => t.split('/').map(encodeURIComponent).join('/');
+    const at = rel => new URL((cfg.imageBase || '') + enc(rel), document.baseURI).href;
+    const head = async u => { try { return (await fetch(u, { method: 'HEAD', cache: 'no-store' })).ok; } catch (_) { return false; } };
+    let names = Array.isArray(z.tracks) ? z.tracks.map(audioName).filter(Boolean) : null, base = null, why = '';
+    if (!names) {
+      if (!fd) throw new Error(tr('core.audio.nofolder'));
+      for (const d of dirs) {
+        let r; try { r = await fetch(at(d + 'playlist.json'), { cache: 'no-store' }); } catch (e) { why = String(e && e.message || e); continue; }
+        if (!r.ok) { why = 'HTTP ' + r.status; continue; }
+        try { const j = await r.json(); names = (Array.isArray(j) ? j : (j && j.tracks)); names = Array.isArray(names) ? names.map(audioName).filter(Boolean) : null; } catch (e) { why = tr('core.audio.badjson'); continue; }
+        if (names) { base = d; break; }
+        why = tr('core.audio.badjson');
+      }
+      if (!names) throw new Error(tr('core.audio.nolist', dirs.map(d => d + 'playlist.json').join(' | '), why));
+    } else if (names.length) {
+      const first = names.find(n => !abs(n));
+      if (first) { base = dirs[dirs.length - 1]; for (const d of dirs) if (await head(at(d + first))) { base = d; break; } }
+    }
+    if (!names.length) throw new Error(tr('core.audio.empty'));
+    return names.slice(0, 500).map(n => ({ name: n.split('/').pop(), url: abs(n) ? new URL(n, document.baseURI).href : at((base || '') + n) }));
   }
   // apercu depuis un dossier choisi (editeur) : f(cible) renvoie une adresse blob: ou null (alors adresse habituelle) ; hors editeur : aucun effet
   // GIF anime (1.6.15) : un navigateur n'expose pas l'image courante d'un GIF anime (drawImage et la texture ne donnent que la premiere image : constate sous Chromium, meme pour une image affichee
@@ -2267,9 +2311,9 @@ function createViewer(container, cfg0, loader) {
         zoneGroup.add(g);
         continue;
       }
-      const kind = z.type === 'url' && /^\s*hop:/i.test(z.target) ? tr('core.kind.hop') : { url: tr('core.kind.url'), ha: tr('core.kind.ha'), portal: tr('core.kind.portal'), spawn: tr('core.kind.spawn'), cast: tr('core.kind.cast') }[z.type];   // lien hop:// : « Monde virtuel », pas « Lien web »
+      const kind = z.type === 'url' && /^\s*hop:/i.test(z.target) ? tr('core.kind.hop') : { url: tr('core.kind.url'), ha: tr('core.kind.ha'), portal: tr('core.kind.portal'), spawn: tr('core.kind.spawn'), cast: tr('core.kind.cast'), audio: tr('core.kind.audio') }[z.type];   // lien hop:// : « Monde virtuel », pas « Lien web »
       const priv = zoneEditor && z.private ? tr('core.private') : '';
-      const clickable = z.type !== 'spawn' && z.type !== 'cast' && z.trigger !== 'enter';   // radio : ni clic ni invite, elle joue toute seule a portee
+      const clickable = z.type !== 'spawn' && z.type !== 'cast' && z.type !== 'audio' && z.trigger !== 'enter';   // radio et musique : ni clic ni invite, elle joue toute seule a portee
       let main = null;
       if (link) {
         // zone liée à un élément : l'élément est la zone (cliquable, E à moins de radius m). Aucun objet ajouté dans la page exportée.
@@ -2361,7 +2405,7 @@ function createViewer(container, cfg0, loader) {
       if (TL.on && TL.refsKnown && !TL.refs && z.mesh && z.type !== 'spawn') { console.warn(tilesNoRefs(z)); return false; }
       return true;
     });
-    nearZone = null; zoneInside.clear(); castReset();
+    nearZone = null; zoneInside.clear(); castReset(); audioReset();
     resolveLinks();
     buildZones();
     return zones.map(z => Object.assign({}, z));
@@ -2446,8 +2490,13 @@ function createViewer(container, cfg0, loader) {
   }
   function zoneTick() {
     if (!zones.length) return;
-    let best = null, bd = 1e9, cast = null, cd = 1e9;
+    let best = null, bd = 1e9, cast = null, cd = 1e9, aud = null, ad = 1e9;
     for (const z of zones) {
+      if (z.type === 'audio') {   // 1.11.4 : musique : comme la radio, la plus proche dont on est a portee
+        const { d, dy } = zoneDist(z);
+        if (d <= z.radius && dy > -4 && dy < 8 && d < ad) { aud = z; ad = d; }
+        continue;
+      }
       if (z.type === 'cast') {   // radio : la plus proche dont on est a portee (en x et z ; de 4 m sous la zone a 8 m au-dessus)
         const { d, dy } = zoneDist(z);
         if (d <= z.radius && dy > -4 && dy < 8 && d < cd) { cast = z; cd = d; }
@@ -2468,6 +2517,8 @@ function createViewer(container, cfg0, loader) {
     if (best !== nearZone) { nearZone = best; if (onNear) onNear(best); }
     const cg = cast ? Math.max(0.05, 1 - cd / cast.radius) : 0;
     if (cast !== castCur || Math.abs(cg - castGain) > 0.01) { castCur = cast; castGain = cg; if (onCast) onCast(cast, cg); }
+    const ag = aud ? Math.max(0.05, 1 - ad / aud.radius) : 0;
+    if (aud !== audCur || Math.abs(ag - audGain) > 0.01) { audCur = aud; audGain = ag; if (onAudio) onAudio(aud, ag); }
   }
   // v36 : E déclenche la zone proche (déclenchement « clic » ou « both »), comme avant la v35 ; E ne fait rien d'autre
   window.addEventListener('keydown', e => {
@@ -2603,7 +2654,7 @@ function createViewer(container, cfg0, loader) {
     // boîte (monde) de l'élément de ce nom : { min, max, center, count } ou null
     meshInfo(name) { const m = findMeshes(name); const b = m.length ? refBox(name, m) : null; if (!b) return null; return { min: b.min.toArray(), max: b.max.toArray(), center: b.getCenter(new THREE.Vector3()).toArray(), size: b.getSize(new THREE.Vector3()).toArray(), count: m.length }; },
     set linkMode(v) { linkLock = !!v; },
-    isTraversable(o) { return isIgnoredMesh(o, parseIgnore(cfg.walkIgnore)); }, getZones() { return zones.map(z => Object.assign({}, z)); }, set onZone(f) { onZone = f; }, set onNear(f) { onNear = f; }, set onCast(f) { onCast = f; }, set onRadio(f) { onRadio = f; }, radioAsk(url) { radioWant = String(url || ''); if (P.ws && P.ws.readyState === 1 && P.id) P.ws.send(JSON.stringify({ t: 'radio', url: radioWant })); },
+    isTraversable(o) { return isIgnoredMesh(o, parseIgnore(cfg.walkIgnore)); }, getZones() { return zones.map(z => Object.assign({}, z)); }, set onZone(f) { onZone = f; }, set onNear(f) { onNear = f; }, set onCast(f) { onCast = f; }, set onAudio(f) { onAudio = f; }, audioTracks, set onRadio(f) { onRadio = f; }, radioAsk(url) { radioWant = String(url || ''); if (P.ws && P.ws.readyState === 1 && P.id) P.ws.send(JSON.stringify({ t: 'radio', url: radioWant })); },
     captureTop(size = 320, hide = []) {
       if (!model) return null;
       const box = new THREE.Box3().setFromObject(model), c = box.getCenter(new THREE.Vector3()), sz = box.getSize(new THREE.Vector3());
