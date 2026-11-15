@@ -6,6 +6,15 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.11.0)
 
+### 15/11/2026: foldable chat block (B key), bold help, radio title requested only when listened to
+
+- **Klaatou's request**: be able to fold the chat, have it unfold by itself when someone writes, arrives or leaves, and have the help show keys and titles in bold; then, seen in the presence server console: with the radio unchecked in Settings, the server kept reading the stream title every 30 s for nobody.
+- **Chat block**: the **B** key folds / unfolds the chat block ("Bloc de chat"), with no delay and no Settings checkbox. Folded, nothing is left on screen; a message, or another visitor arriving or leaving, unfolds it and it stays unfolded until folded again with B. **Enter** unfolds it and opens the input. Replaying the history on connection does not unfold it. The state is kept (`web3d.chat.fold`). On touch, "Close" closes the input and folds the block. Fixed on the way: when opening the input the block was made visible after taking focus, so focus was lost while folded.
+- **Help**: in each line, the text before the first ":" (keys, gestures) is bold; group titles are bold capitals. New line "B: fold / unfold the chat block"; "arrow keys: walk" replaces the old movement wording.
+- **Radio**: the page only asks the server for the stream title when it is really listened to (radio checkbox on, sounds on, volume above 0, stream with no error or mixed content); otherwise it withdraws its request and the server stops reading the stream when nobody listens. Since the server ignores a "radio" message received less than 1 s after the previous one (withdrawal included), the page spaces its requests by at least 1.5 s and sends the last wanted value when due. `presence_server.py` is not changed.
+- **Change in `dist\`**: `glb2html.py`, `index.html`, `carte.html`, `glb-viewer.html` 1.11.1. `VERSION`: `1.11.1`.
+- **Tests**: `tests/chat_replie.py` (new, 16 checks: fold, unfold on message, arrival, departure, Enter, history, bold help); `tests/radio_titre.py` extended (radio unchecked: no request; checked: request; unchecked again: request withdrawn). Pass: `radio_titre`, `chat_replie`, `i18n`, `dist_a_jour`, `smoke`, `chat_fleches`, `apropos`, `v36`, `v37_chat`, `v46`. `v33` (too long here) fails two checks (cursor of the "none" zone, label blinking) **also on 1.11.0**; its "@Bo" check could not be compared (timeout). **Not tested here**: Windows, Edge, real touch.
+
 ## 1.11.0 (15/11/2026)
 
 ### 15/11/2026: release 1.11.0: radio zones, metallic reflections, lighter textures, automatic sea, `oars2site.py`

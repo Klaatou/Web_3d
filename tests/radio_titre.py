@@ -105,7 +105,7 @@ async def main():
     (tmp / "radios.json").write_text(json.dumps([flux]), encoding="utf-8")
     pres = subprocess.Popen([sys.executable, str(DIST / "presence_server.py"), "--host", "127.0.0.1", "--port", str(pport),
                              "--identities", str(tmp / "id.json"), "--bans", str(tmp / "bans.json"), "--radios", str(tmp / "radios.json"), "--radios-every", "5"],
-                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env={**os.environ, "PYTHONIOENCODING": "utf-8"})   # Windows : sinon la console du serveur sort en page de code locale et « demandé » ne se retrouve pas
     JOURNAL = []
     threading.Thread(target=lambda: [JOURNAL.append(l.decode("utf-8", "replace")) for l in pres.stdout], daemon=True).start()   # vide le tube (Windows : 4 Ko) et garde le journal
     Z = lambda i, x, z, **k: dict({"id": i, "type": "cast", "label": "Zone " + i, "x": x, "y": 15, "z": z, "radius": 6}, **k)
@@ -169,6 +169,30 @@ async def main():
             rapport("titre demandé pour http://127.0.0.1" in j and "Premier morceau" in j and "Second morceau" in j and "hors de --radios" in j,
                     "journal du serveur (1.10.35) : demande, titres lus, adresse hors liste", [l.strip()[:110] for l in JOURNAL if "radio" in l][:6])
             rapport(not errs, "aucune erreur JavaScript", errs)
+            # 1.11.1 : le titre n'est demande que si le flux est reellement ecoute : radio decochee = aucune demande, donc aucune lecture du flux par le serveur
+            await pg.evaluate("window.__v.teleportTo([0, 15, 15], 0)"); await pg.wait_for_timeout(1500)
+            n = len(DEMANDES_META)
+            pg2 = await br.new_page(locale="fr-FR"); errs2 = []
+            pg2.on("pageerror", lambda e: errs2.append(str(e)))
+            await pg2.add_init_script("try { localStorage.setItem('glb2html_visitor', JSON.stringify({ radio: false })); } catch (e) {}")
+            await pg2.goto(f"http://127.0.0.1:{wport}/page.html")
+            await pg2.wait_for_function("document.getElementById('msg') === null", timeout=60000)
+            await pg2.evaluate("document.getElementById('lightAskNo') && document.getElementById('lightAskNo').click()")
+            await pg2.evaluate("window.__v.walkStart({ pos: [0, 15, 20], yaw: 0 })"); await pg2.wait_for_timeout(500)
+            await pg2.keyboard.press("ControlLeft")   # premiere action du visiteur : le navigateur autorise le son
+            await pg2.evaluate("window.__v.teleportTo([0, 15, 1], 0)")
+            await pg2.wait_for_timeout(7500)
+            rapport(len(DEMANDES_META) == n, "radio decochee, dans la zone : aucune demande de titre, le serveur ne lit pas le flux", (n, len(DEMANDES_META)))
+            await pg2.evaluate("document.getElementById('visRadio').click()")
+            try:
+                await pg2.wait_for_function("/Second morceau/.test(document.getElementById('radioInfo').textContent)", timeout=20000)
+            except Exception:
+                pass
+            rapport(len(DEMANDES_META) > n and "Second morceau" in await pg2.evaluate("document.getElementById('radioInfo').textContent"), "radio recochee : la demande part, le serveur lit le flux, le titre s'affiche", (n, len(DEMANDES_META)))
+            await pg2.evaluate("document.getElementById('visRadio').click()"); await pg2.wait_for_timeout(2500)   # la page espace ses demandes de 1,5 s : le retrait part a l'echeance
+            n2 = len(DEMANDES_META); await pg2.wait_for_timeout(6500)
+            rapport(len(DEMANDES_META) == n2, "radio decochee de nouveau : la demande est retiree, le serveur cesse de lire le flux", (n2, len(DEMANDES_META)))
+            rapport(not errs2, "aucune erreur JavaScript (page radio decochee)", errs2)
             await br.close()
         # 1.10.35 : deconnexions simultanees de tout un salon (arret du serveur, coupure) : plus de KeyError dans le finally du handler
         import websockets.asyncio.client

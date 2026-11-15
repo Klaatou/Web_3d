@@ -6,6 +6,15 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.11.0)
 
+### 15/11/2026 : bloc de chat repliable (touche B), aide en gras, titre de la radio demandé seulement si on l'écoute
+
+- **Demande de Klaatou** : pouvoir replier le chat, qu'il se déplie seul quand quelqu'un écrit, arrive ou part, et que l'aide mette en gras les touches et les titres ; puis, constat dans la console du serveur de présence : avec la radio décochée dans les Réglages, le serveur continuait de lire le titre du flux toutes les 30 s pour personne.
+- **Bloc de chat** : la touche **B** replie / déplie le bloc de chat (« Bloc de chat »), sans délai ni case dans les Réglages. Replié, il ne reste rien à l'écran ; un message, l'arrivée ou le départ d'un autre visiteur le déplie, et il reste déplié jusqu'à ce qu'on le replie avec B. **Entrée** le déplie et ouvre la saisie. Le rejeu de l'historique à la connexion ne le déplie pas. L'état est gardé (`web3d.chat.fold`). Sur tactile, « Fermer » ferme la saisie et replie le bloc. Correction au passage : à l'ouverture de la saisie, le bloc était rendu visible après la prise de focus, donc le focus était perdu quand il était replié.
+- **Aide** : dans chaque ligne, le texte avant le premier « : » (touches, gestes) est en gras ; les titres de groupes sont en gras et en majuscules. Nouvelle ligne « B : replier / déplier le bloc de chat » ; « flèches : marcher » remplace l'ancien libellé du déplacement.
+- **Radio** : la page ne demande le titre du flux au serveur que si on l'écoute vraiment (case radio cochée, sons actifs, volume supérieur à 0, flux sans erreur ni contenu mixte) ; sinon elle retire sa demande, et le serveur cesse de lire le flux quand plus personne ne l'écoute. Comme le serveur ignore un message « radio » reçu moins d'1 s après le précédent (retrait compris), la page espace ses demandes d'au moins 1,5 s et envoie à l'échéance la dernière valeur voulue. `presence_server.py` n'est pas modifié.
+- **Changent en `dist\`** : `glb2html.py`, `index.html`, `carte.html`, `glb-viewer.html` 1.11.1. `VERSION` : `1.11.1`.
+- **Tests** : `tests/chat_replie.py` (nouveau, 16 contrôles : repli, dépli par message, arrivée, départ, Entrée, historique, aide en gras) ; `tests/radio_titre.py` étendu (radio décochée : aucune demande ; cochée : demande ; décochée de nouveau : demande retirée). Passent : `radio_titre`, `chat_replie`, `i18n`, `dist_a_jour`, `smoke`, `chat_fleches`, `apropos`, `v36`, `v37_chat`, `v46`. `v33` (trop long ici) échoue sur deux contrôles (curseur de la zone « aucun », clignotement de l'étiquette) **aussi sur la 1.11.0** ; son contrôle « @Bo » n'a pas pu être comparé (délai dépassé). **Non testé ici** : Windows, Edge, tactile réel.
+
 ## 1.11.0 (15/11/2026)
 
 ### 15/11/2026 : publication 1.11.0 : zones radio, reflets métalliques, textures allégées, mer automatique, `oars2site.py`
