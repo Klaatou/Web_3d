@@ -116,6 +116,7 @@ body.padOn #bar{max-width:max(200px,calc(50vw - 90px))}   /* v46 : la barre pass
 #stateInfo{font-size:11px;padding:5px 9px}
 #stateInfo div{margin:0}
 #stateInfo select{font:inherit;max-width:100%;box-sizing:border-box;padding:1px 4px;border:1px solid #000;border-radius:4px;background:#fff;color:#000;margin:2px 0}   /* le choix du flux de la radio (au-dessus de la ligne « Radio : … ») */
+#stateInfo .srcCk{margin:0 4px 0 0;vertical-align:-1px;cursor:pointer;accent-color:#000}   /* 1.11.13 : case « couper le son » à côté de la ligne « Radio : … » / « Musique : … » */
 #hudR{display:flex;flex-direction:column;align-items:flex-end;gap:6px;margin-top:6px;text-align:left}   /* v41 : pile de droite, sous Réglages (poussée quand Réglages s'ouvre) */
 #walkHint.winFree,#stateInfo.winFree,#spawnInfo.winFree{position:fixed;z-index:15;margin:0}   /* v41 : fenêtre libre, posée à la souris */
 .winDrag{opacity:.85;box-shadow:0 2px 10px #0006}
@@ -1049,8 +1050,25 @@ if (C.walk) {
   const sb = document.getElementById('stateInfo'), sbody = document.getElementById('stateBody'), shead = document.getElementById('stateHead');
   const mkLine = id => { const d = document.createElement('div'); d.id = id; sbody.append(d); return d; };
   const lv = mkLine('viewInfo'), lm = mkLine('modeInfo'), lmo = mkLine('mouseInfo'), lp = mkLine('posInfo'), lkb = mkLine('kbInfo'), lrd = mkLine('radioInfo'), lmu = mkLine('musicInfo');
-  lmu.hidden = true; musicTxt = t => { lmu.hidden = !t; if (lmu.textContent !== (t || '')) lmu.textContent = t || ''; };   // 1.11.4 : « ♪ Musique : … » tant qu'une zone audio est à portée
-  lrd.hidden = true; radioTxt = t => { lrd.hidden = !t; if (lrd.textContent !== (t || '')) lrd.textContent = t || ''; };   // 1.10.32 : « ♪ Radio : … » tant qu'une zone radio est à portée (le diagnostic la reprend)
+  // 1.11.13 : case à côté de la ligne « Radio : … » / « Musique : … », même action que la case Réglages correspondante (une seule source à la fois, visSave, arbitre, refresh) ;
+  // son état suit VIS.radio / VIS.music à chaque passage de RADIO.show() / MUSIC.show(), donc à chaque décision de RADIO.refresh0() / MUSIC.refresh()
+  const srcLine = (line, k, id) => {
+    const ck = document.createElement('input'); ck.type = 'checkbox'; ck.id = id; ck.className = 'srcCk'; ck.checked = !!VIS[k]; ck.disabled = !VIS.sounds;
+    ck.title = tr(k === 'radio' ? 'page.opt.sound.radio' : 'page.opt.sound.music');
+    const tx = document.createElement('span'); tx.className = 'srcTx';
+    line.append(ck, tx);
+    ck.onchange = () => {
+      VIS[k] = ck.checked;
+      if (ck.checked) { const o = k === 'radio' ? 'music' : 'radio', oc = document.getElementById(o === 'radio' ? 'visRadio' : 'visMusic'), osc = document.getElementById(o === 'radio' ? 'stateRadioCk' : 'stateMusicCk'); VIS[o] = false; if (oc) oc.checked = false; if (osc) osc.checked = false; }   // une seule source (radio ou musique des zones)
+      visSave(); audioArbitre(); RADIO.refresh(); MUSIC.refresh();
+    };
+    return { ck, tx };
+  };
+  const sm = srcLine(lmu, 'music', 'stateMusicCk'), sr = srcLine(lrd, 'radio', 'stateRadioCk');
+  const srcSync = (s, k) => { s.ck.checked = !!VIS[k]; s.ck.disabled = !VIS.sounds; };
+  srcSync(sm, 'music'); srcSync(sr, 'radio');
+  lmu.hidden = true; musicTxt = t => { srcSync(sm, 'music'); lmu.hidden = !t; if (sm.tx.textContent !== (t || '')) sm.tx.textContent = t || ''; };   // 1.11.4 : « ♪ Musique : … » tant qu'une zone audio est à portée
+  lrd.hidden = true; radioTxt = t => { srcSync(sr, 'radio'); lrd.hidden = !t; if (sr.tx.textContent !== (t || '')) sr.tx.textContent = t || ''; };   // 1.10.32 : « ♪ Radio : … » tant qu'une zone radio est à portée (le diagnostic la reprend)
   const rsSel = document.createElement('select'); rsSel.id = 'radioSel'; rsSel.hidden = true;   // 1.11.x : choix du flux de la radio, dans la fenêtre État au-dessus de la ligne « Radio : … » (comme ce texte : s'adapte à la radio en cours)
   rsSel.onchange = () => { const si = parseInt(rsSel.value, 10) || 0; RADIO.setIdx(si); };
   sbody.insertBefore(rsSel, lrd);

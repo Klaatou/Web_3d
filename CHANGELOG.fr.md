@@ -6,6 +6,12 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.11.0)
 
+### 16/11/2026 : fenêtre État : case pour couper le son de la radio ou de la musique, à côté de la ligne
+
+- **Demande de Klaatou** : une case juste à côté de la ligne « Radio : [nom] » (ou du titre de la piste pour une zone audio) de la fenêtre État, avec la même action que la case correspondante de Réglages : couper le son, et le reprendre au re-cochage ; l'état de la case doit suivre la logique de `RADIO.refresh0()`.
+- **Fonction** (`src/template.html`, bloc d'état, `C.walk`) : chaque ligne « ♪ Radio : … » / « ♪ Musique : … » porte une case (`stateRadioCk` / `stateMusicCk`) devant son texte, qui passe dans un `<span>` (la case n'est plus écrasée par la réécriture de la ligne). Le changement de la case répète exactement l'action de la case Réglages : `VIS.radio` / `VIS.music` mis à jour, l'autre source décochée partout (cases Réglages `visRadio`/`visMusic` **et** l'autre case de l'État), `visSave()`, `audioArbitre()`, `RADIO.refresh()`, `MUSIC.refresh()`. L'état de la case est resynchronisé à chaque passage de `RADIO.show()` / `MUSIC.show()` — donc à chaque décision de `RADIO.refresh0()` / `MUSIC.refresh()`, y compris le passage « coupée » (`lvl() <= 0`) : cochée si `VIS.radio` / `VIS.music`, désactivée si les Sons sont coupés (comme les sous-cases de Réglages). Le texte de la ligne et « Copier le diagnostic » sont inchangés (la case n'apporte pas de texte au `textContent`).
+- **Change en `dist\`** après `python build.py` : `index.html`, `glb-viewer.html` et `glb2html.py` (ils intègrent le template). `VERSION` : `1.11.13`. **Non essayé** : un navigateur réel (le code suit exactement les chemins existants de `RADIO`/`MUSIC`).
+
 ### 15/11/2026 : glb2tiles : le « Terrain » de convoar n'est pas tuilé quand les patches « Terrain i,j » sont là
 
 - **Constat** (région du bateau, site d'un tiers, sol encore rayé crème/marine mer coupée, alors que le doublon avait été retiré de la tuile) : la vue d'ensemble `region.overview.glb` (lue directement : 177 triangles de 26 m à y = 1,0000, couleur (3,16,29), sur x 12 à 252, z -12 à -252 de la cellule du bateau) est au même niveau que les cases de sable de 4 m des patches. Sans le fichier d'overview, le sol est propre.

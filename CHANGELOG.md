@@ -6,6 +6,12 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.11.0)
 
+### 16/11/2026: state window: checkbox to cut the radio or the music sound, next to the line
+
+- **Klaatou's request**: a checkbox right next to the "Radio: [name]" line (or the track title for an audio zone) of the state window, with the same action as the matching Réglages checkbox: cut the sound, bring it back on re-check; the checkbox state must follow the logic of `RADIO.refresh0()`.
+- **Function** (`src/template.html`, state block, `C.walk`): each "♪ Radio: ..." / "♪ Music: ..." line carries a checkbox (`stateRadioCk` / `stateMusicCk`) in front of its text, which moves into a `<span>` (the checkbox is no longer overwritten by the line). The change repeats exactly the Réglages checkbox action: `VIS.radio` / `VIS.music` updated, the other source unticked everywhere (Réglages checkboxes `visRadio`/`visMusic` **and** the other state checkbox), `visSave()`, `audioArbitre()`, `RADIO.refresh()`, `MUSIC.refresh()`. The checkbox state is re-synchronised on every pass of `RADIO.show()` / `MUSIC.show()` — that is, on every decision of `RADIO.refresh0()` / `MUSIC.refresh()`, including the "off" pass (`lvl() <= 0`): ticked when `VIS.radio` / `VIS.music`, disabled when sounds are off (like the Réglages sub-checkboxes). The line text and "Copy the diagnostic" are unchanged (the checkbox contributes no text to `textContent`).
+- **Changes in `dist\`** after `python build.py`: `index.html`, `glb-viewer.html` and `glb2html.py` (they embed the template). `VERSION`: `1.11.13`. **Not tried**: a real browser (the code follows exactly the existing `RADIO`/`MUSIC` paths).
+
 ### 15/11/2026: glb2tiles: the convoar `Terrain` is not tiled when the `Terrain i,j` patches are there
 
 - **Report** (ship region of a third party's site, ground still striped cream/navy with the sea off, although the duplicate had been removed from the tile): the overview `region.overview.glb` (read directly: 177 triangles of 26 m at y = 1.0000, colour (3,16,29), over x 12 to 252, z -12 to -252 of the ship's cell) lies at the same level as the 4 m sand cells of the patches. With the overview file removed, the ground is clean.
