@@ -1924,7 +1924,8 @@ function createViewer(container, cfg0, loader) {
   let tipEl = null;
   function zoneTipText(z) {
     const name = z.label || z.id;
-    if (z.type === 'url' || z.type === 'cast') return [name, z.target];
+    if (z.type === 'url') return [name, z.target];
+    if (z.type === 'cast') return [name, (z.urls && z.urls.length ? (z.urls.length > 1 ? z.urls[0] + ' … +' + (z.urls.length - 1) : z.urls[0]) : z.target)];
     if (z.type === 'audio') return [name, z.folder || ''];
     if (z.type === 'image') return [name, z.link || ''];
     if (z.type === 'ha') return [name, tr('core.tip.cmd', name)];
@@ -1969,11 +1970,23 @@ function createViewer(container, cfg0, loader) {
       x: num(z.x, 0, -1e5, 1e5), y: num(z.y, 0, -1e5, 1e5), z: num(z.z, 0, -1e5, 1e5), yaw: num(z.yaw, 0, -7, 7),
       shape: z.shape === 'board' ? 'board' : 'ring', trigger: ['click', 'enter', 'both'].includes(z.trigger) ? z.trigger : 'click',
       radius: num(z.radius, type === 'cast' || type === 'audio' ? 20 : 2, 0.5, type === 'cast' || type === 'audio' ? 200 : 50), w: num(z.w, img ? 1.2 : 2.4, img ? 0.1 : 0.5, 10), h: img ? num(z.h, 0, 0, 6) : num(z.h, 1.2, 0.3, 6),
-      target: String(z.target || '').slice(0, 600), spawn: slug(z.spawn), confirm: !!z.confirm, private: !!z.private, showName: !!z.showName,
+      target: type === 'cast' ? '' : String(z.target || '').slice(0, 600), spawn: slug(z.spawn), confirm: !!z.confirm, private: !!z.private, showName: !!z.showName,
       mesh: type === 'spawn' || type === 'cast' || type === 'audio' || img ? '' : String(z.mesh || '').replace(/[\u0000-\u001f]/g, '').slice(0, 200)
     };
     if (type !== 'portal' && type !== 'url') o.trigger = 'click';
     if (typeof z.cone === 'boolean' && type !== 'spawn' && !img) o.cone = z.cone;   // radio (1.10.35) : cone par defaut, cone: false pour le retirer   // repere (cone) facultatif : vrai = toujours, faux = jamais ; absent = selon le declenchement ; ecrit seulement s'il est vrai ou faux
+    if (type === 'cast') {   // radio : tableau d'URLs (flux Icecast / SHOUTcast) ; on joue la premiere a portee, puis on enchaîne
+      const raw = Array.isArray(z.urls) ? z.urls : (z.target ? [z.target] : []);
+      const lb = Array.isArray(z.labels) ? z.labels : [];   // 1.11.12 : titres des flux, meme ordre que urls ; si le tableau n'existe pas, repli sur le label de la zone
+      const uu = [], ll = [];
+      for (let k = 0; k < raw.length && uu.length < 500; k++) {
+        const u = String(raw[k] || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 600);
+        if (!u) continue;   // une URL vide supprime aussi le label correspondant (on garde l'alignement des indexes)
+        uu.push(u);
+        ll.push(String(lb[k] || o.label).replace(/[\u0000-\u001f]/g, '').trim().slice(0, 60));
+      }
+      if (uu.length) { o.urls = uu; o.labels = ll; o.target = uu[0]; }   // target = premiere URL (retro-compat)
+    }
     if (type === 'audio') {   // 1.11.4 : dossier des pistes (sous-dossier de la region) et liste facultative ecrite dans la zone ; ecrits seulement s'ils sont remplis
       const fd = String(z.folder || '').replace(/[\u0000-\u001f]/g, '').replace(/\\/g, '/').replace(/^\/+|\/+$/g, '').trim().slice(0, 200);
       if (fd && !fd.split('/').includes('..')) o.folder = fd;
