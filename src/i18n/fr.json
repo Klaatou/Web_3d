@@ -369,6 +369,8 @@
  "page.music.click": "♪ Musique : {0} (un clic ou une touche pour l'entendre)",
  "page.music.off": "♪ Musique : {0} (son coupé dans Réglages)",
  "page.music.error": "♪ Musique : {0} : fichiers illisibles ({1})",
+ "page.music.prev": "Morceau précédent",
+ "page.music.next": "Passer au morceau suivant",
  "page.music.nolist": "♪ Musique : {0} : {1}",
  "page.opt.volume": "Volume : ",
  "page.opt.wave": "Vagues : ",

@@ -6,6 +6,18 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.11.0)
 
+### 16/11/2026: Audio playback: ⏮/⏭ buttons and track counter for the playlist
+
+- **Requested by Klaatou**: add buttons to skip to the next and previous track in an audio zone, and display the current track number (e.g., "1/14") between them.
+- **Function** (`src/template.html`, `MUSIC` block and State window): added `next()` and `prev()` (looping at ends) and `trackIndex()` functions to the `MUSIC` object. Added ⏮ and ⏭ buttons and the counter in the State window, next to the "♪ Music: …" line, visible only if the playlist has more than one track.
+- **Change in `dist\`** after `python build.py`: `index.html`, `glb-viewer.html` and `glb2html.py`. `VERSION`: `1.11.15`.
+
+### 16/11/2026: Audio playback: ⏭ (next) and ⏮ (previous) buttons for audio zones playlist
+
+- **Requested by Klaatou**: add a button to skip to the next track in an audio zone playlist (type `audio`), and a button to go back to the previous track.
+- **Function** (`src/template.html`, `MUSIC` block and State window): added `next()` and `prev()` functions to the `MUSIC` object. Added buttons in the State window, next to the "♪ Music: …" line, visible only if the current zone's playlist has more than one track (`MUSIC.count() > 1`). The index loops: at the end of the playlist, `next()` goes back to the first track, and `prev()` on the first track goes to the last one.
+- **Change in `dist\`** after `python build.py`: `index.html`, `glb-viewer.html` and `glb2html.py`. `VERSION`: `1.11.15`.
+
 ### 16/11/2026: state window: checkbox to cut the radio or the music sound, next to the line
 
 - **Klaatou's request**: a checkbox right next to the "Radio: [name]" line (or the track title for an audio zone) of the state window, with the same action as the matching Réglages checkbox: cut the sound, bring it back on re-check; the checkbox state must follow the logic of `RADIO.refresh0()`.

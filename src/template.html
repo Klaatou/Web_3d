@@ -117,6 +117,8 @@ body.padOn #bar{max-width:max(200px,calc(50vw - 90px))}   /* v46 : la barre pass
 #stateInfo div{margin:0}
 #stateInfo select{font:inherit;max-width:100%;box-sizing:border-box;padding:1px 4px;border:1px solid #000;border-radius:4px;background:#fff;color:#000;margin:2px 0}   /* le choix du flux de la radio (au-dessus de la ligne « Radio : … ») */
 #stateInfo .srcCk{margin:0 4px 0 0;vertical-align:-1px;cursor:pointer;accent-color:#000}   /* 1.11.13 : case « couper le son » à côté de la ligne « Radio : … » / « Musique : … » */
+#stateInfo .srcNext{font:inherit;margin:0 0 0 6px;padding:0 4px;display:inline-block;vertical-align:bottom;line-height:1.2;border:1px solid #000;border-radius:3px;background:#fff;color:#000;cursor:pointer} /* 1.11.14 : bouton « ⏭ » (morceau suivant) à côté de la ligne « Musique : … », visible si la playlist a plus d'une piste */
+#stateInfo #musicCount{margin:0 4px; min-width:34px; text-align:center; display:inline-block;}
 #hudR{display:flex;flex-direction:column;align-items:flex-end;gap:6px;margin-top:6px;text-align:left}   /* v41 : pile de droite, sous Réglages (poussée quand Réglages s'ouvre) */
 #walkHint.winFree,#stateInfo.winFree,#spawnInfo.winFree{position:fixed;z-index:15;margin:0}   /* v41 : fenêtre libre, posée à la souris */
 .winDrag{opacity:.85;box-shadow:0 2px 10px #0006}
@@ -734,6 +736,7 @@ const MUSIC = (() => {
   const lvl = () => VIS.sounds && VIS.music ? Math.max(0, Math.min(1, gain * VIS.volume / 100)) : 0;
   const stop = () => { if (!a) return; loaded = ''; a.pause(); a.removeAttribute('src'); a.load(); };
   const next = () => { if (!tracks.length) return; idx = (idx + 1) % tracks.length; if (cur) pos.set(cur.id, idx); play(); };
+  const prev = () => { if (!tracks.length) return; idx = (idx - 1 + tracks.length) % tracks.length; if (cur) pos.set(cur.id, idx); play(); };
   const ensure = () => {
     if (a) return a;
     a = new Audio(); a.preload = 'none';
@@ -773,7 +776,7 @@ const MUSIC = (() => {
   };
   for (const ev of ['pointerdown', 'keydown', 'touchstart']) addEventListener(ev, () => { if (cur && (!a || a.paused)) refresh(); }, true);   // apres la première action : la piste démarre
   return { set(z, g) { const ch = !cur !== !z || (z && cur && z.id !== cur.id); if (ch && cur) bad.delete(cur.id); cur = z; gain = g; if (ch) { tracks = []; fails = 0; refresh(); } else if (a && loaded && !a.paused) a.volume = lvl(); },
-    refresh, playing: () => !!(a && loaded && !a.paused), level: () => (a && loaded ? a.volume : 0), track: () => (tracks[idx] ? tracks[idx].name : '') };
+    refresh, next, prev, playing: () => !!(a && loaded && !a.paused), level: () => (a && loaded ? a.volume : 0), track: () => (tracks[idx] ? tracks[idx].name : ''), trackIndex: () => idx, count: () => tracks.length };   // 1.11.14 : next exposé (arrête le morceau courant et passe à l'index suivant de la playlist) ; count (nombre de pistes, pour le bouton « ⏭ »)
 })();
 // une seule source a la fois : cocher « Radio des zones » decoche « Musique des zones » et inversement ; quand les deux sont cochees (etat de depart) et que les deux zones sont a portee,
 // la plus proche (gain le plus fort) joue, la radio en cas d'egalite ; une case cochee et l'autre non : seule la source cochee joue
@@ -1050,7 +1053,7 @@ if (C.walk) {
   const sb = document.getElementById('stateInfo'), sbody = document.getElementById('stateBody'), shead = document.getElementById('stateHead');
   const mkLine = id => { const d = document.createElement('div'); d.id = id; sbody.append(d); return d; };
   const lv = mkLine('viewInfo'), lm = mkLine('modeInfo'), lmo = mkLine('mouseInfo'), lp = mkLine('posInfo'), lkb = mkLine('kbInfo'), lrd = mkLine('radioInfo'), lmu = mkLine('musicInfo');
-  // 1.11.13 : case à côté de la ligne « Radio : … » / « Musique : … », même action que la case Réglages correspondante (une seule source à la fois, visSave, arbitre, refresh) ;
+   // 1.11.13 : case à côté de la ligne « Radio : … » / « Musique : … », même action que la case Réglages correspondante (une seule source à la fois, visSave, arbitre, refresh) ;
   // son état suit VIS.radio / VIS.music à chaque passage de RADIO.show() / MUSIC.show(), donc à chaque décision de RADIO.refresh0() / MUSIC.refresh()
   const srcLine = (line, k, id) => {
     const ck = document.createElement('input'); ck.type = 'checkbox'; ck.id = id; ck.className = 'srcCk'; ck.checked = !!VIS[k]; ck.disabled = !VIS.sounds;
@@ -1067,7 +1070,29 @@ if (C.walk) {
   const sm = srcLine(lmu, 'music', 'stateMusicCk'), sr = srcLine(lrd, 'radio', 'stateRadioCk');
   const srcSync = (s, k) => { s.ck.checked = !!VIS[k]; s.ck.disabled = !VIS.sounds; };
   srcSync(sm, 'music'); srcSync(sr, 'radio');
-  lmu.hidden = true; musicTxt = t => { srcSync(sm, 'music'); lmu.hidden = !t; if (sm.tx.textContent !== (t || '')) sm.tx.textContent = t || ''; };   // 1.11.4 : « ♪ Musique : … » tant qu'une zone audio est à portée
+  // 1.11.14 : bouton « ⏭ » à côté de la ligne « Musique : … » (fenêtre État) : passe au morceau suivant de la playlist (MUSIC.next(), qui arrête le morceau courant et avance l'index) ;
+  // visible seulement si la playlist de la zone audio en cours a plus d'une piste (MUSIC.count()), sinon un seul fichier en boucle n'a pas de « suivant »
+  const mnext = document.createElement('button'); mnext.type = 'button'; mnext.id = 'musicNext'; mnext.className = 'srcNext'; mnext.textContent = '⏭'; mnext.hidden = true;
+  mnext.title = tr('page.music.next');
+  mnext.onmousedown = e => e.preventDefault();
+  mnext.onclick = () => MUSIC.next();
+  mnext.style.marginLeft = '0';
+  lmu.append(mnext); // <--- IL FAUT AJOUTER LE BOUTON SUIVANT EN PREMIER
+
+  const mprev = document.createElement('button'); mprev.type = 'button'; mprev.id = 'musicPrev'; mprev.className = 'srcNext'; mprev.textContent = '⏮'; mprev.hidden = true;
+  mprev.title = tr('page.music.prev');
+  mprev.onmousedown = e => e.preventDefault();
+  mprev.onclick = () => MUSIC.prev();
+
+  const mcount = document.createElement('span'); mcount.id = 'musicCount'; mcount.className = 'srcNext'; mcount.style.border = 'none'; mcount.style.background = 'transparent'; mcount.style.margin = '0 4px';
+  mcount.textContent = '';
+
+  // MAINTENANT ON LES INSÈRE AUTOUR :
+  lmu.insertBefore(mprev, mnext);  // Le précédent avant le suivant
+  lmu.insertBefore(mcount, mnext); // Le compteur juste avant le suivant
+
+  lmu.hidden = true; musicTxt = t => { srcSync(sm, 'music'); lmu.hidden = !t; mnext.hidden = !(t && MUSIC.count() > 1); mprev.hidden = mnext.hidden; mcount.hidden = mnext.hidden; if (sm.tx.textContent !== (t || '')) sm.tx.textContent = t || ''; if (!mcount.hidden) { const c = MUSIC.trackIndex(); mcount.textContent = ' ' + (c + 1) + '/' + MUSIC.count() + ' '; } };
+  // 1.11.4 : « ♪ Musique : … » tant qu'une zone audio est à portée ; 1.11.14 : « ⏭ » visible si la playlist a plus d'une piste
   lrd.hidden = true; radioTxt = t => { srcSync(sr, 'radio'); lrd.hidden = !t; if (sr.tx.textContent !== (t || '')) sr.tx.textContent = t || ''; };   // 1.10.32 : « ♪ Radio : … » tant qu'une zone radio est à portée (le diagnostic la reprend)
   const rsSel = document.createElement('select'); rsSel.id = 'radioSel'; rsSel.hidden = true;   // 1.11.x : choix du flux de la radio, dans la fenêtre État au-dessus de la ligne « Radio : … » (comme ce texte : s'adapte à la radio en cours)
   rsSel.onchange = () => { const si = parseInt(rsSel.value, 10) || 0; RADIO.setIdx(si); };

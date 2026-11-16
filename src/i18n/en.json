@@ -368,6 +368,8 @@
  "page.music.waiting": "♪ Music: {0} (loading…)",
  "page.music.click": "♪ Music: {0} (a click or a key press to hear it)",
  "page.music.off": "♪ Music: {0} (sound off in Settings)",
+ "page.music.prev": "Previous track",
+ "page.music.next": "Next track",
  "page.music.error": "♪ Music: {0}: unreadable files ({1})",
  "page.music.nolist": "♪ Music: {0}: {1}",
  "page.opt.volume": "Volume: ",

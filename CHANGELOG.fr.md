@@ -6,6 +6,18 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.11.0)
 
+### 16/11/2026 : lecture audio : boutons ⏮/⏭ et compteur de pistes pour la playlist
+
+- **Demande de Klaatou** : ajouter des boutons pour passer au morceau suivant et précédent dans une zone audio, et afficher le numéro de la piste en cours (ex: "1/14") entre les deux boutons.
+- **Fonction** (`src/template.html`, bloc `MUSIC` et fenêtre d'État) : ajout des fonctions `next()` et `prev()` (qui bouclent aux extrémités) et de `trackIndex()` dans l'objet `MUSIC`. Ajout des boutons ⏮ et ⏭ et du compteur dans la fenêtre État, à côté de la ligne « ♪ Musique : … », visibles uniquement si la playlist comporte plus d'une piste.
+- **Change en `dist\`** après `python build.py` : `index.html`, `glb-viewer.html` et `glb2html.py`. `VERSION` : `1.11.15`.
+
+### 16/11/2026 : lecture audio : boutons ⏭ (suivant) et ⏮ (précédent) pour la playlist des zones audio
+
+- **Demande de Klaatou** : ajouter un bouton pour passer d'un morceau à l'autre dans la playlist d'une zone audio (type `audio`), et un bouton pour revenir au morceau précédent.
+- **Fonction** (`src/template.html`, bloc `MUSIC` et fenêtre d'État) : ajout des fonctions `next()` et `prev()` dans l'objet `MUSIC`. Ajout des boutons dans la fenêtre État, à côté de la ligne « ♪ Musique : … », visibles uniquement si la playlist de la zone en cours comporte plus d'une piste (`MUSIC.count() > 1`). L'index boucle : à la fin de la playlist, `next()` revient au premier morceau, et `prev()` au premier morceau passe au dernier.
+- **Change en `dist\`** après `python build.py` : `index.html`, `glb-viewer.html` et `glb2html.py`. `VERSION` : `1.11.15`.
+
 ### 16/11/2026 : fenêtre État : case pour couper le son de la radio ou de la musique, à côté de la ligne
 
 - **Demande de Klaatou** : une case juste à côté de la ligne « Radio : [nom] » (ou du titre de la piste pour une zone audio) de la fenêtre État, avec la même action que la case correspondante de Réglages : couper le son, et le reprendre au re-cochage ; l'état de la case doit suivre la logique de `RADIO.refresh0()`.
