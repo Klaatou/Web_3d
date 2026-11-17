@@ -1978,7 +1978,7 @@ function createViewer(container, cfg0, loader) {
     if (typeof z.cone === 'boolean' && type !== 'spawn' && !img) o.cone = z.cone;   // radio (1.10.35) : cone par defaut, cone: false pour le retirer   // repere (cone) facultatif : vrai = toujours, faux = jamais ; absent = selon le declenchement ; ecrit seulement s'il est vrai ou faux
     if (type === 'cast') {   // radio : tableau d'URLs (flux Icecast / SHOUTcast) ; on joue la premiere a portee, puis on enchaîne
       const raw = Array.isArray(z.urls) ? z.urls : (z.target ? [z.target] : []);
-      const lb = Array.isArray(z.labels) ? z.labels : [];   // 1.11.12 : titres des flux, meme ordre que urls ; si le tableau n'existe pas, repli sur le label de la zone
+      const lb = Array.isArray(z.labels) ? z.labels : [];   // 1.11.13 : titres des flux, meme ordre que urls ; si le tableau n'existe pas, repli sur le label de la zone
       const uu = [], ll = [];
       for (let k = 0; k < raw.length && uu.length < 500; k++) {
         const u = String(raw[k] || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 600);

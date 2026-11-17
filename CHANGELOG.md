@@ -6,15 +6,20 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.11.0)
 
+### 17/11/2026: version numbers of batches 1.11.13 to 1.11.16 fixed
+
+- **Finding**: Qwen's batches carried wrong numbers: `urls` and `labels` (batch 1.11.13) were called 1.11.12 in the code comments, and the entry for the ⏮ ⏭ buttons with counter announced `VERSION` 1.11.15 while the batch is 1.11.16 (`git log`).
+- **Fix**: `1.11.12` comments → `1.11.13` (`src/core.js`, `src/template.html`); entry of the buttons with counter: 1.11.16; 1.11.20 entry: "batches 1.11.13 to 1.11.16". Entries 1.11.12 and earlier are not touched. `VERSION`: `1.11.22`.
+
 ### 17/11/2026: documents of batches 1.11.13 to 1.11.20: multi-stream radio, distance, out of range, tooltips
 
 - **Documents**: `docs/fr/MANUEL.md` and `docs/en/MANUAL.md`: § 5.19 (several streams `urls` and `labels`, distance and out of range), § 5.20 (distance, ⏮ ⏭ buttons and counter), § 7.66 (checkbox and tooltip of the lines), § 10.25 (each `urls` stream in `--radios`); `REFERENCE_JSON.md` (French and English: a radio's `target`, new `urls` and `labels` rows); `PROCEDURES_SIMPLES.md` and `SIMPLE_PROCEDURES.md` § 14 (pointer); `HISTORIQUE.md` and `HISTORY.md` (batches 1.11.10 to 1.11.21).
 - No code changed. `VERSION`: `1.11.21`. **Changes in `dist\`** after `python build.py`: only `docs\REFERENCE_OPTIONS.md` (its generation date).
 
-### 17/11/2026: multi-stream radio and Radio / Music lines: fixes from the review of lots 1.11.12 to 1.11.15
+### 17/11/2026: multi-stream radio and Radio / Music lines: fixes from the review of lots 1.11.13 to 1.11.16
 
 - **Finding** (review and measurements in Chromium): (1) `glb2html.py --zones` dropped `urls` and `labels` of a radio zone (`clean_zones` in `gen_tpl.py` had not been adapted: the zone came out with `"target": ""`, so silent, with no message); (2) after a stream error, choosing another stream in the list did not play it (the error flag was per zone, the line showed the new stream's name with the old one's cause); (3) the stream list was rebuilt on every `selSync()` call (24 DOM mutations for 6 steps of one metre: an open list could close while walking); (4) in the viewer editor, with several streams, editing the address had no effect (`urls` takes precedence over `target`); (5) unchecking the Radio or Music checkbox of the State window stopped the sound but the matching Settings checkbox stayed checked (only the other source was unchecked).
-- **Fixes**: (1) `clean_zones` keeps `urls`, `labels` and `target` (= first address) like `cleanZone` in `core.js` (same limits: 500 addresses, 600 and 60 characters, control characters removed, an empty address removes its label); (2) the error is remembered per zone **and** per stream (`bk()`), forgotten when leaving the zone and when that stream is chosen in the list (it is then tried again); (3) the list is rebuilt only when the zone changes (`selFor`); (4) the editor also rewrites the first address of `urls`; (5) the State window checkbox also updates the Settings checkbox of the same source. Tidying: working comments left in the code removed, comments deleted by mistake restored (1.11.1, 1.10.34, role of `bad`), `1.11.x` replaced by `1.11.12`, unused language key `page.opt.radio.stream` removed (`tests/i18n.py` passes again), indentation of `page.opt.sounds`.
+- **Fixes**: (1) `clean_zones` keeps `urls`, `labels` and `target` (= first address) like `cleanZone` in `core.js` (same limits: 500 addresses, 600 and 60 characters, control characters removed, an empty address removes its label); (2) the error is remembered per zone **and** per stream (`bk()`), forgotten when leaving the zone and when that stream is chosen in the list (it is then tried again); (3) the list is rebuilt only when the zone changes (`selFor`); (4) the editor also rewrites the first address of `urls`; (5) the State window checkbox also updates the Settings checkbox of the same source. Tidying: working comments left in the code removed, comments deleted by mistake restored (1.11.1, 1.10.34, role of `bad`), `1.11.x` replaced by `1.11.13`, unused language key `page.opt.radio.stream` removed (`tests/i18n.py` passes again), indentation of `page.opt.sounds`.
 - **Test**: new `tests/radio_flux.py` (18 checks: `--zones` with `urls` and `labels`, same result in Python and JavaScript on dirty values, stream list and labels, broken stream then another stream, broken stream tried again, list not rebuilt at each step, back to the first stream when leaving the zone, State window checkbox, ⏮ ⏭ buttons and n/N counter with wrap-around, shape of the editor fix). **Not tried**: the viewer editor on screen (the fix is read in the code), Windows and Edge.
 
 ### 17/11/2026: radio and music zones: tooltip on the State window lines
@@ -42,7 +47,7 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 - **Requested by Klaatou**: add buttons to skip to the next and previous track in an audio zone, and display the current track number (e.g., "1/14") between them.
 - **Function** (`src/template.html`, `MUSIC` block and State window): added `next()` and `prev()` (looping at ends) and `trackIndex()` functions to the `MUSIC` object. Added ⏮ and ⏭ buttons and the counter in the State window, next to the "♪ Music: …" line, visible only if the playlist has more than one track.
-- **Change in `dist\`** after `python build.py`: `index.html`, `glb-viewer.html` and `glb2html.py`. `VERSION`: `1.11.15`.
+- **Change in `dist\`** after `python build.py`: `index.html`, `glb-viewer.html` and `glb2html.py`. `VERSION`: `1.11.16`.
 
 ### 16/11/2026: Audio playback: ⏭ (next) and ⏮ (previous) buttons for audio zones playlist
 

@@ -16,8 +16,8 @@ Draco et Meshopt gérés automatiquement (décodeurs intégrés seulement si le 
 """
 from __future__ import annotations
 
-VERSION = "1.11.20 (17/11/2026)"
-SHELL_VERSION = "1.11.20 (17/11/2026)"   # numéro de version de la coquille (index.html) : écrit par build.py, ne change que si la coquille change
+VERSION = "1.11.22 (17/11/2026)"
+SHELL_VERSION = "1.11.22 (17/11/2026)"   # numéro de version de la coquille (index.html) : écrit par build.py, ne change que si la coquille change
 MAP_VERSION = "1.11.20 (17/11/2026)"       # numéro de version de la page de carte (carte.html) : idem
 
 import argparse
@@ -3269,7 +3269,7 @@ function createViewer(container, cfg0, loader) {
     if (typeof z.cone === 'boolean' && type !== 'spawn' && !img) o.cone = z.cone;   // radio (1.10.35) : cone par defaut, cone: false pour le retirer   // repere (cone) facultatif : vrai = toujours, faux = jamais ; absent = selon le declenchement ; ecrit seulement s'il est vrai ou faux
     if (type === 'cast') {   // radio : tableau d'URLs (flux Icecast / SHOUTcast) ; on joue la premiere a portee, puis on enchaîne
       const raw = Array.isArray(z.urls) ? z.urls : (z.target ? [z.target] : []);
-      const lb = Array.isArray(z.labels) ? z.labels : [];   // 1.11.12 : titres des flux, meme ordre que urls ; si le tableau n'existe pas, repli sur le label de la zone
+      const lb = Array.isArray(z.labels) ? z.labels : [];   // 1.11.13 : titres des flux, meme ordre que urls ; si le tableau n'existe pas, repli sur le label de la zone
       const uu = [], ll = [];
       for (let k = 0; k < raw.length && uu.length < 500; k++) {
         const u = String(raw[k] || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 600);
@@ -4468,7 +4468,7 @@ const SND = (() => {
 const distTxt = (z, d) => z ? ' (' + Math.round(d) + ' m / ' + Math.round(z.radius * 10) / 10 + ' m)' : '';   // 1.11.17 : distance a la source et portee de la zone, en metres, ajoutees aux lignes Radio et Musique
 let radioTxt = () => {}, musicTxt = () => {}, radioTip = () => {}, musicTip = () => {};   // lignes « Radio » et « Musique » du bloc d'état (définies avec le bloc)
 const RADIO = (() => {
-  let a = null, cur = null, gain = 0, dist = 0, out = false, src = '', shown = '', asked = '', selIdx = 0;   // asked : flux dont la page a demandé le titre au serveur (1.11.1) ; out : zone hors de portée (1.11.18) ; selIdx : flux choisi dans la liste (1.11.12)
+  let a = null, cur = null, gain = 0, dist = 0, out = false, src = '', shown = '', asked = '', selIdx = 0;   // asked : flux dont la page a demandé le titre au serveur (1.11.1) ; out : zone hors de portée (1.11.18) ; selIdx : flux choisi dans la liste (1.11.13)
   const titles = new Map();   // 1.10.34 : url du flux -> titre du morceau (serveur de présence --radios) ; '' = inconnu
   const bad = new Map();   // zone id + flux -> cause de l'echec (code MEDIA_ERR_* et message du navigateur) ; oubliee quand on sort de la portee (reessai au retour) et quand on choisit ce flux dans la liste (1.11.20 : par flux, pas par zone)
   const bk = () => cur ? cur.id + '\u0001' + selIdx : '';
@@ -4476,7 +4476,7 @@ const RADIO = (() => {
   const ERR = { 1: 'MEDIA_ERR_ABORTED', 2: 'MEDIA_ERR_NETWORK', 3: 'MEDIA_ERR_DECODE', 4: 'MEDIA_ERR_SRC_NOT_SUPPORTED' };
   const cause = () => a && a.error ? (ERR[a.error.code] || 'MEDIA_ERR_' + a.error.code) + (a.error.message ? ' : ' + a.error.message : '') : '?';
   const label = () => cur ? (cur.label || cur.id) : '';
-  const streamTitle = () => cur ? ((cur.labels && cur.labels[selIdx]) || label()) : '';   // 1.11.12 : titre du flux choisi (tableau labels de la zone, meme ordre que urls) ; repli sur le label de la zone sans labels
+  const streamTitle = () => cur ? ((cur.labels && cur.labels[selIdx]) || label()) : '';   // 1.11.13 : titre du flux choisi (tableau labels de la zone, meme ordre que urls) ; repli sur le label de la zone sans labels
   const activeUrl = () => cur && cur.urls && cur.urls.length ? cur.urls[selIdx] : (cur ? cur.target : '');
   const tip = () => {   // 1.11.19 : info-bulle de la ligne Radio : zone, flux, titre, distance et etat, commandes
     if (!cur) return '';
@@ -4487,7 +4487,7 @@ const RADIO = (() => {
     L.push(tr(n > 1 ? 'page.tip.radio.cmd.multi' : 'page.tip.radio.cmd'));
     return L.join('\n');
   };
-  const show = key => { shown = key; radioTxt(key ? tr(key, streamTitle(), cur && bad.get(bk())) + (key === 'page.radio.playing' && cur && titles.get(activeUrl()) ? ' \u2014 ' + titles.get(activeUrl()) : '') : '', cur && (key === 'page.radio.playing' || key === 'page.radio.waiting' || key === 'page.radio.far') ? distTxt(cur, dist) : '', key === 'page.radio.far'); radioTip(tip()); };   // 1.11.12 : le titre affiche celui du flux choisi (labels), pas toujours le premier
+  const show = key => { shown = key; radioTxt(key ? tr(key, streamTitle(), cur && bad.get(bk())) + (key === 'page.radio.playing' && cur && titles.get(activeUrl()) ? ' \u2014 ' + titles.get(activeUrl()) : '') : '', cur && (key === 'page.radio.playing' || key === 'page.radio.waiting' || key === 'page.radio.far') ? distTxt(cur, dist) : '', key === 'page.radio.far'); radioTip(tip()); };   // 1.11.13 : le titre affiche celui du flux choisi (labels), pas toujours le premier
   const lvl = () => VIS.sounds && VIS.radio ? Math.max(0, Math.min(1, gain * VIS.volume / 100)) : 0;
   const stop = () => { if (!a || !src) return; src = ''; a.pause(); a.removeAttribute('src'); a.load(); };
   const ensure = () => {
@@ -4504,7 +4504,7 @@ const RADIO = (() => {
     if (!cur || !cur.urls || cur.urls.length <= 1) { selEl.hidden = true; selFor = null; return; }
     selEl.hidden = false;
     if (selIdx >= cur.urls.length) selIdx = 0;
-    if (selFor !== cur) { selFor = cur; selEl.length = 0; cur.urls.forEach((u, i) => { const o = document.createElement('option'); o.value = i; o.textContent = (cur.labels && cur.labels[i]) || u; selEl.add(o); }); }   // 1.11.12 : le titre du flux (labels) a la place de l'URL quand il existe
+    if (selFor !== cur) { selFor = cur; selEl.length = 0; cur.urls.forEach((u, i) => { const o = document.createElement('option'); o.value = i; o.textContent = (cur.labels && cur.labels[i]) || u; selEl.add(o); }); }   // 1.11.13 : le titre du flux (labels) a la place de l'URL quand il existe
     selEl.value = String(selIdx);
   };
   const setSelEl = el => { selEl = el; };
@@ -4933,7 +4933,7 @@ if (C.walk) {
   // 1.11.4 : « ♪ Musique : … » tant qu'une zone audio est à portée ; 1.11.14 : « ⏭ » visible si la playlist a plus d'une piste
   radioTip = t => { lrd.title = t || ''; };
   lrd.hidden = true; radioTxt = (t, dist, far) => { srcSync(sr, 'radio'); lrd.hidden = !t; setSrcTx(sr, t || '', t ? dist : '', far); };   // 1.10.32 : « ♪ Radio : … » tant qu'une zone radio est à portée (le diagnostic la reprend)
-  const rsSel = document.createElement('select'); rsSel.id = 'radioSel'; rsSel.hidden = true;   // 1.11.12 : choix du flux de la radio, dans la fenêtre État au-dessus de la ligne « Radio : … » (comme ce texte : s'adapte à la radio en cours)
+  const rsSel = document.createElement('select'); rsSel.id = 'radioSel'; rsSel.hidden = true;   // 1.11.13 : choix du flux de la radio, dans la fenêtre État au-dessus de la ligne « Radio : … » (comme ce texte : s'adapte à la radio en cours)
   rsSel.onchange = () => { const si = parseInt(rsSel.value, 10) || 0; RADIO.setIdx(si); };
   sbody.insertBefore(rsSel, lrd);
   RADIO.setSelEl(rsSel);

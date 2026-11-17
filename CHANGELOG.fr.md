@@ -6,15 +6,20 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.11.0)
 
+### 17/11/2026 : numéros de version des lots 1.11.13 à 1.11.16 corrigés
+
+- **Constat** : les lots de Qwen portaient de mauvais numéros : `urls` et `labels` (lot 1.11.13) étaient dits 1.11.12 dans les commentaires du code, et l'entrée des boutons ⏮ ⏭ avec compteur annonçait `VERSION` 1.11.15 alors que le lot est la 1.11.16 (`git log`).
+- **Correctif** : commentaires `1.11.12` → `1.11.13` (`src/core.js`, `src/template.html`) ; entrée des boutons avec compteur : 1.11.16 ; entrée 1.11.20 : « lots 1.11.13 à 1.11.16 ». Les entrées 1.11.12 et antérieures ne sont pas touchées. `VERSION` : `1.11.22`.
+
 ### 17/11/2026 : documents des lots 1.11.13 à 1.11.20 : radio à plusieurs flux, distance, hors de portée, bulles
 
 - **Documents** : `docs/fr/MANUEL.md` et `docs/en/MANUAL.md` : § 5.19 (plusieurs flux `urls` et `labels`, distance et hors de portée), § 5.20 (distance, boutons ⏮ ⏭ et compteur), § 7.66 (case et bulle des lignes), § 10.25 (chaque flux de `urls` dans `--radios`) ; `REFERENCE_JSON.md` (français et anglais : `target` d'une radio, nouvelles lignes `urls` et `labels`) ; `PROCEDURES_SIMPLES.md` et `SIMPLE_PROCEDURES.md` § 14 (renvoi) ; `HISTORIQUE.md` et `HISTORY.md` (lots 1.11.10 à 1.11.21).
 - Aucun code modifié. `VERSION` : `1.11.21`. **Change en `dist\`** après `python build.py` : seulement `docs\REFERENCE_OPTIONS.md` (sa date de génération).
 
-### 17/11/2026 : radio à plusieurs flux et lignes Radio / Musique : corrections de la relecture des lots 1.11.12 à 1.11.15
+### 17/11/2026 : radio à plusieurs flux et lignes Radio / Musique : corrections de la relecture des lots 1.11.13 à 1.11.16
 
 - **Constat** (relecture et mesures dans Chromium) : (1) `glb2html.py --zones` perdait `urls` et `labels` d'une zone radio (`clean_zones` de `gen_tpl.py` n'avait pas été adapté : la zone sortait avec `"target": ""`, donc muette, sans message) ; (2) après une erreur de flux, choisir un autre flux dans la liste ne le jouait pas (le drapeau d'erreur était par zone, la ligne affichait le nom du nouveau flux avec la cause de l'ancien) ; (3) la liste des flux était reconstruite à chaque appel de `selSync()` (24 mutations du DOM pour 6 pas d'un mètre : une liste ouverte pendant la marche risquait de se refermer) ; (4) dans l'éditeur du viewer, avec plusieurs flux, modifier l'adresse n'avait aucun effet (`urls` prime sur `target`) ; (5) décocher la case Radio ou Musique de la fenêtre État arrêtait le son mais la case correspondante de Réglages restait cochée (seule l'autre source était décochée).
-- **Correctifs** : (1) `clean_zones` retient `urls`, `labels` et `target` (= première adresse) comme `cleanZone` de `core.js` (mêmes limites : 500 adresses, 600 et 60 caractères, caractères de contrôle retirés, une adresse vide retire son label) ; (2) l'erreur est mémorisée par zone **et** par flux (`bk()`), oubliée en quittant la zone et quand on choisit ce flux dans la liste (il est alors réessayé) ; (3) la liste n'est refaite que si la zone change (`selFor`) ; (4) l'éditeur réécrit aussi la première adresse de `urls` ; (5) la case de la fenêtre État met aussi à jour la case de Réglages de la même source. Ménage : commentaires de travail laissés dans le code retirés, commentaires supprimés par erreur rétablis (1.11.1, 1.10.34, rôle de `bad`), `1.11.x` remplacé par `1.11.12`, clé de langue inutilisée `page.opt.radio.stream` retirée (`tests/i18n.py` passe à nouveau), indentation de `page.opt.sounds`.
+- **Correctifs** : (1) `clean_zones` retient `urls`, `labels` et `target` (= première adresse) comme `cleanZone` de `core.js` (mêmes limites : 500 adresses, 600 et 60 caractères, caractères de contrôle retirés, une adresse vide retire son label) ; (2) l'erreur est mémorisée par zone **et** par flux (`bk()`), oubliée en quittant la zone et quand on choisit ce flux dans la liste (il est alors réessayé) ; (3) la liste n'est refaite que si la zone change (`selFor`) ; (4) l'éditeur réécrit aussi la première adresse de `urls` ; (5) la case de la fenêtre État met aussi à jour la case de Réglages de la même source. Ménage : commentaires de travail laissés dans le code retirés, commentaires supprimés par erreur rétablis (1.11.1, 1.10.34, rôle de `bad`), `1.11.x` remplacé par `1.11.13`, clé de langue inutilisée `page.opt.radio.stream` retirée (`tests/i18n.py` passe à nouveau), indentation de `page.opt.sounds`.
 - **Test** : nouveau `tests/radio_flux.py` (18 vérifications : zones `--zones` avec `urls` et `labels`, même résultat en Python et en JavaScript sur des valeurs sales, liste des flux et labels, flux cassé puis autre flux, flux cassé réessayé, liste non refaite à chaque pas, retour au premier flux en quittant la zone, case de la fenêtre État, boutons ⏮ ⏭ et compteur n/N avec boucle, forme du correctif de l'éditeur). **Non essayé** : l'éditeur du viewer à l'écran (le correctif est lu dans le code), Windows et Edge.
 
 ### 17/11/2026 : zones radio et musique : info-bulle sur les lignes de la fenêtre État
@@ -42,7 +47,7 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 - **Demande de Klaatou** : ajouter des boutons pour passer au morceau suivant et précédent dans une zone audio, et afficher le numéro de la piste en cours (ex: "1/14") entre les deux boutons.
 - **Fonction** (`src/template.html`, bloc `MUSIC` et fenêtre d'État) : ajout des fonctions `next()` et `prev()` (qui bouclent aux extrémités) et de `trackIndex()` dans l'objet `MUSIC`. Ajout des boutons ⏮ et ⏭ et du compteur dans la fenêtre État, à côté de la ligne « ♪ Musique : … », visibles uniquement si la playlist comporte plus d'une piste.
-- **Change en `dist\`** après `python build.py` : `index.html`, `glb-viewer.html` et `glb2html.py`. `VERSION` : `1.11.15`.
+- **Change en `dist\`** après `python build.py` : `index.html`, `glb-viewer.html` et `glb2html.py`. `VERSION` : `1.11.16`.
 
 ### 16/11/2026 : lecture audio : boutons ⏭ (suivant) et ⏮ (précédent) pour la playlist des zones audio
 
