@@ -284,7 +284,10 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 17/11/2026 |  | after 1.11.0 | Batch 1.11.21: documents of batches 1.11.13 to 1.11.20 |
 | 17/11/2026 |  | after 1.11.0 | Batch 1.11.22: version numbers of batches 1.11.13 to 1.11.16 fixed (code comments and changelogs) |
 | 17/11/2026 |  | after 1.11.0 | Batch 1.11.23: `REPRISE.md` trimmed from 601 to 150 lines; the old one is in `REPRISE_ARCHIVE.md` |
-
+| 17/11/2026 |  | after 1.11.0 | Batch 1.11.24: movable arrow pad; Sound window (radio and music of the zones) in the window layout, opened by the ▲ arrow or a click on the cone; `tests/fenetre_son.py` |
+| 17/11/2026 |  | after 1.11.0 | Batch 1.11.25: the title of the Sound window gives the type of the active zone (Radio, Audio playlist) |
+| 17/11/2026 |  | after 1.11.0 | Batch 1.11.26: radio streams in one `streams` array (name, address pairs), old keys `urls`, `labels`, `target` converted; tooltip of the Radio line |
+| 17/11/2026 |  | after 1.11.0 | Batch 1.11.27: documents for batches 1.11.24 to 1.11.26: manual § 5.19, § 7.66, pad, § 7.44, § 10.25, appendix, simple procedures |
 ## Useful commands
 
 - See the history: `git log --oneline --decorate`

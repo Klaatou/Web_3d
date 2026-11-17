@@ -6,6 +6,11 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.11.0)
 
+### 17/11/2026 : documents des lots 1.11.24 à 1.11.26
+
+- **Manuel** : § 5.19 (`streams`, nom du flux, bulle, attention à la virgule), § 7.66 (fenêtre Son), pavé déplaçable (§ 7.33), § 7.44 (disposition d'origine), § 10.25 (`streams` et `--radios`), annexe § 13.3 ; `PROCEDURES_SIMPLES.md` § 14 ; historiques fr et en.
+- Aucun code modifié. `VERSION` : `1.11.27`. **Non vérifié** : la relecture par JJ ; `MODE_EMPLOI` cité par le lot 1.11.24 n'existe pas dans le dépôt, rien n'a été fait pour lui.
+
 ### 17/11/2026 : flux de la radio dans un seul tableau : `streams` = `[["nom", "adresse"], ...]`
 
 - **Nouveau** : une zone radio (`cast`) liste ses flux dans un seul tableau de paires, le nom d'abord (`""` sans nom) : `"streams": [["Nom 1", "adresse1"], ["Nom 2", "adresse2"]]`. Déplacer, ajouter ou retirer un flux, c'est déplacer, ajouter ou retirer une paire. Seule `streams` est écrite (éditeur du viewer, `--update`, `--zones`).

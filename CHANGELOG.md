@@ -6,6 +6,11 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.11.0)
 
+### 17/11/2026: documents for batches 1.11.24 to 1.11.26
+
+- **Manual**: § 5.19 (`streams`, stream name, tooltip, mind the comma), § 7.66 (Sound window), movable pad (§ 7.33), § 7.44 (original layout), § 10.25 (`streams` and `--radios`), appendix § 13.3; `SIMPLE_PROCEDURES.md` § 14; histories fr and en.
+- No code changed. `VERSION`: `1.11.27`. **Not checked**: JJ's review; the `MODE_EMPLOI` named by batch 1.11.24 is not in the repository, nothing was done for it.
+
 ### 17/11/2026: radio streams in one array: `streams` = `[["label", "url"], ...]`
 
 - **New**: a radio zone (`cast`) lists its streams in one array of pairs, the name first (`""` without a name): `"streams": [["Label 1", "url1"], ["Label 2", "url2"]]`. Moving, adding or removing a stream is moving, adding or removing one pair. Only `streams` is written (editor of the viewer, `--update`, `--zones`).

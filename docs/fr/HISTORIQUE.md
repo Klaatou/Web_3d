@@ -284,7 +284,10 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 17/11/2026 |  | après 1.11.0 | Lot 1.11.21 : documents des lots 1.11.13 à 1.11.20 |
 | 17/11/2026 |  | après 1.11.0 | Lot 1.11.22 : numéros de version des lots 1.11.13 à 1.11.16 corrigés (commentaires du code et changelogs) |
 | 17/11/2026 |  | après 1.11.0 | Lot 1.11.23 : `REPRISE.md` allégé de 601 à 150 lignes ; l'ancien est dans `REPRISE_ARCHIVE.md` |
-
+| 17/11/2026 |  | après 1.11.0 | Lot 1.11.24 : pavé de flèches déplaçable ; fenêtre Son (radio et musique des zones) dans la disposition des fenêtres, ouverte par la flèche ▲ ou le clic sur le cône ; `tests/fenetre_son.py` |
+| 17/11/2026 |  | après 1.11.0 | Lot 1.11.25 : le titre de la fenêtre Son indique le type de la zone active (Radio, PL Audio) |
+| 17/11/2026 |  | après 1.11.0 | Lot 1.11.26 : flux de la radio dans un seul tableau `streams` (paires nom, adresse), anciennes clés `urls`, `labels`, `target` converties ; bulle de la ligne Radio |
+| 17/11/2026 |  | après 1.11.0 | Lot 1.11.27 : documents des lots 1.11.24 à 1.11.26 : manuel § 5.19, § 7.66, pavé, § 7.44, § 10.25, annexe, procédures simples |
 ## Commandes utiles
 
 - Voir l'historique : `git log --oneline --decorate`
