@@ -6,6 +6,12 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.11.0)
 
+### 17/11/2026: delivery mechanics moved from `REGLES.md` to `REPRISE.md` (section 8)
+
+- `REPRISE.md`: new section 8 (setting and particulars, delivering a change, before any delivery, what each delivery gives, visible texts and documents); the old section 8 becomes section 9. The content comes from rules 10, 11, 13 to 16, 18, 19, 21, 23 and the sandbox note of `REGLES.md` (a Project file, rewritten by Klaatou: those rules are now only a pointer, numbers kept; rule 25 stays there, because it names names that cannot be written in the repository).
+- **New convention** (Klaatou's decision): in a series of PowerShell commands, only the first starts with the `cd`; section 0 and section 8.4 of `REPRISE.md`.
+- No code changed. `VERSION`: `1.11.31`.
+
 ### 17/11/2026: initials removed from the batch 1.11.27 entry (rule 25)
 
 - The batch 1.11.27 entry named the reviewer by initials; replaced by "Klaatou". No other text of the repository contains them. If batch 1.11.27 was committed before this fix, the initials stay in the git history.

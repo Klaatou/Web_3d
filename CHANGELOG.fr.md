@@ -6,6 +6,12 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.11.0)
 
+### 17/11/2026 : mécanique de livraison déplacée de `REGLES.md` vers `REPRISE.md` (§ 8)
+
+- `REPRISE.md` : nouveau § 8 (cadre et particularités, livrer une modification, avant toute livraison, ce que donne chaque livraison, textes visibles et documents) ; l'ancien § 8 devient le § 9. Le contenu vient des règles 10, 11, 13 à 16, 18, 19, 21, 23 et du bac à sable de `REGLES.md` (fichier du Projet, réécrit par Klaatou : ces règles n'y sont plus qu'un renvoi, numéros conservés ; la règle 25 y reste, car elle cite des noms qu'on ne peut pas écrire dans le dépôt).
+- **Nouvelle convention** (décision de Klaatou) : dans une série de commandes PowerShell, seule la première commence par le `cd` ; § 0 et § 8.4 de `REPRISE.md`.
+- Aucun code modifié. `VERSION` : `1.11.31`.
+
 ### 17/11/2026 : initiales retirées de l'entrée du lot 1.11.27 (règle 25)
 
 - L'entrée du lot 1.11.27 nommait le relecteur par ses initiales ; remplacé par « Klaatou ». Aucun autre texte du dépôt ne les contient. Si le lot 1.11.27 a été commité avant cette correction, les initiales restent dans l'historique git.
