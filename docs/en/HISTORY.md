@@ -288,6 +288,9 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 17/11/2026 |  | after 1.11.0 | Batch 1.11.25: the title of the Sound window gives the type of the active zone (Radio, Audio playlist) |
 | 17/11/2026 |  | after 1.11.0 | Batch 1.11.26: radio streams in one `streams` array (name, address pairs), old keys `urls`, `labels`, `target` converted; tooltip of the Radio line |
 | 17/11/2026 |  | after 1.11.0 | Batch 1.11.27: documents for batches 1.11.24 to 1.11.26: manual § 5.19, § 7.66, pad, § 7.44, § 10.25, appendix, simple procedures |
+| 17/11/2026 |  | after 1.11.0 | Batch 1.11.28: radio and music volume in the Sound window (slider under a loudspeaker icon) |
+| 17/11/2026 |  | after 1.11.0 | Batch 1.11.29: radio / music volume independent of the Sounds volume (50 by default), icon as a black drawing, tooltip rewritten; manual § 5.19, § 5.20, § 7.66 |
+| 17/11/2026 |  | after 1.11.0 | Batch 1.11.30: initials removed from the batch 1.11.27 entry (rule 25) |
 ## Useful commands
 
 - See the history: `git log --oneline --decorate`

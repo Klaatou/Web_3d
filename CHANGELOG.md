@@ -6,6 +6,11 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.11.0)
 
+### 17/11/2026: initials removed from the batch 1.11.27 entry (rule 25)
+
+- The batch 1.11.27 entry named the reviewer by initials; replaced by "Klaatou". No other text of the repository contains them. If batch 1.11.27 was committed before this fix, the initials stay in the git history.
+- No code changed. `VERSION`: `1.11.30`.
+
 ### 17/11/2026: independent radio / music volume, speaker icon as a black drawing
 
 - **Fix to batch 1.11.28**: the slider of the Sound window is no longer multiplied by the Sounds volume of Settings (its maximum was Settings' one). It alone sets the radio and music, from 1 to 100, **50 by default**; the Sounds volume now only sets the beeps. With no saved value (first start after the update), the slider takes the Sounds volume, so nothing changes to the ear.
@@ -22,7 +27,7 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 ### 17/11/2026: documents for batches 1.11.24 to 1.11.26
 
 - **Manual**: § 5.19 (`streams`, stream name, tooltip, mind the comma), § 7.66 (Sound window), movable pad (§ 7.33), § 7.44 (original layout), § 10.25 (`streams` and `--radios`), appendix § 13.3; `SIMPLE_PROCEDURES.md` § 14; histories fr and en.
-- No code changed. `VERSION`: `1.11.27`. **Not checked**: JJ's review; the `MODE_EMPLOI` named by batch 1.11.24 is not in the repository, nothing was done for it.
+- No code changed. `VERSION`: `1.11.27`. **Not checked**: Klaatou's review; the `MODE_EMPLOI` named by batch 1.11.24 is not in the repository, nothing was done for it.
 
 ### 17/11/2026: radio streams in one array: `streams` = `[["label", "url"], ...]`
 

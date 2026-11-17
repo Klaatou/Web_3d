@@ -288,6 +288,9 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 17/11/2026 |  | après 1.11.0 | Lot 1.11.25 : le titre de la fenêtre Son indique le type de la zone active (Radio, PL Audio) |
 | 17/11/2026 |  | après 1.11.0 | Lot 1.11.26 : flux de la radio dans un seul tableau `streams` (paires nom, adresse), anciennes clés `urls`, `labels`, `target` converties ; bulle de la ligne Radio |
 | 17/11/2026 |  | après 1.11.0 | Lot 1.11.27 : documents des lots 1.11.24 à 1.11.26 : manuel § 5.19, § 7.66, pavé, § 7.44, § 10.25, annexe, procédures simples |
+| 17/11/2026 |  | après 1.11.0 | Lot 1.11.28 : volume de la radio et de la musique dans la fenêtre Son (curseur sous une icône haut-parleur) |
+| 17/11/2026 |  | après 1.11.0 | Lot 1.11.29 : volume radio / musique indépendant du volume des Sons (50 par défaut), icône en dessin noir, bulle réécrite ; manuel § 5.19, § 5.20, § 7.66 |
+| 17/11/2026 |  | après 1.11.0 | Lot 1.11.30 : initiales retirées de l'entrée du lot 1.11.27 (règle 25) |
 ## Commandes utiles
 
 - Voir l'historique : `git log --oneline --decorate`

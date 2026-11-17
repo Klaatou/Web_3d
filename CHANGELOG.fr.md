@@ -6,6 +6,11 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.11.0)
 
+### 17/11/2026 : initiales retirées de l'entrée du lot 1.11.27 (règle 25)
+
+- L'entrée du lot 1.11.27 nommait le relecteur par ses initiales ; remplacé par « Klaatou ». Aucun autre texte du dépôt ne les contient. Si le lot 1.11.27 a été commité avant cette correction, les initiales restent dans l'historique git.
+- Aucun code modifié. `VERSION` : `1.11.30`.
+
 ### 17/11/2026 : volume radio / musique indépendant, icône du haut-parleur en dessin noir
 
 - **Correction du lot 1.11.28** : le curseur de la fenêtre Son ne se multiplie plus avec le volume des Sons de Réglages (son maximum était celui de Réglages). Il règle seul la radio et la musique, de 1 à 100, **50 par défaut** ; le volume des Sons ne règle plus que les bips. Sans valeur retenue (premier démarrage après la mise à jour), le curseur reprend le volume des Sons, donc rien ne change à l'oreille.
@@ -22,7 +27,7 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 ### 17/11/2026 : documents des lots 1.11.24 à 1.11.26
 
 - **Manuel** : § 5.19 (`streams`, nom du flux, bulle, attention à la virgule), § 7.66 (fenêtre Son), pavé déplaçable (§ 7.33), § 7.44 (disposition d'origine), § 10.25 (`streams` et `--radios`), annexe § 13.3 ; `PROCEDURES_SIMPLES.md` § 14 ; historiques fr et en.
-- Aucun code modifié. `VERSION` : `1.11.27`. **Non vérifié** : la relecture par JJ ; `MODE_EMPLOI` cité par le lot 1.11.24 n'existe pas dans le dépôt, rien n'a été fait pour lui.
+- Aucun code modifié. `VERSION` : `1.11.27`. **Non vérifié** : la relecture par Klaatou ; `MODE_EMPLOI` cité par le lot 1.11.24 n'existe pas dans le dépôt, rien n'a été fait pour lui.
 
 ### 17/11/2026 : flux de la radio dans un seul tableau : `streams` = `[["nom", "adresse"], ...]`
 
