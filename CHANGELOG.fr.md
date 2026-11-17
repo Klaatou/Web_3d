@@ -98,10 +98,10 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 - **Nouvelle convention** (décision de Klaatou) : dans une série de commandes PowerShell, seule la première commence par le `cd` ; § 0 et § 8.4 de `REPRISE.md`.
 - Aucun code modifié. `VERSION` : `1.11.31`.
 
-### 17/11/2026 : initiales retirées de l'entrée du lot 1.11.27 (règle 25)
+### 17/11/2026 : `REPRISE.md` à jour (publication 1.12.0)
 
-- L'entrée du lot 1.11.27 nommait le relecteur par ses initiales ; remplacé par « Klaatou ». Aucun autre texte du dépôt ne les contient. Si le lot 1.11.27 a été commité avant cette correction, les initiales restent dans l'historique git.
-- Aucun code modifié. `VERSION` : `1.11.30`.
+- `REPRISE.md` : état au lot 1.12.1, dernière publication 1.12.0, numéros par fichier fabriqué, lots 1.11.24 à 1.11.35, dette de documentation.
+- Aucun code modifié. `VERSION` : `1.12.1`.
 
 ### 17/11/2026 : volume radio / musique indépendant, icône du haut-parleur en dessin noir
 

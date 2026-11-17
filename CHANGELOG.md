@@ -98,10 +98,10 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 - **New convention** (Klaatou's decision): in a series of PowerShell commands, only the first starts with the `cd`; section 0 and section 8.4 of `REPRISE.md`.
 - No code changed. `VERSION`: `1.11.31`.
 
-### 17/11/2026: initials removed from the batch 1.11.27 entry (rule 25)
+### 17/11/2026: `REPRISE.md` up to date (release 1.12.0)
 
-- The batch 1.11.27 entry named the reviewer by initials; replaced by "Klaatou". No other text of the repository contains them. If batch 1.11.27 was committed before this fix, the initials stay in the git history.
-- No code changed. `VERSION`: `1.11.30`.
+- `REPRISE.md`: state at batch 1.12.1, last release 1.12.0, per-file numbers, batches 1.11.24 to 1.11.35, documentation debt.
+- No code changed. `VERSION`: `1.12.1`.
 
 ### 17/11/2026: independent radio / music volume, speaker icon as a black drawing
 

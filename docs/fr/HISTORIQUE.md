@@ -290,7 +290,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 17/11/2026 |  | après 1.11.0 | Lot 1.11.27 : documents des lots 1.11.24 à 1.11.26 : manuel § 5.19, § 7.66, pavé, § 7.44, § 10.25, annexe, procédures simples |
 | 17/11/2026 |  | après 1.11.0 | Lot 1.11.28 : volume de la radio et de la musique dans la fenêtre Son (curseur sous une icône haut-parleur) |
 | 17/11/2026 |  | après 1.11.0 | Lot 1.11.29 : volume radio / musique indépendant du volume des Sons (50 par défaut), icône en dessin noir, bulle réécrite ; manuel § 5.19, § 5.20, § 7.66 |
-| 17/11/2026 |  | après 1.11.0 | Lot 1.11.30 : initiales retirées de l'entrée du lot 1.11.27 (règle 25) |
+| 17/11/2026 |  | après 1.12.0 | Lot 1.12.1 : `REPRISE.md` à jour (publication 1.12.0) |
 | 17/11/2026 |  | après 1.11.0 | Lot 1.11.31 : mécanique de livraison déplacée de `REGLES.md` vers `REPRISE.md` § 8 ; `cd` sur la première commande d'une série seulement |
 | 17/11/2026 |  | après 1.11.0 | Lot 1.11.32 : `verif_trad` : code en ligne de `streams` identique en français et en anglais (manuel, `REFERENCE_JSON`) |
 | 17/11/2026 |  | après 1.11.0 | Lot 1.11.33 : vue d'ensemble à jour (fenêtre Son, `streams`, volume) ; `MODE_EMPLOI` = le manuel (correction du changelog 1.11.27) |
