@@ -109,7 +109,7 @@ async def main():
         rapport(d.suggested_filename == "disposition.json" and js.get("app") == "web3d-layout" and js["layout"]["wins"]["L"]["pile"] == "R", "fichier disposition.json enregistré", js)
         await o.ev("document.getElementById('layReset').click()")
         ordre = await o.ev("[...document.getElementById('hudL').children].map(e => e.id)")
-        rapport(ordre == ["walkHint", "stateInfo", "spawnInfo"] and await o.txt("toast") == "Disposition d'origine rétablie", "disposition d'origine : tout dans la pile de gauche", ordre)
+        rapport(ordre == ["walkHint", "stateInfo", "spawnInfo", "soundInfo"] and await o.txt("toast") == "Disposition d'origine rétablie", "disposition d'origine : tout dans la pile de gauche", ordre)
         await o.pg.set_input_files("#layFile", str(chemin))
         await o.pg.wait_for_timeout(300)
         rapport(await o.ev(PARENT, "spawnInfo") == "hudR" and await o.txt("toast") == "Disposition chargée", "charger le fichier : arrivées de nouveau à droite")

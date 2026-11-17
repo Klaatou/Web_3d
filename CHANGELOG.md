@@ -6,6 +6,13 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.11.0)
 
+### 17/11/2026: movable arrow pad, Sound window (zone radio and music) in the window layout
+
+- **Arrow pad**: a grip above the pad; dragging the grip moves it (mouse and finger), double-click puts it back; the position is kept by the browser (`glb2html_padPos`) and is part of the layout file (save / load / reset).
+- **Sound window** (new, fourth window after H, I, L): repeats the Radio and Music lines of the Status window (text, distance, previous / next with n/N, "mute" box, stream choice). The arrow on those lines opens it **and closes the Status window**; the cross closes it. It is movable, resizable by its right edge, dockable on the piles, saved in the layout file; its size follows its content. The Status window lines are unchanged.
+- **Cone click**: a click on the cone of a zone radio or audio zone in range shows or closes the Sound window (a click on a zone out of range does nothing; the click is no longer reported to the presence server as a zone activation).
+- Files: `src/template.html`, `src/core.js`, `tests/v41.py`, `src/i18n/fr.json`, `src/i18n/en.json`, `VERSION` `1.11.24`. Still to update: manual (windows, pad), `MODE_EMPLOI`.
+
 ### 17/11/2026: `REPRISE.md` trimmed (601 lines, 166 KB, down to 150 lines, 36 KB)
 
 - **Finding**: `REPRISE.md` duplicated the changelog (log of batches 1.7.12 to 1.11.12: about 49 KB), stacked eleven "Decisions of the period" blocks and eleven "Pitfalls of the period" blocks, and kept three "Documents behind" paragraphs for different states (1.11.9, 1.11.1, 1.10.31). Every conversation reads it first.

@@ -6,6 +6,13 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.11.0)
 
+### 17/11/2026 : pavé de flèches déplaçable, fenêtre Son (radio et musique des zones) dans la disposition des fenêtres
+
+- **Pavé** : poignée au-dessus du pavé de flèches ; glisser la poignée le déplace (souris et doigt), double-clic le remet à sa place ; position gardée par le navigateur (`glb2html_padPos`) et incluse dans le fichier de disposition (enregistrer / charger / remise à zéro).
+- **Fenêtre Son** (nouvelle, quatrième fenêtre après H, I, L) : reprend les lignes Radio et Musique de la fenêtre État (texte, distance, précédent / suivant avec n/N, case « couper le son », choix du flux). La flèche de ces lignes l'ouvre **et ferme la fenêtre État** ; la croix la ferme. Déplaçable, redimensionnable par son bord droit, accrochable aux piles, enregistrée dans le fichier de disposition ; sa taille suit son contenu. Les lignes de la fenêtre État ne changent pas.
+- **Clic sur le cône** : un clic sur le cône d'une zone radio ou audio à portée affiche ou ferme la fenêtre Son (un clic sur une zone hors de portée ne fait rien ; le clic n'est plus signalé au serveur de présence comme une activation de zone).
+- Fichiers : `src/template.html`, `src/core.js`, `tests/v41.py`, `src/i18n/fr.json`, `src/i18n/en.json`, `VERSION` `1.11.24`. Reste à mettre à jour : manuel (fenêtres, pavé), `MODE_EMPLOI`.
+
 ### 17/11/2026 : `REPRISE.md` allégé (601 lignes, 166 Ko, vers 150 lignes, 36 Ko)
 
 - **Constat** : `REPRISE.md` doublait le CHANGELOG (journal des lots 1.7.12 à 1.11.12 : environ 49 Ko), empilait onze blocs « Décisions de la période » et onze blocs « Pièges de la période », et gardait trois paragraphes « Documents en retard » d'états différents (1.11.9, 1.11.1, 1.10.31). Chaque conversation le lit en premier.

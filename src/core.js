@@ -2434,7 +2434,7 @@ function createViewer(container, cfg0, loader) {
     dirty = true;
   }
   function fireZone(z, how) {
-    if (walking && P.ws && P.ws.readyState === 1 && P.id) P.ws.send(JSON.stringify({ t: 'zone', id: z.id, type: z.type, label: z.label }));
+    if (walking && P.ws && P.ws.readyState === 1 && P.id && z.type !== 'cast' && z.type !== 'audio') P.ws.send(JSON.stringify({ t: 'zone', id: z.id, type: z.type, label: z.label }));   // 1.11.24 : le clic sur le cone d'une radio ou d'une musique ouvre la fenetre Son : rien a signaler
     if (onZone) onZone(z, how);
   }
   // v35 : distance de survol et de clic des zones en promenade (config zoneInfoDist, 5 à 500 m, défaut 150 depuis la v37) ; les noms affichés (showName) la suivent

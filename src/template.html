@@ -11,7 +11,7 @@
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#__SKY_HEX__}
 #view{position:fixed;inset:0}
 canvas{display:block;touch-action:none}
-#walkBtn,#helpBtn,#mapBtn,#homeBtn,#centerBtn,#flyBtn,#grabBtn,#padBtn,#walkHint,#stateInfo,#spawnInfo{font:12px/1.4 ui-monospace,Consolas,monospace;background:#fffffff0;color:#000;border:1px solid #000;border-radius:6px;padding:7px 10px}
+#walkBtn,#helpBtn,#mapBtn,#homeBtn,#centerBtn,#flyBtn,#grabBtn,#padBtn,#walkHint,#stateInfo,#spawnInfo,#soundInfo{font:12px/1.4 ui-monospace,Consolas,monospace;background:#fffffff0;color:#000;border:1px solid #000;border-radius:6px;padding:7px 10px}
 #walkBtn,#helpBtn,#mapBtn,#homeBtn,#centerBtn,#flyBtn,#grabBtn,#padBtn{cursor:pointer}
 @keyframes walkPulse{0%,49%{background:#fffffff0;color:#000}50%,100%{background:#000;color:#fff}}   /* 1.8.5 : clignotement noir/blanc (pas de couleur), 1,2 s par cycle */
 #walkBtn.pulse{animation:walkPulse 1.2s infinite}
@@ -21,7 +21,7 @@ canvas{display:block;touch-action:none}
 body.padOn #bar{max-width:max(200px,calc(50vw - 90px))}   /* v46 : la barre passe à la ligne avant le pavé de flèches */
 @media (min-width:1361px){#bar{max-width:calc(50vw - 300px)!important}}   /* v46 : et avant la ligne d'état, en bas au centre */
 #dock,#hudL,#bar{pointer-events:none}
-#walkHint,#stateInfo,#spawnInfo,#bar button{pointer-events:auto}   /* seuls l'aide, l'état et les boutons reçoivent la souris : l'espace vide entre eux laisse passer les clics et le survol */
+#walkHint,#stateInfo,#spawnInfo,#soundInfo,#bar button{pointer-events:auto}   /* seuls l'aide, l'état et les boutons reçoivent la souris : l'espace vide entre eux laisse passer les clics et le survol */
 #presence,#nameTag{position:fixed;font:12px/1.4 ui-monospace,Consolas,monospace;background:#fffffff0;color:#000;border:1px solid #000;border-radius:6px;padding:7px 10px}
 #presence{left:12px;top:12px}
 #presence input{font:inherit;width:130px;border:1px solid #000;border-radius:4px;padding:2px 4px}
@@ -110,9 +110,9 @@ body.padOn #bar{max-width:max(200px,calc(50vw - 90px))}   /* v46 : la barre pass
 #modal button.ok{background:#000;color:#fff}
 #nameTag div{font-size:11px}
 #hudL{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
-#walkHint,#stateInfo,#spawnInfo{box-sizing:border-box;max-width:min(440px,45vw);position:relative;border-right:5px double #000}   /* v37 : largeurs par défaut ; le bord droit se tire (voir mkResize), la hauteur suit le contenu */
+#walkHint,#stateInfo,#spawnInfo,#soundInfo{box-sizing:border-box;max-width:min(440px,45vw);position:relative;border-right:5px double #000}   /* v37 : largeurs par défaut ; le bord droit se tire (voir mkResize), la hauteur suit le contenu */
 #walkHint{max-height:calc(100vh - 24px - var(--dockRest, calc(206px + var(--spawnH, 0px))));overflow:auto}   /* v40 : moins la hauteur de la fenêtre Arrivées, pour que la colonne tienne dans l'écran */
-#walkHint,#stateInfo{user-select:text;-webkit-user-select:text;cursor:text}
+#walkHint,#stateInfo,#soundInfo{user-select:text;-webkit-user-select:text;cursor:text}
 #stateInfo{font-size:11px;padding:5px 9px}
 #stateInfo div{margin:0}
 #stateInfo select{font:inherit;max-width:100%;box-sizing:border-box;padding:1px 4px;border:1px solid #000;border-radius:4px;background:#fff;color:#000;margin:2px 0}   /* le choix du flux de la radio (au-dessus de la ligne « Radio : … ») */
@@ -123,9 +123,23 @@ body.padOn #bar{max-width:max(200px,calc(50vw - 90px))}   /* v46 : la barre pass
 #stateInfo .srcNext{font:inherit;margin:0 0 0 6px;padding:0 4px;display:inline-block;vertical-align:bottom;line-height:1.2;border:1px solid #000;border-radius:3px;background:#fff;color:#000;cursor:pointer} /* 1.11.14 : bouton « ⏭ » (morceau suivant) à côté de la ligne « Musique : … », visible si la playlist a plus d'une piste */
 #stateInfo #musicCount{margin:0 4px; min-width:34px; text-align:center; display:inline-block;}
 #hudR{display:flex;flex-direction:column;align-items:flex-end;gap:6px;margin-top:6px;text-align:left}   /* v41 : pile de droite, sous Réglages (poussée quand Réglages s'ouvre) */
-#walkHint.winFree,#stateInfo.winFree,#spawnInfo.winFree{position:fixed;z-index:15;margin:0}   /* v41 : fenêtre libre, posée à la souris */
+#walkHint.winFree,#stateInfo.winFree,#spawnInfo.winFree,#soundInfo.winFree{position:fixed;z-index:15;margin:0}   /* v41 : fenêtre libre, posée à la souris */
 .winDrag{opacity:.85;box-shadow:0 2px 10px #0006}
 #spawnInfo{font-size:11px;padding:5px 9px;max-height:30vh;overflow:auto}   /* v40 : fenêtre Arrivées (touche L) */
+/* 1.11.24 : fenetre Son (lignes Radio et Musique de la fenetre Etat, reprises a part) et poignee du pave de fleches */
+#soundInfo{font-size:11px;padding:5px 9px}
+#soundInfo div{margin:0}
+#soundInfo select{font:inherit;max-width:100%;box-sizing:border-box;padding:1px 4px;border:1px solid #000;border-radius:4px;background:#fff;color:#000;margin:2px 0}
+#soundInfo .srcCk{margin:0 4px 0 0;vertical-align:-1px;cursor:pointer;accent-color:#000}
+#soundInfo .srcFar{font-weight:bold;animation:srcFarBlink 1s steps(1,end) infinite}
+@media (prefers-reduced-motion:reduce){#soundInfo .srcFar{animation:none;text-decoration:underline}}
+#soundInfo .srcNext,#stateInfo .sndUp{font:inherit;margin:0 0 0 6px;padding:0 4px;display:inline-block;vertical-align:bottom;line-height:1.2;border:1px solid #000;border-radius:3px;background:#fff;color:#000;cursor:pointer}
+#soundInfo #soundMusicCount{margin:0 4px;min-width:34px;text-align:center;display:inline-block;border:none;background:transparent;cursor:default}
+#soundInfo .sndX{position:absolute;top:3px;right:14px;z-index:1;width:22px;height:20px;padding:0;font:bold 12px/1 ui-monospace,Consolas,monospace;background:#fff;color:#000;border:1px solid #000;border-radius:4px;cursor:pointer}
+body.touch #soundInfo .sndX{top:4px;width:40px;height:40px;font-size:18px;border-width:2px;border-radius:6px}
+#pad #padGrip{position:absolute;left:0;right:0;top:-22px;width:auto;height:18px}
+body.touch #pad #padGrip{top:-36px;height:32px}
+#pad.padFree{bottom:auto!important;transform:none!important}
 #spawnBody button{display:block;width:100%;text-align:left;font:inherit;background:#fff;color:#000;border:1px solid #000;border-radius:4px;padding:1px 6px;margin:2px 0;cursor:pointer;text-decoration:underline}
 .fold{display:block;width:100%;text-align:left;font:inherit;font-weight:bold;background:#ececec;color:#000;border:1px solid #000;border-radius:4px;padding:1px 6px;margin:0 0 4px;cursor:pointer}
 .grp{margin:2px 0}.grp b{margin-right:8px}.grp b.gt{text-transform:uppercase}.grp .hk{font-weight:bold}
@@ -167,10 +181,10 @@ body.padOn:not(.touch) #zonePrompt{bottom:220px}
 body.touch #walkHint .winX,body.touch #stateInfo .winX,body.touch #spawnInfo .winX{display:block}
 body.touch .fold{min-width:200px}
 body.touch #presence{max-width:calc(50vw - 50px);box-sizing:border-box}
-body.touch #walkHint .fold,body.touch #stateInfo .fold,body.touch #spawnInfo .fold{min-height:44px;padding-right:56px}
+body.touch #walkHint .fold,body.touch #stateInfo .fold,body.touch #spawnInfo .fold,body.touch #soundInfo .fold{min-height:44px;padding-right:56px}
 body.touch #bar{display:none}
 body.touch #dock{top:var(--ttop,140px);bottom:auto}
-body.touch #walkHint,body.touch #stateInfo,body.touch #spawnInfo{max-width:min(440px,55vw)}
+body.touch #walkHint,body.touch #stateInfo,body.touch #spawnInfo,body.touch #soundInfo{max-width:min(440px,55vw)}
 body.touch #walkHint{max-height:max(64px,calc(100vh - var(--ttop, 140px) - 220px - var(--dockRest, var(--spawnH, 0px))))}
 body.touch #statusLine{top:var(--tstat,70px);bottom:auto;white-space:normal;text-align:center;max-width:calc(100vw - 20px)}
 body.touch #pad{left:12px;bottom:20px;transform:none;--pb:56px;--pg:6px}
@@ -215,7 +229,7 @@ __I18N__
 <div id="chat" hidden><div id="chatMentions" hidden><span id="mentCount"></span> <button id="mentGo" type="button" data-i18n="page.chat.mentions.go">Aller au premier</button></div><button id="chatOlder" type="button" hidden data-i18n="page.chat.older">Messages plus anciens</button><div id="chatLog"></div><div id="chatHelp"></div><button id="chatSave" type="button" data-i18n-title="page.chat.save.title" title="Enregistre dans un fichier texte les messages vus depuis ton arrivée" data-i18n="page.chat.save">Enregistrer le chat</button><div id="chatComplete" role="listbox" aria-label="Pseudos" data-i18n-aria="page.chat.names" hidden></div><input id="chatInput" maxlength="200" placeholder="Message : Entrée pour envoyer (reste ouvert), Échap pour fermer" data-i18n-ph="page.chat.placeholder" hidden></div>
 <div id="presence" hidden><span data-i18n="page.presence.label">Pseudo : </span><input id="presenceName" maxlength="24" placeholder="Visiteur" data-i18n-ph="page.visitor"><div id="presenceStatus"></div></div>
 <a id="credit" href="https://github.com/Klaatou/Web_3d" target="_blank" rel="noopener" data-i18n-aria="common.credit.tip"><img src="__CREDIT_ICON__" alt="" width="32" height="32"><span id="creditTip" role="tooltip" data-i18n="common.credit.tip">Réalisé avec Web_3d : voir le projet sur GitHub</span></a>
-<div id="dock"><div id="hudL"><div id="walkHint" hidden><button type="button" id="helpHead" class="fold" aria-expanded="true">▾ Aide</button><div id="helpBody"></div></div><div id="stateInfo" hidden><button type="button" id="stateHead" class="fold" aria-expanded="true">▾ État</button><div id="stateBody"></div></div><div id="spawnInfo" hidden><button type="button" id="spawnHead" class="fold" aria-expanded="true">▾ Arrivées</button><div id="spawnBody"></div></div></div>
+<div id="dock"><div id="hudL"><div id="walkHint" hidden><button type="button" id="helpHead" class="fold" aria-expanded="true">▾ Aide</button><div id="helpBody"></div></div><div id="stateInfo" hidden><button type="button" id="stateHead" class="fold" aria-expanded="true">▾ État</button><div id="stateBody"></div></div><div id="spawnInfo" hidden><button type="button" id="spawnHead" class="fold" aria-expanded="true">▾ Arrivées</button><div id="spawnBody"></div></div><div id="soundInfo" hidden><button type="button" id="soundHead" class="fold" aria-expanded="true">&#9662; Son</button><div id="soundBody"></div></div></div>
 <div id="bar"><button id="walkBtn" hidden></button><button id="flyBtn" hidden aria-pressed="false" data-i18n="page.btn.fly">Voler / Atterrir</button><button id="grabBtn" hidden data-i18n="page.btn.grab">Capturer la souris</button><button id="homeBtn" hidden data-i18n="page.btn.home">Retour à l'arrivée (R)</button><button id="centerBtn" type="button" hidden data-i18n="page.btn.center" data-i18n-title="page.btn.center.tip">Recentrer la vue</button><button id="helpBtn" hidden></button><button id="mapBtn" hidden data-i18n="page.btn.map">Carte (M)</button><button id="padBtn" type="button" hidden></button></div></div>
 <script type="application/json" id="cfg">__CONFIG__</script>
 <script type="application/octet-stream" id="glb">__GLB_B64__</script>
@@ -429,6 +443,8 @@ if ((C.zones || []).length || C.zonesLive) {
     } else if (z.type === 'ha') {
       if (!okUrl(z.target)) return toast(tr('page.zone.badcmd', label));
       if (z.confirm) askConfirm(tr('page.zone.confirm', label), () => haSend(z)); else haSend(z);
+    } else if (z.type === 'cast' || z.type === 'audio') {   // 1.11.24 : cone d'une zone radio / musique : seule la zone dont la ligne est affichee (a portee) ouvre ou ferme la fenetre Son
+      if ((rZ && rZ.id === z.id) || (mZ && mZ.id === z.id)) soundToggle();
     }
   };
   const pr = document.getElementById('zonePrompt');
@@ -662,6 +678,7 @@ const SND = (() => {
 // une seule zone à la fois (core.js choisit la plus proche) ; hors portée ou en vue globale : le flux est arrêté (plus téléchargé) ; le navigateur n'autorise
 // le son qu'après une première action du visiteur ; un flux illisible (format, réseau, mélange http dans une page https) est dit dans le bloc d'état
 const distTxt = (z, d) => z ? ' (' + Math.round(d) + ' m / ' + Math.round(z.radius * 10) / 10 + ' m)' : '';   // 1.11.17 : distance a la source et portee de la zone, en metres, ajoutees aux lignes Radio et Musique
+let soundToggle = () => {};   // 1.11.24 : affiche ou ferme la fenetre Son (definie avec la fenetre) ; appelee par le clic sur le cone d'une zone radio ou audio a portee
 let radioTxt = () => {}, musicTxt = () => {}, radioTip = () => {}, musicTip = () => {};   // lignes « Radio » et « Musique » du bloc d'état (définies avec le bloc)
 const RADIO = (() => {
   let a = null, cur = null, gain = 0, dist = 0, out = false, src = '', shown = '', asked = '', selIdx = 0;   // asked : flux dont la page a demandé le titre au serveur (1.11.1) ; out : zone hors de portée (1.11.18) ; selIdx : flux choisi dans la liste (1.11.13)
@@ -694,16 +711,18 @@ const RADIO = (() => {
     a.addEventListener('waiting', () => { if (cur) show('page.radio.waiting'); });
     return a;
   };
-  let selEl = null, selFor = null;   // selFor : la zone dont la liste est affichee (la liste n'est refaite que si la zone change : refaite a chaque pas, une liste ouverte se refermerait)
+  const selEls = [];   // listes de choix du flux (fenetre Etat, fenetre Son) ; f : la zone dont la liste est affichee (la liste n'est refaite que si la zone change : refaite a chaque pas, une liste ouverte se refermerait)
   const selSync = () => {
-    if (!selEl) return;
-    if (!cur || !cur.urls || cur.urls.length <= 1) { selEl.hidden = true; selFor = null; return; }
-    selEl.hidden = false;
-    if (selIdx >= cur.urls.length) selIdx = 0;
-    if (selFor !== cur) { selFor = cur; selEl.length = 0; cur.urls.forEach((u, i) => { const o = document.createElement('option'); o.value = i; o.textContent = (cur.labels && cur.labels[i]) || u; selEl.add(o); }); }   // 1.11.13 : le titre du flux (labels) a la place de l'URL quand il existe
-    selEl.value = String(selIdx);
+    for (const s of selEls) {
+      const el = s.el;
+      if (!cur || !cur.urls || cur.urls.length <= 1) { el.hidden = true; s.f = null; continue; }
+      el.hidden = false;
+      if (selIdx >= cur.urls.length) selIdx = 0;
+      if (s.f !== cur) { s.f = cur; el.length = 0; cur.urls.forEach((u, i) => { const o = document.createElement('option'); o.value = i; o.textContent = (cur.labels && cur.labels[i]) || u; el.add(o); }); }   // 1.11.13 : le titre du flux (labels) a la place de l'URL quand il existe
+      el.value = String(selIdx);
+    }
   };
-  const setSelEl = el => { selEl = el; };
+  const setSelEl = el => { selEls.push({ el, f: null }); };   // 1.11.24 : appelee pour la fenetre Etat puis pour la fenetre Son
   const refresh0 = () => {
     const v = lvl();
     selSync();   // le choix du flux suit l'état de la radio (comme la ligne « Radio : … ») : visible tant qu'une zone radio à plusieurs flux est en cours
@@ -1252,8 +1271,9 @@ if (C.walk) {
   addEventListener('keydown', e => { const n = e.target && e.target.tagName; if (e.code === 'KeyR' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && n !== 'INPUT' && n !== 'TEXTAREA' && n !== 'SELECT') goHome(); });
   const hb = document.getElementById('helpBtn');
   // v36 : H (aide) et I (informations) tournent en trois temps : masquée -> déployée ; réduite -> déployée ; déployée -> masquée. Réduit / déployé et masqué sont mémorisés.
-  const mkPanel = (wrap, head, body, title, openKey, foldKey) => {
-    let open = lsGet(openKey) !== '0', folded = lsGet(foldKey) === '1';
+  const mkPanel = (wrap, head, body, title, openKey, foldKey, defOpen = true) => {   // 1.11.24 : defOpen false = fermee tant que l'utilisateur ne l'a pas ouverte (fenetre Son)
+    const rdOpen = () => (defOpen ? lsGet(openKey) !== '0' : lsGet(openKey) === '1');
+    let open = rdOpen(), folded = lsGet(foldKey) === '1';
     const apply = () => { wrap.hidden = !open; body.hidden = folded; head.textContent = (folded ? '▸ ' : '▾ ') + title; head.setAttribute('aria-expanded', folded ? 'false' : 'true'); };
     const save = () => { lsSet(openKey, open ? '1' : '0'); lsSet(foldKey, folded ? '1' : '0'); };
     head.onclick = () => { folded = !folded; save(); apply(); };
@@ -1261,7 +1281,8 @@ if (C.walk) {
     return {
       apply, get open() { return open; }, get folded() { return folded; },
       cycle() { if (!open) { open = true; folded = false; } else if (folded) folded = false; else open = false; save(); apply(); },
-      reload() { open = lsGet(openKey) !== '0'; folded = lsGet(foldKey) === '1'; apply(); },   // v41 : après chargement d'une disposition
+      reload() { open = rdOpen(); folded = lsGet(foldKey) === '1'; apply(); },   // v41 : après chargement d'une disposition
+      show() { open = true; folded = false; save(); apply(); },   // 1.11.24 : fleche de la fenetre Etat
       hide() { open = false; save(); apply(); },   // v46 : bouton ✕ (écran tactile)
       foldTmp() { if (open && !folded) { folded = true; apply(); } }   // v46 : réduite à l'ouverture sur écran tactile, sans changer le réglage retenu
     };
@@ -1298,15 +1319,56 @@ if (C.walk) {
     if (!spawnCount) return toast(tr('page.spawn.none'));
     spawnP.cycle(); applySpawn();
   });
+  // 1.11.24 : fenetre Son : les lignes Radio et Musique de la fenetre Etat, reprises dans une fenetre a part (deplacable, redimensionnable, fermable,
+  // dans la disposition enregistree) pour suivre le son quand la fenetre Etat est fermee. La fleche de ces lignes ouvre Son ET ferme Etat ; la croix ferme Son.
+  // Les lignes de la fenetre Etat ne changent pas : la logique (une seule source, Reglages, arbitre) reste celle de leurs cases.
+  const sni = document.getElementById('soundInfo'), snb = document.getElementById('soundBody'), snh = document.getElementById('soundHead');
+  const soundP = mkPanel(sni, snh, snb, tr('page.sound.title'), 'glb2html_sound', 'glb2html_soundFold', false);
+  let padReload = () => {};   // relit la position du pave (definie avec le pave) apres chargement ou remise a zero de la disposition
+  const lnone = document.createElement('div'), lrdS = document.createElement('div'), lmuS = document.createElement('div'), rsSelS = document.createElement('select');
+  lnone.id = 'soundNone'; lnone.textContent = tr('page.sound.none');
+  lrdS.id = 'soundRadioInfo'; lmuS.id = 'soundMusicInfo'; rsSelS.id = 'soundRadioSel'; lrdS.hidden = true; lmuS.hidden = true; rsSelS.hidden = true;
+  snb.append(lnone, rsSelS, lrdS, lmuS);
+  const sSr = srcLine(lrdS, 'radio', 'soundRadioCk'), sSm = srcLine(lmuS, 'music', 'soundMusicCk');
+  sSr.ck.onchange = () => { sr.ck.checked = sSr.ck.checked; sr.ck.onchange(); };
+  sSm.ck.onchange = () => { sm.ck.checked = sSm.ck.checked; sm.ck.onchange(); };
+  const mkSb = (id, txt, tip, fn) => { const b = document.createElement('button'); b.type = 'button'; b.id = id; b.className = 'srcNext'; b.textContent = txt; b.title = tip; b.hidden = true; b.onmousedown = e => e.preventDefault(); b.onclick = fn; return b; };
+  const mprevS = mkSb('soundMusicPrev', '\u23EE', tr('page.music.prev'), () => MUSIC.prev()), mnextS = mkSb('soundMusicNext', '\u23ED', tr('page.music.next'), () => MUSIC.next());
+  const mcountS = document.createElement('span'); mcountS.id = 'soundMusicCount'; mcountS.className = 'srcNext'; mcountS.hidden = true;
+  lmuS.append(mprevS, mcountS, mnextS);
+  rsSelS.onchange = () => { RADIO.setIdx(parseInt(rsSelS.value, 10) || 0); };
+  RADIO.setSelEl(rsSelS);
+  const soundNone = () => { lnone.hidden = !(lrdS.hidden && lmuS.hidden); };
+  const rTx0 = radioTxt, mTx0 = musicTxt, rTip0 = radioTip, mTip0 = musicTip;
+  radioTxt = (t, dist, far) => { rTx0(t, dist, far); srcSync(sSr, 'radio'); lrdS.hidden = !t; setSrcTx(sSr, t || '', t ? dist : '', far); soundNone(); };
+  musicTxt = (t, dist, far) => {
+    mTx0(t, dist, far); srcSync(sSm, 'music'); lmuS.hidden = !t;
+    mnextS.hidden = !(t && MUSIC.count() > 1); mprevS.hidden = mnextS.hidden; mcountS.hidden = mnextS.hidden;
+    setSrcTx(sSm, t || '', t ? dist : '', far);
+    if (!mcountS.hidden) mcountS.textContent = ' ' + (MUSIC.trackIndex() + 1) + '/' + MUSIC.count() + ' ';
+    soundNone();
+  };
+  radioTip = t => { rTip0(t); lrdS.title = t || ''; };
+  musicTip = t => { mTip0(t); lmuS.title = t || ''; };
+  soundToggle = () => { if (soundP.open) soundP.hide(); else soundP.show(); applyHelp(viewer.walking); place(); };
+  const openSound = () => { soundP.show(); stateP.hide(); applyHelp(viewer.walking); place(); };
+  for (const [line, id] of [[lrd, 'soundUpRadio'], [lmu, 'soundUpMusic']]) {
+    const b = document.createElement('button'); b.type = 'button'; b.id = id; b.className = 'srcNext sndUp'; b.textContent = '\u25B2'; b.title = tr('page.sound.open');
+    b.onmousedown = e => e.preventDefault(); b.onclick = openSound; line.append(b);
+  }
+  const sndX = document.createElement('button'); sndX.type = 'button'; sndX.id = 'soundClose'; sndX.className = 'sndX'; sndX.textContent = '\u2715';
+  sndX.title = tr('page.sound.close'); sndX.setAttribute('aria-label', tr('page.sound.close')); sndX.onmousedown = e => e.preventDefault();
+  sndX.onclick = () => { soundP.hide(); applyHelp(viewer.walking); };
+  sni.append(sndX);
   // v41 : fenêtres H, I, L déplaçables par leur titre. Deux piles : gauche (en bas, d'origine) et droite (sous Réglages : poussée quand Réglages s'ouvre).
   // Lâchée près d'une pile : elle s'y accroche (à la hauteur du lâcher) ; ailleurs : libre, à l'endroit exact. Double-clic sur le titre : retour à la
   // dernière pile où elle était accrochée. Disposition retenue par le navigateur (glb2html_layout) ; Réglages : enregistrer / charger un fichier .json.
-  const rzL = mkResize(spi, 'glb2html_spawnW');
+  const rzL = mkResize(spi, 'glb2html_spawnW'), rzS = mkResize(sni, 'glb2html_soundW');
   const hudL = document.getElementById('hudL'), hudR = document.getElementById('hudR');
-  const WINS = { H: [wh, hhead, 'page.win.h.tip', rzH, 'glb2html_helpW'], I: [sb, shead, 'page.win.i.tip', rzI, 'glb2html_stateW'], L: [spi, sph, 'page.win.l.tip', rzL, 'glb2html_spawnW'] };
-  const ORDER = ['H', 'I', 'L'];
-  const LKEYS = ['glb2html_help', 'glb2html_helpFold', 'glb2html_state', 'glb2html_stateFold', 'glb2html_spawn', 'glb2html_spawnFold', 'glb2html_helpW', 'glb2html_stateW', 'glb2html_spawnW'];
-  const layDefault = () => ({ wins: { H: { pile: 'L', home: 'L' }, I: { pile: 'L', home: 'L' }, L: { pile: 'L', home: 'L' } }, order: { L: ORDER.slice(), R: [] } });
+  const WINS = { H: [wh, hhead, 'page.win.h.tip', rzH, 'glb2html_helpW'], I: [sb, shead, 'page.win.i.tip', rzI, 'glb2html_stateW'], L: [spi, sph, 'page.win.l.tip', rzL, 'glb2html_spawnW'], S: [sni, snh, 'page.win.s.tip', rzS, 'glb2html_soundW'] };
+  const ORDER = ['H', 'I', 'L', 'S'];
+  const LKEYS = ['glb2html_help', 'glb2html_helpFold', 'glb2html_state', 'glb2html_stateFold', 'glb2html_spawn', 'glb2html_spawnFold', 'glb2html_helpW', 'glb2html_stateW', 'glb2html_spawnW', 'glb2html_sound', 'glb2html_soundFold', 'glb2html_soundW', 'glb2html_padPos'];
+  const layDefault = () => ({ wins: { H: { pile: 'L', home: 'L' }, I: { pile: 'L', home: 'L' }, L: { pile: 'L', home: 'L' }, S: { pile: 'L', home: 'L' } }, order: { L: ORDER.slice(), R: [] } });
   const layNorm = o => {   // disposition lue (navigateur ou fichier) : remise en forme, ou null si elle n'en est pas une
     if (!o || typeof o !== 'object' || !o.wins || typeof o.wins !== 'object') return null;
     const out = { wins: {}, order: { L: [], R: [] } };
@@ -1411,7 +1473,7 @@ if (C.walk) {
     const fi = Object.assign(document.createElement('input'), { type: 'file', accept: '.json,application/json', hidden: true, id: 'layFile' });
     const applyAll = () => {   // relit états et largeurs (navigateur), puis replace les fenêtres
       for (const k of ORDER) { const [el, , , rz, wk] = WINS[k]; const v = parseInt(lsGet(wk), 10); if (v > 0) rz(v); else { el.style.width = ''; el.style.maxWidth = ''; } }
-      helpP.reload(); stateP.reload(); spawnP.reload(); applyHelp(viewer.walking); place();
+      helpP.reload(); stateP.reload(); spawnP.reload(); soundP.reload(); padReload(); applyHelp(viewer.walking); place();
     };
     bS.onclick = () => {
       const ls = {}; for (const key of LKEYS) { const v = lsGet(key); if (v !== null) ls[key] = v; }
@@ -1432,14 +1494,14 @@ if (C.walk) {
       lay = nl; laySave(); applyAll(); toast(tr('page.layout.loaded'));
     };
     bR.onclick = () => {
-      for (const key of ['glb2html_helpW', 'glb2html_stateW', 'glb2html_spawnW']) try { localStorage.removeItem(key); } catch (e) {}
+      for (const key of ['glb2html_helpW', 'glb2html_stateW', 'glb2html_spawnW', 'glb2html_soundW', 'glb2html_padPos']) try { localStorage.removeItem(key); } catch (e) {}
       lay = layDefault(); laySave(); applyAll(); toast(tr('page.layout.reset.done'));
     };
     for (const b of [bS, bL, bR]) b.onmousedown = e => e.preventDefault();
     row.append(bS, bL, bR); sec.append(lt, row, fi);
     const note = document.getElementById('optsNote'); if (note && note.parentNode === opn) opn.insertBefore(sec, note); else opn.append(sec);
   }
-  const applyHelp = walking => { fillGroups(walking ? walkGroups() : orbitGroups()); viewTick(); stateP.apply(); applySpawn(); helpP.apply(); hb.hidden = false; hb.textContent = !helpP.open ? tr('page.btn.help') : (helpP.folded ? tr('page.btn.help.expand') : tr('page.btn.help.hide')); };
+  const applyHelp = walking => { fillGroups(walking ? walkGroups() : orbitGroups()); viewTick(); stateP.apply(); soundP.apply(); applySpawn(); helpP.apply(); hb.hidden = false; hb.textContent = !helpP.open ? tr('page.btn.help') : (helpP.folded ? tr('page.btn.help.expand') : tr('page.btn.help.hide')); };
   const toggleHelp = () => { helpP.cycle(); applyHelp(viewer.walking); };
   hb.onclick = toggleHelp;
   KB.listeners.push(() => applyHelp(viewer.walking));
@@ -1547,6 +1609,39 @@ if (C.walk) {
     gC.onclick = () => cbn.click(); longPress(gC);
     pg.append(gTl, gF, gTr, gL, gC, gR, gO, gB, gI);
     pad.setAttribute('aria-label', tr('page.pad.label')); pad.append(pw, pg);
+    // 1.11.24 : le pave se deplace : poignee au-dessus, glisser = deplacer (souris ou doigt), double-clic = retour a la place d'origine ;
+    // position gardee par le navigateur et par le fichier de disposition (glb2html_padPos), recadree dans l'ecran
+    const PADKEY = 'glb2html_padPos';
+    const padLoad = () => { try { const o = JSON.parse(lsGet(PADKEY) || 'null'); if (o && Number.isFinite(o.x) && Number.isFinite(o.y)) return { x: o.x, y: o.y }; } catch (e) {} return null; };
+    let padPos = padLoad();
+    const padPlace = () => {
+      if (!padPos) { pad.classList.remove('padFree'); pad.style.left = pad.style.top = ''; return; }
+      const w = pad.offsetWidth || 140, h = pad.offsetHeight || 140, topMin = body.classList.contains('touch') ? 40 : 26;
+      pad.classList.add('padFree');
+      pad.style.left = Math.max(0, Math.min(innerWidth - w, padPos.x)) + 'px'; pad.style.top = Math.max(topMin, Math.min(innerHeight - h, padPos.y)) + 'px';
+    };
+    padReload = () => { padPos = padLoad(); padPlace(); };
+    const grip = mkB('padGrip'); ico(grip, 'M5 9h14M5 15h14'); setTip(grip, tr('page.pad.grip')); pad.append(grip);
+    let gd = null;
+    grip.addEventListener('pointerdown', e => {
+      if (e.button !== 0) return; e.preventDefault();
+      const r = pad.getBoundingClientRect(); gd = { x: e.clientX, y: e.clientY, l: r.left, t: r.top, id: e.pointerId, moved: false };
+      try { grip.setPointerCapture(e.pointerId); } catch (x) {}
+    });
+    grip.addEventListener('pointermove', e => {
+      if (!gd || e.pointerId !== gd.id) return;
+      if (!gd.moved && Math.hypot(e.clientX - gd.x, e.clientY - gd.y) < 4) return;
+      gd.moved = true; padPos = { x: Math.round(gd.l + e.clientX - gd.x), y: Math.round(gd.t + e.clientY - gd.y) }; padPlace();
+    });
+    const gEnd = e => {
+      if (!gd || e.pointerId !== gd.id) return;
+      const moved = gd.moved; gd = null;
+      if (moved) { padPos = { x: parseInt(pad.style.left, 10) || 0, y: parseInt(pad.style.top, 10) || 0 }; lsSet(PADKEY, JSON.stringify(padPos)); }
+    };
+    grip.addEventListener('pointerup', gEnd); grip.addEventListener('pointercancel', gEnd);
+    grip.addEventListener('dblclick', e => { e.preventDefault(); padPos = null; try { localStorage.removeItem(PADKEY); } catch (x) {} padPlace(); });
+    if (window.ResizeObserver) new ResizeObserver(padPlace).observe(pad);
+    addEventListener('resize', padPlace); padPlace();
     const padTips = () => {
       const k = K();
       setTip(bUp, tr('page.pad.fwd', k.fwd) + holdTxt); setTip(bDn, tr('page.pad.back', k.back) + holdTxt);
