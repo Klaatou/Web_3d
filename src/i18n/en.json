@@ -453,6 +453,7 @@
  "page.sound.none": "No radio or music in range.",
  "page.sound.open": "Open the Sound window with these lines (closes the Status window)",
  "page.sound.title": "Sound",
+ "page.sound.vol": "Radio and music volume: {0}% (on top of the Sounds volume in Settings; to mute, use the line's box)",
  "page.win.s.tip": "Sound: radio and music of the zones in range.\nOpened by the ▲ arrow of the Status window, closed by ✕.",
  "page.win.h.tip": "Help: keys and controls of the current view.\nH: show, expand, hide.",
  "page.win.i.tip": "Information / Status: view, mode, position, tiles, diagnostics.\nI: show, expand, hide.",

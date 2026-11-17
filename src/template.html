@@ -137,6 +137,14 @@ body.padOn #bar{max-width:max(200px,calc(50vw - 90px))}   /* v46 : la barre pass
 #soundInfo #soundMusicCount{margin:0 4px;min-width:34px;text-align:center;display:inline-block;border:none;background:transparent;cursor:default}
 #soundInfo .sndX{position:absolute;top:3px;right:14px;z-index:1;width:22px;height:20px;padding:0;font:bold 12px/1 ui-monospace,Consolas,monospace;background:#fff;color:#000;border:1px solid #000;border-radius:4px;cursor:pointer}
 body.touch #soundInfo .sndX{top:4px;width:40px;height:40px;font-size:18px;border-width:2px;border-radius:6px}
+#soundInfo .fold{padding-right:64px}
+#soundInfo .sndV{position:absolute;top:3px;right:40px;z-index:1;width:26px;height:20px;padding:0;font:12px/1 ui-monospace,Consolas,monospace;background:#fff;color:#000;border:1px solid #000;border-radius:4px;cursor:pointer}   /* 1.11.28 : haut-parleur, a gauche de la croix */
+#soundVolRow{display:flex;align-items:center;gap:6px;margin:0 0 4px}
+#soundVolRow[hidden]{display:none}
+#soundVolRow input{flex:1;min-width:110px;margin:0;accent-color:#000;cursor:pointer}
+#soundVolRow span{min-width:3ch;text-align:right}
+body.touch #soundInfo .sndV{top:4px;right:58px;width:40px;height:40px;font-size:18px;border-width:2px;border-radius:6px}
+body.touch #soundVolRow input{height:32px}
 #pad #padGrip{position:absolute;left:0;right:0;top:-22px;width:auto;height:18px}
 body.touch #pad #padGrip{top:-36px;height:32px}
 #pad.padFree{bottom:auto!important;transform:none!important}
@@ -182,6 +190,7 @@ body.touch #walkHint .winX,body.touch #stateInfo .winX,body.touch #spawnInfo .wi
 body.touch .fold{min-width:200px}
 body.touch #presence{max-width:calc(50vw - 50px);box-sizing:border-box}
 body.touch #walkHint .fold,body.touch #stateInfo .fold,body.touch #spawnInfo .fold,body.touch #soundInfo .fold{min-height:44px;padding-right:56px}
+body.touch #soundInfo .fold{padding-right:104px}
 body.touch #bar{display:none}
 body.touch #dock{top:var(--ttop,140px);bottom:auto}
 body.touch #walkHint,body.touch #stateInfo,body.touch #spawnInfo,body.touch #soundInfo{max-width:min(440px,55vw)}
@@ -628,7 +637,7 @@ const VISITS = (() => {   // v48 : aussi ouvert par le bouton « Journal des vis
 // réglages visiteur mémorisés dans ce navigateur : couleur de l'avatar (null = tirée au hasard par le serveur), pseudo cité (gras, clignotement),
 // sons (général, volume, citation, arrivée, départ), disposition du clavier. v36 : les anciens réglages du bip (clé « sound ») sont ignorés.
 const VIS = (() => {
-  const d = { color: null, compass: true, histMax: 200, bold: true, blink: true, sounds: true, volume: 50, soundCite: true, soundMsg: true, soundJoin: true, soundLeave: true, radio: true, music: true, layout: 'auto', pad: true, touch: 'auto' };
+  const d = { color: null, compass: true, histMax: 200, bold: true, blink: true, sounds: true, volume: 50, srcVolume: 100, soundCite: true, soundMsg: true, soundJoin: true, soundLeave: true, radio: true, music: true, layout: 'auto', pad: true, touch: 'auto' };
   try {
     const s = JSON.parse(localStorage.getItem('glb2html_visitor') || '{}');
     if (Number.isInteger(s.color) && s.color >= 0 && s.color <= 0xFFFFFF) d.color = s.color;
@@ -636,6 +645,7 @@ const VIS = (() => {
     if (['auto', 'on', 'off'].includes(s.touch)) d.touch = s.touch;   // v46 : commandes tactiles (auto = écran tactile détecté)
     if (Number.isFinite(s.histMax)) d.histMax = Math.max(20, Math.min(2000, Math.round(s.histMax)));
     if (Number.isFinite(s.volume)) d.volume = Math.max(0, Math.min(100, Math.round(s.volume)));
+    if (Number.isFinite(s.srcVolume)) d.srcVolume = Math.max(1, Math.min(100, Math.round(s.srcVolume)));   // 1.11.28 : volume propre a la radio et a la musique (fenetre Son), 100 = sans changement
     if (['auto', 'azerty', 'qwerty'].includes(s.layout)) d.layout = s.layout;
   } catch (e) {}
   return d;
@@ -702,7 +712,7 @@ const RADIO = (() => {
     return L.join('\n');
   };
   const show = key => { shown = key; radioTxt(key ? tr(key, streamTitle(), cur && bad.get(bk())) + (key === 'page.radio.playing' && cur && titles.get(activeUrl()) ? ' \u2014 ' + titles.get(activeUrl()) : '') : '', cur && (key === 'page.radio.playing' || key === 'page.radio.waiting' || key === 'page.radio.far') ? distTxt(cur, dist) : '', key === 'page.radio.far'); radioTip(tip()); };   // 1.11.13 : le titre affiche celui du flux choisi (labels), pas toujours le premier
-  const lvl = () => VIS.sounds && VIS.radio ? Math.max(0, Math.min(1, gain * VIS.volume / 100)) : 0;
+  const lvl = () => VIS.sounds && VIS.radio ? Math.max(0, Math.min(1, gain * VIS.volume / 100 * VIS.srcVolume / 100)) : 0;
   const stop = () => { if (!a || !src) return; src = ''; a.pause(); a.removeAttribute('src'); a.load(); };
   const ensure = () => {
     if (a) return a;
@@ -779,7 +789,7 @@ const MUSIC = (() => {
     return L.join('\n');
   };
   const show = (key, extra) => { shown = key; musicTxt(key ? tr(key, label(), extra !== undefined ? extra : (tracks[idx] ? tracks[idx].name : '')) : '', (key === 'page.music.playing' || key === 'page.music.waiting' || key === 'page.music.far') && cur ? distTxt(cur, dist) : '', key === 'page.music.far'); musicTip(tip()); };   // la ligne « Musique »
-  const lvl = () => VIS.sounds && VIS.music ? Math.max(0, Math.min(1, gain * VIS.volume / 100)) : 0;
+  const lvl = () => VIS.sounds && VIS.music ? Math.max(0, Math.min(1, gain * VIS.volume / 100 * VIS.srcVolume / 100)) : 0;
   const stop = () => { if (!a) return; loaded = ''; a.pause(); a.removeAttribute('src'); a.load(); };
   const next = () => { if (!tracks.length) return; idx = (idx + 1) % tracks.length; if (cur) pos.set(cur.id, idx); play(); };
   const prev = () => { if (!tracks.length) return; idx = (idx - 1 + tracks.length) % tracks.length; if (cur) pos.set(cur.id, idx); play(); };
@@ -1366,6 +1376,19 @@ if (C.walk) {
   sndX.title = tr('page.sound.close'); sndX.setAttribute('aria-label', tr('page.sound.close')); sndX.onmousedown = e => e.preventDefault();
   sndX.onclick = () => { soundP.hide(); applyHelp(viewer.walking); };
   sni.append(sndX);
+  // 1.11.28 : volume propre a la radio et a la musique : icone haut-parleur (a gauche de la croix) qui deplie / replie un curseur ; s'ajoute au volume des Sons de Reglages ; couper = la case de la ligne
+  const vBtn = document.createElement('button'), vRow = document.createElement('div'), vRg = document.createElement('input'), vVal = document.createElement('span');
+  vBtn.type = 'button'; vBtn.id = 'soundVolBtn'; vBtn.className = 'sndV'; vBtn.setAttribute('aria-controls', 'soundVolRow'); vBtn.onmousedown = e => e.preventDefault();
+  vRow.id = 'soundVolRow'; vRow.hidden = true; vRg.type = 'range'; vRg.min = 1; vRg.max = 100; vRg.step = 1; vRg.id = 'soundVol'; vRow.append(vRg, vVal);
+  const vSync = () => {
+    const v = VIS.srcVolume, t = tr('page.sound.vol', v);
+    vRg.value = v; vVal.textContent = String(v); vBtn.textContent = v < 34 ? '🔈' : v < 67 ? '🔉' : '🔊';   // le dessin change avec le niveau (jamais la couleur)
+    vBtn.title = t; vBtn.setAttribute('aria-label', t); vRg.title = t; vBtn.setAttribute('aria-expanded', String(!vRow.hidden));
+  };
+  vBtn.onclick = () => { vRow.hidden = !vRow.hidden; vSync(); };
+  vRg.oninput = () => { VIS.srcVolume = Math.max(1, Math.min(100, parseInt(vRg.value, 10) || 100)); visSave(); vSync(); RADIO.refresh(); MUSIC.refresh(); };
+  vRow.onkeydown = e => { if (e.key === 'Escape') { vRow.hidden = true; vSync(); vBtn.focus(); e.stopPropagation(); } };
+  vSync(); sni.append(vBtn); snb.prepend(vRow);
   // v41 : fenêtres H, I, L déplaçables par leur titre. Deux piles : gauche (en bas, d'origine) et droite (sous Réglages : poussée quand Réglages s'ouvre).
   // Lâchée près d'une pile : elle s'y accroche (à la hauteur du lâcher) ; ailleurs : libre, à l'endroit exact. Double-clic sur le titre : retour à la
   // dernière pile où elle était accrochée. Disposition retenue par le navigateur (glb2html_layout) ; Réglages : enregistrer / charger un fichier .json.

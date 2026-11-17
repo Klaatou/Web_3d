@@ -6,6 +6,11 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.11.0)
 
+### 17/11/2026: own volume for the radio and music, in the Sound window
+
+- **New**: a loudspeaker icon in the header of the Sound window, left of the cross, shows and hides a volume **slider** (1 to 100, 100 by default) that only sets the **radio and music of the zones**. The real volume is the Sounds volume of Settings x this slider: chat and arrival beeps do not change. The value is kept by the browser (`srcVolume` in `glb2html_visitor`), not in the layout file. The icon drawing changes with the level (never the color). Escape hides the slider. To mute, use the line's box (the slider minimum is 1).
+- Files: `src/template.html`, `src/i18n/fr.json`, `src/i18n/en.json`, `tests/fenetre_son.py`, `VERSION` `1.11.28`. **Not tried**: Windows, Edge, touch, how the emoji look. Still to update: manual § 7.66.
+
 ### 17/11/2026: documents for batches 1.11.24 to 1.11.26
 
 - **Manual**: § 5.19 (`streams`, stream name, tooltip, mind the comma), § 7.66 (Sound window), movable pad (§ 7.33), § 7.44 (original layout), § 10.25 (`streams` and `--radios`), appendix § 13.3; `SIMPLE_PROCEDURES.md` § 14; histories fr and en.

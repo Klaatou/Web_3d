@@ -6,6 +6,11 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.11.0)
 
+### 17/11/2026 : volume propre à la radio et à la musique, dans la fenêtre Son
+
+- **Nouveau** : une icône haut-parleur dans l'en-tête de la fenêtre Son, à gauche de la croix, déplie et replie un **curseur** de volume (1 à 100, 100 par défaut) qui ne règle que la **radio et la musique des zones**. Le volume réel est le volume des Sons de Réglages x ce curseur : les bips du chat et d'arrivée ne changent pas. Valeur gardée par le navigateur (`srcVolume` dans `glb2html_visitor`), pas dans le fichier de disposition. Le dessin de l'icône change avec le niveau (jamais la couleur). Échap replie le curseur. Pour couper, la case de la ligne (le minimum du curseur est 1).
+- Fichiers : `src/template.html`, `src/i18n/fr.json`, `src/i18n/en.json`, `tests/fenetre_son.py`, `VERSION` `1.11.28`. **Non essayé** : Windows, Edge, le toucher, l'aspect des emoji. Reste à mettre à jour : manuel § 7.66.
+
 ### 17/11/2026 : documents des lots 1.11.24 à 1.11.26
 
 - **Manuel** : § 5.19 (`streams`, nom du flux, bulle, attention à la virgule), § 7.66 (fenêtre Son), pavé déplaçable (§ 7.33), § 7.44 (disposition d'origine), § 10.25 (`streams` et `--radios`), annexe § 13.3 ; `PROCEDURES_SIMPLES.md` § 14 ; historiques fr et en.
