@@ -6,6 +6,12 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.11.0)
 
+### 17/11/2026 : vue d'ensemble à jour (fenêtre Son, `streams`, volume) ; `MODE_EMPLOI` = le manuel
+
+- `VUE_ENSEMBLE.md` et `OVERVIEW.md` : la ligne Radio parle des flux multiples (`streams`) et de la fenêtre Son avec le volume propre à la radio et à la musique.
+- **Correction** : l'entrée du lot 1.11.27 disait que `MODE_EMPLOI` n'existait pas dans le dépôt ; c'est l'ancien nom du manuel, devenu `docs/fr/MANUEL.md` à la v38, et le manuel était à jour. Même correction dans `REPRISE.md`.
+- Aucun code modifié. `VERSION` : `1.11.33`.
+
 ### 17/11/2026 : `verif_trad` : le code en ligne de `streams` est le même en français et en anglais
 
 - `verif_trad.py` donnait 3 erreurs sur les paires modifiées aux lots 1.11.27 et 1.11.29 (le code en ligne `["nom", "adresse"]` traduit en anglais) : `["label", "url"]` dans `MANUEL.md` / `MANUAL.md` et `REFERENCE_JSON.md` (fr et en). Ligne de l'annexe du manuel : lots 1.11.24 à 1.11.29. Le contrôle n'avait pas été lancé avant la livraison de ces lots.
@@ -38,7 +44,7 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 ### 17/11/2026 : documents des lots 1.11.24 à 1.11.26
 
 - **Manuel** : § 5.19 (`streams`, nom du flux, bulle, attention à la virgule), § 7.66 (fenêtre Son), pavé déplaçable (§ 7.33), § 7.44 (disposition d'origine), § 10.25 (`streams` et `--radios`), annexe § 13.3 ; `PROCEDURES_SIMPLES.md` § 14 ; historiques fr et en.
-- Aucun code modifié. `VERSION` : `1.11.27`. **Non vérifié** : la relecture par Klaatou ; `MODE_EMPLOI` cité par le lot 1.11.24 n'existe pas dans le dépôt, rien n'a été fait pour lui.
+- Aucun code modifié. `VERSION` : `1.11.27`. **Non vérifié** : la relecture par Klaatou ; `MODE_EMPLOI`, cité par le lot 1.11.24, est l'ancien nom du manuel (devenu `docs/fr/MANUEL.md` à la v38) : le manuel est à jour.
 
 ### 17/11/2026 : flux de la radio dans un seul tableau : `streams` = `[["nom", "adresse"], ...]`
 

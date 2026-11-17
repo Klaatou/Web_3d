@@ -6,6 +6,12 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.11.0)
 
+### 17/11/2026: overview up to date (Sound window, `streams`, volume); `MODE_EMPLOI` = the manual
+
+- `VUE_ENSEMBLE.md` and `OVERVIEW.md`: the Radio line mentions multiple streams (`streams`) and the Sound window with its own radio and music volume.
+- **Fix**: the batch 1.11.27 entry said `MODE_EMPLOI` was not in the repository; it is the old name of the manual, now `docs/fr/MANUEL.md` since v38, and the manual was up to date. Same fix in `REPRISE.md`.
+- No code changed. `VERSION`: `1.11.33`.
+
 ### 17/11/2026: `verif_trad`: the inline code of `streams` is the same in French and English
 
 - `verif_trad.py` gave 3 errors on the pairs changed by batches 1.11.27 and 1.11.29 (the inline code `["name", "address"]` translated into English): `["label", "url"]` in `MANUEL.md` / `MANUAL.md` and `REFERENCE_JSON.md` (fr and en). Appendix line of the manual: batches 1.11.24 to 1.11.29. The check had not been run before these batches were delivered.
@@ -38,7 +44,7 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 ### 17/11/2026: documents for batches 1.11.24 to 1.11.26
 
 - **Manual**: § 5.19 (`streams`, stream name, tooltip, mind the comma), § 7.66 (Sound window), movable pad (§ 7.33), § 7.44 (original layout), § 10.25 (`streams` and `--radios`), appendix § 13.3; `SIMPLE_PROCEDURES.md` § 14; histories fr and en.
-- No code changed. `VERSION`: `1.11.27`. **Not checked**: Klaatou's review; the `MODE_EMPLOI` named by batch 1.11.24 is not in the repository, nothing was done for it.
+- No code changed. `VERSION`: `1.11.27`. **Not checked**: Klaatou's review; `MODE_EMPLOI`, named by batch 1.11.24, is the old name of the manual (now `docs/fr/MANUEL.md` since v38): the manual is up to date.
 
 ### 17/11/2026: radio streams in one array: `streams` = `[["label", "url"], ...]`
 

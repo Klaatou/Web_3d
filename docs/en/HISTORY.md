@@ -293,6 +293,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 17/11/2026 |  | after 1.11.0 | Batch 1.11.30: initials removed from the batch 1.11.27 entry (rule 25) |
 | 17/11/2026 |  | after 1.11.0 | Batch 1.11.31: delivery mechanics moved from `REGLES.md` to `REPRISE.md` section 8; `cd` on the first command of a series only |
 | 17/11/2026 |  | after 1.11.0 | Batch 1.11.32: `verif_trad`: inline code of `streams` identical in French and English (manual, `REFERENCE_JSON`) |
+| 17/11/2026 |  | after 1.11.0 | Batch 1.11.33: overview up to date (Sound window, `streams`, volume); `MODE_EMPLOI` = the manual (fix of the 1.11.27 changelog) |
 ## Useful commands
 
 - See the history: `git log --oneline --decorate`

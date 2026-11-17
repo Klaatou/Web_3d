@@ -1,6 +1,6 @@
 # Reprise du projet Web 3d
 
-*État au 17/11/2026 : `main` = lot **1.11.31** (`VERSION` **1.11.31 (17/11/2026)**, compteur de lots ; à relire avec `git log`). **Dernière publication : 1.11.0** (15/11/2026, étiquette `v1.11.0`, zips `region-simple.zip` et `galerie-photos.zip`) ; les lots 1.11.1 et suivants sont sous « Non publié (après la 1.11.0) » de `CHANGELOG.fr.md` (français) et « Unreleased (after 1.11.0) » de `CHANGELOG.md` (**anglais**). Releases : 1.4.0 (02/11), 1.5.0 et 1.5.1 (04/11), 1.6.0 (05/11), 1.7.0 (07/11), 1.8.0 (08/11), 1.9.0 (10/11), 1.10.0 (12/11), **1.11.0 (15/11/2026)**.*
+*État au 17/11/2026 : `main` = lot **1.11.33** (`VERSION` **1.11.33 (17/11/2026)**, compteur de lots ; à relire avec `git log`). **Dernière publication : 1.11.0** (15/11/2026, étiquette `v1.11.0`, zips `region-simple.zip` et `galerie-photos.zip`) ; les lots 1.11.1 et suivants sont sous « Non publié (après la 1.11.0) » de `CHANGELOG.fr.md` (français) et « Unreleased (after 1.11.0) » de `CHANGELOG.md` (**anglais**). Releases : 1.4.0 (02/11), 1.5.0 et 1.5.1 (04/11), 1.6.0 (05/11), 1.7.0 (07/11), 1.8.0 (08/11), 1.9.0 (10/11), 1.10.0 (12/11), **1.11.0 (15/11/2026)**.*
 
 **Ménage du 17/11/2026 (lot 1.11.23).** Ce fichier est passé de 601 lignes (166 Ko) à l'essentiel. Le journal des lots 1.7.12 à 1.11.12, les « Décisions » et les « Pièges » par période, les anciens paragraphes « Documents en retard » et le détail des § 2 à 6 sont dans **`REPRISE_ARCHIVE.md`**, annexe « REPRISE.md du 15/11/2026 (état 1.11.12) » (à ne lire que pour retrouver un détail).
 
@@ -107,7 +107,7 @@ Relais de flux `http` par un serveur à soi ; écran vidéo de scène ; lecture 
 
 ### 6.4 Documents en retard (règle 16)
 
-État à la fin du lot 1.11.30 : manuel, procédures, `REFERENCE_JSON`, index, vue d'ensemble, README et historiques à jour jusqu'au 1.11.9 et pour les lots 1.11.13 à 1.11.29 (lots 1.11.21, 1.11.27, 1.11.29). **`verif_trad` n'a pas été lancé sur les paires modifiées aux lots 1.11.27 et 1.11.29** (à faire ; il a été appelé sans arguments par erreur). Le texte de `MODE_EMPLOI`, cité par un changelog, n'est pas un fichier du dépôt. **À vérifier** : le terrain en double (`oar2glb` 1.11.11, `glb2tiles` 1.11.12) dans le manuel § 3 et `MODE_EMPLOI` (CHANGELOG fr et en faits, manuel non relu) ; `CREATEURS.md` à jour seulement jusqu'à 1.10.14 ; avertissements `verif_trad` « lignes qui semblent en français » (manuel : 2 lignes ; historique : 8 lignes de 131 à 138) : **présents sur `main` avant le lot 1.11.21** (mesuré le 17/11/2026), sans erreur. L'annexe du manuel (tableau « Ajouts de la 1.11.x ») n'a pas été complétée pour 1.11.13 et suivants.
+État à la fin du lot 1.11.33 : manuel, procédures, `REFERENCE_JSON`, index, vue d'ensemble, README et historiques à jour jusqu'au 1.11.9 et pour les lots 1.11.13 à 1.11.29 (lots 1.11.21, 1.11.27, 1.11.29) ; vue d'ensemble à jour au lot 1.11.33 ; `verif_trad` à 0 erreur sur le manuel, `REFERENCE_JSON`, les procédures simples et les historiques (lot 1.11.32). `MODE_EMPLOI` est l'ancien nom du manuel (devenu `docs/fr/MANUEL.md` à la v38) : les mentions de `MODE_EMPLOI` dans les changelogs visent le manuel. **À vérifier** : le terrain en double (`oar2glb` 1.11.11, `glb2tiles` 1.11.12) dans le manuel § 3 (CHANGELOG fr et en faits, manuel non relu) ; `CREATEURS.md` à jour seulement jusqu'à 1.10.14 ; avertissements `verif_trad` « lignes qui semblent en français » (manuel : 2 lignes ; historique : 8 lignes de 131 à 138) : **présents sur `main` avant le lot 1.11.21** (mesuré le 17/11/2026), sans erreur. L'annexe du manuel (tableau « Ajouts de la 1.11.x ») n'a pas été complétée pour 1.11.13 et suivants.
 
 ### 6.5 Règles de documentation
 
@@ -187,7 +187,7 @@ Patch appliqué à un clone frais de `main` ; `python build.py --vendor` (jsDeli
 
 ### 8.5 Textes visibles et documents
 
-Tout texte visible (page, viewer, outils) passe par `src/i18n`, en français **et** en anglais, avec le test de parité. Les documents `MODE_EMPLOI`, `PROCEDURES` et leurs versions anglaises sont tenus à jour ensemble ; `REFERENCE_OPTIONS.md` est régénéré par `gen_reference.py`. **Pendant la mise au point d'une fonction**, seuls sont livrés : le code, les textes de l'interface (fr et en), `REFERENCE_OPTIONS.md` régénéré et l'entrée des deux CHANGELOG. Manuels, procédures, historiques et traductions sont mis à jour en une fois, à la validation de Klaatou ; le § 6.4 de ce fichier tient la liste des documents en retard (voir aussi § 6.5).
+Tout texte visible (page, viewer, outils) passe par `src/i18n`, en français **et** en anglais, avec le test de parité. Les documents `MANUEL`, `PROCEDURES` et leurs versions anglaises sont tenus à jour ensemble ; `REFERENCE_OPTIONS.md` est régénéré par `gen_reference.py`. **Pendant la mise au point d'une fonction**, seuls sont livrés : le code, les textes de l'interface (fr et en), `REFERENCE_OPTIONS.md` régénéré et l'entrée des deux CHANGELOG. Manuels, procédures, historiques et traductions sont mis à jour en une fois, à la validation de Klaatou ; le § 6.4 de ce fichier tient la liste des documents en retard (voir aussi § 6.5).
 
 ## 9. Ce qui a quitté ce fichier
 
