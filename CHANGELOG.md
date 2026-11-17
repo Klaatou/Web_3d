@@ -6,6 +6,19 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.11.0)
 
+### 17/11/2026: `CREATORS.md`: radio streams and the `--radios` list
+
+- `CREATEURS.md` and `CREATORS.md`: § 2 (the creator gives the host the addresses of their `streams` to get the track title), § 7 (what the server does with `--radios`: only the listed addresses, one connection every 30 s while a visitor listens, only the title is noted); the demo server state moves to 17/11/2026 (`--visits-names` and `--radios` active, from the launch line given by Klaatou).
+- **Not done**: the silent walker (`--idle-walk`, absent from the demo launch line, so without effect there) and the bounded nickname registry (`--max-names`) are not in the note.
+- No code changed. `VERSION`: `1.11.35`.
+
+### 17/11/2026: Sound window: the volume slider takes the colour of the other sliders
+
+- **Finding by Klaatou**: the volume slider of the Sound window was black while the other sliders of the page are blue. **Cause**: `#soundVolRow input` forced `accent-color:#000` (`src/template.html`); the Settings and light sliders have none and keep the browser colour.
+- **Done**: `accent-color` removed from the slider; `tests/fenetre_son.py` checks that its accent colour is the one of the Settings slider.
+- **Not tried**: the real look on Windows, Edge and touch (the test compares styles, not the picture). The checkboxes of the Radio and Music lines stay black (`accent-color:#000`); nobody asked to change them: to be decided.
+- `VERSION`: `1.11.34`.
+
 ### 17/11/2026: overview up to date (Sound window, `streams`, volume); `MODE_EMPLOI` = the manual
 
 - `VUE_ENSEMBLE.md` and `OVERVIEW.md`: the Radio line mentions multiple streams (`streams`) and the Sound window with its own radio and music volume.

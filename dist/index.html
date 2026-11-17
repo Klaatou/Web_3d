@@ -141,7 +141,7 @@ body.touch #soundInfo .sndX{top:4px;width:40px;height:40px;font-size:18px;border
 #soundInfo .sndV{position:absolute;top:3px;right:40px;z-index:1;width:26px;height:20px;padding:0;font:12px/1 ui-monospace,Consolas,monospace;background:#fff;color:#000;border:1px solid #000;border-radius:4px;cursor:pointer}   /* 1.11.28 : haut-parleur, a gauche de la croix */
 #soundVolRow{display:flex;align-items:center;gap:6px;margin:0 0 4px}
 #soundVolRow[hidden]{display:none}
-#soundVolRow input{flex:1;min-width:110px;margin:0;accent-color:#000;cursor:pointer}
+#soundVolRow input{flex:1;min-width:110px;margin:0;cursor:pointer}
 #soundVolRow span{min-width:3ch;text-align:right}
 #soundInfo .sndV svg{display:block;margin:auto;width:16px;height:16px}
 body.touch #soundInfo .sndV svg{width:24px;height:24px}
@@ -502,7 +502,7 @@ function diagShow(text, status, select) {
 function diagText(viewer, extra) {
   const x = extra || {}, L = (k, v) => tr('core.diag.line', k, v), out = [tr('core.diag.title')];
   const nb = (v, d) => (Number.isFinite(v) ? i18nNum(v, d || 0) : '?');   // nombres à la manière de la langue (virgule en français)
-  out.push(L(tr('core.diag.version'), '1.11.29 (17/11/2026)' + (x.cfgVersion && x.cfgVersion !== '1.11.29 (17/11/2026)' ? ' ; ' + tr('core.diag.cfgver', x.cfgVersion) : '')));
+  out.push(L(tr('core.diag.version'), '1.11.35 (17/11/2026)' + (x.cfgVersion && x.cfgVersion !== '1.11.35 (17/11/2026)' ? ' ; ' + tr('core.diag.cfgver', x.cfgVersion) : '')));
   out.push(L(tr('core.diag.date'), new Date().toLocaleString(({ fr: 'fr-FR', en: 'en-GB' })[LANG]) + ' ; ' + tr('core.diag.uptime', nb(performance.now() / 1000))));
   out.push(L(tr('core.diag.page'), location.protocol + (location.host ? '//ADRESSE' : '//') + location.pathname + location.search));
   out.push(L(tr('core.diag.lang'), LANG + ' · ' + ((navigator.languages || []).join(',') || navigator.language || '?') + ' · ' + KB.layout().toUpperCase()));
@@ -4064,7 +4064,7 @@ if (C.walk) {
   rsSel.onchange = () => { const si = parseInt(rsSel.value, 10) || 0; RADIO.setIdx(si); };
   sbody.insertBefore(rsSel, lrd);
   RADIO.setSelEl(rsSel);
-  mkLine('verInfo').textContent = tr('page.state.version', '1.11.29 (17/11/2026)', C.version || '?');   // 1.6.17 : version de la page (index.html, ou glb2html.py pour une page autonome) et de la configuration
+  mkLine('verInfo').textContent = tr('page.state.version', '1.11.35 (17/11/2026)', C.version || '?');   // 1.6.17 : version de la page (index.html, ou glb2html.py pour une page autonome) et de la configuration
   // v39 : bouton « Copier le diagnostic » sous le contenu de la fenêtre (reste visible quand elle est réduite) : lignes affichées + diagText (core.js) ;
   // si le navigateur refuse la copie, le texte s'affiche sélectionné dessous (Ctrl+C)
   {

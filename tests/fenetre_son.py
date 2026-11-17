@@ -253,6 +253,8 @@ async def main():
             pass
         v0 = await ev("(() => { const r = document.getElementById('soundVol'); return [document.getElementById('soundVolRow').hidden, r.min, r.value, document.getElementById('soundVolBtn').getAttribute('aria-expanded')]; })()")
         rapport(v0 == [True, "1", "50", "false"], "curseur replie au depart, de 1 a 100, a 50", v0)
+        ac = await ev("[getComputedStyle(document.getElementById('soundVol')).accentColor, getComputedStyle(document.getElementById('visVolume')).accentColor]")
+        rapport(ac[0] == ac[1], "le curseur du volume a la couleur des autres curseurs (pas de couleur imposee)", ac)
         l0, ic50 = await ev("window.__r.level()"), await ev("document.getElementById('soundVolBtn').innerHTML")
         await ev("document.getElementById('soundVolBtn').click()")
         v1 = await ev("[document.getElementById('soundVolRow').hidden, document.getElementById('soundVolBtn').getAttribute('aria-expanded')]")

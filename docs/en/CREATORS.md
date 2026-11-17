@@ -11,6 +11,7 @@ A presence server relays the positions, the chat and the visitor counters of a r
 - **Your page's origin**: the start of its address, without a path, for example `https://alice.example` (with the port if it is not the usual one). If your page can be reached with and without `www`, give both.
 - **A short identifier**, for example `alice`: it becomes your room prefix.
 - A page opened from disk, and the viewer, have the origin `null`: the host decides whether to accept it.
+- **The addresses of your radio streams**, if your region has a `cast` zone (`streams`) and you want the track title to show: the host must enter them in the `--radios` list (one address per stream, `https://` as in your zone). Without it the radio plays, but without a title.
 
 ## 3. What the host gives you
 
@@ -50,11 +51,12 @@ The host can give you a key for your room (`visits-key alice.galerie` in their c
 - **The server log** (`--log`): one line per event, with the room, the nickname and **the text of every chat message**. The IP address is hidden by default (`--log-ip hash`), in clear with `--log-ip raw`, absent with `--log-ip none`. Retention: `--log-days` (30 days by default, `0` = no limit).
 - **The chat history** (`--history-file`): nickname, text, room and time, never an IP address. The last 200 messages of a room are replayed to newcomers (`--history`). Retention: `--history-days` (30 days by default, `0` = no limit).
 - **The visit log** (`--visits`): room, arrival, duration, walk time, browser fingerprint; never an IP address; the nickname only with `--visits-names` (walkers and visitors who stayed in global view; a global-view visitor's nickname is not reserved). Retention: `--visits-days` (365 days by default).
+- **Radio streams (`--radios`)**: the server only reads the title of an address entered in the host's list; it never contacts any other address. For a listed address, it opens a connection to the radio every 30 seconds (`--radios-every`) as long as at least one visitor is listening to that stream (radio box ticked, volume above 0), then disconnects. It only notes the title, not the visitor. Detail: manual § 5.19 and § 10.25.
 - **The nickname registry**: each browser has a random key; the first one to take a nickname keeps it, the following ones get `NAME#CODE`.
 
 IP addresses, nicknames and messages are personal data: plan to inform your visitors. The exact rule depends on the country, check it on your side.
 
-**Klaatou's demo server (as of 29/10/2026)**: IP addresses in clear (`--log-ip raw`), log and chat history kept without a time limit (`--log-days 0`, `--history-days 0`). This choice may change: ask the host.
+**Klaatou's demo server (as of 17/11/2026)**: IP addresses in clear (`--log-ip raw`), log and chat history kept without a time limit (`--log-days 0`, `--history-days 0`), nicknames noted in the visits log (`--visits-names`), `--radios` list active. This choice may change: ask the host.
 
 ## 8. What you do not control
 

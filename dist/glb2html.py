@@ -16,8 +16,8 @@ Draco et Meshopt gérés automatiquement (décodeurs intégrés seulement si le 
 """
 from __future__ import annotations
 
-VERSION = "1.11.29 (17/11/2026)"
-SHELL_VERSION = "1.11.29 (17/11/2026)"   # numéro de version de la coquille (index.html) : écrit par build.py, ne change que si la coquille change
+VERSION = "1.11.35 (17/11/2026)"
+SHELL_VERSION = "1.11.35 (17/11/2026)"   # numéro de version de la coquille (index.html) : écrit par build.py, ne change que si la coquille change
 MAP_VERSION = "1.11.29 (17/11/2026)"       # numéro de version de la page de carte (carte.html) : idem
 
 import argparse
@@ -1145,7 +1145,7 @@ body.touch #soundInfo .sndX{top:4px;width:40px;height:40px;font-size:18px;border
 #soundInfo .sndV{position:absolute;top:3px;right:40px;z-index:1;width:26px;height:20px;padding:0;font:12px/1 ui-monospace,Consolas,monospace;background:#fff;color:#000;border:1px solid #000;border-radius:4px;cursor:pointer}   /* 1.11.28 : haut-parleur, a gauche de la croix */
 #soundVolRow{display:flex;align-items:center;gap:6px;margin:0 0 4px}
 #soundVolRow[hidden]{display:none}
-#soundVolRow input{flex:1;min-width:110px;margin:0;accent-color:#000;cursor:pointer}
+#soundVolRow input{flex:1;min-width:110px;margin:0;cursor:pointer}
 #soundVolRow span{min-width:3ch;text-align:right}
 #soundInfo .sndV svg{display:block;margin:auto;width:16px;height:16px}
 body.touch #soundInfo .sndV svg{width:24px;height:24px}

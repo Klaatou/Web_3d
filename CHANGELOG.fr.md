@@ -6,6 +6,19 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.11.0)
 
+### 17/11/2026 : `CREATEURS.md` : les flux radio et la liste `--radios`
+
+- `CREATEURS.md` et `CREATORS.md` : § 2 (le créateur donne à l'hôte les adresses de ses flux `streams` pour avoir le titre du morceau), § 7 (ce que fait le serveur avec `--radios` : seulement les adresses listées, une connexion toutes les 30 s tant qu'un visiteur écoute, seul le titre est noté) ; l'état du serveur de démonstration passe au 17/11/2026 (`--visits-names` et `--radios` actifs, d'après la ligne de lancement donnée par Klaatou).
+- **Non fait** : le promeneur muet (`--idle-walk`, absent de la ligne de lancement de la démo, donc sans effet là) et le registre des pseudos borné (`--max-names`) ne sont pas dans la note.
+- Aucun code modifié. `VERSION` : `1.11.35`.
+
+### 17/11/2026 : fenêtre Son : le curseur de volume prend la couleur des autres curseurs
+
+- **Constat de Klaatou** : le curseur de volume de la fenêtre Son était noir, les autres curseurs de la page sont bleus. **Cause** : `#soundVolRow input` imposait `accent-color:#000` (`src/template.html`) ; les curseurs de Réglages et de la lumière n'en ont pas et gardent la couleur du navigateur.
+- **Fait** : `accent-color` retiré du curseur ; `tests/fenetre_son.py` vérifie que sa couleur d'accent est celle du curseur de Réglages.
+- **Non essayé** : l'aspect réel sous Windows, Edge et en tactile (le test compare les styles, pas l'image). Les cases à cocher des lignes Radio et Musique restent noires (`accent-color:#000`), à la demande de personne : à décider.
+- `VERSION` : `1.11.34`.
+
 ### 17/11/2026 : vue d'ensemble à jour (fenêtre Son, `streams`, volume) ; `MODE_EMPLOI` = le manuel
 
 - `VUE_ENSEMBLE.md` et `OVERVIEW.md` : la ligne Radio parle des flux multiples (`streams`) et de la fenêtre Son avec le volume propre à la radio et à la musique.

@@ -11,6 +11,7 @@ Un serveur de présence relaie les positions, le chat et les compteurs de visite
 - **L'origine de ta page** : le début de son adresse, sans chemin, par exemple `https://alice.example` (avec le port s'il n'est pas le port habituel). Si ta page est joignable avec et sans `www`, donne les deux.
 - **Un identifiant court**, par exemple `alice` : il devient ton préfixe de salon.
 - Une page ouverte depuis le disque, et le viewer, ont l'origine `null` : l'hôte décide de l'accepter ou non.
+- **Les adresses de tes flux radio**, si ta région a une zone `cast` (`streams`) et que tu veux que le titre du morceau s'affiche : l'hôte doit les inscrire dans sa liste `--radios` (une adresse par flux, `https://` comme dans ta zone). Sans cela la radio joue, mais sans titre.
 
 ## 3. Ce que l'hôte te donne
 
@@ -50,11 +51,12 @@ L'hôte peut te donner une clé pour ton salon (`visits-key alice.galerie` dans 
 - **Le journal du serveur** (`--log`) : une ligne par évènement, avec le salon, le pseudo et **le texte de chaque message du chat**. L'adresse IP y est masquée par défaut (`--log-ip hash`), en clair avec `--log-ip raw`, absente avec `--log-ip none`. Conservation : `--log-days` (30 jours par défaut, `0` = sans limite).
 - **L'historique du chat** (`--history-file`) : pseudo, texte, salon et heure, jamais d'adresse IP. Les 200 derniers messages d'un salon sont rejoués aux nouveaux arrivants (`--history`). Conservation : `--history-days` (30 jours par défaut, `0` = sans limite).
 - **Le journal des visites** (`--visits`) : salon, arrivée, durée, temps de promenade, empreinte du navigateur ; jamais d'adresse IP ; le pseudo seulement avec `--visits-names` (promeneurs et visiteurs restés en vue globale ; le pseudo d'un visiteur en vue globale n'est pas réservé). Conservation : `--visits-days` (365 jours par défaut).
+- **Les flux radio (`--radios`)** : le serveur ne lit le titre que d'une adresse inscrite dans la liste de l'hôte ; il ne contacte jamais une autre adresse. Pour une adresse listée, il ouvre une connexion vers la radio toutes les 30 secondes (`--radios-every`) tant qu'au moins un visiteur écoute ce flux (case radio cochée, volume supérieur à 0), puis se déconnecte. Il ne note que le titre, pas le visiteur. Détail : manuel § 5.19 et § 10.25.
 - **Le registre des pseudos** : chaque navigateur a une clé aléatoire ; le premier qui prend un pseudo le garde, les suivants reçoivent `NAME#CODE`.
 
 Adresses IP, pseudos et messages sont des données personnelles : prévois d'informer tes visiteurs. La règle exacte dépend du pays, à vérifier de ton côté.
 
-**Serveur de démonstration de Klaatou (état au 29/10/2026)** : adresses IP en clair (`--log-ip raw`), journal et historique du chat conservés sans limite de durée (`--log-days 0`, `--history-days 0`). Ce choix peut changer : demande à l'hôte.
+**Serveur de démonstration de Klaatou (état au 17/11/2026)** : adresses IP en clair (`--log-ip raw`), journal et historique du chat conservés sans limite de durée (`--log-days 0`, `--history-days 0`), pseudos notés dans le journal des visites (`--visits-names`), liste de radios `--radios` active. Ce choix peut changer : demande à l'hôte.
 
 ## 8. Ce que tu ne contrôles pas
 
