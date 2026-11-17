@@ -1861,9 +1861,10 @@ function createViewer(container, cfg0, loader) {
   let selId = null;
   let zones = [], zoneHit = [], zoneAll = [], zoneInside = new Set(), nearZone = null, zoneEditor = false, selBox = null, onZone = null, onNear = null;
   let castCur = null, castGain = 0, onCast = null, onRadio = null, radioWant = '';   // radioWant : flux dont la page veut le titre (redemandé à la reconnexion)   // 1.10.32 : zone radio (type cast) la plus proche a portee et son gain (1 au centre, 0 au bord) ; onCast(zone|null, gain) a chaque changement
-  function castReset() { const was = castCur; castCur = null; castGain = 0; if (was && onCast) onCast(null, 0); }
+  let castM = -1, audM = -1;   // 1.11.17 : distance entiere (m) deja transmise a la page pour la radio et pour la musique
+  function castReset() { const was = castCur; castCur = null; castGain = 0; castM = -1; if (was && onCast) onCast(null, 0, 0); }
   let audCur = null, audGain = 0, onAudio = null;   // 1.11.4 : zone audio (type audio) la plus proche a portee et son gain, comme la radio ; onAudio(zone|null, gain) a chaque changement
-  function audioReset() { const was = audCur; audCur = null; audGain = 0; if (was && onAudio) onAudio(null, 0); }
+  function audioReset() { const was = audCur; audCur = null; audGain = 0; audM = -1; if (was && onAudio) onAudio(null, 0, 0); }
   const imgGone = new Set();   // ids des tableaux dont l'image est introuvable (page exportee) : ni cliquables ni zone proche
   let zoneNums = false;   // reperage des zones image : un gros numero devant chacune (jamais memorise ; voir setZoneNumbers)
   // zones liées à un élément du modèle (champ mesh = nom exact) : id de zone -> { meshes, box } ; mesh 3D -> zone
@@ -2529,9 +2530,11 @@ function createViewer(container, cfg0, loader) {
     }
     if (best !== nearZone) { nearZone = best; if (onNear) onNear(best); }
     const cg = cast ? Math.max(0.05, 1 - cd / cast.radius) : 0;
-    if (cast !== castCur || Math.abs(cg - castGain) > 0.01) { castCur = cast; castGain = cg; if (onCast) onCast(cast, cg); }
+    const cm = cast ? Math.round(cd) : -1;   // 1.11.17 : la page affiche la distance a la source : rappel aussi quand les metres entiers changent
+    if (cast !== castCur || Math.abs(cg - castGain) > 0.01 || cm !== castM) { castCur = cast; castGain = cg; castM = cm; if (onCast) onCast(cast, cg, cast ? cd : 0); }
     const ag = aud ? Math.max(0.05, 1 - ad / aud.radius) : 0;
-    if (aud !== audCur || Math.abs(ag - audGain) > 0.01) { audCur = aud; audGain = ag; if (onAudio) onAudio(aud, ag); }
+    const am = aud ? Math.round(ad) : -1;
+    if (aud !== audCur || Math.abs(ag - audGain) > 0.01 || am !== audM) { audCur = aud; audGain = ag; audM = am; if (onAudio) onAudio(aud, ag, aud ? ad : 0); }
   }
   // v36 : E déclenche la zone proche (déclenchement « clic » ou « both »), comme avant la v35 ; E ne fait rien d'autre
   window.addEventListener('keydown', e => {

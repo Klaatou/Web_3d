@@ -6,6 +6,13 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.11.0)
 
+### 17/11/2026 : zones radio et musique : la ligne d'état indique la distance à la source
+
+- **Demande** : après le nom de la radio et le titre, noter la distance à la source, pour expliquer la baisse du volume et prévenir de la coupure en s'éloignant.
+- **Constat** : `zoneTick` (`core.js`) calculait déjà la distance à chaque image (volume `1 - d / portée`) mais ne rappelait la page que si la zone ou le gain (à 0,01 près) changeait ; les lignes « Radio » et « Musique » ne sont réécrites que sur changement d'état. Aucun message vers le serveur de présence : tout est local.
+- **Correctif** : `onCast` et `onAudio` reçoivent la distance en 3e argument et sont rappelés aussi quand les mètres entiers changent (`castM`, `audM`) ; `RADIO.set` et `MUSIC.set` la gardent et réécrivent la ligne seulement si elle est en lecture ou en connexion ; `distTxt` ajoute « (37 m / 50 m) » (distance arrondie, portée de la zone). Pas d'affichage en cas d'erreur, de son coupé ou d'attente d'un clic. Aucune clé de langue ajoutée (unité identique en français et en anglais). La courbe du volume ne change pas (plancher de 5 % jusqu'à la limite de portée, puis coupure).
+- **Test** : `tests/zone_distance.py`.
+
 ### 16/11/2026 : lecture audio : boutons ⏮/⏭ et compteur de pistes pour la playlist
 
 - **Demande de Klaatou** : ajouter des boutons pour passer au morceau suivant et précédent dans une zone audio, et afficher le numéro de la piste en cours (ex: "1/14") entre les deux boutons.

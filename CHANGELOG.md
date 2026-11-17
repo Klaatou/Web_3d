@@ -6,6 +6,13 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.11.0)
 
+### 17/11/2026: radio and music zones: the status line shows the distance to the source
+
+- **Request**: after the radio name and the title, show the distance to the source, to explain the lower volume and warn before the cut-off when walking away.
+- **Finding**: `zoneTick` (`core.js`) already computed the distance every frame (volume `1 - d / range`) but only called the page back when the zone or the gain (within 0.01) changed; the "Radio" and "Music" lines are rewritten only on a state change. No message goes to the presence server: everything is local.
+- **Fix**: `onCast` and `onAudio` receive the distance as 3rd argument and are called again when the whole metres change (`castM`, `audM`); `RADIO.set` and `MUSIC.set` keep it and rewrite the line only while playing or connecting; `distTxt` appends "(37 m / 50 m)" (rounded distance, range of the zone). Not shown on error, muted sound or waiting for a click. No language key added (same unit in French and English). The volume curve is unchanged (5 % floor up to the range limit, then cut-off).
+- **Test**: `tests/zone_distance.py`.
+
 ### 16/11/2026: Audio playback: ⏮/⏭ buttons and track counter for the playlist
 
 - **Requested by Klaatou**: add buttons to skip to the next and previous track in an audio zone, and display the current track number (e.g., "1/14") between them.
