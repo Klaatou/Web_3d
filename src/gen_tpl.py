@@ -218,7 +218,7 @@ def clean_zones(zones, profile):
             "yaw": num(z.get("yaw"), 0, -7, 7), "shape": "board" if z.get("shape") == "board" else "ring",
             "trigger": (z.get("trigger") if z.get("trigger") in ("click", "enter", "both") else "click") if t in ("portal", "url") else "click",
             "radius": num(z.get("radius"), 20 if t in ("cast", "audio") else 2, 0.5, 200 if t in ("cast", "audio") else 50), "w": num(z.get("w"), 1.2 if img else 2.4, 0.1 if img else 0.5, 10), "h": num(z.get("h"), 0, 0, 6) if img else num(z.get("h"), 1.2, 0.3, 6),
-            "target": str(resolve_image_name(z.get("target")) if img else (z.get("target") or ""))[:600], "spawn": _slug(z.get("spawn")),
+            "target": "" if t == "cast" else str(resolve_image_name(z.get("target")) if img else (z.get("target") or ""))[:600], "spawn": _slug(z.get("spawn")),
             "confirm": bool(z.get("confirm")), "private": bool(z.get("private")), "showName": bool(z.get("showName")),
             "mesh": "" if t in ("spawn", "image", "cast", "audio") else re.sub(r"[\x00-\x1f]", "", str(z.get("mesh") or ""))[:200],
         }
@@ -226,6 +226,20 @@ def clean_zones(zones, profile):
             lk = re.sub(r"[\x00-\x1f]", "", str(z.get("link") or "")).strip()[:600]
             if lk:
                 d["link"] = lk
+        if t == "cast":   # 1.11.20 : flux de la radio : tableau urls (labels dans le meme ordre) ou target seul ; comme core.js (cleanZone)
+            raw = z["urls"] if isinstance(z.get("urls"), list) else ([z["target"]] if z.get("target") else [])
+            lb = z["labels"] if isinstance(z.get("labels"), list) else []
+            uu, ll = [], []
+            for k, v in enumerate(raw):
+                if len(uu) >= 500:
+                    break
+                u = re.sub(r"[\x00-\x1f]", "", str(v or "")).strip()[:600]
+                if not u:   # une adresse vide retire aussi son label (les index restent alignes)
+                    continue
+                uu.append(u)
+                ll.append(re.sub(r"[\x00-\x1f]", "", str((lb[k] if k < len(lb) else "") or d["label"])).strip()[:60])
+            if uu:
+                d["urls"], d["labels"], d["target"] = uu, ll, uu[0]
         if t == "audio":   # 1.11.4 : dossier des pistes et liste facultative ; ecrits seulement s'ils sont remplis, comme core.js
             fd = re.sub(r"[\x00-\x1f]", "", str(z.get("folder") or "")).replace("\\", "/").strip("/").strip()[:200]
             if fd and ".." not in fd.split("/"):
