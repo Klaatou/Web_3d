@@ -282,6 +282,8 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 17/11/2026 |  | after 1.11.0 | Batches 1.11.17 to 1.11.19: distance to the source, line kept out of range with the blinking distance, tooltips on the Radio and Music lines |
 | 17/11/2026 |  | after 1.11.0 | Batch 1.11.20: review fixes (`--zones` lost `urls` and `labels`, error per stream, stream list, editor, Settings checkbox); `tests/radio_flux.py` |
 | 17/11/2026 |  | after 1.11.0 | Batch 1.11.21: documents of batches 1.11.13 to 1.11.20 |
+| 17/11/2026 |  | after 1.11.0 | Batch 1.11.22: version numbers of batches 1.11.13 to 1.11.16 fixed (code comments and changelogs) |
+| 17/11/2026 |  | after 1.11.0 | Batch 1.11.23: `REPRISE.md` trimmed from 601 to 150 lines; the old one is in `REPRISE_ARCHIVE.md` |
 
 ## Useful commands
 

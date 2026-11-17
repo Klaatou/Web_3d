@@ -6,6 +6,12 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.11.0)
 
+### 17/11/2026 : `REPRISE.md` allégé (601 lignes, 166 Ko, vers 150 lignes, 36 Ko)
+
+- **Constat** : `REPRISE.md` doublait le CHANGELOG (journal des lots 1.7.12 à 1.11.12 : environ 49 Ko), empilait onze blocs « Décisions de la période » et onze blocs « Pièges de la période », et gardait trois paragraphes « Documents en retard » d'états différents (1.11.9, 1.11.1, 1.10.31). Chaque conversation le lit en premier.
+- **Fait** : nouveau `REPRISE.md` classé par thème (début de conversation, projet, état, architecture, commandes, décisions arrêtées, à faire, documents en retard, pièges) ; un seul bloc « Documents en retard » ; état au 17/11/2026 (1.11.23, numéros par fichier) ; leçons du lot 1.11.20 ajoutées (relecture d'un lot du LLM local, numéros de version vérifiés avec `git log`, `git checkout -- .` efface les patchs non commités). L'ancien fichier est repris **tel quel** dans `REPRISE_ARCHIVE.md` (annexe « REPRISE.md du 15/11/2026 »). Lignes d'historique des lots 1.11.22 (oubliée) et 1.11.23.
+- Aucun code modifié. `VERSION` : `1.11.23`. **Non vérifié** : que rien de capital ne manque (relecture de Klaatou souhaitée).
+
 ### 17/11/2026 : numéros de version des lots 1.11.13 à 1.11.16 corrigés
 
 - **Constat** : les lots de Qwen portaient de mauvais numéros : `urls` et `labels` (lot 1.11.13) étaient dits 1.11.12 dans les commentaires du code, et l'entrée des boutons ⏮ ⏭ avec compteur annonçait `VERSION` 1.11.15 alors que le lot est la 1.11.16 (`git log`).

@@ -282,6 +282,8 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 17/11/2026 |  | après 1.11.0 | Lots 1.11.17 à 1.11.19 : distance à la source, ligne conservée hors de portée avec la distance qui clignote, bulles d'info des lignes Radio et Musique |
 | 17/11/2026 |  | après 1.11.0 | Lot 1.11.20 : corrections de la relecture (`--zones` perdait `urls` et `labels`, erreur par flux, liste des flux, éditeur, case de Réglages) ; `tests/radio_flux.py` |
 | 17/11/2026 |  | après 1.11.0 | Lot 1.11.21 : documents des lots 1.11.13 à 1.11.20 |
+| 17/11/2026 |  | après 1.11.0 | Lot 1.11.22 : numéros de version des lots 1.11.13 à 1.11.16 corrigés (commentaires du code et changelogs) |
+| 17/11/2026 |  | après 1.11.0 | Lot 1.11.23 : `REPRISE.md` allégé de 601 à 150 lignes ; l'ancien est dans `REPRISE_ARCHIVE.md` |
 
 ## Commandes utiles
 

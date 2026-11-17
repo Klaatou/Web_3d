@@ -6,6 +6,12 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.11.0)
 
+### 17/11/2026: `REPRISE.md` trimmed (601 lines, 166 KB, down to 150 lines, 36 KB)
+
+- **Finding**: `REPRISE.md` duplicated the changelog (log of batches 1.7.12 to 1.11.12: about 49 KB), stacked eleven "Decisions of the period" blocks and eleven "Pitfalls of the period" blocks, and kept three "Documents behind" paragraphs for different states (1.11.9, 1.11.1, 1.10.31). Every conversation reads it first.
+- **Done**: new `REPRISE.md` sorted by topic (start of a conversation, project, state, architecture, commands, settled decisions, to do, documents behind, pitfalls); a single "Documents behind" block; state at 17/11/2026 (1.11.23, per-file numbers); lessons of batch 1.11.20 added (reviewing a local LLM's batch, checking version numbers with `git log`, `git checkout -- .` wipes uncommitted patches). The old file is kept **as it was** in `REPRISE_ARCHIVE.md` (annex "REPRISE.md of 15/11/2026"). History rows for batches 1.11.22 (missed) and 1.11.23.
+- No code changed. `VERSION`: `1.11.23`. **Not checked**: that nothing essential is missing (Klaatou's review wanted).
+
 ### 17/11/2026: version numbers of batches 1.11.13 to 1.11.16 fixed
 
 - **Finding**: Qwen's batches carried wrong numbers: `urls` and `labels` (batch 1.11.13) were called 1.11.12 in the code comments, and the entry for the ⏮ ⏭ buttons with counter announced `VERSION` 1.11.15 while the batch is 1.11.16 (`git log`).
