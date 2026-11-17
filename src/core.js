@@ -1861,10 +1861,10 @@ function createViewer(container, cfg0, loader) {
   let selId = null;
   let zones = [], zoneHit = [], zoneAll = [], zoneInside = new Set(), nearZone = null, zoneEditor = false, selBox = null, onZone = null, onNear = null;
   let castCur = null, castGain = 0, onCast = null, onRadio = null, radioWant = '';   // radioWant : flux dont la page veut le titre (redemandé à la reconnexion)   // 1.10.32 : zone radio (type cast) la plus proche a portee et son gain (1 au centre, 0 au bord) ; onCast(zone|null, gain) a chaque changement
-  let castM = -1, audM = -1;   // 1.11.17 : distance entiere (m) deja transmise a la page pour la radio et pour la musique
-  function castReset() { const was = castCur; castCur = null; castGain = 0; castM = -1; if (was && onCast) onCast(null, 0, 0); }
+  let castM = -1, audM = -1, castO = false, audO = false;   // 1.11.18 : castO / audO : la zone est hors de portee (affichee seulement, jusqu'a 2 fois la portee)   // 1.11.17 : distance entiere (m) deja transmise a la page pour la radio et pour la musique
+  function castReset() { const was = castCur; castCur = null; castGain = 0; castM = -1; castO = false; if (was && onCast) onCast(null, 0, 0, false); }
   let audCur = null, audGain = 0, onAudio = null;   // 1.11.4 : zone audio (type audio) la plus proche a portee et son gain, comme la radio ; onAudio(zone|null, gain) a chaque changement
-  function audioReset() { const was = audCur; audCur = null; audGain = 0; audM = -1; if (was && onAudio) onAudio(null, 0, 0); }
+  function audioReset() { const was = audCur; audCur = null; audGain = 0; audM = -1; audO = false; if (was && onAudio) onAudio(null, 0, 0, false); }
   const imgGone = new Set();   // ids des tableaux dont l'image est introuvable (page exportee) : ni cliquables ni zone proche
   let zoneNums = false;   // reperage des zones image : un gros numero devant chacune (jamais memorise ; voir setZoneNumbers)
   // zones liées à un élément du modèle (champ mesh = nom exact) : id de zone -> { meshes, box } ; mesh 3D -> zone
@@ -2504,16 +2504,16 @@ function createViewer(container, cfg0, loader) {
   }
   function zoneTick() {
     if (!zones.length) return;
-    let best = null, bd = 1e9, cast = null, cd = 1e9, aud = null, ad = 1e9;
+    let best = null, bd = 1e9, cast = null, cd = 1e9, aud = null, ad = 1e9, castF = null, cdF = 1e9, audF = null, adF = 1e9;   // castF / audF : zone la plus proche hors de portee (jusqu'a 2 fois la portee)
     for (const z of zones) {
       if (z.type === 'audio') {   // 1.11.4 : musique : comme la radio, la plus proche dont on est a portee
         const { d, dy } = zoneDist(z);
-        if (d <= z.radius && dy > -4 && dy < 8 && d < ad) { aud = z; ad = d; }
+        if (d <= z.radius && dy > -4 && dy < 8) { if (d < ad) { aud = z; ad = d; } } else if (d <= 2 * z.radius && dy > -4 && dy < 8 && d < adF) { audF = z; adF = d; }
         continue;
       }
       if (z.type === 'cast') {   // radio : la plus proche dont on est a portee (en x et z ; de 4 m sous la zone a 8 m au-dessus)
         const { d, dy } = zoneDist(z);
-        if (d <= z.radius && dy > -4 && dy < 8 && d < cd) { cast = z; cd = d; }
+        if (d <= z.radius && dy > -4 && dy < 8) { if (d < cd) { cast = z; cd = d; } } else if (d <= 2 * z.radius && dy > -4 && dy < 8 && d < cdF) { castF = z; cdF = d; }
         continue;
       }
       if (z.type === 'spawn' || zoneOff(z) || (z.type === 'image' && (!z.link || imgGone.has(z.id)))) continue;   // un tableau sans lien n'est pas une zone proche (pas d'invite « clic ou E »)
@@ -2530,11 +2530,11 @@ function createViewer(container, cfg0, loader) {
     }
     if (best !== nearZone) { nearZone = best; if (onNear) onNear(best); }
     const cg = cast ? Math.max(0.05, 1 - cd / cast.radius) : 0;
-    const cm = cast ? Math.round(cd) : -1;   // 1.11.17 : la page affiche la distance a la source : rappel aussi quand les metres entiers changent
-    if (cast !== castCur || Math.abs(cg - castGain) > 0.01 || cm !== castM) { castCur = cast; castGain = cg; castM = cm; if (onCast) onCast(cast, cg, cast ? cd : 0); }
+    const cs = cast || castF, co = !cast && !!castF, cdd = cast ? cd : cdF, cm = cs ? Math.round(cdd) : -1;   // 1.11.17 : la page affiche la distance a la source : rappel aussi quand les metres entiers changent
+    if (cs !== castCur || Math.abs(cg - castGain) > 0.01 || cm !== castM || co !== castO) { castCur = cs; castGain = cg; castM = cm; castO = co; if (onCast) onCast(cs, cg, cs ? cdd : 0, co); }
     const ag = aud ? Math.max(0.05, 1 - ad / aud.radius) : 0;
-    const am = aud ? Math.round(ad) : -1;
-    if (aud !== audCur || Math.abs(ag - audGain) > 0.01 || am !== audM) { audCur = aud; audGain = ag; audM = am; if (onAudio) onAudio(aud, ag, aud ? ad : 0); }
+    const as = aud || audF, ao = !aud && !!audF, add = aud ? ad : adF, am = as ? Math.round(add) : -1;
+    if (as !== audCur || Math.abs(ag - audGain) > 0.01 || am !== audM || ao !== audO) { audCur = as; audGain = ag; audM = am; audO = ao; if (onAudio) onAudio(as, ag, as ? add : 0, ao); }
   }
   // v36 : E déclenche la zone proche (déclenchement « clic » ou « both »), comme avant la v35 ; E ne fait rien d'autre
   window.addEventListener('keydown', e => {

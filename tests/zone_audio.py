@@ -159,7 +159,7 @@ async def main():
         rapport(await pg.evaluate("['visMusic', 'visRadio', 'visSounds'].every(i => document.getElementById(i) !== null)"), "Reglages : cases « Sons », « Radio des zones » et « Musique des zones » presentes")
         rapport(await info() == "" and not await mplay(), "vue globale : pas de musique")
         await pg.evaluate("window.__v.walkStart({ pos: [0, 15, 20], yaw: 0 })"); await pg.wait_for_timeout(500)
-        rapport(await info() == "" and not await mplay(), "promenade hors portee : pas de musique", await info())
+        rapport("hors de port" in await info() and not await mplay(), "promenade hors portee (dans 2 fois la portee) : rien ne joue, la ligne dit « hors de portee » (1.11.18)", await info())
         await pg.evaluate("window.__v.teleportTo([0, 15, 8], 0)"); await pg.wait_for_timeout(1200)
         t = await info()
         rapport("Zone zik" in t and "clic" in t and not await mplay(), "a portee avant la premiere action : « un clic ou une touche », rien ne joue", t)
@@ -192,7 +192,7 @@ async def main():
             await pg.wait_for_timeout(100)
         avant = await piste()
         await pg.evaluate("window.__v.teleportTo([0, 15, 20], 0)"); await pg.wait_for_timeout(600)
-        rapport(not await mplay() and await info() == "", "sortie de la portee : la musique s'arrete, la ligne disparait", await info())
+        rapport(not await mplay() and "hors de port" in await info(), "sortie de la portee : la musique s'arrete, la ligne reste « hors de portee » (1.11.18)", await info())
         await pg.evaluate("window.__v.teleportTo([0, 15, 4], 0)"); await pg.wait_for_timeout(300)
         try:
             await pg.wait_for_function("window.__m.playing()", timeout=10000)

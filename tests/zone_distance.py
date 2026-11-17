@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Test 1.11.17 : les lignes « Radio » et « Musique » de la fenetre Etat donnent la distance a la source et la portee de la zone (« 10 m / 40 m »),
-mise a jour quand les metres entiers changent, sans autre changement d'etat ; pas de distance en erreur, ni hors portee.
+"""Test 1.11.17 et 1.11.18 : les lignes « Radio » et « Musique » de la fenetre Etat donnent la distance a la source et la portee de la zone (« 10 m / 40 m »),
+mise a jour quand les metres entiers changent, sans autre changement d'etat ; pas de distance en erreur ; 1.11.18 : la ligne reste hors de portee jusqu'a 2 fois la portee (distance qui clignote), puis disparait.
 Prerequis : pip install playwright websockets && playwright install chromium ; python build.py avant. Variables : THREE_DIR, CHROMIUM.
 """
 import os as _os_lang; _os_lang.environ["WEB3D_LANG"] = "fr"
@@ -113,7 +113,21 @@ async def main():
             n.append(await rinfo())
         rapport("(26 m" in n[0] and "(27 m" in n[1] and "(29 m" in n[2], "radio : mise a jour a chaque metre entier", n)
         await pg.evaluate("window.__v.teleportTo([0, 15, 45], 0)"); await pg.wait_for_timeout(400)
-        rapport(await rinfo() == "", "hors portee : ligne cachee", await rinfo())
+        t = await rinfo()
+        far = await pg.evaluate("(() => { const s = document.querySelector('#radioInfo .srcFar'); return s ? [s.textContent, getComputedStyle(s).animationName, getComputedStyle(s).fontWeight] : null; })()")
+        rapport("hors de port" in t and "(45 m / 40 m)" in t and not await pg.evaluate("window.__r.playing()"), "hors de portee : la ligne reste, dit « hors de portee » avec la distance, le flux est arrete", t)
+        rapport(bool(far) and "45 m" in far[0] and far[1] != "none" and int(far[2]) >= 600, "hors de portee : la distance est dans un span qui clignote (animation) et en gras", far)
+        await pg.evaluate("window.__v.teleportTo([0, 15, 30], 0)"); await jouer("window.__r.playing()")
+        t = await rinfo()
+        rapport(await pg.evaluate("window.__r.playing()") and "(30 m / 40 m)" in t and "hors de port" not in t and await pg.evaluate("!document.querySelector('#radioInfo .srcFar')"), "retour dans la portee : le flux reprend, plus de clignotement", t)
+        await pg.evaluate("window.__v.teleportTo([0, 15, 45], 0)"); await pg.wait_for_timeout(300)
+        await pg.evaluate("window.__v.teleportTo([0, 15, 100], 0)"); await pg.wait_for_timeout(400)
+        rapport(await rinfo() == "", "au-dela de 2 fois la portee : ligne cachee", await rinfo())
+        await pg.emulate_media(reduced_motion="reduce")
+        await pg.evaluate("window.__v.teleportTo([0, 15, 45], 0)"); await pg.wait_for_timeout(400)
+        red = await pg.evaluate("(() => { const s = document.querySelector('#radioInfo .srcFar'); return s ? [getComputedStyle(s).animationName, getComputedStyle(s).textDecorationLine] : null; })()")
+        rapport(bool(red) and red[0] == "none" and "underline" in red[1], "mouvement reduit : pas de clignotement, texte souligne", red)
+        await pg.emulate_media(reduced_motion="no-preference")
         await pg.evaluate("window.__v.teleportTo([-50, 15, 1], 0)")
         await jouer("/illisible/.test(document.getElementById('radioInfo').textContent)")
         t = await rinfo()
@@ -125,6 +139,11 @@ async def main():
         await pg.evaluate("window.__v.teleportTo([50, 15, 6], 0)"); await pg.wait_for_timeout(400)
         t = await minfo()
         rapport("(6 m / 8 m)" in t, "musique : la distance suit la marche", t)
+        await pg.evaluate("window.__v.teleportTo([50, 15, 12], 0)"); await pg.wait_for_timeout(400)
+        t = await minfo()
+        rapport("hors de port" in t and "(12 m / 8 m)" in t and not await pg.evaluate("window.__m.playing()") and await pg.evaluate("!!document.querySelector('#musicInfo .srcFar')"), "musique hors de portee : ligne conservee avec la distance qui clignote, piste arretee", t)
+        await pg.evaluate("window.__v.teleportTo([50, 15, 30], 0)"); await pg.wait_for_timeout(400)
+        rapport(await minfo() == "", "musique : au-dela de 2 fois la portee, ligne cachee", await minfo())
         rapport(not errs, "aucune erreur JavaScript", errs)
         await br.close()
     srv.shutdown()

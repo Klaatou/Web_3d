@@ -6,6 +6,13 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.11.0)
 
+### 17/11/2026: radio and music zones: the line stays displayed out of range, the distance blinks
+
+- **Request**: when walking past the range the line vanished from the State window; it must stay, with the distance, and show that the range is exceeded by blinking the distance.
+- **Cause**: `zoneTick` (`core.js`) only kept zones within range (`d <= z.radius`); outside, `onCast(null)` hid the line.
+- **Fix**: `zoneTick` also keeps the nearest radio zone and audio zone **out of range, up to twice the range** (estimate, to be calibrated); `onCast` and `onAudio` get a 4th argument (out of range); `RADIO` and `MUSIC` then stop the stream (nothing is downloaded) and show "♪ Radio: NAME — out of range (63 m / 50 m)"; a zone in range takes precedence over one out of range; when back in range, a failed stream is tried again; beyond twice the range the line disappears as before. The distance is a `<span>` (`srcFar`): it blinks through opacity (no colour: colour blindness); with the system's "reduced motion" setting (`prefers-reduced-motion`) it does not blink: bold and underlined. Two language keys (`page.radio.far`, `page.music.far`, French and English).
+- **Test**: `tests/zone_distance.py` (line kept out of range with the blinking, removed beyond twice the range, stream stopped, resumed on return); `tests/zone_cast.py` adapted (the line now stays up to twice the range).
+
 ### 17/11/2026: radio and music zones: the status line shows the distance to the source
 
 - **Request**: after the radio name and the title, show the distance to the source, to explain the lower volume and warn before the cut-off when walking away.

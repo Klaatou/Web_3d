@@ -366,6 +366,8 @@
  "page.radio.waiting": "♪ Radio : {0} (connexion…)",
  "page.music.playing": "♪ Musique : {0} — {1}",
  "page.music.waiting": "♪ Musique : {0} (chargement…)",
+ "page.radio.far": "♪ Radio : {0} — hors de portée",
+ "page.music.far": "♪ Musique : {0} — hors de portée",
  "page.music.click": "♪ Musique : {0} (un clic ou une touche pour l'entendre)",
  "page.music.off": "♪ Musique : {0} (son coupé dans Réglages)",
  "page.music.error": "♪ Musique : {0} : fichiers illisibles ({1})",

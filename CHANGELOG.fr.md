@@ -6,6 +6,13 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.11.0)
 
+### 17/11/2026 : zones radio et musique : la ligne reste affichée hors de portée, la distance clignote
+
+- **Demande** : en dépassant la portée, la ligne disparaissait de la fenêtre État ; elle doit rester, avec la distance, et signaler que la portée est dépassée en faisant clignoter la distance.
+- **Cause** : `zoneTick` (`core.js`) ne retenait que les zones dont on est à portée (`d <= z.radius`) ; dehors, `onCast(null)` cachait la ligne.
+- **Correctif** : `zoneTick` retient aussi la zone radio et la zone audio les plus proches **hors de portée, jusqu'à 2 fois la portée** (estimation à calibrer) ; `onCast` et `onAudio` reçoivent un 4e argument (hors de portée) ; `RADIO` et `MUSIC` arrêtent alors le flux (rien n'est téléchargé) et affichent « ♪ Radio : NOM — hors de portée (63 m / 50 m) » ; une zone à portée passe avant une zone hors de portée ; au retour dans la portée, un flux en erreur est réessayé ; au-delà de 2 fois la portée la ligne disparaît comme avant. La distance est un `<span>` (`srcFar`) : elle clignote par l'opacité (pas de couleur : daltonisme) ; avec « mouvement réduit » du système (`prefers-reduced-motion`), pas de clignotement : gras et souligné. Deux clés de langue (`page.radio.far`, `page.music.far`, français et anglais).
+- **Test** : `tests/zone_distance.py` (ligne conservée hors de portée avec le clignotement, retirée au-delà de 2 fois la portée, flux arrêté, reprise au retour) ; `tests/zone_cast.py` adapté (la ligne reste désormais jusqu'à 2 fois la portée).
+
 ### 17/11/2026 : zones radio et musique : la ligne d'état indique la distance à la source
 
 - **Demande** : après le nom de la radio et le titre, noter la distance à la source, pour expliquer la baisse du volume et prévenir de la coupure en s'éloignant.

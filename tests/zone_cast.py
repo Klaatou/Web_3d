@@ -113,7 +113,7 @@ async def main():
         # vue globale : rien ; promenade hors portee : rien
         rapport(await info() == "" and not await playing(), "vue globale : pas de radio")
         await pg.evaluate("window.__v.walkStart({ pos: [0, 15, 20], yaw: 0 })"); await pg.wait_for_timeout(500)
-        rapport(await info() == "" and not await playing(), "promenade hors portee : pas de radio", await info())
+        rapport("hors de port" in await info() and not await playing(), "promenade hors portee (dans 2 fois la portee) : rien ne joue, la ligne dit « hors de portee » (1.11.18)", await info())
         # a portee avant toute action du visiteur : la ligne le dit, rien ne joue
         await pg.evaluate("window.__v.teleportTo([0, 15, 8], 0)"); await pg.wait_for_timeout(500)
         t = await info()
@@ -132,7 +132,7 @@ async def main():
         rapport(0.4 < l_centre <= 0.5 and l_bord < 0.15 and l_bord > 0, "volume : 0,45 au centre (gain 0,9 x volume 50 %), presque nul au bord", (l_centre, l_bord))
         # hors portee : arret ; autre zone : son flux
         await pg.evaluate("window.__v.teleportTo([0, 15, 15], 0)"); await pg.wait_for_timeout(500)
-        rapport(not await playing() and await info() == "", "sortie de la portee : le flux s'arrete, la ligne disparait", await info())
+        rapport(not await playing() and "hors de port" in await info(), "sortie de la portee : le flux s'arrete, la ligne reste « hors de portee » (1.11.18)", await info())
         await pg.evaluate("window.__v.teleportTo([30, 15, 1], 0)")
         try:
             await pg.wait_for_function("window.__r.playing()", timeout=15000)
@@ -159,7 +159,7 @@ async def main():
         rapport("illisible" in await info() and "MEDIA_ERR_" in await info() and not await playing(), "flux illisible : la ligne le dit avec la cause (code MEDIA_ERR_*), rien ne joue", await info())
         n1 = DEMANDES.count("/absent.mp3")
         await pg.evaluate("window.__v.teleportTo([-30, 15, 12], 0)"); await pg.wait_for_timeout(400)
-        rapport(await info() == "", "sortie de la zone en erreur : ligne cachee", await info())
+        rapport("illisible" not in await info() and "hors de port" in await info(), "sortie de la zone en erreur : plus d'erreur affichee, la ligne dit « hors de portee » (1.11.18)", await info())
         await pg.evaluate("window.__v.teleportTo([-30, 15, 1], 0)")
         try:
             await pg.wait_for_function("/illisible/.test(document.getElementById('radioInfo').textContent)", timeout=15000)

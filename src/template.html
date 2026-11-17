@@ -117,6 +117,9 @@ body.padOn #bar{max-width:max(200px,calc(50vw - 90px))}   /* v46 : la barre pass
 #stateInfo div{margin:0}
 #stateInfo select{font:inherit;max-width:100%;box-sizing:border-box;padding:1px 4px;border:1px solid #000;border-radius:4px;background:#fff;color:#000;margin:2px 0}   /* le choix du flux de la radio (au-dessus de la ligne « Radio : … ») */
 #stateInfo .srcCk{margin:0 4px 0 0;vertical-align:-1px;cursor:pointer;accent-color:#000}   /* 1.11.13 : case « couper le son » à côté de la ligne « Radio : … » / « Musique : … » */
+#stateInfo .srcFar{font-weight:bold;animation:srcFarBlink 1s steps(1,end) infinite}   /* 1.11.18 : distance qui clignote hors de portee (opacite, pas de couleur) */
+@keyframes srcFarBlink{50%{opacity:.2}}
+@media (prefers-reduced-motion:reduce){#stateInfo .srcFar{animation:none;text-decoration:underline}}   /* mouvement reduit : pas de clignotement, gras et souligne */
 #stateInfo .srcNext{font:inherit;margin:0 0 0 6px;padding:0 4px;display:inline-block;vertical-align:bottom;line-height:1.2;border:1px solid #000;border-radius:3px;background:#fff;color:#000;cursor:pointer} /* 1.11.14 : bouton « ⏭ » (morceau suivant) à côté de la ligne « Musique : … », visible si la playlist a plus d'une piste */
 #stateInfo #musicCount{margin:0 4px; min-width:34px; text-align:center; display:inline-block;}
 #hudR{display:flex;flex-direction:column;align-items:flex-end;gap:6px;margin-top:6px;text-align:left}   /* v41 : pile de droite, sous Réglages (poussée quand Réglages s'ouvre) */
@@ -661,7 +664,7 @@ const SND = (() => {
 const distTxt = (z, d) => z ? ' (' + Math.round(d) + ' m / ' + Math.round(z.radius * 10) / 10 + ' m)' : '';   // 1.11.17 : distance a la source et portee de la zone, en metres, ajoutees aux lignes Radio et Musique
 let radioTxt = () => {}, musicTxt = () => {};   // lignes « Radio » et « Musique » du bloc d'état (définies avec le bloc)
 const RADIO = (() => {
-  let a = null, cur = null, gain = 0, dist = 0, src = '', shown = '', asked = '', selIdx = 0;
+  let a = null, cur = null, gain = 0, dist = 0, out = false, src = '', shown = '', asked = '', selIdx = 0;
   const titles = new Map();
   const bad = new Map();
   const ERR = { 1: 'MEDIA_ERR_ABORTED', 2: 'MEDIA_ERR_NETWORK', 3: 'MEDIA_ERR_DECODE', 4: 'MEDIA_ERR_SRC_NOT_SUPPORTED' };
@@ -669,7 +672,7 @@ const RADIO = (() => {
   const label = () => cur ? (cur.label || cur.id) : '';
   const streamTitle = () => cur ? ((cur.labels && cur.labels[selIdx]) || label()) : '';   // 1.11.12 : titre du flux choisi (tableau labels de la zone, meme ordre que urls) ; repli sur le label de la zone sans labels
   const activeUrl = () => cur && cur.urls && cur.urls.length ? cur.urls[selIdx] : (cur ? cur.target : '');
-  const show = key => { shown = key; radioTxt(key ? tr(key, streamTitle(), cur && bad.get(cur.id)) + (key === 'page.radio.playing' && cur && titles.get(activeUrl()) ? ' \u2014 ' + titles.get(activeUrl()) : '') + (cur && (key === 'page.radio.playing' || key === 'page.radio.waiting') ? distTxt(cur, dist) : '') : ''); };   // 1.11.12 : le titre affiche celui du flux choisi (labels), pas toujours le premier
+  const show = key => { shown = key; radioTxt(key ? tr(key, streamTitle(), cur && bad.get(cur.id)) + (key === 'page.radio.playing' && cur && titles.get(activeUrl()) ? ' \u2014 ' + titles.get(activeUrl()) : '') : '', cur && (key === 'page.radio.playing' || key === 'page.radio.waiting' || key === 'page.radio.far') ? distTxt(cur, dist) : '', key === 'page.radio.far'); };   // 1.11.12 : le titre affiche celui du flux choisi (labels), pas toujours le premier
   const lvl = () => VIS.sounds && VIS.radio ? Math.max(0, Math.min(1, gain * VIS.volume / 100)) : 0;
   const stop = () => { if (!a || !src) return; src = ''; a.pause(); a.removeAttribute('src'); a.load(); };
   const ensure = () => {
@@ -695,6 +698,7 @@ const RADIO = (() => {
     const v = lvl();
     selSync();   // le choix du flux suit l'état de la radio (comme la ligne « Radio : … ») : visible tant qu'une zone radio à plusieurs flux est en cours
     if (!cur) { stop(); show(''); return; }
+    if (out) { stop(); show('page.radio.far'); return; }   // 1.11.18 : hors de portee : rien ne joue, la ligne reste avec la distance
     if (bad.has(cur.id)) { stop(); show('page.radio.error'); return; }
     const au = activeUrl();
     if (location.protocol === 'https:' && /^\s*http:/i.test(au)) { bad.set(cur.id, tr('page.radio.mixed')); stop(); show('page.radio.error'); toast(tr('page.radio.error', streamTitle(), bad.get(cur.id))); return; }
@@ -717,7 +721,7 @@ const RADIO = (() => {
   const refresh = () => { refresh0(); ask(); };
   for (const ev of ['pointerdown', 'keydown', 'touchstart']) addEventListener(ev, () => { if (cur && (!a || a.paused)) refresh(); }, true);
   return {
-    set(z, g, d) { const ch = !cur !== !z || (z && cur && z.id !== cur.id); if (ch) { if (cur) bad.delete(cur.id); selIdx = 0; } cur = z; gain = g; dist = d || 0; selSync(); if (ch) refresh(); else { if (a && src && !a.paused) a.volume = lvl(); if (shown === 'page.radio.playing' || shown === 'page.radio.waiting') show(shown); } },
+    set(z, g, d, o) { const ch = !cur !== !z || (z && cur && z.id !== cur.id), back = !ch && out && !o; if (ch) { if (cur) bad.delete(cur.id); selIdx = 0; } if (back && cur) bad.delete(cur.id); cur = z; gain = g; dist = d || 0; const oc = out !== !!o; out = !!o; selSync(); if (ch || oc) refresh(); else { if (a && src && !a.paused) a.volume = lvl(); if (shown === 'page.radio.playing' || shown === 'page.radio.waiting' || shown === 'page.radio.far') show(shown); } },
     setSelEl,
     setIdx(i) { selIdx = i; refresh(); },
     title(url, t) { titles.set(url, t); if (cur && activeUrl() === url && shown) show(shown); },
@@ -728,12 +732,12 @@ const RADIO = (() => {
 // memes regles que la radio (la zone la plus proche, volume = (1 - distance / portee) x volume des Sons, arret hors portee et en vue globale, son seulement apres une premiere action du visiteur) ;
 // une piste illisible est sautee (toutes illisibles : la ligne « Musique » le dit) ; en quittant la zone puis en revenant, la lecture reprend a la piste ou elle en etait
 const MUSIC = (() => {
-  let a = null, cur = null, gain = 0, dist = 0, tracks = [], idx = 0, loaded = '', loading = '', shown = '', fails = 0;
+  let a = null, cur = null, gain = 0, dist = 0, out = false, tracks = [], idx = 0, loaded = '', loading = '', shown = '', fails = 0;
   const lists = new Map(), bad = new Map(), pos = new Map();   // zone id -> pistes [{ name, url }] ; zone id -> { key, cause } ; zone id -> piste en cours
   const ERR = { 1: 'MEDIA_ERR_ABORTED', 2: 'MEDIA_ERR_NETWORK', 3: 'MEDIA_ERR_DECODE', 4: 'MEDIA_ERR_SRC_NOT_SUPPORTED' };
   const cause = () => a && a.error ? (ERR[a.error.code] || 'MEDIA_ERR_' + a.error.code) + (a.error.message ? ' : ' + a.error.message : '') : '?';
   const label = () => cur ? (cur.label || cur.id) : '';
-  const show = (key, extra) => { shown = key; musicTxt(key ? tr(key, label(), extra !== undefined ? extra : (tracks[idx] ? tracks[idx].name : '')) + ((key === 'page.music.playing' || key === 'page.music.waiting') && cur ? distTxt(cur, dist) : '') : ''); };   // la ligne « Musique »
+  const show = (key, extra) => { shown = key; musicTxt(key ? tr(key, label(), extra !== undefined ? extra : (tracks[idx] ? tracks[idx].name : '')) : '', (key === 'page.music.playing' || key === 'page.music.waiting' || key === 'page.music.far') && cur ? distTxt(cur, dist) : '', key === 'page.music.far'); };   // la ligne « Musique »
   const lvl = () => VIS.sounds && VIS.music ? Math.max(0, Math.min(1, gain * VIS.volume / 100)) : 0;
   const stop = () => { if (!a) return; loaded = ''; a.pause(); a.removeAttribute('src'); a.load(); };
   const next = () => { if (!tracks.length) return; idx = (idx + 1) % tracks.length; if (cur) pos.set(cur.id, idx); play(); };
@@ -768,6 +772,7 @@ const MUSIC = (() => {
   };
   const refresh = () => {
     if (!cur) { stop(); show(''); return; }
+    if (out) { stop(); show('page.music.far', ''); return; }   // 1.11.18 : hors de portee : rien ne joue, la ligne reste avec la distance
     const b = bad.get(cur.id); if (b) { stop(); show(b.key, b.cause); return; }
     if (lvl() <= 0) { stop(); show('page.music.off', ''); return; }
     const L = lists.get(cur.id);
@@ -776,21 +781,21 @@ const MUSIC = (() => {
     play();
   };
   for (const ev of ['pointerdown', 'keydown', 'touchstart']) addEventListener(ev, () => { if (cur && (!a || a.paused)) refresh(); }, true);   // apres la première action : la piste démarre
-  return { set(z, g, d) { const ch = !cur !== !z || (z && cur && z.id !== cur.id); if (ch && cur) bad.delete(cur.id); cur = z; gain = g; dist = d || 0; if (ch) { tracks = []; fails = 0; refresh(); } else { if (a && loaded && !a.paused) a.volume = lvl(); if (shown === 'page.music.playing' || shown === 'page.music.waiting') show(shown); } },
+  return { set(z, g, d, o) { const ch = !cur !== !z || (z && cur && z.id !== cur.id), back = !ch && out && !o; if ((ch || back) && cur) bad.delete(cur.id); cur = z; gain = g; dist = d || 0; const oc = out !== !!o; out = !!o; if (ch) { tracks = []; fails = 0; refresh(); } else if (oc) refresh(); else { if (a && loaded && !a.paused) a.volume = lvl(); if (shown === 'page.music.playing' || shown === 'page.music.waiting' || shown === 'page.music.far') show(shown); } },
     refresh, next, prev, playing: () => !!(a && loaded && !a.paused), level: () => (a && loaded ? a.volume : 0), track: () => (tracks[idx] ? tracks[idx].name : ''), trackIndex: () => idx, count: () => tracks.length };   // 1.11.14 : next exposé (arrête le morceau courant et passe à l'index suivant de la playlist) ; count (nombre de pistes, pour le bouton « ⏭ »)
 })();
 // une seule source a la fois : cocher « Radio des zones » decoche « Musique des zones » et inversement ; quand les deux sont cochees (etat de depart) et que les deux zones sont a portee,
 // la plus proche (gain le plus fort) joue, la radio en cas d'egalite ; une case cochee et l'autre non : seule la source cochee joue
-let rZ = null, rG = 0, rD = 0, mZ = null, mG = 0, mD = 0;
+let rZ = null, rG = 0, rD = 0, rO = false, mZ = null, mG = 0, mD = 0, mO = false;
 const audioArbitre = () => {
   let useR = !!rZ, useM = !!mZ;
   if (rZ && mZ) {
     if (VIS.radio !== VIS.music) { useR = VIS.radio; useM = VIS.music; }
-    else { useR = rG >= mG; useM = !useR; }
+    else { useR = rO && mO ? rD <= mD : rG >= mG; useM = !useR; }   // 1.11.18 : deux zones hors de portee : la plus proche s'affiche
   }
-  RADIO.set(useR ? rZ : null, useR ? rG : 0, rD); MUSIC.set(useM ? mZ : null, useM ? mG : 0, mD);
+  RADIO.set(useR ? rZ : null, useR ? rG : 0, rD, useR && rO); MUSIC.set(useM ? mZ : null, useM ? mG : 0, mD, useM && mO);
 };
-if (C.walk) { viewer.onCast = (z, g, d) => { rZ = z; rG = g; rD = d || 0; audioArbitre(); }; viewer.onAudio = (z, g, d) => { mZ = z; mG = g; mD = d || 0; audioArbitre(); }; viewer.onRadio = (url, t) => RADIO.title(url, t); }
+if (C.walk) { viewer.onCast = (z, g, d, o) => { rZ = z; rG = g; rD = d || 0; rO = !!o; audioArbitre(); }; viewer.onAudio = (z, g, d, o) => { mZ = z; mG = g; mD = d || 0; mO = !!o; audioArbitre(); }; viewer.onRadio = (url, t) => RADIO.title(url, t); }
 viewer.setMyColor(VIS.color);
 if (C.presenceUrl && C.walk) viewer.onPeer = kind => { if (kind === 'join' && VIS.soundJoin) SND.join(); else if (kind === 'leave' && VIS.soundLeave) SND.leave(); };
 // v37 : boussole en haut au centre : point cardinal et degrés (« NE 45° »), sans dépendre de la couleur ; masquée par la case des réglages visiteur ou --no-compass
@@ -1056,6 +1061,12 @@ if (C.walk) {
   const lv = mkLine('viewInfo'), lm = mkLine('modeInfo'), lmo = mkLine('mouseInfo'), lp = mkLine('posInfo'), lkb = mkLine('kbInfo'), lrd = mkLine('radioInfo'), lmu = mkLine('musicInfo');
    // 1.11.13 : case à côté de la ligne « Radio : … » / « Musique : … », même action que la case Réglages correspondante (une seule source à la fois, visSave, arbitre, refresh) ;
   // son état suit VIS.radio / VIS.music à chaque passage de RADIO.show() / MUSIC.show(), donc à chaque décision de RADIO.refresh0() / MUSIC.refresh()
+  const setSrcTx = (s, base, dist, far) => {   // 1.11.18 : texte de la ligne + distance dans un <span> (qui clignote hors de portee)
+    const key = base + '\u0001' + (dist || '') + (far ? '1' : '');
+    if (s.key === key) return;
+    s.key = key; s.tx.textContent = base;
+    if (dist) { const sp = document.createElement('span'); sp.className = far ? 'srcDist srcFar' : 'srcDist'; sp.textContent = dist; s.tx.append(sp); }
+  };
   const srcLine = (line, k, id) => {
     const ck = document.createElement('input'); ck.type = 'checkbox'; ck.id = id; ck.className = 'srcCk'; ck.checked = !!VIS[k]; ck.disabled = !VIS.sounds;
     ck.title = tr(k === 'radio' ? 'page.opt.sound.radio' : 'page.opt.sound.music');
@@ -1092,9 +1103,9 @@ if (C.walk) {
   lmu.insertBefore(mprev, mnext);  // Le précédent avant le suivant
   lmu.insertBefore(mcount, mnext); // Le compteur juste avant le suivant
 
-  lmu.hidden = true; musicTxt = t => { srcSync(sm, 'music'); lmu.hidden = !t; mnext.hidden = !(t && MUSIC.count() > 1); mprev.hidden = mnext.hidden; mcount.hidden = mnext.hidden; if (sm.tx.textContent !== (t || '')) sm.tx.textContent = t || ''; if (!mcount.hidden) { const c = MUSIC.trackIndex(); mcount.textContent = ' ' + (c + 1) + '/' + MUSIC.count() + ' '; } };
+  lmu.hidden = true; musicTxt = (t, dist, far) => { srcSync(sm, 'music'); lmu.hidden = !t; mnext.hidden = !(t && MUSIC.count() > 1); mprev.hidden = mnext.hidden; mcount.hidden = mnext.hidden; setSrcTx(sm, t || '', t ? dist : '', far); if (!mcount.hidden) { const c = MUSIC.trackIndex(); mcount.textContent = ' ' + (c + 1) + '/' + MUSIC.count() + ' '; } };
   // 1.11.4 : « ♪ Musique : … » tant qu'une zone audio est à portée ; 1.11.14 : « ⏭ » visible si la playlist a plus d'une piste
-  lrd.hidden = true; radioTxt = t => { srcSync(sr, 'radio'); lrd.hidden = !t; if (sr.tx.textContent !== (t || '')) sr.tx.textContent = t || ''; };   // 1.10.32 : « ♪ Radio : … » tant qu'une zone radio est à portée (le diagnostic la reprend)
+  lrd.hidden = true; radioTxt = (t, dist, far) => { srcSync(sr, 'radio'); lrd.hidden = !t; setSrcTx(sr, t || '', t ? dist : '', far); };   // 1.10.32 : « ♪ Radio : … » tant qu'une zone radio est à portée (le diagnostic la reprend)
   const rsSel = document.createElement('select'); rsSel.id = 'radioSel'; rsSel.hidden = true;   // 1.11.x : choix du flux de la radio, dans la fenêtre État au-dessus de la ligne « Radio : … » (comme ce texte : s'adapte à la radio en cours)
   rsSel.onchange = () => { const si = parseInt(rsSel.value, 10) || 0; RADIO.setIdx(si); };
   sbody.insertBefore(rsSel, lrd);
