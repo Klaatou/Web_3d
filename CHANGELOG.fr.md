@@ -6,6 +6,14 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.11.0)
 
+### 17/11/2026 : volume radio / musique indépendant, icône du haut-parleur en dessin noir
+
+- **Correction du lot 1.11.28** : le curseur de la fenêtre Son ne se multiplie plus avec le volume des Sons de Réglages (son maximum était celui de Réglages). Il règle seul la radio et la musique, de 1 à 100, **50 par défaut** ; le volume des Sons ne règle plus que les bips. Sans valeur retenue (premier démarrage après la mise à jour), le curseur reprend le volume des Sons, donc rien ne change à l'oreille.
+- **Icône** : un dessin noir (SVG) à 0, 1 ou 2 ondes remplace les emoji, trop pâles.
+- **Bulle** réécrite : elle dit ce que règle le curseur, que les bips et le volume des Sons sont séparés, et comment couper.
+- Documents : manuel § 5.19, § 5.20, § 7.66 (et le texte de la fenêtre Son).
+- Fichiers : `src/template.html`, `src/i18n/fr.json`, `src/i18n/en.json`, `tests/fenetre_son.py`, `tests/zone_cast.py`, `docs/*/MANUEL.md`, `VERSION` `1.11.29`. **Non essayé** : Windows, Edge, le toucher, l'aspect à l'écran.
+
 ### 17/11/2026 : volume propre à la radio et à la musique, dans la fenêtre Son
 
 - **Nouveau** : une icône haut-parleur dans l'en-tête de la fenêtre Son, à gauche de la croix, déplie et replie un **curseur** de volume (1 à 100, 100 par défaut) qui ne règle que la **radio et la musique des zones**. Le volume réel est le volume des Sons de Réglages x ce curseur : les bips du chat et d'arrivée ne changent pas. Valeur gardée par le navigateur (`srcVolume` dans `glb2html_visitor`), pas dans le fichier de disposition. Le dessin de l'icône change avec le niveau (jamais la couleur). Échap replie le curseur. Pour couper, la case de la ligne (le minimum du curseur est 1).

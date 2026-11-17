@@ -143,6 +143,8 @@ body.touch #soundInfo .sndX{top:4px;width:40px;height:40px;font-size:18px;border
 #soundVolRow[hidden]{display:none}
 #soundVolRow input{flex:1;min-width:110px;margin:0;accent-color:#000;cursor:pointer}
 #soundVolRow span{min-width:3ch;text-align:right}
+#soundInfo .sndV svg{display:block;margin:auto;width:16px;height:16px}
+body.touch #soundInfo .sndV svg{width:24px;height:24px}
 body.touch #soundInfo .sndV{top:4px;right:58px;width:40px;height:40px;font-size:18px;border-width:2px;border-radius:6px}
 body.touch #soundVolRow input{height:32px}
 #pad #padGrip{position:absolute;left:0;right:0;top:-22px;width:auto;height:18px}
@@ -637,7 +639,7 @@ const VISITS = (() => {   // v48 : aussi ouvert par le bouton « Journal des vis
 // réglages visiteur mémorisés dans ce navigateur : couleur de l'avatar (null = tirée au hasard par le serveur), pseudo cité (gras, clignotement),
 // sons (général, volume, citation, arrivée, départ), disposition du clavier. v36 : les anciens réglages du bip (clé « sound ») sont ignorés.
 const VIS = (() => {
-  const d = { color: null, compass: true, histMax: 200, bold: true, blink: true, sounds: true, volume: 50, srcVolume: 100, soundCite: true, soundMsg: true, soundJoin: true, soundLeave: true, radio: true, music: true, layout: 'auto', pad: true, touch: 'auto' };
+  const d = { color: null, compass: true, histMax: 200, bold: true, blink: true, sounds: true, volume: 50, srcVolume: 50, soundCite: true, soundMsg: true, soundJoin: true, soundLeave: true, radio: true, music: true, layout: 'auto', pad: true, touch: 'auto' };
   try {
     const s = JSON.parse(localStorage.getItem('glb2html_visitor') || '{}');
     if (Number.isInteger(s.color) && s.color >= 0 && s.color <= 0xFFFFFF) d.color = s.color;
@@ -645,7 +647,7 @@ const VIS = (() => {
     if (['auto', 'on', 'off'].includes(s.touch)) d.touch = s.touch;   // v46 : commandes tactiles (auto = écran tactile détecté)
     if (Number.isFinite(s.histMax)) d.histMax = Math.max(20, Math.min(2000, Math.round(s.histMax)));
     if (Number.isFinite(s.volume)) d.volume = Math.max(0, Math.min(100, Math.round(s.volume)));
-    if (Number.isFinite(s.srcVolume)) d.srcVolume = Math.max(1, Math.min(100, Math.round(s.srcVolume)));   // 1.11.28 : volume propre a la radio et a la musique (fenetre Son), 100 = sans changement
+    d.srcVolume = Number.isFinite(s.srcVolume) ? Math.max(1, Math.min(100, Math.round(s.srcVolume))) : Math.max(1, d.volume);   // 1.11.29 : volume de la radio et de la musique (fenetre Son), independant du volume des Sons ; sans valeur retenue : celle des Sons (ancien comportement)
     if (['auto', 'azerty', 'qwerty'].includes(s.layout)) d.layout = s.layout;
   } catch (e) {}
   return d;
@@ -684,7 +686,7 @@ const SND = (() => {
   const limited = k => { const now = performance.now(); if (now - last[k] < 2000) return false; if (play(k === 'join' ? [[660, 0.08], [880, 0.08]] : k === 'msg' ? [[988, 0.12]] : [[880, 0.08], [660, 0.08]])) { last[k] = now; return true; } return false; };
   return { cite: () => play([[880, 0.16]]), msg: () => limited('msg'), join: () => limited('join'), leave: () => limited('leave'), sample: () => play([[880, 0.16]]), acted: () => acted };
 })();
-// 1.10.32 : zones radio (type cast) : le flux (Icecast / SHOUTcast) de la zone a portée joue en promenade, volume = (1 - distance / portée) x volume des Sons ;
+// 1.10.32 : zones radio (type cast) : le flux (Icecast / SHOUTcast) de la zone a portée joue en promenade, volume = (1 - distance / portée) x volume radio / musique de la fenetre Son (VIS.srcVolume, 1.11.29) ;
 // une seule zone à la fois (core.js choisit la plus proche) ; hors portée ou en vue globale : le flux est arrêté (plus téléchargé) ; le navigateur n'autorise
 // le son qu'après une première action du visiteur ; un flux illisible (format, réseau, mélange http dans une page https) est dit dans le bloc d'état
 const distTxt = (z, d) => z ? ' (' + Math.round(d) + ' m / ' + Math.round(z.radius * 10) / 10 + ' m)' : '';   // 1.11.17 : distance a la source et portee de la zone, en metres, ajoutees aux lignes Radio et Musique
@@ -712,7 +714,7 @@ const RADIO = (() => {
     return L.join('\n');
   };
   const show = key => { shown = key; radioTxt(key ? tr(key, streamTitle(), cur && bad.get(bk())) + (key === 'page.radio.playing' && cur && titles.get(activeUrl()) ? ' \u2014 ' + titles.get(activeUrl()) : '') : '', cur && (key === 'page.radio.playing' || key === 'page.radio.waiting' || key === 'page.radio.far') ? distTxt(cur, dist) : '', key === 'page.radio.far'); radioTip(tip()); };   // 1.11.13 : le titre affiche celui du flux choisi (labels), pas toujours le premier
-  const lvl = () => VIS.sounds && VIS.radio ? Math.max(0, Math.min(1, gain * VIS.volume / 100 * VIS.srcVolume / 100)) : 0;
+  const lvl = () => VIS.sounds && VIS.radio ? Math.max(0, Math.min(1, gain * VIS.srcVolume / 100)) : 0;
   const stop = () => { if (!a || !src) return; src = ''; a.pause(); a.removeAttribute('src'); a.load(); };
   const ensure = () => {
     if (a) return a;
@@ -772,7 +774,7 @@ const RADIO = (() => {
   };
 })();
 // 1.11.4 : zones audio (type audio) : les fichiers son du dossier de la zone (liste playlist.json, ou clé tracks) jouent dans l'ordre, en boucle sur toute la liste, en promenade a portee ;
-// memes regles que la radio (la zone la plus proche, volume = (1 - distance / portee) x volume des Sons, arret hors portee et en vue globale, son seulement apres une premiere action du visiteur) ;
+// memes regles que la radio (la zone la plus proche, volume = (1 - distance / portee) x volume radio / musique de la fenetre Son, arret hors portee et en vue globale, son seulement apres une premiere action du visiteur) ;
 // une piste illisible est sautee (toutes illisibles : la ligne « Musique » le dit) ; en quittant la zone puis en revenant, la lecture reprend a la piste ou elle en etait
 const MUSIC = (() => {
   let a = null, cur = null, gain = 0, dist = 0, out = false, tracks = [], idx = 0, loaded = '', loading = '', shown = '', fails = 0;
@@ -789,7 +791,7 @@ const MUSIC = (() => {
     return L.join('\n');
   };
   const show = (key, extra) => { shown = key; musicTxt(key ? tr(key, label(), extra !== undefined ? extra : (tracks[idx] ? tracks[idx].name : '')) : '', (key === 'page.music.playing' || key === 'page.music.waiting' || key === 'page.music.far') && cur ? distTxt(cur, dist) : '', key === 'page.music.far'); musicTip(tip()); };   // la ligne « Musique »
-  const lvl = () => VIS.sounds && VIS.music ? Math.max(0, Math.min(1, gain * VIS.volume / 100 * VIS.srcVolume / 100)) : 0;
+  const lvl = () => VIS.sounds && VIS.music ? Math.max(0, Math.min(1, gain * VIS.srcVolume / 100)) : 0;
   const stop = () => { if (!a) return; loaded = ''; a.pause(); a.removeAttribute('src'); a.load(); };
   const next = () => { if (!tracks.length) return; idx = (idx + 1) % tracks.length; if (cur) pos.set(cur.id, idx); play(); };
   const prev = () => { if (!tracks.length) return; idx = (idx - 1 + tracks.length) % tracks.length; if (cur) pos.set(cur.id, idx); play(); };
@@ -1376,17 +1378,18 @@ if (C.walk) {
   sndX.title = tr('page.sound.close'); sndX.setAttribute('aria-label', tr('page.sound.close')); sndX.onmousedown = e => e.preventDefault();
   sndX.onclick = () => { soundP.hide(); applyHelp(viewer.walking); };
   sni.append(sndX);
-  // 1.11.28 : volume propre a la radio et a la musique : icone haut-parleur (a gauche de la croix) qui deplie / replie un curseur ; s'ajoute au volume des Sons de Reglages ; couper = la case de la ligne
+  // 1.11.28 : volume propre a la radio et a la musique : icone haut-parleur (a gauche de la croix) qui deplie / replie un curseur ; independant du volume des Sons de Reglages (qui regle les bips) ; couper = la case de la ligne
   const vBtn = document.createElement('button'), vRow = document.createElement('div'), vRg = document.createElement('input'), vVal = document.createElement('span');
   vBtn.type = 'button'; vBtn.id = 'soundVolBtn'; vBtn.className = 'sndV'; vBtn.setAttribute('aria-controls', 'soundVolRow'); vBtn.onmousedown = e => e.preventDefault();
   vRow.id = 'soundVolRow'; vRow.hidden = true; vRg.type = 'range'; vRg.min = 1; vRg.max = 100; vRg.step = 1; vRg.id = 'soundVol'; vRow.append(vRg, vVal);
+  const vIco = n => '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path d="M1.5 5.8h3.2L8.6 2.6v10.8L4.7 10.2H1.5z" fill="currentColor"/>' + (n >= 1 ? '<path d="M10.8 5.6a3.2 3.2 0 0 1 0 4.8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>' : '') + (n >= 2 ? '<path d="M12.9 3.5a6.2 6.2 0 0 1 0 9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>' : '') + '</svg>';   // 1.11.29 : dessin noir (les emoji etaient trop pales) ; 0, 1 ou 2 ondes selon le niveau
   const vSync = () => {
     const v = VIS.srcVolume, t = tr('page.sound.vol', v);
-    vRg.value = v; vVal.textContent = String(v); vBtn.textContent = v < 34 ? '🔈' : v < 67 ? '🔉' : '🔊';   // le dessin change avec le niveau (jamais la couleur)
+    vRg.value = v; vVal.textContent = String(v); vBtn.innerHTML = vIco(v < 34 ? 0 : v < 67 ? 1 : 2);   // le dessin change avec le niveau (jamais la couleur)
     vBtn.title = t; vBtn.setAttribute('aria-label', t); vRg.title = t; vBtn.setAttribute('aria-expanded', String(!vRow.hidden));
   };
   vBtn.onclick = () => { vRow.hidden = !vRow.hidden; vSync(); };
-  vRg.oninput = () => { VIS.srcVolume = Math.max(1, Math.min(100, parseInt(vRg.value, 10) || 100)); visSave(); vSync(); RADIO.refresh(); MUSIC.refresh(); };
+  vRg.oninput = () => { VIS.srcVolume = Math.max(1, Math.min(100, parseInt(vRg.value, 10) || 50)); visSave(); vSync(); RADIO.refresh(); MUSIC.refresh(); };
   vRow.onkeydown = e => { if (e.key === 'Escape') { vRow.hidden = true; vSync(); vBtn.focus(); e.stopPropagation(); } };
   vSync(); sni.append(vBtn); snb.prepend(vRow);
   // v41 : fenêtres H, I, L déplaçables par leur titre. Deux piles : gauche (en bas, d'origine) et droite (sous Réglages : poussée quand Réglages s'ouvre).

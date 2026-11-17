@@ -148,8 +148,8 @@ async def main():
         except Exception:
             pass
         rapport(await playing(), "case recochee : le flux reprend")
-        await pg.evaluate("(() => { const r = document.getElementById('visVolume'); r.value = 100; r.dispatchEvent(new Event('input')); })()"); await pg.wait_for_timeout(200)
-        rapport(abs(await level() - 0.8) < 0.1, "volume des Sons a 100 : niveau 0,8 (gain 0,8 a 1 m sur 5)", await level())
+        await pg.evaluate("(() => { const r = document.getElementById('soundVol'); r.value = 100; r.dispatchEvent(new Event('input')); })()"); await pg.wait_for_timeout(200)
+        rapport(abs(await level() - 0.8) < 0.1, "curseur radio / musique (fenetre Son) a 100 : niveau 0,8 (gain 0,8 a 1 m sur 5)", await level())
         # flux illisible
         await pg.evaluate("window.__v.teleportTo([-30, 15, 1], 0)")
         try:

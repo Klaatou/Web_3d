@@ -6,6 +6,14 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.11.0)
 
+### 17/11/2026: independent radio / music volume, speaker icon as a black drawing
+
+- **Fix to batch 1.11.28**: the slider of the Sound window is no longer multiplied by the Sounds volume of Settings (its maximum was Settings' one). It alone sets the radio and music, from 1 to 100, **50 by default**; the Sounds volume now only sets the beeps. With no saved value (first start after the update), the slider takes the Sounds volume, so nothing changes to the ear.
+- **Icon**: a black drawing (SVG) with 0, 1 or 2 waves replaces the emoji, too pale.
+- **Tooltip** rewritten: it says what the slider sets, that the beeps and the Sounds volume are separate, and how to mute.
+- Documents: manual § 5.19, § 5.20, § 7.66 (and the Sound window text).
+- Files: `src/template.html`, `src/i18n/fr.json`, `src/i18n/en.json`, `tests/fenetre_son.py`, `tests/zone_cast.py`, `docs/*/MANUAL.md`, `VERSION` `1.11.29`. **Not tried**: Windows, Edge, touch, how it looks on screen.
+
 ### 17/11/2026: own volume for the radio and music, in the Sound window
 
 - **New**: a loudspeaker icon in the header of the Sound window, left of the cross, shows and hides a volume **slider** (1 to 100, 100 by default) that only sets the **radio and music of the zones**. The real volume is the Sounds volume of Settings x this slider: chat and arrival beeps do not change. The value is kept by the browser (`srcVolume` in `glb2html_visitor`), not in the layout file. The icon drawing changes with the level (never the color). Escape hides the slider. To mute, use the line's box (the slider minimum is 1).
