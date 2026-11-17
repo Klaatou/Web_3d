@@ -448,6 +448,8 @@
  "page.wait.tiles.other": "{1}/{0} tuiles prêtes",
  "page.pad.grip": "Glisser pour déplacer le pavé de flèches. Double-clic : le remettre à sa place.",
  "page.sound.close": "Fermer la fenêtre Son",
+ "page.sound.kind.audio": "PL Audio",
+ "page.sound.kind.radio": "Radio",
  "page.sound.none": "Aucune radio ni musique à portée.",
  "page.sound.open": "Ouvrir la fenêtre Son avec ces lignes (ferme la fenêtre État)",
  "page.sound.title": "Son",

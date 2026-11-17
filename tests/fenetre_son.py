@@ -117,6 +117,8 @@ async def main():
         rapport(not await hid("soundInfo") and await hid("stateInfo"), "fleche : Son ouverte ET Etat fermee", (await hid("soundInfo"), await hid("stateInfo")))
         rt, st = await txt("radioInfo"), await txt("soundRadioInfo")
         rapport(st != "" and st.replace("▲", "").strip() == rt.replace("▲", "").strip(), "Son reprend la ligne Radio de la fenetre Etat", (rt, st))
+        tt = (await ev("document.getElementById('soundHead').textContent")).strip()
+        rapport(tt.endswith("Son \u00b7 Radio"), "titre de Son : le type de la zone active (Radio)", tt)
         opts = await ev("(() => { const s = document.getElementById('soundRadioSel'); return [s.hidden, [...s.options].map(o => o.textContent), s.value]; })()")
         rapport(opts[0] is False and opts[1] == ["Un", "Deux", "Trois"] and opts[2] == "0", "Son : choix du flux avec les labels", opts)
         await ev("(() => { const s = document.getElementById('soundRadioSel'); s.value = '2'; s.dispatchEvent(new Event('change')); })()"); await pg.wait_for_timeout(300)
@@ -150,6 +152,8 @@ async def main():
         except Exception:
             pass
         rapport("Musique" in await txt("soundMusicInfo") or "usique" in await txt("soundMusicInfo"), "Son : ligne Musique", await txt("soundMusicInfo"))
+        tt = (await ev("document.getElementById('soundHead').textContent")).strip()
+        rapport(tt.endswith("Son \u00b7 PL Audio"), "titre de Son : PL Audio pour une zone audio", tt)
         vis = await ev("['soundMusicPrev', 'soundMusicCount', 'soundMusicNext'].map(i => !document.getElementById(i).hidden)")
         c0 = (await ev("document.getElementById('soundMusicCount').textContent")).strip()
         await ev("document.getElementById('soundMusicNext').click()"); await pg.wait_for_timeout(300)

@@ -448,6 +448,8 @@
  "page.wait.tiles.other": "{1}/{0} tiles ready",
  "page.pad.grip": "Drag to move the arrow pad. Double-click: put it back in place.",
  "page.sound.close": "Close the Sound window",
+ "page.sound.kind.audio": "Audio playlist",
+ "page.sound.kind.radio": "Radio",
  "page.sound.none": "No radio or music in range.",
  "page.sound.open": "Open the Sound window with these lines (closes the Status window)",
  "page.sound.title": "Sound",

@@ -6,6 +6,11 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.11.0)
 
+### 17/11/2026: Sound window title shows the type of the active zone
+
+- The title of the Sound window shows the type of the zone whose line is displayed (the nearest one, or the one whose box is ticked: only one is active at a time): "Sound · Radio" or "Sound · Audio playlist" ("Son · PL Audio" in French).
+- Files: `src/template.html`, `src/i18n/fr.json`, `src/i18n/en.json`, `tests/fenetre_son.py`, `VERSION` `1.11.25`.
+
 ### 17/11/2026: movable arrow pad, Sound window (zone radio and music) in the window layout
 
 - **Arrow pad**: a grip above the pad; dragging the grip moves it (mouse and finger), double-click puts it back; the position is kept by the browser (`glb2html_padPos`) and is part of the layout file (save / load / reset).

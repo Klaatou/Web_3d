@@ -6,6 +6,11 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.11.0)
 
+### 17/11/2026 : le titre de la fenêtre Son indique le type de la zone active
+
+- Le titre de la fenêtre Son indique le type de la zone dont la ligne est affichée (la plus proche, ou celle dont la case est cochée : une seule est active à la fois) : « Son · Radio » ou « Son · PL Audio » (« Sound · Audio playlist » en anglais).
+- Fichiers : `src/template.html`, `src/i18n/fr.json`, `src/i18n/en.json`, `tests/fenetre_son.py`, `VERSION` `1.11.25`.
+
 ### 17/11/2026 : pavé de flèches déplaçable, fenêtre Son (radio et musique des zones) dans la disposition des fenêtres
 
 - **Pavé** : poignée au-dessus du pavé de flèches ; glisser la poignée le déplace (souris et doigt), double-clic le remet à sa place ; position gardée par le navigateur (`glb2html_padPos`) et incluse dans le fichier de disposition (enregistrer / charger / remise à zéro).

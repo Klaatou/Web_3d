@@ -1274,7 +1274,7 @@ if (C.walk) {
   const mkPanel = (wrap, head, body, title, openKey, foldKey, defOpen = true) => {   // 1.11.24 : defOpen false = fermee tant que l'utilisateur ne l'a pas ouverte (fenetre Son)
     const rdOpen = () => (defOpen ? lsGet(openKey) !== '0' : lsGet(openKey) === '1');
     let open = rdOpen(), folded = lsGet(foldKey) === '1';
-    const apply = () => { wrap.hidden = !open; body.hidden = folded; head.textContent = (folded ? '▸ ' : '▾ ') + title; head.setAttribute('aria-expanded', folded ? 'false' : 'true'); };
+    const apply = () => { wrap.hidden = !open; body.hidden = folded; head.textContent = (folded ? '▸ ' : '▾ ') + (typeof title === 'function' ? title() : title); head.setAttribute('aria-expanded', folded ? 'false' : 'true'); };
     const save = () => { lsSet(openKey, open ? '1' : '0'); lsSet(foldKey, folded ? '1' : '0'); };
     head.onclick = () => { folded = !folded; save(); apply(); };
     head.onmousedown = e => e.preventDefault();
@@ -1323,7 +1323,8 @@ if (C.walk) {
   // dans la disposition enregistree) pour suivre le son quand la fenetre Etat est fermee. La fleche de ces lignes ouvre Son ET ferme Etat ; la croix ferme Son.
   // Les lignes de la fenetre Etat ne changent pas : la logique (une seule source, Reglages, arbitre) reste celle de leurs cases.
   const sni = document.getElementById('soundInfo'), snb = document.getElementById('soundBody'), snh = document.getElementById('soundHead');
-  const soundP = mkPanel(sni, snh, snb, tr('page.sound.title'), 'glb2html_sound', 'glb2html_soundFold', false);
+  let sndKind = '';   // 1.11.25 : type de la zone active (une seule ligne, Radio ou Musique, est affichee a la fois : audioArbitre)
+  const soundP = mkPanel(sni, snh, snb, () => tr('page.sound.title') + (sndKind ? ' \u00b7 ' + sndKind : ''), 'glb2html_sound', 'glb2html_soundFold', false);
   let padReload = () => {};   // relit la position du pave (definie avec le pave) apres chargement ou remise a zero de la disposition
   const lnone = document.createElement('div'), lrdS = document.createElement('div'), lmuS = document.createElement('div'), rsSelS = document.createElement('select');
   lnone.id = 'soundNone'; lnone.textContent = tr('page.sound.none');
@@ -1338,7 +1339,11 @@ if (C.walk) {
   lmuS.append(mprevS, mcountS, mnextS);
   rsSelS.onchange = () => { RADIO.setIdx(parseInt(rsSelS.value, 10) || 0); };
   RADIO.setSelEl(rsSelS);
-  const soundNone = () => { lnone.hidden = !(lrdS.hidden && lmuS.hidden); };
+  const soundNone = () => {
+    lnone.hidden = !(lrdS.hidden && lmuS.hidden);
+    const k = !lrdS.hidden ? tr('page.sound.kind.radio') : (!lmuS.hidden ? tr('page.sound.kind.audio') : '');
+    if (k !== sndKind) { sndKind = k; soundP.apply(); }
+  };
   const rTx0 = radioTxt, mTx0 = musicTxt, rTip0 = radioTip, mTip0 = musicTip;
   radioTxt = (t, dist, far) => { rTx0(t, dist, far); srcSync(sSr, 'radio'); lrdS.hidden = !t; setSrcTx(sSr, t || '', t ? dist : '', far); soundNone(); };
   musicTxt = (t, dist, far) => {
