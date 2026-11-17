@@ -6,6 +6,11 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.11.0)
 
+### 17/11/2026 : `verif_trad` : le code en ligne de `streams` est le même en français et en anglais
+
+- `verif_trad.py` donnait 3 erreurs sur les paires modifiées aux lots 1.11.27 et 1.11.29 (le code en ligne `["nom", "adresse"]` traduit en anglais) : `["label", "url"]` dans `MANUEL.md` / `MANUAL.md` et `REFERENCE_JSON.md` (fr et en). Ligne de l'annexe du manuel : lots 1.11.24 à 1.11.29. Le contrôle n'avait pas été lancé avant la livraison de ces lots.
+- Aucun code modifié. `VERSION` : `1.11.32`.
+
 ### 17/11/2026 : mécanique de livraison déplacée de `REGLES.md` vers `REPRISE.md` (§ 8)
 
 - `REPRISE.md` : nouveau § 8 (cadre et particularités, livrer une modification, avant toute livraison, ce que donne chaque livraison, textes visibles et documents) ; l'ancien § 8 devient le § 9. Le contenu vient des règles 10, 11, 13 à 16, 18, 19, 21, 23 et du bac à sable de `REGLES.md` (fichier du Projet, réécrit par Klaatou : ces règles n'y sont plus qu'un renvoi, numéros conservés ; la règle 25 y reste, car elle cite des noms qu'on ne peut pas écrire dans le dépôt).

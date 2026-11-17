@@ -292,6 +292,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 17/11/2026 |  | après 1.11.0 | Lot 1.11.29 : volume radio / musique indépendant du volume des Sons (50 par défaut), icône en dessin noir, bulle réécrite ; manuel § 5.19, § 5.20, § 7.66 |
 | 17/11/2026 |  | après 1.11.0 | Lot 1.11.30 : initiales retirées de l'entrée du lot 1.11.27 (règle 25) |
 | 17/11/2026 |  | après 1.11.0 | Lot 1.11.31 : mécanique de livraison déplacée de `REGLES.md` vers `REPRISE.md` § 8 ; `cd` sur la première commande d'une série seulement |
+| 17/11/2026 |  | après 1.11.0 | Lot 1.11.32 : `verif_trad` : code en ligne de `streams` identique en français et en anglais (manuel, `REFERENCE_JSON`) |
 ## Commandes utiles
 
 - Voir l'historique : `git log --oneline --decorate`

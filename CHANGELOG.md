@@ -6,6 +6,11 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.11.0)
 
+### 17/11/2026: `verif_trad`: the inline code of `streams` is the same in French and English
+
+- `verif_trad.py` gave 3 errors on the pairs changed by batches 1.11.27 and 1.11.29 (the inline code `["name", "address"]` translated into English): `["label", "url"]` in `MANUEL.md` / `MANUAL.md` and `REFERENCE_JSON.md` (fr and en). Appendix line of the manual: batches 1.11.24 to 1.11.29. The check had not been run before these batches were delivered.
+- No code changed. `VERSION`: `1.11.32`.
+
 ### 17/11/2026: delivery mechanics moved from `REGLES.md` to `REPRISE.md` (section 8)
 
 - `REPRISE.md`: new section 8 (setting and particulars, delivering a change, before any delivery, what each delivery gives, visible texts and documents); the old section 8 becomes section 9. The content comes from rules 10, 11, 13 to 16, 18, 19, 21, 23 and the sandbox note of `REGLES.md` (a Project file, rewritten by Klaatou: those rules are now only a pointer, numbers kept; rule 25 stays there, because it names names that cannot be written in the repository).

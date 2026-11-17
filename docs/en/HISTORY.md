@@ -292,6 +292,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 17/11/2026 |  | after 1.11.0 | Batch 1.11.29: radio / music volume independent of the Sounds volume (50 by default), icon as a black drawing, tooltip rewritten; manual § 5.19, § 5.20, § 7.66 |
 | 17/11/2026 |  | after 1.11.0 | Batch 1.11.30: initials removed from the batch 1.11.27 entry (rule 25) |
 | 17/11/2026 |  | after 1.11.0 | Batch 1.11.31: delivery mechanics moved from `REGLES.md` to `REPRISE.md` section 8; `cd` on the first command of a series only |
+| 17/11/2026 |  | after 1.11.0 | Batch 1.11.32: `verif_trad`: inline code of `streams` identical in French and English (manual, `REFERENCE_JSON`) |
 ## Useful commands
 
 - See the history: `git log --oneline --decorate`
