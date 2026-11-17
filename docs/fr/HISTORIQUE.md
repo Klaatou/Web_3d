@@ -296,6 +296,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 17/11/2026 |  | après 1.11.0 | Lot 1.11.33 : vue d'ensemble à jour (fenêtre Son, `streams`, volume) ; `MODE_EMPLOI` = le manuel (correction du changelog 1.11.27) |
 | 17/11/2026 |  | après 1.11.0 | Lot 1.11.34 : fenêtre Son : le curseur de volume prend la couleur des autres curseurs |
 | 17/11/2026 |  | après 1.11.0 | Lot 1.11.35 : `CREATEURS.md` : flux radio et liste `--radios`, état du serveur de démonstration |
+| 17/11/2026 |  | 1.12.0 | Publication 1.12.0 : `VERSION` 1.12.0 ; `CHANGELOG.fr.md` et `CHANGELOG.md` ; réunit les lots 1.11.1 à 1.11.35 (zones audio, radio à plusieurs flux, fenêtre Son, volume radio / musique, pavé déplaçable, chat repliable) ; titre du manuel, vue d'ensemble |
 ## Commandes utiles
 
 - Voir l'historique : `git log --oneline --decorate`

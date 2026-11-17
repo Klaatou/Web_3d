@@ -4,7 +4,69 @@ Les dates sont au format jj/mm/aaaa.
 
 Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
-## Non publié (après la 1.11.0)
+## Non publié (après la 1.12.0)
+
+## 1.12.0 (17/11/2026)
+
+### 17/11/2026 : publication 1.12.0 : zones audio, radio à plusieurs flux, fenêtre Son et volume
+
+- **Publication** : la 1.12.0 (17/11/2026), décidée par Klaatou, réunit les lots 1.11.1 à 1.11.35 (décrits plus bas, sous cette même rubrique). Le numéro mineur monte : des fonctions ont été ajoutées depuis la 1.11.0. Ce lot ne change que `VERSION` et les documents (titre du manuel, vue d'ensemble, historiques, ce journal) ; `dist\` et `VERSIONS.json` sont inchangés.
+- **Numéros par fichier fabriqué** : `index.html`, `glb-viewer.html`, `glb2html.py` 1.11.34 ; `carte.html` 1.11.29 ; `glb2tiles.py` 1.11.12 ; `oar2glb.py` 1.11.11 ; inchangés : `presence_server.py` 1.10.37, `oars2site.py` 1.10.25, `web3d_gui.py` 1.10.31, `diag_carte.py` 1.10.2, `extraire_batiments.py` 1.6.3, `iar2oar.py` 1.6.4. Rien à refaire sur la VM : `presence_server.py` ne change pas.
+- **Essayé par Klaatou** (17/11/2026) : la fenêtre Son et les curseurs de volume, la mise à jour de la démo. **Non essayé ici** (bac à sable Linux) : Windows, Edge, Firefox, Safari, l'écran tactile réel, un vrai flux mp3 dans la page, la mesure du volume de la musique (même formule que la radio, seule la radio est mesurée).
+- **Dette de documentation connue** : l'annexe du manuel (§ 13) n'a pas de ligne pour les lots 1.11.13 à 1.11.23 ; le « terrain en double » (`oar2glb` 1.11.11, `glb2tiles` 1.11.12) n'a pas été relu dans le manuel § 3.
+- **Notes de la release GitHub** (à joindre : `galerie-photos.zip` et `region-simple.zip`, refaits par `python fabriquer_paquets.py` après le passage de `VERSION` à 1.12.0), anglais puis français :
+
+  > **Web_3d 1.12.0: audio zones, radio with several streams, Sound window and volume**
+  >
+  > **Do not unzip over an existing package**: copy `index.html`, `carte.html` (and `favicon.ico`) into your folder instead.
+  >
+  > ### What's new
+  >
+  > **1. Audio zones** (manual § 5.20)
+  > - New zone type `audio`: the sound files of a folder play in a loop within range while walking; `playlist.json`, ⏮ / ⏭ buttons and a track counter; remote sounds through `tracks`.
+  >
+  > **2. Radio zones** (manual § 5.19)
+  > - A radio zone can offer several streams (`streams`, `[["name", "address"], ...]`), chosen from a list in the State block; the old keys `urls`, `labels` and `target` are still read.
+  > - The Radio and Music lines show the distance and stay displayed (blinking distance) up to twice the range; tooltip with the zone and the stream name.
+  > - A box on the line cuts the radio or the music.
+  >
+  > **3. Sound window and volume** (manual § 7.66)
+  > - A small **Sound** window follows the radio and the music (▲ arrow on the State lines, click on the zone cone); it is part of the window layout.
+  > - Its own **volume** for the radio and the music (50 % by default), independent of the Settings "Sounds" volume (beeps).
+  > - The arrow pad can be moved (§ 7.33).
+  >
+  > **4. Other changes**
+  > - The chat block folds with the **B** key and unfolds by itself on a message, an arrival or a departure; the help shows keys and titles in bold.
+  > - New project icon; `oar2glb.py` never leaves two overlapping terrains in the GLB; `glb2tiles.py` no longer tiles the convoar "Terrain" when the "Terrain i,j" patches are there; the world map grid follows the page width.
+  > - Documents: manual, overview, procedures, `CREATORS.md` (radio streams and the `--radios` list).
+  >
+  > **Presence server hosts**: nothing to do, `presence_server.py` is unchanged (1.10.37).
+
+  > **Web_3d 1.12.0 : zones audio, radio à plusieurs flux, fenêtre Son et volume**
+  >
+  > **Ne pas dézipper par-dessus un paquet existant** : copier `index.html`, `carte.html` (et `favicon.ico`) dans votre dossier.
+  >
+  > ### Nouveautés
+  >
+  > **1. Zones audio** (manuel § 5.20)
+  > - Nouveau type de zone `audio` : les fichiers son d'un dossier jouent en boucle à portée en promenade ; `playlist.json`, boutons ⏮ / ⏭ et compteur de pistes ; sons distants par `tracks`.
+  >
+  > **2. Zones radio** (manuel § 5.19)
+  > - Une zone radio peut proposer plusieurs flux (`streams`, `[["nom", "adresse"], ...]`), au choix dans une liste du bloc État ; les anciennes clés `urls`, `labels` et `target` sont toujours lues.
+  > - Les lignes Radio et Musique donnent la distance et restent affichées (distance qui clignote) jusqu'à 2 fois la portée ; bulle avec le nom de la zone et du flux.
+  > - Une case sur la ligne coupe la radio ou la musique.
+  >
+  > **3. Fenêtre Son et volume** (manuel § 7.66)
+  > - Une petite fenêtre **Son** suit la radio et la musique (flèche ▲ sur les lignes de l'État, clic sur le cône de la zone) ; elle fait partie de la disposition des fenêtres.
+  > - Un **volume** propre à la radio et à la musique (50 % au départ), indépendant du volume des « Sons » de Réglages (les bips).
+  > - Le pavé de flèches est déplaçable (§ 7.33).
+  >
+  > **4. Autres changements**
+  > - Le bloc de chat se replie avec la touche **B** et se déplie seul à un message, une arrivée ou un départ ; l'aide met les touches et les titres en gras.
+  > - Nouvelle icône du projet ; `oar2glb.py` ne laisse jamais deux terrains superposés dans le GLB ; `glb2tiles.py` ne tuile plus le « Terrain » de convoar quand les patches « Terrain i,j » sont là ; la grille de la carte des mondes suit la largeur de la page.
+  > - Documents : manuel, vue d'ensemble, procédures, `CREATEURS.md` (flux radio et liste `--radios`).
+  >
+  > **Hébergeurs d'un serveur de présence** : rien à faire, `presence_server.py` ne change pas (1.10.37).
 
 ### 17/11/2026 : `CREATEURS.md` : les flux radio et la liste `--radios`
 

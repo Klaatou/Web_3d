@@ -296,6 +296,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 17/11/2026 |  | after 1.11.0 | Batch 1.11.33: overview up to date (Sound window, `streams`, volume); `MODE_EMPLOI` = the manual (fix of the 1.11.27 changelog) |
 | 17/11/2026 |  | after 1.11.0 | Batch 1.11.34: Sound window: the volume slider takes the colour of the other sliders |
 | 17/11/2026 |  | after 1.11.0 | Batch 1.11.35: `CREATORS.md`: radio streams and the `--radios` list, demo server state |
+| 17/11/2026 |  | 1.12.0 | Release 1.12.0: `VERSION` 1.12.0; `CHANGELOG.fr.md` and `CHANGELOG.md`; gathers batches 1.11.1 to 1.11.35 (audio zones, radio with several streams, Sound window, radio / music volume, movable pad, foldable chat); manual title, overview |
 ## Useful commands
 
 - See the history: `git log --oneline --decorate`
