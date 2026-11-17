@@ -278,6 +278,10 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 15/11/2026 |  | after 1.11.0 | Batch 1.11.7: reflections message: "shiny or metallic materials" (instead of "metallic (PBR)") |
 | 15/11/2026 |  | after 1.11.0 | Batch 1.11.8: tab icon without the yellow ring (`favicon.ico` only) |
 | 15/11/2026 |  | after 1.11.0 | Batch 1.11.9: documents: audio zones (formats depend on the browser, remote sound over `https`, `tracks` entered by hand) |
+| 16/11/2026 |  | after 1.11.0 | Batches 1.11.13 to 1.11.16: multi-stream radio (`urls`, `labels`), checkbox on the State window line, ⏮ ⏭ buttons and track counter |
+| 17/11/2026 |  | after 1.11.0 | Batches 1.11.17 to 1.11.19: distance to the source, line kept out of range with the blinking distance, tooltips on the Radio and Music lines |
+| 17/11/2026 |  | after 1.11.0 | Batch 1.11.20: review fixes (`--zones` lost `urls` and `labels`, error per stream, stream list, editor, Settings checkbox); `tests/radio_flux.py` |
+| 17/11/2026 |  | after 1.11.0 | Batch 1.11.21: documents of batches 1.11.13 to 1.11.20 |
 
 ## Useful commands
 

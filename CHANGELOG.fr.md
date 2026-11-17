@@ -6,6 +6,11 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.11.0)
 
+### 17/11/2026 : documents des lots 1.11.13 à 1.11.20 : radio à plusieurs flux, distance, hors de portée, bulles
+
+- **Documents** : `docs/fr/MANUEL.md` et `docs/en/MANUAL.md` : § 5.19 (plusieurs flux `urls` et `labels`, distance et hors de portée), § 5.20 (distance, boutons ⏮ ⏭ et compteur), § 7.66 (case et bulle des lignes), § 10.25 (chaque flux de `urls` dans `--radios`) ; `REFERENCE_JSON.md` (français et anglais : `target` d'une radio, nouvelles lignes `urls` et `labels`) ; `PROCEDURES_SIMPLES.md` et `SIMPLE_PROCEDURES.md` § 14 (renvoi) ; `HISTORIQUE.md` et `HISTORY.md` (lots 1.11.10 à 1.11.21).
+- Aucun code modifié. `VERSION` : `1.11.21`. **Change en `dist\`** après `python build.py` : seulement `docs\REFERENCE_OPTIONS.md` (sa date de génération).
+
 ### 17/11/2026 : radio à plusieurs flux et lignes Radio / Musique : corrections de la relecture des lots 1.11.12 à 1.11.15
 
 - **Constat** (relecture et mesures dans Chromium) : (1) `glb2html.py --zones` perdait `urls` et `labels` d'une zone radio (`clean_zones` de `gen_tpl.py` n'avait pas été adapté : la zone sortait avec `"target": ""`, donc muette, sans message) ; (2) après une erreur de flux, choisir un autre flux dans la liste ne le jouait pas (le drapeau d'erreur était par zone, la ligne affichait le nom du nouveau flux avec la cause de l'ancien) ; (3) la liste des flux était reconstruite à chaque appel de `selSync()` (24 mutations du DOM pour 6 pas d'un mètre : une liste ouverte pendant la marche risquait de se refermer) ; (4) dans l'éditeur du viewer, avec plusieurs flux, modifier l'adresse n'avait aucun effet (`urls` prime sur `target`) ; (5) décocher la case Radio ou Musique de la fenêtre État arrêtait le son mais la case correspondante de Réglages restait cochée (seule l'autre source était décochée).

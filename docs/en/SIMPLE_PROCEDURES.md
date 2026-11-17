@@ -242,6 +242,8 @@ You need: the address of a radio stream, your region already online (or ready to
 6. **Try it online**: open the page (F5 or Ctrl+F5), switch to walk mode (F key), walk into the range. A first click or key is needed (browser rule). The "♪ Radio: NAME" line of the State block (I key) says what is happening. The volume is the "Sounds" box of Settings.
 7. **The track title (optional).** On the presence server, a `presence_radios.json` file (JSON list of stream addresses) and the `--radios presence_radios.json` option (`MANUAL.md` § 10.25). A radio that does not write its titles in the stream: no title, the zone's name alone.
 
+Several streams in the same zone, distance display, tooltip: `MANUAL.md` § 5.19 (`urls`, `labels`) and § 7.66.
+
 A stream that does not play: `MANUAL.md` § 5.19, "The radio does not play?".
 
 ## 15. Put a playlist of my own sounds (mp3...) in a region

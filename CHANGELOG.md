@@ -6,6 +6,11 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.11.0)
 
+### 17/11/2026: documents of batches 1.11.13 to 1.11.20: multi-stream radio, distance, out of range, tooltips
+
+- **Documents**: `docs/fr/MANUEL.md` and `docs/en/MANUAL.md`: § 5.19 (several streams `urls` and `labels`, distance and out of range), § 5.20 (distance, ⏮ ⏭ buttons and counter), § 7.66 (checkbox and tooltip of the lines), § 10.25 (each `urls` stream in `--radios`); `REFERENCE_JSON.md` (French and English: a radio's `target`, new `urls` and `labels` rows); `PROCEDURES_SIMPLES.md` and `SIMPLE_PROCEDURES.md` § 14 (pointer); `HISTORIQUE.md` and `HISTORY.md` (batches 1.11.10 to 1.11.21).
+- No code changed. `VERSION`: `1.11.21`. **Changes in `dist\`** after `python build.py`: only `docs\REFERENCE_OPTIONS.md` (its generation date).
+
 ### 17/11/2026: multi-stream radio and Radio / Music lines: fixes from the review of lots 1.11.12 to 1.11.15
 
 - **Finding** (review and measurements in Chromium): (1) `glb2html.py --zones` dropped `urls` and `labels` of a radio zone (`clean_zones` in `gen_tpl.py` had not been adapted: the zone came out with `"target": ""`, so silent, with no message); (2) after a stream error, choosing another stream in the list did not play it (the error flag was per zone, the line showed the new stream's name with the old one's cause); (3) the stream list was rebuilt on every `selSync()` call (24 DOM mutations for 6 steps of one metre: an open list could close while walking); (4) in the viewer editor, with several streams, editing the address had no effect (`urls` takes precedence over `target`); (5) unchecking the Radio or Music checkbox of the State window stopped the sound but the matching Settings checkbox stayed checked (only the other source was unchecked).

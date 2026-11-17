@@ -278,6 +278,10 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 15/11/2026 |  | après 1.11.0 | Lot 1.11.7 : message des reflets : « matériaux brillants ou métalliques » (au lieu de « métalliques (PBR) ») |
 | 15/11/2026 |  | après 1.11.0 | Lot 1.11.8 : icône des onglets sans l'anneau jaune (`favicon.ico` seul) |
 | 15/11/2026 |  | après 1.11.0 | Lot 1.11.9 : documents : zones audio (formats selon le navigateur, son distant en `https`, `tracks` saisi à la main) |
+| 16/11/2026 |  | après 1.11.0 | Lots 1.11.13 à 1.11.16 : radio à plusieurs flux (`urls`, `labels`), case de la ligne dans la fenêtre État, boutons ⏮ ⏭ et compteur des pistes |
+| 17/11/2026 |  | après 1.11.0 | Lots 1.11.17 à 1.11.19 : distance à la source, ligne conservée hors de portée avec la distance qui clignote, bulles d'info des lignes Radio et Musique |
+| 17/11/2026 |  | après 1.11.0 | Lot 1.11.20 : corrections de la relecture (`--zones` perdait `urls` et `labels`, erreur par flux, liste des flux, éditeur, case de Réglages) ; `tests/radio_flux.py` |
+| 17/11/2026 |  | après 1.11.0 | Lot 1.11.21 : documents des lots 1.11.13 à 1.11.20 |
 
 ## Commandes utiles
 

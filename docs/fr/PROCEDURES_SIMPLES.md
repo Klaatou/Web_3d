@@ -242,6 +242,8 @@ Il te faut : l'adresse d'un flux radio, ta région déjà en ligne (ou prête à
 6. **Essayer en ligne** : ouvrir la page (F5 ou Ctrl+F5), passer en promenade (touche F), marcher dans la portée. Un premier clic ou une touche est nécessaire (règle du navigateur). La ligne « ♪ Radio : NOM » du bloc État (touche I) dit ce qui se passe. Le volume est celui de la case « Sons » de Réglages.
 7. **Le titre du morceau (facultatif).** Sur le serveur de présence, un fichier `presence_radios.json` (liste JSON des adresses de flux) et l'option `--radios presence_radios.json` (`MANUEL.md` § 10.25). Radio qui n'écrit pas ses titres dans le flux : pas de titre, le nom de la zone seul.
 
+Plusieurs flux dans la même zone, distance affichée, bulle d'info : `MANUEL.md` § 5.19 (`urls`, `labels`) et § 7.66.
+
 Un flux qui ne joue pas : `MANUEL.md` § 5.19, « La radio ne joue pas ? ».
 
 ## 15. Mettre une playlist de mes propres sons (mp3...) dans une région
