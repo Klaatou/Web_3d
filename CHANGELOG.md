@@ -6,6 +6,13 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.11.0)
 
+### 17/11/2026: radio streams in one array: `streams` = `[["label", "url"], ...]`
+
+- **New**: a radio zone (`cast`) lists its streams in one array of pairs, the name first (`""` without a name): `"streams": [["Label 1", "url1"], ["Label 2", "url2"]]`. Moving, adding or removing a stream is moving, adding or removing one pair. Only `streams` is written (editor of the viewer, `--update`, `--zones`).
+- **Compatibility**: the old keys `urls`, `labels` and `target` are still read and converted to `streams` (zones files and pages already made keep working). A missing label is kept empty; the page falls back to the zone name, then the zone id.
+- **Tooltip of the Radio line**: without a zone `label` and with several streams, it starts with the stream line ("Flux : ..."), no longer with the zone id.
+- Files: `src/core.js` (`cleanZone`, tooltip of the zone), `src/gen_tpl.py` (`clean_zones`, same result), `src/template.html` (radio module), `src/viewer_tpl.html` (editor), `docs/*/REFERENCE_JSON.md`, `tests/radio_flux.py`, `tests/fenetre_son.py`, `VERSION` `1.11.26`. Still to update: manual (section 5.19), procedures, history.
+
 ### 17/11/2026: Sound window title shows the type of the active zone
 
 - The title of the Sound window shows the type of the zone whose line is displayed (the nearest one, or the one whose box is ticked: only one is active at a time): "Sound · Radio" or "Sound · Audio playlist" ("Son · PL Audio" in French).

@@ -64,7 +64,8 @@ def serveur(dossier):
 def page(port):
     u = lambda n: f"http://127.0.0.1:{port}/{n}"
     Z = lambda i, t, x, z, **k: dict({"id": i, "type": t, "label": "Zone " + i, "x": x, "y": 15, "z": z}, **k)
-    zones = [Z("multi", "cast", 0, 0, radius=40, urls=[u("flux.wav"), u("flux.wav"), u("flux.wav")], labels=["Un", "Deux", "Trois"]),
+    zones = [Z("multi", "cast", 0, 0, radius=40, streams=[["Un", u("flux.wav")], ["Deux", u("flux.wav")], ["Trois", u("flux.wav")]]),
+             Z("sans", "cast", -100, 0, radius=8, label="", streams=[["Alpha", u("flux.wav")], ["Beta", u("flux.wav")]]),
              Z("mus", "audio", 100, 0, radius=8, folder="audio", tracks=["1-a.wav", "2-b.wav", "3-c.wav"])]
     (tmp / "audio").mkdir(); [wav(tmp / "audio" / n, 40) for n in ("1-a.wav", "2-b.wav", "3-c.wav")]
     (tmp / "z.json").write_text(json.dumps(zones), encoding="utf-8")
@@ -235,6 +236,13 @@ async def main():
         await ev("document.getElementById('layReset').click()"); await pg.wait_for_timeout(200)
         rapport(await ev("localStorage.getItem('glb2html_padPos')") is None and not await ev("document.getElementById('pad').classList.contains('padFree')"), "disposition d'origine : le pave revient a sa place")
 
+        print("--- 8. bulle de la ligne Radio : le label du flux, pas l'id de la zone")
+        await ev("window.__v.teleportTo([0, 15, 12], 0)"); await pg.wait_for_timeout(600)
+        b1 = await ev("document.getElementById('radioInfo').title")
+        rapport(b1.split("\n")[0] == "Zone radio : Zone multi" and b1.split("\n")[1].startswith("Flux : "), "zone avec label : Zone radio puis Flux", b1)
+        await ev("window.__v.teleportTo([-100, 15, 3], 0)"); await pg.wait_for_timeout(700)
+        b2 = await ev("document.getElementById('radioInfo').title")
+        rapport(b2.split("\n")[0] == "Flux : Alpha (1/2)" and "Zone radio" not in b2, "zone sans label : la bulle commence par le flux (Alpha), ni id ni zone", b2)
         rapport(not errs, "aucune erreur JavaScript", errs)
         await br.close()
     srv.shutdown()

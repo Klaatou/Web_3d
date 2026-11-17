@@ -1926,7 +1926,7 @@ function createViewer(container, cfg0, loader) {
   function zoneTipText(z) {
     const name = z.label || z.id;
     if (z.type === 'url') return [name, z.target];
-    if (z.type === 'cast') return [name, (z.urls && z.urls.length ? (z.urls.length > 1 ? z.urls[0] + ' … +' + (z.urls.length - 1) : z.urls[0]) : z.target)];
+    if (z.type === 'cast') return [name, (z.streams && z.streams.length ? (z.streams.length > 1 ? z.streams[0][1] + ' … +' + (z.streams.length - 1) : z.streams[0][1]) : '')];
     if (z.type === 'audio') return [name, z.folder || ''];
     if (z.type === 'image') return [name, z.link || ''];
     if (z.type === 'ha') return [name, tr('core.tip.cmd', name)];
@@ -1977,16 +1977,17 @@ function createViewer(container, cfg0, loader) {
     if (type !== 'portal' && type !== 'url') o.trigger = 'click';
     if (typeof z.cone === 'boolean' && type !== 'spawn' && !img) o.cone = z.cone;   // radio (1.10.35) : cone par defaut, cone: false pour le retirer   // repere (cone) facultatif : vrai = toujours, faux = jamais ; absent = selon le declenchement ; ecrit seulement s'il est vrai ou faux
     if (type === 'cast') {   // radio : tableau d'URLs (flux Icecast / SHOUTcast) ; on joue la premiere a portee, puis on enchaîne
-      const raw = Array.isArray(z.urls) ? z.urls : (z.target ? [z.target] : []);
-      const lb = Array.isArray(z.labels) ? z.labels : [];   // 1.11.13 : titres des flux, meme ordre que urls ; si le tableau n'existe pas, repli sur le label de la zone
-      const uu = [], ll = [];
-      for (let k = 0; k < raw.length && uu.length < 500; k++) {
-        const u = String(raw[k] || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 600);
-        if (!u) continue;   // une URL vide supprime aussi le label correspondant (on garde l'alignement des indexes)
-        uu.push(u);
-        ll.push(String(lb[k] || o.label).replace(/[\u0000-\u001f]/g, '').trim().slice(0, 60));
+      // 1.11.26 : streams = [[label, url], ...] (le label d'abord, "" sans label) ; l'ancienne forme (urls + labels dans le meme ordre, ou target seul) est lue et convertie ; seule streams est ecrite
+      let raw = [];
+      if (Array.isArray(z.streams)) raw = z.streams.map(s => Array.isArray(s) ? (s.length > 1 ? [s[0], s[1]] : ['', s[0]]) : ['', s]);
+      else { const us = Array.isArray(z.urls) ? z.urls : (z.target ? [z.target] : []), lb = Array.isArray(z.labels) ? z.labels : []; raw = us.map((u, k) => [lb[k], u]); }
+      const ss = [];
+      for (let k = 0; k < raw.length && ss.length < 500; k++) {
+        const u = String(raw[k][1] || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 600);
+        if (!u) continue;   // une URL vide supprime aussi son label
+        ss.push([String(raw[k][0] || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 60), u]);
       }
-      if (uu.length) { o.urls = uu; o.labels = ll; o.target = uu[0]; }   // target = premiere URL (retro-compat)
+      if (ss.length) o.streams = ss;
     }
     if (type === 'audio') {   // 1.11.4 : dossier des pistes (sous-dossier de la region) et liste facultative ecrite dans la zone ; ecrits seulement s'ils sont remplis
       const fd = String(z.folder || '').replace(/[\u0000-\u001f]/g, '').replace(/\\/g, '/').replace(/^\/+|\/+$/g, '').trim().slice(0, 200);

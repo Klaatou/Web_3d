@@ -491,7 +491,7 @@ function diagShow(text, status, select) {
 function diagText(viewer, extra) {
   const x = extra || {}, L = (k, v) => tr('core.diag.line', k, v), out = [tr('core.diag.title')];
   const nb = (v, d) => (Number.isFinite(v) ? i18nNum(v, d || 0) : '?');   // nombres à la manière de la langue (virgule en français)
-  out.push(L(tr('core.diag.version'), '1.11.25 (17/11/2026)' + (x.cfgVersion && x.cfgVersion !== '1.11.25 (17/11/2026)' ? ' ; ' + tr('core.diag.cfgver', x.cfgVersion) : '')));
+  out.push(L(tr('core.diag.version'), '1.11.26 (17/11/2026)' + (x.cfgVersion && x.cfgVersion !== '1.11.26 (17/11/2026)' ? ' ; ' + tr('core.diag.cfgver', x.cfgVersion) : '')));
   out.push(L(tr('core.diag.date'), new Date().toLocaleString(({ fr: 'fr-FR', en: 'en-GB' })[LANG]) + ' ; ' + tr('core.diag.uptime', nb(performance.now() / 1000))));
   out.push(L(tr('core.diag.page'), location.protocol + (location.host ? '//ADRESSE' : '//') + location.pathname + location.search));
   out.push(L(tr('core.diag.lang'), LANG + ' · ' + ((navigator.languages || []).join(',') || navigator.language || '?') + ' · ' + KB.layout().toUpperCase()));
@@ -2317,7 +2317,7 @@ function createViewer(container, cfg0, loader) {
   function zoneTipText(z) {
     const name = z.label || z.id;
     if (z.type === 'url') return [name, z.target];
-    if (z.type === 'cast') return [name, (z.urls && z.urls.length ? (z.urls.length > 1 ? z.urls[0] + ' … +' + (z.urls.length - 1) : z.urls[0]) : z.target)];
+    if (z.type === 'cast') return [name, (z.streams && z.streams.length ? (z.streams.length > 1 ? z.streams[0][1] + ' … +' + (z.streams.length - 1) : z.streams[0][1]) : '')];
     if (z.type === 'audio') return [name, z.folder || ''];
     if (z.type === 'image') return [name, z.link || ''];
     if (z.type === 'ha') return [name, tr('core.tip.cmd', name)];
@@ -2368,16 +2368,17 @@ function createViewer(container, cfg0, loader) {
     if (type !== 'portal' && type !== 'url') o.trigger = 'click';
     if (typeof z.cone === 'boolean' && type !== 'spawn' && !img) o.cone = z.cone;   // radio (1.10.35) : cone par defaut, cone: false pour le retirer   // repere (cone) facultatif : vrai = toujours, faux = jamais ; absent = selon le declenchement ; ecrit seulement s'il est vrai ou faux
     if (type === 'cast') {   // radio : tableau d'URLs (flux Icecast / SHOUTcast) ; on joue la premiere a portee, puis on enchaîne
-      const raw = Array.isArray(z.urls) ? z.urls : (z.target ? [z.target] : []);
-      const lb = Array.isArray(z.labels) ? z.labels : [];   // 1.11.13 : titres des flux, meme ordre que urls ; si le tableau n'existe pas, repli sur le label de la zone
-      const uu = [], ll = [];
-      for (let k = 0; k < raw.length && uu.length < 500; k++) {
-        const u = String(raw[k] || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 600);
-        if (!u) continue;   // une URL vide supprime aussi le label correspondant (on garde l'alignement des indexes)
-        uu.push(u);
-        ll.push(String(lb[k] || o.label).replace(/[\u0000-\u001f]/g, '').trim().slice(0, 60));
+      // 1.11.26 : streams = [[label, url], ...] (le label d'abord, "" sans label) ; l'ancienne forme (urls + labels dans le meme ordre, ou target seul) est lue et convertie ; seule streams est ecrite
+      let raw = [];
+      if (Array.isArray(z.streams)) raw = z.streams.map(s => Array.isArray(s) ? (s.length > 1 ? [s[0], s[1]] : ['', s[0]]) : ['', s]);
+      else { const us = Array.isArray(z.urls) ? z.urls : (z.target ? [z.target] : []), lb = Array.isArray(z.labels) ? z.labels : []; raw = us.map((u, k) => [lb[k], u]); }
+      const ss = [];
+      for (let k = 0; k < raw.length && ss.length < 500; k++) {
+        const u = String(raw[k][1] || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 600);
+        if (!u) continue;   // une URL vide supprime aussi son label
+        ss.push([String(raw[k][0] || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 60), u]);
       }
-      if (uu.length) { o.urls = uu; o.labels = ll; o.target = uu[0]; }   // target = premiere URL (retro-compat)
+      if (ss.length) o.streams = ss;
     }
     if (type === 'audio') {   // 1.11.4 : dossier des pistes (sous-dossier de la region) et liste facultative ecrite dans la zone ; ecrits seulement s'ils sont remplis
       const fd = String(z.folder || '').replace(/[\u0000-\u001f]/g, '').replace(/\\/g, '/').replace(/^\/+|\/+$/g, '').trim().slice(0, 200);
@@ -3587,11 +3588,12 @@ const RADIO = (() => {
   const ERR = { 1: 'MEDIA_ERR_ABORTED', 2: 'MEDIA_ERR_NETWORK', 3: 'MEDIA_ERR_DECODE', 4: 'MEDIA_ERR_SRC_NOT_SUPPORTED' };
   const cause = () => a && a.error ? (ERR[a.error.code] || 'MEDIA_ERR_' + a.error.code) + (a.error.message ? ' : ' + a.error.message : '') : '?';
   const label = () => cur ? (cur.label || cur.id) : '';
-  const streamTitle = () => cur ? ((cur.labels && cur.labels[selIdx]) || label()) : '';   // 1.11.13 : titre du flux choisi (tableau labels de la zone, meme ordre que urls) ; repli sur le label de la zone sans labels
-  const activeUrl = () => cur && cur.urls && cur.urls.length ? cur.urls[selIdx] : (cur ? cur.target : '');
+  const streamTitle = () => cur ? ((cur.streams && cur.streams[selIdx] && cur.streams[selIdx][0]) || label()) : '';   // 1.11.26 : titre du flux choisi (streams = [[label, url], ...] de la zone) ; repli sur le label de la zone, puis son id
+  const activeUrl = () => cur && cur.streams && cur.streams.length ? cur.streams[selIdx][1] : '';
   const tip = () => {   // 1.11.19 : info-bulle de la ligne Radio : zone, flux, titre, distance et etat, commandes
     if (!cur) return '';
-    const n = cur.urls ? cur.urls.length : 1, L = [tr('page.tip.radio.zone', label())];
+    const n = cur.streams ? cur.streams.length : 1, L = [];
+    if (cur.label || n <= 1) L.push(tr('page.tip.radio.zone', cur.label || streamTitle()));   // 1.11.26 : sans label de zone et avec plusieurs flux, la ligne Flux suffit (le label du flux n'est pas dit deux fois)
     if (n > 1) L.push(tr('page.tip.radio.stream', streamTitle(), selIdx + 1, n));
     const tt = titles.get(activeUrl()); if (tt && shown === 'page.radio.playing') L.push(tr('page.tip.radio.title', tt));
     L.push(tr(out ? 'page.tip.dist.out' : 'page.tip.dist.in', Math.round(dist), Math.round(cur.radius * 10) / 10));
@@ -3613,10 +3615,10 @@ const RADIO = (() => {
   const selSync = () => {
     for (const s of selEls) {
       const el = s.el;
-      if (!cur || !cur.urls || cur.urls.length <= 1) { el.hidden = true; s.f = null; continue; }
+      if (!cur || !cur.streams || cur.streams.length <= 1) { el.hidden = true; s.f = null; continue; }
       el.hidden = false;
-      if (selIdx >= cur.urls.length) selIdx = 0;
-      if (s.f !== cur) { s.f = cur; el.length = 0; cur.urls.forEach((u, i) => { const o = document.createElement('option'); o.value = i; o.textContent = (cur.labels && cur.labels[i]) || u; el.add(o); }); }   // 1.11.13 : le titre du flux (labels) a la place de l'URL quand il existe
+      if (selIdx >= cur.streams.length) selIdx = 0;
+      if (s.f !== cur) { s.f = cur; el.length = 0; cur.streams.forEach((st, i) => { const o = document.createElement('option'); o.value = i; o.textContent = st[0] || st[1]; el.add(o); }); }   // 1.11.13 : le titre du flux (labels) a la place de l'URL quand il existe
       el.value = String(selIdx);
     }
   };
@@ -4050,7 +4052,7 @@ if (C.walk) {
   rsSel.onchange = () => { const si = parseInt(rsSel.value, 10) || 0; RADIO.setIdx(si); };
   sbody.insertBefore(rsSel, lrd);
   RADIO.setSelEl(rsSel);
-  mkLine('verInfo').textContent = tr('page.state.version', '1.11.25 (17/11/2026)', C.version || '?');   // 1.6.17 : version de la page (index.html, ou glb2html.py pour une page autonome) et de la configuration
+  mkLine('verInfo').textContent = tr('page.state.version', '1.11.26 (17/11/2026)', C.version || '?');   // 1.6.17 : version de la page (index.html, ou glb2html.py pour une page autonome) et de la configuration
   // v39 : bouton « Copier le diagnostic » sous le contenu de la fenêtre (reste visible quand elle est réduite) : lignes affichées + diagText (core.js) ;
   // si le navigateur refuse la copie, le texte s'affiche sélectionné dessous (Ctrl+C)
   {

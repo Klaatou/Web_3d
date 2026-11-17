@@ -16,8 +16,8 @@ Draco et Meshopt gérés automatiquement (décodeurs intégrés seulement si le 
 """
 from __future__ import annotations
 
-VERSION = "1.11.25 (17/11/2026)"
-SHELL_VERSION = "1.11.25 (17/11/2026)"   # numéro de version de la coquille (index.html) : écrit par build.py, ne change que si la coquille change
+VERSION = "1.11.26 (17/11/2026)"
+SHELL_VERSION = "1.11.26 (17/11/2026)"   # numéro de version de la coquille (index.html) : écrit par build.py, ne change que si la coquille change
 MAP_VERSION = "1.11.25 (17/11/2026)"       # numéro de version de la page de carte (carte.html) : idem
 
 import argparse
@@ -310,20 +310,23 @@ def clean_zones(zones, profile):
             lk = re.sub(r"[\x00-\x1f]", "", str(z.get("link") or "")).strip()[:600]
             if lk:
                 d["link"] = lk
-        if t == "cast":   # 1.11.20 : flux de la radio : tableau urls (labels dans le meme ordre) ou target seul ; comme core.js (cleanZone)
-            raw = z["urls"] if isinstance(z.get("urls"), list) else ([z["target"]] if z.get("target") else [])
-            lb = z["labels"] if isinstance(z.get("labels"), list) else []
-            uu, ll = [], []
-            for k, v in enumerate(raw):
-                if len(uu) >= 500:
+        if t == "cast":   # 1.11.26 : streams = [[label, url], ...] (le label d'abord, "" sans label) ; ancienne forme (urls + labels, ou target seul) lue et convertie ; seule streams est ecrite ; comme core.js (cleanZone)
+            if isinstance(z.get("streams"), list):
+                raw = [([s[0], s[1]] if len(s) > 1 else ["", s[0] if s else ""]) if isinstance(s, list) else ["", s] for s in z["streams"]]
+            else:
+                us = z["urls"] if isinstance(z.get("urls"), list) else ([z["target"]] if z.get("target") else [])
+                lb = z["labels"] if isinstance(z.get("labels"), list) else []
+                raw = [[lb[k] if k < len(lb) else "", u] for k, u in enumerate(us)]
+            ss = []
+            for lab, v in raw:
+                if len(ss) >= 500:
                     break
                 u = re.sub(r"[\x00-\x1f]", "", str(v or "")).strip()[:600]
-                if not u:   # une adresse vide retire aussi son label (les index restent alignes)
+                if not u:   # une adresse vide retire aussi son label
                     continue
-                uu.append(u)
-                ll.append(re.sub(r"[\x00-\x1f]", "", str((lb[k] if k < len(lb) else "") or d["label"])).strip()[:60])
-            if uu:
-                d["urls"], d["labels"], d["target"] = uu, ll, uu[0]
+                ss.append([re.sub(r"[\x00-\x1f]", "", str(lab or "")).strip()[:60], u])
+            if ss:
+                d["streams"] = ss
         if t == "audio":   # 1.11.4 : dossier des pistes et liste facultative ; ecrits seulement s'ils sont remplis, comme core.js
             fd = re.sub(r"[\x00-\x1f]", "", str(z.get("folder") or "")).replace("\\", "/").strip("/").strip()[:200]
             if fd and ".." not in fd.split("/"):
@@ -3231,7 +3234,7 @@ function createViewer(container, cfg0, loader) {
   function zoneTipText(z) {
     const name = z.label || z.id;
     if (z.type === 'url') return [name, z.target];
-    if (z.type === 'cast') return [name, (z.urls && z.urls.length ? (z.urls.length > 1 ? z.urls[0] + ' … +' + (z.urls.length - 1) : z.urls[0]) : z.target)];
+    if (z.type === 'cast') return [name, (z.streams && z.streams.length ? (z.streams.length > 1 ? z.streams[0][1] + ' … +' + (z.streams.length - 1) : z.streams[0][1]) : '')];
     if (z.type === 'audio') return [name, z.folder || ''];
     if (z.type === 'image') return [name, z.link || ''];
     if (z.type === 'ha') return [name, tr('core.tip.cmd', name)];
@@ -3282,16 +3285,17 @@ function createViewer(container, cfg0, loader) {
     if (type !== 'portal' && type !== 'url') o.trigger = 'click';
     if (typeof z.cone === 'boolean' && type !== 'spawn' && !img) o.cone = z.cone;   // radio (1.10.35) : cone par defaut, cone: false pour le retirer   // repere (cone) facultatif : vrai = toujours, faux = jamais ; absent = selon le declenchement ; ecrit seulement s'il est vrai ou faux
     if (type === 'cast') {   // radio : tableau d'URLs (flux Icecast / SHOUTcast) ; on joue la premiere a portee, puis on enchaîne
-      const raw = Array.isArray(z.urls) ? z.urls : (z.target ? [z.target] : []);
-      const lb = Array.isArray(z.labels) ? z.labels : [];   // 1.11.13 : titres des flux, meme ordre que urls ; si le tableau n'existe pas, repli sur le label de la zone
-      const uu = [], ll = [];
-      for (let k = 0; k < raw.length && uu.length < 500; k++) {
-        const u = String(raw[k] || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 600);
-        if (!u) continue;   // une URL vide supprime aussi le label correspondant (on garde l'alignement des indexes)
-        uu.push(u);
-        ll.push(String(lb[k] || o.label).replace(/[\u0000-\u001f]/g, '').trim().slice(0, 60));
+      // 1.11.26 : streams = [[label, url], ...] (le label d'abord, "" sans label) ; l'ancienne forme (urls + labels dans le meme ordre, ou target seul) est lue et convertie ; seule streams est ecrite
+      let raw = [];
+      if (Array.isArray(z.streams)) raw = z.streams.map(s => Array.isArray(s) ? (s.length > 1 ? [s[0], s[1]] : ['', s[0]]) : ['', s]);
+      else { const us = Array.isArray(z.urls) ? z.urls : (z.target ? [z.target] : []), lb = Array.isArray(z.labels) ? z.labels : []; raw = us.map((u, k) => [lb[k], u]); }
+      const ss = [];
+      for (let k = 0; k < raw.length && ss.length < 500; k++) {
+        const u = String(raw[k][1] || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 600);
+        if (!u) continue;   // une URL vide supprime aussi son label
+        ss.push([String(raw[k][0] || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 60), u]);
       }
-      if (uu.length) { o.urls = uu; o.labels = ll; o.target = uu[0]; }   // target = premiere URL (retro-compat)
+      if (ss.length) o.streams = ss;
     }
     if (type === 'audio') {   // 1.11.4 : dossier des pistes (sous-dossier de la region) et liste facultative ecrite dans la zone ; ecrits seulement s'ils sont remplis
       const fd = String(z.folder || '').replace(/[\u0000-\u001f]/g, '').replace(/\\/g, '/').replace(/^\/+|\/+$/g, '').trim().slice(0, 200);
@@ -4493,11 +4497,12 @@ const RADIO = (() => {
   const ERR = { 1: 'MEDIA_ERR_ABORTED', 2: 'MEDIA_ERR_NETWORK', 3: 'MEDIA_ERR_DECODE', 4: 'MEDIA_ERR_SRC_NOT_SUPPORTED' };
   const cause = () => a && a.error ? (ERR[a.error.code] || 'MEDIA_ERR_' + a.error.code) + (a.error.message ? ' : ' + a.error.message : '') : '?';
   const label = () => cur ? (cur.label || cur.id) : '';
-  const streamTitle = () => cur ? ((cur.labels && cur.labels[selIdx]) || label()) : '';   // 1.11.13 : titre du flux choisi (tableau labels de la zone, meme ordre que urls) ; repli sur le label de la zone sans labels
-  const activeUrl = () => cur && cur.urls && cur.urls.length ? cur.urls[selIdx] : (cur ? cur.target : '');
+  const streamTitle = () => cur ? ((cur.streams && cur.streams[selIdx] && cur.streams[selIdx][0]) || label()) : '';   // 1.11.26 : titre du flux choisi (streams = [[label, url], ...] de la zone) ; repli sur le label de la zone, puis son id
+  const activeUrl = () => cur && cur.streams && cur.streams.length ? cur.streams[selIdx][1] : '';
   const tip = () => {   // 1.11.19 : info-bulle de la ligne Radio : zone, flux, titre, distance et etat, commandes
     if (!cur) return '';
-    const n = cur.urls ? cur.urls.length : 1, L = [tr('page.tip.radio.zone', label())];
+    const n = cur.streams ? cur.streams.length : 1, L = [];
+    if (cur.label || n <= 1) L.push(tr('page.tip.radio.zone', cur.label || streamTitle()));   // 1.11.26 : sans label de zone et avec plusieurs flux, la ligne Flux suffit (le label du flux n'est pas dit deux fois)
     if (n > 1) L.push(tr('page.tip.radio.stream', streamTitle(), selIdx + 1, n));
     const tt = titles.get(activeUrl()); if (tt && shown === 'page.radio.playing') L.push(tr('page.tip.radio.title', tt));
     L.push(tr(out ? 'page.tip.dist.out' : 'page.tip.dist.in', Math.round(dist), Math.round(cur.radius * 10) / 10));
@@ -4519,10 +4524,10 @@ const RADIO = (() => {
   const selSync = () => {
     for (const s of selEls) {
       const el = s.el;
-      if (!cur || !cur.urls || cur.urls.length <= 1) { el.hidden = true; s.f = null; continue; }
+      if (!cur || !cur.streams || cur.streams.length <= 1) { el.hidden = true; s.f = null; continue; }
       el.hidden = false;
-      if (selIdx >= cur.urls.length) selIdx = 0;
-      if (s.f !== cur) { s.f = cur; el.length = 0; cur.urls.forEach((u, i) => { const o = document.createElement('option'); o.value = i; o.textContent = (cur.labels && cur.labels[i]) || u; el.add(o); }); }   // 1.11.13 : le titre du flux (labels) a la place de l'URL quand il existe
+      if (selIdx >= cur.streams.length) selIdx = 0;
+      if (s.f !== cur) { s.f = cur; el.length = 0; cur.streams.forEach((st, i) => { const o = document.createElement('option'); o.value = i; o.textContent = st[0] || st[1]; el.add(o); }); }   // 1.11.13 : le titre du flux (labels) a la place de l'URL quand il existe
       el.value = String(selIdx);
     }
   };

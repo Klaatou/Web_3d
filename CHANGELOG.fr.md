@@ -6,6 +6,13 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.11.0)
 
+### 17/11/2026 : flux de la radio dans un seul tableau : `streams` = `[["nom", "adresse"], ...]`
+
+- **Nouveau** : une zone radio (`cast`) liste ses flux dans un seul tableau de paires, le nom d'abord (`""` sans nom) : `"streams": [["Nom 1", "adresse1"], ["Nom 2", "adresse2"]]`. Déplacer, ajouter ou retirer un flux, c'est déplacer, ajouter ou retirer une paire. Seule `streams` est écrite (éditeur du viewer, `--update`, `--zones`).
+- **Compatibilité** : les anciennes clés `urls`, `labels` et `target` sont toujours lues et converties en `streams` (les fichiers de zones et les pages déjà faits continuent de marcher). Un nom absent reste vide ; la page prend alors le nom de la zone, puis son id.
+- **Bulle de la ligne Radio** : sans `label` de zone et avec plusieurs flux, elle commence par la ligne du flux (« Flux : ... »), plus par l'id de la zone.
+- Fichiers : `src/core.js` (`cleanZone`, bulle de la zone), `src/gen_tpl.py` (`clean_zones`, même résultat), `src/template.html` (module radio), `src/viewer_tpl.html` (éditeur), `docs/*/REFERENCE_JSON.md`, `tests/radio_flux.py`, `tests/fenetre_son.py`, `VERSION` `1.11.26`. Reste à mettre à jour : manuel (§ 5.19), procédures, historique.
+
 ### 17/11/2026 : le titre de la fenêtre Son indique le type de la zone active
 
 - Le titre de la fenêtre Son indique le type de la zone dont la ligne est affichée (la plus proche, ou celle dont la case est cochée : une seule est active à la fois) : « Son · Radio » ou « Son · PL Audio » (« Sound · Audio playlist » en anglais).

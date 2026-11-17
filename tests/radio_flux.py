@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Test 1.11.20 : radio a plusieurs flux (urls, labels) et lignes Musique / Radio de la fenetre Etat.
-- glb2html.py --zones garde urls et labels (clean_zones de gen_tpl.py, comme cleanZone de core.js : meme resultat sur des valeurs sales) ;
+- glb2html.py --zones convertit urls + labels (ancienne forme) et garde streams (nouvelle forme : paires [label, url]) (clean_zones de gen_tpl.py, comme cleanZone de core.js : meme resultat sur des valeurs sales) ;
 - liste des flux : visible avec les labels, un flux casse n'empeche pas de choisir un autre flux, le choix du flux casse le reessaie,
   la liste n'est pas refaite a chaque pas (une liste ouverte ne se refermerait pas), retour a 0 en quittant la zone ;
 - case « couper le son » de la fenetre Etat : meme action que Reglages (une seule source) ;
@@ -68,6 +68,8 @@ def page(port):
     zones = [Z("multi", "cast", 0, 0, radius=40, urls=[u("absent.mp3"), u("flux.wav"), u("flux.wav")], labels=["Casse", "Bon", "Autre"]),
              Z("seul", "cast", -50, 0, radius=5, target=u("flux.wav")),
              Z("sale", "cast", 0, 50, radius=5, urls=["  " + u("a.wav") + "\u0001 ", "", 5, u("b.wav")], labels=["", "Vide", None, "B\u0002x"], target="ignore"),
+             Z("paires", "cast", 0, -50, radius=5, streams=[["  Un\u0001 ", u("a.wav")], ["", u("b.wav")], u("c.wav"), ["Seul"], [], ["Vide", ""], ["X", 5]]),
+             Z("multi2", "cast", 50, -50, radius=5, streams=[["Casse", u("absent.mp3")], ["Bon", u("flux.wav")], ["Autre", u("flux.wav")]]),
              Z("mus", "audio", 50, 0, radius=8, folder="audio", tracks=["1-a.wav", "2-b.wav", "3-c.wav"])]
     (tmp / "audio").mkdir(); [wav(tmp / "audio" / n, 40) for n in ("1-a.wav", "2-b.wav", "3-c.wav")]
     (tmp / "z.json").write_text(json.dumps(zones), encoding="utf-8")
@@ -101,14 +103,18 @@ async def main():
         zs = {z["id"]: z for z in await pg.evaluate("window.__v.getZones()")}
         port = srv.server_address[1]
         m = zs["multi"]
-        rapport(m.get("urls") == [f"http://127.0.0.1:{port}/{n}" for n in ("absent.mp3", "flux.wav", "flux.wav")] and m.get("labels") == ["Casse", "Bon", "Autre"] and m["target"] == m["urls"][0],
-                "glb2html --zones : urls, labels et target (= premiere adresse) conserves", m)
-        rapport(zs["seul"].get("urls") == [zs["seul"]["target"]] and zs["seul"]["labels"] == ["Zone seul"], "zone radio avec target seul : une seule adresse, label de la zone", zs["seul"])
+        flux = lambda n: f"http://127.0.0.1:{port}/{n}"
+        rapport(m.get("streams") == [["Casse", flux("absent.mp3")], ["Bon", flux("flux.wav")], ["Autre", flux("flux.wav")]] and not any(k in m for k in ("urls", "labels")) and m["target"] == "",
+                "glb2html --zones : l'ancienne forme (urls + labels) est convertie en streams ; ni urls ni labels n'est ecrit", m)
+        rapport(zs["multi2"].get("streams") == m.get("streams"), "la nouvelle forme (paires) et l'ancienne donnent le meme resultat", zs["multi2"])
+        rapport(zs["seul"].get("streams") == [["", flux("flux.wav")]], "zone radio avec target seul : un seul flux, sans label", zs["seul"])
         # meme resultat en Python (page generee) et en JavaScript (setZones) sur des valeurs sales
         js = {z["id"]: z for z in await pg.evaluate("(z) => window.__v.setZones(z, { editor: true })", brut)}
         pj, jj = zs["sale"], js["sale"]
-        rapport(all(pj.get(k) == jj.get(k) for k in ("urls", "labels", "target")) and len(pj["urls"]) == 3 and pj["urls"][1] == "5" and pj["labels"] == ["Zone sale", "Zone sale", "Bx"], "valeurs sales : Python (gen_tpl) et JavaScript (core.js) donnent le meme resultat",
-                (pj.get("urls"), pj.get("labels"), jj.get("urls"), jj.get("labels")))
+        rapport(pj.get("streams") == jj.get("streams") and pj["streams"] == [["", flux("a.wav")], ["", "5"], ["Bx", flux("b.wav")]], "valeurs sales (ancienne forme) : Python (gen_tpl) et JavaScript (core.js) donnent le meme resultat",
+                (pj.get("streams"), jj.get("streams")))
+        pp, jp = zs["paires"], js["paires"]
+        rapport(pp.get("streams") == jp.get("streams") and pp["streams"] == [["Un", flux("a.wav")], ["", flux("b.wav")], ["", flux("c.wav")], ["", "Seul"], ["X", "5"]], "valeurs sales (paires) : Python et JavaScript donnent le meme resultat, label d'abord", (pp.get("streams"), jp.get("streams")))
         await pg.goto(out.as_uri())
         await pg.wait_for_function("document.getElementById('msg') === null", timeout=60000)
         await pg.evaluate("document.getElementById('lightAskNo') && document.getElementById('lightAskNo').click()")
@@ -168,9 +174,9 @@ async def main():
         await pg.evaluate("window.__v.teleportTo([0, 15, 100], 0)"); await pg.wait_for_timeout(400)
         await pg.evaluate("window.__v.teleportTo([0, 15, 10], 0)"); await pg.wait_for_timeout(600)
         rapport(await pg.evaluate("document.getElementById('radioSel').value") == "0", "quitter la zone puis y revenir : retour au premier flux", await pg.evaluate("document.getElementById('radioSel').value"))
-        # editeur du viewer : avec plusieurs flux, la saisie de la premiere adresse est celle de urls (meme forme de correctif que viewer_tpl.html)
-        r = await pg.evaluate("(() => { const l = window.__v.getZones(); const z = l.find(x => x.id === 'multi'); Object.assign(z, { target: 'http://nouveau.invalid/x', urls: z.urls && z.urls.length > 1 ? ['http://nouveau.invalid/x', ...z.urls.slice(1)] : undefined }); const o = window.__v.setZones(l, { editor: true }).find(x => x.id === 'multi'); return [o.target, o.urls.length, o.urls[0], o.labels.length]; })()")
-        rapport(r == ["http://nouveau.invalid/x", 3, "http://nouveau.invalid/x", 3] and "z.urls.slice(1)" in (DIST / "glb-viewer.html").read_text(encoding="utf-8"), "editeur : modifier la premiere adresse change urls[0] (3 flux et 3 labels conserves) ; le viewer contient le correctif", r)
+        # editeur du viewer : avec plusieurs flux, la saisie de la premiere adresse change celle du premier flux (meme forme de correctif que viewer_tpl.html)
+        r = await pg.evaluate("(() => { const l = window.__v.getZones(); const z = l.find(x => x.id === 'multi'); const v = 'http://nouveau.invalid/x'; Object.assign(z, { streams: [[z.streams && z.streams[0] ? z.streams[0][0] : '', v], ...(z.streams || []).slice(1)] }); const o = window.__v.setZones(l, { editor: true }).find(x => x.id === 'multi'); return [o.streams.length, o.streams[0][1], o.streams[0][0]]; })()")
+        rapport(r == [3, "http://nouveau.invalid/x", "Casse"] and "...(z.streams || []).slice(1)" in (DIST / "glb-viewer.html").read_text(encoding="utf-8"), "editeur : modifier la premiere adresse change le premier flux (3 flux, label garde) ; le viewer contient le correctif", r)
         rapport(not errs, "aucune erreur JavaScript", errs)
         await br.close()
     srv.shutdown()

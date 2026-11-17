@@ -226,20 +226,23 @@ def clean_zones(zones, profile):
             lk = re.sub(r"[\x00-\x1f]", "", str(z.get("link") or "")).strip()[:600]
             if lk:
                 d["link"] = lk
-        if t == "cast":   # 1.11.20 : flux de la radio : tableau urls (labels dans le meme ordre) ou target seul ; comme core.js (cleanZone)
-            raw = z["urls"] if isinstance(z.get("urls"), list) else ([z["target"]] if z.get("target") else [])
-            lb = z["labels"] if isinstance(z.get("labels"), list) else []
-            uu, ll = [], []
-            for k, v in enumerate(raw):
-                if len(uu) >= 500:
+        if t == "cast":   # 1.11.26 : streams = [[label, url], ...] (le label d'abord, "" sans label) ; ancienne forme (urls + labels, ou target seul) lue et convertie ; seule streams est ecrite ; comme core.js (cleanZone)
+            if isinstance(z.get("streams"), list):
+                raw = [([s[0], s[1]] if len(s) > 1 else ["", s[0] if s else ""]) if isinstance(s, list) else ["", s] for s in z["streams"]]
+            else:
+                us = z["urls"] if isinstance(z.get("urls"), list) else ([z["target"]] if z.get("target") else [])
+                lb = z["labels"] if isinstance(z.get("labels"), list) else []
+                raw = [[lb[k] if k < len(lb) else "", u] for k, u in enumerate(us)]
+            ss = []
+            for lab, v in raw:
+                if len(ss) >= 500:
                     break
                 u = re.sub(r"[\x00-\x1f]", "", str(v or "")).strip()[:600]
-                if not u:   # une adresse vide retire aussi son label (les index restent alignes)
+                if not u:   # une adresse vide retire aussi son label
                     continue
-                uu.append(u)
-                ll.append(re.sub(r"[\x00-\x1f]", "", str((lb[k] if k < len(lb) else "") or d["label"])).strip()[:60])
-            if uu:
-                d["urls"], d["labels"], d["target"] = uu, ll, uu[0]
+                ss.append([re.sub(r"[\x00-\x1f]", "", str(lab or "")).strip()[:60], u])
+            if ss:
+                d["streams"] = ss
         if t == "audio":   # 1.11.4 : dossier des pistes et liste facultative ; ecrits seulement s'ils sont remplis, comme core.js
             fd = re.sub(r"[\x00-\x1f]", "", str(z.get("folder") or "")).replace("\\", "/").strip("/").strip()[:200]
             if fd and ".." not in fd.split("/"):

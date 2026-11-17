@@ -689,11 +689,12 @@ const RADIO = (() => {
   const ERR = { 1: 'MEDIA_ERR_ABORTED', 2: 'MEDIA_ERR_NETWORK', 3: 'MEDIA_ERR_DECODE', 4: 'MEDIA_ERR_SRC_NOT_SUPPORTED' };
   const cause = () => a && a.error ? (ERR[a.error.code] || 'MEDIA_ERR_' + a.error.code) + (a.error.message ? ' : ' + a.error.message : '') : '?';
   const label = () => cur ? (cur.label || cur.id) : '';
-  const streamTitle = () => cur ? ((cur.labels && cur.labels[selIdx]) || label()) : '';   // 1.11.13 : titre du flux choisi (tableau labels de la zone, meme ordre que urls) ; repli sur le label de la zone sans labels
-  const activeUrl = () => cur && cur.urls && cur.urls.length ? cur.urls[selIdx] : (cur ? cur.target : '');
+  const streamTitle = () => cur ? ((cur.streams && cur.streams[selIdx] && cur.streams[selIdx][0]) || label()) : '';   // 1.11.26 : titre du flux choisi (streams = [[label, url], ...] de la zone) ; repli sur le label de la zone, puis son id
+  const activeUrl = () => cur && cur.streams && cur.streams.length ? cur.streams[selIdx][1] : '';
   const tip = () => {   // 1.11.19 : info-bulle de la ligne Radio : zone, flux, titre, distance et etat, commandes
     if (!cur) return '';
-    const n = cur.urls ? cur.urls.length : 1, L = [tr('page.tip.radio.zone', label())];
+    const n = cur.streams ? cur.streams.length : 1, L = [];
+    if (cur.label || n <= 1) L.push(tr('page.tip.radio.zone', cur.label || streamTitle()));   // 1.11.26 : sans label de zone et avec plusieurs flux, la ligne Flux suffit (le label du flux n'est pas dit deux fois)
     if (n > 1) L.push(tr('page.tip.radio.stream', streamTitle(), selIdx + 1, n));
     const tt = titles.get(activeUrl()); if (tt && shown === 'page.radio.playing') L.push(tr('page.tip.radio.title', tt));
     L.push(tr(out ? 'page.tip.dist.out' : 'page.tip.dist.in', Math.round(dist), Math.round(cur.radius * 10) / 10));
@@ -715,10 +716,10 @@ const RADIO = (() => {
   const selSync = () => {
     for (const s of selEls) {
       const el = s.el;
-      if (!cur || !cur.urls || cur.urls.length <= 1) { el.hidden = true; s.f = null; continue; }
+      if (!cur || !cur.streams || cur.streams.length <= 1) { el.hidden = true; s.f = null; continue; }
       el.hidden = false;
-      if (selIdx >= cur.urls.length) selIdx = 0;
-      if (s.f !== cur) { s.f = cur; el.length = 0; cur.urls.forEach((u, i) => { const o = document.createElement('option'); o.value = i; o.textContent = (cur.labels && cur.labels[i]) || u; el.add(o); }); }   // 1.11.13 : le titre du flux (labels) a la place de l'URL quand il existe
+      if (selIdx >= cur.streams.length) selIdx = 0;
+      if (s.f !== cur) { s.f = cur; el.length = 0; cur.streams.forEach((st, i) => { const o = document.createElement('option'); o.value = i; o.textContent = st[0] || st[1]; el.add(o); }); }   // 1.11.13 : le titre du flux (labels) a la place de l'URL quand il existe
       el.value = String(selIdx);
     }
   };
