@@ -6,6 +6,20 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.12.0)
 
+### 17/11/2026: manual appendix completed, double terrain in § 3.3, CHANGELOG and histories fixed
+
+- **Finding**: batch 1.12.1 had replaced the batch 1.11.30 entry (both CHANGELOG files) and its history row (`HISTORIQUE.md`, `HISTORY.md`) with its own texts; its CHANGELOG entry was filed under 1.12.0 instead of "Unreleased", and its history row sat at the place of 1.11.30.
+- **Fixed**: batch 1.11.30 entry and rows restored (text of commit `45a459f`); batch 1.12.1 entry and rows under "Unreleased" and after the 1.12.0 release.
+- **Manual appendix (§ 13)**: three rows added, in French and in English (batches 1.11.6 to 1.11.12, 1.11.13 to 1.11.23, 1.11.30 to 1.11.35), with references to the sections that describe each addition.
+- **Manual § 3.3**: new bullet "Never two overlapping terrains" (`oar2glb` 1.11.11, `glb2tiles` 1.11.12), in French and in English.
+- **`REPRISE.md`**: state at batch 1.12.2; `presence_server.py` on the VM read by Klaatou (1.10.37, fingerprint `0168d70b`); demo up to date; rule 27 present in `REGLES.md`; documentation debt updated.
+- No code changed. `VERSION`: `1.12.2`.
+
+### 17/11/2026: `REPRISE.md` up to date (release 1.12.0)
+
+- `REPRISE.md`: state at batch 1.12.1, last release 1.12.0, per-file numbers, batches 1.11.24 to 1.11.35, documentation debt.
+- No code changed. `VERSION`: `1.12.1`.
+
 ## 1.12.0 (17/11/2026)
 
 ### 17/11/2026: release 1.12.0: audio zones, radio with several streams, Sound window and volume
@@ -98,10 +112,10 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 - **New convention** (Klaatou's decision): in a series of PowerShell commands, only the first starts with the `cd`; section 0 and section 8.4 of `REPRISE.md`.
 - No code changed. `VERSION`: `1.11.31`.
 
-### 17/11/2026: `REPRISE.md` up to date (release 1.12.0)
+### 17/11/2026: initials removed from the batch 1.11.27 entry (rule 25)
 
-- `REPRISE.md`: state at batch 1.12.1, last release 1.12.0, per-file numbers, batches 1.11.24 to 1.11.35, documentation debt.
-- No code changed. `VERSION`: `1.12.1`.
+- The batch 1.11.27 entry named the reviewer by initials; replaced by "Klaatou". No other text of the repository contains them. If batch 1.11.27 was committed before this fix, the initials stay in the git history.
+- No code changed. `VERSION`: `1.11.30`.
 
 ### 17/11/2026: independent radio / music volume, speaker icon as a black drawing
 

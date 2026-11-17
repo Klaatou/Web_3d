@@ -6,6 +6,20 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.12.0)
 
+### 17/11/2026 : annexe du manuel complétée, terrain en double au § 3.3, CHANGELOG et historiques corrigés
+
+- **Constat** : le lot 1.12.1 avait remplacé l'entrée du lot 1.11.30 (les deux CHANGELOG) et sa ligne d'historique (`HISTORIQUE.md`, `HISTORY.md`) par ses propres textes ; son entrée de CHANGELOG était rangée sous la 1.12.0 et non sous « Non publié », et sa ligne d'historique au rang de la 1.11.30.
+- **Corrigé** : entrée et lignes du lot 1.11.30 rétablies (texte du commit `45a459f`) ; entrée et lignes du lot 1.12.1 sous « Non publié » et après la publication 1.12.0.
+- **Annexe du manuel (§ 13)** : trois lignes ajoutées, en français et en anglais (lots 1.11.6 à 1.11.12, 1.11.13 à 1.11.23, 1.11.30 à 1.11.35), avec les renvois aux paragraphes qui décrivent chaque ajout.
+- **Manuel § 3.3** : puce « Jamais deux terrains superposés » (`oar2glb` 1.11.11, `glb2tiles` 1.11.12), en français et en anglais.
+- **`REPRISE.md`** : état au lot 1.12.2 ; `presence_server.py` sur la VM relevé par Klaatou (1.10.37, empreinte `0168d70b`) ; démo à jour ; règle 27 présente dans `REGLES.md` ; dette de documentation mise à jour.
+- Aucun code modifié. `VERSION` : `1.12.2`.
+
+### 17/11/2026 : `REPRISE.md` à jour (publication 1.12.0)
+
+- `REPRISE.md` : état au lot 1.12.1, dernière publication 1.12.0, numéros par fichier fabriqué, lots 1.11.24 à 1.11.35, dette de documentation.
+- Aucun code modifié. `VERSION` : `1.12.1`.
+
 ## 1.12.0 (17/11/2026)
 
 ### 17/11/2026 : publication 1.12.0 : zones audio, radio à plusieurs flux, fenêtre Son et volume
@@ -98,10 +112,10 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 - **Nouvelle convention** (décision de Klaatou) : dans une série de commandes PowerShell, seule la première commence par le `cd` ; § 0 et § 8.4 de `REPRISE.md`.
 - Aucun code modifié. `VERSION` : `1.11.31`.
 
-### 17/11/2026 : `REPRISE.md` à jour (publication 1.12.0)
+### 17/11/2026 : initiales retirées de l'entrée du lot 1.11.27 (règle 25)
 
-- `REPRISE.md` : état au lot 1.12.1, dernière publication 1.12.0, numéros par fichier fabriqué, lots 1.11.24 à 1.11.35, dette de documentation.
-- Aucun code modifié. `VERSION` : `1.12.1`.
+- L'entrée du lot 1.11.27 nommait le relecteur par ses initiales ; remplacé par « Klaatou ». Aucun autre texte du dépôt ne les contient. Si le lot 1.11.27 a été commité avant cette correction, les initiales restent dans l'historique git.
+- Aucun code modifié. `VERSION` : `1.11.30`.
 
 ### 17/11/2026 : volume radio / musique indépendant, icône du haut-parleur en dessin noir
 
