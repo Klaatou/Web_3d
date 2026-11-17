@@ -6,6 +6,13 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.11.0)
 
+### 17/11/2026 : zones radio et musique : info-bulle sur les lignes de la fenêtre État
+
+- **Demande** : une bulle d'info au survol des lignes Radio et Musique, expliquant ce qu'elles contiennent (nom de la zone, titre, distances, commandes).
+- **Fonction** (`src/template.html`, blocs `RADIO`, `MUSIC` et fenêtre État) : attribut `title` (info-bulle native du navigateur) sur chaque ligne, réécrit à chaque changement de la ligne et à chaque mètre ; la case et les boutons ⏮ ⏭ gardent leur propre bulle. Radio : zone, flux en cours (n/N s'il y en a plusieurs), titre du morceau quand il est connu, distance, portée et état (à portée, ou hors de portée : le son est arrêté), commandes (case ; liste des flux s'il y en a plusieurs). Musique : zone, piste en cours (n/N), distance, portée et état, commandes (case ; ⏮ ⏭ s'il y a plusieurs pistes). Onze clés de langue `page.tip.*` (français et anglais).
+- **Limites** : la bulle native apparaît après environ une seconde, ne suit pas la souris et n'existe pas au toucher ; une bulle à soi serait possible, non faite.
+- **Test** : `tests/zone_distance.py` (3 vérifications ajoutées : bulle de la radio à portée, hors de portée, bulle de la musique).
+
 ### 17/11/2026 : zones radio et musique : la ligne reste affichée hors de portée, la distance clignote
 
 - **Demande** : en dépassant la portée, la ligne disparaissait de la fenêtre État ; elle doit rester, avec la distance, et signaler que la portée est dépassée en faisant clignoter la distance.

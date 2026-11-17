@@ -6,6 +6,13 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.11.0)
 
+### 17/11/2026: radio and music zones: tooltip on the State window lines
+
+- **Request**: a tooltip when hovering the Radio and Music lines, explaining what they contain (zone name, title, distances, commands).
+- **Feature** (`src/template.html`, `RADIO`, `MUSIC` blocks and the State window): `title` attribute (the browser's native tooltip) on each line, rewritten whenever the line changes and every metre; the checkbox and the ⏮ ⏭ buttons keep their own tooltip. Radio: zone, current stream (n/N when there are several), track title when known, distance, range and state (in range, or out of range: the sound is stopped), commands (checkbox; stream list when there are several). Music: zone, current track (n/N), distance, range and state, commands (checkbox; ⏮ ⏭ when there are several tracks). Eleven `page.tip.*` language keys (French and English).
+- **Limits**: the native tooltip appears after about a second, does not follow the mouse and does not exist on touch screens; a custom bubble would be possible, not done.
+- **Test**: `tests/zone_distance.py` (3 checks added: radio tooltip in range, out of range, music tooltip).
+
 ### 17/11/2026: radio and music zones: the line stays displayed out of range, the distance blinks
 
 - **Request**: when walking past the range the line vanished from the State window; it must stay, with the distance, and show that the range is exceeded by blinking the distance.

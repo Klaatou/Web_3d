@@ -662,7 +662,7 @@ const SND = (() => {
 // une seule zone à la fois (core.js choisit la plus proche) ; hors portée ou en vue globale : le flux est arrêté (plus téléchargé) ; le navigateur n'autorise
 // le son qu'après une première action du visiteur ; un flux illisible (format, réseau, mélange http dans une page https) est dit dans le bloc d'état
 const distTxt = (z, d) => z ? ' (' + Math.round(d) + ' m / ' + Math.round(z.radius * 10) / 10 + ' m)' : '';   // 1.11.17 : distance a la source et portee de la zone, en metres, ajoutees aux lignes Radio et Musique
-let radioTxt = () => {}, musicTxt = () => {};   // lignes « Radio » et « Musique » du bloc d'état (définies avec le bloc)
+let radioTxt = () => {}, musicTxt = () => {}, radioTip = () => {}, musicTip = () => {};   // lignes « Radio » et « Musique » du bloc d'état (définies avec le bloc)
 const RADIO = (() => {
   let a = null, cur = null, gain = 0, dist = 0, out = false, src = '', shown = '', asked = '', selIdx = 0;
   const titles = new Map();
@@ -672,7 +672,16 @@ const RADIO = (() => {
   const label = () => cur ? (cur.label || cur.id) : '';
   const streamTitle = () => cur ? ((cur.labels && cur.labels[selIdx]) || label()) : '';   // 1.11.12 : titre du flux choisi (tableau labels de la zone, meme ordre que urls) ; repli sur le label de la zone sans labels
   const activeUrl = () => cur && cur.urls && cur.urls.length ? cur.urls[selIdx] : (cur ? cur.target : '');
-  const show = key => { shown = key; radioTxt(key ? tr(key, streamTitle(), cur && bad.get(cur.id)) + (key === 'page.radio.playing' && cur && titles.get(activeUrl()) ? ' \u2014 ' + titles.get(activeUrl()) : '') : '', cur && (key === 'page.radio.playing' || key === 'page.radio.waiting' || key === 'page.radio.far') ? distTxt(cur, dist) : '', key === 'page.radio.far'); };   // 1.11.12 : le titre affiche celui du flux choisi (labels), pas toujours le premier
+  const tip = () => {   // 1.11.19 : info-bulle de la ligne Radio : zone, flux, titre, distance et etat, commandes
+    if (!cur) return '';
+    const n = cur.urls ? cur.urls.length : 1, L = [tr('page.tip.radio.zone', label())];
+    if (n > 1) L.push(tr('page.tip.radio.stream', streamTitle(), selIdx + 1, n));
+    const tt = titles.get(activeUrl()); if (tt && shown === 'page.radio.playing') L.push(tr('page.tip.radio.title', tt));
+    L.push(tr(out ? 'page.tip.dist.out' : 'page.tip.dist.in', Math.round(dist), Math.round(cur.radius * 10) / 10));
+    L.push(tr(n > 1 ? 'page.tip.radio.cmd.multi' : 'page.tip.radio.cmd'));
+    return L.join('\n');
+  };
+  const show = key => { shown = key; radioTxt(key ? tr(key, streamTitle(), cur && bad.get(cur.id)) + (key === 'page.radio.playing' && cur && titles.get(activeUrl()) ? ' \u2014 ' + titles.get(activeUrl()) : '') : '', cur && (key === 'page.radio.playing' || key === 'page.radio.waiting' || key === 'page.radio.far') ? distTxt(cur, dist) : '', key === 'page.radio.far'); radioTip(tip()); };   // 1.11.12 : le titre affiche celui du flux choisi (labels), pas toujours le premier
   const lvl = () => VIS.sounds && VIS.radio ? Math.max(0, Math.min(1, gain * VIS.volume / 100)) : 0;
   const stop = () => { if (!a || !src) return; src = ''; a.pause(); a.removeAttribute('src'); a.load(); };
   const ensure = () => {
@@ -721,7 +730,7 @@ const RADIO = (() => {
   const refresh = () => { refresh0(); ask(); };
   for (const ev of ['pointerdown', 'keydown', 'touchstart']) addEventListener(ev, () => { if (cur && (!a || a.paused)) refresh(); }, true);
   return {
-    set(z, g, d, o) { const ch = !cur !== !z || (z && cur && z.id !== cur.id), back = !ch && out && !o; if (ch) { if (cur) bad.delete(cur.id); selIdx = 0; } if (back && cur) bad.delete(cur.id); cur = z; gain = g; dist = d || 0; const oc = out !== !!o; out = !!o; selSync(); if (ch || oc) refresh(); else { if (a && src && !a.paused) a.volume = lvl(); if (shown === 'page.radio.playing' || shown === 'page.radio.waiting' || shown === 'page.radio.far') show(shown); } },
+    set(z, g, d, o) { const ch = !cur !== !z || (z && cur && z.id !== cur.id), back = !ch && out && !o; if (ch) { if (cur) bad.delete(cur.id); selIdx = 0; } if (back && cur) bad.delete(cur.id); cur = z; gain = g; dist = d || 0; const oc = out !== !!o; out = !!o; selSync(); if (ch || oc) refresh(); else { if (a && src && !a.paused) a.volume = lvl(); if (shown === 'page.radio.playing' || shown === 'page.radio.waiting' || shown === 'page.radio.far') show(shown); radioTip(tip()); } },
     setSelEl,
     setIdx(i) { selIdx = i; refresh(); },
     title(url, t) { titles.set(url, t); if (cur && activeUrl() === url && shown) show(shown); },
@@ -737,7 +746,15 @@ const MUSIC = (() => {
   const ERR = { 1: 'MEDIA_ERR_ABORTED', 2: 'MEDIA_ERR_NETWORK', 3: 'MEDIA_ERR_DECODE', 4: 'MEDIA_ERR_SRC_NOT_SUPPORTED' };
   const cause = () => a && a.error ? (ERR[a.error.code] || 'MEDIA_ERR_' + a.error.code) + (a.error.message ? ' : ' + a.error.message : '') : '?';
   const label = () => cur ? (cur.label || cur.id) : '';
-  const show = (key, extra) => { shown = key; musicTxt(key ? tr(key, label(), extra !== undefined ? extra : (tracks[idx] ? tracks[idx].name : '')) : '', (key === 'page.music.playing' || key === 'page.music.waiting' || key === 'page.music.far') && cur ? distTxt(cur, dist) : '', key === 'page.music.far'); };   // la ligne « Musique »
+  const tip = () => {   // 1.11.19 : info-bulle de la ligne Musique : zone, piste, distance et etat, commandes
+    if (!cur) return '';
+    const n = tracks.length, L = [tr('page.tip.music.zone', label())];
+    if (n && tracks[idx]) L.push(tr('page.tip.music.track', tracks[idx].name, idx + 1, n));
+    L.push(tr(out ? 'page.tip.dist.out' : 'page.tip.dist.in', Math.round(dist), Math.round(cur.radius * 10) / 10));
+    L.push(tr(n > 1 ? 'page.tip.music.cmd.multi' : 'page.tip.music.cmd'));
+    return L.join('\n');
+  };
+  const show = (key, extra) => { shown = key; musicTxt(key ? tr(key, label(), extra !== undefined ? extra : (tracks[idx] ? tracks[idx].name : '')) : '', (key === 'page.music.playing' || key === 'page.music.waiting' || key === 'page.music.far') && cur ? distTxt(cur, dist) : '', key === 'page.music.far'); musicTip(tip()); };   // la ligne « Musique »
   const lvl = () => VIS.sounds && VIS.music ? Math.max(0, Math.min(1, gain * VIS.volume / 100)) : 0;
   const stop = () => { if (!a) return; loaded = ''; a.pause(); a.removeAttribute('src'); a.load(); };
   const next = () => { if (!tracks.length) return; idx = (idx + 1) % tracks.length; if (cur) pos.set(cur.id, idx); play(); };
@@ -781,7 +798,7 @@ const MUSIC = (() => {
     play();
   };
   for (const ev of ['pointerdown', 'keydown', 'touchstart']) addEventListener(ev, () => { if (cur && (!a || a.paused)) refresh(); }, true);   // apres la première action : la piste démarre
-  return { set(z, g, d, o) { const ch = !cur !== !z || (z && cur && z.id !== cur.id), back = !ch && out && !o; if ((ch || back) && cur) bad.delete(cur.id); cur = z; gain = g; dist = d || 0; const oc = out !== !!o; out = !!o; if (ch) { tracks = []; fails = 0; refresh(); } else if (oc) refresh(); else { if (a && loaded && !a.paused) a.volume = lvl(); if (shown === 'page.music.playing' || shown === 'page.music.waiting' || shown === 'page.music.far') show(shown); } },
+  return { set(z, g, d, o) { const ch = !cur !== !z || (z && cur && z.id !== cur.id), back = !ch && out && !o; if ((ch || back) && cur) bad.delete(cur.id); cur = z; gain = g; dist = d || 0; const oc = out !== !!o; out = !!o; if (ch) { tracks = []; fails = 0; refresh(); } else if (oc) refresh(); else { if (a && loaded && !a.paused) a.volume = lvl(); if (shown === 'page.music.playing' || shown === 'page.music.waiting' || shown === 'page.music.far') show(shown); musicTip(tip()); } },
     refresh, next, prev, playing: () => !!(a && loaded && !a.paused), level: () => (a && loaded ? a.volume : 0), track: () => (tracks[idx] ? tracks[idx].name : ''), trackIndex: () => idx, count: () => tracks.length };   // 1.11.14 : next exposé (arrête le morceau courant et passe à l'index suivant de la playlist) ; count (nombre de pistes, pour le bouton « ⏭ »)
 })();
 // une seule source a la fois : cocher « Radio des zones » decoche « Musique des zones » et inversement ; quand les deux sont cochees (etat de depart) et que les deux zones sont a portee,
@@ -1103,8 +1120,10 @@ if (C.walk) {
   lmu.insertBefore(mprev, mnext);  // Le précédent avant le suivant
   lmu.insertBefore(mcount, mnext); // Le compteur juste avant le suivant
 
+  musicTip = t => { lmu.title = t || ''; };   // 1.11.19 : info-bulle de la ligne (la case et les boutons gardent la leur)
   lmu.hidden = true; musicTxt = (t, dist, far) => { srcSync(sm, 'music'); lmu.hidden = !t; mnext.hidden = !(t && MUSIC.count() > 1); mprev.hidden = mnext.hidden; mcount.hidden = mnext.hidden; setSrcTx(sm, t || '', t ? dist : '', far); if (!mcount.hidden) { const c = MUSIC.trackIndex(); mcount.textContent = ' ' + (c + 1) + '/' + MUSIC.count() + ' '; } };
   // 1.11.4 : « ♪ Musique : … » tant qu'une zone audio est à portée ; 1.11.14 : « ⏭ » visible si la playlist a plus d'une piste
+  radioTip = t => { lrd.title = t || ''; };
   lrd.hidden = true; radioTxt = (t, dist, far) => { srcSync(sr, 'radio'); lrd.hidden = !t; setSrcTx(sr, t || '', t ? dist : '', far); };   // 1.10.32 : « ♪ Radio : … » tant qu'une zone radio est à portée (le diagnostic la reprend)
   const rsSel = document.createElement('select'); rsSel.id = 'radioSel'; rsSel.hidden = true;   // 1.11.x : choix du flux de la radio, dans la fenêtre État au-dessus de la ligne « Radio : … » (comme ce texte : s'adapte à la radio en cours)
   rsSel.onchange = () => { const si = parseInt(rsSel.value, 10) || 0; RADIO.setIdx(si); };
