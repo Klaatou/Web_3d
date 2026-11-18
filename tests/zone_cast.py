@@ -173,7 +173,7 @@ async def main():
         except Exception:
             pass
         await pg.evaluate("window.__v.toggleWalk()"); await pg.wait_for_timeout(400)
-        rapport(not await playing() and await info() == "", "retour en vue globale : arret, ligne cachee", await info())
+        rapport(not await playing() and (await info() == "" or "hors de port" in await info()), "retour en vue globale : arret (la camera, a 291 m, est hors de portee : ligne cachee ou « hors de portee »)", await info())   # 1.12.11 : hors promenade la portee se mesure depuis la camera
         rapport(not errs, "aucune erreur JavaScript", errs)
         await br.close()
     srv.shutdown()

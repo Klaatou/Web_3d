@@ -6,6 +6,15 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.12.0)
 
+### 18/11/2026: zone radio and music in overview (range measured from the camera)
+
+- **Request from Klaatou**: media must be available all the time, like images and video screens, not only while walking.
+- **Outside walking mode** (overview, before the walk), zone radio and music play when the **camera** is within range: 3D distance (height counts) from the camera to the zone, or to its element if linked; no more −4 / +8 m height window. The "Radio" / "Music" line shows the camera distance, as when walking. While walking nothing changes: the visitor counts.
+- Outside walking mode only radio and music are tracked: no "click or E" prompt, no zone entry, no editor (zones do not play in the viewer editor).
+- Sound still needs a first click or key press in the page, and the Sound setting (zone Radio / Music boxes, volume) applies as before.
+- Caveat: in orbit the camera is often high and far; a 20 m zone is then rarely in range.
+- Test added: `tests/zone_apercu.py`. `tests/zone_cast.py`: returning to the global view no longer requires the line to be hidden (the camera may stay within 2x the range: it then says "out of range").
+
 ### 18/11/2026: video zones: click on the screen = pause / play
 
 - **Request from Klaatou**: stop or restart a video by clicking it, like a player.

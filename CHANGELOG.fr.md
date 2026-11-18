@@ -6,6 +6,15 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.12.0)
 
+### 18/11/2026 : radio et musique des zones en vue d'ensemble (portée mesurée depuis la caméra)
+
+- **Demande de Klaatou** : les médias doivent être disponibles tout le temps, comme les images et les écrans vidéo, pas seulement en promenade.
+- **Hors promenade** (vue d'ensemble, avant la promenade), la radio et la musique des zones jouent quand la **caméra** est à portée : distance en 3D (la hauteur compte) de la caméra à la zone, ou à son élément si elle y est liée ; plus de fenêtre de hauteur −4 / +8 m. La ligne « Radio » / « Musique » donne la distance de la caméra, comme en promenade. En promenade, rien ne change : c'est le visiteur qui compte.
+- Hors promenade, seules la radio et la musique sont suivies : pas d'invite « clic ou E », pas d'entrée dans une zone, pas d'éditeur (les zones ne jouent pas dans l'éditeur du viewer).
+- Le son exige toujours un premier clic ou une première touche dans la page, et le réglage Son (cases Radio / Musique des zones, volume) s'applique comme avant.
+- Piège : en orbite la caméra est souvent haut et loin ; une zone de 20 m n'est alors rarement à portée.
+- Test ajouté : `tests/zone_apercu.py`. `tests/zone_cast.py` : le retour en vue globale n'exige plus que la ligne soit cachée (la caméra reste parfois dans la zone des 2 fois la portée : elle dit « hors de portée »).
+
 ### 18/11/2026 : zones vidéo : clic sur l'écran = pause / lecture
 
 - **Demande de Klaatou** : arrêter ou relancer une vidéo en cliquant dessus, comme dans un lecteur.

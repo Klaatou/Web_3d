@@ -16,8 +16,8 @@ Draco et Meshopt gérés automatiquement (décodeurs intégrés seulement si le 
 """
 from __future__ import annotations
 
-VERSION = "1.12.10 (18/11/2026)"
-SHELL_VERSION = "1.12.10 (18/11/2026)"   # numéro de version de la coquille (index.html) : écrit par build.py, ne change que si la coquille change
+VERSION = "1.12.11 (18/11/2026)"
+SHELL_VERSION = "1.12.11 (18/11/2026)"   # numéro de version de la coquille (index.html) : écrit par build.py, ne change que si la coquille change
 MAP_VERSION = "1.12.10 (18/11/2026)"       # numéro de version de la page de carte (carte.html) : idem
 
 import argparse
@@ -3965,20 +3965,31 @@ function createViewer(container, cfg0, loader) {
     const b = l.box, p = W.pos;
     return { d: Math.hypot(Math.max(b.min.x - p.x, 0, p.x - b.max.x), Math.max(b.min.z - p.z, 0, p.z - b.max.z)), dy: p.y < b.min.y ? p.y - b.min.y : (p.y > b.max.y ? p.y - b.max.y : 0) };
   }
+  // 1.12.11 : distance d'une source sonore (radio, musique) : en promenade celle du visiteur (zoneDist) ; hors promenade (vue d'ensemble) celle de la camera, en 3D, comme les ecrans video
+  function mediaDist(z) {
+    if (walking) return zoneDist(z);
+    const l = zoneLink.get(z.id), p = camera.position;
+    if (!l) return { d: Math.hypot(p.x - z.x, p.y - z.y, p.z - z.z), dy: 0 };
+    const b = l.box;
+    return { d: Math.hypot(Math.max(b.min.x - p.x, 0, p.x - b.max.x), Math.max(b.min.y - p.y, 0, p.y - b.max.y), Math.max(b.min.z - p.z, 0, p.z - b.max.z)), dy: 0 };
+  }
+  let mediaLast = 0;
+  function mediaTick(now) { if (walking || zoneEditor || !zones.length || now - mediaLast < 100) return; mediaLast = now; camera.updateMatrixWorld(); zoneTick(); }   // hors promenade : seules la radio et la musique des zones sont suivies (pas d'invite, pas d'entree)
   function zoneTick() {
     if (!zones.length) return;
     let best = null, bd = 1e9, cast = null, cd = 1e9, aud = null, ad = 1e9, castF = null, cdF = 1e9, audF = null, adF = 1e9;   // castF / audF : zone la plus proche hors de portee (jusqu'a 2 fois la portee)
     for (const z of zones) {
       if (z.type === 'audio') {   // 1.11.4 : musique : comme la radio, la plus proche dont on est a portee
-        const { d, dy } = zoneDist(z);
+        const { d, dy } = mediaDist(z);
         if (d <= z.radius && dy > -4 && dy < 8) { if (d < ad) { aud = z; ad = d; } } else if (d <= 2 * z.radius && dy > -4 && dy < 8 && d < adF) { audF = z; adF = d; }
         continue;
       }
       if (z.type === 'cast') {   // radio : la plus proche dont on est a portee (en x et z ; de 4 m sous la zone a 8 m au-dessus)
-        const { d, dy } = zoneDist(z);
+        const { d, dy } = mediaDist(z);
         if (d <= z.radius && dy > -4 && dy < 8) { if (d < cd) { cast = z; cd = d; } } else if (d <= 2 * z.radius && dy > -4 && dy < 8 && d < cdF) { castF = z; cdF = d; }
         continue;
       }
+      if (!walking) continue;   // hors promenade : ni invite, ni entree dans une zone
       if (z.type === 'spawn' || z.type === 'video' || zoneOff(z) || (z.type === 'image' && (!z.link || imgGone.has(z.id)))) continue;   // un tableau sans lien n'est pas une zone proche (pas d'invite « clic ou E »)
       const { d, dy } = zoneDist(z);
       if (zoneEntrant(z) && z.trigger !== 'click') {
@@ -4091,6 +4102,7 @@ function createViewer(container, cfg0, loader) {
     landingTick(performance.now());
     animTick(performance.now());
     videoTick(performance.now());
+    mediaTick(performance.now());
     if (seaMat && seaMat.uniforms) { seaMat.uniforms.uTime.value = clock.elapsedTime; dirty = true; }
     if (dirty || moved) {
       const now = performance.now(), fm = Number(cfg.fpsMax);

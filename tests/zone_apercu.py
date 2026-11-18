@@ -1,0 +1,143 @@
+#!/usr/bin/env python3
+"""Test 1.12.11 : hors promenade (vue d'ensemble, avant la promenade) la radio et la musique des zones suivent la CAMERA, comme les ecrans video : distance 3D de la camera
+a la zone, ligne « Radio » / « Musique » avec la distance, flux joue a portee, arrete au-dela, ligne cachee au-dela de 2 fois la portee ; en promenade, c'est le visiteur.
+Prerequis : pip install playwright websockets && playwright install chromium ; python build.py avant. Variables : THREE_DIR, CHROMIUM.
+"""
+import os as _os_lang; _os_lang.environ["WEB3D_LANG"] = "fr"
+import asyncio, functools, http.server, json, math, os, pathlib, struct, subprocess, sys, tempfile, threading
+
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+DIST = ROOT / "dist"
+tmp = pathlib.Path(tempfile.mkdtemp(prefix="glb2html_cast_"))
+vend = ["--vendor", os.environ["THREE_DIR"]] if os.environ.get("THREE_DIR") else []
+echecs = 0
+
+
+def rapport(ok, titre, detail=""):
+    global echecs
+    print(("[OK]    " if ok else "[ECHEC] ") + titre + ("" if ok else f"  {detail}"))
+    echecs += not ok
+
+
+def sol_glb(path):
+    pos = struct.pack("<12f", -60, 0, -60, 60, 0, -60, 60, 0, 60, -60, 0, 60)
+    blob = pos + struct.pack("<6H", 0, 2, 1, 0, 3, 2) + b"\0\0"
+    g = {"asset": {"version": "2.0"}, "buffers": [{"byteLength": len(blob)}],
+         "bufferViews": [{"buffer": 0, "byteOffset": 0, "byteLength": 48}, {"buffer": 0, "byteOffset": 48, "byteLength": 12}],
+         "accessors": [{"bufferView": 0, "componentType": 5126, "count": 4, "type": "VEC3", "min": [-60, 0, -60], "max": [60, 0, 60]},
+                       {"bufferView": 1, "componentType": 5123, "count": 6, "type": "SCALAR"}],
+         "meshes": [{"primitives": [{"attributes": {"POSITION": 0}, "indices": 1}]}],
+         "nodes": [{"mesh": 0, "name": "sol"}], "scenes": [{"nodes": [0]}], "scene": 0}
+    js = json.dumps(g).encode(); js += b" " * ((4 - len(js) % 4) % 4)
+    path.write_bytes(struct.pack("<4sII", b"glTF", 2, 12 + 8 + len(js) + 8 + len(blob))
+                     + struct.pack("<I4s", len(js), b"JSON") + js + struct.pack("<I4s", len(blob), b"BIN\0") + blob)
+
+
+def wav(path, secondes=40):
+    n = 8000 * secondes
+    data = bytes(int(128 + 100 * math.sin(2 * math.pi * 440 * i / 8000)) for i in range(n))
+    path.write_bytes(b"RIFF" + struct.pack("<I", 36 + n) + b"WAVEfmt " + struct.pack("<IHHIIHH", 16, 1, 1, 8000, 8000, 1, 8) + b"data" + struct.pack("<I", n) + data)
+
+
+DEMANDES = []   # chemins demandes au serveur (compte des reessais)
+
+
+class Handler(http.server.SimpleHTTPRequestHandler):
+    def log_message(self, *a):
+        pass
+
+    def do_GET(self):
+        DEMANDES.append(self.path)
+        super().do_GET()
+
+
+def serveur(dossier):
+    h = functools.partial(Handler, directory=str(dossier))
+    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), h)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    return srv
+
+
+def page(port):
+    Z = lambda i, t, x, z, **k: dict({"id": i, "type": t, "label": "Zone " + i, "x": x, "y": 15, "z": z}, **k)
+    zones = [Z("salle", "cast", 0, 0, radius=40, target=f"http://127.0.0.1:{port}/flux.wav"),
+             Z("casse", "cast", -50, 0, radius=5, target=f"http://127.0.0.1:{port}/absent.mp3"),
+             Z("zik", "audio", 50, 0, radius=8, folder="audio", tracks=["1-a.wav"])]
+    (tmp / "audio").mkdir(); wav(tmp / "audio" / "1-a.wav", 40)
+    (tmp / "z.json").write_text(json.dumps(zones), encoding="utf-8")
+    out = tmp / "p.html"
+    r = subprocess.run([sys.executable, str(DIST / "glb2html.py"), str(tmp / "sol.glb"), "-o", str(out), "--zones", str(tmp / "z.json"), "--no-sea", *vend],
+                       capture_output=True, text=True)
+    if r.returncode:
+        sys.exit(f"[ECHEC] generation\n{r.stdout}{r.stderr}")
+    t = out.read_text(encoding="utf-8")
+    for a, b in (("const viewer = createViewer(", "const viewer = window.__v = createViewer("), ("const RADIO = (() => {", "const RADIO = window.__r = (() => {"), ("const MUSIC = (() => {", "const MUSIC = window.__m = (() => {")):
+        if a not in t:
+            sys.exit(f"[ECHEC] marqueur absent de la page : {a}")
+        t = t.replace(a, b, 1)
+    out.write_text(t, encoding="utf-8")
+    return out
+
+
+async def main():
+    from playwright.async_api import async_playwright
+    sol_glb(tmp / "sol.glb"); wav(tmp / "flux.wav")
+    srv = serveur(tmp)
+    out = page(srv.server_address[1])
+    async with async_playwright() as p:
+        kw = {"executable_path": os.environ["CHROMIUM"]} if os.environ.get("CHROMIUM") else {}
+        br = await p.chromium.launch(args=["--use-gl=swiftshader", "--enable-unsafe-swiftshader"], **kw)
+        pg = await br.new_page(locale="fr-FR"); errs = []
+        pg.on("pageerror", lambda e: errs.append(str(e)))
+        await pg.goto(out.as_uri())
+        await pg.wait_for_function("document.getElementById('msg') === null", timeout=60000)
+        await pg.evaluate("document.getElementById('lightAskNo') && document.getElementById('lightAskNo').click()")
+        rinfo = lambda: pg.evaluate("(() => { const e = document.getElementById('radioInfo'); return e.hidden ? '' : e.textContent; })()")
+        minfo = lambda: pg.evaluate("(() => { const e = document.getElementById('musicInfo'); return e.hidden ? '' : e.textContent; })()")
+        async def jouer(fn):
+            try:
+                await pg.wait_for_function(fn, timeout=15000)
+            except Exception:
+                pass
+        async def cam(x, y, z):
+            await pg.evaluate(f"(() => {{ const v = window.__v; v.camera.position.set({x}, {y}, {z}); v.controls.target.set({x}, {y}, {z - 30}); v.controls.update(); v.requestRender(); }})()")
+            await pg.wait_for_timeout(450)
+        rapport(not await pg.evaluate("window.__v.walking"), "depart : pas en promenade", "")
+        await pg.keyboard.press("ControlLeft")   # un geste de l'utilisateur : le navigateur l'exige pour le son
+        await cam(0, 15, 20); await jouer("window.__r.playing()")
+        t = await rinfo()
+        rapport(await pg.evaluate("window.__r.playing()") and "(20 m / 40 m)" in t, "vue d'ensemble : la radio joue, la ligne donne la distance de la camera", t)
+        await cam(0, 15, 33); t = await rinfo()
+        rapport("(33 m / 40 m)" in t, "vue d'ensemble : la distance suit la camera", t)
+        await cam(0, 55, 20); t = await rinfo()   # 3D : la hauteur compte (les commandes d'orbite peuvent corriger un peu la position demandee)
+        c = await pg.evaluate("window.__v.camera.position.toArray()"); d3 = math.hypot(c[0], c[1] - 15, c[2])
+        rapport(d3 > 40 and "hors de port" in t and f"({round(d3)} m / 40 m)" in t and not await pg.evaluate("window.__r.playing()"), "camera en hauteur : distance 3D, hors de portee, flux arrete", (t, c, d3))
+        rapport(math.hypot(c[0], c[2]) < 40, "(la distance horizontale seule aurait ete a portee : c'est bien la hauteur qui compte)", c)
+        await cam(0, 15, 100)
+        rapport(await rinfo() == "", "au-dela de 2 fois la portee : ligne cachee", await rinfo())
+        await cam(50, 15, 3); await jouer("window.__m.playing()")
+        t = await minfo()
+        rapport(await pg.evaluate("window.__m.playing()") and "(3 m / 8 m)" in t, "vue d'ensemble : la musique joue, distance de la camera", t)
+        await cam(50, 15, 12); t = await minfo()
+        rapport("hors de port" in t and not await pg.evaluate("window.__m.playing()"), "musique : camera hors de portee, arretee", t)
+        # promenade : c'est le visiteur qui compte, pas la camera
+        await cam(0, 15, 20); await jouer("window.__r.playing()")
+        await pg.evaluate("window.__v.walkStart({ pos: [0, 15, 70], yaw: 0 })"); await pg.wait_for_timeout(500)
+        t = await rinfo()
+        rapport(not await pg.evaluate("window.__r.playing()") and (t == "" or "hors de port" in t), "en promenade, visiteur loin : la radio ne joue plus", t)
+        await pg.evaluate("window.__v.teleportTo([0, 15, 30], 0)"); await jouer("window.__r.playing()")
+        t = await rinfo()
+        rapport(await pg.evaluate("window.__r.playing()") and "(30 m / 40 m)" in t, "en promenade : la distance est celle du visiteur", t)
+        await pg.evaluate("window.__v.walkStop && window.__v.walkStop()"); await pg.wait_for_timeout(300)
+        rapport(not await pg.evaluate("window.__v.walking"), "fin de promenade", "")
+        await cam(0, 15, 25); await jouer("window.__r.playing()")
+        t = await rinfo()
+        rapport(await pg.evaluate("window.__r.playing()") and "(25 m / 40 m)" in t, "retour en vue d'ensemble : la camera reprend la main", t)
+        rapport(not errs, "aucune erreur JavaScript", errs)
+        await br.close()
+    srv.shutdown()
+    print("\nRESULTAT : " + ("tout est passe" if not echecs else f"ECHEC ({echecs})"))
+    sys.exit(1 if echecs else 0)
+
+
+asyncio.run(main())
