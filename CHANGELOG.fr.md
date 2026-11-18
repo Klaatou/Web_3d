@@ -6,6 +6,13 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.12.0)
 
+### 18/11/2026 : exemples de zones multimédias (JSON) et fichier d'exemple remis à jour
+
+- **Demande de Klaatou** : des exemples de blocs JSON avec tous les paramètres des zones multimédias.
+- **`REFERENCE_JSON.md`** (FR et EN, § 11.4) : huit exemples complets (écran vidéo avec un fichier et du son, avec une liste lue dans un dossier, avec `tracks` ; musique avec un dossier, avec `tracks` ; radio à plusieurs `streams` ; tableau avec `link` ; lien avec `frame`), chacun sous un titre (un JSON n'a pas de commentaires : le titre et l'`id` disent ce qu'il montre). Le tableau de l'exemple passe à quatorze zones.
+- **`docs/samples/region.zones.sample.json`** : 14 zones. **Remis à jour** : la radio `dance-floor` utilise `streams` (elle gardait l'ancienne clé `target`) ; **ajoutés** : `ambiance` (`audio`), `screen-clip` et `screen-list` (`video`), `video-page` (`url` avec `frame`). Le fichier est écrit par `clean_zones`, donc identique à ce que la page écrit. `tests/samples.py` : 13 zones publiques au lieu de 9.
+- **Constat** : sur `main`, trois contrôles de `tests/samples.py` échouaient déjà (zones « déjà propres », « une zone de chaque sorte », profil `perso`) parce que l'exemple était resté à l'état de la 1.10.35 ; ils passent avec ce lot.
+- Aucun code touché : `dist\` ne change pas. `VERSION` : `1.12.16`.
 ### 18/11/2026 : documents des lots 1.12.3 à 1.12.14 (zones lien en fenêtre flottante, écrans vidéo)
 
 - **Demande de Klaatou** : mettre à jour d'un coup les documents en retard depuis le lot 1.12.3.

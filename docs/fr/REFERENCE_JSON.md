@@ -175,7 +175,7 @@ Il existe **huit sortes** de zones (champ `type`) : `"spawn"` (arrivée), `"port
 | `cone`        | oui / non | (absente : selon le déclenchement) | repère (cône) au-dessus de la zone : `true` le montre toujours, même pour une zone « au clic » ; `false` ne le montre jamais ; absente : un cône pour les portails, les radios, les musiques et les liens déclenchés en marchant dedans (`"enter"` ou `"both"`). La touche T masque tous les cônes. Sans effet sur une arrivée (`--show-spawns`), ni sur un tableau, ni sur un écran vidéo ; la clé n'est écrite que si elle vaut `true` ou `false` |
 | `mesh`        | texte     | `""`          | zone **liée à un objet** du modèle : son nom, ou `nom#numéro` quand plusieurs objets portent ce nom ; l'objet devient cliquable. Jamais pour une arrivée |
 
-L'exemple contient dix zones, une de chaque cas :
+L'exemple contient quatorze zones, une de chaque cas :
 
 | `id`              | Sorte    | Ce qu'elle montre                                                                              |
 | ----------------- | -------- | ---------------------------------------------------------------------------------------------- |
@@ -188,8 +188,238 @@ L'exemple contient dix zones, une de chaque cas :
 | `door-info`       | lien     | liée à l'objet `Door#2` du modèle                                                              |
 | `back-home`       | portail  | nom affiché au-dessus de la zone (`showName`)                                                  |
 | `painting-1`      | image    | tableau sur un mur : fichier `paintings/painting-1.jpg`, hauteur d'après l'image               |
-| `dance-floor`     | radio    | flux `https://ADRESSE/flux` joué à moins de 25 m en promenade (§ 5.19)                        |
+| `dance-floor`     | radio    | deux flux (`streams`) joués à moins de 25 m en promenade (§ 5.19)                             |
 | `ambiance`        | musique | fichiers son du dossier `audio` (avec `audio/playlist.json`), joués à moins de 20 m en promenade (§ 5.20) |
+| `screen-clip`     | vidéo    | écran sur un mur : un fichier (`clip.mp4`), avec son (§ 5.21)                                 |
+| `screen-list`     | vidéo    | écran sur un mur : une liste, le dossier `videos` (avec `videos/playlist.json`) (§ 5.21)      |
+| `video-page`      | lien     | adresse YouTube ouverte dans une fenêtre flottante de la page (`frame`, § 5.7.1)              |
+
+**Un exemple par sorte multimédia.** Un fichier JSON n'accepte pas de commentaires : chaque exemple a son titre juste au-dessus, et son `id` dit ce qu'il montre. Ce sont des zones complètes, écrites comme la page les écrit : les clés facultatives (`sound`, `frame`, `link`, `cone`, `folder`, `tracks`, `streams`) n'apparaissent que si elles sont remplies. Une zone s'ajoute à la liste du fichier `NOM.zones.json`, entre les accolades de la liste `[ ... ]`.
+
+**Écran vidéo, un seul fichier, avec du son**
+
+```json
+{
+ "id": "screen-clip",
+ "type": "video",
+ "label": "Welcome video",
+ "x": 20,
+ "y": 24,
+ "z": -40,
+ "yaw": 3.14,
+ "shape": "ring",
+ "trigger": "click",
+ "radius": 20,
+ "w": 4,
+ "h": 0,
+ "target": "clip.mp4",
+ "spawn": "",
+ "confirm": false,
+ "private": false,
+ "showName": false,
+ "mesh": "",
+ "sound": true
+}
+```
+
+**Écran vidéo, une liste lue dans le dossier (`playlist.json`)**
+
+```json
+{
+ "id": "screen-list",
+ "type": "video",
+ "label": "Videos of the region",
+ "x": 25,
+ "y": 24,
+ "z": -40,
+ "yaw": 3.14,
+ "shape": "ring",
+ "trigger": "click",
+ "radius": 30,
+ "w": 3.2,
+ "h": 0,
+ "target": "",
+ "spawn": "",
+ "confirm": false,
+ "private": false,
+ "showName": false,
+ "mesh": "",
+ "folder": "videos"
+}
+```
+
+**Écran vidéo, une liste écrite dans la zone (`tracks`)**
+
+```json
+{
+ "id": "screen-tracks",
+ "type": "video",
+ "label": "Trailers",
+ "x": 25,
+ "y": 24,
+ "z": -38,
+ "yaw": 3.14,
+ "shape": "ring",
+ "trigger": "click",
+ "radius": 30,
+ "w": 3.2,
+ "h": 1.8,
+ "target": "",
+ "spawn": "",
+ "confirm": false,
+ "private": false,
+ "showName": false,
+ "mesh": "",
+ "tracks": [
+  "01-trailer.mp4",
+  "https://ADRESSE/clip2.mp4"
+ ],
+ "sound": true
+}
+```
+
+**Musique : les fichiers son d'un dossier**
+
+```json
+{
+ "id": "ambiance",
+ "type": "audio",
+ "label": "Ambient music",
+ "x": 50,
+ "y": 22,
+ "z": -45,
+ "yaw": 0,
+ "shape": "ring",
+ "trigger": "click",
+ "radius": 20,
+ "w": 2.4,
+ "h": 1.2,
+ "target": "",
+ "spawn": "",
+ "confirm": false,
+ "private": false,
+ "showName": false,
+ "mesh": "",
+ "folder": "audio",
+ "cone": true
+}
+```
+
+**Musique : une liste écrite dans la zone (`tracks`)**
+
+```json
+{
+ "id": "ambiance-2",
+ "type": "audio",
+ "label": "Cafe music",
+ "x": 52,
+ "y": 22,
+ "z": -45,
+ "yaw": 0,
+ "shape": "ring",
+ "trigger": "click",
+ "radius": 15,
+ "w": 2.4,
+ "h": 1.2,
+ "target": "",
+ "spawn": "",
+ "confirm": false,
+ "private": false,
+ "showName": false,
+ "mesh": "",
+ "tracks": [
+  "01-intro.mp3",
+  "https://ADRESSE/son.mp3"
+ ]
+}
+```
+
+**Radio : plusieurs flux (`streams`, le nom d'abord)**
+
+```json
+{
+ "id": "dance-floor",
+ "type": "cast",
+ "label": "Dance floor radio",
+ "x": 60,
+ "y": 22,
+ "z": -30,
+ "yaw": 0,
+ "shape": "ring",
+ "trigger": "click",
+ "radius": 25,
+ "w": 2.4,
+ "h": 1.2,
+ "target": "",
+ "spawn": "",
+ "confirm": false,
+ "private": false,
+ "showName": false,
+ "mesh": "",
+ "streams": [
+  [
+   "Main stream",
+   "https://ADRESSE/flux"
+  ],
+  [
+   "",
+   "https://ADRESSE/flux2"
+  ]
+ ]
+}
+```
+
+**Tableau avec un lien (`link`)**
+
+```json
+{
+ "id": "painting-1",
+ "type": "image",
+ "label": "Painting 1",
+ "x": 118.5,
+ "y": 27.2,
+ "z": -85.98,
+ "yaw": 0,
+ "shape": "ring",
+ "trigger": "click",
+ "radius": 2,
+ "w": 1.5,
+ "h": 0,
+ "target": "paintings/painting-1.jpg",
+ "spawn": "",
+ "confirm": false,
+ "private": false,
+ "showName": false,
+ "mesh": "",
+ "link": "gallery.html"
+}
+```
+
+**Lien en fenêtre flottante (`frame`)**
+
+```json
+{
+ "id": "video-page",
+ "type": "url",
+ "label": "Presentation video",
+ "x": 8,
+ "y": 22,
+ "z": -24,
+ "yaw": 0,
+ "shape": "board",
+ "trigger": "click",
+ "radius": 2,
+ "w": 2.4,
+ "h": 1.2,
+ "target": "https://www.youtube.com/watch?v=VIDEO_ID",
+ "spawn": "",
+ "confirm": false,
+ "private": false,
+ "showName": false,
+ "mesh": "",
+ "frame": true
+}
+```
 
 Dans une région en tuiles, une zone liée retrouve son objet grâce à l'étiquette `extras.ref` que `glb2tiles.py` écrit dans les objets des tuiles. Cette étiquette est dans les fichiers `.glb` des tuiles, **pas** dans `NOM.zones.json`.
 

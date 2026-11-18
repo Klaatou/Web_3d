@@ -175,7 +175,7 @@ There are **eight kinds** of zones (`type` field): `"spawn"` (arrival), `"portal
 | `cone`        | yes / no | (absent: follows the trigger) | marker (cone) above the zone: `true` always shows it, even for an "on click" zone; `false` never shows it; absent: a cone for the portals, the radios, the music zones and the links triggered by walking into them (`"enter"` or `"both"`). The T key hides all cones. No effect on an arrival (`--show-spawns`) or on a picture; the key is written only when it is `true` or `false` |
 | `mesh`        | text     | `""`          | zone **linked to an object** of the model: its name, or `name#number` when several objects have that name; the object becomes clickable. Never for an arrival |
 
-The sample contains ten zones, one for each case:
+The sample contains fourteen zones, one for each case:
 
 | `id`              | Kind    | What it shows                                                                                 |
 | ----------------- | ------- | --------------------------------------------------------------------------------------------- |
@@ -188,8 +188,238 @@ The sample contains ten zones, one for each case:
 | `door-info`       | link    | linked to the model's `Door#2` object                                                         |
 | `back-home`       | portal  | name shown above the zone (`showName`)                                                        |
 | `painting-1`      | image   | picture on a wall: file `paintings/painting-1.jpg`, height from the image                     |
-| `dance-floor`     | radio   | stream `https://ADRESSE/flux` played within 25 m while walking (§ 5.19)                       |
+| `dance-floor`     | radio   | two streams (`streams`) played within 25 m while walking (§ 5.19)                             |
 | `ambiance`        | music   | sound files of the `audio` folder (with `audio/playlist.json`), played within 20 m while walking (§ 5.20) |
+| `screen-clip`     | video   | screen on a wall: one file (`clip.mp4`), with sound (§ 5.21)                                  |
+| `screen-list`     | video   | screen on a wall: a list, the `videos` folder (with `videos/playlist.json`) (§ 5.21)          |
+| `video-page`      | link    | YouTube address opened in a floating window of the page (`frame`, § 5.7.1)                    |
+
+**One example per multimedia kind.** A JSON file does not accept comments: each example has its title just above it, and its `id` says what it shows. These are complete zones, written the way the page writes them: the optional keys (`sound`, `frame`, `link`, `cone`, `folder`, `tracks`, `streams`) only appear when filled in. A zone is added to the list of the `NOM.zones.json` file, inside the brackets of the `[ ... ]` list.
+
+**Video screen, one single file, with sound**
+
+```json
+{
+ "id": "screen-clip",
+ "type": "video",
+ "label": "Welcome video",
+ "x": 20,
+ "y": 24,
+ "z": -40,
+ "yaw": 3.14,
+ "shape": "ring",
+ "trigger": "click",
+ "radius": 20,
+ "w": 4,
+ "h": 0,
+ "target": "clip.mp4",
+ "spawn": "",
+ "confirm": false,
+ "private": false,
+ "showName": false,
+ "mesh": "",
+ "sound": true
+}
+```
+
+**Video screen, a list read from the folder (`playlist.json`)**
+
+```json
+{
+ "id": "screen-list",
+ "type": "video",
+ "label": "Videos of the region",
+ "x": 25,
+ "y": 24,
+ "z": -40,
+ "yaw": 3.14,
+ "shape": "ring",
+ "trigger": "click",
+ "radius": 30,
+ "w": 3.2,
+ "h": 0,
+ "target": "",
+ "spawn": "",
+ "confirm": false,
+ "private": false,
+ "showName": false,
+ "mesh": "",
+ "folder": "videos"
+}
+```
+
+**Video screen, a list written in the zone (`tracks`)**
+
+```json
+{
+ "id": "screen-tracks",
+ "type": "video",
+ "label": "Trailers",
+ "x": 25,
+ "y": 24,
+ "z": -38,
+ "yaw": 3.14,
+ "shape": "ring",
+ "trigger": "click",
+ "radius": 30,
+ "w": 3.2,
+ "h": 1.8,
+ "target": "",
+ "spawn": "",
+ "confirm": false,
+ "private": false,
+ "showName": false,
+ "mesh": "",
+ "tracks": [
+  "01-trailer.mp4",
+  "https://ADRESSE/clip2.mp4"
+ ],
+ "sound": true
+}
+```
+
+**Music: the sound files of a folder**
+
+```json
+{
+ "id": "ambiance",
+ "type": "audio",
+ "label": "Ambient music",
+ "x": 50,
+ "y": 22,
+ "z": -45,
+ "yaw": 0,
+ "shape": "ring",
+ "trigger": "click",
+ "radius": 20,
+ "w": 2.4,
+ "h": 1.2,
+ "target": "",
+ "spawn": "",
+ "confirm": false,
+ "private": false,
+ "showName": false,
+ "mesh": "",
+ "folder": "audio",
+ "cone": true
+}
+```
+
+**Music: a list written in the zone (`tracks`)**
+
+```json
+{
+ "id": "ambiance-2",
+ "type": "audio",
+ "label": "Cafe music",
+ "x": 52,
+ "y": 22,
+ "z": -45,
+ "yaw": 0,
+ "shape": "ring",
+ "trigger": "click",
+ "radius": 15,
+ "w": 2.4,
+ "h": 1.2,
+ "target": "",
+ "spawn": "",
+ "confirm": false,
+ "private": false,
+ "showName": false,
+ "mesh": "",
+ "tracks": [
+  "01-intro.mp3",
+  "https://ADRESSE/son.mp3"
+ ]
+}
+```
+
+**Radio: several streams (`streams`, the name first)**
+
+```json
+{
+ "id": "dance-floor",
+ "type": "cast",
+ "label": "Dance floor radio",
+ "x": 60,
+ "y": 22,
+ "z": -30,
+ "yaw": 0,
+ "shape": "ring",
+ "trigger": "click",
+ "radius": 25,
+ "w": 2.4,
+ "h": 1.2,
+ "target": "",
+ "spawn": "",
+ "confirm": false,
+ "private": false,
+ "showName": false,
+ "mesh": "",
+ "streams": [
+  [
+   "Main stream",
+   "https://ADRESSE/flux"
+  ],
+  [
+   "",
+   "https://ADRESSE/flux2"
+  ]
+ ]
+}
+```
+
+**Picture with a link (`link`)**
+
+```json
+{
+ "id": "painting-1",
+ "type": "image",
+ "label": "Painting 1",
+ "x": 118.5,
+ "y": 27.2,
+ "z": -85.98,
+ "yaw": 0,
+ "shape": "ring",
+ "trigger": "click",
+ "radius": 2,
+ "w": 1.5,
+ "h": 0,
+ "target": "paintings/painting-1.jpg",
+ "spawn": "",
+ "confirm": false,
+ "private": false,
+ "showName": false,
+ "mesh": "",
+ "link": "gallery.html"
+}
+```
+
+**Link in a floating window (`frame`)**
+
+```json
+{
+ "id": "video-page",
+ "type": "url",
+ "label": "Presentation video",
+ "x": 8,
+ "y": 22,
+ "z": -24,
+ "yaw": 0,
+ "shape": "board",
+ "trigger": "click",
+ "radius": 2,
+ "w": 2.4,
+ "h": 1.2,
+ "target": "https://www.youtube.com/watch?v=VIDEO_ID",
+ "spawn": "",
+ "confirm": false,
+ "private": false,
+ "showName": false,
+ "mesh": "",
+ "frame": true
+}
+```
 
 In a tiled region, a linked zone finds its object thanks to the `extras.ref` tag that `glb2tiles.py` writes in the objects of the tiles. This tag is in the tiles' `.glb` files, **not** in `NOM.zones.json`.
 

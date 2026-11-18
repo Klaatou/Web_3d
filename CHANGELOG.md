@@ -6,6 +6,13 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.12.0)
 
+### 18/11/2026: multimedia zone examples (JSON) and sample file brought up to date
+
+- **Requested by Klaatou**: JSON block examples with all the parameters of the multimedia zones.
+- **`REFERENCE_JSON.md`** (FR and EN, § 11.4): eight complete examples (video screen with one file and sound, with a list read from a folder, with `tracks`; music with a folder, with `tracks`; radio with several `streams`; picture with `link`; link with `frame`), each under a title (JSON has no comments: the title and the `id` say what it shows). The sample table goes to fourteen zones.
+- **`docs/samples/region.zones.sample.json`**: 14 zones. **Updated**: the `dance-floor` radio uses `streams` (it still had the old `target` key); **added**: `ambiance` (`audio`), `screen-clip` and `screen-list` (`video`), `video-page` (`url` with `frame`). The file is written by `clean_zones`, so it is identical to what the page writes. `tests/samples.py`: 13 public zones instead of 9.
+- **Finding**: on `main`, three checks of `tests/samples.py` were already failing (zones "already clean", "one zone of each kind", `perso` profile) because the sample had stayed at the 1.10.35 state; they pass with this batch.
+- No code touched: `dist\` does not change. `VERSION`: `1.12.16`.
 ### 18/11/2026: documents of batches 1.12.3 to 1.12.14 (link zones in a floating window, video screens)
 
 - **Requested by Klaatou**: bring the documents that have been behind since batch 1.12.3 up to date in one go.
