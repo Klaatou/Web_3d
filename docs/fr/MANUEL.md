@@ -1859,47 +1859,335 @@ Test : `python tests/tuiles.py` (région synthétique de 16 tuiles, Chromium san
 
 ## 13. Annexe : ce que chaque version a apporté
 
-Le détail, version par version, est dans `HISTORIQUE.md` (récit) et `CHANGELOG.fr.md` (liste complète, avec les tests). Le tableau ci-dessous dit seulement où chaque ajout se trouve aujourd'hui dans ce manuel.
+Le détail, version par version, est dans `HISTORIQUE.md` (récit) et `CHANGELOG.fr.md` (liste complète, avec les tests). La liste ci-dessous (un titre en gras par version ou groupe de lots) dit seulement où chaque ajout se trouve aujourd'hui dans ce manuel.
 
-| Version | Ce qu'elle a apporté (renvois au manuel) |
-| --- | --- |
-| Nouveautés de la v33 (22/10/2026) | Démarrage avec une arrivée (`#spawn=`, `#pos=`) dans une région en tuiles (§ 8.6); Arrivée par défaut et retour à l'arrivée (§ 7.21); Marqueurs de zones dans la page exportée (§ 7.14); Vol, trois vues, « Aller à » (§ 7.7); Chat (§ 7.25); Couleur de l'avatar (client et serveur) (§ 7.29); Adresses IP dans le journal : `--log-ip raw` (§ 10.22); Enregistrer les zones directement dans le dossier de la région (viewer) (§ 5.15); `glb2html.py --tiles --zones` avec le fichier déjà en place (§ 8.7); Mettre à jour une région déjà publiée (§ 6.14) |
-| Nouveautés de la v34 (22/10/2026) | Panneau d'aide sélectionnable et bloc d'état (§ 7.38); Zone de survol et de clic des marqueurs (§ 7.15); Vol (§ 7.8); Souris libre après Échap (§ 7.10); Couleur en direct (§ 7.30); `glb2html.py --update` : mettre à jour une région sans rien ressaisir (§ 6.15); Pseudo, lien personnel, page de lancement (§ 7.28) |
-| Nouveautés de la v35 (22/10/2026) | Aide en groupes, panneaux repliables (§ 7.39); Touches Firestorm / touches de cette page (§ 7.2); Vol et saut (§ 7.5); Troisième personne (§ 7.6); Infobulle et clic des zones : `--zone-info-dist` (§ 7.16); Copier dans le presse-papiers (§ 7.23); `--update` et la carte des mondes (§ 9.3); Créer la carte des mondes (§ 9.2); Caméra libre et molette (§ 7.9) |
-| Nouveautés de la v36 (23/10/2026) | Touches : F et P, E, vol (§ 7.3); Disposition du clavier : AZERTY ou QWERTY (§ 7.4); Aide et informations : trois temps (§ 7.40); Repères de portail (cônes) : `--zone-cone`, touche T (§ 7.17); Arrivée occupée (§ 7.19); Sons (§ 7.31); Copier ma position, « Aller à » (§ 7.22); Langue de la page (§ 7.49); Ajouter une langue (sans toucher au code) (§ 7.51); Langue du viewer (§ 5.17); Langue des outils Python : `--lang`, `WEB3D_LANG` (§ 7.50) |
-| Nouveautés de la v37 (23/10/2026) | Indicateur de course, boussole, fenêtres redimensionnables, touche O (§ 7.12); Repère de portail (cône) : taille constante, distance (§ 7.18); Arrivée occupée, améliorée (§ 7.20); Pseudo cité : clignotement continu (§ 7.27); Paramètres du lien après `#` (§ 7.52); Historique du chat (§ 10.21); Région par défaut (`default.json`) (§ 6.7); Dossier lib : `--lib-url` (§ 6.5); Régions dans des sous-dossiers (§ 6.6) |
-| Nouveautés de la v39 (23/10/2026) | Bouton « Copier le diagnostic » (§ 7.53) |
-| Nouveautés de la v40 (24/10/2026) | Fenêtre « Arrivées » (touche L) (§ 7.24); Bouton « Recentrer la vue » (§ 7.11); Lien « Manuel complet » et bulle du diagnostic (§ 7.41) |
-| Nouveautés de la v41 (24/10/2026) | Bulles des fenêtres (§ 7.42); Fenêtres déplaçables (§ 7.43); Disposition retenue et fichier de disposition (§ 7.44) |
-| Nouveautés de la v42 (24/10/2026) | Rendu léger (§ 7.45); Réglages fins (§ 7.46); Proposition automatique (§ 7.47); Option `--light` (§ 6.12); Fenêtre Réglages plus étroite (§ 7.48); Diagnostic (§ 7.54) |
-| Nouveautés de la v45 (24/10/2026) | La page dit pourquoi la présence s'est coupée (§ 7.57); Diagnostic (§ 7.55); Test de la présence (§ 10.23); Une seule ligne pour le dossier `lib` (§ 6.3); `--update` garde la ligne (§ 6.4); `dist\index.html` (§ 6.8); Navigateurs (§ 7.59) |
-| Nouveautés de la v46 (25/10/2026) | Ligne d'état (§ 7.32); Flèches à l'écran (§ 7.33); Cacher ou montrer les flèches (§ 7.34); Écran tactile (téléphone, tablette) (§ 7.35); Bulles (§ 7.36); Compteur du chat (§ 7.26); Diagnostic (§ 7.56); Une coquille pour tout un site (§ 6.2); Non testé (§ 7.37) |
-| Nouveautés de la v47 (25/10/2026) | La tuile de la carte (§ 9.4); Adresse facultative (§ 9.5); `regions.json` avec en-tête (§ 9.6); Deux façons de faire la carte (§ 9.7); Serveur de présence (§ 10.1); Non testé (§ 9.8) |
-| Nouveautés de la v48 (25/10/2026) : journal des visites | À quoi il sert (§ 10.2); Côté hôte : le serveur de présence (§ 10.3); Côté créateur : la fenêtre « Journal des visites » (§ 10.4); Ce qui est compté (§ 10.5); Données personnelles (§ 10.6); Fichiers (§ 10.7); Non testé (§ 10.8) |
-| Nouveautés de la v49 (25/10/2026) : mise à jour de `regions.json` depuis le dossier des sites | La commande (§ 9.9); Ce que fait le parcours (§ 9.10); Les vignettes (§ 9.11); Non testé (§ 9.12) |
-| Nouveautés de la v50 (25/10/2026) : la carte des mondes dans le viewer | Importer et exporter `regions.json` (§ 9.13); Ajouter ou mettre à jour cette région (§ 9.14); Non testé (§ 9.15) |
-| Nouveautés de la v51 (25/10/2026) : créateurs sur le serveur de présence | À quoi ça sert (§ 10.9); Le fichier des créateurs (§ 10.10); Ce que voit le visiteur (§ 10.11); Console et journal (§ 10.12); Accueillir un créateur (§ 10.13); Limites (§ 10.14); Non testé (§ 10.15); Connexions vides (§ 10.16); Adresse de présence « même nom que la page » (§ 10.17) |
-| Nouveautés de la v52 (25/10/2026) | `carte.html` : décompte, total, deux lignes (§ 9.16); Surveillance des arrivées (son et repère) (§ 9.17); Vignette agrandie au survol (§ 9.18); Case « Afficher la mer » (§ 9.19); Serveur de présence : requêtes HTTP ordinaires (§ 10.18); Région en tuiles renommée (§ 8.9); Non testé (§ 9.20) |
-| Ajouts de la 1.0.0 (après la v52) | Icône des pages (`favicon.ico`) (§ 6.9); Pseudos : la commande `oublier` (§ 10.19); Adresses IPv6 : limite et bannissements par préfixe `/64` (§ 10.20); Essais de connexion à la présence (§ 7.58); Numérotation des versions (§ 13.1) |
-| Ajouts de la 1.1.0 (après la 1.0.0) | Zone `image` : un tableau sur un mur (§ 5.11); Éditeur : dossier de la région et aperçu des images (§ 5.12); Matériaux rendus pleins : `--solid-materials` (§ 6.13); Pointeur : le nom du bâtiment (§ 7.61); Quand WebGL est indisponible (§ 7.60); Versions : un numéro par fichier, marque, commande `version` (§ 13.2); Serveur de présence : console et lignes « requête http » (§ 10.24); Documents ajoutés ou revus depuis la 1.0.0 (§ 13.3); Essayé et non essayé (§ 5.18) |
-| Ajouts de la 1.4 (lots 1.4.2 à 1.4.7) | La ligne des tuiles (§ 8.8); « À propos de la région » (§ 6.10); Compresser les tuiles : `glb2tiles.py --compress` (§ 4.2); Titre affiché : la clé `title` (§ 6.11); `--scan-sites --prune-missing` (§ 9.21); Essayé et non essayé (§ 6.17) |
-| Ajouts de la 1.4 (lots 1.4.8 à 1.4.13) | « À propos de la région » : liens cliquables et bouton « Aide des visiteurs » (§ 6.10); manuel refait par thèmes en 13 chapitres (§ 1.3); chaque outil Python n'embarque que ses propres textes (§ 7.50); cartes des paquets : `carte.html`, `regions.json`, `vignette.jpg` (`GUIDE.md`) |
-| Ajouts de la 1.5 (1.5.0 à 1.5.4) | Version affichée par les paquets : celle de la release (§ 13.2); zones `url` et `image` : liens `hop://` (chapitre 5); tableaux et légendes lisibles des deux côtés (§ 5.11) |
-| Ajouts de la 1.6.0 | Panneau `zhop` « Lien vers OpenSim » des paquets (§ 5.11) |
-| Ajouts de la 1.7.0 (lots 1.6.1 à 1.6.19) | `extraire_batiments.py` (§ 3.7) et `iar2oar.py` (§ 3.8); référence des fichiers JSON à part (`REFERENCE_JSON.md`) et `INDEX.md`; mise à jour d'un paquet déjà publié (`PROCEDURES_SIMPLES.md` § 10); icône « Réalisé avec Web_3d » (§ 7.62); logo en icône d'onglet (§ 6.9); GIF animés (§ 5.11); lignes « Animations GIF » et « Version : page … » du diagnostic (§ 7.53) |
-| Ajouts de la 1.8.0 (lots 1.7.1 à 1.7.22) | `diag_carte.py` : diagnostic des pseudos de la carte (§ 9.22) ; essais réels de `extraire_batiments.py` et d'`iar2oar.py` (§ 3.7, § 3.8) ; GIF animés vérifiés sous Windows et Firefox (§ 5.11) ; schémas SVG du README (`DEVELOPPEMENT.md` § 6) ; lanceur graphique `web3d_gui.py` avec raccourcis Windows (§ 3.9) ; lien vers le serveur Discord |
-| Ajouts de la 1.9.0 (lots 1.8.1 à 1.8.18) | Bouton « Promenade (P) » qui clignote (§ 7.63) ; lien Discord dans la fenêtre d'aide (§ 7.64) ; plus de fond noir à l'ouverture par lien sur une région en tuiles (§ 8.6) ; convoar fourni dans `dist/convoar/` (§ 3) ; `build.py` refait `docs/REFERENCE_OPTIONS.md` ; dossier `deploy/` ; liste d'exemples d'usages de base dans le lanceur graphique (§ 3.9) |
-| Ajouts de la 1.10.0 (lots 1.9.1 à 1.9.23) | Matériaux PBR d'OpenSim 0.9.3 appliqués par `oar2glb.py` : `--no-pbr`, `--pbr-size` (§ 3.10) ; conversion sous Linux avec Mono (§ 3.11) ; curseur « Hauteur de la mer » dans Réglages (§ 9.19) ; le lanceur graphique ouvre `oar2glb` sans console ; `tests/tout.py` (toute la suite en une commande, `DEVELOPPEMENT.md`) ; `CHANGELOG.fr.md` et `CHANGELOG.md` (anglais) |
-| Ajouts de la 1.11.0, 1re partie (lots 1.10.1 à 1.10.17) | Python 3.14 : `glb2html.py` s'ouvre de nouveau, Python 3.10 à 3.14 (§ 3.9) ; lanceur : icône de la fenêtre, `glb-stats`, ligne « Fonction » (§ 3.9) ; plus de pause « Entrée » après `--help` (§ 3) ; sortie des outils redirigée dans un fichier Windows (cp1252) : le caractère impossible devient `?` ; carte : bloc replié « Clé des pseudos » (§ 9.16) ; reflets métalliques (§ 7.65) ; diagnostic dans une fenêtre (§ 7.53) ; journal des visites : pseudos des visiteurs restés en vue globale (§ 10.3) ; option `--no-credit` (§ 7.62) ; la mer n'est plus comptée comme métal (§ 7.65) ; zones lien web déclenchées en marchant dedans et clé `cone` par zone (§ 5.7.1, § 5.8, § 7.17) ; démo Sandbox_BMoG (PBR, zone de saut vers BloodMoon) |
-| Ajouts de la 1.11.0, 2e partie (lots 1.10.18 à 1.10.29) | Réduction des textures ordinaires `--tex-size` et `--tex-quality`, tableau de leurs tailles, `--tex-only` (§ 3.12) ; niveau d'eau de l'OAR et mer automatique `seaM`, `--sea-m`, `--water-from` (§ 3.13, § 9.19) ; nouvel outil `oars2site.py` (document CONVERTIR_OARS.md), qui copie `carte.html` dans le site ; serveur de présence : registre des pseudos borné `--max-names` (§ 10.19) et dernière adresse de l'en-tête du relais (§ 10.24) ; tests `presence_noms.py`, `editeur_cone.py`, `tex_size.py`, `tex_tableau.py`, `tex_seul.py`, `oars2site.py`, `mer_auto.py` |
-| Ajouts de la 1.11.0, 3e partie (lots 1.10.30 à 1.10.38) | Lanceur : boutons Fichier et Dossier pour `OAR` et `GLB`, pas de bouton Dossier pour un seul fichier (§ 3.9) ; **zones radio** `cast` : flux Icecast / SHOUTcast à portée en promenade, volume par distance, cône par défaut (§ 5.19), ligne « Radio » du bloc État et cases Sons / Radio des zones sans présence (§ 7.66), titre du morceau lu dans le flux par le serveur (`--radios`, § 10.25) ; serveur : plus de `KeyError` à deux déconnexions simultanées (§ 10.25) ; promeneur muet sans position depuis `--idle-walk` minutes, ni compté ni montré (§ 10.26) |
-| Ajouts de la 1.11.1 et de la 1.11.2 (lots 1.11.1 à 1.11.3) | **bloc de chat repliable**, touche **B** (§ 7.25, § 7.1, § 7.2) ; aide : touches et titres en gras (§ 7.39) ; la page ne demande le titre de la radio que si on l'écoute (§ 5.19, § 10.25) ; **nouvelle icône du projet** (globe « Web 3D » : `favicon.ico` et icône « Réalisé avec Web_3d »)                                                                                                                                                                                                                                                                         |
-| Ajouts de la 1.11.4 (lots 1.11.4 et 1.11.5) | **zones audio** `audio` : les fichiers son d'un dossier jouent en boucle à portée en promenade, ordre alphabétique (§ 5.20) ; `playlist.json` faite par `glb2html.py --audio-list` ou par le bouton du viewer (§ 5.20, § 6) ; case « Musique des zones » exclusive avec « Radio des zones » et ligne « Musique » du bloc État (§ 7.66) ; tutoriels `PROCEDURES_SIMPLES.md` § 14 (radio) et § 15 (playlist) |
-| Ajouts de la 1.11.6 à la 1.11.12 (lots 1.11.6 à 1.11.12) | message des reflets « brillants ou métalliques » (§ 7.65) ; icône des onglets sans l'anneau jaune (§ 6.9) ; tutoriels `PROCEDURES_SIMPLES.md` § 14 à § 16 (radio, playlist, mettre à jour les zones d'une région en ligne) ; zones audio : formats, https, `tracks` (§ 5.20) ; carte des mondes : la grille suit la largeur de la page (§ 9) ; **jamais deux terrains superposés** : `oar2glb.py` 1.11.11 et `glb2tiles.py` 1.11.12 (§ 3.3) |
-| Ajouts de la 1.11.13 à la 1.11.23 (lots 1.11.13 à 1.11.23) | **radio à plusieurs flux** (clés `urls` et `labels`, devenues `streams` en 1.11.26), liste des flux et erreur mémorisée flux par flux (§ 5.19) ; case pour couper la radio ou la musique sur la ligne du bloc État (§ 7.66) ; boutons **⏮** et **⏭** et compteur n/N pour la playlist (§ 5.20) ; ligne qui donne la distance à la source, reste affichée hors de portée jusqu'à 2 fois la portée, distance qui clignote (§ 5.19, § 5.20) ; info-bulle sur les lignes Radio et Musique (§ 7.66) |
-| Ajouts de la 1.11.24 à la 1.11.29 (lots 1.11.24 à 1.11.29) | **pavé de flèches déplaçable** (§ 7.33) ; **fenêtre Son** (radio et musique, flèche ▲, clic sur le cône, titre avec le type de la zone, dans la disposition) (§ 7.66) ; **`streams`** : flux de la radio en paires `[label, url]` (§ 5.19, `REFERENCE_JSON.md`) |
-| Ajouts de la 1.11.30 à la 1.11.35 (lots 1.11.30 à 1.11.35) | curseur de volume de la fenêtre Son à la couleur des autres curseurs (§ 7.66) ; `CREATEURS.md` : flux radio et liste `--radios` ; vue d'ensemble à jour (fenêtre Son, `streams`, volume) ; documents et mécanique de livraison (`REPRISE.md` § 8) |
-| Ajouts de la 1.12.3 à la 1.12.15 (lots 1.12.3 à 1.12.15) | **zones lien en fenêtre flottante** (`frame`, YouTube et listes, ouverte à gauche, ↗ qui ferme) (§ 5.7.1) ; **zones `video`** : écran sur un mur, portée depuis le visiteur, son, clic pause / lecture, listes de vidéos et `--video-list`, barre de pistes escamotable (§ 5.21) ; **radio et musique en vue d'ensemble**, portée depuis la caméra (§ 5.21) ; documents des lots 1.12.3 à 1.12.14 (`REFERENCE_JSON`, manuel, `PROCEDURES_SIMPLES.md` § 17, historiques) |
+**Nouveautés de la v33 (22/10/2026)**
+
+- Démarrage avec une arrivée (`#spawn=`, `#pos=`) dans une région en tuiles (§ 8.6)
+- Arrivée par défaut et retour à l'arrivée (§ 7.21)
+- Marqueurs de zones dans la page exportée (§ 7.14)
+- Vol, trois vues, « Aller à » (§ 7.7)
+- Chat (§ 7.25)
+- Couleur de l'avatar (client et serveur) (§ 7.29)
+- Adresses IP dans le journal : `--log-ip raw` (§ 10.22)
+- Enregistrer les zones directement dans le dossier de la région (viewer) (§ 5.15)
+- `glb2html.py --tiles --zones` avec le fichier déjà en place (§ 8.7)
+- Mettre à jour une région déjà publiée (§ 6.14)
+
+**Nouveautés de la v34 (22/10/2026)**
+
+- Panneau d'aide sélectionnable et bloc d'état (§ 7.38)
+- Zone de survol et de clic des marqueurs (§ 7.15)
+- Vol (§ 7.8)
+- Souris libre après Échap (§ 7.10)
+- Couleur en direct (§ 7.30)
+- `glb2html.py --update` : mettre à jour une région sans rien ressaisir (§ 6.15)
+- Pseudo, lien personnel, page de lancement (§ 7.28)
+
+**Nouveautés de la v35 (22/10/2026)**
+
+- Aide en groupes, panneaux repliables (§ 7.39)
+- Touches Firestorm / touches de cette page (§ 7.2)
+- Vol et saut (§ 7.5)
+- Troisième personne (§ 7.6)
+- Infobulle et clic des zones : `--zone-info-dist` (§ 7.16)
+- Copier dans le presse-papiers (§ 7.23)
+- `--update` et la carte des mondes (§ 9.3)
+- Créer la carte des mondes (§ 9.2)
+- Caméra libre et molette (§ 7.9)
+
+**Nouveautés de la v36 (23/10/2026)**
+
+- Touches : F et P, E, vol (§ 7.3)
+- Disposition du clavier : AZERTY ou QWERTY (§ 7.4)
+- Aide et informations : trois temps (§ 7.40)
+- Repères de portail (cônes) : `--zone-cone`, touche T (§ 7.17)
+- Arrivée occupée (§ 7.19)
+- Sons (§ 7.31)
+- Copier ma position, « Aller à » (§ 7.22)
+- Langue de la page (§ 7.49)
+- Ajouter une langue (sans toucher au code) (§ 7.51)
+- Langue du viewer (§ 5.17)
+- Langue des outils Python : `--lang`, `WEB3D_LANG` (§ 7.50)
+
+**Nouveautés de la v37 (23/10/2026)**
+
+- Indicateur de course, boussole, fenêtres redimensionnables, touche O (§ 7.12)
+- Repère de portail (cône) : taille constante, distance (§ 7.18)
+- Arrivée occupée, améliorée (§ 7.20)
+- Pseudo cité : clignotement continu (§ 7.27)
+- Paramètres du lien après `#` (§ 7.52)
+- Historique du chat (§ 10.21)
+- Région par défaut (`default.json`) (§ 6.7)
+- Dossier lib : `--lib-url` (§ 6.5)
+- Régions dans des sous-dossiers (§ 6.6)
+
+**Nouveautés de la v39 (23/10/2026)**
+
+- Bouton « Copier le diagnostic » (§ 7.53)
+
+**Nouveautés de la v40 (24/10/2026)**
+
+- Fenêtre « Arrivées » (touche L) (§ 7.24)
+- Bouton « Recentrer la vue » (§ 7.11)
+- Lien « Manuel complet » et bulle du diagnostic (§ 7.41)
+
+**Nouveautés de la v41 (24/10/2026)**
+
+- Bulles des fenêtres (§ 7.42)
+- Fenêtres déplaçables (§ 7.43)
+- Disposition retenue et fichier de disposition (§ 7.44)
+
+**Nouveautés de la v42 (24/10/2026)**
+
+- Rendu léger (§ 7.45)
+- Réglages fins (§ 7.46)
+- Proposition automatique (§ 7.47)
+- Option `--light` (§ 6.12)
+- Fenêtre Réglages plus étroite (§ 7.48)
+- Diagnostic (§ 7.54)
+
+**Nouveautés de la v45 (24/10/2026)**
+
+- La page dit pourquoi la présence s'est coupée (§ 7.57)
+- Diagnostic (§ 7.55)
+- Test de la présence (§ 10.23)
+- Une seule ligne pour le dossier `lib` (§ 6.3)
+- `--update` garde la ligne (§ 6.4)
+- `dist\index.html` (§ 6.8)
+- Navigateurs (§ 7.59)
+
+**Nouveautés de la v46 (25/10/2026)**
+
+- Ligne d'état (§ 7.32)
+- Flèches à l'écran (§ 7.33)
+- Cacher ou montrer les flèches (§ 7.34)
+- Écran tactile (téléphone, tablette) (§ 7.35)
+- Bulles (§ 7.36)
+- Compteur du chat (§ 7.26)
+- Diagnostic (§ 7.56)
+- Une coquille pour tout un site (§ 6.2)
+- Non testé (§ 7.37)
+
+**Nouveautés de la v47 (25/10/2026)**
+
+- La tuile de la carte (§ 9.4)
+- Adresse facultative (§ 9.5)
+- `regions.json` avec en-tête (§ 9.6)
+- Deux façons de faire la carte (§ 9.7)
+- Serveur de présence (§ 10.1)
+- Non testé (§ 9.8)
+
+**Nouveautés de la v48 (25/10/2026) : journal des visites**
+
+- À quoi il sert (§ 10.2)
+- Côté hôte : le serveur de présence (§ 10.3)
+- Côté créateur : la fenêtre « Journal des visites » (§ 10.4)
+- Ce qui est compté (§ 10.5)
+- Données personnelles (§ 10.6)
+- Fichiers (§ 10.7)
+- Non testé (§ 10.8)
+
+**Nouveautés de la v49 (25/10/2026) : mise à jour de `regions.json` depuis le dossier des sites**
+
+- La commande (§ 9.9)
+- Ce que fait le parcours (§ 9.10)
+- Les vignettes (§ 9.11)
+- Non testé (§ 9.12)
+
+**Nouveautés de la v50 (25/10/2026) : la carte des mondes dans le viewer**
+
+- Importer et exporter `regions.json` (§ 9.13)
+- Ajouter ou mettre à jour cette région (§ 9.14)
+- Non testé (§ 9.15)
+
+**Nouveautés de la v51 (25/10/2026) : créateurs sur le serveur de présence**
+
+- À quoi ça sert (§ 10.9)
+- Le fichier des créateurs (§ 10.10)
+- Ce que voit le visiteur (§ 10.11)
+- Console et journal (§ 10.12)
+- Accueillir un créateur (§ 10.13)
+- Limites (§ 10.14)
+- Non testé (§ 10.15)
+- Connexions vides (§ 10.16)
+- Adresse de présence « même nom que la page » (§ 10.17)
+
+**Nouveautés de la v52 (25/10/2026)**
+
+- `carte.html` : décompte, total, deux lignes (§ 9.16)
+- Surveillance des arrivées (son et repère) (§ 9.17)
+- Vignette agrandie au survol (§ 9.18)
+- Case « Afficher la mer » (§ 9.19)
+- Serveur de présence : requêtes HTTP ordinaires (§ 10.18)
+- Région en tuiles renommée (§ 8.9)
+- Non testé (§ 9.20)
+
+**Ajouts de la 1.0.0 (après la v52)**
+
+- Icône des pages (`favicon.ico`) (§ 6.9)
+- Pseudos : la commande `oublier` (§ 10.19)
+- Adresses IPv6 : limite et bannissements par préfixe `/64` (§ 10.20)
+- Essais de connexion à la présence (§ 7.58)
+- Numérotation des versions (§ 13.1)
+
+**Ajouts de la 1.1.0 (après la 1.0.0)**
+
+- Zone `image` : un tableau sur un mur (§ 5.11)
+- Éditeur : dossier de la région et aperçu des images (§ 5.12)
+- Matériaux rendus pleins : `--solid-materials` (§ 6.13)
+- Pointeur : le nom du bâtiment (§ 7.61)
+- Quand WebGL est indisponible (§ 7.60)
+- Versions : un numéro par fichier, marque, commande `version` (§ 13.2)
+- Serveur de présence : console et lignes « requête http » (§ 10.24)
+- Documents ajoutés ou revus depuis la 1.0.0 (§ 13.3)
+- Essayé et non essayé (§ 5.18)
+
+**Ajouts de la 1.4 (lots 1.4.2 à 1.4.7)**
+
+- La ligne des tuiles (§ 8.8)
+- « À propos de la région » (§ 6.10)
+- Compresser les tuiles : `glb2tiles.py --compress` (§ 4.2)
+- Titre affiché : la clé `title` (§ 6.11)
+- `--scan-sites --prune-missing` (§ 9.21)
+- Essayé et non essayé (§ 6.17)
+
+**Ajouts de la 1.4 (lots 1.4.8 à 1.4.13)**
+
+- « À propos de la région » : liens cliquables et bouton « Aide des visiteurs » (§ 6.10)
+- manuel refait par thèmes en 13 chapitres (§ 1.3)
+- chaque outil Python n'embarque que ses propres textes (§ 7.50)
+- cartes des paquets : `carte.html`, `regions.json`, `vignette.jpg` (`GUIDE.md`)
+
+**Ajouts de la 1.5 (1.5.0 à 1.5.4)**
+
+- Version affichée par les paquets : celle de la release (§ 13.2)
+- zones `url` et `image` : liens `hop://` (chapitre 5)
+- tableaux et légendes lisibles des deux côtés (§ 5.11)
+
+**Ajouts de la 1.6.0**
+
+- Panneau `zhop` « Lien vers OpenSim » des paquets (§ 5.11)
+
+**Ajouts de la 1.7.0 (lots 1.6.1 à 1.6.19)**
+
+- `extraire_batiments.py` (§ 3.7) et `iar2oar.py` (§ 3.8)
+- référence des fichiers JSON à part (`REFERENCE_JSON.md`) et `INDEX.md`
+- mise à jour d'un paquet déjà publié (`PROCEDURES_SIMPLES.md` § 10)
+- icône « Réalisé avec Web_3d » (§ 7.62)
+- logo en icône d'onglet (§ 6.9)
+- GIF animés (§ 5.11)
+- lignes « Animations GIF » et « Version : page … » du diagnostic (§ 7.53)
+
+**Ajouts de la 1.8.0 (lots 1.7.1 à 1.7.22)**
+
+- `diag_carte.py` : diagnostic des pseudos de la carte (§ 9.22)
+- essais réels de `extraire_batiments.py` et d'`iar2oar.py` (§ 3.7, § 3.8)
+- GIF animés vérifiés sous Windows et Firefox (§ 5.11)
+- schémas SVG du README (`DEVELOPPEMENT.md` § 6)
+- lanceur graphique `web3d_gui.py` avec raccourcis Windows (§ 3.9)
+- lien vers le serveur Discord
+
+**Ajouts de la 1.9.0 (lots 1.8.1 à 1.8.18)**
+
+- Bouton « Promenade (P) » qui clignote (§ 7.63)
+- lien Discord dans la fenêtre d'aide (§ 7.64)
+- plus de fond noir à l'ouverture par lien sur une région en tuiles (§ 8.6)
+- convoar fourni dans `dist/convoar/` (§ 3)
+- `build.py` refait `docs/REFERENCE_OPTIONS.md`
+- dossier `deploy/`
+- liste d'exemples d'usages de base dans le lanceur graphique (§ 3.9)
+
+**Ajouts de la 1.10.0 (lots 1.9.1 à 1.9.23)**
+
+- Matériaux PBR d'OpenSim 0.9.3 appliqués par `oar2glb.py` : `--no-pbr`, `--pbr-size` (§ 3.10)
+- conversion sous Linux avec Mono (§ 3.11)
+- curseur « Hauteur de la mer » dans Réglages (§ 9.19)
+- le lanceur graphique ouvre `oar2glb` sans console
+- `tests/tout.py` (toute la suite en une commande, `DEVELOPPEMENT.md`)
+- `CHANGELOG.fr.md` et `CHANGELOG.md` (anglais)
+
+**Ajouts de la 1.11.0, 1re partie (lots 1.10.1 à 1.10.17)**
+
+- Python 3.14 : `glb2html.py` s'ouvre de nouveau, Python 3.10 à 3.14 (§ 3.9)
+- lanceur : icône de la fenêtre, `glb-stats`, ligne « Fonction » (§ 3.9)
+- plus de pause « Entrée » après `--help` (§ 3)
+- sortie des outils redirigée dans un fichier Windows (cp1252) : le caractère impossible devient `?`
+- carte : bloc replié « Clé des pseudos » (§ 9.16)
+- reflets métalliques (§ 7.65)
+- diagnostic dans une fenêtre (§ 7.53)
+- journal des visites : pseudos des visiteurs restés en vue globale (§ 10.3)
+- option `--no-credit` (§ 7.62)
+- la mer n'est plus comptée comme métal (§ 7.65)
+- zones lien web déclenchées en marchant dedans et clé `cone` par zone (§ 5.7.1, § 5.8, § 7.17)
+- démo Sandbox_BMoG (PBR, zone de saut vers BloodMoon)
+
+**Ajouts de la 1.11.0, 2e partie (lots 1.10.18 à 1.10.29)**
+
+- Réduction des textures ordinaires `--tex-size` et `--tex-quality`, tableau de leurs tailles, `--tex-only` (§ 3.12)
+- niveau d'eau de l'OAR et mer automatique `seaM`, `--sea-m`, `--water-from` (§ 3.13, § 9.19)
+- nouvel outil `oars2site.py` (document CONVERTIR_OARS.md), qui copie `carte.html` dans le site
+- serveur de présence : registre des pseudos borné `--max-names` (§ 10.19) et dernière adresse de l'en-tête du relais (§ 10.24)
+- tests `presence_noms.py`, `editeur_cone.py`, `tex_size.py`, `tex_tableau.py`, `tex_seul.py`, `oars2site.py`, `mer_auto.py`
+
+**Ajouts de la 1.11.0, 3e partie (lots 1.10.30 à 1.10.38)**
+
+- Lanceur : boutons Fichier et Dossier pour `OAR` et `GLB`, pas de bouton Dossier pour un seul fichier (§ 3.9)
+- **zones radio** `cast` : flux Icecast / SHOUTcast à portée en promenade, volume par distance, cône par défaut (§ 5.19), ligne « Radio » du bloc État et cases Sons / Radio des zones sans présence (§ 7.66), titre du morceau lu dans le flux par le serveur (`--radios`, § 10.25)
+- serveur : plus de `KeyError` à deux déconnexions simultanées (§ 10.25)
+- promeneur muet sans position depuis `--idle-walk` minutes, ni compté ni montré (§ 10.26)
+
+**Ajouts de la 1.11.1 et de la 1.11.2 (lots 1.11.1 à 1.11.3)**
+
+- **bloc de chat repliable**, touche **B** (§ 7.25, § 7.1, § 7.2)
+- aide : touches et titres en gras (§ 7.39)
+- la page ne demande le titre de la radio que si on l'écoute (§ 5.19, § 10.25)
+- **nouvelle icône du projet** (globe « Web 3D » : `favicon.ico` et icône « Réalisé avec Web_3d »)
+
+**Ajouts de la 1.11.4 (lots 1.11.4 et 1.11.5)**
+
+- **zones audio** `audio` : les fichiers son d'un dossier jouent en boucle à portée en promenade, ordre alphabétique (§ 5.20)
+- `playlist.json` faite par `glb2html.py --audio-list` ou par le bouton du viewer (§ 5.20, § 6)
+- case « Musique des zones » exclusive avec « Radio des zones » et ligne « Musique » du bloc État (§ 7.66)
+- tutoriels `PROCEDURES_SIMPLES.md` § 14 (radio) et § 15 (playlist)
+
+**Ajouts de la 1.11.6 à la 1.11.12 (lots 1.11.6 à 1.11.12)**
+
+- message des reflets « brillants ou métalliques » (§ 7.65)
+- icône des onglets sans l'anneau jaune (§ 6.9)
+- tutoriels `PROCEDURES_SIMPLES.md` § 14 à § 16 (radio, playlist, mettre à jour les zones d'une région en ligne)
+- zones audio : formats, https, `tracks` (§ 5.20)
+- carte des mondes : la grille suit la largeur de la page (§ 9)
+- **jamais deux terrains superposés** : `oar2glb.py` 1.11.11 et `glb2tiles.py` 1.11.12 (§ 3.3)
+
+**Ajouts de la 1.11.13 à la 1.11.23 (lots 1.11.13 à 1.11.23)**
+
+- **radio à plusieurs flux** (clés `urls` et `labels`, devenues `streams` en 1.11.26), liste des flux et erreur mémorisée flux par flux (§ 5.19)
+- case pour couper la radio ou la musique sur la ligne du bloc État (§ 7.66)
+- boutons **⏮** et **⏭** et compteur n/N pour la playlist (§ 5.20)
+- ligne qui donne la distance à la source, reste affichée hors de portée jusqu'à 2 fois la portée, distance qui clignote (§ 5.19, § 5.20)
+- info-bulle sur les lignes Radio et Musique (§ 7.66)
+
+**Ajouts de la 1.11.24 à la 1.11.29 (lots 1.11.24 à 1.11.29)**
+
+- **pavé de flèches déplaçable** (§ 7.33)
+- **fenêtre Son** (radio et musique, flèche ▲, clic sur le cône, titre avec le type de la zone, dans la disposition) (§ 7.66)
+- **`streams`** : flux de la radio en paires `[label, url]` (§ 5.19, `REFERENCE_JSON.md`)
+
+**Ajouts de la 1.11.30 à la 1.11.35 (lots 1.11.30 à 1.11.35)**
+
+- curseur de volume de la fenêtre Son à la couleur des autres curseurs (§ 7.66)
+- `CREATEURS.md` : flux radio et liste `--radios`
+- vue d'ensemble à jour (fenêtre Son, `streams`, volume)
+- documents et mécanique de livraison (`REPRISE.md` § 8)
+
+**Ajouts de la 1.12.3 à la 1.12.15 (lots 1.12.3 à 1.12.15)**
+
+- **zones lien en fenêtre flottante** (`frame`, YouTube et listes, ouverte à gauche, ↗ qui ferme) (§ 5.7.1)
+- **zones `video`** : écran sur un mur, portée depuis le visiteur, son, clic pause / lecture, listes de vidéos et `--video-list`, barre de pistes escamotable (§ 5.21)
+- **radio et musique en vue d'ensemble**, portée depuis la caméra (§ 5.21)
+- documents des lots 1.12.3 à 1.12.14 (`REFERENCE_JSON`, manuel, `PROCEDURES_SIMPLES.md` § 17, historiques)
+
 Tout ce qui suit est dans la **1.1.0** (publiée le 31/10/2026). Le détail, lot par lot, est dans `CHANGELOG.fr.md`.
 
 ### 13.1 Numérotation des versions

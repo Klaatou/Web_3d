@@ -9,12 +9,26 @@ This folder holds **one example of each JSON file** that the page, the viewer, t
 | Example | Real file | What it is for | Reference |
 | --- | --- | --- | --- |
 | `region.config.sample.json` | `NOM.config.json` | the settings the page reads at start-up (sea, walking, chat, presence, map, tiles); written by `glb2html.py`; flat | § 11.3 |
-| `region.zones.sample.json` | `NOM.zones.json` | the zones: arrivals, portals, web links, Home Assistant, pictures on a wall (the `painting-1` zone, type `image`, with its optional `link` key: page opened on click) radio (the `dance-floor` zone, type `cast`: streams in the `streams` list, played within range in walk mode), music (`ambiance`, type `audio`), video screens (`screen-clip` with one file and sound, `screen-list` with a folder of videos, type `video`) and a link in a floating window (`video-page`, type `url`, key `frame`) | § 11.4 |
+| `region.zones.sample.json` | `NOM.zones.json` | the zones of a region: arrivals, portals, links, command, pictures, radio, music, video screens (the list is further down) | § 11.4 |
 | `region.tiles.sample.json` | `NOM.tiles.json` | the tile index of a large region, written by `glb2tiles.py`; not to be edited by hand | § 11.7 |
 | `region.reglages.sample.json` | `NOM.reglages.json` | the viewer's working state, written by the "Save to a file" button: the settings, **all** the zones (private ones included), the camera framing, the region's card for the map and the command summary; nested; read back by the viewer and by `glb2html.py --settings` | § 11.8 |
 | `default.sample.json` | `default.json` | the region opened when the address has no `?region=` | § 11.5 |
 | `regions.sample.json` | `regions.json` | the world map: one card per region (name, place, address, presence, thumbnail) | § 11.6 |
 | `disposition.sample.json` | `disposition.json` | the place of the help, information and arrivals windows, saved by the page's Settings | § 11.9 |
+
+## The zones of the sample
+
+`region.zones.sample.json` contains 14 zones (`REFERENCE_JSON.md` § 11.4):
+
+- arrivals: `default`, `gallery`
+- portals: `to-gallery` (same region, by walking into it), `to-other-region` (other region, with confirmation), `back-home` (name shown)
+- web links: `website`, `door-info` (linked to the `Door#2` object)
+- Home Assistant command: `light-on` (private, with confirmation)
+- picture: `painting-1` (optional `link` key: page opened on click)
+- radio (`cast`): `dance-floor` (streams of the `streams` list, played within range in walk mode)
+- music (`audio`): `ambiance` (files of the `audio` folder)
+- video screens (`video`): `screen-clip` (one file, with sound), `screen-list` (a folder of videos)
+- link in a floating window: `video-page` (`url` zone with the `frame` key)
 
 ## Files of the presence server
 

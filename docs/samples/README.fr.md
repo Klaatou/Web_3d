@@ -9,12 +9,26 @@ Ce dossier contient **un exemple de chaque fichier JSON** que la page, le viewer
 | Exemple | Fichier réel | À quoi il sert | Référence |
 | --- | --- | --- | --- |
 | `region.config.sample.json` | `NOM.config.json` | les réglages que la page lit au démarrage (mer, marche, chat, présence, carte, tuiles) ; écrit par `glb2html.py` ; à plat | § 11.3 |
-| `region.zones.sample.json` | `NOM.zones.json` | les zones : arrivées, portails, liens web, Home Assistant, images sur un mur (la zone `painting-1`, type `image`, avec sa clé facultative `link` : page ouverte au clic) radio (la zone `dance-floor`, type `cast` : flux de la liste `streams`, joués à portée en promenade), musique (`ambiance`, type `audio`), écrans vidéo (`screen-clip` avec un fichier et du son, `screen-list` avec un dossier de vidéos, type `video`) et lien en fenêtre flottante (`video-page`, type `url`, clé `frame`) | § 11.4 |
+| `region.zones.sample.json` | `NOM.zones.json` | les zones d'une région : arrivées, portails, liens, commande, images, radio, musique, écrans vidéo (la liste est plus bas) | § 11.4 |
 | `region.tiles.sample.json` | `NOM.tiles.json` | l'index des tuiles d'une grosse région, écrit par `glb2tiles.py` ; ne se modifie pas à la main | § 11.7 |
 | `region.reglages.sample.json` | `NOM.reglages.json` | l'état de travail du viewer, écrit par le bouton « Enregistrer dans un fichier » : les réglages, **toutes** les zones (privées comprises), le cadrage de la caméra, la fiche de la région pour la carte et le récapitulatif de commande ; imbriqué ; relu par le viewer et par `glb2html.py --settings` | § 11.8 |
 | `default.sample.json` | `default.json` | la région ouverte quand l'adresse n'a pas de `?region=` | § 11.5 |
 | `regions.sample.json` | `regions.json` | la carte des mondes : une fiche par région (nom, place, adresse, présence, vignette) | § 11.6 |
 | `disposition.sample.json` | `disposition.json` | la place des fenêtres d'aide, d'informations et d'arrivées, enregistrée par les Réglages de la page | § 11.9 |
+
+## Les zones de l'exemple
+
+`region.zones.sample.json` contient 14 zones (`REFERENCE_JSON.md` § 11.4) :
+
+- arrivées : `default`, `gallery`
+- portails : `to-gallery` (même région, en marchant dedans), `to-other-region` (autre région, avec confirmation), `back-home` (nom affiché)
+- liens web : `website`, `door-info` (liée à l'objet `Door#2`)
+- commande Home Assistant : `light-on` (privée, avec confirmation)
+- image : `painting-1` (clé facultative `link` : page ouverte au clic)
+- radio (`cast`) : `dance-floor` (flux de la liste `streams`, joués à portée en promenade)
+- musique (`audio`) : `ambiance` (fichiers du dossier `audio`)
+- écrans vidéo (`video`) : `screen-clip` (un fichier, avec du son), `screen-list` (un dossier de vidéos)
+- lien en fenêtre flottante : `video-page` (zone `url` avec la clé `frame`)
 
 ## Fichiers du serveur de présence
 

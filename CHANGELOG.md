@@ -6,6 +6,13 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.12.0)
 
+### 18/11/2026: more readable lists in the documents
+
+- **Requested by Klaatou**: the cell of the examples `README` that lists the zones was unreadable (and a comma had been missing before "radio" since batch 1.12.16).
+- **`docs/samples/README.fr.md` and `README.md`**: the `region.zones.sample.json` cell is short; a section "The zones of the sample" gives the list, one line per kind, with the `id`s.
+- **Manual appendix** (§ 13, `MANUEL.md` and `MANUAL.md`): the "Version / What it brought" table (cells of 10 to 18 items separated by semicolons) becomes, per version, a bold title followed by a list. Same content, same pointers; the introductory sentence says "the list" instead of "the table".
+- **Not touched**: the long cells that describe one single option (`--reencode`, `--update`, F key): they are explanations, not enumerations.
+- No code touched: `dist\` does not change. `VERSION`: `1.12.17`.
 ### 18/11/2026: multimedia zone examples (JSON) and sample file brought up to date
 
 - **Requested by Klaatou**: JSON block examples with all the parameters of the multimedia zones.

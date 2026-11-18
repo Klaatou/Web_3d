@@ -6,6 +6,13 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.12.0)
 
+### 18/11/2026 : listes plus lisibles dans les documents
+
+- **Demande de Klaatou** : la cellule du `README` des exemples qui énumère les zones était illisible (et une virgule manquait avant « radio » depuis le lot 1.12.16).
+- **`docs/samples/README.fr.md` et `README.md`** : la cellule de `region.zones.sample.json` est courte ; une section « Les zones de l'exemple » donne la liste, une ligne par sorte, avec les `id`.
+- **Annexe du manuel** (§ 13, `MANUEL.md` et `MANUAL.md`) : le tableau « Version / Ce qu'elle a apporté » (cellules de 10 à 18 éléments séparés par des points-virgules) devient, par version, un titre en gras suivi d'une liste. Même contenu, mêmes renvois ; la phrase d'introduction dit « la liste » au lieu de « le tableau ».
+- **Pas touché** : les cellules longues qui décrivent une seule option (`--reencode`, `--update`, touche F) : ce sont des explications, pas des énumérations.
+- Aucun code touché : `dist\` ne change pas. `VERSION` : `1.12.17`.
 ### 18/11/2026 : exemples de zones multimédias (JSON) et fichier d'exemple remis à jour
 
 - **Demande de Klaatou** : des exemples de blocs JSON avec tous les paramètres des zones multimédias.
