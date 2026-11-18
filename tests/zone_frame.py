@@ -20,6 +20,7 @@ tmp = pathlib.Path(tempfile.mkdtemp(prefix="glb2html_frame_"))
 vend = ["--vendor", os.environ["THREE_DIR"]] if os.environ.get("THREE_DIR") else []
 echecs = 0
 HOP = "hop://exemple.invalid:9000/Atoll/128/128/25"
+YTL = "https://www.youtube.com/watch?v=Qp7TR1RAjXc&list=RDQp7TR1RAjXc"   # lien d'un mix : video dans sa liste
 YT = "https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=42"
 
 
@@ -54,7 +55,11 @@ def zones():
             Z("ent", "url", 0, 10, target="https://exemple.invalid/e", trigger="enter", frame=True),
             Z("same", "url", 15, 0, target="https://web3d.test/autre", trigger="click", frame=True),
             Z("port", "portal", 10, 10, target="", trigger="click", frame=True),
-            Z("txt", "url", 5, 5, target="https://exemple.invalid/t", trigger="click", frame="oui")]
+            Z("txt", "url", 5, 5, target="https://exemple.invalid/t", trigger="click", frame="oui"),
+            Z("pl1", "url", -5, 15, target=YTL, trigger="click", frame=True),
+            Z("pl2", "url", 5, 15, target="https://www.youtube.com/playlist?list=PLabcdefghijkl", trigger="click", frame=True),
+            Z("pl3", "url", -8, 5, target="https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=x%3Cb", trigger="click", frame=True),
+            Z("pl4", "url", -10, -8, target="https://www.youtube.com/playlist?list=a", trigger="click", frame=True)]
 
 
 def page():
@@ -119,6 +124,21 @@ async def main():
         r1 = await pg.evaluate("(() => { const r = document.querySelector('#frameWin').getBoundingClientRect(); return [r.x, r.y]; })()")
         r2 = await pg.evaluate("(() => { const r = document.querySelector('#frameWin .fwHead').getBoundingClientRect(); return [r.x + 40, r.y + 10]; })()")
         rapport(abs(r2[0] - (r0[0] - 150)) < 3 and abs(r2[1] - (r0[1] - 100)) < 3, "fenetre : se deplace en glissant l'en-tete", (r0, r1, r2))
+        # glissement : le lecteur est masque pendant le deplacement, reaffiche apres le lacher (1.12.4)
+        await pg.wait_for_function("getComputedStyle(document.querySelector('#frameWin iframe')).visibility === 'visible'", timeout=10000, polling=100)   # fin du lacher precedent (lent en rendu logiciel)
+        await pg.mouse.move(r2[0], r2[1]); await pg.mouse.down(); await pg.mouse.move(r2[0] + 30, r2[1] + 20, steps=3); await pg.wait_for_timeout(100)
+        vis = await pg.evaluate("getComputedStyle(document.querySelector('#frameWin iframe')).visibility")
+        await pg.mouse.up(); await pg.wait_for_timeout(300)
+        vis2 = await pg.evaluate("getComputedStyle(document.querySelector('#frameWin iframe')).visibility")
+        rapport(vis == "hidden" and vis2 == "visible", "glissement : le lecteur est masque pendant le deplacement et reaffiche apres le lacher", (vis, vis2))
+        # ressaisie avant la fin du lacher precedent (images lentes) : le retrait differe de l'ancienne saisie ne doit pas toucher la nouvelle (1.12.4)
+        await pg.evaluate("(() => { const o = window.__raf0 = window.requestAnimationFrame; window.requestAnimationFrame = f => o.call(window, () => setTimeout(f, 250)); })()")
+        r3 = await pg.evaluate("(() => { const r = document.querySelector('#frameWin .fwHead').getBoundingClientRect(); return [r.x + 40, r.y + 10]; })()")
+        await pg.mouse.move(r3[0], r3[1]); await pg.mouse.down(); await pg.mouse.up(); await pg.mouse.down(); await pg.mouse.move(r3[0] + 20, r3[1] + 10, steps=3); await pg.wait_for_timeout(900)
+        vis3 = await pg.evaluate("getComputedStyle(document.querySelector('#frameWin iframe')).visibility")
+        await pg.mouse.up(); await pg.wait_for_function("getComputedStyle(document.querySelector('#frameWin iframe')).visibility === 'visible'", timeout=10000, polling=100)
+        await pg.evaluate("(() => { window.requestAnimationFrame = window.__raf0; })()")
+        rapport(vis3 == "hidden", "glissement : ressaisie avant la fin du lacher precedent, le lecteur reste masque", vis3)
         # une seule fenetre, remplacee par celle d'une autre zone ; la meme zone ne la rouvre pas
         await aller(pg, -5, -13); await pg.keyboard.press("KeyE"); await pg.wait_for_timeout(300)
         e = await etat(pg)
@@ -136,6 +156,15 @@ async def main():
 
         e, op = await ouvrir_e(pg, -15, 15)
         rapport(e and e["src"].startswith("https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?") and "start" not in e["src"], "youtu.be/ID : lecteur youtube-nocookie", e)
+        e, op = await ouvrir_e(pg, -5, 15)
+        rapport(bool(e and e["src"].startswith("https://www.youtube-nocookie.com/embed/Qp7TR1RAjXc?") and "list=RDQp7TR1RAjXc" in e["src"] and "autoplay=1" in e["src"]),
+                "watch?v=ID&list=RD... : lecteur sur la video, dans sa liste", e)
+        e, op = await ouvrir_e(pg, 5, 15)
+        rapport(bool(e and e["src"].startswith("https://www.youtube-nocookie.com/embed/videoseries?") and "list=PLabcdefghijkl" in e["src"]), "playlist?list=PL... : lecteur de la liste (videoseries)", e)
+        e, op = await ouvrir_e(pg, -8, 5)
+        rapport(bool(e and e["src"].startswith("https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?") and "list" not in e["src"]), "liste invalide (caracteres interdits) : ignoree, la video seule", e)
+        e, op = await ouvrir_e(pg, -10, -8)
+        rapport(bool(e and e["src"] == "https://www.youtube.com/playlist?list=a"), "playlist sans liste valide : pas de lecteur, adresse telle quelle", e)
         e, op = await ouvrir_e(pg, 5, -15)
         rapport(e and e["src"] == "http://exemple.invalid/x" and not op, "http depuis une page qui n'est pas en https : cadre", (e, op))
         e, op = await ouvrir_e(pg, 15, -15)

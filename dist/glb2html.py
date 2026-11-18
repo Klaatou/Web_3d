@@ -16,8 +16,8 @@ Draco et Meshopt gérés automatiquement (décodeurs intégrés seulement si le 
 """
 from __future__ import annotations
 
-VERSION = "1.12.3 (18/11/2026)"
-SHELL_VERSION = "1.12.3 (18/11/2026)"   # numéro de version de la coquille (index.html) : écrit par build.py, ne change que si la coquille change
+VERSION = "1.12.4 (18/11/2026)"
+SHELL_VERSION = "1.12.4 (18/11/2026)"   # numéro de version de la coquille (index.html) : écrit par build.py, ne change que si la coquille change
 MAP_VERSION = "1.12.3 (18/11/2026)"       # numéro de version de la page de carte (carte.html) : idem
 
 import argparse
@@ -1114,7 +1114,7 @@ body.padOn #bar{max-width:max(200px,calc(50vw - 90px))}   /* v46 : la barre pass
 #frameWin .fwBody{flex:1;min-height:0;display:grid;place-items:center;background:#fff}
 #frameWin iframe{width:100%;height:100%;border:0;display:block}
 #frameWin .fwLoad{font:inherit;padding:8px 14px;border:2px solid #000;border-radius:6px;background:#000;color:#fff;cursor:pointer}
-#frameWin.drag iframe{pointer-events:none}
+#frameWin.drag iframe{visibility:hidden}   /* 1.12.4 : pendant le glissement le lecteur est masque (un lecteur d'un autre site qui se deplace laissait un rectangle fantome) ; il revient deux images apres le lacher */
 #zonePrompt{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);z-index:30;font:13px/1.4 ui-monospace,Consolas,monospace;background:#000;color:#fff;border-radius:6px;padding:6px 12px}
 #fade{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .45s;z-index:50}
 #fade.on{opacity:1;pointer-events:auto}
@@ -4254,14 +4254,16 @@ if ((C.zones || []).length || C.zonesLive) {
   // 1.12.3 : zone lien « fenetre flottante » (cle frame) : la page s'affiche dans un cadre deplacable au lieu d'un nouvel onglet
   const ytEmbed = (u, auto) => {   // lien YouTube (watch, youtu.be, shorts, live, embed) -> lecteur integre sans cookies ; null si ce n'est pas un lien de video
     const h = u.hostname.replace(/^(www|m|music)\./, ''); let id = '';
+    const list = /^[\w-]{10,80}$/.test(u.searchParams.get('list') || '') ? u.searchParams.get('list') : '';   // 1.12.4 : liste de lecture (PL..., mix RD... : non garanti par YouTube)
     if (h === 'youtu.be') id = u.pathname.split('/')[1] || '';
     else if (h === 'youtube.com' || h === 'youtube-nocookie.com') {
       const p = u.pathname.split('/').filter(Boolean);
       if (p[0] === 'watch') id = u.searchParams.get('v') || '';
+      else if (p[0] === 'playlist') id = 'videoseries';   // liste seule : embed/videoseries?list=ID
       else if (['shorts', 'live', 'embed', 'v'].includes(p[0])) id = p[1] || '';
     } else return null;
-    if (!/^[\w-]{11}$/.test(id)) return null;
-    const q = new URLSearchParams({ rel: '0' }); if (auto) q.set('autoplay', '1');
+    if (id === 'videoseries' ? !list : !/^[\w-]{11}$/.test(id)) return null;
+    const q = new URLSearchParams({ rel: '0' }); if (list) q.set('list', list); if (auto) q.set('autoplay', '1');
     const t = u.searchParams.get('t') || u.searchParams.get('start'); if (/^\d{1,6}$/.test(t || '')) q.set('start', t);
     return 'https://www.youtube-nocookie.com/embed/' + id + '?' + q;
   };
@@ -4293,10 +4295,10 @@ if ((C.zones || []).length || C.zonesLive) {
       const b = document.createElement('button'); b.className = 'fwLoad'; b.textContent = tr('page.frame.load', new URL(frameSrc(u, false)).hostname); b.onclick = () => load(true); bd.appendChild(b);
     } else load(true);
     w.append(hd, bd); document.body.appendChild(w);
-    let dx = 0, dy = 0;
-    hd.onpointerdown = e => { if (e.target.closest('button')) return; const r = w.getBoundingClientRect(); w.style.left = r.left + 'px'; w.style.top = r.top + 'px'; w.style.right = 'auto'; w.style.bottom = 'auto'; dx = e.clientX - r.left; dy = e.clientY - r.top; w.classList.add('drag'); hd.setPointerCapture(e.pointerId); e.preventDefault(); };
+    let dx = 0, dy = 0, grab = 0;   // grab : numero de saisie ; le retrait differe de « drag » d'un relache precedent ne doit pas s'appliquer a une nouvelle saisie (1.12.4)
+    hd.onpointerdown = e => { if (e.target.closest('button')) return; grab++; const r = w.getBoundingClientRect(); w.style.left = r.left + 'px'; w.style.top = r.top + 'px'; w.style.right = 'auto'; w.style.bottom = 'auto'; dx = e.clientX - r.left; dy = e.clientY - r.top; w.classList.add('drag'); hd.setPointerCapture(e.pointerId); e.preventDefault(); };
     hd.onpointermove = e => { if (w.classList.contains('drag')) { w.style.left = Math.max(0, Math.min(innerWidth - 60, e.clientX - dx)) + 'px'; w.style.top = Math.max(0, Math.min(innerHeight - 30, e.clientY - dy)) + 'px'; } };
-    hd.onpointerup = hd.onpointercancel = () => w.classList.remove('drag');
+    hd.onpointerup = hd.onpointercancel = () => { const g = grab; requestAnimationFrame(() => requestAnimationFrame(() => { if (g === grab) w.classList.remove('drag'); })); };
     toast(tr('page.zone.opening', label));
     return true;
   };

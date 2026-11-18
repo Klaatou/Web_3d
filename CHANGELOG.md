@@ -6,6 +6,16 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.12.0)
 
+### 18/11/2026: floating window: YouTube lists, no more ghost rectangle when moving
+
+- **Finding from Klaatou** (screenshot): moving the floating window of a YouTube link zone leaves an empty sky-coloured rectangle, the size of the player, displayed lower down after release; and a list link (`&list=`) only played the video.
+- **Ghost rectangle**: not reproduced in the sandbox (Chrome on Linux, software rendering, a real video in a frame from another site: the window moves cleanly). Cause not established; hypothesis: a region badly refreshed by the browser when a player from another site moves over the 3D background. **Fix** (`src/template.html`): while the header is dragged, the frame is hidden (`visibility:hidden`, playback continues); it is shown again two frames after release. To be confirmed on screen at Klaatou's. **Defect found in this first fix** (`zone_frame.py` failed at Klaatou's, software rendering, slow frames): the deferred removal of `drag` from an earlier release (two `requestAnimationFrame`) also applied to a grab made in the meantime, so the player became visible again during the drag. Reproduced by slowing `requestAnimationFrame` (250 ms). Fixed with a grab counter (`grab`): the removal applies only if no new grab happened.
+- **Lists** (`ytEmbed`, `src/template.html`): `watch?v=ID&list=L` (also `youtu.be/ID?list=L`, `embed/ID?list=L`) plays the video within its list (`embed/ID?list=L`); `playlist?list=L` opens the list player (`embed/videoseries?list=L`). A list id is kept only if it is 10 to 80 characters among letters, digits, `_` and `-`; otherwise the video alone (or, for `playlist?list=` without a valid list, the address as is). **`RD…` mix**: YouTube only documents `PL…` lists for embedding; a mix may be refused (the ↗ button remains the fallback).
+- **Test**: `tests/zone_frame.py` goes to 28 checks (mix list, list alone, invalid list, playlist without list, hiding while dragging and return after release, re-grab before the previous release has finished with slowed frames). Three defects introduced on purpose (hiding removed, lists removed, deferred removal unprotected) make it fail. Zones family rerun without regression.
+- **Changes in `dist\`** after `python build.py`: `glb2html.py`, `index.html`, `glb-viewer.html`. `VERSION`: `1.12.4`.
+- **Not tried**: the real display of the player and of the list (sandbox without access to YouTube), the `RD…` mix, the effect of hiding on the ghost rectangle (Edge, software rendering), touch.
+- **Still to update**: manual (§ 5.7), `REFERENCE_JSON.md` (`frame` key), procedures, histories.
+
 ### 18/11/2026: link zones in a floating window (`frame` key)
 
 - **Request from Klaatou**: show a YouTube video or a page in the region, like OpenSim screens, without leaving the page.

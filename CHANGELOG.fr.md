@@ -6,6 +6,16 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.12.0)
 
+### 18/11/2026 : fenêtre flottante : listes YouTube, plus de rectangle fantôme au déplacement
+
+- **Constat de Klaatou** (capture) : en déplaçant la fenêtre flottante d'une zone lien YouTube, un rectangle vide de la couleur du ciel, de la taille du lecteur, reste affiché plus bas après le lâcher ; et le lien d'une liste (`&list=`) ne jouait que la vidéo.
+- **Rectangle fantôme** : non reproduit dans le bac à sable (Chrome sous Linux, rendu logiciel, vraie vidéo dans un cadre d'un autre site : la fenêtre se déplace proprement). Cause non établie ; hypothèse : zone mal rafraîchie par le navigateur quand un lecteur d'un autre site se déplace au-dessus du fond 3D. **Correctif** (`src/template.html`) : pendant le glissement de l'en-tête, le cadre est masqué (`visibility:hidden`, la lecture continue) ; il est réaffiché deux images après le lâcher. À confirmer à l'écran chez Klaatou. **Défaut trouvé dans ce premier correctif** (le test `zone_frame.py` échouait chez Klaatou, rendu logiciel, images lentes) : le retrait différé de `drag` d'un lâcher précédent (deux `requestAnimationFrame`) s'appliquait aussi à une saisie faite entre-temps, donc le lecteur redevenait visible pendant le glissement. Reproduit en ralentissant `requestAnimationFrame` (250 ms). Corrigé par un numéro de saisie (`grab`) : le retrait ne s'applique que s'il n'y a pas eu de nouvelle saisie.
+- **Listes** (`ytEmbed`, `src/template.html`) : `watch?v=ID&list=L` (aussi `youtu.be/ID?list=L`, `embed/ID?list=L`) joue la vidéo dans sa liste (`embed/ID?list=L`) ; `playlist?list=L` ouvre le lecteur de la liste (`embed/videoseries?list=L`). Un identifiant de liste n'est gardé que s'il fait 10 à 80 caractères parmi lettres, chiffres, `_` et `-` ; sinon la vidéo seule (ou, pour `playlist?list=` sans liste valide, l'adresse telle quelle). **Mix `RD…`** : YouTube ne documente que les listes `PL…` pour l'intégration ; un mix peut être refusé (le bouton ↗ reste le recours).
+- **Test** : `tests/zone_frame.py` passe à 28 contrôles (liste d'un mix, liste seule, liste invalide, playlist sans liste, masquage pendant le glissement et retour après le lâcher, ressaisie avant la fin du lâcher précédent avec images ralenties). Trois défauts introduits exprès (masquage retiré, listes retirées, retrait différé non protégé) le font échouer. Famille zones relancée sans régression.
+- **Change en `dist\`** après `python build.py` : `glb2html.py`, `index.html`, `glb-viewer.html`. `VERSION` : `1.12.4`.
+- **Non essayé** : l'affichage réel du lecteur et de la liste (bac à sable sans accès à YouTube), le mix `RD…`, l'effet du masquage sur le rectangle fantôme (Edge, rendu logiciel), le toucher.
+- **Reste à mettre à jour** : manuel (§ 5.7), `REFERENCE_JSON.md` (clé `frame`), procédures, historiques.
+
 ### 18/11/2026 : zones lien en fenêtre flottante (clé `frame`)
 
 - **Demande de Klaatou** : montrer une vidéo YouTube ou une page dans la région, à la façon des écrans d'OpenSim, sans quitter la page.
