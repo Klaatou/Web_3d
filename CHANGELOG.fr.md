@@ -6,6 +6,15 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.12.0)
 
+### 18/11/2026 : fenêtre flottante : ouverte à gauche, centrée en hauteur ; le ↗ ferme la fenêtre
+
+- **Demande de Klaatou** : en bas à droite, la fenêtre laissait voir le rectangle fantôme d'Edge (sans accélération matérielle) juste au-dessus d'elle dès l'ouverture ; au centre gauche, plus de fantôme tant qu'on ne déplace rien.
+- **Pourquoi ça marche** : le fantôme est le symétrique de la zone du lecteur par rapport à la ligne médiane de l'écran. Une fenêtre centrée en hauteur contient ce symétrique, qui est donc caché dessous. Une fois déplacée vers le haut ou le bas, le fantôme réapparaît (limite connue, voir 1.12.5).
+- **Change** (`src/template.html`) : `#frameWin` est placée par `left:16px` et `top:calc((100vh - hauteur) / 2)` au lieu de `right:16px;bottom:72px`. Le glissement (qui pose `left`/`top`) n'est pas touché.
+- **Bouton ↗** (demande de Klaatou) : ouvre l'adresse dans un nouvel onglet **et ferme** la mini-fenêtre (`src/template.html`).
+- **Test** : `tests/zone_frame.py` passe à 28 contrôles (position d'ouverture : à gauche, et symétrique du lecteur contenu dans la fenêtre ; le ↗ ferme la fenêtre). Le contrôle de déplacement tire maintenant la fenêtre vers la droite (elle part de `left:16px` et butte à 0 vers la gauche).
+- **Change en `dist\`** après `python build.py` : `glb2html.py`, `index.html`, `glb-viewer.html`. `VERSION` : `1.12.6`.
+
 ### 18/11/2026 : fenêtre flottante : retrait du masquage pendant le glissement
 
 - **Constat de Klaatou** (Edge, accélération matérielle désactivée exprès pour garder le GPU à l'IA ; `edge://gpu` : WebGL, rastérisation et compositing en logiciel) : le rectangle fantôme de la couleur du ciel, de la taille du lecteur et symétrique par rapport à la ligne médiane de l'écran, apparaît dès l'ouverture et reste fixe à l'écran quand la scène bouge ; il ne recouvre aucun panneau de la page ; il disparaît quand les canvas sont masqués. Le masquage pendant le glissement (1.12.4) n'y change rien : le fantôme revient au lâcher. Un `will-change: transform` sur la fenêtre ou sur les canvas ne l'enlève pas non plus.

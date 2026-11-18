@@ -6,6 +6,15 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.12.0)
 
+### 18/11/2026: floating window: opened on the left, vertically centred; ↗ closes the window
+
+- **Request from Klaatou**: at the bottom right the window showed Edge's ghost rectangle (without hardware acceleration) right above it as soon as it opened; at the centre left there is no ghost as long as nothing is moved.
+- **Why it works**: the ghost is the mirror image of the player's area about the screen's horizontal midline. A vertically centred window contains that mirror image, which is therefore hidden under it. Once moved up or down the ghost comes back (known limit, see 1.12.5).
+- **Changed** (`src/template.html`): `#frameWin` is placed with `left:16px` and `top:calc((100vh - height) / 2)` instead of `right:16px;bottom:72px`. Dragging (which sets `left`/`top`) is untouched.
+- **↗ button** (request from Klaatou): opens the address in a new tab **and closes** the mini window (`src/template.html`).
+- **Test**: `tests/zone_frame.py` goes to 28 checks (opening position: on the left, and the player's mirror image contained in the window; ↗ closes the window). The move check now drags the window to the right (it starts at `left:16px` and stops at 0 going left).
+- **Changes in `dist\`** after `python build.py`: `glb2html.py`, `index.html`, `glb-viewer.html`. `VERSION`: `1.12.6`.
+
 ### 18/11/2026: floating window: hiding while dragging removed
 
 - **Finding from Klaatou** (Edge, hardware acceleration turned off on purpose to keep the GPU for AI; `edge://gpu`: WebGL, rasterization and compositing in software): the ghost rectangle, sky-coloured, the size of the player and mirrored about the screen's horizontal midline, appears as soon as the window opens and stays fixed on screen while the scene moves; it covers no page panel; it disappears when the canvases are hidden. Hiding during the drag (1.12.4) changes nothing: the ghost comes back on release. A `will-change: transform` on the window or on the canvases does not remove it either.

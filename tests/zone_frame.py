@@ -118,12 +118,15 @@ async def main():
         rapport(bool(e and e["src"] and e["src"].startswith("https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?") and "autoplay=1" in e["src"] and "start=42" in e["src"]),
                 "YouTube watch?v=...&t=42 avec E : lecteur youtube-nocookie, autoplay, depart a 42 s", e)
         rapport(e and not op and e["title"] == "Zone yt" and "allow-scripts" in (e["sandbox"] or "") and e["n"] == 1, "fenetre : titre de la zone, sandbox, aucun nouvel onglet", (e, op))
-        # deplacement par l'en-tete
+        # position d'ouverture (1.12.6) : a gauche, centree en hauteur ; le symetrique du lecteur par rapport a la ligne mediane (fantome d'Edge sans acceleration materielle) tombe dans la fenetre
+        g = await pg.evaluate("(() => { const w = document.getElementById('frameWin').getBoundingClientRect(), f = document.querySelector('#frameWin iframe').getBoundingClientRect(); return { H: innerHeight, wt: w.top, wb: w.bottom, wl: w.left, ft: f.top, fb: f.bottom }; })()")
+        rapport(abs(g["wl"] - 16) < 2 and g["H"] - g["fb"] >= g["wt"] - 1 and g["H"] - g["ft"] <= g["wb"] + 1,
+                "ouverture : a gauche, centree en hauteur (le symetrique du lecteur tombe dans la fenetre)", g)
         r0 = await pg.evaluate("(() => { const r = document.querySelector('#frameWin .fwHead').getBoundingClientRect(); return [r.x + 40, r.y + 10]; })()")
-        await pg.mouse.move(r0[0], r0[1]); await pg.mouse.down(); await pg.mouse.move(r0[0] - 150, r0[1] - 100, steps=4); await pg.mouse.up()
+        await pg.mouse.move(r0[0], r0[1]); await pg.mouse.down(); await pg.mouse.move(r0[0] + 150, r0[1] - 100, steps=4); await pg.mouse.up()
         r1 = await pg.evaluate("(() => { const r = document.querySelector('#frameWin').getBoundingClientRect(); return [r.x, r.y]; })()")
         r2 = await pg.evaluate("(() => { const r = document.querySelector('#frameWin .fwHead').getBoundingClientRect(); return [r.x + 40, r.y + 10]; })()")
-        rapport(abs(r2[0] - (r0[0] - 150)) < 3 and abs(r2[1] - (r0[1] - 100)) < 3, "fenetre : se deplace en glissant l'en-tete", (r0, r1, r2))
+        rapport(abs(r2[0] - (r0[0] + 150)) < 3 and abs(r2[1] - (r0[1] - 100)) < 3, "fenetre : se deplace en glissant l'en-tete", (r0, r1, r2))
         # une seule fenetre, remplacee par celle d'une autre zone ; la meme zone ne la rouvre pas
         await aller(pg, -5, -13); await pg.keyboard.press("KeyE"); await pg.wait_for_timeout(300)
         e = await etat(pg)
@@ -138,6 +141,7 @@ async def main():
         await pg.evaluate("window.__op = []; document.querySelectorAll('#frameWin .fwHead button')[0].click()")
         op = json.loads(await pg.evaluate("JSON.stringify(window.__op)"))
         rapport(len(op) == 1 and op[0][0] == "https://exemple.invalid/page" and op[0][1] == "_blank", "bouton ↗ : ouvre l'adresse d'origine dans un nouvel onglet", op)
+        rapport(await etat(pg) is None, "bouton ↗ : la mini fenetre se ferme aussi (1.12.6)")
 
         e, op = await ouvrir_e(pg, -15, 15)
         rapport(e and e["src"].startswith("https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?") and "start" not in e["src"], "youtu.be/ID : lecteur youtube-nocookie", e)
