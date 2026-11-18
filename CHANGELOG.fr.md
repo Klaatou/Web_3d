@@ -6,6 +6,12 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.12.0)
 
+### 18/11/2026 : manuel § 5.19 à 5.21 : puces denses découpées en sous-listes ; essai radio sur téléphone
+
+- **Demande de Klaatou** : les puces très denses des zones radio, musique et vidéo du manuel sont découpées en sous-listes.
+- **`MANUEL.md` et `MANUAL.md`** (§ 5.19, 5.20, 5.21) : chaque puce de plus de 420 caractères garde sa première phrase (le titre en gras) et passe ses phrases suivantes en sous-puces ; les « trois cas » de la radio qui ne joue pas et les deux façons de refaire `playlist.json` (**(1)**, **(2)**) deviennent des sous-puces de second niveau. Le texte n'est pas changé, il est seulement découpé.
+- **Essayé** (§ 5.19) : un testeur a essayé, sur un téléphone, la région avec la radio à plusieurs flux, changement de flux compris : tout passe (modèle et navigateur non relevés).
+- Aucun code touché : `dist\` ne change pas. `VERSION` : `1.12.18`.
 ### 18/11/2026 : listes plus lisibles dans les documents
 
 - **Demande de Klaatou** : la cellule du `README` des exemples qui énumère les zones était illisible (et une virgule manquait avant « radio » depuis le lot 1.12.16).

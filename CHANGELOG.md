@@ -6,6 +6,12 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.12.0)
 
+### 18/11/2026: manual § 5.19 to 5.21: dense bullets split into sub-lists; radio tried on a phone
+
+- **Requested by Klaatou**: the very dense bullets of the radio, music and video zones in the manual are split into sub-lists.
+- **`MANUEL.md` and `MANUAL.md`** (§ 5.19, 5.20, 5.21): each bullet of more than 420 characters keeps its first sentence (the bold title) and moves its following sentences to sub-bullets; the "three cases" of the radio that does not play and the two ways of redoing `playlist.json` (**(1)**, **(2)**) become second-level sub-bullets. The text is not changed, only split.
+- **Tried** (§ 5.19): a tester tried, on a phone, the region with the several-stream radio, stream changes included: everything works (model and browser not recorded).
+- No code touched: `dist\` does not change. `VERSION`: `1.12.18`.
 ### 18/11/2026: more readable lists in the documents
 
 - **Requested by Klaatou**: the cell of the examples `README` that lists the zones was unreadable (and a comma had been missing before "radio" since batch 1.12.16).
