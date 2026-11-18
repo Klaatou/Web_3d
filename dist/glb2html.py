@@ -16,8 +16,8 @@ Draco et Meshopt gérés automatiquement (décodeurs intégrés seulement si le 
 """
 from __future__ import annotations
 
-VERSION = "1.12.14 (18/11/2026)"
-SHELL_VERSION = "1.12.14 (18/11/2026)"   # numéro de version de la coquille (index.html) : écrit par build.py, ne change que si la coquille change
+VERSION = "1.12.20 (18/11/2026)"
+SHELL_VERSION = "1.12.20 (18/11/2026)"   # numéro de version de la coquille (index.html) : écrit par build.py, ne change que si la coquille change
 MAP_VERSION = "1.12.13 (18/11/2026)"       # numéro de version de la page de carte (carte.html) : idem
 
 import argparse
@@ -6059,9 +6059,16 @@ if (C.presenceUrl && C.walk && C.chat) {
   const cInsert = () => { const n = cItems[cSel]; if (n === undefined) return; inp.value = inp.value.replace(AT, '@' + n + ' '); cHide(); inp.focus(); };
   const close = () => { inp.hidden = true; inp.value = ''; cHide(); cDismissed = null; inp.blur(); ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].forEach(c => viewer.holdKey(c, false)); render(); };
   addEventListener('keydown', e => {
-    if ((e.code === 'Enter' || e.code === 'NumpadEnter') && viewer.walking && inp.hidden) { e.preventDefault(); openChat(); }
-    const n = e.target && e.target.tagName;   // 1.11.1 : B replie ou déplie le bloc de chat (pas dans un champ de texte)
-    if (e.code === 'KeyB' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && viewer.walking && inp.hidden && n !== 'INPUT' && n !== 'TEXTAREA' && n !== 'SELECT') setFold(!folded);
+    const n = e.target && e.target.tagName;
+    const champ = n === 'INPUT' || n === 'TEXTAREA' || n === 'SELECT';
+    const sansFocus = !inp.hidden && document.activeElement !== inp;   // 1.12.20 : saisie restee ouverte sans le focus (envoi avec Entree, puis clic sur la scene) : Entree, Echap et B n'agissaient plus
+    if ((e.code === 'Enter' || e.code === 'NumpadEnter') && viewer.walking) {
+      if (inp.hidden) { e.preventDefault(); openChat(); }
+      else if (sansFocus && !champ && n !== 'BUTTON') { e.preventDefault(); inp.focus(); }   // Entree rend le focus a la saisie ouverte
+    }
+    if (e.repeat || e.ctrlKey || e.metaKey || e.altKey || !viewer.walking || champ) return;
+    if (e.code === 'KeyB') { if (sansFocus) { close(); setFold(true); } else if (inp.hidden) setFold(!folded); }   // 1.11.1 : B replie ou deplie le bloc de chat (pas dans un champ de texte) ; 1.12.20 : saisie ouverte sans focus : on la ferme et on replie
+    else if (e.code === 'Escape' && sansFocus) close();   // 1.12.20 : Echap ferme la saisie restee ouverte sans focus (dans le champ, c'est le gestionnaire du champ)
   });
   inp.addEventListener('keydown', e => {
     e.stopPropagation();

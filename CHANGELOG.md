@@ -6,6 +6,14 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.12.0)
 
+### 18/11/2026: B key without effect after a sent message (batch 1.12.20)
+
+- **Finding** (Klaatou): at times the B key does nothing, the chat block does not move, while the chat works; no other visitor; `--idle-walk` at 0; the time the page has been open is not the cause.
+- **Cause** (`template.html`, the chat key handler): after sending with Enter, the input stays open; a click on the scene takes the focus away from the field (`core.js`, `blur`) without closing the input (`inp.hidden` stays false). Enter, Esc and B required `inp.hidden` or the focus in the field: none of them could act any more. Reproduced in a test browser: message sent, click on the scene, B without effect.
+- **Fix**: input open without focus: **Enter** gives it the focus back, **Esc** closes it, **B** closes it and folds the block. Nothing changes when the field has the focus or the input is closed.
+- **Check**: new `tests/touche_b.py` (send, click on the scene, B, Enter, Esc; B after choosing a radio stream, after walking).
+- `VERSION`: `1.12.20`.
+
 ### 18/11/2026: README brought up to date (multimedia zones)
 
 - **`README.fr.md` and `README.md`**: the feature list adds video screens and floating-window links; the Zones section only mentioned pictures, it now lists radio, music, video and floating window, with the manual references (§ 5.7.1, 5.19 to 5.21).

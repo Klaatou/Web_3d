@@ -510,7 +510,7 @@ function diagShow(text, status, select) {
 function diagText(viewer, extra) {
   const x = extra || {}, L = (k, v) => tr('core.diag.line', k, v), out = [tr('core.diag.title')];
   const nb = (v, d) => (Number.isFinite(v) ? i18nNum(v, d || 0) : '?');   // nombres à la manière de la langue (virgule en français)
-  out.push(L(tr('core.diag.version'), '1.12.14 (18/11/2026)' + (x.cfgVersion && x.cfgVersion !== '1.12.14 (18/11/2026)' ? ' ; ' + tr('core.diag.cfgver', x.cfgVersion) : '')));
+  out.push(L(tr('core.diag.version'), '1.12.20 (18/11/2026)' + (x.cfgVersion && x.cfgVersion !== '1.12.20 (18/11/2026)' ? ' ; ' + tr('core.diag.cfgver', x.cfgVersion) : '')));
   out.push(L(tr('core.diag.date'), new Date().toLocaleString(({ fr: 'fr-FR', en: 'en-GB' })[LANG]) + ' ; ' + tr('core.diag.uptime', nb(performance.now() / 1000))));
   out.push(L(tr('core.diag.page'), location.protocol + (location.host ? '//ADRESSE' : '//') + location.pathname + location.search));
   out.push(L(tr('core.diag.lang'), LANG + ' · ' + ((navigator.languages || []).join(',') || navigator.language || '?') + ' · ' + KB.layout().toUpperCase()));
@@ -4340,7 +4340,7 @@ if (C.walk) {
   rsSel.onchange = () => { const si = parseInt(rsSel.value, 10) || 0; RADIO.setIdx(si); };
   sbody.insertBefore(rsSel, lrd);
   RADIO.setSelEl(rsSel);
-  mkLine('verInfo').textContent = tr('page.state.version', '1.12.14 (18/11/2026)', C.version || '?');   // 1.6.17 : version de la page (index.html, ou glb2html.py pour une page autonome) et de la configuration
+  mkLine('verInfo').textContent = tr('page.state.version', '1.12.20 (18/11/2026)', C.version || '?');   // 1.6.17 : version de la page (index.html, ou glb2html.py pour une page autonome) et de la configuration
   // v39 : bouton « Copier le diagnostic » sous le contenu de la fenêtre (reste visible quand elle est réduite) : lignes affichées + diagText (core.js) ;
   // si le navigateur refuse la copie, le texte s'affiche sélectionné dessous (Ctrl+C)
   {
@@ -5141,9 +5141,16 @@ if (C.presenceUrl && C.walk && C.chat) {
   const cInsert = () => { const n = cItems[cSel]; if (n === undefined) return; inp.value = inp.value.replace(AT, '@' + n + ' '); cHide(); inp.focus(); };
   const close = () => { inp.hidden = true; inp.value = ''; cHide(); cDismissed = null; inp.blur(); ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].forEach(c => viewer.holdKey(c, false)); render(); };
   addEventListener('keydown', e => {
-    if ((e.code === 'Enter' || e.code === 'NumpadEnter') && viewer.walking && inp.hidden) { e.preventDefault(); openChat(); }
-    const n = e.target && e.target.tagName;   // 1.11.1 : B replie ou déplie le bloc de chat (pas dans un champ de texte)
-    if (e.code === 'KeyB' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && viewer.walking && inp.hidden && n !== 'INPUT' && n !== 'TEXTAREA' && n !== 'SELECT') setFold(!folded);
+    const n = e.target && e.target.tagName;
+    const champ = n === 'INPUT' || n === 'TEXTAREA' || n === 'SELECT';
+    const sansFocus = !inp.hidden && document.activeElement !== inp;   // 1.12.20 : saisie restee ouverte sans le focus (envoi avec Entree, puis clic sur la scene) : Entree, Echap et B n'agissaient plus
+    if ((e.code === 'Enter' || e.code === 'NumpadEnter') && viewer.walking) {
+      if (inp.hidden) { e.preventDefault(); openChat(); }
+      else if (sansFocus && !champ && n !== 'BUTTON') { e.preventDefault(); inp.focus(); }   // Entree rend le focus a la saisie ouverte
+    }
+    if (e.repeat || e.ctrlKey || e.metaKey || e.altKey || !viewer.walking || champ) return;
+    if (e.code === 'KeyB') { if (sansFocus) { close(); setFold(true); } else if (inp.hidden) setFold(!folded); }   // 1.11.1 : B replie ou deplie le bloc de chat (pas dans un champ de texte) ; 1.12.20 : saisie ouverte sans focus : on la ferme et on replie
+    else if (e.code === 'Escape' && sansFocus) close();   // 1.12.20 : Echap ferme la saisie restee ouverte sans focus (dans le champ, c'est le gestionnaire du champ)
   });
   inp.addEventListener('keydown', e => {
     e.stopPropagation();

@@ -311,6 +311,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 18/11/2026 |  | after 1.12.0 | Batch 1.12.12: video screens: lists of videos (`folder`, `tracks`, `playlist.json`), previous / next, `glb2html.py --video-list`, viewer field and button; `tests/zone_video_liste.py` |
 | 18/11/2026 |  | after 1.12.0 | Batch 1.12.13: video screens: retractable track bar with icons under the screen; sound set before start |
 | 18/11/2026 |  | after 1.12.0 | Batch 1.12.14: video screens: the sound no longer falls back to muted at a track change (only a real `NotAllowedError` cuts the sound) |
+| 18/11/2026 |  | after 1.12.0 | Batch 1.12.20: fix: the B key (and Enter, Esc) did nothing when the chat input had been left open without focus (message sent, then a click on the scene) |
 | 18/11/2026 |  | after 1.12.0 | Batch 1.12.19: README (FR and EN): radio, music, video and floating-window link zones added to the feature list and to the Zones section |
 | 18/11/2026 |  | after 1.12.0 | Batch 1.12.18: manual § 5.19 to 5.21: dense bullets split into sub-lists; several-stream radio tried on a phone |
 | 18/11/2026 |  | after 1.12.0 | Batch 1.12.17: more readable lists: zones of the sample as a list in `docs/samples/README`, manual appendix (§ 13) as lists per version instead of a table |

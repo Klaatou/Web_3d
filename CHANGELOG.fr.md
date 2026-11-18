@@ -6,6 +6,14 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.12.0)
 
+### 18/11/2026 : touche B sans effet après un message envoyé (lot 1.12.20)
+
+- **Constat** (Klaatou) : par moments la touche B n'a aucun effet, le bloc de chat ne bouge pas, alors que le chat fonctionne ; sans autre visiteur ; `--idle-walk` à 0 ; la durée d'ouverture de la page n'y est pour rien.
+- **Cause** (`template.html`, gestionnaire de touches du chat) : après un envoi avec Entrée, la saisie reste ouverte ; un clic sur la scène retire le focus au champ (`core.js`, `blur`) sans fermer la saisie (`inp.hidden` reste faux). Entrée, Échap et B exigeaient `inp.hidden` ou le focus dans le champ : plus aucun ne pouvait agir. Reproduit dans un navigateur de test : message envoyé, clic sur la scène, B sans effet.
+- **Correctif** : saisie ouverte sans le focus : **Entrée** lui rend le focus, **Échap** la ferme, **B** la ferme et replie le bloc. Rien ne change quand le champ a le focus ou que la saisie est fermée.
+- **Contrôle** : nouveau `tests/touche_b.py` (envoi, clic sur la scène, B, Entrée, Échap ; B après choix d'un flux de radio, après marche).
+- `VERSION` : `1.12.20`.
+
 ### 18/11/2026 : README remis à jour (zones multimédias)
 
 - **`README.fr.md` et `README.md`** : la liste des fonctions ajoute les écrans vidéo et les liens en fenêtre flottante ; la section Zones citait encore seulement les images, elle liste maintenant radio, musique, vidéo et fenêtre flottante, avec les renvois au manuel (§ 5.7.1, 5.19 à 5.21).
