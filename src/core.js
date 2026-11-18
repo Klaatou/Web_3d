@@ -1994,6 +1994,7 @@ function createViewer(container, cfg0, loader) {
       if (fd && !fd.split('/').includes('..')) o.folder = fd;
       if (Array.isArray(z.tracks)) { const tk = z.tracks.map(audioName).filter(Boolean).slice(0, 500); if (tk.length) o.tracks = tk; }
     }
+    if (type === 'url' && z.frame === true) o.frame = true;   // 1.12.3 : lien ouvert dans une fenetre flottante de la page au lieu d'un nouvel onglet ; ecrit seulement s'il est vrai, comme gen_tpl.py
     if (img) { const lk = String(z.link || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 600); if (lk) o.link = lk; }   // lien facultatif d'un tableau : page ouverte au clic ou a E ; ecrit seulement s'il est rempli
     return o;
   }

@@ -6,6 +6,20 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.12.0)
 
+### 18/11/2026 : zones lien en fenêtre flottante (clé `frame`)
+
+- **Demande de Klaatou** : montrer une vidéo YouTube ou une page dans la région, à la façon des écrans d'OpenSim, sans quitter la page.
+- **Clé `frame`** (zone `url` seulement, écrite seulement si vraie ; `cleanZone` de `src/core.js` et `clean_zones` de `src/gen_tpl.py` identiques) : le lien s'ouvre dans une fenêtre déplaçable et redimensionnable de la page (`frameOpen`, `src/template.html`) au lieu d'un nouvel onglet. Mêmes déclenchements que les autres zones lien : `click`, touche E, `enter`, `both`.
+- **YouTube** : les formes `watch?v=`, `youtu.be/`, `shorts/`, `live/` et `embed/` deviennent un lecteur `youtube-nocookie.com/embed/ID` (départ `t=` ou `start=` en secondes ; lecture automatique demandée au clic ou à E).
+- **Pas de cadre** (le lien s'ouvre comme avant) : `hop://`, `http` depuis une page en https (contenu mixte bloqué par le navigateur), adresse de la même origine que la page (le `sandbox` ne la protégerait pas). Une adresse `http` est cadrée depuis une page qui n'est pas en https.
+- **En marchant dedans (`enter`)** : la fenêtre s'ouvre avec un bouton « Charger (contacte HOTE) » ; aucun site n'est contacté avant le clic du visiteur.
+- **Fenêtre** : titre = nom de la zone ; le bouton ↗ ouvre l'adresse d'origine dans un nouvel onglet (sites qui refusent d'être encadrés) ; la croix ferme et arrête la lecture ; une seule fenêtre à la fois ; `sandbox` et `referrerpolicy` posés sur le cadre ; hors du fichier de disposition des fenêtres.
+- **Viewer** : case « Ouvrir dans une fenêtre flottante de la page » dans la fiche d'une zone lien. Textes fr et en : `page.frame.newtab`, `page.frame.close`, `page.frame.load`, `viewer.zf.frame`.
+- **Test** : `tests/zone_frame.py` (nouveau, 22 contrôles : adresse donnée au cadre, YouTube, http et hop, page en https par interception des requêtes, enter sans chargement, déplacement, croix, miroir Python et JavaScript de la validation). Deux défauts introduits exprès (garde contenu mixte et même origine retirée ; chargement immédiat en `enter`) le font échouer. Famille zones relancée sans régression : `zones_url_cone`, `zone_cast`, `zone_audio`, `zone_distance`, `zones_numeros`, `image_zone`, `editeur_cone`, `radio_flux`, `i18n`, `modulaire`, `smoke`, `dist_a_jour`. `samples` (3 échecs) et `lien_image` (4 échecs) échouent à l'identique sur `main` dans le bac à sable.
+- **Change en `dist\`** après `python build.py` : `glb2html.py`, `index.html`, `carte.html`, `glb-viewer.html`. `VERSION` : `1.12.3`.
+- **Non essayé** (bac à sable sans accès à YouTube ni aux autres sites) : l'affichage réel du lecteur et des pages, Edge et Windows, le toucher, la lecture automatique, les vidéos dont l'intégration est interdite ou qui demandent une connexion, un lecteur YouTube depuis une page ouverte comme fichier (essayer depuis une adresse https).
+- **Reste à mettre à jour** : manuel (§ 5.7, éditeur), `REFERENCE_JSON.md` (clé `frame`), procédures, historiques.
+
 ### 17/11/2026 : annexe du manuel complétée, terrain en double au § 3.3, CHANGELOG et historiques corrigés
 
 - **Constat** : le lot 1.12.1 avait remplacé l'entrée du lot 1.11.30 (les deux CHANGELOG) et sa ligne d'historique (`HISTORIQUE.md`, `HISTORY.md`) par ses propres textes ; son entrée de CHANGELOG était rangée sous la 1.12.0 et non sous « Non publié », et sa ligne d'historique au rang de la 1.11.30.

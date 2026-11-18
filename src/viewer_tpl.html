@@ -530,6 +530,7 @@ function renderZoneList() {
         d.appendChild(inp(tr('viewer.zf.trigger'), 'select', z.trigger, v => upd({ trigger: v }, true), [['enter', tr('viewer.zf.trig.enter')], ['click', tr('viewer.zf.trig.click')], ['both', tr('viewer.zf.trig.both')]]));
       } else if (z.type === 'url') {
         d.appendChild(inp(tr('viewer.zf.url'), 'text', z.target, v => upd({ target: v })));
+        d.appendChild(inp(tr('viewer.zf.frame'), 'checkbox', z.frame, v => upd({ frame: v })));
         d.appendChild(inp(tr('viewer.zf.trigger'), 'select', z.trigger, v => upd({ trigger: v }, true), [['enter', tr('viewer.zf.trig.enter')], ['click', tr('viewer.zf.trig.click')], ['both', tr('viewer.zf.trig.both')]]));
       } else { d.appendChild(inp(tr('viewer.zf.ha'), 'text', z.target, v => upd({ target: v }))); d.appendChild(inp(tr('viewer.zf.confirm'), 'checkbox', z.confirm, v => upd({ confirm: v }))); }
       const lk = document.createElement('small'); lk.style.margin = '6px 0 2px';

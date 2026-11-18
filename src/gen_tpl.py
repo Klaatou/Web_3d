@@ -222,6 +222,8 @@ def clean_zones(zones, profile):
             "confirm": bool(z.get("confirm")), "private": bool(z.get("private")), "showName": bool(z.get("showName")),
             "mesh": "" if t in ("spawn", "image", "cast", "audio") else re.sub(r"[\x00-\x1f]", "", str(z.get("mesh") or ""))[:200],
         }
+        if t == "url" and z.get("frame") is True:   # 1.12.3 : fenetre flottante (lien ouvert dans la page) ; ecrit seulement s'il est vrai, comme core.js
+            d["frame"] = True
         if img:   # lien facultatif d'un tableau (page ouverte au clic ou a E) : ecrit seulement s'il est rempli, comme core.js
             lk = re.sub(r"[\x00-\x1f]", "", str(z.get("link") or "")).strip()[:600]
             if lk:

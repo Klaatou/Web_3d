@@ -6,6 +6,20 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.12.0)
 
+### 18/11/2026: link zones in a floating window (`frame` key)
+
+- **Request from Klaatou**: show a YouTube video or a page in the region, like OpenSim screens, without leaving the page.
+- **`frame` key** (`url` zones only, written only when true; `cleanZone` in `src/core.js` and `clean_zones` in `src/gen_tpl.py` identical): the link opens in a movable, resizable window of the page (`frameOpen`, `src/template.html`) instead of a new tab. Same triggers as the other link zones: `click`, the E key, `enter`, `both`.
+- **YouTube**: the `watch?v=`, `youtu.be/`, `shorts/`, `live/` and `embed/` forms become a `youtube-nocookie.com/embed/ID` player (start from `t=` or `start=` in seconds; autoplay requested on click or E).
+- **No frame** (the link opens as before): `hop://`, `http` from an https page (mixed content blocked by the browser), an address of the same origin as the page (the `sandbox` would not protect it). An `http` address is framed from a page that is not https.
+- **Walking into it (`enter`)**: the window opens with a "Load (contacts HOST)" button; no site is contacted before the visitor clicks.
+- **Window**: title = zone name; the ↗ button opens the original address in a new tab (sites that refuse to be framed); the cross closes it and stops playback; one window at a time; `sandbox` and `referrerpolicy` set on the frame; not part of the window layout file.
+- **Viewer**: "Open in a floating window of the page" box in the link zone form. Texts in French and English: `page.frame.newtab`, `page.frame.close`, `page.frame.load`, `viewer.zf.frame`.
+- **Test**: `tests/zone_frame.py` (new, 22 checks: address given to the frame, YouTube, http and hop, https page by request interception, enter without loading, move, cross, Python and JavaScript mirror of the validation). Two defects introduced on purpose (mixed-content and same-origin guard removed; immediate loading on `enter`) make it fail. Zones family rerun without regression: `zones_url_cone`, `zone_cast`, `zone_audio`, `zone_distance`, `zones_numeros`, `image_zone`, `editeur_cone`, `radio_flux`, `i18n`, `modulaire`, `smoke`, `dist_a_jour`. `samples` (3 failures) and `lien_image` (4 failures) fail identically on `main` in the sandbox.
+- **Changes in `dist\`** after `python build.py`: `glb2html.py`, `index.html`, `carte.html`, `glb-viewer.html`. `VERSION`: `1.12.3`.
+- **Not tried** (sandbox without access to YouTube or other sites): the real display of the player and of pages, Edge and Windows, touch, autoplay, videos whose embedding is forbidden or that ask for a sign-in, a YouTube player from a page opened as a file (try from an https address).
+- **Still to update**: manual (§ 5.7, editor), `REFERENCE_JSON.md` (`frame` key), procedures, histories.
+
 ### 17/11/2026: manual appendix completed, double terrain in § 3.3, CHANGELOG and histories fixed
 
 - **Finding**: batch 1.12.1 had replaced the batch 1.11.30 entry (both CHANGELOG files) and its history row (`HISTORIQUE.md`, `HISTORY.md`) with its own texts; its CHANGELOG entry was filed under 1.12.0 instead of "Unreleased", and its history row sat at the place of 1.11.30.
