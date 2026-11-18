@@ -6,6 +6,16 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.12.0)
 
+### 18/11/2026: documents of batches 1.12.3 to 1.12.14 (link zones in a floating window, video screens)
+
+- **Requested by Klaatou**: bring the documents that have been behind since batch 1.12.3 up to date in one go.
+- **`REFERENCE_JSON.md`** (FR and EN, § 11.4): eight kinds of zones; type `"video"`; `radius`, `w`, `h`, `target` for the video screen; `folder` and `tracks` valid for `video`; new keys `sound` and `frame`; `cone` has no effect on a video screen.
+- **Manual** (`MANUEL.md`, `MANUAL.md`): § 5.7.1 (floating window, `frame` key, YouTube and lists, cases without a frame, **known limit: Edge without hardware acceleration may leave a ghost rectangle**); new § 5.21 (`video` zone: file, playback, click, sound, lists, `--video-list`, track bar, radio and music in the overview, diagnostic, tried and not tried); appendix (§ 13): line for batches 1.12.3 to 1.12.15.
+- **`PROCEDURES_SIMPLES.md`** (FR and EN): new § 17 "Put a video screen in a region"; § 16 step 3: pointer to § 17. `VUE_ENSEMBLE.md` and `OVERVIEW.md`: video on a screen is no longer an idea.
+- **Histories** (`HISTORIQUE.md`, `HISTORY.md`): one line per batch, 1.12.3 to 1.12.15.
+- No code touched: `dist\` does not change. `VERSION`: `1.12.15`.
+- **Still to update**: `REPRISE.md` (when Klaatou asks, rule 23).
+
 ### 18/11/2026: video screens: sound no longer falls back to muted at a track change
 
 - **Reported by Klaatou**: on a playlist screen, the sound came about 2 s after the picture at each track change (the Diagnostic said "sound requested but muted").

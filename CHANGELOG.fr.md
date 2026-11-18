@@ -6,6 +6,16 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.12.0)
 
+### 18/11/2026 : documents des lots 1.12.3 à 1.12.14 (zones lien en fenêtre flottante, écrans vidéo)
+
+- **Demande de Klaatou** : mettre à jour d'un coup les documents en retard depuis le lot 1.12.3.
+- **`REFERENCE_JSON.md`** (FR et EN, § 11.4) : huit sortes de zones ; type `"video"` ; `radius`, `w`, `h`, `target` pour l'écran vidéo ; `folder` et `tracks` valables pour `video` ; nouvelles clés `sound` et `frame` ; `cone` sans effet sur un écran vidéo.
+- **Manuel** (`MANUEL.md`, `MANUAL.md`) : § 5.7.1 (fenêtre flottante, clé `frame`, YouTube et listes, cas sans cadre, **limite connue : Edge sans accélération matérielle peut laisser un rectangle fantôme**) ; nouveau § 5.21 (zone `video` : fichier, lecture, clic, son, listes, `--video-list`, barre de pistes, radio et musique en vue d'ensemble, diagnostic, essayé et non essayé) ; annexe (§ 13) : ligne des lots 1.12.3 à 1.12.15.
+- **`PROCEDURES_SIMPLES.md`** (FR et EN) : nouveau § 17 « Mettre un écran vidéo dans une région » ; § 16 étape 3 : renvoi au § 17. `VUE_ENSEMBLE.md` et `OVERVIEW.md` : la vidéo sur un écran n'est plus une idée.
+- **Historiques** (`HISTORIQUE.md`, `HISTORY.md`) : une ligne par lot, 1.12.3 à 1.12.15.
+- Aucun code touché : `dist\` ne change pas. `VERSION` : `1.12.15`.
+- **Reste à mettre à jour** : `REPRISE.md` (à la demande de Klaatou, règle 23).
+
 ### 18/11/2026 : écrans vidéo : le son ne retombe plus en muet au changement de piste
 
 - **Signalé par Klaatou** : sur un écran à liste, le son arrivait environ 2 s après l'image à chaque changement de piste (le Diagnostic disait « son demandé mais muet »).

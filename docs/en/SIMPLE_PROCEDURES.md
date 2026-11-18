@@ -276,7 +276,7 @@ Radio **or** music: in Settings, the "Zone radio" and "Zone music" boxes exclude
 
 1. **Open the viewer**: the `glb-viewer.html` file (tools' `dist` folder) opens in Edge or Chrome by double-click. Open the region's `.glb`.
 2. **Take the zones already placed**: **"Import zones (.json)"** button, then the region's **current** `NOM.zones.json`. **Do not skip this step**: the file exported at step 4 only holds what is in the viewer at that moment; without the import, the existing zones would vanish from the region.
-3. **Edit**: add a zone (type, click on the ground or P key while walking), open its sheet to set it, or delete it (`MANUAL.md` § 5.2). For a picture: the files go in the region's `medias` sub-folder (`MANUAL.md` § 5.11); for music: the `audio` folder (§ 15); a radio: nothing to copy.
+3. **Edit**: add a zone (type, click on the ground or P key while walking), open its sheet to set it, or delete it (`MANUAL.md` § 5.2). For a picture: the files go in the region's `medias` sub-folder (`MANUAL.md` § 5.11); for music: the `audio` folder (§ 15); for a video screen: the videos (§ 17); a radio: nothing to copy.
 4. **Export**: **"Export zones (.json)"** button. The browser downloads a file named `zones.json` into its downloads folder.
 5. **Replace the region's file**: first **keep a copy** of the old `NOM.zones.json` (for example rename it `NOM.zones.avant.json`). Then rename the downloaded file to **`NOM.zones.json`** (exactly the old one's name) and copy it into the region folder, in place of the old one. Keep the exact name: the page only looks for that one.
 6. **Try at home before publishing**: from the site folder, `python -m http.server 8000`, then open `http://localhost:8000/index.html?region=NOM`. The page reads `NOM.zones.json` again at each opening: **F5 is enough**, no page rebuild (unless you also change the page options, which are in `NOM.config.json`).
@@ -284,3 +284,19 @@ Radio **or** music: in Settings, the "Zone radio" and "Zone music" boxes exclude
 8. **Check online**: open the public address, **Ctrl+F5** (the browser sometimes keeps the old file), switch to walk mode (F key) and go to the zone.
 
 A mistake? Put the old file back (the copy of step 5) in place of `NOM.zones.json` and publish again.
+
+
+## 17. Put a video screen in a region
+
+**I want a screen on a wall to show a video (or a series of videos) when visitors come close.** A "Video" zone is a screen that plays within range, in a loop, muted or with sound (`MANUAL.md` § 5.21).
+
+You need: your video files (H.264 mp4 is the most compatible; webm too; that you have the rights to), your region folder (the one with the `.glb`), Edge or Chrome for the viewer.
+
+1. **Store the videos.** In the region folder, create a sub-folder `videos` (or `medias\videos` if the region has a `medias` folder) and put the files there. For **one single video**, put it in `medias` (or next to the `.glb`). **Number the names to set the order** of a list: `01-accueil.mp4`, `02-visite.mp4`.
+2. **For a list: make `playlist.json`**, from the `dist` folder of the tools: `python .\glb2html.py --video-list "CHEMIN\NOM\videos"` (with `--dry-run`: shows without writing). *Variant without a command line*: the "Update the list (playlist.json)" button of the zone sheet (step 3). One single video: no list.
+3. **Place the screen in the viewer.** Open `glb-viewer.html`, open the `.glb`, **import its current zones** ("Import zones (.json)", `NOM.zones.json`). Type "Video (screen on a wall)", click on the wall. **One single video**: write its name in "File or address of the video" (`clip` or `clip.mp4`). **A list**: leave that field empty and write `videos` in "Video folder". Set the width (height 0 follows the video), the range and, if you want sound, "Screen sound" ("with sound": only the closest screen speaks).
+4. **Export, replace the zones file, put online**: procedure of **§ 16** (steps 4 to 8). Also copy the **whole** `videos` folder (the videos **and** `playlist.json`) into the region folder on the host.
+5. **Try it**: open the page (F5 or Ctrl+F5), walk up to the screen: it loads then plays. **Click on the screen**: pause, then play. With a list, the **track bar** (previous, pause / play, next) shows under the screen when you hover over it. The sound needs a first click or key press in the page.
+6. **Later**: adding, removing or renaming a video of a list: **redo `playlist.json`** (step 2) and copy the folder online again.
+
+Nothing plays? The **Video** line of the diagnostic (State block, key I, "Copy the diagnostic") says why: file not found, not loaded yet, sound requested but muted. `MANUAL.md` § 5.21, "Not playing?".

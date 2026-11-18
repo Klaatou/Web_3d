@@ -299,6 +299,19 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 17/11/2026 |  | 1.12.0 | Release 1.12.0: `VERSION` 1.12.0; `CHANGELOG.fr.md` and `CHANGELOG.md`; gathers batches 1.11.1 to 1.11.35 (audio zones, radio with several streams, Sound window, radio / music volume, movable pad, foldable chat); manual title, overview |
 | 17/11/2026 |  | after 1.12.0 | Batch 1.12.1: `REPRISE.md` up to date (release 1.12.0) |
 | 17/11/2026 |  | after 1.12.0 | Batch 1.12.2: manual appendix (§ 13) completed, double terrain in § 3.3, CHANGELOG and histories fixed (batch 1.11.30 restored), `REPRISE.md` up to date |
+| 18/11/2026 |  | after 1.12.0 | Batch 1.12.3: link zones in a **floating window** (`frame` key: page or YouTube video in a movable window of the page; `tests/zone_frame.py`) |
+| 18/11/2026 |  | after 1.12.0 | Batch 1.12.4: floating window: YouTube lists (`&list=`, `playlist?list=`); frame hidden while dragging (removed in 1.12.5) |
+| 18/11/2026 |  | after 1.12.0 | Batch 1.12.5: floating window: hiding while dragging removed; known limit: Edge without hardware acceleration may leave a ghost rectangle |
+| 18/11/2026 |  | after 1.12.0 | Batch 1.12.6: floating window: opened on the left and centred in height; the ↗ button closes the window |
+| 18/11/2026 |  | after 1.12.0 | Batch 1.12.7: **`video` zones**, step 1: screen on a wall (`target`, `w`, `h`, `radius`), muted looping playback within range, 8 screens at most; `tests/zone_video.py` |
+| 18/11/2026 |  | after 1.12.0 | Batch 1.12.8: video screens: range measured from the visitor, not the camera |
+| 18/11/2026 |  | after 1.12.0 | Batch 1.12.9: video screens: sound (`sound: true`), only one screen speaks, the closest; volume by distance |
+| 18/11/2026 |  | after 1.12.0 | Batch 1.12.10: video screens: a click on the screen = pause / play |
+| 18/11/2026 |  | after 1.12.0 | Batch 1.12.11: radio and music of zones also in the overview (range from the camera) |
+| 18/11/2026 |  | after 1.12.0 | Batch 1.12.12: video screens: lists of videos (`folder`, `tracks`, `playlist.json`), previous / next, `glb2html.py --video-list`, viewer field and button; `tests/zone_video_liste.py` |
+| 18/11/2026 |  | after 1.12.0 | Batch 1.12.13: video screens: retractable track bar with icons under the screen; sound set before start |
+| 18/11/2026 |  | after 1.12.0 | Batch 1.12.14: video screens: the sound no longer falls back to muted at a track change (only a real `NotAllowedError` cuts the sound) |
+| 18/11/2026 |  | after 1.12.0 | Batch 1.12.15: documents of batches 1.12.3 to 1.12.14: `REFERENCE_JSON` (`video` zone, `sound`, `frame`, `folder`, `tracks`), manual § 5.7.1 and § 5.21, `SIMPLE_PROCEDURES.md` § 17, overview, appendix, histories |
 ## Useful commands
 
 - See the history: `git log --oneline --decorate`

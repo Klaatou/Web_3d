@@ -276,7 +276,7 @@ Radio **ou** musique : dans Réglages, les cases « Radio des zones » et « Mus
 
 1. **Ouvrir le viewer** : le fichier `glb-viewer.html` (dossier `dist` des outils) s'ouvre dans Edge ou Chrome par double-clic. Ouvrir le `.glb` de la région.
 2. **Reprendre les zones déjà posées** : bouton **« Importer zones (.json) »**, puis le `NOM.zones.json` **actuel** de la région. **Ne pas sauter cette étape** : le fichier exporté à l'étape 4 contient seulement ce qui est dans le viewer à ce moment ; sans l'import, les zones existantes disparaîtraient de la région.
-3. **Modifier** : ajouter une zone (type, clic au sol ou touche P en promenade), ouvrir sa fiche pour la régler, ou la supprimer (`MANUEL.md` § 5.2). Pour une image : les fichiers se mettent dans le sous-dossier `medias` de la région (`MANUEL.md` § 5.11) ; pour une musique : le dossier `audio` (§ 15) ; une radio : rien à copier.
+3. **Modifier** : ajouter une zone (type, clic au sol ou touche P en promenade), ouvrir sa fiche pour la régler, ou la supprimer (`MANUEL.md` § 5.2). Pour une image : les fichiers se mettent dans le sous-dossier `medias` de la région (`MANUEL.md` § 5.11) ; pour une musique : le dossier `audio` (§ 15) ; pour un écran vidéo : les vidéos (§ 17) ; une radio : rien à copier.
 4. **Exporter** : bouton **« Exporter zones (.json) »**. Le navigateur télécharge un fichier nommé `zones.json` dans son dossier de téléchargements.
 5. **Remplacer le fichier de la région** : d'abord **garder une copie** de l'ancien `NOM.zones.json` (par exemple le renommer `NOM.zones.avant.json`). Puis renommer le fichier téléchargé en **`NOM.zones.json`** (exactement le nom de l'ancien) et le copier dans le dossier de la région, à la place de l'ancien. Garder le nom exact : la page ne cherche que celui-là.
 6. **Essayer chez soi avant de publier** : depuis le dossier du site, `python -m http.server 8000`, puis ouvrir `http://localhost:8000/index.html?region=NOM`. La page relit `NOM.zones.json` à chaque ouverture : **F5 suffit**, sans refaire la page (sauf si tu changes aussi les options de la page, qui sont dans `NOM.config.json`).
@@ -284,3 +284,19 @@ Radio **ou** musique : dans Réglages, les cases « Radio des zones » et « Mus
 8. **Vérifier en ligne** : ouvrir l'adresse publique, **Ctrl+F5** (le navigateur garde parfois l'ancien fichier), passer en promenade (touche F) et aller à la zone.
 
 Une erreur ? Remettre l'ancien fichier (la copie de l'étape 5) à la place de `NOM.zones.json` et republier.
+
+
+## 17. Mettre un écran vidéo dans une région
+
+**Je veux qu'un écran sur un mur montre une vidéo (ou une suite de vidéos) quand les visiteurs s'approchent.** Une zone « Vidéo » est un écran qui joue à portée, en boucle, muet ou avec du son (`MANUEL.md` § 5.21).
+
+Il te faut : tes fichiers vidéo (mp4 en H.264 : le plus compatible ; webm aussi ; dont tu as les droits), le dossier de ta région (celui où est le `.glb`), Edge ou Chrome pour le viewer.
+
+1. **Ranger les vidéos.** Dans le dossier de la région, créer un sous-dossier `videos` (ou `medias\videos` si la région a un dossier `medias`) et y mettre les fichiers. Pour **une seule vidéo**, la mettre dans `medias` (ou à côté du `.glb`). **Numéroter les noms pour fixer l'ordre** d'une liste : `01-accueil.mp4`, `02-visite.mp4`.
+2. **Pour une liste : faire `playlist.json`**, depuis le dossier `dist` des outils : `python .\glb2html.py --video-list "CHEMIN\NOM\videos"` (avec `--dry-run` : montre sans écrire). *Variante sans ligne de commande* : le bouton « Mettre à jour la liste (playlist.json) » de la fiche de la zone (étape 3). Une seule vidéo : pas de liste.
+3. **Poser l'écran dans le viewer.** Ouvrir `glb-viewer.html`, ouvrir le `.glb`, **importer ses zones actuelles** (« Importer zones (.json) », `NOM.zones.json`). Type « Vidéo (écran sur un mur) », clic sur le mur. **Une seule vidéo** : écrire son nom dans « Fichier ou adresse de la vidéo » (`clip` ou `clip.mp4`). **Une liste** : laisser ce champ vide et écrire `videos` dans « Dossier de vidéos ». Régler la largeur (la hauteur à 0 suit la vidéo), la portée et, si tu veux du son, « Son de l'écran » (« avec son » : seul l'écran le plus proche parle).
+4. **Exporter, remplacer le fichier de zones, mettre en ligne** : procédure du **§ 16** (étapes 4 à 8). Copier aussi le dossier `videos` **entier** (les vidéos **et** `playlist.json`) dans le dossier de la région sur l'hébergement.
+5. **Essayer** : ouvrir la page (F5 ou Ctrl+F5), s'approcher de l'écran : il se charge puis joue. **Cliquer sur l'écran** : pause, puis lecture. Avec une liste, la **barre de pistes** (précédente, pause / lecture, suivante) apparaît sous l'écran quand on le survole. Le son demande un premier clic ou une première touche dans la page.
+6. **Plus tard** : ajouter, retirer ou renommer une vidéo d'une liste : **refaire `playlist.json`** (étape 2) et recopier le dossier en ligne.
+
+Rien ne joue ? La ligne **Vidéo** du diagnostic (bloc État, touche I, « Copier le diagnostic ») dit pourquoi : fichier introuvable, pas encore chargé, son demandé mais muet. `MANUEL.md` § 5.21, « Ça ne joue pas ? ».

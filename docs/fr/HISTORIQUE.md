@@ -299,6 +299,19 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 17/11/2026 |  | 1.12.0 | Publication 1.12.0 : `VERSION` 1.12.0 ; `CHANGELOG.fr.md` et `CHANGELOG.md` ; réunit les lots 1.11.1 à 1.11.35 (zones audio, radio à plusieurs flux, fenêtre Son, volume radio / musique, pavé déplaçable, chat repliable) ; titre du manuel, vue d'ensemble |
 | 17/11/2026 |  | après 1.12.0 | Lot 1.12.1 : `REPRISE.md` à jour (publication 1.12.0) |
 | 17/11/2026 |  | après 1.12.0 | Lot 1.12.2 : annexe du manuel (§ 13) complétée, terrain en double au § 3.3, CHANGELOG et historiques corrigés (lot 1.11.30 rétabli), `REPRISE.md` à jour |
+| 18/11/2026 |  | après 1.12.0 | Lot 1.12.3 : zones lien en **fenêtre flottante** (clé `frame` : page ou vidéo YouTube dans une fenêtre déplaçable de la page ; `tests/zone_frame.py`) |
+| 18/11/2026 |  | après 1.12.0 | Lot 1.12.4 : fenêtre flottante : listes YouTube (`&list=`, `playlist?list=`) ; masquage du cadre pendant le glissement (retiré en 1.12.5) |
+| 18/11/2026 |  | après 1.12.0 | Lot 1.12.5 : fenêtre flottante : retrait du masquage pendant le glissement ; limite connue : Edge sans accélération matérielle peut laisser un rectangle fantôme |
+| 18/11/2026 |  | après 1.12.0 | Lot 1.12.6 : fenêtre flottante : ouverte à gauche et centrée en hauteur ; le bouton ↗ ferme la fenêtre |
+| 18/11/2026 |  | après 1.12.0 | Lot 1.12.7 : **zones `video`**, étape 1 : écran sur un mur (`target`, `w`, `h`, `radius`), lecture muette en boucle à portée, 8 écrans au plus ; `tests/zone_video.py` |
+| 18/11/2026 |  | après 1.12.0 | Lot 1.12.8 : écrans vidéo : la portée est mesurée depuis le visiteur, pas la caméra |
+| 18/11/2026 |  | après 1.12.0 | Lot 1.12.9 : écrans vidéo : le son (`sound: true`), un seul écran parle, le plus proche ; volume par distance |
+| 18/11/2026 |  | après 1.12.0 | Lot 1.12.10 : écrans vidéo : un clic sur l'écran = pause / lecture |
+| 18/11/2026 |  | après 1.12.0 | Lot 1.12.11 : radio et musique des zones aussi en vue d'ensemble (portée depuis la caméra) |
+| 18/11/2026 |  | après 1.12.0 | Lot 1.12.12 : écrans vidéo : listes de vidéos (`folder`, `tracks`, `playlist.json`), précédente / suivante, `glb2html.py --video-list`, champ et bouton du viewer ; `tests/zone_video_liste.py` |
+| 18/11/2026 |  | après 1.12.0 | Lot 1.12.13 : écrans vidéo : barre de pistes escamotable à icônes sous l'écran ; son réglé avant le démarrage |
+| 18/11/2026 |  | après 1.12.0 | Lot 1.12.14 : écrans vidéo : le son ne retombe plus en muet au changement de piste (seul un vrai `NotAllowedError` coupe le son) |
+| 18/11/2026 |  | après 1.12.0 | Lot 1.12.15 : documents des lots 1.12.3 à 1.12.14 : `REFERENCE_JSON` (zone `video`, `sound`, `frame`, `folder`, `tracks`), manuel § 5.7.1 et § 5.21, `PROCEDURES_SIMPLES.md` § 17, vue d'ensemble, annexe, historiques |
 ## Commandes utiles
 
 - Voir l'historique : `git log --oneline --decorate`

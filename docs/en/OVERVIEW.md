@@ -32,7 +32,7 @@ An OpenSim region (`.oar` backup) becomes a **3D web page** you can walk around 
 1. **Domain name**: for the presentation site and for a stable name for the presence server.
 2. **Presentation page**: clickable GIF leading to the demo, a button to try it, contact, removal procedure, legal notices.
 3. **Option to remove the "Made with Web_3d" icon** (key `credit`): to be decided in a few weeks.
-4. **Ideas**: remaining media zones (page, video on a screen; music is done: radio and audio zones), pictures in a tiled region, GLB insertion, guest book (optional, can be external); extract each building of a large OAR into a separate GLB to recompose regions (done: `extraire_batiments.py`, the composition is done in Blender); mega-region (study in `docs/fr/ETUDE_MEGAREGION.md`, in French, nothing coded); animated PNG and WebP.
+4. **Ideas**: remaining media zones (page iframe inside the scene, apart from the floating window; done: music, radio and audio zones, video on a screen, `video` zone, and the link in a floating window, `frame` key), pictures in a tiled region, GLB insertion, guest book (optional, can be external); extract each building of a large OAR into a separate GLB to recompose regions (done: `extraire_batiments.py`, the composition is done in Blender); mega-region (study in `docs/fr/ETUDE_MEGAREGION.md`, in French, nothing coded); animated PNG and WebP.
 
 ## 4. Where to read what
 
