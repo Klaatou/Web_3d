@@ -6,6 +6,11 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.12.0)
 
+### 18/11/2026: README brought up to date (multimedia zones)
+
+- **`README.fr.md` and `README.md`**: the feature list adds video screens and floating-window links; the Zones section only mentioned pictures, it now lists radio, music, video and floating window, with the manual references (§ 5.7.1, 5.19 to 5.21).
+- No code touched: `dist\` does not change. `VERSION`: `1.12.19`.
+
 ### 18/11/2026: manual § 5.19 to 5.21: dense bullets split into sub-lists; radio tried on a phone
 
 - **Requested by Klaatou**: the very dense bullets of the radio, music and video zones in the manual are split into sub-lists.

@@ -311,6 +311,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 18/11/2026 |  | après 1.12.0 | Lot 1.12.12 : écrans vidéo : listes de vidéos (`folder`, `tracks`, `playlist.json`), précédente / suivante, `glb2html.py --video-list`, champ et bouton du viewer ; `tests/zone_video_liste.py` |
 | 18/11/2026 |  | après 1.12.0 | Lot 1.12.13 : écrans vidéo : barre de pistes escamotable à icônes sous l'écran ; son réglé avant le démarrage |
 | 18/11/2026 |  | après 1.12.0 | Lot 1.12.14 : écrans vidéo : le son ne retombe plus en muet au changement de piste (seul un vrai `NotAllowedError` coupe le son) |
+| 18/11/2026 |  | après 1.12.0 | Lot 1.12.19 : README (FR et EN) : zones radio, musique, vidéo et lien en fenêtre flottante ajoutées à la liste des fonctions et à la section Zones |
 | 18/11/2026 |  | après 1.12.0 | Lot 1.12.18 : manuel § 5.19 à 5.21 : puces denses découpées en sous-listes ; essai de la radio à plusieurs flux sur un téléphone |
 | 18/11/2026 |  | après 1.12.0 | Lot 1.12.17 : listes plus lisibles : zones de l'exemple en liste dans `docs/samples/README`, annexe du manuel (§ 13) en listes par version au lieu d'un tableau |
 | 18/11/2026 |  | après 1.12.0 | Lot 1.12.16 : exemples JSON des zones multimédias dans `REFERENCE_JSON.md` ; `region.zones.sample.json` remis à jour (14 zones, `streams`, `audio`, `video`, `frame`) ; `tests/samples.py` |

@@ -18,7 +18,7 @@
 
 - **Marcher, courir, sauter et voler** dans la région : vue à la première personne, à la troisième ou caméra libre, avec collisions ; commandes à l'écran et mode tactile pour téléphones et tablettes (voir « Touches principales »).
 - **Visiter une région énorme** : elle est découpée en tuiles qui se chargent autour de l'avatar (voir « Régions en tuiles »).
-- **Placer des zones** dans le modèle : points d'arrivée, portails vers une autre région, panneaux, liens web, commandes Home Assistant, **images sur les murs** (JPEG, PNG, GIF animé) **radio** (un flux Icecast / SHOUTcast joué à portée en promenade) et **musique** (les fichiers son d'un dossier, joués en boucle à portée).
+- **Placer des zones** dans le modèle : points d'arrivée, portails vers une autre région, panneaux, liens web, commandes Home Assistant, **images sur les murs** (JPEG, PNG, GIF animé) **radio** (un flux Icecast / SHOUTcast joué à portée en promenade), **musique** (les fichiers son d'un dossier, joués en boucle à portée), **écrans vidéo** sur un mur (un fichier ou un dossier, son à portée) et **liens en fenêtre flottante** (page web, YouTube).
 - **Être plusieurs** : voir les autres visiteurs et discuter, avec le serveur de présence facultatif (voir « Serveur de présence »).
 - **Relier plusieurs régions** par une carte des mondes (`carte.html`) : une fiche par région, qui y mène (voir « Carte des mondes »).
 - **Tout régler** dans le viewer (`glb-viewer.html` : mer, caméra, promenade, zones, fiche de région), ou directement dans les fichiers JSON (`NOM.config.json`, `NOM.zones.json`), qu'une page avec coquille relit à chaque F5.
@@ -157,7 +157,7 @@ Pour un modèle énorme, `glb2tiles.py` écrit les tuiles, et `glb2html.py --til
 ## La page
 
 - **Promenade** : avatar, collisions, course, saut, vol, trois vues (subjective, troisième personne, caméra libre), boussole, arrivées et portails, téléportation par la fenêtre Arrivées (L) ou par double-clic.
-- **Zones** : arrivées, portails, liens web, commandes Home Assistant et **images sur les murs** (fichiers déposés dans le sous-dossier `medias` de la région, légende dans le nom du fichier ou dans un fichier `.txt`) ; mode hébergé seulement (manuel § 5.11).
+- **Zones** : arrivées, portails, liens web (y compris en **fenêtre flottante**, manuel § 5.7.1), commandes Home Assistant, **images sur les murs** (fichiers déposés dans le sous-dossier `medias` de la région, légende dans le nom du fichier ou dans un fichier `.txt` ; mode hébergé seulement, manuel § 5.11), **radio** (§ 5.19), **musique** (§ 5.20) et **écrans vidéo** (§ 5.21).
 - **Fenêtres** : Aide (H), Informations (I), Arrivées (L), Réglages (O), déplaçables et retenues par le navigateur ; bouton « Copier le diagnostic » ; « Journal des visites… » quand la page a un serveur de présence.
 - **Commandes à l'écran** : ligne d'état, flèches 3 x 3 (touche K), mode tactile pour téléphone et tablette.
 - **Rendu léger** : résolution, images par seconde, vue d'ensemble seule, rayon des tuiles, anticrénelage (`--light`).

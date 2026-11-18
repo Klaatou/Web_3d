@@ -6,6 +6,11 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.12.0)
 
+### 18/11/2026 : README remis à jour (zones multimédias)
+
+- **`README.fr.md` et `README.md`** : la liste des fonctions ajoute les écrans vidéo et les liens en fenêtre flottante ; la section Zones citait encore seulement les images, elle liste maintenant radio, musique, vidéo et fenêtre flottante, avec les renvois au manuel (§ 5.7.1, 5.19 à 5.21).
+- Aucun code touché : `dist\` ne change pas. `VERSION` : `1.12.19`.
+
 ### 18/11/2026 : manuel § 5.19 à 5.21 : puces denses découpées en sous-listes ; essai radio sur téléphone
 
 - **Demande de Klaatou** : les puces très denses des zones radio, musique et vidéo du manuel sont découpées en sous-listes.
