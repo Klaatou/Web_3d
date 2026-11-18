@@ -6,6 +6,18 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.12.0)
 
+### 18/11/2026 : zones vidéo, étape 1 (type `video`)
+
+- **Demande de Klaatou** : des écrans vidéo comme dans OpenSim, avec le même fonctionnement que les tableaux « image » pour la cible. Étapes décidées : 1) un écran avec un fichier, lecture à portée ; 2) le son selon la distance (`sound: true`) ; 3) une liste de fichiers (`folder`, `playlist.json`, comme les zones audio). Choix de Klaatou : muet par défaut, tous les écrans à portée jouent, le son seulement du plus proche (étape 2).
+- **Zone `video`** : un tableau plaqué sur un mur (comme `image`) dont la texture est un fichier vidéo. Clés : `target` (nom de fichier ou adresse), `w`, `h` (0 = d'après le rapport de la vidéo), `radius` (20 m par défaut, 0,5 à 200), `x y z yaw`, `label`. Pas de `mesh`, `cone`, `link` ni `trigger` utile : rien à cliquer.
+- **Nom du fichier** : comme une image. Nom nu (`clip`) : `medias/clip.mp4`, `.webm`, `.m4v`, `.ogv`, puis le dossier de la région ; avec extension : tel quel dans `medias/` puis dans le dossier ; adresse `https:` ou chemin `/…` tel quel (autre site : il doit autoriser le CORS, sinon WebGL refuse la texture). `javascript:`, `data:`, `blob:` refusés.
+- **Lecture** : rien n'est demandé au serveur avant d'être à portée (`radius`) et dans le champ de la caméra. La vidéo joue alors, en boucle, **sans son**, et se met en pause une seconde après avoir tourné le dos ou quitté la portée, ou si l'onglet est caché. Au plus 8 vidéos jouent à la fois (les plus proches). Mouvement réduit demandé au système (`prefers-reduced-motion`) : première image seulement.
+- **Éditeur** : type « Vidéo (écran sur un mur) », champs fichier, largeur, hauteur, portée ; dans l'éditeur l'écran est un panneau avec le nom du fichier, la vidéo ne joue pas. `Copier le diagnostic` donne une ligne par écran (fichier lu, état).
+- **Code** : `core.js` (`videoPlane`, `videoTick`, `cleanZone`), `gen_tpl.py` (`clean_zones`, même résultat), `viewer_tpl.html`, `i18n`. Les écrans vidéo ne sont pas des zones proches (pas d'invite « clic ou E »).
+- **Test** : `tests/zone_video.py` (23 contrôles, vidéos d'essai fabriquées avec ffmpeg, page servie en http) : nettoyage JavaScript = Python, rien de demandé hors de portée, nom nu, lecture muette en boucle, pause en tournant le dos et en s'éloignant, reprise, écran lointain chargé seulement à l'approche, fichier absent, `javascript:`, mp4 H.264, plafond de 8, texture réellement dessinée, mouvement réduit. Cinq défauts introduits exprès (jamais de pause, chargement immédiat, plus de plafond, texture non appliquée, pas de test de champ) le font échouer.
+- **Change en `dist\`** après `python build.py` : `glb2html.py`, `index.html`, `glb-viewer.html`, `carte.html` (elle embarque le dictionnaire de langues). `VERSION` : `1.12.7`.
+- **Limites de l'étape 1** : pas de son ; pas de légende `.txt` (le titre se lit dans le nom du fichier, après le premier tiret, comme les images) ; le fichier se télécharge en entier (`preload`) une fois à portée ; dans `glb-viewer.html` (fichiers locaux sans serveur), la vidéo ne se charge pas : il faut une page servie en http. Non essayé : Edge sans accélération matérielle (rendu logiciel), grosses vidéos, serveur sans CORS.
+
 ### 18/11/2026 : fenêtre flottante : ouverte à gauche, centrée en hauteur ; le ↗ ferme la fenêtre
 
 - **Demande de Klaatou** : en bas à droite, la fenêtre laissait voir le rectangle fantôme d'Edge (sans accélération matérielle) juste au-dessus d'elle dès l'ouverture ; au centre gauche, plus de fantôme tant qu'on ne déplace rien.

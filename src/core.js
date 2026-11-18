@@ -123,6 +123,7 @@ function diagText(viewer, extra) {
   }
   if (viewer && viewer.metalInfo) { const k = viewer.metalInfo(); out.push(L(tr('core.diag.metal'), tr('core.diag.metal.v', nb(k.pct), k.metal, k.total, k.env))); }   // 1.10.8 : reflets metalliques : reglage, materiaux metalliques charges, ceux qui ont les reflets
   if (viewer && viewer.imageDiag) for (const d of viewer.imageDiag().slice(0, 60)) out.push(L(tr('core.diag.image'), tr('core.diag.image.v', d.id, d.target || '\u2014', d.loaded || '\u2014', d.cap ? '\u00ab ' + d.cap + ' \u00bb (' + (d.src === 'txt' ? tr('core.diag.image.txt') : tr('core.diag.image.name')) + (d.vis ? '' : ', ' + tr('core.diag.image.hidden')) + ')' : '\u2014')));
+  if (viewer && viewer.videoDiag) for (const d of viewer.videoDiag().slice(0, 60)) out.push(L(tr('core.diag.video'), tr('core.diag.video.v', d.id, d.target || '\u2014', d.loaded || '\u2014', ({ fail: tr('core.diag.video.s.fail'), wait: tr('core.diag.video.s.wait'), play: tr('core.diag.video.s.play'), pause: tr('core.diag.video.s.pause') })[d.state])));   // 1.12.7
   if (viewer && viewer.animInfo && viewer.imageDiag && viewer.imageDiag().length) {   // 1.6.16 : GIF animes decodes, changements d'image, mouvement reduit demande au systeme
     const a = viewer.animInfo(), red = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
     out.push(L(tr('core.diag.anim'), tr('core.diag.anim.v', a.planes, a.ticks, red ? tr('common.yes') : tr('common.no'))));
@@ -1929,6 +1930,7 @@ function createViewer(container, cfg0, loader) {
     if (z.type === 'cast') return [name, (z.streams && z.streams.length ? (z.streams.length > 1 ? z.streams[0][1] + ' … +' + (z.streams.length - 1) : z.streams[0][1]) : '')];
     if (z.type === 'audio') return [name, z.folder || ''];
     if (z.type === 'image') return [name, z.link || ''];
+    if (z.type === 'video') return [name, z.target || ''];
     if (z.type === 'ha') return [name, tr('core.tip.cmd', name)];
     return [name, tr('core.tip.region', (String(z.target || '').trim() || tr('core.tip.thisregion')) + (z.spawn ? ' #' + z.spawn : ''))];
   }
@@ -1952,7 +1954,7 @@ function createViewer(container, cfg0, loader) {
     tipEl.style.left = Math.max(4, Math.min(innerWidth - w - 4, cx + 14)) + 'px';
     tipEl.style.top = Math.max(4, Math.min(innerHeight - h - 4, cy + 18)) + 'px';
   }
-  const ZONE_TYPES = ['url', 'ha', 'portal', 'spawn', 'image', 'cast', 'audio'];   // audio (1.11.4) : fichiers son d'un dossier joues en boucle a portee ; cast (1.10.32) : radio, flux Icecast / SHOUTcast joue en promenade a portee, volume selon la distance
+  const ZONE_TYPES = ['url', 'ha', 'portal', 'spawn', 'image', 'cast', 'audio', 'video'];   // audio (1.11.4) : fichiers son d'un dossier joues en boucle a portee ; cast (1.10.32) : radio, flux Icecast / SHOUTcast joue en promenade a portee, volume selon la distance
   const slug = s => String(s || '').toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
   function zoneEntrant(z) { return z.type === 'portal' || z.type === 'url'; }   // zones qui se declenchent aussi en marchant dedans (trigger enter ou both) : portail et lien (hop:// compris)
   // 1.11.4 : nom d'une piste : fichier relatif (sans « .. »), chemin /… ou adresse http(s) ; '' si autre chose (javascript:, data:, ...)
@@ -1966,16 +1968,17 @@ function createViewer(container, cfg0, loader) {
     const num = (v, d, lo, hi) => { v = Number(v); return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d; };
     const type = ZONE_TYPES.includes(z.type) ? z.type : 'portal';
     const img = type === 'image';   // image : tableau plaque sur un mur ; h = 0 : hauteur d'apres le rapport de l'image
+    const vid = type === 'video', board = img || vid, rng = type === 'cast' || type === 'audio' || vid;   // 1.12.7 : video : ecran sur un mur, joue a portee (comme musique et radio : portee 20 m par defaut, jusqu'a 200)
     const o = {
       id: slug(z.id) || ('z' + (i + 1)), type, label: String(z.label || '').slice(0, 60),
       x: num(z.x, 0, -1e5, 1e5), y: num(z.y, 0, -1e5, 1e5), z: num(z.z, 0, -1e5, 1e5), yaw: num(z.yaw, 0, -7, 7),
       shape: z.shape === 'board' ? 'board' : 'ring', trigger: ['click', 'enter', 'both'].includes(z.trigger) ? z.trigger : 'click',
-      radius: num(z.radius, type === 'cast' || type === 'audio' ? 20 : 2, 0.5, type === 'cast' || type === 'audio' ? 200 : 50), w: num(z.w, img ? 1.2 : 2.4, img ? 0.1 : 0.5, 10), h: img ? num(z.h, 0, 0, 6) : num(z.h, 1.2, 0.3, 6),
+      radius: num(z.radius, rng ? 20 : 2, 0.5, rng ? 200 : 50), w: num(z.w, img ? 1.2 : 2.4, board ? 0.1 : 0.5, 10), h: board ? num(z.h, 0, 0, 6) : num(z.h, 1.2, 0.3, 6),
       target: type === 'cast' ? '' : String(z.target || '').slice(0, 600), spawn: slug(z.spawn), confirm: !!z.confirm, private: !!z.private, showName: !!z.showName,
-      mesh: type === 'spawn' || type === 'cast' || type === 'audio' || img ? '' : String(z.mesh || '').replace(/[\u0000-\u001f]/g, '').slice(0, 200)
+      mesh: type === 'spawn' || type === 'cast' || type === 'audio' || board ? '' : String(z.mesh || '').replace(/[\u0000-\u001f]/g, '').slice(0, 200)
     };
     if (type !== 'portal' && type !== 'url') o.trigger = 'click';
-    if (typeof z.cone === 'boolean' && type !== 'spawn' && !img) o.cone = z.cone;   // radio (1.10.35) : cone par defaut, cone: false pour le retirer   // repere (cone) facultatif : vrai = toujours, faux = jamais ; absent = selon le declenchement ; ecrit seulement s'il est vrai ou faux
+    if (typeof z.cone === 'boolean' && type !== 'spawn' && !board) o.cone = z.cone;   // radio (1.10.35) : cone par defaut, cone: false pour le retirer   // repere (cone) facultatif : vrai = toujours, faux = jamais ; absent = selon le declenchement ; ecrit seulement s'il est vrai ou faux
     if (type === 'cast') {   // radio : tableau d'URLs (flux Icecast / SHOUTcast) ; on joue la premiere a portee, puis on enchaîne
       // 1.11.26 : streams = [[label, url], ...] (le label d'abord, "" sans label) ; l'ancienne forme (urls + labels dans le meme ordre, ou target seul) est lue et convertie ; seule streams est ecrite
       let raw = [];
@@ -2196,6 +2199,100 @@ function createViewer(container, cfg0, loader) {
     }
     if (n) { dirty = true; animTicks++; }
   }
+  // 1.12.7 : zone video : un ecran sur un mur (comme un tableau « image »), dont la texture est un fichier video (mp4, webm...). Rien n'est telecharge avant d'etre a portee
+  // (radius) et dans le champ de la camera ; la video joue alors, sans son, en boucle, et se met en pause quand on s'eloigne ou qu'on regarde ailleurs. Le nom du fichier se
+  // cherche comme celui d'une image (medias/ puis dossier de la region ; sans extension : .mp4, .webm, .m4v, .ogv). Au plus VID_MAX videos jouent a la fois : les plus proches.
+  // Une video d'un autre site doit autoriser le CORS, sinon WebGL refuse la texture.
+  const vidPlanes = new Map(), vidFrustum = new THREE.Frustum(), vidM = new THREE.Matrix4(), vidP = new THREE.Vector3(); let vidLast = 0, vidDec = 0;
+  const VID_MAX = 8, VID_EXTS = ['mp4', 'webm', 'm4v', 'ogv'];
+  function videoPlane(z) {
+    const mat = new THREE.MeshBasicMaterial({ color: 0x111111, transparent: true });   // sombre tant que la video n'a pas de premiere image
+    const pl = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat); backOf(pl);
+    const hOf = (vw, vh) => z.h > 0 ? z.h : z.w * (vw && vh ? vh / vw : 9 / 16);
+    pl.scale.set(z.w, hOf(0, 0), 1);
+    const capText = imageCaption(z.target), cap = capText ? captionPlane(capText, z.w) : null;
+    const place = () => { if (cap) cap.position.y = -(pl.scale.y / 2 + z.w * 96 / 2048 + 0.03); };
+    place(); if (cap) pl.userData.cap = cap;
+    const st = { v: null, ready: false, failed: false, want: false, dead: false, i: 0, ct: -1, seen: 0, loaded: '', objUrl: '', set: null }; pl.userData.vid = st;
+    const tz = String(z.target || '').trim();
+    if (zoneEditor) { mat.color.set(0xffffff); mat.map = boardTex(z.label || z.id, tr('core.video.board', tz || '-'), z.w, pl.scale.y); mat.needsUpdate = true; return pl; }   // dans l'editeur : l'ecran est un panneau, la video ne joue pas
+    const absent = () => {
+      console.warn(tr('core.video.missing', tz || '-'));
+      st.failed = true; pl.visible = false; if (cap) cap.visible = false; dirty = true;
+    };
+    const bare = !/^([a-z][a-z0-9+.\-]*:|\/)/i.test(tz), hasExt = /\.[A-Za-z0-9]{2,5}$/.test(tz), stem = tz.replace(/\.[A-Za-z0-9]{2,5}$/, '');
+    if (!tz || (!bare && !/^(https?:|\/)/i.test(tz))) { absent(); return pl; }   // ni javascript:, ni data:, ni blob: ecrits dans la zone
+    const md = String(cfg.mediaDir === undefined ? 'medias' : (cfg.mediaDir || '')).replace(/^[\\/]+|[\\/]+$/g, ''), dirs = md ? [md + '/', ''] : [''];
+    let cands;
+    if (!bare) cands = [tz];
+    else if (hasExt) cands = dirs.map(d => d + tz);
+    else { cands = []; for (const d of dirs) for (const e of VID_EXTS) cands.push(d + stem + '.' + e); }
+    const reduced = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    const play = () => { const v = st.v; if (!v || !st.ready || reduced()) return; const r = v.play(); if (r && r.catch) r.catch(() => {}); };
+    const ensure = () => {
+      if (st.v || st.failed || st.dead) return;
+      const v = document.createElement('video');
+      v.muted = true; v.defaultMuted = true; v.loop = true; v.playsInline = true; v.preload = 'auto'; v.crossOrigin = 'anonymous';
+      v.setAttribute('muted', ''); v.setAttribute('playsinline', '');
+      st.v = v;
+      const next = () => {
+        if (st.dead) return;
+        if (st.i >= cands.length) { absent(); return; }
+        const c = cands[st.i++];
+        Promise.resolve().then(() => imageResolver ? imageResolver(c) : null).then(u => u || imageUrl(c), () => imageUrl(c)).then(u => {
+          if (st.dead) { if (/^blob:/.test(u)) URL.revokeObjectURL(u); return; }
+          if (st.objUrl) { URL.revokeObjectURL(st.objUrl); st.objUrl = ''; }
+          st.loaded = c; if (/^blob:/.test(u)) st.objUrl = u;
+          v.src = u; v.load();
+        });
+      };
+      v.addEventListener('error', () => { if (!st.ready && !st.dead) next(); });   // fichier absent ou illisible : candidat suivant
+      v.addEventListener('loadeddata', () => {   // premiere image disponible : elle devient la texture
+        if (st.ready || st.dead) return;
+        st.ready = true;
+        const tex = new THREE.VideoTexture(v); tex.colorSpace = THREE.SRGBColorSpace;
+        mat.map = tex; mat.color.set(0xffffff); mat.needsUpdate = true;
+        pl.scale.y = hOf(v.videoWidth, v.videoHeight); place(); dirty = true;
+        if (st.want) play();
+      });
+      next();
+    };
+    st.set = on => {   // demande de lecture (a portee et visible) ou de pause
+      st.want = on;
+      if (on) { ensure(); if (st.ready && st.v.paused) play(); } else if (st.v && st.ready && !st.v.paused) st.v.pause();
+    };
+    pl.userData.vdispose = () => {
+      st.dead = true; const v = st.v;
+      if (v) { v.pause(); v.removeAttribute('src'); try { v.load(); } catch (e) {} }
+      if (st.objUrl) { URL.revokeObjectURL(st.objUrl); st.objUrl = ''; }
+      vidPlanes.delete(pl);
+    };
+    vidPlanes.set(pl, { z, st });
+    return pl;
+  }
+  function videoTick(now) {
+    if (!vidPlanes.size || now - vidLast < 33) return;
+    vidLast = now;
+    if (now - vidDec >= 150) {   // decision de lecture : dix fois par seconde au plus
+      vidDec = now;
+      for (const pl of [...vidPlanes.keys()]) { let o = pl; while (o.parent) o = o.parent; if (o !== scene) vidPlanes.delete(pl); }   // ecran retire de la scene
+      if (!vidPlanes.size) return;
+      camera.updateMatrixWorld(); vidM.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse); vidFrustum.setFromProjectionMatrix(vidM);
+      const cand = [];
+      for (const [pl, { z, st }] of vidPlanes) {
+        if (st.failed) continue;
+        let d = 0, want = false;
+        if (pl.visible && !document.hidden) { pl.getWorldPosition(vidP); d = vidP.distanceTo(camera.position); want = d <= z.radius && vidFrustum.intersectsObject(pl); }
+        if (want) cand.push([d, st]); else if (st.want && now - st.seen > 1000) st.set(false);   // une seconde de grace : un regard de cote ne coupe pas la video
+      }
+      cand.sort((a, b) => a[0] - b[0]);
+      cand.forEach(([, st], i) => { if (i < VID_MAX) { st.seen = now; if (!st.want) st.set(true); } else if (st.want) st.set(false); });
+    }
+    let n = 0;
+    for (const { st } of vidPlanes.values()) { const v = st.v; if (v && st.ready && !v.paused && v.currentTime !== st.ct) { st.ct = v.currentTime; n++; } }
+    if (n) dirty = true;   // nouvelle image video : la scene est redessinee (la boucle ne dessine qu'a la demande)
+  }
+  function videoDiag() { const o = []; for (const { z, st } of vidPlanes.values()) o.push({ id: z.id, target: z.target, loaded: st.loaded, state: st.failed ? 'fail' : (!st.ready ? 'wait' : (st.v && !st.v.paused ? 'play' : 'pause')) }); return o; }
   let imageResolver = null;
   function setImageResolver(f) { imageResolver = typeof f === 'function' ? f : null; if (zones.length) { buildZones(); dirty = true; } }
   // legende d'une image de zone : texte entre le premier « - » du nom de fichier et l'extension (« 1-Soleil_couchant.jpg » : « Soleil couchant »), « _ » devient espace
@@ -2308,7 +2405,7 @@ function createViewer(container, cfg0, loader) {
   function buildZones() {
     for (const c of [...zoneGroup.children]) {
       zoneGroup.remove(c);
-      c.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) { if (o.material.map) o.material.map.dispose(); o.material.dispose(); } });
+      c.traverse(o => { if (o.userData && o.userData.vdispose) o.userData.vdispose(); if (o.geometry) o.geometry.dispose(); if (o.material) { if (o.material.map) o.material.map.dispose(); o.material.dispose(); } });   // vdispose : arrete la video d'un ecran (1.12.7)
     }
     if (selBox) { scene.remove(selBox); selBox.geometry.dispose(); selBox.material.dispose(); selBox = null; }
     zoneHit = []; zoneAll = []; zoneLabs = []; meshZone.clear(); imgGone.clear();
@@ -2319,6 +2416,12 @@ function createViewer(container, cfg0, loader) {
       const link = zoneLink.get(z.id);
       const g = new THREE.Group(); g.userData.zoneId = z.id;
       if (!link) { g.position.set(z.x, z.y, z.z); g.rotation.y = z.yaw; }
+      if (z.type === 'video') {   // 1.12.7 : ecran video : tableau plaque sur un mur ; rien a cliquer en promenade ; selectionnable dans l'editeur comme une image
+        const pl = videoPlane(z); g.add(pl); if (pl.userData.cap) g.add(pl.userData.cap);
+        if (zoneEditor) { pl.userData.zone = z; pl.userData.bk.userData.zone = z; zoneAll.push(pl, pl.userData.bk); const lab = makeLabel(z.label || z.id); lab.position.y = (z.h > 0 ? z.h : z.w * 0.5625) / 2 + 0.3; lab.material.depthTest = false; lab.renderOrder = 999; g.add(lab); }
+        zoneGroup.add(g);
+        continue;
+      }
       if (z.type === 'image') {
         const pl = imagePlane(z); g.add(pl); if (pl.userData.cap) g.add(pl.userData.cap);
         if (z.link && !zoneEditor && pl.visible) { pl.userData.zone = z; pl.userData.bk.userData.zone = z; zoneAll.push(pl, pl.userData.bk); zoneHit.push(pl, pl.userData.bk); }   // tableau avec lien : cliquable (survol, clic, E) ; sans lien ou image absente : il ne reagit pas
@@ -2518,7 +2621,7 @@ function createViewer(container, cfg0, loader) {
         if (d <= z.radius && dy > -4 && dy < 8) { if (d < cd) { cast = z; cd = d; } } else if (d <= 2 * z.radius && dy > -4 && dy < 8 && d < cdF) { castF = z; cdF = d; }
         continue;
       }
-      if (z.type === 'spawn' || zoneOff(z) || (z.type === 'image' && (!z.link || imgGone.has(z.id)))) continue;   // un tableau sans lien n'est pas une zone proche (pas d'invite « clic ou E »)
+      if (z.type === 'spawn' || z.type === 'video' || zoneOff(z) || (z.type === 'image' && (!z.link || imgGone.has(z.id)))) continue;   // un tableau sans lien n'est pas une zone proche (pas d'invite « clic ou E »)
       const { d, dy } = zoneDist(z);
       if (zoneEntrant(z) && z.trigger !== 'click') {
         const inside = d <= z.radius && dy > -1.5 && dy < 3.5, was = zoneInside.has(z.id);
@@ -2629,6 +2732,7 @@ function createViewer(container, cfg0, loader) {
     presenceTick(dt, performance.now());
     landingTick(performance.now());
     animTick(performance.now());
+    videoTick(performance.now());
     if (seaMat && seaMat.uniforms) { seaMat.uniforms.uTime.value = clock.elapsedTime; dirty = true; }
     if (dirty || moved) {
       const now = performance.now(), fm = Number(cfg.fpsMax);
@@ -2639,7 +2743,7 @@ function createViewer(container, cfg0, loader) {
   });
 
   return {
-    scene, camera, renderer, controls, cfg, setCfg, seaShift, metalEnvReady: () => !!metalEnvTex, metalInfo, setModel, loadBuffer, imageUrl, freshFetch, setImageResolver, animInfo: () => ({ planes: animPlanes.size, ticks: animTicks }), frame, getCameraState, setZoom, renderStats,
+    scene, camera, renderer, controls, cfg, setCfg, seaShift, metalEnvReady: () => !!metalEnvTex, metalInfo, setModel, loadBuffer, imageUrl, freshFetch, videoDiag, setImageResolver, animInfo: () => ({ planes: animPlanes.size, ticks: animTicks }), frame, getCameraState, setZoom, renderStats,
     get model() { return model; }, get sea() { return sea; }, set onCfg(f) { onCfg = f; }, set onWalk(f) { onWalk = f; }, set onPick(f) { onPick = f; }, set pickOrbit(v) { pickOrbit = !!v; }, set onPresence(f) { onPresence = f; }, set onChat(f) { onChat = f; }, set onPeer(f) { onPeer = f; },
     setZones, setZoneNumbers, zoneSelect, zonePickAt, findMeshes, imageDiag,
     // v36 : repères de portail (cônes) : affichés ou non (T), rappel, état pour les tests

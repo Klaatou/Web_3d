@@ -6,6 +6,18 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.12.0)
 
+### 18/11/2026: video zones, step 1 (`video` type)
+
+- **Request from Klaatou**: video screens as in OpenSim, working like the "image" boards for the target. Agreed steps: 1) a screen with one file, played when within range; 2) sound by distance (`sound: true`); 3) a list of files (`folder`, `playlist.json`, like audio zones). Klaatou's choices: muted by default, every screen within range plays, sound only from the nearest (step 2).
+- **`video` zone**: a board placed on a wall (like `image`) whose texture is a video file. Keys: `target` (file name or address), `w`, `h` (0 = from the video's aspect ratio), `radius` (20 m by default, 0.5 to 200), `x y z yaw`, `label`. No `mesh`, `cone`, `link` or useful `trigger`: nothing to click.
+- **File name**: as for an image. Bare name (`clip`): `medias/clip.mp4`, `.webm`, `.m4v`, `.ogv`, then the region folder; with an extension: as is in `medias/` then in the folder; an `https:` address or `/…` path as is (another site must allow CORS, otherwise WebGL refuses the texture). `javascript:`, `data:`, `blob:` refused.
+- **Playback**: nothing is requested from the server before being within range (`radius`) and in the camera's field of view. The video then plays, looped, **without sound**, and pauses one second after turning away or leaving the range, or when the tab is hidden. At most 8 videos play at once (the nearest). Reduced motion requested from the system (`prefers-reduced-motion`): first frame only.
+- **Editor**: type "Video (screen on a wall)", fields file, width, height, range; in the editor the screen is a board showing the file name and the video does not play. `Copy the diagnostic` gives one line per screen (file read, state).
+- **Code**: `core.js` (`videoPlane`, `videoTick`, `cleanZone`), `gen_tpl.py` (`clean_zones`, same result), `viewer_tpl.html`, `i18n`. Video screens are not near zones (no "click or E" prompt).
+- **Test**: `tests/zone_video.py` (23 checks, test videos made with ffmpeg, page served over http): JavaScript = Python cleaning, nothing requested out of range, bare name, muted looped playback, pause on turning away and on leaving, resume, far screen loaded only on approach, missing file, `javascript:`, H.264 mp4, cap of 8, texture really drawn, reduced motion. Five defects introduced on purpose (never pausing, immediate loading, no cap, texture not applied, no field-of-view test) make it fail.
+- **Changes in `dist\`** after `python build.py`: `glb2html.py`, `index.html`, `glb-viewer.html`, `carte.html` (it embeds the language dictionary). `VERSION`: `1.12.7`.
+- **Limits of step 1**: no sound; no `.txt` caption (the title is read from the file name, after the first dash, like images); the file is downloaded whole (`preload`) once within range; in `glb-viewer.html` (local files without a server) the video does not load: the page must be served over http. Not tried: Edge without hardware acceleration (software rendering), large videos, a server without CORS.
+
 ### 18/11/2026: floating window: opened on the left, vertically centred; ↗ closes the window
 
 - **Request from Klaatou**: at the bottom right the window showed Edge's ghost rectangle (without hardware acceleration) right above it as soon as it opened; at the centre left there is no ghost as long as nothing is moved.

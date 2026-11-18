@@ -123,7 +123,7 @@ DRACO_LIBS = {
 MESHOPT_FILES = {"three/addons/libs/meshopt_decoder.module.js": "examples/jsm/libs/meshopt_decoder.module.js"}
 
 
-ZONE_TYPES = ("url", "ha", "portal", "spawn", "image", "cast", "audio")   # cast (1.10.32) : radio, flux Icecast / SHOUTcast joue en promenade a portee
+ZONE_TYPES = ("url", "ha", "portal", "spawn", "image", "cast", "audio", "video")   # cast (1.10.32) : radio, flux Icecast / SHOUTcast joue en promenade a portee
 IMG_EXTS = (".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif", ".bmp")
 MEDIA_DIR = "medias"   # sous-dossier des medias de la region (cle mediaDir de la config cote page ; ici toujours « medias »)
 IMG_DIR = [None]   # dossier ou se cherchent les images des zones « image » (celui de la page), pose par main() ; None : aucune recherche
@@ -212,15 +212,18 @@ def clean_zones(zones, profile):
             continue
         t = z.get("type") if z.get("type") in ZONE_TYPES else "portal"
         img = t == "image"   # image : tableau plaque sur un mur ; h = 0 : hauteur d'apres le rapport de l'image
+        vid = t == "video"   # 1.12.7 : video : ecran sur un mur, joue a portee (portee 20 m par defaut, jusqu'a 200) ; comme core.js
+        board = img or vid
+        rng = t in ("cast", "audio") or vid
         d = {
             "id": _slug(z.get("id")) or f"z{i + 1}", "type": t, "label": str(z.get("label") or "")[:60],
             "x": num(z.get("x"), 0, -1e5, 1e5), "y": num(z.get("y"), 0, -1e5, 1e5), "z": num(z.get("z"), 0, -1e5, 1e5),
             "yaw": num(z.get("yaw"), 0, -7, 7), "shape": "board" if z.get("shape") == "board" else "ring",
             "trigger": (z.get("trigger") if z.get("trigger") in ("click", "enter", "both") else "click") if t in ("portal", "url") else "click",
-            "radius": num(z.get("radius"), 20 if t in ("cast", "audio") else 2, 0.5, 200 if t in ("cast", "audio") else 50), "w": num(z.get("w"), 1.2 if img else 2.4, 0.1 if img else 0.5, 10), "h": num(z.get("h"), 0, 0, 6) if img else num(z.get("h"), 1.2, 0.3, 6),
+            "radius": num(z.get("radius"), 20 if rng else 2, 0.5, 200 if rng else 50), "w": num(z.get("w"), 1.2 if img else 2.4, 0.1 if board else 0.5, 10), "h": num(z.get("h"), 0, 0, 6) if board else num(z.get("h"), 1.2, 0.3, 6),
             "target": "" if t == "cast" else str(resolve_image_name(z.get("target")) if img else (z.get("target") or ""))[:600], "spawn": _slug(z.get("spawn")),
             "confirm": bool(z.get("confirm")), "private": bool(z.get("private")), "showName": bool(z.get("showName")),
-            "mesh": "" if t in ("spawn", "image", "cast", "audio") else re.sub(r"[\x00-\x1f]", "", str(z.get("mesh") or ""))[:200],
+            "mesh": "" if t in ("spawn", "image", "cast", "audio", "video") else re.sub(r"[\x00-\x1f]", "", str(z.get("mesh") or ""))[:200],
         }
         if t == "url" and z.get("frame") is True:   # 1.12.3 : fenetre flottante (lien ouvert dans la page) ; ecrit seulement s'il est vrai, comme core.js
             d["frame"] = True
@@ -253,7 +256,7 @@ def clean_zones(zones, profile):
                 tk = [x for x in (audio_name(s) for s in z["tracks"]) if x][:500]
                 if tk:
                     d["tracks"] = tk
-        if isinstance(z.get("cone"), bool) and t not in ("spawn", "image"):   # repere facultatif : ecrit seulement s'il est vrai ou faux, comme core.js
+        if isinstance(z.get("cone"), bool) and t not in ("spawn", "image", "video"):   # repere facultatif : ecrit seulement s'il est vrai ou faux, comme core.js
             d["cone"] = z["cone"]
         out.append(d)
     return out

@@ -272,7 +272,7 @@ for (const r of ROWS) {
   }
   if (r[0] === 'zones') {
     const box = add('<div id="zonesBox"></div>');
-    box.innerHTML = '<div class="row"><label>' + tr('viewer.zone.type') + '</label><select id="zNewType" style="grid-column:1/-1;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;width:100%"><option value="portal">' + tr('viewer.zone.t.portal') + '</option><option value="url">' + tr('viewer.zone.t.url') + '</option><option value="ha">' + tr('viewer.zone.t.ha') + '</option><option value="spawn">' + tr('viewer.zone.t.spawn') + '</option><option value="image">' + tr('viewer.zone.t.image') + '</option><option value="cast">' + tr('viewer.zone.t.cast') + '</option><option value="audio">' + tr('viewer.zone.t.audio') + '</option></select></div>' +
+    box.innerHTML = '<div class="row"><label>' + tr('viewer.zone.type') + '</label><select id="zNewType" style="grid-column:1/-1;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;width:100%"><option value="portal">' + tr('viewer.zone.t.portal') + '</option><option value="url">' + tr('viewer.zone.t.url') + '</option><option value="ha">' + tr('viewer.zone.t.ha') + '</option><option value="spawn">' + tr('viewer.zone.t.spawn') + '</option><option value="image">' + tr('viewer.zone.t.image') + '</option><option value="cast">' + tr('viewer.zone.t.cast') + '</option><option value="audio">' + tr('viewer.zone.t.audio') + '</option><option value="video">' + tr('viewer.zone.t.video') + '</option></select></div>' +
       '<div class="btns"><button id="bZoneAdd" class="wide"></button></div><small>' + tr('viewer.zone.pnote') + '</small>' +
       '<div id="zoneList"></div>' +
       '<div class="btns"><button id="bZoneExp">' + tr('viewer.zone.exp') + '</button><button id="bZoneImp">' + tr('viewer.zone.imp') + '</button></div>' +
@@ -448,6 +448,7 @@ function zoneDefaults(type) {
   const base = { type, label: '', shape: 'ring', trigger: 'click', radius: 2, w: 2.4, h: 1.2, target: '', spawn: '', confirm: false, private: false, showName: false, yaw: 0, mesh: '' };
   if (type === 'portal') return Object.assign(base, { label: tr('viewer.kind.portal'), trigger: 'enter' });
   if (type === 'image') return Object.assign(base, { label: tr('viewer.kind.image'), w: 1.2, h: 0 });
+  if (type === 'video') return Object.assign(base, { label: tr('viewer.kind.video'), radius: 20, w: 2.4, h: 0 });   // 1.12.7 : ecran video (fichier mp4 / webm joue a portee, sans son)
   if (type === 'audio') return Object.assign(base, { label: tr('viewer.kind.audio'), radius: 20, folder: 'audio' });   // 1.11.4 : musique (fichiers son d'un dossier, joues en boucle)
   if (type === 'cast') return Object.assign(base, { label: tr('viewer.kind.cast'), radius: 20, streams: [['', 'https://']] });   // 1.10.32 : radio (flux Icecast / SHOUTcast)
   if (type === 'url') return Object.assign(base, { label: tr('viewer.kind.url'), shape: 'board', target: 'https://' });
@@ -484,7 +485,7 @@ function renderZoneList() {
   viewer.getZones().forEach((z, idx) => {
     const d = document.createElement('details'); d.open = z.id === zoneSel; d.style.cssText = 'border:1px solid #000;border-radius:6px;padding:4px 8px;margin:6px 0';
     const s = document.createElement('summary'); s.style.cursor = 'pointer';
-    s.textContent = ({ url: tr('viewer.kind.url'), ha: tr('viewer.kind.ha'), portal: tr('viewer.kind.portal'), spawn: tr('viewer.kind.spawn'), image: tr('viewer.kind.image'), cast: tr('viewer.kind.cast'), audio: tr('viewer.kind.audio') }[z.type]) + ' : ' + (z.label || z.id) + (z.private ? tr('viewer.private') : '');
+    s.textContent = ({ url: tr('viewer.kind.url'), ha: tr('viewer.kind.ha'), portal: tr('viewer.kind.portal'), spawn: tr('viewer.kind.spawn'), image: tr('viewer.kind.image'), cast: tr('viewer.kind.cast'), audio: tr('viewer.kind.audio'), video: tr('viewer.kind.video') }[z.type]) + ' : ' + (z.label || z.id) + (z.private ? tr('viewer.private') : '');
     s.onclick = () => { setTimeout(() => { if (d.open) { zoneSel = z.id; viewer.zoneSelect(z.id); } }, 0); };
     d.appendChild(s);
     const upd = (patch, rerender) => { const list = viewer.getZones(); Object.assign(list[idx], patch); zonesSync(list, rerender); };
@@ -512,6 +513,11 @@ function renderZoneList() {
       d.appendChild(inp(tr('viewer.zf.w'), 'number', z.w, v => upd({ w: v }, true)));
       d.appendChild(inp(tr('viewer.zf.h.image'), 'number', z.h, v => upd({ h: v }, true)));
       d.appendChild(inp(tr('viewer.zf.link.image'), 'text', z.link || '', v => upd({ link: v })));
+    } else if (z.type === 'video') {   // 1.12.7 : ecran video : fichier ou adresse, largeur, hauteur, portee (la video joue seule a portee, sans son ; rien a cliquer)
+      d.appendChild(inp(tr('viewer.zf.video'), 'text', z.target, v => upd({ target: v }, true)));
+      d.appendChild(inp(tr('viewer.zf.w'), 'number', z.w, v => upd({ w: v }, true)));
+      d.appendChild(inp(tr('viewer.zf.h.video'), 'number', z.h, v => upd({ h: v }, true)));
+      d.appendChild(inp(tr('viewer.zf.r.video'), 'number', z.radius, v => upd({ radius: v }, true)));
     } else if (z.type === 'cast') {   // 1.10.32 : radio : adresse du flux, essai de 5 s, portée ; rien d'autre (ni clic, ni lien à un élément)
       d.appendChild(inp(tr('viewer.zf.cast'), 'text', z.streams && z.streams[0] ? z.streams[0][1] : '', v => upd({ streams: [[z.streams && z.streams[0] ? z.streams[0][0] : '', v], ...(z.streams || []).slice(1)] })));   // 1.11.26 : la saisie change l'adresse du premier flux (son label et les autres flux sont gardes)
       const bt2 = document.createElement('button'); bt2.className = 'wide'; bt2.textContent = tr('viewer.zf.cast.try'); bt2.onclick = () => castTry(z.streams && z.streams[0] ? z.streams[0][1] : ''); d.appendChild(bt2);
@@ -580,7 +586,7 @@ function castTry(url) {
   castT = setTimeout(() => { stop(); setStatus(tr('viewer.zf.cast.stopped')); }, 5000);
 }
 viewer.onZone = (z, how) => {
-  setStatus(tr('viewer.preview.fired', { url: tr('viewer.kind.url'), ha: tr('viewer.kind.ha'), portal: tr('viewer.kind.portal'), spawn: tr('viewer.kind.spawn'), image: tr('viewer.kind.image'), cast: tr('viewer.kind.cast'), audio: tr('viewer.kind.audio') }[z.type], z.label || z.id, how, (z.type === 'image' ? z.link : z.target) || tr('viewer.preview.notarget'), z.spawn ? ' #' + z.spawn : ''));
+  setStatus(tr('viewer.preview.fired', { url: tr('viewer.kind.url'), ha: tr('viewer.kind.ha'), portal: tr('viewer.kind.portal'), spawn: tr('viewer.kind.spawn'), image: tr('viewer.kind.image'), cast: tr('viewer.kind.cast'), audio: tr('viewer.kind.audio'), video: tr('viewer.kind.video') }[z.type], z.label || z.id, how, (z.type === 'image' ? z.link : z.target) || tr('viewer.preview.notarget'), z.spawn ? ' #' + z.spawn : ''));
   // aperçu : un portail sans destination déplace dans la région vers son point d'arrivée
   if (z.type === 'portal' && !String(z.target || '').trim() && viewer.walking) {
     const id = z.spawn || 'default', s = viewer.getZones().find(q => q.type === 'spawn' && q.id === id);
@@ -619,7 +625,7 @@ addEventListener('keydown', e => {
   if (e.code === 'KeyP' && !e.repeat && viewer.walking && n !== 'INPUT' && n !== 'TEXTAREA' && n !== 'SELECT') {
     const w = viewer.getWalk(), type = $('zNewType') ? $('zNewType').value : 'portal', fwd = [-Math.sin(w.yaw), -Math.cos(w.yaw)];
     const r2 = v => Math.round(v * 100) / 100;
-    if (type === 'image') addZone(type, r2(w.pos[0] + fwd[0] * 2.2), r2(w.pos[1] + 1.6), r2(w.pos[2] + fwd[1] * 2.2), r2(w.yaw));   // en face de toi, a hauteur de mur : a ajuster
+    if (type === 'image' || type === 'video') addZone(type, r2(w.pos[0] + fwd[0] * 2.2), r2(w.pos[1] + 1.6), r2(w.pos[2] + fwd[1] * 2.2), r2(w.yaw));   // en face de toi, a hauteur de mur : a ajuster
     else if (type === 'url' || type === 'ha') addZone(type, r2(w.pos[0] + fwd[0] * 2.2), r2(w.pos[1]), r2(w.pos[2] + fwd[1] * 2.2), r2(w.yaw));
     else addZone(type, r2(w.pos[0]), r2(w.pos[1]), r2(w.pos[2]), type === 'spawn' ? r2(w.yaw) : 0);
     return;
