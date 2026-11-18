@@ -16,8 +16,8 @@ Draco et Meshopt gérés automatiquement (décodeurs intégrés seulement si le 
 """
 from __future__ import annotations
 
-VERSION = "1.12.4 (18/11/2026)"
-SHELL_VERSION = "1.12.4 (18/11/2026)"   # numéro de version de la coquille (index.html) : écrit par build.py, ne change que si la coquille change
+VERSION = "1.12.5 (18/11/2026)"
+SHELL_VERSION = "1.12.5 (18/11/2026)"   # numéro de version de la coquille (index.html) : écrit par build.py, ne change que si la coquille change
 MAP_VERSION = "1.12.3 (18/11/2026)"       # numéro de version de la page de carte (carte.html) : idem
 
 import argparse
@@ -1114,7 +1114,7 @@ body.padOn #bar{max-width:max(200px,calc(50vw - 90px))}   /* v46 : la barre pass
 #frameWin .fwBody{flex:1;min-height:0;display:grid;place-items:center;background:#fff}
 #frameWin iframe{width:100%;height:100%;border:0;display:block}
 #frameWin .fwLoad{font:inherit;padding:8px 14px;border:2px solid #000;border-radius:6px;background:#000;color:#fff;cursor:pointer}
-#frameWin.drag iframe{visibility:hidden}   /* 1.12.4 : pendant le glissement le lecteur est masque (un lecteur d'un autre site qui se deplace laissait un rectangle fantome) ; il revient deux images apres le lacher */
+#frameWin.drag iframe{pointer-events:none}
 #zonePrompt{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);z-index:30;font:13px/1.4 ui-monospace,Consolas,monospace;background:#000;color:#fff;border-radius:6px;padding:6px 12px}
 #fade{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .45s;z-index:50}
 #fade.on{opacity:1;pointer-events:auto}
@@ -4295,10 +4295,10 @@ if ((C.zones || []).length || C.zonesLive) {
       const b = document.createElement('button'); b.className = 'fwLoad'; b.textContent = tr('page.frame.load', new URL(frameSrc(u, false)).hostname); b.onclick = () => load(true); bd.appendChild(b);
     } else load(true);
     w.append(hd, bd); document.body.appendChild(w);
-    let dx = 0, dy = 0, grab = 0;   // grab : numero de saisie ; le retrait differe de « drag » d'un relache precedent ne doit pas s'appliquer a une nouvelle saisie (1.12.4)
-    hd.onpointerdown = e => { if (e.target.closest('button')) return; grab++; const r = w.getBoundingClientRect(); w.style.left = r.left + 'px'; w.style.top = r.top + 'px'; w.style.right = 'auto'; w.style.bottom = 'auto'; dx = e.clientX - r.left; dy = e.clientY - r.top; w.classList.add('drag'); hd.setPointerCapture(e.pointerId); e.preventDefault(); };
+    let dx = 0, dy = 0;
+    hd.onpointerdown = e => { if (e.target.closest('button')) return; const r = w.getBoundingClientRect(); w.style.left = r.left + 'px'; w.style.top = r.top + 'px'; w.style.right = 'auto'; w.style.bottom = 'auto'; dx = e.clientX - r.left; dy = e.clientY - r.top; w.classList.add('drag'); hd.setPointerCapture(e.pointerId); e.preventDefault(); };
     hd.onpointermove = e => { if (w.classList.contains('drag')) { w.style.left = Math.max(0, Math.min(innerWidth - 60, e.clientX - dx)) + 'px'; w.style.top = Math.max(0, Math.min(innerHeight - 30, e.clientY - dy)) + 'px'; } };
-    hd.onpointerup = hd.onpointercancel = () => { const g = grab; requestAnimationFrame(() => requestAnimationFrame(() => { if (g === grab) w.classList.remove('drag'); })); };
+    hd.onpointerup = hd.onpointercancel = () => w.classList.remove('drag');
     toast(tr('page.zone.opening', label));
     return true;
   };

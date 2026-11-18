@@ -6,6 +6,14 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.12.0)
 
+### 18/11/2026 : fenêtre flottante : retrait du masquage pendant le glissement
+
+- **Constat de Klaatou** (Edge, accélération matérielle désactivée exprès pour garder le GPU à l'IA ; `edge://gpu` : WebGL, rastérisation et compositing en logiciel) : le rectangle fantôme de la couleur du ciel, de la taille du lecteur et symétrique par rapport à la ligne médiane de l'écran, apparaît dès l'ouverture et reste fixe à l'écran quand la scène bouge ; il ne recouvre aucun panneau de la page ; il disparaît quand les canvas sont masqués. Le masquage pendant le glissement (1.12.4) n'y change rien : le fantôme revient au lâcher. Un `will-change: transform` sur la fenêtre ou sur les canvas ne l'enlève pas non plus.
+- **Cause** : défaut de dessin du compositeur logiciel d'Edge (couche du canvas WebGL sous un cadre d'un autre site), pas du code de la page. Non reproduit dans le bac à sable (Chrome, rendu logiciel). Limite connue : Edge sans accélération matérielle peut laisser un rectangle fantôme à côté du lecteur flottant.
+- **Retiré** (`src/template.html`) : le masquage du cadre pendant le glissement et le numéro de saisie `grab` qui ne servait qu'à lui. Retour à `#frameWin.drag iframe{pointer-events:none}` et au retrait immédiat de `drag` du 1.12.3 ; les listes YouTube du 1.12.4 sont gardées.
+- **Test** : `tests/zone_frame.py` passe à 26 contrôles (les deux contrôles du masquage sont retirés ; le déplacement par l'en-tête reste vérifié).
+- **Change en `dist\`** après `python build.py` : `glb2html.py`, `index.html`, `glb-viewer.html`. `VERSION` : `1.12.5`.
+
 ### 18/11/2026 : fenêtre flottante : listes YouTube, plus de rectangle fantôme au déplacement
 
 - **Constat de Klaatou** (capture) : en déplaçant la fenêtre flottante d'une zone lien YouTube, un rectangle vide de la couleur du ciel, de la taille du lecteur, reste affiché plus bas après le lâcher ; et le lien d'une liste (`&list=`) ne jouait que la vidéo.

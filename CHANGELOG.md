@@ -6,6 +6,14 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.12.0)
 
+### 18/11/2026: floating window: hiding while dragging removed
+
+- **Finding from Klaatou** (Edge, hardware acceleration turned off on purpose to keep the GPU for AI; `edge://gpu`: WebGL, rasterization and compositing in software): the ghost rectangle, sky-coloured, the size of the player and mirrored about the screen's horizontal midline, appears as soon as the window opens and stays fixed on screen while the scene moves; it covers no page panel; it disappears when the canvases are hidden. Hiding during the drag (1.12.4) changes nothing: the ghost comes back on release. A `will-change: transform` on the window or on the canvases does not remove it either.
+- **Cause**: a drawing defect of Edge's software compositor (WebGL canvas layer under a frame from another site), not of the page code. Not reproduced in the sandbox (Chrome, software rendering). Known limit: Edge without hardware acceleration may leave a ghost rectangle next to the floating player.
+- **Removed** (`src/template.html`): hiding the frame while dragging and the `grab` counter that only served it. Back to `#frameWin.drag iframe{pointer-events:none}` and to the immediate removal of `drag` of 1.12.3; the YouTube lists of 1.12.4 are kept.
+- **Test**: `tests/zone_frame.py` goes to 26 checks (the two hiding checks are removed; moving by the header is still checked).
+- **Changes in `dist\`** after `python build.py`: `glb2html.py`, `index.html`, `glb-viewer.html`. `VERSION`: `1.12.5`.
+
 ### 18/11/2026: floating window: YouTube lists, no more ghost rectangle when moving
 
 - **Finding from Klaatou** (screenshot): moving the floating window of a YouTube link zone leaves an empty sky-coloured rectangle, the size of the player, displayed lower down after release; and a list link (`&list=`) only played the video.
