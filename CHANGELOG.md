@@ -6,6 +6,28 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.12.0)
 
+### 18/11/2026: video zones: click on the screen = pause / play
+
+- **Request from Klaatou**: stop or restart a video by clicking it, like a player.
+- A click on a playing screen stops it; another click restarts it. The hover tooltip now says "click: pause / play" (it used to show the target).
+- A click-stop lasts while the visitor stays within range: leaving the range and coming back makes the screen play again by itself. Turning away does not cancel it.
+- The click triggers no zone action and sends nothing to presence. It does nothing on a screen out of range, not yet loaded or failed; a hidden screen (missing file) no longer catches clicks.
+- Diagnostic: a "stopped by a click" state is added to the existing ones.
+
+### 18/11/2026: video zones, step 2: sound (`sound` key)
+
+- **`sound: true` key** on a `video` zone: the screen has sound. Without the key it stays muted as in 1.12.7.
+- **Only one screen speaks**: among playing screens with sound, the one nearest the visitor; the others keep playing, muted. Volume = (1 − distance / range) × the radio / music volume of the Sound window (at least 5% of that level), like audio zones.
+- Sound follows the Sound setting ("Sounds" ticked) and only starts after a first click or key press, as browsers require. If the browser still refuses the sound, the screen falls back to muted and retries 5 seconds later.
+- **Editor**: "Screen sound" field (muted / with sound). **Diagnostic**: the Video line shows "sound N%" or "sound requested but muted".
+- Limits: zone radio and music keep playing alongside a screen with sound; no file list yet (step 3).
+
+### 18/11/2026: video zones: range follows the visitor, not the camera
+
+- **Defect reported by Klaatou**: in free view the video did not stop when the visitor moved away (the camera stayed near the screen).
+- **Fix**: while walking, the distance to the screen is measured from the visitor (eye height), like audio zones; the field-of-view test (screen in frame or not) still uses the camera. Outside walking mode the camera is still the reference.
+- Test added: free view, camera in front of the screen, visitor far away → pause; visitor back in range → play.
+
 ### 18/11/2026: video zones, step 1 (`video` type)
 
 - **Request from Klaatou**: video screens as in OpenSim, working like the "image" boards for the target. Agreed steps: 1) a screen with one file, played when within range; 2) sound by distance (`sound: true`); 3) a list of files (`folder`, `playlist.json`, like audio zones). Klaatou's choices: muted by default, every screen within range plays, sound only from the nearest (step 2).

@@ -6,6 +6,28 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.12.0)
 
+### 18/11/2026 : zones vidéo : clic sur l'écran = pause / lecture
+
+- **Demande de Klaatou** : arrêter ou relancer une vidéo en cliquant dessus, comme dans un lecteur.
+- Un clic sur un écran qui joue l'arrête ; un nouveau clic la relance. L'infobulle au survol indique « clic : pause / lecture » (elle montrait la cible).
+- L'arrêt par clic dure tant que le visiteur reste à portée : en sortant de la portée puis en revenant, l'écran rejoue seul. Tourner le dos ne l'annule pas.
+- Le clic ne déclenche aucune action de zone et n'envoie rien à la présence. Sans effet sur un écran hors portée, pas encore chargé ou en échec ; un écran masqué (fichier absent) ne capte plus les clics.
+- Diagnostic : l'état « arrêtée par un clic » s'ajoute aux états existants.
+
+### 18/11/2026 : zones vidéo, étape 2 : le son (clé `sound`)
+
+- **Clé `sound: true`** sur une zone `video` : l'écran a du son. Sans la clé, il reste muet comme en 1.12.7.
+- **Un seul écran parle** : parmi les écrans à son qui jouent, le plus proche du visiteur ; les autres continuent de jouer, muets. Volume = (1 − distance / portée) × volume radio / musique de la fenêtre Son (minimum 5 % de ce niveau), comme les zones audio.
+- Le son suit le réglage Son (case « Sons » cochée) et ne démarre qu'après un premier clic ou une première touche, exigence du navigateur. Si le navigateur refuse quand même le son, l'écran retombe en muet et réessaie 5 secondes plus tard.
+- **Éditeur** : champ « Son de l'écran » (muet / avec son). **Diagnostic** : la ligne Vidéo indique « son N % » ou « son demandé mais muet ».
+- Limites : la radio et la musique des zones continuent de jouer en même temps qu'un écran à son ; pas encore de liste de fichiers (étape 3).
+
+### 18/11/2026 : zones vidéo : la portée suit le visiteur, pas la caméra
+
+- **Défaut signalé par Klaatou** : en vue libre, la vidéo ne s'arrêtait pas quand le visiteur s'éloignait (la caméra restait près de l'écran).
+- **Correction** : en promenade, la distance à l'écran est mesurée depuis le visiteur (hauteur des yeux), comme pour les zones audio ; le champ de vision (écran dans l'image ou non) reste mesuré depuis la caméra. Hors promenade, la caméra sert toujours de référence.
+- Test ajouté : vue libre, caméra devant l'écran, visiteur loin → pause ; visiteur de retour à portée → lecture.
+
 ### 18/11/2026 : zones vidéo, étape 1 (type `video`)
 
 - **Demande de Klaatou** : des écrans vidéo comme dans OpenSim, avec le même fonctionnement que les tableaux « image » pour la cible. Étapes décidées : 1) un écran avec un fichier, lecture à portée ; 2) le son selon la distance (`sound: true`) ; 3) une liste de fichiers (`folder`, `playlist.json`, comme les zones audio). Choix de Klaatou : muet par défaut, tous les écrans à portée jouent, le son seulement du plus proche (étape 2).

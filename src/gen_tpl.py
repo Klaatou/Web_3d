@@ -256,6 +256,8 @@ def clean_zones(zones, profile):
                 tk = [x for x in (audio_name(s) for s in z["tracks"]) if x][:500]
                 if tk:
                     d["tracks"] = tk
+        if t == "video" and z.get("sound") is True:   # 1.12.9 : ecran video avec son (muet par defaut) ; ecrit seulement s'il est vrai, comme core.js
+            d["sound"] = True
         if isinstance(z.get("cone"), bool) and t not in ("spawn", "image", "video"):   # repere facultatif : ecrit seulement s'il est vrai ou faux, comme core.js
             d["cone"] = z["cone"]
         out.append(d)

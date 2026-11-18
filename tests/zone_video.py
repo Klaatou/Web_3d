@@ -5,7 +5,7 @@ pause en s'eloignant et en tournant le dos (apres une seconde de grace), reprise
 au plus 8 videos a la fois ; mouvement reduit demande au systeme : premiere image seulement ; aucune erreur JavaScript.
 Prerequis : pip install playwright ; ffmpeg ; python build.py avant. Variables facultatives : THREE_DIR, CHROMIUM. Lancer : python tests/zone_video.py
 """
-import os as _os_lang; _os_lang.environ["WEB3D_LANG"] = "fr"
+import math, os as _os_lang; _os_lang.environ["WEB3D_LANG"] = "fr"
 import asyncio, importlib.util, json, os, pathlib, shutil, socket, struct, subprocess, sys, tempfile, time
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -60,6 +60,7 @@ def zones():
           V("nul", -20, -20, target="inexistant"),               # fichier absent
           V("js", -30, -20, target="javascript:alert(1)"),       # adresse interdite
           V("film", 20, -20, target="film.mp4")]                 # mp4 (H.264) : essai seulement si le navigateur sait le lire
+    zs += [V("s1", 80, -20, target="clip.webm", sound=True), V("s2", 86, -20, target="clip.webm", sound=True), V("s3", 83, -20, target="clip.webm")]   # 1.12.9 : deux ecrans a son et un muet
     for k in range(10):                                          # dix ecrans serres : au plus 8 jouent
         zs.append(V("m%d" % k, -50 + k * 0.8, 40, target="clip.webm", radius=60, w=0.6))
     return zs
@@ -82,7 +83,7 @@ async def aller(pg, x, z, yaw=0):
 
 DIAG = "() => Object.fromEntries(window.__v.videoDiag().map(d => [d.id, d]))"
 ELEM = """(id) => { let r = null; window.__v.scene.traverse(n => { const s = n.userData && n.userData.vid; if (s && n.parent && n.parent.userData.zoneId === id) r = { ready: s.ready, failed: s.failed, vis: n.visible, sy: n.scale.y, sx: n.scale.x,
-    v: s.v ? { paused: s.v.paused, muted: s.v.muted, loop: s.v.loop, t: s.v.currentTime, w: s.v.videoWidth } : null }; }); return r; }"""
+    v: s.v ? { paused: s.v.paused, muted: s.v.muted, vol: s.v.volume, loop: s.v.loop, t: s.v.currentTime, w: s.v.videoWidth } : null }; }); return r; }"""
 
 
 async def etat(pg, i):
@@ -179,11 +180,66 @@ async def main():
             await aller(pg, 0, -14, 0)
             rapport(await attendre(pg, "clip", "play", 4000), "face a l'ecran de nouveau : la lecture reprend")
 
+            # clic sur l'ecran (1.12.10) : pause, puis lecture ; sortir de la portee annule la pause
+            vs = pg.viewport_size; cx, cy = vs["width"] // 2, vs["height"] // 2
+            await pg.mouse.move(cx, cy); await pg.wait_for_timeout(300)
+            tip = await pg.evaluate("(() => { const e = document.getElementById('zoneTip'); return e && !e.hidden ? e.textContent : ''; })()")
+            rapport("pause" in tip.lower() or "lecture" in tip.lower(), "infobulle au survol : clic = pause / lecture", tip)
+            await pg.mouse.click(cx, cy); await pg.wait_for_timeout(400)
+            ev = (await pg.evaluate(ELEM, "clip"))["v"]
+            rapport(ev["paused"] and await etat(pg, "clip") == "user", "clic sur l'ecran : la video s'arrete (etat : arretee par un clic)", (ev, await etat(pg, "clip")))
+            await pg.wait_for_timeout(1500)
+            rapport(await etat(pg, "clip") == "user", "arretee par clic : elle ne repart pas toute seule (a portee, en vue)")
+            await pg.mouse.click(cx, cy); await pg.wait_for_timeout(500)
+            rapport(await attendre(pg, "clip", "play", 3000), "deuxieme clic : la lecture reprend")
+            await pg.mouse.click(cx, cy); await pg.wait_for_timeout(300)
+            await aller(pg, 0, 30, 0); await pg.wait_for_timeout(400); await aller(pg, 0, -14, 0)
+            rapport(await attendre(pg, "clip", "play", 4000), "arretee par clic, puis sortie de portee et retour : elle rejoue")
+            await aller(pg, 40, -14, 0); await pg.wait_for_timeout(300)
+            await aller(pg, 0, -14, 0)
+            await pg.mouse.click(cx, cy); await pg.wait_for_timeout(300); await pg.mouse.click(cx, cy); await pg.wait_for_timeout(300)
+
+            # vue libre : la camera reste devant l'ecran, c'est le visiteur qui s'eloigne -> pause ; il revient -> reprise
+            await pg.evaluate("window.__v.setView('free')"); await pg.wait_for_timeout(300)
+            c0 = (await pg.evaluate("window.__v.getWalk()"))["cam"]
+            await aller(pg, 0, 30, 0)
+            c1 = (await pg.evaluate("window.__v.getWalk()"))["cam"]
+            rapport(max(abs(c0[i] - c1[i]) for i in range(3)) < 0.01, "vue libre : la camera n'a pas suivi le visiteur", (c0, c1))
+            rapport(await attendre(pg, "clip", "pause", 4000), "vue libre, visiteur loin, camera pres de l'ecran : pause", await pg.evaluate(DIAG))
+            await aller(pg, 0, -14, 0)
+            rapport(await attendre(pg, "clip", "play", 4000), "vue libre, visiteur revenu a portee : lecture")
+            await pg.evaluate("window.__v.setView('fps')"); await pg.wait_for_timeout(300)
+
             # s'eloigner : pause ; l'ecran lointain, une fois a portee, se charge
             await aller(pg, 0, 30, 0)
             rapport(await attendre(pg, "clip", "pause", 4000), "hors de portee : pause (la video reste chargee)")
             await aller(pg, 40, -14, 0)
             rapport(await attendre(pg, "loin", "play"), "l'ecran lointain se charge et joue seulement quand on s'en approche", await pg.evaluate(DIAG))
+
+            # son (1.12.9) : muet par defaut ; seul l'ecran a son le plus proche parle, au volume (1 - distance / portee) x niveau de la page ; le navigateur peut refuser le son sans geste
+            await aller(pg, 82, -14, 0)
+            for i in ("s1", "s2", "s3"):
+                await attendre(pg, i, "play")
+            await pg.evaluate("window.__v.videoSound = () => 0"); await pg.wait_for_timeout(500)
+            m = [(await pg.evaluate(ELEM, i))["v"] for i in ("s1", "s2", "s3")]
+            rapport(all(x["muted"] for x in m) and all(not x["paused"] for x in m), "niveau 0 : les trois ecrans jouent, muets", m)
+            await pg.mouse.click(10, 10)   # geste de l'utilisateur (la politique du navigateur l'exige pour le son)
+            await pg.evaluate("window.__v.videoSound = () => 0.8"); await pg.wait_for_timeout(700)
+            e = [(await pg.evaluate(ELEM, i))["v"] for i in ("s1", "s2", "s3")]
+            att = (1 - math.hypot(2, 6.1) / 12) * 0.8
+            rapport(not e[0]["muted"] and e[1]["muted"] and e[2]["muted"], "deux ecrans a son a portee : seul le plus proche (s1) parle ; s2 (a son, plus loin) et s3 (sans son) restent muets", e)
+            rapport(abs(e[0]["vol"] - att) < 0.06, "volume = (1 - distance / portee) x niveau", (e[0]["vol"], att))
+            rapport(all(not x["paused"] for x in e), "les trois ecrans continuent de jouer", e)
+            await aller(pg, 85, -14, 0); await pg.wait_for_timeout(700)
+            e = [(await pg.evaluate(ELEM, i))["v"] for i in ("s1", "s2", "s3")]
+            rapport(e[0]["muted"] and not e[1]["muted"] and e[2]["muted"], "on se rapproche de s2 : c'est lui qui parle, s1 se tait", e)
+            await aller(pg, 85, -3, 0)
+            for i in ("s1", "s2", "s3"):
+                await attendre(pg, i, "pause", 4000)   # une seconde de grace avant la pause
+            e = [(await pg.evaluate(ELEM, i))["v"] for i in ("s1", "s2", "s3")]
+            rapport(all(x["muted"] for x in e) and all(x["paused"] for x in e), "hors de portee : tous en pause et muets", e)
+            dg = await pg.evaluate(DIAG)
+            rapport(dg["s2"]["sound"] is True and dg["s3"]["sound"] is False, "diagnostic : cle sound lue par ecran", dg["s2"])
 
             # fichier absent, adresse interdite
             await aller(pg, -20, -14, 0)

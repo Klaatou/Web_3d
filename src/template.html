@@ -909,6 +909,7 @@ const audioArbitre = () => {
   RADIO.set(useR ? rZ : null, useR ? rG : 0, rD, useR && rO); MUSIC.set(useM ? mZ : null, useM ? mG : 0, mD, useM && mO);
 };
 if (C.walk) { viewer.onCast = (z, g, d, o) => { rZ = z; rG = g; rD = d || 0; rO = !!o; audioArbitre(); }; viewer.onAudio = (z, g, d, o) => { mZ = z; mG = g; mD = d || 0; mO = !!o; audioArbitre(); }; viewer.onRadio = (url, t) => RADIO.title(url, t); }
+viewer.videoSound = () => VIS.sounds && SND.acted() ? Math.max(0, Math.min(1, VIS.srcVolume / 100)) : 0;   // 1.12.9 : son des ecrans video (zones avec sound: true) : reglage Son active, apres un premier geste, au volume radio / musique de la fenetre Son
 viewer.setMyColor(VIS.color);
 if (C.presenceUrl && C.walk) viewer.onPeer = kind => { if (kind === 'join' && VIS.soundJoin) SND.join(); else if (kind === 'leave' && VIS.soundLeave) SND.leave(); };
 // v37 : boussole en haut au centre : point cardinal et degrés (« NE 45° »), sans dépendre de la couleur ; masquée par la case des réglages visiteur ou --no-compass

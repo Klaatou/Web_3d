@@ -518,6 +518,7 @@ function renderZoneList() {
       d.appendChild(inp(tr('viewer.zf.w'), 'number', z.w, v => upd({ w: v }, true)));
       d.appendChild(inp(tr('viewer.zf.h.video'), 'number', z.h, v => upd({ h: v }, true)));
       d.appendChild(inp(tr('viewer.zf.r.video'), 'number', z.radius, v => upd({ radius: v }, true)));
+      d.appendChild(inp(tr('viewer.zf.sound'), 'select', z.sound ? 'on' : 'off', v => upd({ sound: v === 'on' ? true : undefined }, true), [['off', tr('viewer.zf.sound.off')], ['on', tr('viewer.zf.sound.on')]]));   // 1.12.9
     } else if (z.type === 'cast') {   // 1.10.32 : radio : adresse du flux, essai de 5 s, portée ; rien d'autre (ni clic, ni lien à un élément)
       d.appendChild(inp(tr('viewer.zf.cast'), 'text', z.streams && z.streams[0] ? z.streams[0][1] : '', v => upd({ streams: [[z.streams && z.streams[0] ? z.streams[0][0] : '', v], ...(z.streams || []).slice(1)] })));   // 1.11.26 : la saisie change l'adresse du premier flux (son label et les autres flux sont gardes)
       const bt2 = document.createElement('button'); bt2.className = 'wide'; bt2.textContent = tr('viewer.zf.cast.try'); bt2.onclick = () => castTry(z.streams && z.streams[0] ? z.streams[0][1] : ''); d.appendChild(bt2);
