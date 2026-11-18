@@ -55,7 +55,7 @@ def serveur(dossier):
 
 def zones():
     V = lambda i, x, **k: dict({"id": i, "type": "video", "label": "Ecran " + i, "x": x, "y": 16.6, "z": -20, "radius": 12, "w": 2.4, "h": 0, "yaw": 0}, **k)
-    return [V("liste", 0, folder="clips"),                                                    # liste lue dans clips/playlist.json
+    return [V("liste", 0, folder="clips", sound=True),                                                    # liste lue dans clips/playlist.json
             V("ins", 30, folder="clips", tracks=["1-a.webm", "absent-zzz.webm", "10-c.webm"]),   # liste ecrite dans la zone, une piste absente
             V("vide", -30, folder="vide"),                                                    # liste vide
             V("mauvais", -60, folder="clips", tracks=["x1.webm", "x2.webm"]),                 # aucune piste lisible
@@ -65,7 +65,7 @@ def zones():
 
 DIAG = "() => Object.fromEntries(window.__v.videoDiag().map(d => [d.id, d]))"
 ELEM = """(id) => { let r = null; window.__v.scene.traverse(n => { const s = n.userData && n.userData.vid; if (s && n.parent && n.parent.userData.zoneId === id) r = { ready: s.ready, failed: s.failed, vis: n.visible, sy: n.scale.y,
-    v: s.v ? { paused: s.v.paused, loop: s.v.loop, t: s.v.currentTime, w: s.v.videoWidth } : null }; }); return r; }"""
+    v: s.v ? { paused: s.v.paused, muted: s.v.muted, loop: s.v.loop, t: s.v.currentTime, w: s.v.videoWidth } : null }; }); return r; }"""
 # point de l'ecran a l'abscisse u (0 a 1) en pixels, pour cliquer sur un bord
 PIX = """([id, u, bar]) => { let pl = null; window.__v.scene.traverse(n => { const s = bar ? (n.userData && n.userData.vbar && !n.userData.back) : (n.userData && n.userData.vid); if (s && n.parent && n.parent.userData.zoneId === id) pl = n; });
     const v = new window.__v.camera.position.constructor(u - 0.5, 0, 0).applyMatrix4(pl.matrixWorld).project(window.__v.camera), r = window.__v.renderer.domElement.getBoundingClientRect();
@@ -146,7 +146,8 @@ async def main():
             rapport(js[0].get("folder") == "clips/x" and js[0].get("tracks") == ["1-a.webm", "sub/2.webm", "http://h.invalid/c.webm"] and "folder" not in js[1] and "tracks" not in js[1] and "folder" not in js[3], "folder nettoye, tracks filtrees (pas de .., pas de javascript:), rien de tout cela sur une image", js)
             await pg.evaluate("(l) => window.__v.setZones(l)", zones()); await pg.wait_for_timeout(300)
 
-            # liste lue dans playlist.json : piste 1, puis enchainement
+            # son d'une liste (1.12.14) : apres chaque changement de piste (fin de piste, suivante, precedente) l'ecran a son redevient audible tout de suite, il ne retombe pas en muet
+            await pg.mouse.click(10, 10); await pg.evaluate("window.__v.videoSound = () => 0.8")   # geste de l'utilisateur, niveau 0,8
             await aller(pg, 0, -14, 0)
             ok = await attendre(pg, "liste", lambda d: d.get("state") == "play" and d.get("n") == 4)
             d = await diag(pg, "liste")
@@ -154,7 +155,9 @@ async def main():
             e = await pg.evaluate(ELEM, "liste")
             rapport(e["v"] and not e["v"]["loop"] and abs(e["sy"] - 2.4 * 180 / 320) < 0.01, "liste de plusieurs pistes : pas de boucle sur une piste ; hauteur d'apres la piste 1", e)
             ok = await attendre(pg, "liste", lambda d: d.get("ti") == 1 and d.get("state") == "play")
+            await pg.wait_for_timeout(600)
             e = await pg.evaluate(ELEM, "liste")
+            rapport(e["v"] and not e["v"]["muted"] and not e["v"]["paused"], "fin de la piste 1 : la piste 2 joue avec le son (pas de retombee en muet)", e)
             rapport(ok and abs(e["sy"] - 2.4 * 240 / 320) < 0.01, "fin de la piste 1 : la piste 2 s'enchaine, avec son propre rapport largeur / hauteur", (await diag(pg, "liste"), e))
             ok = await attendre(pg, "liste", lambda d: d.get("ti") == 3 and d.get("state") == "play")
             e = await pg.evaluate(ELEM, "liste")
@@ -181,9 +184,10 @@ async def main():
             d = await diag(pg, "liste")
             rapport(d["ti"] == (ti0 + 1) % 4 or (ti0 == 1 and d["ti"] == 3) or (ti0 == 3 and d["ti"] == 0), "icone suivante : piste suivante", (ti0, d))
             ti1 = d["ti"]
-            await pg.mouse.click(*await pg.evaluate(PIX, ["liste", 0.62, True])); await pg.wait_for_timeout(500)
-            d = await diag(pg, "liste")
+            await pg.mouse.click(*await pg.evaluate(PIX, ["liste", 0.62, True])); await pg.wait_for_timeout(1200)
+            d = await diag(pg, "liste"); e = await pg.evaluate(ELEM, "liste")
             rapport(d["ti"] == ti0, "icone precedente : on revient a la piste d'avant", (ti0, ti1, d))
+            rapport(e["v"] and not e["v"]["muted"] and not e["v"]["paused"], "apres un changement de piste par les icones : le son est la, 1 s apres", e)
             await pg.mouse.click(*await pg.evaluate(PIX, ["liste", 0.62, True])); await pg.wait_for_timeout(500)
             d = await diag(pg, "liste")
             rapport(d["ti"] not in (ti0, 2), "precedente encore : la piste illisible (3) n'est jamais choisie", (ti0, d))

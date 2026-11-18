@@ -6,6 +6,13 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.12.0)
 
+### 18/11/2026 : écrans vidéo : le son ne retombe plus en muet au changement de piste
+
+- **Signalé par Klaatou** : sur un écran à liste, le son arrivait environ 2 s après l'image à chaque changement de piste (le Diagnostic disait « son demandé mais muet »).
+- **Cause** : un secours deviné d'après l'état « en pause » de l'élément coupait le son 5 s dès qu'une piste changeait, car le chargement d'une nouvelle piste met l'élément en pause un instant.
+- **Correctif** : ce secours est supprimé. Le son n'est coupé que si le navigateur refuse réellement la lecture avec son (erreur `NotAllowedError`) : l'écran joue alors muet et le son est retenté 5 s plus tard.
+- Tests : fin de piste et icônes précédente / suivante gardent le son ; refus simulé du navigateur. Le refus réel d'Edge n'est pas testé ici.
+
 ### 18/11/2026 : écrans vidéo : barre de pistes escamotable (icônes) ; son réglé avant le démarrage
 
 - **Demande de Klaatou** : des icônes pour parcourir les vidéos d'une liste, sur une ligne d'état escamotable sous l'écran ; et le son démarrait un peu en retard.

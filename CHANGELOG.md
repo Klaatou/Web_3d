@@ -6,6 +6,13 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.12.0)
 
+### 18/11/2026: video screens: sound no longer falls back to muted at a track change
+
+- **Reported by Klaatou**: on a playlist screen, the sound came about 2 s after the picture at each track change (the Diagnostic said "sound requested but muted").
+- **Cause**: a fallback guessed from the element's "paused" state muted the sound for 5 s whenever a track changed, because loading a new track briefly puts the element in the paused state.
+- **Fix**: that fallback is removed. The sound is muted only when the browser really refuses playback with sound (`NotAllowedError`): the screen then plays muted and the sound is retried 5 s later.
+- Tests: end of track and previous / next icons keep the sound; simulated browser refusal. A real Edge refusal is not tested here.
+
 ### 18/11/2026: video screens: retractable track bar (icons); sound set before playback starts
 
 - **Request from Klaatou**: icons to move through the videos of a list, on a retractable status line under the screen; and the sound started a little late.

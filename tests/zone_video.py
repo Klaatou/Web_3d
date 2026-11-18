@@ -245,6 +245,20 @@ async def main():
             dg = await pg.evaluate(DIAG)
             rapport(dg["s2"]["sound"] is True and dg["s3"]["sound"] is False, "diagnostic : cle sound lue par ecran", dg["s2"])
 
+            # le navigateur refuse le son sans geste (NotAllowedError, simule) : l'ecran joue quand meme, muet ; le son est retente 5 s plus tard (1.12.14)
+            pg2 = await br.new_page()
+            await pg2.add_init_script("window.__refuse = true; const p1 = HTMLMediaElement.prototype.play; HTMLMediaElement.prototype.play = function () { if (window.__refuse && !this.muted) return Promise.reject(new DOMException('refus', 'NotAllowedError')); return p1.apply(this, arguments); };")
+            await pg2.goto(f"http://127.0.0.1:{port}/p.html"); await pret(pg2)
+            await pg2.evaluate("window.__v.videoSound = () => 0.8")
+            await aller(pg2, 82, -14, 0)
+            ok = await attendre(pg2, "s1", "play"); await pg2.wait_for_timeout(500)
+            e = (await pg2.evaluate(ELEM, "s1"))["v"]
+            rapport(ok and e["muted"] and not e["paused"], "navigateur qui refuse le son : l'ecran joue quand meme, muet", e)
+            await pg2.evaluate("window.__refuse = false"); await pg2.wait_for_timeout(6000)
+            e = (await pg2.evaluate(ELEM, "s1"))["v"]
+            rapport(not e["muted"] and not e["paused"], "refus leve : le son est retente et passe (5 s plus tard)", e)
+            await pg2.close()
+
             # fichier absent, adresse interdite
             await aller(pg, -20, -14, 0)
             rapport(await attendre(pg, "nul", "fail"), "fichier absent : echec, l'ecran disparait", await pg.evaluate(DIAG))

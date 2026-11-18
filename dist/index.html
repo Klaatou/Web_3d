@@ -510,7 +510,7 @@ function diagShow(text, status, select) {
 function diagText(viewer, extra) {
   const x = extra || {}, L = (k, v) => tr('core.diag.line', k, v), out = [tr('core.diag.title')];
   const nb = (v, d) => (Number.isFinite(v) ? i18nNum(v, d || 0) : '?');   // nombres à la manière de la langue (virgule en français)
-  out.push(L(tr('core.diag.version'), '1.12.13 (18/11/2026)' + (x.cfgVersion && x.cfgVersion !== '1.12.13 (18/11/2026)' ? ' ; ' + tr('core.diag.cfgver', x.cfgVersion) : '')));
+  out.push(L(tr('core.diag.version'), '1.12.14 (18/11/2026)' + (x.cfgVersion && x.cfgVersion !== '1.12.14 (18/11/2026)' ? ' ; ' + tr('core.diag.cfgver', x.cfgVersion) : '')));
   out.push(L(tr('core.diag.date'), new Date().toLocaleString(({ fr: 'fr-FR', en: 'en-GB' })[LANG]) + ' ; ' + tr('core.diag.uptime', nb(performance.now() / 1000))));
   out.push(L(tr('core.diag.page'), location.protocol + (location.host ? '//ADRESSE' : '//') + location.pathname + location.search));
   out.push(L(tr('core.diag.lang'), LANG + ' · ' + ((navigator.languages || []).join(',') || navigator.language || '?') + ' · ' + KB.layout().toUpperCase()));
@@ -2644,7 +2644,14 @@ function createViewer(container, cfg0, loader) {
     }
     st.tracks = plist ? null : [{ name: tz, c: cands }]; st.ti = 0; st.bad = new Set();
     const reduced = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-    const play = () => { const v = st.v; if (!v || !st.ready || reduced()) return; vidApplySound(st, performance.now()); const r = v.play(); if (r && r.catch) r.catch(() => {}); };   // le son est regle avant le demarrage (1.12.13)
+    const play = () => { const v = st.v; if (!v || !st.ready || reduced()) return; vidApplySound(st, performance.now());   // le son est regle avant le demarrage (1.12.13)
+      const r = v.play();
+      if (r && r.catch) r.catch(e => {   // 1.12.14 : le navigateur refuse le son sans geste de l'utilisateur (NotAllowedError) : l'ecran joue muet et retente le son dans 5 s ; un autre refus (chargement interrompu) ne change rien
+        if (!e || e.name !== 'NotAllowedError' || v.muted) return;
+        v.muted = true; st.snd = 0; st.blk = performance.now() + 5000;
+        const r2 = v.play(); if (r2 && r2.catch) r2.catch(() => {});
+      });
+    };
     const nextCand = () => {   // emplacement suivant de la piste courante ; plus aucun : piste illisible
       if (st.dead || !st.tracks) return;
       const tk = st.tracks[st.ti], v = st.v;
@@ -2788,9 +2795,7 @@ function createViewer(container, cfg0, loader) {
     if (g > 0 && now >= (st.blk || 0)) {
       if (v.muted) v.muted = false;
       v.volume = Math.min(1, g); st.snd = v.volume;
-      if (v.paused && st.want && !v.muted && st.unm) { v.muted = true; st.snd = 0; st.blk = now + 5000; const r = v.play(); if (r && r.catch) r.catch(() => {}); }   // le navigateur a refuse le son sans geste : retour au muet, nouvel essai dans 5 s
-      st.unm = true;
-    } else { if (!v.muted) v.muted = true; st.snd = 0; st.unm = false; }
+    } else { if (!v.muted) v.muted = true; st.snd = 0; }
   }
   function videoDiag() { const o = []; for (const { z, st } of vidPlanes.values()) o.push({ id: z.id, target: z.target, loaded: st.loaded, bar: !!(st.bar && st.bar.mesh.visible), sound: !!z.sound, snd: st.snd || 0, n: st.tracks ? st.tracks.length : 0, ti: st.ti, name: st.tracks && st.tracks[st.ti] ? st.tracks[st.ti].name : '', state: st.failed ? 'fail' : (!st.ready ? 'wait' : (st.v && !st.v.paused ? 'play' : (st.off ? 'user' : 'pause'))) }); return o; }
   let imageResolver = null;
@@ -4335,7 +4340,7 @@ if (C.walk) {
   rsSel.onchange = () => { const si = parseInt(rsSel.value, 10) || 0; RADIO.setIdx(si); };
   sbody.insertBefore(rsSel, lrd);
   RADIO.setSelEl(rsSel);
-  mkLine('verInfo').textContent = tr('page.state.version', '1.12.13 (18/11/2026)', C.version || '?');   // 1.6.17 : version de la page (index.html, ou glb2html.py pour une page autonome) et de la configuration
+  mkLine('verInfo').textContent = tr('page.state.version', '1.12.14 (18/11/2026)', C.version || '?');   // 1.6.17 : version de la page (index.html, ou glb2html.py pour une page autonome) et de la configuration
   // v39 : bouton « Copier le diagnostic » sous le contenu de la fenêtre (reste visible quand elle est réduite) : lignes affichées + diagText (core.js) ;
   // si le navigateur refuse la copie, le texte s'affiche sélectionné dessous (Ctrl+C)
   {

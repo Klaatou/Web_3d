@@ -16,8 +16,8 @@ Draco et Meshopt gérés automatiquement (décodeurs intégrés seulement si le 
 """
 from __future__ import annotations
 
-VERSION = "1.12.13 (18/11/2026)"
-SHELL_VERSION = "1.12.13 (18/11/2026)"   # numéro de version de la coquille (index.html) : écrit par build.py, ne change que si la coquille change
+VERSION = "1.12.14 (18/11/2026)"
+SHELL_VERSION = "1.12.14 (18/11/2026)"   # numéro de version de la coquille (index.html) : écrit par build.py, ne change que si la coquille change
 MAP_VERSION = "1.12.13 (18/11/2026)"       # numéro de version de la page de carte (carte.html) : idem
 
 import argparse
@@ -3570,7 +3570,14 @@ function createViewer(container, cfg0, loader) {
     }
     st.tracks = plist ? null : [{ name: tz, c: cands }]; st.ti = 0; st.bad = new Set();
     const reduced = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-    const play = () => { const v = st.v; if (!v || !st.ready || reduced()) return; vidApplySound(st, performance.now()); const r = v.play(); if (r && r.catch) r.catch(() => {}); };   // le son est regle avant le demarrage (1.12.13)
+    const play = () => { const v = st.v; if (!v || !st.ready || reduced()) return; vidApplySound(st, performance.now());   // le son est regle avant le demarrage (1.12.13)
+      const r = v.play();
+      if (r && r.catch) r.catch(e => {   // 1.12.14 : le navigateur refuse le son sans geste de l'utilisateur (NotAllowedError) : l'ecran joue muet et retente le son dans 5 s ; un autre refus (chargement interrompu) ne change rien
+        if (!e || e.name !== 'NotAllowedError' || v.muted) return;
+        v.muted = true; st.snd = 0; st.blk = performance.now() + 5000;
+        const r2 = v.play(); if (r2 && r2.catch) r2.catch(() => {});
+      });
+    };
     const nextCand = () => {   // emplacement suivant de la piste courante ; plus aucun : piste illisible
       if (st.dead || !st.tracks) return;
       const tk = st.tracks[st.ti], v = st.v;
@@ -3714,9 +3721,7 @@ function createViewer(container, cfg0, loader) {
     if (g > 0 && now >= (st.blk || 0)) {
       if (v.muted) v.muted = false;
       v.volume = Math.min(1, g); st.snd = v.volume;
-      if (v.paused && st.want && !v.muted && st.unm) { v.muted = true; st.snd = 0; st.blk = now + 5000; const r = v.play(); if (r && r.catch) r.catch(() => {}); }   // le navigateur a refuse le son sans geste : retour au muet, nouvel essai dans 5 s
-      st.unm = true;
-    } else { if (!v.muted) v.muted = true; st.snd = 0; st.unm = false; }
+    } else { if (!v.muted) v.muted = true; st.snd = 0; }
   }
   function videoDiag() { const o = []; for (const { z, st } of vidPlanes.values()) o.push({ id: z.id, target: z.target, loaded: st.loaded, bar: !!(st.bar && st.bar.mesh.visible), sound: !!z.sound, snd: st.snd || 0, n: st.tracks ? st.tracks.length : 0, ti: st.ti, name: st.tracks && st.tracks[st.ti] ? st.tracks[st.ti].name : '', state: st.failed ? 'fail' : (!st.ready ? 'wait' : (st.v && !st.v.paused ? 'play' : (st.off ? 'user' : 'pause'))) }); return o; }
   let imageResolver = null;
