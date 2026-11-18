@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Ecrans video, listes de lecture (1.12.12) : folder / tracks / <dossier>/playlist.json comme une zone audio. Verifie : nettoyage JavaScript = Python (folder, tracks) ;
 glb2html.py --video-list (ordre naturel, seulement les extensions video, --dry-run n'ecrit rien) ; lecture de la premiere piste, enchainement a la fin d'une piste, retour a la
-premiere apres la derniere, piste illisible sautee, rapport largeur / hauteur propre a chaque piste ; clic sur le bord droit = suivante, bord gauche = precedente, ailleurs = pause ;
+premiere apres la derniere, piste illisible sautee, rapport largeur / hauteur propre a chaque piste ; barre de pistes escamotable sous l'ecran (survol, 3 s apres un clic) avec icones precedente / pause-lecture / suivante, clic sur l'ecran = pause ;
 une seule piste : boucle ; liste vide ou toutes pistes illisibles : l'ecran disparait ; infobulle ; un ecran a fichier unique garde pause / lecture sur ses bords ; aucune erreur JavaScript.
 Prerequis : pip install playwright ; ffmpeg ; python build.py avant. Variables facultatives : THREE_DIR, CHROMIUM. Lancer : python tests/zone_video_liste.py
 """
@@ -35,7 +35,7 @@ def sol_glb(path):
                      + struct.pack("<I4s", len(js), b"JSON") + js + struct.pack("<I4s", len(blob), b"BIN\0") + blob)
 
 
-def clip(path, size, secondes=2):
+def clip(path, size, secondes=5):
     r = subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-f", "lavfi", "-i", f"testsrc=size={size}:rate=15", "-t", str(secondes), "-c:v", "libvpx", "-b:v", "200k", str(path)], capture_output=True, text=True)
     if r.returncode:
         sys.exit("[ECHEC] ffmpeg : " + r.stderr[-300:])
@@ -67,7 +67,7 @@ DIAG = "() => Object.fromEntries(window.__v.videoDiag().map(d => [d.id, d]))"
 ELEM = """(id) => { let r = null; window.__v.scene.traverse(n => { const s = n.userData && n.userData.vid; if (s && n.parent && n.parent.userData.zoneId === id) r = { ready: s.ready, failed: s.failed, vis: n.visible, sy: n.scale.y,
     v: s.v ? { paused: s.v.paused, loop: s.v.loop, t: s.v.currentTime, w: s.v.videoWidth } : null }; }); return r; }"""
 # point de l'ecran a l'abscisse u (0 a 1) en pixels, pour cliquer sur un bord
-PIX = """([id, u]) => { let pl = null; window.__v.scene.traverse(n => { const s = n.userData && n.userData.vid; if (s && n.parent && n.parent.userData.zoneId === id) pl = n; });
+PIX = """([id, u, bar]) => { let pl = null; window.__v.scene.traverse(n => { const s = bar ? (n.userData && n.userData.vbar && !n.userData.back) : (n.userData && n.userData.vid); if (s && n.parent && n.parent.userData.zoneId === id) pl = n; });
     const v = new window.__v.camera.position.constructor(u - 0.5, 0, 0).applyMatrix4(pl.matrixWorld).project(window.__v.camera), r = window.__v.renderer.domElement.getBoundingClientRect();
     return [r.left + (v.x + 1) / 2 * r.width, r.top + (1 - v.y) / 2 * r.height]; }"""
 
@@ -91,7 +91,7 @@ async def diag(pg, i):
     return (await pg.evaluate(DIAG)).get(i, {})
 
 
-async def attendre(pg, i, cond, ms=9000):
+async def attendre(pg, i, cond, ms=16000):
     t0 = time.time()
     while time.time() - t0 < ms / 1000:
         if cond(await diag(pg, i)):
@@ -162,26 +162,45 @@ async def main():
             ok = await attendre(pg, "liste", lambda d: d.get("ti") == 0 and d.get("state") == "play")
             rapport(ok, "apres la derniere piste : retour a la premiere (la piste illisible reste sautee)", await diag(pg, "liste"))
 
-            # clics sur les bords : suivante / precedente ; au milieu : pause
-            tip = await pg.evaluate("(() => { const e = document.getElementById('zoneTip'); return e && !e.hidden ? e.textContent : ''; })()")
-            x, y = await pg.evaluate(PIX, ["liste", 0.5]); await pg.mouse.move(x, y); await pg.wait_for_timeout(300)
-            tip = await pg.evaluate("(() => { const e = document.getElementById('zoneTip'); return e && !e.hidden ? e.textContent : ''; })()")
-            rapport("bord" in tip, "infobulle d'une liste : explique les bords", tip)
+            # barre de pistes escamotable : apparait au survol, trois icones ; le clic sur l'ecran lui-meme reste pause / lecture
+            bulle = lambda: pg.evaluate("(() => { const e = document.getElementById('zoneTip'); return e && !e.hidden ? e.textContent : ''; })()")
+            await pg.mouse.move(5, 5); await pg.wait_for_timeout(400)
+            rapport(not (await diag(pg, "liste"))["bar"], "souris ailleurs : la barre est escamotee", await diag(pg, "liste"))
+            x, y = await pg.evaluate(PIX, ["liste", 0.5]); await pg.mouse.move(x, y); await pg.wait_for_timeout(500)
+            rapport((await diag(pg, "liste"))["bar"], "survol de l'ecran : la barre de pistes apparait", await diag(pg, "liste"))
+            tip = await bulle()
+            rapport("barre" in tip, "infobulle d'une liste : parle de la barre", tip)
+            x, y = await pg.evaluate(PIX, ["liste", 0.3, True]); await pg.mouse.move(x, y); await pg.wait_for_timeout(300)
+            rapport((await diag(pg, "liste"))["bar"], "la souris sur la barre : elle reste affichee", await diag(pg, "liste"))
+            await attendre(pg, "liste", lambda q: q.get("state") == "play" and q.get("ti") in (0, 1) and (q.get("bar") is True))
+            d0 = await diag(pg, "liste"); await pg.mouse.click(x, y); d = await diag(pg, "liste")
+            rapport(d["state"] != "user" and d["ti"] == d0["ti"], "clic sur le texte de la barre : rien ne change (ni pause, ni piste)", (d0, d))
+            await attendre(pg, "liste", lambda q: q.get("state") == "play")
+            ti0 = (await diag(pg, "liste"))["ti"]
+            await pg.mouse.click(*await pg.evaluate(PIX, ["liste", 0.90, True])); await pg.wait_for_timeout(500)
+            d = await diag(pg, "liste")
+            rapport(d["ti"] == (ti0 + 1) % 4 or (ti0 == 1 and d["ti"] == 3) or (ti0 == 3 and d["ti"] == 0), "icone suivante : piste suivante", (ti0, d))
+            ti1 = d["ti"]
+            await pg.mouse.click(*await pg.evaluate(PIX, ["liste", 0.62, True])); await pg.wait_for_timeout(500)
+            d = await diag(pg, "liste")
+            rapport(d["ti"] == ti0, "icone precedente : on revient a la piste d'avant", (ti0, ti1, d))
+            await pg.mouse.click(*await pg.evaluate(PIX, ["liste", 0.62, True])); await pg.wait_for_timeout(500)
+            d = await diag(pg, "liste")
+            rapport(d["ti"] not in (ti0, 2), "precedente encore : la piste illisible (3) n'est jamais choisie", (ti0, d))
+            await pg.mouse.click(*await pg.evaluate(PIX, ["liste", 0.76, True])); await pg.wait_for_timeout(400)
+            d = await diag(pg, "liste")
+            rapport(d["state"] == "user", "icone pause / lecture : pause", d)
+            await pg.mouse.click(*await pg.evaluate(PIX, ["liste", 0.76, True])); await pg.wait_for_timeout(400)
+            rapport(await attendre(pg, "liste", lambda q: q.get("state") == "play", 4000), "icone pause / lecture : la lecture reprend", await diag(pg, "liste"))
+            await pg.mouse.click(*await pg.evaluate(PIX, ["liste", 0.93])); await pg.wait_for_timeout(400)
+            d = await diag(pg, "liste")
+            rapport(d["state"] == "user", "clic sur le bord de l'ecran : pause / lecture (plus de piste suivante par les bords)", d)
             await pg.mouse.click(*await pg.evaluate(PIX, ["liste", 0.93])); await pg.wait_for_timeout(500)
-            d = await diag(pg, "liste")
-            rapport(d["ti"] == 1 and d["state"] in ("play", "wait"), "clic sur le bord droit : piste suivante", d)
-            await pg.mouse.click(*await pg.evaluate(PIX, ["liste", 0.07])); await pg.wait_for_timeout(500)
-            d = await diag(pg, "liste")
-            rapport(d["ti"] == 0, "clic sur le bord gauche : piste precedente", d)
-            await pg.mouse.click(*await pg.evaluate(PIX, ["liste", 0.07])); await pg.wait_for_timeout(500)
-            d = await diag(pg, "liste")
-            rapport(d["ti"] == 3, "precedente depuis la premiere : la derniere lisible (la piste illisible est sautee)", d)
-            await pg.mouse.click(*await pg.evaluate(PIX, ["liste", 0.5])); await pg.wait_for_timeout(400)
-            d = await diag(pg, "liste")
-            rapport(d["state"] == "user", "clic au milieu : pause", d)
-            await pg.mouse.click(*await pg.evaluate(PIX, ["liste", 0.93])); await pg.wait_for_timeout(600)
-            d = await diag(pg, "liste")
-            rapport(d["ti"] == 0 and await attendre(pg, "liste", lambda q: q.get("state") == "play", 4000), "en pause, clic sur le bord : la piste change et la lecture reprend", d)
+            await pg.mouse.move(5, 5); await pg.wait_for_timeout(500)
+            rapport((await diag(pg, "liste"))["bar"], "apres un clic, la barre reste visible un moment meme si la souris est partie", await diag(pg, "liste"))
+            await pg.wait_for_timeout(3500)
+            rapport(not (await diag(pg, "liste"))["bar"], "puis elle s'escamote", await diag(pg, "liste"))
+            await pg.wait_for_function("window.__v.videoDiag().find(q => q.id === 'liste').state === 'play'", timeout=6000)
 
             # liste ecrite dans la zone, avec une piste absente
             await aller(pg, 30, -14, 0)
@@ -203,16 +222,20 @@ async def main():
             ok = await attendre(pg, "seul", lambda d: d.get("state") == "play")
             e = await pg.evaluate(ELEM, "seul")
             rapport(ok and e["v"] and e["v"]["loop"], "liste d'une seule piste : elle joue en boucle", (await diag(pg, "seul"), e))
+            x, y = await pg.evaluate(PIX, ["seul", 0.5]); await pg.mouse.move(x, y); await pg.wait_for_timeout(500)
+            rapport(not (await diag(pg, "seul"))["bar"], "une seule piste : pas de barre de pistes", await diag(pg, "seul"))
             await pg.mouse.click(*await pg.evaluate(PIX, ["seul", 0.93])); await pg.wait_for_timeout(400)
             d = await diag(pg, "seul")
-            rapport(d["state"] == "user" and d["ti"] == 0, "une seule piste : le bord ne change rien d'autre qu'une pause / lecture", d)
+            rapport(d["state"] == "user" and d["ti"] == 0, "une seule piste : le clic = pause / lecture", d)
 
             # fichier unique : les bords restent pause / lecture
             await aller(pg, 90, -14, 0)
             ok = await attendre(pg, "fich", lambda d: d.get("state") == "play")
+            x, y = await pg.evaluate(PIX, ["fich", 0.5]); await pg.mouse.move(x, y); await pg.wait_for_timeout(500)
+            rapport(not (await diag(pg, "fich"))["bar"], "fichier unique : pas de barre de pistes", await diag(pg, "fich"))
             await pg.mouse.click(*await pg.evaluate(PIX, ["fich", 0.93])); await pg.wait_for_timeout(400)
             d = await diag(pg, "fich")
-            rapport(ok and d["state"] == "user" and d["n"] == 1, "fichier unique : un clic sur le bord = pause (pas de piste suivante)", d)
+            rapport(ok and d["state"] == "user" and d["n"] == 1, "fichier unique : un clic = pause (pas de piste suivante)", d)
             rapport(not errs, "aucune erreur JavaScript", errs)
             await br.close()
     finally:

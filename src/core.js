@@ -2204,7 +2204,7 @@ function createViewer(container, cfg0, loader) {
   // (radius) et dans le champ de la camera ; la video joue alors, sans son, en boucle, et se met en pause quand on s'eloigne ou qu'on regarde ailleurs. Le nom du fichier se
   // cherche comme celui d'une image (medias/ puis dossier de la region ; sans extension : .mp4, .webm, .m4v, .ogv). Au plus VID_MAX videos jouent a la fois : les plus proches.
   // Une video d'un autre site doit autoriser le CORS, sinon WebGL refuse la texture.
-  const vidPlanes = new Map(), vidFrustum = new THREE.Frustum(), vidM = new THREE.Matrix4(), vidP = new THREE.Vector3(), vidEye = new THREE.Vector3(); let videoSound = null, vidLast = 0, vidDec = 0;   // 1.12.9 : videoSound() rend le niveau sonore voulu (0 a 1) ; 0 = muet (reglage Son coupe, pas encore de geste de l'utilisateur) ; fourni par la page
+  const vidPlanes = new Map(), vidFrustum = new THREE.Frustum(), vidM = new THREE.Matrix4(), vidP = new THREE.Vector3(), vidEye = new THREE.Vector3(); let videoSound = null, vidLast = 0, vidDec = 0, vidHover = null, vidAim = null;   // 1.12.9 : videoSound() rend le niveau sonore voulu (0 a 1) ; 0 = muet (reglage Son coupe, pas encore de geste de l'utilisateur) ; fourni par la page
   const VID_MAX = 8, VID_EXTS = ['mp4', 'webm', 'm4v', 'ogv'];
   function videoPlane(z) {
     const mat = new THREE.MeshBasicMaterial({ color: 0x111111, transparent: true });   // sombre tant que la video n'a pas de premiere image
@@ -2212,7 +2212,7 @@ function createViewer(container, cfg0, loader) {
     const hOf = (vw, vh) => z.h > 0 ? z.h : z.w * (vw && vh ? vh / vw : 9 / 16);
     pl.scale.set(z.w, hOf(0, 0), 1);
     const capText = imageCaption(z.target), cap = capText ? captionPlane(capText, z.w) : null;
-    const place = () => { if (cap) cap.position.y = -(pl.scale.y / 2 + z.w * 96 / 2048 + 0.03); };
+    const place = () => { if (cap) cap.position.y = -(pl.scale.y / 2 + z.w * 96 / 2048 + 0.03); if (pl.userData.barMesh) pl.userData.barMesh.position.y = -(pl.scale.y / 2 + z.w / 16 + 0.04); };
     place(); if (cap) pl.userData.cap = cap;
     const st = { v: null, ready: false, failed: false, want: false, dead: false, i: 0, ct: -1, seen: 0, loaded: '', objUrl: '', set: null }; pl.userData.vid = st;
     const tz = String(z.target || '').trim();
@@ -2234,7 +2234,7 @@ function createViewer(container, cfg0, loader) {
     }
     st.tracks = plist ? null : [{ name: tz, c: cands }]; st.ti = 0; st.bad = new Set();
     const reduced = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-    const play = () => { const v = st.v; if (!v || !st.ready || reduced()) return; const r = v.play(); if (r && r.catch) r.catch(() => {}); };
+    const play = () => { const v = st.v; if (!v || !st.ready || reduced()) return; vidApplySound(st, performance.now()); const r = v.play(); if (r && r.catch) r.catch(() => {}); };   // le son est regle avant le demarrage (1.12.13)
     const nextCand = () => {   // emplacement suivant de la piste courante ; plus aucun : piste illisible
       if (st.dead || !st.tracks) return;
       const tk = st.tracks[st.ti], v = st.v;
@@ -2257,7 +2257,34 @@ function createViewer(container, cfg0, loader) {
       for (let a = 0; a < n; a++) { k = (k + step + n) % n; if (!st.bad.has(k)) break; }
       st.ti = k; st.i = 0; nextCand();
     };
-    st.step = d => { if (!st.tracks || st.tracks.length < 2 || st.failed) return false; go(d); return true; };
+    st.step = d => { if (!st.tracks || st.tracks.length < 2 || st.failed) return false; go(d); st.barUntil = performance.now() + 3000; return true; };
+    // barre de pistes sous l'ecran (liste de plusieurs pistes) : « 2/4 nom » et trois icones dessinees (precedente, pause / lecture, suivante), centres a 62 %, 76 % et 90 % de la largeur
+    const makeBar = () => {
+      if (st.bar || st.dead || !pl.parent || !st.tracks || st.tracks.length < 2) return;
+      const cv = document.createElement('canvas'); cv.width = 1024; cv.height = 128;
+      const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
+      const bm = new THREE.MeshBasicMaterial({ map: tex, transparent: true });
+      const bar = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), bm); backOf(bar);
+      bar.scale.set(z.w, z.w / 8, 1); bar.visible = false;
+      for (const m of [bar, bar.userData.bk]) { m.userData.vbar = true; m.userData.zone = z; }
+      pl.parent.add(bar); zoneAll.push(bar, bar.userData.bk); zoneHit.push(bar, bar.userData.bk);
+      st.bar = { mesh: bar }; pl.userData.barMesh = bar; place();
+      st.barDraw = () => {
+        const tk = st.tracks[st.ti], pause = !!(st.v && !st.v.paused), sig = st.ti + '|' + pause + '|' + (tk ? tk.name : '');
+        if (st.bar.sig === sig) return; st.bar.sig = sig;
+        const c = cv.getContext('2d'), W = 1024, H = 128, cy = H / 2;
+        c.clearRect(0, 0, W, H); c.fillStyle = 'rgba(0,0,0,0.8)'; c.fillRect(0, 0, W, H);
+        c.fillStyle = '#fff'; c.font = 'bold 40px sans-serif'; c.textBaseline = 'middle';
+        const txt = (st.ti + 1) + '/' + st.tracks.length + '   ' + (tk ? tk.name : ''); let sh = txt;
+        while (sh.length > 2 && c.measureText(sh).width > 520) sh = sh.slice(0, -1);
+        c.fillText(sh === txt ? txt : sh.trimEnd() + '\u2026', 28, cy);
+        c.fillRect(0.62 * W - 24, cy - 26, 8, 52); c.beginPath(); c.moveTo(0.62 * W - 12, cy); c.lineTo(0.62 * W + 16, cy - 26); c.lineTo(0.62 * W + 16, cy + 26); c.fill();   // precedente
+        if (pause) { c.fillRect(0.76 * W - 14, cy - 26, 10, 52); c.fillRect(0.76 * W + 4, cy - 26, 10, 52); }   // joue : icone pause
+        else { c.beginPath(); c.moveTo(0.76 * W - 14, cy - 26); c.lineTo(0.76 * W + 18, cy); c.lineTo(0.76 * W - 14, cy + 26); c.fill(); }   // en pause : icone lecture
+        c.fillRect(0.90 * W + 16, cy - 26, 8, 52); c.beginPath(); c.moveTo(0.90 * W + 12, cy); c.lineTo(0.90 * W - 16, cy - 26); c.lineTo(0.90 * W - 16, cy + 26); c.fill();   // suivante
+        tex.needsUpdate = true; dirty = true;
+      };
+    };
     const ensure = () => {
       if (st.v || st.failed || st.dead) return;
       const v = document.createElement('video');
@@ -2279,7 +2306,7 @@ function createViewer(container, cfg0, loader) {
       if (plist) {
         audioTracks(z).then(l => {
           if (st.dead) return;
-          st.tracks = l.map(q => ({ name: q.name, c: [q.url] })); v.loop = st.tracks.length === 1; nextCand();
+          st.tracks = l.map(q => ({ name: q.name, c: [q.url] })); v.loop = st.tracks.length === 1; makeBar(); nextCand();
         }, e => { console.warn(tr('core.video.list', z.label || z.id, e && e.message || e)); if (!st.dead) absent(); });
       } else nextCand();
     };
@@ -2315,15 +2342,15 @@ function createViewer(container, cfg0, loader) {
       cand.forEach(([, st], i) => { if (i < VID_MAX) { st.seen = now; if (!st.want) st.set(true); } else if (st.want) st.set(false); });
       // son (1.12.9) : seul l'ecran a son le plus proche parle, volume = (1 - distance / portee) x niveau de la page ; les autres restent muets
       const lvl = videoSound ? Math.max(0, Math.min(1, +videoSound() || 0)) : 0, talk = cand.slice(0, VID_MAX).find(c => c[2].sound);
+      for (const { z, st } of vidPlanes.values()) { st.g = talk && talk[1] === st && lvl > 0 ? Math.max(0.05, 1 - talk[0] / z.radius) * lvl : 0; vidApplySound(st, now); }
+      // barre de pistes (1.12.13) : visible au survol, a la visee (promenade, pointeur capture) et 3 s apres un clic ; redessinee quand la piste ou l'etat change
+      vidAim = null;
+      if (walking && document.pointerLockElement === dom && zoneHit.length) { const zc = zoneFromClick(0, 0, zoneInfoDist(), false); if (zc && zc.type === 'video') vidAim = zc.id; }
       for (const { z, st } of vidPlanes.values()) {
-        const v = st.v; if (!v || !st.ready) continue;
-        const g = talk && talk[1] === st && lvl > 0 ? Math.max(0.05, 1 - talk[0] / z.radius) * lvl : 0;
-        if (g > 0 && now >= (st.blk || 0)) {
-          if (v.muted) v.muted = false;
-          v.volume = Math.min(1, g); st.snd = v.volume;
-          if (v.paused && st.want && !v.muted && st.unm) { v.muted = true; st.snd = 0; st.blk = now + 5000; const r = v.play(); if (r && r.catch) r.catch(() => {}); }   // le navigateur a refuse le son sans geste : retour au muet, nouvel essai dans 5 s
-          st.unm = true;
-        } else { if (!v.muted) v.muted = true; st.snd = 0; st.unm = false; }
+        if (!st.bar) continue;
+        const vis = st.ready && !st.failed && !document.hidden && (vidHover === z.id || vidAim === z.id || now < (st.barUntil || 0));
+        if (st.bar.mesh.visible !== vis) { st.bar.mesh.visible = vis; dirty = true; }
+        if (vis && st.barDraw) st.barDraw();
       }
     }
     let n = 0;
@@ -2331,16 +2358,31 @@ function createViewer(container, cfg0, loader) {
     if (n) dirty = true;   // nouvelle image video : la scene est redessinee (la boucle ne dessine qu'a la demande)
   }
   // clic sur un ecran : pause si elle joue, lecture si elle a ete arretee par un clic ; sans effet hors portee, avant le chargement ou apres un echec
-  function videoClick(id, u) {   // 1.12.12 : liste de plusieurs pistes : bord gauche (20 %) = precedente, bord droit = suivante ; ailleurs, et sans liste : pause / lecture
+  // clic sur un ecran : pause si elle joue, lecture si elle a ete arretee par un clic ; sans effet hors portee, avant le chargement ou apres un echec.
+  // 1.12.13 : clic sur la barre de pistes (bar = vrai) : u < 0.55 rien, jusqu'a 0.69 precedente, jusqu'a 0.83 pause / lecture, au-dela suivante (memes bornes que le dessin de la barre)
+  function videoClick(id, u, bar) {
     for (const { z, st } of vidPlanes.values()) {
       if (z.id !== id || st.failed) continue;
-      if (st.tracks && st.tracks.length > 1 && (u < 0.2 || u > 0.8)) { if (st.set && st.step) { st.off = false; vidDec = 0; vidLast = 0; st.step(u < 0.2 ? -1 : 1); dirty = true; } return; }
+      const now = performance.now(); st.barUntil = now + 3000;
+      if (bar && u < 0.55) return;
+      if (bar && (u < 0.69 || u >= 0.83)) { if (st.step) { st.off = false; vidDec = 0; vidLast = 0; st.step(u < 0.69 ? -1 : 1); dirty = true; } return; }
       if (st.off) { st.off = false; vidDec = 0; vidLast = 0; }   // la decision de lecture est refaite tout de suite
       else if (st.want) { st.off = true; st.set(false); }
       dirty = true; return;
     }
   }
-  function videoDiag() { const o = []; for (const { z, st } of vidPlanes.values()) o.push({ id: z.id, target: z.target, loaded: st.loaded, sound: !!z.sound, snd: st.snd || 0, n: st.tracks ? st.tracks.length : 0, ti: st.ti, name: st.tracks && st.tracks[st.ti] ? st.tracks[st.ti].name : '', state: st.failed ? 'fail' : (!st.ready ? 'wait' : (st.v && !st.v.paused ? 'play' : (st.off ? 'user' : 'pause'))) }); return o; }
+  // son d'un ecran : st.g = niveau voulu (0 = muet), calcule a chaque decision pour tous les ecrans (meme pas encore prets) ; applique ici, et juste avant le premier play() d'une piste
+  function vidApplySound(st, now) {
+    const v = st.v; if (!v || !st.ready) return;
+    const g = st.g || 0;
+    if (g > 0 && now >= (st.blk || 0)) {
+      if (v.muted) v.muted = false;
+      v.volume = Math.min(1, g); st.snd = v.volume;
+      if (v.paused && st.want && !v.muted && st.unm) { v.muted = true; st.snd = 0; st.blk = now + 5000; const r = v.play(); if (r && r.catch) r.catch(() => {}); }   // le navigateur a refuse le son sans geste : retour au muet, nouvel essai dans 5 s
+      st.unm = true;
+    } else { if (!v.muted) v.muted = true; st.snd = 0; st.unm = false; }
+  }
+  function videoDiag() { const o = []; for (const { z, st } of vidPlanes.values()) o.push({ id: z.id, target: z.target, loaded: st.loaded, bar: !!(st.bar && st.bar.mesh.visible), sound: !!z.sound, snd: st.snd || 0, n: st.tracks ? st.tracks.length : 0, ti: st.ti, name: st.tracks && st.tracks[st.ti] ? st.tracks[st.ti].name : '', state: st.failed ? 'fail' : (!st.ready ? 'wait' : (st.v && !st.v.paused ? 'play' : (st.off ? 'user' : 'pause'))) }); return o; }
   let imageResolver = null;
   function setImageResolver(f) { imageResolver = typeof f === 'function' ? f : null; if (zones.length) { buildZones(); dirty = true; } }
   // legende d'une image de zone : texte entre le premier « - » du nom de fichier et l'extension (« 1-Soleil_couchant.jpg » : « Soleil couchant »), « _ » devient espace
@@ -2588,7 +2630,7 @@ function createViewer(container, cfg0, loader) {
     dirty = true;
   }
   function fireZone(z, how) {
-    if (z.type === 'video') { videoClick(z.id, lastHitU); return; }   // 1.12.10 : un clic sur un ecran video = pause / lecture (rien n'est envoye a la presence, aucune action de zone)
+    if (z.type === 'video') { videoClick(z.id, lastHitU, !!(lastHitObj && lastHitObj.userData.vbar)); return; }   // 1.12.10 : un clic sur un ecran video = pause / lecture (rien n'est envoye a la presence, aucune action de zone)
     if (walking && P.ws && P.ws.readyState === 1 && P.id && z.type !== 'cast' && z.type !== 'audio') P.ws.send(JSON.stringify({ t: 'zone', id: z.id, type: z.type, label: z.label }));   // 1.11.24 : le clic sur le cone d'une radio ou d'une musique ouvre la fenetre Son : rien a signaler
     if (onZone) onZone(z, how);
   }
@@ -2621,6 +2663,7 @@ function createViewer(container, cfg0, loader) {
     return z;
   }
   function setHover(z, cx, cy) {
+    vidHover = z && z.type === 'video' ? z.id : null;   // 1.12.13 : la barre de pistes d'un ecran video apparait au survol
     if (z && cx !== undefined) tipShow(z, cx, cy);
     if (z === hoverZone) return;
     if (hoverZone) for (const m of markerMat.get(hoverZone.id) || []) m.opacity = MARK_OP;

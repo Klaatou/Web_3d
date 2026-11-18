@@ -1545,7 +1545,7 @@
  "core.diag.video.mute": " ; son demandé mais muet (réglage Son coupé, pas encore de clic, ou un écran plus proche parle)",
  "core.tip.video": "clic : pause / lecture",
  "core.diag.video.s.user": "arrêtée par un clic",
- "core.tip.video.list": "clic : pause / lecture ; bord gauche : précédente, bord droit : suivante",
+ "core.tip.video.list": "clic : pause / lecture ; survole l'écran : barre précédente / suivante",
  "core.diag.video.trk": " ; piste {0}/{1} : {2}",
  "core.video.list": "écran vidéo « {0} » : {1}",
  "viewer.zf.video.folder": "Dossier de vidéos (liste, quand le fichier est vide)",

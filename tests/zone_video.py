@@ -126,6 +126,7 @@ async def main():
             pg = await br.new_page(locale="fr-FR"); errs = []; reqs = []
             pg.on("pageerror", lambda e: errs.append(str(e)))
             pg.on("request", lambda r: reqs.append(r.url))
+            await pg.add_init_script("window.__plays = []; const p0 = HTMLMediaElement.prototype.play; HTMLMediaElement.prototype.play = function () { window.__plays.push({ muted: this.muted, vol: this.volume }); return p0.apply(this, arguments); };")   # 1.12.13 : etat du son a chaque demarrage
             await pg.goto(f"http://127.0.0.1:{port}/p.html"); await pret(pg)
 
             # nettoyage : valeurs par defaut et champs ecartes
@@ -217,9 +218,12 @@ async def main():
             rapport(await attendre(pg, "loin", "play"), "l'ecran lointain se charge et joue seulement quand on s'en approche", await pg.evaluate(DIAG))
 
             # son (1.12.9) : muet par defaut ; seul l'ecran a son le plus proche parle, au volume (1 - distance / portee) x niveau de la page ; le navigateur peut refuser le son sans geste
+            await pg.mouse.click(10, 10); await pg.evaluate("window.__v.videoSound = () => 0.8; window.__plays = []")   # geste de l'utilisateur, niveau 0,8, puis on approche des trois ecrans
             await aller(pg, 82, -14, 0)
             for i in ("s1", "s2", "s3"):
                 await attendre(pg, i, "play")
+            pl = await pg.evaluate("window.__plays")
+            rapport(len(pl) == 3 and sum(1 for x in pl if not x["muted"]) == 1 and all(0 < x["vol"] <= 1 for x in pl if not x["muted"]), "le son est regle avant le demarrage : seul l'ecran a son le plus proche demarre non muet, pas de demarrage muet suivi d'un rattrapage", pl)
             await pg.evaluate("window.__v.videoSound = () => 0"); await pg.wait_for_timeout(500)
             m = [(await pg.evaluate(ELEM, i))["v"] for i in ("s1", "s2", "s3")]
             rapport(all(x["muted"] for x in m) and all(not x["paused"] for x in m), "niveau 0 : les trois ecrans jouent, muets", m)

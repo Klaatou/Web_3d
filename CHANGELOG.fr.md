@@ -6,6 +6,14 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.12.0)
 
+### 18/11/2026 : écrans vidéo : barre de pistes escamotable (icônes) ; son réglé avant le démarrage
+
+- **Demande de Klaatou** : des icônes pour parcourir les vidéos d'une liste, sur une ligne d'état escamotable sous l'écran ; et le son démarrait un peu en retard.
+- **Barre de pistes** : sous un écran qui a une **liste de plusieurs pistes**, une barre noire de la largeur de l'écran affiche « 2/4 nom » et trois icônes dessinées (pas de caractères, donc aucune dépendance aux polices) : précédente, pause / lecture (l'icône change selon l'état), suivante. Elle est **escamotée** : visible quand la souris survole l'écran ou la barre, quand le viseur de la promenade (pointeur capturé) est sur l'écran, et 3 secondes après chaque clic ou changement de piste. Un clic sur le texte de la barre ne fait rien. Un écran à fichier unique ou à une seule piste n'a pas de barre : le clic sur l'écran reste pause / lecture.
+- **Les bords cliquables de la 1.12.12 sont retirés** : un clic sur l'écran, bords compris, est toujours pause / lecture. L'infobulle d'une liste parle de la barre.
+- **Son** : il était appliqué à la décision de lecture suivante (jusqu'à ~150 ms après le démarrage muet) ; il est maintenant calculé pour tous les écrans à chaque décision et appliqué juste avant le premier `play()` de chaque piste. Cause établie par mesure : sans ce réglage, les trois démarrages du test étaient muets.
+- Tests : `tests/zone_video_liste.py` (barre : survol, escamotage, icônes, texte, délai de 3 s, pas de barre sur fichier unique) et `tests/zone_video.py` (son avant le démarrage).
+
 ### 18/11/2026 : zones vidéo, étape 3 : listes de vidéos, précédente / suivante
 
 - **Demande de Klaatou** : une liste de vidéos pour un même écran, comme les fichiers son d'une zone audio, avec précédente / suivante.

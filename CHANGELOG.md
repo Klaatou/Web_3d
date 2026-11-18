@@ -6,6 +6,14 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.12.0)
 
+### 18/11/2026: video screens: retractable track bar (icons); sound set before playback starts
+
+- **Request from Klaatou**: icons to move through the videos of a list, on a retractable status line under the screen; and the sound started a little late.
+- **Track bar**: under a screen with a **list of several tracks**, a black bar as wide as the screen shows "2/4 name" and three drawn icons (no characters, so no font dependency): previous, pause / play (the icon follows the state), next. It is **retracted**: visible while the mouse hovers the screen or the bar, while the walking crosshair (captured pointer) is on the screen, and 3 seconds after every click or track change. A click on the bar's text does nothing. A single-file or one-track screen has no bar: a click on the screen stays pause / play.
+- **The clickable edges of 1.12.12 are removed**: a click on the screen, edges included, is always pause / play. The tooltip of a list mentions the bar.
+- **Sound**: it was applied at the next playback decision (up to ~150 ms after the muted start); it is now computed for every screen at each decision and applied right before the first `play()` of each track. Cause established by measurement: without this, the three starts of the test were muted.
+- Tests: `tests/zone_video_liste.py` (bar: hover, retracting, icons, text, 3 s delay, no bar on a single file) and `tests/zone_video.py` (sound before start).
+
 ### 18/11/2026: video zones, step 3: video playlists, previous / next
 
 - **Request from Klaatou**: a list of videos for one screen, like the sound files of an audio zone, with previous / next.
