@@ -123,7 +123,7 @@ function diagText(viewer, extra) {
   }
   if (viewer && viewer.metalInfo) { const k = viewer.metalInfo(); out.push(L(tr('core.diag.metal'), tr('core.diag.metal.v', nb(k.pct), k.metal, k.total, k.env))); }   // 1.10.8 : reflets metalliques : reglage, materiaux metalliques charges, ceux qui ont les reflets
   if (viewer && viewer.imageDiag) for (const d of viewer.imageDiag().slice(0, 60)) out.push(L(tr('core.diag.image'), tr('core.diag.image.v', d.id, d.target || '\u2014', d.loaded || '\u2014', d.cap ? '\u00ab ' + d.cap + ' \u00bb (' + (d.src === 'txt' ? tr('core.diag.image.txt') : tr('core.diag.image.name')) + (d.vis ? '' : ', ' + tr('core.diag.image.hidden')) + ')' : '\u2014')));
-  if (viewer && viewer.videoDiag) for (const d of viewer.videoDiag().slice(0, 60)) out.push(L(tr('core.diag.video'), tr('core.diag.video.v', d.id, d.target || '\u2014', d.loaded || '\u2014', ({ fail: tr('core.diag.video.s.fail'), wait: tr('core.diag.video.s.wait'), play: tr('core.diag.video.s.play'), pause: tr('core.diag.video.s.pause'), user: tr('core.diag.video.s.user') })[d.state] + (d.snd > 0 ? tr('core.diag.video.snd', Math.round(d.snd * 100)) : (d.sound && d.state === 'play' ? tr('core.diag.video.mute') : '')))));   // 1.12.7 ; son : 1.12.9
+  if (viewer && viewer.videoDiag) for (const d of viewer.videoDiag().slice(0, 60)) out.push(L(tr('core.diag.video'), tr('core.diag.video.v', d.id, d.target || '\u2014', d.loaded || '\u2014', ({ fail: tr('core.diag.video.s.fail'), wait: tr('core.diag.video.s.wait'), play: tr('core.diag.video.s.play'), pause: tr('core.diag.video.s.pause'), user: tr('core.diag.video.s.user') })[d.state] + (d.n > 1 ? tr('core.diag.video.trk', d.ti + 1, d.n, d.name) : '') + (d.snd > 0 ? tr('core.diag.video.snd', Math.round(d.snd * 100)) : (d.sound && d.state === 'play' ? tr('core.diag.video.mute') : '')))));   // 1.12.7 ; son : 1.12.9
   if (viewer && viewer.animInfo && viewer.imageDiag && viewer.imageDiag().length) {   // 1.6.16 : GIF animes decodes, changements d'image, mouvement reduit demande au systeme
     const a = viewer.animInfo(), red = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
     out.push(L(tr('core.diag.anim'), tr('core.diag.anim.v', a.planes, a.ticks, red ? tr('common.yes') : tr('common.no'))));
@@ -1930,7 +1930,7 @@ function createViewer(container, cfg0, loader) {
     if (z.type === 'cast') return [name, (z.streams && z.streams.length ? (z.streams.length > 1 ? z.streams[0][1] + ' … +' + (z.streams.length - 1) : z.streams[0][1]) : '')];
     if (z.type === 'audio') return [name, z.folder || ''];
     if (z.type === 'image') return [name, z.link || ''];
-    if (z.type === 'video') return [name, tr('core.tip.video')];
+    if (z.type === 'video') return [name, (z.folder || (z.tracks && z.tracks.length > 1) ? tr('core.tip.video.list') : tr('core.tip.video'))];
     if (z.type === 'ha') return [name, tr('core.tip.cmd', name)];
     return [name, tr('core.tip.region', (String(z.target || '').trim() || tr('core.tip.thisregion')) + (z.spawn ? ' #' + z.spawn : ''))];
   }
@@ -1993,7 +1993,7 @@ function createViewer(container, cfg0, loader) {
       }
       if (ss.length) o.streams = ss;
     }
-    if (type === 'audio') {   // 1.11.4 : dossier des pistes (sous-dossier de la region) et liste facultative ecrite dans la zone ; ecrits seulement s'ils sont remplis
+    if (type === 'audio' || vid) {   // 1.11.4 : dossier des pistes (video : 1.12.12, liste a la place du fichier) (sous-dossier de la region) et liste facultative ecrite dans la zone ; ecrits seulement s'ils sont remplis
       const fd = String(z.folder || '').replace(/[\u0000-\u001f]/g, '').replace(/\\/g, '/').replace(/^\/+|\/+$/g, '').trim().slice(0, 200);
       if (fd && !fd.split('/').includes('..')) o.folder = fd;
       if (Array.isArray(z.tracks)) { const tk = z.tracks.map(audioName).filter(Boolean).slice(0, 500); if (tk.length) o.tracks = tk; }
@@ -2216,47 +2216,72 @@ function createViewer(container, cfg0, loader) {
     place(); if (cap) pl.userData.cap = cap;
     const st = { v: null, ready: false, failed: false, want: false, dead: false, i: 0, ct: -1, seen: 0, loaded: '', objUrl: '', set: null }; pl.userData.vid = st;
     const tz = String(z.target || '').trim();
-    if (zoneEditor) { mat.color.set(0xffffff); mat.map = boardTex(z.label || z.id, tr('core.video.board', tz || '-'), z.w, pl.scale.y); mat.needsUpdate = true; return pl; }   // dans l'editeur : l'ecran est un panneau, la video ne joue pas
+    if (zoneEditor) { mat.color.set(0xffffff); mat.map = boardTex(z.label || z.id, tr('core.video.board', tz || z.folder || '-'), z.w, pl.scale.y); mat.needsUpdate = true; return pl; }   // dans l'editeur : l'ecran est un panneau, la video ne joue pas
     const absent = () => {
-      console.warn(tr('core.video.missing', tz || '-'));
+      console.warn(tr('core.video.missing', tz || z.folder || '-'));
       st.failed = true; pl.visible = false; if (cap) cap.visible = false; dirty = true;
     };
+    // 1.12.12 : un fichier (target, avec ses emplacements possibles) ou une liste (folder / tracks, comme une zone audio : tracks, sinon <dossier>/playlist.json) ; sans target, la liste est lue
+    const plist = !tz && (!!z.folder || (Array.isArray(z.tracks) && z.tracks.length > 0));
     const bare = !/^([a-z][a-z0-9+.\-]*:|\/)/i.test(tz), hasExt = /\.[A-Za-z0-9]{2,5}$/.test(tz), stem = tz.replace(/\.[A-Za-z0-9]{2,5}$/, '');
-    if (!tz || (!bare && !/^(https?:|\/)/i.test(tz))) { absent(); return pl; }   // ni javascript:, ni data:, ni blob: ecrits dans la zone
-    const md = String(cfg.mediaDir === undefined ? 'medias' : (cfg.mediaDir || '')).replace(/^[\\/]+|[\\/]+$/g, ''), dirs = md ? [md + '/', ''] : [''];
-    let cands;
-    if (!bare) cands = [tz];
-    else if (hasExt) cands = dirs.map(d => d + tz);
-    else { cands = []; for (const d of dirs) for (const e of VID_EXTS) cands.push(d + stem + '.' + e); }
+    if (!plist && (!tz || (!bare && !/^(https?:|\/)/i.test(tz)))) { absent(); return pl; }   // ni javascript:, ni data:, ni blob: ecrits dans la zone
+    let cands = [];
+    if (!plist) {
+      const md = String(cfg.mediaDir === undefined ? 'medias' : (cfg.mediaDir || '')).replace(/^[\\/]+|[\\/]+$/g, ''), dirs = md ? [md + '/', ''] : [''];
+      if (!bare) cands = [tz];
+      else if (hasExt) cands = dirs.map(d => d + tz);
+      else { for (const d of dirs) for (const e of VID_EXTS) cands.push(d + stem + '.' + e); }
+    }
+    st.tracks = plist ? null : [{ name: tz, c: cands }]; st.ti = 0; st.bad = new Set();
     const reduced = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
     const play = () => { const v = st.v; if (!v || !st.ready || reduced()) return; const r = v.play(); if (r && r.catch) r.catch(() => {}); };
+    const nextCand = () => {   // emplacement suivant de la piste courante ; plus aucun : piste illisible
+      if (st.dead || !st.tracks) return;
+      const tk = st.tracks[st.ti], v = st.v;
+      if (st.i >= tk.c.length) { skip(); return; }
+      const c = tk.c[st.i++];
+      Promise.resolve().then(() => imageResolver ? imageResolver(c) : null).then(u => u || imageUrl(c), () => imageUrl(c)).then(u => {
+        if (st.dead) { if (/^blob:/.test(u)) URL.revokeObjectURL(u); return; }
+        if (st.objUrl) { URL.revokeObjectURL(st.objUrl); st.objUrl = ''; }
+        st.loaded = c; if (/^blob:/.test(u)) st.objUrl = u;
+        v.src = u; v.load();
+      });
+    };
+    const skip = () => {   // piste illisible : on passe a la suivante ; toutes illisibles : l'ecran disparait (comme un fichier absent)
+      st.bad.add(st.ti);
+      if (st.bad.size >= st.tracks.length) { absent(); return; }
+      go(1);
+    };
+    const go = step => {   // piste suivante (1) ou precedente (-1), les illisibles sautees, en boucle
+      const n = st.tracks.length; let k = st.ti;
+      for (let a = 0; a < n; a++) { k = (k + step + n) % n; if (!st.bad.has(k)) break; }
+      st.ti = k; st.i = 0; nextCand();
+    };
+    st.step = d => { if (!st.tracks || st.tracks.length < 2 || st.failed) return false; go(d); return true; };
     const ensure = () => {
       if (st.v || st.failed || st.dead) return;
       const v = document.createElement('video');
       v.muted = true; v.defaultMuted = true; v.loop = true; v.playsInline = true; v.preload = 'auto'; v.crossOrigin = 'anonymous';
       v.setAttribute('muted', ''); v.setAttribute('playsinline', '');
       st.v = v;
-      const next = () => {
+      v.addEventListener('error', () => { if (!st.dead && st.tracks) nextCand(); });   // fichier absent ou illisible : emplacement suivant, puis piste suivante
+      v.addEventListener('ended', () => { if (!st.dead && st.tracks && st.tracks.length > 1) go(1); });   // fin d'une piste d'une liste : la suivante (une seule piste : boucle)
+      v.addEventListener('loadeddata', () => {   // premiere image d'une piste disponible : elle devient la texture
         if (st.dead) return;
-        if (st.i >= cands.length) { absent(); return; }
-        const c = cands[st.i++];
-        Promise.resolve().then(() => imageResolver ? imageResolver(c) : null).then(u => u || imageUrl(c), () => imageUrl(c)).then(u => {
-          if (st.dead) { if (/^blob:/.test(u)) URL.revokeObjectURL(u); return; }
-          if (st.objUrl) { URL.revokeObjectURL(st.objUrl); st.objUrl = ''; }
-          st.loaded = c; if (/^blob:/.test(u)) st.objUrl = u;
-          v.src = u; v.load();
-        });
-      };
-      v.addEventListener('error', () => { if (!st.ready && !st.dead) next(); });   // fichier absent ou illisible : candidat suivant
-      v.addEventListener('loadeddata', () => {   // premiere image disponible : elle devient la texture
-        if (st.ready || st.dead) return;
-        st.ready = true;
-        const tex = new THREE.VideoTexture(v); tex.colorSpace = THREE.SRGBColorSpace;
-        mat.map = tex; mat.color.set(0xffffff); mat.needsUpdate = true;
-        pl.scale.y = hOf(v.videoWidth, v.videoHeight); place(); dirty = true;
+        if (!st.ready) {
+          st.ready = true;
+          const tex = new THREE.VideoTexture(v); tex.colorSpace = THREE.SRGBColorSpace;
+          mat.map = tex; mat.color.set(0xffffff); mat.needsUpdate = true;
+        }
+        pl.scale.y = hOf(v.videoWidth, v.videoHeight); place(); dirty = true;   // chaque piste a son rapport largeur / hauteur
         if (st.want) play();
       });
-      next();
+      if (plist) {
+        audioTracks(z).then(l => {
+          if (st.dead) return;
+          st.tracks = l.map(q => ({ name: q.name, c: [q.url] })); v.loop = st.tracks.length === 1; nextCand();
+        }, e => { console.warn(tr('core.video.list', z.label || z.id, e && e.message || e)); if (!st.dead) absent(); });
+      } else nextCand();
     };
     st.set = on => {   // demande de lecture (a portee et visible) ou de pause
       st.want = on;
@@ -2306,15 +2331,16 @@ function createViewer(container, cfg0, loader) {
     if (n) dirty = true;   // nouvelle image video : la scene est redessinee (la boucle ne dessine qu'a la demande)
   }
   // clic sur un ecran : pause si elle joue, lecture si elle a ete arretee par un clic ; sans effet hors portee, avant le chargement ou apres un echec
-  function videoToggle(id) {
+  function videoClick(id, u) {   // 1.12.12 : liste de plusieurs pistes : bord gauche (20 %) = precedente, bord droit = suivante ; ailleurs, et sans liste : pause / lecture
     for (const { z, st } of vidPlanes.values()) {
       if (z.id !== id || st.failed) continue;
+      if (st.tracks && st.tracks.length > 1 && (u < 0.2 || u > 0.8)) { if (st.set && st.step) { st.off = false; vidDec = 0; vidLast = 0; st.step(u < 0.2 ? -1 : 1); dirty = true; } return; }
       if (st.off) { st.off = false; vidDec = 0; vidLast = 0; }   // la decision de lecture est refaite tout de suite
       else if (st.want) { st.off = true; st.set(false); }
       dirty = true; return;
     }
   }
-  function videoDiag() { const o = []; for (const { z, st } of vidPlanes.values()) o.push({ id: z.id, target: z.target, loaded: st.loaded, sound: !!z.sound, snd: st.snd || 0, state: st.failed ? 'fail' : (!st.ready ? 'wait' : (st.v && !st.v.paused ? 'play' : (st.off ? 'user' : 'pause'))) }); return o; }
+  function videoDiag() { const o = []; for (const { z, st } of vidPlanes.values()) o.push({ id: z.id, target: z.target, loaded: st.loaded, sound: !!z.sound, snd: st.snd || 0, n: st.tracks ? st.tracks.length : 0, ti: st.ti, name: st.tracks && st.tracks[st.ti] ? st.tracks[st.ti].name : '', state: st.failed ? 'fail' : (!st.ready ? 'wait' : (st.v && !st.v.paused ? 'play' : (st.off ? 'user' : 'pause'))) }); return o; }
   let imageResolver = null;
   function setImageResolver(f) { imageResolver = typeof f === 'function' ? f : null; if (zones.length) { buildZones(); dirty = true; } }
   // legende d'une image de zone : texte entre le premier « - » du nom de fichier et l'extension (« 1-Soleil_couchant.jpg » : « Soleil couchant »), « _ » devient espace
@@ -2562,7 +2588,7 @@ function createViewer(container, cfg0, loader) {
     dirty = true;
   }
   function fireZone(z, how) {
-    if (z.type === 'video') { videoToggle(z.id); return; }   // 1.12.10 : un clic sur un ecran video = pause / lecture (rien n'est envoye a la presence, aucune action de zone)
+    if (z.type === 'video') { videoClick(z.id, lastHitU); return; }   // 1.12.10 : un clic sur un ecran video = pause / lecture (rien n'est envoye a la presence, aucune action de zone)
     if (walking && P.ws && P.ws.readyState === 1 && P.id && z.type !== 'cast' && z.type !== 'audio') P.ws.send(JSON.stringify({ t: 'zone', id: z.id, type: z.type, label: z.label }));   // 1.11.24 : le clic sur le cone d'une radio ou d'une musique ouvre la fenetre Son : rien a signaler
     if (onZone) onZone(z, how);
   }
@@ -2572,7 +2598,7 @@ function createViewer(container, cfg0, loader) {
   function zoneLabelTick() {
     for (const o of zoneLabs) { let v = !walking || !o.parent || Math.hypot(W.pos.x - (o.parent.position.x + o.position.x), W.pos.z - (o.parent.position.z + o.position.z)) <= zoneInfoDist(); if (o.userData.cone) v = v && coneOn; if (o.visible !== v) { o.visible = v; dirty = true; } }
   }
-  let lastHitObj = null, tipObj = null;
+  let lastHitObj = null, tipObj = null, lastHitU = 0.5;   // lastHitU : abscisse (0 a 1) du point cliqué sur le plan touché
   function zoneFromClick(nx, ny, maxDist, forClick) {
     if (!zoneHit.length) return null;
     camera.updateMatrixWorld(true);
@@ -2581,7 +2607,7 @@ function createViewer(container, cfg0, loader) {
     const h = tpRay.intersectObjects(zoneHit, false).find(q => !(q.object.userData.cone && (!q.object.visible || !coneOn || (forClick && q.object.userData.zone.trigger === 'enter'))) && !(q.object.userData.zone && q.object.userData.zone.type === 'video' && !(q.object.userData.back ? q.object.parent : q.object).visible));
     lastHitObj = null;
     if (!h || (maxDist && h.distance > maxDist)) return null;
-    lastHitObj = h.object;
+    lastHitObj = h.object; lastHitU = h.uv ? h.uv.x : 0.5;
     const z = zoneOf(h.object), link = z && zoneLink.get(z.id);
     if (model) {
       // un élément traversable (walkIgnore) ne bloque pas le clic, ni les autres morceaux de l'élément visé

@@ -6,6 +6,16 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.12.0)
 
+### 18/11/2026: video zones, step 3: video playlists, previous / next
+
+- **Request from Klaatou**: a list of videos for one screen, like the sound files of an audio zone, with previous / next.
+- **`folder` and `tracks` keys** on a `video` zone **without `target`**: `tracks` is the list written in the zone; without it the list is the file `<folder>/playlist.json` (array of names or `{ "tracks": [...] }`), looked up in `medias/<folder>/` then `<folder>/`, as for audio. With a `target`, it wins (single file). A name may be an `http(s)` address or a `/…` path.
+- **Playback**: tracks follow one another in order and wrap to the first after the last; a one-track list loops. Each track has its own aspect ratio (the screen adapts when `h` is 0). An unreadable track is skipped; if none can be read, or the list is empty, the screen disappears (message in the console).
+- **Previous / next**: a click on the **right edge** (20% of the width) of the screen goes to the next track, on the **left edge** to the previous one; elsewhere, pause / play as in 1.12.10. Without a list (or with one track) the whole screen stays pause / play. The tooltip explains it; the Diagnostic gives "track N/total: name".
+- **Tool**: `glb2html.py --video-list FOLDER` writes `FOLDER/playlist.json` (mp4, webm, m4v, ogv; alphabetical, numbers compared as numbers), with `--dry-run`. **Viewer editor**: "Video folder" field and "Update the list (playlist.json)" button (choose the region folder, as for audio).
+- Tests: `tests/zone_video_liste.py` (new).
+- Limits: no shuffle; lists do not play in the viewer editor (the editor panel does not play video); local viewer files untested; Edge without hardware acceleration and big files untested.
+
 ### 18/11/2026: zone radio and music in overview (range measured from the camera)
 
 - **Request from Klaatou**: media must be available all the time, like images and video screens, not only while walking.

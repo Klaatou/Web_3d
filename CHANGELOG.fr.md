@@ -6,6 +6,16 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.12.0)
 
+### 18/11/2026 : zones vidéo, étape 3 : listes de vidéos, précédente / suivante
+
+- **Demande de Klaatou** : une liste de vidéos pour un même écran, comme les fichiers son d'une zone audio, avec précédente / suivante.
+- **Clés `folder` et `tracks`** sur une zone `video` **sans `target`** : `tracks` est la liste écrite dans la zone ; sans elle, la liste est le fichier `<dossier>/playlist.json` (tableau de noms ou `{ "tracks": [...] }`), cherché dans `medias/<dossier>/` puis `<dossier>/`, comme pour l'audio. Avec un `target`, c'est lui qui gagne (un seul fichier). Un nom peut être une adresse `http(s)` ou un chemin `/…`.
+- **Lecture** : les pistes s'enchaînent dans l'ordre et reprennent à la première après la dernière ; une liste d'une seule piste joue en boucle. Chaque piste a son rapport largeur / hauteur (l'écran s'adapte si `h` vaut 0). Une piste illisible est sautée ; si aucune ne se lit, ou si la liste est vide, l'écran disparaît (message dans la console).
+- **Précédente / suivante** : un clic sur le **bord droit** (20 % de la largeur) de l'écran passe à la piste suivante, sur le **bord gauche** à la précédente ; ailleurs, pause / lecture comme en 1.12.10. Sans liste (ou une seule piste), tout l'écran reste pause / lecture. L'infobulle l'explique ; le Diagnostic donne « piste N/total : nom ».
+- **Outil** : `glb2html.py --video-list DOSSIER` écrit `DOSSIER/playlist.json` (mp4, webm, m4v, ogv ; ordre alphabétique, nombres comparés comme des nombres), avec `--dry-run`. **Éditeur du viewer** : champ « Dossier de vidéos » et bouton « Mettre à jour la liste (playlist.json) » (choix du dossier de la région, comme pour l'audio).
+- Tests : `tests/zone_video_liste.py` (nouveau).
+- Limites : pas de lecture aléatoire ; les listes ne se lisent pas dans l'aperçu du viewer (le panneau de l'éditeur ne joue pas la vidéo) ; fichiers du viewer local non testés ; Edge sans accélération et gros fichiers non testés.
+
 ### 18/11/2026 : radio et musique des zones en vue d'ensemble (portée mesurée depuis la caméra)
 
 - **Demande de Klaatou** : les médias doivent être disponibles tout le temps, comme les images et les écrans vidéo, pas seulement en promenade.

@@ -515,6 +515,8 @@ function renderZoneList() {
       d.appendChild(inp(tr('viewer.zf.link.image'), 'text', z.link || '', v => upd({ link: v })));
     } else if (z.type === 'video') {   // 1.12.7 : ecran video : fichier ou adresse, largeur, hauteur, portee (la video joue seule a portee, sans son ; rien a cliquer)
       d.appendChild(inp(tr('viewer.zf.video'), 'text', z.target, v => upd({ target: v }, true)));
+      d.appendChild(inp(tr('viewer.zf.video.folder'), 'text', z.folder || '', v => upd({ folder: v }, true)));   // 1.12.12 : liste de videos a la place du fichier
+      const blv = document.createElement('button'); blv.className = 'wide'; blv.textContent = tr('viewer.zf.audio.list'); blv.onclick = () => updateAudioList(z, 'video'); d.appendChild(blv);
       d.appendChild(inp(tr('viewer.zf.w'), 'number', z.w, v => upd({ w: v }, true)));
       d.appendChild(inp(tr('viewer.zf.h.video'), 'number', z.h, v => upd({ h: v }, true)));
       d.appendChild(inp(tr('viewer.zf.r.video'), 'number', z.radius, v => upd({ radius: v }, true)));
@@ -1186,7 +1188,7 @@ async function chooseImagesDir() {
 }
 // 1.11.4 : zones audio : le dossier des pistes est un sous-dossier du dossier de la region (<mediaDir>/<dossier> d'abord, puis <dossier>) ; la liste de lecture est le fichier playlist.json
 // qu'il contient (une page hebergee ne peut pas lister un dossier) ; meme ordre que glb2html.py --audio-list : alphabetique sans tenir compte des majuscules, nombres compares comme des nombres
-const AUDIO_EXT_RE = /\.(mp3|ogg|oga|opus|wav|m4a|aac|flac|weba|webm)$/i;
+const AUDIO_EXT_RE = /\.(mp3|ogg|oga|opus|wav|m4a|aac|flac|weba|webm)$/i, VIDEO_EXT_RE = /\.(mp4|webm|m4v|ogv)$/i;   // VIDEO_EXT_RE : 1.12.12, listes des ecrans video
 const natKey = n => String(n).split(/([0-9]+)/).map((t, i) => i % 2 ? Number(t) : t.toLowerCase());
 const natCmp = (x, y) => { const a = natKey(x), b = natKey(y), n = Math.min(a.length, b.length); for (let i = 0; i < n; i++) { if (a[i] < b[i]) return -1; if (a[i] > b[i]) return 1; } return a.length - b.length; };
 async function audioFolderIn(dir, folder) {   // { handle, path } ou null
@@ -1196,8 +1198,9 @@ async function audioFolderIn(dir, folder) {   // { handle, path } ou null
   }
   return null;
 }
-async function audioFilesIn(h) { const out = []; for await (const [n, e] of h.entries()) if (e.kind === 'file' && !n.startsWith('.') && AUDIO_EXT_RE.test(n)) out.push(n); return out.sort(natCmp); }
-async function updateAudioList(z) {
+async function audioFilesIn(h, re) { const out = []; for await (const [n, e] of h.entries()) if (e.kind === 'file' && !n.startsWith('.') && (re || AUDIO_EXT_RE).test(n)) out.push(n); return out.sort(natCmp); }
+async function updateAudioList(z, kind) {   // kind 'video' (1.12.12) : fichiers video d'un ecran ; sinon fichiers son d'une zone audio
+  const vk = kind === 'video';
   const say = t => setStatus(t);
   if (!String(z.folder || '').trim()) return say(tr('viewer.zf.audio.nofolder'));
   if (typeof window.showDirectoryPicker !== 'function') return say(tr('viewer.zdir.noapi'));
@@ -1215,9 +1218,9 @@ async function updateAudioList(z) {
     zonesDirHandle = dir; try { await idbDirs('readwrite', st => st.put(dir, baseName)); } catch (e) {}
     const f = await audioFolderIn(dir, String(z.folder).trim());
     if (!f) return say(tr('viewer.zf.audio.nodir', z.folder, dir.name));
-    const names = await audioFilesIn(f.handle);
+    const names = await audioFilesIn(f.handle, vk ? VIDEO_EXT_RE : null);
     await writeInDir(f.handle, 'playlist.json', JSON.stringify({ tracks: names }, null, 2) + '\n');
-    say(names.length ? tr('viewer.zf.audio.written', names.length, f.path + '/playlist.json') : tr('viewer.zf.audio.writtenempty', f.path + '/playlist.json'));
+    say(names.length ? tr(vk ? 'viewer.zf.video.written' : 'viewer.zf.audio.written', names.length, f.path + '/playlist.json') : tr(vk ? 'viewer.zf.video.writtenempty' : 'viewer.zf.audio.writtenempty', f.path + '/playlist.json'));
   } catch (e) {
     if (e && e.name === 'AbortError') return say(tr('viewer.zdir.abort'));
     if (e && e.name === 'WrongFolder') return say(tr('viewer.zdir.nothing', e.message));

@@ -183,6 +183,7 @@ def _slug(s):
     return re.sub(r"^-+|-+$", "", re.sub(r"[^a-z0-9_-]+", "-", str(s or "").lower()))[:40]
 
 
+VIDEO_EXTS = (".mp4", ".webm", ".m4v", ".ogv")   # 1.12.12 : fichiers video gardes par --video-list
 AUDIO_EXTS = (".mp3", ".ogg", ".oga", ".opus", ".wav", ".m4a", ".aac", ".flac", ".weba", ".webm")   # 1.11.4 : fichiers son gardes par --audio-list
 
 
@@ -248,7 +249,7 @@ def clean_zones(zones, profile):
                 ss.append([re.sub(r"[\x00-\x1f]", "", str(lab or "")).strip()[:60], u])
             if ss:
                 d["streams"] = ss
-        if t == "audio":   # 1.11.4 : dossier des pistes et liste facultative ; ecrits seulement s'ils sont remplis, comme core.js
+        if t in ("audio", "video"):   # 1.11.4 : dossier des pistes et liste facultative (video : 1.12.12) ; ecrits seulement s'ils sont remplis, comme core.js
             fd = re.sub(r"[\x00-\x1f]", "", str(z.get("folder") or "")).replace("\\", "/").strip("/").strip()[:200]
             if fd and ".." not in fd.split("/"):
                 d["folder"] = fd
@@ -665,7 +666,7 @@ SCAN_SKIP = {"lib", "_bak", "node_modules"}
 SCAN_IMG = (".jpg", ".jpeg", ".png", ".webp")
 
 
-def audio_list(folder, dry):
+def audio_list(folder, dry, exts=None, video=False):
     """1.11.4 --audio-list : ecrit FOLDER/playlist.json, les fichiers son du dossier (pas des sous-dossiers) par ordre alphabetique sans tenir compte
     des majuscules, les nombres compares comme des nombres (2-x avant 10-x). Un site heberge ne peut pas lister un dossier : la page lit ce fichier.
     Ne touche ni a la page ni aux zones. Avec --dry-run : affiche sans ecrire."""
@@ -673,11 +674,12 @@ def audio_list(folder, dry):
     if not folder.is_dir():
         sys.exit(_tr("py.glb2html.audio.nofolder", folder))
     cle = lambda n: [int(t) if i % 2 else t.lower() for i, t in enumerate(re.split(r"([0-9]+)", n))]   # comme natKey du viewer
-    names = sorted((p.name for p in folder.iterdir() if p.is_file() and not p.name.startswith(".") and p.suffix.lower() in AUDIO_EXTS), key=cle)
+    exts = exts or AUDIO_EXTS
+    names = sorted((p.name for p in folder.iterdir() if p.is_file() and not p.name.startswith(".") and p.suffix.lower() in exts), key=cle)
     for i, n in enumerate(names, 1):
         print(f"  {i:3d}. {n}")
     if not names:
-        print(_tr("py.glb2html.audio.none", folder, " ".join(AUDIO_EXTS)), file=sys.stderr)
+        print(_tr("py.glb2html.video.none" if video else "py.glb2html.audio.none", folder, " ".join(exts)), file=sys.stderr)
     dest = folder / "playlist.json"
     texte = json.dumps({"tracks": names}, ensure_ascii=False, indent=2) + "\n"
     if dry:
@@ -1780,6 +1782,7 @@ def main():
     ap.add_argument("--map-url", default=MAP_URL, help=_tr("py.glb2html.adresse_s_de_regions_json_partage"))
     ap.add_argument("--register", help=_tr("py.glb2html.fichier_regions_json_a_mettre_a"))
     ap.add_argument("--scan-sites", metavar="FOLDER", help=_tr("py.glb2html.scan.help"))
+    ap.add_argument("--video-list", metavar="FOLDER", help=_tr("py.glb2html.video.help"))   # 1.12.12 : playlist.json d'un dossier de videos (ecrans video)
     ap.add_argument("--audio-list", metavar="FOLDER", help=_tr("py.glb2html.audio.help"))   # 1.11.4 : playlist.json d'un dossier de sons (zones audio)
     ap.add_argument("--dry-run", action="store_true", help=_tr("py.glb2html.scan.dryhelp"))
     ap.add_argument("--prune-missing", action="store_true", help=_tr("py.glb2html.scan.prunehelp"))
@@ -2014,6 +2017,9 @@ def main():
             else:
                 print(_tr("py.glb2html.avertissement_map_page_ignore_aucune_region_2"), file=sys.stderr)
         sys.exit(0 if ok else 1)
+    if a.video_list and not a.input:   # 1.12.12 : liste de lecture d'un dossier de videos (ecrans video)
+        audio_list(a.video_list, a.dry_run, VIDEO_EXTS, True)
+        sys.exit(0)
     if a.audio_list and not a.input:   # 1.11.4 : liste de lecture d'un dossier de sons (zones audio)
         audio_list(a.audio_list, a.dry_run)
         sys.exit(0)
