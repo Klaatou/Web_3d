@@ -232,6 +232,13 @@ def clean_zones(zones, profile):
             lk = re.sub(r"[\x00-\x1f]", "", str(z.get("link") or "")).strip()[:600]
             if lk:
                 d["link"] = lk
+        if t in ("audio", "cast"):   # 1.12.26 : pochette (image) et lien facultatifs d'une zone radio / musique, montres dans la fenetre Son ; ecrits seulement s'ils sont remplis, comme core.js
+            pt = re.sub(r"[\x00-\x1f]", "", str(z.get("poster") or "")).strip()[:600]
+            if pt:
+                d["poster"] = pt
+            lk2 = re.sub(r"[\x00-\x1f]", "", str(z.get("link") or "")).strip()[:600]
+            if lk2:
+                d["link"] = lk2
         if t == "cast":   # 1.11.26 : streams = [[label, url], ...] (le label d'abord, "" sans label) ; ancienne forme (urls + labels, ou target seul) lue et convertie ; seule streams est ecrite ; comme core.js (cleanZone)
             if isinstance(z.get("streams"), list):
                 raw = [([s[0], s[1]] if len(s) > 1 else ["", s[0] if s else ""]) if isinstance(s, list) else ["", s] for s in z["streams"]]

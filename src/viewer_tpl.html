@@ -525,12 +525,16 @@ function renderZoneList() {
       d.appendChild(inp(tr('viewer.zf.cast'), 'text', z.streams && z.streams[0] ? z.streams[0][1] : '', v => upd({ streams: [[z.streams && z.streams[0] ? z.streams[0][0] : '', v], ...(z.streams || []).slice(1)] })));   // 1.11.26 : la saisie change l'adresse du premier flux (son label et les autres flux sont gardes)
       const bt2 = document.createElement('button'); bt2.className = 'wide'; bt2.textContent = tr('viewer.zf.cast.try'); bt2.onclick = () => castTry(z.streams && z.streams[0] ? z.streams[0][1] : ''); d.appendChild(bt2);
       d.appendChild(inp(tr('viewer.zf.r.cast'), 'number', z.radius, v => upd({ radius: v }, true)));
+      d.appendChild(inp(tr('viewer.zf.poster'), 'text', z.poster || '', v => upd({ poster: v })));   // 1.12.26 : pochette montree dans la fenetre Son
+      d.appendChild(inp(tr('viewer.zf.link.sound'), 'text', z.link || '', v => upd({ link: v })));   // 1.12.26 : page ouverte par un clic sur la pochette
       d.appendChild(inp(tr('viewer.zf.cone'), 'select', typeof z.cone === 'boolean' ? (z.cone ? 'on' : 'off') : 'auto', v => upd({ cone: v === 'on' ? true : (v === 'off' ? false : undefined) }, true), [['auto', tr('viewer.zf.cone.auto')], ['on', tr('viewer.zf.cone.on')], ['off', tr('viewer.zf.cone.off')]]));   // 1.10.35 : cone par defaut
     } else if (z.type === 'audio') {   // 1.11.4 : musique : dossier des pistes, mise a jour de la liste (playlist.json), essai de 5 s, portee, repere
       d.appendChild(inp(tr('viewer.zf.audio.folder'), 'text', z.folder || '', v => upd({ folder: v })));
       const bl = document.createElement('button'); bl.className = 'wide'; bl.textContent = tr('viewer.zf.audio.list'); bl.onclick = () => updateAudioList(z); d.appendChild(bl);
       const bt3 = document.createElement('button'); bt3.className = 'wide'; bt3.textContent = tr('viewer.zf.audio.try'); bt3.onclick = () => audioTry(z); d.appendChild(bt3);
       d.appendChild(inp(tr('viewer.zf.r.audio'), 'number', z.radius, v => upd({ radius: v }, true)));
+      d.appendChild(inp(tr('viewer.zf.poster'), 'text', z.poster || '', v => upd({ poster: v })));   // 1.12.26 : pochette montree dans la fenetre Son
+      d.appendChild(inp(tr('viewer.zf.link.sound'), 'text', z.link || '', v => upd({ link: v })));   // 1.12.26 : page ouverte par un clic sur la pochette
       d.appendChild(inp(tr('viewer.zf.cone'), 'select', typeof z.cone === 'boolean' ? (z.cone ? 'on' : 'off') : 'auto', v => upd({ cone: v === 'on' ? true : (v === 'off' ? false : undefined) }, true), [['auto', tr('viewer.zf.cone.auto')], ['on', tr('viewer.zf.cone.on')], ['off', tr('viewer.zf.cone.off')]]));
     } else if (z.type !== 'spawn') {
       if (z.type === 'portal') {

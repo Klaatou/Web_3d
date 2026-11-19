@@ -311,6 +311,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 18/11/2026 |  | après 1.12.0 | Lot 1.12.12 : écrans vidéo : listes de vidéos (`folder`, `tracks`, `playlist.json`), précédente / suivante, `glb2html.py --video-list`, champ et bouton du viewer ; `tests/zone_video_liste.py` |
 | 18/11/2026 |  | après 1.12.0 | Lot 1.12.13 : écrans vidéo : barre de pistes escamotable à icônes sous l'écran ; son réglé avant le démarrage |
 | 18/11/2026 |  | après 1.12.0 | Lot 1.12.14 : écrans vidéo : le son ne retombe plus en muet au changement de piste (seul un vrai `NotAllowedError` coupe le son) |
+| 19/11/2026 |  | après 1.12.0 | Lot 1.12.26 : pochette (`poster`) et lien (`link`) des zones radio et musique, montrés dans la fenêtre Son |
 | 19/11/2026 |  | après 1.12.0 | Lot 1.12.25 : la source la plus proche en mètres parle ; s'approcher d'un écran à son efface la priorité restée à la radio après un geste (case, flux) |
 | 19/11/2026 |  | après 1.12.0 | Lot 1.12.24 : correctif : le lecteur YouTube de la fenêtre flottante ne garde plus le clavier (E et la marche répondent) |
 | 19/11/2026 |  | après 1.12.0 | Lot 1.12.23 : correctif : le lecteur YouTube de la fenêtre démarre seul et gère sa playlist comme avant (`enablejsapi` retiré) ; bouton muet distinct du volume |

@@ -6,6 +6,14 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.12.0)
 
+### 19/11/2026 : pochette et lien des zones radio et musique (lot 1.12.26)
+
+- **Demande** (Klaatou) : une pochette dans la fenêtre Son pour la radio et la musique qui parlent, avec un lien facultatif.
+- **Fait** : les zones `cast` et `audio` acceptent `poster` (image : nom relatif à la région ou adresse `http(s)`, extension comprise) et `link` (adresse `http(s)` ou `hop://`, 600 caractères au plus) ; les clés ne sont écrites que si elles sont remplies. La fenêtre Son montre la pochette (96 px au plus, 128 au toucher) de la source qui parle, au-dessus des lignes ; avec `link`, un clic ou Entrée ouvre la page dans un nouvel onglet (`hop://` dans l'onglet) ; sans lien, la pochette n'est pas cliquable ; image introuvable ou zone sans pochette : rien. Viewer : champs « Pochette » et « Lien de la pochette » pour la radio et la musique.
+- **Miroir** : `cleanZone` (`core.js`) et `clean_zones` (`gen_tpl.py`) écrivent les mêmes clés ; `poster` et `link` sont ignorés pour les autres sortes.
+- **Non essayé ici** : Windows, Edge, vrai toucher. Pas de panneau 3D (plus tard).
+- Fichiers : `src/core.js`, `src/gen_tpl.py`, `src/template.html`, `src/viewer_tpl.html`, `src/i18n/fr.json`, `src/i18n/en.json`, `docs/fr/REFERENCE_JSON.md`, `docs/en/REFERENCE_JSON.md`, `docs/samples/region.zones.sample.json`, `tests/zone_pochette.py`, historique, `VERSION` `1.12.26`. Reste à mettre à jour : manuel (§ 5.19 et 5.20).
+
 ### 19/11/2026 : la source la plus proche en mètres parle (lot 1.12.25)
 
 - **Constat** (Klaatou) : (1) après ses essais de la fenêtre YouTube, l'écran ne prend plus le dessus sur la radio quand il s'en approche ; après F5, si ; (2) le nez sur la radio, c'est l'écran à 14 m qui parle.

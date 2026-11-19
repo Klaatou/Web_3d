@@ -230,6 +230,8 @@
   "showName": false,
   "mesh": "",
   "folder": "audio",
+  "poster": "audio/cover.jpg",
+  "link": "https://ADRESSE/album",
   "cone": true
  },
  {

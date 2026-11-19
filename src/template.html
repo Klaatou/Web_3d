@@ -137,6 +137,11 @@ body.padOn #bar{max-width:max(200px,calc(50vw - 90px))}   /* v46 : la barre pass
 /* 1.11.24 : fenetre Son (lignes Radio et Musique de la fenetre Etat, reprises a part) et poignee du pave de fleches */
 #soundInfo{font-size:11px;padding:5px 9px}
 #soundInfo div{margin:0}
+#soundInfo #soundPoster{display:block;margin:2px 0 4px;padding:0;width:max-content;max-width:96px;line-height:0;border:1px solid #000;border-radius:4px;background:#fff}   /* 1.12.26 : pochette de la zone qui parle */
+#soundInfo #soundPoster img{display:block;max-width:96px;max-height:96px;border-radius:3px}
+#soundInfo #soundPoster[role=button]{cursor:pointer}
+#soundInfo #soundPoster[role=button]:focus-visible{outline:2px solid #000;outline-offset:2px}
+body.touch #soundInfo #soundPoster,body.touch #soundInfo #soundPoster img{max-width:128px;max-height:128px}
 #soundInfo select{font:inherit;max-width:100%;box-sizing:border-box;padding:1px 4px;border:1px solid #000;border-radius:4px;background:#fff;color:#000;margin:2px 0}
 #soundInfo .srcCk{margin:0 4px 0 0;vertical-align:-1px;cursor:pointer;accent-color:#000}
 #soundInfo .srcFar{font-weight:bold;animation:srcFarBlink 1s steps(1,end) infinite}
@@ -916,6 +921,7 @@ const MUSIC = (() => {
 // sinon, parmi les sources cochees a portee (toutes si aucune ou toutes sont cochees), la plus proche EN METRES parle (1.12.25 : le gain comparait des portees differentes), la radio puis la musique puis la video en cas d'egalite ;
 // toutes hors de portee (vue d'ensemble) : la plus proche s'affiche
 let rZ = null, rG = 0, rD = 0, rO = false, mZ = null, mG = 0, mD = 0, mO = false, vZ = null, vG = 0, vD = 0;
+let posterTick = () => {};   // 1.12.26 : pochette de la zone radio / musique qui parle (definie avec la fenetre Son)
 let videoTxt = () => {};   // ligne « Video : … » de la fenetre Son (definie avec la fenetre)
 const audioArbitre = () => {
   const C3 = [];
@@ -933,6 +939,7 @@ const audioArbitre = () => {
   SRC.win = win;
   RADIO.set(rZ, win === 'radio' ? rG : 0, rD, rO, win !== 'radio'); MUSIC.set(mZ, win === 'music' ? mG : 0, mD, mO, win !== 'music');   // 1.12.22 : la zone reste donnee (ligne et choix du flux affiches) ; le dernier argument dit « une autre source parle »
   videoTxt(win === 'video' ? vZ : null, vD);
+  posterTick(win === 'radio' ? rZ : win === 'music' ? mZ : null);
 };
 const srcPref = k => { const y = srcFrameOn(); SRC.yt = false; SRC.pref = k; if (!VIS[k]) { srcSetFlag(k, true); visSave(); } audioArbitre(); if (y) srcRefresh(); };   // 1.12.22 : un geste sur une source reprend la main sur la fenetre YouTube (la page ne peut pas arreter le lecteur : il continue)   // un geste du visiteur sur une source (choix d'un flux, piste suivante, clic sur un ecran) la rend prioritaire
 srcRefresh = () => { RADIO.refresh(); MUSIC.refresh(); };
@@ -1433,6 +1440,26 @@ if (C.walk) {
   lnone.id = 'soundNone'; lnone.textContent = tr('page.sound.none');
   lrdS.id = 'soundRadioInfo'; lmuS.id = 'soundMusicInfo'; lvdS.id = 'soundVideoInfo'; rsSelS.id = 'soundRadioSel'; lrdS.hidden = true; lmuS.hidden = true; lvdS.hidden = true; rsSelS.hidden = true;
   snb.append(lnone, rsSelS, lrdS, lmuS, lvdS);
+  // 1.12.26 : pochette (poster) de la zone radio / musique qui parle, au-dessus des lignes ; un clic l'ouvre sur le lien (link) de la zone, sinon elle ne fait rien ; image introuvable : rien
+  const pstB = document.createElement('div'), pstI = document.createElement('img'); pstB.id = 'soundPoster'; pstB.hidden = true; pstB.append(pstI);
+  snb.insertBefore(pstB, lnone);
+  let pstKey = '', pstU = null, pstZ = null;
+  const pstOk = u => { try { const x = new URL(u, location.href); return (x.protocol === 'hop:' || x.protocol === 'http:' || x.protocol === 'https:' || (location.protocol === 'file:' && x.protocol === 'file:')) ? x : null; } catch (e) { return null; } };   // meme regle que okLink (liens des zones url et image), qui n'est pas visible d'ici
+  const pstGo = () => { if (!pstU) return; if (pstU.protocol === 'hop:') window.open(pstU.href, '_self'); else window.open(pstU.href, '_blank', 'noopener,noreferrer'); toast(tr('page.zone.opening', (pstZ && (pstZ.label || pstZ.id)) || '')); };
+  pstB.onmousedown = e => e.preventDefault(); pstB.onclick = pstGo;
+  pstB.onkeydown = e => { if (pstU && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); e.stopPropagation(); pstGo(); } };
+  pstI.onload = () => { pstB.hidden = !pstKey; }; pstI.onerror = () => { pstB.hidden = true; };
+  posterTick = z => {
+    const key = z && z.poster ? z.id + '\u0001' + z.poster + '\u0001' + (z.link || '') : '';
+    if (key === pstKey) return;
+    pstKey = key; pstZ = z || null; pstU = key && z.link ? pstOk(z.link) : null; pstB.hidden = true; pstI.removeAttribute('src');
+    if (!key) return;
+    const nm = z.label || z.id;
+    pstI.alt = tr('page.sound.poster.alt', nm);
+    if (pstU) { pstB.setAttribute('role', 'button'); pstB.tabIndex = 0; pstB.title = tr('page.sound.poster.open') + ' : ' + nm; pstB.setAttribute('aria-label', tr('page.sound.poster.open') + ' : ' + nm); }
+    else { pstB.removeAttribute('role'); pstB.removeAttribute('tabindex'); pstB.removeAttribute('title'); pstB.removeAttribute('aria-label'); }
+    pstI.src = viewer.imageUrl(z.poster);
+  };
   const sSr = srcLine(lrdS, 'radio', 'soundRadioCk'), sSm = srcLine(lmuS, 'music', 'soundMusicCk'), sSv = srcLine(lvdS, 'video', 'soundVideoCk');
   sSr.ck.onchange = () => { sr.ck.checked = sSr.ck.checked; sr.ck.onchange(); };
   sSm.ck.onchange = () => { sm.ck.checked = sSm.ck.checked; sm.ck.onchange(); };

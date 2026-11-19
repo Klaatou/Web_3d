@@ -162,10 +162,11 @@ There are **eight kinds** of zones (`type` field): `"spawn"` (arrival), `"portal
 | `radius`      | number   | `2`           | radius of the zone in meters (from 0.5 to 50); radio (`cast`), music (`audio`) and video screen (`video`): range, 20 by default, up to 200                                                                                                                 |
 | `w`, `h`      | number   | `2.4`, `1.2`  | width and height of the sign in meters; for `image`: 1.2 wide by default, height 0 = from the image; for `video`: 2.4 wide by default, height 0 = from the video (§ 5.21)                                                                                                                        |
 | `target`      | text     | `""`          | portal: address of the destination region, or empty for a point of the same region; link: address of the web page; command: address called; image: file name or address of the image; video: file name or address of the video (§ 5.21); radio: no longer used (see `streams`) |
-| `link`        | text     | `""`          | image only, optional: page opened on click or E in front of the picture (an `http(s)` or `hop://` address, or a path relative to the open page, for example `galerie.html`); at most 600 characters; the key is only written when filled in (§ 5.11) |
+| `link`        | text     | `""`          | image, radio (`cast`) and music (`audio`), optional: page opened on click or E in front of the picture for an image, and by a click on the cover `poster` in the Sound window for a radio or music (an `http(s)` or `hop://` address, or a path relative to the open page, for example `galerie.html`); at most 600 characters; the key is only written when filled in (§ 5.11) |
 | `folder`      | text      | `""`          | music (`audio`) and video screen (`video`) only: sub-folder of the sound files (or of the videos; § 5.21), relative to the region folder (for example `"audio"`); searched in `medias` first (`mediaDir` key), 200 characters at most, no `..`; the page reads `playlist.json` there (`{"tracks": [...]}` or an array of names), made by `glb2html.py --audio-list` (`--video-list` for videos) or by the viewer button (§ 5.20) |
 | `tracks`      | list      | (absent)      | music (`audio`) and video screen (`video`) only, optional: file names (relative to the region) or `http(s)://` addresses, 500 at most, played in the written order instead of `playlist.json`; an `http` address is refused by a page served over `https` (§ 5.20); entered by hand (the viewer has no field); the key is only written when filled (§ 5.20) |
 | `streams`     | list      | (absent)      | radio (`cast`) only, optional: the streams of the radio, one pair `["label", "url"]` per stream, the name first (`""` without a name; 60 and 600 characters, 500 streams at most); the listener chooses in a list of the State block. Replaces `urls`, `labels` and `target`, which are still read and converted (§ 5.19) |
+| `poster`      | text      | (absent)      | radio (`cast`) and music (`audio`) only, optional: image shown as a cover (96 px at most) in the Sound window while the zone is the one playing; file name relative to the region, or an `http(s)://` address, with its extension (600 characters at most); image not found: nothing is shown; with `link`, a click on the cover opens the page; the key is only written when filled in |
 | `sound`       | yes / no | (absent: muted) | video screen (`video`) only: `true` gives the screen sound (only the closest screen with sound speaks); the key is only written when it is `true` (§ 5.21) |
 | `frame`       | yes / no | (absent: new tab) | link (`url`) only: `true` opens the page in a floating window of the page instead of a new tab; the key is only written when it is `true` (§ 5.7.1) |
 | `spawn`       | text     | `""`          | portal: `id` of the targeted arrival (empty = `default`)                                                                                                      |
@@ -194,7 +195,7 @@ The sample contains fourteen zones, one for each case:
 | `screen-list`     | video   | screen on a wall: a list, the `videos` folder (with `videos/playlist.json`) (§ 5.21)          |
 | `video-page`      | link    | YouTube address opened in a floating window of the page (`frame`, § 5.7.1)                    |
 
-**One example per multimedia kind.** A JSON file does not accept comments: each example has its title just above it, and its `id` says what it shows. These are complete zones, written the way the page writes them: the optional keys (`sound`, `frame`, `link`, `cone`, `folder`, `tracks`, `streams`) only appear when filled in. A zone is added to the list of the `NOM.zones.json` file, inside the brackets of the `[ ... ]` list.
+**One example per multimedia kind.** A JSON file does not accept comments: each example has its title just above it, and its `id` says what it shows. These are complete zones, written the way the page writes them: the optional keys (`sound`, `frame`, `link`, `poster`, `cone`, `folder`, `tracks`, `streams`) only appear when filled in. A zone is added to the list of the `NOM.zones.json` file, inside the brackets of the `[ ... ]` list.
 
 **Video screen, one single file, with sound**
 
@@ -301,6 +302,8 @@ The sample contains fourteen zones, one for each case:
  "showName": false,
  "mesh": "",
  "folder": "audio",
+ "poster": "audio/cover.jpg",
+ "link": "https://ADRESSE/album",
  "cone": true
 }
 ```

@@ -1999,6 +1999,10 @@ function createViewer(container, cfg0, loader) {
       if (Array.isArray(z.tracks)) { const tk = z.tracks.map(audioName).filter(Boolean).slice(0, 500); if (tk.length) o.tracks = tk; }
     }
     if (type === 'url' && z.frame === true) o.frame = true;   // 1.12.3 : lien ouvert dans une fenetre flottante de la page au lieu d'un nouvel onglet ; ecrit seulement s'il est vrai, comme gen_tpl.py
+    if (type === 'audio' || type === 'cast') {   // 1.12.26 : pochette (image) et lien facultatifs d'une zone radio / musique, montres dans la fenetre Son ; ecrits seulement s'ils sont remplis, comme gen_tpl.py
+      const pt = String(z.poster || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 600); if (pt) o.poster = pt;
+      const lk2 = String(z.link || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 600); if (lk2) o.link = lk2;
+    }
     if (img) { const lk = String(z.link || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 600); if (lk) o.link = lk; }   // lien facultatif d'un tableau : page ouverte au clic ou a E ; ecrit seulement s'il est rempli
     return o;
   }

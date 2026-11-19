@@ -311,6 +311,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 18/11/2026 |  | after 1.12.0 | Batch 1.12.12: video screens: lists of videos (`folder`, `tracks`, `playlist.json`), previous / next, `glb2html.py --video-list`, viewer field and button; `tests/zone_video_liste.py` |
 | 18/11/2026 |  | after 1.12.0 | Batch 1.12.13: video screens: retractable track bar with icons under the screen; sound set before start |
 | 18/11/2026 |  | after 1.12.0 | Batch 1.12.14: video screens: the sound no longer falls back to muted at a track change (only a real `NotAllowedError` cuts the sound) |
+| 19/11/2026 |  | after 1.12.0 | Batch 1.12.26: cover (`poster`) and link (`link`) of radio and music zones, shown in the Sound window |
 | 19/11/2026 |  | after 1.12.0 | Batch 1.12.25: the source nearest in metres speaks; approaching a screen with sound clears the priority left to the radio after a gesture (box, stream) |
 | 19/11/2026 |  | after 1.12.0 | Batch 1.12.24: fix: the YouTube player of the floating window no longer keeps the keyboard (E and walking respond) |
 | 19/11/2026 |  | after 1.12.0 | Batch 1.12.23: fix: the YouTube player of the window starts by itself and handles its playlist as before (`enablejsapi` removed); mute button distinct from the volume |

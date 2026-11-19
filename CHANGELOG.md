@@ -6,6 +6,14 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.12.0)
 
+### 19/11/2026: cover and link of radio and music zones (batch 1.12.26)
+
+- **Request** (Klaatou): a cover in the Sound window for the radio and music that are playing, with an optional link.
+- **Done**: `cast` and `audio` zones accept `poster` (image: name relative to the region or `http(s)` address, extension included) and `link` (`http(s)` or `hop://` address, 600 characters at most); the keys are only written when filled in. The Sound window shows the cover (96 px at most, 128 on touch) of the source that is speaking, above the lines; with `link`, a click or Enter opens the page in a new tab (`hop://` in the tab); without a link the cover is not clickable; image not found or zone without a cover: nothing. Viewer: "Cover" and "Cover link" fields for radio and music.
+- **Mirror**: `cleanZone` (`core.js`) and `clean_zones` (`gen_tpl.py`) write the same keys; `poster` and `link` are ignored for the other kinds.
+- **Not tried here**: Windows, Edge, real touch. No 3D panel (later).
+- Files: `src/core.js`, `src/gen_tpl.py`, `src/template.html`, `src/viewer_tpl.html`, `src/i18n/fr.json`, `src/i18n/en.json`, `docs/fr/REFERENCE_JSON.md`, `docs/en/REFERENCE_JSON.md`, `docs/samples/region.zones.sample.json`, `tests/zone_pochette.py`, history, `VERSION` `1.12.26`. Still to update: manual (§ 5.19 and 5.20).
+
 ### 19/11/2026: the nearest source in metres speaks (batch 1.12.25)
 
 - **Finding** (Klaatou): (1) after his tests of the YouTube window, the screen no longer takes over from the radio when he approaches it; after F5, it does; (2) nose on the radio, the screen 14 m away is the one speaking.
