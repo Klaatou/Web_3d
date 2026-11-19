@@ -359,6 +359,8 @@ The sample contains fourteen zones, one for each case:
  "private": false,
  "showName": false,
  "mesh": "",
+ "poster": "radio-cover.jpg",
+ "link": "https://ADRESSE/radio",
  "streams": [
   [
    "Main stream",

@@ -25,8 +25,8 @@ This folder holds **one example of each JSON file** that the page, the viewer, t
 - web links: `website`, `door-info` (linked to the `Door#2` object)
 - Home Assistant command: `light-on` (private, with confirmation)
 - picture: `painting-1` (optional `link` key: page opened on click)
-- radio (`cast`): `dance-floor` (streams of the `streams` list, played within range in walk mode)
-- music (`audio`): `ambiance` (files of the `audio` folder)
+- radio (`cast`): `dance-floor` (streams of the `streams` list, played within range in walk mode; optional `poster` cover and `link` page, shown in the Sound window)
+- music (`audio`): `ambiance` (files of the `audio` folder, with a `poster` cover and a `link`)
 - video screens (`video`): `screen-clip` (one file, with sound), `screen-list` (a folder of videos)
 - link in a floating window: `video-page` (`url` zone with the `frame` key)
 

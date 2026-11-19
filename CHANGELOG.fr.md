@@ -6,6 +6,11 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.12.0)
 
+### 19/11/2026 : exemples : pochette et lien sur la zone radio (correction du lot 1.12.26, sans changement de version)
+
+- **Constat** (Klaatou) : `poster` et `link` n'étaient que sur la zone `audio` de l'exemple, pas sur la zone radio.
+- **Fait** : `dance-floor` (`cast`) porte `poster` et `link` dans `docs/samples/region.zones.sample.json` et dans l'exemple de `REFERENCE_JSON.md` (FR et EN) ; les deux `README` des exemples le disent. `tests/samples.py` passe (le nettoyage garde les clés).
+
 ### 19/11/2026 : manuel : pochette et lien des zones radio et musique (documentation du lot 1.12.26, sans changement de version)
 
 - **Demande** (Klaatou) : les docs d'aide pour essayer une pochette sur une zone `cast`.

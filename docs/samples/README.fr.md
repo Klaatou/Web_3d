@@ -25,8 +25,8 @@ Ce dossier contient **un exemple de chaque fichier JSON** que la page, le viewer
 - liens web : `website`, `door-info` (liée à l'objet `Door#2`)
 - commande Home Assistant : `light-on` (privée, avec confirmation)
 - image : `painting-1` (clé facultative `link` : page ouverte au clic)
-- radio (`cast`) : `dance-floor` (flux de la liste `streams`, joués à portée en promenade)
-- musique (`audio`) : `ambiance` (fichiers du dossier `audio`)
+- radio (`cast`) : `dance-floor` (flux de la liste `streams`, joués à portée en promenade ; `poster` (pochette) et `link` (page) facultatifs, montrés dans la fenêtre Son)
+- musique (`audio`) : `ambiance` (fichiers du dossier `audio`, avec une pochette `poster` et un `link`)
 - écrans vidéo (`video`) : `screen-clip` (un fichier, avec du son), `screen-list` (un dossier de vidéos)
 - lien en fenêtre flottante : `video-page` (zone `url` avec la clé `frame`)
 

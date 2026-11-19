@@ -359,6 +359,8 @@ L'exemple contient quatorze zones, une de chaque cas :
  "private": false,
  "showName": false,
  "mesh": "",
+ "poster": "radio-cover.jpg",
+ "link": "https://ADRESSE/radio",
  "streams": [
   [
    "Main stream",

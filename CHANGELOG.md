@@ -6,6 +6,11 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.12.0)
 
+### 19/11/2026: samples: cover and link on the radio zone (fix of batch 1.12.26, no version change)
+
+- **Finding** (Klaatou): `poster` and `link` were only on the sample `audio` zone, not on the radio zone.
+- **Done**: `dance-floor` (`cast`) carries `poster` and `link` in `docs/samples/region.zones.sample.json` and in the `REFERENCE_JSON.md` example (FR and EN); the two sample `README` files say so. `tests/samples.py` passes (the cleaning keeps the keys).
+
 ### 19/11/2026: manual: cover and link of radio and music zones (documentation of batch 1.12.26, no version change)
 
 - **Request** (Klaatou): the help docs to try a cover on a `cast` zone.
