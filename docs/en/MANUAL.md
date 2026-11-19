@@ -763,6 +763,10 @@ A zone of type `cast` plays a **radio stream** (Icecast or SHOUTcast, the same a
     - **(3)** a SHOUTcast v1 server answers `ICY 200 OK`, which browsers sometimes refuse (not tried here).
   - A failed zone is tried again when coming back after leaving its range.
 - **Rights**: broadcasting protected music publicly requires permissions; for a demo, a royalty-free stream or one whose owner agreed.
+- **Cover and link** (1.12.26): two optional keys of the `cast` zone, `poster` and `link`.
+  - `poster`: an **image**, as a file name relative to the region folder, or as an `https://…` address, with its extension (`"poster": "pochette.jpg"`). The Sound window shows it as a cover (96 px at most, 128 on touch) when this radio is the one speaking. Image not found: nothing is shown.
+  - `link`: the address of a page (`https://…` or `hop://…`). A click on the cover, or Enter when it has focus, opens it in a new tab. Without `link`, the cover is not clickable.
+  - Viewer: "Cover" and "Cover link" fields of the zone. By hand in `NOM.zones.json`: `"poster": "pochette.jpg", "link": "https://exemple.org/album"`. The keys are only written when filled in; `poster` and `link` only apply to `cast` and `audio` zones.
 - **Tried**: automatic tests (`tests/zone_cast.py`, `tests/radio_titre.py`: WAV stream served locally, Chromium on Linux); by Klaatou on Windows and Edge: a public Icecast stream in a local page and in the demo (GitHub Pages), a radio's 403 refusal, a radio without a title in its stream.
   - By a tester on a phone (18/11/2026; model and browser not recorded): the region with the several-stream radio, stream changes included: everything works.
   - **Not tried**: SHOUTcast v1, Firefox, Safari, a tiled region.
@@ -799,6 +803,10 @@ A zone of type `audio` plays the **sound files of a folder** (mp3, ogg, wav...) 
   - **An unreadable track is skipped**; if all are, the zone is tried again on return to its range.
   - A renamed folder, or a sound added without redoing the list: the sound is simply not played.
 - **Publishing**: copy the folder (sounds and `playlist.json`) with the rest of the region; the zones (`NOM.zones.json`) only say `"folder": "audio"`. Step by step, from the list to publishing: `SIMPLE_PROCEDURES.md` § 15 and § 16.
+- **Cover and link** (1.12.26): two optional keys of the `audio` zone, `poster` and `link`.
+  - `poster`: an **image**, as a file name relative to the region folder, or as an `https://…` address, with its extension (`"poster": "pochette.jpg"`). The Sound window shows it as a cover (96 px at most, 128 on touch) when this music is the one speaking. Image not found: nothing is shown.
+  - `link`: the address of a page (`https://…` or `hop://…`). A click on the cover, or Enter when it has focus, opens it in a new tab. Without `link`, the cover is not clickable.
+  - Viewer: "Cover" and "Cover link" fields of the zone. By hand in `NOM.zones.json`: `"poster": "pochette.jpg", "link": "https://exemple.org/album"`. The keys are only written when filled in; `poster` and `link` only apply to `cast` and `audio` zones.
 - **Tried**: `tests/zone_audio.py` (`--audio-list` command, page in Chromium with one-second WAV tracks: order, loop, volume, resume, skipped track, missing / empty / unreadable lists, exclusion with the radio; viewer with a simulated folder, same order as the command).
   - **Not tried**: playing real mp3 files (the test Chromium has no mp3 decoder), the real folder picker on Windows and Edge, Firefox and Safari, a tiled region, a folder of several hundred tracks.
 

@@ -6,6 +6,11 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.12.0)
 
+### 19/11/2026: manual: cover and link of radio and music zones (documentation of batch 1.12.26, no version change)
+
+- **Request** (Klaatou): the help docs to try a cover on a `cast` zone.
+- **Done**: § 5.19 (`cast`) and § 5.20 (`audio`) of the manual, in French and English: `poster` and `link` keys, viewer fields, hand-written example in `NOM.zones.json`. Files: `docs/fr/MANUEL.md`, `docs/en/MANUAL.md`.
+
 ### 19/11/2026: cover and link of radio and music zones (batch 1.12.26)
 
 - **Request** (Klaatou): a cover in the Sound window for the radio and music that are playing, with an optional link.

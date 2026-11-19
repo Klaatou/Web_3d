@@ -763,6 +763,10 @@ Une zone de type `cast` fait jouer un **flux radio** (Icecast ou SHOUTcast, le m
     - **(3)** un serveur SHOUTcast v1 répond `ICY 200 OK`, que les navigateurs refusent parfois (non essayé ici).
   - Une zone en erreur est réessayée quand on y revient après être sorti de sa portée.
 - **Droits** : diffuser publiquement de la musique protégée demande des autorisations ; pour une démo, un flux libre de droits ou dont le propriétaire a donné son accord.
+- **Pochette et lien** (1.12.26) : deux clés facultatives de la zone `cast`, `poster` et `link`.
+  - `poster` : une **image**, en nom de fichier relatif au dossier de la région, ou en adresse `https://…`, avec son extension (`"poster": "pochette.jpg"`). La fenêtre Son la montre en pochette (96 px au plus, 128 au toucher) quand cette radio est celle qui parle. Image introuvable : rien n'est montré.
+  - `link` : l'adresse d'une page (`https://…` ou `hop://…`). Un clic sur la pochette, ou Entrée quand elle a le focus, l'ouvre dans un nouvel onglet. Sans `link`, la pochette n'est pas cliquable.
+  - Viewer : champs « Pochette » et « Lien de la pochette » de la zone. À la main dans `NOM.zones.json` : `"poster": "pochette.jpg", "link": "https://exemple.org/album"`. Les clés ne sont écrites que si elles sont remplies ; `poster` et `link` ne servent qu'aux zones `cast` et `audio`.
 - **Essayé** : tests automatiques (`tests/zone_cast.py`, `tests/radio_titre.py` : flux WAV servi en local, Chromium sous Linux) ; par Klaatou sous Windows et Edge : un flux Icecast public dans une page locale et dans la démo (GitHub Pages), le refus 403 d'une radio, une radio sans titre dans son flux.
   - Par un testeur sur un téléphone (18/11/2026 ; modèle et navigateur non relevés) : la région avec la radio à plusieurs flux, changement de flux compris : tout passe.
   - **Non essayé** : SHOUTcast v1, Firefox, Safari, une région en tuiles.
@@ -799,6 +803,10 @@ Une zone de type `audio` fait jouer en boucle les **fichiers son d'un dossier** 
   - **Une piste illisible est sautée** ; si toutes le sont, la zone est réessayée au retour dans sa portée.
   - Un dossier renommé ou un son ajouté sans refaire la liste : le son n'est tout simplement pas joué.
 - **Mettre en ligne** : copier le dossier (sons et `playlist.json`) avec le reste de la région ; les zones (`NOM.zones.json`) disent seulement `"folder": "audio"`. Pas à pas, de la liste à la publication : `PROCEDURES_SIMPLES.md` § 15 et § 16.
+- **Pochette et lien** (1.12.26) : deux clés facultatives de la zone `audio`, `poster` et `link`.
+  - `poster` : une **image**, en nom de fichier relatif au dossier de la région, ou en adresse `https://…`, avec son extension (`"poster": "pochette.jpg"`). La fenêtre Son la montre en pochette (96 px au plus, 128 au toucher) quand cette musique est celle qui parle. Image introuvable : rien n'est montré.
+  - `link` : l'adresse d'une page (`https://…` ou `hop://…`). Un clic sur la pochette, ou Entrée quand elle a le focus, l'ouvre dans un nouvel onglet. Sans `link`, la pochette n'est pas cliquable.
+  - Viewer : champs « Pochette » et « Lien de la pochette » de la zone. À la main dans `NOM.zones.json` : `"poster": "pochette.jpg", "link": "https://exemple.org/album"`. Les clés ne sont écrites que si elles sont remplies ; `poster` et `link` ne servent qu'aux zones `cast` et `audio`.
 - **Essayé** : `tests/zone_audio.py` (commande `--audio-list`, page dans Chromium avec des pistes WAV d'une seconde : ordre, boucle, volume, reprise, piste sautée, listes absente / vide / illisibles, exclusion avec la radio ; viewer avec un dossier simulé, même ordre que la commande).
   - **Non essayé** : la lecture de vrais mp3 (le Chromium d'essai n'a pas de décodeur mp3), le vrai sélecteur de dossier sous Windows et Edge, Firefox et Safari, une région en tuiles, un dossier de plusieurs centaines de pistes.
 

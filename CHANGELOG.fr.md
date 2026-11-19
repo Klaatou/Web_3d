@@ -6,6 +6,11 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.12.0)
 
+### 19/11/2026 : manuel : pochette et lien des zones radio et musique (documentation du lot 1.12.26, sans changement de version)
+
+- **Demande** (Klaatou) : les docs d'aide pour essayer une pochette sur une zone `cast`.
+- **Fait** : § 5.19 (`cast`) et § 5.20 (`audio`) du manuel, en français et en anglais : clés `poster` et `link`, champs du viewer, exemple à la main dans `NOM.zones.json`. Fichiers : `docs/fr/MANUEL.md`, `docs/en/MANUAL.md`.
+
 ### 19/11/2026 : pochette et lien des zones radio et musique (lot 1.12.26)
 
 - **Demande** (Klaatou) : une pochette dans la fenêtre Son pour la radio et la musique qui parlent, avec un lien facultatif.
