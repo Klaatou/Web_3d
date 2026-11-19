@@ -6,6 +6,22 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.12.0)
 
+### 19/11/2026: effect suggestions: blinking icon instead of the bubble (batch 1.12.28)
+
+- **Request** (Klaatou): no more message forced on the screen ("This region contains 27 shiny materials… Turn on the reflections at 60 %?"); a blinking icon to offer it instead, with a selector.
+- **Done** (`template.html`): the light rendering offer and the reflections offer go through `fxPropose`: by default an `#fxHint` icon (✦, the black and white blink of the "Walk" button, steady with reduced motion, tooltip) appears left of "Settings"; clicking it shows the Yes / No question(s), unchanged. Touching the reflections slider drops the pending offer. Settings > "Effect suggestions": blinking icon (default) or message right away; remembered in `glb2html_visitor` (`fxAsk`).
+- **Tests**: `tests/reflets_metal.py` (section 9: icon, click, remembered "No", slider, selector, reload; sections 8 onward in message mode), `tests/v42.py` (goes through the icon). `v36_lang` and `v37` already failed before this batch in the sandbox.
+- **Not tried here**: Windows, Edge, touch.
+- Files: `src/template.html`, `src/i18n/fr.json`, `src/i18n/en.json`, `docs/fr/MANUEL.md`, `docs/en/MANUAL.md`, `tests/reflets_metal.py`, `tests/v42.py`, `CHANGELOG.md`, `CHANGELOG.fr.md`, `VERSION`.
+
+### 19/11/2026: oars2site: convoar names with a trailing backslash and damaged OAR (batch 1.12.27)
+
+- **Finding** (Klaatou): out of 195 regions, 5 failures. Three (`breakout-zone-oscc13-2013`, `knowledge-transfer-center`, `quest-for-illumination`): `invalid .gltf: Invalid control character`, because convoar writes `"name": "bench\",` (trailing backslash not doubled); one (`adult-dragonfyre-2023-update`): damaged archive, `zlib.error` traceback; one (`winterland`): convoar does not write a `.buf` (not handled here).
+- **Done** (`tools/oar2glb.py`): `load_gltf` repairs, only when the normal read fails, text values ending in an odd number of backslashes (one added) and says so in the log; the pattern that doubles lone backslashes now consumes pairs (a name like `C:\\x` was no longer read correctly). `oar_scan` turns `zlib.error`, `EOFError` and `tarfile.ReadError` into an "the OAR is damaged" message (download or export again), no traceback.
+- **Test**: `tests/gltf_barre_finale.py` (broken names, CRLF, valid file unchanged, truly invalid JSON, damaged, empty, truncated OAR).
+- **Left**: `winterland` (`.buf` never written by convoar, exit code 0); to be decided.
+- Files: `tools/oar2glb.py`, `src/i18n/fr.json`, `src/i18n/en.json`, `tests/gltf_barre_finale.py`, `CHANGELOG.fr.md`, `CHANGELOG.md`, `VERSION`.
+
 ### 19/11/2026: samples: cover and link on the radio zone (fix of batch 1.12.26, no version change)
 
 - **Finding** (Klaatou): `poster` and `link` were only on the sample `audio` zone, not on the radio zone.

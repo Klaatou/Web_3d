@@ -85,6 +85,9 @@ async def main():
         o = await Onglet(br).ouvrir(BASE + "?region=Sol", ctx=ctx)
 
         print("--- 1. proposition (rendu logiciel)")
+        await o.attendre("!!document.getElementById('fxHint') && !document.getElementById('fxHint').hidden", 10)      # 1.12.28 : la proposition s'annonce par une icone ; un clic montre la question
+        rapport(await o.ev("!document.getElementById('lightAsk')"), "d'abord seulement l'icone, pas de bulle")
+        await o.ev("document.getElementById('fxHint').click()")
         await o.attendre("!!document.getElementById('lightAsk')", 10)
         t = await o.ev("document.getElementById('lightAsk').textContent")
         rapport("sans carte graphique" in t and "rendu léger" in t, "la page propose le rendu léger", t)
@@ -174,6 +177,7 @@ async def main():
         print("--- 8. région en tuiles : vue d'ensemble seule en vue globale")
         o3 = await Onglet(br).ouvrir(BASE + "?region=Damier", ctx=ctx)
         await o3.attendre("window.__viewer.tilesState().loaded > 0", 30)
+        await o3.ev("document.getElementById('fxHint') && !document.getElementById('fxHint').hidden && document.getElementById('fxHint').click()")
         await o3.ev("document.getElementById('lightAskYes') && document.getElementById('lightAskYes').click()")
         await o3.attendre("window.__viewer.tilesState().loaded === 0", 10)
         rapport(True, "Oui : les tuiles détaillées sont déchargées en vue globale")

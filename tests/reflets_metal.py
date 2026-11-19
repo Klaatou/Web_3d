@@ -19,6 +19,13 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from h37 import *
 import h37
 
+FX_BOITE = "try { if (!localStorage.getItem('glb2html_visitor')) localStorage.setItem('glb2html_visitor', JSON.stringify({ fxAsk: 'box' })); } catch (e) {}"
+
+
+class OngletBoite(Onglet):      # 1.12.28 : les sections 8 et suivantes essaient la question elle-meme ; la page l'affiche tout de suite (Reglages : propositions en « message ») ; la section 9 essaie l'icone
+    async def ouvrir(self, url, init=None, **kw):
+        return await super().ouvrir(url, init=(STUB if init is None else init) + "\n" + FX_BOITE, **kw)
+
 
 def spheres_glb(chemin, metal=True):
     """trois spheres de rayon 1 (normales justes), alignees sur x : non metallique, metallique rugosite 0,7, metallique rugosite 0,3"""
@@ -217,7 +224,7 @@ async def main():
         print("--- 8. la page propose les reflets quand elle voit des metaux (1.10.10)")
         BARRE = "document.getElementById('metalAsk') && document.getElementById('metalAskText').textContent"
         SOFT = " Rendu sans carte graphique : cela peut ralentir."      # SwiftShader : rendu logiciel
-        o = await Onglet(br).ouvrir(BASE + "Metal.html", locale="fr-FR")
+        o = await OngletBoite(br).ouvrir(BASE + "Metal.html", locale="fr-FR")
         await o.attendre("!!document.getElementById('metalAsk')", 15)
         texte = await o.ev(BARRE)
         rapport(texte == "Cette région contient 2 matériaux brillants ou métalliques. Activer les reflets à 60 % ?" + SOFT, "2 metaux vus, reflets a 0 % : la barre propose 60 % (et previent d'un ralentissement en rendu logiciel)", texte)
@@ -231,14 +238,14 @@ async def main():
         rapport(not o.errs, "aucune erreur de page", o.errs)
         await o.ctx.close()
 
-        o = await Onglet(br).ouvrir(BASE + "Metal.html", locale="fr-FR")
+        o = await OngletBoite(br).ouvrir(BASE + "Metal.html", locale="fr-FR")
         await o.attendre("!!document.getElementById('metalAsk')", 15)
         await o.ev("document.getElementById('metalAskNo').click()")
         await o.pg.reload(); await o.attendre(PRET, 40); await o.pg.wait_for_timeout(2500)
         rapport(not await o.ev("!!document.getElementById('metalAsk')") and await o.ev("window.__viewer.cfg.metalEnv") == 0, "« Non » : retenu, plus de question au rechargement, reflets a 0 %")
         await o.ctx.close()
 
-        o = await Onglet(br).ouvrir(BASE + "Metal.html", locale="fr-FR")
+        o = await OngletBoite(br).ouvrir(BASE + "Metal.html", locale="fr-FR")
         await o.attendre("!!document.getElementById('metalAsk')", 15)
         await o.ev("document.getElementById('optsBtn').click()")
         await o.ev(REGLER, ["Reflets métalliques", 25])
@@ -253,30 +260,71 @@ async def main():
         await o.ev("document.getElementById('metalAskNo').click()")
         await o.ctx.close()
 
-        o = await Onglet(br).ouvrir(BASE + "Plat.html", locale="fr-FR")
+        o = await OngletBoite(br).ouvrir(BASE + "Plat.html", locale="fr-FR")
         await o.pg.wait_for_timeout(5000)
         rapport(not await o.ev("!!document.getElementById('metalAsk')") and await o.ev("window.__viewer.metalInfo().metal") == 0, "region sans metal : aucune proposition")
         await o.ctx.close()
         for nom_m, titre_m in (("PlatMer.html", "avec la mer"), ("PlatMerFixe.html", "avec la mer non animee")):      # 1.10.14 : la mer n'est pas un materiau de la region
-            o = await Onglet(br).ouvrir(BASE + nom_m, locale="fr-FR")
+            o = await OngletBoite(br).ouvrir(BASE + nom_m, locale="fr-FR")
             await o.pg.wait_for_timeout(5000)
             if nom_m == "PlatMerFixe.html":
                 rapport(await o.ev("(() => { let n = 0; window.__viewer.scene.traverse(x => { if (x.isMesh && x.material && x.material.isMeshStandardMaterial && x.material.metalness > 0.05) n++; }); return n; })()") >= 1, "mer non animee : la scene a bien un materiau standard de metalness > 0,05 (la mer)")
             rapport(not await o.ev("!!document.getElementById('metalAsk')") and await o.ev("window.__viewer.metalInfo().metal") == 0, f"region sans metal {titre_m} : aucune proposition, aucun materiau metallique compte")
             await o.ctx.close()
 
-        o = await Onglet(br).ouvrir(BASE + "Metal.html", locale="en-US")
+        o = await OngletBoite(br).ouvrir(BASE + "Metal.html", locale="en-US")
         await o.attendre("!!document.getElementById('metalAsk')", 15)
         texte = await o.ev(BARRE)
         rapport(texte == "This region contains 2 shiny or metallic materials. Turn on the reflections at 60 %? Rendering without a graphics card: this may slow things down.", "anglais : texte de la proposition", texte)
         await o.ctx.close()
 
-        o = await Onglet(br).ouvrir(BASE + "index.html?region=Tuilee", locale="fr-FR")
+        o = await OngletBoite(br).ouvrir(BASE + "index.html?region=Tuilee", locale="fr-FR")
         await o.attendre("window.__viewer.tilesState().total > 0 && window.__viewer.tilesState().ready.length > 0", 40)
         await o.attendre("!!document.getElementById('metalAsk')", 20)
         await o.ev("document.getElementById('metalAskYes').click()")
         mets = await o.ev(METAUX)
         rapport(len(mets) >= 2 and all(v["env"] for v in mets), "mode tuiles : la proposition apparait quand les tuiles metalliques sont chargees ; « Oui » donne les reflets", mets)
+        await o.ctx.close()
+
+        print("--- 9. propositions d'effets : icone clignotante (1.12.28)")
+        PEND = "document.getElementById('fxHint') && !document.getElementById('fxHint').hidden"
+        BOITES = "['lightAsk', 'metalAsk'].filter(i => document.getElementById(i))"
+        o = await Onglet(br).ouvrir(BASE + "Metal.html", locale="fr-FR")
+        await o.attendre(PEND, 20)
+        await o.pg.wait_for_timeout(2500)
+        rapport(await o.ev(BOITES) == [] and await o.ev("document.getElementById('fxHint').title.length > 10"), "par defaut : aucune bulle, une icone avec une infobulle", await o.ev(BOITES))
+        rapport(await o.ev("getComputedStyle(document.getElementById('fxHint')).animationName") == "walkPulse", "l'icone clignote (noir et blanc)")
+        await o.ev("document.getElementById('fxHint').click()")
+        b = await o.ev(BOITES)
+        rapport("metalAsk" in b and await o.ev("document.getElementById('fxHint').hidden"), "clic : la question des reflets apparait, l'icone s'efface", b)
+        await o.ev("document.getElementById('metalAskNo').click()")
+        await o.ev("document.getElementById('lightAskNo') && document.getElementById('lightAskNo').click()")
+        await o.pg.reload(); await o.attendre(PRET, 40); await o.pg.wait_for_timeout(2500)
+        rapport(await o.ev(BOITES) == [] and not await o.ev(PEND), "apres « Non » : plus de proposition au rechargement (ni bulle ni icone)")
+        rapport(not o.errs, "aucune erreur de page", o.errs)
+        await o.ctx.close()
+
+        o = await Onglet(br).ouvrir(BASE + "Metal.html", locale="fr-FR")
+        await o.attendre(PEND, 20)
+        await o.pg.wait_for_timeout(3500)      # la proposition des reflets arrive quand les metaux sont vus
+        await o.ev("document.getElementById('optsBtn').click()")
+        await o.ev(REGLER, ["Reflets métalliques", 25])
+        await o.ev("document.getElementById('fxHint').click()")
+        b = await o.ev(BOITES)
+        rapport("metalAsk" not in b, "toucher au curseur des reflets retire la proposition en attente (il reste celle du rendu leger)", b)
+        await o.ctx.close()
+
+        o = await Onglet(br).ouvrir(BASE + "Metal.html", locale="fr-FR")
+        await o.attendre(PEND, 20)
+        await o.pg.wait_for_timeout(3500)      # la proposition des reflets arrive quand les metaux sont vus
+        await o.ev("document.getElementById('optsBtn').click()")
+        await o.ev("(() => { const s = document.getElementById('visFxAsk'); s.value = 'box'; s.dispatchEvent(new Event('change')); })()")
+        b = await o.ev(BOITES)
+        rapport("metalAsk" in b and not await o.ev(PEND), "Reglages > Propositions d'effets > message : les questions en attente s'affichent, l'icone s'efface", b)
+        rapport(await o.ev("JSON.parse(localStorage.getItem('glb2html_visitor')).fxAsk") == "box", "choix retenu sur l'appareil")
+        await o.pg.reload(); await o.attendre(PRET, 40); await o.pg.wait_for_timeout(3500)
+        rapport("metalAsk" in await o.ev(BOITES) and not await o.ev(PEND), "apres rechargement : la question s'affiche directement, sans icone")
+        rapport(not o.errs, "aucune erreur de page", o.errs)
         await o.ctx.close()
         await br.close()
 

@@ -6,6 +6,22 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.12.0)
 
+### 19/11/2026 : propositions d'effets : icône clignotante au lieu de la bulle (lot 1.12.28)
+
+- **Demande** (Klaatou) : plus de message qui s'impose (« Cette région contient 27 matériaux brillants… Activer les reflets à 60 % ? ») ; une icône qui clignote pour le proposer, avec un sélecteur.
+- **Fait** (`template.html`) : la proposition du rendu léger et celle des reflets passent par `fxPropose` : par défaut une icône `#fxHint` (✦, clignotement noir et blanc de la barre « Marche », fixe en mouvement réduit, infobulle) apparaît à gauche de « Réglages » ; son clic affiche la ou les questions Oui / Non, inchangées. Toucher au curseur des reflets retire la proposition en attente. Réglages > « Propositions d'effets » : icône clignotante (défaut) ou message tout de suite ; retenu dans `glb2html_visitor` (`fxAsk`).
+- **Tests** : `tests/reflets_metal.py` (section 9 : icône, clic, « Non » retenu, curseur, sélecteur, rechargement ; sections 8 et suivantes en mode message), `tests/v42.py` (passe par l'icône). `v36_lang` et `v37` échouaient déjà avant ce lot dans le bac à sable.
+- **Non essayé ici** : Windows, Edge, tactile.
+- Fichiers : `src/template.html`, `src/i18n/fr.json`, `src/i18n/en.json`, `docs/fr/MANUEL.md`, `docs/en/MANUAL.md`, `tests/reflets_metal.py`, `tests/v42.py`, `CHANGELOG.fr.md`, `CHANGELOG.md`, `VERSION`.
+
+### 19/11/2026 : oars2site : noms de convoar à barre finale et OAR abîmé (lot 1.12.27)
+
+- **Constat** (Klaatou) : sur 195 régions, 5 échecs. Trois (`breakout-zone-oscc13-2013`, `knowledge-transfer-center`, `quest-for-illumination`) : `.gltf invalide : Invalid control character`, car convoar écrit `"name": "banc\",` (barre finale non doublée) ; une (`adult-dragonfyre-2023-update`) : archive abîmée, trace `zlib.error` ; une (`winterland`) : convoar n'écrit pas un `.buf` (non traité ici).
+- **Fait** (`tools/oar2glb.py`) : `load_gltf` répare, seulement si la lecture normale échoue, les valeurs texte qui finissent par un nombre impair de barres (une barre ajoutée) et le dit dans le journal ; le motif qui double les barres isolées consomme maintenant les paires (un nom comme `C:\\x` n'était plus lu correctement). `oar_scan` transforme `zlib.error`, `EOFError` et `tarfile.ReadError` en message « l'OAR est abîmé » (télécharger ou exporter de nouveau), sans trace.
+- **Test** : `tests/gltf_barre_finale.py` (noms cassés, CRLF, fichier valide inchangé, JSON réellement invalide, OAR abîmé, vide, tronqué).
+- **Reste** : `winterland` (`.buf` jamais écrit par convoar, code retour 0) ; à décider.
+- Fichiers : `tools/oar2glb.py`, `src/i18n/fr.json`, `src/i18n/en.json`, `tests/gltf_barre_finale.py`, `CHANGELOG.fr.md`, `CHANGELOG.md`, `VERSION`.
+
 ### 19/11/2026 : exemples : pochette et lien sur la zone radio (correction du lot 1.12.26, sans changement de version)
 
 - **Constat** (Klaatou) : `poster` et `link` n'étaient que sur la zone `audio` de l'exemple, pas sur la zone radio.

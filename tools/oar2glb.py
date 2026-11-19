@@ -605,6 +605,14 @@ def parse_object(xml_bytes):
 
 
 def oar_scan(oar, terrain_seul=False):
+    # 1.12.27 : une archive abîmée (flux gzip invalide, fichier tronqué) donne un message clair, pas une trace
+    try:
+        return oar_scan_lire(oar, terrain_seul)
+    except (zlib.error, EOFError, tarfile.ReadError) as e:
+        sys.exit(_tr("py.oar2glb.erreur_oar_abime", oar, e))
+
+
+def oar_scan_lire(oar, terrain_seul=False):
     # terrain_seul : ne lit que archive.xml, settings/ et terrains/ (ni objets ni meshes)
     size, groups, skins, terrain, water = (256.0, 256.0), [], {}, None, None
     pbr_mats = {}
@@ -851,14 +859,40 @@ def missing_images(outdir):
                    and find_file(Path(outdir), unquote(i["uri"])) is None})
 
 
+RX_VALEUR_TEXTE = re.compile(r'^(\s*(?:"(?:[^"\\]|\\.)*"\s*:\s*)?")(.*)("\s*,?\s*)$')
+
+
+def reparer_barre_finale(txt):
+    # 1.12.27 : convoar n'écrit pas doublée la barre oblique inverse qui termine un nom ("name": "banc\", au lieu de "banc\\",) : elle échappe le guillemet
+    # fermant, la valeur avale la fin de la ligne et le JSON est invalide. Une valeur texte (une par ligne) qui finit par un nombre IMPAIR de barres est cassée : on
+    # en ajoute une. Un fichier valide n'a jamais ce cas, il n'est donc pas touché (et la réparation n'est essayée que si la lecture normale échoue).
+    sortie = []
+    for ligne in txt.split("\n"):
+        m = RX_VALEUR_TEXTE.match(ligne)
+        if m:
+            milieu = m.group(2)
+            if (len(milieu) - len(milieu.rstrip("\\"))) % 2:
+                ligne = m.group(1) + milieu + "\\" + m.group(3)
+        sortie.append(ligne)
+    return "\n".join(sortie)
+
+
 def load_gltf(path):
     txt = path.read_text(encoding="utf-8", errors="replace")
-    txt = re.sub(r'\\(?!["\\/bfnrt]|u[0-9a-fA-F]{4})', r'\\\\', txt)
+    # les séquences valides (y compris la paire de deux barres) sont consommées d'un bloc : une barre isolée est doublée (1.12.27 : l'ancien motif cassait un nom comme C:\\x)
+    txt = re.sub(r'\\(["\\/bfnrt]|u[0-9a-fA-F]{4})|\\', lambda m: m.group(0) if m.group(1) else "\\\\", txt)
     try:
         return json.loads(txt)
-    except json.JSONDecodeError as e:
-        line = txt.splitlines()[e.lineno - 1] if e.lineno <= len(txt.splitlines()) else ""
-        sys.exit(_tr("py.oar2glb.erreur_gltf_invalide_0_ligne_1", e, e.lineno, line.strip()[:120]))
+    except json.JSONDecodeError:
+        txt2 = reparer_barre_finale(txt)
+        try:
+            g = json.loads(txt2)
+            print(_tr("py.oar2glb.gltf_barres_reparees"))
+            return g
+        except json.JSONDecodeError as e:
+            txt = txt2
+            line = txt.splitlines()[e.lineno - 1] if e.lineno <= len(txt.splitlines()) else ""
+            sys.exit(_tr("py.oar2glb.erreur_gltf_invalide_0_ligne_1", e, e.lineno, line.strip()[:120]))
 
 
 def check(g):

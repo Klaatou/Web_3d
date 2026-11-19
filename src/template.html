@@ -15,6 +15,8 @@ canvas{display:block;touch-action:none}
 #walkBtn,#helpBtn,#mapBtn,#homeBtn,#centerBtn,#flyBtn,#grabBtn,#padBtn{cursor:pointer}
 @keyframes walkPulse{0%,49%{background:#fffffff0;color:#000}50%,100%{background:#000;color:#fff}}   /* 1.8.5 : clignotement noir/blanc (pas de couleur), 1,2 s par cycle */
 #walkBtn.pulse{animation:walkPulse 1.2s infinite}
+#fxHint{font:inherit;background:#fffffff0;color:#000;border:1px solid #000;border-radius:6px;padding:6px 10px;margin-right:6px;cursor:pointer;animation:walkPulse 1.2s infinite}   /* 1.12.28 : icone qui propose les effets (reflets, rendu leger) a la place de la bulle */
+@media (prefers-reduced-motion:reduce){#fxHint{animation:none;border-width:3px;padding:4px 8px}}
 @media (prefers-reduced-motion:reduce){#walkBtn.pulse{animation:none;border-width:3px;padding:5px 8px}}   /* mouvement reduit : pas de clignotement, bordure epaisse */
 #dock{position:fixed;left:12px;bottom:12px;display:flex;flex-direction:column;align-items:flex-start;gap:8px}
 #bar{display:flex;flex-wrap:wrap;gap:8px;max-width:max(260px,calc(100vw - 430px))}
@@ -710,11 +712,12 @@ const VISITS = (() => {   // v48 : aussi ouvert par le bouton « Journal des vis
 // réglages visiteur mémorisés dans ce navigateur : couleur de l'avatar (null = tirée au hasard par le serveur), pseudo cité (gras, clignotement),
 // sons (général, volume, citation, arrivée, départ), disposition du clavier. v36 : les anciens réglages du bip (clé « sound ») sont ignorés.
 const VIS = (() => {
-  const d = { color: null, compass: true, histMax: 200, bold: true, blink: true, sounds: true, volume: 50, srcVolume: 50, soundCite: true, soundMsg: true, soundJoin: true, soundLeave: true, radio: true, music: true, video: true, layout: 'auto', pad: true, touch: 'auto' };
+  const d = { color: null, compass: true, histMax: 200, bold: true, blink: true, sounds: true, volume: 50, srcVolume: 50, soundCite: true, soundMsg: true, soundJoin: true, soundLeave: true, radio: true, music: true, video: true, layout: 'auto', pad: true, touch: 'auto', fxAsk: 'icon' };
   try {
     const s = JSON.parse(localStorage.getItem('glb2html_visitor') || '{}');
     if (Number.isInteger(s.color) && s.color >= 0 && s.color <= 0xFFFFFF) d.color = s.color;
     for (const k of ['compass', 'bold', 'blink', 'sounds', 'soundCite', 'soundMsg', 'soundJoin', 'soundLeave', 'radio', 'music', 'video', 'pad']) if (typeof s[k] === 'boolean') d[k] = s[k];
+    if (['icon', 'box'].includes(s.fxAsk)) d.fxAsk = s.fxAsk;   // 1.12.28 : propositions d'effets (reflets, rendu leger) : icone clignotante (defaut) ou message
     if (['auto', 'on', 'off'].includes(s.touch)) d.touch = s.touch;   // v46 : commandes tactiles (auto = écran tactile détecté)
     if (Number.isFinite(s.histMax)) d.histMax = Math.max(20, Math.min(2000, Math.round(s.histMax)));
     if (Number.isFinite(s.volume)) d.volume = Math.max(0, Math.min(100, Math.round(s.volume)));
@@ -725,6 +728,27 @@ const VIS = (() => {
 })();
 let chatTrim = () => {};   // v37 : rempli par le chat (réduit la liste quand le réglage « Messages d'historique affichés » baisse)
 const visSave = () => { try { localStorage.setItem('glb2html_visitor', JSON.stringify(VIS)); } catch (e) {} };
+// 1.12.28 : les propositions d'effets (rendu leger, reflets metalliques) ne s'imposent plus : une icone clignote en haut a droite ; un clic montre la ou les questions (Oui / Non, comme avant).
+// Reglages > « Propositions d'effets » : icone (defaut) ou message tout de suite.
+const FXQ = { list: [], btn: null };
+function fxSync() {
+  FXQ.list = FXQ.list.filter(b => !b.isConnected);
+  if (!FXQ.list.length) { if (FXQ.btn) FXQ.btn.hidden = true; return; }
+  if (!FXQ.btn) {
+    FXQ.btn = Object.assign(document.createElement('button'), { type: 'button', id: 'fxHint', textContent: '\u2726' });
+    FXQ.btn.title = FXQ.btn.ariaLabel = tr('page.fx.hint');
+    FXQ.btn.onclick = fxShow;
+    const o = document.getElementById('opts'); o.insertBefore(FXQ.btn, o.firstChild);
+  }
+  FXQ.btn.hidden = false;
+}
+function fxShow() { for (const b of FXQ.list) document.body.append(b); FXQ.list = []; fxSync(); }
+function fxPropose(box) {
+  FXQ.list = FXQ.list.filter(b => b.id !== box.id);
+  if (VIS.fxAsk === 'box') { document.body.append(box); return; }
+  FXQ.list.push(box); fxSync();
+}
+function fxCancel(id) { FXQ.list = FXQ.list.filter(b => b.id !== id); fxSync(); }   // reponse donnee ailleurs (curseur des reflets) : la proposition tombe
 // v46 : commandes à l'écran (remplies par le bloc promenade) ; Réglages et chat les appellent
 const CTL = { apply() {}, tick() {}, sync() {}, chat: null, touch: false };
 KB.setPref(VIS.layout);
@@ -984,7 +1008,7 @@ if (C.panel !== false) {
   cbAnim.onchange = () => { st.anim = cbAnim.checked; apply(); };
   rgWave.oninput = () => { st.wave = parseFloat(rgWave.value); apply(); };
   rgSea.oninput = () => { st.seaM = parseFloat(rgSea.value); apply(); };
-  rgMetal.oninput = () => { st.metal = parseFloat(rgMetal.value); apply(); try { localStorage.setItem(METAL_ASKED, '1'); } catch (e) {} const ma = document.getElementById('metalAsk'); if (ma) ma.remove(); };   // toucher au curseur vaut reponse
+  rgMetal.oninput = () => { st.metal = parseFloat(rgMetal.value); apply(); try { localStorage.setItem(METAL_ASKED, '1'); } catch (e) {} const ma = document.getElementById('metalAsk'); if (ma) ma.remove(); fxCancel('metalAsk'); };   // toucher au curseur vaut reponse
   metalAskApply = p => { st.metal = p; apply(); };
   op.append(lab(tr('page.opt.retina'), cbRetina));
   {
@@ -1101,6 +1125,13 @@ if (C.panel !== false) {
     CTL.sync = () => { cbPad.checked = VIS.pad; selT.value = VIS.touch; };
   }
   {
+    // 1.12.28 : propositions d'effets (rendu leger, reflets) : icone clignotante ou message
+    const selF = mk('select', { id: 'visFxAsk' });
+    for (const [v, t] of [['icon', tr('page.opt.fxask.icon')], ['box', tr('page.opt.fxask.box')]]) selF.append(mk('option', { value: v, textContent: t }));
+    selF.value = VIS.fxAsk; selF.onchange = () => { VIS.fxAsk = selF.value; visSave(); if (VIS.fxAsk === 'box') fxShow(); };
+    const lf = mk('label'); lf.append(mk('span', { textContent: tr('page.opt.fxask') }), selF); op.append(lf);
+  }
+  {
     // v36 : langue de la page (Auto = première langue du navigateur disponible, sinon l'anglais) ; changer recharge la page
     const selL = mk('select', { id: 'visLang' });
     for (const [v, tt] of i18nChoices()) selL.append(mk('option', { value: v, textContent: tt }));
@@ -1124,7 +1155,7 @@ if (!LIGHT.asked && !LIGHT.st.on && softGpu(viewer.renderer)) {
   box.append(Object.assign(document.createElement('span'), { textContent: tr('page.light.ask') }), yes, no);
   yes.onclick = () => { box.remove(); lightApply(LIGHT.preset); toast(tr('page.light.done')); };
   no.onclick = () => { box.remove(); LIGHT.save(); };
-  document.body.append(box);
+  fxPropose(box);
 }
 // 1.10.10 : la region contient des metaux PBR et les reflets sont a 0 % : la page propose de les activer, une seule fois par region (un « oui », un « non » ou un reglage du curseur est retenu).
 // Les tuiles arrivent peu a peu : on regarde toutes les 2 s pendant 2 minutes.
@@ -1133,7 +1164,7 @@ if (!LIGHT.asked && !LIGHT.st.on && softGpu(viewer.renderer)) {
   const asked = () => { try { return localStorage.getItem(METAL_ASKED) === '1'; } catch (e) { return false; } };
   const mark = () => { try { localStorage.setItem(METAL_ASKED, '1'); } catch (e) {} };
   const check = () => {
-    if (asked() || document.getElementById('metalAsk') || Number(viewer.cfg.metalEnv) > 0) return true;
+    if (asked() || document.getElementById('metalAsk') || FXQ.list.some(b => b.id === 'metalAsk') || Number(viewer.cfg.metalEnv) > 0) return true;
     const k = viewer.metalInfo();
     if (k.metal <= 0) return ++tries > 60;
     const box = document.createElement('div'); box.id = 'metalAsk';
@@ -1142,7 +1173,7 @@ if (!LIGHT.asked && !LIGHT.st.on && softGpu(viewer.renderer)) {
     box.append(Object.assign(document.createElement('span'), { id: 'metalAskText', textContent: trn('page.metal.ask', k.metal, METAL_SUGGEST) + (softGpu(viewer.renderer) ? tr('page.metal.ask.soft') : '') }), yes, no);
     yes.onclick = () => { box.remove(); mark(); metalAskApply(METAL_SUGGEST); toast(tr('page.metal.done', METAL_SUGGEST)); };
     no.onclick = () => { box.remove(); mark(); };
-    document.body.append(box);
+    fxPropose(box);
     return true;
   };
   const start = () => { tries = 0; if (!check()) { const iv = setInterval(() => { if (check()) clearInterval(iv); }, 2000); } };
