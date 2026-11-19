@@ -311,6 +311,11 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 18/11/2026 |  | après 1.12.0 | Lot 1.12.12 : écrans vidéo : listes de vidéos (`folder`, `tracks`, `playlist.json`), précédente / suivante, `glb2html.py --video-list`, champ et bouton du viewer ; `tests/zone_video_liste.py` |
 | 18/11/2026 |  | après 1.12.0 | Lot 1.12.13 : écrans vidéo : barre de pistes escamotable à icônes sous l'écran ; son réglé avant le démarrage |
 | 18/11/2026 |  | après 1.12.0 | Lot 1.12.14 : écrans vidéo : le son ne retombe plus en muet au changement de piste (seul un vrai `NotAllowedError` coupe le son) |
+| 19/11/2026 |  | après 1.12.0 | Lot 1.12.25 : la source la plus proche en mètres parle ; s'approcher d'un écran à son efface la priorité restée à la radio après un geste (case, flux) |
+| 19/11/2026 |  | après 1.12.0 | Lot 1.12.24 : correctif : le lecteur YouTube de la fenêtre flottante ne garde plus le clavier (E et la marche répondent) |
+| 19/11/2026 |  | après 1.12.0 | Lot 1.12.23 : correctif : le lecteur YouTube de la fenêtre démarre seul et gère sa playlist comme avant (`enablejsapi` retiré) ; bouton muet distinct du volume |
+| 19/11/2026 |  | après 1.12.0 | Lot 1.12.22 : correctifs du 1.12.21 : un écran à son passe devant la radio et la musique ; la ligne et le choix du flux restent affichés ; bouton muet visible ; seule une fenêtre YouTube coupe le son, y compris la radio |
+| 19/11/2026 |  | après 1.12.0 | Lot 1.12.21 : une seule source sonore à la fois (radio, musique, son des écrans vidéo, fenêtre flottante), ligne Vidéo et bouton muet dans la fenêtre Son, touche N |
 | 18/11/2026 |  | après 1.12.0 | Lot 1.12.20 : correctif : la touche B (et Entrée, Échap) n'agissait plus quand la saisie du chat était restée ouverte sans le focus (message envoyé, puis clic sur la scène) |
 | 18/11/2026 |  | après 1.12.0 | Lot 1.12.19 : README (FR et EN) : zones radio, musique, vidéo et lien en fenêtre flottante ajoutées à la liste des fonctions et à la section Zones |
 | 18/11/2026 |  | après 1.12.0 | Lot 1.12.18 : manuel § 5.19 à 5.21 : puces denses découpées en sous-listes ; essai de la radio à plusieurs flux sur un téléphone |

@@ -2204,7 +2204,7 @@ function createViewer(container, cfg0, loader) {
   // (radius) et dans le champ de la camera ; la video joue alors, sans son, en boucle, et se met en pause quand on s'eloigne ou qu'on regarde ailleurs. Le nom du fichier se
   // cherche comme celui d'une image (medias/ puis dossier de la region ; sans extension : .mp4, .webm, .m4v, .ogv). Au plus VID_MAX videos jouent a la fois : les plus proches.
   // Une video d'un autre site doit autoriser le CORS, sinon WebGL refuse la texture.
-  const vidPlanes = new Map(), vidFrustum = new THREE.Frustum(), vidM = new THREE.Matrix4(), vidP = new THREE.Vector3(), vidEye = new THREE.Vector3(); let videoSound = null, vidLast = 0, vidDec = 0, vidHover = null, vidAim = null;   // 1.12.9 : videoSound() rend le niveau sonore voulu (0 a 1) ; 0 = muet (reglage Son coupe, pas encore de geste de l'utilisateur) ; fourni par la page
+  const vidPlanes = new Map(), vidFrustum = new THREE.Frustum(), vidM = new THREE.Matrix4(), vidP = new THREE.Vector3(), vidEye = new THREE.Vector3(); let videoSound = null, onVideoTalk = null, onVideoAct = null, vidTalkId = '', vidTalkG = 0, vidLast = 0, vidDec = 0, vidHover = null, vidAim = null;   // 1.12.9 : videoSound() rend le niveau sonore voulu (0 a 1) ; 0 = muet (reglage Son coupe, pas encore de geste de l'utilisateur) ; fourni par la page
   const VID_MAX = 8, VID_EXTS = ['mp4', 'webm', 'm4v', 'ogv'];
   function videoPlane(z) {
     const mat = new THREE.MeshBasicMaterial({ color: 0x111111, transparent: true });   // sombre tant que la video n'a pas de premiere image
@@ -2348,7 +2348,11 @@ function createViewer(container, cfg0, loader) {
       cand.sort((a, b) => a[0] - b[0]);
       cand.forEach(([, st], i) => { if (i < VID_MAX) { st.seen = now; if (!st.want) st.set(true); } else if (st.want) st.set(false); });
       // son (1.12.9) : seul l'ecran a son le plus proche parle, volume = (1 - distance / portee) x niveau de la page ; les autres restent muets
-      const lvl = videoSound ? Math.max(0, Math.min(1, +videoSound() || 0)) : 0, talk = cand.slice(0, VID_MAX).find(c => c[2].sound);
+      const talk = cand.slice(0, VID_MAX).find(c => c[2].sound);
+      // 1.12.21 : l'ecran a son le plus proche est signale a la page (onVideoTalk : zone, gain 0.05 a 1, distance) a chaque changement ; la page decide (arbitrage radio / musique / video) puis videoSound() rend le niveau
+      const tId = talk ? talk[2].id : '', tG = talk ? Math.max(0.05, 1 - talk[0] / talk[2].radius) : 0;
+      if (tId !== vidTalkId || Math.abs(tG - vidTalkG) > 0.01) { vidTalkId = tId; vidTalkG = tG; if (onVideoTalk) onVideoTalk(talk ? talk[2] : null, tG, talk ? talk[0] : 0); }
+      const lvl = videoSound ? Math.max(0, Math.min(1, +videoSound() || 0)) : 0;
       for (const { z, st } of vidPlanes.values()) { st.g = talk && talk[1] === st && lvl > 0 ? Math.max(0.05, 1 - talk[0] / z.radius) * lvl : 0; vidApplySound(st, now); }
       // barre de pistes (1.12.13) : visible au survol, a la visee (promenade, pointeur capture) et 3 s apres un clic ; redessinee quand la piste ou l'etat change
       vidAim = null;
@@ -2372,8 +2376,8 @@ function createViewer(container, cfg0, loader) {
       if (z.id !== id || st.failed) continue;
       const now = performance.now(); st.barUntil = now + 3000;
       if (bar && u < 0.55) return;
-      if (bar && (u < 0.69 || u >= 0.83)) { if (st.step) { st.off = false; vidDec = 0; vidLast = 0; st.step(u < 0.69 ? -1 : 1); dirty = true; } return; }
-      if (st.off) { st.off = false; vidDec = 0; vidLast = 0; }   // la decision de lecture est refaite tout de suite
+      if (bar && (u < 0.69 || u >= 0.83)) { if (st.step) { st.off = false; vidDec = 0; vidLast = 0; st.step(u < 0.69 ? -1 : 1); dirty = true; if (onVideoAct) onVideoAct(z); } return; }   // 1.12.21 : onVideoAct : le visiteur lance un ecran (la page le rend prioritaire)
+      if (st.off) { st.off = false; vidDec = 0; vidLast = 0; if (onVideoAct) onVideoAct(z); }   // la decision de lecture est refaite tout de suite
       else if (st.want) { st.off = true; st.set(false); }
       dirty = true; return;
     }
@@ -2886,7 +2890,7 @@ function createViewer(container, cfg0, loader) {
     // boîte (monde) de l'élément de ce nom : { min, max, center, count } ou null
     meshInfo(name) { const m = findMeshes(name); const b = m.length ? refBox(name, m) : null; if (!b) return null; return { min: b.min.toArray(), max: b.max.toArray(), center: b.getCenter(new THREE.Vector3()).toArray(), size: b.getSize(new THREE.Vector3()).toArray(), count: m.length }; },
     set linkMode(v) { linkLock = !!v; },
-    isTraversable(o) { return isIgnoredMesh(o, parseIgnore(cfg.walkIgnore)); }, getZones() { return zones.map(z => Object.assign({}, z)); }, set onZone(f) { onZone = f; }, set videoSound(f) { videoSound = typeof f === 'function' ? f : null; }, set onNear(f) { onNear = f; }, set onCast(f) { onCast = f; }, set onAudio(f) { onAudio = f; }, audioTracks, set onRadio(f) { onRadio = f; }, radioAsk(url) { radioWant = String(url || ''); if (P.ws && P.ws.readyState === 1 && P.id) P.ws.send(JSON.stringify({ t: 'radio', url: radioWant })); },
+    isTraversable(o) { return isIgnoredMesh(o, parseIgnore(cfg.walkIgnore)); }, getZones() { return zones.map(z => Object.assign({}, z)); }, set onZone(f) { onZone = f; }, set videoSound(f) { videoSound = typeof f === 'function' ? f : null; }, set onVideoTalk(f) { onVideoTalk = typeof f === 'function' ? f : null; }, set onVideoAct(f) { onVideoAct = typeof f === 'function' ? f : null; }, set onNear(f) { onNear = f; }, set onCast(f) { onCast = f; }, set onAudio(f) { onAudio = f; }, audioTracks, set onRadio(f) { onRadio = f; }, radioAsk(url) { radioWant = String(url || ''); if (P.ws && P.ws.readyState === 1 && P.id) P.ws.send(JSON.stringify({ t: 'radio', url: radioWant })); },
     captureTop(size = 320, hide = []) {
       if (!model) return null;
       const box = new THREE.Box3().setFromObject(model), c = box.getCenter(new THREE.Vector3()), sz = box.getSize(new THREE.Vector3());

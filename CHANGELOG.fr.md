@@ -6,6 +6,43 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.12.0)
 
+### 19/11/2026 : la source la plus proche en mètres parle (lot 1.12.25)
+
+- **Constat** (Klaatou) : (1) après ses essais de la fenêtre YouTube, l'écran ne prend plus le dessus sur la radio quand il s'en approche ; après F5, si ; (2) le nez sur la radio, c'est l'écran à 14 m qui parle.
+- **Causes** (`template.html`) : (1) cocher une source, choisir un flux ou passer une piste la rend prioritaire (1.12.22), et la priorité reste tant que sa zone est à portée : la radio, grande, la gardait ; (2) le 1.12.22 donnait toujours la parole à l'écran qui joue (gain + 1), sans regarder la distance.
+- **Fait** : la source la plus proche **en mètres** parle (le gain comparait des portées différentes) ; quand un écran à son entre dans le champ (nouveau parleur dans `onVideoTalk`), la priorité collée est effacée ; un geste ensuite la repose.
+- Fichiers : `src/template.html`, `tests/arbitrage_son.py`, manuel (§ 5.22), historique, `VERSION` `1.12.25`.
+
+### 19/11/2026 : la fenêtre flottante ne garde plus le clavier (lot 1.12.24)
+
+- **Constat** (Klaatou, `tests/zone_frame.py`) : « autre zone https : une seule fenêtre » échoue chez lui, jamais ici (YouTube y est inaccessible) ; la ligne de diagnostic ajoutée au test donne `IFRAME` pour l'élément qui a le focus.
+- **Cause** (`template.html`, `frameOpen`) : le vrai lecteur YouTube prend le focus clavier à son chargement ; les touches (E, et la marche en promenade) partent alors dans l'iframe et non dans la page.
+- **Fait** : à la fin du chargement de l'iframe, puis 0,3, 0,8, 1,5 et 3 s plus tard, la page reprend le focus si c'est l'iframe qui l'a ; un clic dans le lecteur le lui redonne ensuite.
+- **Limite** : le focus pris plus de 3 s après le chargement n'est pas repris ; essai sur un vrai lecteur par Klaatou (`zone_frame.py` et la marche avec la fenêtre ouverte).
+- Fichiers : `src/template.html`, `tests/arbitrage_son.py`, manuel (§ 5.7.1), historique, `VERSION` `1.12.24`.
+
+### 19/11/2026 : lecteur YouTube et icône du bouton muet (lot 1.12.23)
+
+- **Constat** (Klaatou, essai du 1.12.22) : les deux icônes de haut-parleur (muet et volume) sont identiques quand le son n'est pas coupé ; le lecteur YouTube de la fenêtre ne démarre plus seul et ne gère plus sa playlist.
+- **Cause** (`template.html`, `ytEmbed`) : le 1.12.22 avait ajouté `enablejsapi=1` à la ligne de l'adresse du lecteur avec un commentaire `//` au milieu de la ligne : la suite (`list`, la liste de lecture, et `autoplay`) était devenue du commentaire.
+- **Fait** : ligne rétablie, `enablejsapi` retiré et la demande de pause avec lui (la page ne peut pas arrêter le lecteur : un geste sur une source reprend la main pour la radio, la musique et les écrans, et la vidéo YouTube continue) ; le bouton muet dessine toujours une croix sur le haut-parleur et passe en fond noir quand le son est coupé.
+- Fichiers : `src/template.html`, `tests/arbitrage_son.py`, manuel (§ 5.22), historique, `VERSION` `1.12.23`.
+
+### 19/11/2026 : correctifs de l'arbitrage du son (lot 1.12.22)
+
+- **Constat** (Klaatou, essai du 1.12.21) : l'écran à son ne prend pas le dessus sur la radio ; après un clic sur l'écran, la ligne et le choix des flux de la radio disparaissent ; pas de bouton haut-parleur barré ; la fenêtre YouTube ne coupe pas la radio ; une page autre que YouTube n'a pas de raison de couper le son.
+- **Causes** (`template.html`) : (1) la règle « le gain le plus fort » compare des portées différentes : une radio à grande portée gagnait même à 5 m d'un écran ; (2) l'arbitrage donnait `null` à la source qui ne parle pas, donc sa ligne et son choix de flux disparaissaient (le manuel disait pourtant qu'ils restaient) ; (3) le bouton avait la classe `sndV`, donc la même position que le bouton du volume, dessous ; (4) l'iframe n'est dans la page qu'après `load()` : `srcRefresh()` ne la voyait pas, seule la vidéo (relue en continu) se taisait ; (5) tout iframe coupait le son.
+- **Fait** : un écran à son qui joue passe devant la radio et la musique (le geste du visiteur reste prioritaire) ; la source qui ne parle pas garde sa ligne (« une autre source parle »), son choix de flux et ⏮ ⏭ ; bouton muet à `right:70px` ; `srcRefresh()` aussi après l'ajout au document ; seule une page YouTube coupe les sources, et un geste sur une source (case, flux, piste, écran) la remet, avec une demande de pause au lecteur (`enablejsapi`, non essayée) ; textes « son coupé : touche N ou fenêtre YouTube ».
+- Fichiers : `src/template.html`, `src/i18n/fr.json`, `src/i18n/en.json`, `tests/arbitrage_son.py`, manuel (§ 5.22), historique, `VERSION` `1.12.22`.
+
+### 19/11/2026 : une seule source sonore à la fois, bouton muet, touche N (lot 1.12.21)
+
+- **Demande** (Klaatou) : que la musique, la radio, le son d'une vidéo et YouTube ne se superposent plus ; un bouton muet aussi pour les vidéos, dans la fenêtre Son.
+- **Fait** (`template.html`, `core.js`) : un seul arbitrage pour la radio, la musique et le son des écrans vidéo (le plus proche parle ; un geste du visiteur passe devant : flux choisi, piste suivante ou précédente, clic sur un écran) ; `core.js` signale à la page l'écran à son le plus proche (`onVideoTalk`) et le clic du visiteur (`onVideoAct`) ; case « Vidéos des zones » (Réglages et fenêtre Son), exclusive avec les deux autres ; ligne « Vidéo » dans la fenêtre Son ; bouton muet (haut-parleur barré) et touche N ; une fenêtre flottante qui charge une page fait taire les trois sources (son d'un iframe non contrôlable).
+- **Limites** : la pause d'une vidéo YouTube de la fenêtre n'est pas essayée ; deux vrais écrans avec une vraie radio ensemble non essayés.
+- **Contrôle** : nouveau `tests/arbitrage_son.py` ; `fenetre_son`, `zone_video`, `radio_flux`, `zone_cast`, `touche_b`, `chat_replie` et `i18n` repassent.
+- Fichiers : `src/template.html`, `src/core.js`, `src/i18n/fr.json`, `src/i18n/en.json`, `tests/arbitrage_son.py`, manuel (§ 5.22, § 7.66, touche N), historique, `VERSION` `1.12.21`.
+
 ### 18/11/2026 : touche B sans effet après un message envoyé (lot 1.12.20)
 
 - **Constat** (Klaatou) : par moments la touche B n'a aucun effet, le bloc de chat ne bouge pas, alors que le chat fonctionne ; sans autre visiteur ; `--idle-walk` à 0 ; la durée d'ouverture de la page n'y est pour rien.

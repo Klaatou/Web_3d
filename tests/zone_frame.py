@@ -128,7 +128,11 @@ async def main():
         r2 = await pg.evaluate("(() => { const r = document.querySelector('#frameWin .fwHead').getBoundingClientRect(); return [r.x + 40, r.y + 10]; })()")
         rapport(abs(r2[0] - (r0[0] + 150)) < 3 and abs(r2[1] - (r0[1] - 100)) < 3, "fenetre : se deplace en glissant l'en-tete", (r0, r1, r2))
         # une seule fenetre, remplacee par celle d'une autre zone ; la meme zone ne la rouvre pas
-        await aller(pg, -5, -13); await pg.keyboard.press("KeyE"); await pg.wait_for_timeout(300)
+        await aller(pg, -5, -13); await pg.wait_for_timeout(600); await pg.keyboard.press("KeyE")
+        try:
+            await pg.wait_for_function("(() => { const f = document.querySelector('#frameWin iframe'); return !!f && f.src.indexOf('youtube') < 0; })()", timeout=8000)
+        except Exception:
+            pass
         e = await etat(pg)
         rapport(e and e["n"] == 1 and e["title"] == "Zone gen" and e["src"] == "https://exemple.invalid/page", "autre zone https : une seule fenetre, adresse telle quelle", e)
         await pg.keyboard.press("KeyE"); await pg.wait_for_timeout(200)

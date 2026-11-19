@@ -6,6 +6,43 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.12.0)
 
+### 19/11/2026: the nearest source in metres speaks (batch 1.12.25)
+
+- **Finding** (Klaatou): (1) after his tests of the YouTube window, the screen no longer takes over from the radio when he approaches it; after F5, it does; (2) nose on the radio, the screen 14 m away is the one speaking.
+- **Causes** (`template.html`): (1) ticking a source, choosing a stream or skipping a track makes it the priority (1.12.22), and the priority lasts while its zone is in range: the wide radio kept it; (2) 1.12.22 always gave the floor to the playing screen (gain + 1), without looking at the distance.
+- **Done**: the source nearest **in metres** speaks (the gain compared different ranges); when a screen with sound comes into view (new talker in `onVideoTalk`), the stuck priority is cleared; a gesture then sets it again.
+- Files: `src/template.html`, `tests/arbitrage_son.py`, manual (§ 5.22), history, `VERSION` `1.12.25`.
+
+### 19/11/2026: the floating window no longer keeps the keyboard (batch 1.12.24)
+
+- **Finding** (Klaatou, `tests/zone_frame.py`): "other https zone: a single window" fails on his machine, never here (YouTube is unreachable here); the diagnostic line added to the test gives `IFRAME` for the focused element.
+- **Cause** (`template.html`, `frameOpen`): the real YouTube player takes the keyboard focus when it loads; keys (E, and walking) then go to the iframe instead of the page.
+- **Done**: when the iframe has finished loading, then 0.3, 0.8, 1.5 and 3 s later, the page takes the focus back if the iframe holds it; a click in the player gives it back to the player afterwards.
+- **Limit**: focus taken more than 3 s after loading is not taken back; to be tried on a real player by Klaatou (`zone_frame.py` and walking with the window open).
+- Files: `src/template.html`, `tests/arbitrage_son.py`, manual (§ 5.7.1), history, `VERSION` `1.12.24`.
+
+### 19/11/2026: YouTube player and mute button icon (batch 1.12.23)
+
+- **Finding** (Klaatou, trying 1.12.22): the two speaker icons (mute and volume) are identical when the sound is not muted; the YouTube player of the window no longer starts by itself and no longer handles its playlist.
+- **Cause** (`template.html`, `ytEmbed`): 1.12.22 had added `enablejsapi=1` to the player address line with a `//` comment in the middle of the line: the rest (`list`, the playlist, and `autoplay`) had become a comment.
+- **Done**: line restored, `enablejsapi` removed and the pause request with it (the page cannot stop the player: a gesture on a source takes over for the radio, the music and the screens, and the YouTube video keeps playing); the mute button always draws a cross on the speaker and turns to a black background while muted.
+- Files: `src/template.html`, `tests/arbitrage_son.py`, manual (§ 5.22), history, `VERSION` `1.12.23`.
+
+### 19/11/2026: sound arbitration fixes (batch 1.12.22)
+
+- **Finding** (Klaatou, trying 1.12.21): the screen with sound does not take over from the radio; after a click on the screen, the radio line and stream choice disappear; no crossed speaker button; the YouTube window does not silence the radio; a page other than YouTube has no reason to cut the sound.
+- **Causes** (`template.html`): (1) the "strongest gain" rule compares different ranges: a wide-range radio won even 5 m from a screen; (2) the arbitration gave `null` to the source that does not speak, so its line and stream choice disappeared (the manual said they stayed); (3) the button had the `sndV` class, hence the same position as the volume button, under it; (4) the iframe is in the page only after `load()`: `srcRefresh()` did not see it, only the video (re-read continuously) went quiet; (5) any iframe cut the sound.
+- **Done**: a playing screen with sound goes ahead of the radio and the music (a visitor gesture still wins); the source that does not speak keeps its line ("another source is speaking"), its stream choice and ⏮ ⏭; mute button at `right:70px`; `srcRefresh()` also after the window is added to the document; only a YouTube page silences the sources, and a gesture on a source (box, stream, track, screen) brings it back, with a pause request to the player (`enablejsapi`, not tried); "sound muted: N key or YouTube window" texts.
+- Files: `src/template.html`, `src/i18n/fr.json`, `src/i18n/en.json`, `tests/arbitrage_son.py`, manual (§ 5.22), history, `VERSION` `1.12.22`.
+
+### 19/11/2026: one sound source at a time, mute button, N key (batch 1.12.21)
+
+- **Request** (Klaatou): music, radio, video sound and YouTube must no longer overlap; a mute button for videos too, in the Sound window.
+- **Done** (`template.html`, `core.js`): one arbitration for the radio, the music and the video screen sound (the nearest speaks; a visitor gesture wins: chosen stream, next or previous track, click on a screen); `core.js` reports the nearest screen with sound (`onVideoTalk`) and the visitor's click (`onVideoAct`) to the page; "Zone videos" box (Settings and Sound window), exclusive with the other two; "Video" line in the Sound window; mute button (crossed speaker) and N key; a floating window that loads a page silences the three sources (the sound of an iframe cannot be controlled).
+- **Limits**: pausing a YouTube video of the window is not tried; two real screens with a real radio together are not tried.
+- **Check**: new `tests/arbitrage_son.py`; `fenetre_son`, `zone_video`, `radio_flux`, `zone_cast`, `touche_b`, `chat_replie` and `i18n` pass again.
+- Files: `src/template.html`, `src/core.js`, `src/i18n/fr.json`, `src/i18n/en.json`, `tests/arbitrage_son.py`, manual (§ 5.22, § 7.66, N key), history, `VERSION` `1.12.21`.
+
 ### 18/11/2026: B key without effect after a sent message (batch 1.12.20)
 
 - **Finding** (Klaatou): at times the B key does nothing, the chat block does not move, while the chat works; no other visitor; `--idle-walk` at 0; the time the page has been open is not the cause.

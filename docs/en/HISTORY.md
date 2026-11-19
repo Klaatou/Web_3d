@@ -311,6 +311,11 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 18/11/2026 |  | after 1.12.0 | Batch 1.12.12: video screens: lists of videos (`folder`, `tracks`, `playlist.json`), previous / next, `glb2html.py --video-list`, viewer field and button; `tests/zone_video_liste.py` |
 | 18/11/2026 |  | after 1.12.0 | Batch 1.12.13: video screens: retractable track bar with icons under the screen; sound set before start |
 | 18/11/2026 |  | after 1.12.0 | Batch 1.12.14: video screens: the sound no longer falls back to muted at a track change (only a real `NotAllowedError` cuts the sound) |
+| 19/11/2026 |  | after 1.12.0 | Batch 1.12.25: the source nearest in metres speaks; approaching a screen with sound clears the priority left to the radio after a gesture (box, stream) |
+| 19/11/2026 |  | after 1.12.0 | Batch 1.12.24: fix: the YouTube player of the floating window no longer keeps the keyboard (E and walking respond) |
+| 19/11/2026 |  | after 1.12.0 | Batch 1.12.23: fix: the YouTube player of the window starts by itself and handles its playlist as before (`enablejsapi` removed); mute button distinct from the volume |
+| 19/11/2026 |  | after 1.12.0 | Batch 1.12.22: fixes of 1.12.21: a screen with sound goes ahead of the radio and the music; the line and the stream choice stay displayed; visible mute button; only a YouTube window silences the sound, the radio included |
+| 19/11/2026 |  | after 1.12.0 | Batch 1.12.21: one sound source at a time (radio, music, video screen sound, floating window), Video line and mute button in the Sound window, N key |
 | 18/11/2026 |  | after 1.12.0 | Batch 1.12.20: fix: the B key (and Enter, Esc) did nothing when the chat input had been left open without focus (message sent, then a click on the scene) |
 | 18/11/2026 |  | after 1.12.0 | Batch 1.12.19: README (FR and EN): radio, music, video and floating-window link zones added to the feature list and to the Zones section |
 | 18/11/2026 |  | after 1.12.0 | Batch 1.12.18: manual § 5.19 to 5.21: dense bullets split into sub-lists; several-stream radio tried on a phone |

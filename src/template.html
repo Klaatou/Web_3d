@@ -151,6 +151,9 @@ body.touch #soundInfo .sndX{top:4px;width:40px;height:40px;font-size:18px;border
 #soundVolRow[hidden]{display:none}
 #soundVolRow input{flex:1;min-width:110px;margin:0;cursor:pointer}
 #soundVolRow span{min-width:3ch;text-align:right}
+#soundInfo #soundMute[aria-pressed="true"]{background:#000;color:#fff}   /* 1.12.23 : enfonce = fond noir (le dessin est le meme : une croix sur le haut-parleur, qui ne ressemble plus au volume) */
+#soundInfo #soundMute{right:70px}   /* 1.12.22 : a gauche du haut-parleur du volume (right:40px) */
+body.touch #soundInfo #soundMute{right:104px}
 #soundInfo .sndV svg{display:block;margin:auto;width:16px;height:16px}
 body.touch #soundInfo .sndV svg{width:24px;height:24px}
 body.touch #soundInfo .sndV{top:4px;right:58px;width:40px;height:40px;font-size:18px;border-width:2px;border-radius:6px}
@@ -384,6 +387,7 @@ if (H.has('key')) {   // la clé (secret) ne reste jamais dans l'adresse visible
 if (H.get('name')) { try { localStorage.setItem('glb2html_name', H.get('name').slice(0, 24)); } catch (e) {} viewer.setName(H.get('name')); }
 let liveReady = Promise.resolve();
 let nearNow = null, refreshNear = () => {};
+let srcRefresh = () => {};   // 1.12.21 : rempli avec l'arbitrage (RADIO.refresh + MUSIC.refresh) ; la fenetre flottante l'appelle a son ouverture et a sa fermeture
 let refreshSpawns = () => {}, openView = null;   // v40 : liste des arrivées (fenêtre L, remplie à la fin du chargement) ; cadrage d'ouverture (bouton « Recentrer la vue »)
 // v40 : bouton « Recentrer la vue » (caché en promenade) : revient au cadrage d'ouverture de la région, mémorisé à la fin du chargement (openView)
 {
@@ -452,7 +456,7 @@ if ((C.zones || []).length || C.zonesLive) {
       else if (['shorts', 'live', 'embed', 'v'].includes(p[0])) id = p[1] || '';
     } else return null;
     if (id === 'videoseries' ? !list : !/^[\w-]{11}$/.test(id)) return null;
-    const q = new URLSearchParams({ rel: '0' }); if (list) q.set('list', list); if (auto) q.set('autoplay', '1');
+    const q = new URLSearchParams({ rel: '0' }); if (list) q.set('list', list); if (auto) q.set('autoplay', '1');   // 1.12.23 : comme avant la 1.12.22 (qui avait colle un commentaire au milieu de la ligne : playlist et demarrage automatique perdus)
     const t = u.searchParams.get('t') || u.searchParams.get('start'); if (/^\d{1,6}$/.test(t || '')) q.set('start', t);
     return 'https://www.youtube-nocookie.com/embed/' + id + '?' + q;
   };
@@ -462,10 +466,10 @@ if ((C.zones || []).length || C.zonesLive) {
     return ytEmbed(u, auto) || u.href;
   };
   let frameZ = '';
-  const frameClose = () => { const w = document.getElementById('frameWin'); if (w) w.remove(); frameZ = ''; try { window.focus(); } catch (e) {} };
+  const frameClose = () => { const w = document.getElementById('frameWin'); if (w) w.remove(); frameZ = ''; SRC.yt = false; srcRefresh(); try { window.focus(); } catch (e) {} };
   const frameOpen = (z, u, how, label) => {
     if (!frameSrc(u, false)) return false;
-    if (frameZ === z.id && document.getElementById('frameWin')) return true;   // deja ouverte pour cette zone
+    if (frameZ === z.id && document.getElementById('frameWin')) { SRC.yt = true; srcRefresh(); return true; }   // deja ouverte pour cette zone ; 1.12.22 : un nouveau clic sur sa zone la remet au premier plan du son
     frameClose(); frameZ = z.id;
     const w = document.createElement('div'); w.id = 'frameWin';
     const hd = document.createElement('div'); hd.className = 'fwHead';
@@ -478,12 +482,14 @@ if ((C.zones || []).length || C.zonesLive) {
       const f = document.createElement('iframe'); f.src = frameSrc(u, auto); f.title = label;
       f.allow = 'autoplay; encrypted-media; fullscreen; picture-in-picture'; f.allowFullscreen = true; f.referrerPolicy = 'strict-origin-when-cross-origin';
       f.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation');
-      bd.appendChild(f);
+      const back = () => { if (document.activeElement === f) { f.blur(); try { window.focus(); } catch (e) {} } };   // 1.12.24 : le lecteur YouTube prend le focus clavier : E et la marche partaient dans l'iframe ; la page le reprend (a la fin du chargement, puis quelques fois)
+      f.addEventListener('load', () => { back(); for (const ms of [300, 800, 1500, 3000]) setTimeout(back, ms); });
+      bd.appendChild(f); SRC.yt = true; srcRefresh();   // 1.12.21 : un iframe est charge : radio, musique et sons video se taisent (leur son est la priorite)
     };
     if (how === 'enter') {   // en marchant dedans : rien n'est charge (donc aucun site contacte) avant un clic du visiteur
       const b = document.createElement('button'); b.className = 'fwLoad'; b.textContent = tr('page.frame.load', new URL(frameSrc(u, false)).hostname); b.onclick = () => load(true); bd.appendChild(b);
     } else load(true);
-    w.append(hd, bd); document.body.appendChild(w);
+    w.append(hd, bd); document.body.appendChild(w); SRC.yt = true; srcRefresh();   // 1.12.22 : l'iframe n'est dans la page qu'ici (load() la cree avant) : la radio et la musique sont recalculees maintenant
     let dx = 0, dy = 0;
     hd.onpointerdown = e => { if (e.target.closest('button')) return; const r = w.getBoundingClientRect(); w.style.left = r.left + 'px'; w.style.top = r.top + 'px'; w.style.right = 'auto'; w.style.bottom = 'auto'; dx = e.clientX - r.left; dy = e.clientY - r.top; w.classList.add('drag'); hd.setPointerCapture(e.pointerId); e.preventDefault(); };
     hd.onpointermove = e => { if (w.classList.contains('drag')) { w.style.left = Math.max(0, Math.min(innerWidth - 60, e.clientX - dx)) + 'px'; w.style.top = Math.max(0, Math.min(innerHeight - 30, e.clientY - dy)) + 'px'; } };
@@ -699,11 +705,11 @@ const VISITS = (() => {   // v48 : aussi ouvert par le bouton « Journal des vis
 // réglages visiteur mémorisés dans ce navigateur : couleur de l'avatar (null = tirée au hasard par le serveur), pseudo cité (gras, clignotement),
 // sons (général, volume, citation, arrivée, départ), disposition du clavier. v36 : les anciens réglages du bip (clé « sound ») sont ignorés.
 const VIS = (() => {
-  const d = { color: null, compass: true, histMax: 200, bold: true, blink: true, sounds: true, volume: 50, srcVolume: 50, soundCite: true, soundMsg: true, soundJoin: true, soundLeave: true, radio: true, music: true, layout: 'auto', pad: true, touch: 'auto' };
+  const d = { color: null, compass: true, histMax: 200, bold: true, blink: true, sounds: true, volume: 50, srcVolume: 50, soundCite: true, soundMsg: true, soundJoin: true, soundLeave: true, radio: true, music: true, video: true, layout: 'auto', pad: true, touch: 'auto' };
   try {
     const s = JSON.parse(localStorage.getItem('glb2html_visitor') || '{}');
     if (Number.isInteger(s.color) && s.color >= 0 && s.color <= 0xFFFFFF) d.color = s.color;
-    for (const k of ['compass', 'bold', 'blink', 'sounds', 'soundCite', 'soundMsg', 'soundJoin', 'soundLeave', 'radio', 'music', 'pad']) if (typeof s[k] === 'boolean') d[k] = s[k];
+    for (const k of ['compass', 'bold', 'blink', 'sounds', 'soundCite', 'soundMsg', 'soundJoin', 'soundLeave', 'radio', 'music', 'video', 'pad']) if (typeof s[k] === 'boolean') d[k] = s[k];
     if (['auto', 'on', 'off'].includes(s.touch)) d.touch = s.touch;   // v46 : commandes tactiles (auto = écran tactile détecté)
     if (Number.isFinite(s.histMax)) d.histMax = Math.max(20, Math.min(2000, Math.round(s.histMax)));
     if (Number.isFinite(s.volume)) d.volume = Math.max(0, Math.min(100, Math.round(s.volume)));
@@ -752,8 +758,15 @@ const SND = (() => {
 const distTxt = (z, d) => z ? ' (' + Math.round(d) + ' m / ' + Math.round(z.radius * 10) / 10 + ' m)' : '';   // 1.11.17 : distance a la source et portee de la zone, en metres, ajoutees aux lignes Radio et Musique
 let soundToggle = () => {};   // 1.11.24 : affiche ou ferme la fenetre Son (definie avec la fenetre) ; appelee par le clic sur le cone d'une zone radio ou audio a portee
 let radioTxt = () => {}, musicTxt = () => {}, radioTip = () => {}, musicTip = () => {};   // lignes « Radio » et « Musique » du bloc d'état (définies avec le bloc)
+// 1.12.21 : etat commun des sources sonores des zones (radio, musique, ecrans video) : mute = coupure des trois (touche N, bouton de la fenetre Son) ; pref = source choisie par le visiteur (flux, piste, clic sur un ecran),
+// prioritaire tant que sa zone est a portee ; win = la source qui parle (decidee par audioArbitre) ; srcFrameOn : une fenetre flottante a un iframe charge (son hors de portee de la page : les sources s'effacent devant lui)
+const SRC = { mute: false, pref: null, win: null, yt: false };   // yt : une fenetre YouTube est ouverte et aucun geste du visiteur sur une source depuis (1.12.22)
+const srcFrameOn = () => { const f = document.querySelector('#frameWin iframe'); if (!SRC.yt || !f) return false; try { return /(^|\.)(youtube(-nocookie)?\.com|youtu\.be)$/i.test(new URL(f.src, location.href).hostname); } catch (e) { return false; } };   // 1.12.22 : seule une page YouTube coupe le son des sources (une autre page ne change rien)
+const SRC_CK = { radio: ['visRadio', 'stateRadioCk', 'soundRadioCk'], music: ['visMusic', 'stateMusicCk', 'soundMusicCk'], video: ['visVideo', 'soundVideoCk'] };
+const srcSetFlag = (k, on) => { VIS[k] = on; for (const id of SRC_CK[k]) { const c = document.getElementById(id); if (c) c.checked = on; } };
+const srcOnly = k => { SRC.pref = null; for (const o of Object.keys(SRC_CK)) if (o !== k) srcSetFlag(o, false); };   // une seule source a la fois : cocher l'une decoche les autres
 const RADIO = (() => {
-  let a = null, cur = null, gain = 0, dist = 0, out = false, src = '', shown = '', asked = '', selIdx = 0;   // asked : flux dont la page a demandé le titre au serveur (1.11.1) ; out : zone hors de portée (1.11.18) ; selIdx : flux choisi dans la liste (1.11.13)
+  let a = null, cur = null, gain = 0, dist = 0, out = false, lost = false, src = '', shown = '', asked = '', selIdx = 0;   // asked : flux dont la page a demandé le titre au serveur (1.11.1) ; out : zone hors de portée (1.11.18) ; selIdx : flux choisi dans la liste (1.11.13)
   const titles = new Map();   // 1.10.34 : url du flux -> titre du morceau (serveur de présence --radios) ; '' = inconnu
   const bad = new Map();   // zone id + flux -> cause de l'echec (code MEDIA_ERR_* et message du navigateur) ; oubliee quand on sort de la portee (reessai au retour) et quand on choisit ce flux dans la liste (1.11.20 : par flux, pas par zone)
   const bk = () => cur ? cur.id + '\u0001' + selIdx : '';
@@ -773,8 +786,8 @@ const RADIO = (() => {
     L.push(tr(n > 1 ? 'page.tip.radio.cmd.multi' : 'page.tip.radio.cmd'));
     return L.join('\n');
   };
-  const show = key => { shown = key; radioTxt(key ? tr(key, streamTitle(), cur && bad.get(bk())) + (key === 'page.radio.playing' && cur && titles.get(activeUrl()) ? ' \u2014 ' + titles.get(activeUrl()) : '') : '', cur && (key === 'page.radio.playing' || key === 'page.radio.waiting' || key === 'page.radio.far') ? distTxt(cur, dist) : '', key === 'page.radio.far'); radioTip(tip()); };   // 1.11.13 : le titre affiche celui du flux choisi (labels), pas toujours le premier
-  const lvl = () => VIS.sounds && VIS.radio ? Math.max(0, Math.min(1, gain * VIS.srcVolume / 100)) : 0;
+  const show = key => { shown = key; radioTxt(key ? tr(key, streamTitle(), cur && bad.get(bk())) + (key === 'page.radio.playing' && cur && titles.get(activeUrl()) ? ' \u2014 ' + titles.get(activeUrl()) : '') : '', cur && (key === 'page.radio.playing' || key === 'page.radio.waiting' || key === 'page.radio.far' || key === 'page.radio.lost' || key === 'page.radio.muted') ? distTxt(cur, dist) : '', key === 'page.radio.far'); radioTip(tip()); };   // 1.11.13 : le titre affiche celui du flux choisi (labels), pas toujours le premier
+  const lvl = () => VIS.sounds && VIS.radio && !lost && !SRC.mute && !srcFrameOn() ? Math.max(0, Math.min(1, gain * VIS.srcVolume / 100)) : 0;
   const stop = () => { if (!a || !src) return; src = ''; a.pause(); a.removeAttribute('src'); a.load(); };
   const ensure = () => {
     if (a) return a;
@@ -800,11 +813,12 @@ const RADIO = (() => {
     const v = lvl();
     selSync();   // le choix du flux suit l'état de la radio (comme la ligne « Radio : … ») : visible tant qu'une zone radio à plusieurs flux est en cours
     if (!cur) { stop(); show(''); return; }
-    if (out) { stop(); show('page.radio.far'); return; }   // 1.11.18 : hors de portee : rien ne joue, la ligne reste avec la distance
+    if (out) { stop(); show('page.radio.far'); return; }
+    if (lost) { stop(); show('page.radio.lost'); return; }   // 1.12.22 : une autre source parle : la ligne et le choix du flux restent (s'en servir rend la parole a la radio)   // 1.11.18 : hors de portee : rien ne joue, la ligne reste avec la distance
     if (bad.has(bk())) { stop(); show('page.radio.error'); return; }
     const au = activeUrl();
     if (location.protocol === 'https:' && /^\s*http:/i.test(au)) { bad.set(bk(), tr('page.radio.mixed')); stop(); show('page.radio.error'); toast(tr('page.radio.error', streamTitle(), bad.get(bk()))); return; }
-    if (v <= 0) { stop(); show('page.radio.off'); return; }
+    if (v <= 0) { stop(); show(SRC.mute || srcFrameOn() ? 'page.radio.muted' : 'page.radio.off'); return; }
     const el = ensure(); el.volume = v;
     if (src !== au) { stop(); src = au; el.src = src; }
     if (!el.paused) return;
@@ -826,9 +840,9 @@ const RADIO = (() => {
   const refresh = () => { refresh0(); ask(); };
   for (const ev of ['pointerdown', 'keydown', 'touchstart']) addEventListener(ev, () => { if (cur && (!a || a.paused)) refresh(); }, true);   // après la première action : le flux démarre (SND a déjà noté l'action : il écoute avant)
   return {
-    set(z, g, d, o) { const ch = !cur !== !z || (z && cur && z.id !== cur.id), back = !ch && out && !o; if (ch) { if (cur) badClear(cur); selIdx = 0; } if (back && cur) badClear(cur); cur = z; gain = g; dist = d || 0; const oc = out !== !!o; out = !!o; selSync(); if (ch || oc) refresh(); else { if (a && src && !a.paused) a.volume = lvl(); if (shown === 'page.radio.playing' || shown === 'page.radio.waiting' || shown === 'page.radio.far') show(shown); radioTip(tip()); } },
+    set(z, g, d, o, l) { const ch = !cur !== !z || (z && cur && z.id !== cur.id), back = !ch && out && !o; if (ch) { if (cur) badClear(cur); selIdx = 0; } if (back && cur) badClear(cur); cur = z; gain = g; dist = d || 0; const oc = out !== !!o, lc = lost !== !!l; out = !!o; lost = !!l; selSync(); if (ch || oc || lc) refresh(); else { if (a && src && !a.paused) a.volume = lvl(); if (shown === 'page.radio.playing' || shown === 'page.radio.waiting' || shown === 'page.radio.far') show(shown); radioTip(tip()); } },
     setSelEl,
-    setIdx(i) { selIdx = i; bad.delete(bk()); refresh(); },   // choisir un flux le reessaie, meme s'il avait echoue
+    setIdx(i) { selIdx = i; bad.delete(bk()); srcPref('radio'); refresh(); },   // choisir un flux le reessaie, meme s'il avait echoue
     title(url, t) { titles.set(url, t); if (cur && activeUrl() === url && shown) show(shown); },
     refresh, playing: () => !!(a && src && !a.paused), level: () => (a && src ? a.volume : 0)
   };
@@ -837,7 +851,7 @@ const RADIO = (() => {
 // memes regles que la radio (la zone la plus proche, volume = (1 - distance / portee) x volume radio / musique de la fenetre Son, arret hors portee et en vue globale, son seulement apres une premiere action du visiteur) ;
 // une piste illisible est sautee (toutes illisibles : la ligne « Musique » le dit) ; en quittant la zone puis en revenant, la lecture reprend a la piste ou elle en etait
 const MUSIC = (() => {
-  let a = null, cur = null, gain = 0, dist = 0, out = false, tracks = [], idx = 0, loaded = '', loading = '', shown = '', fails = 0;
+  let a = null, cur = null, gain = 0, dist = 0, out = false, lost = false, tracks = [], idx = 0, loaded = '', loading = '', shown = '', fails = 0;
   const lists = new Map(), bad = new Map(), pos = new Map();   // zone id -> pistes [{ name, url }] ; zone id -> { key, cause } ; zone id -> piste en cours
   const ERR = { 1: 'MEDIA_ERR_ABORTED', 2: 'MEDIA_ERR_NETWORK', 3: 'MEDIA_ERR_DECODE', 4: 'MEDIA_ERR_SRC_NOT_SUPPORTED' };
   const cause = () => a && a.error ? (ERR[a.error.code] || 'MEDIA_ERR_' + a.error.code) + (a.error.message ? ' : ' + a.error.message : '') : '?';
@@ -850,8 +864,8 @@ const MUSIC = (() => {
     L.push(tr(n > 1 ? 'page.tip.music.cmd.multi' : 'page.tip.music.cmd'));
     return L.join('\n');
   };
-  const show = (key, extra) => { shown = key; musicTxt(key ? tr(key, label(), extra !== undefined ? extra : (tracks[idx] ? tracks[idx].name : '')) : '', (key === 'page.music.playing' || key === 'page.music.waiting' || key === 'page.music.far') && cur ? distTxt(cur, dist) : '', key === 'page.music.far'); musicTip(tip()); };   // la ligne « Musique »
-  const lvl = () => VIS.sounds && VIS.music ? Math.max(0, Math.min(1, gain * VIS.srcVolume / 100)) : 0;
+  const show = (key, extra) => { shown = key; musicTxt(key ? tr(key, label(), extra !== undefined ? extra : (tracks[idx] ? tracks[idx].name : '')) : '', (key === 'page.music.playing' || key === 'page.music.waiting' || key === 'page.music.far' || key === 'page.music.lost' || key === 'page.music.muted') && cur ? distTxt(cur, dist) : '', key === 'page.music.far'); musicTip(tip()); };   // la ligne « Musique »
+  const lvl = () => VIS.sounds && VIS.music && !lost && !SRC.mute && !srcFrameOn() ? Math.max(0, Math.min(1, gain * VIS.srcVolume / 100)) : 0;
   const stop = () => { if (!a) return; loaded = ''; a.pause(); a.removeAttribute('src'); a.load(); };
   const next = () => { if (!tracks.length) return; idx = (idx + 1) % tracks.length; if (cur) pos.set(cur.id, idx); play(); };
   const prev = () => { if (!tracks.length) return; idx = (idx - 1 + tracks.length) % tracks.length; if (cur) pos.set(cur.id, idx); play(); };
@@ -885,31 +899,47 @@ const MUSIC = (() => {
   };
   const refresh = () => {
     if (!cur) { stop(); show(''); return; }
-    if (out) { stop(); show('page.music.far', ''); return; }   // 1.11.18 : hors de portee : rien ne joue, la ligne reste avec la distance
+    if (out) { stop(); show('page.music.far', ''); return; }
+    if (lost) { stop(); show('page.music.lost', ''); return; }   // 1.12.22 : une autre source parle : la ligne et ⏮ ⏭ restent   // 1.11.18 : hors de portee : rien ne joue, la ligne reste avec la distance
     const b = bad.get(cur.id); if (b) { stop(); show(b.key, b.cause); return; }
-    if (lvl() <= 0) { stop(); show('page.music.off', ''); return; }
+    if (lvl() <= 0) { stop(); show(SRC.mute || srcFrameOn() ? 'page.music.muted' : 'page.music.off', ''); return; }
     const L = lists.get(cur.id);
     if (!L) { load(cur); return; }
     if (tracks !== L) { tracks = L; idx = Math.min(pos.get(cur.id) || 0, L.length - 1); fails = 0; stop(); }
     play();
   };
   for (const ev of ['pointerdown', 'keydown', 'touchstart']) addEventListener(ev, () => { if (cur && (!a || a.paused)) refresh(); }, true);   // apres la première action : la piste démarre
-  return { set(z, g, d, o) { const ch = !cur !== !z || (z && cur && z.id !== cur.id), back = !ch && out && !o; if ((ch || back) && cur) bad.delete(cur.id); cur = z; gain = g; dist = d || 0; const oc = out !== !!o; out = !!o; if (ch) { tracks = []; fails = 0; refresh(); } else if (oc) refresh(); else { if (a && loaded && !a.paused) a.volume = lvl(); if (shown === 'page.music.playing' || shown === 'page.music.waiting' || shown === 'page.music.far') show(shown); musicTip(tip()); } },
+  return { set(z, g, d, o, l) { const ch = !cur !== !z || (z && cur && z.id !== cur.id), back = !ch && out && !o; if ((ch || back) && cur) bad.delete(cur.id); cur = z; gain = g; dist = d || 0; const oc = out !== !!o, lc = lost !== !!l; out = !!o; lost = !!l; if (ch) { tracks = []; fails = 0; refresh(); } else if (oc || lc) refresh(); else { if (a && loaded && !a.paused) a.volume = lvl(); if (shown === 'page.music.playing' || shown === 'page.music.waiting' || shown === 'page.music.far') show(shown); musicTip(tip()); } },
     refresh, next, prev, playing: () => !!(a && loaded && !a.paused), level: () => (a && loaded ? a.volume : 0), track: () => (tracks[idx] ? tracks[idx].name : ''), trackIndex: () => idx, count: () => tracks.length };   // 1.11.14 : next exposé (arrête le morceau courant et passe à l'index suivant de la playlist) ; count (nombre de pistes, pour le bouton « ⏭ »)
 })();
-// une seule source a la fois : cocher « Radio des zones » decoche « Musique des zones » et inversement ; quand les deux sont cochees (etat de depart) et que les deux zones sont a portee,
-// la plus proche (gain le plus fort) joue, la radio en cas d'egalite ; une case cochee et l'autre non : seule la source cochee joue
-let rZ = null, rG = 0, rD = 0, rO = false, mZ = null, mG = 0, mD = 0, mO = false;
+// une seule source a la fois (1.12.21 : radio, musique et ecran video) : cocher l'une decoche les autres ; la source choisie par le visiteur (SRC.pref : flux, piste, clic sur un ecran) passe devant tant que sa zone est a portee ;
+// sinon, parmi les sources cochees a portee (toutes si aucune ou toutes sont cochees), la plus proche EN METRES parle (1.12.25 : le gain comparait des portees differentes), la radio puis la musique puis la video en cas d'egalite ;
+// toutes hors de portee (vue d'ensemble) : la plus proche s'affiche
+let rZ = null, rG = 0, rD = 0, rO = false, mZ = null, mG = 0, mD = 0, mO = false, vZ = null, vG = 0, vD = 0;
+let videoTxt = () => {};   // ligne « Video : … » de la fenetre Son (definie avec la fenetre)
 const audioArbitre = () => {
-  let useR = !!rZ, useM = !!mZ;
-  if (rZ && mZ) {
-    if (VIS.radio !== VIS.music) { useR = VIS.radio; useM = VIS.music; }
-    else { useR = rO && mO ? rD <= mD : rG >= mG; useM = !useR; }   // 1.11.18 : deux zones hors de portee : la plus proche s'affiche
-  }
-  RADIO.set(useR ? rZ : null, useR ? rG : 0, rD, useR && rO); MUSIC.set(useM ? mZ : null, useM ? mG : 0, mD, useM && mO);
+  const C3 = [];
+  if (rZ) C3.push({ k: 'radio', g: rG, d: rD, o: rO });
+  if (mZ) C3.push({ k: 'music', g: mG, d: mD, o: mO });
+  if (vZ) C3.push({ k: 'video', g: vG, d: vD, o: false });
+  let win = null;
+  if (C3.length) {
+    if (SRC.pref && !C3.some(c => c.k === SRC.pref && VIS[c.k])) SRC.pref = null;   // sa zone n'est plus a portee, ou la source a ete decochee
+    const on = C3.filter(c => VIS[c.k]);
+    const pool = SRC.pref ? C3.filter(c => c.k === SRC.pref) : (on.length && on.length < C3.length ? on : C3);
+    const near = pool.filter(c => !c.o);
+    win = (near.length ? near.reduce((a, b) => b.d < a.d ? b : a) : pool.reduce((a, b) => b.d < a.d ? b : a)).k;
+  } else SRC.pref = null;
+  SRC.win = win;
+  RADIO.set(rZ, win === 'radio' ? rG : 0, rD, rO, win !== 'radio'); MUSIC.set(mZ, win === 'music' ? mG : 0, mD, mO, win !== 'music');   // 1.12.22 : la zone reste donnee (ligne et choix du flux affiches) ; le dernier argument dit « une autre source parle »
+  videoTxt(win === 'video' ? vZ : null, vD);
 };
+const srcPref = k => { const y = srcFrameOn(); SRC.yt = false; SRC.pref = k; if (!VIS[k]) { srcSetFlag(k, true); visSave(); } audioArbitre(); if (y) srcRefresh(); };   // 1.12.22 : un geste sur une source reprend la main sur la fenetre YouTube (la page ne peut pas arreter le lecteur : il continue)   // un geste du visiteur sur une source (choix d'un flux, piste suivante, clic sur un ecran) la rend prioritaire
+srcRefresh = () => { RADIO.refresh(); MUSIC.refresh(); };
 if (C.walk) { viewer.onCast = (z, g, d, o) => { rZ = z; rG = g; rD = d || 0; rO = !!o; audioArbitre(); }; viewer.onAudio = (z, g, d, o) => { mZ = z; mG = g; mD = d || 0; mO = !!o; audioArbitre(); }; viewer.onRadio = (url, t) => RADIO.title(url, t); }
-viewer.videoSound = () => VIS.sounds && SND.acted() ? Math.max(0, Math.min(1, VIS.srcVolume / 100)) : 0;   // 1.12.9 : son des ecrans video (zones avec sound: true) : reglage Son active, apres un premier geste, au volume radio / musique de la fenetre Son
+viewer.onVideoTalk = (z, g, d) => { if (z && (!vZ || vZ.id !== z.id)) SRC.pref = null; vZ = z; vG = g; vD = d || 0; audioArbitre(); };   // 1.12.21 : l'ecran a son le plus proche (core.js) entre dans l'arbitrage
+viewer.onVideoAct = z => { if (z && z.sound) srcPref('video'); };   // le visiteur lance un ecran (clic, piste suivante ou precedente)
+viewer.videoSound = () => VIS.sounds && VIS.video && !SRC.mute && SRC.win === 'video' && !srcFrameOn() && SND.acted() ? Math.max(0, Math.min(1, VIS.srcVolume / 100)) : 0;   // 1.12.9 : son des ecrans video (zones avec sound: true) ; 1.12.21 : seulement si l'ecran gagne l'arbitrage, case Videos cochee, son des sources non coupe et aucune fenetre flottante chargee
 viewer.setMyColor(VIS.color);
 if (C.presenceUrl && C.walk) viewer.onPeer = kind => { if (kind === 'join' && VIS.soundJoin) SND.join(); else if (kind === 'leave' && VIS.soundLeave) SND.leave(); };
 // v37 : boussole en haut au centre : point cardinal et degrés (« NE 45° »), sans dépendre de la couleur ; masquée par la case des réglages visiteur ou --no-compass
@@ -1037,12 +1067,12 @@ if (C.panel !== false) {
     rgV.onchange = () => { SND.sample(); };
     op.append(lab(tr('page.opt.sounds'), cbS));
     const wv = mk('label'); wv.append(rgV, mk('span', { textContent: tr('page.opt.volume') }), vV); op.append(wv);
-    for (const [k, t, id, need] of [['soundCite', tr('page.opt.sound.cite'), 'visSoundCite', C.chat && !!C.presenceUrl], ['soundMsg', tr('page.opt.sound.msg'), 'visSoundMsg', C.chat && !!C.presenceUrl], ['soundJoin', tr('page.opt.sound.join'), 'visSoundJoin', !!C.presenceUrl], ['soundLeave', tr('page.opt.sound.leave'), 'visSoundLeave', !!C.presenceUrl], ['radio', tr('page.opt.sound.radio'), 'visRadio', true], ['music', tr('page.opt.sound.music'), 'visMusic', true]]) {
+    for (const [k, t, id, need] of [['soundCite', tr('page.opt.sound.cite'), 'visSoundCite', C.chat && !!C.presenceUrl], ['soundMsg', tr('page.opt.sound.msg'), 'visSoundMsg', C.chat && !!C.presenceUrl], ['soundJoin', tr('page.opt.sound.join'), 'visSoundJoin', !!C.presenceUrl], ['soundLeave', tr('page.opt.sound.leave'), 'visSoundLeave', !!C.presenceUrl], ['radio', tr('page.opt.sound.radio'), 'visRadio', true], ['music', tr('page.opt.sound.music'), 'visMusic', true], ['video', tr('page.opt.sound.video'), 'visVideo', true]]) {
       if (!need) continue;
       const cb = mk('input', { type: 'checkbox', id }); cb.checked = VIS[k]; cb.onchange = () => {
         VIS[k] = cb.checked;
-        if (cb.checked && (k === 'radio' || k === 'music')) { const o = k === 'radio' ? 'music' : 'radio', oc = document.getElementById(o === 'radio' ? 'visRadio' : 'visMusic'); VIS[o] = false; if (oc) oc.checked = false; }   // 1.11.4 : une seule source (radio ou musique des zones)
-        visSave(); if (k === 'radio' || k === 'music') { audioArbitre(); RADIO.refresh(); MUSIC.refresh(); }
+        if (cb.checked && (k === 'radio' || k === 'music' || k === 'video')) { srcOnly(k); srcPref(k); }   // 1.11.4 : une seule source (radio, musique ou video des zones ; 1.12.21 : la video aussi)
+        visSave(); if (k === 'radio' || k === 'music' || k === 'video') { audioArbitre(); RADIO.refresh(); MUSIC.refresh(); }
       }; subs.push(cb); op.append(lab(t, cb));
     }
     syncS();
@@ -1131,13 +1161,13 @@ if (C.walk) {
     grp(tr('page.help.g.view'), [tr('page.help.view'), tr('page.help.m'), tr('page.help.wheel'), tr('page.help.end'), tr('page.help.alt')]),
     grp(tr('page.help.g.mouse'), [tr('page.help.mouse'), tr('page.help.esc'), tr('page.help.grab')]),
     (C.chat && on) ? grp(tr('page.help.g.chat'), [tr('page.help.chat.enter'), tr('page.help.chat.esc'), tr('page.help.chat.arrows'), tr('page.help.chat.fold')]) : null,
-    (hasZones || C.names) ? grp(tr('page.help.g.zones'), [hasZones ? tr('page.help.zone.click') : '', hasZones ? tr('page.help.zone.cone') : '', C.names ? tr('page.help.zone.name') : '']) : null,
+    (hasZones || C.names) ? grp(tr('page.help.g.zones'), [hasZones ? tr('page.help.zone.click') : '', hasZones ? tr('page.help.zone.cone') : '', hasZones ? tr('page.help.zone.mute') : '', C.names ? tr('page.help.zone.name') : '']) : null,
     grp(tr('page.help.g.page'), [tr('page.help.quit'), tr('page.help.h'), tr('page.help.i'), spawnList().length ? tr('page.help.l') : '', tr('page.help.o'), ABOUT.found ? tr('page.help.about') : '', hasMap ? tr('page.help.map.ctrl') : '', tr('page.help.k')])
   ].filter(Boolean); };
   const orbitGroups = () => [
     grp(tr('page.help.g.orbit'), [tr('page.help.orbit.drag'), tr('page.help.orbit.wheel'), tr('page.help.orbit.pan'), tr('page.help.orbit.reframe')]),
     grp(tr('page.help.g.walk'), [tr('page.help.enter'), tr('page.help.landing')]),
-    (hasZones || C.names) ? grp(tr('page.help.g.zones'), [hasZones ? tr('page.help.zone.click.orbit') : '', hasZones ? tr('page.help.zone.cone') : '', C.names ? tr('page.help.zone.name') : '']) : null,
+    (hasZones || C.names) ? grp(tr('page.help.g.zones'), [hasZones ? tr('page.help.zone.click.orbit') : '', hasZones ? tr('page.help.zone.cone') : '', hasZones ? tr('page.help.zone.mute') : '', C.names ? tr('page.help.zone.name') : '']) : null,
     grp(tr('page.help.g.page'), [tr('page.help.h'), tr('page.help.i'), spawnList().length ? tr('page.help.l') : '', tr('page.help.o'), ABOUT.found ? tr('page.help.about') : '', hasMap ? tr('page.help.map') : '', tr('page.help.center'), tr('page.help.k')])
   ].filter(Boolean);
   const feat = tr('page.feat', C.panel !== false ? tr('page.feat.panel.yes') : tr('common.no'), on ? tr('page.feat.presence.yes', C.room) : tr('page.feat.presence.no'), on && C.chat ? tr('common.yes') : tr('common.no'),
@@ -1183,13 +1213,12 @@ if (C.walk) {
   };
   const srcLine = (line, k, id) => {
     const ck = document.createElement('input'); ck.type = 'checkbox'; ck.id = id; ck.className = 'srcCk'; ck.checked = !!VIS[k]; ck.disabled = !VIS.sounds;
-    ck.title = tr(k === 'radio' ? 'page.opt.sound.radio' : 'page.opt.sound.music');
+    ck.title = tr(k === 'radio' ? 'page.opt.sound.radio' : k === 'video' ? 'page.opt.sound.video' : 'page.opt.sound.music');
     const tx = document.createElement('span'); tx.className = 'srcTx';
     line.append(ck, tx);
     ck.onchange = () => {
-      VIS[k] = ck.checked;
-      const rc = document.getElementById(k === 'radio' ? 'visRadio' : 'visMusic'); if (rc) rc.checked = ck.checked;   // 1.11.20 : la case de Réglages suit celle de la fenêtre État
-      if (ck.checked) { const o = k === 'radio' ? 'music' : 'radio', oc = document.getElementById(o === 'radio' ? 'visRadio' : 'visMusic'), osc = document.getElementById(o === 'radio' ? 'stateRadioCk' : 'stateMusicCk'); VIS[o] = false; if (oc) oc.checked = false; if (osc) osc.checked = false; }   // une seule source (radio ou musique des zones)
+      srcSetFlag(k, ck.checked);   // 1.11.20 : la case de Réglages et celles des fenêtres État et Son suivent (1.12.21 : table SRC_CK)
+      if (ck.checked) { srcOnly(k); srcPref(k); }   // une seule source (radio, musique ou video des zones) ; cocher est un geste (1.12.22)
       visSave(); audioArbitre(); RADIO.refresh(); MUSIC.refresh();
     };
     return { ck, tx };
@@ -1202,14 +1231,14 @@ if (C.walk) {
   const mnext = document.createElement('button'); mnext.type = 'button'; mnext.id = 'musicNext'; mnext.className = 'srcNext'; mnext.textContent = '⏭'; mnext.hidden = true;
   mnext.title = tr('page.music.next');
   mnext.onmousedown = e => e.preventDefault();
-  mnext.onclick = () => MUSIC.next();
+  mnext.onclick = () => { srcPref('music'); MUSIC.next(); };
   mnext.style.marginLeft = '0';
   lmu.append(mnext);   // ordre dans la ligne : case, texte, ⏮, compteur, ⏭ (⏮ et le compteur sont insérés avant ⏭ plus bas)
 
   const mprev = document.createElement('button'); mprev.type = 'button'; mprev.id = 'musicPrev'; mprev.className = 'srcNext'; mprev.textContent = '⏮'; mprev.hidden = true;
   mprev.title = tr('page.music.prev');
   mprev.onmousedown = e => e.preventDefault();
-  mprev.onclick = () => MUSIC.prev();
+  mprev.onclick = () => { srcPref('music'); MUSIC.prev(); };
 
   const mcount = document.createElement('span'); mcount.id = 'musicCount'; mcount.className = 'srcNext'; mcount.style.border = 'none'; mcount.style.background = 'transparent'; mcount.style.margin = '0 4px';
   mcount.textContent = '';
@@ -1400,22 +1429,22 @@ if (C.walk) {
   let sndKind = '';   // 1.11.25 : type de la zone active (une seule ligne, Radio ou Musique, est affichee a la fois : audioArbitre)
   const soundP = mkPanel(sni, snh, snb, () => tr('page.sound.title') + (sndKind ? ' \u00b7 ' + sndKind : ''), 'glb2html_sound', 'glb2html_soundFold', false);
   let padReload = () => {};   // relit la position du pave (definie avec le pave) apres chargement ou remise a zero de la disposition
-  const lnone = document.createElement('div'), lrdS = document.createElement('div'), lmuS = document.createElement('div'), rsSelS = document.createElement('select');
+  const lnone = document.createElement('div'), lrdS = document.createElement('div'), lmuS = document.createElement('div'), lvdS = document.createElement('div'), rsSelS = document.createElement('select');
   lnone.id = 'soundNone'; lnone.textContent = tr('page.sound.none');
-  lrdS.id = 'soundRadioInfo'; lmuS.id = 'soundMusicInfo'; rsSelS.id = 'soundRadioSel'; lrdS.hidden = true; lmuS.hidden = true; rsSelS.hidden = true;
-  snb.append(lnone, rsSelS, lrdS, lmuS);
-  const sSr = srcLine(lrdS, 'radio', 'soundRadioCk'), sSm = srcLine(lmuS, 'music', 'soundMusicCk');
+  lrdS.id = 'soundRadioInfo'; lmuS.id = 'soundMusicInfo'; lvdS.id = 'soundVideoInfo'; rsSelS.id = 'soundRadioSel'; lrdS.hidden = true; lmuS.hidden = true; lvdS.hidden = true; rsSelS.hidden = true;
+  snb.append(lnone, rsSelS, lrdS, lmuS, lvdS);
+  const sSr = srcLine(lrdS, 'radio', 'soundRadioCk'), sSm = srcLine(lmuS, 'music', 'soundMusicCk'), sSv = srcLine(lvdS, 'video', 'soundVideoCk');
   sSr.ck.onchange = () => { sr.ck.checked = sSr.ck.checked; sr.ck.onchange(); };
   sSm.ck.onchange = () => { sm.ck.checked = sSm.ck.checked; sm.ck.onchange(); };
   const mkSb = (id, txt, tip, fn) => { const b = document.createElement('button'); b.type = 'button'; b.id = id; b.className = 'srcNext'; b.textContent = txt; b.title = tip; b.hidden = true; b.onmousedown = e => e.preventDefault(); b.onclick = fn; return b; };
-  const mprevS = mkSb('soundMusicPrev', '\u23EE', tr('page.music.prev'), () => MUSIC.prev()), mnextS = mkSb('soundMusicNext', '\u23ED', tr('page.music.next'), () => MUSIC.next());
+  const mprevS = mkSb('soundMusicPrev', '\u23EE', tr('page.music.prev'), () => { srcPref('music'); MUSIC.prev(); }), mnextS = mkSb('soundMusicNext', '\u23ED', tr('page.music.next'), () => { srcPref('music'); MUSIC.next(); });
   const mcountS = document.createElement('span'); mcountS.id = 'soundMusicCount'; mcountS.className = 'srcNext'; mcountS.hidden = true;
   lmuS.append(mprevS, mcountS, mnextS);
   rsSelS.onchange = () => { RADIO.setIdx(parseInt(rsSelS.value, 10) || 0); };
   RADIO.setSelEl(rsSelS);
   const soundNone = () => {
-    lnone.hidden = !(lrdS.hidden && lmuS.hidden);
-    const k = !lrdS.hidden ? tr('page.sound.kind.radio') : (!lmuS.hidden ? tr('page.sound.kind.audio') : '');
+    lnone.hidden = !(lrdS.hidden && lmuS.hidden && lvdS.hidden);
+    const k = !lrdS.hidden ? tr('page.sound.kind.radio') : (!lmuS.hidden ? tr('page.sound.kind.audio') : (!lvdS.hidden ? tr('page.sound.kind.video') : ''));
     if (k !== sndKind) { sndKind = k; soundP.apply(); }
   };
   const rTx0 = radioTxt, mTx0 = musicTxt, rTip0 = radioTip, mTip0 = musicTip;
@@ -1427,6 +1456,7 @@ if (C.walk) {
     if (!mcountS.hidden) mcountS.textContent = ' ' + (MUSIC.trackIndex() + 1) + '/' + MUSIC.count() + ' ';
     soundNone();
   };
+  videoTxt = (z, d) => { srcSync(sSv, 'video'); lvdS.hidden = !z; setSrcTx(sSv, z ? tr('page.video.playing', z.label || z.id) : '', z ? distTxt(z, d) : '', false); soundNone(); };   // 1.12.21 : « Video : … » tant qu'un ecran a son joue et gagne l'arbitrage
   radioTip = t => { rTip0(t); lrdS.title = t || ''; };
   musicTip = t => { mTip0(t); lmuS.title = t || ''; };
   soundToggle = () => { if (soundP.open) soundP.hide(); else soundP.show(); applyHelp(viewer.walking); place(); };
@@ -1453,6 +1483,13 @@ if (C.walk) {
   vRg.oninput = () => { VIS.srcVolume = Math.max(1, Math.min(100, parseInt(vRg.value, 10) || 50)); visSave(); vSync(); RADIO.refresh(); MUSIC.refresh(); };
   vRow.onkeydown = e => { if (e.key === 'Escape') { vRow.hidden = true; vSync(); vBtn.focus(); e.stopPropagation(); } };
   vSync(); sni.append(vBtn); snb.prepend(vRow);
+  // 1.12.21 : bouton muet (haut-parleur barre) a gauche du volume et touche N : coupe ou retablit d'un coup radio, musique et sons video (SRC.mute, valable pour la session) ; les cases et le volume ne changent pas
+  const mBtn = document.createElement('button'); mBtn.type = 'button'; mBtn.id = 'soundMute'; mBtn.className = 'sndV'; mBtn.onmousedown = e => e.preventDefault();
+  const mIco = on => '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path d="M1.5 5.8h3.2L8.6 2.6v10.8L4.7 10.2H1.5z" fill="currentColor"/>' + (on ? '<path d="M10.5 5.5l4 5M14.5 5.5l-4 5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>' : '<path d="M10.8 5.6a3.2 3.2 0 0 1 0 4.8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>') + '</svg>';   // muet : une croix ; sinon une onde (le dessin change, jamais la couleur seule)
+  const mSync = () => { const t = tr(SRC.mute ? 'page.sound.unmute' : 'page.sound.mute'); mBtn.innerHTML = mIco(true); mBtn.title = t; mBtn.setAttribute('aria-label', t); mBtn.setAttribute('aria-pressed', String(SRC.mute)); };
+  const muteToggle = () => { SRC.mute = !SRC.mute; mSync(); srcRefresh(); toast(tr(SRC.mute ? 'page.sound.mute.on' : 'page.sound.mute.off')); };
+  mBtn.onclick = muteToggle; mSync(); sni.insertBefore(mBtn, vBtn);
+  addEventListener('keydown', e => { const n = e.target && e.target.tagName; if (e.code === 'KeyN' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && n !== 'INPUT' && n !== 'TEXTAREA' && n !== 'SELECT') muteToggle(); });
   // v41 : fenêtres H, I, L déplaçables par leur titre. Deux piles : gauche (en bas, d'origine) et droite (sous Réglages : poussée quand Réglages s'ouvre).
   // Lâchée près d'une pile : elle s'y accroche (à la hauteur du lâcher) ; ailleurs : libre, à l'endroit exact. Double-clic sur le titre : retour à la
   // dernière pile où elle était accrochée. Disposition retenue par le navigateur (glb2html_layout) ; Réglages : enregistrer / charger un fichier .json.
