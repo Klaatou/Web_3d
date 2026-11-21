@@ -100,8 +100,8 @@ body.padOn #bar{max-width:max(200px,calc(50vw - 90px))}   /* v46 : la barre pass
 #lightPanel input[type=range]{width:130px}
 #lightPanel button{font:inherit;padding:2px 8px;border:1px solid #000;border-radius:6px;background:#fff;cursor:pointer}
 #lightPanel small{display:block;margin-top:6px;opacity:.8;contain:inline-size}
-#lightAsk,#metalAsk{position:fixed;bottom:56px;left:50%;transform:translateX(-50%);z-index:41;font:13px/1.4 ui-monospace,Consolas,monospace;background:#fff;color:#000;border:2px solid #000;border-radius:6px;padding:8px 12px;width:max-content;max-width:min(340px,90vw);box-sizing:border-box}
-#lightAsk button,#metalAsk button{font:inherit;margin-left:8px;padding:2px 10px;border:1px solid #000;border-radius:6px;background:#fff;cursor:pointer}
+#lightAsk,#metalAsk,#mpAsk{position:fixed;bottom:56px;left:50%;transform:translateX(-50%);z-index:41;font:13px/1.4 ui-monospace,Consolas,monospace;background:#fff;color:#000;border:2px solid #000;border-radius:6px;padding:8px 12px;width:max-content;max-width:min(340px,90vw);box-sizing:border-box}
+#lightAsk button,#metalAsk button,#mpAsk button{font:inherit;margin-left:8px;padding:2px 10px;border:1px solid #000;border-radius:6px;background:#fff;cursor:pointer}
 #toast{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:40;font:13px/1.4 ui-monospace,Consolas,monospace;background:#000;color:#fff;border-radius:6px;padding:8px 14px;max-width:90%}
 #frameWin{position:fixed;left:16px;top:calc((100vh - max(160px,min(330px,60vh))) / 2);width:min(480px,92vw);height:min(330px,60vh);min-width:260px;min-height:160px;max-width:98vw;max-height:92vh;z-index:25;display:flex;flex-direction:column;box-sizing:border-box;background:#fff;color:#000;border:2px solid #000;border-radius:8px;box-shadow:0 4px 16px #0007;resize:both;overflow:hidden;font:12px/1.4 ui-monospace,Consolas,monospace}   /* 1.12.3 : fenetre flottante d'une zone lien (cle frame) ; 1.12.6 : a gauche, centree en hauteur (le rectangle fantome d'Edge sans acceleration materielle est le symetrique du lecteur par rapport a la ligne mediane : il tombe alors sous la fenetre) */
 #frameWin .fwHead{display:flex;align-items:center;gap:6px;padding:3px 6px;border-bottom:2px solid #000;cursor:move;touch-action:none;user-select:none}
@@ -111,6 +111,32 @@ body.padOn #bar{max-width:max(200px,calc(50vw - 90px))}   /* v46 : la barre pass
 #frameWin iframe{width:100%;height:100%;border:0;display:block}
 #frameWin .fwLoad{font:inherit;padding:8px 14px;border:2px solid #000;border-radius:6px;background:#000;color:#fff;cursor:pointer}
 #frameWin.drag iframe{pointer-events:none}
+.mpWin{position:fixed;z-index:26;width:min(320px,92vw);height:min(250px,50vh);min-width:220px;min-height:120px;max-width:98vw;max-height:92vh;display:flex;flex-direction:column;box-sizing:border-box;background:#fff;color:#000;border:2px solid #000;border-radius:8px;box-shadow:0 4px 16px #0007;resize:both;overflow:hidden;font:12px/1.4 ui-monospace,Consolas,monospace}   /* 1.12.30 : une fenetre flottante par conversation privee */
+.mpWin[hidden]{display:none}
+.mpWin.min{height:auto!important;min-height:0;resize:none}
+.mpWin.min .mpBody,.mpWin.min .mpFoot{display:none}
+.mpHead{display:flex;align-items:center;gap:6px;padding:3px 6px;border-bottom:2px solid #000;cursor:move;touch-action:none;user-select:none}
+.mpWin.min .mpHead{border-bottom:0}
+.mpTitle{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:bold}
+.mpHead button{font:bold 13px/1 ui-monospace,Consolas,monospace;width:26px;height:22px;padding:0;border:1px solid #000;border-radius:5px;background:#fff;color:#000;cursor:pointer}
+.mpWin.blink .mpHead{animation:mpb 1s steps(1) infinite}
+@keyframes mpb{50%{background:#000;color:#fff}}
+@media (prefers-reduced-motion:reduce){.mpWin.blink .mpHead{animation:none;background:#000;color:#fff}}
+.mpBody{position:relative;flex:1;min-height:0;display:flex}
+.mpLog{flex:1;min-width:0;overflow-y:auto;overscroll-behavior:contain;padding:4px 6px}
+.mpLog div{margin-top:3px;word-break:break-word}
+.mpLog .me{background:#eee}
+.mpLog .sys{font-style:italic}
+.mpIgn{position:absolute;inset:0;background:#fff;overflow-y:auto;padding:6px}
+.mpIgn[hidden]{display:none}
+.mpIgn div{display:flex;gap:6px;align-items:center;margin-bottom:4px}
+.mpIgn span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mpFoot{border-top:2px solid #000;padding:4px 6px}
+.mpBar{display:flex;gap:6px;margin-bottom:4px;flex-wrap:wrap}
+.mpWin button.mpB,.mpIgn button{font:inherit;background:#fff;color:#000;border:1px solid #000;border-radius:5px;padding:1px 6px;cursor:pointer}
+.mpIn{box-sizing:border-box;width:100%;font:inherit;padding:4px;border:2px solid #000;border-radius:6px}
+body.touch .mpIn{font-size:16px}
+body.dmOn #chatLog b[data-pid]{cursor:pointer;text-decoration:underline dotted}
 #zonePrompt{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);z-index:30;font:13px/1.4 ui-monospace,Consolas,monospace;background:#000;color:#fff;border-radius:6px;padding:6px 12px}
 #fade{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .45s;z-index:50}
 #fade.on{opacity:1;pointer-events:auto}
@@ -2041,6 +2067,7 @@ if (C.presenceUrl && C.walk && C.chat) {
     const el = document.createElement('div');
     if (hit && VIS.bold) { el.style.fontWeight = 'bold'; el.appendChild(document.createTextNode('@ ')); el.dataset.cite = '1'; }
     const b = document.createElement('b'); b.textContent = m.name + ' : '; el.appendChild(b); el.appendChild(document.createTextNode(m.text));
+    if (m.id && !m.self) { b.dataset.pid = m.id; b.title = tr('page.mp.click'); b.onclick = () => { const p = [peerById(m.id), ...peersNow()].find(x => x && x.name === m.name); if (p) mpOpen(p); else toast(tr('page.mp.err.gone', m.name)); }; }   // 1.12.31 : un message de l'historique rejoue garde l'ancien id du visiteur : on retrouve alors le visiteur par son pseudo   // 1.12.30 : clic sur un pseudo = message prive
     return el;
   };
   viewer.onHistory = r => {
@@ -2141,7 +2168,7 @@ if (C.presenceUrl && C.walk && C.chat) {
       if (e.key === 'Tab' || e.key === 'Enter') { e.preventDefault(); cInsert(); return; }   // Entrée n'envoie pas tant que la liste est ouverte
       if (e.key === 'Escape') { e.preventDefault(); cDismissed = inp.value; cHide(); return; }   // ferme la liste, pas la saisie
     }
-    if (e.key === 'Enter') { e.preventDefault(); const v = inp.value.trim(); if (v) viewer.sendChat(v); inp.value = ''; cHide(); cDismissed = null; }   // envoie ET garde la saisie ouverte
+    if (e.key === 'Enter') { e.preventDefault(); const v = inp.value.trim(); if (v) sendLine(v); inp.value = ''; cHide(); cDismissed = null; }   // envoie ET garde la saisie ouverte
     else if (e.key === 'Escape') close();   // 1.1.9 : les flèches restent dans le texte (curseur) tant que la saisie est ouverte ; Échap la ferme et rend les flèches à la promenade
   });
   inp.addEventListener('keyup', e => { if (e.key.startsWith('Arrow')) viewer.holdKey(e.code, false); });
@@ -2153,10 +2180,181 @@ if (C.presenceUrl && C.walk && C.chat) {
     ct.id = 'chatTouch'; ct.hidden = true; bs.type = bc.type = 'button'; bs.id = 'chatSend'; bc.id = 'chatClose';
     bs.textContent = tr('page.chat.send'); bs.title = tr('page.chat.send.tip'); bc.textContent = tr('page.chat.close'); bc.title = tr('page.chat.close.tip');
     bs.onmousedown = e => e.preventDefault();   // le champ garde le focus (le clavier du téléphone reste ouvert)
-    bs.onclick = () => { const v = inp.value.trim(); if (v) viewer.sendChat(v); inp.value = ''; cHide(); cDismissed = null; inp.focus(); };
+    bs.onclick = () => { const v = inp.value.trim(); if (v) sendLine(v); inp.value = ''; cHide(); cDismissed = null; inp.focus(); };
     bc.onclick = () => { close(); setFold(true); };   // 1.11.1 : sans clavier, « Fermer » replie aussi le bloc
     ct.append(bs, bc); chat.append(ct);
   }
+  // 1.12.30 : messages prives. Une fenetre flottante par correspondant (cle k) ; fermer une fenetre la cache, son texte reste dans la page (aucune limite tant que la page est affichee) ;
+  // « Ignorer » masque chat, bulles et MP d'une cle (liste gardee dans le navigateur) ; rien n'est garde cote serveur
+  const IGN_KEY = 'web3d.ignore', ign = new Map();
+  try { const o = JSON.parse(localStorage.getItem(IGN_KEY) || '[]'); if (Array.isArray(o)) for (const e of o) if (Array.isArray(e) && typeof e[0] === 'string' && e[0]) ign.set(e[0].slice(0, 24), String(e[1] || '?').slice(0, 60)); } catch (e) {}
+  const ignSave = () => { try { localStorage.setItem(IGN_KEY, JSON.stringify([...ign])); } catch (e) {} viewer.setIgnored([...ign.keys()]); mpRefresh(); };
+  viewer.setIgnored([...ign.keys()]);
+  const MP = new Map(), mpOrder = [];
+  let mpZ = 26, mpN = 0;
+  const peersNow = () => viewer.getPresence().peers;
+  const peerById = id => peersNow().find(p => p.id === id);
+  const peerByK = k => (k ? peersNow().find(p => p.k === k) : null);
+  const mpFind = (k, name) => MP.get(k || 'n:' + name);
+  const mpPeer = c => (c.k && peerByK(c.k)) || peerById(c.id) || null;
+  const mpTitle = c => { c.title.textContent = tr('page.mp.title', c.name) + (c.gone ? ' ' + tr('page.mp.gone') : '') + (c.unread ? ' (' + c.unread + ')' : ''); };
+  const mpRefresh = () => {
+    for (const c of MP.values()) { c.ignBtn.hidden = !ign.size; c.ignBtn.textContent = tr('page.mp.ignores', ign.size); if (!c.ignPanel.hidden) mpIgnDraw(c); }
+  };
+  const mpIgnDraw = c => {
+    c.ignPanel.textContent = '';
+    if (!ign.size) { const d = document.createElement('div'); d.textContent = tr('page.mp.ignores.none'); c.ignPanel.appendChild(d); return; }
+    for (const [k, n] of ign) {
+      const d = document.createElement('div'), s = document.createElement('span'), b = document.createElement('button');
+      s.textContent = n; b.type = 'button'; b.textContent = tr('page.mp.restore');
+      b.onclick = () => { ign.delete(k); ignSave(); toast(tr('page.mp.unignored', n)); };
+      d.append(s, b); c.ignPanel.appendChild(d);
+    }
+  };
+  const mpLimit = () => { const vis = mpOrder.filter(c => !c.win.hidden && !c.win.classList.contains('min')); while (vis.length > 8) vis.shift().win.classList.add('min'); };
+  const mpFront = c => { c.win.style.zIndex = Math.min(39, ++mpZ); const i = mpOrder.indexOf(c); if (i >= 0) mpOrder.splice(i, 1); mpOrder.push(c); };
+  const mpRead = c => { if (c.unread || c.win.classList.contains('blink')) { c.unread = 0; c.win.classList.remove('blink'); mpTitle(c); } };
+  const mpShow = (c, focus) => {
+    if (focus && document.pointerLockElement && document.exitPointerLock) document.exitPointerLock();
+    c.win.hidden = false; c.win.classList.remove('min'); mpFront(c); mpLimit(); mpRead(c);
+    c.log.scrollTop = c.log.scrollHeight;
+    if (focus) { viewer.releaseKeys(); c.ta.focus(); }
+  };
+  const mpLine = (c, text, self, sys, t) => {
+    const d = document.createElement('div');
+    if (sys) { d.className = 'sys'; d.textContent = text; }
+    else {
+      const nm = self ? viewer.getName() : c.name, b = document.createElement('b');
+      if (self) d.className = 'me';
+      b.textContent = nm + ' : '; d.append(b, document.createTextNode(text));
+      c.lines.push({ t: t || new Date(), name: nm, text });
+    }
+    const stick = c.log.scrollTop + c.log.clientHeight >= c.log.scrollHeight - 6;
+    c.log.appendChild(d); if (stick) c.log.scrollTop = c.log.scrollHeight;
+  };
+  const mpSave = c => {
+    const now = new Date();
+    const lines = [tr('page.mp.file.head', C.room || '', c.name, fmtDate(now)), tr('page.mp.file.note'), ''].concat(c.lines.map(x => fmtDate(x.t) + ' | ' + x.name + ' | ' + x.text));
+    const blob = new Blob(['\ufeff' + lines.join('\r\n') + '\r\n'], { type: 'text/plain;charset=utf-8' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = 'mp_' + String(c.name).replace(/[^\p{L}\p{N}_-]+/gu, '_') + '_' + p2(now.getDate()) + '-' + p2(now.getMonth() + 1) + '-' + now.getFullYear() + '_' + p2(now.getHours()) + p2(now.getMinutes()) + p2(now.getSeconds()) + '.txt';
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    toast(trn('page.mp.saved', c.lines.length, c.name));
+  };
+  const mpIgnore = c => {
+    if (!c.k) { toast(tr('page.mp.noignore')); return; }
+    ign.set(c.k, c.name); ignSave(); c.win.hidden = true; toast(tr('page.mp.ignored', c.name));   // le texte deja echange reste dans la page
+  };
+  const mpSend = (c, text) => {
+    if (c.k && ign.has(c.k)) { toast(tr('page.mp.ignoring', c.name)); return false; }
+    if (!viewer.dmOK) { mpLine(c, tr('page.mp.off'), false, true); return false; }
+    const p = mpPeer(c);
+    if (!p) { mpLine(c, tr('page.mp.err.gone', c.name), false, true); return false; }
+    c.id = p.id;
+    return viewer.sendDM(p.id, text);
+  };
+  const mpMake = (k, name, id) => {
+    const c = { key: k || 'n:' + name, k, name, id, lines: [], unread: 0, gone: false };
+    const w = document.createElement('div'); w.className = 'mpWin'; w.hidden = true; w.setAttribute('role', 'dialog');
+    const n = mpN++; w.style.left = Math.min(16 + (n % 8) * 26, Math.max(0, innerWidth - 240)) + 'px'; w.style.top = (90 + (n % 8) * 26) + 'px';
+    const hd = document.createElement('div'); hd.className = 'mpHead';
+    const tt = document.createElement('span'); tt.className = 'mpTitle';
+    const btn = (txt, tip, f) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = txt; b.title = tip; b.setAttribute('aria-label', tip); b.onclick = f; return b; };
+    hd.append(tt, btn('–', tr('page.mp.min'), () => { w.classList.toggle('min'); if (!w.classList.contains('min')) { mpRead(c); c.log.scrollTop = c.log.scrollHeight; } }), btn('✕', tr('page.mp.close'), () => { w.hidden = true; try { window.focus(); } catch (e) {} }));
+    const bd = document.createElement('div'); bd.className = 'mpBody';
+    const lg = document.createElement('div'); lg.className = 'mpLog'; lg.setAttribute('aria-live', 'polite');
+    const ip = document.createElement('div'); ip.className = 'mpIgn'; ip.hidden = true;
+    bd.append(lg, ip);
+    const ft = document.createElement('div'); ft.className = 'mpFoot';
+    const bar = document.createElement('div'); bar.className = 'mpBar';
+    const bt = (txt, tip, f) => { const b = btn(txt, tip, f); b.className = 'mpB'; b.removeAttribute('aria-label'); return b; };
+    const ignBtn = bt('', tr('page.mp.ignores.tip'), () => { ip.hidden = !ip.hidden; if (!ip.hidden) mpIgnDraw(c); });
+    bar.append(bt(tr('page.mp.save'), tr('page.mp.save.tip'), () => mpSave(c)), bt(tr('page.mp.ignore'), tr('page.mp.ignore.tip'), () => mpIgnore(c)), ignBtn);
+    const ta = document.createElement('input'); ta.className = 'mpIn'; ta.maxLength = 200; ta.placeholder = tr('page.mp.ph'); ta.setAttribute('aria-label', tr('page.mp.ph'));
+    ft.append(bar, ta); w.append(hd, bd, ft);
+    Object.assign(c, { win: w, title: tt, log: lg, ta, ignBtn, ignPanel: ip });
+    ta.addEventListener('keydown', e => {
+      e.stopPropagation();
+      if (e.key === 'Enter') { e.preventDefault(); const v = ta.value.trim(); if (v && mpSend(c, v)) ta.value = ''; }
+      else if (e.key === 'Escape') { ta.blur(); try { window.focus(); } catch (x) {} }
+    });
+    ta.addEventListener('focus', () => { viewer.releaseKeys(); mpRead(c); });
+    w.addEventListener('pointerdown', () => { mpFront(c); mpRead(c); });
+    let dx = 0, dy = 0, drag = false;
+    hd.onpointerdown = e => { if (e.target.closest('button')) return; const r = w.getBoundingClientRect(); dx = e.clientX - r.left; dy = e.clientY - r.top; drag = true; try { hd.setPointerCapture(e.pointerId); } catch (x) {} };
+    hd.onpointermove = e => { if (drag) { w.style.left = Math.max(0, Math.min(innerWidth - 60, e.clientX - dx)) + 'px'; w.style.top = Math.max(0, Math.min(innerHeight - 30, e.clientY - dy)) + 'px'; } };
+    hd.onpointerup = hd.onpointercancel = () => { drag = false; };
+    document.body.appendChild(w); mpTitle(c); mpRefresh();
+    MP.set(c.key, c); return c;
+  };
+  const mpGet = (k, name, id) => {
+    const c = mpFind(k, name) || mpMake(k, name, id);
+    if (id !== undefined) c.id = id;
+    if (name && name !== c.name) { c.name = name; mpTitle(c); }
+    return c;
+  };
+  // 1.12.31 : clic sur l'avatar ou le nom d'un visiteur dans la scene : question « Écrire un message privé à X ? » (garde-fou contre un clic involontaire), sans effet si les MP sont indisponibles
+  viewer.onPeerClick = p => {
+    if (!viewer.dmOK) return;
+    if (p.k && ign.has(p.k)) { toast(tr('page.mp.ignoring', p.name)); return; }
+    const old = document.getElementById('mpAsk'); if (old) old.remove();
+    const box = document.createElement('div'); box.id = 'mpAsk'; box.setAttribute('role', 'alertdialog');
+    const yes = Object.assign(document.createElement('button'), { type: 'button', textContent: tr('page.mp.ask.yes') });
+    const no = Object.assign(document.createElement('button'), { type: 'button', textContent: tr('page.mp.ask.no') });
+    let tm = 0; const done = () => { clearTimeout(tm); box.remove(); };
+    box.append(Object.assign(document.createElement('span'), { textContent: tr('page.mp.ask', p.name) }), yes, no);
+    yes.onclick = () => { done(); const q = (p.k && peerByK(p.k)) || peerById(p.id); if (q) mpOpen(q); else toast(tr('page.mp.err.gone', p.name)); };
+    no.onclick = done;
+    document.body.appendChild(box); tm = setTimeout(done, 10000);   // sans reponse, la question disparait seule
+  };
+  const mpOpen = p => { if (!viewer.dmOK) { toast(tr('page.mp.off')); return; } mpShow(mpGet(p.k || '', p.name, p.id), true); };
+  viewer.onDM = m => {
+    const c = mpGet(m.k, m.name, m.id);
+    mpLine(c, m.text, m.self, false, new Date(m.ts * 1000));
+    if (m.self) return;
+    const away = document.hidden || !document.hasFocus();
+    if (c.win.hidden) { c.win.hidden = false; c.win.classList.add('min'); mpFront(c); mpLimit(); }   // une fenetre qui s'ouvre seule arrive reduite, sans prendre le focus
+    const min = c.win.classList.contains('min');
+    if (min || away) { c.unread++; mpTitle(c); }
+    if (min) c.win.classList.add('blink');
+    if (VIS.soundMsg && (min || away)) SND.msg();
+  };
+  viewer.onDMErr = m => {
+    const c = [...MP.values()].find(x => x.id === m.to), nm = c ? c.name : '?';
+    const t = { off: tr('page.mp.err.off'), rate: tr('page.mp.err.rate'), gone: tr('page.mp.err.gone', nm), self: tr('page.mp.err.self') }[m.why] || tr('page.mp.err.refused');
+    if (c && !c.win.hidden) mpLine(c, t, false, true); else toast(t);
+  };
+  // « /mp pseudo message », « /ignore pseudo », « /unignore pseudo » (ou « tous ») ; le reste part dans le chat public
+  const nameMatch = rest => {
+    const r = rest.replace(/^@/, ''), low = r.toLowerCase(); let best = null;
+    for (const p of peersNow()) { const n = p.name; if (!n) continue; const nl = n.toLowerCase(); if ((low === nl || low.startsWith(nl + ' ')) && (!best || n.length > best.p.name.length)) best = { p, text: r.slice(n.length).trim() }; }
+    return best;
+  };
+  const sendLine = v => {
+    const m = /^\/(mp|pm|dm|ignore|ignorer|unignore)(?:\s+(.*))?$/i.exec(v);
+    if (!m) { viewer.sendChat(v); return; }
+    const cmd = m[1].toLowerCase(), arg = (m[2] || '').trim();
+    if (cmd === 'unignore') {
+      const low = arg.replace(/^@/, '').toLowerCase();
+      if (/^(all|tous)$/.test(low)) { ign.clear(); ignSave(); toast(tr('page.mp.unignored.all')); return; }
+      const e = [...ign].find(x => x[1].toLowerCase() === low);
+      if (!e) { toast(tr('page.mp.unknown', arg)); return; }
+      ign.delete(e[0]); ignSave(); toast(tr('page.mp.unignored', e[1])); return;
+    }
+    if (!arg) { toast(tr(cmd.startsWith('ignor') ? 'page.mp.usage.ignore' : 'page.mp.usage')); return; }
+    const r = nameMatch(arg);
+    if (!r) { toast(tr('page.mp.unknown', arg.replace(/^@/, '').split(/\s+/)[0])); return; }
+    if (cmd.startsWith('ignor')) { mpIgnore(mpGet(r.p.k || '', r.p.name, r.p.id)); return; }
+    if (!viewer.dmOK) { toast(tr('page.mp.off')); return; }
+    const c = mpGet(r.p.k || '', r.p.name, r.p.id);
+    if (r.text) { if (mpSend(c, r.text) && c.win.hidden) mpShow(c, false); } else mpShow(c, true);
+  };
+  setInterval(() => {
+    document.body.classList.toggle('dmOn', !!viewer.dmOK);
+    if (![...MP.values()].some(c => !c.win.hidden)) return;
+    const ps = peersNow();
+    for (const c of MP.values()) if (!c.win.hidden) { const g = !((c.k && ps.some(p => p.k === c.k)) || ps.some(p => p.id === c.id)); if (g !== c.gone) { c.gone = g; mpTitle(c); } }
+  }, 1000);
   CTL.chat = { open: () => !!(openChat && openChat()), get isOpen() { return !inp.hidden; }, get unread() { return unread; } };
   setInterval(render, 1000);
 }

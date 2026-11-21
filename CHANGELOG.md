@@ -6,6 +6,24 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.12.0)
 
+### 21/11/2026: private messages, click on the avatar or its name (batch 1.12.31)
+
+- **Request** (Klaatou): clicking a name in the chat did not work in his try; a click on the avatar or its name would be useful, with a confirmation against accidental clicks.
+- **Finding**: clicking a chat name works in the test with a real mouse (Chromium); a likely cause in his try: for a message **replayed from the history**, the visitor's id is no longer today's and the click ended with "is no longer here". **Fixed**: the visitor is then found by name. If the defect remains after this batch, describe what is displayed (message, window, nothing).
+- **Done**: single click on the avatar, its name or its bubble in the scene (`core.js`, `peerFromClick`, `viewer.onPeerClick`): the page asks "Send a private message to X?" (Yes / No, disappears by itself after 10 s) and opens the window only after "Yes". A double click is still the teleport (the single click only acts after 350 ms without a second click); a visitor hidden behind a solid element is not reached; without DMs on the server the click does nothing; an ignored visitor opens nothing. `getPresence().peers[].screen` gives the on-screen position (tests). Clicking a chat name stays direct, without confirmation.
+- **Tests**: `tests/presence_mp_page.py` extended (avatar click: question, No, Yes).
+- Files: `src/core.js`, `src/template.html`, `src/i18n/fr.json`, `src/i18n/en.json`, `tests/presence_mp_page.py`, `docs/fr/MANUEL.md`, `docs/en/MANUAL.md`, `CHANGELOG.fr.md`, `CHANGELOG.md`, `VERSION`.
+
+### 21/11/2026: private messages between walkers, page side (batch 1.12.30)
+
+- **Request** (Klaatou): follow-up to batch 1.12.29: one floating window per conversation, "Ignore", local save; closing a window does not delete its text; the in-page archive has no limit while the page is displayed.
+- **Finding**: the `k` key was only published with DMs; without it in the public data (`welcome`, `join`), "Ignore" could hide neither the public chat nor the bubbles. **Server** (`presence_server.py`): `Peer.public()` now carries `k` (truncated, non-reversible hash).
+- **Done, page** (`core.js`, `template.html`): `core.js` handles `dm` and `dmerr` (`viewer.sendDM`, `onDM`, `onDMErr`, `setIgnored`, `dmOK`), knows each visitor's key, and shows neither chat line nor bubble of an ignored visitor. Page: one floating window per correspondent (draggable, minimized or closed without losing the text, at most 8 open), incoming DM = minimized blinking window (inverted header, no colour) without taking focus, click on a chat name, `/mp name message`, `/ignore name`, `/unignore name|all`, Save / Ignore / Ignored (n) buttons per window, ignore list kept in the browser (`web3d.ignore`). Everything is hidden (names not clickable, `/mp` refused) if the server does not offer DMs (`--no-dm`, older server).
+- **Limits**: the history replayed on arrival is not filtered by "Ignore" (its old messages have no reliable key); a visitor without a persistent identifier is ignored only for the length of their connection.
+- **Tests**: `tests/presence_mp_page.py` (minimized blinking reception without focus, reply and echo, closing without loss, click on a name, `/mp`, save with BOM, ignoring chat, bubble and DMs, persistence after reload, `/unignore`, `--no-dm` server). `tests/presence_mp.py` unchanged.
+- **Not tried here**: Windows, Edge, touch.
+- Files: `src/presence_server.py`, `src/core.js`, `src/template.html`, `src/i18n/fr.json`, `src/i18n/en.json`, `tests/presence_mp_page.py`, `docs/fr/MANUEL.md`, `docs/en/MANUAL.md`, `CHANGELOG.fr.md`, `CHANGELOG.md`, `VERSION`.
+
 ### 20/11/2026: private messages between walkers, server side (batch 1.12.29)
 
 - **Request** (Klaatou): private messages between visitors, one floating window per conversation, an "Ignore" feature, local save of the logs. This first batch is the presence server and its protocol; the page comes next.

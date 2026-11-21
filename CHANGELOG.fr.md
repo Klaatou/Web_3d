@@ -6,6 +6,24 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.12.0)
 
+### 21/11/2026 : messages privés, clic sur l'avatar ou le nom (lot 1.12.31)
+
+- **Demande** (Klaatou) : le clic sur un pseudo du chat n'avait pas fonctionné à l'essai ; un clic sur l'avatar ou son nom serait utile, avec une confirmation en cas de clic involontaire.
+- **Constat** : le clic sur un pseudo du chat fonctionne dans le test avec une vraie souris (Chromium) ; une cause probable à l'essai : pour un message **rejoué de l'historique**, l'identifiant du visiteur n'est plus celui d'aujourd'hui et le clic se terminait par « n'est plus là ». **Corrigé** : on retrouve alors le visiteur par son pseudo. Si le défaut persiste après ce lot, il faut décrire ce qui s'affiche (message, fenêtre, rien).
+- **Fait** : clic simple sur l'avatar, son nom ou sa bulle dans la scène (`core.js`, `peerFromClick`, `viewer.onPeerClick`) : la page demande « Écrire un message privé à X ? » (Oui / Non, disparaît seule au bout de 10 s) et n'ouvre la fenêtre qu'après « Oui ». Un double clic reste la téléportation (le clic simple n'agit qu'après 350 ms sans second clic) ; un visiteur caché derrière un élément plein n'est pas atteint ; sans MP sur le serveur, le clic n'a aucun effet ; un visiteur ignoré n'ouvre rien. `getPresence().peers[].screen` donne la position à l'écran (tests). Le clic sur un pseudo du chat reste direct, sans confirmation.
+- **Tests** : `tests/presence_mp_page.py` complété (clic sur l'avatar : question, Non, Oui).
+- Fichiers : `src/core.js`, `src/template.html`, `src/i18n/fr.json`, `src/i18n/en.json`, `tests/presence_mp_page.py`, `docs/fr/MANUEL.md`, `docs/en/MANUAL.md`, `CHANGELOG.fr.md`, `CHANGELOG.md`, `VERSION`.
+
+### 21/11/2026 : messages privés entre promeneurs, côté page (lot 1.12.30)
+
+- **Demande** (Klaatou) : suite du lot 1.12.29 : une fenêtre flottante par conversation, « Ignorer », enregistrement local ; fermer une fenêtre ne supprime pas son texte ; l'archive tant que la page est affichée n'a pas de limite.
+- **Constat** : la clé `k` n'était publiée qu'avec les MP ; sans elle dans les données publiques (`welcome`, `join`), « Ignorer » ne pouvait masquer ni le chat public ni les bulles. **Serveur** (`presence_server.py`) : `Peer.public()` porte maintenant `k` (empreinte tronquée, non réversible).
+- **Fait, page** (`core.js`, `template.html`) : `core.js` gère `dm` et `dmerr` (`viewer.sendDM`, `onDM`, `onDMErr`, `setIgnored`, `dmOK`), connaît la clé de chaque visiteur, et n'affiche ni ligne de chat ni bulle d'un visiteur ignoré. Page : une fenêtre flottante par correspondant (déplaçable, réduite ou fermée sans perdre le texte, 8 ouvertes au plus), MP reçu = fenêtre réduite qui clignote (en-tête inversé, sans couleur) sans prendre le focus, clic sur un pseudo du chat, `/mp pseudo message`, `/ignore pseudo`, `/unignore pseudo|tous`, boutons Enregistrer / Ignorer / Ignorés (n) par fenêtre, liste des ignorés dans le navigateur (`web3d.ignore`). Tout est masqué (pseudos non cliquables, `/mp` refusé) si le serveur ne propose pas les MP (`--no-dm`, ancien serveur).
+- **Limites** : l'historique rejoué à l'arrivée n'est pas filtré par « Ignorer » (ses anciens messages n'ont pas de clé fiable) ; un visiteur sans identifiant persistant n'est ignoré que le temps de sa connexion.
+- **Tests** : `tests/presence_mp_page.py` (réception réduite et clignotante sans focus, réponse et écho, fermeture sans perte, clic sur un pseudo, `/mp`, enregistrement avec BOM, ignorer chat, bulle et MP, mémorisation après rechargement, `/unignore`, serveur `--no-dm`). `tests/presence_mp.py` inchangé.
+- **Non essayé ici** : Windows, Edge, tactile.
+- Fichiers : `src/presence_server.py`, `src/core.js`, `src/template.html`, `src/i18n/fr.json`, `src/i18n/en.json`, `tests/presence_mp_page.py`, `docs/fr/MANUEL.md`, `docs/en/MANUAL.md`, `CHANGELOG.fr.md`, `CHANGELOG.md`, `VERSION`.
+
 ### 20/11/2026 : messages privés entre promeneurs, côté serveur (lot 1.12.29)
 
 - **Demande** (Klaatou) : messages privés entre visiteurs, une fenêtre flottante par conversation, une fonction « Ignorer », enregistrement local des journaux. Ce premier lot est le serveur de présence et son protocole ; la page vient ensuite.

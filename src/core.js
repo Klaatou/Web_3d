@@ -368,7 +368,7 @@ function webglMissing(host) {
 function createViewer(container, cfg0, loader) {
   const cfg = Object.assign({}, cfg0);
   if (cfg.zoneMarker) cfg.zoneMarker = zmNorm(cfg.zoneMarker);
-  let onMouse = null, onView = null, onFly = null, onCfg = null, onWalk = null, onPick = null, onPresence = null, onChat = null, onHistory = null, onBlink = null, onBlinkEnd = null, onPeer = null, onName = null, spectateOn = false, pickOrbit = false, walking = false, linkLock = false;
+  let onMouse = null, onView = null, onFly = null, onCfg = null, onWalk = null, onPick = null, onPresence = null, onChat = null, onHistory = null, onBlink = null, onBlinkEnd = null, onPeer = null, onPeerClick = null, onDM = null, onDMErr = null, onName = null, spectateOn = false, pickOrbit = false, walking = false, linkLock = false;
   const W = { pos: new THREE.Vector3(), spawn: new THREE.Vector3(), vy: 0, grounded: true, yaw: 0, pitch: 0, keys: new Set(), jumpReq: false, drag: false, mouseFree: false, saved: null, grid: null,
     fly: false, flyFloor: undefined, view: 'fps', cam: new THREE.Vector3(), cyaw: 0, cpitch: 0,
     tyaw: 0, tpitch: 0,   // v35 : caméra à la troisième personne (orbite propre) ; W.yaw reste l'orientation de l'avatar
@@ -1531,6 +1531,28 @@ function createViewer(container, cfg0, loader) {
     const info = pickNdc(locked ? 0 : (e.clientX - r.left) / r.width * 2 - 1, locked ? 0 : -((e.clientY - r.top) / r.height) * 2 + 1);
     onPick(info, locked ? r.left + r.width / 2 : e.clientX, locked ? r.top + r.height / 2 : e.clientY);
   }
+  // 1.12.31 : visiteur sous le pointeur (avatar, etiquette de nom ou bulle) : le plus proche, s'il n'est pas cache derriere un element plein
+  function peerFromClick(nx, ny) {
+    if (!P.peers.size) return null;
+    camera.updateMatrixWorld(true);
+    tpV.set(nx, ny); tpRay.setFromCamera(tpV, camera);
+    let best = null;
+    for (const q of P.peers.values()) {
+      if (!q.g.visible) continue;
+      const h = tpRay.intersectObject(q.g, true).find(x => x.object.visible);
+      if (h && (!best || h.distance < best.d)) best = { q, d: h.distance };
+    }
+    if (!best || best.d > 40) return null;
+    if (model) {
+      const tokens = parseIgnore(cfg.walkIgnore);
+      for (const m of tpRay.intersectObject(model, true)) {
+        if (m.distance >= best.d - 0.05) break;
+        if (m.object.isMesh && m.object.visible && !isIgnoredMesh(m.object, tokens)) return null;
+      }
+    }
+    return best.q;
+  }
+  const peerScreen = q => { camera.updateMatrixWorld(true); const r = dom.getBoundingClientRect(), p = q.g.position.clone(); p.y += 1; const pr = p.project(camera); return { sx: r.left + (pr.x + 1) / 2 * r.width, sy: r.top + (1 - pr.y) / 2 * r.height, front: pr.z < 1 }; };   // position du corps du visiteur a l'ecran (tests)
   let downPos = null, lastClick = { t: 0, x: 0, y: 0 };
   dom.addEventListener('pointerdown', e => { downPos = [e.clientX, e.clientY]; });
   dom.addEventListener('click', e => {
@@ -1560,6 +1582,10 @@ function createViewer(container, cfg0, loader) {
     }
     lastClick = { t: now, x: e.clientX, y: e.clientY };
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    if (onPeerClick && P.id) {   // 1.12.31 : clic simple sur un visiteur (avatar ou nom) ; un double clic reste la teleportation (on attend 350 ms qu'il n'y ait pas de second clic)
+      const rc = dom.getBoundingClientRect(), pq = peerFromClick(locked ? 0 : (e.clientX - rc.left) / rc.width * 2 - 1, locked ? 0 : -((e.clientY - rc.top) / rc.height) * 2 + 1);
+      if (pq) { const t0 = now; setTimeout(() => { if (lastClick.t === t0 && walking && P.peers.get(pq.id) === pq && onPeerClick) onPeerClick({ id: pq.id, name: pq.name, k: pq.k }); }, 350); return; }
+    }
     // un clic ne capture jamais la souris : seulement G ou le bouton « Capturer la souris » (grabMouse) ; sans capture, glisser bouton enfonce tourne la vue
     doPick(e, locked);
   });
@@ -1577,7 +1603,7 @@ function createViewer(container, cfg0, loader) {
     }
     return u;
   })();
-  const P = { ws: null, id: null, peers: new Map(), last: 0, name: '', state: 'off', retry: 0, timer: 0, sent: [0, 0, 0, 0], myColor: null, serverColor: null, opened: false, closeCode: null, closeReason: '', everOpened: false, stopped: false };
+  const P = { ws: null, id: null, peers: new Map(), last: 0, name: '', state: 'off', retry: 0, timer: 0, sent: [0, 0, 0, 0], myColor: null, serverColor: null, opened: false, closeCode: null, closeReason: '', everOpened: false, stopped: false, dm: false, ignored: new Set() };   // 1.12.30 : dm = le serveur accepte les messages prives ; ignored = cles (k) a ne plus afficher
   const PRES_TRIES_NEVER = 5, PRES_TRIES_LOST = 12;   // essais de connexion consecutifs avant d'arreter jusqu'au rechargement : jamais ouverte / ouverte puis perdue
   const r2 = v => Math.round(v * 100) / 100;
   const cleanName = s => String(s || '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 24);
@@ -1674,7 +1700,7 @@ function createViewer(container, cfg0, loader) {
   function addPeer(q) {
     if (!q || q.id === P.id || P.peers.has(q.id)) return;
     const g = makeAvatar(q.name, q.color | 0); g.visible = false; scene.add(g);
-    const peer = { id: q.id, name: q.name, color: q.color | 0, g, tx: 0, ty: 0, tz: 0, tyaw: 0 };
+    const peer = { id: q.id, name: q.name, color: q.color | 0, k: typeof q.k === 'string' ? q.k.slice(0, 24) : '', g, tx: 0, ty: 0, tz: 0, tyaw: 0 };
     if (Array.isArray(q.p)) { peer.tx = q.p[0]; peer.ty = q.p[1]; peer.tz = q.p[2]; peer.tyaw = q.yaw || 0; g.position.set(peer.tx, peer.ty, peer.tz); g.rotation.y = peer.tyaw; g.visible = true; }
     P.peers.set(q.id, peer);
   }
@@ -1694,7 +1720,7 @@ function createViewer(container, cfg0, loader) {
   function presenceMsg(m) {
     if (!m || typeof m !== 'object') return;
     if (m.t === 'welcome') {
-      P.id = m.id; (m.peers || []).forEach(addPeer); pStatus('online'); dodgeWelcome();
+      P.id = m.id; P.dm = m.dm === true; (m.peers || []).forEach(addPeer); pStatus('online'); dodgeWelcome();
       P.serverColor = Number.isInteger(m.color) && m.color >= 0 && m.color <= 0xFFFFFF ? m.color : null;
       if (m.name) setMyName(m.name);
       if (m.role === 'spectator' && walking && P.ws) P.ws.send(JSON.stringify({ t: 'role', walker: true, name: P.name }));
@@ -1705,9 +1731,16 @@ function createViewer(container, cfg0, loader) {
     else if (m.t === 'leave') { const q = P.peers.get(m.id); removePeer(m.id); pStatus('online'); if (q && onChat && cfg.chat !== false) onChat({ system: true, text: tr('core.left', q.name) }); if (q && onPeer) onPeer('leave', q.name); }
     else if (m.t === 'chat' && cfg.chat !== false) {
       const text = String(m.text || '').slice(0, 200), q = P.peers.get(m.id);
+      if (q && q.k && P.ignored.has(q.k)) return;   // 1.12.30 : visiteur ignore : ni ligne de chat ni bulle
       if (q) showBubble(q, text);
       if (onChat) onChat({ id: m.id, name: cleanName(m.name) || (q && q.name) || '?', text, self: m.id === P.id, history: false, n: Number.isFinite(m.n) ? m.n : undefined, ts: Number.isFinite(m.ts) ? m.ts : undefined });
     }
+    else if (m.t === 'dm') {   // 1.12.30 : message prive (le serveur ne le garde pas) ; un ignore n'arrive jamais jusqu'a la page
+      const k = typeof m.k === 'string' ? m.k.slice(0, 24) : '', self = m.self === true;
+      if (!onDM || cfg.chat === false || (!self && k && P.ignored.has(k))) return;
+      onDM({ id: m.id, name: cleanName(m.name) || '?', k, text: String(m.text || '').slice(0, 200), self, ts: Number.isFinite(m.ts) ? m.ts : Date.now() / 1000 });
+    }
+    else if (m.t === 'dmerr') { if (onDMErr) onDMErr({ to: m.to, why: String(m.why || '').slice(0, 12) }); }
     else if (m.t === 'history') {   // v37 : page plus ancienne de l'historique du salon (réponse à requestHistory)
       if (onHistory && cfg.chat !== false) onHistory({ more: m.more === true, msgs: (Array.isArray(m.msgs) ? m.msgs : []).slice(0, 100).map(h => ({ id: h.id, name: cleanName(h.name) || '?', text: String(h.text || '').slice(0, 200), self: false, history: true, n: Number.isFinite(h.n) ? h.n : undefined, ts: Number.isFinite(h.t) ? h.t : undefined })) });
     }
@@ -2862,7 +2895,7 @@ function createViewer(container, cfg0, loader) {
 
   return {
     scene, camera, renderer, controls, cfg, setCfg, seaShift, metalEnvReady: () => !!metalEnvTex, metalInfo, setModel, loadBuffer, imageUrl, freshFetch, videoDiag, setImageResolver, animInfo: () => ({ planes: animPlanes.size, ticks: animTicks }), frame, getCameraState, setZoom, renderStats,
-    get model() { return model; }, get sea() { return sea; }, set onCfg(f) { onCfg = f; }, set onWalk(f) { onWalk = f; }, set onPick(f) { onPick = f; }, set pickOrbit(v) { pickOrbit = !!v; }, set onPresence(f) { onPresence = f; }, set onChat(f) { onChat = f; }, set onPeer(f) { onPeer = f; },
+    get model() { return model; }, get sea() { return sea; }, set onCfg(f) { onCfg = f; }, set onWalk(f) { onWalk = f; }, set onPick(f) { onPick = f; }, set pickOrbit(v) { pickOrbit = !!v; }, set onPresence(f) { onPresence = f; }, set onChat(f) { onChat = f; }, set onPeer(f) { onPeer = f; }, set onPeerClick(f) { onPeerClick = f; },
     setZones, setZoneNumbers, zoneSelect, zonePickAt, findMeshes, imageDiag,
     // v36 : repères de portail (cônes) : affichés ou non (T), rappel, état pour les tests
     setCones, get cones() { return coneOn; }, set onCones(f) { onCones = f; },
@@ -2918,6 +2951,15 @@ function createViewer(container, cfg0, loader) {
     // v37 : demande les n messages précédant le message numéro `before` ; un ancien serveur ne répond pas (la page masque alors le bouton)
     requestHistory(before, n) { if (!P.ws || P.ws.readyState !== 1 || !P.id || !Number.isFinite(before)) return false; P.ws.send(JSON.stringify({ t: 'history', before, n: n || 50 })); return true; },
     set onHistory(f) { onHistory = f; },
+    // 1.12.30 : messages prives : sendDM(id, texte) ; onDM / onDMErr ; setIgnored(cles) remplace la liste des visiteurs ignores (chat, bulles et MP)
+    sendDM(to, text) {
+      const t = String(text || '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, 200);
+      if (!t || !Number.isInteger(to) || !P.dm || !walking || !P.ws || P.ws.readyState !== 1 || !P.id) return false;
+      P.ws.send(JSON.stringify({ t: 'dm', to, text: t })); return true;
+    },
+    set onDM(f) { onDM = f; }, set onDMErr(f) { onDMErr = f; },
+    setIgnored(keys) { P.ignored = new Set((Array.isArray(keys) ? keys : []).filter(k => typeof k === 'string' && k)); },
+    get dmOK() { return P.dm && walking && !!P.ws && P.ws.readyState === 1 && !!P.id; },
     sendChat(text) {
       const t = String(text || '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, 200);
       if (!t || !P.ws || P.ws.readyState !== 1 || !P.id) return false;
@@ -2959,7 +3001,7 @@ function createViewer(container, cfg0, loader) {
     },
     blinkBubble: blinkStart, blinkStop, get blinking() { return BL.on; }, set onBlink(f) { onBlink = f; }, set onBlinkEnd(f) { onBlinkEnd = f; },
     setName(n) { P.name = cleanName(n); if (P.ws && P.ws.readyState === 1) P.ws.send(JSON.stringify({ t: 'name', name: P.name })); },
-    getPresence() { return { state: P.state, id: P.id, opened: P.opened, stopped: P.stopped, tries: P.retry, closeCode: P.closeCode, closeReason: P.closeReason, peers: [...P.peers.values()].map(q => ({ id: q.id, name: q.name, pos: q.g.position.toArray(), visible: q.g.visible, bubble: !!q.bubble, bubbleVisible: !!q.bubble && q.bubble.visible, labelVisible: (q.g.children.find(o => o.isSprite && !o.userData.isBubble) || { visible: null }).visible, blinking: !!q.blink, blinkHidden: q.blinkHidden || 0, color: q.color, stack: avatarStack(q) })) }; }, get walking() { return walking; },
+    getPresence() { return { state: P.state, id: P.id, opened: P.opened, stopped: P.stopped, tries: P.retry, closeCode: P.closeCode, closeReason: P.closeReason, dm: P.dm, peers: [...P.peers.values()].map(q => ({ id: q.id, name: q.name, k: q.k, screen: peerScreen(q), pos: q.g.position.toArray(), visible: q.g.visible, bubble: !!q.bubble, bubbleVisible: !!q.bubble && q.bubble.visible, labelVisible: (q.g.children.find(o => o.isSprite && !o.userData.isBubble) || { visible: null }).visible, blinking: !!q.blink, blinkHidden: q.blinkHidden || 0, color: q.color, stack: avatarStack(q) })) }; }, get walking() { return walking; },
     walkTick(dt) { if (walking) walkStep(dt); },
     refreshCollision() { if (TL.on) { for (const t of TL.tiles) if (t.state === 'ready' && t.grp) { t.state = 'building'; t.grid = null; t.gen = collisionGridSteps(t.grp, 3, parseIgnore(cfg.walkIgnore)); t.qAt = performance.now(); t.qFirst = true; t.gridCpu = 0; TL.gridQ.push(t); } } else if (walking && model) W.grid = buildCollisionGrid(model, 3, parseIgnore(cfg.walkIgnore)); },
     teleportNdc(nx, ny) { return walkTeleport(nx, ny); },

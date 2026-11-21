@@ -118,7 +118,7 @@ def clean_text(s, limit):
 
 
 def peer_key(p):
-    """1.12.29 : cle courte et stable d'un visiteur (empreinte de son identifiant interne, tronquee), publiee seulement avec ses messages prives :
+    """1.12.29 : cle courte et stable d'un visiteur (empreinte de son identifiant interne, tronquee), publiee avec ses messages prives et (1.12.30) avec les donnees publiques du visiteur (arrivee, liste) :
     elle permet d'ignorer quelqu'un meme s'il change de pseudo ; sans uid persistant (anon-), elle change a chaque connexion"""
     return hashlib.sha256(("dm:" + p.uidh).encode()).hexdigest()[:12]
 
@@ -415,7 +415,7 @@ class Peer:
             self.walk0 = None
 
     def public(self):
-        d = {"id": self.id, "name": self.name, "color": self.color}
+        d = {"id": self.id, "name": self.name, "color": self.color, "k": peer_key(self)}   # 1.12.30 : cle stable (pour « ignorer » cote page)
         if self.p is not None:
             d["p"], d["yaw"] = self.p, self.yaw
         return d
