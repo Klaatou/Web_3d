@@ -6,6 +6,14 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.12.0)
 
+### 21/11/2026 : verif_trad à zéro erreur (lot 1.12.45)
+
+- **Demande** (Klaatou) : corriger les 6 erreurs de `verif_trad` laissées par les lots 1.12.30 à 1.12.44.
+- **Fait** : `docs/en/MANUAL.md` ligne 1240 : les commandes `/mp`, `/ignore` et `/unignore` s'écrivent comme dans le manuel français (`pseudo`, `tous`), le code en ligne étant identique dans les deux langues (la commande accepte `all` et `tous`) ; `docs/en/SIMPLE_PROCEDURES.md` § 18 : `NOM.zones.json` (et non `NAME.zones.json`).
+- **Vérifié** : `verif_trad` sur le manuel et sur les procédures simples : 0 erreur.
+- **Non fait** : rien.
+- Fichiers : `docs/en/MANUAL.md`, `docs/en/SIMPLE_PROCEDURES.md`, historiques FR et EN, `VERSION`, les deux CHANGELOG.
+
 ### 21/11/2026 : documents des lots 1.12.39 à 1.12.43 (lot 1.12.44)
 
 - **Demande** (Klaatou) : mettre les documents à jour, exemples JSON compris.

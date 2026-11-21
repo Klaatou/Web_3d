@@ -340,6 +340,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 21/11/2026 |  | after 1.12.0 | Batch 1.12.42: actions on `video` screens: `link` (clickable title in the bar under the screen), `portal` and `ha` (on approach, `actionRadius` key); `radio` and `music` stay refused; "Screen action" menu in the viewer; `zones_unifiees.py`, `zone_video_liste.py` extended, `editeur_video_action.py` new |
 | 21/11/2026 |  | after 1.12.0 | Batch 1.12.43: the video tests find ffmpeg (PATH, otherwise `tests/ffmpeg.chemin.txt`), `ffmpeg_chemin.py` helper |
 | 21/11/2026 |  | after 1.12.0 | Batch 1.12.44: documents of batches 1.12.39 to 1.12.43: `REFERENCE_JSON.md` § 11.4 (keys `model`, `scale`, `pitch`, `roll`, `solid`, `actionRadius`, `modelLazy`, cone), manual § 5.21, § 5.23 (new), § 7.17 and appendix, `PROCEDURES.md`, `SIMPLE_PROCEDURES.md` § 17 and § 18, `DEVELOPMENT.md`, index; zones sample with 17 zones (`screen-link`, `screen-portal`) and samples README; `samples.py` |
+| 21/11/2026 |  | after 1.12.0 | Batch 1.12.45: `verif_trad` at 0 errors: `/mp`, `/ignore`, `/unignore` commands of the English manual written like the French one, `NOM.zones.json` in `SIMPLE_PROCEDURES.md`; documents only |
 ## Useful commands
 
 - See the history: `git log --oneline --decorate`

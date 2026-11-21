@@ -312,7 +312,7 @@ Nothing plays? The **Video** line of the diagnostic (State block, key I, "Copy t
 You need: your object's `.glb` file, your region folder (the one with the region's `.glb`), Edge or Chrome for the viewer.
 
 1. **Put the file away.** Put it in the region folder (for example `statue.glb`).
-2. **Place the model in the viewer.** Open `glb-viewer.html`, open the region's `.glb`, **import its current zones** ("Import zones (.json)", `NAME.zones.json`). Type "3D model (separate .glb file)", click where you want it, file name in "Model file (.glb)".
+2. **Place the model in the viewer.** Open `glb-viewer.html`, open the region's `.glb`, **import its current zones** ("Import zones (.json)", `NOM.zones.json`). Type "3D model (separate .glb file)", click where you want it, file name in "Model file (.glb)".
 3. **Adjust**: "Size (1 = as is)", the two tilts (in degrees) and the orientation; tick "Solid (cannot be walked through)" if visitors must not walk through it.
 4. **To make it do something** (for example a radio set placed on a radio zone), do not create a "3D model" zone: fill in the "Model file" field of the link, portal, command, radio or music form. A click on the model of a radio or of music opens the Sound window.
 5. **Export, replace the zones file, put online**: procedure of **§ 16** (steps 4 to 8). Also copy the model's `.glb` file to the region folder on the host.

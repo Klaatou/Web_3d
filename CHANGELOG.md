@@ -6,6 +6,14 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.12.0)
 
+### 21/11/2026: verif_trad at zero errors (batch 1.12.45)
+
+- **Request** (Klaatou): fix the 6 `verif_trad` errors left by batches 1.12.30 to 1.12.44.
+- **Done**: `docs/en/MANUAL.md` line 1240: the `/mp`, `/ignore` and `/unignore` commands are written as in the French manual (`pseudo`, `tous`), inline code being identical in both languages (the command accepts `all` and `tous`); `docs/en/SIMPLE_PROCEDURES.md` § 18: `NOM.zones.json` (not `NAME.zones.json`).
+- **Checked**: `verif_trad` on the manual and on the simple procedures: 0 errors.
+- **Not done**: nothing.
+- Files: `docs/en/MANUAL.md`, `docs/en/SIMPLE_PROCEDURES.md`, FR and EN histories, `VERSION`, both CHANGELOGs.
+
 ### 21/11/2026: documents of batches 1.12.39 to 1.12.43 (batch 1.12.44)
 
 - **Request** (Klaatou): bring the documents up to date, JSON examples included.

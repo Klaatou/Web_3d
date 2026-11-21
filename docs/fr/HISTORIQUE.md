@@ -340,6 +340,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 21/11/2026 |  | après 1.12.0 | Lot 1.12.42 : actions sur les écrans `video` : `link` (titre cliquable dans la barre sous l'écran), `portal` et `ha` (à l'approche, clé `actionRadius`) ; `radio` et `music` restent refusés ; menu « Action de l'écran » du viewer ; `zones_unifiees.py`, `zone_video_liste.py` étendus, `editeur_video_action.py` nouveau |
 | 21/11/2026 |  | après 1.12.0 | Lot 1.12.43 : les tests vidéo trouvent ffmpeg (PATH, sinon `tests/ffmpeg.chemin.txt`), aide `ffmpeg_chemin.py` |
 | 21/11/2026 |  | après 1.12.0 | Lot 1.12.44 : documents des lots 1.12.39 à 1.12.43 : `REFERENCE_JSON.md` § 11.4 (clés `model`, `scale`, `pitch`, `roll`, `solid`, `actionRadius`, `modelLazy`, cône), manuel § 5.21, § 5.23 (nouveau), § 7.17 et annexe, `PROCEDURES.md`, `PROCEDURES_SIMPLES.md` § 17 et § 18, `DEVELOPPEMENT.md`, index ; exemple de zones à 17 zones (`screen-link`, `screen-portal`) et README des exemples ; `samples.py` |
+| 21/11/2026 |  | après 1.12.0 | Lot 1.12.45 : `verif_trad` à 0 erreur : commandes `/mp`, `/ignore`, `/unignore` du manuel anglais écrites comme le français, `NOM.zones.json` dans `SIMPLE_PROCEDURES.md` ; documents seulement |
 ## Commandes utiles
 
 - Voir l'historique : `git log --oneline --decorate`
