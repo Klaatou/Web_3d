@@ -6,6 +6,23 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.12.0)
 
+### 21/11/2026 : zone `model`, un fichier .glb posé à part (lot 1.12.39)
+
+- **Demande** (Klaatou) : poser un petit `.glb` (un poste de radio à l'emplacement d'une zone radio, par exemple) avec position, rotation et taille indépendantes, avec une collision possible, et un chargement qu'on puisse désactiver.
+- **Fait** :
+  - clé `model` : quatrième « ce qu'on voit » (avec `image`, `video`, `mesh`) ; le fichier est cherché comme une image (relatif au dossier de la région, ou adresse complète) ;
+  - réglages : `x`, `y`, `z` (ou `pos`) = origine du `.glb` ; `yaw` (existant), `pitch` et `roll` (radians, comme `yaw` ; affichés en degrés dans le viewer) ; `scale` (0,01 à 100, 1 par défaut) ; `solid: true` (on ne traverse pas le modèle) ;
+  - `model` seul est un décor (ni rayon, ni repère, ni nom : les clés `radius`, `showName`, `cone` sont signalées) ; avec `link`, `portal`, `ha`, `radio` ou `music` il porte l'action (cliquable comme un tableau, cône, déclenchement en marchant, poste de radio posé sur une zone radio) ;
+  - `solid` : les triangles du modèle s'ajoutent à la grille de collision de la marche (sol et murs) et ses meshes aux rayons de téléportation (double clic) et d'occlusion des clics ; le marqueur d'atterrissage et la pose de zones du viewer l'ignorent ;
+  - chargement à la demande : un modèle se charge quand le visiteur (ou la caméra hors promenade) est à moins de `modelLazy` mètres de sa zone (150 par défaut, option `--model-lazy M`, clé de config `modelLazy`) ; **`0` = tous chargés au départ, sans plafond** (désactive le chargement à la demande) ; sinon 16 modèles au plus en même temps (le plus loin est libéré), 2 chargements à la fois ; dans le viewer tout se charge ;
+  - mesure dans le bac à sable (Chromium logiciel, serveur local, **estimation** pour un vrai réseau) : 30 modèles de 20 Ko, 0,8 Mo et 9 Mo, dont 8 proches : à la demande 6 chargés en 1,8 s et 42 Mo de mémoire JavaScript, `--model-lazy 0` 30 chargés en 20 s et 110 à 130 Mo ; la page est prête en 0,4 s dans les deux cas ;
+  - un fichier introuvable ou illisible ne laisse rien dans la page et écrit un avertissement dans la console (pas d'erreur) ; page ouverte depuis le disque (`file://`) : le navigateur refuse la lecture, comme pour les listes de pistes ;
+  - viewer : type « Modèle 3D » dans la liste, champs fichier, taille, inclinaison avant / arrière, inclinaison sur le côté, solide ; le champ « fichier du modèle » existe aussi sur les fiches lien, portail, commande, radio et musique ; la zone est écrite au format du fichier (`model`, `scale`, `pitch`, `roll`, `solid`) ;
+  - miroirs exacts : `zoneIn` / `zoneOut` / `cleanZone` (`src/core.js`) et `zone_in` / `zone_out` / `clean_zones` (`src/gen_tpl.py`) ; clés internes `mdl`, `mscale`, `pitch`, `roll`, `solid` ; type interne `model` pour un modèle sans action.
+- **Vérifié** : nouveau test `tests/zone_model.py` (chargement, taille, cap, pitch, roll, position `pos`, modèle à 1 km non chargé, fichier absent, clic sur un modèle avec lien, solide arrête le visiteur et pas le modèle sans `solid`, `--model-lazy 0`, plafond de 16 sur 20 modèles proches, viewer) ; en retirant exprès les murs de `solid`, le test échoue ; `zones_unifiees.py` étendu (six cas, Python et JavaScript identiques) ; `samples.py` (zone `statue` et clé `modelLazy` d'exemple) ; `i18n`, `dist_a_jour`, `build_reference`, `smoke`, `paquets`, `image_zone`, `zone_frame`, `zone_video`, `zone_video_liste`, `zone_cast`, `zone_audio`, `zone_pochette`, `zone_apercu`, `zone_distance`, `zones_url_cone`, `zones_numeros`, `lien_image`, `image_noms_gen`, `editeur_cone`, `tuiles`, `tuile_ici`, `pose_promenade`, `portail_interne`, `yaw_etat`, `v32`, `v34`, `v35`, `v36`.
+- **Non fait** : documents (`REFERENCE_JSON.md`, manuel, procédures, historiques) à la validation de Klaatou ; `docs/REFERENCE_OPTIONS.md` est refait par `python build.py` chez Klaatou (option `--model-lazy`).
+- Fichiers : `src/core.js`, `src/gen_tpl.py`, `src/viewer_tpl.html`, `src/i18n/fr.json`, `src/i18n/en.json`, `tests/zone_model.py`, `tests/zones_unifiees.py`, `tests/samples.py`, `docs/samples/region.config.sample.json`, `docs/samples/region.zones.sample.json`.
+
 ### 21/11/2026 : clé `pos` pour la position d'une zone (lot 1.12.38)
 
 - **Demande** (Klaatou) : pouvoir recopier tel quel dans `zones.json` une coordonnée copiée depuis la fenêtre H, avec la syntaxe de `config.json` (`"target": [0, 13, 7]`).

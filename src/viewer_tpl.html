@@ -272,7 +272,7 @@ for (const r of ROWS) {
   }
   if (r[0] === 'zones') {
     const box = add('<div id="zonesBox"></div>');
-    box.innerHTML = '<div class="row"><label>' + tr('viewer.zone.type') + '</label><select id="zNewType" style="grid-column:1/-1;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;width:100%"><option value="portal">' + tr('viewer.zone.t.portal') + '</option><option value="url">' + tr('viewer.zone.t.url') + '</option><option value="ha">' + tr('viewer.zone.t.ha') + '</option><option value="spawn">' + tr('viewer.zone.t.spawn') + '</option><option value="image">' + tr('viewer.zone.t.image') + '</option><option value="cast">' + tr('viewer.zone.t.cast') + '</option><option value="audio">' + tr('viewer.zone.t.audio') + '</option><option value="video">' + tr('viewer.zone.t.video') + '</option></select></div>' +
+    box.innerHTML = '<div class="row"><label>' + tr('viewer.zone.type') + '</label><select id="zNewType" style="grid-column:1/-1;font:inherit;padding:4px;border:1px solid #000;border-radius:4px;width:100%"><option value="portal">' + tr('viewer.zone.t.portal') + '</option><option value="url">' + tr('viewer.zone.t.url') + '</option><option value="ha">' + tr('viewer.zone.t.ha') + '</option><option value="spawn">' + tr('viewer.zone.t.spawn') + '</option><option value="image">' + tr('viewer.zone.t.image') + '</option><option value="cast">' + tr('viewer.zone.t.cast') + '</option><option value="audio">' + tr('viewer.zone.t.audio') + '</option><option value="video">' + tr('viewer.zone.t.video') + '</option><option value="model">' + tr('viewer.zone.t.model') + '</option></select></div>' +
       '<div class="btns"><button id="bZoneAdd" class="wide"></button></div><small>' + tr('viewer.zone.pnote') + '</small>' +
       '<div id="zoneList"></div>' +
       '<div class="btns"><button id="bZoneExp">' + tr('viewer.zone.exp') + '</button><button id="bZoneImp">' + tr('viewer.zone.imp') + '</button></div>' +
@@ -449,11 +449,20 @@ function zoneDefaults(type) {
   if (type === 'portal') return Object.assign(base, { label: tr('viewer.kind.portal'), trigger: 'enter' });
   if (type === 'image') return Object.assign(base, { label: tr('viewer.kind.image'), w: 1.2, h: 0 });
   if (type === 'video') return Object.assign(base, { label: tr('viewer.kind.video'), radius: 20, w: 2.4, h: 0 });   // 1.12.7 : ecran video (fichier mp4 / webm joue a portee, sans son)
+  if (type === 'model') return Object.assign(base, { label: tr('viewer.kind.model'), mdl: '' });   // 1.12.39 : modele .glb pose a part
   if (type === 'audio') return Object.assign(base, { label: tr('viewer.kind.audio'), radius: 20, folder: 'audio' });   // 1.11.4 : musique (fichiers son d'un dossier, joues en boucle)
   if (type === 'cast') return Object.assign(base, { label: tr('viewer.kind.cast'), radius: 20, streams: [['', 'https://']] });   // 1.10.32 : radio (flux Icecast / SHOUTcast)
   if (type === 'url') return Object.assign(base, { label: tr('viewer.kind.url'), shape: 'board', target: 'https://' });
   if (type === 'ha') return Object.assign(base, { label: tr('viewer.kind.ha'), shape: 'board', target: 'http://homeassistant.local:8123/api/webhook/', private: true, confirm: true });
   return Object.assign(base, { id: 'arrivee', label: tr('viewer.kind.spawn') });
+}
+function modelFields(d, z, upd, inp) {   // 1.12.39 : taille, inclinaisons (degres a l'ecran, radians dans le fichier comme yaw) et solide d'un modele
+  if (z.type !== 'model' && !z.mdl) return;
+  const deg = v => Math.round((v || 0) * 180 / Math.PI * 10) / 10;
+  d.appendChild(inp(tr('viewer.zf.mscale'), 'number', z.mscale === undefined ? 1 : z.mscale, v => upd({ mscale: v }, true)));
+  d.appendChild(inp(tr('viewer.zf.pitch'), 'number', deg(z.pitch), v => upd({ pitch: v * Math.PI / 180 }, true)));
+  d.appendChild(inp(tr('viewer.zf.roll'), 'number', deg(z.roll), v => upd({ roll: v * Math.PI / 180 }, true)));
+  d.appendChild(inp(tr('viewer.zf.solid'), 'checkbox', z.solid, v => upd({ solid: v }, true)));
 }
 function zonesFile() { return (cfg.zones || []).map(viewer.zoneOut); }   // 1.12.35 : fichiers de zones et de reglages ecrits au format unifie
 function zonesSync(list, rerender) {
@@ -486,7 +495,7 @@ function renderZoneList() {
   viewer.getZones().forEach((z, idx) => {
     const d = document.createElement('details'); d.open = z.id === zoneSel; d.style.cssText = 'border:1px solid #000;border-radius:6px;padding:4px 8px;margin:6px 0';
     const s = document.createElement('summary'); s.style.cursor = 'pointer';
-    s.textContent = ({ url: tr('viewer.kind.url'), ha: tr('viewer.kind.ha'), portal: tr('viewer.kind.portal'), spawn: tr('viewer.kind.spawn'), image: tr('viewer.kind.image'), cast: tr('viewer.kind.cast'), audio: tr('viewer.kind.audio'), video: tr('viewer.kind.video') }[z.type]) + ' : ' + (z.label || z.id) + (z.private ? tr('viewer.private') : '');
+    s.textContent = ({ url: tr('viewer.kind.url'), ha: tr('viewer.kind.ha'), portal: tr('viewer.kind.portal'), spawn: tr('viewer.kind.spawn'), image: tr('viewer.kind.image'), cast: tr('viewer.kind.cast'), audio: tr('viewer.kind.audio'), video: tr('viewer.kind.video'), model: tr('viewer.kind.model') }[z.type]) + ' : ' + (z.label || z.id) + (z.private ? tr('viewer.private') : '');
     s.onclick = () => { setTimeout(() => { if (d.open) { zoneSel = z.id; viewer.zoneSelect(z.id); } }, 0); };
     d.appendChild(s);
     const upd = (patch, rerender) => { const list = viewer.getZones(); Object.assign(list[idx], patch); zonesSync(list, rerender); };
@@ -517,6 +526,9 @@ function renderZoneList() {
       d.appendChild(inp(tr('viewer.zf.frame'), 'checkbox', z.frame, v => upd({ frame: v })));   // 1.12.34 : le lien du tableau s'ouvre dans la fenetre flottante
       d.appendChild(inp(tr('viewer.zf.trigger'), 'select', z.trigger, v => upd({ trigger: v }, true), [['enter', tr('viewer.zf.trig.enter')], ['click', tr('viewer.zf.trig.click')], ['both', tr('viewer.zf.trig.both')]]));   // 1.12.34 : comme une zone url
       d.appendChild(inp(tr('viewer.zf.r.ring'), 'number', z.radius, v => upd({ radius: v })));   // 1.12.34 : rayon de l'invite et du declenchement en marchant devant le tableau
+    } else if (z.type === 'model') {   // 1.12.39 : modele .glb pose a part : fichier, taille, inclinaisons, solide (la position et le cap sont plus bas)
+      d.appendChild(inp(tr('viewer.zf.model'), 'text', z.mdl || '', v => upd({ mdl: v }, true)));
+      modelFields(d, z, upd, inp);
     } else if (z.type === 'video') {   // 1.12.7 : ecran video : fichier ou adresse, largeur, hauteur, portee (la video joue seule a portee, sans son ; rien a cliquer)
       d.appendChild(inp(tr('viewer.zf.video'), 'text', z.target, v => upd({ target: v }, true)));
       d.appendChild(inp(tr('viewer.zf.video.folder'), 'text', z.folder || '', v => upd({ folder: v }, true)));   // 1.12.12 : liste de videos a la place du fichier
@@ -531,6 +543,7 @@ function renderZoneList() {
       d.appendChild(inp(tr('viewer.zf.r.cast'), 'number', z.radius, v => upd({ radius: v }, true)));
       d.appendChild(inp(tr('viewer.zf.poster'), 'text', z.poster || '', v => upd({ poster: v })));   // 1.12.26 : pochette montree dans la fenetre Son
       d.appendChild(inp(tr('viewer.zf.pic'), 'text', z.pic || '', v => upd({ pic: v }, true)));   // 1.12.36 : tableau a la place de l'anneau (et pochette par defaut)
+      if (!z.pic) { d.appendChild(inp(tr('viewer.zf.model'), 'text', z.mdl || '', v => upd({ mdl: v }, true))); modelFields(d, z, upd, inp); }   // 1.12.39
       d.appendChild(inp(tr('viewer.zf.link.sound'), 'text', z.link || '', v => upd({ link: v })));   // 1.12.26 : page ouverte par un clic sur la pochette
       d.appendChild(inp(tr('viewer.zf.cone'), 'select', typeof z.cone === 'boolean' ? (z.cone ? 'on' : 'off') : 'auto', v => upd({ cone: v === 'on' ? true : (v === 'off' ? false : undefined) }, true), [['auto', tr('viewer.zf.cone.auto')], ['on', tr('viewer.zf.cone.on')], ['off', tr('viewer.zf.cone.off')]]));   // 1.10.35 : cone par defaut
     } else if (z.type === 'audio') {   // 1.11.4 : musique : dossier des pistes, mise a jour de la liste (playlist.json), essai de 5 s, portee, repere
@@ -540,6 +553,7 @@ function renderZoneList() {
       d.appendChild(inp(tr('viewer.zf.r.audio'), 'number', z.radius, v => upd({ radius: v }, true)));
       d.appendChild(inp(tr('viewer.zf.poster'), 'text', z.poster || '', v => upd({ poster: v })));   // 1.12.26 : pochette montree dans la fenetre Son
       d.appendChild(inp(tr('viewer.zf.pic'), 'text', z.pic || '', v => upd({ pic: v }, true)));   // 1.12.36 : tableau a la place de l'anneau (et pochette par defaut)
+      if (!z.pic) { d.appendChild(inp(tr('viewer.zf.model'), 'text', z.mdl || '', v => upd({ mdl: v }, true))); modelFields(d, z, upd, inp); }   // 1.12.39
       d.appendChild(inp(tr('viewer.zf.link.sound'), 'text', z.link || '', v => upd({ link: v })));   // 1.12.26 : page ouverte par un clic sur la pochette
       d.appendChild(inp(tr('viewer.zf.cone'), 'select', typeof z.cone === 'boolean' ? (z.cone ? 'on' : 'off') : 'auto', v => upd({ cone: v === 'on' ? true : (v === 'off' ? false : undefined) }, true), [['auto', tr('viewer.zf.cone.auto')], ['on', tr('viewer.zf.cone.on')], ['off', tr('viewer.zf.cone.off')]]));
     } else if (z.type !== 'spawn') {
@@ -553,6 +567,7 @@ function renderZoneList() {
         d.appendChild(inp(tr('viewer.zf.trigger'), 'select', z.trigger, v => upd({ trigger: v }, true), [['enter', tr('viewer.zf.trig.enter')], ['click', tr('viewer.zf.trig.click')], ['both', tr('viewer.zf.trig.both')]]));
       } else { d.appendChild(inp(tr('viewer.zf.ha'), 'text', z.target, v => upd({ target: v }))); d.appendChild(inp(tr('viewer.zf.confirm'), 'checkbox', z.confirm, v => upd({ confirm: v }))); }
       if (z.type === 'portal' || z.type === 'ha') d.appendChild(inp(tr('viewer.zf.pic'), 'text', z.pic || '', v => upd({ pic: v }, true)));   // 1.12.36 : tableau a la place de l'anneau
+      if (!z.pic && !z.mesh) { d.appendChild(inp(tr('viewer.zf.model'), 'text', z.mdl || '', v => upd({ mdl: v }, true))); modelFields(d, z, upd, inp); }   // 1.12.39 : modele .glb a la place de l'anneau
       const lk = document.createElement('small'); lk.style.margin = '6px 0 2px';
       lk.textContent = !z.mesh ? tr('viewer.link.none') : tr('viewer.link.linked', z.mesh) + (viewer.meshInfo(z.mesh) ? tr('viewer.link.info', viewer.meshInfo(z.mesh).count, viewer.meshInfo(z.mesh).size.map(v => v.toFixed(2)).join(' × ')) : (tilesMode ? tr('viewer.link.unloaded') : tr('viewer.link.missing')));
       d.appendChild(lk);
@@ -600,7 +615,7 @@ function castTry(url) {
   castT = setTimeout(() => { stop(); setStatus(tr('viewer.zf.cast.stopped')); }, 5000);
 }
 viewer.onZone = (z, how) => {
-  setStatus(tr('viewer.preview.fired', { url: tr('viewer.kind.url'), ha: tr('viewer.kind.ha'), portal: tr('viewer.kind.portal'), spawn: tr('viewer.kind.spawn'), image: tr('viewer.kind.image'), cast: tr('viewer.kind.cast'), audio: tr('viewer.kind.audio'), video: tr('viewer.kind.video') }[z.type], z.label || z.id, how, (z.type === 'image' ? z.link : z.target) || tr('viewer.preview.notarget'), z.spawn ? ' #' + z.spawn : ''));
+  setStatus(tr('viewer.preview.fired', { url: tr('viewer.kind.url'), ha: tr('viewer.kind.ha'), portal: tr('viewer.kind.portal'), spawn: tr('viewer.kind.spawn'), image: tr('viewer.kind.image'), cast: tr('viewer.kind.cast'), audio: tr('viewer.kind.audio'), video: tr('viewer.kind.video'), model: tr('viewer.kind.model') }[z.type], z.label || z.id, how, (z.type === 'image' ? z.link : z.target) || tr('viewer.preview.notarget'), z.spawn ? ' #' + z.spawn : ''));
   // aperçu : un portail sans destination déplace dans la région vers son point d'arrivée
   if (z.type === 'portal' && !String(z.target || '').trim() && viewer.walking) {
     const id = z.spawn || 'default', s = viewer.getZones().find(q => q.type === 'spawn' && q.id === id);
@@ -641,7 +656,7 @@ addEventListener('keydown', e => {
     const r2 = v => Math.round(v * 100) / 100;
     if (type === 'image' || type === 'video') addZone(type, r2(w.pos[0] + fwd[0] * 2.2), r2(w.pos[1] + 1.6), r2(w.pos[2] + fwd[1] * 2.2), r2(w.yaw));   // en face de toi, a hauteur de mur : a ajuster
     else if (type === 'url' || type === 'ha') addZone(type, r2(w.pos[0] + fwd[0] * 2.2), r2(w.pos[1]), r2(w.pos[2] + fwd[1] * 2.2), r2(w.yaw));
-    else addZone(type, r2(w.pos[0]), r2(w.pos[1]), r2(w.pos[2]), type === 'spawn' ? r2(w.yaw) : 0);
+    else addZone(type, r2(w.pos[0]), r2(w.pos[1]), r2(w.pos[2]), type === 'spawn' || type === 'model' ? r2(w.yaw) : 0);
     return;
   }
   if (e.code === 'KeyF' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && n !== 'INPUT' && n !== 'TEXTAREA' && n !== 'SELECT' && viewer.model) viewer.toggleWalk();   // v36 : F entre ET sort de la promenade (la touche est libre dans le viewer) ; Maj+P et le bouton sortent aussi

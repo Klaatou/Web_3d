@@ -62,6 +62,7 @@
  "fly": true,
  "targetExplicit": true,
  "zoneInfoDist": 150.0,
+ "modelLazy": 150.0,
  "compass": true,
  "northDeg": 0.0,
  "libUrl": "",

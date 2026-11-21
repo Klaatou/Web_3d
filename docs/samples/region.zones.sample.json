@@ -156,5 +156,16 @@
   "shape": "board",
   "link": "https://www.youtube.com/watch?v=VIDEO_ID",
   "frame": true
+ },
+ {
+  "id": "statue",
+  "label": "Statue",
+  "x": 12,
+  "y": 22,
+  "z": -30,
+  "yaw": 1.57,
+  "model": "statue.glb",
+  "scale": 1.5,
+  "solid": true
  }
 ]

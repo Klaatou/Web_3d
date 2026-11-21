@@ -88,6 +88,12 @@ CAS = [
     dict(id="bha", image="t.png", ha="http://exemple.invalid/api", confirm=True, **P),                   # tableau + Home Assistant
     dict(id="brad", image="t.png", radio=["https://exemple.invalid/r"], **P),                            # tableau + radio (pochette = tableau)
     dict(id="bmus", image="t.png", music="audio", tracks=["a.mp3"], poster="p.jpg", **P),                # tableau + musique, pochette choisie
+    dict(id="mdec", model="m.glb", scale=2, pitch=0.2, roll=-0.1, solid=True, **P),                      # modele seul : decor
+    dict(id="mdec2", model="m.glb", radius=5, showName=True, cone=True, **P),                            # decor : rayon, nom et repere ignores
+    dict(id="mlink", model="m.glb", link="https://exemple.invalid/m", trigger="both", radius=3, solid=True, **P),   # modele + lien
+    dict(id="mrad", model="m.glb", radio=["https://exemple.invalid/r"], poster="p.jpg", scale=0.5, **P),  # modele + radio
+    dict(id="mscale", link="a.html", scale=2, pitch=0.1, **P),                                           # taille et inclinaison sans modele : ignorees
+    dict(id="mcombo", model="m.glb", image="t.png", **P),                                                # deux visuels
     dict(id="combo2", video="v.mp4", link="a.html", **P),
     dict(id="combo3", mesh="porte", radio=["https://exemple.invalid/r"], **P),
     dict(id="posa", link="a.html", pos=[120, 25.5, -80]),                                               # pos remplace x, y, z
@@ -133,7 +139,8 @@ async def main():
     pyz = g.clean_zones(CAS, "private", msgs)
     codes = {(m[0], m[1]) for m in msgs}
     attendu = {("ignored", "arr2"), ("unknown", "inconnu"), ("ignored", "ign"), ("visuals", "deuxv"), ("actions", "deuxa"),
-               ("posboth", "posb"), ("posbad", "posc"), ("posbad", "pose"), ("combo", "combo2"), ("combo", "combo3"), ("empty", "vide"), ("empty", "vide2")}
+               ("posboth", "posb"), ("posbad", "posc"), ("posbad", "pose"), ("combo", "combo2"), ("combo", "combo3"), ("empty", "vide"), ("empty", "vide2"),
+               ("ignored", "mdec2"), ("ignored", "mscale"), ("visuals", "mcombo")}
     rapport(codes == attendu, "Python : messages attendus (inconnue, ignoree, deux visuels, deux actions, pas encore possible, vide)", sorted(codes ^ attendu))
     ign = sorted(m[2] for m in msgs if m[:2] == ["ignored", "ign"])
     rapport(ign == ["frame", "poster", "sound"], "Python : portail avec frame, poster et sound : les trois cles signalees", ign)
@@ -153,6 +160,17 @@ async def main():
             "Python : tableau + portail / ha / radio / musique : image gardee, pochette choisie respectee", {k: t[k].get("pic") for k in ("bport", "bha", "brad", "bmus")})
     ok = all(g.zone_out(t[k]).get("image") == "t.png" and "pic" not in g.zone_out(t[k]) for k in ("bport", "bha", "brad", "bmus"))
     rapport(ok, "Python : ecriture : l'image du tableau revient sous la cle image")
+    ig2 = sorted(m[2] for m in msgs if m[:2] == ["ignored", "mdec2"]); ig3 = sorted(m[2] for m in msgs if m[:2] == ["ignored", "mscale"])
+    rapport(ig2 == ["cone", "radius", "showName"] and ig3 == ["pitch", "scale"], "Python : modele seul : rayon, nom et repere signales ; taille et inclinaison sans modele signalees", (ig2, ig3))
+    rapport(t["mdec"]["type"] == "model" and t["mdec"]["mdl"] == "m.glb" and t["mdec"]["mscale"] == 2 and t["mdec"]["pitch"] == 0.2 and t["mdec"]["roll"] == -0.1 and t["mdec"]["solid"] is True
+            and t["mlink"]["type"] == "url" and t["mlink"]["mdl"] == "m.glb" and t["mlink"]["target"] == "https://exemple.invalid/m" and t["mlink"]["trigger"] == "both" and t["mlink"]["solid"] is True
+            and t["mrad"]["type"] == "cast" and t["mrad"]["mdl"] == "m.glb" and t["mrad"]["mscale"] == 0.5 and t["mrad"]["poster"] == "p.jpg"
+            and t["mcombo"]["type"] == "image" and "mdl" not in t["mcombo"] and "mdl" not in t["mscale"] and "mscale" not in t["mscale"],
+            "Python : modele seul (decor), modele + lien, modele + radio ; deux visuels : image gagne ; taille sans modele : rien", {k: t[k] for k in ("mdec", "mlink")})
+    o1, o2 = g.zone_out(t["mdec"]), g.zone_out(t["mlink"])
+    rapport(o1.get("model") == "m.glb" and o1.get("scale") == 2 and o1.get("pitch") == 0.2 and o1.get("roll") == -0.1 and o1.get("solid") is True and "radius" not in o1 and "type" not in o1
+            and o2.get("model") == "m.glb" and o2.get("link") == "https://exemple.invalid/m" and o2.get("trigger") == "both" and o2.get("radius") == 3 and "target" not in o2,
+            "Python : ecriture : model, scale, pitch, roll, solid (decor sans rayon) ; modele + lien garde rayon et declenchement", (o1, o2))
     # aller-retour
     ok = True
     for z in ANCIEN:

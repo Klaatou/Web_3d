@@ -93,6 +93,7 @@ SHOW_SPAWNS = False
 ZONE_CONE = True
 FLY_ENABLED = True
 ZONE_INFO_DIST = 150.0
+MODEL_LAZY = 150.0   # 1.12.39 : distance (m) a laquelle un modele .glb de zone se charge ; 0 = tous charges au depart
 COMPASS = True
 NORTH_DEG = 0.0
 TARGET_EXPLICIT = False
@@ -123,7 +124,7 @@ DRACO_LIBS = {
 MESHOPT_FILES = {"three/addons/libs/meshopt_decoder.module.js": "examples/jsm/libs/meshopt_decoder.module.js"}
 
 
-ZONE_TYPES = ("url", "ha", "portal", "spawn", "image", "cast", "audio", "video")   # cast (1.10.32) : radio, flux Icecast / SHOUTcast joue en promenade a portee
+ZONE_TYPES = ("url", "ha", "portal", "spawn", "image", "cast", "audio", "video", "model")   # cast (1.10.32) : radio, flux Icecast / SHOUTcast joue en promenade a portee
 IMG_EXTS = (".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif", ".bmp")
 MEDIA_DIR = "medias"   # sous-dossier des medias de la region (cle mediaDir de la config cote page ; ici toujours « medias »)
 IMG_DIR = [None]   # dossier ou se cherchent les images des zones « image » (celui de la page), pose par main() ; None : aucune recherche
@@ -202,8 +203,8 @@ def audio_name(s):
 # et messages [code, id, a, b] ; zone_out : zone interne -> zone du fichier (cles utiles seulement). Miroir exact de zoneIn / zoneOut (core.js).
 # L'ancien format (cle type ou target) reste lu tel quel : c'est le format interne.
 ZONE_KEYS = ("id", "label", "x", "y", "z", "yaw", "radius", "trigger", "showName", "private", "cone", "shape", "w", "h", "image", "video", "videoFolder", "tracks", "sound", "mesh",
-             "link", "frame", "portal", "spawn", "ha", "confirm", "radio", "music", "poster", "posterLink", "arrival", "pos")
-ZONE_VIS = ("image", "video", "mesh")
+             "link", "frame", "portal", "spawn", "ha", "confirm", "radio", "music", "poster", "posterLink", "arrival", "pos", "model", "scale", "pitch", "roll", "solid")
+ZONE_VIS = ("image", "video", "mesh", "model")
 ZONE_ACT = ("link", "portal", "ha", "radio", "music")
 
 
@@ -247,12 +248,14 @@ def zone_in(z):
     if (v == "video" and a) or (v == "mesh" and a in ("radio", "music")):   # 1.12.36 : un tableau va avec toutes les actions
         msgs.append(["combo", zid, v, a])
         return None, msgs
-    if not a and v not in ("image", "video"):
+    if not a and v not in ("image", "video", "model"):
         msgs.append(["empty", zid])
         return None, msgs
     sound = a in ("radio", "music")
     wh = v in ("image", "video") or (not v and z.get("shape") == "board")
-    ok = {"radius": True, "showName": True, "cone": v not in ("image", "video"), "trigger": a in ("link", "portal"), "shape": not v, "w": wh, "h": wh,
+    deco = v == "model" and not a   # 1.12.39 : model seul = decor (ni rayon, ni repere, ni nom)
+    ok = {"radius": not deco, "showName": not deco, "cone": v not in ("image", "video") and not deco, "trigger": a in ("link", "portal"), "shape": not v, "w": wh, "h": wh,
+          "scale": v == "model", "pitch": v == "model", "roll": v == "model", "solid": v == "model",
           "videoFolder": v == "video", "sound": v == "video", "tracks": v == "video" or a == "music", "frame": a == "link", "spawn": a == "portal", "confirm": a == "ha",
           "poster": sound, "posterLink": sound}
     for k, good in ok.items():
@@ -269,6 +272,8 @@ def zone_in(z):
         o["target"] = sstr(z.get("video"))
         o["folder"] = z.get("videoFolder")
         o["sound"] = z.get("sound")
+    elif deco:
+        t = "model"
     elif a == "link":
         t = "url"
         o["target"] = sstr(z.get("link"))
@@ -294,6 +299,12 @@ def zone_in(z):
         o["link"] = z.get("posterLink")
     if v == "mesh":
         o["mesh"] = z.get("mesh")
+    if v == "model":   # 1.12.39 : fichier .glb pose a part (decor ou porteur d'une action)
+        o["mdl"] = sstr(z.get("model"))
+        o["mscale"] = z.get("scale")
+        o["pitch"] = z.get("pitch")
+        o["roll"] = z.get("roll")
+        o["solid"] = z.get("solid")
     if v == "image" and t != "image":   # 1.12.36 : tableau-portail, tableau-commande, tableau qui joue une radio ou une musique : l'image est dans pic
         o["pic"] = sstr(z.get("image"))
     for k in ("radius", "trigger", "showName", "cone", "shape", "w", "h"):
@@ -353,7 +364,7 @@ def zone_out(o):
             r["private"] = True
         return r
     rng = t in ("cast", "audio", "video")
-    if o.get("radius") != (20 if rng else 2):
+    if t != "model" and o.get("radius") != (20 if rng else 2):
         r["radius"] = o.get("radius")
     if (t in ("url", "portal") or (t == "image" and o.get("link"))) and o.get("trigger") and o.get("trigger") != "click":
         r["trigger"] = o["trigger"]
@@ -373,6 +384,16 @@ def zone_out(o):
     elif o.get("pic"):   # 1.12.36
         r["image"] = o["pic"]
         w0, h0, wh = 1.2, 0, True
+    elif t == "model" or o.get("mdl"):   # 1.12.39
+        r["model"] = o.get("mdl") or ""
+        if o.get("mscale") is not None and o.get("mscale") != 1:
+            r["scale"] = o["mscale"]
+        if o.get("pitch"):
+            r["pitch"] = o["pitch"]
+        if o.get("roll"):
+            r["roll"] = o["roll"]
+        if o.get("solid"):
+            r["solid"] = True
     elif o.get("mesh"):
         r["mesh"] = o["mesh"]
     elif o.get("shape") == "board":
@@ -406,9 +427,9 @@ def zone_out(o):
             r["poster"] = o["poster"]
         if o.get("link"):
             r["posterLink"] = o["link"]
-    if isinstance(o.get("cone"), bool):
+    if isinstance(o.get("cone"), bool) and t != "model":
         r["cone"] = o["cone"]
-    if o.get("showName"):
+    if o.get("showName") and t != "model":
         r["showName"] = True
     if o.get("private"):
         r["private"] = True
@@ -439,6 +460,7 @@ def clean_zones(zones, profile, msgs=None):
         img = t == "image"   # image : tableau plaque sur un mur ; h = 0 : hauteur d'apres le rapport de l'image
         vid = t == "video"   # 1.12.7 : video : ecran sur un mur, joue a portee (portee 20 m par defaut, jusqu'a 200) ; comme core.js
         pic = str(resolve_image_name(re.sub(r"[\x00-\x1f]", "", str(z.get("pic") or "")).strip()))[:600] if t in ("portal", "ha", "cast", "audio") else ""   # 1.12.36 : image d'un tableau qui porte une autre action qu'un lien
+        mdl = re.sub(r"[\x00-\x1f]", "", str(z.get("mdl") or "")).strip()[:600] if t in ("model", "portal", "ha", "url", "cast", "audio") and not pic else ""   # 1.12.39 : fichier .glb d'une zone model, ou d'un portail, d'une commande, d'un lien, d'une radio, d'une musique
         board = img or vid or bool(pic)
         pimg = img or bool(pic)
         rng = t in ("cast", "audio") or vid
@@ -456,6 +478,21 @@ def clean_zones(zones, profile, msgs=None):
             d["pic"] = pic
             d["mesh"] = ""
             d["shape"] = "ring"
+        if mdl or t == "model":   # 1.12.39 : mdl, mscale (0,01 a 100), pitch et roll (radians, comme yaw), solid : ecrits seulement s'ils servent, comme core.js
+            d["mdl"] = mdl
+            d["mesh"] = ""
+            d["shape"] = "ring"
+            ms = num(z.get("mscale"), 1, 0.01, 100)
+            if ms != 1:
+                d["mscale"] = ms
+            pt2 = num(z.get("pitch"), 0, -7, 7)
+            if pt2:
+                d["pitch"] = pt2
+            rl = num(z.get("roll"), 0, -7, 7)
+            if rl:
+                d["roll"] = rl
+            if z.get("solid") is True:
+                d["solid"] = True
         if (t == "url" or img) and z.get("frame") is True:   # 1.12.3 : fenetre flottante (lien ouvert dans la page ; 1.12.34 : aussi pour le lien d'un tableau image) ; ecrit seulement s'il est vrai, comme core.js
             d["frame"] = True
         if img:   # lien facultatif d'un tableau (page ouverte au clic ou a E) : ecrit seulement s'il est rempli, comme core.js
@@ -1041,7 +1078,7 @@ def settings_defaults(S):
                           ("sea", "sea_enabled", bool), ("retina", "retina", bool), ("light", "light", bool), ("walk", "walk", bool), ("eyeHeight", "eye_height", float),
                           ("walkSpeed", "walk_speed", float), ("walkIgnore", "walk_ignore", str), ("solidMaterials", "solid_materials", str), ("names", "names", bool), ("chat", "chat", bool),
                           ("chatFade", "chat_fade", float), ("presenceUrl", "presence_url", str), ("room", "room", str), ("spectate", "spectate", bool),
-                          ("panel", "panel", bool), ("mapUrl", "map_url", str), ("zoneMarker", "zone_marker", str), ("showSpawns", "show_spawns", bool), ("zoneCone", "zone_cone", bool), ("fly", "fly", bool), ("zoneInfoDist", "zone_info_dist", float), ("compass", "compass", bool), ("northDeg", "north", float), ("libUrl", "lib_url", str)):
+                          ("panel", "panel", bool), ("mapUrl", "map_url", str), ("zoneMarker", "zone_marker", str), ("showSpawns", "show_spawns", bool), ("zoneCone", "zone_cone", bool), ("fly", "fly", bool), ("zoneInfoDist", "zone_info_dist", float), ("modelLazy", "model_lazy", float), ("compass", "compass", bool), ("northDeg", "north", float), ("libUrl", "lib_url", str)):
         put(dest, c.get(k), conv)
     put("target_explicit", S.get("targetExplicit"), bool)
     put("zoom", cam.get("zoom"), float)
@@ -1116,7 +1153,7 @@ MESHOPT_JS = r"""__MESHOPT_JS__"""
 def build_cfg(name: str, *, title="", rotate=ROTATE, hole=HOLE_RADIUS, hole_fade=HOLE_FADE, hole_x=HOLE_X, hole_z=HOLE_Z, wave=WAVE_AMP,
                sea_y=SEA_Y, sea_m=None, zoom=ZOOM_RATIO, cam_dir=CAM_DIR, target=TARGET, sea_enabled=SEA_ENABLED,
                anim_enabled=ANIM_ENABLED, retina=RETINA_ENABLED, light=LIGHT_ENABLED, foliage_cutout=FOLIAGE_CUTOUT,
-               sea_color=SEA_COLOR, sky_color=SKY_COLOR, sea_segments=SEA_SEGMENTS, walk=WALK_ENABLED, eye_height=EYE_HEIGHT, walk_speed=WALK_SPEED, walk_ignore=WALK_IGNORE, solid_materials=SOLID_MATERIALS, names=NAMES_ENABLED, presence_url=PRESENCE_URL, room=ROOM, chat=CHAT_ENABLED, chat_fade=CHAT_FADE, zones=None, profile=PROFILE, spectate=SPECTATE, panel=PANEL, zones_live=ZONES_LIVE, map_entries=None, map_url=MAP_URL, modular=False, zone_marker=ZONE_MARKER, show_spawns=SHOW_SPAWNS, zone_cone=ZONE_CONE, fly=FLY_ENABLED, zone_info_dist=ZONE_INFO_DIST, compass=COMPASS, north=NORTH_DEG, lib_url="", make_default=False, target_explicit=TARGET_EXPLICIT, tiles=None, tile_radius=TILE_RADIUS, tile_margin=TILE_MARGIN, tile_max_mo=TILE_MAX_MO, tile_max_tri=TILE_MAX_TRI, tile_concurrency=TILE_CONCURRENCY, credit=True) -> dict:
+               sea_color=SEA_COLOR, sky_color=SKY_COLOR, sea_segments=SEA_SEGMENTS, walk=WALK_ENABLED, eye_height=EYE_HEIGHT, walk_speed=WALK_SPEED, walk_ignore=WALK_IGNORE, solid_materials=SOLID_MATERIALS, names=NAMES_ENABLED, presence_url=PRESENCE_URL, room=ROOM, chat=CHAT_ENABLED, chat_fade=CHAT_FADE, zones=None, profile=PROFILE, spectate=SPECTATE, panel=PANEL, zones_live=ZONES_LIVE, map_entries=None, map_url=MAP_URL, modular=False, zone_marker=ZONE_MARKER, show_spawns=SHOW_SPAWNS, zone_cone=ZONE_CONE, fly=FLY_ENABLED, zone_info_dist=ZONE_INFO_DIST, model_lazy=MODEL_LAZY, compass=COMPASS, north=NORTH_DEG, lib_url="", make_default=False, target_explicit=TARGET_EXPLICIT, tiles=None, tile_radius=TILE_RADIUS, tile_margin=TILE_MARGIN, tile_max_mo=TILE_MAX_MO, tile_max_tri=TILE_MAX_TRI, tile_concurrency=TILE_CONCURRENCY, credit=True) -> dict:
     """Le dictionnaire de réglages `cfg` : identique dans la page autonome et dans <page>.config.json (mode modulaire),
     sauf que le mode modulaire garde les zones hors de la config (fichier <page>.zones.json, relu à chaque ouverture)."""
     presence_url = fix_presence_url(presence_url)
@@ -1132,7 +1169,7 @@ def build_cfg(name: str, *, title="", rotate=ROTATE, hole=HOLE_RADIUS, hole_fade
         "map": clean_map(json.loads(MAP_JSON) if map_entries is None else map_entries), "mapUrl": str(map_url or "")[:1200], "spectate": bool(presence_url) if spectate is None else bool(spectate),
         "zones": clean_zones(json.loads(ZONES_JSON) if zones is None else zones, profile), "chatFade": float(chat_fade), "presenceUrl": str(presence_url), "room": str(room) or pathlib.Path(name).stem,
         "zoneMarker": ZONE_MARKER_OLD.get(zone_marker, zone_marker) if ZONE_MARKER_OLD.get(zone_marker, zone_marker) in ZONE_MARKERS else "dot", "showSpawns": bool(show_spawns), "zoneCone": bool(zone_cone), "fly": bool(fly), "targetExplicit": bool(target_explicit),
-        "zoneInfoDist": max(5.0, min(500.0, float(zone_info_dist))), "compass": bool(compass), "northDeg": float(north) % 360.0, "libUrl": str(lib_url or ""),
+        "zoneInfoDist": max(5.0, min(500.0, float(zone_info_dist))), "modelLazy": max(0.0, min(500.0, float(model_lazy))), "compass": bool(compass), "northDeg": float(north) % 360.0, "libUrl": str(lib_url or ""),
     }
     if modular:
         cfg["zones"], cfg["zonesLive"] = [], ""
@@ -1746,7 +1783,7 @@ MAJ_KEYS = {
     "sky_color": ("skyColor",), "sea_segments": ("seaSegments",), "walk": ("walk",), "eye_height": ("eyeHeight",), "walk_speed": ("walkSpeed",),
     "walk_ignore": ("walkIgnore",), "solid_materials": ("solidMaterials",), "names": ("names",), "presence_url": ("presenceUrl",), "chat": ("chat",), "chat_fade": ("chatFade",), "profile": ("profile",),
     "spectate": ("spectate",), "panel": ("panel",), "map_url": ("mapUrl",), "room": ("room",), "title": ("title",), "sea_enabled": ("sea",), "anim_enabled": ("anim",), "retina": ("retina",), "light": ("light",),
-    "zone_marker": ("zoneMarker",), "show_spawns": ("showSpawns",), "zone_cone": ("zoneCone",), "fly": ("fly",), "zone_info_dist": ("zoneInfoDist",), "compass": ("compass",), "north": ("northDeg",), "lib_url": ("libUrl",), "tile_radius": ("tileRadius",), "tile_margin": ("tileMargin",),
+    "zone_marker": ("zoneMarker",), "show_spawns": ("showSpawns",), "zone_cone": ("zoneCone",), "fly": ("fly",), "zone_info_dist": ("zoneInfoDist",), "model_lazy": ("modelLazy",), "compass": ("compass",), "north": ("northDeg",), "lib_url": ("libUrl",), "tile_radius": ("tileRadius",), "tile_margin": ("tileMargin",),
     "tile_max_mo": ("tileMaxMB",), "tile_max_tri": ("tileMaxTriangles",), "tile_concurrency": ("tileConcurrency",), "tiles": ("tiles",),
     "map": ("map",), "register": ("map",), "credit": ("credit",),
 }
@@ -2045,6 +2082,7 @@ def main():
     ap.add_argument("--zone-cone", action=argparse.BooleanOptionalAction, default=ZONE_CONE, help=_tr("py.glb2html.petit_cone_pointe_vers_le_bas"))
     ap.add_argument("--show-spawns", action=argparse.BooleanOptionalAction, default=SHOW_SPAWNS, help=_tr("py.glb2html.dessine_aussi_les_arrivees_dans_la"))
     ap.add_argument("--zone-info-dist", type=float, default=ZONE_INFO_DIST, metavar="M", help=_tr("py.glb2html.distance_5_a_200_m_defaut"))
+    ap.add_argument("--model-lazy", type=float, default=MODEL_LAZY, metavar="M", help=_tr("py.glb2html.model_lazy_help"))
     ap.add_argument("--lib-url", default="", metavar="PATH", help=_tr("py.glb2html.lib_url"))
     ap.add_argument("--default", action="store_true", help=_tr("py.glb2html.default_region"))
     ap.add_argument("--compass", action=argparse.BooleanOptionalAction, default=COMPASS, help=_tr("py.glb2html.compass"))
@@ -2157,7 +2195,7 @@ def main():
               sea_y=clamp(a.sea_y, -150, 60), sea_m=sea_m_val, zoom=clamp(a.zoom, 0.05, 100), cam_dir=a.cam_dir, target=a.target,
               foliage_cutout=clamp(a.foliage_cutout, 0, 1), sea_color=a.sea_color, sky_color=a.sky_color, sea_segments=int(clamp(a.sea_segments, 8, 1000)), walk=a.walk, walk_ignore=a.walk_ignore, solid_materials=a.solid_materials, zones_live=a.zones_live or "", map_entries=map_arg, map_url=a.map_url, names=a.names, presence_url=a.presence_url, room=a.room, chat=a.chat, chat_fade=clamp(a.chat_fade, 0, 3600), zones=zones_arg, profile=a.profile, spectate=a.spectate, panel=a.panel, eye_height=clamp(a.eye_height, 0.3, 5), walk_speed=clamp(a.walk_speed, 0.5, 30),
               sea_enabled=a.sea_enabled, anim_enabled=a.anim_enabled, retina=a.retina, light=a.light, credit=a.credit, title=a.title,
-              zone_marker=a.zone_marker, show_spawns=a.show_spawns, zone_cone=a.zone_cone, fly=a.fly, zone_info_dist=clamp(a.zone_info_dist, 5, 500), compass=a.compass, north=a.north, lib_url=clean_lib_url(a.lib_url)[0], make_default=a.default,
+              zone_marker=a.zone_marker, show_spawns=a.show_spawns, zone_cone=a.zone_cone, fly=a.fly, zone_info_dist=clamp(a.zone_info_dist, 5, 500), model_lazy=clamp(a.model_lazy, 0, 500), compass=a.compass, north=a.north, lib_url=clean_lib_url(a.lib_url)[0], make_default=a.default,
               target_explicit=bool(tuple(a.target) != tuple(TARGET) or TARGET_EXPLICIT or getattr(a, "target_explicit", False)))
 
     if a.maj:

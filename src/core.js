@@ -587,7 +587,7 @@ function createViewer(container, cfg0, loader) {
     model.updateMatrixWorld(true);
     model.traverse(o => { if (o.isMesh) o.updateMatrix(); });
     if (zones.length) { resolveLinks(); buildZones(); }
-    if (walking) W.grid = buildCollisionGrid(model, 3, parseIgnore(cfg.walkIgnore));
+    if (walking) W.grid = withSolids(buildCollisionGrid(model, 3, parseIgnore(cfg.walkIgnore)));
     landKey = ''; dirty = true;
   }
 
@@ -1268,7 +1268,7 @@ function createViewer(container, cfg0, loader) {
       if (TG.pending(at.x, at.z)) { TL.pending = { kind: 'walk', opts, at, t0: TL.pending ? TL.pending.t0 : (TL.anchor ? TL.anchor.t0 : performance.now()) }; markWait(at.x, at.z); tilesUpdate(TL.waitT); return false; }
       TL.pending = null; TL.forced = null; releaseAnchor();
     }
-    W.grid = TL.on ? TG : buildCollisionGrid(model, 3, parseIgnore(cfg.walkIgnore));
+    W.grid = withSolids(TL.on ? TG : buildCollisionGrid(model, 3, parseIgnore(cfg.walkIgnore)));
     W.saved = { pos: camera.position.clone(), target: controls.target.clone(), fov: camera.fov };
     const t = (opts && opts.pos) ? new THREE.Vector3().fromArray(opts.pos) : controls.target, fx = t.x - camera.position.x, fz = t.z - camera.position.z;
     W.yaw = (opts && Number.isFinite(opts.yaw)) ? opts.yaw : (Math.hypot(fx, fz) > 1e-3 ? Math.atan2(-fx, -fz) : 0);
@@ -1495,7 +1495,7 @@ function createViewer(container, cfg0, loader) {
     tpV.set(nx, ny);
     tpRay.setFromCamera(tpV, camera);
     const tokens = parseIgnore(cfg.walkIgnore);
-    for (const h of tpRay.intersectObject(model, true)) {
+    for (const h of tpRay.intersectObjects(rayModels(), true)) {   // 1.12.39 : + les modeles solid des zones
       const o = h.object;
       if (!o.isMesh || !o.visible) continue;
       const m = Array.isArray(o.material) ? o.material[h.face ? h.face.materialIndex : 0] : o.material;
@@ -1545,7 +1545,7 @@ function createViewer(container, cfg0, loader) {
     if (!best || best.d > 40) return null;
     if (model) {
       const tokens = parseIgnore(cfg.walkIgnore);
-      for (const m of tpRay.intersectObject(model, true)) {
+      for (const m of tpRay.intersectObjects(rayModels(), true)) {
         if (m.distance >= best.d - 0.05) break;
         if (m.object.isMesh && m.object.visible && !isIgnoredMesh(m.object, tokens)) return null;
       }
@@ -1990,7 +1990,7 @@ function createViewer(container, cfg0, loader) {
     tipEl.style.left = Math.max(4, Math.min(innerWidth - w - 4, cx + 14)) + 'px';
     tipEl.style.top = Math.max(4, Math.min(innerHeight - h - 4, cy + 18)) + 'px';
   }
-  const ZONE_TYPES = ['url', 'ha', 'portal', 'spawn', 'image', 'cast', 'audio', 'video'];   // audio (1.11.4) : fichiers son d'un dossier joues en boucle a portee ; cast (1.10.32) : radio, flux Icecast / SHOUTcast joue en promenade a portee, volume selon la distance
+  const ZONE_TYPES = ['url', 'ha', 'portal', 'spawn', 'image', 'cast', 'audio', 'video', 'model'];   // audio (1.11.4) : fichiers son d'un dossier joues en boucle a portee ; cast (1.10.32) : radio, flux Icecast / SHOUTcast joue en promenade a portee, volume selon la distance
   const slug = s => String(s || '').toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
   function zoneEntrant(z) { return z.type === 'portal' || z.type === 'url' || (z.type === 'image' && !!z.link); }   // zones qui se declenchent aussi en marchant dedans (trigger enter ou both) : portail et lien (hop:// compris)
   // 1.11.4 : nom d'une piste : fichier relatif (sans « .. »), chemin /… ou adresse http(s) ; '' si autre chose (javascript:, data:, ...)
@@ -2005,8 +2005,8 @@ function createViewer(container, cfg0, loader) {
   // et messages [code, id, a, b] ; zoneOut : zone interne -> zone du fichier (cles utiles seulement). Miroir exact de zone_in / zone_out (gen_tpl.py).
   // L'ancien format (cle type ou target) reste lu tel quel : c'est le format interne.
   const ZONE_KEYS = ['id', 'label', 'x', 'y', 'z', 'yaw', 'radius', 'trigger', 'showName', 'private', 'cone', 'shape', 'w', 'h', 'image', 'video', 'videoFolder', 'tracks', 'sound', 'mesh',
-    'link', 'frame', 'portal', 'spawn', 'ha', 'confirm', 'radio', 'music', 'poster', 'posterLink', 'arrival', 'pos'];
-  const ZONE_VIS = ['image', 'video', 'mesh'], ZONE_ACT = ['link', 'portal', 'ha', 'radio', 'music'];
+    'link', 'frame', 'portal', 'spawn', 'ha', 'confirm', 'radio', 'music', 'poster', 'posterLink', 'arrival', 'pos', 'model', 'scale', 'pitch', 'roll', 'solid'];
+  const ZONE_VIS = ['image', 'video', 'mesh', 'model'], ZONE_ACT = ['link', 'portal', 'ha', 'radio', 'music'];
   function zoneLegacy(z) { return !!z && typeof z === 'object' && ('type' in z || 'target' in z); }
   function zoneIn(z) {
     const id = String(z.id == null ? '' : z.id), msgs = [];
@@ -2031,14 +2031,15 @@ function createViewer(container, cfg0, loader) {
     if (act.length > 1) msgs.push(['actions', id, act[0], act.slice(1).join(', ')]);
     const v = vis[0] || '', a = act[0] || '';
     if ((v === 'video' && a) || (v === 'mesh' && (a === 'radio' || a === 'music'))) { msgs.push(['combo', id, v, a]); return { z: null, msgs }; }   // 1.12.36 : un tableau va avec toutes les actions
-    if (!a && v !== 'image' && v !== 'video') { msgs.push(['empty', id]); return { z: null, msgs }; }
-    const sound = a === 'radio' || a === 'music', wh = v === 'image' || v === 'video' || (!v && z.shape === 'board');
-    const ok = { radius: true, showName: true, cone: v !== 'image' && v !== 'video', trigger: a === 'link' || a === 'portal', shape: !v, w: wh, h: wh,
+    if (!a && v !== 'image' && v !== 'video' && v !== 'model') { msgs.push(['empty', id]); return { z: null, msgs }; }
+    const sound = a === 'radio' || a === 'music', wh = v === 'image' || v === 'video' || (!v && z.shape === 'board'), deco = v === 'model' && !a;   // 1.12.39 : model seul = decor (ni rayon, ni repere, ni nom)
+    const ok = { radius: !deco, showName: !deco, cone: v !== 'image' && v !== 'video' && !deco, trigger: a === 'link' || a === 'portal', shape: !v, w: wh, h: wh, scale: v === 'model', pitch: v === 'model', roll: v === 'model', solid: v === 'model',
       videoFolder: v === 'video', sound: v === 'video', tracks: v === 'video' || a === 'music', frame: a === 'link', spawn: a === 'portal', confirm: a === 'ha', poster: sound, posterLink: sound };
     for (const k of Object.keys(ok)) if (!ok[k] && set(k)) msgs.push(['ignored', id, k]);
     let t;
     if (v === 'image' && (!a || a === 'link')) { t = 'image'; o.target = str(z.image); if (a === 'link') { o.link = str(z.link); o.frame = z.frame; } }
     else if (v === 'video') { t = 'video'; o.target = str(z.video); o.folder = z.videoFolder; o.sound = z.sound; }
+    else if (deco) t = 'model';
     else if (a === 'link') { t = 'url'; o.target = str(z.link); o.frame = z.frame; }
     else if (a === 'portal') { t = 'portal'; o.target = str(z.portal); o.spawn = z.spawn; }
     else if (a === 'ha') { t = 'ha'; o.target = str(z.ha); o.confirm = z.confirm; }
@@ -2047,6 +2048,7 @@ function createViewer(container, cfg0, loader) {
     if (ok.tracks) o.tracks = z.tracks;
     if (sound) { o.poster = z.poster; o.link = z.posterLink; }
     if (v === 'mesh') o.mesh = z.mesh;
+    if (v === 'model') { o.mdl = str(z.model); o.mscale = z.scale; o.pitch = z.pitch; o.roll = z.roll; o.solid = z.solid; }   // 1.12.39 : fichier .glb pose a part (decor ou porteur d'une action)
     if (v === 'image' && t !== 'image') o.pic = str(z.image);   // 1.12.36 : tableau-portail, tableau-commande, tableau qui joue une radio ou une musique : l'image est dans pic
     for (const k of ['radius', 'trigger', 'showName', 'cone', 'shape', 'w', 'h']) if (ok[k]) o[k] = z[k];
     o.type = t;
@@ -2059,12 +2061,13 @@ function createViewer(container, cfg0, loader) {
     if (o.yaw) r.yaw = o.yaw;
     if (t === 'spawn') { r.arrival = true; if (o.private) r.private = true; return r; }
     const rng = t === 'cast' || t === 'audio' || t === 'video';
-    if (o.radius !== (rng ? 20 : 2)) r.radius = o.radius;
+    if (t !== 'model' && o.radius !== (rng ? 20 : 2)) r.radius = o.radius;
     if ((t === 'url' || t === 'portal' || (t === 'image' && o.link)) && o.trigger && o.trigger !== 'click') r.trigger = o.trigger;
     let w0 = 2.4, h0 = 1.2, wh = false;
     if (t === 'image') { r.image = o.target; w0 = 1.2; h0 = 0; wh = true; }
     else if (t === 'video') { r.video = o.target; if (o.folder) r.videoFolder = o.folder; if (o.tracks) r.tracks = o.tracks; if (o.sound) r.sound = true; h0 = 0; wh = true; }
     else if (o.pic) { r.image = o.pic; w0 = 1.2; h0 = 0; wh = true; }   // 1.12.36
+    else if (t === 'model' || o.mdl) { r.model = o.mdl || ''; if (o.mscale !== undefined && o.mscale !== 1) r.scale = o.mscale; if (o.pitch) r.pitch = o.pitch; if (o.roll) r.roll = o.roll; if (o.solid) r.solid = true; }   // 1.12.39
     else if (o.mesh) r.mesh = o.mesh;
     else if (o.shape === 'board') { r.shape = 'board'; wh = true; }
     if (wh) { if (o.w !== w0) r.w = o.w; if (o.h !== h0) r.h = o.h; }
@@ -2074,8 +2077,8 @@ function createViewer(container, cfg0, loader) {
     else if (t === 'cast') r.radio = o.streams || [];
     else if (t === 'audio') { r.music = o.folder || ''; if (o.tracks) r.tracks = o.tracks; }
     if (t === 'cast' || t === 'audio') { if (o.poster) r.poster = o.poster; if (o.link) r.posterLink = o.link; }
-    if (typeof o.cone === 'boolean') r.cone = o.cone;
-    if (o.showName) r.showName = true;
+    if (typeof o.cone === 'boolean' && t !== 'model') r.cone = o.cone;
+    if (o.showName && t !== 'model') r.showName = true;
     if (o.private) r.private = true;
     return r;
   }
@@ -2085,6 +2088,7 @@ function createViewer(container, cfg0, loader) {
     const img = type === 'image';   // image : tableau plaque sur un mur ; h = 0 : hauteur d'apres le rapport de l'image
     const vid = type === 'video', rng = type === 'cast' || type === 'audio' || vid;
     const pic = ['portal', 'ha', 'cast', 'audio'].includes(type) ? String(z.pic || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 600) : '';   // 1.12.36 : image d'un tableau qui porte une autre action qu'un lien
+    const mdl = ['model', 'portal', 'ha', 'url', 'cast', 'audio'].includes(type) && !pic ? String(z.mdl || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 600) : '';   // 1.12.39 : fichier .glb d'une zone model, ou d'un portail, d'une commande, d'un lien, d'une radio, d'une musique
     const board = img || vid || !!pic, pimg = img || !!pic;   // 1.12.7 : video : ecran sur un mur, joue a portee (comme musique et radio : portee 20 m par defaut, jusqu'a 200)
     const o = {
       id: slug(z.id) || ('z' + (i + 1)), type, label: String(z.label || '').slice(0, 60),
@@ -2096,6 +2100,13 @@ function createViewer(container, cfg0, loader) {
     };
     if (type !== 'portal' && type !== 'url' && !img) o.trigger = 'click';   // 1.12.34 : un tableau image garde son declenchement (enter : le lien s'ouvre en marchant devant ; sans lien, il est ignore)
     if (pic) { o.pic = pic; o.shape = 'ring'; }
+    if (mdl || type === 'model') {   // 1.12.39 : mdl, mscale (0,01 a 100), pitch et roll (radians, comme yaw), solid : ecrits seulement s'ils servent, comme gen_tpl.py
+      o.mdl = mdl; o.mesh = ''; o.shape = 'ring';
+      const ms = num(z.mscale, 1, 0.01, 100); if (ms !== 1) o.mscale = ms;
+      const pt2 = num(z.pitch, 0, -7, 7); if (pt2) o.pitch = pt2;
+      const rl = num(z.roll, 0, -7, 7); if (rl) o.roll = rl;
+      if (z.solid === true) o.solid = true;
+    }
     if (vid && z.sound === true) o.sound = true;   // 1.12.9 : ecran video avec son (muet par defaut) ; ecrit seulement s'il est vrai, comme gen_tpl.py
     if (typeof z.cone === 'boolean' && type !== 'spawn' && !board) o.cone = z.cone;   // radio (1.10.35) : cone par defaut, cone: false pour le retirer   // repere (cone) facultatif : vrai = toujours, faux = jamais ; absent = selon le declenchement ; ecrit seulement s'il est vrai ou faux
     if (type === 'cast') {   // radio : tableau d'URLs (flux Icecast / SHOUTcast) ; on joue la premiere a portee, puis on enchaîne
@@ -2623,7 +2634,77 @@ function createViewer(container, cfg0, loader) {
     return pl;
   }
   function imageDiag() { const o = []; zoneGroup.traverse(n => { const d = n.userData && n.userData.diag; if (d) o.push({ id: d.id, target: d.target, loaded: d.loaded, cap: d.cap, src: d.src, vis: d.vis() }); }); return o; }
+  // 1.12.39 : zones model : un fichier .glb pose a part (decor, ou porteur d'une action : lien, portail, commande, radio, musique). Charge a la demande : a moins de cfg.modelLazy metres
+  // de la zone (150 par defaut ; 0 = tous charges des le depart, sans plafond) ; au plus MODEL_CAP charges en meme temps (le plus loin est libere) et MODEL_PAR chargements a la fois.
+  // solid : ses triangles s'ajoutent a la grille de collision de la marche (withSolids) et ses meshes aux rayons de teleportation et de clic (rayModels).
+  const MODEL_CAP = 16, MODEL_PAR = 2;
+  const mdlState = new Map();   // id de zone -> { z, g, hold, st : empty | idle | loading | ready | failed, d, grid, meshes, err }
+  let mdlGen = 0, mdlLast = 0;
+  const solidGrids = [];
+  function withSolids(base) {
+    if (!base) return base;
+    return {
+      get tiled() { return base.tiled; }, get count() { let n = base.count; for (const q of solidGrids) n += q.count; return n; },
+      pending: base.pending ? (x, z) => base.pending(x, z) : undefined,
+      ground(x, z, y0) { let b = base.ground(x, z, y0); for (const q of solidGrids) { const g = q.ground(x, z, y0); if (g !== null && (b === null || g > b)) b = g; } return b; },
+      wall(x, y, z, dx, dz, dist) { let b = base.wall(x, y, z, dx, dz, dist); for (const q of solidGrids) { const h = q.wall(x, y, z, dx, dz, dist); if (h && (!b || h.t < b.t)) b = h; } return b; }
+    };
+  }
+  function rayModels() { const a = [model]; for (const e of mdlState.values()) if (e.st === 'ready' && e.z.solid) a.push(e.hold); return a; }
+  function mdlAdd(z, g) {
+    const hold = new THREE.Group(); hold.rotation.set(z.pitch || 0, z.yaw || 0, z.roll || 0, 'YXZ'); hold.scale.setScalar(z.mscale || 1); g.add(hold);
+    mdlState.set(z.id, { z, g, hold, st: z.mdl ? 'idle' : 'empty', d: 1e9, grid: null, meshes: [], err: '' });
+  }
+  async function mdlLoad(e) {
+    const gen = mdlGen; e.st = 'loading';
+    try {
+      const r = await freshFetch(imageUrl(e.z.mdl));
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const gltf = await loader.parseAsync(await r.arrayBuffer(), '');
+      if (gen !== mdlGen || mdlState.get(e.z.id) !== e) { disposeObject(gltf.scene); return; }
+      mdlReady(e, gltf.scene);
+    } catch (err) {
+      if (gen !== mdlGen) return;
+      e.st = 'failed'; e.err = String(err && err.message || err); console.warn(tr('core.model.fail', e.z.id, e.z.mdl, e.err));
+    }
+  }
+  function mdlReady(e, root) {
+    const z = e.z, hit = !zoneEditor && z.type !== 'model' && z.type !== 'cast' && z.type !== 'audio' && z.trigger !== 'enter';
+    e.hold.add(root); e.hold.updateWorldMatrix(true, true);
+    root.traverse(o => { if (o.isMesh) e.meshes.push(o); });
+    if (zoneEditor || hit) for (const o of e.meshes) { o.userData.zone = z; zoneAll.push(o); if (hit) zoneHit.push(o); }
+    if (z.solid) { e.grid = buildCollisionGrid(e.hold, 3, parseIgnore(cfg.walkIgnore)); solidGrids.push(e.grid); }
+    e.st = 'ready'; dirty = true;
+    if (zoneEditor && selId === z.id) zoneSelect(z.id);   // le cadre de selection suit le modele charge
+  }
+  function mdlUnload(e) {
+    if (e.grid) { const i = solidGrids.indexOf(e.grid); if (i >= 0) solidGrids.splice(i, 1); e.grid = null; }
+    if (e.meshes.length) { const s2 = new Set(e.meshes); zoneAll = zoneAll.filter(o => !s2.has(o)); zoneHit = zoneHit.filter(o => !s2.has(o)); e.meshes = []; }
+    for (const c of [...e.hold.children]) { e.hold.remove(c); disposeObject(c); }
+    e.st = 'idle'; dirty = true;
+  }
+  function modelTick(now) {
+    if (!mdlState.size || now - mdlLast < 250) return;
+    mdlLast = now;
+    const lazy = zoneEditor ? 0 : (cfg.modelLazy === undefined ? 150 : Math.max(0, Number(cfg.modelLazy) || 0)), ref = walking ? W.pos : camera.position;
+    let busy = 0; const cand = [], ready = [];
+    for (const e of mdlState.values()) {
+      e.d = Math.hypot(ref.x - e.z.x, ref.y - e.z.y, ref.z - e.z.z);
+      if (e.st === 'loading') busy++; else if (e.st === 'ready') ready.push(e); else if (e.st === 'idle' && (!lazy || e.d <= lazy)) cand.push(e);
+    }
+    cand.sort((a, b) => a.d - b.d);
+    for (const e of cand) {
+      if (busy >= MODEL_PAR) break;
+      if (lazy && ready.length + busy >= MODEL_CAP) {
+        ready.sort((a, b) => b.d - a.d);
+        if (!ready.length || ready[0].d <= e.d) continue;
+        mdlUnload(ready.shift());
+      }
+      mdlLoad(e); busy++;
+    }
+  }
   function buildZones() {
+    mdlGen++; for (const e of mdlState.values()) disposeObject(e.hold); mdlState.clear(); solidGrids.length = 0;
     for (const c of [...zoneGroup.children]) {
       zoneGroup.remove(c);
       c.traverse(o => { if (o.userData && o.userData.vdispose) o.userData.vdispose(); if (o.geometry) o.geometry.dispose(); if (o.material) { if (o.material.map) o.material.map.dispose(); o.material.dispose(); } });   // vdispose : arrete la video d'un ecran (1.12.7)
@@ -2637,6 +2718,16 @@ function createViewer(container, cfg0, loader) {
       const link = zoneLink.get(z.id);
       const g = new THREE.Group(); g.userData.zoneId = z.id;
       if (!link) { g.position.set(z.x, z.y, z.z); g.rotation.y = z.yaw; }
+      if (z.mdl || z.type === 'model') {   // 1.12.39 : modele .glb pose a part ; g reste sans rotation : le cone d'une action ne penche pas avec pitch et roll
+        g.rotation.set(0, 0, 0); mdlAdd(z, g);
+        if (zoneEditor) {
+          const rm = new THREE.Mesh(new THREE.RingGeometry(0.25, 0.4, 24), new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide, fog: false }));
+          rm.rotation.x = -Math.PI / 2; rm.position.y = 0.05; rm.userData.zone = z; g.add(rm); zoneAll.push(rm);
+          const lab = makeLabel((z.label || z.id) + (z.private ? tr('core.private') : '')); lab.position.y = 2.9; lab.material.depthTest = false; lab.renderOrder = 999; g.add(lab);
+        } else if (z.type !== 'model') coneFor(g, z);
+        zoneGroup.add(g);
+        continue;
+      }
       if (z.type === 'video') {   // 1.12.7 : ecran video : tableau plaque sur un mur ; rien a cliquer en promenade ; selectionnable dans l'editeur comme une image
         const pl = videoPlane(z); g.add(pl); if (pl.userData.cap) g.add(pl.userData.cap);
         if (!zoneEditor) { pl.userData.zone = z; pl.userData.bk.userData.zone = z; zoneAll.push(pl, pl.userData.bk); zoneHit.push(pl, pl.userData.bk); }   // 1.12.10 : cliquable (pause / lecture) ; un ecran masque (fichier absent) ne reagit pas, voir zoneFromClick
@@ -2789,7 +2880,7 @@ function createViewer(container, cfg0, loader) {
     if (model) {
       // un élément traversable (walkIgnore) ne bloque pas le clic, ni les autres morceaux de l'élément visé
       const tokens = parseIgnore(cfg.walkIgnore);
-      for (const m of tpRay.intersectObject(model, true)) {
+      for (const m of tpRay.intersectObjects(rayModels(), true)) {
         if (m.distance >= h.distance - 0.05) break;
         if (isIgnoredMesh(m.object, tokens) || (link && link.meshes.includes(m.object))) continue;
         return null;
@@ -2860,7 +2951,7 @@ function createViewer(container, cfg0, loader) {
         continue;
       }
       if (!walking) continue;   // hors promenade : ni invite, ni entree dans une zone
-      if (z.type === 'spawn' || z.type === 'video' || zoneOff(z) || (z.type === 'image' && !z.link) || ((z.type === 'image' || z.pic) && imgGone.has(z.id))) continue;   // un tableau sans lien n'est pas une zone proche (pas d'invite « clic ou E »)
+      if (z.type === 'spawn' || z.type === 'video' || z.type === 'model' || zoneOff(z) || (z.type === 'image' && !z.link) || ((z.type === 'image' || z.pic) && imgGone.has(z.id))) continue;   // un tableau sans lien n'est pas une zone proche (pas d'invite « clic ou E »)
       const { d, dy } = zoneDist(z);
       if (zoneEntrant(z) && z.trigger !== 'click') {
         const inside = d <= z.radius && (z.type === 'image' || z.pic ? boardReach(z, dy) : dy > -1.5 && dy < 3.5), was = zoneInside.has(z.id);   // 1.12.34 : un tableau est accroche plus haut que les pieds : meme tranche de hauteur que l'invite « clic ou E »
@@ -2973,6 +3064,7 @@ function createViewer(container, cfg0, loader) {
     animTick(performance.now());
     videoTick(performance.now());
     mediaTick(performance.now());
+    modelTick(performance.now());
     if (seaMat && seaMat.uniforms) { seaMat.uniforms.uTime.value = clock.elapsedTime; dirty = true; }
     if (dirty || moved) {
       const now = performance.now(), fm = Number(cfg.fpsMax);
@@ -3092,7 +3184,7 @@ function createViewer(container, cfg0, loader) {
     setName(n) { P.name = cleanName(n); if (P.ws && P.ws.readyState === 1) P.ws.send(JSON.stringify({ t: 'name', name: P.name })); },
     getPresence() { return { state: P.state, id: P.id, opened: P.opened, stopped: P.stopped, tries: P.retry, closeCode: P.closeCode, closeReason: P.closeReason, dm: P.dm, peers: [...P.peers.values()].map(q => ({ id: q.id, name: q.name, k: q.k, screen: peerScreen(q), pos: q.g.position.toArray(), visible: q.g.visible, bubble: !!q.bubble, bubbleVisible: !!q.bubble && q.bubble.visible, labelVisible: (q.g.children.find(o => o.isSprite && !o.userData.isBubble) || { visible: null }).visible, blinking: !!q.blink, blinkHidden: q.blinkHidden || 0, color: q.color, stack: avatarStack(q) })) }; }, get walking() { return walking; },
     walkTick(dt) { if (walking) walkStep(dt); },
-    refreshCollision() { if (TL.on) { for (const t of TL.tiles) if (t.state === 'ready' && t.grp) { t.state = 'building'; t.grid = null; t.gen = collisionGridSteps(t.grp, 3, parseIgnore(cfg.walkIgnore)); t.qAt = performance.now(); t.qFirst = true; t.gridCpu = 0; TL.gridQ.push(t); } } else if (walking && model) W.grid = buildCollisionGrid(model, 3, parseIgnore(cfg.walkIgnore)); },
+    refreshCollision() { if (TL.on) { for (const t of TL.tiles) if (t.state === 'ready' && t.grp) { t.state = 'building'; t.grid = null; t.gen = collisionGridSteps(t.grp, 3, parseIgnore(cfg.walkIgnore)); t.qAt = performance.now(); t.qFirst = true; t.gridCpu = 0; TL.gridQ.push(t); } } else if (walking && model) W.grid = withSolids(buildCollisionGrid(model, 3, parseIgnore(cfg.walkIgnore))); },
     teleportNdc(nx, ny) { return walkTeleport(nx, ny); },
     toggleWalk, pressF, recenterCam, startFly, walkStart, walkStop, teleportTo,
     getWalk() { return { pos: W.pos.toArray(), yaw: W.yaw, pitch: W.pitch, grounded: W.grounded, tris: W.grid ? W.grid.count : 0, flying: W.fly, view: W.view, camYaw: W.view === 'tps' ? W.tyaw : (W.view === 'free' ? W.cyaw : W.yaw), tpsDist: W.tdist, camPitch: W.view === 'tps' ? W.tpitch : (W.view === 'free' ? W.cpitch : W.pitch), running: W.run.size > 0 || W.keys.has('ShiftLeft') || W.keys.has('ShiftRight') || !!W.runLatch, cam: camera.position.toArray(), selfVisible: !!(selfAv && selfAv.visible) }; }, get fit() { return fit; }, requestRender() { dirty = true; }
