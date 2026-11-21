@@ -6,6 +6,14 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.12.0)
 
+### 21/11/2026: full check of the documents against the code (batch 1.12.33)
+
+- **Request** (Klaatou): check everything and update everything, in French and in English.
+- **Checked against the code**: zones table (`cleanZone`, `clean_zones`), command-line options of all the tools (old names included), section cross-references, cited files, configuration keys (`build_cfg` and `REFERENCE_JSON.md` § 11.3), cited interface labels (`fr.json`, `en.json`), keys, presence server defaults, `localStorage` keys, paths cited in `DEVELOPMENT.md`, `GUIDE.md` and `PROCEDURES.md`.
+- **Corrected**: `REFERENCE_JSON.md` § 11.9 named neither the Sound window (`S`) nor the keys `glb2html_sound`, `glb2html_soundFold`, `glb2html_soundW`, `glb2html_padPos` that the layout file stores; manual § 7.66: new bullet listing what the page keeps in the browser (so far missing from the documents).
+- **Left as is**: the configuration keys `landingMarker`, `metalEnv`, `roomDefault` and `imageBase` are set by no generator option (page setting or internal value); they do not belong in `REFERENCE_JSON.md`.
+- Files: `docs/fr/REFERENCE_JSON.md`, `docs/en/REFERENCE_JSON.md`, `docs/fr/MANUEL.md`, `docs/en/MANUAL.md`, `docs/fr/HISTORIQUE.md`, `docs/en/HISTORY.md`, `CHANGELOG.fr.md`, `CHANGELOG.md`, `VERSION`.
+
 ### 21/11/2026: documents brought up to date for batches 1.12.16 to 1.12.31, histories put back in order (batch 1.12.32)
 
 - **Request** (Klaatou): check all the documents and catch up on what was missing, keeping chronological order where it matters.

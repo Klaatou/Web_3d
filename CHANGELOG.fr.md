@@ -6,6 +6,14 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.12.0)
 
+### 21/11/2026 : contrôle complet des documents contre le code (lot 1.12.33)
+
+- **Demande** (Klaatou) : tout vérifier et tout mettre à jour, en français et en anglais.
+- **Contrôlé contre le code** : tableau des zones (`cleanZone`, `clean_zones`), options de ligne de commande de tous les outils (y compris les anciens noms), renvois de section, fichiers cités, clés de configuration (`build_cfg` et `REFERENCE_JSON.md` § 11.3), libellés d'interface cités (`fr.json`, `en.json`), touches, valeurs par défaut du serveur de présence, clés `localStorage`, chemins cités dans `DEVELOPPEMENT.md`, `GUIDE.md` et `PROCEDURES.md`.
+- **Corrigé** : `REFERENCE_JSON.md` § 11.9 ne citait ni la fenêtre Son (`S`) ni les clés `glb2html_sound`, `glb2html_soundFold`, `glb2html_soundW`, `glb2html_padPos` que le fichier de disposition enregistre ; manuel § 7.66 : nouvelle puce qui liste ce que la page retient dans le navigateur (jusqu'ici absent des documents).
+- **Laissé tel quel** : les clés `landingMarker`, `metalEnv`, `roomDefault` et `imageBase` de la configuration ne sont posées par aucune option du générateur (réglage de la page ou valeur interne) ; elles n'entrent pas dans `REFERENCE_JSON.md`.
+- Fichiers : `docs/fr/REFERENCE_JSON.md`, `docs/en/REFERENCE_JSON.md`, `docs/fr/MANUEL.md`, `docs/en/MANUAL.md`, `docs/fr/HISTORIQUE.md`, `docs/en/HISTORY.md`, `CHANGELOG.fr.md`, `CHANGELOG.md`, `VERSION`.
+
 ### 21/11/2026 : documents remis à jour pour les lots 1.12.16 à 1.12.31, historiques remis dans l'ordre (lot 1.12.32)
 
 - **Demande** (Klaatou) : contrôler tous les documents et rattraper ce qui manquait, en gardant l'ordre chronologique là où il compte.
