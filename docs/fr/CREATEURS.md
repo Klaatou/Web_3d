@@ -11,7 +11,7 @@ Un serveur de présence relaie les positions, le chat et les compteurs de visite
 - **L'origine de ta page** : le début de son adresse, sans chemin, par exemple `https://alice.example` (avec le port s'il n'est pas le port habituel). Si ta page est joignable avec et sans `www`, donne les deux.
 - **Un identifiant court**, par exemple `alice` : il devient ton préfixe de salon.
 - Une page ouverte depuis le disque, et le viewer, ont l'origine `null` : l'hôte décide de l'accepter ou non.
-- **Les adresses de tes flux radio**, si ta région a une zone `cast` (`streams`) et que tu veux que le titre du morceau s'affiche : l'hôte doit les inscrire dans sa liste `--radios` (une adresse par flux, `https://` comme dans ta zone). Sans cela la radio joue, mais sans titre.
+- **Les adresses de tes flux radio**, si ta région a une radio (clé `radio`) et que tu veux que le titre du morceau s'affiche : l'hôte doit les inscrire dans sa liste `--radios` (une adresse par flux, `https://` comme dans ta zone). Sans cela la radio joue, mais sans titre.
 
 ## 3. Ce que l'hôte te donne
 

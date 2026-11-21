@@ -1899,6 +1899,9 @@ function createViewer(container, cfg0, loader) {
   function castReset() { const was = castCur; castCur = null; castGain = 0; castM = -1; castO = false; if (was && onCast) onCast(null, 0, 0, false); }
   let audCur = null, audGain = 0, onAudio = null;   // 1.11.4 : zone audio (type audio) la plus proche a portee et son gain, comme la radio ; onAudio(zone|null, gain) a chaque changement
   function audioReset() { const was = audCur; audCur = null; audGain = 0; audM = -1; audO = false; if (was && onAudio) onAudio(null, 0, 0, false); }
+  const imgH = new Map();   // 1.12.35 : hauteur reelle de chaque tableau (m), connue au chargement de l'image ; sert a boardReach
+  // 1.12.35 : un tableau se touche si les pieds sont entre 4 m sous son bord bas et 0,5 m au-dessus de son bord haut (avant : 3,5 m autour de son centre ; un tableau accroche haut etait intouchable)
+  const boardReach = (z, dy) => { const hh = imgH.get(z.id) || (z.h > 0 ? z.h : z.w * 0.75); return dy >= -hh / 2 - 4 && dy <= hh / 2 + 0.5; };
   const imgGone = new Set();   // ids des tableaux dont l'image est introuvable (page exportee) : ni cliquables ni zone proche
   let zoneNums = false;   // reperage des zones image : un gros numero devant chacune (jamais memorise ; voir setZoneNumbers)
   // zones liées à un élément du modèle (champ mesh = nom exact) : id de zone -> { meshes, box } ; mesh 3D -> zone
@@ -1996,6 +1999,76 @@ function createViewer(container, cfg0, loader) {
     s = s.replace(/[\u0000-\u001f]/g, '').replace(/\\/g, '/').trim().slice(0, 300);
     if (!s || s.split('/').includes('..')) return '';
     return /^[a-z][a-z0-9+.\-]*:/i.test(s) && !/^https?:/i.test(s) ? '' : s;
+  }
+  // 1.12.35 : format unifie des zones (fichiers JSON) : plus de type ni de target. Ce qu'on voit (image, video, mesh ; sinon anneau, ou panneau avec shape board)
+  // + ce qui se passe (link, portal, ha, radio, music) ; arrival : point d'arrivee. zoneIn : zone du fichier -> zone interne (celle de cleanZone, ex-format a type)
+  // et messages [code, id, a, b] ; zoneOut : zone interne -> zone du fichier (cles utiles seulement). Miroir exact de zone_in / zone_out (gen_tpl.py).
+  // L'ancien format (cle type ou target) reste lu tel quel : c'est le format interne.
+  const ZONE_KEYS = ['id', 'label', 'x', 'y', 'z', 'yaw', 'radius', 'trigger', 'showName', 'private', 'cone', 'shape', 'w', 'h', 'image', 'video', 'videoFolder', 'tracks', 'sound', 'mesh',
+    'link', 'frame', 'portal', 'spawn', 'ha', 'confirm', 'radio', 'music', 'poster', 'posterLink', 'arrival'];
+  const ZONE_VIS = ['image', 'video', 'mesh'], ZONE_ACT = ['link', 'portal', 'ha', 'radio', 'music'];
+  function zoneLegacy(z) { return !!z && typeof z === 'object' && ('type' in z || 'target' in z); }
+  function zoneIn(z) {
+    const id = String(z.id == null ? '' : z.id), msgs = [];
+    const on = k => z[k] !== undefined && z[k] !== null && z[k] !== false;
+    const set = k => on(k) && z[k] !== '';
+    const str = v => typeof v === 'string' ? v : '';
+    for (const k of Object.keys(z)) if (!ZONE_KEYS.includes(k)) msgs.push(['unknown', id, k]);
+    const o = { id: z.id, label: z.label, x: z.x, y: z.y, z: z.z, yaw: z.yaw, private: z.private };
+    if (on('arrival')) {
+      for (const k of ZONE_KEYS) if (!['id', 'label', 'x', 'y', 'z', 'yaw', 'private', 'arrival'].includes(k) && set(k)) msgs.push(['ignored', id, k]);
+      o.type = 'spawn'; return { z: o, msgs };
+    }
+    const vis = ZONE_VIS.filter(on), act = ZONE_ACT.filter(on);
+    if (vis.length > 1) msgs.push(['visuals', id, vis[0], vis.slice(1).join(', ')]);
+    if (act.length > 1) msgs.push(['actions', id, act[0], act.slice(1).join(', ')]);
+    const v = vis[0] || '', a = act[0] || '';
+    if ((v === 'image' && a && a !== 'link') || (v === 'video' && a) || (v === 'mesh' && (a === 'radio' || a === 'music'))) { msgs.push(['combo', id, v, a]); return { z: null, msgs }; }
+    if (!a && v !== 'image' && v !== 'video') { msgs.push(['empty', id]); return { z: null, msgs }; }
+    const sound = a === 'radio' || a === 'music', wh = v === 'image' || v === 'video' || (!v && z.shape === 'board');
+    const ok = { radius: true, showName: true, cone: v !== 'image' && v !== 'video', trigger: a === 'link' || a === 'portal', shape: !v, w: wh, h: wh,
+      videoFolder: v === 'video', sound: v === 'video', tracks: v === 'video' || a === 'music', frame: a === 'link', spawn: a === 'portal', confirm: a === 'ha', poster: sound, posterLink: sound };
+    for (const k of Object.keys(ok)) if (!ok[k] && set(k)) msgs.push(['ignored', id, k]);
+    let t;
+    if (v === 'image') { t = 'image'; o.target = str(z.image); if (a === 'link') { o.link = str(z.link); o.frame = z.frame; } }
+    else if (v === 'video') { t = 'video'; o.target = str(z.video); o.folder = z.videoFolder; o.sound = z.sound; }
+    else if (a === 'link') { t = 'url'; o.target = str(z.link); o.frame = z.frame; }
+    else if (a === 'portal') { t = 'portal'; o.target = str(z.portal); o.spawn = z.spawn; }
+    else if (a === 'ha') { t = 'ha'; o.target = str(z.ha); o.confirm = z.confirm; }
+    else if (a === 'radio') { t = 'cast'; o.streams = Array.isArray(z.radio) ? z.radio : [z.radio]; }
+    else { t = 'audio'; o.folder = str(z.music); }
+    if (ok.tracks) o.tracks = z.tracks;
+    if (sound) { o.poster = z.poster; o.link = z.posterLink; }
+    if (v === 'mesh') o.mesh = z.mesh;
+    for (const k of ['radius', 'trigger', 'showName', 'cone', 'shape', 'w', 'h']) if (ok[k]) o[k] = z[k];
+    o.type = t;
+    return { z: o, msgs };
+  }
+  function zoneOut(o) {
+    const t = o.type, r = { id: o.id };
+    if (o.label) r.label = o.label;
+    r.x = o.x; r.y = o.y; r.z = o.z;
+    if (o.yaw) r.yaw = o.yaw;
+    if (t === 'spawn') { r.arrival = true; if (o.private) r.private = true; return r; }
+    const rng = t === 'cast' || t === 'audio' || t === 'video';
+    if (o.radius !== (rng ? 20 : 2)) r.radius = o.radius;
+    if ((t === 'url' || t === 'portal' || (t === 'image' && o.link)) && o.trigger && o.trigger !== 'click') r.trigger = o.trigger;
+    let w0 = 2.4, h0 = 1.2, wh = false;
+    if (t === 'image') { r.image = o.target; w0 = 1.2; h0 = 0; wh = true; }
+    else if (t === 'video') { r.video = o.target; if (o.folder) r.videoFolder = o.folder; if (o.tracks) r.tracks = o.tracks; if (o.sound) r.sound = true; h0 = 0; wh = true; }
+    else if (o.mesh) r.mesh = o.mesh;
+    else if (o.shape === 'board') { r.shape = 'board'; wh = true; }
+    if (wh) { if (o.w !== w0) r.w = o.w; if (o.h !== h0) r.h = o.h; }
+    if (t === 'url' || (t === 'image' && o.link)) { r.link = t === 'url' ? o.target : o.link; if (o.frame) r.frame = true; }
+    else if (t === 'portal') { r.portal = o.target; if (o.spawn) r.spawn = o.spawn; }
+    else if (t === 'ha') { r.ha = o.target; if (o.confirm) r.confirm = true; }
+    else if (t === 'cast') r.radio = o.streams || [];
+    else if (t === 'audio') { r.music = o.folder || ''; if (o.tracks) r.tracks = o.tracks; }
+    if (t === 'cast' || t === 'audio') { if (o.poster) r.poster = o.poster; if (o.link) r.posterLink = o.link; }
+    if (typeof o.cone === 'boolean') r.cone = o.cone;
+    if (o.showName) r.showName = true;
+    if (o.private) r.private = true;
+    return r;
   }
   function cleanZone(z, i) {
     const num = (v, d, lo, hi) => { v = Number(v); return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d; };
@@ -2459,7 +2532,7 @@ function createViewer(container, cfg0, loader) {
     const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true });
     const pl = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat); backOf(pl);
     const hOf = (iw, ih) => z.h > 0 ? z.h : z.w * (iw && ih ? ih / iw : 0.75);
-    pl.scale.set(z.w, hOf(0, 0), 1);
+    pl.scale.set(z.w, hOf(0, 0), 1); imgH.set(z.id, pl.scale.y);
     const capText = imageCaption(z.target); let cap = capText ? captionPlane(capText, z.w) : null;
     const place = () => { if (cap) cap.position.y = -(pl.scale.y / 2 + z.w * 96 / 2048 + 0.03); };
     place(); if (cap) pl.userData.cap = cap;
@@ -2473,7 +2546,7 @@ function createViewer(container, cfg0, loader) {
     const setTex = (tex, iw, ih, ok) => {
       tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
       mat.map = tex; mat.needsUpdate = true;
-      pl.scale.y = hOf(iw, ih); place(); dirty = true; if (ok) ok();
+      pl.scale.y = hOf(iw, ih); imgH.set(z.id, pl.scale.y); place(); dirty = true; if (ok) ok();
     };
     const loadTex = (u, tmp, fail, ok) => new THREE.TextureLoader().load(u, tex => {
       if (tmp) URL.revokeObjectURL(u);
@@ -2544,7 +2617,7 @@ function createViewer(container, cfg0, loader) {
       c.traverse(o => { if (o.userData && o.userData.vdispose) o.userData.vdispose(); if (o.geometry) o.geometry.dispose(); if (o.material) { if (o.material.map) o.material.map.dispose(); o.material.dispose(); } });   // vdispose : arrete la video d'un ecran (1.12.7)
     }
     if (selBox) { scene.remove(selBox); selBox.geometry.dispose(); selBox.material.dispose(); selBox = null; }
-    zoneHit = []; zoneAll = []; zoneLabs = []; meshZone.clear(); imgGone.clear();
+    zoneHit = []; zoneAll = []; zoneLabs = []; meshZone.clear(); imgGone.clear(); imgH.clear();
     setHover(null);
     markerMat.clear();
     for (const z of zones) {
@@ -2651,16 +2724,20 @@ function createViewer(container, cfg0, loader) {
     dirty = true;
   }
   const tilesNoRefs = z => tr('core.zone.norefs', z.id, z.mesh);
+  let zoneMsgs = [];   // 1.12.35 : messages du dernier setZones (cles ignorees, zones refusees), voir zoneIn
   function setZones(list, opts) {
     zoneEditor = !!(opts && opts.editor);
     const seen = new Set();
-    zones = (Array.isArray(list) ? list : []).map((z, i) => cleanZone(z || {}, i)).map(z => {
+    zoneMsgs = [];
+    zones = (Array.isArray(list) ? list : []).map(z => { if (!z || zoneLegacy(z) || typeof z !== 'object') return z; const r = zoneIn(z); zoneMsgs.push(...r.msgs); return r.z; })   // 1.12.35 : format unifie lu ici (page, viewer, coquille, zones relues)
+      .filter(z => z !== null).map((z, i) => cleanZone(z || {}, i)).map(z => {
       let id = z.id, n = 2; while (seen.has(id)) id = z.id + '-' + (n++);
       seen.add(id); z.id = id; return z;
     }).filter(z => {
       if (TL.on && TL.refsKnown && !TL.refs && z.mesh && z.type !== 'spawn') { console.warn(tilesNoRefs(z)); return false; }
       return true;
     });
+    for (const m of zoneMsgs) console.warn(tr('core.zmsg.' + m[0], ...m.slice(1)));
     nearZone = null; zoneInside.clear(); castReset(); audioReset();
     resolveLinks();
     buildZones();
@@ -2774,13 +2851,13 @@ function createViewer(container, cfg0, loader) {
       if (z.type === 'spawn' || z.type === 'video' || zoneOff(z) || (z.type === 'image' && (!z.link || imgGone.has(z.id)))) continue;   // un tableau sans lien n'est pas une zone proche (pas d'invite « clic ou E »)
       const { d, dy } = zoneDist(z);
       if (zoneEntrant(z) && z.trigger !== 'click') {
-        const inside = d <= z.radius && (z.type === 'image' ? Math.abs(dy) < 3.5 : dy > -1.5 && dy < 3.5), was = zoneInside.has(z.id);   // 1.12.34 : un tableau est accroche plus haut que les pieds : meme tranche de hauteur que l'invite « clic ou E »
+        const inside = d <= z.radius && (z.type === 'image' ? boardReach(z, dy) : dy > -1.5 && dy < 3.5), was = zoneInside.has(z.id);   // 1.12.34 : un tableau est accroche plus haut que les pieds : meme tranche de hauteur que l'invite « clic ou E »
         if (inside && !was) { zoneInside.add(z.id); fireZone(z, 'enter'); }
         else if (!inside && was) zoneInside.delete(z.id);
       }
       if (z.trigger !== 'enter') {
         const reach = zoneLink.has(z.id) ? z.radius : (z.shape === 'board' ? Math.max(z.radius, 2) : z.radius) + 1.5;
-        if (d <= reach && Math.abs(dy) < 3.5 && d < bd) { best = z; bd = d; }
+        if (d <= reach && (z.type === 'image' ? boardReach(z, dy) : Math.abs(dy) < 3.5) && d < bd) { best = z; bd = d; }
       }
     }
     if (best !== nearZone) { nearZone = best; if (onNear) onNear(best); }
@@ -2927,7 +3004,7 @@ function createViewer(container, cfg0, loader) {
     // boîte (monde) de l'élément de ce nom : { min, max, center, count } ou null
     meshInfo(name) { const m = findMeshes(name); const b = m.length ? refBox(name, m) : null; if (!b) return null; return { min: b.min.toArray(), max: b.max.toArray(), center: b.getCenter(new THREE.Vector3()).toArray(), size: b.getSize(new THREE.Vector3()).toArray(), count: m.length }; },
     set linkMode(v) { linkLock = !!v; },
-    isTraversable(o) { return isIgnoredMesh(o, parseIgnore(cfg.walkIgnore)); }, getZones() { return zones.map(z => Object.assign({}, z)); }, set onZone(f) { onZone = f; }, set videoSound(f) { videoSound = typeof f === 'function' ? f : null; }, set onVideoTalk(f) { onVideoTalk = typeof f === 'function' ? f : null; }, set onVideoAct(f) { onVideoAct = typeof f === 'function' ? f : null; }, set onNear(f) { onNear = f; }, set onCast(f) { onCast = f; }, set onAudio(f) { onAudio = f; }, audioTracks, set onRadio(f) { onRadio = f; }, radioAsk(url) { radioWant = String(url || ''); if (P.ws && P.ws.readyState === 1 && P.id) P.ws.send(JSON.stringify({ t: 'radio', url: radioWant })); },
+    isTraversable(o) { return isIgnoredMesh(o, parseIgnore(cfg.walkIgnore)); }, getZones() { return zones.map(z => Object.assign({}, z)); }, zoneMessages() { return zoneMsgs.slice(); }, zoneIn, zoneOut, set onZone(f) { onZone = f; }, set videoSound(f) { videoSound = typeof f === 'function' ? f : null; }, set onVideoTalk(f) { onVideoTalk = typeof f === 'function' ? f : null; }, set onVideoAct(f) { onVideoAct = typeof f === 'function' ? f : null; }, set onNear(f) { onNear = f; }, set onCast(f) { onCast = f; }, set onAudio(f) { onAudio = f; }, audioTracks, set onRadio(f) { onRadio = f; }, radioAsk(url) { radioWant = String(url || ''); if (P.ws && P.ws.readyState === 1 && P.id) P.ws.send(JSON.stringify({ t: 'radio', url: radioWant })); },
     captureTop(size = 320, hide = []) {
       if (!model) return null;
       const box = new THREE.Box3().setFromObject(model), c = box.getCenter(new THREE.Vector3()), sz = box.getSize(new THREE.Vector3());

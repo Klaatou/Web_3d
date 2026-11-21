@@ -22,9 +22,9 @@ Cette page dit **quel document lire pour quoi**. Les documents anglais portent l
 | corriger la mer d'une région déjà publiée | `PROCEDURES_SIMPLES.md` § 12 ; `MANUEL.md` § 3.13 |
 | alléger les textures d'une région | `PROCEDURES_SIMPLES.md` § 13 ; `MANUEL.md` § 3.12 |
 | poser des zones (arrivées, portails, panneaux, images) | `GUIDE.md` § 2 ; `MANUEL.md` § 5 ; `PROCEDURES.md` § 5 |
-| mettre une radio dans une région (zone `cast`, titre du morceau) | `PROCEDURES_SIMPLES.md` § 14 (pas à pas) ; `MANUEL.md` § 5.19 et § 10.25 |
-| mettre ma propre musique (mp3...) dans une région (zone `audio`, playlist) | `PROCEDURES_SIMPLES.md` § 15 ; `MANUEL.md` § 5.20 |
-| mettre un écran vidéo sur un mur (zone `video`, liste de vidéos) | `PROCEDURES_SIMPLES.md` § 17 ; `MANUEL.md` § 5.21 |
+| mettre une radio dans une région (clé `radio`, titre du morceau) | `PROCEDURES_SIMPLES.md` § 14 (pas à pas) ; `MANUEL.md` § 5.19 et § 10.25 |
+| mettre ma propre musique (mp3...) dans une région (clé `music`, playlist) | `PROCEDURES_SIMPLES.md` § 15 ; `MANUEL.md` § 5.20 |
+| mettre un écran vidéo sur un mur (clé `video`, liste de vidéos) | `PROCEDURES_SIMPLES.md` § 17 ; `MANUEL.md` § 5.21 |
 | ouvrir un lien dans une fenêtre flottante, YouTube compris (clé `frame`) | `MANUEL.md` § 5.7.1 |
 | comprendre quelle source sonore parle, couper le son (fenêtre Son, touche N) | `MANUEL.md` § 5.22 et § 7.66 |
 | mettre à jour les zones d'une région déjà en ligne (exporter, remplacer `NOM.zones.json`, publier) | `PROCEDURES_SIMPLES.md` § 16 ; `MANUEL.md` § 5.15 |

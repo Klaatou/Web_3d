@@ -197,7 +197,211 @@ def audio_name(s):
     return "" if re.match(r"^[a-z][a-z0-9+.\-]*:", s, re.I) and not re.match(r"^https?:", s, re.I) else s
 
 
-def clean_zones(zones, profile):
+# 1.12.35 : format unifie des zones (fichiers JSON) : plus de type ni de target. Ce qu'on voit (image, video, mesh ; sinon anneau, ou panneau avec shape board)
+# + ce qui se passe (link, portal, ha, radio, music) ; arrival : point d'arrivee. zone_in : zone du fichier -> zone interne (celle de clean_zones, ex-format a type)
+# et messages [code, id, a, b] ; zone_out : zone interne -> zone du fichier (cles utiles seulement). Miroir exact de zoneIn / zoneOut (core.js).
+# L'ancien format (cle type ou target) reste lu tel quel : c'est le format interne.
+ZONE_KEYS = ("id", "label", "x", "y", "z", "yaw", "radius", "trigger", "showName", "private", "cone", "shape", "w", "h", "image", "video", "videoFolder", "tracks", "sound", "mesh",
+             "link", "frame", "portal", "spawn", "ha", "confirm", "radio", "music", "poster", "posterLink", "arrival")
+ZONE_VIS = ("image", "video", "mesh")
+ZONE_ACT = ("link", "portal", "ha", "radio", "music")
+
+
+def zone_legacy(z):
+    return isinstance(z, dict) and ("type" in z or "target" in z)
+
+
+def zone_in(z):
+    zid = "" if z.get("id") is None else str(z.get("id"))
+    msgs = []
+    on = lambda k: z.get(k) is not None and z.get(k) is not False
+    setk = lambda k: on(k) and z.get(k) != ""
+    sstr = lambda v: v if isinstance(v, str) else ""
+    for k in z:
+        if k not in ZONE_KEYS:
+            msgs.append(["unknown", zid, k])
+    o = {"id": z.get("id"), "label": z.get("label"), "x": z.get("x"), "y": z.get("y"), "z": z.get("z"), "yaw": z.get("yaw"), "private": z.get("private")}
+    if on("arrival"):
+        for k in ZONE_KEYS:
+            if k not in ("id", "label", "x", "y", "z", "yaw", "private", "arrival") and setk(k):
+                msgs.append(["ignored", zid, k])
+        o["type"] = "spawn"
+        return o, msgs
+    vis = [k for k in ZONE_VIS if on(k)]
+    act = [k for k in ZONE_ACT if on(k)]
+    if len(vis) > 1:
+        msgs.append(["visuals", zid, vis[0], ", ".join(vis[1:])])
+    if len(act) > 1:
+        msgs.append(["actions", zid, act[0], ", ".join(act[1:])])
+    v = vis[0] if vis else ""
+    a = act[0] if act else ""
+    if (v == "image" and a and a != "link") or (v == "video" and a) or (v == "mesh" and a in ("radio", "music")):
+        msgs.append(["combo", zid, v, a])
+        return None, msgs
+    if not a and v not in ("image", "video"):
+        msgs.append(["empty", zid])
+        return None, msgs
+    sound = a in ("radio", "music")
+    wh = v in ("image", "video") or (not v and z.get("shape") == "board")
+    ok = {"radius": True, "showName": True, "cone": v not in ("image", "video"), "trigger": a in ("link", "portal"), "shape": not v, "w": wh, "h": wh,
+          "videoFolder": v == "video", "sound": v == "video", "tracks": v == "video" or a == "music", "frame": a == "link", "spawn": a == "portal", "confirm": a == "ha",
+          "poster": sound, "posterLink": sound}
+    for k, good in ok.items():
+        if not good and setk(k):
+            msgs.append(["ignored", zid, k])
+    if v == "image":
+        t = "image"
+        o["target"] = sstr(z.get("image"))
+        if a == "link":
+            o["link"] = sstr(z.get("link"))
+            o["frame"] = z.get("frame")
+    elif v == "video":
+        t = "video"
+        o["target"] = sstr(z.get("video"))
+        o["folder"] = z.get("videoFolder")
+        o["sound"] = z.get("sound")
+    elif a == "link":
+        t = "url"
+        o["target"] = sstr(z.get("link"))
+        o["frame"] = z.get("frame")
+    elif a == "portal":
+        t = "portal"
+        o["target"] = sstr(z.get("portal"))
+        o["spawn"] = z.get("spawn")
+    elif a == "ha":
+        t = "ha"
+        o["target"] = sstr(z.get("ha"))
+        o["confirm"] = z.get("confirm")
+    elif a == "radio":
+        t = "cast"
+        o["streams"] = z["radio"] if isinstance(z.get("radio"), list) else [z.get("radio")]
+    else:
+        t = "audio"
+        o["folder"] = sstr(z.get("music"))
+    if ok["tracks"]:
+        o["tracks"] = z.get("tracks")
+    if sound:
+        o["poster"] = z.get("poster")
+        o["link"] = z.get("posterLink")
+    if v == "mesh":
+        o["mesh"] = z.get("mesh")
+    for k in ("radius", "trigger", "showName", "cone", "shape", "w", "h"):
+        if ok[k]:
+            o[k] = z.get(k)
+    o["type"] = t
+    return {k: val for k, val in o.items() if val is not None}, msgs
+
+
+def report_zones(zones):
+    """1.12.35 : affiche une fois, a la lecture, les messages du format unifie (cles ignorees, zones refusees) et le nombre de zones a l'ancien format."""
+    if not isinstance(zones, list):
+        return
+    msgs = []
+    clean_zones(zones, "private", msgs)
+    for m in msgs:
+        print(_tr("py.glb2html.zmsg." + m[0], *m[1:]))
+    old = sum(1 for z in zones if zone_legacy(z))
+    if old:
+        print(_tr("py.glb2html.zmsg.legacy", old))
+
+
+def convert_zones_file(path):
+    """1.12.35 : --convert-zones : reecrit une liste de zones, ou un fichier de reglages (cle zones), au format unifie ; l'original reste dans FICHIER.bak."""
+    p = pathlib.Path(path)
+    raw = p.read_text(encoding="utf-8-sig")
+    data = json.loads(raw)
+    lst = data if isinstance(data, list) else (data.get("zones") if isinstance(data, dict) else None)
+    if not isinstance(lst, list):
+        sys.exit(_tr("py.glb2html.zmsg.badfile", p))
+    old = [z for z in lst if zone_legacy(z)]
+    if not old:
+        print(_tr("py.glb2html.zmsg.nothing", p))
+        return
+    new = [zone_out(clean_zones([z], "private")[0]) if zone_legacy(z) and clean_zones([z], "private") else z for z in lst]
+    if isinstance(data, list):
+        data = new
+    else:
+        data["zones"] = new
+    bak = p.with_name(p.name + ".bak")
+    bak.write_text(raw, encoding="utf-8")
+    p.write_text(json.dumps(data, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    print(_tr("py.glb2html.zmsg.converted", p, len(old), bak))
+
+
+def zone_out(o):
+    t = o.get("type")
+    r = {"id": o.get("id")}
+    if o.get("label"):
+        r["label"] = o["label"]
+    r["x"], r["y"], r["z"] = o.get("x"), o.get("y"), o.get("z")
+    if o.get("yaw"):
+        r["yaw"] = o["yaw"]
+    if t == "spawn":
+        r["arrival"] = True
+        if o.get("private"):
+            r["private"] = True
+        return r
+    rng = t in ("cast", "audio", "video")
+    if o.get("radius") != (20 if rng else 2):
+        r["radius"] = o.get("radius")
+    if (t in ("url", "portal") or (t == "image" and o.get("link"))) and o.get("trigger") and o.get("trigger") != "click":
+        r["trigger"] = o["trigger"]
+    w0, h0, wh = 2.4, 1.2, False
+    if t == "image":
+        r["image"] = o.get("target")
+        w0, h0, wh = 1.2, 0, True
+    elif t == "video":
+        r["video"] = o.get("target")
+        if o.get("folder"):
+            r["videoFolder"] = o["folder"]
+        if o.get("tracks"):
+            r["tracks"] = o["tracks"]
+        if o.get("sound"):
+            r["sound"] = True
+        h0, wh = 0, True
+    elif o.get("mesh"):
+        r["mesh"] = o["mesh"]
+    elif o.get("shape") == "board":
+        r["shape"] = "board"
+        wh = True
+    if wh:
+        if o.get("w") != w0:
+            r["w"] = o.get("w")
+        if o.get("h") != h0:
+            r["h"] = o.get("h")
+    if t == "url" or (t == "image" and o.get("link")):
+        r["link"] = o.get("target") if t == "url" else o.get("link")
+        if o.get("frame"):
+            r["frame"] = True
+    elif t == "portal":
+        r["portal"] = o.get("target")
+        if o.get("spawn"):
+            r["spawn"] = o["spawn"]
+    elif t == "ha":
+        r["ha"] = o.get("target")
+        if o.get("confirm"):
+            r["confirm"] = True
+    elif t == "cast":
+        r["radio"] = o.get("streams") or []
+    elif t == "audio":
+        r["music"] = o.get("folder") or ""
+        if o.get("tracks"):
+            r["tracks"] = o["tracks"]
+    if t in ("cast", "audio"):
+        if o.get("poster"):
+            r["poster"] = o["poster"]
+        if o.get("link"):
+            r["posterLink"] = o["link"]
+    if isinstance(o.get("cone"), bool):
+        r["cone"] = o["cone"]
+    if o.get("showName"):
+        r["showName"] = True
+    if o.get("private"):
+        r["private"] = True
+    return r
+
+
+def clean_zones(zones, profile, msgs=None):
     """Valide les zones ; le profil 'public' retire toutes les zones privées (leurs adresses ne sont jamais écrites dans la page)."""
     def num(v, d, lo, hi):
         try:
@@ -211,6 +415,12 @@ def clean_zones(zones, profile):
             continue
         if z.get("private") and profile not in ("private", "perso"):
             continue
+        if not zone_legacy(z):   # 1.12.35 : format unifie, converti en zone interne ; les messages (cles ignorees, zone refusee) vont dans msgs
+            z, m = zone_in(z)
+            if msgs is not None:
+                msgs.extend(m)
+            if z is None:
+                continue
         t = z.get("type") if z.get("type") in ZONE_TYPES else "portal"
         img = t == "image"   # image : tableau plaque sur un mur ; h = 0 : hauteur d'apres le rapport de l'image
         vid = t == "video"   # 1.12.7 : video : ecran sur un mur, joue a portee (portee 20 m par defaut, jusqu'a 200) ; comme core.js
@@ -1262,7 +1472,7 @@ def write_live_zones(out_path, kw):
     zones = clean_zones(json.loads(ZONES_JSON) if zones is None else zones, kw.get("profile", PROFILE))
     target = out_path.with_name(name)
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(json.dumps(zones, ensure_ascii=False, indent=1), encoding="utf-8")
+    target.write_text(json.dumps([zone_out(z) for z in zones], ensure_ascii=False, indent=1), encoding="utf-8")   # 1.12.35 : ecrit au format unifie
     print(_tr("py.glb2html.zones_0_zone_s_profil_1", len(zones), kw.get('profile', PROFILE), target))
 
 
@@ -1275,7 +1485,7 @@ def write_modular_zones(zones_path: pathlib.Path, kw):
     """Écrit <page>.zones.json (zones nettoyées, filtrées selon le profil), relu par la page à chaque ouverture."""
     profile = kw.get("profile", PROFILE)
     zones = clean_zones(json.loads(ZONES_JSON) if kw.get("zones") is None else kw["zones"], profile)
-    write_atomic(zones_path, json.dumps(zones, ensure_ascii=False, indent=1).encode("utf-8"))
+    write_atomic(zones_path, json.dumps([zone_out(z) for z in zones], ensure_ascii=False, indent=1).encode("utf-8"))   # 1.12.35 : ecrit au format unifie
     print(_tr("py.glb2html.zones_0_zone_s_profil_1", len(zones), profile, zones_path))
 
 
@@ -1675,6 +1885,7 @@ def run_maj(a, kw, explicit, S_reg):
             kw["zones"] = json.loads(zf.read_text(encoding="utf-8-sig"))
         except (OSError, ValueError) as e:
             sys.exit(_tr("py.glb2html.erreur_0_illisible_1", zf, e))
+        report_zones(kw["zones"])
         if zones_out.is_file() and zf.resolve() == zones_out.resolve():
             print(_tr("py.glb2html.zones_zones_deja_en_place_0", zones_out))
         else:
@@ -1799,6 +2010,7 @@ def main():
     ap.add_argument("--region-spawn", help=_tr("py.glb2html.identifiant_du_point_d_arrivee_des"))
     ap.add_argument("--thumb", help=_tr("py.glb2html.vignette_de_la_region_fichier_jpg"))
     ap.add_argument("--map-page", metavar="FILE.html", help=_tr("py.glb2html.genere_aussi_une_page_web_carte"))
+    ap.add_argument("--convert-zones", metavar="FILE", help=_tr("py.glb2html.convert_zones"))
     ap.add_argument("--settings", nargs="?", const="auto", default=None, metavar="FILE", help=_tr("py.glb2html.reprend_tous_les_reglages_enregistres_par"))
     ap.add_argument("--modular", action="store_true", help=_tr("py.glb2html.mode_modulaire_ecrit_une_coquille_page"))
     ap.add_argument("--shared-shell", nargs="?", const=DEFAULT_SHELL, default=None, metavar="SHELL.html", help=_tr("py.glb2html.mode_modulaire_a_coquille_commune_une", DEFAULT_SHELL))
@@ -1828,6 +2040,12 @@ def main():
     ap.add_argument("--title", help=_tr("py.glb2html.titre_de_la_page"))
     ap.add_argument("--vendor", type=pathlib.Path, help=_tr("py.glb2html.racine_d_un_paquet_npm_three"))
     a = ap.parse_args()
+    if a.convert_zones:   # 1.12.35 : conversion seule, rien d'autre n'est fait
+        f = find_beside(a.convert_zones)
+        if f is None:
+            sys.exit(_tr("py.glb2html.erreur_0_introuvable", a.convert_zones))
+        convert_zones_file(f)
+        return
     S = {}
     if a.maj and a.settings:
         sys.exit(_tr("py.glb2html.erreur_maj_et_settings_s_excluent"))
@@ -1902,6 +2120,8 @@ def main():
         except (OSError, ValueError) as e:
             sys.exit(_tr("py.glb2html.erreur_0_illisible_1", zf, e))
         print(_tr("py.glb2html.zones_0_zone_s_lue_s", len(zones_arg) if isinstance(zones_arg, list) else 0, zf))
+    if zones_arg is not None:
+        report_zones(zones_arg)
 
     sea_m_val = None        # 1.10.26 : mer en repère de la région (seaM, comme le curseur de Réglages) ; --water-from et --sea-m priment, puis le niveau d'eau du GLB (sauf --sea-y)
     if a.water_from:

@@ -146,35 +146,96 @@ The light rendering settings chosen by a visitor (resolution, frames per second,
 
 ## 11.4 `NOM.zones.json`: the zones
 
-A **list** of zones, read again at each opening of the page. Each zone has the fields below; a missing field takes its default value, and a value outside the limits is brought back within them.
+A **list** of zones, read again at each opening of the page. Since **1.12.35**, a zone is described in three parts: **where it is**, **what is shown**, **what happens**. Each key has a single meaning, whatever the zone. A missing field takes its default value; a value outside the limits is brought back within them.
 
-There are **eight kinds** of zones (`type` field): `"spawn"` (arrival), `"portal"` (portal), `"url"` (web link), `"ha"` (command), `"image"` (picture on a wall, § 5.11), `"cast"` (radio: stream within range, § 5.19) `"audio"` (music: sound files of a folder within range, § 5.20) and `"video"` (video screen on a wall, § 5.21). "Private", "linked to an object" and "name shown" are not kinds: they are boxes (`private`, `mesh`, `showName`) valid for all kinds.
+An unknown key, or one that does not apply to this zone, is ignored and reported:
 
-| Field         | Type     | Default       | What it does                                                                                                                                                  |
-| ------------- | -------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `id`          | text     | `z1`, `z2`... | short, unique name: lowercase letters, digits, `-` and `_`, 40 characters at most. The `default` arrival is the region's entry point                          |
-| `type`        | text     | `"portal"`    | `"spawn"`, `"portal"`, `"url"`, `"ha"`, `"image"`, `"cast"`, `"audio"` or `"video"`                                                                                                                      |
-| `label`       | text     | `""`          | name shown (tooltip, sign), 60 characters at most                                                                                                             |
-| `x`, `y`, `z` | number   | `0`           | position in meters                                                                                                                                            |
-| `yaw`         | number   | `0`           | orientation in radians: direction of the gaze on arrival, or front of the sign                                                                                |
-| `shape`       | text     | `"ring"`      | `"ring"` (ring on the ground) or `"board"` (sign on a post)                                                                                                   |
-| `trigger`     | text     | `"click"`     | portals, links (`"url"`, `hop://` included) and image boards with `link` (1.12.34): `"click"` (click or E), `"enter"` (walking into it) or `"both"` (both). The other kinds are always `"click"`                                    |
-| `radius`      | number   | `2`           | radius of the zone in meters (from 0.5 to 50); radio (`cast`), music (`audio`) and video screen (`video`): range, 20 by default, up to 200                                                                                                                 |
-| `w`, `h`      | number   | `2.4`, `1.2`  | width and height of the sign in meters; for `image`: 1.2 wide by default, height 0 = from the image; for `video`: 2.4 wide by default, height 0 = from the video (§ 5.21)                                                                                                                        |
-| `target`      | text     | `""`          | portal: address of the destination region, or empty for a point of the same region; link: address of the web page; command: address called; image: file name or address of the image; video: file name or address of the video (§ 5.21); radio: no longer used (see `streams`) |
-| `link`        | text     | `""`          | image, radio (`cast`) and music (`audio`), optional: page opened on click or E in front of the picture for an image, and by a click on the cover `poster` in the Sound window for a radio or music (an `http(s)` or `hop://` address, or a path relative to the open page, for example `galerie.html`); at most 600 characters; the key is only written when filled in (§ 5.11) |
-| `folder`      | text      | `""`          | music (`audio`) and video screen (`video`) only: sub-folder of the sound files (or of the videos; § 5.21), relative to the region folder (for example `"audio"`); searched in `medias` first (`mediaDir` key), 200 characters at most, no `..`; the page reads `playlist.json` there (`{"tracks": [...]}` or an array of names), made by `glb2html.py --audio-list` (`--video-list` for videos) or by the viewer button (§ 5.20) |
-| `tracks`      | list      | (absent)      | music (`audio`) and video screen (`video`) only, optional: file names (relative to the region) or `http(s)://` addresses, 500 at most, played in the written order instead of `playlist.json`; an `http` address is refused by a page served over `https` (§ 5.20); entered by hand (the viewer has no field); the key is only written when filled (§ 5.20) |
-| `streams`     | list      | (absent)      | radio (`cast`) only, optional: the streams of the radio, one pair `["label", "url"]` per stream, the name first (`""` without a name; 60 and 600 characters, 500 streams at most); the listener chooses in a list of the State block. Replaces `urls`, `labels` and `target`, which are still read and converted (§ 5.19) |
-| `poster`      | text      | (absent)      | radio (`cast`) and music (`audio`) only, optional: image shown as a cover (96 px at most) in the Sound window while the zone is the one playing; file name relative to the region, or an `http(s)://` address, with its extension (600 characters at most); image not found: nothing is shown; with `link`, a click on the cover opens the page; the key is only written when filled in |
-| `sound`       | yes / no | (absent: muted) | video screen (`video`) only: `true` gives the screen sound (only the closest screen with sound speaks); the key is only written when it is `true` (§ 5.21) |
-| `frame`       | yes / no | (absent: new tab) | link (`url`) and image board with `link` (1.12.34): `true` opens the page in a floating window of the page instead of a new tab; the key is only written when it is `true` (§ 5.7.1) |
-| `spawn`       | text     | `""`          | portal: `id` of the targeted arrival (empty = `default`)                                                                                                      |
-| `confirm`     | yes / no | `false`       | asks for a confirmation before acting                                                                                                                         |
-| `private`     | yes / no | `false`       | private zone: absent from public pages (`public` profile)                                                                                                     |
-| `showName`    | yes / no | `false`       | writes the `label` above the zone in walk mode                                                                                                                |
-| `cone`        | yes / no | (absent: follows the trigger) | marker (cone) above the zone: `true` always shows it, even for an "on click" zone; `false` never shows it; absent: a cone for the portals, the radios, the music zones and the links triggered by walking into them (`"enter"` or `"both"`). The T key hides all cones. No effect on an arrival (`--show-spawns`) or on a picture; the key is written only when it is `true` or `false` |
-| `mesh`        | text     | `""`          | zone **linked to an object** of the model: its name, or `name#number` when several objects have that name; the object becomes clickable. Never for an arrival |
+- by `glb2html.py`, when the page is made;
+- by the viewer, when the zones are imported;
+- in the browser console, for the page.
+
+**Where it is** (all zones)
+
+| Field         | Type     | Default       | What it does                                                                                                                       |
+| ------------- | -------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `id`          | text     | `z1`, `z2`... | short, unique name: lowercase letters, digits, `-` and `_`, 40 characters at most. The `default` arrival is the entry of the region |
+| `label`       | text     | `""`          | name shown (tooltip, sign), 60 characters at most                                                                                  |
+| `x`, `y`, `z` | number   | `0`           | position in meters; for a picture or a screen, the centre of the image                                                            |
+| `yaw`         | number   | `0`           | orientation in radians: direction of the gaze on arrival, or front of the sign, picture or screen                                 |
+| `private`     | yes / no | `false`       | private zone: left out of public pages (`public` profile)                                                                          |
+
+**What is shown**: only one of these keys. None: a ring on the ground (or a sign with `shape`).
+
+| Field   | Type | What it does                                                                                                                        |
+| ------- | ---- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `image` | text | **picture** on a wall: file name or address of the image (§ 5.11)                                                                    |
+| `video` | text | **video screen** on a wall: file name or address of the video, or `""` with `videoFolder` or `tracks` (§ 5.21)                     |
+| `mesh`  | text | zone **linked to an object** of the model: its name, or `name#number` when several objects have that name; the object becomes clickable (§ 5.9) |
+| `shape` | text | without the three keys above: `"ring"` (ring on the ground, default) or `"board"` (sign on a post)                                   |
+
+**What happens**: only one of these keys.
+
+| Field     | Type     | What it does                                                                                                                             |
+| --------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `link`    | text     | **link**: page opened on click or E (`http(s)` or `hop://` address, or path relative to the open page, for example `galerie.html`) (§ 5.7.1) |
+| `portal`  | text     | **portal**: address of the arrival region, or `""` for a point of the same region (§ 5.5, § 5.6)                                          |
+| `ha`      | text     | **command**: address called, for example a Home Assistant webhook (§ 5.7.2)                                                               |
+| `radio`   | list     | **radio**: the streams, one `["label", "url"]` pair per stream, the name first (`""` without a name); a lone address is also accepted (§ 5.19) |
+| `music`   | text     | **music**: subfolder of the sound files, relative to the region folder (for example `"audio"`), or `""` with `tracks` (§ 5.20)          |
+| `arrival` | yes / no | **arrival point** (`true`): nothing to show or do, only `id`, `label`, `x`, `y`, `z`, `yaw` and `private` are used (§ 5.4)              |
+
+**Settings**: each one only applies to some zones.
+
+| Field         | Type     | Default                  | Applies to                  | What it does                                                                                                                                            |
+| ------------- | -------- | ------------------------ | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `radius`      | number   | `2` (sound, video: `20`) | all but `arrival`           | radius of the zone in meters (0.5 to 50); radio, music and video screen: range (up to 200)                                                              |
+| `trigger`     | text     | `"click"`                | `link`, `portal`            | `"click"` (click or E), `"enter"` (walking into it, or in front of the picture) or `"both"` (both)                                                       |
+| `showName`    | yes / no | `false`                  | all but `arrival`           | writes the `label` above the zone while walking                                                                                                         |
+| `cone`        | yes / no | (depends on the trigger) | without `image` or `video`  | marker (cone) above the zone: `true` always, `false` never; absent: portals, radios, music and links triggered by walking. The T key hides them        |
+| `w`, `h`      | number   | see the text             | `image`, `video`, sign      | width and height in meters (see below the table)                                                                                                        |
+| `frame`       | yes / no | `false`                  | `link`                      | `true`: the page opens in a floating window of the page instead of a new tab; YouTube becomes a player there (§ 5.7.1)                                  |
+| `spawn`       | text     | `""`                     | `portal`                    | `id` of the arrival aimed at (empty = `default`)                                                                                                        |
+| `confirm`     | yes / no | `false`                  | `ha`                        | asks for a confirmation before calling the address                                                                                                      |
+| `videoFolder` | text     | `""`                     | `video`                     | subfolder of the videos, read from `playlist.json` (§ 5.21)                                                                                             |
+| `tracks`      | list     | (absent)                 | `music`, `video`            | file names (relative to the region) or `http(s)://` addresses, 500 at most, played in the written order instead of `playlist.json` (§ 5.20)            |
+| `sound`       | yes / no | `false`                  | `video`                     | `true` gives sound to the screen (only the nearest screen with sound speaks) (§ 5.21)                                                                   |
+| `poster`      | text     | (absent)                 | `radio`, `music`            | image shown as a cover (96 px at most) in the Sound window while the zone plays; file relative to the region or `http(s)://` address, with its extension |
+| `posterLink`  | text     | (absent)                 | `radio`, `music`            | page opened by a click on the cover                                                                                                                     |
+
+Width and height (`w`, `h`):
+
+- picture: 1.2 m wide by default; height `0` (default) = from the image;
+- video screen: 2.4 m wide by default; height `0` (default) = from the video;
+- sign (`shape: "board"`): 2.4 m by 1.2 m by default.
+
+A picture with `link` and `trigger` `"enter"` or `"both"` opens its link when walking in front of it, within its radius. The height counts from its edges: it can be reached when the feet are between 4 m below its bottom edge and 0.5 m above its top edge.
+
+**Possible combinations**:
+
+- ring or sign, with a link, a portal, a command, a radio or music;
+- object of the model (`mesh`), with a link, a portal or a command;
+- picture (`image`), alone or with a link (`link`);
+- video screen (`video`), alone;
+- arrival point (`arrival`), alone.
+
+The other combinations (a picture that plays music, a video screen with a link, an object of the model that plays a radio…) are not possible yet: the zone is not shown and a message says so. A zone with nothing to show or do is not shown either. Two things to show, or two actions: the first one in the list above is kept, the others are reported.
+
+**Old format (up to 1.12.34)**. Zones with `type` and `target` are still read. `glb2html.py` says how many it read; the viewer and `glb2html.py` rewrite them in the new format as soon as they save the zones. To rewrite a hand-written file at once (list of zones or `.reglages.json` file):
+
+```
+python glb2html.py --convert-zones NOM.zones.json
+```
+
+The original is kept beside it (`NOM.zones.json.bak`). Correspondence:
+
+- `"type": "spawn"`: `"arrival": true`;
+- `"type": "portal"`: `target` becomes `portal`;
+- `"type": "url"`: `target` becomes `link`;
+- `"type": "ha"`: `target` becomes `ha`;
+- `"type": "image"`: `target` becomes `image`;
+- `"type": "video"`: `target` becomes `video`, `folder` becomes `videoFolder`;
+- `"type": "cast"`: `streams` becomes `radio`, `link` becomes `posterLink`;
+- `"type": "audio"`: `folder` becomes `music`, `link` becomes `posterLink`.
 
 The sample contains fourteen zones, one for each case:
 
@@ -182,44 +243,34 @@ The sample contains fourteen zones, one for each case:
 | ----------------- | ------- | --------------------------------------------------------------------------------------------- |
 | `default`         | arrival | entry point of the region                                                                     |
 | `gallery`         | arrival | second arrival, targeted by a portal                                                          |
-| `to-gallery`      | portal  | to another point of the same region (empty `target`, `spawn` = `gallery`), by walking into it |
-| `to-other-region` | portal  | to another region, sign, click or walk, with confirmation                                     |
+| `to-gallery`      | portal  | to another point of the same region (empty `portal`, `spawn` = `gallery`), by walking into it |
+| `to-other-region` | portal  | to another region, sign, click or walk                                                        |
 | `website`         | link    | opens a web page, sign                                                                        |
 | `light-on`        | command | call to an address (for example a Home Assistant webhook), private, with confirmation         |
 | `door-info`       | link    | linked to the model's `Door#2` object                                                         |
 | `back-home`       | portal  | name shown above the zone (`showName`)                                                        |
 | `painting-1`      | image   | picture on a wall: file `paintings/painting-1.jpg`, height from the image                     |
-| `dance-floor`     | radio   | two streams (`streams`) played within 25 m while walking (§ 5.19)                             |
+| `dance-floor`     | radio   | two streams (`radio`) played within 25 m while walking (§ 5.19)                             |
 | `ambiance`        | music   | sound files of the `audio` folder (with `audio/playlist.json`), played within 20 m while walking (§ 5.20) |
 | `screen-clip`     | video   | screen on a wall: one file (`clip.mp4`), with sound (§ 5.21)                                  |
 | `screen-list`     | video   | screen on a wall: a list, the `videos` folder (with `videos/playlist.json`) (§ 5.21)          |
 | `video-page`      | link    | YouTube address opened in a floating window of the page (`frame`, § 5.7.1)                    |
 
-**One example per multimedia kind.** A JSON file does not accept comments: each example has its title just above it, and its `id` says what it shows. These are complete zones, written the way the page writes them: the optional keys (`sound`, `frame`, `link`, `poster`, `cone`, `folder`, `tracks`, `streams`) only appear when filled in. A zone is added to the list of the `NOM.zones.json` file, inside the brackets of the `[ ... ]` list.
+**One example per multimedia kind.** A JSON file does not accept comments: each example has its title just above it, and its `id` says what it shows. These are complete zones, written the way the page writes them: only the keys useful to the zone appear, and default settings are left out. A zone is added to the list of the `NOM.zones.json` file, inside the brackets of the `[ ... ]` list.
 
 **Video screen, one single file, with sound**
 
 ```json
 {
  "id": "screen-clip",
- "type": "video",
  "label": "Welcome video",
  "x": 20,
  "y": 24,
  "z": -40,
  "yaw": 3.14,
- "shape": "ring",
- "trigger": "click",
- "radius": 20,
- "w": 4,
- "h": 0,
- "target": "clip.mp4",
- "spawn": "",
- "confirm": false,
- "private": false,
- "showName": false,
- "mesh": "",
- "sound": true
+ "video": "clip.mp4",
+ "sound": true,
+ "w": 4
 }
 ```
 
@@ -228,24 +279,15 @@ The sample contains fourteen zones, one for each case:
 ```json
 {
  "id": "screen-list",
- "type": "video",
  "label": "Videos of the region",
  "x": 25,
  "y": 24,
  "z": -40,
  "yaw": 3.14,
- "shape": "ring",
- "trigger": "click",
  "radius": 30,
- "w": 3.2,
- "h": 0,
- "target": "",
- "spawn": "",
- "confirm": false,
- "private": false,
- "showName": false,
- "mesh": "",
- "folder": "videos"
+ "video": "",
+ "videoFolder": "videos",
+ "w": 3.2
 }
 ```
 
@@ -254,28 +296,20 @@ The sample contains fourteen zones, one for each case:
 ```json
 {
  "id": "screen-tracks",
- "type": "video",
  "label": "Trailers",
  "x": 25,
  "y": 24,
  "z": -38,
  "yaw": 3.14,
- "shape": "ring",
- "trigger": "click",
  "radius": 30,
- "w": 3.2,
- "h": 1.8,
- "target": "",
- "spawn": "",
- "confirm": false,
- "private": false,
- "showName": false,
- "mesh": "",
+ "video": "",
  "tracks": [
   "01-trailer.mp4",
   "https://ADRESSE/clip2.mp4"
  ],
- "sound": true
+ "sound": true,
+ "w": 3.2,
+ "h": 1.8
 }
 ```
 
@@ -284,26 +318,13 @@ The sample contains fourteen zones, one for each case:
 ```json
 {
  "id": "ambiance",
- "type": "audio",
  "label": "Ambient music",
  "x": 50,
  "y": 22,
  "z": -45,
- "yaw": 0,
- "shape": "ring",
- "trigger": "click",
- "radius": 20,
- "w": 2.4,
- "h": 1.2,
- "target": "",
- "spawn": "",
- "confirm": false,
- "private": false,
- "showName": false,
- "mesh": "",
- "folder": "audio",
+ "music": "audio",
  "poster": "audio/cover.jpg",
- "link": "https://ADRESSE/album",
+ "posterLink": "https://ADRESSE/album",
  "cone": true
 }
 ```
@@ -313,23 +334,12 @@ The sample contains fourteen zones, one for each case:
 ```json
 {
  "id": "ambiance-2",
- "type": "audio",
  "label": "Cafe music",
  "x": 52,
  "y": 22,
  "z": -45,
- "yaw": 0,
- "shape": "ring",
- "trigger": "click",
  "radius": 15,
- "w": 2.4,
- "h": 1.2,
- "target": "",
- "spawn": "",
- "confirm": false,
- "private": false,
- "showName": false,
- "mesh": "",
+ "music": "",
  "tracks": [
   "01-intro.mp3",
   "https://ADRESSE/son.mp3"
@@ -337,31 +347,17 @@ The sample contains fourteen zones, one for each case:
 }
 ```
 
-**Radio: several streams (`streams`, the name first)**
+**Radio: several streams (`radio`, the name first)**
 
 ```json
 {
  "id": "dance-floor",
- "type": "cast",
  "label": "Dance floor radio",
  "x": 60,
  "y": 22,
  "z": -30,
- "yaw": 0,
- "shape": "ring",
- "trigger": "click",
  "radius": 25,
- "w": 2.4,
- "h": 1.2,
- "target": "",
- "spawn": "",
- "confirm": false,
- "private": false,
- "showName": false,
- "mesh": "",
- "poster": "radio-cover.jpg",
- "link": "https://ADRESSE/radio",
- "streams": [
+ "radio": [
   [
    "Main stream",
    "https://ADRESSE/flux"
@@ -370,7 +366,9 @@ The sample contains fourteen zones, one for each case:
    "",
    "https://ADRESSE/flux2"
   ]
- ]
+ ],
+ "poster": "radio-cover.jpg",
+ "posterLink": "https://ADRESSE/radio"
 }
 ```
 
@@ -379,23 +377,12 @@ The sample contains fourteen zones, one for each case:
 ```json
 {
  "id": "painting-1",
- "type": "image",
  "label": "Painting 1",
  "x": 118.5,
  "y": 27.2,
  "z": -85.98,
- "yaw": 0,
- "shape": "ring",
- "trigger": "click",
- "radius": 2,
+ "image": "paintings/painting-1.jpg",
  "w": 1.5,
- "h": 0,
- "target": "paintings/painting-1.jpg",
- "spawn": "",
- "confirm": false,
- "private": false,
- "showName": false,
- "mesh": "",
  "link": "gallery.html"
 }
 ```
@@ -405,24 +392,31 @@ The sample contains fourteen zones, one for each case:
 ```json
 {
  "id": "video-page",
- "type": "url",
  "label": "Presentation video",
  "x": 8,
  "y": 22,
  "z": -24,
- "yaw": 0,
  "shape": "board",
- "trigger": "click",
- "radius": 2,
- "w": 2.4,
- "h": 1.2,
- "target": "https://www.youtube.com/watch?v=VIDEO_ID",
- "spawn": "",
- "confirm": false,
- "private": false,
- "showName": false,
- "mesh": "",
+ "link": "https://www.youtube.com/watch?v=VIDEO_ID",
  "frame": true
+}
+```
+
+**Picture that opens a YouTube video in the floating window, on click, E or walking in front of it**
+
+```json
+{
+ "id": "video-board",
+ "label": "YouTube video",
+ "x": 10.8,
+ "y": 11.6,
+ "z": -28.9,
+ "radius": 3,
+ "trigger": "both",
+ "image": "youtube.png",
+ "link": "https://www.youtube.com/watch?v=VIDEO_ID",
+ "frame": true,
+ "showName": true
 }
 ```
 

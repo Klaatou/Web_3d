@@ -27,8 +27,8 @@ Pour commencer
      Un second panneau, "Lien vers OpenSim" (lien hop://, image site/medias/hop.jpg), est un exemple a personnaliser :
      galerie.html, section 4, explique comment changer l'image, la position et l'adresse.
   4. Remplacez les photos de site/medias/ : 1.jpg a 30.jpg, noms en MINUSCULES.
-     Un GIF anime marche aussi : posez-le dans site/medias/ sous le meme numero (30.gif) et retirez 30.jpg. La zone 30 a pour cible "30" :
-     la page essaie jpg, jpeg, png, webp, gif puis avif, dans cet ordre. (Si une cible de galerie.zones.json porte une extension, par exemple
+     Un GIF anime marche aussi : posez-le dans site/medias/ sous le meme numero (30.gif) et retirez 30.jpg. La zone 30 a pour image "30" :
+     la page essaie jpg, jpeg, png, webp, gif puis avif, dans cet ordre. (Si une image de galerie.zones.json porte une extension, par exemple
      "30.jpg", changez-la en "30.gif".) Il s'anime avec le index.html de la version 1.6.15 ou plus recente.
   5. Un autre nom que "galerie" ? Double-cliquez sur renommer-galerie.bat (macOS : renommer-galerie.command ; Linux : sh renommer-galerie.sh NOUVEAU_NOM).
 
@@ -75,8 +75,8 @@ To start
      A second panel, "Lien vers OpenSim" (hop:// link, image site/medias/hop.jpg), is an example to customise:
      galerie.html, section 4, explains how to change the image, the position and the address.
   4. Replace the photos in site/medias/: 1.jpg to 30.jpg, LOWERCASE names.
-     An animated GIF works too: put it in site/medias/ under the same number (30.gif) and remove 30.jpg. Zone 30 has the target "30":
-     the page tries jpg, jpeg, png, webp, gif then avif, in that order. (If a target in galerie.zones.json carries an extension, for example
+     An animated GIF works too: put it in site/medias/ under the same number (30.gif) and remove 30.jpg. Zone 30 has the image "30":
+     the page tries jpg, jpeg, png, webp, gif then avif, in that order. (If an image in galerie.zones.json carries an extension, for example
      "30.jpg", change it to "30.gif".) It animates with the index.html of version 1.6.15 or later.
   5. A name other than "galerie"? Double-click renommer-galerie.bat (macOS: renommer-galerie.command; Linux: sh renommer-galerie.sh NEW_NAME).
 

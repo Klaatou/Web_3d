@@ -6,6 +6,22 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.12.0)
 
+### 21/11/2026 : format unifié des zones (lot 1.12.35)
+
+- **Demande** (Klaatou) : simplifier les zones (« pas une usine à gaz ») ; la compatibilité avec l'ancien format n'est exigée que pour les zones des paquets publiés.
+- **Fait** :
+  - une zone se décrit par ce qu'on voit (`image`, `video`, `mesh`, sinon anneau ou panneau avec `shape`) et ce qui se passe (`link`, `portal`, `ha`, `radio`, `music`) ; `arrival` pour un point d'arrivée ; plus de `type` ni de `target` ; chaque clé a un seul sens (le lien de la pochette d'une radio ou d'une musique devient `posterLink`, le dossier des vidéos `videoFolder`) ;
+  - lecture : `zoneIn` (`src/core.js`, dans `setZones` : page, coquille, zones relues, viewer) et `zone_in` (`src/gen_tpl.py`, dans `clean_zones`), miroirs exacts ; l'ancien format reste lu tel quel (c'est le format interne : rien ne coûte à le garder) ;
+  - écriture au nouveau format partout : `glb2html.py` (`NOM.zones.json`, zones relues), viewer (export des zones, enregistrement dans le dossier de la région, export modulaire, fichier `.reglages.json`) ; les réglages par défaut ne sont pas écrits ;
+  - messages : clé inconnue, clé qui ne sert pas à cette zone, deux choses à voir, deux actions, combinaison pas encore possible (tableau avec une autre action qu'un lien, écran vidéo avec une action, objet du modèle avec radio ou musique), zone vide ; affichés par `glb2html.py`, par le viewer à l'import, dans la console pour la page ;
+  - `glb2html.py --convert-zones FICHIER` : réécrit une liste de zones ou un `.reglages.json`, l'original dans `FICHIER.bak` ;
+  - tableau accroché haut : il se touche si les pieds sont entre 4 m sous son bord bas et 0,5 m au-dessus de son bord haut (avant : 3,5 m autour de son centre, un tableau haut était intouchable) ;
+  - exemples (`docs/samples`), zones des paquets (galerie-photos, region-simple) et leurs notices au nouveau format.
+- **Vérifié** : nouveau test `zones_unifiees.py` (Python et JavaScript identiques zone par zone et message par message, aller-retour de chaque type de l'ancien format, `glb2html.py` lit, signale et écrit le nouveau format, `--convert-zones` sur une liste et un fichier de réglages, tableau haut atteignable et contre-épreuve : échec avec l'ancienne règle de hauteur) ; batterie complète.
+- **Non fait** (lot suivant) : les combinaisons nouvelles (tableau qui joue une musique, tableau-portail…) et la pochette prise sur l'image du tableau ; poser un fichier `.glb` à part (`model`).
+- **Documents** : `REFERENCE_JSON.md` § 11.4 réécrit (tableaux par partie, combinaisons, ancien format et correspondance), exemples JSON convertis ; manuel (note au § 5, § 5.11, § 5.19 à § 5.21, § 10.25, annexe) ; index, vue d'ensemble, procédures, créateurs, `docs/samples/README` ; FR et EN.
+- Fichiers : `src/core.js`, `src/gen_tpl.py`, `src/template.html`, `src/viewer_tpl.html`, `src/i18n/fr.json`, `src/i18n/en.json`, `tests/zones_unifiees.py`, `docs/samples/*.json`, `paquets/*/site/*.zones.json`, notices des paquets, documents ci-dessus, `dist\`.
+
 ### 21/11/2026 : un tableau image ouvre son lien dans la fenêtre flottante (lot 1.12.34)
 
 - **Demande** (Klaatou) : une image qui ouvre le mini-lecteur YouTube (la clé `poster` d'une zone `url` est ignorée : elle ne sert qu'aux zones radio et musique).

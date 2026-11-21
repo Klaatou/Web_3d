@@ -11,7 +11,7 @@ A presence server relays the positions, the chat and the visitor counters of a r
 - **Your page's origin**: the start of its address, without a path, for example `https://alice.example` (with the port if it is not the usual one). If your page can be reached with and without `www`, give both.
 - **A short identifier**, for example `alice`: it becomes your room prefix.
 - A page opened from disk, and the viewer, have the origin `null`: the host decides whether to accept it.
-- **The addresses of your radio streams**, if your region has a `cast` zone (`streams`) and you want the track title to show: the host must enter them in the `--radios` list (one address per stream, `https://` as in your zone). Without it the radio plays, but without a title.
+- **The addresses of your radio streams**, if your region has a radio (`radio` key) and you want the track title to show: the host must enter them in the `--radios` list (one address per stream, `https://` as in your zone). Without it the radio plays, but without a title.
 
 ## 3. What the host gives you
 

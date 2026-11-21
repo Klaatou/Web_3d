@@ -34,7 +34,7 @@ def rapport(ok, nom, detail=""):
 
 
 def run(script, *a, ok=True):
-    r = subprocess.run([sys.executable, str(script), *map(str, a)], capture_output=True, text=True, cwd=tmp)
+    r = subprocess.run([sys.executable, str(script), *map(str, a)], capture_output=True, text=True, cwd=tmp, encoding="utf-8", errors="replace", env=dict(os.environ, PYTHONIOENCODING="utf-8"))
     if ok and r.returncode:
         sys.exit(f"[ECHEC] {script.name} {' '.join(map(str, a))}\n{r.stdout}{r.stderr}")
     return r
@@ -259,7 +259,9 @@ async def main():
         rapport(d_.suggested_filename == "Syn.zones.json", "export : nom du fichier X.zones.json", d_.suggested_filename)
         EXPORT["zones"] = json.loads(pathlib.Path(await d_.path()).read_text(encoding="utf-8"))
         zl_ = EXPORT["zones"]
-        rapport(len(zl_) == 5 and [z["type"] for z in zl_] == ["url", "portal", "spawn", "url", "url"] and zl_[3]["mesh"] == "Statue" and zl_[4]["mesh"] == "Banc#1", "zones exportées : libre, portail, arrivée, deux zones liées", [(z["type"], z["mesh"]) for z in zl_])
+        sorte = lambda z: "arrival" if z.get("arrival") else next((k for k in ("link", "portal", "ha") if k in z), "?")   # 1.12.35 : export au format unifie
+        rapport(len(zl_) == 5 and [sorte(z) for z in zl_] == ["link", "portal", "arrival", "link", "link"] and zl_[3].get("mesh") == "Statue" and zl_[4].get("mesh") == "Banc#1" and not any("type" in z for z in zl_),
+                "zones exportées (format unifié) : libre, portail, arrivée, deux zones liées", [(sorte(z), z.get("mesh")) for z in zl_])
         await pg.select_option("#profileSel", "private")
         await pg.fill("#cmdScript", "glb2html.py")
         await pg.click("#bCmd")
@@ -403,7 +405,7 @@ async def main():
             rapport(proche(Z[libre["id"]]["pos"], [libre[k] for k in "xyz"]) and proche(Z[portail["id"]]["pos"], [portail[k] for k in "xyz"]), "zone libre et portail : à la position exportée (0,05 m)", (Z[libre["id"]]["pos"], [libre[k] for k in "xyz"]))
             arr = EXPORT["zones"][2]
             rapport(proche(Z[arr["id"]]["pos"], [arr[k] for k in "xyz"]), "arrivée : à la position exportée", Z[arr["id"]]["pos"])
-            ids_lies = [z["id"] for z in EXPORT["zones"] if z["mesh"]]
+            ids_lies = [z["id"] for z in EXPORT["zones"] if z.get("mesh")]
             rapport(all(not Z[i]["linked"] and Z[i]["off"] for i in ids_lies) and not Z["village"]["linked"], "zones liées : absentes tant que la tuile de leur objet n'est pas chargée", [(i, Z[i]["linked"]) for i in ids_lies])
             await o.ev("window.__viewer.controls.target.set(%f, 15, %f)" % (sx, sz))
             await o.pg.wait_for_timeout(2500)

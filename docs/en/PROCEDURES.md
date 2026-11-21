@@ -86,11 +86,11 @@ Useful keys: `seaY` (sea level, in m, the page's frame), `seaM` (the sea in metr
 | Portal to another region | `MANUAL.md` § 5.6 |
 | Zone linked to an object of the model | `MANUAL.md` § 5.9 (as tiles: § 5.14) |
 | Private zone (visible only with the "private" profile) | `MANUAL.md` § 5.10 |
-| Picture on a wall (`image` zone) | viewer, type "Picture (on a wall)", `MANUAL.md` § 5.11; step by step below |
+| Picture on a wall (`image` key) | viewer, type "Picture (on a wall)", `MANUAL.md` § 5.11; step by step below |
 
 The zones of a tiled region are written in the model's original frame (no recentring). The viewer in tiles mode produces these coordinates directly; do not copy by hand coordinates from another GLB.
 
-**Add or replace a picture on a wall (`image` zone, hosted mode only)**
+**Add or replace a picture on a wall (`image` key, hosted mode only)**
 
 1. Put the image in the region's `medias` subfolder, next to the `.glb`: `12.jpg`, or `12-Titre.jpg` (the text after the first dash is the caption). A `12.txt` file (first non-empty line = caption) takes precedence over the title in the name.
 2. In the viewer: type "Picture (on a wall)", click the wall, `12` in the "Image" field (with "Choose the region folder" the editor completes the name if needed), then save or export the zones (`X.zones.json`).

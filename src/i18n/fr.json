@@ -2042,5 +2042,22 @@
  "page.mp.file.note": "Heure locale | nom | texte. Rien n'est gardé côté serveur.",
  "page.mp.ask": "Écrire un message privé à {0} ?",
  "page.mp.ask.yes": "Oui",
- "page.mp.ask.no": "Non"
+ "page.mp.ask.no": "Non",
+ "core.zmsg.unknown": "zone « {0} » : clé inconnue « {1} », ignorée",
+ "py.glb2html.zmsg.unknown": "zone « {0} » : clé inconnue « {1} », ignorée",
+ "core.zmsg.ignored": "zone « {0} » : clé « {1} » ignorée (elle ne sert pas à cette sorte de zone)",
+ "py.glb2html.zmsg.ignored": "zone « {0} » : clé « {1} » ignorée (elle ne sert pas à cette sorte de zone)",
+ "core.zmsg.visuals": "zone « {0} » : une seule chose à montrer ; « {1} » est gardé, ignoré : {2}",
+ "py.glb2html.zmsg.visuals": "zone « {0} » : une seule chose à montrer ; « {1} » est gardé, ignoré : {2}",
+ "core.zmsg.actions": "zone « {0} » : une seule action ; « {1} » est gardée, ignorée : {2}",
+ "py.glb2html.zmsg.actions": "zone « {0} » : une seule action ; « {1} » est gardée, ignorée : {2}",
+ "core.zmsg.combo": "zone « {0} » non affichée : « {1} » avec « {2} » n'est pas encore possible",
+ "py.glb2html.zmsg.combo": "zone « {0} » non affichée : « {1} » avec « {2} » n'est pas encore possible",
+ "core.zmsg.empty": "zone « {0} » non affichée : rien à montrer ni à faire (il faut link, portal, ha, radio, music, image, video ou arrival)",
+ "py.glb2html.zmsg.empty": "zone « {0} » non affichée : rien à montrer ni à faire (il faut link, portal, ha, radio, music, image, video ou arrival)",
+ "py.glb2html.zmsg.legacy": "{0} zone(s) à l'ancien format (clé type) : lues comme avant ; « glb2html.py --convert-zones FICHIER » réécrit le fichier au nouveau format",
+ "py.glb2html.convert_zones": "réécrit ce fichier de zones (ou de réglages) au format unifié de la 1.12.35, puis s'arrête ; l'original est gardé à côté (.bak)",
+ "py.glb2html.zmsg.converted": "{0} : {1} zone(s) réécrite(s) au nouveau format ; original gardé dans {2}",
+ "py.glb2html.zmsg.nothing": "{0} : rien à convertir (déjà au nouveau format)",
+ "py.glb2html.zmsg.badfile": "{0} : ni une liste de zones ni un fichier de réglages avec « zones »"
 }

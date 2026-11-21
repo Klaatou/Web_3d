@@ -21,14 +21,14 @@ Ce dossier contient **un exemple de chaque fichier JSON** que la page, le viewer
 `region.zones.sample.json` contient 14 zones (`REFERENCE_JSON.md` § 11.4) :
 
 - arrivées : `default`, `gallery`
-- portails : `to-gallery` (même région, en marchant dedans), `to-other-region` (autre région, avec confirmation), `back-home` (nom affiché)
+- portails : `to-gallery` (même région, en marchant dedans), `to-other-region` (autre région, panneau), `back-home` (nom affiché)
 - liens web : `website`, `door-info` (liée à l'objet `Door#2`)
 - commande Home Assistant : `light-on` (privée, avec confirmation)
 - image : `painting-1` (clé facultative `link` : page ouverte au clic)
-- radio (`cast`) : `dance-floor` (flux de la liste `streams`, joués à portée en promenade ; `poster` (pochette) et `link` (page) facultatifs, montrés dans la fenêtre Son)
-- musique (`audio`) : `ambiance` (fichiers du dossier `audio`, avec une pochette `poster` et un `link`)
+- radio (`radio`) : `dance-floor` (flux de la liste `radio`, joués à portée en promenade ; `poster` (pochette) et `posterLink` (page) facultatifs, montrés dans la fenêtre Son)
+- musique (`music`) : `ambiance` (fichiers du dossier `audio`, avec une pochette `poster` et un `posterLink`)
 - écrans vidéo (`video`) : `screen-clip` (un fichier, avec du son), `screen-list` (un dossier de vidéos)
-- lien en fenêtre flottante : `video-page` (zone `url` avec la clé `frame`)
+- lien en fenêtre flottante : `video-page` (lien `link` avec la clé `frame`)
 
 ## Fichiers du serveur de présence
 

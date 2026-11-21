@@ -47,63 +47,31 @@
  "zones": [
   {
    "id": "default",
-   "type": "spawn",
    "label": "Main entrance",
    "x": 10,
    "y": 22,
    "z": -5,
-   "yaw": 0,
-   "shape": "ring",
-   "trigger": "click",
-   "radius": 2,
-   "w": 2.4,
-   "h": 1.2,
-   "target": "",
-   "spawn": "",
-   "confirm": false,
-   "private": false,
-   "showName": false,
-   "mesh": ""
+   "arrival": true
   },
   {
    "id": "gallery",
-   "type": "spawn",
    "label": "Gallery",
    "x": 120,
    "y": 25.5,
    "z": -80,
    "yaw": 1.57,
-   "shape": "ring",
-   "trigger": "click",
-   "radius": 2,
-   "w": 2.4,
-   "h": 1.2,
-   "target": "",
-   "spawn": "",
-   "confirm": false,
-   "private": false,
-   "showName": false,
-   "mesh": ""
+   "arrival": true
   },
   {
    "id": "light-on",
-   "type": "ha",
    "label": "Light on",
    "x": 8,
    "y": 22,
    "z": 2,
-   "yaw": 0,
    "shape": "board",
-   "trigger": "click",
-   "radius": 2,
-   "w": 2.4,
-   "h": 1.2,
-   "target": "http://ADRESSE:8123/api/webhook/web3d_light",
-   "spawn": "",
+   "ha": "http://ADRESSE:8123/api/webhook/web3d_light",
    "confirm": true,
-   "private": true,
-   "showName": false,
-   "mesh": ""
+   "private": true
   }
  ],
  "camera": {

@@ -2042,5 +2042,22 @@
  "page.mp.file.note": "Local time | name | text. Nothing is kept on the server.",
  "page.mp.ask": "Send a private message to {0}?",
  "page.mp.ask.yes": "Yes",
- "page.mp.ask.no": "No"
+ "page.mp.ask.no": "No",
+ "core.zmsg.unknown": "zone \"{0}\": unknown key \"{1}\", ignored",
+ "py.glb2html.zmsg.unknown": "zone \"{0}\": unknown key \"{1}\", ignored",
+ "core.zmsg.ignored": "zone \"{0}\": key \"{1}\" ignored (it does not apply to this kind of zone)",
+ "py.glb2html.zmsg.ignored": "zone \"{0}\": key \"{1}\" ignored (it does not apply to this kind of zone)",
+ "core.zmsg.visuals": "zone \"{0}\": only one thing to show; \"{1}\" is kept, ignored: {2}",
+ "py.glb2html.zmsg.visuals": "zone \"{0}\": only one thing to show; \"{1}\" is kept, ignored: {2}",
+ "core.zmsg.actions": "zone \"{0}\": only one action; \"{1}\" is kept, ignored: {2}",
+ "py.glb2html.zmsg.actions": "zone \"{0}\": only one action; \"{1}\" is kept, ignored: {2}",
+ "core.zmsg.combo": "zone \"{0}\" not shown: \"{1}\" with \"{2}\" is not possible yet",
+ "py.glb2html.zmsg.combo": "zone \"{0}\" not shown: \"{1}\" with \"{2}\" is not possible yet",
+ "core.zmsg.empty": "zone \"{0}\" not shown: nothing to show or do (it needs link, portal, ha, radio, music, image, video or arrival)",
+ "py.glb2html.zmsg.empty": "zone \"{0}\" not shown: nothing to show or do (it needs link, portal, ha, radio, music, image, video or arrival)",
+ "py.glb2html.zmsg.legacy": "{0} zone(s) in the old format (type key): read as before; \"glb2html.py --convert-zones FILE\" rewrites the file in the new format",
+ "py.glb2html.convert_zones": "rewrites this zones (or settings) file in the unified format of 1.12.35, then stops; the original is kept beside it (.bak)",
+ "py.glb2html.zmsg.converted": "{0}: {1} zone(s) rewritten in the new format; original kept in {2}",
+ "py.glb2html.zmsg.nothing": "{0}: nothing to convert (already in the new format)",
+ "py.glb2html.zmsg.badfile": "{0}: neither a list of zones nor a settings file with \"zones\""
 }

@@ -460,6 +460,8 @@ In `--analyse`, the "Reading" line gives the bytes read. Positions are only read
 
 The viewer (`glb-viewer.html`) is the page you open with your `.glb`. It is used to **look at** the model, to **adjust** how it is displayed (sea, rotation, camera, region card…), to **place the zones** (arrival points, portals, signs, links, images, private zones: see the vocabulary, § 1.1), to **capture the thumbnail** of the world map and to **export** the standalone page, the zones (`NOM.zones.json`) and `regions.json`. Fields of `NOM.zones.json`: `REFERENCE_JSON.md` § 11.4. For the published page to see the changes: § 6.16.
 
+**Zone format (1.12.35).** In `NOM.zones.json`, a zone is described by what is shown (`image`, `video`, `mesh`, otherwise a ring or a sign) and what happens (`link`, `portal`, `ha`, `radio`, `music`, or `arrival` for an arrival point): the full list and the possible combinations are in `REFERENCE_JSON.md` § 11.4. The old format (`type`, `target`) is still read; `glb2html.py --convert-zones FILE` rewrites it.
+
 ### 5.1 The rule that explains 90 % of failures
 
 Each zone has two names:
@@ -630,18 +632,18 @@ The visitor then triggers the zone by clicking on the object, or with E when clo
 
 A private arrival also disappears from the public export: a public portal that targets it will land on `default`.
 
-### 5.11 `image` zone: a picture on a wall
+### 5.11 Picture on a wall (`image`)
 
 An `image` zone lays a picture flat against a wall of the model.
 
 - **Placing**: in the viewer, type "Picture (on a wall)", then click a wall. The zone turns to the face hit and sits 2 cm in front of it. Floor and ceiling are refused ("Click on a wall (a vertical surface) to place a picture."). An image zone is never linked to an object (`mesh` stays empty) and always triggers on click.
 - **Size**: `w` is the width in metres (1.2 by default; from 0.1 to 10) and `h` the height (from 0 to 6). **`h` = 0 (the default): the height follows the image's aspect ratio.**
-- **Link (optional `link` key)**: clicking the picture, or pressing E in front of it, opens this link in a new tab, like a `url` zone (with `"frame": true`, 1.12.34: in the floating window, § 5.7.1, for example a board that opens a YouTube video; `trigger` `"enter"` or `"both"` opens the link when walking in front of the board, within its `radius`, like a `url` zone); tooltip and hand cursor on hover. It is an `http(s)` address or a path **relative to the address of the open page** (not to the region folder): `galerie.html` for a file next to `index.html`, `pages/galerie.html` in a subfolder; `../` leaves the page's folder. Without `link`, the picture does not react (no prompt, no action). Only `http(s)` and `hop://` pass: `javascript:` and any other scheme are refused ("Invalid link"). A `hop://` link opens in the same tab (§ 5.7.1). A picture whose image is missing is neither clickable nor a "near zone". By hand: add `"link": "galerie.html"` to the zone in `NOM.zones.json`. In the editor: field "Link (page opened on click or E, optional)". Pages and viewers older than 1.1.1 ignore `link`, and **a `glb-viewer.html` older than 1.1.1 that saves zones loses the `link` keys**: keep the viewer and the page at the same version.
+- **Link (optional `link` key)**: clicking the picture, or pressing E in front of it, opens this link in a new tab, like a link (with `"frame": true`, 1.12.34: in the floating window, § 5.7.1, for example a board that opens a YouTube video; `trigger` `"enter"` or `"both"` opens the link when walking in front of the board, within its `radius`, like a link); tooltip and hand cursor on hover. It is an `http(s)` address or a path **relative to the address of the open page** (not to the region folder): `galerie.html` for a file next to `index.html`, `pages/galerie.html` in a subfolder; `../` leaves the page's folder. Without `link`, the picture does not react (no prompt, no action). Only `http(s)` and `hop://` pass: `javascript:` and any other scheme are refused ("Invalid link"). A `hop://` link opens in the same tab (§ 5.7.1). A picture whose image is missing is neither clickable nor a "near zone". By hand: add `"link": "galerie.html"` to the zone in `NOM.zones.json`. In the editor: field "Link (page opened on click or E, optional)". Pages and viewers older than 1.1.1 ignore `link`, and **a `glb-viewer.html` older than 1.1.1 that saves zones loses the `link` keys**: keep the viewer and the page at the same version.
 - **Readable from both sides (1.5.4)**: the picture and its caption are made of two back-to-back planes: the image and the text read the right way round from the front and from behind, never mirrored. There is no one-sided or two-sided option. The same goes for zone signs. Against a wall, the back is hidden.
 - **The packages' `zhop` panel (1.6.0)**: `region-simple` and `galerie-photos` contain an image zone with the id `zhop` (added by Klaatou, commit `b3b35b6`): image `medias/hop.jpg` ("Lien vers OpenSim") and an incomplete `hop://` link, to be customised. How to: `readme.html` § 8 (simple region), `galerie.html` § 4 (gallery).
 - **Placing, in global view or while walking**: click placement works in both. While walking (mouse captured) it places the zone where the centre of the screen aims; the **P key** also places a picture 2.2 m in front of you, 1.6 m above your feet, facing you. In both cases, adjust the position afterwards in the zone's fields.
 - **Finding image zones (exported page)**: in "Settings", the **"Image zone numbers (to find them)"** box (unticked at every opening, never remembered) shows a big number, flat, in front of each image zone (in the image's plane, not turned towards you), even if its image is still missing: the position is what matters. The number is the one in the targeted file name (`12`, `12.jpg` and `12-Cezanne.jpg` give 12; `paintings/painting-1.jpg` gives 1), otherwise the zone's display name, then its `id`. The numbers are hidden by the scenery and are not clickable. The box only exists if the region has at least one image zone.
-- **Image**: the zone's `target` field: a file name, or an `http(s):` or `data:` address.
+- **Image**: the zone's `image` key: a file name, or an `http(s):` or `data:` address.
 - **Where the page looks**: with the shell (`index.html?region=dossier/NOM`), in the **region's folder** (next to the `.glb`), not next to the page; for a page stored in the region's folder or a stand-alone page, next to the page. In both cases, the **`medias` subfolder** first, then the folder itself: images already in place keep working. The name of this subfolder is the optional key `mediaDir` of `NOM.config.json` (`"medias"` by default, `""` for no subfolder, or another name; the generator always looks in `medias`).
 - **Full name or bare number**: `12-Cezanne.jpg` is a full name. With `12` alone, the page tries `12.jpg`, `12.jpeg`, `12.png`, `12.webp`, `12.gif`, `12.avif` in that order and keeps the first file found (optional key `imageExts`, for example `"png,jpg"`). Missing extensions show up as 404 responses in the browser console: that is expected.
 - **Caption** (small text under the image): the first non-empty line of `12.txt` (UTF-8, at most 200 characters; re-read at every page load: editing the file is enough, no need to run the generator again); otherwise the text between the first `-` of the file name and the extension (`1-Soleil_couchant.jpg` gives "Sunset glow", `_` becomes a space); otherwise no caption. A missing image has no caption either.
@@ -728,24 +730,24 @@ The viewer (`glb-viewer.html`) has the same "**Language / Langue**" list as the 
 - **Not tried**: Windows and Edge in detail (real folder picker); image zones in a tiled region; wall with a slanted face; the pointer label in tiles mode.
 - **Seen once, not reproduced**: a missing image title (cause not confirmed: if it comes back, the "Image" line of "Copy diagnostics" gives the target, the file read and the caption's source); placing an image by click on a low wall that put the image behind the visible face (the zones are then set by hand: `x` or `z` a few hundredths of a metre from the face).
 
-### 5.19 `cast` zone: a radio in the region (1.10.32 to 1.10.35)
+### 5.19 Radio in the region (`radio`, 1.10.32 to 1.10.35)
 
 A zone of type `cast` plays a **radio stream** (Icecast or SHOUTcast, the same as an OpenSim parcel "music URL") to the visitors who come within range while walking.
 
 - **Place it**: in the viewer, type "Radio (Icecast / SHOUTcast stream within range)", then click on the ground (or P key while walking).
-  - Fields: "Stream address" (`target`, `https://…`), **"Try the stream (5 s)"** button (the viewer plays the stream for five seconds and says "Stream: playing" or "Stream unreadable (cause)"), "Range" (`radius`, 0.5 to **200 m**; 20 by default; the other kinds stay limited to 50), the marker (cone) and the position.
+  - Fields: "Stream address" (the first address of `radio`, `https://…`), **"Try the stream (5 s)"** button (the viewer plays the stream for five seconds and says "Stream: playing" or "Stream unreadable (cause)"), "Range" (`radius`, 0.5 to **200 m**; 20 by default; the other kinds stay limited to 50), the marker (cone) and the position.
   - A radio zone is never linked to an object, has no click nor "E" prompt, and does not fire: it plays by itself.
   - **Cone by default** (1.10.35): like a portal, so that one sees a radio is there; `cone: false` removes it.
 - **In the page**: while walking only (nothing in global view), the stream of the nearest radio zone **within range** (in x and z; from 4 m below the zone to 8 m above) plays, with a volume that fades with distance: `(1 - distance / range)` x the **radio / music volume** of the Sound window (50 by default, § 7.66).
   - One radio at a time.
   - Out of range or in global view, the stream is **stopped** (no longer downloaded).
   - The browser only allows sound after a first action by the visitor: until then, the "Radio" line says "click or press a key to hear it", and the stream starts at the first action.
-- **Several streams in one zone** (1.11.13, `streams` since 1.11.26): the zone carries a **`streams`** array of `["label", "url"]` pairs, the **name first** (`""` without a name; 500 streams at most, 60 characters for a name, 600 for an address): `"streams": [["Oldies Radio", "https://…/stream"], ["Jazz Radio", "https://…/jazz.mp3"]]`.
+- **Several streams in one zone** (1.11.13; `streams` from 1.11.26 to 1.12.34, `radio` since 1.12.35): the **`radio`** key is an array of `["label", "url"]` pairs, the **name first** (`""` without a name; 500 streams at most, 60 characters for a name, 600 for an address): `"radio": [["Oldies Radio", "https://…/stream"], ["Jazz Radio", "https://…/jazz.mp3"]]`.
   - Moving, adding or removing a stream is moving, adding or removing a pair.
   - An empty address removes its pair.
-  - The old keys **`urls`**, **`labels`** and **`target`** are still read and converted to `streams`; only `streams` is written (viewer, `--update`, `--zones`).
+  - The old keys **`streams`**, **`urls`**, **`labels`** and **`target`** (old format) are still read; only `radio` is written (viewer, `--update`, `--zones`).
   - With several streams, the State block (I key) shows a **list** above the "Radio" line: choosing a stream plays it, even if it had failed (it is then tried again); an error is remembered **stream by stream**, and leaving the zone goes back to the first stream.
-  - `streams` is entered by hand in `NOM.zones.json` (the viewer's "Stream address" field sets the first address and keeps its name and the other streams).
+  - `radio` is entered by hand in `NOM.zones.json` (the viewer's "Stream address" field sets the first address and keeps its name and the other streams).
   - **Mind the syntax**: a forgotten comma between the name and the address makes the whole file invalid.
   - Each address must be in `--radios` to get its title (§ 10.25).
 - **Stream name and tooltip** (1.11.26): the list and the "Stream" line show the stream's name; without a name, the address. The tooltip of the Radio line has two lines when the zone has a `label` and several streams: "Radio zone: zone label", then "Stream: name of the active stream (n/N)". With `"label": ""` on the zone, the tooltip starts with the active stream (handy for stream names alone, without a zone name).
@@ -763,7 +765,7 @@ A zone of type `cast` plays a **radio stream** (Icecast or SHOUTcast, the same a
     - **(3)** a SHOUTcast v1 server answers `ICY 200 OK`, which browsers sometimes refuse (not tried here).
   - A failed zone is tried again when coming back after leaving its range.
 - **Rights**: broadcasting protected music publicly requires permissions; for a demo, a royalty-free stream or one whose owner agreed.
-- **Cover and link** (1.12.26): two optional keys of the `cast` zone, `poster` and `link`.
+- **Cover and link** (1.12.26): two optional keys of the radio, `poster` and `posterLink` (`link` up to 1.12.34).
   - `poster`: an **image**, as a file name relative to the region folder, or as an `https://…` address, with its extension (`"poster": "pochette.jpg"`). The Sound window shows it as a cover (96 px at most, 128 on touch) when this radio is the one speaking. Image not found: nothing is shown.
   - `link`: the address of a page (`https://…` or `hop://…`). A click on the cover, or Enter when it has focus, opens it in a new tab. Without `link`, the cover is not clickable.
   - Viewer: "Cover" and "Cover link" fields of the zone. By hand in `NOM.zones.json`: `"poster": "pochette.jpg", "link": "https://exemple.org/album"`. The keys are only written when filled in; `poster` and `link` only apply to `cast` and `audio` zones.
@@ -771,7 +773,7 @@ A zone of type `cast` plays a **radio stream** (Icecast or SHOUTcast, the same a
   - By a tester on a phone (18/11/2026; model and browser not recorded): the region with the several-stream radio, stream changes included: everything works.
   - **Not tried**: SHOUTcast v1, Firefox, Safari, a tiled region.
 
-### 5.20 `audio` zone: a playlist of sound files in the region (1.11.4)
+### 5.20 Music: a playlist of sound files in the region (`music`, 1.11.4)
 
 A zone of type `audio` plays the **sound files of a folder** (mp3, ogg, wav...) in a loop to the visitors who come within range in walk mode. Unlike the radio (§ 5.19), the sounds are **files of the region**, published with it: no stream server, nothing to ask a third party, but the rights to the tracks remain yours to check.
 
@@ -779,7 +781,7 @@ A zone of type `audio` plays the **sound files of a folder** (mp3, ogg, wav...) 
   - Put it next to the `.glb`, or in the `medias` sub-folder (`mediaDir` key): the page looks for it like images (§ 5.11), `medias/audio` first, then `audio`.
   - Formats: mp3, ogg, oga, opus, wav, m4a, aac, flac, weba, webm (whatever the browser can play, so it depends on the browser; tried by Klaatou: `.aac`).
 - **Place it**: in the viewer, type "Music (sound files of a folder, played in a loop within range)", then click on the ground (or P key while walking).
-  - Fields: "Tracks folder (sub-folder of the region)" (`folder`, for example `audio`), the **"Update the list (playlist.json)"** and **"Try the first track (5 s)"** buttons, "Range" (`radius`, 0.5 to **200 m**, 20 by default), the marker (cone) and the position.
+  - Fields: "Tracks folder (sub-folder of the region)" (`music`, for example `audio`), the **"Update the list (playlist.json)"** and **"Try the first track (5 s)"** buttons, "Range" (`radius`, 0.5 to **200 m**, 20 by default), the marker (cone) and the position.
   - An audio zone is never linked to an object, has no click or "E" prompt and plays by itself.
   - Cone by default, like the radio; `cone: false` removes it.
 - **Distance, track buttons** (1.11.16, 1.11.17, 1.11.18): the "Music" line gives, like the radio, the distance and the range, and stays out of range (up to 2 times the range) with the blinking distance (§ 5.19). With several tracks, two buttons **⏮** and **⏭** go to the previous or next track (the list loops) around the **n/N** counter.
@@ -803,19 +805,19 @@ A zone of type `audio` plays the **sound files of a folder** (mp3, ogg, wav...) 
   - **An unreadable track is skipped**; if all are, the zone is tried again on return to its range.
   - A renamed folder, or a sound added without redoing the list: the sound is simply not played.
 - **Publishing**: copy the folder (sounds and `playlist.json`) with the rest of the region; the zones (`NOM.zones.json`) only say `"folder": "audio"`. Step by step, from the list to publishing: `SIMPLE_PROCEDURES.md` § 15 and § 16.
-- **Cover and link** (1.12.26): two optional keys of the `audio` zone, `poster` and `link`.
+- **Cover and link** (1.12.26): two optional keys of the music, `poster` and `posterLink` (`link` up to 1.12.34).
   - `poster`: an **image**, as a file name relative to the region folder, or as an `https://…` address, with its extension (`"poster": "pochette.jpg"`). The Sound window shows it as a cover (96 px at most, 128 on touch) when this music is the one speaking. Image not found: nothing is shown.
   - `link`: the address of a page (`https://…` or `hop://…`). A click on the cover, or Enter when it has focus, opens it in a new tab. Without `link`, the cover is not clickable.
   - Viewer: "Cover" and "Cover link" fields of the zone. By hand in `NOM.zones.json`: `"poster": "pochette.jpg", "link": "https://exemple.org/album"`. The keys are only written when filled in; `poster` and `link` only apply to `cast` and `audio` zones.
 - **Tried**: `tests/zone_audio.py` (`--audio-list` command, page in Chromium with one-second WAV tracks: order, loop, volume, resume, skipped track, missing / empty / unreadable lists, exclusion with the radio; viewer with a simulated folder, same order as the command).
   - **Not tried**: playing real mp3 files (the test Chromium has no mp3 decoder), the real folder picker on Windows and Edge, Firefox and Safari, a tiled region, a folder of several hundred tracks.
 
-### 5.21 `video` zone: a video screen on a wall (1.12.7 to 1.12.14)
+### 5.21 Video screen on a wall (`video`, 1.12.7 to 1.12.14)
 
 A zone of type `video` is a **screen laid on a wall**, like an "image" picture (§ 5.11), whose picture is a **video** (mp4, webm, m4v, ogv). Nothing is downloaded until the visitor is within range: the screen loads on approach.
 
 - **Placing**: in the viewer, type "Video (screen on a wall)", then click on the wall.
-  - Fields: "File or address of the video" (`target`), width (`w`, 2.4 m by default), height (`h`, **0 = from the video's aspect ratio**), "Range" (`radius`, 20 m by default, 0.5 to **200 m**), "Screen sound" (`sound`), "Video folder" (`folder`, see below).
+  - Fields: "File or address of the video" (`video`), width (`w`, 2.4 m by default), height (`h`, **0 = from the video's aspect ratio**), "Range" (`radius`, 20 m by default, 0.5 to **200 m**), "Screen sound" (`sound`), "Video folder" (`videoFolder`, see below).
   - No `mesh`, `cone`, `link` or trigger: there is nothing to click except the screen itself.
   - **In the viewer the screen is a panel carrying the file name: the video does not play there** (and the viewer opened as a local file, without a server, does not load the video: it needs a page served over `http`).
 - **The file** is looked up like an image's: a name without extension (`clip`) gives `medias/clip.mp4`, `.webm`, `.m4v`, `.ogv`, then the region folder; with an extension, as is in `medias` then in the folder; an `https://` address or a `/…` path as is (another site must allow CORS, otherwise WebGL refuses the texture; not tried).
@@ -834,9 +836,9 @@ A zone of type `video` is a **screen laid on a wall**, like an "image" picture (
   - **If the browser refuses the sound anyway** (`NotAllowedError` error), the screen plays muted and the sound is retried 5 seconds later; a track change no longer cuts the sound (1.12.14).
   - **Since 1.12.21**, a screen with sound no longer mixes with the radio or the music of the zones: only one source speaks (§ 5.22).
   - The real refusal by Edge is not tried here.
-- **A list of videos** (`folder` or `tracks`, **without `target`**): like an audio zone (§ 5.20).
+- **A list of videos** (`videoFolder` or `tracks`, with `"video": ""`): like music (§ 5.20).
   - `tracks` is the list written in the zone (names relative to the region or `http(s)://` addresses, 500 at most, entered by hand); without it, the list is the file `<folder>/playlist.json` (`{"tracks": [...]}` or an array of names), looked up in `medias/<folder>/` then `<folder>/`.
-  - With a `target`, it wins (one single file).
+  - With a file in `video`, it wins (one single file).
   - The tracks follow one another in order and start again at the first after the last; **a list of one single track loops**.
   - Each track has its own aspect ratio (the screen adapts if `h` is 0).
   - An unreadable track is skipped; if none can be read, or if the list is empty, the screen disappears.
@@ -865,7 +867,7 @@ Before 1.12.21, the radio, the music and the sound of a video screen could speak
 - **Boxes** (Settings and the State and Sound windows): "Zone radio", "Zone music" and the new "**Zone videos**" (ticked at the start). **Ticking one unticks the other two**, everywhere; with all three ticked (start), the rule above applies; with a single one ticked, only that one speaks. The "Sounds" box of Settings and the volume of the Sound window apply to all three.
 - **Sound window**: a **"♪ Video: NAME (distance / range)"** line appears when a screen with sound plays and speaks, with its box; the window title then says "Video".
 - **Mute button and N key**: a crossed speaker button (left of the volume, Sound window; black background while muted) and the **N** key mute or restore the radio, the music and the screen sounds at once. The boxes and the volume do not change; the mute lasts until the next press or a page reload. A message at the bottom of the page confirms it.
-- **Floating window** (`frame` option of a `url` zone, § 5.1): while it holds a **YouTube** page, the radio, the music and the screen sounds are silent (their line says "sound muted: N key or YouTube window"), because the sound of a YouTube video in the window cannot be muted by the page; they come back when it closes, or as soon as the visitor makes a **gesture on a source** (ticking its box, choosing a stream, skipping a track, clicking a screen): the page cannot stop the YouTube player, which keeps playing at the same time (up to the visitor to pause it). **Any other page does not change the sound of the page** (1.12.22).
+- **Floating window** (`frame` option of a link, § 5.7.1): while it holds a **YouTube** page, the radio, the music and the screen sounds are silent (their line says "sound muted: N key or YouTube window"), because the sound of a YouTube video in the window cannot be muted by the page; they come back when it closes, or as soon as the visitor makes a **gesture on a source** (ticking its box, choosing a stream, skipping a track, clicking a screen): the page cannot stop the YouTube player, which keeps playing at the same time (up to the visitor to pause it). **Any other page does not change the sound of the page** (1.12.22).
   - Not tried: pausing a YouTube video of the window from the page (the player API is not used).
 - **Tried**: `tests/arbitrage_son.py` (nearest, gesture priority, exclusive boxes, Video line, mute by key and by button, floating window); the screen gain is simulated there (its range is tested by `zone_video.py`). **Not tried**: two real screens with sound and a real radio together, a real YouTube, touch.
 
@@ -1876,7 +1878,7 @@ The server can give the pages the **track title** of the radio zones (§ 5.19).
 
 - **`--radios FILE`**: JSON list of the allowed stream addresses (example `docs/samples/presence_radios.sample.json`), reread when the file changes; missing or unreadable: no title. The server **never queries any other address** than those of the file: a page cannot make it read anything. **`--radios-every N`**: seconds between two readings of a listened stream (30 by default, 5 at least). Without `--radios`: "no radio titles" at start-up.
 - **How**: the page sends `{"t": "radio", "url": …}` when entering a radio zone (empty `url` on leaving; one request per second at most; since 1.11.1 the page sends the request only if the stream is really being listened to, withdraws it otherwise, and spaces its requests at least 1.5 s apart); the server answers `{"t": "radio", "url": …, "title": …}` at once, then at every change; address not in the list: answer without `title`. The title is read **in the stream** (`Icy-MetaData: 1` header; the server skips `icy-metaint` bytes, reads the `StreamTitle='…';` block, then closes: ~16 KB per reading, 1 MB of `icy-metaint` at most): Icecast and SHOUTcast, no status address needed. One reading per stream every N seconds **while a visitor listens to it** (all rooms together), none otherwise.
-- **Several streams** (1.11.13): every address of a zone's `streams` array (the second value of each pair) must be in the file; an address that is missing plays without a title ("not in --radios").
+- **Several streams** (1.11.13): every address of a zone's `radio` array (the second value of each pair) must be in the file; an address that is missing plays without a title ("not in --radios").
 - **Log**: "radio" lines: "title asked for URL" or "address not in --radios, no title: URL" at each request; "title “…”" at each change; "no title: CAUSE": the stream sends no ICY metadata (with the `icy-metaint` value), stream cut before the block, block without `StreamTitle`, **empty title in the stream**, or the error with its message. An empty title is the case of a radio that does not put its titles in the stream (its website takes them elsewhere): Icecast sends the current title on connection, then only when it changes; such a radio will never give a title here. To know it in a few seconds from the server: `curl -s -H "Icy-MetaData: 1" --max-time 20 URL | strings | grep --line-buffered -o "StreamTitle='[^']*'"` (first line: the current title, if it is sent).
 - **Tried**: `tests/radio_titre.py` (local fake Icecast server, real presence server); by Klaatou on the VM: a public Icecast stream that sends `icy-metaint` but an empty title. **Not tried**: a SHOUTcast v1 server (`ICY 200 OK` answer: `urllib` refuses it, the title stays empty, the stream still plays).
 
@@ -2299,7 +2301,7 @@ The detail, version by version, is in `HISTORY.md` (narrative) and `CHANGELOG.md
 - **radio and music in the overview**, range from the camera (§ 5.21)
 - documents of batches 1.12.3 to 1.12.14 (`REFERENCE_JSON`, manual, `SIMPLE_PROCEDURES.md` § 17, histories)
 
-**Additions of 1.12.16 to 1.12.34 (batches 1.12.16 to 1.12.34)**
+**Additions of 1.12.16 to 1.12.35 (batches 1.12.16 to 1.12.35)**
 
 - chat input left open without focus: **B**, **Enter** and **Esc** act again (1.12.20, § 7.25)
 - **one sound source at a time** (radio, music, video-screen sound, YouTube floating window), Video line and **mute button** of the Sound window, **N** key (1.12.21 to 1.12.25, § 5.22, § 7.66); the source nearest in metres speaks (1.12.25); the YouTube window no longer keeps the keyboard (1.12.24)
@@ -2308,6 +2310,7 @@ The detail, version by version, is in `HISTORY.md` (narrative) and `CHANGELOG.md
 - **effect suggestions**: blinking icon instead of the bubble, choice in Settings (1.12.28, § 7.45)
 - **private messages** between walkers: server (`dm` message, `--no-dm`, 1.12.29, § 10.27), page (floating windows, Ignore, Save, `/mp`, `/ignore`, 1.12.30, § 7.25), click on the avatar with a confirmation (1.12.31)
 - **image board that opens its link in the floating window** (`frame: true` and `trigger` on an `image` zone with `link`, 1.12.34, § 5.7.1, § 5.11)
+- **unified zone format**: what is shown (`image`, `video`, `mesh`) and what happens (`link`, `portal`, `ha`, `radio`, `music`, `arrival`), messages for ignored keys and refused zones, `glb2html.py --convert-zones`, a picture hung high can be reached (1.12.35, § 5, `REFERENCE_JSON.md` § 11.4)
 - documents: JSON examples, more readable lists, README, overview, index, guide, procedures; histories put back in order (1.12.16 to 1.12.19 and 1.12.32)
 
 Everything below is in **1.1.0** (released on 31/10/2026). The detail, batch by batch, is in `CHANGELOG.md`.

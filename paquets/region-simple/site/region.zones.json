@@ -1,44 +1,22 @@
 [
   {
     "id": "aide",
-    "type": "image",
     "label": "Aide",
     "x": -4.48,
     "y": 17.2,
-    "z": -6.0,
+    "z": -6,
     "yaw": 1.5707963,
-    "shape": "ring",
-    "trigger": "click",
-    "radius": 2,
+    "image": "aide",
     "w": 0.9,
-    "h": 0,
-    "target": "aide",
-    "spawn": "",
-    "confirm": false,
-    "private": false,
-    "showName": false,
-    "mesh": "",
     "link": "aide.html"
- },
-{
-  "id": "zhop",
-  "type": "image",
-  "label": "",
-  "x": 9.1,
-  "y": 17.0,
-  "z": -18.1, 
-  "yaw": -3,
-  "shape": "ring",
-  "trigger": "click",
-  "radius": 2,
-  "w": 1.2,
-  "h": 0,
-  "target": "hop",
-  "spawn": "",
-  "confirm": false,
-  "private": false,
-  "showName": false,
-  "mesh": "",
-  "link": "hop://"
- }
+  },
+  {
+    "id": "zhop",
+    "x": 9.1,
+    "y": 17,
+    "z": -18.1,
+    "yaw": -3,
+    "image": "hop",
+    "link": "hop://"
+  }
 ]

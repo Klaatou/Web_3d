@@ -13,7 +13,7 @@ html,body{margin:0;height:100%;font:12px/1.4 ui-monospace,SFMono-Regular,Consola
 #app{display:grid;grid-template-columns:1fr 330px;height:100vh}
 #view{position:relative;min-width:0;min-height:0;overflow:hidden;background:#87ceeb}
 #view canvas{display:block;touch-action:none}
-#stat{position:absolute;left:10px;top:10px;max-width:calc(100% - 20px);padding:6px 10px;background:#fffffff0;border:1px solid #000;border-radius:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+#stat{position:absolute;left:10px;top:10px;max-width:calc(100% - 20px);padding:6px 10px;background:#fffffff0;border:1px solid #000;border-radius:6px;white-space:pre;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
 #hint{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;text-align:center;font-size:14px;color:#000}
 #hint div{background:#fffffff0;border:2px dashed #000;border-radius:10px;padding:22px 30px}
 #drop{position:absolute;inset:0;display:none;place-items:center;background:#ffffffd0;border:3px dashed #000;font-size:16px;z-index:5}
@@ -279,7 +279,7 @@ for (const r of ROWS) {
       '<div class="btns" id="zDirRow"><button id="bZoneDir" class="wide">' + tr('viewer.zone.dir') + '</button></div><small id="zDirInfo"></small>';
     zoneAddLabel();
     $('bZoneAdd').onclick = () => { zoneAddMode = !zoneAddMode; placeMode = false; if (linkZone) { setLinkZone(null); renderZoneList(); } zoneAddLabel(); setStatus(zoneAddMode ? tr('viewer.zone.addstatus') : tr('viewer.zone.cancel')); };
-    $('bZoneExp').onclick = () => download(tilesMode ? baseName + '.zones.json' : 'zones.json', new Blob([JSON.stringify(cfg.zones, null, 1)], { type: 'application/json' }));
+    $('bZoneExp').onclick = () => download(tilesMode ? baseName + '.zones.json' : 'zones.json', new Blob([JSON.stringify(zonesFile(), null, 1)], { type: 'application/json' }));
     $('bZoneImp').onclick = () => $('fZones').click();
     $('zDirRow').hidden = !tilesMode; $('zDirInfo').hidden = !tilesMode;
     $('zDirInfo').textContent = tr('viewer.zone.dirinfo');
@@ -455,6 +455,7 @@ function zoneDefaults(type) {
   if (type === 'ha') return Object.assign(base, { label: tr('viewer.kind.ha'), shape: 'board', target: 'http://homeassistant.local:8123/api/webhook/', private: true, confirm: true });
   return Object.assign(base, { id: 'arrivee', label: tr('viewer.kind.spawn') });
 }
+function zonesFile() { return (cfg.zones || []).map(viewer.zoneOut); }   // 1.12.35 : fichiers de zones et de reglages ecrits au format unifie
 function zonesSync(list, rerender) {
   cfg.zones = viewer.setZones(list, { editor: true });
   if (zoneSel && cfg.zones.some(z => z.id === zoneSel)) viewer.zoneSelect(zoneSel); else zoneSel = null;
@@ -815,7 +816,7 @@ $('fTiles').onchange = e => {
 };
 $('fZones').onchange = async e => {
   const f = e.target.files[0]; e.target.value = ''; if (!f) return;
-  try { const list = JSON.parse(await f.text()); if (!Array.isArray(list)) throw new Error(tr('viewer.arrayexpected')); zoneSel = null; zonesSync(list, true); setStatus(tr('viewer.zones.imported', cfg.zones.length)); }
+  try { const list = JSON.parse(await f.text()); if (!Array.isArray(list)) throw new Error(tr('viewer.arrayexpected')); zoneSel = null; zonesSync(list, true); setStatus([tr('viewer.zones.imported', cfg.zones.length)].concat(viewer.zoneMessages().map(m => tr('core.zmsg.' + m[0], ...m.slice(1)))).join('\n')); }   // 1.12.35 : cles ignorees et zones refusees montrees a l'import
   catch (err) { setStatus(tr('viewer.import.fail', err.message)); }
 };
 $('fMap').onchange = async e => {
@@ -1244,7 +1245,7 @@ async function audioTry(z) {   // essai de 5 s de la premiere piste du dossier (
   castTry(URL.createObjectURL(await (await f.handle.getFileHandle(names[0])).getFile()));
 }
 async function saveZonesToDir() {
-  const zname = baseName + '.zones.json', text = JSON.stringify(cfg.zones, null, 1), info = $('zDirInfo');
+  const zname = baseName + '.zones.json', text = JSON.stringify(zonesFile(), null, 1), info = $('zDirInfo');
   const say = t => { setStatus(t); if (info) info.textContent = t; };
   const fallback = why => {
     download(zname, new Blob([text], { type: 'application/json' }));
@@ -1282,7 +1283,7 @@ let curFile = null, lastSaved = '', settingsReady = false;
 const fileKey = f => 'glb2html_set_' + f.name + '|' + f.size;
 function snapshot() {
   const cam = viewer.getCameraState();
-  const s = { v: 1, file: curFile ? curFile.name : '', saved: new Date().toLocaleString(i18nLocale), cfg: {}, zones: cfg.zones || [],
+  const s = { v: 1, file: curFile ? curFile.name : '', saved: new Date().toLocaleString(i18nLocale), cfg: {}, zones: zonesFile(),
     camera: { camDir: cam.camDir, target: cam.target, zoom: cam.zoom }, profile: $('profileSel').value, thisReg: Object.assign({}, thisReg),
     cmd: { script: $('cmdScript').value, glb: $('cmdGlb').value, dest: $('cmdDest').value, mapPage: $('cmdMapPage').value } };
   for (const k of SKEYS) s.cfg[k] = cfg[k];
@@ -1497,7 +1498,7 @@ $('bZip').onclick = () => {
       ['index.html', enc.encode(SHELL)],
       [baseName + '.glb', glbBytes],
       [baseName + '.config.json', enc.encode(JSON.stringify(Object.assign(c, { zones: [], zonesLive: '' }), null, 1))],
-      [baseName + '.zones.json', enc.encode(JSON.stringify(zones, null, 1))]
+      [baseName + '.zones.json', enc.encode(JSON.stringify(zones.map(viewer.zoneOut), null, 1))]
     ];
     for (const [spec, f] of Object.entries(SHELL_LIB.modules)) files.push([SHELL_LIB.dir + '/' + f, fromDataUrl(IMPORTS[spec])]);
     for (const f of SHELL_LIB.draco) files.push([SHELL_LIB.dir + '/draco/' + f, fromDataUrl(LIBS[f])]);

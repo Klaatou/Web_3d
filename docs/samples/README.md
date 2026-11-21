@@ -21,14 +21,14 @@ This folder holds **one example of each JSON file** that the page, the viewer, t
 `region.zones.sample.json` contains 14 zones (`REFERENCE_JSON.md` § 11.4):
 
 - arrivals: `default`, `gallery`
-- portals: `to-gallery` (same region, by walking into it), `to-other-region` (other region, with confirmation), `back-home` (name shown)
+- portals: `to-gallery` (same region, by walking into it), `to-other-region` (other region, sign), `back-home` (name shown)
 - web links: `website`, `door-info` (linked to the `Door#2` object)
 - Home Assistant command: `light-on` (private, with confirmation)
 - picture: `painting-1` (optional `link` key: page opened on click)
-- radio (`cast`): `dance-floor` (streams of the `streams` list, played within range in walk mode; optional `poster` cover and `link` page, shown in the Sound window)
-- music (`audio`): `ambiance` (files of the `audio` folder, with a `poster` cover and a `link`)
+- radio (`radio`): `dance-floor` (streams of the `radio` list, played within range in walk mode; optional `poster` cover and `posterLink` page, shown in the Sound window)
+- music (`music`): `ambiance` (files of the `audio` folder, with a `poster` cover and a `posterLink`)
 - video screens (`video`): `screen-clip` (one file, with sound), `screen-list` (a folder of videos)
-- link in a floating window: `video-page` (`url` zone with the `frame` key)
+- link in a floating window: `video-page` (`link` with the `frame` key)
 
 ## Files of the presence server
 

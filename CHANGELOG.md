@@ -6,6 +6,22 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.12.0)
 
+### 21/11/2026: unified zone format (batch 1.12.35)
+
+- **Request** (Klaatou): simplify the zones ("not a gas factory"); compatibility with the old format is only required for the zones of the published packages.
+- **Done**:
+  - a zone is described by what is shown (`image`, `video`, `mesh`, otherwise a ring or a sign with `shape`) and what happens (`link`, `portal`, `ha`, `radio`, `music`); `arrival` for an arrival point; no more `type` or `target`; each key has a single meaning (the cover link of a radio or music becomes `posterLink`, the videos folder `videoFolder`);
+  - reading: `zoneIn` (`src/core.js`, in `setZones`: page, shell, reloaded zones, viewer) and `zone_in` (`src/gen_tpl.py`, in `clean_zones`), exact mirrors; the old format is still read as is (it is the internal format: keeping it costs nothing);
+  - writing in the new format everywhere: `glb2html.py` (`NOM.zones.json`, reloaded zones), viewer (zones export, saving in the region folder, modular export, `.reglages.json` file); default settings are not written;
+  - messages: unknown key, key that does not apply to this zone, two things to show, two actions, combination not possible yet (picture with an action other than a link, video screen with an action, object of the model with radio or music), empty zone; shown by `glb2html.py`, by the viewer on import, in the console for the page;
+  - `glb2html.py --convert-zones FILE`: rewrites a list of zones or a `.reglages.json`, the original in `FILE.bak`;
+  - picture hung high: it can be reached when the feet are between 4 m below its bottom edge and 0.5 m above its top edge (before: 3.5 m around its centre, a high picture could not be reached);
+  - samples (`docs/samples`), zones of the packages (galerie-photos, region-simple) and their notes in the new format.
+- **Checked**: new test `zones_unifiees.py` (Python and JavaScript identical zone by zone and message by message, round trip of each old-format type, `glb2html.py` reads, reports and writes the new format, `--convert-zones` on a list and on a settings file, high picture reachable and counter-test: fails with the old height rule); full test run.
+- **Not done** (next batch): the new combinations (picture that plays music, picture-portal…) and the cover taken from the picture's image; placing a separate `.glb` file (`model`).
+- **Documents**: `REFERENCE_JSON.md` § 11.4 rewritten (tables by part, combinations, old format and correspondence), JSON examples converted; manual (note in § 5, § 5.11, § 5.19 to § 5.21, § 10.25, annex); index, overview, procedures, creators, `docs/samples/README`; FR and EN.
+- Files: `src/core.js`, `src/gen_tpl.py`, `src/template.html`, `src/viewer_tpl.html`, `src/i18n/fr.json`, `src/i18n/en.json`, `tests/zones_unifiees.py`, `docs/samples/*.json`, `paquets/*/site/*.zones.json`, package notes, documents above, `dist\`.
+
 ### 21/11/2026: an image board opens its link in the floating window (batch 1.12.34)
 
 - **Request** (Klaatou): an image that opens the YouTube mini player (the `poster` key of a `url` zone is ignored: it only serves radio and music zones).

@@ -1103,7 +1103,7 @@ if (C.panel !== false) {
   if (C.compass !== false) {   // v37 : boussole (cap de l'avatar, de la caméra en vue globale)
     const cb = mk('input', { type: 'checkbox', id: 'visCompass' }); cb.checked = VIS.compass; cb.onchange = () => { VIS.compass = cb.checked; visSave(); compassTick(); }; op.append(lab(tr('page.opt.compass'), cb));
   }
-  if ((C.zones || []).some(z => z && z.type === 'image') || C.zonesLive) {   // reperage des zones image : numeros, jamais memorises (decoche a chaque ouverture)
+  if (viewer.getZones().some(z => z.type === 'image') || C.zonesLive) {   // 1.12.35 : zones deja lues (format unifie ou ancien)   // reperage des zones image : numeros, jamais memorises (decoche a chaque ouverture)
     const cb = mk('input', { type: 'checkbox', id: 'visZoneNums' }); cb.onchange = () => viewer.setZoneNumbers(cb.checked); op.append(lab(tr('page.opt.zonenums'), cb));
   }
   if (C.presenceUrl && C.walk && C.chat) {

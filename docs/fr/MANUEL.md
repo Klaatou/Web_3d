@@ -460,6 +460,8 @@ Dans `--analyse`, la ligne « Lecture » indique les octets lus. Les positions n
 
 Le viewer (`glb-viewer.html`) est la page que tu ouvres avec ton `.glb`. Elle sert à **regarder** le modèle, à **régler** son affichage (mer, rotation, caméra, fiche de la région…), à **poser les zones** (points d'arrivée, portails, panneaux, liens, images, zones privées : voir le vocabulaire, § 1.1), à **capturer la vignette** de la carte des mondes et à **exporter** la page autonome, les zones (`NOM.zones.json`) et `regions.json`. Champs de `NOM.zones.json` : `REFERENCE_JSON.md` § 11.4. Pour que la page publiée voie les changements : § 6.16.
 
+**Format des zones (1.12.35).** Dans `NOM.zones.json`, une zone se décrit par ce qu'on voit (`image`, `video`, `mesh`, sinon un anneau ou un panneau) et ce qui se passe (`link`, `portal`, `ha`, `radio`, `music`, ou `arrival` pour un point d'arrivée) : la liste complète et les combinaisons possibles sont dans `REFERENCE_JSON.md` § 11.4. L'ancien format (`type`, `target`) reste lu ; `glb2html.py --convert-zones FICHIER` le réécrit.
+
 ### 5.1 La règle qui explique 90 % des pannes
 
 Chaque zone a deux noms :
@@ -630,18 +632,18 @@ Le visiteur déclenche alors la zone en cliquant sur l'objet, ou avec E quand il
 
 Une arrivée privée disparaît aussi de l'export public : un portail public qui la vise tombera sur `default`.
 
-### 5.11 Zone `image` : un tableau sur un mur
+### 5.11 Tableau sur un mur (`image`)
 
 Une zone de type `image` plaque une image contre un mur du modèle.
 
 - **Poser** : dans le viewer, type « Image (tableau sur un mur) », puis clic sur un mur. La zone se tourne vers la face touchée et se place 2 cm devant. Le sol et le plafond sont refusés (« Clique sur un mur (une surface verticale) pour poser une image. »). Une zone image n'est jamais liée à un objet (`mesh` reste vide) et se déclenche toujours au clic.
 - **Taille** : `w` est la largeur en mètres (1,2 par défaut ; de 0,1 à 10) et `h` la hauteur (de 0 à 6). **`h` = 0 (valeur par défaut) : la hauteur suit le rapport de l'image.**
-- **Lien (clé `link`, facultative)** : un clic sur le tableau, ou la touche E devant lui, ouvre ce lien dans un nouvel onglet, comme une zone `url` (avec `"frame": true`, 1.12.34 : dans la fenêtre flottante, § 5.7.1, par exemple un tableau qui ouvre une vidéo YouTube ; `trigger` `"enter"` ou `"both"` ouvre le lien en marchant devant le tableau, dans son rayon `radius`, comme une zone `url`) ; infobulle et curseur main au survol. C'est une adresse `http(s)` ou un chemin **relatif à l'adresse de la page ouverte** (pas au dossier de la région) : `galerie.html` pour un fichier à côté de `index.html`, `pages/galerie.html` dans un sous-dossier ; `../` sort du dossier de la page. Sans `link`, le tableau ne réagit pas (ni invite, ni action). Seuls `http(s)` et `hop://` passent : `javascript:` et tout autre schéma sont refusés (« Lien invalide »). Un lien `hop://` s'ouvre dans le même onglet (§ 5.7.1). Un tableau dont l'image est introuvable n'est ni cliquable ni « zone proche ». À la main : ajouter `"link": "galerie.html"` à la zone dans `NOM.zones.json`. Dans l'éditeur : champ « Lien (page ouverte au clic ou à E, facultatif) ». Les pages et le viewer d'avant la 1.1.1 ignorent `link`, et **un `glb-viewer.html` d'avant la 1.1.1 qui enregistre des zones perd les `link`** : garder le viewer et la page à la même version.
+- **Lien (clé `link`, facultative)** : un clic sur le tableau, ou la touche E devant lui, ouvre ce lien dans un nouvel onglet, comme un lien (avec `"frame": true`, 1.12.34 : dans la fenêtre flottante, § 5.7.1, par exemple un tableau qui ouvre une vidéo YouTube ; `trigger` `"enter"` ou `"both"` ouvre le lien en marchant devant le tableau, dans son rayon `radius`, comme un lien) ; infobulle et curseur main au survol. C'est une adresse `http(s)` ou un chemin **relatif à l'adresse de la page ouverte** (pas au dossier de la région) : `galerie.html` pour un fichier à côté de `index.html`, `pages/galerie.html` dans un sous-dossier ; `../` sort du dossier de la page. Sans `link`, le tableau ne réagit pas (ni invite, ni action). Seuls `http(s)` et `hop://` passent : `javascript:` et tout autre schéma sont refusés (« Lien invalide »). Un lien `hop://` s'ouvre dans le même onglet (§ 5.7.1). Un tableau dont l'image est introuvable n'est ni cliquable ni « zone proche ». À la main : ajouter `"link": "galerie.html"` à la zone dans `NOM.zones.json`. Dans l'éditeur : champ « Lien (page ouverte au clic ou à E, facultatif) ». Les pages et le viewer d'avant la 1.1.1 ignorent `link`, et **un `glb-viewer.html` d'avant la 1.1.1 qui enregistre des zones perd les `link`** : garder le viewer et la page à la même version.
 - **Lisible des deux côtés (1.5.4)** : le tableau et sa légende sont faits de deux plans dos à dos : l'image et le texte se lisent à l'endroit devant comme derrière, jamais en miroir. Il n'y a pas d'option mono ou bi-face. Il en va de même des panneaux des zones. Contre un mur, le verso est caché.
 - **Panneau `zhop` des paquets (1.6.0)** : `region-simple` et `galerie-photos` contiennent une zone image d'identifiant `zhop` (ajoutée par Klaatou, commit `b3b35b6`) : image `medias/hop.jpg` (« Lien vers OpenSim ») et lien `hop://` incomplet, à personnaliser. Mode d'emploi : `readme.html` § 8 (région simple), `galerie.html` § 4 (galerie).
 - **Poser, en vue globale ou en promenade** : le clic de pose marche dans les deux cas. En promenade (souris capturée), il pose la zone là où vise le centre de l'écran ; la **touche P** pose en plus un tableau 2,2 m devant toi, à 1,6 m au-dessus des pieds, face à toi. Dans les deux cas, ajuster ensuite la position dans les champs de la zone.
 - **Repérer les zones image (page exportée)** : dans « Réglages », la case **« Numéros des zones image (repérage) »** (décochée à chaque ouverture, jamais mémorisée) affiche un gros numéro à plat devant chaque zone image (dans le plan de l'image, pas tourné vers toi), même si son image manque encore : c'est l'emplacement qui compte. Le numéro est celui du nom de fichier visé (`12`, `12.jpg` et `12-Cezanne.jpg` donnent 12 ; `paintings/painting-1.jpg` donne 1), à défaut le nom affiché de la zone, puis son `id`. Les numéros sont masqués par le décor et ne sont pas cliquables. La case n'existe que si la région a au moins une zone image.
-- **Image** : champ `target` de la zone : un nom de fichier, ou une adresse `http(s):` ou `data:`.
+- **Image** : clé `image` de la zone : un nom de fichier, ou une adresse `http(s):` ou `data:`.
 - **Où la page cherche** : avec la coquille (`index.html?region=dossier/NOM`), dans le **dossier de la région** (à côté du `.glb`), et non à côté de la page ; pour une page rangée dans le dossier de la région ou une page autonome, à côté de la page. Dans les deux cas, le **sous-dossier `medias`** d'abord, puis le dossier lui-même : les images déjà en place continuent de marcher. Le nom de ce sous-dossier est la clé facultative `mediaDir` de `NOM.config.json` (`"medias"` par défaut, `""` pour aucun sous-dossier, ou un autre nom ; le générateur, lui, cherche toujours `medias`).
 - **Nom complet ou numéro seul** : `12-Cezanne.jpg` est un nom complet. Avec `12` seul, la page essaie `12.jpg`, `12.jpeg`, `12.png`, `12.webp`, `12.gif`, `12.avif` dans cet ordre et garde le premier fichier trouvé (clé facultative `imageExts`, par exemple `"png,jpg"`). Les extensions absentes donnent des réponses 404 dans la console du navigateur : c'est normal.
 - **Légende** (petit texte sous l'image) : la première ligne non vide de `12.txt` (UTF-8, 200 caractères au plus ; relu à chaque chargement de la page : modifier le fichier suffit, sans relancer le générateur) ; sinon le texte entre le premier `-` du nom de fichier et l'extension (`1-Soleil_couchant.jpg` donne « Soleil couchant », `_` devient espace) ; sinon pas de légende. Une image introuvable n'a pas de légende non plus.
@@ -728,24 +730,24 @@ Le viewer (`glb-viewer.html`) a la même liste « **Langue / Language** » que l
 - **Non essayé** : Windows et Edge pour le détail (vrai sélecteur de dossier) ; zones image en région en tuiles ; mur à face inclinée ; étiquette du pointeur en mode tuiles.
 - **Constaté une fois, non reproduit** : un titre d'image manquant (cause non confirmée : en cas de retour, la ligne « Image » de « Copier le diagnostic » donne la cible, le fichier lu et la source de la légende) ; une pose d'image par clic sur un muret qui plaçait l'image derrière la face visible (les zones se règlent alors à la main : `x` ou `z` à quelques centièmes de mètre de la face).
 
-### 5.19 Zone `cast` : une radio dans la région (1.10.32 à 1.10.35)
+### 5.19 Radio dans la région (`radio`, 1.10.32 à 1.10.35)
 
 Une zone de type `cast` fait jouer un **flux radio** (Icecast ou SHOUTcast, le même qu'une « music URL » de parcelle OpenSim) aux visiteurs qui passent à portée en promenade.
 
 - **Poser** : dans le viewer, type « Radio (flux Icecast / SHOUTcast à portée) », puis clic au sol (ou touche P en promenade).
-  - Champs : « Adresse du flux » (`target`, `https://…`), bouton **« Essayer le flux (5 s) »** (le viewer lit le flux cinq secondes et dit « Flux : lecture » ou « Flux illisible (cause) »), « Portée » (`radius`, 0,5 à **200 m** ; 20 par défaut ; les autres sortes restent limitées à 50), le repère (cône) et la position.
+  - Champs : « Adresse du flux » (la première adresse de `radio`, `https://…`), bouton **« Essayer le flux (5 s) »** (le viewer lit le flux cinq secondes et dit « Flux : lecture » ou « Flux illisible (cause) »), « Portée » (`radius`, 0,5 à **200 m** ; 20 par défaut ; les autres sortes restent limitées à 50), le repère (cône) et la position.
   - Une zone radio n'est jamais liée à un objet, n'a ni clic ni invite « E », et ne se déclenche pas : elle joue d'elle-même.
   - **Cône par défaut** (1.10.35) : comme un portail, pour que l'on voie qu'une radio est là ; `cone: false` le retire.
 - **Dans la page** : en promenade seulement (rien en vue globale), le flux de la zone radio la plus proche **dont on est à portée** (en x et z ; de 4 m sous la zone à 8 m au-dessus) joue, avec un volume qui baisse avec la distance : `(1 - distance / portée)` x le **volume radio / musique** de la fenêtre Son (50 par défaut, § 7.66).
   - Une seule radio à la fois.
   - Hors portée ou en vue globale, le flux est **arrêté** (plus téléchargé).
   - Le navigateur n'autorise le son qu'après une première action du visiteur : jusque-là, la ligne « Radio » dit « un clic ou une touche pour l'entendre », et le flux part à la première action.
-- **Plusieurs flux dans une zone** (1.11.13, `streams` depuis la 1.11.26) : la zone porte un tableau **`streams`** de paires `["label", "url"]`, le **nom d'abord** (`""` sans nom ; 500 flux au plus, 60 caractères pour un nom, 600 pour une adresse) : `"streams": [["Oldies Radio", "https://…/stream"], ["Jazz Radio", "https://…/jazz.mp3"]]`.
+- **Plusieurs flux dans une zone** (1.11.13 ; `streams` de la 1.11.26 à la 1.12.34, `radio` depuis la 1.12.35) : la clé **`radio`** est un tableau de paires `["label", "url"]`, le **nom d'abord** (`""` sans nom ; 500 flux au plus, 60 caractères pour un nom, 600 pour une adresse) : `"radio": [["Oldies Radio", "https://…/stream"], ["Jazz Radio", "https://…/jazz.mp3"]]`.
   - Déplacer, ajouter ou retirer un flux, c'est déplacer, ajouter ou retirer une paire.
   - Une adresse vide retire sa paire.
-  - Les anciennes clés **`urls`**, **`labels`** et **`target`** sont toujours lues et converties en `streams` ; seule `streams` est écrite (viewer, `--update`, `--zones`).
+  - Les anciennes clés **`streams`**, **`urls`**, **`labels`** et **`target`** (ancien format) sont toujours lues ; seule `radio` est écrite (viewer, `--update`, `--zones`).
   - Avec plusieurs flux, le bloc État (touche I) montre au-dessus de la ligne « Radio » une **liste** : choisir un flux le joue, même s'il avait échoué (il est alors réessayé) ; une erreur est mémorisée **flux par flux**, et quitter la zone ramène au premier flux.
-  - `streams` se saisit à la main dans `NOM.zones.json` (le champ « Adresse du flux » du viewer règle la première adresse et garde son nom et les autres flux).
+  - `radio` se saisit à la main dans `NOM.zones.json` (le champ « Adresse du flux » du viewer règle la première adresse et garde son nom et les autres flux).
   - **Attention à la syntaxe** : une virgule oubliée entre le nom et l'adresse rend tout le fichier invalide.
   - Chaque adresse doit figurer dans `--radios` pour avoir son titre (§ 10.25).
 - **Nom du flux et bulle** (1.11.26) : la liste et la ligne « Flux » montrent le nom du flux ; sans nom, l'adresse. La bulle de la ligne Radio a deux lignes quand la zone a un `label` et plusieurs flux : « Zone radio : label de la zone », puis « Flux : nom du flux actif (n/N) ». Avec `"label": ""` sur la zone, la bulle commence par le flux actif (pratique pour des noms de flux seuls, sans nom de zone).
@@ -763,7 +765,7 @@ Une zone de type `cast` fait jouer un **flux radio** (Icecast ou SHOUTcast, le m
     - **(3)** un serveur SHOUTcast v1 répond `ICY 200 OK`, que les navigateurs refusent parfois (non essayé ici).
   - Une zone en erreur est réessayée quand on y revient après être sorti de sa portée.
 - **Droits** : diffuser publiquement de la musique protégée demande des autorisations ; pour une démo, un flux libre de droits ou dont le propriétaire a donné son accord.
-- **Pochette et lien** (1.12.26) : deux clés facultatives de la zone `cast`, `poster` et `link`.
+- **Pochette et lien** (1.12.26) : deux clés facultatives de la radio, `poster` et `posterLink` (`link` jusqu'à la 1.12.34).
   - `poster` : une **image**, en nom de fichier relatif au dossier de la région, ou en adresse `https://…`, avec son extension (`"poster": "pochette.jpg"`). La fenêtre Son la montre en pochette (96 px au plus, 128 au toucher) quand cette radio est celle qui parle. Image introuvable : rien n'est montré.
   - `link` : l'adresse d'une page (`https://…` ou `hop://…`). Un clic sur la pochette, ou Entrée quand elle a le focus, l'ouvre dans un nouvel onglet. Sans `link`, la pochette n'est pas cliquable.
   - Viewer : champs « Pochette » et « Lien de la pochette » de la zone. À la main dans `NOM.zones.json` : `"poster": "pochette.jpg", "link": "https://exemple.org/album"`. Les clés ne sont écrites que si elles sont remplies ; `poster` et `link` ne servent qu'aux zones `cast` et `audio`.
@@ -771,7 +773,7 @@ Une zone de type `cast` fait jouer un **flux radio** (Icecast ou SHOUTcast, le m
   - Par un testeur sur un téléphone (18/11/2026 ; modèle et navigateur non relevés) : la région avec la radio à plusieurs flux, changement de flux compris : tout passe.
   - **Non essayé** : SHOUTcast v1, Firefox, Safari, une région en tuiles.
 
-### 5.20 Zone `audio` : une playlist de fichiers son dans la région (1.11.4)
+### 5.20 Musique : une playlist de fichiers son dans la région (`music`, 1.11.4)
 
 Une zone de type `audio` fait jouer en boucle les **fichiers son d'un dossier** (mp3, ogg, wav...) aux visiteurs qui passent à portée en promenade. À la différence de la radio (§ 5.19), les sons sont des **fichiers de la région**, publiés avec elle : pas de serveur de flux, pas de droit d'un tiers à demander, mais les droits des morceaux restent les tiens.
 
@@ -779,7 +781,7 @@ Une zone de type `audio` fait jouer en boucle les **fichiers son d'un dossier** 
   - Il se range à côté du `.glb`, ou dans le sous-dossier `medias` (clé `mediaDir`) : la page le cherche comme les images (§ 5.11), `medias/audio` d'abord, puis `audio`.
   - Formats : mp3, ogg, oga, opus, wav, m4a, aac, flac, weba, webm (ceux que le navigateur sait lire, donc selon le navigateur ; essayé par Klaatou : `.aac`).
 - **Poser** : dans le viewer, type « Musique (fichiers son d'un dossier, joués en boucle à portée) », puis clic au sol (ou touche P en promenade).
-  - Champs : « Dossier des pistes (sous-dossier de la région) » (`folder`, par exemple `audio`), les boutons **« Mettre à jour la liste (playlist.json) »** et **« Essayer la première piste (5 s) »**, « Portée » (`radius`, 0,5 à **200 m**, 20 par défaut), le repère (cône) et la position.
+  - Champs : « Dossier des pistes (sous-dossier de la région) » (`music`, par exemple `audio`), les boutons **« Mettre à jour la liste (playlist.json) »** et **« Essayer la première piste (5 s) »**, « Portée » (`radius`, 0,5 à **200 m**, 20 par défaut), le repère (cône) et la position.
   - Une zone audio n'est jamais liée à un objet, n'a ni clic ni invite « E » et joue d'elle-même.
   - Cône par défaut, comme la radio ; `cone: false` le retire.
 - **Distance, boutons de piste** (1.11.16, 1.11.17, 1.11.18) : la ligne « Musique » donne, comme la radio, la distance et la portée, et reste hors de portée (jusqu'à 2 fois la portée) avec la distance qui clignote (§ 5.19). S'il y a plusieurs pistes, deux boutons **⏮** et **⏭** passent à la piste précédente ou suivante (la liste boucle) autour du compteur **n/N**.
@@ -803,19 +805,19 @@ Une zone de type `audio` fait jouer en boucle les **fichiers son d'un dossier** 
   - **Une piste illisible est sautée** ; si toutes le sont, la zone est réessayée au retour dans sa portée.
   - Un dossier renommé ou un son ajouté sans refaire la liste : le son n'est tout simplement pas joué.
 - **Mettre en ligne** : copier le dossier (sons et `playlist.json`) avec le reste de la région ; les zones (`NOM.zones.json`) disent seulement `"folder": "audio"`. Pas à pas, de la liste à la publication : `PROCEDURES_SIMPLES.md` § 15 et § 16.
-- **Pochette et lien** (1.12.26) : deux clés facultatives de la zone `audio`, `poster` et `link`.
+- **Pochette et lien** (1.12.26) : deux clés facultatives de la musique, `poster` et `posterLink` (`link` jusqu'à la 1.12.34).
   - `poster` : une **image**, en nom de fichier relatif au dossier de la région, ou en adresse `https://…`, avec son extension (`"poster": "pochette.jpg"`). La fenêtre Son la montre en pochette (96 px au plus, 128 au toucher) quand cette musique est celle qui parle. Image introuvable : rien n'est montré.
   - `link` : l'adresse d'une page (`https://…` ou `hop://…`). Un clic sur la pochette, ou Entrée quand elle a le focus, l'ouvre dans un nouvel onglet. Sans `link`, la pochette n'est pas cliquable.
   - Viewer : champs « Pochette » et « Lien de la pochette » de la zone. À la main dans `NOM.zones.json` : `"poster": "pochette.jpg", "link": "https://exemple.org/album"`. Les clés ne sont écrites que si elles sont remplies ; `poster` et `link` ne servent qu'aux zones `cast` et `audio`.
 - **Essayé** : `tests/zone_audio.py` (commande `--audio-list`, page dans Chromium avec des pistes WAV d'une seconde : ordre, boucle, volume, reprise, piste sautée, listes absente / vide / illisibles, exclusion avec la radio ; viewer avec un dossier simulé, même ordre que la commande).
   - **Non essayé** : la lecture de vrais mp3 (le Chromium d'essai n'a pas de décodeur mp3), le vrai sélecteur de dossier sous Windows et Edge, Firefox et Safari, une région en tuiles, un dossier de plusieurs centaines de pistes.
 
-### 5.21 Zone `video` : un écran vidéo sur un mur (1.12.7 à 1.12.14)
+### 5.21 Écran vidéo sur un mur (`video`, 1.12.7 à 1.12.14)
 
 Une zone de type `video` est un **écran plaqué sur un mur**, comme un tableau « image » (§ 5.11), dont l'image est une **vidéo** (mp4, webm, m4v, ogv). Rien n'est téléchargé avant que le visiteur soit à portée : l'écran se charge à l'approche.
 
 - **Poser** : dans le viewer, type « Vidéo (écran sur un mur) », puis clic sur le mur.
-  - Champs : « Fichier ou adresse de la vidéo » (`target`), largeur (`w`, 2,4 m par défaut), hauteur (`h`, **0 = d'après le rapport de la vidéo**), « Portée » (`radius`, 20 m par défaut, 0,5 à **200 m**), « Son de l'écran » (`sound`), « Dossier de vidéos » (`folder`, voir plus bas).
+  - Champs : « Fichier ou adresse de la vidéo » (`video`), largeur (`w`, 2,4 m par défaut), hauteur (`h`, **0 = d'après le rapport de la vidéo**), « Portée » (`radius`, 20 m par défaut, 0,5 à **200 m**), « Son de l'écran » (`sound`), « Dossier de vidéos » (`videoFolder`, voir plus bas).
   - Pas de `mesh`, de `cone`, de `link` ni de déclenchement : il n'y a rien à cliquer sauf l'écran lui-même.
   - **Dans le viewer, l'écran est un panneau qui porte le nom du fichier : la vidéo n'y joue pas** (et le viewer ouvert comme un fichier local, sans serveur, ne charge pas la vidéo : il faut une page servie en `http`).
 - **Le fichier** se cherche comme celui d'une image : un nom sans extension (`clip`) donne `medias/clip.mp4`, `.webm`, `.m4v`, `.ogv`, puis le dossier de la région ; avec extension, tel quel dans `medias` puis dans le dossier ; une adresse `https://` ou un chemin `/…` tel quel (un autre site doit autoriser le CORS, sinon WebGL refuse la texture ; non essayé).
@@ -834,9 +836,9 @@ Une zone de type `video` est un **écran plaqué sur un mur**, comme un tableau 
   - **Si le navigateur refuse quand même le son** (erreur `NotAllowedError`), l'écran joue muet et le son est retenté 5 secondes plus tard ; un changement de piste ne coupe plus le son (1.12.14).
   - **Depuis la 1.12.21**, un écran à son ne se mélange plus à la radio ni à la musique des zones : une seule source parle (§ 5.22).
   - Le refus réel d'Edge n'est pas essayé ici.
-- **Une liste de vidéos** (`folder` ou `tracks`, **sans `target`**) : comme une zone audio (§ 5.20).
+- **Une liste de vidéos** (`videoFolder` ou `tracks`, avec `"video": ""`) : comme une musique (§ 5.20).
   - `tracks` est la liste écrite dans la zone (noms relatifs à la région ou adresses `http(s)://`, 500 au plus, saisie à la main) ; sans elle, la liste est le fichier `<dossier>/playlist.json` (`{"tracks": [...]}` ou un tableau de noms), cherché dans `medias/<dossier>/` puis `<dossier>/`.
-  - Avec un `target`, c'est lui qui gagne (un seul fichier).
+  - Avec un fichier dans `video`, c'est lui qui gagne (un seul fichier).
   - Les pistes s'enchaînent dans l'ordre et reprennent à la première après la dernière ; **une liste d'une seule piste joue en boucle**.
   - Chaque piste a son rapport largeur / hauteur (l'écran s'adapte si `h` vaut 0).
   - Une piste illisible est sautée ; si aucune ne se lit, ou si la liste est vide, l'écran disparaît.
@@ -865,7 +867,7 @@ Avant la 1.12.21, la radio, la musique et le son d'un écran vidéo pouvaient pa
 - **Cases** (Réglages et fenêtres État et Son) : « Radio des zones », « Musique des zones » et la nouvelle « **Vidéos des zones** » (cochées au départ). **Cocher l'une décoche les deux autres**, partout ; avec les trois cochées (départ), la règle ci-dessus s'applique ; avec une seule cochée, seule celle-là parle. La case « Sons » de Réglages et le volume de la fenêtre Son s'appliquent aux trois.
 - **Fenêtre Son** : une ligne **« ♪ Vidéo : NOM (distance / portée) »** apparaît quand un écran à son joue et parle, avec sa case ; le titre de la fenêtre dit alors « Vidéo ».
 - **Bouton muet et touche N** : un bouton haut-parleur barré (à gauche du volume, fenêtre Son ; fond noir quand le son est coupé) et la touche **N** coupent ou rétablissent d'un coup la radio, la musique et les sons des écrans. Les cases et le volume ne changent pas ; le muet dure jusqu'au prochain appui ou au rechargement de la page. Un message en bas de la page le confirme.
-- **Fenêtre flottante** (option `frame` d'une zone `url`, § 5.1) : tant qu'elle contient une page **YouTube**, la radio, la musique et les sons des écrans se taisent (leur ligne dit « son coupé : touche N ou fenêtre YouTube »), car le son d'une vidéo YouTube de la fenêtre ne peut pas être coupé par la page ; ils reviennent à sa fermeture, ou dès que le visiteur fait un **geste sur une source** (cocher sa case, choisir un flux, passer une piste, cliquer sur un écran) : la page ne peut pas arrêter le lecteur YouTube, qui continue de jouer en même temps (au visiteur de le mettre en pause). **Une autre page ne change rien au son de la page** (1.12.22).
+- **Fenêtre flottante** (option `frame` d'un lien, § 5.7.1) : tant qu'elle contient une page **YouTube**, la radio, la musique et les sons des écrans se taisent (leur ligne dit « son coupé : touche N ou fenêtre YouTube »), car le son d'une vidéo YouTube de la fenêtre ne peut pas être coupé par la page ; ils reviennent à sa fermeture, ou dès que le visiteur fait un **geste sur une source** (cocher sa case, choisir un flux, passer une piste, cliquer sur un écran) : la page ne peut pas arrêter le lecteur YouTube, qui continue de jouer en même temps (au visiteur de le mettre en pause). **Une autre page ne change rien au son de la page** (1.12.22).
   - Non essayé : mettre en pause une vidéo YouTube de la fenêtre depuis la page (l'API de lecteur n'est pas utilisée).
 - **Essayé** : `tests/arbitrage_son.py` (plus proche, priorité d'un geste, cases exclusives, ligne Vidéo, muet par touche et par bouton, fenêtre flottante) ; le gain de l'écran y est simulé (sa portée est testée par `zone_video.py`). **Non essayé** : deux écrans à son et une radio réels ensemble, un vrai YouTube, le toucher.
 
@@ -1876,7 +1878,7 @@ Le serveur peut donner aux pages le **titre du morceau** des zones radio (§ 5.1
 
 - **`--radios FICHIER`** : liste JSON des adresses de flux autorisées (exemple `docs/samples/presence_radios.sample.json`), relue quand le fichier change ; absente ou illisible : aucun titre. Le serveur **n'interroge jamais une autre adresse** que celles du fichier : une page ne peut pas lui faire lire n'importe quoi. **`--radios-every N`** : secondes entre deux lectures d'un flux écouté (30 par défaut, 5 au moins). Sans `--radios` : « pas de titre des radios » au démarrage.
 - **Comment** : la page envoie `{"t": "radio", "url": …}` en entrant dans une zone radio (`url` vide en sortant ; une demande par seconde au plus ; depuis la 1.11.1 la page n'envoie la demande que si le flux est réellement écouté, la retire sinon, et espace ses demandes d'au moins 1,5 s) ; le serveur répond `{"t": "radio", "url": …, "title": …}` tout de suite, puis à chaque changement ; adresse hors liste : réponse sans `title`. Le titre est lu **dans le flux** (en-tête `Icy-MetaData: 1` ; le serveur saute `icy-metaint` octets, lit le bloc `StreamTitle='…';`, puis coupe : ~16 Ko par lecture, 1 Mo d'`icy-metaint` au plus) : Icecast et SHOUTcast, sans adresse de statut. Une lecture par flux toutes les N secondes **tant qu'un visiteur l'écoute** (tous salons confondus), aucune sinon.
-- **Plusieurs flux** (1.11.13) : chaque adresse du tableau `streams` d'une zone (la deuxième valeur de chaque paire) doit figurer dans le fichier ; une adresse absente joue sans titre (« hors de --radios »).
+- **Plusieurs flux** (1.11.13) : chaque adresse du tableau `radio` d'une zone (la deuxième valeur de chaque paire) doit figurer dans le fichier ; une adresse absente joue sans titre (« hors de --radios »).
 - **Journal** : lignes « radio » : « titre demandé pour URL » ou « adresse hors de --radios, pas de titre : URL » à chaque demande ; « titre « … » » à chaque changement ; « pas de titre : CAUSE » : le flux n'envoie pas de métadonnées ICY (avec la valeur d'`icy-metaint`), flux coupé avant le bloc, bloc sans `StreamTitle`, **titre vide dans le flux**, ou l'erreur avec son message. Un titre vide est le cas d'une radio qui ne met pas ses titres dans le flux (son site les prend ailleurs) : Icecast envoie le titre courant au branchement, puis seulement quand il change ; une telle radio ne donnera jamais de titre ici. Pour le savoir en quelques secondes depuis le serveur : `curl -s -H "Icy-MetaData: 1" --max-time 20 URL | strings | grep --line-buffered -o "StreamTitle='[^']*'"` (première ligne : le titre courant, s'il est envoyé).
 - **Essayé** : `tests/radio_titre.py` (faux serveur Icecast local, vrai serveur de présence) ; par Klaatou sur la VM : un flux Icecast public qui envoie `icy-metaint` mais un titre vide. **Non essayé** : un serveur SHOUTcast v1 (réponse `ICY 200 OK` : `urllib` la refuse, le titre reste vide, le flux joue quand même).
 
@@ -2299,7 +2301,7 @@ Le détail, version par version, est dans `HISTORIQUE.md` (récit) et `CHANGELOG
 - **radio et musique en vue d'ensemble**, portée depuis la caméra (§ 5.21)
 - documents des lots 1.12.3 à 1.12.14 (`REFERENCE_JSON`, manuel, `PROCEDURES_SIMPLES.md` § 17, historiques)
 
-**Ajouts de la 1.12.16 à la 1.12.34 (lots 1.12.16 à 1.12.34)**
+**Ajouts de la 1.12.16 à la 1.12.35 (lots 1.12.16 à 1.12.35)**
 
 - saisie du chat restée ouverte sans le focus : **B**, **Entrée** et **Échap** agissent de nouveau (1.12.20, § 7.25)
 - **une seule source sonore à la fois** (radio, musique, son des écrans vidéo, fenêtre flottante YouTube), ligne Vidéo et **bouton muet** de la fenêtre Son, touche **N** (1.12.21 à 1.12.25, § 5.22, § 7.66) ; la source la plus proche en mètres parle (1.12.25) ; la fenêtre YouTube ne garde plus le clavier (1.12.24)
@@ -2308,6 +2310,7 @@ Le détail, version par version, est dans `HISTORIQUE.md` (récit) et `CHANGELOG
 - **propositions d'effets** : icône clignotante à la place de la bulle, choix dans Réglages (1.12.28, § 7.45)
 - **messages privés** entre promeneurs : serveur (message `dm`, `--no-dm`, 1.12.29, § 10.27), page (fenêtres flottantes, Ignorer, Enregistrer, `/mp`, `/ignore`, 1.12.30, § 7.25), clic sur l'avatar avec confirmation (1.12.31)
 - **tableau image qui ouvre son lien dans la fenêtre flottante** (`frame: true` et `trigger` sur une zone `image` avec `link`, 1.12.34, § 5.7.1, § 5.11)
+- **format unifié des zones** : ce qu'on voit (`image`, `video`, `mesh`) et ce qui se passe (`link`, `portal`, `ha`, `radio`, `music`, `arrival`), messages pour les clés ignorées et les zones refusées, `glb2html.py --convert-zones`, tableau accroché haut atteignable (1.12.35, § 5, `REFERENCE_JSON.md` § 11.4)
 - documents : exemples JSON, listes plus lisibles, README, vue d'ensemble, index, guide, procédures ; historiques remis dans l'ordre (1.12.16 à 1.12.19 et 1.12.32) ; contrôle de tous les documents contre le code (1.12.33 : fenêtre Son dans le fichier de disposition, clés mémorisées dans le navigateur, § 7.66)
 
 Tout ce qui suit est dans la **1.1.0** (publiée le 31/10/2026). Le détail, lot par lot, est dans `CHANGELOG.fr.md`.

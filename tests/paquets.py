@@ -66,6 +66,8 @@ for nom in ("galerie-photos", "region-simple"):
     rapport(jb[:2] == b"\xff\xd8" and jpeg_taille(jb) == (320, 320) and len(jb) < 60 * 1024, f"{nom} : vignette.jpg : JPEG de 320 x 320 pixels, moins de 60 Ko", (jpeg_taille(jb), len(jb)))
     zf = site / f"{reg}.zones.json"
     zones = json.loads(zf.read_text(encoding="utf-8")) if zf.is_file() else []
+    rapport(bool(zones) and all("type" not in z and "target" not in z for z in zones), f"{nom} : zones au format unifie de la 1.12.35 (ni type ni target)", [z.get("id") for z in zones if "type" in z][:3])
+    zones = [dict(z, type="image", target=z["image"]) if "image" in z else z for z in zones]   # meme lecture qu'avant : un tableau = type image, son image = target
     def cible_fichier(t):   # 1.6.18 : une cible sans extension ("30") se resout comme dans la page : jpg, jpeg, png, webp, gif, avif, dans cet ordre, dans medias/ ; avec extension : ce fichier
         if "." in t: return (site / "medias" / t) if (site / "medias" / t).is_file() else None
         return next((site / "medias" / f"{t}.{e}" for e in ("jpg", "jpeg", "png", "webp", "gif", "avif") if (site / "medias" / f"{t}.{e}").is_file()), None)

@@ -41,7 +41,7 @@ def gen(*args):
 
 
 def cibles(zfile):
-    return [z["target"] for z in json.loads(zfile.read_text(encoding="utf-8"))]
+    return [z.get("image", z.get("target")) for z in json.loads(zfile.read_text(encoding="utf-8"))]   # 1.12.35 : fichier ecrit au format unifie (cle image)
 
 
 site = tmp / "site"; site.mkdir()

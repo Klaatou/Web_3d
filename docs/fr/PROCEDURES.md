@@ -86,11 +86,11 @@ Clés utiles : `seaY` (hauteur de la mer, en m, repère de la page), `seaM` (la 
 | Portail vers une autre région | `MANUEL.md` § 5.6 |
 | Zone liée à un objet du modèle | `MANUEL.md` § 5.9 (en tuiles : § 5.14) |
 | Zone privée (visible seulement avec le profil « private ») | `MANUEL.md` § 5.10 |
-| Image sur un mur (zone `image`) | viewer, type « Image (tableau sur un mur) », `MANUEL.md` § 5.11 ; pas à pas ci-dessous |
+| Image sur un mur (clé `image`) | viewer, type « Image (tableau sur un mur) », `MANUEL.md` § 5.11 ; pas à pas ci-dessous |
 
 Les zones d'une région en tuiles s'écrivent dans le repère d'origine du modèle (aucun recentrage). Le viewer en mode tuiles produit ces coordonnées directement ; ne reporte pas à la main des coordonnées d'un autre GLB.
 
-**Ajouter ou remplacer une image sur un mur (zone `image`, mode hébergé seulement)**
+**Ajouter ou remplacer une image sur un mur (clé `image`, mode hébergé seulement)**
 
 1. Dépose l'image dans le sous-dossier `medias` de la région, à côté du `.glb` : `12.jpg`, ou `12-Titre.jpg` (le texte après le premier tiret sert de légende). Un fichier `12.txt` (première ligne non vide = légende) l'emporte sur le titre du nom.
 2. Dans le viewer : type « Image (tableau sur un mur) », clic sur le mur, `12` dans le champ « Image » (avec « Choisir le dossier de la région », l'éditeur complète le nom si besoin), puis enregistre ou exporte les zones (`X.zones.json`).
