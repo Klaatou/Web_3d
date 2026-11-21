@@ -16,65 +16,64 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 - **Known documentation debt**: none; the French / English pairs of documents give 0 error in `verif_trad` (21/11/2026).
 - **GitHub release notes** (to attach: `galerie-photos.zip` and `region-simple.zip`, rebuilt by `python fabriquer_paquets.py` after `VERSION` is set to 1.13.0), English then French:
 
-  > **Web_3d 1.13.0: video screens, private messages, one sound at a time, unified zones and placed models**
+  > **Web_3d 1.13.0: video screens, private messages, one sound at a time, more flexible zones**
   >
   > **Do not unzip over an existing package**: copy `index.html`, `carte.html` (and `favicon.ico`) into your folder instead. **Presence server hosts**: replace `presence_server.py` (now 1.12.30) to get private messages.
   >
   > ### What's new
   >
-  > **1. Video screens** (manual § 5.21)
-  > - New zone type `video`: a screen on a wall (`target`, `w`, `h`, `radius`); the 8 nearest screens play at most; click = pause / play.
-  > - Sound with `sound: true`: only the nearest screen speaks, the volume follows the distance.
-  > - Lists of videos (`folder`, `tracks`, `playlist.json`, `--video-list`) with a foldable track bar under the screen.
-  > - An action on the screen: `link` (clickable title), `portal` or `ha` (on approach, `actionRadius`).
+  > **1. Video screens**
+  > - Put a screen on a wall: the video plays when you walk up to it, a click pauses it. Only the nearest screen talks.
+  > - A screen can play a list of videos (previous / next buttons), and can also be a link, a portal or a Home Assistant command.
   >
-  > **2. One sound at a time** (manual § 5.22)
-  > - Radio, music, video screens and YouTube share the sound: the source nearest in metres speaks; mute button and **N** key.
+  > **2. One sound at a time**
+  > - Radio, music, videos and YouTube no longer play over each other: the nearest source is the one you hear. New mute button and **N** key.
   >
-  > **3. Floating window for links and YouTube** (manual § 5.7)
-  > - Link zones can open in a floating window (`frame`), YouTube lists included; an image board with a `link` accepts `frame: true`.
+  > **3. Links and YouTube in a floating window**
+  > - A link can open in a small floating window, so you stay in the region.
   >
-  > **4. Private messages** (manual § 7.25 and § 10.27)
-  > - Walkers write to each other: one floating window per correspondent, Ignore, Save, commands `/mp`, `/ignore`, `/unignore`; click on an avatar or on a name in the chat. Server option `--no-dm` turns them off.
+  > **4. Private messages**
+  > - Click a visitor's avatar, or their name in the chat, to write to them privately. One window per person, with Ignore and Save. Hosts can turn it off.
   >
-  > **5. Unified zones and placed models** (manual § 5.23)
-  > - One format for all zones (`glb2html.py --convert-zones` converts the old files); an image board combines with `portal`, `ha`, `radio` and `music`; `pos: [x, y, z]`; the cone is off by default.
-  > - New zone `model`: a separate `.glb` file placed in the scene (`scale`, `pitch`, `roll`, `solid`, loaded on demand with `--model-lazy`); the model of a radio or a music is clickable.
-  > - Radio and music zones also work in the overview; cover (`poster`) and `link` in the Sound window.
+  > **5. More flexible zones**
+  > - A picture board can also be a portal, a radio, a music player or a command.
+  > - You can place your own 3D models (`.glb` files) in the region; the model of a radio or a music player is clickable.
+  > - Old zone files are converted with one command.
+  > - Radio and music also work in the overview; the Sound window shows the cover and the link.
   >
   > **6. Other changes**
-  > - Proposed effects: a blinking icon instead of the bubble; the **B** key works again after a message; `oars2site` handles convoar names with a trailing slash and damaged OARs.
-  > - Documents, manual, procedures and JSON examples (17 zones) brought up to date and checked in both languages.
+  > - A blinking icon instead of the bubble for proposed effects; the **B** key works again after a message; `oars2site` accepts more convoar names and damaged OARs.
+  > - Documents and examples brought up to date, in English and French.
 
-  > **Web_3d 1.13.0 : écrans vidéo, messages privés, un seul son à la fois, zones unifiées et modèles posés**
+  > **Web_3d 1.13.0 : écrans vidéo, messages privés, un seul son à la fois, zones plus souples**
   >
   > **Ne pas dézipper par-dessus un paquet existant** : copier `index.html`, `carte.html` (et `favicon.ico`) dans votre dossier. **Hébergeurs du serveur de présence** : remplacer `presence_server.py` (maintenant 1.12.30) pour avoir les messages privés.
   >
   > ### Nouveautés
   >
-  > **1. Écrans vidéo** (manuel § 5.21)
-  > - Nouveau type de zone `video` : un écran sur un mur (`target`, `w`, `h`, `radius`) ; les 8 écrans les plus proches jouent au plus ; clic = pause / lecture.
-  > - Son avec `sound: true` : seul l'écran le plus proche parle, le volume suit la distance.
-  > - Listes de vidéos (`folder`, `tracks`, `playlist.json`, `--video-list`) avec une barre de pistes escamotable sous l'écran.
-  > - Une action sur l'écran : `link` (titre cliquable), `portal` ou `ha` (à l'approche, `actionRadius`).
+  > **1. Écrans vidéo**
+  > - Posez un écran sur un mur : la vidéo démarre quand on s'en approche, un clic la met en pause. Seul l'écran le plus proche parle.
+  > - Un écran peut jouer une liste de vidéos (boutons précédent / suivant), et servir aussi de lien, de portail ou de commande Home Assistant.
   >
-  > **2. Un seul son à la fois** (manuel § 5.22)
-  > - La radio, la musique, les écrans vidéo et YouTube se partagent le son : la source la plus proche en mètres parle ; bouton muet et touche **N**.
+  > **2. Un seul son à la fois**
+  > - La radio, la musique, les vidéos et YouTube ne se superposent plus : on entend la source la plus proche. Nouveau bouton muet et touche **N**.
   >
-  > **3. Fenêtre flottante pour les liens et YouTube** (manuel § 5.7)
-  > - Les zones lien peuvent s'ouvrir dans une fenêtre flottante (`frame`), listes YouTube comprises ; un tableau image avec `link` accepte `frame: true`.
+  > **3. Liens et YouTube dans une fenêtre flottante**
+  > - Un lien peut s'ouvrir dans une petite fenêtre flottante : on reste dans la région.
   >
-  > **4. Messages privés** (manuel § 7.25 et § 10.27)
-  > - Les promeneurs s'écrivent : une fenêtre flottante par correspondant, Ignorer, Enregistrer, commandes `/mp`, `/ignore`, `/unignore` ; clic sur un avatar ou sur un nom du chat. L'option `--no-dm` du serveur les coupe.
+  > **4. Messages privés**
+  > - Un clic sur l'avatar d'un visiteur, ou sur son nom dans le chat, pour lui écrire en privé. Une fenêtre par personne, avec Ignorer et Enregistrer. Les hébergeurs peuvent les couper.
   >
-  > **5. Zones unifiées et modèles posés** (manuel § 5.23)
-  > - Un seul format pour toutes les zones (`glb2html.py --convert-zones` convertit les anciens fichiers) ; un tableau image se combine avec `portal`, `ha`, `radio` et `music` ; `pos: [x, y, z]` ; le cône est à faux par défaut.
-  > - Nouvelle zone `model` : un fichier `.glb` posé à part dans la scène (`scale`, `pitch`, `roll`, `solid`, chargé à la demande avec `--model-lazy`) ; le modèle d'une radio ou d'une musique est cliquable.
-  > - Les zones radio et musique marchent aussi en vue d'ensemble ; pochette (`poster`) et `link` dans la fenêtre Son.
+  > **5. Zones plus souples**
+  > - Un tableau image peut aussi être un portail, une radio, une musique ou une commande.
+  > - On peut poser ses propres modèles 3D (fichiers `.glb`) dans la région ; le modèle d'une radio ou d'une musique est cliquable.
+  > - Les anciens fichiers de zones se convertissent en une commande.
+  > - La radio et la musique marchent aussi en vue d'ensemble ; la fenêtre Son affiche la pochette et le lien.
   >
   > **6. Autres changements**
-  > - Propositions d'effets : une icône qui clignote au lieu de la bulle ; la touche **B** marche de nouveau après un message ; `oars2site` accepte les noms de convoar à barre finale et les OAR abîmés.
-  > - Documents, manuel, procédures et exemples JSON (17 zones) remis à jour et contrôlés dans les deux langues.
+  > - Une icône qui clignote au lieu de la bulle pour les propositions d'effets ; la touche **B** marche de nouveau après un message ; `oars2site` accepte plus de noms de convoar et les OAR abîmés.
+  > - Documents et exemples remis à jour, en français et en anglais.
+
 
 ### 21/11/2026: verif_trad at zero errors (batch 1.12.45)
 
