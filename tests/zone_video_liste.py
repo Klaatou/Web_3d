@@ -60,7 +60,9 @@ def zones():
             V("vide", -30, folder="vide"),                                                    # liste vide
             V("mauvais", -60, folder="clips", tracks=["x1.webm", "x2.webm"]),                 # aucune piste lisible
             V("seul", 60, folder="seul"),                                                     # une seule piste : boucle
-            V("fich", 90, target="clips/1-a.webm")]                                           # fichier unique : les bords restent pause / lecture
+            V("fich", 90, target="clips/1-a.webm"),
+            V("lienf", 120, target="clips/1-a.webm", act="url", atarget="https://exemple.invalid/p", label="Mon lien"),   # 1.12.42 : une seule video avec un lien : barre = titre-lien seulement
+            V("lienl", 150, folder="clips", act="url", atarget="https://exemple.invalid/l", label="")]                       # liste avec un lien : le titre-lien et les trois icones                                           # fichier unique : les bords restent pause / lecture
 
 
 DIAG = "() => Object.fromEntries(window.__v.videoDiag().map(d => [d.id, d]))"
@@ -240,6 +242,32 @@ async def main():
             await pg.mouse.click(*await pg.evaluate(PIX, ["fich", 0.93])); await pg.wait_for_timeout(400)
             d = await diag(pg, "fich")
             rapport(ok and d["state"] == "user" and d["n"] == 1, "fichier unique : un clic = pause (pas de piste suivante)", d)
+
+            # 1.12.42 : le titre de la barre est le lien de l'ecran
+            await pg.evaluate("window.__open = []; window.open = (u) => { window.__open.push(String(u)); return null; }; 0")
+            await aller(pg, 120, -14, 0)
+            ok = await attendre(pg, "lienf", lambda d: d.get("state") == "play")
+            x, y = await pg.evaluate(PIX, ["lienf", 0.5]); await pg.mouse.move(x, y); await pg.wait_for_timeout(600)
+            rapport(ok and (await diag(pg, "lienf"))["bar"], "une seule video avec un lien : la barre (titre-lien) apparait au survol", await diag(pg, "lienf"))
+            await pg.mouse.click(*await pg.evaluate(PIX, ["lienf", 0.3, True])); await pg.wait_for_timeout(400)
+            op = await pg.evaluate("window.__open")
+            rapport(op == ["https://exemple.invalid/p"], "clic sur le titre de la barre : la page du lien s'ouvre", op)
+            await pg.mouse.click(*await pg.evaluate(PIX, ["lienf", 0.76, True])); await pg.wait_for_timeout(400)
+            d = await diag(pg, "lienf")
+            rapport(d["state"] == "play" and (await pg.evaluate("window.__open")) == op, "une seule video : le reste de la barre ne fait rien (ni pause, ni autre page)", (d, await pg.evaluate("window.__open")))
+            await pg.mouse.click(*await pg.evaluate(PIX, ["lienf", 0.93])); await pg.wait_for_timeout(400)
+            d = await diag(pg, "lienf")
+            rapport(d["state"] == "user" and (await pg.evaluate("window.__open")) == op, "le clic sur l'ecran reste pause / lecture (et n'ouvre pas le lien)", (d, await pg.evaluate("window.__open")))
+            await aller(pg, 150, -14, 0)
+            ok = await attendre(pg, "lienl", lambda d: d.get("state") == "play" and d.get("n") == 4)
+            x, y = await pg.evaluate(PIX, ["lienl", 0.5]); await pg.mouse.move(x, y); await pg.wait_for_timeout(600)
+            await pg.evaluate("window.__open = []")
+            d0 = await diag(pg, "lienl")
+            await pg.mouse.click(*await pg.evaluate(PIX, ["lienl", 0.3, True])); await pg.wait_for_timeout(400)
+            rapport(ok and (await pg.evaluate("window.__open")) == ["https://exemple.invalid/l"], "liste avec un lien : clic sur le titre = la page s'ouvre", (d0, await pg.evaluate("window.__open")))
+            await pg.mouse.click(*await pg.evaluate(PIX, ["lienl", 0.90, True])); await pg.wait_for_timeout(600)
+            d = await diag(pg, "lienl")
+            rapport(d["ti"] != d0["ti"] and (await pg.evaluate("window.__open")) == ["https://exemple.invalid/l"], "liste avec un lien : l'icone suivante change toujours de piste, sans ouvrir la page", (d0, d))
             rapport(not errs, "aucune erreur JavaScript", errs)
             await br.close()
     finally:

@@ -203,7 +203,7 @@ def audio_name(s):
 # et messages [code, id, a, b] ; zone_out : zone interne -> zone du fichier (cles utiles seulement). Miroir exact de zoneIn / zoneOut (core.js).
 # L'ancien format (cle type ou target) reste lu tel quel : c'est le format interne.
 ZONE_KEYS = ("id", "label", "x", "y", "z", "yaw", "radius", "trigger", "showName", "private", "cone", "shape", "w", "h", "image", "video", "videoFolder", "tracks", "sound", "mesh",
-             "link", "frame", "portal", "spawn", "ha", "confirm", "radio", "music", "poster", "posterLink", "arrival", "pos", "model", "scale", "pitch", "roll", "solid")
+             "link", "frame", "portal", "spawn", "ha", "confirm", "radio", "music", "poster", "posterLink", "arrival", "pos", "model", "scale", "pitch", "roll", "solid", "actionRadius")
 ZONE_VIS = ("image", "video", "mesh", "model")
 ZONE_ACT = ("link", "portal", "ha", "radio", "music")
 
@@ -245,7 +245,7 @@ def zone_in(z):
         msgs.append(["actions", zid, act[0], ", ".join(act[1:])])
     v = vis[0] if vis else ""
     a = act[0] if act else ""
-    if (v == "video" and a) or (v == "mesh" and a in ("radio", "music")):   # 1.12.36 : un tableau va avec toutes les actions
+    if v in ("video", "mesh") and a in ("radio", "music"):   # 1.12.36 : un tableau va avec toutes les actions
         msgs.append(["combo", zid, v, a])
         return None, msgs
     if not a and v not in ("image", "video", "model"):
@@ -254,10 +254,10 @@ def zone_in(z):
     sound = a in ("radio", "music")
     wh = v in ("image", "video") or (not v and z.get("shape") == "board")
     deco = v == "model" and not a   # 1.12.39 : model seul = decor (ni rayon, ni repere, ni nom)
-    ok = {"radius": not deco, "showName": not deco, "cone": v not in ("image", "video") and not deco, "trigger": a in ("link", "portal"), "shape": not v, "w": wh, "h": wh,
+    ok = {"radius": not deco, "showName": not deco, "cone": v not in ("image", "video") and not deco, "trigger": a in ("link", "portal") and v != "video", "shape": not v, "w": wh, "h": wh,
           "scale": v == "model", "pitch": v == "model", "roll": v == "model", "solid": v == "model",
           "videoFolder": v == "video", "sound": v == "video", "tracks": v == "video" or a == "music", "frame": a == "link", "spawn": a == "portal", "confirm": a == "ha",
-          "poster": sound, "posterLink": sound}
+          "poster": sound, "posterLink": sound, "actionRadius": v == "video" and a in ("portal", "ha")}
     for k, good in ok.items():
         if not good and setk(k):
             msgs.append(["ignored", zid, k])
@@ -272,6 +272,17 @@ def zone_in(z):
         o["target"] = sstr(z.get("video"))
         o["folder"] = z.get("videoFolder")
         o["sound"] = z.get("sound")
+        if a:   # 1.12.42 : un ecran video avec un lien (titre de la barre), un portail ou une commande (a l'approche)
+            o["act"] = "url" if a == "link" else a
+            o["atarget"] = sstr(z.get(a))
+            if a == "link":
+                o["frame"] = z.get("frame")
+            elif a == "portal":
+                o["spawn"] = z.get("spawn")
+            else:
+                o["confirm"] = z.get("confirm")
+            if a != "link":
+                o["aradius"] = z.get("actionRadius")
     elif deco:
         t = "model"
     elif a == "link":
@@ -354,7 +365,7 @@ def convert_zones_file(path):
 
 def cone_auto(o):
     """Cone d'une zone de l'ancien format sans la cle cone (comportement d'avant, voir coneFor) : zone_out l'ecrit tel quel. Miroir de coneAuto (core.js)."""
-    return o.get("type") in ("portal", "cast", "audio") or (o.get("trigger") != "click" and o.get("type") != "image")
+    return o.get("type") in ("portal", "cast", "audio") or (o.get("trigger") != "click" and o.get("type") != "image" and o.get("type") != "video")
 
 
 def zone_out(o):
@@ -411,6 +422,21 @@ def zone_out(o):
             r["w"] = o.get("w")
         if o.get("h") != h0:
             r["h"] = o.get("h")
+    if t == "video" and o.get("act"):   # 1.12.42
+        if o["act"] == "url":
+            r["link"] = o.get("atarget")
+            if o.get("frame"):
+                r["frame"] = True
+        elif o["act"] == "portal":
+            r["portal"] = o.get("atarget")
+            if o.get("spawn"):
+                r["spawn"] = o["spawn"]
+        else:
+            r["ha"] = o.get("atarget")
+            if o.get("confirm"):
+                r["confirm"] = True
+        if o["act"] != "url" and o.get("aradius") is not None and o.get("aradius") != 2:
+            r["actionRadius"] = o["aradius"]
     if t == "url" or (t == "image" and o.get("link")):
         r["link"] = o.get("target") if t == "url" else o.get("link")
         if o.get("frame"):
@@ -471,6 +497,7 @@ def clean_zones(zones, profile, msgs=None):
         board = img or vid or bool(pic)
         pimg = img or bool(pic)
         rng = t in ("cast", "audio") or vid
+        act = z.get("act") if vid and z.get("act") in ("url", "portal", "ha") else ""   # 1.12.42 : action d'un ecran video (act, atarget, aradius), comme core.js
         d = {
             "id": _slug(z.get("id")) or f"z{i + 1}", "type": t, "label": str(z.get("label") or "")[:60],
             "x": num(z.get("x"), 0, -1e5, 1e5), "y": num(z.get("y"), 0, -1e5, 1e5), "z": num(z.get("z"), 0, -1e5, 1e5),
@@ -500,7 +527,7 @@ def clean_zones(zones, profile, msgs=None):
                 d["roll"] = rl
             if z.get("solid") is True:
                 d["solid"] = True
-        if (t == "url" or img) and z.get("frame") is True:   # 1.12.3 : fenetre flottante (lien ouvert dans la page ; 1.12.34 : aussi pour le lien d'un tableau image) ; ecrit seulement s'il est vrai, comme core.js
+        if (t == "url" or img or act == "url") and z.get("frame") is True:   # 1.12.3 : fenetre flottante (lien ouvert dans la page ; 1.12.34 : aussi pour le lien d'un tableau image) ; ecrit seulement s'il est vrai, comme core.js
             d["frame"] = True
         if img:   # lien facultatif d'un tableau (page ouverte au clic ou a E) : ecrit seulement s'il est rempli, comme core.js
             lk = re.sub(r"[\x00-\x1f]", "", str(z.get("link") or "")).strip()[:600]
@@ -540,6 +567,12 @@ def clean_zones(zones, profile, msgs=None):
                     d["tracks"] = tk
         if t == "video" and z.get("sound") is True:   # 1.12.9 : ecran video avec son (muet par defaut) ; ecrit seulement s'il est vrai, comme core.js
             d["sound"] = True
+        if act:   # 1.12.42 : ecrits seulement s'il y a une action ; portail et commande : declenchement a l'approche
+            d["act"] = act
+            d["atarget"] = str(z.get("atarget") or "")[:600]
+            if act != "url":
+                d["trigger"] = "enter"
+                d["aradius"] = num(z.get("aradius"), 2, 0.5, 50)
         if isinstance(z.get("cone"), bool) and t not in ("spawn", "image", "video"):   # repere facultatif : ecrit seulement s'il est vrai ou faux, comme core.js
             d["cone"] = z["cone"]
         out.append(d)

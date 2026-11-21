@@ -6,6 +6,20 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.12.0)
 
+### 21/11/2026 : actions sur les écrans `video` : lien, portail, commande (lot 1.12.42)
+
+- **Demande** (Klaatou) : un écran `video` peut porter un lien, un portail ou une commande Home Assistant ; la vidéo montre ce que l'action ouvre.
+- **Fait** :
+  - `video` accepte une action parmi `link`, `portal`, `ha` ; `video` avec `radio` ou `music` reste refusé (message `combo`), comme `mesh` avec `radio` ou `music`.
+  - **`link`** : le titre devient un segment cliquable de la barre sous l'écran (souligné et flèche dessinée, jamais de couleur) ; titre = `label` de la zone, sinon nom de la vidéo ; la barre existe aussi pour une vidéo seule (titre seulement, sans les trois icônes) ; avec une liste, le compteur « 2/4 » reste devant le titre et les trois icônes ne changent pas ; `frame: true` ouvre la fenêtre flottante ; le clic sur le plan reste pause / lecture.
+  - **`portal` et `ha`** : l'action part **en s'approchant** (la touche E reste inactive sur un écran) ; nouvelle clé **`actionRadius`** (mètres, 2 par défaut, de 0,5 à 50) ; `radius` garde son sens (portée de lecture). Même tranche de hauteur que les tableaux (`boardReach`). Un fichier vidéo introuvable cache l'écran mais ne retire pas l'action.
+  - `trigger` et `cone` (avec `video`) et `actionRadius` (avec `link`) sont signalés comme ignorés ; jamais de cône pour un écran (`coneAuto` / `cone_auto` excluent `video`).
+  - clés internes `act` (`url`, `portal`, `ha`), `atarget`, `aradius` ; `cleanZone` / `clean_zones`, `zoneIn` / `zone_in` et `zoneOut` / `zone_out` restent miroirs exacts.
+  - viewer : menu « Action de l'écran » (aucune, lien, portail, commande) avec ses champs et la distance de déclenchement.
+- **Vérifié** : `tests/zones_unifiees.py` (cas Python et JavaScript, aller-retour de l'ancien format, un écran avec portail téléporte à moins de `actionRadius` et pas à la portée de lecture) ; `tests/zone_video_liste.py` (titre-lien d'une vidéo seule et d'une liste, clic sur le titre, reste de la barre et clic sur le plan inchangés) ; nouveau `tests/editeur_video_action.py` (formulaire du viewer, sens inverse, page et fichier de zones générés). Les trois échouent sans le correctif. `i18n`, `dist_a_jour`, `samples`, `zone_video`, `zone_model`, `zones_url_cone`, `zone_cast`, `zone_audio`, `editeur_cone`, `fenetre_son`, `arbitrage_son`, `image_zone`, `pose_promenade`, `v32`, `v36_viewer_lang`, `zone_frame`, `smoke` passent. Non testé ici : Edge, Windows, tactile.
+- **Non fait** : documents (`REFERENCE_JSON.md`, manuel, procédures, historiques) à la validation de Klaatou.
+- Fichiers : `src/core.js`, `src/gen_tpl.py`, `src/viewer_tpl.html`, `src/i18n/fr.json`, `src/i18n/en.json`, `tests/zones_unifiees.py`, `tests/zone_video_liste.py`, `tests/editeur_video_action.py`.
+
 ### 21/11/2026 : cône à `false` par défaut dans le format unifié (lot 1.12.41)
 
 - **Demande** (Klaatou) : plus de mélange, le cône n'est plus allumé d'office pour certains genres seulement ; il faut le demander.

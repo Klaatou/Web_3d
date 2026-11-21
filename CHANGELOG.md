@@ -6,6 +6,20 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.12.0)
 
+### 21/11/2026: actions on `video` screens: link, portal, command (batch 1.12.42)
+
+- **Request** (Klaatou): a `video` screen can carry a link, a portal or a Home Assistant command; the video shows what the action opens.
+- **Done**:
+  - `video` accepts one action among `link`, `portal`, `ha`; `video` with `radio` or `music` stays refused (`combo` message), like `mesh` with `radio` or `music`.
+  - **`link`**: the title becomes a clickable segment of the bar under the screen (underlined, with a drawn arrow, never colour); title = the zone `label`, otherwise the video name; the bar also exists for a single video (title only, without the three icons); with a list, the "2/4" counter stays in front of the title and the three icons do not change; `frame: true` opens the floating window; a click on the screen stays pause / play.
+  - **`portal` and `ha`**: the action fires **when you walk up to the screen** (the E key stays inactive on a screen); new key **`actionRadius`** (metres, 2 by default, 0.5 to 50); `radius` keeps its meaning (playback range). Same height band as the boards (`boardReach`). A missing video file hides the screen but does not remove the action.
+  - `trigger` and `cone` (with `video`) and `actionRadius` (with `link`) are reported as ignored; a screen never has a cone (`coneAuto` / `cone_auto` leave out `video`).
+  - internal keys `act` (`url`, `portal`, `ha`), `atarget`, `aradius`; `cleanZone` / `clean_zones`, `zoneIn` / `zone_in` and `zoneOut` / `zone_out` stay exact mirrors.
+  - viewer: "Screen action" menu (none, link, portal, command) with its fields and the trigger distance.
+- **Checked**: `tests/zones_unifiees.py` (Python and JavaScript cases, round trip of the old format, a screen with a portal teleports within `actionRadius` and not at the playback range); `tests/zone_video_liste.py` (title link of a single video and of a list, click on the title, rest of the bar and click on the screen unchanged); new `tests/editeur_video_action.py` (viewer form, reverse direction, generated page and zones file). All three fail without the fix. `i18n`, `dist_a_jour`, `samples`, `zone_video`, `zone_model`, `zones_url_cone`, `zone_cast`, `zone_audio`, `editeur_cone`, `fenetre_son`, `arbitrage_son`, `image_zone`, `pose_promenade`, `v32`, `v36_viewer_lang`, `zone_frame`, `smoke` pass. Not tested here: Edge, Windows, touch.
+- **Not done**: documents (`REFERENCE_JSON.md`, manual, procedures, histories) at Klaatou's validation.
+- Files: `src/core.js`, `src/gen_tpl.py`, `src/viewer_tpl.html`, `src/i18n/fr.json`, `src/i18n/en.json`, `tests/zones_unifiees.py`, `tests/zone_video_liste.py`, `tests/editeur_video_action.py`.
+
 ### 21/11/2026: `cone` defaults to `false` in the unified format (batch 1.12.41)
 
 - **Request** (Klaatou): no more mixture; the cone is no longer switched on by default for some kinds only; it has to be asked for.

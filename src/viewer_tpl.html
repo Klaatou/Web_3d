@@ -537,6 +537,11 @@ function renderZoneList() {
       d.appendChild(inp(tr('viewer.zf.h.video'), 'number', z.h, v => upd({ h: v }, true)));
       d.appendChild(inp(tr('viewer.zf.r.video'), 'number', z.radius, v => upd({ radius: v }, true)));
       d.appendChild(inp(tr('viewer.zf.sound'), 'select', z.sound ? 'on' : 'off', v => upd({ sound: v === 'on' ? true : undefined }, true), [['off', tr('viewer.zf.sound.off')], ['on', tr('viewer.zf.sound.on')]]));   // 1.12.9
+      d.appendChild(inp(tr('viewer.zf.vact'), 'select', z.act || '', v => upd({ act: v || undefined, trigger: v === 'portal' || v === 'ha' ? 'enter' : 'click' }, true), [['', tr('viewer.zf.vact.none')], ['url', tr('viewer.zf.vact.url')], ['portal', tr('viewer.zf.vact.portal')], ['ha', tr('viewer.zf.vact.ha')]]));   // 1.12.42 : action de l'ecran
+      if (z.act === 'url') { d.appendChild(inp(tr('viewer.zf.url'), 'text', z.atarget || '', v => upd({ atarget: v }))); d.appendChild(inp(tr('viewer.zf.frame'), 'checkbox', z.frame, v => upd({ frame: v }))); }
+      else if (z.act === 'portal') { d.appendChild(inp(tr('viewer.zf.target'), 'text', z.atarget || '', v => upd({ atarget: v }))); d.appendChild(inp(tr('viewer.zf.spawn'), 'text', z.spawn, v => upd({ spawn: v }))); }
+      else if (z.act === 'ha') { d.appendChild(inp(tr('viewer.zf.ha'), 'text', z.atarget || '', v => upd({ atarget: v }))); d.appendChild(inp(tr('viewer.zf.confirm'), 'checkbox', z.confirm, v => upd({ confirm: v }))); }
+      if (z.act === 'portal' || z.act === 'ha') d.appendChild(inp(tr('viewer.zf.vact.r'), 'number', z.aradius || 2, v => upd({ aradius: v })));
     } else if (z.type === 'cast') {   // 1.10.32 : radio : adresse du flux, essai de 5 s, portée ; rien d'autre (ni clic, ni lien à un élément)
       d.appendChild(inp(tr('viewer.zf.cast'), 'text', z.streams && z.streams[0] ? z.streams[0][1] : '', v => upd({ streams: [[z.streams && z.streams[0] ? z.streams[0][0] : '', v], ...(z.streams || []).slice(1)] })));   // 1.11.26 : la saisie change l'adresse du premier flux (son label et les autres flux sont gardes)
       const bt2 = document.createElement('button'); bt2.className = 'wide'; bt2.textContent = tr('viewer.zf.cast.try'); bt2.onclick = () => castTry(z.streams && z.streams[0] ? z.streams[0][1] : ''); d.appendChild(bt2);

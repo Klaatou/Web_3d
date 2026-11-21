@@ -546,7 +546,7 @@ function diagShow(text, status, select) {
 function diagText(viewer, extra) {
   const x = extra || {}, L = (k, v) => tr('core.diag.line', k, v), out = [tr('core.diag.title')];
   const nb = (v, d) => (Number.isFinite(v) ? i18nNum(v, d || 0) : '?');   // nombres à la manière de la langue (virgule en français)
-  out.push(L(tr('core.diag.version'), '1.12.41 (21/11/2026)' + (x.cfgVersion && x.cfgVersion !== '1.12.41 (21/11/2026)' ? ' ; ' + tr('core.diag.cfgver', x.cfgVersion) : '')));
+  out.push(L(tr('core.diag.version'), '1.12.42 (21/11/2026)' + (x.cfgVersion && x.cfgVersion !== '1.12.42 (21/11/2026)' ? ' ; ' + tr('core.diag.cfgver', x.cfgVersion) : '')));
   out.push(L(tr('core.diag.date'), new Date().toLocaleString(({ fr: 'fr-FR', en: 'en-GB' })[LANG]) + ' ; ' + tr('core.diag.uptime', nb(performance.now() / 1000))));
   out.push(L(tr('core.diag.page'), location.protocol + (location.host ? '//ADRESSE' : '//') + location.pathname + location.search));
   out.push(L(tr('core.diag.lang'), LANG + ' · ' + ((navigator.languages || []).join(',') || navigator.language || '?') + ' · ' + KB.layout().toUpperCase()));
@@ -1730,7 +1730,7 @@ function createViewer(container, cfg0, loader) {
     walking = true;
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
     zoneInside.clear(); nearZone = null;
-    for (const z of zones) if (zoneEntrant(z) && z.trigger !== 'click' && !zoneOff(z) && zoneDist(z).d <= z.radius) zoneInside.add(z.id);
+    for (const z of zones) if (zoneEntrant(z) && z.trigger !== 'click' && !zoneOff(z) && zoneDist(z).d <= actR(z)) zoneInside.add(z.id);
     walkStep(0); dirty = true;
     presenceEnter();
     if (onWalk) onWalk(true);
@@ -1780,7 +1780,7 @@ function createViewer(container, cfg0, loader) {
     if (Number.isFinite(yaw)) { W.yaw = yaw; W.tyaw = yaw; }
     W.pitch = 0; W.vy = 0; W.grounded = true;
     zoneInside.clear(); nearZone = null; if (onNear) onNear(null);
-    for (const q of zones) if (zoneEntrant(q) && q.trigger !== 'click' && !zoneOff(q) && zoneDist(q).d <= q.radius) zoneInside.add(q.id);
+    for (const q of zones) if (zoneEntrant(q) && q.trigger !== 'click' && !zoneOff(q) && zoneDist(q).d <= actR(q)) zoneInside.add(q.id);
     walkStep(0); dirty = true;
     return true;
   }
@@ -2438,7 +2438,9 @@ function createViewer(container, cfg0, loader) {
   }
   const ZONE_TYPES = ['url', 'ha', 'portal', 'spawn', 'image', 'cast', 'audio', 'video', 'model'];   // audio (1.11.4) : fichiers son d'un dossier joues en boucle a portee ; cast (1.10.32) : radio, flux Icecast / SHOUTcast joue en promenade a portee, volume selon la distance
   const slug = s => String(s || '').toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
-  function zoneEntrant(z) { return z.type === 'portal' || z.type === 'url' || (z.type === 'image' && !!z.link); }   // zones qui se declenchent aussi en marchant dedans (trigger enter ou both) : portail et lien (hop:// compris)
+  function vidEnter(z) { return z.type === 'video' && (z.act === 'portal' || z.act === 'ha'); }   // 1.12.42 : ecran video qui porte un portail ou une commande : se declenche en s'approchant
+  function actR(z) { return z.type === 'video' ? (z.aradius || 2) : z.radius; }   // rayon de declenchement : actionRadius pour un ecran video (radius = portee de lecture), radius pour les autres
+  function zoneEntrant(z) { return z.type === 'portal' || z.type === 'url' || (z.type === 'image' && !!z.link) || vidEnter(z); }   // zones qui se declenchent aussi en marchant dedans (trigger enter ou both) : portail et lien (hop:// compris)
   // 1.11.4 : nom d'une piste : fichier relatif (sans « .. »), chemin /… ou adresse http(s) ; '' si autre chose (javascript:, data:, ...)
   function audioName(s) {
     if (typeof s !== 'string') return '';
@@ -2451,7 +2453,7 @@ function createViewer(container, cfg0, loader) {
   // et messages [code, id, a, b] ; zoneOut : zone interne -> zone du fichier (cles utiles seulement). Miroir exact de zone_in / zone_out (gen_tpl.py).
   // L'ancien format (cle type ou target) reste lu tel quel : c'est le format interne.
   const ZONE_KEYS = ['id', 'label', 'x', 'y', 'z', 'yaw', 'radius', 'trigger', 'showName', 'private', 'cone', 'shape', 'w', 'h', 'image', 'video', 'videoFolder', 'tracks', 'sound', 'mesh',
-    'link', 'frame', 'portal', 'spawn', 'ha', 'confirm', 'radio', 'music', 'poster', 'posterLink', 'arrival', 'pos', 'model', 'scale', 'pitch', 'roll', 'solid'];
+    'link', 'frame', 'portal', 'spawn', 'ha', 'confirm', 'radio', 'music', 'poster', 'posterLink', 'arrival', 'pos', 'model', 'scale', 'pitch', 'roll', 'solid', 'actionRadius'];
   const ZONE_VIS = ['image', 'video', 'mesh', 'model'], ZONE_ACT = ['link', 'portal', 'ha', 'radio', 'music'];
   function zoneLegacy(z) { return !!z && typeof z === 'object' && ('type' in z || 'target' in z); }
   function zoneIn(z) {
@@ -2476,15 +2478,22 @@ function createViewer(container, cfg0, loader) {
     if (vis.length > 1) msgs.push(['visuals', id, vis[0], vis.slice(1).join(', ')]);
     if (act.length > 1) msgs.push(['actions', id, act[0], act.slice(1).join(', ')]);
     const v = vis[0] || '', a = act[0] || '';
-    if ((v === 'video' && a) || (v === 'mesh' && (a === 'radio' || a === 'music'))) { msgs.push(['combo', id, v, a]); return { z: null, msgs }; }   // 1.12.36 : un tableau va avec toutes les actions
+    if ((v === 'video' || v === 'mesh') && (a === 'radio' || a === 'music')) { msgs.push(['combo', id, v, a]); return { z: null, msgs }; }   // 1.12.36 : un tableau va avec toutes les actions
     if (!a && v !== 'image' && v !== 'video' && v !== 'model') { msgs.push(['empty', id]); return { z: null, msgs }; }
     const sound = a === 'radio' || a === 'music', wh = v === 'image' || v === 'video' || (!v && z.shape === 'board'), deco = v === 'model' && !a;   // 1.12.39 : model seul = decor (ni rayon, ni repere, ni nom)
-    const ok = { radius: !deco, showName: !deco, cone: v !== 'image' && v !== 'video' && !deco, trigger: a === 'link' || a === 'portal', shape: !v, w: wh, h: wh, scale: v === 'model', pitch: v === 'model', roll: v === 'model', solid: v === 'model',
-      videoFolder: v === 'video', sound: v === 'video', tracks: v === 'video' || a === 'music', frame: a === 'link', spawn: a === 'portal', confirm: a === 'ha', poster: sound, posterLink: sound };
+    const ok = { radius: !deco, showName: !deco, cone: v !== 'image' && v !== 'video' && !deco, trigger: (a === 'link' || a === 'portal') && v !== 'video', shape: !v, w: wh, h: wh, scale: v === 'model', pitch: v === 'model', roll: v === 'model', solid: v === 'model',
+      videoFolder: v === 'video', sound: v === 'video', tracks: v === 'video' || a === 'music', frame: a === 'link', spawn: a === 'portal', confirm: a === 'ha', poster: sound, posterLink: sound, actionRadius: v === 'video' && (a === 'portal' || a === 'ha') };
     for (const k of Object.keys(ok)) if (!ok[k] && set(k)) msgs.push(['ignored', id, k]);
     let t;
     if (v === 'image' && (!a || a === 'link')) { t = 'image'; o.target = str(z.image); if (a === 'link') { o.link = str(z.link); o.frame = z.frame; } }
-    else if (v === 'video') { t = 'video'; o.target = str(z.video); o.folder = z.videoFolder; o.sound = z.sound; }
+    else if (v === 'video') {
+      t = 'video'; o.target = str(z.video); o.folder = z.videoFolder; o.sound = z.sound;
+      if (a) {   // 1.12.42 : un ecran video avec un lien (titre de la barre), un portail ou une commande (a l'approche)
+        o.act = a === 'link' ? 'url' : a; o.atarget = str(z[a]);
+        if (a === 'link') o.frame = z.frame; else if (a === 'portal') o.spawn = z.spawn; else o.confirm = z.confirm;
+        if (a !== 'link') o.aradius = z.actionRadius;
+      }
+    }
     else if (deco) t = 'model';
     else if (a === 'link') { t = 'url'; o.target = str(z.link); o.frame = z.frame; }
     else if (a === 'portal') { t = 'portal'; o.target = str(z.portal); o.spawn = z.spawn; }
@@ -2502,7 +2511,7 @@ function createViewer(container, cfg0, loader) {
     return { z: o, msgs };
   }
   // cone d'une zone de l'ancien format qui n'a pas la cle cone (comportement d'avant, voir coneFor) : zoneOut l'ecrit tel quel pour que le fichier garde le meme aspect
-  const coneAuto = o => o.type === 'portal' || o.type === 'cast' || o.type === 'audio' || (o.trigger !== 'click' && o.type !== 'image');
+  const coneAuto = o => o.type === 'portal' || o.type === 'cast' || o.type === 'audio' || (o.trigger !== 'click' && o.type !== 'image' && o.type !== 'video');
   function zoneOut(o) {
     const t = o.type, r = { id: o.id };
     if (o.label) r.label = o.label;
@@ -2520,6 +2529,12 @@ function createViewer(container, cfg0, loader) {
     else if (o.mesh) r.mesh = o.mesh;
     else if (o.shape === 'board') { r.shape = 'board'; wh = true; }
     if (wh) { if (o.w !== w0) r.w = o.w; if (o.h !== h0) r.h = o.h; }
+    if (t === 'video' && o.act) {   // 1.12.42
+      if (o.act === 'url') { r.link = o.atarget; if (o.frame) r.frame = true; }
+      else if (o.act === 'portal') { r.portal = o.atarget; if (o.spawn) r.spawn = o.spawn; }
+      else { r.ha = o.atarget; if (o.confirm) r.confirm = true; }
+      if (o.act !== 'url' && o.aradius !== undefined && o.aradius !== 2) r.actionRadius = o.aradius;
+    }
     if (t === 'url' || (t === 'image' && o.link)) { r.link = t === 'url' ? o.target : o.link; if (o.frame) r.frame = true; }
     else if (t === 'portal') { r.portal = o.target; if (o.spawn) r.spawn = o.spawn; }
     else if (t === 'ha') { r.ha = o.target; if (o.confirm) r.confirm = true; }
@@ -2536,6 +2551,7 @@ function createViewer(container, cfg0, loader) {
     const type = ZONE_TYPES.includes(z.type) ? z.type : 'portal';
     const img = type === 'image';   // image : tableau plaque sur un mur ; h = 0 : hauteur d'apres le rapport de l'image
     const vid = type === 'video', rng = type === 'cast' || type === 'audio' || vid;
+    const act = vid && ['url', 'portal', 'ha'].includes(z.act) ? z.act : '';   // 1.12.42 : action d'un ecran video (act, atarget, aradius : portail et commande se declenchent a moins de aradius m)
     const pic = ['portal', 'ha', 'cast', 'audio'].includes(type) ? String(z.pic || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 600) : '';   // 1.12.36 : image d'un tableau qui porte une autre action qu'un lien
     const mdl = ['model', 'portal', 'ha', 'url', 'cast', 'audio'].includes(type) && !pic ? String(z.mdl || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 600) : '';   // 1.12.39 : fichier .glb d'une zone model, ou d'un portail, d'une commande, d'un lien, d'une radio, d'une musique
     const board = img || vid || !!pic, pimg = img || !!pic;   // 1.12.7 : video : ecran sur un mur, joue a portee (comme musique et radio : portee 20 m par defaut, jusqu'a 200)
@@ -2555,6 +2571,10 @@ function createViewer(container, cfg0, loader) {
       const pt2 = num(z.pitch, 0, -7, 7); if (pt2) o.pitch = pt2;
       const rl = num(z.roll, 0, -7, 7); if (rl) o.roll = rl;
       if (z.solid === true) o.solid = true;
+    }
+    if (act) {   // 1.12.42 : ecrits seulement s'il y a une action, comme gen_tpl.py ; portail et commande : declenchement a l'approche
+      o.act = act; o.atarget = String(z.atarget || '').slice(0, 600);
+      if (act !== 'url') { o.trigger = 'enter'; o.aradius = num(z.aradius, 2, 0.5, 50); }
     }
     if (vid && z.sound === true) o.sound = true;   // 1.12.9 : ecran video avec son (muet par defaut) ; ecrit seulement s'il est vrai, comme gen_tpl.py
     if (typeof z.cone === 'boolean' && type !== 'spawn' && !board) o.cone = z.cone;   // radio (1.10.35) : cone par defaut, cone: false pour le retirer   // repere (cone) facultatif : vrai = toujours, faux = jamais ; absent = selon le declenchement ; ecrit seulement s'il est vrai ou faux
@@ -2576,7 +2596,7 @@ function createViewer(container, cfg0, loader) {
       if (fd && !fd.split('/').includes('..')) o.folder = fd;
       if (Array.isArray(z.tracks)) { const tk = z.tracks.map(audioName).filter(Boolean).slice(0, 500); if (tk.length) o.tracks = tk; }
     }
-    if ((type === 'url' || img) && z.frame === true) o.frame = true;   // 1.12.3 : lien ouvert dans une fenetre flottante de la page au lieu d'un nouvel onglet (1.12.34 : aussi pour le lien d'un tableau image) ; ecrit seulement s'il est vrai, comme gen_tpl.py
+    if ((type === 'url' || img || act === 'url') && z.frame === true) o.frame = true;   // 1.12.3 : lien ouvert dans une fenetre flottante de la page au lieu d'un nouvel onglet (1.12.34 : aussi pour le lien d'un tableau image) ; ecrit seulement s'il est vrai, comme gen_tpl.py
     if (type === 'audio' || type === 'cast') {   // 1.12.26 : pochette (image) et lien facultatifs d'une zone radio / musique, montres dans la fenetre Son ; ecrits seulement s'ils sont remplis, comme gen_tpl.py
       const pt = String(z.poster || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 600); if (pt) o.poster = pt;
       const lk2 = String(z.link || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 600); if (lk2) o.link = lk2;
@@ -2849,7 +2869,7 @@ function createViewer(container, cfg0, loader) {
     st.step = d => { if (!st.tracks || st.tracks.length < 2 || st.failed) return false; go(d); st.barUntil = performance.now() + 3000; return true; };
     // barre de pistes sous l'ecran (liste de plusieurs pistes) : « 2/4 nom » et trois icones dessinees (precedente, pause / lecture, suivante), centres a 62 %, 76 % et 90 % de la largeur
     const makeBar = () => {
-      if (st.bar || st.dead || !pl.parent || !st.tracks || st.tracks.length < 2) return;
+      if (st.bar || st.dead || !pl.parent || !st.tracks || (st.tracks.length < 2 && z.act !== 'url')) return;   // 1.12.42 : une seule video avec un lien a aussi sa barre (le titre-lien)
       const cv = document.createElement('canvas'); cv.width = 1024; cv.height = 128;
       const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
       const bm = new THREE.MeshBasicMaterial({ map: tex, transparent: true });
@@ -2864,9 +2884,12 @@ function createViewer(container, cfg0, loader) {
         const c = cv.getContext('2d'), W = 1024, H = 128, cy = H / 2;
         c.clearRect(0, 0, W, H); c.fillStyle = 'rgba(0,0,0,0.8)'; c.fillRect(0, 0, W, H);
         c.fillStyle = '#fff'; c.font = 'bold 40px sans-serif'; c.textBaseline = 'middle';
-        const txt = (st.ti + 1) + '/' + st.tracks.length + '   ' + (tk ? tk.name : ''); let sh = txt;
-        while (sh.length > 2 && c.measureText(sh).width > 520) sh = sh.slice(0, -1);
-        c.fillText(sh === txt ? txt : sh.trimEnd() + '\u2026', 28, cy);
+        const lk = z.act === 'url', list = st.tracks.length > 1, ttl = lk ? (z.label || (tk ? tk.name : '')) : (tk ? tk.name : '');   // 1.12.42 : avec un lien, le titre est le lien (souligne, fleche), un clic dessus ouvre la page
+        const txt = (list ? (st.ti + 1) + '/' + st.tracks.length + '   ' : '') + ttl, maxw = lk ? 470 : 520; let sh = txt;
+        while (sh.length > 2 && c.measureText(sh).width > maxw) sh = sh.slice(0, -1);
+        const shown = sh === txt ? txt : sh.trimEnd() + '\u2026'; c.fillText(shown, 28, cy);
+        if (lk) { const x1 = 28 + c.measureText(shown).width; c.fillRect(28, cy + 24, x1 - 28, 4); c.strokeStyle = '#fff'; c.lineWidth = 6; c.beginPath(); c.moveTo(x1 + 16, cy + 12); c.lineTo(x1 + 40, cy - 12); c.moveTo(x1 + 22, cy - 12); c.lineTo(x1 + 40, cy - 12); c.lineTo(x1 + 40, cy + 6); c.stroke(); }
+        if (!list) { tex.needsUpdate = true; dirty = true; return; }   // une seule video : le titre-lien seulement, sans les trois icones
         c.fillRect(0.62 * W - 24, cy - 26, 8, 52); c.beginPath(); c.moveTo(0.62 * W - 12, cy); c.lineTo(0.62 * W + 16, cy - 26); c.lineTo(0.62 * W + 16, cy + 26); c.fill();   // precedente
         if (pause) { c.fillRect(0.76 * W - 14, cy - 26, 10, 52); c.fillRect(0.76 * W + 4, cy - 26, 10, 52); }   // joue : icone pause
         else { c.beginPath(); c.moveTo(0.76 * W - 14, cy - 26); c.lineTo(0.76 * W + 18, cy); c.lineTo(0.76 * W - 14, cy + 26); c.fill(); }   // en pause : icone lecture
@@ -2874,6 +2897,7 @@ function createViewer(container, cfg0, loader) {
         tex.needsUpdate = true; dirty = true;
       };
     };
+    st.mk = makeBar;
     const ensure = () => {
       if (st.v || st.failed || st.dead) return;
       const v = document.createElement('video');
@@ -2940,6 +2964,7 @@ function createViewer(container, cfg0, loader) {
       vidAim = null;
       if (walking && document.pointerLockElement === dom && zoneHit.length) { const zc = zoneFromClick(0, 0, zoneInfoDist(), false); if (zc && zc.type === 'video') vidAim = zc.id; }
       for (const { z, st } of vidPlanes.values()) {
+        if (!st.bar && st.mk && z.act === 'url') st.mk();   // 1.12.42 : la barre d'une seule video avec un lien se cree quand l'ecran est dans la scene
         if (!st.bar) continue;
         const vis = st.ready && !st.failed && !document.hidden && (vidHover === z.id || vidAim === z.id || now < (st.barUntil || 0));
         if (st.bar.mesh.visible !== vis) { st.bar.mesh.visible = vis; dirty = true; }
@@ -2957,7 +2982,8 @@ function createViewer(container, cfg0, loader) {
     for (const { z, st } of vidPlanes.values()) {
       if (z.id !== id || st.failed) continue;
       const now = performance.now(); st.barUntil = now + 3000;
-      if (bar && u < 0.55) return;
+      if (bar && u < 0.55) { if (z.act === 'url') fireZone(z, 'act'); return; }   // 1.12.42 : le titre de la barre est le lien de l'ecran
+      if (bar && st.tracks && st.tracks.length < 2) return;   // barre d'une seule video (titre-lien seulement) : pas de boutons
       if (bar && (u < 0.69 || u >= 0.83)) { if (st.step) { st.off = false; vidDec = 0; vidLast = 0; st.step(u < 0.69 ? -1 : 1); dirty = true; if (onVideoAct) onVideoAct(z); } return; }   // 1.12.21 : onVideoAct : le visiteur lance un ecran (la page le rend prioritaire)
       if (st.off) { st.off = false; vidDec = 0; vidLast = 0; if (onVideoAct) onVideoAct(z); }   // la decision de lecture est refaite tout de suite
       else if (st.want) { st.off = true; st.set(false); }
@@ -3304,8 +3330,17 @@ function createViewer(container, cfg0, loader) {
     else if (g) { selBox = new THREE.BoxHelper(g, 0x000000); selBox.material.depthTest = false; selBox.material.transparent = true; scene.add(selBox); }
     dirty = true;
   }
+  const actZones = new WeakMap();
+  function actZone(z) {   // 1.12.42 : l'action d'un ecran video (lien, portail, commande) vue comme une zone ordinaire de ce type : la page la traite comme les autres
+    let a = actZones.get(z);
+    if (!a) { a = Object.assign({}, z, { type: z.act, target: z.atarget }); actZones.set(z, a); }
+    return a;
+  }
   function fireZone(z, how) {
-    if (z.type === 'video') { videoClick(z.id, lastHitU, !!(lastHitObj && lastHitObj.userData.vbar)); return; }   // 1.12.10 : un clic sur un ecran video = pause / lecture (rien n'est envoye a la presence, aucune action de zone)
+    if (z.type === 'video') {
+      if (z.act && (how === 'enter' || how === 'act')) { z = actZone(z); if (how === 'act') how = 'click'; }   // 1.12.42 : portail et commande en s'approchant (enter), lien par le titre de la barre (act)
+      else { videoClick(z.id, lastHitU, !!(lastHitObj && lastHitObj.userData.vbar)); return; }
+    }   // 1.12.10 : un clic sur un ecran video = pause / lecture (rien n'est envoye a la presence, aucune action de zone)
     if (walking && P.ws && P.ws.readyState === 1 && P.id && z.type !== 'cast' && z.type !== 'audio') P.ws.send(JSON.stringify({ t: 'zone', id: z.id, type: z.type, label: z.label }));   // 1.11.24 : le clic sur le cone d'une radio ou d'une musique ouvre la fenetre Son : rien a signaler
     if (onZone) onZone(z, how);
   }
@@ -3400,10 +3435,10 @@ function createViewer(container, cfg0, loader) {
         continue;
       }
       if (!walking) continue;   // hors promenade : ni invite, ni entree dans une zone
-      if (z.type === 'spawn' || z.type === 'video' || z.type === 'model' || zoneOff(z) || (z.type === 'image' && !z.link) || ((z.type === 'image' || z.pic) && imgGone.has(z.id))) continue;   // un tableau sans lien n'est pas une zone proche (pas d'invite « clic ou E »)
+      if (z.type === 'spawn' || (z.type === 'video' && !vidEnter(z)) || z.type === 'model' || zoneOff(z) || (z.type === 'image' && !z.link) || ((z.type === 'image' || z.pic) && imgGone.has(z.id))) continue;   // un tableau sans lien n'est pas une zone proche (pas d'invite « clic ou E »)
       const { d, dy } = zoneDist(z);
       if (zoneEntrant(z) && z.trigger !== 'click') {
-        const inside = d <= z.radius && (z.type === 'image' || z.pic ? boardReach(z, dy) : dy > -1.5 && dy < 3.5), was = zoneInside.has(z.id);   // 1.12.34 : un tableau est accroche plus haut que les pieds : meme tranche de hauteur que l'invite « clic ou E »
+        const inside = d <= actR(z) && (z.type === 'image' || z.pic || z.type === 'video' ? boardReach(z, dy) : dy > -1.5 && dy < 3.5), was = zoneInside.has(z.id);   // 1.12.34 : un tableau est accroche plus haut que les pieds : meme tranche de hauteur que l'invite « clic ou E »
         if (inside && !was) { zoneInside.add(z.id); fireZone(z, 'enter'); }
         else if (!inside && was) zoneInside.delete(z.id);
       }
@@ -4667,7 +4702,7 @@ if (C.walk) {
   rsSel.onchange = () => { const si = parseInt(rsSel.value, 10) || 0; RADIO.setIdx(si); };
   sbody.insertBefore(rsSel, lrd);
   RADIO.setSelEl(rsSel);
-  mkLine('verInfo').textContent = tr('page.state.version', '1.12.41 (21/11/2026)', C.version || '?');   // 1.6.17 : version de la page (index.html, ou glb2html.py pour une page autonome) et de la configuration
+  mkLine('verInfo').textContent = tr('page.state.version', '1.12.42 (21/11/2026)', C.version || '?');   // 1.6.17 : version de la page (index.html, ou glb2html.py pour une page autonome) et de la configuration
   // v39 : bouton « Copier le diagnostic » sous le contenu de la fenêtre (reste visible quand elle est réduite) : lignes affichées + diagText (core.js) ;
   // si le navigateur refuse la copie, le texte s'affiche sélectionné dessous (Ctrl+C)
   {

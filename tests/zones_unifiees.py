@@ -94,7 +94,11 @@ CAS = [
     dict(id="mrad", model="m.glb", radio=["https://exemple.invalid/r"], poster="p.jpg", scale=0.5, **P),  # modele + radio
     dict(id="mscale", link="a.html", scale=2, pitch=0.1, **P),                                           # taille et inclinaison sans modele : ignorees
     dict(id="mcombo", model="m.glb", image="t.png", **P),                                                # deux visuels
-    dict(id="combo2", video="v.mp4", link="a.html", **P),
+    dict(id="combo2", video="v.mp4", radio=["https://exemple.invalid/r"], **P),                         # video + radio : refuse
+    dict(id="vlien", label="Titre", video="v.mp4", link="https://exemple.invalid/v", frame=True, **P),      # ecran video + lien (1.12.42)
+    dict(id="vport", video="v.mp4", portal="", spawn="arr", actionRadius=4, **P),                        # ecran video + portail
+    dict(id="vha", video="v.mp4", ha="http://exemple.invalid/api", confirm=True, **P),                   # ecran video + commande
+    dict(id="vign", video="v.mp4", link="a.html", trigger="enter", actionRadius=3, cone=True, **P),      # trigger, actionRadius et cone ignores
     dict(id="combo3", mesh="porte", radio=["https://exemple.invalid/r"], **P),
     dict(id="posa", link="a.html", pos=[120, 25.5, -80]),                                               # pos remplace x, y, z
     dict(id="posb", link="a.html", pos=[1, 2, 3], x=9, y=9, z=9),                                       # pos et x, y, z : pos gagne, message
@@ -116,6 +120,9 @@ ANCIEN = [
     {"id": "i", "type": "image", "target": "t.png", "link": "https://exemple.invalid/l", "frame": True, "trigger": "both", "w": 2, "h": 1, "x": 1, "y": 2, "z": 3},
     {"id": "i2", "type": "image", "target": "t.png", "x": 1, "y": 2, "z": 3, "yaw": 3.14},
     {"id": "v", "type": "video", "target": "", "folder": "videos", "tracks": ["a.mp4"], "sound": True, "w": 4, "radius": 30, "x": 1, "y": 2, "z": 3},
+    {"id": "va", "type": "video", "target": "clip.mp4", "act": "url", "atarget": "https://exemple.invalid/va", "frame": True, "x": 1, "y": 2, "z": 3},
+    {"id": "vb", "type": "video", "target": "clip.mp4", "act": "portal", "atarget": "", "spawn": "default", "trigger": "enter", "aradius": 3, "x": 1, "y": 2, "z": 3},
+    {"id": "vc", "type": "video", "target": "clip.mp4", "act": "ha", "atarget": "http://exemple.invalid/api", "confirm": True, "trigger": "enter", "x": 1, "y": 2, "z": 3},
 ]
 
 
@@ -147,7 +154,7 @@ async def main():
     pyz = g.clean_zones(CAS, "private", msgs)
     codes = {(m[0], m[1]) for m in msgs}
     attendu = {("ignored", "arr2"), ("unknown", "inconnu"), ("ignored", "ign"), ("visuals", "deuxv"), ("actions", "deuxa"),
-               ("posboth", "posb"), ("posbad", "posc"), ("posbad", "pose"), ("combo", "combo2"), ("combo", "combo3"), ("empty", "vide"), ("empty", "vide2"),
+               ("posboth", "posb"), ("posbad", "posc"), ("posbad", "pose"), ("combo", "combo2"), ("combo", "combo3"), ("ignored", "vign"), ("empty", "vide"), ("empty", "vide2"),
                ("ignored", "mdec2"), ("ignored", "mscale"), ("visuals", "mcombo")}
     rapport(codes == attendu, "Python : messages attendus (inconnue, ignoree, deux visuels, deux actions, pas encore possible, vide)", sorted(codes ^ attendu))
     ign = sorted(m[2] for m in msgs if m[:2] == ["ignored", "ign"])
@@ -179,6 +186,20 @@ async def main():
     rapport(o1.get("model") == "m.glb" and o1.get("scale") == 2 and o1.get("pitch") == 0.2 and o1.get("roll") == -0.1 and o1.get("solid") is True and "radius" not in o1 and "type" not in o1
             and o2.get("model") == "m.glb" and o2.get("link") == "https://exemple.invalid/m" and o2.get("trigger") == "both" and o2.get("radius") == 3 and "target" not in o2,
             "Python : ecriture : model, scale, pitch, roll, solid (decor sans rayon) ; modele + lien garde rayon et declenchement", (o1, o2))
+    # 1.12.42 : actions sur un ecran video
+    vl, vp, vh, vg = t["vlien"], t["vport"], t["vha"], t["vign"]
+    rapport(vl["type"] == "video" and vl["act"] == "url" and vl["atarget"] == "https://exemple.invalid/v" and vl["frame"] is True and vl["trigger"] == "click" and "aradius" not in vl
+            and vp["type"] == "video" and vp["act"] == "portal" and vp["atarget"] == "" and vp["spawn"] == "arr" and vp["trigger"] == "enter" and vp["aradius"] == 4
+            and vh["act"] == "ha" and vh["atarget"] == "http://exemple.invalid/api" and vh["confirm"] is True and vh["trigger"] == "enter" and vh["aradius"] == 2
+            and vg["act"] == "url" and vg["trigger"] == "click" and "aradius" not in vg and "cone" not in vg,
+            "Python : ecran video + lien / portail / commande : action gardee, portail et commande a l'approche (2 m par defaut), lien en clic", (vl, vp, vh, vg))
+    ign = sorted(m[2] for m in msgs if m[:2] == ["ignored", "vign"])
+    rapport(ign == ["actionRadius", "cone", "trigger"], "Python : ecran video + lien : trigger, cone et actionRadius signales comme ignores", ign)
+    ol, op, oh = g.zone_out(vl), g.zone_out(vp), g.zone_out(vh)
+    rapport(ol.get("video") == "v.mp4" and ol.get("link") == "https://exemple.invalid/v" and ol.get("frame") is True and "cone" not in ol and "trigger" not in ol and "actionRadius" not in ol
+            and op.get("portal") == "" and op.get("spawn") == "arr" and op.get("actionRadius") == 4 and "cone" not in op and "trigger" not in op
+            and oh.get("ha") == "http://exemple.invalid/api" and oh.get("confirm") is True and "actionRadius" not in oh and "cone" not in oh,
+            "Python : ecriture : video + link / portal / ha (actionRadius ecrit s'il n'est pas 2 ; ni cone ni trigger)", (ol, op, oh))
     # aller-retour
     ok = True
     for z in ANCIEN:
@@ -202,7 +223,7 @@ async def main():
                         "--shared-shell", "--no-sea", *vend], capture_output=True, text=True, encoding="utf-8", errors="replace", env=dict(os.environ, PYTHONIOENCODING="utf-8"))
     rapport(r.returncode == 0, "glb2html : un fichier au nouveau format est accepte", r.stdout[-400:] + r.stderr[-400:])
     out = r.stdout
-    rapport("clé inconnue « couleur »" in out and "« video » avec « link » n'est pas encore possible" in out and "zone « vide » non affichée" in out,
+    rapport("clé inconnue « couleur »" in out and "« video » avec « radio » n'est pas encore possible" in out and "zone « vide » non affichée" in out,
             "glb2html : les messages sont affiches a la lecture", out[-900:])
     ecrit = json.loads((site / "Salle.zones.json").read_text(encoding="utf-8"))
     rapport(all("type" not in z and "target" not in z for z in ecrit) and len(ecrit) == len(pyz), "glb2html : Salle.zones.json ecrit au nouveau format",
@@ -230,7 +251,8 @@ async def main():
     hauts = [dict(id="haut", image="t.png", link="https://exemple.invalid/h", w=1, h=1, x=-4, y=19.2, z=-4.98),      # bas a 3,7 m du sol
              dict(id="trop", image="t.png", link="https://exemple.invalid/t", w=1, h=1, x=4, y=23.5, z=-4.98),
              dict(id="arrx", arrival=True, x=30, y=15, z=30),                                               # arrivee du portail du tableau
-             dict(id="tport", image="t.png", portal="", spawn="arrx", trigger="enter", radius=3, w=1.5, h=1, x=-20, y=15.5, z=-20)]        # bas a 8 m
+             dict(id="tport", image="t.png", portal="", spawn="arrx", trigger="enter", radius=3, w=1.5, h=1, x=-20, y=15.5, z=-20),        # bas a 8 m
+             dict(id="vportail", video="absent.mp4", portal="", spawn="arrx", actionRadius=3, radius=15, w=2, h=1.2, x=-10, y=15.8, z=-20)]   # 1.12.42 : ecran video + portail (fichier absent : l'action reste)
     (tmp / "h.json").write_text(json.dumps(hauts), encoding="utf-8")
     r = subprocess.run([sys.executable, str(DIST / "glb2html.py"), str(tmp / "salle.glb"), "-o", str(site / "page.html"), "--zones", str(tmp / "h.json"), "--no-sea", *vend],
                        capture_output=True, text=True, encoding="utf-8", errors="replace")
@@ -265,6 +287,19 @@ async def main():
             await pg.keyboard.up("ArrowUp")
             w = await pg.evaluate("window.__v.getWalk().pos")
             rapport(abs(w[0] - 30) < 4 and abs(w[2] - 30) < 4, "promenade : tableau + portail (enter) : marcher dans le cercle teleporte a l'arrivee", w)
+            # 1.12.42 : ecran video + portail : se declenche a moins de actionRadius, pas a la portee de lecture (radius)
+            await pg.evaluate("window.__v.teleportTo([-10, 15, -10], 0)"); await pg.wait_for_timeout(1000)
+            w = await pg.evaluate("window.__v.getWalk().pos")
+            rapport(abs(w[0] + 10) < 1 and abs(w[2] + 10) < 1, "promenade : ecran video + portail : a 10 m (dans la portee de lecture de 15 m) rien ne part", w)
+            await pg.evaluate("window.__v.teleportTo([-10, 15, -16], 0)"); await pg.wait_for_timeout(500)
+            await pg.keyboard.down("ArrowUp")
+            try:
+                await pg.wait_for_function("(() => { const w = window.__v.getWalk().pos; return Math.abs(w[0] - 30) < 4 && Math.abs(w[2] - 30) < 4; })()", timeout=15000)
+            except Exception:
+                pass
+            await pg.keyboard.up("ArrowUp")
+            w = await pg.evaluate("window.__v.getWalk().pos")
+            rapport(abs(w[0] - 30) < 4 and abs(w[2] - 30) < 4, "promenade : ecran video + portail : a moins de 3 m (actionRadius) le portail teleporte a l'arrivee", w)
             # parite JS / Python
             js = await pg.evaluate("""(cas) => { const v = window.__v; const z = v.setZones(cas, { editor: false }); return { z, m: v.zoneMessages(), out: z.map(v.zoneOut) }; }""", CAS)
             rapport(sorted(map(tuple, js["m"])) == sorted(map(tuple, msgs)), "JavaScript : memes messages que Python", (js["m"], msgs))
