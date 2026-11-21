@@ -2059,5 +2059,6 @@
  "py.glb2html.convert_zones": "réécrit ce fichier de zones (ou de réglages) au format unifié de la 1.12.35, puis s'arrête ; l'original est gardé à côté (.bak)",
  "py.glb2html.zmsg.converted": "{0} : {1} zone(s) réécrite(s) au nouveau format ; original gardé dans {2}",
  "py.glb2html.zmsg.nothing": "{0} : rien à convertir (déjà au nouveau format)",
- "py.glb2html.zmsg.badfile": "{0} : ni une liste de zones ni un fichier de réglages avec « zones »"
+ "py.glb2html.zmsg.badfile": "{0} : ni une liste de zones ni un fichier de réglages avec « zones »",
+ "viewer.zf.pic": "Image (tableau sur un mur à la place de l'anneau)"
 }

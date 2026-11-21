@@ -84,7 +84,10 @@ CAS = [
     dict(id="ign", portal="b.html", frame=True, poster="p.jpg", sound=True, **P),                       # cles ignorees
     dict(id="deuxv", image="t.png", video="v.mp4", **P),                                                # deux visuels
     dict(id="deuxa", link="a.html", portal="b.html", **P),                                              # deux actions
-    dict(id="combo1", image="t.png", music="audio", **P),                                               # pas encore possible
+    dict(id="bport", image="t.png", portal="", spawn="arr", trigger="both", radius=3, **P),                # tableau + portail
+    dict(id="bha", image="t.png", ha="http://exemple.invalid/api", confirm=True, **P),                   # tableau + Home Assistant
+    dict(id="brad", image="t.png", radio=["https://exemple.invalid/r"], **P),                            # tableau + radio (pochette = tableau)
+    dict(id="bmus", image="t.png", music="audio", tracks=["a.mp3"], poster="p.jpg", **P),                # tableau + musique, pochette choisie
     dict(id="combo2", video="v.mp4", link="a.html", **P),
     dict(id="combo3", mesh="porte", radio=["https://exemple.invalid/r"], **P),
     dict(id="vide", label="Rien", **P),                                                                 # rien a montrer ni a faire
@@ -125,11 +128,11 @@ async def main():
     pyz = g.clean_zones(CAS, "private", msgs)
     codes = {(m[0], m[1]) for m in msgs}
     attendu = {("ignored", "arr2"), ("unknown", "inconnu"), ("ignored", "ign"), ("visuals", "deuxv"), ("actions", "deuxa"),
-               ("combo", "combo1"), ("combo", "combo2"), ("combo", "combo3"), ("empty", "vide"), ("empty", "vide2")}
+               ("combo", "combo2"), ("combo", "combo3"), ("empty", "vide"), ("empty", "vide2")}
     rapport(codes == attendu, "Python : messages attendus (inconnue, ignoree, deux visuels, deux actions, pas encore possible, vide)", sorted(codes ^ attendu))
     ign = sorted(m[2] for m in msgs if m[:2] == ["ignored", "ign"])
     rapport(ign == ["frame", "poster", "sound"], "Python : portail avec frame, poster et sound : les trois cles signalees", ign)
-    rapport(sorted(z["id"] for z in pyz) == sorted(c["id"] for c in CAS if c["id"] not in ("combo1", "combo2", "combo3", "vide", "vide2")),
+    rapport(sorted(z["id"] for z in pyz) == sorted(c["id"] for c in CAS if c["id"] not in ("combo2", "combo3", "vide", "vide2")),
             "Python : zones refusees absentes, les autres gardees", [z["id"] for z in pyz])
     t = {z["id"]: z for z in pyz}
     rapport(t["img2"]["type"] == "image" and t["img2"]["link"].startswith("https://www.youtube") and t["img2"]["frame"] is True and t["img2"]["trigger"] == "both"
@@ -137,6 +140,12 @@ async def main():
             and t["vid2"]["folder"] == "videos" and t["arr"]["type"] == "spawn" and t["deuxa"]["type"] == "url",
             "Python : chaque cle donne la bonne zone (tableau avec lien, portail lie, radio et lien de pochette, video en dossier, arrivee)", t.get("img2"))
 
+    rapport(t["bport"]["type"] == "portal" and t["bport"]["pic"] == "t.png" and t["bha"]["type"] == "ha" and t["bha"]["pic"] == "t.png"
+            and t["brad"]["type"] == "cast" and t["brad"]["pic"] == "t.png" and t["bmus"]["type"] == "audio" and t["bmus"]["pic"] == "t.png"
+            and t["bmus"].get("poster") == "p.jpg" and "pic" not in t["img2"] and "pic" not in t["mus"],
+            "Python : tableau + portail / ha / radio / musique : image gardee, pochette choisie respectee", {k: t[k].get("pic") for k in ("bport", "bha", "brad", "bmus")})
+    ok = all(g.zone_out(t[k]).get("image") == "t.png" and "pic" not in g.zone_out(t[k]) for k in ("bport", "bha", "brad", "bmus"))
+    rapport(ok, "Python : ecriture : l'image du tableau revient sous la cle image")
     # aller-retour
     ok = True
     for z in ANCIEN:
@@ -153,7 +162,7 @@ async def main():
                         "--shared-shell", "--no-sea", *vend], capture_output=True, text=True, encoding="utf-8", errors="replace", env=dict(os.environ, PYTHONIOENCODING="utf-8"))
     rapport(r.returncode == 0, "glb2html : un fichier au nouveau format est accepte", r.stdout[-400:] + r.stderr[-400:])
     out = r.stdout
-    rapport("clé inconnue « couleur »" in out and "« image » avec « music » n'est pas encore possible" in out and "zone « vide » non affichée" in out,
+    rapport("clé inconnue « couleur »" in out and "« video » avec « link » n'est pas encore possible" in out and "zone « vide » non affichée" in out,
             "glb2html : les messages sont affiches a la lecture", out[-900:])
     ecrit = json.loads((site / "Salle.zones.json").read_text(encoding="utf-8"))
     rapport(all("type" not in z and "target" not in z for z in ecrit) and len(ecrit) == len(pyz), "glb2html : Salle.zones.json ecrit au nouveau format",
@@ -179,7 +188,9 @@ async def main():
     # ---- JavaScript : memes zones, memes messages, zoneOut identique
     (site / "t.png").write_bytes(png(8, 8))
     hauts = [dict(id="haut", image="t.png", link="https://exemple.invalid/h", w=1, h=1, x=-4, y=19.2, z=-4.98),      # bas a 3,7 m du sol
-             dict(id="trop", image="t.png", link="https://exemple.invalid/t", w=1, h=1, x=4, y=23.5, z=-4.98)]        # bas a 8 m
+             dict(id="trop", image="t.png", link="https://exemple.invalid/t", w=1, h=1, x=4, y=23.5, z=-4.98),
+             dict(id="arrx", arrival=True, x=30, y=15, z=30),                                               # arrivee du portail du tableau
+             dict(id="tport", image="t.png", portal="", spawn="arrx", trigger="enter", radius=3, w=1.5, h=1, x=-20, y=15.5, z=-20)]        # bas a 8 m
     (tmp / "h.json").write_text(json.dumps(hauts), encoding="utf-8")
     r = subprocess.run([sys.executable, str(DIST / "glb2html.py"), str(tmp / "salle.glb"), "-o", str(site / "page.html"), "--zones", str(tmp / "h.json"), "--no-sea", *vend],
                        capture_output=True, text=True, encoding="utf-8", errors="replace")
@@ -204,6 +215,16 @@ async def main():
                 return await pg.evaluate("document.getElementById('zonePrompt').hidden ? '' : document.getElementById('zonePrompt').textContent")
             rapport("haut" in await invite(-4), "promenade : tableau dont le bas est a 3,7 m du sol : invite « clic ou E » (avant : intouchable)")
             rapport(await invite(4) == "", "promenade : tableau dont le bas est a 8 m du sol : pas d'invite")
+            # tableau + portail : marcher dans le cercle du tableau teleporte (declenchement a l'approche)
+            await pg.evaluate("window.__v.teleportTo([-20, 15, -16], 0)"); await pg.wait_for_timeout(500)
+            await pg.keyboard.down("ArrowUp")
+            try:
+                await pg.wait_for_function("(() => { const w = window.__v.getWalk().pos; return Math.abs(w[0] - 30) < 4 && Math.abs(w[2] - 30) < 4; })()", timeout=15000)
+            except Exception:
+                pass
+            await pg.keyboard.up("ArrowUp")
+            w = await pg.evaluate("window.__v.getWalk().pos")
+            rapport(abs(w[0] - 30) < 4 and abs(w[2] - 30) < 4, "promenade : tableau + portail (enter) : marcher dans le cercle teleporte a l'arrivee", w)
             # parite JS / Python
             js = await pg.evaluate("""(cas) => { const v = window.__v; const z = v.setZones(cas, { editor: false }); return { z, m: v.zoneMessages(), out: z.map(v.zoneOut) }; }""", CAS)
             rapport(sorted(map(tuple, js["m"])) == sorted(map(tuple, msgs)), "JavaScript : memes messages que Python", (js["m"], msgs))

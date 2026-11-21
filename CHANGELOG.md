@@ -6,6 +6,20 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.12.0)
 
+### 21/11/2026: end of the unified zones (batch 1.12.36)
+
+- **Request** (Klaatou): finish the unified zones; keep the small script that adapts old zone JSON files, for the few creators who made their own.
+- **Done**:
+  - a picture (`image`) combines with `portal`, `ha`, `radio` or `music`: it becomes the portal, the command, the radio or the music; no ground marker; `radius` and `trigger` work as for a ring (portal on approach); internal key `pic` (exact mirrors `zoneIn`/`zoneOut` and `zone_in`/`zone_out`, lossless round trip);
+  - without `poster`, the picture is the cover in the Sound window;
+  - viewer: a « board picture » field in the portal, command, radio and music sheets;
+  - still refused, with a message: a video screen with an action, an object of the model with radio or music;
+  - the adaptation script `python glb2html.py --convert-zones FILE` (delivered in 1.12.35, original kept as `.bak`) is the one to give to creators with their own zones; it is described in `REFERENCE_JSON.md` § 11.4 and manual § 5.
+- **Checked**: `zones_unifiees.py` (new picture + portal / command / radio / music cases, Python and JavaScript identical, picture-portal fires when walking into the circle), `image_zone.py`, `zone_frame.py`, `lien_image.py`, `image_noms_gen.py`, `paquets.py`, `samples.py`.
+- **Not done**: placing a separate `.glb` file (`model`).
+- **Documents**: `REFERENCE_JSON.md` § 11.4, manual § 5.11 and annex, FR and EN histories.
+- Files: `src/core.js`, `src/gen_tpl.py`, `src/template.html`, `src/viewer_tpl.html`, `src/i18n/fr.json`, `src/i18n/en.json`, `tests/zones_unifiees.py`, documents above.
+
 ### 21/11/2026: unified zone format (batch 1.12.35)
 
 - **Request** (Klaatou): simplify the zones ("not a gas factory"); compatibility with the old format is only required for the zones of the published packages.

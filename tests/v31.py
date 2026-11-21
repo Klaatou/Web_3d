@@ -33,7 +33,7 @@ def rapport(ok, nom, detail=""):
 
 
 def run(script, *a, ok=True, cwd=None, env=None):
-    r = subprocess.run([sys.executable, str(script), *map(str, a)], capture_output=True, text=True, cwd=cwd or tmp, env=env)
+    r = subprocess.run([sys.executable, str(script), *map(str, a)], capture_output=True, text=True, cwd=cwd or tmp, env=dict(os.environ if env is None else env, PYTHONIOENCODING="utf-8"), encoding="utf-8", errors="replace")   # 1.12.36 : sortie des outils en UTF-8 (Windows : cp1252 sinon)
     if ok and r.returncode:
         sys.exit(f"[ECHEC] {script.name} {' '.join(map(str, a))}\n{r.stdout}{r.stderr}")
     return r
@@ -218,7 +218,7 @@ d2b = tmp / "vue_sanspil"
 d2b.mkdir()
 shutil.copy(d2 / "Syn.glb", d2b / "Syn.glb")
 lanceur = "import sys, runpy; sys.modules['PIL'] = None; sys.argv = ['glb2tiles.py'] + sys.argv[1:]; runpy.run_path(sys.argv[0] if False else %r, run_name='__main__')" % str(DIST / "glb2tiles.py")
-r = subprocess.run([sys.executable, "-c", lanceur, str(d2b / "Syn.glb"), "--nopause", *OPTS_TUILES], capture_output=True, text=True, cwd=tmp)
+r = subprocess.run([sys.executable, "-c", lanceur, str(d2b / "Syn.glb"), "--nopause", *OPTS_TUILES], capture_output=True, text=True, cwd=tmp, encoding="utf-8", errors="replace", env=dict(os.environ, PYTHONIOENCODING="utf-8"))
 js_b, bn_b = lire_glb(d2b / "Syn.overview.glb")
 blanc = sum(c[:3] == (255, 255, 255) for p in lire_prims(js_b, bn_b) for c in p[1])
 rouge_b = sum(c[:3] == (255, 0, 0) for p in lire_prims(js_b, bn_b) for c in p[1])

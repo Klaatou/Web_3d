@@ -214,11 +214,11 @@ Un tableau avec `link` et `trigger` `"enter"` ou `"both"` ouvre son lien quand o
 
 - anneau ou panneau, avec un lien, un portail, une commande, une radio ou une musique ;
 - objet du modèle (`mesh`), avec un lien, un portail ou une commande ;
-- tableau (`image`), seul ou avec un lien (`link`) ;
+- tableau (`image`), seul ou avec un lien (`link`), un portail (`portal`), une commande (`ha`), une radio (`radio`) ou une musique (`music`). Avec une radio ou une musique, l'image du tableau sert de pochette tant que `poster` n'est pas donné ; avec un portail ou une commande, `radius` et `trigger` s'appliquent au tableau comme à un anneau ;
 - écran vidéo (`video`), seul ;
 - point d'arrivée (`arrival`), seul.
 
-Les autres combinaisons (tableau qui joue une musique, écran vidéo avec un lien, objet du modèle qui joue une radio…) ne sont pas encore possibles : la zone n'est pas affichée et un message le dit. Une zone sans rien à montrer ni à faire n'est pas affichée non plus. Deux choses à voir, ou deux actions : la première de la liste ci-dessus est gardée, les autres sont signalées.
+Les autres combinaisons (écran vidéo avec un lien ou une action, objet du modèle qui joue une radio ou une musique) ne sont pas encore possibles : la zone n'est pas affichée et un message le dit. Une zone sans rien à montrer ni à faire n'est pas affichée non plus. Deux choses à voir, ou deux actions : la première de la liste ci-dessus est gardée, les autres sont signalées.
 
 **Ancien format (jusqu'à la 1.12.34)**. Les zones avec `type` et `target` sont toujours lues. `glb2html.py` dit combien il en a lu ; le viewer et `glb2html.py` les réécrivent au nouveau format dès qu'ils enregistrent les zones. Pour réécrire un fichier à la main d'un coup (liste de zones ou fichier `.reglages.json`) :
 

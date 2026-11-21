@@ -1507,7 +1507,8 @@ if (C.walk) {
   pstB.onkeydown = e => { if (pstU && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); e.stopPropagation(); pstGo(); } };
   pstI.onload = () => { pstB.hidden = !pstKey; }; pstI.onerror = () => { pstB.hidden = true; };
   posterTick = z => {
-    const key = z && z.poster ? z.id + '\u0001' + z.poster + '\u0001' + (z.link || '') : '';
+    const pst = z ? z.poster || z.pic || '' : '';   // 1.12.36 : sans pochette, l'image du tableau qui joue (pic) sert de pochette
+    const key = pst ? z.id + '\u0001' + pst + '\u0001' + (z.link || '') : '';
     if (key === pstKey) return;
     pstKey = key; pstZ = z || null; pstU = key && z.link ? pstOk(z.link) : null; pstB.hidden = true; pstI.removeAttribute('src');
     if (!key) return;
@@ -1515,7 +1516,7 @@ if (C.walk) {
     pstI.alt = tr('page.sound.poster.alt', nm);
     if (pstU) { pstB.setAttribute('role', 'button'); pstB.tabIndex = 0; pstB.title = tr('page.sound.poster.open') + ' : ' + nm; pstB.setAttribute('aria-label', tr('page.sound.poster.open') + ' : ' + nm); }
     else { pstB.removeAttribute('role'); pstB.removeAttribute('tabindex'); pstB.removeAttribute('title'); pstB.removeAttribute('aria-label'); }
-    pstI.src = viewer.imageUrl(z.poster);
+    pstI.src = viewer.imageUrl(pst);
   };
   const sSr = srcLine(lrdS, 'radio', 'soundRadioCk'), sSm = srcLine(lmuS, 'music', 'soundMusicCk'), sSv = srcLine(lvdS, 'video', 'soundVideoCk');
   sSr.ck.onchange = () => { sr.ck.checked = sSr.ck.checked; sr.ck.onchange(); };

@@ -235,7 +235,7 @@ def zone_in(z):
         msgs.append(["actions", zid, act[0], ", ".join(act[1:])])
     v = vis[0] if vis else ""
     a = act[0] if act else ""
-    if (v == "image" and a and a != "link") or (v == "video" and a) or (v == "mesh" and a in ("radio", "music")):
+    if (v == "video" and a) or (v == "mesh" and a in ("radio", "music")):   # 1.12.36 : un tableau va avec toutes les actions
         msgs.append(["combo", zid, v, a])
         return None, msgs
     if not a and v not in ("image", "video"):
@@ -249,7 +249,7 @@ def zone_in(z):
     for k, good in ok.items():
         if not good and setk(k):
             msgs.append(["ignored", zid, k])
-    if v == "image":
+    if v == "image" and (not a or a == "link"):
         t = "image"
         o["target"] = sstr(z.get("image"))
         if a == "link":
@@ -285,6 +285,8 @@ def zone_in(z):
         o["link"] = z.get("posterLink")
     if v == "mesh":
         o["mesh"] = z.get("mesh")
+    if v == "image" and t != "image":   # 1.12.36 : tableau-portail, tableau-commande, tableau qui joue une radio ou une musique : l'image est dans pic
+        o["pic"] = sstr(z.get("image"))
     for k in ("radius", "trigger", "showName", "cone", "shape", "w", "h"):
         if ok[k]:
             o[k] = z.get(k)
@@ -359,6 +361,9 @@ def zone_out(o):
         if o.get("sound"):
             r["sound"] = True
         h0, wh = 0, True
+    elif o.get("pic"):   # 1.12.36
+        r["image"] = o["pic"]
+        w0, h0, wh = 1.2, 0, True
     elif o.get("mesh"):
         r["mesh"] = o["mesh"]
     elif o.get("shape") == "board":
@@ -424,18 +429,24 @@ def clean_zones(zones, profile, msgs=None):
         t = z.get("type") if z.get("type") in ZONE_TYPES else "portal"
         img = t == "image"   # image : tableau plaque sur un mur ; h = 0 : hauteur d'apres le rapport de l'image
         vid = t == "video"   # 1.12.7 : video : ecran sur un mur, joue a portee (portee 20 m par defaut, jusqu'a 200) ; comme core.js
-        board = img or vid
+        pic = str(resolve_image_name(re.sub(r"[\x00-\x1f]", "", str(z.get("pic") or "")).strip()))[:600] if t in ("portal", "ha", "cast", "audio") else ""   # 1.12.36 : image d'un tableau qui porte une autre action qu'un lien
+        board = img or vid or bool(pic)
+        pimg = img or bool(pic)
         rng = t in ("cast", "audio") or vid
         d = {
             "id": _slug(z.get("id")) or f"z{i + 1}", "type": t, "label": str(z.get("label") or "")[:60],
             "x": num(z.get("x"), 0, -1e5, 1e5), "y": num(z.get("y"), 0, -1e5, 1e5), "z": num(z.get("z"), 0, -1e5, 1e5),
             "yaw": num(z.get("yaw"), 0, -7, 7), "shape": "board" if z.get("shape") == "board" else "ring",
             "trigger": (z.get("trigger") if z.get("trigger") in ("click", "enter", "both") else "click") if t in ("portal", "url", "image") else "click",
-            "radius": num(z.get("radius"), 20 if rng else 2, 0.5, 200 if rng else 50), "w": num(z.get("w"), 1.2 if img else 2.4, 0.1 if board else 0.5, 10), "h": num(z.get("h"), 0, 0, 6) if board else num(z.get("h"), 1.2, 0.3, 6),
+            "radius": num(z.get("radius"), 20 if rng else 2, 0.5, 200 if rng else 50), "w": num(z.get("w"), 1.2 if pimg else 2.4, 0.1 if board else 0.5, 10), "h": num(z.get("h"), 0, 0, 6) if board else num(z.get("h"), 1.2, 0.3, 6),
             "target": "" if t == "cast" else str(resolve_image_name(z.get("target")) if img else (z.get("target") or ""))[:600], "spawn": _slug(z.get("spawn")),
             "confirm": bool(z.get("confirm")), "private": bool(z.get("private")), "showName": bool(z.get("showName")),
             "mesh": "" if t in ("spawn", "image", "cast", "audio", "video") else re.sub(r"[\x00-\x1f]", "", str(z.get("mesh") or ""))[:200],
         }
+        if pic:
+            d["pic"] = pic
+            d["mesh"] = ""
+            d["shape"] = "ring"
         if (t == "url" or img) and z.get("frame") is True:   # 1.12.3 : fenetre flottante (lien ouvert dans la page ; 1.12.34 : aussi pour le lien d'un tableau image) ; ecrit seulement s'il est vrai, comme core.js
             d["frame"] = True
         if img:   # lien facultatif d'un tableau (page ouverte au clic ou a E) : ecrit seulement s'il est rempli, comme core.js

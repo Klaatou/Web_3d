@@ -6,6 +6,20 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.12.0)
 
+### 21/11/2026 : fin des zones unifiées (lot 1.12.36)
+
+- **Demande** (Klaatou) : finir les zones unifiées ; garder le petit script qui adapte les anciens JSON de zones, pour les rares créateurs qui auraient les leurs.
+- **Fait** :
+  - un tableau (`image`) se combine avec `portal`, `ha`, `radio` ou `music` : il devient le portail, la commande, la radio ou la musique ; pas de zone au sol ; `radius` et `trigger` valent comme pour un anneau (portail à l'approche) ; clé interne `pic` (miroirs exacts `zoneIn`/`zoneOut` et `zone_in`/`zone_out`, aller-retour sans perte) ;
+  - sans `poster`, l'image du tableau sert de pochette dans la fenêtre Son ;
+  - viewer : champ « image du tableau » dans les fiches portail, commande, radio et musique ;
+  - restent refusés, avec message : écran vidéo avec une action, objet du modèle avec radio ou musique ;
+  - le script d'adaptation `python glb2html.py --convert-zones FICHIER` (livré en 1.12.35, original gardé en `.bak`) est à donner aux créateurs qui ont leurs propres zones ; il est décrit dans `REFERENCE_JSON.md` § 11.4 et le manuel § 5.
+- **Vérifié** : `zones_unifiees.py` (nouveaux cas tableau + portail / commande / radio / musique, Python et JavaScript identiques, tableau-portail déclenché en marchant dans le cercle), `image_zone.py`, `zone_frame.py`, `lien_image.py`, `image_noms_gen.py`, `paquets.py`, `samples.py`.
+- **Non fait** : poser un fichier `.glb` à part (`model`).
+- **Documents** : `REFERENCE_JSON.md` § 11.4, manuel § 5.11 et annexe, historiques FR et EN.
+- Fichiers : `src/core.js`, `src/gen_tpl.py`, `src/template.html`, `src/viewer_tpl.html`, `src/i18n/fr.json`, `src/i18n/en.json`, `tests/zones_unifiees.py`, documents ci-dessus.
+
 ### 21/11/2026 : format unifié des zones (lot 1.12.35)
 
 - **Demande** (Klaatou) : simplifier les zones (« pas une usine à gaz ») ; la compatibilité avec l'ancien format n'est exigée que pour les zones des paquets publiés.

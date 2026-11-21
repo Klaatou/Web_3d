@@ -18,7 +18,7 @@ reg = tmp / "identites.json"
 sortie_chemin = tmp / "sortie.txt"
 sortie = open(sortie_chemin, "w", encoding="utf-8")
 proc = subprocess.Popen([sys.executable, str(DIST / "presence_server.py"), "--lang", "fr", "--host", "127.0.0.1", "--port", str(port), "--identities", str(reg), "--bans", str(tmp / "bans.json")],
-                        stdin=subprocess.PIPE, stdout=sortie, stderr=subprocess.STDOUT, text=True, env=dict(os.environ, PYTHONUNBUFFERED="1"))
+                        stdin=subprocess.PIPE, stdout=sortie, stderr=subprocess.STDOUT, text=True, encoding="utf-8", env=dict(os.environ, PYTHONUNBUFFERED="1", PYTHONIOENCODING="utf-8"))   # 1.12.36 : UTF-8 aux deux bouts (Windows : cp1252 sinon)
 attendre_port(port, proc, "presence_server")
 
 

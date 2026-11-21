@@ -81,7 +81,7 @@ if not gltfpack_dispo():
 
 # ---- 2. reference et compression
 ref, cmp_ = tmp / "ref", tmp / "cmp"
-r0 = tuiler(src / "Reg.glb", ref)
+r0 = tuiler(src / "Reg.glb", ref, env=env_fr)   # 1.12.36 : meme environnement que la comparaison (sinon langue et codage du poste)
 r1 = tuiler(src / "Reg.glb", cmp_, "--compress", env=env_fr)
 rapport(r0.returncode == 0 and r1.returncode == 0, "reference et --compress : code 0", (r0.returncode, r1.returncode, [l for l in (r1.stdout + r1.stderr).splitlines() if "erreur, original" in l], (r1.stdout + r1.stderr)[-300:]))
 idx_ref, idx_cmp = json.loads((ref / "Reg.tiles.json").read_text(encoding="utf-8")), json.loads((cmp_ / "Reg.tiles.json").read_text(encoding="utf-8"))

@@ -214,11 +214,11 @@ A picture with `link` and `trigger` `"enter"` or `"both"` opens its link when wa
 
 - ring or sign, with a link, a portal, a command, a radio or music;
 - object of the model (`mesh`), with a link, a portal or a command;
-- picture (`image`), alone or with a link (`link`);
+- picture (`image`), alone or with a link (`link`), a portal (`portal`), a command (`ha`), a radio (`radio`) or music (`music`). With a radio or music, the picture is the cover unless `poster` is given; with a portal or a command, `radius` and `trigger` apply to the picture as they do to a ring;
 - video screen (`video`), alone;
 - arrival point (`arrival`), alone.
 
-The other combinations (a picture that plays music, a video screen with a link, an object of the model that plays a radio…) are not possible yet: the zone is not shown and a message says so. A zone with nothing to show or do is not shown either. Two things to show, or two actions: the first one in the list above is kept, the others are reported.
+The other combinations (a video screen with a link or an action, an object of the model that plays a radio or music) are not possible yet: the zone is not shown and a message says so. A zone with nothing to show or do is not shown either. Two things to show, or two actions: the first one in the list above is kept, the others are reported.
 
 **Old format (up to 1.12.34)**. Zones with `type` and `target` are still read. `glb2html.py` says how many it read; the viewer and `glb2html.py` rewrite them in the new format as soon as they save the zones. To rewrite a hand-written file at once (list of zones or `.reglages.json` file):
 
