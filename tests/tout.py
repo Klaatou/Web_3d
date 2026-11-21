@@ -28,7 +28,7 @@ for _s in (sys.stdout, sys.stderr):
 
 ICI = Path(__file__).resolve().parent
 RACINE = ICI.parent
-AIDES = {"h37", "glbfab", "vider_tube", "tout"}          # modules d'aide importes par d'autres tests, et ce script : pas des tests
+AIDES = {"h37", "glbfab", "vider_tube", "tout", "ffmpeg_chemin"}          # modules d'aide importes par d'autres tests, et ce script : pas des tests
 # Environnement UTF-8, comme au premier passage complet sous Windows (83 tests OK). Sans ces deux variables, neuf tests de plus echouent : un
 # programme fils ecrit sa sortie dans l'encodage de la page de code de Windows (cp1252) ou en UTF-8 selon l'outil, et le test, qui la relit avec
 # l'encodage par defaut, ne retrouve pas ses accents ; un outil peut aussi planter sur un caractere comme la fleche « → » quand sa sortie va dans

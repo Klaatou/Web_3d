@@ -3,10 +3,12 @@
 glb2html.py --video-list (ordre naturel, seulement les extensions video, --dry-run n'ecrit rien) ; lecture de la premiere piste, enchainement a la fin d'une piste, retour a la
 premiere apres la derniere, piste illisible sautee, rapport largeur / hauteur propre a chaque piste ; barre de pistes escamotable sous l'ecran (survol, 3 s apres un clic) avec icones precedente / pause-lecture / suivante, clic sur l'ecran = pause ;
 une seule piste : boucle ; liste vide ou toutes pistes illisibles : l'ecran disparait ; infobulle ; un ecran a fichier unique garde pause / lecture sur ses bords ; aucune erreur JavaScript.
-Prerequis : pip install playwright ; ffmpeg ; python build.py avant. Variables facultatives : THREE_DIR, CHROMIUM. Lancer : python tests/zone_video_liste.py
+Prerequis : pip install playwright ; ffmpeg (dans le PATH, ou son chemin complet dans tests/ffmpeg.chemin.txt) ; python build.py avant. Variables facultatives : THREE_DIR, CHROMIUM. Lancer : python tests/zone_video_liste.py
 """
 import math, os as _os_lang; _os_lang.environ["WEB3D_LANG"] = "fr"
 import asyncio, importlib.util, json, os, pathlib, shutil, socket, struct, subprocess, sys, tempfile, time
+import ffmpeg_chemin   # aide des tests : trouve ffmpeg (PATH, sinon le chemin ecrit dans tests/ffmpeg.chemin.txt)
+FFMPEG = ffmpeg_chemin.trouver()
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 DIST = ROOT / "dist"
@@ -36,7 +38,7 @@ def sol_glb(path):
 
 
 def clip(path, size, secondes=5):
-    r = subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-f", "lavfi", "-i", f"testsrc=size={size}:rate=15", "-t", str(secondes), "-c:v", "libvpx", "-b:v", "200k", str(path)], capture_output=True, text=True)
+    r = subprocess.run([FFMPEG, "-loglevel", "error", "-y", "-f", "lavfi", "-i", f"testsrc=size={size}:rate=15", "-t", str(secondes), "-c:v", "libvpx", "-b:v", "200k", str(path)], capture_output=True, text=True)
     if r.returncode:
         sys.exit("[ECHEC] ffmpeg : " + r.stderr[-300:])
 
@@ -108,8 +110,8 @@ def outil(*args):
 
 async def main():
     from playwright.async_api import async_playwright
-    if not shutil.which("ffmpeg"):
-        sys.exit("[ECHEC] ffmpeg absent (necessaire pour fabriquer les videos d'essai)")
+    if not FFMPEG:
+        sys.exit("[ECHEC] ffmpeg introuvable (necessaire pour fabriquer les videos d'essai) : dossier dans le PATH, ou chemin complet de ffmpeg.exe dans tests/ffmpeg.chemin.txt")
     site = tmp / "site"; cl = site / "medias" / "clips"; cl.mkdir(parents=True); (site / "medias" / "vide").mkdir(); (site / "medias" / "seul").mkdir()
     sol_glb(site / "sol.glb")
     clip(cl / "1-a.webm", "320x180"); clip(cl / "2-b.webm", "320x240"); clip(cl / "10-c.webm", "160x90")

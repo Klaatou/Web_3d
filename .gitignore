@@ -28,6 +28,7 @@ regions.json
 # notes de travail personnelles et sauvegardes de patchs : ne jamais committer
 REGLES.md
 _bak/
+tests/ffmpeg.chemin.txt
 patch_*.py
 
 # scripts autonomes (messages en français seulement, hors règles i18n) : hors du dépôt tant qu'ils ne sont pas devenus de vrais outils

@@ -3,10 +3,12 @@
 Verifie : nettoyage JavaScript = Python ; rien n'est telecharge hors de portee ; nom sans extension (medias/ puis .mp4, .webm...) ; lecture muette en boucle a portee,
 pause en s'eloignant et en tournant le dos (apres une seconde de grace), reprise au retour ; hauteur d'apres le rapport de la video ; fichier absent ou adresse interdite ;
 au plus 8 videos a la fois ; mouvement reduit demande au systeme : premiere image seulement ; aucune erreur JavaScript.
-Prerequis : pip install playwright ; ffmpeg ; python build.py avant. Variables facultatives : THREE_DIR, CHROMIUM. Lancer : python tests/zone_video.py
+Prerequis : pip install playwright ; ffmpeg (dans le PATH, ou son chemin complet dans tests/ffmpeg.chemin.txt) ; python build.py avant. Variables facultatives : THREE_DIR, CHROMIUM. Lancer : python tests/zone_video.py
 """
 import math, os as _os_lang; _os_lang.environ["WEB3D_LANG"] = "fr"
 import asyncio, importlib.util, json, os, pathlib, shutil, socket, struct, subprocess, sys, tempfile, time
+import ffmpeg_chemin   # aide des tests : trouve ffmpeg (PATH, sinon le chemin ecrit dans tests/ffmpeg.chemin.txt)
+FFMPEG = ffmpeg_chemin.trouver()
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 DIST = ROOT / "dist"
@@ -36,7 +38,7 @@ def sol_glb(path):
 
 
 def video(path, codec):
-    r = subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-f", "lavfi", "-i", "testsrc=size=320x180:rate=15", "-t", "4", *codec, str(path)], capture_output=True, text=True)
+    r = subprocess.run([FFMPEG, "-loglevel", "error", "-y", "-f", "lavfi", "-i", "testsrc=size=320x180:rate=15", "-t", "4", *codec, str(path)], capture_output=True, text=True)
     if r.returncode:
         sys.exit("[ECHEC] ffmpeg : " + r.stderr[-300:])
 
@@ -110,8 +112,8 @@ def page_html(site):
 
 async def main():
     from playwright.async_api import async_playwright
-    if not shutil.which("ffmpeg"):
-        sys.exit("[ECHEC] ffmpeg absent (necessaire pour fabriquer les videos d'essai)")
+    if not FFMPEG:
+        sys.exit("[ECHEC] ffmpeg introuvable (necessaire pour fabriquer les videos d'essai) : dossier dans le PATH, ou chemin complet de ffmpeg.exe dans tests/ffmpeg.chemin.txt")
     site = tmp / "site"; (site / "medias").mkdir(parents=True)
     sol_glb(site / "sol.glb")
     video(site / "medias" / "clip.webm", ["-c:v", "libvpx", "-b:v", "200k"])

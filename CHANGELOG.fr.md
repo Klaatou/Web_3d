@@ -6,6 +6,14 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.12.0)
 
+### 21/11/2026 : les tests vidéo trouvent ffmpeg tout seuls (lot 1.12.43)
+
+- **Demande** (Klaatou) : `zone_video.py` et `zone_video_liste.py` s'arrêtent sur « ffmpeg absent » quand `ffmpeg.exe` n'est pas dans le PATH ; il faut que les tests le retrouvent.
+- **Fait** : nouvelle aide `tests/ffmpeg_chemin.py` : ffmpeg est cherché dans le PATH, sinon dans le fichier `tests/ffmpeg.chemin.txt` (une ligne : le chemin complet de `ffmpeg.exe`, fichier personnel ignoré par git) ; les deux tests l'utilisent, le message d'absence dit où le mettre ; `tests/tout.py` ne la prend pas pour un test.
+- **Vérifié** : l'aide dans les trois cas (PATH, fichier, rien) ; `zone_video_liste.py` lancé avec un PATH sans ffmpeg et le chemin dans le fichier ; `tout.py --liste` ne compte pas l'aide.
+- **Non fait** : mention dans `docs/fr/DEVELOPPEMENT.md` à la validation de Klaatou.
+- Fichiers : `tests/ffmpeg_chemin.py` (nouveau), `tests/zone_video.py`, `tests/zone_video_liste.py`, `tests/tout.py`, `.gitignore`.
+
 ### 21/11/2026 : actions sur les écrans `video` : lien, portail, commande (lot 1.12.42)
 
 - **Demande** (Klaatou) : un écran `video` peut porter un lien, un portail ou une commande Home Assistant ; la vidéo montre ce que l'action ouvre.
