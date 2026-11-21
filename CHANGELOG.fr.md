@@ -23,30 +23,36 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
   > ### What's new
   >
   > **1. Mini player (floating window)**
+  >
   > - A link zone, or an image zone that has a link, can now open its page, or a YouTube video or playlist, in a small floating window on top of the page. You can move it, resize it and close it; you never leave the region.
   > - It is not a video screen: the mini player floats over the page, while a video screen (next item) is part of the 3D scene, on a wall.
   >
   > **2. Video screens (inside the 3D scene)**
+  >
   > - New zone type `video`: a screen on a wall of the region. The video starts when you walk up to it, a click pauses it, and only the nearest screen talks.
   > - A screen can play a list of videos (previous / next buttons), and can also be a link, a portal or a Home Assistant command.
   >
   > **3. One sound at a time**
-  > - The radio, the music, the video screens and the YouTube mini player no longer play over each other: you hear the nearest source. New mute button and **N** key.
+  >
+  > - The radio, the music, the video screens and the YouTube mini player no longer play over each other: you hear the nearest source. New mute button and **N** key (for No sound).
   >
   > **4. Private messages**
-  > - Click a visitor's avatar, or their name in the chat, to write to them, or type `/mp name message`. Each conversation has its own window: you can move it, shrink it or close it without losing the text, and a new message makes it blink. Buttons Ignore and Save. Hosts can turn private messages off.
+  >
+  > - Click a visitor's avatar, or their name in the chat, to write to them, or type `/dm name message` (`/mp` and `/pm` work too). Each conversation has its own window: you can move it, shrink it or close it without losing the text, and a new message makes it blink. Buttons Ignore and Save the chat. Hosts can turn private messages off.
   >
   > **5. Zones**
+  >
   > - An image zone can now also be a portal, a radio, a music player or a Home Assistant command: the picture itself is the door, the radio, and so on.
-  > - New zone type `model`: place your own 3D model (a `.glb` file) in the region. The model of a radio or music zone can be clicked.
-  > - Radio and music zones also work in the overview.
+  > - New zone type `model`: place your own 3D model (a `.glb` file) in the region. On its own it is just decoration; give it a link, a portal, a command, a radio or a music and it becomes clickable.
+  > - Radio and music zones also work in the overview of the region (outside walk mode).
   > - A radio or music zone can show an illustration (an image) in the Sound window, with an optional link that opens a web page in a new tab.
-  > - Creators with their own zone files: `python glb2html.py --convert-zones FILE` converts them to the new format; the original is kept as a `.bak` file.
+  > - Creators who have their own zone files in the old format can convert them using this script: `python glb2html.py --convert-zones FILE`; the original is preserved as a `.bak` file.
   >
   > **6. Other changes**
+  >
   > - Effect proposals: when a region has shiny materials, the page used to pop up a message offering to turn on Reflections (and Light rendering). It now shows a blinking ✦ icon next to Settings; click it to see the question. Settings > "Effect proposals" brings the message back.
-  > - The **B** key works again after a chat message is sent.
-  > - `oars2site` accepts more convoar names and damaged OARs.
+  > - The **B** key, which hides the chat panel, works again after a chat message is sent.
+  > - The OAR conversion process (`oar2glb`, used by `oars2site`) no longer halts when `convoar` writes an object name ending in a backslash, and it now clearly indicates when an OAR file is corrupted.
   > - Documents and examples brought up to date, in English and French.
 
   > **Web_3d 1.13.0 : mini lecteur, écrans vidéo, un seul son à la fois, messages privés**
@@ -56,32 +62,37 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
   > ### Nouveautés
   >
   > **1. Mini lecteur (fenêtre flottante)**
+  >
   > - Une zone lien, ou une zone image qui a un lien, peut maintenant ouvrir sa page, ou une vidéo ou une liste YouTube, dans une petite fenêtre flottante par-dessus la page. On peut la déplacer, la redimensionner et la fermer ; on ne quitte jamais la région.
   > - Ce n'est pas un écran vidéo : le mini lecteur flotte au-dessus de la page, alors qu'un écran vidéo (point suivant) fait partie de la scène 3D, sur un mur.
   >
   > **2. Écrans vidéo (dans la scène 3D)**
+  >
   > - Nouveau type de zone `video` : un écran sur un mur de la région. La vidéo démarre quand on s'en approche, un clic la met en pause, et seul l'écran le plus proche parle.
   > - Un écran peut jouer une liste de vidéos (boutons précédent / suivant), et servir aussi de lien, de portail ou de commande Home Assistant.
   >
   > **3. Un seul son à la fois**
-  > - La radio, la musique, les écrans vidéo et le mini lecteur YouTube ne se superposent plus : on entend la source la plus proche. Nouveau bouton muet et touche **N**.
+  >
+  > - La radio, la musique, les écrans vidéo et le mini lecteur YouTube ne se superposent pas : on entend la source la plus proche. Nouveau bouton muet et touche **N** (comme No sound).
   >
   > **4. Messages privés**
-  > - Un clic sur l'avatar d'un visiteur, ou sur son nom dans le chat, pour lui écrire, ou taper `/mp pseudo message`. Chaque conversation a sa fenêtre : on peut la déplacer, la réduire ou la fermer sans perdre le texte, et un nouveau message la fait clignoter. Boutons Ignorer et Enregistrer. Les hébergeurs peuvent couper les messages privés.
+  >
+  > - Un clic sur l'avatar d'un visiteur, ou sur son nom dans le chat, pour lui écrire, ou taper `/mp pseudo message`. Chaque conversation a sa fenêtre : on peut la déplacer, la réduire ou la fermer sans perdre le texte, et un nouveau message la fait clignoter. Boutons Ignorer et Enregistrer le dialogue. Les hébergeurs peuvent couper les messages privés (ils passent aussi par le serveur de présence).
   >
   > **5. Zones**
+  >
   > - Une zone image peut maintenant être aussi un portail, une radio, une musique ou une commande Home Assistant : l'image elle-même est la porte, la radio, etc.
-  > - Nouveau type de zone `model` : on pose son propre modèle 3D (un fichier `.glb`) dans la région. Le modèle d'une zone radio ou musique est cliquable.
-  > - Les zones radio et musique marchent aussi en vue d'ensemble.
+  > - Nouveau type de zone `model` : on pose son propre modèle 3D (un fichier `.glb`) dans la région. Seul, c'est un décor ; avec un lien, un portail, une commande, une radio ou une musique, il devient cliquable.
+  > - Les zones radio et musique marchent aussi en vue d'ensemble de la région (hors Promenade).
   > - Une zone radio ou musique peut afficher une illustration (une image) dans la fenêtre Son, avec un lien facultatif qui ouvre une page web dans un nouvel onglet.
-  > - Créateurs qui ont leurs propres fichiers de zones : `python glb2html.py --convert-zones FICHIER` les convertit au nouveau format ; l'original est gardé en `.bak`.
+  > - Les Créateurs qui ont leurs propres fichiers de zones selon l'ancien format peuvent les convertir avec ce script : `python glb2html.py --convert-zones FICHIER` ; l'original est gardé en `.bak`.
   >
   > **6. Autres changements**
-  > - Propositions d'effets : quand une région a des matériaux brillants, la page affichait un message pour proposer d'activer les Reflets (et le Rendu léger). Elle affiche maintenant une icône ✦ qui clignote à côté de Réglages ; un clic affiche la question. Réglages > « Propositions d'effets » remet le message.
-  > - La touche **B** marche de nouveau après l'envoi d'un message du chat.
-  > - `oars2site` accepte plus de noms de convoar et les OAR abîmés.
+  >
+  > - Propositions d'effets : quand une région a des matériaux brillants, la page affichait un message pour proposer d'activer les Reflets (et le Rendu léger). Elle affiche maintenant une icône ✦ qui clignote à côté de Réglages ; un clic affiche la question. Dans Réglages la case « Propositions d'effets » remet le message.
+  > - La touche **B** qui masque le pavé du chat marche de nouveau après l'envoi d'un message du chat.
+  > - La conversion des OAR (`oar2glb`, utilisé par `oars2site`) ne s'arrête plus quand `convoar` écrit un nom d'objet qui finit par une barre oblique inverse, et dit clairement quand un fichier OAR est abîmé.
   > - Documents et exemples remis à jour, en français et en anglais.
-
 
 ### 21/11/2026 : verif_trad à zéro erreur (lot 1.12.45)
 

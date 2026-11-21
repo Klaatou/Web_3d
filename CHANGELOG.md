@@ -11,88 +11,84 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 ### 21/11/2026: release 1.13.0: video screens, private messages, one sound at a time, unified zones and placed models
 
 - **Release**: 1.13.0 (21/11/2026), decided by Klaatou, gathers batches 1.12.1 to 1.12.45 (described below, under this same heading). The minor number goes up: features were added since 1.12.0. This batch only changes `VERSION` and the documents (manual title, overview, histories, this log); `dist\` and `VERSIONS.json` are unchanged.
-
 - **Per-file numbers**: `index.html`, `glb-viewer.html`, `glb2html.py` 1.12.42; `carte.html` 1.12.39; `oar2glb.py` 1.12.27; `presence_server.py` 1.12.30; unchanged: `glb2tiles.py` 1.11.12, `oars2site.py` 1.10.25, `web3d_gui.py` 1.10.31, `diag_carte.py` 1.10.2, `extraire_batiments.py` 1.6.3, `iar2oar.py` 1.6.4. **`presence_server.py` changes** (1.10.37 to 1.12.30): hosts must replace it for private messages.
-
 - **Tried by Klaatou**: private messages (21/11/2026, "it works"); the click on the model of a radio (1.12.40, "perfect"); the video tests pass on his machine (21/11/2026). **Not tried here** (Linux sandbox): Windows, Edge, Firefox, Safari, a real touch screen; on his screen: the cone off on his own zones, a large `.glb` in `modelLazy` on a real network, `solid` on a real building, a video screen with `link` or `portal` / `ha`.
-
 - **Known documentation debt**: none; the French / English pairs of documents give 0 error in `verif_trad` (21/11/2026).
-
 - **GitHub release notes** (to attach: `galerie-photos.zip` and `region-simple.zip`, rebuilt by `python fabriquer_paquets.py` after `VERSION` is set to 1.13.0), English then French:
-  
+
   > **Web_3d 1.13.0: mini player, video screens, one sound at a time, private messages**
-  > 
+  >
   > **Do not unzip over an existing package**: copy `index.html`, `carte.html` (and `favicon.ico`) into your folder instead. **Presence server hosts**: replace `presence_server.py` (now 1.12.30) to get private messages.
-  > 
+  >
   > ### What's new
-  > 
+  >
   > **1. Mini player (floating window)**
-  > 
+  >
   > - A link zone, or an image zone that has a link, can now open its page, or a YouTube video or playlist, in a small floating window on top of the page. You can move it, resize it and close it; you never leave the region.
   > - It is not a video screen: the mini player floats over the page, while a video screen (next item) is part of the 3D scene, on a wall.
-  > 
+  >
   > **2. Video screens (inside the 3D scene)**
-  > 
+  >
   > - New zone type `video`: a screen on a wall of the region. The video starts when you walk up to it, a click pauses it, and only the nearest screen talks.
   > - A screen can play a list of videos (previous / next buttons), and can also be a link, a portal or a Home Assistant command.
-  > 
+  >
   > **3. One sound at a time**
-  > 
-  > - The radio, the music, the video screens and the YouTube mini player no longer play over each other: you hear the nearest source. New mute button and **N** key (for No sound)..
-  > 
+  >
+  > - The radio, the music, the video screens and the YouTube mini player no longer play over each other: you hear the nearest source. New mute button and **N** key (for No sound).
+  >
   > **4. Private messages**
-  > 
-  > - Click a visitor's avatar, or their name in the chat, to write to them, or type `/mp name message`. Each conversation has its own window: you can move it, shrink it or close it without losing the text, and a new message makes it blink. Buttons Ignore and Save the chat. Hosts can turn private messages off (MP goes by the presence server too). 
-  > 
+  >
+  > - Click a visitor's avatar, or their name in the chat, to write to them, or type `/dm name message` (`/mp` and `/pm` work too). Each conversation has its own window: you can move it, shrink it or close it without losing the text, and a new message makes it blink. Buttons Ignore and Save the chat. Hosts can turn private messages off.
+  >
   > **5. Zones**
-  > 
+  >
   > - An image zone can now also be a portal, a radio, a music player or a Home Assistant command: the picture itself is the door, the radio, and so on.
   > - New zone type `model`: place your own 3D model (a `.glb` file) in the region. On its own it is just decoration; give it a link, a portal, a command, a radio or a music and it becomes clickable.
   > - Radio and music zones also work in the overview of the region (outside walk mode).
   > - A radio or music zone can show an illustration (an image) in the Sound window, with an optional link that opens a web page in a new tab.
   > - Creators who have their own zone files in the old format can convert them using this script: `python glb2html.py --convert-zones FILE`; the original is preserved as a `.bak` file.
-  > 
+  >
   > **6. Other changes**
-  > 
+  >
   > - Effect proposals: when a region has shiny materials, the page used to pop up a message offering to turn on Reflections (and Light rendering). It now shows a blinking ✦ icon next to Settings; click it to see the question. Settings > "Effect proposals" brings the message back.
   > - The **B** key, which hides the chat panel, works again after a chat message is sent.
   > - The OAR conversion process (`oar2glb`, used by `oars2site`) no longer halts when `convoar` writes an object name ending in a backslash, and it now clearly indicates when an OAR file is corrupted.
   > - Documents and examples brought up to date, in English and French.
-  
+
   > **Web_3d 1.13.0 : mini lecteur, écrans vidéo, un seul son à la fois, messages privés**
-  > 
+  >
   > **Ne pas dézipper par-dessus un paquet existant** : copier `index.html`, `carte.html` (et `favicon.ico`) dans votre dossier. **Hébergeurs du serveur de présence** : remplacer `presence_server.py` (maintenant 1.12.30) pour avoir les messages privés.
-  > 
+  >
   > ### Nouveautés
-  > 
+  >
   > **1. Mini lecteur (fenêtre flottante)**
-  > 
+  >
   > - Une zone lien, ou une zone image qui a un lien, peut maintenant ouvrir sa page, ou une vidéo ou une liste YouTube, dans une petite fenêtre flottante par-dessus la page. On peut la déplacer, la redimensionner et la fermer ; on ne quitte jamais la région.
   > - Ce n'est pas un écran vidéo : le mini lecteur flotte au-dessus de la page, alors qu'un écran vidéo (point suivant) fait partie de la scène 3D, sur un mur.
-  > 
+  >
   > **2. Écrans vidéo (dans la scène 3D)**
-  > 
+  >
   > - Nouveau type de zone `video` : un écran sur un mur de la région. La vidéo démarre quand on s'en approche, un clic la met en pause, et seul l'écran le plus proche parle.
   > - Un écran peut jouer une liste de vidéos (boutons précédent / suivant), et servir aussi de lien, de portail ou de commande Home Assistant.
-  > 
+  >
   > **3. Un seul son à la fois**
-  > 
+  >
   > - La radio, la musique, les écrans vidéo et le mini lecteur YouTube ne se superposent pas : on entend la source la plus proche. Nouveau bouton muet et touche **N** (comme No sound).
-  > 
+  >
   > **4. Messages privés**
-  > 
+  >
   > - Un clic sur l'avatar d'un visiteur, ou sur son nom dans le chat, pour lui écrire, ou taper `/mp pseudo message`. Chaque conversation a sa fenêtre : on peut la déplacer, la réduire ou la fermer sans perdre le texte, et un nouveau message la fait clignoter. Boutons Ignorer et Enregistrer le dialogue. Les hébergeurs peuvent couper les messages privés (ils passent aussi par le serveur de présence).
-  > 
+  >
   > **5. Zones**
-  > 
+  >
   > - Une zone image peut maintenant être aussi un portail, une radio, une musique ou une commande Home Assistant : l'image elle-même est la porte, la radio, etc.
   > - Nouveau type de zone `model` : on pose son propre modèle 3D (un fichier `.glb`) dans la région. Seul, c'est un décor ; avec un lien, un portail, une commande, une radio ou une musique, il devient cliquable.
   > - Les zones radio et musique marchent aussi en vue d'ensemble de la région (hors Promenade).
   > - Une zone radio ou musique peut afficher une illustration (une image) dans la fenêtre Son, avec un lien facultatif qui ouvre une page web dans un nouvel onglet.
   > - Les Créateurs qui ont leurs propres fichiers de zones selon l'ancien format peuvent les convertir avec ce script : `python glb2html.py --convert-zones FICHIER` ; l'original est gardé en `.bak`.
-  > 
+  >
   > **6. Autres changements**
-  > 
+  >
   > - Propositions d'effets : quand une région a des matériaux brillants, la page affichait un message pour proposer d'activer les Reflets (et le Rendu léger). Elle affiche maintenant une icône ✦ qui clignote à côté de Réglages ; un clic affiche la question. Dans Réglages la case « Propositions d'effets » remet le message.
   > - La touche **B** qui masque le pavé du chat marche de nouveau après l'envoi d'un message du chat.
   > - La conversion des OAR (`oar2glb`, utilisé par `oars2site`) ne s'arrête plus quand `convoar` écrit un nom d'objet qui finit par une barre oblique inverse, et dit clairement quand un fichier OAR est abîmé.
@@ -358,51 +354,31 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 ### 18/11/2026: manual § 5.19 to 5.21: dense bullets split into sub-lists; radio tried on a phone
 
 - **Requested by Klaatou**: the very dense bullets of the radio, music and video zones in the manual are split into sub-lists.
-
 - **`MANUEL.md` and `MANUAL.md`** (§ 5.19, 5.20, 5.21): each bullet of more than 420 characters keeps its first sentence (the bold title) and moves its following sentences to sub-bullets; the "three cases" of the radio that does not play and the two ways of redoing `playlist.json` (**(1)**, **(2)**) become second-level sub-bullets. The text is not changed, only split.
-
 - **Tried** (§ 5.19): a tester tried, on a phone, the region with the several-stream radio, stream changes included: everything works (model and browser not recorded).
-
 - No code touched: `dist\` does not change. `VERSION`: `1.12.18`.
-  
-  ### 18/11/2026: more readable lists in the documents
+### 18/11/2026: more readable lists in the documents
 
 - **Requested by Klaatou**: the cell of the examples `README` that lists the zones was unreadable (and a comma had been missing before "radio" since batch 1.12.16).
-
 - **`docs/samples/README.fr.md` and `README.md`**: the `region.zones.sample.json` cell is short; a section "The zones of the sample" gives the list, one line per kind, with the `id`s.
-
 - **Manual appendix** (§ 13, `MANUEL.md` and `MANUAL.md`): the "Version / What it brought" table (cells of 10 to 18 items separated by semicolons) becomes, per version, a bold title followed by a list. Same content, same pointers; the introductory sentence says "the list" instead of "the table".
-
 - **Not touched**: the long cells that describe one single option (`--reencode`, `--update`, F key): they are explanations, not enumerations.
-
 - No code touched: `dist\` does not change. `VERSION`: `1.12.17`.
-  
-  ### 18/11/2026: multimedia zone examples (JSON) and sample file brought up to date
+### 18/11/2026: multimedia zone examples (JSON) and sample file brought up to date
 
 - **Requested by Klaatou**: JSON block examples with all the parameters of the multimedia zones.
-
 - **`REFERENCE_JSON.md`** (FR and EN, § 11.4): eight complete examples (video screen with one file and sound, with a list read from a folder, with `tracks`; music with a folder, with `tracks`; radio with several `streams`; picture with `link`; link with `frame`), each under a title (JSON has no comments: the title and the `id` say what it shows). The sample table goes to fourteen zones.
-
 - **`docs/samples/region.zones.sample.json`**: 14 zones. **Updated**: the `dance-floor` radio uses `streams` (it still had the old `target` key); **added**: `ambiance` (`audio`), `screen-clip` and `screen-list` (`video`), `video-page` (`url` with `frame`). The file is written by `clean_zones`, so it is identical to what the page writes. `tests/samples.py`: 13 public zones instead of 9.
-
 - **Finding**: on `main`, three checks of `tests/samples.py` were already failing (zones "already clean", "one zone of each kind", `perso` profile) because the sample had stayed at the 1.10.35 state; they pass with this batch.
-
 - No code touched: `dist\` does not change. `VERSION`: `1.12.16`.
-  
-  ### 18/11/2026: documents of batches 1.12.3 to 1.12.14 (link zones in a floating window, video screens)
+### 18/11/2026: documents of batches 1.12.3 to 1.12.14 (link zones in a floating window, video screens)
 
 - **Requested by Klaatou**: bring the documents that have been behind since batch 1.12.3 up to date in one go.
-
 - **`REFERENCE_JSON.md`** (FR and EN, § 11.4): eight kinds of zones; type `"video"`; `radius`, `w`, `h`, `target` for the video screen; `folder` and `tracks` valid for `video`; new keys `sound` and `frame`; `cone` has no effect on a video screen.
-
 - **Manual** (`MANUEL.md`, `MANUAL.md`): § 5.7.1 (floating window, `frame` key, YouTube and lists, cases without a frame, **known limit: Edge without hardware acceleration may leave a ghost rectangle**); new § 5.21 (`video` zone: file, playback, click, sound, lists, `--video-list`, track bar, radio and music in the overview, diagnostic, tried and not tried); appendix (§ 13): line for batches 1.12.3 to 1.12.15.
-
 - **`PROCEDURES_SIMPLES.md`** (FR and EN): new § 17 "Put a video screen in a region"; § 16 step 3: pointer to § 17. `VUE_ENSEMBLE.md` and `OVERVIEW.md`: video on a screen is no longer an idea.
-
 - **Histories** (`HISTORIQUE.md`, `HISTORY.md`): one line per batch, 1.12.3 to 1.12.15.
-
 - No code touched: `dist\` does not change. `VERSION`: `1.12.15`.
-
 - **Still to update**: `REPRISE.md` (when Klaatou asks, rule 23).
 
 ### 18/11/2026: video screens: sound no longer falls back to muted at a track change
@@ -533,73 +509,61 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 ### 17/11/2026: release 1.12.0: audio zones, radio with several streams, Sound window and volume
 
 - **Release**: 1.12.0 (17/11/2026), decided by Klaatou, gathers batches 1.11.1 to 1.11.35 (described below, under this same heading). The minor number goes up: features were added since 1.11.0. This batch only changes `VERSION` and the documents (manual title, overview, histories, this log); `dist\` and `VERSIONS.json` are unchanged.
-
 - **Per-file numbers**: `index.html`, `glb-viewer.html`, `glb2html.py` 1.11.34; `carte.html` 1.11.29; `glb2tiles.py` 1.11.12; `oar2glb.py` 1.11.11; unchanged: `presence_server.py` 1.10.37, `oars2site.py` 1.10.25, `web3d_gui.py` 1.10.31, `diag_carte.py` 1.10.2, `extraire_batiments.py` 1.6.3, `iar2oar.py` 1.6.4. Nothing to redo on the VM: `presence_server.py` does not change.
-
 - **Tried by Klaatou** (17/11/2026): the Sound window and the volume sliders, the demo update. **Not tried here** (Linux sandbox): Windows, Edge, Firefox, Safari, a real touch screen, a real mp3 stream in the page, measuring the music volume (same formula as the radio, only the radio is measured).
-
 - **Known documentation debt**: the manual annex (§ 13) has no row for batches 1.11.13 to 1.11.23; the "double terrain" (`oar2glb` 1.11.11, `glb2tiles` 1.11.12) was not re-read in manual § 3.
-
 - **GitHub release notes** (to attach: `galerie-photos.zip` and `region-simple.zip`, rebuilt by `python fabriquer_paquets.py` after `VERSION` is set to 1.12.0), English then French:
-  
+
   > **Web_3d 1.12.0: audio zones, radio with several streams, Sound window and volume**
-  > 
+  >
   > **Do not unzip over an existing package**: copy `index.html`, `carte.html` (and `favicon.ico`) into your folder instead.
-  > 
+  >
   > ### What's new
-  > 
+  >
   > **1. Audio zones** (manual § 5.20)
-  > 
   > - New zone type `audio`: the sound files of a folder play in a loop within range while walking; `playlist.json`, ⏮ / ⏭ buttons and a track counter; remote sounds through `tracks`.
-  > 
+  >
   > **2. Radio zones** (manual § 5.19)
-  > 
   > - A radio zone can offer several streams (`streams`, `[["name", "address"], ...]`), chosen from a list in the State block; the old keys `urls`, `labels` and `target` are still read.
   > - The Radio and Music lines show the distance and stay displayed (blinking distance) up to twice the range; tooltip with the zone and the stream name.
   > - A box on the line cuts the radio or the music.
-  > 
+  >
   > **3. Sound window and volume** (manual § 7.66)
-  > 
   > - A small **Sound** window follows the radio and the music (▲ arrow on the State lines, click on the zone cone); it is part of the window layout.
   > - Its own **volume** for the radio and the music (50 % by default), independent of the Settings "Sounds" volume (beeps).
   > - The arrow pad can be moved (§ 7.33).
-  > 
+  >
   > **4. Other changes**
-  > 
   > - The chat block folds with the **B** key and unfolds by itself on a message, an arrival or a departure; the help shows keys and titles in bold.
   > - New project icon; `oar2glb.py` never leaves two overlapping terrains in the GLB; `glb2tiles.py` no longer tiles the convoar "Terrain" when the "Terrain i,j" patches are there; the world map grid follows the page width.
   > - Documents: manual, overview, procedures, `CREATORS.md` (radio streams and the `--radios` list).
-  > 
+  >
   > **Presence server hosts**: nothing to do, `presence_server.py` is unchanged (1.10.37).
-  
+
   > **Web_3d 1.12.0 : zones audio, radio à plusieurs flux, fenêtre Son et volume**
-  > 
+  >
   > **Ne pas dézipper par-dessus un paquet existant** : copier `index.html`, `carte.html` (et `favicon.ico`) dans votre dossier.
-  > 
+  >
   > ### Nouveautés
-  > 
+  >
   > **1. Zones audio** (manuel § 5.20)
-  > 
   > - Nouveau type de zone `audio` : les fichiers son d'un dossier jouent en boucle à portée en promenade ; `playlist.json`, boutons ⏮ / ⏭ et compteur de pistes ; sons distants par `tracks`.
-  > 
+  >
   > **2. Zones radio** (manuel § 5.19)
-  > 
   > - Une zone radio peut proposer plusieurs flux (`streams`, `[["nom", "adresse"], ...]`), au choix dans une liste du bloc État ; les anciennes clés `urls`, `labels` et `target` sont toujours lues.
   > - Les lignes Radio et Musique donnent la distance et restent affichées (distance qui clignote) jusqu'à 2 fois la portée ; bulle avec le nom de la zone et du flux.
   > - Une case sur la ligne coupe la radio ou la musique.
-  > 
+  >
   > **3. Fenêtre Son et volume** (manuel § 7.66)
-  > 
   > - Une petite fenêtre **Son** suit la radio et la musique (flèche ▲ sur les lignes de l'État, clic sur le cône de la zone) ; elle fait partie de la disposition des fenêtres.
   > - Un **volume** propre à la radio et à la musique (50 % au départ), indépendant du volume des « Sons » de Réglages (les bips).
   > - Le pavé de flèches est déplaçable (§ 7.33).
-  > 
+  >
   > **4. Autres changements**
-  > 
   > - Le bloc de chat se replie avec la touche **B** et se déplie seul à un message, une arrivée ou un départ ; l'aide met les touches et les titres en gras.
   > - Nouvelle icône du projet ; `oar2glb.py` ne laisse jamais deux terrains superposés dans le GLB ; `glb2tiles.py` ne tuile plus le « Terrain » de convoar quand les patches « Terrain i,j » sont là ; la grille de la carte des mondes suit la largeur de la page.
   > - Documents : manuel, vue d'ensemble, procédures, `CREATEURS.md` (flux radio et liste `--radios`).
-  > 
+  >
   > **Hébergeurs d'un serveur de présence** : rien à faire, `presence_server.py` ne change pas (1.10.37).
 
 ### 17/11/2026: `CREATORS.md`: radio streams and the `--radios` list
@@ -830,100 +794,86 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 ### 15/11/2026: release 1.11.0: radio zones, metallic reflections, lighter textures, automatic sea, `oars2site.py`
 
 - **Release**: 1.11.0 (15/11/2026), decided by Klaatou, gathers batches 1.10.1 to 1.10.38 (described below, under this same heading). The minor number goes up: features were added since 1.10.0. This batch only changes `VERSION` and the documents (manual title, § 13 lines, overview, histories, this log); `dist\` and `VERSIONS.json` are unchanged.
-
 - **Per-file numbers**: `index.html`, `carte.html`, `glb-viewer.html`, `glb2html.py` 1.10.36; `presence_server.py` 1.10.37; `oar2glb.py`, `glb2tiles.py` 1.10.26; `oars2site.py` 1.10.25; `web3d_gui.py` 1.10.31; `diag_carte.py` 1.10.2; unchanged: `extraire_batiments.py` 1.6.3, `iar2oar.py` 1.6.4. To do on the VM: `presence_server.py` 1.10.37 (`scp`, restart; `--idle-walk 0` in `lance_presence.sh`, Klaatou's decision).
-
 - **Tried by Klaatou** (Windows, Edge, demo): the radio zones and their titles, the reflections, the automatic sea, the launcher, `--tex-only`, the full suite on 12/11 (93 tests out of 95, `websockets` 16.0). **Not tried**: a real background tab for the silent walker; `oars2site.py` with the real convoar; macOS; Safari.
-
 - **GitHub release notes** (to attach: `galerie-photos.zip` and `region-simple.zip`, rebuilt by `python fabriquer_paquets.py` after `VERSION` is set to 1.11.0 so that they contain the 1.10.36 pages), English then French:
-  
+
   > **Web_3d 1.11.0: radio zones, metallic reflections, lighter textures, automatic sea, `oars2site.py`**
-  > 
+  >
   > ### What's new
-  > 
+  >
   > **1. Radio zones** (manual § 5.19)
-  > 
   > - A new zone type `cast` plays an Icecast / SHOUTcast stream while walking within range, louder when closer; one radio at a time, stopped out of range and in the global view.
   > - The track title is shown when the presence server reads it in the stream (`--radios FILE`, manual § 10.25).
   > - The "Radio" line of the State block says why a stream does not play (mixed content, refused or unreadable stream).
-  > 
+  >
   > **2. Web page**
-  > 
   > - Metallic reflections: new "Metallic reflections" slider in Settings (0 % by default; the page offers 60 % when the region has metals; § 7.65); diagnostic shown in a resizable window (§ 7.53).
   > - Automatic sea: `oar2glb.py` reads the region's water height from the OAR and the page starts at it (`seaM`; `--sea-m`, `--water-from` to fix a region already converted; § 3.13).
   > - `url` zones open on entering (`trigger` `enter` / `both`, `hop://` in the same tab); `cone` key per zone (§ 5.7.1).
   > - `--no-credit` removes the "Made with Web_3d" icon; the world map remembers the nicknames key (§ 9.16).
-  > 
+  >
   > **3. Conversion tools**
-  > 
   > - Lighter textures: `oar2glb.py --tex-size`, `--tex-quality`, `--tex-only GLB` (on a GLB already made), table of texture sizes, `glb-stats.py` (§ 3.12).
   > - New `oars2site.py`: a folder of OARs becomes a complete site, one region after another, with the world map (`CONVERT_OARS.md`).
   > - Python 3.14: `glb2html.py` opens again. Tools no longer stop on a redirected output on Windows.
-  > 
+  >
   > **4. Graphical launcher** (§ 3.9)
-  > 
   > - Project icon, `glb-stats.py` in the list, "Function" line, File / Folder buttons for `OAR` and `GLB` parameters, no "press Enter" after `--help`.
-  > 
+  >
   > **5. Presence server** (§ 10)
-  > 
   > - Bounded nickname registry (`--max-names`), last address of the relay header, no more `KeyError` on simultaneous disconnections, visits log with the nicknames of visitors in the global view (`--visits-names`).
   > - Silent walker: a walker whose page is in the background is no longer counted nor shown after `--idle-walk` minutes (3 by default, `0` = never; § 10.26).
   > - Security review of the pages and the server (no page flaw found).
-  > 
+  >
   > **6. Documentation**
-  > 
   > - Manual § 3.12, § 3.13, § 5.19, § 7.65, § 10.25, § 10.26; `CONVERT_OARS.md`; simple procedures § 12 to § 14; `REFERENCE_JSON.md` (`cast` zones, `seaM`, `credit`).
-  > 
+  >
   > ### Updating
-  > 
+  >
   > - If you already have one of the packages, copy only `index.html` and `carte.html` into your folder.
   > - Do not unzip the new zip over it: that would overwrite your configuration, zones and images.
   > - Presence server hosts: replace `presence_server.py` and restart it; the new options are optional.
-  
+
   > ---
-  > 
+  >
   > **Web_3d 1.11.0 : zones radio, reflets métalliques, textures allégées, mer automatique, `oars2site.py`**
-  > 
+  >
   > ### Nouveautés
-  > 
+  >
   > **1. Zones radio** (manuel § 5.19)
-  > 
   > - Un nouveau type de zone `cast` joue un flux Icecast / SHOUTcast en promenade à portée, plus fort quand on s'approche ; une radio à la fois, arrêtée hors de portée et en vue globale.
   > - Le titre du morceau s'affiche quand le serveur de présence le lit dans le flux (`--radios FICHIER`, manuel § 10.25).
   > - La ligne « Radio » du bloc État dit pourquoi un flux ne joue pas (contenu mixte, flux refusé ou illisible).
-  > 
+  >
   > **2. Page web**
-  > 
   > - Reflets métalliques : nouveau curseur « Reflets métalliques » dans Réglages (0 % par défaut ; la page propose 60 % quand la région a des métaux ; § 7.65) ; diagnostic affiché dans une fenêtre redimensionnable (§ 7.53).
   > - Mer automatique : `oar2glb.py` lit le niveau d'eau de la région dans l'OAR et la page démarre à ce niveau (`seaM` ; `--sea-m`, `--water-from` pour corriger une région déjà convertie ; § 3.13).
   > - Les zones `url` s'ouvrent en entrant (`trigger` `enter` / `both`, `hop://` dans le même onglet) ; clé `cone` par zone (§ 5.7.1).
   > - `--no-credit` retire l'icône « Réalisé avec Web_3d » ; la carte des mondes mémorise la clé des pseudos (§ 9.16).
-  > 
+  >
   > **3. Outils de conversion**
-  > 
   > - Textures allégées : `oar2glb.py --tex-size`, `--tex-quality`, `--tex-only GLB` (sur un GLB déjà fait), tableau des tailles de textures, `glb-stats.py` (§ 3.12).
   > - Nouvel outil `oars2site.py` : un dossier d'OAR devient un site complet, une région après l'autre, avec la carte des mondes (`CONVERTIR_OARS.md`).
   > - Python 3.14 : `glb2html.py` s'ouvre de nouveau. Les outils ne s'arrêtent plus sur une sortie redirigée sous Windows.
-  > 
+  >
   > **4. Lanceur graphique** (§ 3.9)
-  > 
   > - Icône du projet, `glb-stats.py` dans la liste, ligne « Fonction », boutons Fichier / Dossier pour les paramètres `OAR` et `GLB`, plus de « Entrée » après `--help`.
-  > 
+  >
   > **5. Serveur de présence** (§ 10)
-  > 
   > - Registre des pseudos borné (`--max-names`), dernière adresse de l'en-tête du relais, plus de `KeyError` à des déconnexions simultanées, journal des visites avec les pseudos des visiteurs en vue globale (`--visits-names`).
   > - Promeneur muet : un promeneur dont la page est en arrière-plan n'est plus compté ni montré après `--idle-walk` minutes (3 par défaut, `0` = jamais ; § 10.26).
   > - Audit de sécurité des pages et du serveur (aucune faille trouvée dans les pages).
-  > 
+  >
   > **6. Documentation**
-  > 
   > - Manuel § 3.12, § 3.13, § 5.19, § 7.65, § 10.25, § 10.26 ; `CONVERTIR_OARS.md` ; procédures simples § 12 à § 14 ; `REFERENCE_JSON.md` (zones `cast`, `seaM`, `credit`).
-  > 
+  >
   > ### Mise à jour
-  > 
+  >
   > - Si vous avez déjà un des paquets, copiez seulement `index.html` et `carte.html` dans votre dossier.
   > - Ne dézippez pas le nouveau zip par-dessus : cela écraserait votre configuration, vos zones et vos images.
   > - Hébergeurs d'un serveur de présence : remplacez `presence_server.py` et relancez-le ; les nouvelles options sont facultatives.
+
 
 ### 15/11/2026: documents for batch 1.10.37: silent walker (batch 1.10.38)
 
@@ -1281,98 +1231,82 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 ### 12/11/2026: release 1.10.0: PBR materials, Linux with Mono, sea height
 
 - **Release**: 1.10.0 (12/11/2026), decided by Klaatou, gathers batches 1.9.1 to 1.9.23 (described below, in this same section). The minor number goes up: functions were added since 1.9.0.
-
 - **New since 1.9.0**:
-  
   - **(1)** OpenSim 0.9.3 PBR materials: `oar2glb.py` reads them in the OAR and applies them to the GLB (manual § 3.10; `--no-pbr`, `--pbr-size N`; Pillow needed for the textures).
   - **(2)** Conversion on Linux: `oar2glb.py` runs convoar with Mono (manual § 3.11).
   - **(3)** "Sea height" slider in the Settings of the page (manual § 9.19).
   - **(4)** The graphical launcher opens `oar2glb` again from its shortcuts (it did not open without a console); PBR example in its list.
   - **(5)** `tests/tout.py`: the whole test suite in one command (`DEVELOPPEMENT.md`); `CHANGELOG.fr.md` created and `CHANGELOG.md` becomes the English version; PBR picture and credit in the README; documents up to date.
-
 - **Version numbers per built file**: `index.html`, `glb2html.py`, `glb-viewer.html`, `carte.html` 1.9.15 ; `oar2glb.py` 1.9.21 ; `web3d_gui.py` 1.9.17 ; unchanged: `glb2tiles.py` 1.4.10, `extraire_batiments.py` 1.6.3, `iar2oar.py` 1.6.4, `diag_carte.py` 1.7.7, `presence_server.py` 1.6.19 (no `scp` to the VM).
-
 - **Tried by Klaatou on Windows**: the conversion of a real 1.45 GB sandbox OAR with PBR (`--pbr-size 256`), the result in Blender and in the viewer, the sea slider, the launcher, the whole test suite (93 tests out of 95; `v51_vides` and `v52_http` fail with websockets 16.0, which only adds noise to the presence server's log). **Tried**: Linux with Mono, on Debian 13 (Klaatou) and Ubuntu 24 (sandbox), small regions. **Not tried**: Edge, macOS, a large region on Linux, the sea slider in tiles mode.
-
 - **Known points** (to correct later, probably in 1.10.1): `glb2html.py` stops on `→` when its output goes to a Windows pipe or file in cp1252; without `--pbr-size` a region with many PBR materials gives a heavy GLB; under Mono, convoar did not write its `.buf` on a 20-object extract.
-
 - **GitHub release notes** (to attach: `galerie-photos.zip` and `region-simple.zip`, built by `python fabriquer_paquets.py` after `VERSION` is set to 1.10.0), English then French:
-  
+
   > **Web_3d 1.10.0: PBR materials, Linux, sea height**
-  > 
+  >
   > ### What's new
-  > 
+  >
   > **1. OpenSim 0.9.3 PBR materials**
-  > 
   > - OARs that contain PBR materials are converted with their real materials: colour, metallic and roughness, relief (normal), occlusion, emissive, and each object's own settings.
   > - It is automatic. `--no-pbr` to skip it; `--pbr-size 256` for smaller textures (lighter GLB).
   > - Pillow is needed for the textures: `pip install pillow`.
   > - Tried on the BloodMoon Pack grid's sandbox (1.45 GB). Thanks to its owner, Vlad.
-  > 
+  >
   > **2. Conversion on Linux**
-  > 
   > - `oar2glb.py` runs convoar with Mono. The packages to install are in the manual, § 3.11.
   > - Tried on Debian 13 and Ubuntu 24. **Your feedback is welcome** (other distributions, large regions) to validate it completely.
-  > 
+  >
   > **3. Web page: sea height**
-  > 
   > - New "Sea height" slider in Settings.
   > - It fixes the case where the sea hid the lower part of buildings on some large regions.
   > - Existing pages do not change.
-  > 
+  >
   > **4. Graphical launcher**
-  > 
   > - `oar2glb` opens again from the launcher and its shortcuts (it did not open without a console).
   > - New PBR example in the list.
-  > 
+  >
   > **5. Documentation**
-  > 
   > - Manual: § 3.10 (PBR), § 3.11 (Linux), § 9.19 (sea).
   > - README with a PBR picture.
   > - Changelog in French (`CHANGELOG.fr.md`) and in English (`CHANGELOG.md`).
-  > 
+  >
   > ### Updating
-  > 
+  >
   > - If you already have one of the packages, copy only `index.html` and `carte.html` into your folder.
   > - Do not unzip the new zip over it: that would overwrite your configuration, zones and images.
-  > 
+  >
   > ---
-  > 
+  >
   > **Web_3d 1.10.0 : matériaux PBR, Linux, hauteur de la mer**
-  > 
+  >
   > ### Nouveautés
-  > 
+  >
   > **1. Matériaux PBR d'OpenSim 0.9.3**
-  > 
   > - Les OAR qui contiennent des matériaux PBR sont convertis avec leurs vrais matériaux : couleur, métal et rugosité, relief (normale), occlusion, émissif, et les réglages propres à chaque objet.
   > - C'est automatique. `--no-pbr` pour s'en passer ; `--pbr-size 256` pour des textures plus petites (GLB plus léger).
   > - Pillow est nécessaire pour les textures : `pip install pillow`.
   > - Essayé sur la sandbox de la grille BloodMoon Pack (1,45 Go). Merci à son propriétaire, Vlad.
-  > 
+  >
   > **2. Conversion sous Linux**
-  > 
   > - `oar2glb.py` lance convoar avec Mono. Les paquets à installer sont dans le manuel, § 3.11.
   > - Essayé sur Debian 13 et Ubuntu 24. **Vos retours sont les bienvenus** (autres distributions, grandes régions) pour le valider complètement.
-  > 
+  >
   > **3. Page web : hauteur de la mer**
-  > 
   > - Nouveau curseur « Hauteur de la mer » dans Réglages.
   > - Il règle le cas où la mer cachait le bas des bâtiments sur certaines grandes régions.
   > - Les pages existantes ne changent pas.
-  > 
+  >
   > **4. Lanceur graphique**
-  > 
   > - `oar2glb` s'ouvre de nouveau depuis le lanceur et ses raccourcis (il ne s'ouvrait pas sans console).
   > - Nouvel exemple PBR dans la liste.
-  > 
+  >
   > **5. Documentation**
-  > 
   > - Manuel : § 3.10 (PBR), § 3.11 (Linux), § 9.19 (mer).
   > - README avec une image PBR.
   > - Journal des modifications en français (`CHANGELOG.fr.md`) et en anglais (`CHANGELOG.md`).
-  > 
+  >
   > ### Mise à jour
-  > 
+  >
   > - Si vous avez déjà un des paquets, copiez seulement `index.html` et `carte.html` dans votre dossier.
   > - Ne dézippez pas le nouveau zip par-dessus : cela écraserait votre configuration, vos zones et vos images.
 
@@ -1570,13 +1504,11 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 ### 10/11/2026: release 1.9.0: blinking Walk button, Discord link in Help, no more black screen on tiled regions, convoar supplied, launcher examples list
 
 - **Release**: 1.9.0 (10/11/2026) gathers batches 1.8.1 to 1.8.18 (described below, in this same section). New since 1.8.0: **(1)** in the global view, the "Walk (P)" button blinks after 8 s without action (black and white, never colour alone; it stops at the slightest action, and for good after a first walk); **(2)** link to the Discord server in the Help window; **(3)** opening a tiled region with a `#spawn=` or `#pos=` link: no more black screen, the global view stays visible while the ground loads; **(4)** convoar supplied in `dist\convoar\` (Windows only; copy of the `dist` folder of its repository, without the `*.pdb` files and `NLog.xml`, licences included), found by `oar2glb.py` by itself; convoar's address corrected in the READMEs, the manuals and the tool; **(5)** `web3d_gui.py`: a list of basic-use examples for every tool (it fills the fields); **(6)** `python build.py` regenerates `docs/REFERENCE_OPTIONS.md`; root of the repository tidied (`deploy\` folder); tests fixed under Windows. Documents up to date (manual § 3.9, § 7.63, § 7.64, simple procedures § 11, `DEVELOPMENT.md`). **Version numbers per built file**: `index.html`, `glb2html.py`, `glb-viewer.html` 1.8.6; `carte.html` 1.8.5; `oar2glb.py` 1.8.11; `web3d_gui.py` 1.8.17; unchanged: `glb2tiles.py` 1.4.10, `extraire_batiments.py` 1.6.3, `iar2oar.py` 1.6.4, `diag_carte.py` 1.7.7, `presence_server.py` 1.6.19 (no `scp` to the VM). **Tried by Klaatou under Windows**: the launcher and its examples list, a small conversion with the slimmed-down convoar. **Not tried**: Edge, Safari, the launcher on macOS and on Linux with a real display, the "Houses" region loading without a black screen.
-
 - **GitHub release notes** (to attach: `galerie-photos.zip` and `region-simple.zip`, built by `python fabriquer_paquets.py` after `VERSION` is set to 1.9.0):
-  
+
   > The two packages contain the new `index.html` and `carte.html` (and the `region-simple` readme has the corrected convoar address). If you already have one, copy only `index.html` and `carte.html` into your folder: do not unzip over it, that would overwrite your config, zones and images. See docs/en/SIMPLE_PROCEDURES.md section 10.
-  > 
+  >
   > **Release** 1.9.0. New:
-  > 
   > - in the global view, the "Walk (P)" button blinks after a few seconds without action (it stops at the first action, and for good after a first walk);
   > - the Help window links to the Discord server;
   > - opening a tiled region with a `#spawn=` or `#pos=` link no longer shows a black screen: the global view stays visible while the ground loads;
@@ -1584,7 +1516,7 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
   > - `web3d_gui.py` (graphical launcher): a list of basic-use examples for every tool; choosing one fills the fields;
   > - `python build.py` regenerates `docs/REFERENCE_OPTIONS.md`; the repository root is tidied (`deploy/` folder); tests fixed under Windows;
   > - documentation: manual sections 3.9, 7.63 and 7.64, simple procedures section 11, `DEVELOPMENT.md`.
-  > 
+  >
   > Tested on Windows by Klaatou: the graphical launcher and its examples list, a small conversion with the supplied convoar. The page changes were tested in Chromium under Linux. Not tried: Edge, Safari, the graphical launcher on macOS and on Linux with a real display.
 
 ### 10/11/2026: documents: the launcher's examples list (batch 1.8.18)
@@ -1708,20 +1640,18 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 ### 08/11/2026: release 1.8.0: graphical launcher and Windows shortcuts, `diag_carte.py`, READMEs and documents rewritten
 
 - **Release**: 1.8.0 (08/11/2026) gathers batches 1.7.1 to 1.7.22 (described below, in this same section). New since 1.7.0: **(1)** `web3d_gui.py`, a graphical launcher for the six tools (`glb2html`, `glb2tiles`, `oar2glb`, `extraire_batiments`, `iar2oar`, `diag_carte`): tool list, one line per option read from the tool itself, help for each option, command line, launch and output, repeatable options, `--tool`, File and Folder buttons; **(2)** `--shortcuts` creates Windows shortcuts on the desktop (one for the window, one per tool) with the project icon; `--dry-run`, `--remove-shortcuts`, `--shortcuts-folder`; **(3)** `diag_carte.py` enters `tools` and `dist`: it tells you why the map shows no nicknames; **(4)** READMEs rewritten (introduction, glossary, SVG diagrams, features) with a link to the Discord server; **(5)** documents: manual § 3.9 and § 9.22, simple procedures § 11, `DEVELOPMENT.md` § 6, `INDEX.md`, histories, shortcuts image; **(6)** tests: `gui.py`, `diag_carte.py` and `readme_liens.py` are new; `v32`, `v37`, `textes_outils` and `tools_lang` fixed (waiting for a condition, closed input, Windows language); **(7)** the macOS tester's name (NightshadeCeres, with his agreement) in the documents. **Unchanged since 1.7.0**: the page, the viewer, `glb2html.py`, `glb2tiles.py`, `oar2glb.py`, `extraire_batiments.py`, `iar2oar.py`, the presence server (1.6.19) and the two packages (their zips only write "Web_3d 1.8.0" in `VERSION.txt`).
-
 - **GitHub release notes** (to attach: `galerie-photos.zip` and `region-simple.zip`, built by `python fabriquer_paquets.py` after `VERSION` is set to 1.8.0):
-  
+
   > The two packages are unchanged since 1.7.0 (only the version written in their `VERSION.txt` changes): if you already have one, there is nothing to update. If you do update, do not unzip over your folder: it would overwrite your config, zones and images. See docs/en/SIMPLE_PROCEDURES.md section 10.
-  > 
+  >
   > **Release** 1.8.0. New:
-  > 
   > - `web3d_gui.py`: a graphical launcher for the tools (`glb2html`, `glb2tiles`, `oar2glb`, `extraire_batiments`, `iar2oar`, `diag_carte`): choose the tool in a list, fill in the options (the help of each option shows under the pointer), see the resulting command, run it and read its output; `--tool NAME` opens it on one tool;
   > - `python web3d_gui.py --shortcuts` creates Windows shortcuts on the desktop (one for the window, one per tool) with the Web_3d icon; `--dry-run` shows what would be done, `--remove-shortcuts` removes them;
   > - `diag_carte.py`: tells you why the world map shows no nicknames (it queries the presence server with and without the key);
   > - the READMEs are rewritten (introduction, glossary, diagrams, features) and link to the Discord server;
   > - documentation: manual sections 3.9 (graphical launcher) and 9.22 (map nicknames), simple procedures section 11, `INDEX.md`;
   > - the page, the viewer, the other tools, the presence server and the packages are unchanged since 1.7.0.
-  > 
+  >
   > Tested on Windows by Klaatou: the graphical launcher, the tool list, the file and folder pickers and the shortcuts. Reported earlier by NightshadeCeres: the macOS launcher and the region display work on macOS Ventura 13.7.8 with Firefox 159.0.1. Not tried: the graphical launcher on macOS and Linux, Safari.
 
 ### 08/11/2026: `web3d_gui.py`: File and Folder buttons on the output fields (batch 1.7.22)
@@ -1860,13 +1790,11 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 ### 07/11/2026: 1.7.0 release: scripts in the repository, icon and logo, animated GIFs, reorganized documentation
 
 - **Release**: 1.7.0 (07/11/2026) gathers batches 1.6.1 to 1.6.19 (described below, in this same section). New since 1.6.0: **(1)** `extraire_batiments.py` and `iar2oar.py` join the repository (French and English messages, `--lang`, English option names with the old French names still accepted, cache in the current folder); **(2)** documentation: `INDEX.md`, the JSON reference as a separate document (`REFERENCE_JSON.md`), procedure to update a package that is already published, "do not unzip over it" warnings; **(3)** "Made with Web_3d" icon at the bottom right of the page and of the map, and the logo as the default tab icon (sample `favicon.ico` replaced); **(4)** animated GIFs on image zones (decoder in the page); **(5)** Status window: "Version: page … · configuration …", and "Copy diagnostics": "Animated GIFs" line; **(6)** packages: image targets without extension (any image), the packages' `README.txt` files say that `carte.html` is published with the site (it has been there since 1.5.0); **(7)** `REFERENCE_OPTIONS.md` regenerated, `--map-names` described. Report from a tester: macOS launcher and region display on macOS Ventura 13.7.8 with Firefox 159.0.1. **Updating a package that is already published**: copy `index.html` and `carte.html` (and `favicon.ico` if you do not have your own), never unzip over it (`SIMPLE_PROCEDURES.md` § 10). `VERSION` goes from `1.6.19` to `1.7.0`; no built file changes at the release (each keeps the number of its last batch).
-
 - **GitHub release notes** (attach: `galerie-photos.zip` and `region-simple.zip`, built by `python fabriquer_paquets.py`), as Klaatou published them on 07/11/2026 (English; the French ones stay in `CHANGELOG.fr.md`), except the bullet on `carte.html`, reworded here because the map has been in the packages since 1.5.0:
-  
+
   > Already have one of these packages? Do not unzip over your folder: it would overwrite your config, zones and images. See docs/en/SIMPLE_PROCEDURES.md section 10.
-  > 
+  >
   > **Release** 1.7.0. New:
-  > 
   > - animated GIFs on image zones (the page decodes the GIF itself, animates only the planes you can see, and keeps the first frame when the system asks for less motion);
   > - the Status window shows "Version: page … · configuration …" and "Copy diagnostics" gives an "Animated GIFs" line;
   > - the packages' image zones now use targets without extension, so any image type (jpg, jpeg, png, webp, gif, avif <- note that this is the order in which the image is searched for; if the target exists as both a .jpg and a .gif, the .jpg version will be displayed!) can be dropped in `medias/` under the same number;
@@ -1874,9 +1802,9 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
   > - `extraire_batiments.py` (one GLB per object group of an OAR) and `iar2oar.py` (OpenSim inventory archive to a minimal OAR) join the repository, with French and English messages, `--lang`, English option names (the old French names are still accepted);
   > - documentation: `INDEX.md`, the JSON reference as a separate document, the procedure to update a package that is already published, `REFERENCE_OPTIONS.md` regenerated;
   > - a small "Made with Web_3d" icon (the Web_3d logo) at the bottom right of the page and of the map, with a bubble linking to the repository; the logo is also the default tab icon (sample `favicon.ico` replaced).
-  > 
+  >
   > **Upgrading a package**: copy `index.html` and `carte.html` and `aide.html` (be careful if you have customized your aide.html file!) from the new zip (and `favicon.ico` if you have not placed your own); do not unzip over your folder.
-  > 
+  >
   > Reported by a tester: the macOS launcher and the region display work on macOS Ventura 13.7.8 with Firefox 159.0.1. Not tried: Safari, Firefox on Windows, GIF animation outside Chromium.
 
 ### 07/11/2026: `--map-names` described; `REFERENCE_OPTIONS.md` regenerated
@@ -1954,8 +1882,7 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 ### 05/11/2026: no more personal region names or nicknames in the examples and tests
 
 - **Found by Klaatou**: an old sample region name and a personal nickname appeared in documents, tests and examples of the public repository. They are replaced by neutral names (`Atoll`, `klaat`): `docs/samples/README.md` and `README.fr.md`, `src/i18n` (example of the `-o` option, hence `REFERENCE_OPTIONS.md` and `dist\`), `tests/modulaire.py`, `tests/v37_region.py`, `tests/samples.py`, `tests/v51.py`, `CHANGELOG.md`. `VERSION` goes from `1.6.0` to `1.6.1`.
-  
-  ## 1.6.0 (05/11/2026)
+## 1.6.0 (05/11/2026)
 
 ### 05/11/2026: 1.6.0 release: `yaw` in the status, "Link to OpenSim" panel in the packages, documents up to date
 
@@ -1977,12 +1904,9 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 ### 04/11/2026: chat: a text selection in the log is no longer erased
 
 - **Found by Klaatou**: impossible to copy a chat message, the selection was lost. **Cause**: the page rebuilt the whole log every second (`setInterval(render, 1000)`, `template.html`), which erases a text selection. **Fix**: the log is touched only if the displayed list changes, and one more message is appended at the end without rebuilding everything; in the viewer, one more message is appended to the log without rewriting it. Nothing changes on the network side: `render()` does not talk to the presence server. `VERSION`: `1.5.2`. Changed in `dist\`: `glb2html.py`, `index.html`, `glb-viewer.html`.
-
 - **Tests**: `tests/chat_selection.py` (new: triple click on a message, the selection holds for 3.5 s and when a message arrives; more than 6 messages: correct rebuild; on 1.5.1, 2 checks fail). **Not tested here**: Windows, Edge.
-
 - **Fixed**: a text selection in the chat log is no longer erased. The page rebuilt the whole log every second (`setInterval(render, 1000)`), which cleared any selection; the log is now touched only when the displayed list changes, and a new message is appended without rebuilding. In the viewer, a new message is appended to the log without rewriting it. Nothing changes on the network side. New test `tests/chat_selection.py` (fails on 1.5.1). Not tested here: Windows, Edge.
-  
-  ## 1.5.1 (04/11/2026)
+## 1.5.1 (04/11/2026)
 
 ### 04/11/2026: 1.5.1 release: the version shown by the packages follows the release
 
@@ -2073,8 +1997,7 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 ### 02/11/2026: version 1.4.1: `CLAUDE.md` removed
 
 - **Removed** (Klaatou's request, after reading it): `CLAUDE.md` served the Claude Code sessions up to v37 (23/10/2026); it said so at its very top. The current state is in `REPRISE.md`, the detail in `CHANGELOG.md` and the histories, the usage in the manual. It also held decisions reversed since (for example the chat arrows going through `viewer.holdKey`, changed in 1.2.1). It stays in the git history. `tests/samples.py` no longer checks it; the manual ("Standalone files", FR and EN) no longer cites it. The file itself is removed with `git rm CLAUDE.md` (or by deleting it before `git add -A`).
-  
-  ## 1.4.0 (02/11/2026)
+## 1.4.0 (02/11/2026)
 
 ### 02/11/2026: 1.4.0 release: map nicknames, chat beep, launchers' guard
 
@@ -2137,12 +2060,9 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 ### 01/11/2026: version 1.2.1: chat, help and README.txt of the packages, README
 
 - **Fix** (chat): while typing in the chat, the arrows moved the avatar instead of the cursor in the text (a v33 decision: you could walk while writing), which made it impossible to correct a message (Klaatou's finding). They now stay in the text while the input is open; Esc closes it and gives the arrows back to walk mode. `template.html` (the chat's key handler), help (`page.help.chat.arrows`), FR/EN manual (§ 18.5, § 22.6 and the key table). Tests: `tests/chat_fleches.py` (new, with a real presence server) and `tests/v33.py` (two checks inverted).
-
 - **Packages**: `LISEZMOI.txt` becomes `README.txt` (international name), gives the addresses of the help (`aide.html`) and of the documentation, and says where to find the help in the 3D world (the “?” panel); `aide.html`: the K key is described exactly (shows or hides the arrow buttons), the chat follows the new help.
-
 - **Documents**: the FR/EN `README` presents the two packages right under the demo; `PROCEDURES` § 12, step 4: creating the GitHub release step by step.
-  
-  ## 1.2.0 (01/11/2026)
+## 1.2.0 (01/11/2026)
 
 ### 01/11/2026: 1.2.0 release: clickable image zones, numbers, `dist/` and ready-to-use packages
 
@@ -2312,8 +2232,7 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 ### 29/10/2026: alignment of the service file
 
 - **Documents**: `web3d-presence.service` (repository root): `NOM_USER` becomes `UTILISATEUR`, as in `PROCEDURES` § 11 and `REPRISE.md`. No code change, no version number change.
-  
-  ## 1.0.0 (29/10/2026)
+## 1.0.0 (29/10/2026)
 
 ### 29/10/2026: 1.0.0 numbering, documents revised
 
@@ -2393,27 +2312,20 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 ### 25/10/2026: one-page overview
 
 - **Documents**: `docs/fr/VUE_ENSEMBLE.md` and `docs/en/OVERVIEW.md`: what works, what has been tried or not, what is left to do (test from the VM, note for creators, mouse, public demo, numbering, release), where to read what. No code change, no version number change.
-  
-  ## v52 (25/10/2026)
-  
-  ### 25/10/2026 : région en tuiles renommée, vue d'ensemble reliée aux tuiles
-
+## v52 (25/10/2026)
+### 25/10/2026 : région en tuiles renommée, vue d'ensemble reliée aux tuiles
 - **Page et viewer (`core.js`, `loadOverview`)** : le fichier `X.overview.glb` porte dans chaque nœud le chemin de sa tuile tel qu'il était au découpage (`extras.tile`, « X.tiles/T_3_0_0.glb »). Après un renommage des dossiers et des chemins de l'index (le binaire restant intact), plus aucune cellule n'était reliée à sa tuile : la vue d'ensemble restait visible sous les tuiles détaillées et les surfaces se recouvraient (moirures, plaques sombres, surtout sur le terrain et les rochers). La cellule est maintenant retrouvée par le nom du fichier de la tuile quand le chemin complet ne correspond pas (nom unique dans une région ; sinon la cellule reste visible, jamais de trou). On peut renommer une région à la main sans régénérer la vue d'ensemble. `tests/v52_renom.py`.
-
 - **Page and viewer (`core.js`, `loadOverview`)**: the `X.overview.glb` file carries in each node the path of its tile as it was when the region was split (`extras.tile`, "X.tiles/T_3_0_0.glb"). After renaming the folders and the index paths (the binary being untouched), no cell was linked to its tile any more: the overview stayed visible under the detailed tiles and the surfaces overlapped (moire, dark patches, mostly on terrain and rocks). The cell is now found by the tile's file name when the full path does not match (unique in a region; otherwise the cell stays visible, never a hole). A region can be renamed by hand without regenerating the overview. `tests/v52_renom.py`.
 
 ### 25/10/2026 : serveur de présence, requêtes HTTP ordinaires sur le port
-
 - **Serveur de présence** : avec `websockets` 14 et 15, une requête HTTP ordinaire sur le port du serveur (navigateur qui ouvre son adresse, robot, test) écrivait une trace complète (« opening handshake failed », `InvalidUpgrade`, « invalid Connection header: keep-alive ») alors que le client reçoit bien « 426 Upgrade Required ». Une ligne `requête http` la remplace : adresse, chemin, hôte, agent et raison, au plus une par minute et par adresse. Les requêtes mal formées et les autres erreurs restent affichées en entier. `tests/v52_http.py` (variables `WS_OLD`, `WS_OLD2`). **Relancer le serveur de présence.**
 - **Presence server**: with `websockets` 14 and 15, an ordinary HTTP request on the server port (a browser opening its address, a robot, a test) wrote a full trace ("opening handshake failed", `InvalidUpgrade`, "invalid Connection header: keep-alive") although the client does get "426 Upgrade Required". An `http request` line replaces it: address, path, host, agent and reason, at most one per minute and per address. Malformed requests and other errors are still shown in full. `tests/v52_http.py` (variables `WS_OLD`, `WS_OLD2`). **Restart the presence server.**
 
 ### 25/10/2026 : repère visuel des arrivées, agrandissement des vignettes à 400 px
-
 - **`carte.html`** : quand la surveillance est cochée, la tuile de la région où quelqu'un vient d'arriver est marquée : contour en pointillés qui clignote, fond jaune et le texte « ● arrivée hh:mm » (jamais la couleur seule ; sans clignotement si le système demande de réduire les animations). Le repère reste jusqu'au survol de la tuile ; décocher la case l'efface. La case devient « Surveillance des arrivées (son et repère) ». Agrandissement des vignettes porté de 320 à 400 px au plus (`carte.html` et carte ouverte par M). **Décompte des régions** (« 12 régions · Total : … ») au-dessus de la grille. **Français : visiteurs et promeneurs sur deux lignes** dans les tuiles (cle `map.sep` / `page.map.sep`, « \n » en français, « · » en anglais ; `white-space: pre-line`), le total reste sur une ligne.
 - **`carte.html`**: when the alert is checked, the tile of the region where someone just arrived is marked: dashed outline that blinks, yellow background and the text "● arrival hh:mm" (never colour alone; no blinking if the system asks for reduced motion). The marker stays until the tile is hovered; unchecking the box clears it. The checkbox becomes "Arrival alert (sound and marker)". Thumbnail enlargement raised from 320 to 400 px at most (`carte.html` and the map opened with M). **Region count** ("12 regions · Total: …") above the grid. **French: visitors and walkers on two lines** in the tiles (key `map.sep` / `page.map.sep`, line break in French, " · " in English; `white-space: pre-line`), the total stays on one line.
 
 ### 25/10/2026 : carte.html (total, surveillance sonore, agrandissement), « promeneur », case « Afficher la mer »
-
 - **`carte.html` et carte autonome `--map-page`** : ligne « Total : N visiteurs · N promeneurs » au-dessus de la grille (chaque salon compté une fois ; avec un ancien serveur sans `visitors`, promeneurs seulement) ; case « Surveillance sonore » (mémorisée, clé `glb2html_map_alert`) : une hausse du nombre de visiteurs d'un salon de la carte entre deux relevés joue les deux notes montantes de l'arrivée d'un promeneur et note « dernière arrivée : région, hh:mm » ; le premier relevé d'un serveur ne sonne jamais ; le son démarre au premier clic dans la page (règle du navigateur, dite en texte). Délais d'interrogation en tête du script de la page : `POLL_MS` (10 000 ms) et `POLL_ALERT_MS` (5 000 ms, surveillance cochée). Agrandissement de la vignette au survol (souris seulement, 320 px au plus), aussi dans la carte ouverte par M.
 - **Texte** : « 1 promeneur », « N promeneurs » à la place de « en promenade » (français) ; « walker » / « walkers » à la place de « walking » (anglais) ; `tests/v47.py` adapté.
 - **Réglages de la page** : case « Afficher la mer » avant « Mer animée » (seulement si la page a une mer) ; mer masquée : « Mer animée » et « Vagues » grisés ; choix retenu avec les autres réglages (`glb2html_opts_SALON`), « Valeurs d'origine » la remet. Une page faite avec `--no-sea` ignore un ancien choix retenu.
@@ -2422,106 +2334,82 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 - **Page settings**: "Show the sea" checkbox before "Animated sea" (only if the page has a sea); sea hidden: "Animated sea" and "Waves" greyed out; choice kept with the other settings (`glb2html_opts_ROOM`), "Default values" restores it. A page made with `--no-sea` ignores an old remembered choice.
 
 ## v51 (25/10/2026)
-
 ### 25/10/2026 : adresse de présence « même nom que la page »
-
 - **Page, fenêtre Carte, `carte.html`, journal des visites, viewer** : une adresse de présence peut s'écrire `ws://*:PORT` ; l'étoile est remplacée par le nom avec lequel la page a été ouverte (`presUrl` dans `core.js`, `template.html` et la page de carte de `gen_tpl.py` ; disque et viewer : `127.0.0.1` ; `ws://0.0.0.0` toujours corrigé). Corrige les connexions vides et les compteurs absents quand `carte.html` ouverte par un nom public visait une adresse du réseau local. Message d'erreur de présence avec l'adresse résolue. Aide de `--presence-url` et message de démarrage du serveur (`py.presence.star_hint`), `REFERENCE_OPTIONS.md`. Manuel § 34.10 (FR, EN), procédures § 6 point 4, historique, `tests/v51_etoile.py`.
 - **Page, Map window, `carte.html`, visit log, viewer**: a presence address can be written `ws://*:PORT`; the star is replaced with the name the page was opened with (`presUrl` in `core.js`, `template.html` and the map page of `gen_tpl.py`; disk and viewer: `127.0.0.1`; `ws://0.0.0.0` still corrected). Fixes the empty connections and missing counters when `carte.html` opened through a public name targeted a local network address. Presence error message with the resolved address. `--presence-url` help and server start-up message (`py.presence.star_hint`), `REFERENCE_OPTIONS.md`. Manual § 34.10 (FR, EN), procedures § 6 item 4, history, `tests/v51_etoile.py`.
 
 ### 25/10/2026 : connexions vides du serveur de présence
-
 - **Serveur de présence** : avec `websockets` 14 et 15, chaque connexion TCP fermée sans requête (préconnexion d'un navigateur, test de port, robot) écrivait une trace complète « opening handshake failed » (EOFError) dans la console. Un filtre sur le journal `websockets.server` la remplace par une ligne « vide » (console et `presence.log`) avec l'adresse de l'appelant, masquée selon `--log-ip`, au plus une par minute et par adresse ; les autres erreurs restent affichées. Livré d'abord en v52, rattaché à la v51 le 25/10/2026 (étiquette `v52` supprimée). Manuel § 34.9 (FR, EN), historique, README, `tests/v51_vides.py` (variable `WS_OLD` pour une ancienne version de `websockets`).
 - **Presence server**: with `websockets` 14 and 15, each TCP connection closed without a request (browser preconnection, port test, robot) wrote a full "opening handshake failed" trace (EOFError) to the console. A filter on the `websockets.server` log replaces it with an "empty" line (console and `presence.log`) with the caller's address, masked according to `--log-ip`, at most one per minute and per address; other errors are still shown. First delivered as v52, attached to v51 on 25/10/2026 (`v52` tag removed). Manual § 34.9 (FR, EN), history, README, `tests/v51_vides.py` (`WS_OLD` variable for an old `websockets` version).
 
 ### 25/10/2026 : documents des créateurs
-
 - **Manuel** (FR et EN) : § 34 (créateurs sur le serveur de présence : fichier, origine, préfixe, limites, ce que voit le visiteur, console, limites de la méthode), § 27.1 et § 27.10 (`presence_creators.json` champ par champ), titre et résumé (v51). **Procédures** § 6, point 7 : accueillir un créateur. **Historique** et **README** (FR et EN) : v51, commande `creators`, `presence_creators.json` à ne jamais committer.
 - **Manual** (FR and EN): § 34 (creators on the presence server: file, origin, prefix, limits, what the visitor sees, console, limits of the method), § 27.1 and § 27.10 (`presence_creators.json` field by field), title and summary (v51). **Procedures** § 6, item 7: welcoming a creator. **History** and **README** (FR and EN): v51, `creators` command, `presence_creators.json` never to be committed.
 
 ### 25/10/2026 : créateurs sur le serveur de présence
-
 - **Serveur de présence** : option `--creators FICHIER` (`presence_creators.json`, relu à chaud, sans relancer le serveur). Chaque créateur déclare les origines de ses pages, un préfixe de salon (`alice.` ; l'hôte n'en a pas et garde tous les autres salons), `maxWalkers`, `maxRooms`, `off`. Une page d'une origine non déclarée, d'un créateur suspendu, un salon hors du préfixe ou un salon de trop sont refusés (message `refused`, code 4003, ligne « refus » au journal) ; promeneurs au plus par créateur à l'arrivée et au passage en promenade. Commande de console `creators`. Sans `--creators`, rien ne change. Correction : un refus (bannissement, salon complet) ne laisse plus de salon vide. **Page et viewer** : le refus est affiché avec sa raison, sans nouvelle tentative. `.gitignore` : `presence_creators.json`. Exemple `docs/samples/presence_creators.sample.json`, `tests/v51.py`, `tests/samples.py`.
 - **Presence server**: `--creators FILE` option (`presence_creators.json`, re-read on change, no server restart). Each creator declares the origins of their pages, a room prefix (`alice.`; the host has none and keeps all other rooms), `maxWalkers`, `maxRooms`, `off`. A page from an undeclared origin, from a suspended creator, a room outside the prefix or one room too many are refused (`refused` message, code 4003, "refusal" log line); walkers at most per creator on arrival and when switching to walking. Console command `creators`. Without `--creators`, nothing changes. Fix: a refusal (ban, full room) no longer leaves an empty room. **Page and viewer**: the refusal is shown with its reason, without retrying. `.gitignore`: `presence_creators.json`. Sample `docs/samples/presence_creators.sample.json`, `tests/v51.py`, `tests/samples.py`.
 
 ## v50 (25/10/2026)
-
 ### 25/10/2026 : textes et documents à jour
-
 - **README** (FR et EN, même plan) : à jour jusqu'à la v50 (fichiers `index.html` et `carte.html`, organisation d'un site, `--scan-sites`, carte des mondes, résumé de la page, tableau des touches complet avec K, L, O, serveur de présence, tests) au lieu des nouveautés v33 à v37. **Manuel** (FR et EN) : titre et résumé (v50), touche K au § 2. **Procédures** (FR et EN) : § 4 (patch, copie de `index.html` et `carte.html` dans `Sites\`, `--update` avec la coquille de la racine, serveur relancé à chaque version), § 7 (carte par `--scan-sites` et `carte.html`), § 8. **Serveur de présence** : le message de démarrage cite `rooms` et `visits-key`. **`CLAUDE.md`** : renvoie à `REPRISE.md` et aux règles de travail, feuille de route et liste des tests périmées retirées (`git show v49:CLAUDE.md`). **`.gitignore`** : `presence_visits_keys.json` exclu.
 - **README** (FR and EN, same outline): up to date to v50 (`index.html` and `carte.html` files, site layout, `--scan-sites`, world map, page summary, full key table with K, L, O, presence server, tests) instead of the v33 to v37 news. **Manual** (FR and EN): title and summary (v50), K key in § 2. **Procedures** (FR and EN): § 4 (patch, copy of `index.html` and `carte.html` into `Sites\`, `--update` with the root shell, server restarted at each version), § 7 (map through `--scan-sites` and `carte.html`), § 8. **Presence server**: the start-up message lists `rooms` and `visits-key`. **`CLAUDE.md`**: points to `REPRISE.md` and the working rules, outdated roadmap and test list removed (`git show v49:CLAUDE.md`). **`.gitignore`**: `presence_visits_keys.json` excluded.
 
 ### 25/10/2026 : carte des mondes du viewer (import, export, ajout)
-
 - **Viewer, section Carte des mondes** : « Importer regions.json » accepte la forme objet avec en-tête (v47, celle que crée `--scan-sites`) au lieu de répondre « tableau attendu » ; « Exporter regions.json » rend la forme importée avec son en-tête (retenu par le navigateur) ; chaque fiche garde tous ses champs (`presence` était perdu) ; « Ajouter / mettre à jour cette région » met à jour sur place la fiche du même salon sans effacer un champ par un vide, comme `--register`. `tests/v50.py`, manuel § 27.6 et § 33.
 - **Viewer, World map section**: "Import regions.json" accepts the object shape with a header (v47, the one `--scan-sites` creates) instead of answering "array expected"; "Export regions.json" gives back the imported shape with its header (remembered by the browser); every card keeps all its fields (`presence` was lost); "Add / update this region" updates the card of the same room in place without erasing a field with an empty one, like `--register`. `tests/v50.py`, manual § 27.6 and § 33.
 
 ## v49 (25/10/2026)
-
 ### 25/10/2026 : documents de la v49
-
 - **Manuel § 32** (FR et EN) : `--scan-sites`, vignettes (320 x 320 conseillé), `REPRISE.md` (créateurs sur le serveur de Klaatou : conception notée, à faire).
 - **Manual § 32** (FR and EN): `--scan-sites`, thumbnails (320 x 320 recommended), `REPRISE.md` (creators on Klaatou's server: design noted, to do).
 
 ### 25/10/2026 : mise à jour de regions.json depuis le dossier des sites
-
 - **`glb2html.py --scan-sites DOSSIER`** (et `--dry-run`) : une fiche par `NOM.config.json` (adresse `index.html?region=dossier/NOM`, salon, serveur), vignette `NOM.jpg`, `.png` ou `.webp` à côté ; fiche reconnue par son salon puis son adresse ; nom, place, arrivée, en-tête et fiches externes gardés ; nouvelle région sur une case libre ; rien n'est supprimé (orphelines signalées). `tests/v49.py`, `REFERENCE_OPTIONS.md`.
 - **`glb2html.py --scan-sites FOLDER`** (and `--dry-run`): one card per `NOM.config.json` (address `index.html?region=folder/NAME`, room, server), thumbnail `NAME.jpg`, `.png` or `.webp` next to it; card recognised by its room then its address; name, place, arrival, header and external cards kept; new region on a free cell; nothing is deleted (orphans reported). `tests/v49.py`, `REFERENCE_OPTIONS.md`.
 
 ## v48 (25/10/2026)
-
 ### 25/10/2026 : bouton « Journal des visites… »
-
 - **Page** : bouton « Journal des visites… » dans la fenêtre Informations (I), à côté de « Copier le diagnostic », seulement si la page a un serveur de présence ; il ouvre la même fenêtre que `#visits` (fermée puis rouverte, le résumé reste). `tests/v48.py`, manuel § 31.3.
 - **Page**: "Visit log…" button in the Information window (I), next to "Copy diagnostics", only when the page has a presence server; it opens the same window as `#visits` (closed then reopened, the summary stays). `tests/v48.py`, manual § 31.3.
 
 ### 25/10/2026 : commande rooms
-
 - **Console du serveur de présence** : `rooms` (alias `salons`) liste les salons connus avec leur casse exacte : connectés (dont promeneurs), visites (reconnexions fusionnées) et date de la dernière, clé ou non. `tests/v48.py`, manuel § 31.2, procédures § 6.
 - **Presence server console**: `rooms` (alias `salons`) lists the known rooms with their exact case: connected (walkers among them), visits (reconnections merged) and date of the last one, key or not. `tests/v48.py`, manual § 31.2, procedures § 6.
 
 ### 25/10/2026 : visits-key et la casse du salon
-
 - **`visits-key ROOM`** : la casse du nom du salon compte partout dans le serveur ; si le nom tapé n'existe qu'avec une autre casse (salons connectés et fichier des visites), la console le signale (la clé est quand même créée). `tests/v48.py`, manuel § 31.2.
 - **`visits-key ROOM`**: case matters in the room name throughout the server; if the typed name only exists with a different case (connected rooms and visit file), the console says so (the key is still created). `tests/v48.py`, manual § 31.2.
 
 ### 25/10/2026 : documents de la v48
-
 - **Manuel § 31** (FR et EN) : journal des visites, côté hôte et côté créateur, ce qui est compté, données personnelles ; § 27.1 et § 27.10 (fichier des visites, `presence_visits_keys.json`) ; procédures § 6 ; exemples `docs/samples/visits.sample.jsonl` et `docs/samples/presence_visits_keys.sample.json` (lus par `tests/samples.py`) ; `REFERENCE_OPTIONS.md` régénéré ; historique (la ligne v47 était sous « Commandes utiles » : remise dans le tableau) ; `REPRISE.md`.
 - **Manual § 31** (FR and EN): visit log, host side and creator side, what is counted, personal data; § 27.1 and § 27.10 (visit file, `presence_visits_keys.json`); procedures § 6; samples `docs/samples/visits.sample.jsonl` and `docs/samples/presence_visits_keys.sample.json` (read by `tests/samples.py`); `REFERENCE_OPTIONS.md` regenerated; history (the v47 line was under "Useful commands": moved back into the table); `REPRISE.md`.
 
 ### 25/10/2026 : journal des visites (code)
-
 - **Serveur de présence** : `--visits FICHIER` note chaque visite à sa fin, une ligne JSON (`room`, `start`, `dur`, `walk`, `v` empreinte du navigateur ; `name` seulement avec `--visits-names`), jamais d'adresse IP ; `--visits-days N` (365, 0 = tout garder) purge au démarrage et toutes les 6 h ; arrêt propre : les visites en cours sont écrites. Commande de console `visits-key ROOM` (clé affichée une seule fois, seule son empreinte gardée dans `--visits-keys`, par défaut `presence_visits_keys.json`), `visits-key ROOM off`, `visits-key` seul. Message `visits` (avant `hello`) : résumé par jour et visites des 30 derniers jours, reconnexions de moins de 2 min fusionnées, 5 clés refusées par minute et par IP au plus. `presence.log` inchangé.
 - **Page** : l'adresse suivie de `#visits` ouvre la fenêtre « Journal des visites » (clé, Afficher, Oublier la clé, Télécharger (CSV), Fermer (Échap)) ; clé acceptée retenue par le navigateur ; messages clé refusée, trop d'essais, serveur sans `--visits`, serveur trop ancien, serveur absent, page sans présence. Textes dans `src/i18n`. `tests/v48.py`.
 - **Presence server**: `--visits FILE` records each visit when it ends, one JSON line (`room`, `start`, `dur`, `walk`, `v` browser fingerprint; `name` only with `--visits-names`), never an IP address; `--visits-days N` (365, 0 = keep everything) purges at startup and every 6 h; clean stop: visits in progress are written. Console command `visits-key ROOM` (key shown only once, only its fingerprint kept in `--visits-keys`, `presence_visits_keys.json` by default), `visits-key ROOM off`, `visits-key` alone. `visits` message (before `hello`): summary per day and visits of the last 30 days, reconnections within 2 min merged, at most 5 refused keys per minute and per IP. `presence.log` unchanged.
 - **Page**: the address followed by `#visits` opens the "Visit log" window (key, Show, Forget the key, Download (CSV), Close (Esc)); accepted key kept by the browser; messages key refused, too many attempts, server without `--visits`, server too old, missing server, page without presence. Texts in `src/i18n`. `tests/v48.py`.
 
 ## v47 (25/10/2026)
-
 ### 25/10/2026 : documents de la v47
-
 - **Manuel § 30** (FR et EN) : tuile de la carte, adresse facultative, `regions.json` avec en-tête (§ 27.6), deux façons de faire la carte, serveur de présence ; procédures § 4 ; exemple `docs/samples/regions.sample.json` en forme objet ; `REPRISE.md`.
 - **Manual § 30** (FR and EN): map tile, optional address, `regions.json` with a header (§ 27.6), two ways to make the map, presence server; procedures § 4; sample `docs/samples/regions.sample.json` in object form; `REPRISE.md`.
 
 ### 25/10/2026 : carte des mondes (visiteurs, adresse facultative, carte.html universelle)
-
 - **Tuile** (page carte et carte ouverte par M) : « N visiteurs · N en promenade » ou « aucun visiteur » à la place de « visiter → », bulle au survol. **Adresse** masquée par défaut : `showUrl` dans l'en-tête de `regions.json` et case « Afficher les adresses » (choix du visiteur mémorisé, prioritaire). **`regions.json`** en liste ou en objet `{"showUrl", "regions"}` ; `--register` garde l'en-tête et la forme (il effaçait un fichier qui n'était pas une liste). **Serveur** : `rooms` reçoit `visitors` par salon. **`build.py`** écrit `dist/carte.html`, la page de carte universelle (lit `regions.json` à côté d'elle ; messages distincts si le fichier manque ou si elle est ouverte depuis le disque). `tests/v47.py` ; `tests/v36_lang.py`, `tests/modulaire.py`, `tests/samples.py` adaptés.
 - **Map tile** (map page and map opened with M): "N visitors · N walking" or "no visitors" instead of "visit →", tooltip on hover. **Address** hidden by default: `showUrl` in the `regions.json` header and an "Show addresses" checkbox (visitor's choice kept, takes priority). **`regions.json`** as a list or an object `{"showUrl", "regions"}`; `--register` keeps the header and the shape (it used to wipe a file that was not a list). **Server**: `rooms` gets `visitors` per room. **`build.py`** writes `dist/carte.html`, the universal map page (reads the `regions.json` next to it; distinct messages when the file is missing or when it is opened from disk). `tests/v47.py`; `tests/v36_lang.py`, `tests/modulaire.py`, `tests/samples.py` adapted.
 
 ## v46 (25/10/2026)
-
 ### 25/10/2026 : documents de la v46
-
 - **Manuel § 29** (FR et EN) : ligne d'état, flèches (promenade et vue globale, déplacer et rapprocher), K, écran tactile, bulles, compteur du chat (remise à zéro à l'ouverture, comportement voulu), diagnostic, une coquille pour tout un site (`--update -o … --shared-shell CHEMIN_DE_LA_COQUILLE`). Tableau des touches (§ 20.2), procédures §§ 4 et 10, historique.
 - **Manual § 29** (FR and EN): status line, arrows (walking and overview, move and zoom), K, touch screen, tooltips, chat counter (reset when opened, intended behaviour), diagnostics, one shell for a whole site (`--update -o … --shared-shell SHELL_PATH`). Key table (§ 20.2), procedures §§ 4 and 10, history.
 
 ### 25/10/2026 : pas de côté sur le pavé de promenade
-
 - **Flèches de promenade** : pas de côté à gauche et à droite (Q et D en AZERTY, A et D en QWERTY) au milieu du pavé ; tourner passe aux coins du haut, monter et descendre (en vol) aux coins du bas, comme le pavé de la vue globale. `tests/v46.py` complété.
 - **Walking arrows**: step left and right (Q and D on AZERTY, A and D on QWERTY) in the middle of the pad; turning moves to the top corners, up and down (while flying) to the bottom corners, like the overview pad. `tests/v46.py` extended.
 
 ### 25/10/2026 : commandes à l'écran (code)
-
 - **Ligne d'état** toujours visible (en bas au centre ; en haut sous la boussole sur un écran étroit ou tactile) : mode en toutes lettres (Promenade, Vue globale), allure, vue, position ou cible.
 - **Flèches à l'écran** (pavé 3 x 3) : en promenade avancer, reculer, tourner, Courir (un clic l'allume, un clic l'éteint), et en vol monter, descendre ; en vue globale déplacer, tourner, rapprocher, éloigner, et Recentrer au centre (le bouton « Recentrer la vue » ne revient que si les flèches sont cachées). Appui maintenu = touche tenue. Escamotables : touche K, bouton « Flèches (K) », case de Réglages (retenu par le navigateur).
 - **Mode tactile** (écran tactile détecté, ou réglage « Commandes tactiles » Auto / Oui / Non) : colonne de boutons (Promenade ou Sortir, Sauter, Voler, Vue, Chat, Flèches, Menu), menu (Aide, Informations, Arrivées, Carte, Retour à l'arrivée, Recentrer, Plein écran si le navigateur le permet), fenêtres réduites à l'ouverture avec un ✕, glisser du doigt pour regarder en promenade, vrai champ de chat avec Envoyer et Fermer, bulle par appui long ; écran tourné à l'horizontale pris en charge. « Capturer la souris » caché.
@@ -2536,23 +2424,19 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 - `src/core.js`: `lookBy` (mouse and finger), `padKey`, `padJump`, `runLatch`, `globalMove`, `globalTurn`, `globalZoom`. `tests/v46.py`; `tests/v34.py` and `tests/v40.py` adapted.
 
 ## v45 (24/10/2026)
-
 ### 24/10/2026 : la page dit pourquoi la connexion de présence s'est fermée
-
 - **Présence** : la ligne de présence (page et viewer) donne la cause au lieu de toujours « serveur injoignable » : connexion jamais établie, ouverte puis fermée (code et raison du serveur), ou refusée par le navigateur (`SecurityError`). Le navigateur ne donne jamais la cause d'une connexion qui ne s'ouvre pas (code 1006) : la page ne distingue donc pas un nom introuvable, un port fermé ou un blocage.
 - **Diagnostic** : nouvelle ligne « Connexion de présence » (s'est ouverte, dernier code, dernière raison). `getPresence()` expose `opened`, `closeCode`, `closeReason`. `tests/v45.py`, manuel § 28.
 - **Presence**: the presence line (page and viewer) gives the cause instead of always "server unreachable": connection never established, opened then closed (server code and reason), or refused by the browser (`SecurityError`). The browser never gives the cause of a connection that does not open (code 1006): the page cannot tell an unknown name, a closed port or a block apart.
 - **Diagnostics**: new "Presence connection" line (was opened, last code, last reason). `getPresence()` exposes `opened`, `closeCode`, `closeReason`. `tests/v45.py`, manual § 28.
 
 ### 24/10/2026 : procédures § 11 complétées
-
 - **Procédures § 11** (français et anglais) : Tailscale Funnel essayé le 24/10/2026 (WebSocket en 101, vraie IP avec `--proxy-header X-Forwarded-For`, visiteur extérieur connecté) ; règle « la présence au même endroit que la page » (blocage sur les appareils où Tailscale est actif quand la page vient d'une autre adresse) ; avertissement : `tailscale funnel` prend la racine du port et remplace ce que `tailscale serve` y publiait ; nouvelle voie D « VM Linux + Tailscale Funnel + Apache » (Apache sur `127.0.0.1` avec `mod_remoteip`, présence en service système, funnel `/` et `/presence`, essayée sauf Tailscale et le démarrage par systemd) ; cas « un autre service est déjà publié » (port 8443, commandes non essayées).
 - **Procedures § 11** (French and English): Tailscale Funnel tried on 24/10/2026 (WebSocket 101, real IP with `--proxy-header X-Forwarded-For`, outside visitor connected); rule "the presence in the same place as the page" (blocked on devices where Tailscale is active when the page comes from another address); warning: `tailscale funnel` takes the root of the port and replaces what `tailscale serve` was publishing there; new way D "Linux VM + Tailscale Funnel + Apache" (Apache on `127.0.0.1` with `mod_remoteip`, presence as a system service, funnel `/` and `/presence`, tried except Tailscale and the start by systemd); case "another service is already published" (port 8443, commands not tried).
 - **Documents** : `REPRISE.md` remis à jour (demandes du 24/10/2026 au § 6) ; lignes v45 de l'historique (français et anglais).
 - **Documents**: `REPRISE.md` updated (requests of 24/10/2026 in § 6); v45 lines of the history (French and English).
 
 ### 24/10/2026 : le dossier `lib` de la coquille se règle par une seule ligne
-
 - **Coquille** : elle commence par `const LIB = './lib';`, seule ligne à modifier pour mettre `lib` ailleurs ; la table d'import de three.js et le chemin Draco sont construits à partir de cette ligne par un script classique, avant tout module (`SHELL_IMPORTMAP_NEW` dans `src/gen_tpl.py`). La page autonome ne change pas.
 - **`--update`** garde la ligne modifiée à la main : ordre `--lib-url` donné, ligne `const LIB` de la coquille si elle n'est pas `./lib`, `libUrl` de la config, `./lib` (`lib_from_shell`, `effective_lib_url`) ; `libUrl` est aligné, message `[update]` ; une nouvelle région créée dans un tel dossier garde le même `lib` ; les fins de ligne CRLF sont reconnues identiques (`same_shell`).
 - **`build.py`** écrit `dist/index.html` : la coquille prête, identique octet pour octet à celle de `glb2html.py`, à copier à la place de `--update`.
@@ -2563,9 +2447,7 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 - **Documents and tests**: manual § 28 (and § 22.8, § 27), procedures § 4, `REFERENCE_OPTIONS.md` regenerated, `tests/v45_lib.py`, `tests/essai_importmap.html` (Firefox and Safari: not tried here), `tests/v37_region.py` followed.
 
 ## v44 (24/10/2026)
-
 ### 24/10/2026 : derniers noms en anglais, historique complété
-
 - **Noms en anglais (suite de la v43)** : `gen_reference.py` `--tools`, `--output`, `--check` (anciens `--outils`, `--sortie`, `--verifier` acceptés) ; `verif_trad.py` `--glossary` (ancien `--glossaire` accepté) ; messages de `--update` en français commencent par `[update]` (et non plus `[maj]`) ; noms d'exemple des textes d'aide alignés sur l'aide (`FILE`, `FOLDER`, `SHELL.html`, `NAME`) ; menu du viewer « Point (dot) » et « Portée (range) » en français, « Dot » en anglais ; `CLAUDE.md`, `README.fr.md` et les procédures citaient encore `discret` / `portee` : corrigés. Manuel § 27.11 complété.
 - **Contrôle** : `tests/samples.py` cherche les anciens noms dans les textes d'aide et les messages (`src/i18n`), `REFERENCE_OPTIONS.md`, les README, `CLAUDE.md`, le manuel et les procédures ; un ancien nom n'y est permis que présenté comme ancien.
 - **Historique** : `docs/fr/HISTORIQUE.md` et `docs/en/HISTORY.md` complétés de la v38 à la v44.
@@ -2574,9 +2456,7 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 - **History**: `docs/fr/HISTORIQUE.md` and `docs/en/HISTORY.md` completed from v38 to v44.
 
 ## v43 (24/10/2026)
-
 ### 24/10/2026 : référence des fichiers JSON, fichiers d'exemple, noms en anglais
-
 - **Fichiers JSON** : manuel § 27 « Référence des fichiers JSON » (français et anglais) : chaque fichier (`NOM.config.json`, `NOM.zones.json`, `default.json`, `regions.json`, `NOM.tiles.json`, `NOM.reglages.json`, `disposition.json`, `presence_identities.json`, `presence_bans.json`, historique du chat), chaque champ avec son type, sa valeur par défaut, son rôle et l'option qui le règle ; le § 16 y renvoie. Dossier `docs/samples/` : un exemple complet et valide de chaque fichier (zones : deux arrivées, portail dans la région, portail vers une autre région, lien, commande privée, zone liée à un objet, nom affiché). `tests/samples.py` vérifie que chaque exemple est accepté par le vrai code (outils, page, viewer, serveur de présence).
 - **Noms en anglais** : options `--update` (`--maj`), `--tile-max-mb`, `--tile-max-triangles`, options de `glb2tiles.py` (`--threshold`, `--exclude`, `--no-overview`, `--overview-only`, `--output`...), de `oar2glb.py` (`--markers`, `--terrain-only`, `--terrain yes|no`) et de `glb-stats.py` (`--block`, `--output`) ; valeurs `zoneMarker` `dot`, `range`, `none` et profil `private` ; clés `tileMaxMB`, `tileMaxTriangles`, `budgetMB`, `wholeWeightMB`, `thresholdMB` ; adresses `?radius=` et `?tiles=` ; noms d'exemple de l'aide (`FILE`, `PATH`, `NAME`...). Les anciens noms restent acceptés (tableau au § 27.11). La valeur traduite « none » de `--zone-marker` en anglais n'était pas comprise par la page (repère discret affiché) : corrigé.
 - **gen_reference.py** : `oar2glb.py` ne demande plus « Entrée pour fermer » (`--nopause`).
@@ -2585,39 +2465,29 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 - **gen_reference.py**: `oar2glb.py` no longer asks "Press Enter to close" (`--nopause`).
 
 ## v42 (24/10/2026)
-
 ### 24/10/2026 : rendu léger, fenêtre Réglages plus étroite
-
 - **Rendu léger** : case « Rendu léger » dans Réglages (sous « Haute résolution ») et sous-fenêtre « Réglages fins… » à gauche de Réglages, réglages appliqués en direct et retenus par le navigateur : résolution du rendu (50 % préconisé), images par seconde au plus (15), vue d'ensemble seule en vue globale (aucune tuile détaillée hors promenade), rayon des tuiles détaillées (80 m), anticrénelage (non, au prochain chargement) ; bouton « Valeurs préconisées » ; « Valeurs d'origine » remet aussi le rendu léger. Rendu sans carte graphique détecté (Basic Render Driver, SwiftShader, llvmpipe) : la page propose le rendu léger une fois. Option `--light` / `--no-light` de `glb2html.py` (reprise par `--maj`), case et réglages dans le viewer. Diagnostic : réglages du rendu léger, images rendues par seconde sur 5 s et causes du rendu continu. Réglages : 420 px de large au plus, défilement au-delà de la hauteur de l'écran, note de couleur de l'avatar sur deux lignes, section « Disposition des fenêtres » mise en forme, note sur Échap tout en bas. Manuel § 26, `tests/v42.py`.
 - **Light rendering**: "Light rendering" box in Settings (below "High resolution") and "Fine settings…" sub-window to the left of Settings, settings applied live and remembered by the browser: render resolution (50% recommended), frames per second at most (15), overview only in global view (no detailed tile outside walk mode), detailed tile radius (80 m), antialiasing (no, on next load); "Recommended values" button; "Default values" also resets light rendering. Rendering without a graphics card detected (Basic Render Driver, SwiftShader, llvmpipe): the page offers light rendering once. `--light` / `--no-light` option of `glb2html.py` (carried over by `--maj`), box and settings in the viewer. Diagnostics: light rendering settings, frames rendered per second over 5 s and causes of continuous rendering. Settings: at most 420 px wide, scrolls beyond the screen height, avatar color note on two lines, "Window layout" section laid out, Esc note at the very bottom. Manual § 26, `tests/v42.py`.
 
 ## v41 (24/10/2026)
-
 ### 24/10/2026 : bulles des fenêtres, fenêtres déplaçables, fichier de disposition
-
 - **Fenêtres** : bulle sur les titres H, I, L et sur Réglages (rôle, touche, déplacement). Aide, Informations / État et Arrivées se glissent par le titre : pile de gauche (origine), pile de droite sous Réglages (poussée quand Réglages s'ouvre), ou libres ; double-clic sur le titre : retour à la dernière pile ; clic de souris sur le titre retardé de 250 ms (un double-clic ne replie pas) ; fenêtre libre gardée dans l'écran. Disposition retenue par le navigateur ; Réglages : enregistrer dans `disposition.json`, charger, disposition d'origine. Manuel § 25, `tests/v41.py` ; `tests/v35.py` et `tests/v36.py` attendent 300 ms après un clic de souris sur un titre.
 - **Procédures** : § 11 « Rendre le serveur de présence public sans montrer son adresse IP » (Tailscale Funnel, Caddy, Cloudflare Tunnel ; `--host 127.0.0.1`, `--origins`, `--proxy-header`, contrôle en 4G), rédigé dans une session cloud, repris dans `docs/fr/PROCEDURES.md` et traduit dans `docs/en/PROCEDURES.md`. Non testé.
 - **Windows**: tooltip on the H, I, L titles and on Settings (role, key, moving). Help, Information / Status and Arrivals are dragged by their title: left stack (original), right stack below Settings (pushed when Settings opens), or free; double-click on the title: back to the last stack; mouse click on the title delayed by 250 ms (a double-click does not collapse); free window kept on screen. Layout remembered by the browser; Settings: save to `disposition.json`, load, original layout. Manual § 25, `tests/v41.py`; `tests/v35.py` and `tests/v36.py` wait 300 ms after a mouse click on a title.
 - **Procedures**: § 11 "Making the presence server public without showing your IP address" (Tailscale Funnel, Caddy, Cloudflare Tunnel; `--host 127.0.0.1`, `--origins`, `--proxy-header`, 4G check), written in a cloud session, brought into `docs/fr/PROCEDURES.md` and translated into `docs/en/PROCEDURES.md`. Not tested.
 
 ## v40 (24/10/2026)
-
 ### 24/10/2026 : fenêtre Arrivées, Recentrer la vue, lien Manuel, bulle du diagnostic
-
 - **Arrivées** : fenêtre « Arrivées » (touche **L**, même cycle que H et I, bulle « Liste des points de téléportation disponibles (TP) ») sous la fenêtre Informations / État ; un clic sur un nom téléporte (promenade) ou entre en promenade (vue globale) ; absente sans arrivée. **Recentrer la vue** : bouton hors promenade, rend le cadrage d'ouverture. **Manuel** : lien « Manuel complet (en ligne) » vers GitHub dans l'aide de la page et dans le viewer, selon la langue. **Diagnostic** : bulle sur le bouton (page et viewer). Aide : L, bouton Recentrer, « R : centrer sur l'arrivée » en vue globale. Manuel § 24 et tableau des touches, `tests/v40.py`.
 - **Arrivals**: "Arrivals" window (**L** key, same cycle as H and I, tooltip "List of available teleport points (TP)") below the Information / Status window; clicking a name teleports (walk mode) or enters walk mode (global view); absent without arrival points. **Recenter the view**: button outside walk mode, restores the opening framing. **Manual**: "Full manual (online)" link to GitHub in the page help and in the viewer, by language. **Diagnostics**: tooltip on the button (page and viewer). Help: L, Recenter button, "R: center on the arrival point" in global view. Manual § 24 and key table, `tests/v40.py`.
 
 ## v39 (23/10/2026)
-
 ### 23/10/2026 : bouton « Copier le diagnostic »
-
 - **Diagnostic** : bouton « Copier le diagnostic » en bas de la fenêtre Informations / État de la page et en haut du panneau du viewer ; il copie la version, la date, la page (hôte masqué), la langue, le clavier, le navigateur, la fenêtre, la carte graphique, le rendu, la mémoire, les tuiles et leurs durées, les lignes d'état, la présence et les 10 dernières erreurs et avertissements (adresses remplacées par `ADRESSE`, partie `#` de l'adresse jamais copiée) ; copie refusée : texte affiché sélectionné. Code commun dans `src/core.js` (`DIAG`, `diagText`), textes `core.diag.*` en français et en anglais, manuel § 23, `tests/v39.py`.
 - **Diagnostics**: "Copy diagnostics" button at the bottom of the page's Information / Status window and at the top of the viewer panel; it copies the version, date, page (host masked), language, keyboard, browser, window, graphics card, rendering, memory, tiles and their timings, status lines, presence and the last 10 errors and warnings (addresses replaced by `ADRESSE`, `#` part of the address never copied); copy refused: text shown selected. Shared code in `src/core.js` (`DIAG`, `diagText`), `core.diag.*` texts in French and English, manual § 23, `tests/v39.py`.
 
 ## v38 (23/10/2026)
-
 ### 23/10/2026 : traductions
-
 - **Traductions** : `verif_trad.py` compare un document français et sa traduction (titres, tableaux, listes, code, liens, glossaire de l'interface) ; code de sortie 1 en cas d'erreur. `docs/en/PROCEDURES.md` et `docs/en/HISTORY.md` : traductions de `PROCEDURES.md` et `HISTORIQUE.md`, contrôlées par ce script.
 - **Translations**: `verif_trad.py` compares a French document with its translation (headings, tables, lists, code, links, UI glossary); exit code 1 on error. `docs/en/PROCEDURES.md` and `docs/en/HISTORY.md`: translations of `PROCEDURES.md` and `HISTORIQUE.md`, checked by this script.
 - **Manuel** : `docs/en/MANUAL.md`, traduction de `MODE_EMPLOI.md` (1 066 lignes), contrôlée par `verif_trad.py` ; détection du français dans le code affinée (mots propres au français, espace avant le deux-points, virgule décimale).
@@ -2626,47 +2496,27 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 - **Documents**: `MODE_EMPLOI.md` becomes `docs/fr/MANUEL.md`, `PROCEDURES.md` and `HISTORIQUE.md` move to `docs/fr/`; `README.md` is now in English (GitHub home page), `README.fr.md` in French, with an `English | Français` line; references updated (documents, code comments, `CLAUDE.md`); `verif_trad.py` treats `MANUAL.md` as equivalent to `MANUEL.md`.
 
 ## v37 (23/10/2026)
-
 ### Lot 1 : corrections et ajouts de la page
-
 - **Course** : la ligne « Mode » affiche « à pied · course » / « en vol · course » tant que la course est active.
-
 - **Cône de portail** : taille apparente constante (échelle = distance / 12 entre 1 et 12, pointe immobile), visible jusqu'à `zoneInfoDist` (**150 m par défaut**, plage 5 à 500), infobulle avec la distance (« Portail → château · 120 m »).
-
 - **Arrivée occupée** : le point libre le plus proche de l'occupant (anneaux 1,5 / 2,0 / 3,0 m autour de lui, 16 candidats), l'arrivant est tourné vers l'occupant, ligne console « arrivée occupée : décalé de X m (anneau R m) ».
-
 - **Pseudo cité** : étiquette du nom de l'auteur, bulle et ligne du chat clignotent (0,5 s / 0,5 s) **sans limite de durée**, jusqu'à ma première action (touche, clic, mouvement, envoi). Remplace les 6 x 300 ms de la v33.
-
 - **Hash** : `&` ou `#` séparent les paramètres (`hashParams`, une fonction pour la page, la coquille et la page carte).
-
 - **Boussole** : cap en haut au centre (« NE 45° »), nord d'OpenSim = -Z, `rotate` pris en compte, case dans les Réglages visiteur ; `--compass` / `--no-compass`, `--north DEGRES` (config `compass`, `northDeg`).
-
 - **`--help`** des quatre outils : première ligne « NOM vNN (jj/mm/aaaa) : fonction ».
-
 - **Fenêtres Aide et Informations** : largeur réglable (bord droit, 260 px à 70 %), mémorisée, hauteur qui suit le contenu, empilées et collées.
-
 - **Touche O** : ouvre / ferme la fenêtre Réglages (demande de Klaatou en cours de session ; R est déjà pris).
-  
-  ### Lot 2 : historique du chat
-
+### Lot 2 : historique du chat
 - Serveur : `--history` 200 par défaut, `--history-file`, `--history-days` (30 ; 0 = tout), message `history` (`before`, `n`, réponse `msgs`, `more`), numéros `n` et heures `t` sur les messages (anciens clients inchangés).
-
 - Page : panneau défilable, réglage « Messages d'historique affichés » (200, 20 à 2000), bouton « Messages plus anciens », non lus dans le titre de l'onglet, « N messages vous citent ».
-  
-  ### Lot 3 : région par défaut, dossier lib, sous-dossiers
-
+### Lot 3 : région par défaut, dossier lib, sous-dossiers
 - Sans `?region=` : `X.config.json` de la page, puis `default.json`, puis `regions.json` (première adresse relative valide), sinon un message. `glb2html.py` écrit `default.json` la première fois ; `--default` ; `--maj` ne l'écrase pas sans `--default`.
-
 - `--lib-url CHEMIN` (relatif ou `http(s)`), inscrit dans la table d'import de la coquille et retenu dans la config (`libUrl`) pour `--maj`.
-
 - `?region=a/b/nom` (sous-dossiers) ; `--shared-shell DOSSIER/index.html` accepte un chemin ; les chemins de la config sont relatifs au dossier de la région.
-
 - Tests : `tests/v37.py`, `tests/v37_chat.py`, `tests/v37_region.py`, `tests/h37.py` ; attentes adaptées dans `v33.py`, `v35.py`, `v36.py` (voir `CLAUDE.md`).
 
 ## v36 (23/10/2026)
-
 ### Lot A : touches, fenêtres, arrivées, repères, sons, copie de position
-
 - **Touches (décisions de Klaatou).** **F** et **P** entrent en promenade et en sortent (en vue globale comme en promenade) ; dans le viewer, P pose une zone en promenade, **F**, **Maj+P** ou le bouton sortent. **F ne fait plus basculer le vol** : voler / atterrir = **Début** ou le bouton « Voler / Atterrir », ou **Page Haut** maintenu plus de 0,4 s au sol. Monter en vol : **Page Haut** ou **Espace** maintenu ; descendre : **Page Bas** ou **C** (atterrissage automatique au sol) ; sauter au sol : **Espace** ou **Page Haut** en appui bref. **E redevient la touche d'action des zones** (déclenchement « clic » ou « both »), invite « clic ou E : … » ; E ne saute plus, ne monte plus et ne fait rien d'autre.
 - **Disposition du clavier (AZERTY / QWERTY).** La marche garde les codes physiques ; l'aide et la fenêtre Informations / État affichent les **lettres réelles** (Z Q S D ou W A S D, jamais les deux). Détection : `navigator.keyboard.getLayoutMap()` si présent (Chrome, Edge), sinon la langue du navigateur (fr, fr-FR, fr-BE : AZERTY ; le reste : QWERTY). Réglage visiteur « Disposition du clavier : Auto / AZERTY / QWERTY », mémorisé ; même règle dans le viewer. **M** est reconnue par la lettre imprimée (`e.key` = « m »), plus par le code physique : sur AZERTY c'était la touche « , ».
 - **Aide et informations en trois temps.** La fenêtre « État » s'appelle **Informations / État**. **H** (aide) et **I** (informations) : masquée → déployée ; réduite → déployée ; déployée → masquée. Réduit / déployé et masqué sont mémorisés.
@@ -2677,18 +2527,15 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 - Tests : nouveau `tests/v36.py` ; attentes adaptées là où une règle de la v36 l'impose (voir `CLAUDE.md`, décisions de la v36).
 
 ### Lot B : langue de la page (français et anglais)
-
 - **Un fichier de textes par langue** : `src/i18n/fr.json` et `src/i18n/en.json` (clés stables, texte pur, `{0}` `{1}` pour les valeurs, `.one` / `.other` pour les pluriels, `_name` = nom de la langue). `build.py` les intègre (`src/i18n.js` pour l'exécution) dans la coquille, la page autonome, la page « carte » et le viewer ; `build.py --i18n DOSSIER` choisit un autre dossier de langues. **Ajouter une langue = ajouter un fichier** (MODE_EMPLOI § 21.9). Texte absent : anglais, puis français, puis la clé.
 - **Réglage « Langue / Language »** dans les Réglages visiteur : Auto (première langue de `navigator.languages` disponible, sinon l'anglais) puis chaque langue présente ; changer recharge la page. `#lang=en` (ou `fr`, `auto`) dans l'adresse est prioritaire et mémorisé. Tout texte visible est traduit : aide et groupes de touches, réglages, informations / état, invites de zones, chargement et erreurs (coquille comprise), chat, présence, carte des mondes, page `carte.html`. Les textes saisis par le propriétaire (noms de zones, panneaux) ne le sont pas.
 - Tests : les autres tests fixent la locale française des contextes de navigateur (`new_context(locale="fr-FR", ...)`) ; nouveaux `tests/i18n.py` (mêmes clés, mêmes marqueurs, clés citées existantes et utilisées, aucun accent français en anglais) et `tests/v36_lang.py` (Auto, aucune lettre accentuée française dans l'interface en anglais, réglage, `#lang=`, repli, langue ajoutée par un fichier).
 
 ### Lot C : langue du viewer (`glb-viewer.html`)
-
 - Même mécanisme que la page (lot B) : tous les textes du viewer (réglages, boutons, messages, aide, section « Clavier », commandes fabriquées) viennent de `src/i18n/*.json` (clés `viewer.*`), liste « **Langue / Language** » (Auto par défaut), `#lang=`, repli anglais, français, clé. Les noms de zones saisis ne sont jamais traduits. Le viewer ne reçoit pas les clés `py.*` (outils Python) ; les pages n'ont pas les clés `viewer.*`.
 - Nouveau `tests/v36_viewer_lang.py` (Auto, aucune lettre accentuée française dans le viewer en anglais, réglage, `#lang=`, repli).
 
 ### Lot D : langue des outils Python, documentation
-
 - **`--lang fr|en|auto`** (défaut `auto`) sur `glb2html.py`, `glb2tiles.py`, `oar2glb.py`, `presence_server.py` : messages, avertissements, erreurs et `--help`. Sans `--lang` : variable d'environnement `WEB3D_LANG`, puis langue du système, puis anglais. Les textes (clés `py.*`) sont intégrés dans chaque outil de `dist\` à la fabrication (fichiers autonomes) ; depuis `tools\` et `src\`, `i18n_py.py` et `i18n\` sont lus à côté ou dans `src\`. Options et commandes de modération du serveur (`liste`, `ejecter`, `bannir`, `bans`, `debannir`, `aide`) inchangées.
 - Aide ajoutée aux options qui n'en avaient pas : `--host`, `--port`, `--max-total` (serveur), `--convoar` (oar2glb), `--sea`, `--anim`, l'argument `oar`.
 - **`REFERENCE_OPTIONS.md` bilingue** : `gen_reference.py` lit chaque outil en français puis en anglais, écrit les deux textes dans chaque case « Effet » séparés par `<br>`, et échoue si une description manque dans une langue ; le mécanisme des descriptions de secours (« * ») est supprimé.
@@ -2696,7 +2543,6 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 - Tests : nouveaux `tests/tools_lang.py` (aide anglaise sans lettre accentuée française pour chaque outil, `WEB3D_LANG`, priorité de `--lang`, langue du système, messages d'erreur) et `tests/doc_options.py` (toutes les options dans la référence, description non vide dans les deux langues, fichier à jour). Les autres tests fixent `WEB3D_LANG=fr`, et ceux qui copient un outil des sources copient aussi `i18n_py.py` et `i18n\` (`tests/glb2tiles.py`, `tests/terrain.py`).
 
 ## v35 (22/10/2026)
-
 - **Aide en groupes courts** (Déplacement, Vol, Vue, Souris, Chat, Zones, Page), sans phrases ; plus de « Ctrl+C copie » ni d'explication de la sélection (le texte reste sélectionnable). **L'aide et le bloc d'état ont une barre de titre cliquable** qui les replie / déplie (état mémorisé : `glb2html_helpFold`, `glb2html_stateFold`) ; H et I masquent toujours tout. Bouton « Quitter la promenade (F) » supprimé ; en vue globale « Promenade (P) ».
 - **Commandes à la Firestorm.** **F** ou **Début** : bascule le vol (en vue globale, F entre encore en promenade) ; **P** entre et sort de la promenade ; **E** / **Page Haut** : appui bref au sol = saut, maintenu plus de 0,4 s au sol = décollage (puis montée), maintenu en vol = monter ; **C** / **Page Bas** : descendre (atterrissage automatique) ; **course** : Maj ou double appui (moins de 300 ms) sur W, S, ↑, ↓ ; **M** : bascule vue subjective / troisième personne en promenade (carte des mondes hors promenade), **Ctrl+M** : carte des mondes partout ; **Fin** et **Alt + clic** : caméra derrière l'avatar ; Alt + glisser : orbiter. **E ne déclenche plus les zones** (clic, ou entrée dans le rayon d'un portail « en marchant dedans »). Tableau « Touches Firestorm / touches de cette page » : `MODE_EMPLOI.md` § 20.2.
 - **Troisième personne** : la souris fait orbiter la caméra (lacet et tangage propres) sans tourner l'avatar ; l'avatar se tourne, de façon lissée, vers sa direction de déplacement quand une touche de marche est pressée ; la marche avant suit la caméra ; à l'arrêt on voit le devant de l'avatar. La présence transmet l'orientation de l'avatar, pas celle de la caméra.
@@ -2708,7 +2554,6 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 - Tests : nouveau `tests/v35.py` ; attentes adaptées là où une règle de la v35 l'impose (voir `CLAUDE.md`, décisions de la v35) ; `MODE_EMPLOI.md` § 2 et nouveau § 20 (dont « Créer la carte des mondes »).
 
 ## v34 (22/10/2026)
-
 - **Panneau d'aide sélectionnable.** Il reçoit de nouveau la souris (en v33 il la laissait passer au canvas) : son texte se sélectionne et se copie avec Ctrl+C (Ctrl+C n'est plus intercepté par la promenade ; C seule descend toujours). Le survol des marqueurs marche partout **sauf sous le panneau** ; son encombrement est borné (440 px / 45 % de la largeur, 42 % de la hauteur avec défilement).
 - **Bloc d'état** distinct de l'aide (texte sélectionnable) : `Vue : …`, `Mode : à pied` / `Mode : en vol`, `Souris : …`, position, lignes des tuiles et de la vue d'ensemble. L'aide ne garde que les touches et réglages. **H** masque l'aide seule, **I** masque / affiche l'état. L'étiquette « Vue : … · au sol » disparaît.
 - **Marqueurs** : avec `--zone-marker portee`, la zone de survol et de clic prend le rayon de l'anneau visible (l'infobulle apparaît sur l'anneau et dedans) ; avec `discret`, entre 0,6 m (comme avant) et 1 m.
@@ -2720,7 +2565,6 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 - Tests : nouveau `tests/v34.py` ; `tests/v33.py` et `tests/v24.py` : attentes adaptées là où une règle de la v34 l'impose (aide qui ne contient plus « Vue : … », atterrissage automatique en descendant, aide masquée pour survoler les marqueurs ; voir `CLAUDE.md`, décisions de la v34). Docs : `MODE_EMPLOI.md` § 2, § 16 et nouveau § 19, `README.md`, `CLAUDE.md`.
 
 ## v33 (22/10/2026)
-
 - **Démarrage avec une arrivée (`#spawn=`), région en tuiles : cause mesurée et corrigée.** Sur une région synthétique de 16 tuiles dont deux de plus d'un million de triangles (23 Mo, `tests/glbfab.py region_lourde`), avec le processeur ralenti 10 fois : écran noir de **121,6 s** (promenade à 125,7 s). Cause : le chargeur ne prenait l'arrivée pour référence que 4 s, puis revenait à la cible de caméra ; la tuile de l'arrivée, hors du rayon de la cible, était **déchargée et son téléchargement abandonné** (`TL.forcedUntil`), puis `loadTiles` attendait 120 s. Ce n'était pas la grille de collision (142 ms de calcul pour 1 million de triangles à vitesse normale, 2 s à x10). v33 : promenade à **7,1 s** (x10), 1,6 s à vitesse normale (2,6 s avant).
   - L'arrivée demandée est la **référence du chargeur** (`TL.anchor`) jusqu'au début de la promenade ; ses tuiles démarrent **avant la vue d'ensemble** et **aucune autre tuile ne démarre** avant qu'elles soient prêtes. Leur grille passe en premier (budget 40 ms par image contre 6) ; en promenade, la grille de la tuile de l'avatar passe toujours avant les autres.
   - **Jamais d'écran noir sans texte** : « Chargement du sol… n/m tuiles prêtes · N s », texte blanc sur fond noir encadré. Après 15 s l'écran noir est retiré (vue d'ensemble visible) et la promenade démarre dès que la tuile est prête (`TL.pending`) ; le délai de 120 s a disparu (après 60 s : « attente longue »). Une erreur de chargement n'est plus cachée par le fondu.
@@ -2737,7 +2581,6 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 - Docs : `MODE_EMPLOI.md` § 2 et nouveau § 18, `README.md`, `CLAUDE.md` (décisions v33).
 
 ## v32 (22/10/2026)
-
 - **Le viewer ouvre une région en tuiles.** Bouton « Ouvrir une région en tuiles (dossier) » (dossier qui contient `X.tiles.json`, choix ou glisser-déposer ; fichiers lus sur place, un par un, à la demande : jamais 1,3 Go en mémoire), ou `glb-viewer.html?tuiles=chemin/X.tiles.json` quand le viewer est servi en http (chemin relatif à la page, mêmes règles de sécurité que la coquille). Il utilise le chargeur de la coquille (`loadTiles` de `core.js`, source de fichiers abstraite : adresses http ou dossier choisi), donc mêmes rayon, marge, budgets et vue d'ensemble. **Repère du modèle d'origine, aucun recentrage** : zones, arrivées, cible et trou de la mer produits sont ceux de `glb2html.py --tiles`. Cible initiale = centre de l'étendue (même règle que `--tiles`). Toutes les fonctions d'édition de zones fonctionnent (créer, déplacer, rayon et hauteur, portails, arrivées, panneaux, Home Assistant, P en promenade). Le placement par clic se fait sur les tuiles détaillées chargées ; un clic hors tuile chargée dit en texte « Pas de tuile détaillée chargée à cet endroit… » et charge la tuile. Export `X.zones.json` (nom de la région), import d'un `X.zones.json` existant pour le compléter, récapitulatif de commande `glb2html.py --shared-shell -o X.html --tiles X.tiles.json --zones X.zones.json …` (hauteur de mer par défaut 20 m comme `--tiles`, cible écrite seulement si elle diffère). Export HTML autonome et `.zip` désactivés (pas de GLB unique), rotation non proposée, trou de la mer relatif au centre de la région. Ouvrir ensuite un `.glb` ferme le mode tuiles (tuiles et vue d'ensemble libérées, caméra, brouillard et distance maximale d'origine : `closeTiles`). Testé : dossier choisi, glisser-déposer (entrées de dossier simulées, sous-dossier), `?tuiles=`, refus de `..`.
 - **Coordonnées.** Nouvelle section « Coordonnées (m) » du viewer : point visé (clic simple) et cible en texte (x, y, z, une décimale), boutons « Copier le point visé » et « Copier la cible ». La coquille affiche dans le panneau d'aide la position de la cible en vue globale ou de l'avatar en promenade (« Position cible (vue globale) : x 123.5 · y 15.0 · z -77.7 m »).
 - **Zones liées à un objet en mode tuiles.** `glb2tiles.py` écrit dans les `extras` de chaque nœud copié `ref` (référence stable dans le GLB entier : le nom s'il est unique, sinon `nom#index`, rang dans l'ordre de parcours) et `box` (boîte monde de l'objet ENTIER, identique dans chaque morceau d'un objet réparti sur plusieurs tuiles) ; `X.tiles.json` porte `nodeRefs: 1`. Coût mesuré (GLB synthétique de 40 000 nœuds) : +0,5 s sur 8 s, +3 Mo sur 230 Mo. La coquille et le viewer indexent les nœuds des tuiles chargées par `ref` et résolvent les zones liées : la zone **apparaît quand la tuile de l'objet est chargée** (boîte de l'objet entier, même si un seul morceau est chargé) et disparaît au déchargement (absente de la scène, de la détection de proximité et des portails ; reconstruction des seules zones quand la résolution change). Le viewer lie une zone à l'objet cliqué (référence lue dans `extras.ref` en remontant les parents). Les références sont celles des noms du GLB, pas celles du chargeur de three.js (qui renomme les doublons) : une zone liée écrite en mode tuiles s'utilise en mode tuiles. **Anciennes tuiles** (sans `nodeRefs`) : zones liées ignorées avec « …redécouper avec glb2tiles v32 » en console ; `glb2html.py --tiles` avertit quand des zones sont liées ; `glb2tiles.py --analyse` et `--vue-ensemble-seule` signalent des tuiles existantes sans références. `--sans-references` écrit l'ancien format.
@@ -2746,7 +2589,6 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 - Docs : `MODE_EMPLOI.md` § 17, 17 bis et nouveau § 17 ter (pas à pas), `README.md`, `CLAUDE.md`.
 
 ## v31 (22/10/2026)
-
 - **Images vides ou invalides (`glb2tiles.py`).** Sur la région « Free House Gallery 4X4 », 778 images sur 19 799 avaient un `bufferView` de 0 octet et faisaient échouer leur tuile (« THREE.GLTFLoader: Couldn't load texture »). Toute image embarquée de 0 octet, d'un autre format que PNG/JPEG/WebP ou **tronquée** (mesuré dans Chromium : un PNG, un JPEG ou un WebP coupé échoue comme une image vide, d'où la vérification de la fin du fichier) est remplacée à l'écriture par un PNG gris de 4 x 4 pixels (gris 128, celui de `oar2glb.py`), écrit une seule fois par tuile et partagé par toutes les références de la tuile. Matériaux, textures et coordonnées de texture inchangés. Vérification par en-tête, fin de fichier et en-têtes de blocs (l'image n'est pas lue en entier). `--analyse` et le rapport donnent le nombre d'images remplacées (distinctes et occurrences) ; `X.tiles.json` reçoit `replacedImages` (et un nombre par tuile).
 - **Sortie de promenade (F).** `walkStop()` ne remet plus la caméra exactement où elle était : la cible de la vue globale (cercle d'atterrissage) est posée **au sol sous la dernière position de l'avatar** ; la caméra garde **le même décalage** (distance et direction) qu'avant l'entrée en promenade. En mode tuiles le chargeur suit cette cible : les tuiles autour de l'avatar restent chargées (avec l'ancien comportement elles partaient, testé). Valable aussi pour un GLB unique.
 - **Vue d'ensemble légère `X.overview.glb`.** Produite par `glb2tiles.py` avec le découpage (`--sans-vue-ensemble` pour s'en passer) ou seule (`--vue-ensemble-seule`, mêmes options de découpage ; le découpage recalculé doit retrouver exactement les tuiles de `X.tiles.json`, sinon erreur claire). Un nœud par fichier de tuile (nom et `extras.tile` = clé de la tuile), un seul matériau, **aucune image**, couleurs de sommets : couleur moyenne de la texture de chaque matériau avec Pillow (facultatif), sinon couleur de base ; couleurs de sommets du terrain conservées. Chaque primitive **unique** est simplifiée une seule fois (regroupement de sommets sur une grille proportionnelle à sa boîte, Python standard) puis recopiée avec la matrice de chaque instance (testé : 25 simplifications pour 64 instances). Le terrain (pièces `extras.terrain`) est rééchantillonné à part sur un réseau régulier commun de 4 m : aucune fente entre patches (testé sur les arêtes ouvertes), hauteurs à moins de 5 cm. Omis : objets de plus grande dimension sous `--ov-seuil` (3 m), primitives translucides (BLEND), objets à squelette. Budgets `--ov-budget` 25 Mo et `--ov-budget-tri` 1 500 000 : le terrain prend au plus la moitié (son pas grossit sinon), puis les plus grands objets d'abord ; le seuil effectif monte, et la résolution baisse si le budget oblige à omettre des objets de plus de `--ov-seuil-max` (24 m). Rapport : poids, triangles, objets gardés et omis (par cause), couleurs, temps. `--analyse` imprime en plus la répartition des instances par étendue (1 à 64 m) pour choisir le seuil. Lecture du GLB par morceaux de 4 Mo au plus (testé), progression affichée.
@@ -2760,7 +2602,6 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 - Docs : `MODE_EMPLOI.md` § 2, 17 et 17 bis, `README.md`, `CLAUDE.md`.
 
 ## v30 (22/10/2026)
-
 - **La coquille charge une région découpée en tuiles par `glb2tiles.py`.** Champ `tiles` dans `X.config.json` (chemin relatif de `X.tiles.json`) ; sans lui, rien ne change (aucune clé de tuiles n'est écrite, les tests v23, v24, v27, portail_interne, modulaire et smoke passent sans modification). La page charge les tuiles dont la boîte est à moins de `tileRadius` m de l'avatar (en vue globale : de la cible), les plus proches d'abord, `tileConcurrency` téléchargements à la fois ; elle décharge au-delà de `tileRadius + tileMargin` (hystérésis), puis, si `tileMaxMo` ou `tileMaxTri` sont dépassés, les plus lointaines d'abord. Distance mesurée à la boîte réelle de la tuile (`min` / `max` de `X.tiles.json`), en plan X,Z. `?rayon=NNN` dans l'adresse remplace `tileRadius` (essais).
 - Chargement par le chargeur existant (GLTFLoader, Draco, Meshopt) à partir d'un `ArrayBuffer`, analyse asynchrone, ajout à la scène seulement quand la tuile est prête, un groupe nommé `tile:<fichier>` par tuile. Déchargement complet : `disposeObject` (géométries, matériaux, textures) plus fermeture des images décodées ; `renderer.info.memory` revient au niveau de base (testé). Échec (404, GLB corrompu) : message dans la page, ligne d'information, nouvelle tentative plus tard (3 s, puis 6, 12… jusqu'à 30 s), sans bloquer les autres tuiles.
 - **Promenade et collisions par tuile.** `buildCollisionGrid` devient un générateur (`collisionGridSteps`) : la promenade ordinaire l'exécute d'une traite (résultat identique) ; en mode tuiles, une grille par tuile est construite par tranches de 6 ms au plus par image, dès le chargement de la tuile, et supprimée au déchargement. Sol et murs viennent des seules tuiles prêtes (grille composite). L'avatar n'avance jamais vers un point dont une tuile n'est pas prête : déplacement bloqué, indicateur texte « Chargement du sol… », reprise dès que la tuile est prête ; ni chute ni saut. La touche F attend la tuile sous l'avatar (F de nouveau : annuler) ; une téléportation (portail interne) vers une zone non chargée attend de même. Les sols des patches de terrain, qui ont des bords communs, se prolongent d'une tuile à l'autre sans saut (testé sur 8 frontières).
@@ -2773,7 +2614,6 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 - Docs : `MODE_EMPLOI.md` § 17 bis, `README.md`, `CLAUDE.md` (décisions v30, limites, feuille de route).
 
 ## v29 (22/10/2026)
-
 - **`tools/oar2glb.py` : terrain complet des régions de plus de 256 m.** convoar ne produit qu'un nœud « Terrain » plafonné (257 x 267 m sur une région de 1 024 m). La carte de hauteurs de l'OAR (`terrains/*.r32`) sert maintenant à construire des patches de `--terrain-patch` m (défaut 64), un mesh de (P+1)² sommets chacun, nommés « Terrain i,j », objets racine de la scène. Bords partagés identiques (hauteurs, normales, couleurs), dernier patch plus petit si n-1 n'est pas multiple de P, normales par différences centrées sur toute la carte, un seul matériau « terrain » simple face, indices 16 bits, pas de coordonnées de texture, couleur par sommet (`COLOR_0`) : sable humide sous l'eau, sable sec puis herbe en dégradé léger selon l'altitude, roche grise au-delà d'environ 35 degrés (palette dans `MODE_EMPLOI.md` § 15). Niveau d'eau : `WaterHeight` de `settings/*.xml`, sinon 20 m ; journalisé.
 - `--terrain auto|oui|non` (défaut `auto`) : en `auto`, le nœud « Terrain » de convoar est remplacé seulement s'il couvre moins de 95 % de la carte ; région de 256 m ou terrain complet : GLB identique octet pour octet à celui de `--terrain non`. Le filtre des objets hors région épargne les patches.
 - `--terrain-seul GLB OAR` (sans convoar, GLB de plusieurs Go) : le GLB n'est pas chargé en entier (JSON réécrit, chunk binaire recopié par morceaux de 8 Mo, nouveaux tampons ajoutés à la fin) ; sortie `X-terrain.glb` ou `--sortie`, l'original n'est jamais écrasé, aucune pause. OAR sans carte de hauteurs : message clair, code 0, rien d'écrit.
@@ -2784,7 +2624,6 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 - Docs : `MODE_EMPLOI.md` § 15 et § 17, `README.md`, `CLAUDE.md` (décisions v29, feuille de route).
 
 ## v28 (21/10/2026)
-
 - **Nouvel outil `tools/glb2tiles.py`** (fabriqué dans `dist/glb2tiles.py`) : découpe un GLB énorme en tuiles autonomes `X.tiles/T_<niveau>_<i>_<j>.glb` + `X.tiles.json`. Ni le viewer ni la coquille ne sont modifiés : le chargement des tuiles viendra dans un autre lot.
 - **Lecture par morceaux** : le GLB n'est jamais chargé en entier (en-tête JSON, puis indices, positions et images par seek/read). Avancement dans le journal toutes les 5 % ou 10 s. GLB compressé (Draco, meshopt) et accessors `sparse` : refus avec message.
 - **Découpage** : quadtree adaptatif sur X,Z, cellules non vides seulement, budget en Mo **et** en triangles (`--budget`, `--budget-tri`, `--min`). Objet racine gardé entier si poids autonome ≤ `--entier-poids` ET étendue ≤ `--entier-etendue`, sinon réparti instance par instance (parents recopiés avec leurs transformations). Objet avec skin : jamais réparti (joints hors de l'objet, `inverseBindMatrices` recopiés). Mesh unique plus lourd que le budget : avertissement. Meshes partagés dupliqués dans chaque tuile.
@@ -2796,13 +2635,11 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 - Docs : `MODE_EMPLOI.md` § 17, `README.md`, `CLAUDE.md` (décisions v28, feuille de route).
 
 ## v27 (21/10/2026)
-
 - **Repère des avatars visiteurs : la bulle de chat n'est plus recouverte.** Les repères sont empilés de bas en haut : nom, bulle (si elle existe), losange, avec une marge entre chacun, calculée sur les tailles réelles des sprites (`scale.y`). Le nom et la bulle suivent le même facteur d'éloignement k (la bulle grossit avec la distance comme le nom, donc le nom ne la recouvre plus de loin) ; le bas du losange est toujours au-dessus du haut de la bulle, de 1 à 4 lignes, de près comme de loin. Sans bulle, le losange est exactement à sa hauteur d'avant ; à l'apparition ou à la disparition d'une bulle il glisse (environ 0,2 s) au lieu de sauter. Ni couleur ni forme modifiées, protocole de présence inchangé.
 - `getPresence()` expose en plus, par visiteur, `stack` (hauteurs bas / haut du nom, de la bulle et du losange, distance à la caméra), pour les tests.
 - Tests : nouveau `tests/v27.py` (faux WebSocket injecté, sans serveur ni réseau) : nom < bulle < losange pour 1 et 4 lignes, à 8 m et à 120 m ; sans bulle, hauteur inchangée ; retour à la hauteur d'origine quand la bulle expire.
 
 ## v26 (21/10/2026)
-
 - **Coquille unique en mode modulaire.** Une seule coquille (par défaut `index.html`) et un seul `lib/three-0.160.0/` servent plusieurs régions d'un même dossier ; chaque région n'ajoute que `NOM.glb`, `NOM.config.json` et `NOM.zones.json`. Adresse : `index.html?region=NOM` (`NOM.html` accepté : l'extension est retirée).
 - La coquille reste identique, octet pour octet, pour toutes les régions (elle lit `?region=` à l'exécution). **Sans paramètre `region`, comportement inchangé** (fichiers déduits du nom de la page) : les pages déjà publiées et leurs coquilles continuent de marcher. Sans paramètre ni fichier correspondant : « Erreur : … introuvable (HTTP …) ».
 - **Sécurité.** NOM doit être un seul nom de fichier : un nom vide, contenant `/` `\` `:` `?` `#` ou `..`, des caractères de contrôle, ou commençant par un point est refusé avec un message dans la page et **aucune requête réseau** (sinon `?region=https://autre-site/x` ferait charger config, zones et modèle depuis un site étranger). Contrôle fait avant toute requête ; le script `glb2html.py` applique la même règle à `-o`.
@@ -2814,9 +2651,7 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 - Docs : `MODE_EMPLOI.md` § 16 (coquille unique), § 6 et § 15 ; `README.md` ; `CLAUDE.md` (décisions v26 ; feuille de route : régions énormes, notes seulement, rien d'implémenté).
 
 ## v25 (20/10/2026)
-
 `tools/oar2glb.py` : correction des animaux riggés (animesh) et des prims invisibles, validée sur un vrai OAR (Jungle_Isle : 771 parties, 34 meshes riggés). Cette version regroupe les itérations de mise au point du 20/10/2026.
-
 - **Meshes riggés reconstruits depuis l'OAR.** Pour tout mesh riggé, le `.llmesh` de l'OAR (`assets/*_mesh.llmesh`) est décodé (positions, normales, UV, triangles, domaine de position, bloc skin zlib + LLSD binaire) et `bind_shape_matrix` est appliquée ; l'échelle du prim est ignorée. Raison : la géométrie que convoar écrit pour ces meshes est inutilisable (étendues de sommets identiques pour des animaux différents, échelle cuite inconnue de l'OAR). Aucune règle propre à un animal. Matériaux et textures repris du nœud GLB (face i = primitive i), sens des UV détecté. Si le `.llmesh` est illisible, le mesh reste tel que convoar l'a produit.
 - **Placement.** Les morceaux d'un même animal (un cheval = 6 meshes de même nom, chacun avec sa `bind_shape_matrix`) sont déplacés ensemble : centrés à l'horizontale sur la racine, rotation = racine x rotation du premier morceau, pieds sous la boîte racine (z moins la moitié de son échelle) ou à l'altitude de la racine si elle est elle-même riggée. Le terrain de l'OAR n'est pas utilisé. Garde-fou : une taille hors de 0,1 à 12 m laisse le mesh tel quel.
 - **Prims invisibles retirés** (`--keep-invisible` pour les garder) : toutes les faces à alpha 0, ou texture invisible standard (`8dcd4a48-…`, `3a367d1c-…` ; `e97cf410-…` est le dégradé alpha, visible), nœuds dont tous les matériaux sont à alpha 0, et boîte racine d'animesh (prim simple, racine d'un objet dont toutes les autres parties sont des meshes riggés). Les enfants d'une racine retirée restent.
@@ -2829,7 +2664,6 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 - `MODE_EMPLOI.md` : section 15 complète (commandes de `oar2glb.py`).
 
 ## v24 (19/10/2026)
-
 - Page exportée (autonome et modulaire) : plus aucun cylindre pour les zones lien web, commande HA et portail. Zone liée à un élément : aucun objet ajouté ; au survol, curseur main, léger contour de l'élément et infobulle (nom + destination : adresse web, « Région : … », « Commande : … » ; jamais le webhook). Zone non liée : marqueur discret au sol (disque plat de 0,4 m + anneau fin, semi-transparent) avec le même survol ; la surface de visée est plus large que le marqueur et masquée par le relief. Clic = suivre le lien. Plus de panneau de texte permanent : le nom ne s'affiche qu'au survol ou à portée (« E : … »).
 - Nouvelle option par zone « Toujours afficher le nom » (champ `showName`, décochée par défaut ; viewer, `clean_zones`, `.zones.json`, `.reglages.json`) : nom permanent au-dessus de l'élément ou du marqueur ; panneau complet pour une zone non liée de forme « panneau ».
 - Viewer (édition) : cylindres conservés et toujours visibles pour toutes les zones non liées, panneaux compris (portée), contour pour les zones liées. Pas d'infobulle en édition.
@@ -2839,7 +2673,6 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 - `MODE_EMPLOI.md` : nouvelle section 2 bis.
 
 ## v23 (19/10/2026)
-
 - Viewer, clic : un clic simple sur le modèle n'a plus d'effet sur la cible caméra ni sur le cercle d'atterrissage, dans aucun mode. Il affiche le nom de l'élément ET les coordonnées du point touché (x, y, z, 2 décimales) dans « picked » et la barre d'état. Seul le double-clic choisit la cible / l'atterrissage, comme la page exportée.
 - Viewer, zone : bouton « Placer ici (dernier point cliqué) » (copie x, y, z du dernier clic simple).
 - Liaison à un élément : on lie le morceau réellement cliqué. Si son nom est partagé par plusieurs objets (OAR : prims répétés), la zone stocke `nom#index` (rang de l'objet parmi ceux de ce nom, ordre de parcours three.js). Nom unique : le nom seul, comme avant (zones existantes inchangées). Règle commune : `resolveMeshRef` (core.js) et `resolve_mesh_ref` (glb2html.py). glb2html.py n'ouvre pas le GLB : il ne fait que transporter la référence.
@@ -2851,7 +2684,6 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 - Tests : nouveau `tests/v23.py` (clic simple sans effet, double-clic, « Placer ici », deux meshes de même nom à 100 m, mesh de 30 m refusé, rotation 180 avec zone sur le mesh nord, mémorisation, page générée `--rotate 180` aux mêmes positions que le viewer, « Oublier »). Pour obtenir de vrais doublons de nom, le modèle de test instancie un mesh à deux primitives : three.js rend uniques les noms de nœuds (`_instance_N`), mais les enfants des clones gardent leur nom.
 
 ## v22 (19/10/2026)
-
 - Portail interne : un portail dont la « Page de destination » est vide, ou désigne la page elle-même, pose le visiteur sur le point d'arrivée indiqué de la même région (fondu, sans rechargement : présence et chat conservés). Avant, la page restait sur un écran noir. Arrivée absente : message « Point d'arrivée … introuvable dans cette région ».
 - Noyau : `teleportTo(pos, yaw)` (hors promenade : `walkStart`). Les portails « en marchant dedans » sous les pieds à l'arrivée ne se déclenchent pas tout de suite (pas de ping-pong).
 - Viewer : libellé « Page de destination (adresse ou fichier .html ; vide = cette région) » ; l'aperçu applique le portail interne en promenade.
@@ -2859,7 +2691,6 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 - Tests : nouveau `tests/portail_interne.py` ; `tests/modulaire.py` attend le chargement réel des pages exportées au lieu d'un délai fixe (échouait sur une machine lente).
 
 ## v21 (19/10/2026)
-
 - Correctif viewer, « Lier à un élément » sur un gros modèle (Atoll) : le contour affiché était un énorme cube noir ou un petit cube sous la région, et le cercle d'atterrissage pouvait se déplacer.
 - Mode liaison exclusif : le noyau ignore clics, double-clics et survol pendant la liaison (le double-clic déclenchait l'atterrissage) ; il reste verrouillé 600 ms après une liaison réussie. Le mode se quitte en cliquant sur le bouton, en posant une zone ou en plaçant le trou.
 - On lie le mesh nommé touché (éléments traversables ignorés), non un parent. Boîte englobante calculée en coordonnées monde après mise à jour des matrices depuis la racine (`boxOfMeshes`). Boîte vide ou non finie : élément refusé.
@@ -2868,7 +2699,6 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 - Test : modèle à racine décalée et mise à l'échelle ×2 avec voile traversable et sol géant (`tests/modulaire.py`, `test_liaison`).
 
 ## v20 (18/10/2026)
-
 - Mode modulaire universel : la coquille `<page>.html` est la même, octet pour octet, pour toutes les régions (~85 Ko). Elle déduit ses fichiers de son propre nom (`X.html` charge `X.config.json`, `X.glb` et `X.zones.json` du même dossier) : aucun nom écrit en dur, elle se copie sous un autre nom avec ses trois fichiers frères renommés. Titre de l'onglet = champ `room` de la config, fond = `skyColor`. `lib/three-0.160.0/` contient toujours Draco et Meshopt (la coquille ne dépend plus du contenu du `.glb`).
 - Zones relues à chaque rechargement : `X.zones.json`, sinon `zones.json` du même dossier, sinon aucune zone, sans erreur. Corrige la v19, où modifier `zones.json` dans le dossier du site n'avait aucun effet (les zones étaient figées dans la config). Le mode modulaire écrit les zones dans `X.zones.json`, jamais dans `config.json` (`zones: []`).
 - `--config-only` ne touche pas `X.zones.json`, sauf si `--zones` est donné. `--zones-only` marche sur une page modulaire (`-o X.html --zones z.json`). Régénérer avec `--modular` sans source de zones n'écrase pas un `X.zones.json` existant.
@@ -2879,7 +2709,6 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 - Tests : nouveau `tests/modulaire.py` (coquille identique, copie renommée, rechargement des zones, secours `zones.json`, `--config-only` / `--zones-only`, zones liées, voile traversable, touche E, portail à l'approche, deux exports du viewer, zip) ; `tests/smoke.py` inchangé.
 
 ## v19 (18/10/2026)
-
 - Mode modulaire : `--modular` écrit une coquille légère `<page>.html` (~80 Ko), `<page>.glb` (octets bruts, non encodés), `<page>.config.json` (le même `cfg` que la page autonome, zones et carte comprises) et `lib/three-0.160.0/` partagé par toutes les pages du dossier (modules à plat, décodeurs Draco/Meshopt ajoutés au besoin). La page se charge par `fetch` : elle exige http(s) (message explicatif si ouverte depuis le disque). Le mode autonome reste le défaut.
 - `--config-only -o page.html` : réécrit seulement `<page>.config.json` (et `regions.json` / la page carte avec `--register` / `--map-page`), sans toucher au `.glb` ni à la coquille. Le salon (`room`) existant est conservé si `--room` n'est pas donné. Les visiteurs rechargent la page pour voir le changement.
 - `build_html` est scindé : `build_cfg` fabrique le dictionnaire de réglages (commun aux deux modes) ; `build_html` accepte `modular=True`.
@@ -2887,7 +2716,6 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 - `tests/smoke.py` : teste le mode modulaire sous `python -m http.server` (chargement des 3 GLB, cfg identique au mode autonome, modification de `config.json` puis rechargement, `--config-only`, config absente, ouverture depuis le disque).
 
 ## v18 (18/10/2026)
-
 - `--settings [FICHIER]` : le script relit tous les réglages enregistrés par le viewer (trou, vagues, caméra, zones, fiche de région, vignette). La ligne de commande l'emporte sur le fichier.
 - Viewer : case « Commande courte » (utilise `--settings`).
 - `--register` sans `.glb` : ajoute ou met à jour une région dans `regions.json` sans rien régénérer (région d'un collègue, par exemple).
@@ -2897,16 +2725,13 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 - `--map-page` n'écrase plus la page carte par une page vide.
 
 ## v17 (18/10/2026)
-
 - Carte : `--register`, `--region-name`, `--region-url`, `--region-xy`, `--region-spawn`, `--thumb`.
 - Page web « carte des mondes » : `--map-page` (liens réels vers chaque région, compteurs de visiteurs).
 - Viewer : bouton « Enregistrer la vignette (.jpg) », champ « page carte », ligne de commande avec `--register`.
 - Placement compact de la carte : les grands vides entre régions sont compressés.
 
 ## v16 (18/10/2026)
-
 - Mémorisation des réglages par fichier, carte des mondes (touche M), zones/portails, présence, chat, modération.
 
 ## v1 à v15
-
 - Développement initial (viewer, export HTML autonome, promenade, présence). Les décisions sont dans CLAUDE.md.
