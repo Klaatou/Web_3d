@@ -16,62 +16,70 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 - **Dette de documentation connue** : aucune ; les couples de documents français / anglais donnent 0 erreur à `verif_trad` (21/11/2026).
 - **Notes de la release GitHub** (à joindre : `galerie-photos.zip` et `region-simple.zip`, refaits par `python fabriquer_paquets.py` après le passage de `VERSION` à 1.13.0), anglais puis français :
 
-  > **Web_3d 1.13.0: video screens, private messages, one sound at a time, more flexible zones**
+  > **Web_3d 1.13.0: mini player, video screens, one sound at a time, private messages**
   >
   > **Do not unzip over an existing package**: copy `index.html`, `carte.html` (and `favicon.ico`) into your folder instead. **Presence server hosts**: replace `presence_server.py` (now 1.12.30) to get private messages.
   >
   > ### What's new
   >
-  > **1. Video screens**
-  > - Put a screen on a wall: the video plays when you walk up to it, a click pauses it. Only the nearest screen talks.
+  > **1. Mini player (floating window)**
+  > - A link zone, or an image zone that has a link, can now open its page, or a YouTube video or playlist, in a small floating window on top of the page. You can move it, resize it and close it; you never leave the region.
+  > - It is not a video screen: the mini player floats over the page, while a video screen (next item) is part of the 3D scene, on a wall.
+  >
+  > **2. Video screens (inside the 3D scene)**
+  > - New zone type `video`: a screen on a wall of the region. The video starts when you walk up to it, a click pauses it, and only the nearest screen talks.
   > - A screen can play a list of videos (previous / next buttons), and can also be a link, a portal or a Home Assistant command.
   >
-  > **2. One sound at a time**
-  > - Radio, music, videos and YouTube no longer play over each other: the nearest source is the one you hear. New mute button and **N** key.
-  >
-  > **3. Links and YouTube in a floating window**
-  > - A link can open in a small floating window, so you stay in the region.
+  > **3. One sound at a time**
+  > - The radio, the music, the video screens and the YouTube mini player no longer play over each other: you hear the nearest source. New mute button and **N** key.
   >
   > **4. Private messages**
-  > - Click a visitor's avatar, or their name in the chat, to write to them privately. One window per person, with Ignore and Save. Hosts can turn it off.
+  > - Click a visitor's avatar, or their name in the chat, to write to them, or type `/mp name message`. Each conversation has its own window: you can move it, shrink it or close it without losing the text, and a new message makes it blink. Buttons Ignore and Save. Hosts can turn private messages off.
   >
-  > **5. More flexible zones**
-  > - A picture board can also be a portal, a radio, a music player or a command.
-  > - You can place your own 3D models (`.glb` files) in the region; the model of a radio or a music player is clickable.
-  > - Old zone files are converted with one command.
-  > - Radio and music also work in the overview; the Sound window shows the cover and the link.
+  > **5. Zones**
+  > - An image zone can now also be a portal, a radio, a music player or a Home Assistant command: the picture itself is the door, the radio, and so on.
+  > - New zone type `model`: place your own 3D model (a `.glb` file) in the region. The model of a radio or music zone can be clicked.
+  > - Radio and music zones also work in the overview.
+  > - A radio or music zone can show an illustration (an image) in the Sound window, with an optional link that opens a web page in a new tab.
+  > - Creators with their own zone files: `python glb2html.py --convert-zones FILE` converts them to the new format; the original is kept as a `.bak` file.
   >
   > **6. Other changes**
-  > - A blinking icon instead of the bubble for proposed effects; the **B** key works again after a message; `oars2site` accepts more convoar names and damaged OARs.
+  > - Effect proposals: when a region has shiny materials, the page used to pop up a message offering to turn on Reflections (and Light rendering). It now shows a blinking ✦ icon next to Settings; click it to see the question. Settings > "Effect proposals" brings the message back.
+  > - The **B** key works again after a chat message is sent.
+  > - `oars2site` accepts more convoar names and damaged OARs.
   > - Documents and examples brought up to date, in English and French.
 
-  > **Web_3d 1.13.0 : écrans vidéo, messages privés, un seul son à la fois, zones plus souples**
+  > **Web_3d 1.13.0 : mini lecteur, écrans vidéo, un seul son à la fois, messages privés**
   >
   > **Ne pas dézipper par-dessus un paquet existant** : copier `index.html`, `carte.html` (et `favicon.ico`) dans votre dossier. **Hébergeurs du serveur de présence** : remplacer `presence_server.py` (maintenant 1.12.30) pour avoir les messages privés.
   >
   > ### Nouveautés
   >
-  > **1. Écrans vidéo**
-  > - Posez un écran sur un mur : la vidéo démarre quand on s'en approche, un clic la met en pause. Seul l'écran le plus proche parle.
+  > **1. Mini lecteur (fenêtre flottante)**
+  > - Une zone lien, ou une zone image qui a un lien, peut maintenant ouvrir sa page, ou une vidéo ou une liste YouTube, dans une petite fenêtre flottante par-dessus la page. On peut la déplacer, la redimensionner et la fermer ; on ne quitte jamais la région.
+  > - Ce n'est pas un écran vidéo : le mini lecteur flotte au-dessus de la page, alors qu'un écran vidéo (point suivant) fait partie de la scène 3D, sur un mur.
+  >
+  > **2. Écrans vidéo (dans la scène 3D)**
+  > - Nouveau type de zone `video` : un écran sur un mur de la région. La vidéo démarre quand on s'en approche, un clic la met en pause, et seul l'écran le plus proche parle.
   > - Un écran peut jouer une liste de vidéos (boutons précédent / suivant), et servir aussi de lien, de portail ou de commande Home Assistant.
   >
-  > **2. Un seul son à la fois**
-  > - La radio, la musique, les vidéos et YouTube ne se superposent plus : on entend la source la plus proche. Nouveau bouton muet et touche **N**.
-  >
-  > **3. Liens et YouTube dans une fenêtre flottante**
-  > - Un lien peut s'ouvrir dans une petite fenêtre flottante : on reste dans la région.
+  > **3. Un seul son à la fois**
+  > - La radio, la musique, les écrans vidéo et le mini lecteur YouTube ne se superposent plus : on entend la source la plus proche. Nouveau bouton muet et touche **N**.
   >
   > **4. Messages privés**
-  > - Un clic sur l'avatar d'un visiteur, ou sur son nom dans le chat, pour lui écrire en privé. Une fenêtre par personne, avec Ignorer et Enregistrer. Les hébergeurs peuvent les couper.
+  > - Un clic sur l'avatar d'un visiteur, ou sur son nom dans le chat, pour lui écrire, ou taper `/mp pseudo message`. Chaque conversation a sa fenêtre : on peut la déplacer, la réduire ou la fermer sans perdre le texte, et un nouveau message la fait clignoter. Boutons Ignorer et Enregistrer. Les hébergeurs peuvent couper les messages privés.
   >
-  > **5. Zones plus souples**
-  > - Un tableau image peut aussi être un portail, une radio, une musique ou une commande.
-  > - On peut poser ses propres modèles 3D (fichiers `.glb`) dans la région ; le modèle d'une radio ou d'une musique est cliquable.
-  > - Les anciens fichiers de zones se convertissent en une commande.
-  > - La radio et la musique marchent aussi en vue d'ensemble ; la fenêtre Son affiche la pochette et le lien.
+  > **5. Zones**
+  > - Une zone image peut maintenant être aussi un portail, une radio, une musique ou une commande Home Assistant : l'image elle-même est la porte, la radio, etc.
+  > - Nouveau type de zone `model` : on pose son propre modèle 3D (un fichier `.glb`) dans la région. Le modèle d'une zone radio ou musique est cliquable.
+  > - Les zones radio et musique marchent aussi en vue d'ensemble.
+  > - Une zone radio ou musique peut afficher une illustration (une image) dans la fenêtre Son, avec un lien facultatif qui ouvre une page web dans un nouvel onglet.
+  > - Créateurs qui ont leurs propres fichiers de zones : `python glb2html.py --convert-zones FICHIER` les convertit au nouveau format ; l'original est gardé en `.bak`.
   >
   > **6. Autres changements**
-  > - Une icône qui clignote au lieu de la bulle pour les propositions d'effets ; la touche **B** marche de nouveau après un message ; `oars2site` accepte plus de noms de convoar et les OAR abîmés.
+  > - Propositions d'effets : quand une région a des matériaux brillants, la page affichait un message pour proposer d'activer les Reflets (et le Rendu léger). Elle affiche maintenant une icône ✦ qui clignote à côté de Réglages ; un clic affiche la question. Réglages > « Propositions d'effets » remet le message.
+  > - La touche **B** marche de nouveau après l'envoi d'un message du chat.
+  > - `oars2site` accepte plus de noms de convoar et les OAR abîmés.
   > - Documents et exemples remis à jour, en français et en anglais.
 
 
