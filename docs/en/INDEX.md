@@ -24,6 +24,9 @@ This page says **which document to read for what**. The French documents carry t
 | place zones (arrivals, portals, signs, pictures) | `GUIDE.md` § 2; `MANUAL.md` § 5; `PROCEDURES.md` § 5 |
 | put a radio in a region (`cast` zone, track title) | `SIMPLE_PROCEDURES.md` § 14 (step by step); `MANUAL.md` § 5.19 and § 10.25 |
 | put my own music (mp3...) in a region (`audio` zone, playlist) | `SIMPLE_PROCEDURES.md` § 15; `MANUAL.md` § 5.20 |
+| put a video screen on a wall (`video` zone, video list) | `SIMPLE_PROCEDURES.md` § 17; `MANUAL.md` § 5.21 |
+| open a link in a floating window, YouTube included (`frame` key) | `MANUAL.md` § 5.7.1 |
+| understand which sound source speaks, mute the sound (Sound window, N key) | `MANUAL.md` § 5.22 and § 7.66 |
 | update the zones of a region already online (export, replace `NOM.zones.json`, publish) | `SIMPLE_PROCEDURES.md` § 16; `MANUAL.md` § 5.15 |
 | build or update the page | `GUIDE.md` § 3; `MANUAL.md` § 6; `PROCEDURES.md` § 3, § 4 and § 8; `SIMPLE_PROCEDURES.md` § 1 |
 | set the tab title, rename a tiled region | `SIMPLE_PROCEDURES.md` § 2 and § 3 |
@@ -40,6 +43,7 @@ This page says **which document to read for what**. The French documents carry t
 | set the sea height in the page | `MANUAL.md` § 9.19 |
 | ask a question, get help | the Discord server: https://discord.gg/BDG9r5gXwr |
 | see other visitors, chat, moderate | `GUIDE.md` § 5; `MANUAL.md` § 10; `PROCEDURES.md` § 6 |
+| write privately to a visitor, ignore someone; refuse private messages (`--no-dm`) | `MANUAL.md` § 7.25 and § 10.27 |
 | install the presence server on a VM | `SIMPLE_PROCEDURES.md` § 8; `PROCEDURES.md` § 11 |
 | make the presence server public without showing my IP address | `PROCEDURES.md` § 11 |
 | welcome a creator on my server | `SIMPLE_PROCEDURES.md` § 9; `MANUAL.md` § 10.10 |

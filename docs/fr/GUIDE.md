@@ -83,7 +83,7 @@ python -m http.server 8000
 
 ## 5. Les autres visiteurs : la présence
 
-Voir les autres promeneurs et discuter demande un serveur de présence : celui d'un hôte qui t'accueille (note `CREATEURS.md`, en anglais `CREATORS.md`), ou le tien (`presence_server.py`, `PROCEDURES.md` § 6 et § 11).
+Voir les autres promeneurs et discuter demande un serveur de présence : celui d'un hôte qui t'accueille (note `CREATEURS.md`, en anglais `CREATORS.md`), ou le tien (`presence_server.py`, `PROCEDURES.md` § 6 et § 11). Les promeneurs peuvent aussi s'écrire en privé (messages privés, « Ignorer » : manuel § 7.25) ; le serveur les refuse avec `--no-dm` (manuel § 10.27).
 
 ## 6. Les outils et leur rôle
 

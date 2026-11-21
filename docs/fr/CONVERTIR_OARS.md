@@ -85,6 +85,13 @@ Les fichiers de travail et les journaux sont écrits hors du dossier du site (pa
 
 Le dossier de travail d'une région est supprimé à la fin, y compris après un échec : le journal suffit à comprendre.
 
+Deux messages du journal ne sont pas des pannes de l'outil (lot 1.12.27) :
+
+- **« barre oblique inverse finale non doublée dans des noms (défaut de convoar) : réparée »** : convoar a écrit un nom d'objet qui finit par une barre oblique inverse sans la doubler, ce qui rendait le `.gltf` invalide (« Invalid control character ») ; `oar2glb.py` le répare tout seul, il n'y a rien à faire ;
+- **« l'OAR est abîmé »** : l'archive est incomplète ou corrompue (téléchargement interrompu, disque) ; la conversion de cette région s'arrête avec ce message, sans trace. Télécharge ou exporte l'OAR de nouveau.
+
+Cas connu, non traité : sur une région essayée, convoar s'est terminé sans écrire son fichier `.buf` (code retour 0) ; cette région échoue, la cause n'est pas établie.
+
 ## 7. Le GLB publié peut être téléchargé
 
 La page charge la région en téléchargeant son GLB (ou ses tuiles) et ses fichiers JSON par HTTP ordinaire. Web_3d ne les chiffre pas et ne les cache pas : toute personne qui peut ouvrir la page peut enregistrer le GLB, avec la géométrie et les textures de l'OAR, et un nom de région illisible n'y change rien, car `default.json` le donne.

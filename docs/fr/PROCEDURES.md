@@ -113,6 +113,7 @@ Les zones d'une région en tuiles s'écrivent dans le repère d'origine du modè
 7. **Accueillir un créateur** (v51, manuel § 10.10) : ajoute `--creators presence_creators.json` à la ligne de lancement ; dans ce fichier (copie de `docs\samples\presence_creators.sample.json`), garde une entrée pour toi (`"prefix": ""`, tes origines et `null`) et ajoute la sienne (`id`, origines de ses pages). Le créateur met `room` à `ID.NAME` (par exemple `alice.galerie`) et ton adresse `wss://` dans `presenceUrl` de sa config. Vérifie avec `creators` dans la console ; clé de ses visites : `visits-key alice.galerie` ; fiche sur ta carte : `--register` sans glb (`REFERENCE_JSON.md` § 11.6).
 8. **Mettre à jour** : arrête le serveur (Ctrl+C) et relance-le depuis le `presence_server.py` du dossier `dist` après `python build.py`. Un ancien exemplaire ignore les nouveautés (par exemple la couleur choisie).
 9. **Serveur permanent sur une VM** : un service systemd seul ne donne pas de clavier à la console de modération ; la façon qui a marché (une session `tmux` lancée par systemd) est décrite au § 11, « VM Debian 13 : service permanent avec console de modération ».
+10. **Messages privés** (1.12.29) : acceptés par défaut entre promeneurs ; `--no-dm` les refuse (la page masque alors la fonction) ; le texte d'un message privé n'est ni gardé ni journalisé (manuel § 10.27).
 
 Les adresses IP et les messages du chat sont des données personnelles : informe tes visiteurs et limite la durée de conservation. Le journal des visites ne contient jamais d'adresse IP.
 

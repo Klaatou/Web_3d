@@ -311,18 +311,24 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 18/11/2026 |  | après 1.12.0 | Lot 1.12.12 : écrans vidéo : listes de vidéos (`folder`, `tracks`, `playlist.json`), précédente / suivante, `glb2html.py --video-list`, champ et bouton du viewer ; `tests/zone_video_liste.py` |
 | 18/11/2026 |  | après 1.12.0 | Lot 1.12.13 : écrans vidéo : barre de pistes escamotable à icônes sous l'écran ; son réglé avant le démarrage |
 | 18/11/2026 |  | après 1.12.0 | Lot 1.12.14 : écrans vidéo : le son ne retombe plus en muet au changement de piste (seul un vrai `NotAllowedError` coupe le son) |
-| 19/11/2026 |  | après 1.12.0 | Lot 1.12.26 : pochette (`poster`) et lien (`link`) des zones radio et musique, montrés dans la fenêtre Son |
-| 19/11/2026 |  | après 1.12.0 | Lot 1.12.25 : la source la plus proche en mètres parle ; s'approcher d'un écran à son efface la priorité restée à la radio après un geste (case, flux) |
-| 19/11/2026 |  | après 1.12.0 | Lot 1.12.24 : correctif : le lecteur YouTube de la fenêtre flottante ne garde plus le clavier (E et la marche répondent) |
-| 19/11/2026 |  | après 1.12.0 | Lot 1.12.23 : correctif : le lecteur YouTube de la fenêtre démarre seul et gère sa playlist comme avant (`enablejsapi` retiré) ; bouton muet distinct du volume |
-| 19/11/2026 |  | après 1.12.0 | Lot 1.12.22 : correctifs du 1.12.21 : un écran à son passe devant la radio et la musique ; la ligne et le choix du flux restent affichés ; bouton muet visible ; seule une fenêtre YouTube coupe le son, y compris la radio |
-| 19/11/2026 |  | après 1.12.0 | Lot 1.12.21 : une seule source sonore à la fois (radio, musique, son des écrans vidéo, fenêtre flottante), ligne Vidéo et bouton muet dans la fenêtre Son, touche N |
-| 18/11/2026 |  | après 1.12.0 | Lot 1.12.20 : correctif : la touche B (et Entrée, Échap) n'agissait plus quand la saisie du chat était restée ouverte sans le focus (message envoyé, puis clic sur la scène) |
-| 18/11/2026 |  | après 1.12.0 | Lot 1.12.19 : README (FR et EN) : zones radio, musique, vidéo et lien en fenêtre flottante ajoutées à la liste des fonctions et à la section Zones |
-| 18/11/2026 |  | après 1.12.0 | Lot 1.12.18 : manuel § 5.19 à 5.21 : puces denses découpées en sous-listes ; essai de la radio à plusieurs flux sur un téléphone |
-| 18/11/2026 |  | après 1.12.0 | Lot 1.12.17 : listes plus lisibles : zones de l'exemple en liste dans `docs/samples/README`, annexe du manuel (§ 13) en listes par version au lieu d'un tableau |
-| 18/11/2026 |  | après 1.12.0 | Lot 1.12.16 : exemples JSON des zones multimédias dans `REFERENCE_JSON.md` ; `region.zones.sample.json` remis à jour (14 zones, `streams`, `audio`, `video`, `frame`) ; `tests/samples.py` |
 | 18/11/2026 |  | après 1.12.0 | Lot 1.12.15 : documents des lots 1.12.3 à 1.12.14 : `REFERENCE_JSON` (zone `video`, `sound`, `frame`, `folder`, `tracks`), manuel § 5.7.1 et § 5.21, `PROCEDURES_SIMPLES.md` § 17, vue d'ensemble, annexe, historiques |
+| 18/11/2026 |  | après 1.12.0 | Lot 1.12.16 : exemples JSON des zones multimédias dans `REFERENCE_JSON.md` ; `region.zones.sample.json` remis à jour (14 zones, `streams`, `audio`, `video`, `frame`) ; `tests/samples.py` |
+| 18/11/2026 |  | après 1.12.0 | Lot 1.12.17 : listes plus lisibles : zones de l'exemple en liste dans `docs/samples/README`, annexe du manuel (§ 13) en listes par version au lieu d'un tableau |
+| 18/11/2026 |  | après 1.12.0 | Lot 1.12.18 : manuel § 5.19 à 5.21 : puces denses découpées en sous-listes ; essai de la radio à plusieurs flux sur un téléphone |
+| 18/11/2026 |  | après 1.12.0 | Lot 1.12.19 : README (FR et EN) : zones radio, musique, vidéo et lien en fenêtre flottante ajoutées à la liste des fonctions et à la section Zones |
+| 18/11/2026 |  | après 1.12.0 | Lot 1.12.20 : correctif : la touche B (et Entrée, Échap) n'agissait plus quand la saisie du chat était restée ouverte sans le focus (message envoyé, puis clic sur la scène) |
+| 19/11/2026 |  | après 1.12.0 | Lot 1.12.21 : une seule source sonore à la fois (radio, musique, son des écrans vidéo, fenêtre flottante), ligne Vidéo et bouton muet dans la fenêtre Son, touche N |
+| 19/11/2026 |  | après 1.12.0 | Lot 1.12.22 : correctifs du 1.12.21 : un écran à son passe devant la radio et la musique ; la ligne et le choix du flux restent affichés ; bouton muet visible ; seule une fenêtre YouTube coupe le son, y compris la radio |
+| 19/11/2026 |  | après 1.12.0 | Lot 1.12.23 : correctif : le lecteur YouTube de la fenêtre démarre seul et gère sa playlist comme avant (`enablejsapi` retiré) ; bouton muet distinct du volume |
+| 19/11/2026 |  | après 1.12.0 | Lot 1.12.24 : correctif : le lecteur YouTube de la fenêtre flottante ne garde plus le clavier (E et la marche répondent) |
+| 19/11/2026 |  | après 1.12.0 | Lot 1.12.25 : la source la plus proche en mètres parle ; s'approcher d'un écran à son efface la priorité restée à la radio après un geste (case, flux) |
+| 19/11/2026 |  | après 1.12.0 | Lot 1.12.26 : pochette (`poster`) et lien (`link`) des zones radio et musique, montrés dans la fenêtre Son |
+| 19/11/2026 |  | après 1.12.0 | Lot 1.12.27 : `oar2glb.py` : noms de convoar à barre oblique inverse finale réparés (le `.gltf` était invalide), OAR abîmé (archive tronquée ou corrompue) signalé par un message clair, sans trace |
+| 19/11/2026 |  | après 1.12.0 | Lot 1.12.28 : propositions d'effets (rendu léger, reflets) : icône clignotante à la place de la bulle, choix « Propositions d'effets » dans Réglages |
+| 20/11/2026 |  | après 1.12.0 | Lot 1.12.29 : messages privés, serveur : message `dm` (écho `self`, erreurs `dmerr`), clé `k`, option `--no-dm`, promeneurs seulement, texte jamais gardé ni journalisé |
+| 21/11/2026 |  | après 1.12.0 | Lot 1.12.30 : messages privés, page : une fenêtre flottante par correspondant, Ignorer, Enregistrer, `/mp`, `/ignore`, `/unignore` ; clé `k` dans les données publiques du serveur |
+| 21/11/2026 |  | après 1.12.0 | Lot 1.12.31 : messages privés : clic sur l'avatar ou son nom avec question de confirmation ; clic sur un pseudo d'une ligne rejouée de l'historique, retrouvé par son pseudo |
+| 21/11/2026 |  | après 1.12.0 | Lot 1.12.32 : documents : historiques remis dans l'ordre des lots, annexe du manuel (§ 13) et § 10.27 (messages privés côté serveur), README, vue d'ensemble, index, guide, procédures et CONVERTIR_OARS.md à jour pour les lots 1.12.16 à 1.12.31, deux affirmations périmées corrigées (manuel § 5.20 et § 7.25) |
 ## Commandes utiles
 
 - Voir l'historique : `git log --oneline --decorate`

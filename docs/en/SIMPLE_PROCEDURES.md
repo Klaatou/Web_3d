@@ -244,6 +244,8 @@ You need: the address of a radio stream, your region already online (or ready to
 
 Several streams in the same zone (`streams`), distance display, tooltip: `MANUAL.md` § 5.19 and § 7.66.
 
+Cover and link (optional, 1.12.26): the "Cover" and "Cover link" fields of the zone, shown in the Sound window when this radio speaks: `MANUAL.md` § 5.19.
+
 A stream that does not play: `MANUAL.md` § 5.19, "The radio does not play?".
 
 ## 15. Put a playlist of my own sounds (mp3...) in a region
@@ -260,7 +262,7 @@ You need: your sound files (that you have the rights to), your region's folder (
 6. **Try it online**: open the page (F5 or Ctrl+F5), switch to walk mode (F key), enter the range: the "♪ Music: NAME — track" line of the State block (I key) gives the current track. A click or key is needed the first time. The volume falls as you move away, playback stops out of range and resumes at the track that was left.
 7. **Later**: if you add, remove or rename a sound, **redo the list** (step 2) and copy the `audio` folder online again; the page reads the list each time the zone is entered, no page rebuild and no new zones file.
 
-Radio **or** music: in Settings, the "Zone radio" and "Zone music" boxes exclude each other. Nothing plays? `MANUAL.md` § 5.20, "Does not play?".
+Radio, music and video never speak together: in Settings, the "Zone radio", "Zone music" and "Zone videos" boxes exclude each other, and the source nearest in metres speaks (`MANUAL.md` § 5.22). Optional cover and link (1.12.26): `MANUAL.md` § 5.20. Nothing plays? `MANUAL.md` § 5.20, "Does not play?".
 
 ## 16. Update the zones of a region already online
 

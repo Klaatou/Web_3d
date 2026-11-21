@@ -24,6 +24,9 @@ Cette page dit **quel document lire pour quoi**. Les documents anglais portent l
 | poser des zones (arrivées, portails, panneaux, images) | `GUIDE.md` § 2 ; `MANUEL.md` § 5 ; `PROCEDURES.md` § 5 |
 | mettre une radio dans une région (zone `cast`, titre du morceau) | `PROCEDURES_SIMPLES.md` § 14 (pas à pas) ; `MANUEL.md` § 5.19 et § 10.25 |
 | mettre ma propre musique (mp3...) dans une région (zone `audio`, playlist) | `PROCEDURES_SIMPLES.md` § 15 ; `MANUEL.md` § 5.20 |
+| mettre un écran vidéo sur un mur (zone `video`, liste de vidéos) | `PROCEDURES_SIMPLES.md` § 17 ; `MANUEL.md` § 5.21 |
+| ouvrir un lien dans une fenêtre flottante, YouTube compris (clé `frame`) | `MANUEL.md` § 5.7.1 |
+| comprendre quelle source sonore parle, couper le son (fenêtre Son, touche N) | `MANUEL.md` § 5.22 et § 7.66 |
 | mettre à jour les zones d'une région déjà en ligne (exporter, remplacer `NOM.zones.json`, publier) | `PROCEDURES_SIMPLES.md` § 16 ; `MANUEL.md` § 5.15 |
 | fabriquer ou mettre à jour la page | `GUIDE.md` § 3 ; `MANUEL.md` § 6 ; `PROCEDURES.md` § 3, § 4 et § 8 ; `PROCEDURES_SIMPLES.md` § 1 |
 | fixer le titre de l'onglet, renommer une région en tuiles | `PROCEDURES_SIMPLES.md` § 2 et § 3 |
@@ -40,6 +43,7 @@ Cette page dit **quel document lire pour quoi**. Les documents anglais portent l
 | régler la hauteur de la mer dans la page | `MANUEL.md` § 9.19 |
 | poser une question, demander de l'aide | le serveur Discord : https://discord.gg/BDG9r5gXwr |
 | voir les autres visiteurs, chatter, modérer | `GUIDE.md` § 5 ; `MANUEL.md` § 10 ; `PROCEDURES.md` § 6 |
+| écrire en privé à un visiteur, ignorer quelqu'un ; refuser les messages privés (`--no-dm`) | `MANUEL.md` § 7.25 et § 10.27 |
 | installer le serveur de présence sur une VM | `PROCEDURES_SIMPLES.md` § 8 ; `PROCEDURES.md` § 11 |
 | rendre le serveur de présence public sans montrer mon adresse IP | `PROCEDURES.md` § 11 |
 | accueillir un créateur sur mon serveur | `PROCEDURES_SIMPLES.md` § 9 ; `MANUEL.md` § 10.10 |

@@ -83,7 +83,7 @@ python -m http.server 8000
 
 ## 5. The other visitors: presence
 
-Seeing the other walkers and chatting needs a presence server: that of a host who welcomes you (note `CREATEURS.md`, in English `CREATORS.md`), or your own (`presence_server.py`, `PROCEDURES.md` § 6 and § 11).
+Seeing the other walkers and chatting needs a presence server: that of a host who welcomes you (note `CREATEURS.md`, in English `CREATORS.md`), or your own (`presence_server.py`, `PROCEDURES.md` § 6 and § 11). Walkers can also write to each other privately (private messages, "Ignore": manual § 7.25); the server refuses them with `--no-dm` (manual § 10.27).
 
 ## 6. The tools and their role
 

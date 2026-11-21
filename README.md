@@ -157,11 +157,11 @@ For a huge model, `glb2tiles.py` writes the tiles, and `glb2html.py --tiles X.ti
 ## The page
 
 - **Walking**: avatar, collisions, running, jumping, flying, three views (first person, third person, free camera), compass, arrival points and portals, teleport through the Arrivals window (L) or by double-click.
-- **Zones**: arrivals, portals, web links (including in a **floating window**, manual § 5.7.1), Home Assistant commands, **pictures on walls** (files put in the region's `medias` subfolder, caption in the file name or in a `.txt` file; hosted mode only, manual § 5.11), **radio** (§ 5.19), **music** (§ 5.20) and **video screens** (§ 5.21).
-- **Windows**: Help (H), Information (I), Arrivals (L), Settings (O), movable and remembered by the browser; "Copy diagnostics" button; "Visit log…" when the page has a presence server.
+- **Zones**: arrivals, portals, web links (including in a **floating window**, manual § 5.7.1), Home Assistant commands, **pictures on walls** (files put in the region's `medias` subfolder, caption in the file name or in a `.txt` file; hosted mode only, manual § 5.11), **radio** (§ 5.19), **music** (§ 5.20) and **video screens** (§ 5.21); only one sound source speaks at a time, with a mute button and the N key (§ 5.22).
+- **Windows**: Help (H), Information (I), Arrivals (L), Settings (O) and Sound (radio, music, video; manual § 7.66), movable and remembered by the browser; "Copy diagnostics" button; "Visit log…" when the page has a presence server.
 - **On-screen controls**: status line, 3 x 3 arrows (K key), touch mode for phones and tablets.
 - **Light rendering**: resolution, frames per second, overview only, tile radius, anti-aliasing (`--light`).
-- **Presence and chat**: real-time visitors, avatar colour, chat with history, cited nickname; the page says why the connection closed.
+- **Presence and chat**: real-time visitors, avatar colour, chat with history, cited nickname, **private messages** (one floating window per correspondent, "Ignore", local save; manual § 7.25 and § 10.27); the page says why the connection closed.
 
 ## Main keys
 
@@ -180,12 +180,13 @@ For a huge model, `glb2tiles.py` writes the tiles, and `glb2html.py --tiles X.ti
 | **G**                                                       | grab the mouse again after **Esc**                                                                  |
 | **Enter**                                                   | write in the chat                                                                                   |
 | **B**                                                       | fold / unfold the chat block                                                                        |
+| **N**                                                       | mute / restore the radio, the music and the video sound at once                                     |
 
 The "Keyboard" setting (Auto, AZERTY or QWERTY) only changes the letters shown in the help; the physical keys stay the same. Full table: manual § 7.1 and § 7.2.
 
 ## Presence server
 
-Positions, chat (history `--history-file`), moderation from its console (`liste`, `ejecter`, `bannir`, `bans`, `debannir`, `rooms`, `visits-key`, `creators`, `aide`; English aliases `list`, `kick`, `ban`, `unban`, `help`), visitor counters for the map, a visit log without IP addresses (`--visits`) that the creator reads with `#visits` and their key, hosting of other creators (`--creators`: declared pages, rooms reserved by a prefix, manual § 10.10). Making it public without showing its IP address: procedures § 11. Details: manual § 10.
+Positions, chat (history `--history-file`), private messages (`--no-dm` refuses them, manual § 10.27), moderation from its console (`liste`, `ejecter`, `bannir`, `bans`, `debannir`, `rooms`, `visits-key`, `creators`, `aide`; English aliases `list`, `kick`, `ban`, `unban`, `help`), visitor counters for the map, a visit log without IP addresses (`--visits`) that the creator reads with `#visits` and their key, hosting of other creators (`--creators`: declared pages, rooms reserved by a prefix, manual § 10.10). Making it public without showing its IP address: procedures § 11. Details: manual § 10.
 
 ## Language
 

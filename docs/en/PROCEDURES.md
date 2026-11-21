@@ -113,6 +113,7 @@ The zones of a tiled region are written in the model's original frame (no recent
 7. **Welcome a creator** (v51, manual § 10.10): add `--creators presence_creators.json` to the start line; in this file (copy of `docs\samples\presence_creators.sample.json`), keep an entry for yourself (`"prefix": ""`, your origins and `null`) and add theirs (`id`, origins of their pages). The creator sets `room` to `ID.NAME` (for example `alice.galerie`) and your `wss://` address in `presenceUrl` of their config. Check with `creators` in the console; key of their visits: `visits-key alice.galerie`; card on your map: `--register` without a glb (`REFERENCE_JSON.md` § 11.6).
 8. **Update**: stop the server (Ctrl+C) and run it again from the `presence_server.py` of the `dist` folder after `python build.py`. An old copy ignores new features (for example the chosen colour).
 9. **Permanent server on a VM**: a plain systemd service gives the moderation console no keyboard; the way that worked (a `tmux` session started by systemd) is described in § 11, "Debian 13 VM: permanent service with a moderation console".
+10. **Private messages** (1.12.29): accepted by default between walkers; `--no-dm` refuses them (the page then hides the feature); the text of a private message is neither kept nor logged (manual § 10.27).
 
 IP addresses and chat messages are personal data: inform your visitors and limit how long they are kept. The visit log never contains an IP address.
 

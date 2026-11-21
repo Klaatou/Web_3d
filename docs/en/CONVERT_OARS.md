@@ -85,6 +85,13 @@ The work files and the logs are written outside the site folder (by default `SIT
 
 A region's work folder is removed at the end, including after a failure: the log is enough to understand.
 
+Two messages in the log are not tool failures (batch 1.12.27):
+
+- **"trailing backslash not doubled in names (convoar defect): repaired"**: convoar wrote an object name ending with a backslash without doubling it, which made the `.gltf` invalid ("Invalid control character"); `oar2glb.py` repairs it by itself, there is nothing to do;
+- **"the OAR is damaged"**: the archive is incomplete or corrupt (interrupted download, disk); the conversion of that region stops with this message, without a trace. Download or export the OAR again.
+
+Known case, not handled: on one region tried, convoar ended without writing its `.buf` file (return code 0); that region fails, the cause is not established.
+
 ## 7. The published GLB can be downloaded
 
 The page loads the region by downloading its GLB (or its tiles) and its JSON files over plain HTTP. Web_3d neither encrypts nor hides them: anyone who can open the page can save the GLB, with the geometry and the textures of the OAR, and an unreadable region name changes nothing, because `default.json` gives it.

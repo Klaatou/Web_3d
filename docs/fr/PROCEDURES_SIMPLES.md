@@ -244,6 +244,8 @@ Il te faut : l'adresse d'un flux radio, ta région déjà en ligne (ou prête à
 
 Plusieurs flux dans la même zone (`streams`), distance affichée, bulle d'info : `MANUEL.md` § 5.19 et § 7.66.
 
+Pochette et lien (facultatifs, 1.12.26) : les champs « Pochette » et « Lien de la pochette » de la zone, montrés dans la fenêtre Son quand cette radio parle : `MANUEL.md` § 5.19.
+
 Un flux qui ne joue pas : `MANUEL.md` § 5.19, « La radio ne joue pas ? ».
 
 ## 15. Mettre une playlist de mes propres sons (mp3...) dans une région
@@ -260,7 +262,7 @@ Il te faut : tes fichiers son (dont tu as les droits), le dossier de ta région 
 6. **Essayer en ligne** : ouvrir la page (F5 ou Ctrl+F5), passer en promenade (touche F), entrer dans la portée : la ligne « ♪ Musique : NOM — piste » du bloc État (touche I) donne la piste en cours. Un clic ou une touche est nécessaire la première fois. Le volume baisse quand on s'éloigne, la lecture s'arrête hors portée et reprend à la piste quittée.
 7. **Plus tard** : si tu ajoutes, retires ou renommes un son, **refaire la liste** (étape 2) et recopier le dossier `audio` en ligne ; la page relit la liste à chaque entrée dans la zone, sans refaire la page ni le fichier de zones.
 
-Radio **ou** musique : dans Réglages, les cases « Radio des zones » et « Musique des zones » s'excluent. Rien ne joue ? `MANUEL.md` § 5.20, « Ça ne joue pas ? ».
+Radio, musique et vidéo ne parlent jamais ensemble : dans Réglages, les cases « Radio des zones », « Musique des zones » et « Vidéos des zones » s'excluent, et la source la plus proche en mètres parle (`MANUEL.md` § 5.22). Pochette et lien facultatifs (1.12.26) : `MANUEL.md` § 5.20. Rien ne joue ? `MANUEL.md` § 5.20, « Ça ne joue pas ? ».
 
 ## 16. Mettre à jour les zones d'une région déjà en ligne
 

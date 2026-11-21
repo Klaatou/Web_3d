@@ -311,18 +311,24 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 18/11/2026 |  | after 1.12.0 | Batch 1.12.12: video screens: lists of videos (`folder`, `tracks`, `playlist.json`), previous / next, `glb2html.py --video-list`, viewer field and button; `tests/zone_video_liste.py` |
 | 18/11/2026 |  | after 1.12.0 | Batch 1.12.13: video screens: retractable track bar with icons under the screen; sound set before start |
 | 18/11/2026 |  | after 1.12.0 | Batch 1.12.14: video screens: the sound no longer falls back to muted at a track change (only a real `NotAllowedError` cuts the sound) |
-| 19/11/2026 |  | after 1.12.0 | Batch 1.12.26: cover (`poster`) and link (`link`) of radio and music zones, shown in the Sound window |
-| 19/11/2026 |  | after 1.12.0 | Batch 1.12.25: the source nearest in metres speaks; approaching a screen with sound clears the priority left to the radio after a gesture (box, stream) |
-| 19/11/2026 |  | after 1.12.0 | Batch 1.12.24: fix: the YouTube player of the floating window no longer keeps the keyboard (E and walking respond) |
-| 19/11/2026 |  | after 1.12.0 | Batch 1.12.23: fix: the YouTube player of the window starts by itself and handles its playlist as before (`enablejsapi` removed); mute button distinct from the volume |
-| 19/11/2026 |  | after 1.12.0 | Batch 1.12.22: fixes of 1.12.21: a screen with sound goes ahead of the radio and the music; the line and the stream choice stay displayed; visible mute button; only a YouTube window silences the sound, the radio included |
-| 19/11/2026 |  | after 1.12.0 | Batch 1.12.21: one sound source at a time (radio, music, video screen sound, floating window), Video line and mute button in the Sound window, N key |
-| 18/11/2026 |  | after 1.12.0 | Batch 1.12.20: fix: the B key (and Enter, Esc) did nothing when the chat input had been left open without focus (message sent, then a click on the scene) |
-| 18/11/2026 |  | after 1.12.0 | Batch 1.12.19: README (FR and EN): radio, music, video and floating-window link zones added to the feature list and to the Zones section |
-| 18/11/2026 |  | after 1.12.0 | Batch 1.12.18: manual § 5.19 to 5.21: dense bullets split into sub-lists; several-stream radio tried on a phone |
-| 18/11/2026 |  | after 1.12.0 | Batch 1.12.17: more readable lists: zones of the sample as a list in `docs/samples/README`, manual appendix (§ 13) as lists per version instead of a table |
-| 18/11/2026 |  | after 1.12.0 | Batch 1.12.16: JSON examples of the multimedia zones in `REFERENCE_JSON.md`; `region.zones.sample.json` brought up to date (14 zones, `streams`, `audio`, `video`, `frame`); `tests/samples.py` |
 | 18/11/2026 |  | after 1.12.0 | Batch 1.12.15: documents of batches 1.12.3 to 1.12.14: `REFERENCE_JSON` (`video` zone, `sound`, `frame`, `folder`, `tracks`), manual § 5.7.1 and § 5.21, `SIMPLE_PROCEDURES.md` § 17, overview, appendix, histories |
+| 18/11/2026 |  | after 1.12.0 | Batch 1.12.16: JSON examples of the multimedia zones in `REFERENCE_JSON.md`; `region.zones.sample.json` brought up to date (14 zones, `streams`, `audio`, `video`, `frame`); `tests/samples.py` |
+| 18/11/2026 |  | after 1.12.0 | Batch 1.12.17: more readable lists: zones of the sample as a list in `docs/samples/README`, manual appendix (§ 13) as lists per version instead of a table |
+| 18/11/2026 |  | after 1.12.0 | Batch 1.12.18: manual § 5.19 to 5.21: dense bullets split into sub-lists; several-stream radio tried on a phone |
+| 18/11/2026 |  | after 1.12.0 | Batch 1.12.19: README (FR and EN): radio, music, video and floating-window link zones added to the feature list and to the Zones section |
+| 18/11/2026 |  | after 1.12.0 | Batch 1.12.20: fix: the B key (and Enter, Esc) did nothing when the chat input had been left open without focus (message sent, then a click on the scene) |
+| 19/11/2026 |  | after 1.12.0 | Batch 1.12.21: one sound source at a time (radio, music, video screen sound, floating window), Video line and mute button in the Sound window, N key |
+| 19/11/2026 |  | after 1.12.0 | Batch 1.12.22: fixes of 1.12.21: a screen with sound goes ahead of the radio and the music; the line and the stream choice stay displayed; visible mute button; only a YouTube window silences the sound, the radio included |
+| 19/11/2026 |  | after 1.12.0 | Batch 1.12.23: fix: the YouTube player of the window starts by itself and handles its playlist as before (`enablejsapi` removed); mute button distinct from the volume |
+| 19/11/2026 |  | after 1.12.0 | Batch 1.12.24: fix: the YouTube player of the floating window no longer keeps the keyboard (E and walking respond) |
+| 19/11/2026 |  | after 1.12.0 | Batch 1.12.25: the source nearest in metres speaks; approaching a screen with sound clears the priority left to the radio after a gesture (box, stream) |
+| 19/11/2026 |  | after 1.12.0 | Batch 1.12.26: cover (`poster`) and link (`link`) of radio and music zones, shown in the Sound window |
+| 19/11/2026 |  | after 1.12.0 | Batch 1.12.27: `oar2glb.py`: convoar names ending with a lone backslash repaired (the `.gltf` was invalid), damaged OAR (truncated or corrupt archive) reported by a clear message, no trace |
+| 19/11/2026 |  | after 1.12.0 | Batch 1.12.28: effect suggestions (light rendering, reflections): blinking icon instead of the bubble, "Effect suggestions" choice in Settings |
+| 20/11/2026 |  | after 1.12.0 | Batch 1.12.29: private messages, server: `dm` message (`self` echo, `dmerr` errors), `k` key, `--no-dm` option, walkers only, text never kept or logged |
+| 21/11/2026 |  | after 1.12.0 | Batch 1.12.30: private messages, page: one floating window per correspondent, Ignore, Save, `/mp`, `/ignore`, `/unignore`; `k` key in the server's public data |
+| 21/11/2026 |  | after 1.12.0 | Batch 1.12.31: private messages: click on the avatar or its name with a confirmation question; click on a name in a line replayed from the history, found by its name |
+| 21/11/2026 |  | after 1.12.0 | Batch 1.12.32: documents: histories put back in batch order, manual annex (§ 13) and § 10.27 (private messages, server side), README, overview, index, guide, procedures and CONVERT_OARS.md up to date for batches 1.12.16 to 1.12.31, two outdated statements corrected (manual § 5.20 and § 7.25) |
 ## Useful commands
 
 - See the history: `git log --oneline --decorate`

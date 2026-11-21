@@ -157,11 +157,11 @@ Pour un modèle énorme, `glb2tiles.py` écrit les tuiles, et `glb2html.py --til
 ## La page
 
 - **Promenade** : avatar, collisions, course, saut, vol, trois vues (subjective, troisième personne, caméra libre), boussole, arrivées et portails, téléportation par la fenêtre Arrivées (L) ou par double-clic.
-- **Zones** : arrivées, portails, liens web (y compris en **fenêtre flottante**, manuel § 5.7.1), commandes Home Assistant, **images sur les murs** (fichiers déposés dans le sous-dossier `medias` de la région, légende dans le nom du fichier ou dans un fichier `.txt` ; mode hébergé seulement, manuel § 5.11), **radio** (§ 5.19), **musique** (§ 5.20) et **écrans vidéo** (§ 5.21).
-- **Fenêtres** : Aide (H), Informations (I), Arrivées (L), Réglages (O), déplaçables et retenues par le navigateur ; bouton « Copier le diagnostic » ; « Journal des visites… » quand la page a un serveur de présence.
+- **Zones** : arrivées, portails, liens web (y compris en **fenêtre flottante**, manuel § 5.7.1), commandes Home Assistant, **images sur les murs** (fichiers déposés dans le sous-dossier `medias` de la région, légende dans le nom du fichier ou dans un fichier `.txt` ; mode hébergé seulement, manuel § 5.11), **radio** (§ 5.19), **musique** (§ 5.20) et **écrans vidéo** (§ 5.21) ; une seule source sonore parle à la fois, bouton muet et touche N (§ 5.22).
+- **Fenêtres** : Aide (H), Informations (I), Arrivées (L), Réglages (O) et Son (radio, musique, vidéo ; manuel § 7.66), déplaçables et retenues par le navigateur ; bouton « Copier le diagnostic » ; « Journal des visites… » quand la page a un serveur de présence.
 - **Commandes à l'écran** : ligne d'état, flèches 3 x 3 (touche K), mode tactile pour téléphone et tablette.
 - **Rendu léger** : résolution, images par seconde, vue d'ensemble seule, rayon des tuiles, anticrénelage (`--light`).
-- **Présence et chat** : visiteurs en temps réel, couleur d'avatar, chat avec historique, pseudo cité ; la page dit pourquoi la connexion s'est fermée.
+- **Présence et chat** : visiteurs en temps réel, couleur d'avatar, chat avec historique, pseudo cité, **messages privés** (une fenêtre flottante par correspondant, « Ignorer », enregistrement local ; manuel § 7.25 et § 10.27) ; la page dit pourquoi la connexion s'est fermée.
 
 ## Touches principales
 
@@ -180,12 +180,13 @@ Pour un modèle énorme, `glb2tiles.py` écrit les tuiles, et `glb2html.py --til
 | **G**                                                         | reprendre la souris après **Échap**                                                                                           |
 | **Entrée**                                                    | écrire dans le chat                                                                                                           |
 | **B**                                                         | replier / déplier le bloc de chat                                                                                             |
+| **N**                                                         | couper / rétablir d'un coup la radio, la musique et le son des vidéos                                                         |
 
 Le réglage « Clavier » (Auto, AZERTY ou QWERTY) ne change que les lettres affichées dans l'aide ; les touches physiques restent les mêmes. Tableau complet : manuel § 7.1 et § 7.2.
 
 ## Serveur de présence
 
-Positions, chat (historique `--history-file`), modération depuis sa console (`liste`, `ejecter`, `bannir`, `bans`, `debannir`, `rooms`, `visits-key`, `creators`, `aide` ; alias anglais `list`, `kick`, `ban`, `unban`, `help`), compteurs de visiteurs pour la carte, journal des visites sans adresse IP (`--visits`) que le créateur consulte avec `#visits` et sa clé, accueil d'autres créateurs (`--creators` : pages déclarées, salons réservés par un préfixe, manuel § 10.10). Le rendre public sans montrer son adresse IP : procédures § 11. Détail : manuel § 10.
+Positions, chat (historique `--history-file`), messages privés (`--no-dm` les refuse, manuel § 10.27), modération depuis sa console (`liste`, `ejecter`, `bannir`, `bans`, `debannir`, `rooms`, `visits-key`, `creators`, `aide` ; alias anglais `list`, `kick`, `ban`, `unban`, `help`), compteurs de visiteurs pour la carte, journal des visites sans adresse IP (`--visits`) que le créateur consulte avec `#visits` et sa clé, accueil d'autres créateurs (`--creators` : pages déclarées, salons réservés par un préfixe, manuel § 10.10). Le rendre public sans montrer son adresse IP : procédures § 11. Détail : manuel § 10.
 
 ## Langue
 
