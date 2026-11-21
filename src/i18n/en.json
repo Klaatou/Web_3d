@@ -2005,5 +2005,7 @@
  "py.presence.idle_back": "back (position received)",
  "py.presence.idle_on": "walker silent after {0:g} min without a position (--idle-walk)",
  "py.presence.idle_off": "silent walkers: never (--idle-walk 0)",
- "py.presence.role.idle": "silent"
+ "py.presence.role.idle": "silent",
+ "py.presence.dm": "DM",
+ "py.presence.help.no_dm": "disables private messages between walkers (\"dm\" message)"
 }

@@ -6,6 +6,15 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.12.0)
 
+### 20/11/2026 : messages privés entre promeneurs, côté serveur (lot 1.12.29)
+
+- **Demande** (Klaatou) : messages privés entre visiteurs, une fenêtre flottante par conversation, une fonction « Ignorer », enregistrement local des journaux. Ce premier lot est le serveur de présence et son protocole ; la page vient ensuite.
+- **Fait** (`presence_server.py`) : nouveau message `dm` `{t:'dm', to:id, text}`. Le destinataire reçoit `{t:'dm', id, name, k, text, ts}` ; l'expéditeur reçoit le même message avec `self:true` et l'id, le nom et la clé du destinataire. `k` est une clé courte et stable du visiteur (empreinte de son identifiant interne), publiée seulement avec les messages privés, pour que la page puisse ignorer quelqu'un même s'il change de pseudo (sans `uid` persistant, elle change à chaque connexion). Un échec répond `{t:'dmerr', to, why}` avec `why` = `off`, `rate`, `gone` (inconnu, spectateur, autre salon) ou `self`. Cadence propre, mêmes valeurs que le chat (`--chat-gap`, `--chat-burst`). Promeneurs seulement : un spectateur ne peut pas écrire. Jamais diffusé, jamais gardé dans l'historique, jamais écrit dans la console (seulement l'événement, expéditeur -> destinataire). Nouvelle option `--no-dm` ; le message `welcome` porte `dm` (vrai sauf avec `--no-dm`), absent chez un ancien serveur : la page masquera alors la fonction.
+- **Décisions** (Klaatou, 20/11/2026), pour les lots suivants (page) : fermer la fenêtre d'une conversation n'efface pas son texte (il réapparaît à la réouverture) ; l'archive d'une conversation gardée tant que la page est affichée n'a pas de limite de taille ; un seul mécanisme « Ignorer » (par clé, mémorisé dans le navigateur : messages privés, messages publics et bulles de la personne) ; enregistrement local par un bouton, même format de texte que l'enregistrement du chat.
+- **Tests** : `tests/presence_mp.py` (remise et écho, tiers, erreurs, valeurs invalides, spectateur, stabilité de la clé, historique, cadence, `--no-dm`, console sans le texte). Sur la 1.12.28 il échoue dès la première vérification.
+- **Non essayé ici** : Windows, Edge, tactile.
+- Fichiers : `src/presence_server.py`, `src/i18n/fr.json`, `src/i18n/en.json`, `tests/presence_mp.py`, `docs/REFERENCE_OPTIONS.md` (refait par le build), `CHANGELOG.fr.md`, `CHANGELOG.md`, `VERSION`.
+
 ### 19/11/2026 : propositions d'effets : icône clignotante au lieu de la bulle (lot 1.12.28)
 
 - **Demande** (Klaatou) : plus de message qui s'impose (« Cette région contient 27 matériaux brillants… Activer les reflets à 60 % ? ») ; une icône qui clignote pour le proposer, avec un sélecteur.

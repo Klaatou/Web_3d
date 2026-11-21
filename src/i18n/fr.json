@@ -2005,5 +2005,7 @@
  "py.presence.idle_back": "de retour (position reçue)",
  "py.presence.idle_on": "promeneur muet après {0:g} min sans position (--idle-walk)",
  "py.presence.idle_off": "promeneurs muets : jamais (--idle-walk 0)",
- "py.presence.role.idle": "muet"
+ "py.presence.role.idle": "muet",
+ "py.presence.dm": "MP",
+ "py.presence.help.no_dm": "désactive les messages privés entre promeneurs (message « dm »)"
 }

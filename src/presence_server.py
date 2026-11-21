@@ -117,6 +117,12 @@ def clean_text(s, limit):
     return re.sub(r"\s+", " ", s).strip()[:limit]
 
 
+def peer_key(p):
+    """1.12.29 : cle courte et stable d'un visiteur (empreinte de son identifiant interne, tronquee), publiee seulement avec ses messages prives :
+    elle permet d'ignorer quelqu'un meme s'il change de pseudo ; sans uid persistant (anon-), elle change a chaque connexion"""
+    return hashlib.sha256(("dm:" + p.uidh).encode()).hexdigest()[:12]
+
+
 def clean_room(s):
     s = re.sub(r"[^\w .\-]", "", str(s or "")).strip()[:64]
     return s or "default"
@@ -384,13 +390,14 @@ def log(kind, room, who, extra=""):
 
 class Peer:
     __slots__ = ("id", "ws", "name", "color", "p", "yaw", "last", "ip", "chat_times", "spectator", "uidh", "t0", "zone_t", "room", "color_t", "hist_t",
-                 "wall0", "walk_s", "walk0", "vname", "label", "name_t", "radio", "radio_t", "idle")
+                 "wall0", "walk_s", "walk0", "vname", "label", "name_t", "radio", "radio_t", "idle", "dm_times")
 
     def __init__(self, pid, ws, name, color, ip, spectator, uidh, room):
         self.id, self.ws, self.name, self.color, self.ip = pid, ws, name, color, ip
         self.spectator, self.uidh, self.room = spectator, uidh, room
         self.p, self.yaw, self.last, self.zone_t, self.color_t, self.hist_t, self.name_t = None, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
         self.chat_times = []
+        self.dm_times = []      # 1.12.29 : heures des derniers messages prives (cadence propre)
         self.t0 = time.monotonic()
         self.wall0, self.walk_s, self.vname = time.time(), 0.0, ""      # v48 : journal des visites
         self.walk0 = None if spectator else self.t0
@@ -1381,7 +1388,7 @@ async def handler(ws):
         peers = ROOMS.setdefault(room, {})      # v51 : créé ici seulement (un refus plus haut ne laisse plus de salon vide)
         peers[pid] = peer
         await ws.send(json.dumps({"t": "welcome", "id": pid, "name": peer.name, "color": peer.color, "peers": existing,
-                                  "history": list(HISTORY.get(room, ()))[-OPTS.history:] if OPTS.history > 0 else [], "role": "spectator" if spectator else "walker"},
+                                  "history": list(HISTORY.get(room, ()))[-OPTS.history:] if OPTS.history > 0 else [], "role": "spectator" if spectator else "walker", "dm": not OPTS.no_dm},
                                  separators=(",", ":")))
         log(_tr("py.presence.ev.connect"), room, peer.who(), "spectateur" if spectator else _tr("py.presence.promeneur_0_dans_le_salon", len(walkers(room))))
         if not spectator:
@@ -1459,6 +1466,31 @@ async def handler(ws):
                 ent = hist_add(room, pid, peer.name, text) if (OPTS.history > 0 or OPTS.history_file) else {"n": 0, "t": int(time.time())}
                 log(_tr("py.presence.chat"), room, peer.who(), text)
                 await broadcast(room, {"t": "chat", "id": pid, "name": peer.name, "text": text, "n": ent["n"], "ts": ent["t"]})
+            elif t == "dm":
+                # 1.12.29 : message prive {t:'dm', to:id, text} : le destinataire recoit {t:'dm', id, name, k, text, ts}, l'expediteur le meme avec self:true
+                # (id, nom et cle du destinataire) ; erreurs {t:'dmerr', to, why} : off, rate, gone, self ; jamais diffuse, jamais garde, texte jamais journalise
+                to = m.get("to")
+                text = clean_text(m.get("text"), OPTS.max_chat)
+                if not text or isinstance(to, bool) or not isinstance(to, int):
+                    continue
+                if OPTS.no_dm:
+                    await send_safe(ws, json.dumps({"t": "dmerr", "to": to, "why": "off"}))
+                    continue
+                now = time.monotonic()
+                peer.dm_times = [x for x in peer.dm_times if now - x < 10]
+                if (peer.dm_times and now - peer.dm_times[-1] < OPTS.chat_gap) or len(peer.dm_times) >= OPTS.chat_burst:
+                    await send_safe(ws, json.dumps({"t": "dmerr", "to": to, "why": "rate"}))
+                    continue
+                dest = ROOMS.get(room, {}).get(to)
+                why = "self" if dest is peer else ("gone" if dest is None or dest.spectator else "")
+                if why:
+                    await send_safe(ws, json.dumps({"t": "dmerr", "to": to, "why": why}))
+                    continue
+                peer.dm_times.append(now)
+                ts = int(time.time())
+                log(_tr("py.presence.dm"), room, peer.who(), "-> " + dest.who())
+                await send_safe(dest.ws, json.dumps({"t": "dm", "id": pid, "name": peer.name, "k": peer_key(peer), "text": text, "ts": ts}, separators=(",", ":")))
+                await send_safe(ws, json.dumps({"t": "dm", "id": dest.id, "name": dest.name, "k": peer_key(dest), "text": text, "ts": ts, "self": True}, separators=(",", ":")))
             elif t == "history":
                 # v37 : page plus ancienne de l'historique du salon : {t:'history', before: n, n: 50} -> {t:'history', msgs:[...], more:bool}
                 now = time.monotonic()
@@ -1543,6 +1575,7 @@ async def main():
     ap.add_argument("--chat-gap", type=float, default=0.7, help=_tr("py.presence.delai_mini_entre_deux_messages_d"))
     ap.add_argument("--chat-burst", type=int, default=5, help=_tr("py.presence.messages_max_par_fenetre_de_10"))
     ap.add_argument("--history", type=int, default=200, help=_tr("py.presence.derniers_messages_rejoues_aux_nouveaux_arriv"))
+    ap.add_argument("--no-dm", action="store_true", help=_tr("py.presence.help.no_dm"))
     ap.add_argument("--identities", default="presence_identities.json", help=_tr("py.presence.registre_des_noms_reserves_vide_en"))
     ap.add_argument("--name-ttl-days", type=int, default=365, help=_tr("py.presence.un_nom_non_utilise_depuis_ce"))
     ap.add_argument("--max-names", type=int, default=10000, help=_tr("py.presence.help.max_names"))
