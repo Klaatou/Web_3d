@@ -4,7 +4,77 @@ Les dates sont au format jj/mm/aaaa.
 
 Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
-## Non publié (après la 1.12.0)
+## Non publié (après la 1.13.0)
+
+## 1.13.0 (21/11/2026)
+
+### 21/11/2026 : publication 1.13.0 : écrans vidéo, messages privés, un seul son à la fois, zones unifiées et modèles posés
+
+- **Publication** : la 1.13.0 (21/11/2026), décidée par Klaatou, réunit les lots 1.12.1 à 1.12.45 (décrits plus bas, sous cette même rubrique). Le numéro mineur monte : des fonctions ont été ajoutées depuis la 1.12.0. Ce lot ne change que `VERSION` et les documents (titre du manuel, vue d'ensemble, historiques, ce journal) ; `dist\` et `VERSIONS.json` sont inchangés.
+- **Numéros par fichier fabriqué** : `index.html`, `glb-viewer.html`, `glb2html.py` 1.12.42 ; `carte.html` 1.12.39 ; `oar2glb.py` 1.12.27 ; `presence_server.py` 1.12.30 ; inchangés : `glb2tiles.py` 1.11.12, `oars2site.py` 1.10.25, `web3d_gui.py` 1.10.31, `diag_carte.py` 1.10.2, `extraire_batiments.py` 1.6.3, `iar2oar.py` 1.6.4. **`presence_server.py` change** (1.10.37 vers 1.12.30) : les hébergeurs doivent le remplacer pour avoir les messages privés.
+- **Essayé par Klaatou** : les messages privés (21/11/2026, « ça marche ») ; le clic sur le modèle de la radio (1.12.40, « impec ») ; les tests vidéo passent chez lui (21/11/2026). **Non essayé ici** (bac à sable Linux) : Windows, Edge, Firefox, Safari, un vrai écran tactile ; à l'écran chez lui : le cône faux sur ses propres zones, un `.glb` lourd en `modelLazy` sur un vrai réseau, `solid` sur un vrai bâtiment, un écran vidéo avec `link` ou `portal` / `ha`.
+- **Dette de documentation connue** : aucune ; les couples de documents français / anglais donnent 0 erreur à `verif_trad` (21/11/2026).
+- **Notes de la release GitHub** (à joindre : `galerie-photos.zip` et `region-simple.zip`, refaits par `python fabriquer_paquets.py` après le passage de `VERSION` à 1.13.0), anglais puis français :
+
+  > **Web_3d 1.13.0: video screens, private messages, one sound at a time, unified zones and placed models**
+  >
+  > **Do not unzip over an existing package**: copy `index.html`, `carte.html` (and `favicon.ico`) into your folder instead. **Presence server hosts**: replace `presence_server.py` (now 1.12.30) to get private messages.
+  >
+  > ### What's new
+  >
+  > **1. Video screens** (manual § 5.21)
+  > - New zone type `video`: a screen on a wall (`target`, `w`, `h`, `radius`); the 8 nearest screens play at most; click = pause / play.
+  > - Sound with `sound: true`: only the nearest screen speaks, the volume follows the distance.
+  > - Lists of videos (`folder`, `tracks`, `playlist.json`, `--video-list`) with a foldable track bar under the screen.
+  > - An action on the screen: `link` (clickable title), `portal` or `ha` (on approach, `actionRadius`).
+  >
+  > **2. One sound at a time** (manual § 5.22)
+  > - Radio, music, video screens and YouTube share the sound: the source nearest in metres speaks; mute button and **N** key.
+  >
+  > **3. Floating window for links and YouTube** (manual § 5.7)
+  > - Link zones can open in a floating window (`frame`), YouTube lists included; an image board with a `link` accepts `frame: true`.
+  >
+  > **4. Private messages** (manual § 7.25 and § 10.27)
+  > - Walkers write to each other: one floating window per correspondent, Ignore, Save, commands `/mp`, `/ignore`, `/unignore`; click on an avatar or on a name in the chat. Server option `--no-dm` turns them off.
+  >
+  > **5. Unified zones and placed models** (manual § 5.23)
+  > - One format for all zones (`glb2html.py --convert-zones` converts the old files); an image board combines with `portal`, `ha`, `radio` and `music`; `pos: [x, y, z]`; the cone is off by default.
+  > - New zone `model`: a separate `.glb` file placed in the scene (`scale`, `pitch`, `roll`, `solid`, loaded on demand with `--model-lazy`); the model of a radio or a music is clickable.
+  > - Radio and music zones also work in the overview; cover (`poster`) and `link` in the Sound window.
+  >
+  > **6. Other changes**
+  > - Proposed effects: a blinking icon instead of the bubble; the **B** key works again after a message; `oars2site` handles convoar names with a trailing slash and damaged OARs.
+  > - Documents, manual, procedures and JSON examples (17 zones) brought up to date and checked in both languages.
+
+  > **Web_3d 1.13.0 : écrans vidéo, messages privés, un seul son à la fois, zones unifiées et modèles posés**
+  >
+  > **Ne pas dézipper par-dessus un paquet existant** : copier `index.html`, `carte.html` (et `favicon.ico`) dans votre dossier. **Hébergeurs du serveur de présence** : remplacer `presence_server.py` (maintenant 1.12.30) pour avoir les messages privés.
+  >
+  > ### Nouveautés
+  >
+  > **1. Écrans vidéo** (manuel § 5.21)
+  > - Nouveau type de zone `video` : un écran sur un mur (`target`, `w`, `h`, `radius`) ; les 8 écrans les plus proches jouent au plus ; clic = pause / lecture.
+  > - Son avec `sound: true` : seul l'écran le plus proche parle, le volume suit la distance.
+  > - Listes de vidéos (`folder`, `tracks`, `playlist.json`, `--video-list`) avec une barre de pistes escamotable sous l'écran.
+  > - Une action sur l'écran : `link` (titre cliquable), `portal` ou `ha` (à l'approche, `actionRadius`).
+  >
+  > **2. Un seul son à la fois** (manuel § 5.22)
+  > - La radio, la musique, les écrans vidéo et YouTube se partagent le son : la source la plus proche en mètres parle ; bouton muet et touche **N**.
+  >
+  > **3. Fenêtre flottante pour les liens et YouTube** (manuel § 5.7)
+  > - Les zones lien peuvent s'ouvrir dans une fenêtre flottante (`frame`), listes YouTube comprises ; un tableau image avec `link` accepte `frame: true`.
+  >
+  > **4. Messages privés** (manuel § 7.25 et § 10.27)
+  > - Les promeneurs s'écrivent : une fenêtre flottante par correspondant, Ignorer, Enregistrer, commandes `/mp`, `/ignore`, `/unignore` ; clic sur un avatar ou sur un nom du chat. L'option `--no-dm` du serveur les coupe.
+  >
+  > **5. Zones unifiées et modèles posés** (manuel § 5.23)
+  > - Un seul format pour toutes les zones (`glb2html.py --convert-zones` convertit les anciens fichiers) ; un tableau image se combine avec `portal`, `ha`, `radio` et `music` ; `pos: [x, y, z]` ; le cône est à faux par défaut.
+  > - Nouvelle zone `model` : un fichier `.glb` posé à part dans la scène (`scale`, `pitch`, `roll`, `solid`, chargé à la demande avec `--model-lazy`) ; le modèle d'une radio ou d'une musique est cliquable.
+  > - Les zones radio et musique marchent aussi en vue d'ensemble ; pochette (`poster`) et `link` dans la fenêtre Son.
+  >
+  > **6. Autres changements**
+  > - Propositions d'effets : une icône qui clignote au lieu de la bulle ; la touche **B** marche de nouveau après un message ; `oars2site` accepte les noms de convoar à barre finale et les OAR abîmés.
+  > - Documents, manuel, procédures et exemples JSON (17 zones) remis à jour et contrôlés dans les deux langues.
 
 ### 21/11/2026 : verif_trad à zéro erreur (lot 1.12.45)
 
