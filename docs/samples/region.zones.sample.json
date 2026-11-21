@@ -24,6 +24,7 @@
   "z": -12,
   "radius": 1.5,
   "trigger": "enter",
+  "cone": true,
   "portal": "",
   "spawn": "gallery"
  },
@@ -37,6 +38,7 @@
   "radius": 2.5,
   "trigger": "both",
   "shape": "board",
+  "cone": true,
   "portal": "https://ADRESSE/web3d/index.html?region=Other",
   "spawn": "default"
  },
@@ -79,6 +81,7 @@
   "x": 118,
   "y": 25.5,
   "z": -76,
+  "cone": true,
   "portal": "",
   "spawn": "default",
   "showName": true
@@ -100,6 +103,7 @@
   "y": 22,
   "z": -30,
   "radius": 25,
+  "cone": true,
   "radio": [
    [
     "Main stream",

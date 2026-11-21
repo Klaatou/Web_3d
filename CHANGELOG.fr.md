@@ -6,6 +6,27 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.12.0)
 
+### 21/11/2026 : cône à `false` par défaut dans le format unifié (lot 1.12.41)
+
+- **Demande** (Klaatou) : plus de mélange, le cône n'est plus allumé d'office pour certains genres seulement ; il faut le demander.
+- **Fait** :
+  - format unifié : sans la clé `cone`, **pas de cône** pour tous les genres (radio, musique, portail, ou toute zone avec un déclenchement `enter` ou `both`) ; `"cone": true` l'allume. `zoneIn` / `zone_in` donnent toujours un booléen ; `zoneOut` / `zone_out` n'écrivent la clé que si elle est vraie.
+  - ancien format (présence de `type`) : lu tel quel, comportement d'avant (cône par défaut pour portail, radio, musique et déclenchement autre que `click`). **Une zone ancienne ouverte puis enregistrée par le viewer** garde son aspect : `zoneOut` écrit `"cone": true` quand l'ancien défaut allumait le cône (`coneAuto` en JS, `cone_auto` en Python, miroirs exacts de `coneFor`).
+  - viewer : une zone posée a `cone: false` ; le choix « automatique / toujours / jamais » reste (pour les zones de l'ancien format).
+  - exemple `region.zones.sample.json` : `"cone": true` ajouté aux trois portails et à la radio, qui gardent leur cône.
+  - le cône reste la cible de clic d'une radio ou d'une musique sans visuel : sans lui (nouveau défaut), ouvrir la fenêtre Son se fait par ▲ dans la fenêtre État ou par un modèle ou un tableau cliquable.
+- **Vérifié** : `tests/zones_unifiees.py` (défaut en Python et en JavaScript, ancien format écrit en clair, aller-retour comparé avec le cône d'avant rendu explicite) ; `tests/zone_model.py` (zones posées depuis le viewer : cône faux, rien d'écrit). Chaque nouveau contrôle échoue sans le correctif. `samples`, `zones_url_cone`, `zone_cast`, `zone_audio`, `editeur_cone`, `fenetre_son`, `arbitrage_son`, `image_zone`, `pose_promenade`, `v32`, `v36_viewer_lang`, `zone_video` passent.
+- **Non fait** : documents (`REFERENCE_JSON.md`, manuel, procédures) à la validation de Klaatou.
+- Fichiers : `src/core.js`, `src/gen_tpl.py`, `src/viewer_tpl.html`, `docs/samples/region.zones.sample.json`, `tests/zones_unifiees.py`, `tests/zone_model.py`.
+
+### 21/11/2026 : le modèle d'une radio ou d'une musique est cliquable (lot 1.12.40)
+
+- **Demande** (Klaatou) : le clic sur le modèle d'une radio (`radio.glb`) ne faisait rien, seul le cône ouvrait ou fermait la fenêtre Son.
+- **Cause** : en 1.12.39, `mdlReady` (`src/core.js`) excluait `cast` et `audio` des cibles de clic d'un modèle, par copie de la règle de la zone radio sans modèle (`clickable`, qui n'a que le cône comme cible).
+- **Fait** : les meshes du modèle d'une zone radio (`radio`) ou musique (`music`) entrent dans les cibles de clic ; le clic appelle le même gestionnaire que le cône (ouvre ou ferme la fenêtre Son, seulement à portée). Le déclenchement `enter` reste sans clic pour `link`, `portal` et `ha`. Une zone radio ou musique sans modèle ne change pas (le cône reste sa seule cible).
+- **Vérifié** : `tests/zone_model.py` : deux cas ajoutés (clic sur le modèle d'une zone radio, puis d'une zone musique) ; sans le correctif les deux échouent, avec il passent ; `zones_unifiees`, `zone_cast`, `zone_audio`, `image_zone` passent.
+- Fichiers : `src/core.js`, `tests/zone_model.py`.
+
 ### 21/11/2026 : zone `model`, un fichier .glb posé à part (lot 1.12.39)
 
 - **Demande** (Klaatou) : poser un petit `.glb` (un poste de radio à l'emplacement d'une zone radio, par exemple) avec position, rotation et taille indépendantes, avec une collision possible, et un chargement qu'on puisse désactiver.

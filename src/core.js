@@ -2051,9 +2051,12 @@ function createViewer(container, cfg0, loader) {
     if (v === 'model') { o.mdl = str(z.model); o.mscale = z.scale; o.pitch = z.pitch; o.roll = z.roll; o.solid = z.solid; }   // 1.12.39 : fichier .glb pose a part (decor ou porteur d'une action)
     if (v === 'image' && t !== 'image') o.pic = str(z.image);   // 1.12.36 : tableau-portail, tableau-commande, tableau qui joue une radio ou une musique : l'image est dans pic
     for (const k of ['radius', 'trigger', 'showName', 'cone', 'shape', 'w', 'h']) if (ok[k]) o[k] = z[k];
+    if (ok.cone) o.cone = z.cone === true;   // 1.12.41 : format unifie : sans la cle cone, pas de cone (faux par defaut pour tout)
     o.type = t;
     return { z: o, msgs };
   }
+  // cone d'une zone de l'ancien format qui n'a pas la cle cone (comportement d'avant, voir coneFor) : zoneOut l'ecrit tel quel pour que le fichier garde le meme aspect
+  const coneAuto = o => o.type === 'portal' || o.type === 'cast' || o.type === 'audio' || (o.trigger !== 'click' && o.type !== 'image');
   function zoneOut(o) {
     const t = o.type, r = { id: o.id };
     if (o.label) r.label = o.label;
@@ -2077,7 +2080,7 @@ function createViewer(container, cfg0, loader) {
     else if (t === 'cast') r.radio = o.streams || [];
     else if (t === 'audio') { r.music = o.folder || ''; if (o.tracks) r.tracks = o.tracks; }
     if (t === 'cast' || t === 'audio') { if (o.poster) r.poster = o.poster; if (o.link) r.posterLink = o.link; }
-    if (typeof o.cone === 'boolean' && t !== 'model') r.cone = o.cone;
+    if (t !== 'model' && (o.cone === true || (typeof o.cone !== 'boolean' && coneAuto(o)))) r.cone = true;   // 1.12.41 : ecrit seulement quand il est vrai (faux = defaut)
     if (o.showName && t !== 'model') r.showName = true;
     if (o.private) r.private = true;
     return r;
@@ -2669,7 +2672,7 @@ function createViewer(container, cfg0, loader) {
     }
   }
   function mdlReady(e, root) {
-    const z = e.z, hit = !zoneEditor && z.type !== 'model' && z.type !== 'cast' && z.type !== 'audio' && z.trigger !== 'enter';
+    const z = e.z, hit = !zoneEditor && z.type !== 'model' && (z.type === 'cast' || z.type === 'audio' || z.trigger !== 'enter');   // 1.12.40 : le modele d'une radio ou d'une musique ouvre / ferme la fenetre Son, comme son cone
     e.hold.add(root); e.hold.updateWorldMatrix(true, true);
     root.traverse(o => { if (o.isMesh) e.meshes.push(o); });
     if (zoneEditor || hit) for (const o of e.meshes) { o.userData.zone = z; zoneAll.push(o); if (hit) zoneHit.push(o); }

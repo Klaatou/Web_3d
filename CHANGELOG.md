@@ -6,6 +6,27 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.12.0)
 
+### 21/11/2026: `cone` defaults to `false` in the unified format (batch 1.12.41)
+
+- **Request** (Klaatou): no more mixture; the cone is no longer switched on by default for some kinds only; it has to be asked for.
+- **Done**:
+  - unified format: without the `cone` key there is **no cone** for every kind (radio, music, portal, or any zone with an `enter` or `both` trigger); `"cone": true` switches it on. `zoneIn` / `zone_in` always give a boolean; `zoneOut` / `zone_out` write the key only when it is true.
+  - old format (a `type` key): read as it is, with the previous behaviour (cone by default for portal, radio, music and any trigger other than `click`). **An old zone opened then saved by the viewer** keeps its look: `zoneOut` writes `"cone": true` where the old default switched the cone on (`coneAuto` in JS, `cone_auto` in Python, exact mirrors of `coneFor`).
+  - viewer: a zone you place has `cone: false`; the "automatic / always / never" choice stays (for zones of the old format).
+  - sample `region.zones.sample.json`: `"cone": true` added to the three portals and the radio, which keep their cone.
+  - the cone stays the click target of a radio or music zone with no visual: without it (new default), the Sound window opens with ▲ in the State window or through a clickable model or board.
+- **Checked**: `tests/zones_unifiees.py` (default in Python and JavaScript, old format written explicitly, round trip compared with the former cone made explicit); `tests/zone_model.py` (zones placed from the viewer: cone false, nothing written). Each new check fails without the fix. `samples`, `zones_url_cone`, `zone_cast`, `zone_audio`, `editeur_cone`, `fenetre_son`, `arbitrage_son`, `image_zone`, `pose_promenade`, `v32`, `v36_viewer_lang`, `zone_video` pass.
+- **Not done**: documents (`REFERENCE_JSON.md`, manual, procedures) await Klaatou's approval.
+- Files: `src/core.js`, `src/gen_tpl.py`, `src/viewer_tpl.html`, `docs/samples/region.zones.sample.json`, `tests/zones_unifiees.py`, `tests/zone_model.py`.
+
+### 21/11/2026: the model of a radio or music zone is clickable (batch 1.12.40)
+
+- **Request** (Klaatou): clicking the model of a radio (`radio.glb`) did nothing; only the cone opened or closed the Sound window.
+- **Cause**: in 1.12.39, `mdlReady` (`src/core.js`) left `cast` and `audio` out of a model's click targets, copying the rule of a radio zone without a model (`clickable`, whose only target is the cone).
+- **Done**: the meshes of the model of a radio (`radio`) or music (`music`) zone are click targets; the click calls the same handler as the cone (opens or closes the Sound window, in range only). The `enter` trigger still has no click for `link`, `portal` and `ha`. A radio or music zone without a model is unchanged (the cone stays its only target).
+- **Checked**: `tests/zone_model.py`: two cases added (click on the model of a radio zone, then of a music zone); both fail without the fix and pass with it; `zones_unifiees`, `zone_cast`, `zone_audio`, `image_zone` pass.
+- Files: `src/core.js`, `tests/zone_model.py`.
+
 ### 21/11/2026: `model` zone, a separate .glb file (batch 1.12.39)
 
 - **Request** (Klaatou): place a small `.glb` (a radio set where a radio zone is, for example) with independent position, rotation and size, with an optional collision, and a loading that can be switched off.

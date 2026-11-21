@@ -119,6 +119,14 @@ ANCIEN = [
 ]
 
 
+def resolu(c, g):
+    """Zone interne de l'ancien format avec le cone d'avant (absent = selon le type et le declenchement) rendu explicite : le nouveau format l'ecrit toujours en clair (1.12.41)."""
+    c = dict(c)
+    if c.get("type") not in ("spawn", "image", "video") and not isinstance(c.get("cone"), bool):
+        c["cone"] = g.cone_auto(c)
+    return c
+
+
 def norm(o):
     """nombres : 2 et 2.0 sont la meme valeur (Python ecrit des float)"""
     if isinstance(o, dict):
@@ -175,9 +183,16 @@ async def main():
     ok = True
     for z in ANCIEN:
         c = g.clean_zones([z], "private")[0]; u = g.zone_out(c); m = []; c2 = g.clean_zones([u], "private", m)
-        if m or not c2 or c2[0] != c or "type" in u or "target" in u:
+        if m or not c2 or c2[0] != resolu(c, g) or "type" in u or "target" in u:
             ok = False; print("   ", z["id"], m, u)
     rapport(ok, "Python : aller-retour ancien format -> nouveau -> zone identique, sans type ni target")
+    # 1.12.41 : cone faux par defaut dans le format unifie ; l'ancien format garde son comportement et l'ecrit en clair
+    cu = g.clean_zones([dict(id="r1", radio=["https://exemple.invalid/r"], **P), dict(id="p1", portal="", **P), dict(id="m1", music="audio", **P),
+                        dict(id="r2", radio=["https://exemple.invalid/r"], cone=True, **P)], "private")
+    rapport([c.get("cone") for c in cu] == [False, False, False, True] and [g.zone_out(c).get("cone") for c in cu] == [None, None, None, True],
+            "Python : format unifie : sans la cle cone, pas de cone (radio, portail, musique) ; cone: true l'allume ; seul le vrai est ecrit", [(c["id"], c.get("cone")) for c in cu])
+    lg = g.clean_zones([{"id": "lr", "type": "cast", "streams": [["a", "https://exemple.invalid/r"]], "x": 1, "y": 2, "z": 3}, {"id": "lu", "type": "url", "target": "https://exemple.invalid/u", "x": 1, "y": 2, "z": 3}], "private")
+    rapport([g.zone_out(c).get("cone") for c in lg] == [True, None], "Python : ancien format sans cone : la radio garde son cone (ecrit true), l'url en clic n'en a pas", [g.zone_out(c).get("cone") for c in lg])
 
     # ---- glb2html : lecture, messages, ecriture au nouveau format, conversion
     mur_glb(tmp / "salle.glb")
@@ -203,7 +218,7 @@ async def main():
         sorties.append(r.stdout + r.stderr)
     conv = json.loads((tmp / "ancien.json").read_text(encoding="utf-8"))
     convr = json.loads((tmp / "r.reglages.json").read_text(encoding="utf-8"))
-    rapport(all("type" not in z for z in conv) and norm(g.clean_zones(conv, "private")) == norm(g.clean_zones(ANCIEN, "private")),
+    rapport(all("type" not in z for z in conv) and norm(g.clean_zones(conv, "private")) == norm([resolu(z, g) for z in g.clean_zones(ANCIEN, "private")]),
             "--convert-zones : liste reecrite au nouveau format, memes zones", sorties[0])
     rapport(all("type" not in z for z in convr["zones"]) and convr["v"] == 1 and (tmp / "r.reglages.json.bak").is_file() and (tmp / "ancien.json.bak").is_file(),
             "--convert-zones : fichier de reglages converti (le reste garde), originaux dans .bak", sorties[1])
@@ -256,9 +271,17 @@ async def main():
             rapport(norm(js["z"]) == norm(pyz), "JavaScript : memes zones que Python",
                     [(a["id"], {k: (a.get(k), b.get(k)) for k in set(a) | set(b) if norm(a.get(k)) != norm(b.get(k))}) for a, b in zip(js["z"], pyz) if norm(a) != norm(b)][:3])
             rapport(norm(js["out"]) == norm([g.zone_out(z) for z in pyz]), "JavaScript : zoneOut ecrit la meme chose que zone_out")
-            jsa = await pg.evaluate("""(an) => { const v = window.__v; const a = v.setZones(an, { editor: false }); const o = a.map(v.zoneOut); const b = v.setZones(o, { editor: false });
-                return { same: JSON.stringify(a) === JSON.stringify(b), m: v.zoneMessages(), legacy: o.some(z => 'type' in z || 'target' in z) }; }""", ANCIEN)
+            jsa = await pg.evaluate("""(an) => { const v = window.__v; const a0 = v.setZones(an, { editor: false }); const o = a0.map(v.zoneOut); const b = v.setZones(o, { editor: false });
+                const a = a0.map(z => (['spawn', 'image', 'video'].includes(z.type) || typeof z.cone === 'boolean') ? z : Object.assign({}, z, { cone: z.type === 'portal' || z.type === 'cast' || z.type === 'audio' || (z.trigger !== 'click' && z.type !== 'image') }));   // 1.12.41 : le cone d'avant, rendu explicite
+                const ser = l => JSON.stringify(l.map(z => Object.keys(z).sort().reduce((r, k) => (r[k] = z[k], r), {})));   // l'ordre des cles ne compte pas
+                return { same: ser(a) === ser(b), m: v.zoneMessages(), legacy: o.some(z => 'type' in z || 'target' in z) }; }""", ANCIEN)
             rapport(jsa["same"] and not jsa["m"] and not jsa["legacy"], "JavaScript : aller-retour ancien format -> nouveau -> zone identique", jsa)
+            jc = await pg.evaluate("""() => { const v = window.__v, P = { x: 1, y: 2, z: 3 };
+                const u = v.setZones([Object.assign({ id: 'r1', radio: ['https://exemple.invalid/r'] }, P), Object.assign({ id: 'r2', radio: ['https://exemple.invalid/r'], cone: true }, P)], { editor: false });
+                const l = v.setZones([{ id: 'lr', type: 'cast', streams: [['a', 'https://exemple.invalid/r']], x: 1, y: 2, z: 3 }, { id: 'lu', type: 'url', target: 'https://exemple.invalid/u', x: 1, y: 2, z: 3 }], { editor: false });
+                return { u: u.map(z => z.cone), uo: u.map(z => v.zoneOut(z).cone), lo: l.map(z => v.zoneOut(z).cone) }; }""")
+            rapport(jc["u"] == [False, True] and jc["uo"] == [None, True] and jc["lo"] == [True, None],
+                    "JavaScript : format unifie : sans cone pas de cone, cone: true l'allume ; ancien format sans cone : la radio garde le sien (ecrit true), l'url en clic non", jc)
             rapport(not errs, "aucune erreur JavaScript", errs)
             await br.close()
     finally:

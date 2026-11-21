@@ -78,6 +78,8 @@ ZONES = [
     {"id": "deco", "model": "pilier.glb", "pos": [8, 15, 8], "yaw": 0.5, "scale": 2, "pitch": 0.25, "roll": -0.25},
     {"id": "lien", "model": "pilier.glb", "link": "https://example.org/", "x": -4, "y": 15, "z": 6, "radius": 3},
     {"id": "loin", "model": "pilier.glb", "x": 900, "y": 15, "z": 900},
+    {"id": "radio", "model": "pilier.glb", "radio": [["Test", "http://127.0.0.1:9/flux"]], "x": -10, "y": 15, "z": 6, "radius": 6},
+    {"id": "musique", "model": "pilier.glb", "music": "audio", "x": 12, "y": 15, "z": 6, "radius": 6},
     {"id": "rate", "model": "absent.glb", "x": 0, "y": 15, "z": 12},
     {"id": "mur", "model": "pilier.glb", "x": 0, "y": 15, "z": -2, "scale": 3, "solid": True},
     {"id": "fantome", "model": "pilier.glb", "x": 6, "y": 15, "z": -2, "scale": 3},
@@ -113,7 +115,7 @@ async def marcher(pg, x, z, touche, duree):
 async def page_exportee(br, port):
     errs = []
     pg = await ouvrir(br, f"http://127.0.0.1:{port}/page.html", errs)
-    await attendre(pg, ["deco", "lien", "mur", "fantome"])
+    await attendre(pg, ["deco", "lien", "mur", "fantome", "radio", "musique"])
     z = await pg.evaluate("(" + LIRE + ")()")
     d = z.get("deco", {})
     rapport(d.get("meshes") == 1 and abs(d["s"] - 2) < 1e-6 and abs(d["rx"] - 0.25) < 1e-6 and abs(d["ry"] - 0.5) < 1e-6 and abs(d["rz"] + 0.25) < 1e-6 and d["pos"] == [8, 15, 8],
@@ -132,6 +134,16 @@ async def page_exportee(br, port):
     await pg.mouse.click(sx, sy); await pg.wait_for_timeout(700)
     fired = await pg.evaluate("window.__fired")
     rapport(any(f[0] == "lien" for f in fired), "page exportee : un clic sur le modele d'une zone « link » la declenche", fired)
+    # 1.12.40 : le modele d'une radio ou d'une musique est cliquable comme son cone (ouvre / ferme la fenetre Son)
+    for zid, cx in (("radio", -10), ("musique", 12)):
+        await pg.evaluate(f"window.__v.teleportTo([{cx}, 15, 9], 0)")
+        await pg.wait_for_timeout(600)
+        await pg.evaluate("window.__fired = []; 0")
+        sx, sy = await pg.evaluate(PROJ, [cx, 16, 6])
+        await pg.mouse.move(sx, sy); await pg.wait_for_timeout(200)
+        await pg.mouse.click(sx, sy); await pg.wait_for_timeout(700)
+        fired = await pg.evaluate("window.__fired")
+        rapport(any(f[0] == zid for f in fired), f"page exportee : un clic sur le modele d'une zone « {zid} » la declenche (fenetre Son)", fired)
     await pg.evaluate("window.__v.toggleWalk()")
     # solid : on ne traverse pas ; sans solid on traverse (depart a z = 4, vers -z ; le pilier solide occupe z de -3,5 a -0,5)
     arret = await marcher(pg, 0, 4, "KeyW", 3500)
@@ -182,6 +194,15 @@ async def viewer(br, port):
     champs = await pg.evaluate("(() => { const d = [...document.querySelectorAll('#zoneList details')][0]; d.open = true; return [...d.querySelectorAll('label')].map(l => l.textContent); })()")
     rapport(any("Fichier du mod" in c for c in champs) and any("Taille" in c for c in champs) and any("avant / arri" in c for c in champs) and any("sur le c" in c for c in champs) and any("Solide" in c for c in champs),
             "viewer : champs fichier, taille, inclinaisons et solide", champs)
+    # 1.12.41 : une radio, un portail et une musique poses depuis le viewer n'ecrivent pas de cone (faux par defaut) ; le choix « toujours » l'ecrit
+    await pg.evaluate("window.__viewer.walkStart({ pos: [0, 0, 0], yaw: 0 })")
+    await pg.wait_for_function("window.__viewer.walking", timeout=10000)
+    for typ in ("cast", "portal", "audio"):
+        await pg.evaluate("(t) => { document.getElementById('zNewType').value = t; window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyP', cancelable: true, bubbles: true })); window.dispatchEvent(new KeyboardEvent('keyup', { code: 'KeyP' })); }", typ)
+    await pg.evaluate("window.__viewer.walkStop()")
+    neuves = await pg.evaluate("window.__viewer.getZones().slice(-3).map(z => ({ type: z.type, cone: z.cone, out: window.__viewer.zoneOut(z).cone }))")
+    rapport(len(neuves) == 3 and all(n["cone"] is False and n["out"] is None for n in neuves),
+            "viewer : radio, portail et musique poses : cone faux, rien d'ecrit dans le fichier", neuves)
     rapport(not errs, "viewer : aucune erreur JavaScript", errs)
     await pg.close()
 

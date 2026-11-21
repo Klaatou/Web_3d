@@ -445,7 +445,7 @@ function setRotation(deg) {
   setStatus(tr('viewer.rot.done', Math.round(d * 180 / Math.PI), list.length));
 }
 function zoneDefaults(type) {
-  const base = { type, label: '', shape: 'ring', trigger: 'click', radius: 2, w: 2.4, h: 1.2, target: '', spawn: '', confirm: false, private: false, showName: false, yaw: 0, mesh: '' };
+  const base = { type, cone: false, label: '', shape: 'ring', trigger: 'click', radius: 2, w: 2.4, h: 1.2, target: '', spawn: '', confirm: false, private: false, showName: false, yaw: 0, mesh: '' };
   if (type === 'portal') return Object.assign(base, { label: tr('viewer.kind.portal'), trigger: 'enter' });
   if (type === 'image') return Object.assign(base, { label: tr('viewer.kind.image'), w: 1.2, h: 0 });
   if (type === 'video') return Object.assign(base, { label: tr('viewer.kind.video'), radius: 20, w: 2.4, h: 0 });   // 1.12.7 : ecran video (fichier mp4 / webm joue a portee, sans son)
