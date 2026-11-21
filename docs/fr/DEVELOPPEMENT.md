@@ -46,6 +46,8 @@ Pour la lancer d'un coup : `python .\tests\tout.py`. Elle lance chaque test l'un
 
 Tests ajoutés avec la 1.8.x : `bouton_promenade.py`, `demarrage_lien.py`, `build_reference.py` et `convoar_dist.py`.
 
+**ffmpeg pour les tests vidéo** (1.12.43) : `zone_video.py` et `zone_video_liste.py` fabriquent leurs vidéos d'essai avec ffmpeg. Ils le cherchent dans le PATH, sinon dans le fichier `tests\ffmpeg.chemin.txt` (une ligne : le chemin complet de `ffmpeg.exe`, fichier personnel que git ignore). Aide : `tests/ffmpeg_chemin.py`, que `tout.py` ne lance pas comme un test. Sans ffmpeg, le test s'arrête sur « ffmpeg introuvable » et dit où mettre le chemin.
+
 Sous Windows, un test qui lit la sortie d'un programme fils doit lancer ce programme avec `PYTHONIOENCODING=utf-8` (sinon sa sortie est en cp1252), fermer son entrée (`stdin=subprocess.DEVNULL`, sinon un outil attend Entrée) et, si ce programme écrit beaucoup dans sa console, la lire pendant le test (un tube Windows ne garde que 4 Ko) : `tests/build_reference.py`, `tests/console.py` et `tests/correctifs_v52.py` en sont des exemples. Les serveurs de présence lancés avec un tube passent par `vider` de `tests/vider_tube.py`.
 
 ## 5. Publier une version

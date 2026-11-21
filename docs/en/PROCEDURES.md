@@ -87,6 +87,8 @@ Useful keys: `seaY` (sea level, in m, the page's frame), `seaM` (the sea in metr
 | Zone linked to an object of the model | `MANUAL.md` § 5.9 (as tiles: § 5.14) |
 | Private zone (visible only with the "private" profile) | `MANUAL.md` § 5.10 |
 | Picture on a wall (`image` key) | viewer, type "Picture (on a wall)", `MANUAL.md` § 5.11; step by step below |
+| 3D model placed on its own (`model` key, solid, loading on demand) | viewer, type "3D model (separate .glb file)", `MANUAL.md` § 5.23; step by step: `SIMPLE_PROCEDURES.md` § 18 |
+| Video screen that opens a link, a portal or a command | viewer, "Screen action" menu of the form, `MANUAL.md` § 5.21 |
 
 The zones of a tiled region are written in the model's original frame (no recentring). The viewer in tiles mode produces these coordinates directly; do not copy by hand coordinates from another GLB.
 

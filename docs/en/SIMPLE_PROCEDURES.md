@@ -302,3 +302,20 @@ You need: your video files (H.264 mp4 is the most compatible; webm too; that you
 6. **Later**: adding, removing or renaming a video of a list: **redo `playlist.json`** (step 2) and copy the folder online again.
 
 Nothing plays? The **Video** line of the diagnostic (State block, key I, "Copy the diagnostic") says why: file not found, not loaded yet, sound requested but muted. `MANUAL.md` § 5.21, "Not playing?".
+
+**Variant: the screen opens a page, a portal or a command** (1.12.42). In the screen's form, the **"Screen action"** menu: "link" turns the video's title into a link in the bar under the screen (a click on the title opens the page); "portal" and "command" start when you walk up to the screen, at the "Trigger distance". The video is there to show what the action opens. `MANUAL.md` § 5.21, "Screen action".
+
+## 18. Place a 3D model on its own (a small `.glb`)
+
+**I want to place an object (a statue, a radio set, a piece of furniture) in my region without redoing its model.** A "3D model" zone loads a `.glb` file where you want it, with its size and tilt (`MANUAL.md` § 5.23).
+
+You need: your object's `.glb` file, your region folder (the one with the region's `.glb`), Edge or Chrome for the viewer.
+
+1. **Put the file away.** Put it in the region folder (for example `statue.glb`).
+2. **Place the model in the viewer.** Open `glb-viewer.html`, open the region's `.glb`, **import its current zones** ("Import zones (.json)", `NAME.zones.json`). Type "3D model (separate .glb file)", click where you want it, file name in "Model file (.glb)".
+3. **Adjust**: "Size (1 = as is)", the two tilts (in degrees) and the orientation; tick "Solid (cannot be walked through)" if visitors must not walk through it.
+4. **To make it do something** (for example a radio set placed on a radio zone), do not create a "3D model" zone: fill in the "Model file" field of the link, portal, command, radio or music form. A click on the model of a radio or of music opens the Sound window.
+5. **Export, replace the zones file, put online**: procedure of **§ 16** (steps 4 to 8). Also copy the model's `.glb` file to the region folder on the host.
+6. **Try it**: open the page (F5 or Ctrl+F5) and walk up: the model loads within 150 m of its zone. With many models, reduce that distance without rebuilding the page: `python .\glb2html.py --update --model-lazy 60` (see `MANUAL.md` § 9.3).
+
+Nothing shows up? The browser console (F12) says "the model … could not be read": wrong file name, file missing online, or page opened from the disk (`file://`). `MANUAL.md` § 5.23.

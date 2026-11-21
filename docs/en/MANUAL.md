@@ -460,7 +460,7 @@ In `--analyse`, the "Reading" line gives the bytes read. Positions are only read
 
 The viewer (`glb-viewer.html`) is the page you open with your `.glb`. It is used to **look at** the model, to **adjust** how it is displayed (sea, rotation, camera, region card…), to **place the zones** (arrival points, portals, signs, links, images, private zones: see the vocabulary, § 1.1), to **capture the thumbnail** of the world map and to **export** the standalone page, the zones (`NOM.zones.json`) and `regions.json`. Fields of `NOM.zones.json`: `REFERENCE_JSON.md` § 11.4. For the published page to see the changes: § 6.16.
 
-**Zone format (1.12.35).** In `NOM.zones.json`, a zone is described by what is shown (`image`, `video`, `mesh`, otherwise a ring or a sign) and what happens (`link`, `portal`, `ha`, `radio`, `music`, or `arrival` for an arrival point): the full list and the possible combinations are in `REFERENCE_JSON.md` § 11.4. The old format (`type`, `target`) is still read; `glb2html.py --convert-zones FILE` rewrites it.
+**Zone format (1.12.35).** In `NOM.zones.json`, a zone is described by what is shown (`image`, `video`, `mesh`, `model`, otherwise a ring or a sign) and what happens (`link`, `portal`, `ha`, `radio`, `music`, or `arrival` for an arrival point): the full list and the possible combinations are in `REFERENCE_JSON.md` § 11.4. The old format (`type`, `target`) is still read; `glb2html.py --convert-zones FILE` rewrites it.
 
 ### 5.1 The rule that explains 90 % of failures
 
@@ -738,7 +738,7 @@ A zone of type `cast` plays a **radio stream** (Icecast or SHOUTcast, the same a
 - **Place it**: in the viewer, type "Radio (Icecast / SHOUTcast stream within range)", then click on the ground (or P key while walking).
   - Fields: "Stream address" (the first address of `radio`, `https://…`), **"Try the stream (5 s)"** button (the viewer plays the stream for five seconds and says "Stream: playing" or "Stream unreadable (cause)"), "Range" (`radius`, 0.5 to **200 m**; 20 by default; the other kinds stay limited to 50), the marker (cone) and the position.
   - A radio zone is never linked to an object, has no click nor "E" prompt, and does not fire: it plays by itself.
-  - **Cone by default** (1.10.35): like a portal, so that one sees a radio is there; `cone: false` removes it.
+  - **Cone**: in the old format, **by default** (1.10.35), like a portal, so that one sees a radio is there; in the unified format, **no cone** without `"cone": true` (since 1.12.41). A radio with no cone, no model and no picture has nothing left to click: the line of the State window and its ▲ arrow remain.
 - **In the page**: while walking only (nothing in global view), the stream of the nearest radio zone **within range** (in x and z; from 4 m below the zone to 8 m above) plays, with a volume that fades with distance: `(1 - distance / range)` x the **radio / music volume** of the Sound window (50 by default, § 7.66).
   - One radio at a time.
   - Out of range or in global view, the stream is **stopped** (no longer downloaded).
@@ -784,7 +784,7 @@ A zone of type `audio` plays the **sound files of a folder** (mp3, ogg, wav...) 
 - **Place it**: in the viewer, type "Music (sound files of a folder, played in a loop within range)", then click on the ground (or P key while walking).
   - Fields: "Tracks folder (sub-folder of the region)" (`music`, for example `audio`), the **"Update the list (playlist.json)"** and **"Try the first track (5 s)"** buttons, "Range" (`radius`, 0.5 to **200 m**, 20 by default), the marker (cone) and the position.
   - An audio zone is never linked to an object, has no click or "E" prompt and plays by itself.
-  - Cone by default, like the radio; `cone: false` removes it.
+  - Cone: like the radio (old format: by default; unified format: `"cone": true`, since 1.12.41).
 - **Distance, track buttons** (1.11.16, 1.11.17, 1.11.18): the "Music" line gives, like the radio, the distance and the range, and stays out of range (up to 2 times the range) with the blinking distance (§ 5.19). With several tracks, two buttons **⏮** and **⏭** go to the previous or next track (the list loops) around the **n/N** counter.
 - **Playing order**: alphabetical, case ignored, **numbers compared as numbers** (`2-b.mp3` before `10-c.mp3`). To force an order, number the files (`01-intro.mp3`, `02-...`). The list is played in order, then starts again. The viewer and the command give the same order.
 - **`playlist.json`**: a hosted site cannot list a folder, so the page reads this file, `{"tracks": ["01-intro.mp3", "02-suite.mp3"]}` (a plain array of names is also accepted), read again each time the zone is entered: editing it is enough, no need to rebuild the page.
@@ -819,7 +819,7 @@ A zone of type `video` is a **screen laid on a wall**, like an "image" picture (
 
 - **Placing**: in the viewer, type "Video (screen on a wall)", then click on the wall.
   - Fields: "File or address of the video" (`video`), width (`w`, 2.4 m by default), height (`h`, **0 = from the video's aspect ratio**), "Range" (`radius`, 20 m by default, 0.5 to **200 m**), "Screen sound" (`sound`), "Video folder" (`videoFolder`, see below).
-  - No `mesh`, `cone`, `link` or trigger: there is nothing to click except the screen itself.
+  - No `mesh` and no cone. Since 1.12.42 a screen can carry an **action** (link, portal or command, see "Screen action" below); without an action, there is nothing to click except the screen itself.
   - **In the viewer the screen is a panel carrying the file name: the video does not play there** (and the viewer opened as a local file, without a server, does not load the video: it needs a page served over `http`).
 - **The file** is looked up like an image's: a name without extension (`clip`) gives `medias/clip.mp4`, `.webm`, `.m4v`, `.ogv`, then the region folder; with an extension, as is in `medias` then in the folder; an `https://` address or a `/…` path as is (another site must allow CORS, otherwise WebGL refuses the texture; not tried).
   - `javascript:`, `data:` and `blob:` are refused.
@@ -848,7 +848,12 @@ A zone of type `video` is a **screen laid on a wall**, like an "image" picture (
 - **Track bar** (1.12.13): under a screen that has **several tracks**, a black bar as wide as the screen shows "2/4 name" and three drawn icons: previous, pause / play (the icon follows the state), next.
   - It is **retractable**: visible when the mouse is over the screen or the bar, when the walk crosshair (captured pointer) is on the screen, and 3 seconds after each click or track change.
   - A click on the text of the bar does nothing.
-  - A screen with one file or one single track has no bar: a click on the screen stays pause / play.
+  - A screen with one file or one single track has no bar (unless it carries a link, see below): a click on the screen stays pause / play.
+- **Screen action** (1.12.42): the video **shows what the action opens**. One action per screen: `link`, `portal` or `ha` (`radio` and `music` are refused on a screen, as on an object of the model).
+  - **Placing**: in the screen's form, the **"Screen action"** menu (none, link, portal, command) shows the fields of the chosen action (address, target arrival, confirmation, floating window) and, for a portal or a command, **"Trigger distance (m)"** (`actionRadius`).
+  - **Link** (`link`): the **title** becomes a clickable segment of the bar under the screen, underlined and followed by a drawn arrow (never colour alone). Title = the zone's `label`, otherwise the video name. The bar also exists for a single video (the title, without the three icons); with a list, the "2/4" counter stays in front of the title and the three icons do not change. `frame: true` opens the page in the floating window (§ 5.7.1). A click on the image is still pause / play.
+  - **Portal and command** (`portal`, `ha`): the action starts **when walking up to the screen**, within `actionRadius` (2 m by default, 0.5 to 50), in the same height band as pictures. The E key stays inactive on a screen. `radius` keeps its meaning: the playing range. With `confirm`, the command asks for confirmation.
+  - A missing video file hides the screen but does not remove the action. `trigger` and `cone` are ignored and reported, and so is `actionRadius` with a link; a screen never has a cone.
 - **Radio and music in the overview** (1.12.11): outside walk mode (overview, before walking), the radio and the music of zones play when the **camera** is within range (3D distance, height counts), like video screens and images; the "Radio" / "Music" line gives the camera's distance.
   - In orbit the camera is often high and far: a 20 m zone is then rarely within range.
   - Outside walk mode there is no prompt and no entering a zone.
@@ -856,6 +861,7 @@ A zone of type `video` is a **screen laid on a wall**, like an "image" picture (
 - **Putting it online**: copy the videos (and `playlist.json`) with the rest of the region; the zones only say the name, or `"folder": "videos"`. Step by step: `SIMPLE_PROCEDURES.md` § 17.
 - **Tried**: `tests/zone_video.py` (JavaScript = Python cleaning, nothing requested out of range, muted looping playback, pause when turning away and moving away, cap of 8, texture really drawn, reduced motion, sound before start, only one screen speaks) and `tests/zone_video_liste.py` (lists, order, skipped track, bar, icons, 3 s delay).
   - **Not tried**: Edge without hardware acceleration, the real refusal of playback with sound under Edge, large files, a server without CORS, touch, a test with two real screens.
+  - **Since 1.12.42**: `tests/zone_video_liste.py` (link title of a single video and of a list, click on the title), `tests/zones_unifiees.py` (screen with a portal: teleports within `actionRadius`, not at the playing range) and `tests/editeur_video_action.py` (viewer form). Since 1.12.43, `zone_video.py` and `zone_video_liste.py` look for ffmpeg in the PATH, then in `tests/ffmpeg.chemin.txt` (`DEVELOPMENT.md`).
 
 ### 5.22 One sound source at a time, mute button and N key (1.12.21)
 
@@ -871,6 +877,31 @@ Before 1.12.21, the radio, the music and the sound of a video screen could speak
 - **Floating window** (`frame` option of a link, § 5.7.1): while it holds a **YouTube** page, the radio, the music and the screen sounds are silent (their line says "sound muted: N key or YouTube window"), because the sound of a YouTube video in the window cannot be muted by the page; they come back when it closes, or as soon as the visitor makes a **gesture on a source** (ticking its box, choosing a stream, skipping a track, clicking a screen): the page cannot stop the YouTube player, which keeps playing at the same time (up to the visitor to pause it). **Any other page does not change the sound of the page** (1.12.22).
   - Not tried: pausing a YouTube video of the window from the page (the player API is not used).
 - **Tried**: `tests/arbitrage_son.py` (nearest, gesture priority, exclusive boxes, Video line, mute by key and by button, floating window); the screen gain is simulated there (its range is tested by `zone_video.py`). **Not tried**: two real screens with sound and a real radio together, a real YouTube, touch.
+
+### 5.23 3D model placed on its own (`model`, 1.12.39 and 1.12.40)
+
+A `model` zone places a **separate `.glb` file** (a radio set, a statue, a piece of furniture) in the region, with its own position, rotation and size, without touching the region's model.
+
+- **Placing**: in the viewer, type "3D model (separate .glb file)", then click where you want it.
+  - Fields: "Model file (.glb)" (`model`), "Size (1 = as is)" (`scale`, 0.01 to 100), "Tilt forward / back (degrees)" (`pitch`) and "Tilt sideways (degrees)" (`roll`) in degrees in the viewer and in radians in the file, like `yaw`, and "Solid (cannot be walked through)" (`solid`).
+  - `x`, `y`, `z` (or `pos`) are the **origin of the `.glb`**.
+  - The "Model file" field also exists in the link, portal, command, radio and music forms: the model carries the action there.
+- **The file** is looked for like a picture: relative to the region folder, or a full address. Not found or unreadable: nothing is placed and the console writes a warning (no error). Page opened from the disk (`file://`): the browser refuses to read it, as for track lists.
+- **Decoration or action carrier**:
+  - `model` alone is a **decoration**: no radius, no marker, no name (`radius`, `showName` and `cone` are reported as ignored).
+  - With `link`, `portal`, `ha`, `radio` or `music`, it **carries the action**: clickable like a picture, cone if `cone` is true, trigger by walking (`trigger`). Example: a radio set placed on a radio zone.
+  - **Since 1.12.40**, the model of a radio or of music is clickable: it opens or closes the Sound window, only within range, like the cone. `link`, `portal` and `ha` triggered by walking (`enter`) stay without a click.
+- **Solid**: with `solid: true`, the model's triangles are added to the walking collision grid (floor and walls) and its objects to the teleport (double click) and click-occlusion rays. Without `solid`, the model can be walked through. The landing marker and the viewer's zone placement ignore the model.
+- **Loading on demand**: a model loads when the visitor (the camera outside walk mode) is within `modelLazy` meters of its zone.
+
+| Option | Config | Effect |
+| --- | --- | --- |
+| `--model-lazy M` | `modelLazy` | loading distance, 0 to 500 m, **150 by default**. `0`: all models are loaded at start, with no cap. Otherwise **at most 16 models** at the same time (the farthest is released) and 2 loads at a time. In the viewer, everything loads. `glb2html.py --update --model-lazy 60` applies it to an already published page (§ 9.3) |
+
+- **Measurement** (sandbox, software Chromium, local server: an **estimate** for a real network): 30 models of 20 KB, 0.8 MB and 9 MB, 8 of them close. On demand: 6 loaded in 1.8 s, 42 MB of JavaScript memory. With `--model-lazy 0`: 30 loaded in 20 s, 110 to 130 MB. The page is ready in 0.4 s in both cases.
+- **Tried**: `tests/zone_model.py` (loading, size, cap of 16, `pitch`, `roll`, `pos` position, model 1 km away not loaded, missing file, click on a model with a link, click on the model of a radio and of music, `solid` stopping the visitor and the model without `solid` not stopping them, `--model-lazy 0`, viewer).
+  - **Not tried**: a `.glb` of several MB on a real network, `solid` on a real building, Edge, touch (click on a model).
+- Key reference: `REFERENCE_JSON.md` § 11.4.
 
 ## 6. Building the page (`glb2html.py`)
 
@@ -1153,7 +1184,7 @@ They concern portals and free zones (web link, command). Setting in the viewer: 
 
 ### 7.17 Portal markers (cones): `--zone-cone`, T key
 
-Above each portal and each "walking into it" or "both" zone, the page draws a small **cone pointing downwards** (about 0.35 m wide, 0.5 m high, tip 2 m above the centre of the zone; light neutral tint, dark outline: it can be read without depending on colour). It is added to `--zone-marker` (it does not replace it). Visible up to `--zone-info-dist` (150 m by default since v37); hovering over the cone shows the same tooltip as the zone, with the **distance** to the visitor (§ 7.18). Since v37 its **apparent size is constant** (§ 7.18). **T** shows or hides all the cones (choice remembered). `--no-zone-cone` hides them at the start (config `zoneCone`); arrivals only have a cone with `--show-spawns`. **Zone by zone (1.10.16)**: a zone's optional `cone` key is `true` (a cone even for an "on click" zone) or `false` (never a cone, even for a portal); when absent, the behaviour above applies. It changes nothing for arrivals (`--show-spawns`) or pictures, and T still hides all the cones. In the viewer editor: the "Marker (cone) above the zone" list (follows the trigger, always, never). Reference: `REFERENCE_JSON.md`.
+Above each zone that has one (see "Who has a cone" below), the page draws a small **cone pointing downwards** (about 0.35 m wide, 0.5 m high, tip 2 m above the centre of the zone; light neutral tint, dark outline: it can be read without depending on colour). It is added to `--zone-marker` (it does not replace it). Visible up to `--zone-info-dist` (150 m by default since v37); hovering over the cone shows the same tooltip as the zone, with the **distance** to the visitor (§ 7.18). Since v37 its **apparent size is constant** (§ 7.18). **T** shows or hides all the cones (choice remembered). `--no-zone-cone` hides them at the start (config `zoneCone`); arrivals only have a cone with `--show-spawns`. **Who has a cone (1.12.41)**: in the **unified format**, only a zone that carries `"cone": true` has one; absent or `false`, no cone. In the **old format** (zones with `type`), the optional `cone` key (1.10.16) is `true` (a cone even for an "on click" zone) or `false` (never a cone, even for a portal); when absent, the old behaviour applies: a cone for portals, radios, music and "walking into it" or "both" zones. A video screen never has a cone. It changes nothing for arrivals (`--show-spawns`) or pictures, and T still hides all the cones. In the viewer editor: the "Marker (cone) above the zone" list (follows the trigger, always, never); the zones file only writes the key when the cone is on. Reference: `REFERENCE_JSON.md`.
 
 ### 7.18 Portal marker (cone): constant size, distance
 
@@ -2314,6 +2345,16 @@ The detail, version by version, is in `HISTORY.md` (narrative) and `CHANGELOG.md
 - **unified zone format**: what is shown (`image`, `video`, `mesh`) and what happens (`link`, `portal`, `ha`, `radio`, `music`, `arrival`), messages for ignored keys and refused zones, `glb2html.py --convert-zones`, a picture hung high can be reached (1.12.35, § 5, `REFERENCE_JSON.md` § 11.4)
 - **picture with portal, command, radio or music**: `image` combines with `portal`, `ha`, `radio`, `music`; the picture is the default cover (1.12.36, § 5.11, `REFERENCE_JSON.md` § 11.4)
 - documents: JSON examples, more readable lists, README, overview, index, guide, procedures; histories put back in order (1.12.16 to 1.12.19 and 1.12.32)
+
+**Additions from 1.12.38 to 1.12.43 (batches 1.12.38 to 1.12.43)**
+
+- **`pos` key**: `[x, y, z]` for a zone's position, and the "[x, y, z]" format of "Copy my position" (1.12.38, `REFERENCE_JSON.md` § 11.4)
+- **`model` zone**: a `.glb` file placed on its own, with `scale`, `pitch`, `roll`, `solid`, loading on demand `--model-lazy` (1.12.39, § 5.23)
+- **click on the model of a radio or of music** (1.12.40, § 5.23)
+- **cone `false` by default in the unified format** (1.12.41, § 7.17)
+- **actions on video screens**: link (title in the bar), portal and command on approach, `actionRadius` key (1.12.42, § 5.21)
+- **video tests**: ffmpeg found in the PATH or in `tests/ffmpeg.chemin.txt` (1.12.43, `DEVELOPMENT.md`)
+- documents of batches 1.12.39 to 1.12.43 (`REFERENCE_JSON.md`, manual, procedures, histories, samples)
 
 Everything below is in **1.1.0** (released on 31/10/2026). The detail, batch by batch, is in `CHANGELOG.md`.
 

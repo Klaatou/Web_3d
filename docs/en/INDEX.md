@@ -25,6 +25,7 @@ This page says **which document to read for what**. The French documents carry t
 | put a radio in a region (`radio` key, track title) | `SIMPLE_PROCEDURES.md` § 14 (step by step); `MANUAL.md` § 5.19 and § 10.25 |
 | put my own music (mp3...) in a region (`music` key, playlist) | `SIMPLE_PROCEDURES.md` § 15; `MANUAL.md` § 5.20 |
 | put a video screen on a wall (`video` key, video list) | `SIMPLE_PROCEDURES.md` § 17; `MANUAL.md` § 5.21 |
+| place a small `.glb` model on its own (`model` key, solid, `--model-lazy`) | `SIMPLE_PROCEDURES.md` § 18; `MANUAL.md` § 5.23 |
 | open a link in a floating window, YouTube included (`frame` key) | `MANUAL.md` § 5.7.1 |
 | understand which sound source speaks, mute the sound (Sound window, N key) | `MANUAL.md` § 5.22 and § 7.66 |
 | update the zones of a region already online (export, replace `NOM.zones.json`, publish) | `SIMPLE_PROCEDURES.md` § 16; `MANUAL.md` § 5.15 |

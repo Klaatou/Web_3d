@@ -120,9 +120,10 @@ Positions are in meters, in the page's frame: x towards the east, y upwards, z t
 | `imageExts`    | text     | `"jpg,jpeg,png,webp,gif,avif"` | extensions tried, in order, for an image name without an extension (§ 5.11); optional key, absent from the file the generator writes | —                                   |
 | `mediaDir`     | text     | `"medias"` | subfolder of the images and text files of `image` zones (§ 5.11); `""` = none; optional key, absent from the file the generator writes | —                                   |
 | `zoneMarker`   | text     | `"dot"`    | marker of portals and free zones: `"dot"` small disc, `"range"` ring at the zone's real radius, `"none"` nothing | `--zone-marker`                     |
-| `zoneCone`     | yes / no | `true`     | small cone above the portals and the links triggered by walking into them (T key); adjustable zone by zone with the `cone` key                                                                             | `--zone-cone`, `--no-zone-cone`     |
+| `zoneCone`     | yes / no | `true`     | cones (markers above the zones that ask for one with the `cone` key) are shown at start; the T key hides or shows them                                                                                    | `--zone-cone`, `--no-zone-cone`     |
 | `showSpawns`   | yes / no | `false`    | also draws the arrivals                                                                                          | `--show-spawns`, `--no-show-spawns` |
 | `zoneInfoDist` | number   | `150`      | distance in meters (from 5 to 500) up to which zones react to hovering and clicking in walk mode                 | `--zone-info-dist`                  |
+| `modelLazy`    | number   | `150`      | distance in meters (from 0 to 500) at which the `.glb` file of a `model` zone is loaded; `0`: all loaded at start, with no cap (§ 5.23) | `--model-lazy`                      |
 
 **World map**
 
@@ -160,9 +161,9 @@ An unknown key, or one that does not apply to this zone, is ignored and reported
 | ------------- | -------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | `id`          | text     | `z1`, `z2`... | short, unique name: lowercase letters, digits, `-` and `_`, 40 characters at most. The `default` arrival is the entry of the region |
 | `label`       | text     | `""`          | name shown (tooltip, sign), 60 characters at most                                                                                  |
-| `x`, `y`, `z` | number   | `0`           | position in meters; for a picture or a screen, the centre of the image                                                            |
+| `x`, `y`, `z` | number   | `0`           | position in meters; for a picture or a screen, the centre of the image; for a model, the origin of the `.glb` file                |
 | `pos`         | list      | (absent)      | another way to write `x`, `y`, `z`: `[120, 25.5, -80]`, like `target` in `config.json`; paste it from "Copy my position" (`[x, y, z]` format, H window). With `x`, `y`, `z` as well, `pos` wins and a message says so; a list that is not three numbers is ignored and reported |
-| `yaw`         | number   | `0`           | orientation in radians: direction of the gaze on arrival, or front of the sign, picture or screen                                 |
+| `yaw`         | number   | `0`           | orientation in radians: direction of the gaze on arrival, or front of the sign, picture, screen or model                          |
 | `private`     | yes / no | `false`       | private zone: left out of public pages (`public` profile)                                                                          |
 
 **What is shown**: only one of these keys. None: a ring on the ground (or a sign with `shape`).
@@ -172,7 +173,8 @@ An unknown key, or one that does not apply to this zone, is ignored and reported
 | `image` | text | **picture** on a wall: file name or address of the image (§ 5.11)                                                                    |
 | `video` | text | **video screen** on a wall: file name or address of the video, or `""` with `videoFolder` or `tracks` (§ 5.21)                     |
 | `mesh`  | text | zone **linked to an object** of the model: its name, or `name#number` when several objects have that name; the object becomes clickable (§ 5.9) |
-| `shape` | text | without the three keys above: `"ring"` (ring on the ground, default) or `"board"` (sign on a post)                                   |
+| `model` | text | **3D model** placed on its own: name of a `.glb` file (relative to the region folder) or full address; alone, it is a decoration; with an action, it carries it (§ 5.23) |
+| `shape` | text | without the four keys above: `"ring"` (ring on the ground, default) or `"board"` (sign on a post)                                  |
 
 **What happens**: only one of these keys.
 
@@ -189,10 +191,10 @@ An unknown key, or one that does not apply to this zone, is ignored and reported
 
 | Field         | Type     | Default                  | Applies to                  | What it does                                                                                                                                            |
 | ------------- | -------- | ------------------------ | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `radius`      | number   | `2` (sound, video: `20`) | all but `arrival`           | radius of the zone in meters (0.5 to 50); radio, music and video screen: range (up to 200)                                                              |
-| `trigger`     | text     | `"click"`                | `link`, `portal`            | `"click"` (click or E), `"enter"` (walking into it, or in front of the picture) or `"both"` (both)                                                       |
+| `radius`      | number   | `2` (sound, video: `20`) | all but `arrival` and `model` alone | radius of the zone in meters (0.5 to 50); radio, music and video screen: listening or playing range (up to 200); the action of a video screen has its own radius, `actionRadius` |
+| `trigger`     | text     | `"click"`                | `link`, `portal`            | `"click"` (click or E), `"enter"` (walking into it, or in front of the picture) or `"both"` (both); no effect on a video screen (see `actionRadius`) |
 | `showName`    | yes / no | `false`                  | all but `arrival`           | writes the `label` above the zone while walking                                                                                                         |
-| `cone`        | yes / no | (depends on the trigger) | without `image` or `video`  | marker (cone) above the zone: `true` always, `false` never; absent: portals, radios, music and links triggered by walking. The T key hides them        |
+| `cone`        | yes / no | `false`                  | without `image`, `video` or `model` alone | marker (cone) above the zone: `true` turns it on; absent or `false`: no cone (since 1.12.41; the old format keeps its behavior, see below). The T key hides them |
 | `w`, `h`      | number   | see the text             | `image`, `video`, sign      | width and height in meters (see below the table)                                                                                                        |
 | `frame`       | yes / no | `false`                  | `link`                      | `true`: the page opens in a floating window of the page instead of a new tab; YouTube becomes a player there (§ 5.7.1)                                  |
 | `spawn`       | text     | `""`                     | `portal`                    | `id` of the arrival aimed at (empty = `default`)                                                                                                        |
@@ -202,6 +204,10 @@ An unknown key, or one that does not apply to this zone, is ignored and reported
 | `sound`       | yes / no | `false`                  | `video`                     | `true` gives sound to the screen (only the nearest screen with sound speaks) (§ 5.21)                                                                   |
 | `poster`      | text     | (absent)                 | `radio`, `music`            | image shown as a cover (96 px at most) in the Sound window while the zone plays; file relative to the region or `http(s)://` address, with its extension |
 | `posterLink`  | text     | (absent)                 | `radio`, `music`            | page opened by a click on the cover                                                                                                                     |
+| `actionRadius` | number  | `2`                      | `video` with `portal` or `ha` | distance at which the action starts, in meters (0.5 to 50); `radius` stays the playing range (§ 5.21) |
+| `scale`       | number   | `1`                      | `model`                     | size of the model (0.01 to 100) (§ 5.23)                                                                                                                |
+| `pitch`, `roll` | number | `0`                      | `model`                     | forward / backward and sideways tilt, in radians like `yaw` (-7 to 7) (§ 5.23)                                                                          |
+| `solid`       | yes / no | `false`                  | `model`                     | `true`: the model cannot be walked through in walk mode (§ 5.23)                                                                                        |
 
 Width and height (`w`, `h`):
 
@@ -215,13 +221,17 @@ A picture with `link` and `trigger` `"enter"` or `"both"` opens its link when wa
 
 - ring or sign, with a link, a portal, a command, a radio or music;
 - object of the model (`mesh`), with a link, a portal or a command;
+- placed model (`model`), alone (decoration) or with a link, a portal, a command, a radio or music (§ 5.23);
 - picture (`image`), alone or with a link (`link`), a portal (`portal`), a command (`ha`), a radio (`radio`) or music (`music`). With a radio or music, the picture is the cover unless `poster` is given; with a portal or a command, `radius` and `trigger` apply to the picture as they do to a ring;
-- video screen (`video`), alone;
+- video screen (`video`), alone or with a link (`link`), a portal (`portal`) or a command (`ha`): the video shows what the action opens (§ 5.21):
+  - `link`: the title becomes a link in the bar under the screen (title = `label`, otherwise the video name; `frame` for the floating window); a click on the image is still pause / play;
+  - `portal` and `ha`: the action starts when walking up to it, within `actionRadius`;
+  - `trigger` and `cone` are ignored and reported;
 - arrival point (`arrival`), alone.
 
-The other combinations (a video screen with a link or an action, an object of the model that plays a radio or music) are not possible yet: the zone is not shown and a message says so. A zone with nothing to show or do is not shown either. Two things to show, or two actions: the first one in the list above is kept, the others are reported.
+The other combinations (a video screen or an object of the model (`mesh`) with a radio or music) are not possible yet: the zone is not shown and a message says so. A zone with nothing to show or do is not shown either. Two things to show, or two actions: the first one in the list above is kept, the others are reported.
 
-**Old format (up to 1.12.34)**. Zones with `type` and `target` are still read. `glb2html.py` says how many it read; the viewer and `glb2html.py` rewrite them in the new format as soon as they save the zones. To rewrite a hand-written file at once (list of zones or `.reglages.json` file):
+**Old format (up to 1.12.34)**. Zones with `type` and `target` are still read, and keep their former behavior for the cone: with no `cone` key, a cone for a portal, a radio, music or a trigger other than `click`. `glb2html.py` says how many it read; the viewer and `glb2html.py` rewrite them in the new format as soon as they save the zones. To rewrite a hand-written file at once (list of zones or `.reglages.json` file):
 
 ```
 python glb2html.py --convert-zones NOM.zones.json
@@ -238,7 +248,7 @@ The original is kept beside it (`NOM.zones.json.bak`). Correspondence:
 - `"type": "cast"`: `streams` becomes `radio`, `link` becomes `posterLink`;
 - `"type": "audio"`: `folder` becomes `music`, `link` becomes `posterLink`.
 
-The sample contains fourteen zones, one for each case:
+The sample contains seventeen zones, one for each case:
 
 | `id`              | Kind    | What it shows                                                                                 |
 | ----------------- | ------- | --------------------------------------------------------------------------------------------- |
@@ -256,6 +266,9 @@ The sample contains fourteen zones, one for each case:
 | `screen-clip`     | video   | screen on a wall: one file (`clip.mp4`), with sound (§ 5.21)                                  |
 | `screen-list`     | video   | screen on a wall: a list, the `videos` folder (with `videos/playlist.json`) (§ 5.21)          |
 | `video-page`      | link    | YouTube address opened in a floating window of the page (`frame`, § 5.7.1)                    |
+| `screen-link`     | video   | screen with a link: the title is a link in the bar under the screen, opened in a floating window (`frame`) (§ 5.21) |
+| `screen-portal`   | video   | screen with a portal to the `gallery` arrival, started within 3 m (`actionRadius`) (§ 5.21)                           |
+| `statue`          | model   | `statue.glb` file placed on its own, size 1.5, solid (§ 5.23)                                                        |
 
 **One example per multimedia kind.** A JSON file does not accept comments: each example has its title just above it, and its `id` says what it shows. These are complete zones, written the way the page writes them: only the keys useful to the zone appear, and default settings are left out. A zone is added to the list of the `NOM.zones.json` file, inside the brackets of the `[ ... ]` list.
 
@@ -311,6 +324,41 @@ The sample contains fourteen zones, one for each case:
  "sound": true,
  "w": 3.2,
  "h": 1.8
+}
+```
+
+**Video screen with a link: the title opens the page (`link`)**
+
+```json
+{
+ "id": "screen-link",
+ "label": "Making of",
+ "x": 30,
+ "y": 24,
+ "z": -40,
+ "yaw": 3.14,
+ "video": "making-of.mp4",
+ "w": 3.2,
+ "link": "https://ADRESSE/making-of",
+ "frame": true
+}
+```
+
+**Video screen with a portal: it starts when walking up to it (`portal`, `actionRadius`)**
+
+```json
+{
+ "id": "screen-portal",
+ "label": "Gallery preview",
+ "x": 35,
+ "y": 24,
+ "z": -40,
+ "yaw": 3.14,
+ "video": "gallery.mp4",
+ "w": 3.2,
+ "portal": "",
+ "spawn": "gallery",
+ "actionRadius": 3
 }
 ```
 
@@ -418,6 +466,22 @@ The sample contains fourteen zones, one for each case:
  "link": "https://www.youtube.com/watch?v=VIDEO_ID",
  "frame": true,
  "showName": true
+}
+```
+
+**3D model placed on its own (`model`)**
+
+```json
+{
+ "id": "statue",
+ "label": "Statue",
+ "x": 12,
+ "y": 22,
+ "z": -30,
+ "yaw": 1.57,
+ "model": "statue.glb",
+ "scale": 1.5,
+ "solid": true
 }
 ```
 

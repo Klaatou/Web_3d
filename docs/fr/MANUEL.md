@@ -460,7 +460,7 @@ Dans `--analyse`, la ligne « Lecture » indique les octets lus. Les positions n
 
 Le viewer (`glb-viewer.html`) est la page que tu ouvres avec ton `.glb`. Elle sert à **regarder** le modèle, à **régler** son affichage (mer, rotation, caméra, fiche de la région…), à **poser les zones** (points d'arrivée, portails, panneaux, liens, images, zones privées : voir le vocabulaire, § 1.1), à **capturer la vignette** de la carte des mondes et à **exporter** la page autonome, les zones (`NOM.zones.json`) et `regions.json`. Champs de `NOM.zones.json` : `REFERENCE_JSON.md` § 11.4. Pour que la page publiée voie les changements : § 6.16.
 
-**Format des zones (1.12.35).** Dans `NOM.zones.json`, une zone se décrit par ce qu'on voit (`image`, `video`, `mesh`, sinon un anneau ou un panneau) et ce qui se passe (`link`, `portal`, `ha`, `radio`, `music`, ou `arrival` pour un point d'arrivée) : la liste complète et les combinaisons possibles sont dans `REFERENCE_JSON.md` § 11.4. L'ancien format (`type`, `target`) reste lu ; `glb2html.py --convert-zones FICHIER` le réécrit.
+**Format des zones (1.12.35).** Dans `NOM.zones.json`, une zone se décrit par ce qu'on voit (`image`, `video`, `mesh`, `model`, sinon un anneau ou un panneau) et ce qui se passe (`link`, `portal`, `ha`, `radio`, `music`, ou `arrival` pour un point d'arrivée) : la liste complète et les combinaisons possibles sont dans `REFERENCE_JSON.md` § 11.4. L'ancien format (`type`, `target`) reste lu ; `glb2html.py --convert-zones FICHIER` le réécrit.
 
 ### 5.1 La règle qui explique 90 % des pannes
 
@@ -738,7 +738,7 @@ Une zone de type `cast` fait jouer un **flux radio** (Icecast ou SHOUTcast, le m
 - **Poser** : dans le viewer, type « Radio (flux Icecast / SHOUTcast à portée) », puis clic au sol (ou touche P en promenade).
   - Champs : « Adresse du flux » (la première adresse de `radio`, `https://…`), bouton **« Essayer le flux (5 s) »** (le viewer lit le flux cinq secondes et dit « Flux : lecture » ou « Flux illisible (cause) »), « Portée » (`radius`, 0,5 à **200 m** ; 20 par défaut ; les autres sortes restent limitées à 50), le repère (cône) et la position.
   - Une zone radio n'est jamais liée à un objet, n'a ni clic ni invite « E », et ne se déclenche pas : elle joue d'elle-même.
-  - **Cône par défaut** (1.10.35) : comme un portail, pour que l'on voie qu'une radio est là ; `cone: false` le retire.
+  - **Cône** : dans l'ancien format, **par défaut** (1.10.35), comme un portail, pour que l'on voie qu'une radio est là ; dans le format unifié, **pas de cône** sans `"cone": true` (depuis la 1.12.41). Une radio sans cône, sans modèle et sans tableau n'a plus rien à cliquer : la ligne de la fenêtre État et sa flèche ▲ restent.
 - **Dans la page** : en promenade seulement (rien en vue globale), le flux de la zone radio la plus proche **dont on est à portée** (en x et z ; de 4 m sous la zone à 8 m au-dessus) joue, avec un volume qui baisse avec la distance : `(1 - distance / portée)` x le **volume radio / musique** de la fenêtre Son (50 par défaut, § 7.66).
   - Une seule radio à la fois.
   - Hors portée ou en vue globale, le flux est **arrêté** (plus téléchargé).
@@ -784,7 +784,7 @@ Une zone de type `audio` fait jouer en boucle les **fichiers son d'un dossier** 
 - **Poser** : dans le viewer, type « Musique (fichiers son d'un dossier, joués en boucle à portée) », puis clic au sol (ou touche P en promenade).
   - Champs : « Dossier des pistes (sous-dossier de la région) » (`music`, par exemple `audio`), les boutons **« Mettre à jour la liste (playlist.json) »** et **« Essayer la première piste (5 s) »**, « Portée » (`radius`, 0,5 à **200 m**, 20 par défaut), le repère (cône) et la position.
   - Une zone audio n'est jamais liée à un objet, n'a ni clic ni invite « E » et joue d'elle-même.
-  - Cône par défaut, comme la radio ; `cone: false` le retire.
+  - Cône : comme la radio (ancien format : par défaut ; format unifié : `"cone": true`, depuis la 1.12.41).
 - **Distance, boutons de piste** (1.11.16, 1.11.17, 1.11.18) : la ligne « Musique » donne, comme la radio, la distance et la portée, et reste hors de portée (jusqu'à 2 fois la portée) avec la distance qui clignote (§ 5.19). S'il y a plusieurs pistes, deux boutons **⏮** et **⏭** passent à la piste précédente ou suivante (la liste boucle) autour du compteur **n/N**.
 - **Ordre de lecture** : alphabétique, majuscules ignorées, **nombres comparés comme des nombres** (`2-b.mp3` avant `10-c.mp3`). Pour imposer un ordre, numéroter les fichiers (`01-intro.mp3`, `02-...`). La liste est jouée dans l'ordre, puis recommence au début. Le viewer et la commande donnent le même ordre.
 - **`playlist.json`** : un site hébergé ne peut pas lister un dossier ; la page lit donc ce fichier, `{"tracks": ["01-intro.mp3", "02-suite.mp3"]}` (un simple tableau de noms est aussi accepté), relu à chaque entrée dans la zone : le modifier suffit, sans refaire la page.
@@ -819,7 +819,7 @@ Une zone de type `video` est un **écran plaqué sur un mur**, comme un tableau 
 
 - **Poser** : dans le viewer, type « Vidéo (écran sur un mur) », puis clic sur le mur.
   - Champs : « Fichier ou adresse de la vidéo » (`video`), largeur (`w`, 2,4 m par défaut), hauteur (`h`, **0 = d'après le rapport de la vidéo**), « Portée » (`radius`, 20 m par défaut, 0,5 à **200 m**), « Son de l'écran » (`sound`), « Dossier de vidéos » (`videoFolder`, voir plus bas).
-  - Pas de `mesh`, de `cone`, de `link` ni de déclenchement : il n'y a rien à cliquer sauf l'écran lui-même.
+  - Pas de `mesh` ni de cône. Depuis la 1.12.42 un écran peut porter une **action** (lien, portail ou commande, voir « Action de l'écran » plus bas) ; sans action, il n'y a rien à cliquer sauf l'écran lui-même.
   - **Dans le viewer, l'écran est un panneau qui porte le nom du fichier : la vidéo n'y joue pas** (et le viewer ouvert comme un fichier local, sans serveur, ne charge pas la vidéo : il faut une page servie en `http`).
 - **Le fichier** se cherche comme celui d'une image : un nom sans extension (`clip`) donne `medias/clip.mp4`, `.webm`, `.m4v`, `.ogv`, puis le dossier de la région ; avec extension, tel quel dans `medias` puis dans le dossier ; une adresse `https://` ou un chemin `/…` tel quel (un autre site doit autoriser le CORS, sinon WebGL refuse la texture ; non essayé).
   - `javascript:`, `data:` et `blob:` sont refusés.
@@ -848,7 +848,12 @@ Une zone de type `video` est un **écran plaqué sur un mur**, comme un tableau 
 - **Barre de pistes** (1.12.13) : sous un écran qui a **plusieurs pistes**, une barre noire de la largeur de l'écran affiche « 2/4 nom » et trois icônes dessinées : précédente, pause / lecture (l'icône suit l'état), suivante.
   - Elle est **escamotée** : visible quand la souris survole l'écran ou la barre, quand le viseur de la promenade (pointeur capturé) est sur l'écran, et 3 secondes après chaque clic ou changement de piste.
   - Un clic sur le texte de la barre ne fait rien.
-  - Un écran à fichier unique ou à une seule piste n'a pas de barre : le clic sur l'écran reste pause / lecture.
+  - Un écran à fichier unique ou à une seule piste n'a pas de barre (sauf s'il porte un lien, voir ci-dessous) : le clic sur l'écran reste pause / lecture.
+- **Action de l'écran** (1.12.42) : la vidéo **montre ce que l'action ouvre**. Une seule action par écran : `link`, `portal` ou `ha` (`radio` et `music` sont refusés sur un écran, comme sur un objet du modèle).
+  - **Poser** : dans la fiche de l'écran, le menu **« Action de l'écran »** (aucune, lien, portail, commande) montre les champs de l'action choisie (adresse, arrivée visée, confirmation, fenêtre flottante) et, pour un portail ou une commande, **« Distance de déclenchement (m) »** (`actionRadius`).
+  - **Lien** (`link`) : le **titre** devient un segment cliquable de la barre sous l'écran, souligné et suivi d'une flèche dessinée (jamais de couleur seule). Titre = `label` de la zone, sinon nom de la vidéo. La barre existe aussi pour une vidéo seule (le titre, sans les trois icônes) ; avec une liste, le compteur « 2/4 » reste devant le titre et les trois icônes ne changent pas. `frame: true` ouvre la page dans la fenêtre flottante (§ 5.7.1). Un clic sur l'image reste pause / lecture.
+  - **Portail et commande** (`portal`, `ha`) : l'action part **en s'approchant**, à moins de `actionRadius` (2 m par défaut, de 0,5 à 50), dans la même tranche de hauteur que les tableaux. La touche E reste inactive sur un écran. `radius` garde son sens : la portée de lecture. Avec `confirm`, la commande demande confirmation.
+  - Un fichier vidéo introuvable cache l'écran mais ne retire pas l'action. `trigger` et `cone` sont ignorés et signalés, `actionRadius` aussi avec un lien ; un écran n'a jamais de cône.
 - **Radio et musique en vue d'ensemble** (1.12.11) : hors promenade (vue d'ensemble, avant la promenade), la radio et la musique des zones jouent quand la **caméra** est à portée (distance en 3D, la hauteur compte), comme les écrans vidéo et les images ; la ligne « Radio » / « Musique » donne la distance de la caméra.
   - En orbite la caméra est souvent haute et loin : une zone de 20 m est alors rarement à portée.
   - Hors promenade, il n'y a ni invite ni entrée dans une zone.
@@ -856,6 +861,7 @@ Une zone de type `video` est un **écran plaqué sur un mur**, comme un tableau 
 - **Mettre en ligne** : copier les vidéos (et `playlist.json`) avec le reste de la région ; les zones disent seulement le nom, ou `"folder": "videos"`. Pas à pas : `PROCEDURES_SIMPLES.md` § 17.
 - **Essayé** : `tests/zone_video.py` (nettoyage JavaScript = Python, rien demandé hors de portée, lecture muette en boucle, pause en tournant le dos et en s'éloignant, plafond de 8, texture réellement dessinée, mouvement réduit, son avant le démarrage, un seul écran parle) et `tests/zone_video_liste.py` (listes, ordre, piste sautée, barre, icônes, délai de 3 s).
   - **Non essayé** : Edge sans accélération matérielle, le refus réel de lecture avec son sous Edge, de gros fichiers, un serveur sans CORS, le toucher, un essai à deux écrans réels.
+  - **Depuis la 1.12.42** : `tests/zone_video_liste.py` (titre-lien d'une vidéo seule et d'une liste, clic sur le titre), `tests/zones_unifiees.py` (écran avec portail : téléporte à moins de `actionRadius`, pas à la portée de lecture) et `tests/editeur_video_action.py` (fiche du viewer). Depuis la 1.12.43, `zone_video.py` et `zone_video_liste.py` cherchent ffmpeg dans le PATH, puis dans `tests/ffmpeg.chemin.txt` (`DEVELOPPEMENT.md`).
 
 ### 5.22 Une seule source sonore à la fois, bouton muet et touche N (1.12.21)
 
@@ -871,6 +877,31 @@ Avant la 1.12.21, la radio, la musique et le son d'un écran vidéo pouvaient pa
 - **Fenêtre flottante** (option `frame` d'un lien, § 5.7.1) : tant qu'elle contient une page **YouTube**, la radio, la musique et les sons des écrans se taisent (leur ligne dit « son coupé : touche N ou fenêtre YouTube »), car le son d'une vidéo YouTube de la fenêtre ne peut pas être coupé par la page ; ils reviennent à sa fermeture, ou dès que le visiteur fait un **geste sur une source** (cocher sa case, choisir un flux, passer une piste, cliquer sur un écran) : la page ne peut pas arrêter le lecteur YouTube, qui continue de jouer en même temps (au visiteur de le mettre en pause). **Une autre page ne change rien au son de la page** (1.12.22).
   - Non essayé : mettre en pause une vidéo YouTube de la fenêtre depuis la page (l'API de lecteur n'est pas utilisée).
 - **Essayé** : `tests/arbitrage_son.py` (plus proche, priorité d'un geste, cases exclusives, ligne Vidéo, muet par touche et par bouton, fenêtre flottante) ; le gain de l'écran y est simulé (sa portée est testée par `zone_video.py`). **Non essayé** : deux écrans à son et une radio réels ensemble, un vrai YouTube, le toucher.
+
+### 5.23 Modèle 3D posé à part (`model`, 1.12.39 et 1.12.40)
+
+Une zone `model` pose un **fichier `.glb` à part** (un poste de radio, une statue, un meuble) dans la région, avec sa position, sa rotation et sa taille, sans toucher au modèle de la région.
+
+- **Poser** : dans le viewer, type « Modèle 3D (fichier .glb posé à part) », puis clic à l'endroit voulu.
+  - Champs : « Fichier du modèle (.glb) » (`model`), « Taille (1 = telle quelle) » (`scale`, de 0,01 à 100), « Inclinaison avant / arrière » (`pitch`) et « Inclinaison sur le côté » (`roll`) en degrés dans le viewer et en radians dans le fichier, comme `yaw`, et « Solide (on ne le traverse pas) » (`solid`).
+  - `x`, `y`, `z` (ou `pos`) sont l'**origine du `.glb`**.
+  - Le champ « Fichier du modèle » existe aussi dans les fiches lien, portail, commande, radio et musique : le modèle y porte l'action.
+- **Le fichier** se cherche comme une image : relatif au dossier de la région, ou adresse complète. Introuvable ou illisible : rien n'est posé et la console écrit un avertissement (pas d'erreur). Page ouverte depuis le disque (`file://`) : le navigateur refuse la lecture, comme pour les listes de pistes.
+- **Décor ou porteur d'une action** :
+  - `model` seul est un **décor** : ni rayon, ni repère, ni nom (`radius`, `showName` et `cone` sont signalés comme ignorés).
+  - Avec `link`, `portal`, `ha`, `radio` ou `music`, il **porte l'action** : cliquable comme un tableau, cône si `cone` est vrai, déclenchement en marchant (`trigger`). Exemple : un poste de radio posé sur une zone radio.
+  - **Depuis la 1.12.40**, le modèle d'une radio ou d'une musique est cliquable : il ouvre ou ferme la fenêtre Son, seulement à portée, comme le cône. `link`, `portal` et `ha` déclenchés en marchant (`enter`) restent sans clic.
+- **Solide** : avec `solid: true`, les triangles du modèle s'ajoutent à la grille de collision de la marche (sol et murs) et ses objets aux rayons de téléportation (double clic) et d'occlusion des clics. Sans `solid`, on traverse le modèle. Le marqueur d'atterrissage et la pose de zones du viewer ignorent le modèle.
+- **Chargement à la demande** : un modèle se charge quand le visiteur (la caméra hors promenade) est à moins de `modelLazy` mètres de sa zone.
+
+| Option | Config | Effet |
+| --- | --- | --- |
+| `--model-lazy M` | `modelLazy` | distance de chargement, de 0 à 500 m, **150 par défaut**. `0` : tous les modèles sont chargés au départ, sans plafond. Sinon **16 modèles au plus** en même temps (le plus loin est libéré) et 2 chargements à la fois. Dans le viewer, tout se charge. `glb2html.py --update --model-lazy 60` l'applique à une page déjà publiée (§ 9.3) |
+
+- **Mesure** (bac à sable, Chromium logiciel, serveur local : **estimation** pour un vrai réseau) : 30 modèles de 20 Ko, 0,8 Mo et 9 Mo, dont 8 proches. À la demande : 6 chargés en 1,8 s, 42 Mo de mémoire JavaScript. Avec `--model-lazy 0` : 30 chargés en 20 s, 110 à 130 Mo. La page est prête en 0,4 s dans les deux cas.
+- **Essayé** : `tests/zone_model.py` (chargement, taille, plafond de 16, `pitch`, `roll`, position `pos`, modèle à 1 km non chargé, fichier absent, clic sur un modèle avec lien, clic sur le modèle d'une radio et d'une musique, `solid` qui arrête le visiteur et pas le modèle sans `solid`, `--model-lazy 0`, viewer).
+  - **Non essayé** : un `.glb` de plusieurs Mo sur un vrai réseau, `solid` sur un vrai bâtiment, Edge, le toucher (clic sur un modèle).
+- Référence des clés : `REFERENCE_JSON.md` § 11.4.
 
 ## 6. Fabriquer la page (`glb2html.py`)
 
@@ -1153,7 +1184,7 @@ Ils concernent les portails et les zones libres (lien web, commande). Réglage d
 
 ### 7.17 Repères de portail (cônes) : `--zone-cone`, touche T
 
-Au-dessus de chaque portail et de chaque zone « en marchant dedans » ou « les deux », la page dessine un petit **cône pointé vers le bas** (environ 0,35 m de large, 0,5 m de haut, sommet à 2 m au-dessus du centre de la zone ; teinte claire neutre, contour sombre : il se lit sans dépendre de la couleur). Il s'ajoute à `--zone-marker` (il ne le remplace pas). Visible jusqu'à `--zone-info-dist` (150 m par défaut depuis la v37) ; survoler le cône affiche la même infobulle que la zone, avec la **distance** au visiteur (§ 7.18). Depuis la v37 sa **taille apparente est constante** (§ 7.18). **T** affiche ou masque tous les cônes (choix mémorisé). `--no-zone-cone` les masque au départ (config `zoneCone`) ; les arrivées n'ont de cône qu'avec `--show-spawns`. **Zone par zone (1.10.16)** : la clé facultative `cone` d'une zone vaut `true` (un cône même pour une zone « au clic ») ou `false` (jamais de cône, même pour un portail) ; absente, le comportement ci-dessus s'applique. Elle ne change rien pour les arrivées (`--show-spawns`) ni pour les tableaux, et T masque toujours tous les cônes. Dans l'éditeur du viewer : la liste « Repère (cône) au-dessus de la zone » (selon le déclenchement, toujours, jamais). Référence : `REFERENCE_JSON.md`.
+Au-dessus de chaque zone qui en a un (voir « Qui a un cône » plus bas), la page dessine un petit **cône pointé vers le bas** (environ 0,35 m de large, 0,5 m de haut, sommet à 2 m au-dessus du centre de la zone ; teinte claire neutre, contour sombre : il se lit sans dépendre de la couleur). Il s'ajoute à `--zone-marker` (il ne le remplace pas). Visible jusqu'à `--zone-info-dist` (150 m par défaut depuis la v37) ; survoler le cône affiche la même infobulle que la zone, avec la **distance** au visiteur (§ 7.18). Depuis la v37 sa **taille apparente est constante** (§ 7.18). **T** affiche ou masque tous les cônes (choix mémorisé). `--no-zone-cone` les masque au départ (config `zoneCone`) ; les arrivées n'ont de cône qu'avec `--show-spawns`. **Qui a un cône (1.12.41)** : dans le **format unifié**, seule une zone qui porte `"cone": true` en a un ; absente ou `false`, pas de cône. Dans l'**ancien format** (zones avec `type`), la clé facultative `cone` (1.10.16) vaut `true` (un cône même pour une zone « au clic ») ou `false` (jamais de cône, même pour un portail) ; absente, l'ancien comportement s'applique : cône pour les portails, les radios, les musiques et les zones « en marchant dedans » ou « les deux ». Un écran vidéo n'a jamais de cône. Elle ne change rien pour les arrivées (`--show-spawns`) ni pour les tableaux, et T masque toujours tous les cônes. Dans l'éditeur du viewer : la liste « Repère (cône) au-dessus de la zone » (selon le déclenchement, toujours, jamais) ; le fichier de zones n'écrit la clé que si le cône est allumé. Référence : `REFERENCE_JSON.md`.
 
 ### 7.18 Repère de portail (cône) : taille constante, distance
 
@@ -2314,6 +2345,16 @@ Le détail, version par version, est dans `HISTORIQUE.md` (récit) et `CHANGELOG
 - **format unifié des zones** : ce qu'on voit (`image`, `video`, `mesh`) et ce qui se passe (`link`, `portal`, `ha`, `radio`, `music`, `arrival`), messages pour les clés ignorées et les zones refusées, `glb2html.py --convert-zones`, tableau accroché haut atteignable (1.12.35, § 5, `REFERENCE_JSON.md` § 11.4)
 - **tableau avec portail, commande, radio ou musique** : `image` se combine avec `portal`, `ha`, `radio`, `music` ; l'image sert de pochette par défaut (1.12.36, § 5.11, `REFERENCE_JSON.md` § 11.4)
 - documents : exemples JSON, listes plus lisibles, README, vue d'ensemble, index, guide, procédures ; historiques remis dans l'ordre (1.12.16 à 1.12.19 et 1.12.32) ; contrôle de tous les documents contre le code (1.12.33 : fenêtre Son dans le fichier de disposition, clés mémorisées dans le navigateur, § 7.66)
+
+**Ajouts de la 1.12.38 à la 1.12.43 (lots 1.12.38 à 1.12.43)**
+
+- **clé `pos`** : `[x, y, z]` pour la position d'une zone, et format « [x, y, z] » de « Copier ma position » (1.12.38, `REFERENCE_JSON.md` § 11.4)
+- **zone `model`** : un fichier `.glb` posé à part, avec `scale`, `pitch`, `roll`, `solid`, chargement à la demande `--model-lazy` (1.12.39, § 5.23)
+- **clic sur le modèle d'une radio ou d'une musique** (1.12.40, § 5.23)
+- **cône à `false` par défaut dans le format unifié** (1.12.41, § 7.17)
+- **actions sur les écrans vidéo** : lien (titre dans la barre), portail et commande à l'approche, clé `actionRadius` (1.12.42, § 5.21)
+- **tests vidéo** : ffmpeg trouvé dans le PATH ou dans `tests/ffmpeg.chemin.txt` (1.12.43, `DEVELOPPEMENT.md`)
+- documents des lots 1.12.39 à 1.12.43 (`REFERENCE_JSON.md`, manuel, procédures, historiques, exemples)
 
 Tout ce qui suit est dans la **1.1.0** (publiée le 31/10/2026). Le détail, lot par lot, est dans `CHANGELOG.fr.md`.
 

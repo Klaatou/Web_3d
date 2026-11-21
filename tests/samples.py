@@ -65,10 +65,12 @@ zones = lire("region.zones.sample.json")
 rapport([G["zone_out"](z) for z in G["clean_zones"](zones, "private")] == zones, "zones : déjà propres (rien à corriger, format unifié de la 1.12.35) avec le profil private")
 zones = G["clean_zones"](zones, "private")   # zones internes (avec type) pour les contrôles suivants
 pub = G["clean_zones"](zones, "public")
-rapport(len(pub) == 14 and all(not z["private"] for z in pub), "zones : profil public, la zone privée est retirée", len(pub))
+rapport(len(pub) == 16 and all(not z["private"] for z in pub), "zones : profil public, la zone privée est retirée", len(pub))
 rapport(sorted({z["type"] for z in zones}) == sorted(G["ZONE_TYPES"]), "zones : une zone de chaque sorte", sorted({z["type"] for z in zones}))
 rapport(any(z["mesh"] for z in zones) and any(z["showName"] for z in zones) and any(z["confirm"] for z in zones), "zones : liée à un objet, nom affiché, confirmation")
 rapport(G["clean_zones"](lire("region.zones.sample.json"), "perso") == zones, "ancien profil « perso » : compris comme private")
+ecr = {z["id"]: z for z in zones if z["type"] == "video"}
+rapport(ecr.get("screen-link", {}).get("act") == "url" and ecr.get("screen-portal", {}).get("act") == "portal" and ecr["screen-portal"]["aradius"] == 3, "zones : écran vidéo avec un lien, écran vidéo avec un portail (1.12.42)", {k: (v.get("act"), v.get("aradius")) for k, v in ecr.items()})
 regions = lire("regions.sample.json")
 rapport(isinstance(regions, dict) and regions.get("showUrl") is False and G["clean_map"](regions) == regions["regions"], "regions : en-tête showUrl et fiches déjà propres (rien à corriger)")
 S = lire("region.reglages.sample.json")
@@ -187,7 +189,7 @@ async def main():
         ign = [l for l in o.logs if avant("core.tile.ignored") in l]
         rapport(tot == 4 and not ign, "index des tuiles d'exemple : 4 tuiles, aucune ignorée", (tot, ign))
         zs = await o.ev("window.__viewer.getZones().map(z => z.id)")
-        rapport(len(zs) == 14 and "light-on" not in zs, "zones d'exemple : 14 affichées, la zone privée retirée (profil public)", zs)
+        rapport(len(zs) == 16 and "light-on" not in zs, "zones d'exemple : 16 affichées, la zone privée retirée (profil public)", zs)
         await o.attendre("!document.getElementById('mapBtn').hidden", 10)
         await o.ev("document.getElementById('mapBtn').click()")
         await o.attendre("document.getElementById('mapGrid').textContent.includes('Other region')", 15)

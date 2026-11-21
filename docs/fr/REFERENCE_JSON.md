@@ -120,9 +120,10 @@ Les positions sont en mètres, dans le repère de la page : x vers l'est, y vers
 | `imageExts`    | texte     | `"jpg,jpeg,png,webp,gif,avif"` | extensions essayées, dans l'ordre, pour un nom d'image sans extension (§ 5.11) ; clé facultative, absente du fichier écrit par le générateur | —                                   |
 | `mediaDir`     | texte     | `"medias"` | sous-dossier des images et des fichiers texte des zones `image` (§ 5.11) ; `""` = aucun ; clé facultative, absente du fichier écrit par le générateur | —                                   |
 | `zoneMarker`   | texte     | `"dot"`    | repère des portails et zones libres : `"dot"` petit disque, `"range"` anneau au rayon réel de la zone, `"none"` rien | `--zone-marker`                     |
-| `zoneCone`     | oui / non | `true`     | petit cône au-dessus des portails et des liens déclenchés en marchant dedans (touche T) ; réglable zone par zone par la clé `cone`                                                                         | `--zone-cone`, `--no-zone-cone`     |
+| `zoneCone`     | oui / non | `true`     | les cônes (repères au-dessus des zones qui en demandent un par la clé `cone`) sont montrés au départ ; la touche T les masque ou les montre                                                              | `--zone-cone`, `--no-zone-cone`     |
 | `showSpawns`   | oui / non | `false`    | dessine aussi les arrivées                                                                                           | `--show-spawns`, `--no-show-spawns` |
 | `zoneInfoDist` | nombre    | `150`      | distance en mètres (de 5 à 500) jusqu'où les zones répondent au survol et au clic en promenade                       | `--zone-info-dist`                  |
+| `modelLazy`    | nombre    | `150`      | distance en mètres (de 0 à 500) à laquelle le fichier `.glb` d'une zone `model` se charge ; `0` : tous chargés au départ, sans plafond (§ 5.23) | `--model-lazy`                      |
 
 **Carte des mondes**
 
@@ -160,9 +161,9 @@ Une clé inconnue, ou qui ne sert pas à cette zone, est ignorée et signalée :
 | ------------- | --------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | `id`          | texte     | `z1`, `z2`... | nom court et unique : lettres minuscules, chiffres, `-` et `_`, 40 caractères au plus. L'arrivée `default` est le point d'entrée de la région |
 | `label`       | texte     | `""`          | nom affiché (infobulle, panneau), 60 caractères au plus                                                                                       |
-| `x`, `y`, `z` | nombre    | `0`           | position en mètres ; pour un tableau ou un écran, le centre de l'image                                                                        |
+| `x`, `y`, `z` | nombre    | `0`           | position en mètres ; pour un tableau ou un écran, le centre de l'image ; pour un modèle, l'origine du fichier `.glb`                         |
 | `pos`         | liste     | (absente)     | autre écriture de `x`, `y`, `z` : `[120, 25.5, -80]`, comme `target` de `config.json` ; se colle depuis « Copier ma position » (format `[x, y, z]`, fenêtre H). Avec `x`, `y`, `z` en plus, `pos` gagne et un message le dit ; une liste qui n'a pas trois nombres est ignorée et signalée |
-| `yaw`         | nombre    | `0`           | orientation en radians : sens du regard à l'arrivée, ou face du panneau, du tableau, de l'écran                                              |
+| `yaw`         | nombre    | `0`           | orientation en radians : sens du regard à l'arrivée, ou face du panneau, du tableau, de l'écran ou du modèle                                 |
 | `private`     | oui / non | `false`       | zone privée : absente des pages publiques (profil `public`)                                                                                   |
 
 **Ce qu'on voit** : une seule de ces clés. Aucune : un anneau au sol (ou un panneau avec `shape`).
@@ -172,7 +173,8 @@ Une clé inconnue, ou qui ne sert pas à cette zone, est ignorée et signalée :
 | `image` | texte | **tableau** sur un mur : nom du fichier ou adresse de l'image (§ 5.11)                                                                                |
 | `video` | texte | **écran vidéo** sur un mur : nom du fichier ou adresse de la vidéo, ou `""` avec `videoFolder` ou `tracks` (§ 5.21)                                 |
 | `mesh`  | texte | zone **liée à un objet** du modèle : son nom, ou `nom#numéro` quand plusieurs objets portent ce nom ; l'objet devient cliquable (§ 5.9)               |
-| `shape` | texte | sans les trois clés ci-dessus : `"ring"` (anneau au sol, par défaut) ou `"board"` (panneau sur un poteau)                                             |
+| `model` | texte | **modèle 3D** posé à part : nom d'un fichier `.glb` (relatif au dossier de la région) ou adresse complète ; seul, c'est un décor ; avec une action, il la porte (§ 5.23) |
+| `shape` | texte | sans les quatre clés ci-dessus : `"ring"` (anneau au sol, par défaut) ou `"board"` (panneau sur un poteau)                                         |
 
 **Ce qui se passe** : une seule de ces clés.
 
@@ -189,10 +191,10 @@ Une clé inconnue, ou qui ne sert pas à cette zone, est ignorée et signalée :
 
 | Champ         | Type      | Défaut                    | Sert avec                    | Ce qu'il fait                                                                                                                                                  |
 | ------------- | --------- | ------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `radius`      | nombre    | `2` (son, vidéo : `20`)   | toutes sauf `arrival`        | rayon de la zone en mètres (0,5 à 50) ; radio, musique et écran vidéo : portée (jusqu'à 200)                                                                   |
-| `trigger`     | texte     | `"click"`                 | `link`, `portal`             | `"click"` (clic ou E), `"enter"` (en marchant dedans, ou devant le tableau) ou `"both"` (les deux)                                                             |
+| `radius`      | nombre    | `2` (son, vidéo : `20`)   | toutes sauf `arrival` et `model` seul | rayon de la zone en mètres (0,5 à 50) ; radio, musique et écran vidéo : portée d'écoute ou de lecture (jusqu'à 200) ; l'action d'un écran vidéo a son propre rayon, `actionRadius` |
+| `trigger`     | texte     | `"click"`                 | `link`, `portal`             | `"click"` (clic ou E), `"enter"` (en marchant dedans, ou devant le tableau) ou `"both"` (les deux) ; sans effet sur un écran vidéo (voir `actionRadius`) |
 | `showName`    | oui / non | `false`                   | toutes sauf `arrival`        | écrit le `label` au-dessus de la zone en promenade                                                                                                             |
-| `cone`        | oui / non | (selon le déclenchement)  | sans `image` ni `video`      | repère (cône) au-dessus de la zone : `true` toujours, `false` jamais ; absente : portails, radios, musiques et liens déclenchés en marchant. La touche T les masque |
+| `cone`        | oui / non | `false`                   | sans `image`, `video` ni `model` seul | repère (cône) au-dessus de la zone : `true` l'allume ; absente ou `false` : pas de cône (depuis la 1.12.41 ; l'ancien format garde son comportement, voir plus bas). La touche T les masque |
 | `w`, `h`      | nombre    | voir le texte             | `image`, `video`, panneau    | largeur et hauteur en mètres (voir sous le tableau)                                                                                                            |
 | `frame`       | oui / non | `false`                   | `link`                       | `true` : la page s'ouvre dans une fenêtre flottante de la page au lieu d'un nouvel onglet ; YouTube y devient un lecteur (§ 5.7.1)                             |
 | `spawn`       | texte     | `""`                      | `portal`                     | `id` de l'arrivée visée (vide = `default`)                                                                                                                     |
@@ -202,6 +204,10 @@ Une clé inconnue, ou qui ne sert pas à cette zone, est ignorée et signalée :
 | `sound`       | oui / non | `false`                   | `video`                      | `true` donne du son à l'écran (seul l'écran à son le plus proche parle) (§ 5.21)                                                                               |
 | `poster`      | texte     | (absente)                 | `radio`, `music`             | image montrée en pochette (96 px au plus) dans la fenêtre Son tant que la zone parle ; fichier relatif à la région ou adresse `http(s)://`, avec son extension |
 | `posterLink`  | texte     | (absente)                 | `radio`, `music`             | page ouverte par un clic sur la pochette                                                                                                                       |
+| `actionRadius` | nombre   | `2`                       | `video` avec `portal` ou `ha` | distance de déclenchement de l'action, en mètres (0,5 à 50) ; `radius` reste la portée de lecture (§ 5.21) |
+| `scale`       | nombre    | `1`                       | `model`                      | taille du modèle (0,01 à 100) (§ 5.23)                                                                                                                         |
+| `pitch`, `roll` | nombre  | `0`                       | `model`                      | inclinaison avant / arrière et sur le côté, en radians comme `yaw` (de -7 à 7) (§ 5.23)                                                                        |
+| `solid`       | oui / non | `false`                   | `model`                      | `true` : on ne traverse pas le modèle en promenade (§ 5.23)                                                                                                    |
 
 Largeur et hauteur (`w`, `h`) :
 
@@ -215,13 +221,17 @@ Un tableau avec `link` et `trigger` `"enter"` ou `"both"` ouvre son lien quand o
 
 - anneau ou panneau, avec un lien, un portail, une commande, une radio ou une musique ;
 - objet du modèle (`mesh`), avec un lien, un portail ou une commande ;
+- modèle posé (`model`), seul (décor) ou avec un lien, un portail, une commande, une radio ou une musique (§ 5.23) ;
 - tableau (`image`), seul ou avec un lien (`link`), un portail (`portal`), une commande (`ha`), une radio (`radio`) ou une musique (`music`). Avec une radio ou une musique, l'image du tableau sert de pochette tant que `poster` n'est pas donné ; avec un portail ou une commande, `radius` et `trigger` s'appliquent au tableau comme à un anneau ;
-- écran vidéo (`video`), seul ;
+- écran vidéo (`video`), seul ou avec un lien (`link`), un portail (`portal`) ou une commande (`ha`) : la vidéo montre ce que l'action ouvre (§ 5.21) :
+  - `link` : le titre devient un lien dans la barre sous l'écran (titre = `label`, sinon nom de la vidéo ; `frame` pour la fenêtre flottante) ; le clic sur l'image reste pause / lecture ;
+  - `portal` et `ha` : l'action part en s'approchant, à moins de `actionRadius` ;
+  - `trigger` et `cone` sont ignorés et signalés ;
 - point d'arrivée (`arrival`), seul.
 
-Les autres combinaisons (écran vidéo avec un lien ou une action, objet du modèle qui joue une radio ou une musique) ne sont pas encore possibles : la zone n'est pas affichée et un message le dit. Une zone sans rien à montrer ni à faire n'est pas affichée non plus. Deux choses à voir, ou deux actions : la première de la liste ci-dessus est gardée, les autres sont signalées.
+Les autres combinaisons (écran vidéo ou objet du modèle (`mesh`) avec une radio ou une musique) ne sont pas encore possibles : la zone n'est pas affichée et un message le dit. Une zone sans rien à montrer ni à faire n'est pas affichée non plus. Deux choses à voir, ou deux actions : la première de la liste ci-dessus est gardée, les autres sont signalées.
 
-**Ancien format (jusqu'à la 1.12.34)**. Les zones avec `type` et `target` sont toujours lues. `glb2html.py` dit combien il en a lu ; le viewer et `glb2html.py` les réécrivent au nouveau format dès qu'ils enregistrent les zones. Pour réécrire un fichier à la main d'un coup (liste de zones ou fichier `.reglages.json`) :
+**Ancien format (jusqu'à la 1.12.34)**. Les zones avec `type` et `target` sont toujours lues, et gardent leur comportement d'avant pour le cône : sans clé `cone`, un cône pour un portail, une radio, une musique ou un déclenchement autre que `click`. `glb2html.py` dit combien il en a lu ; le viewer et `glb2html.py` les réécrivent au nouveau format dès qu'ils enregistrent les zones. Pour réécrire un fichier à la main d'un coup (liste de zones ou fichier `.reglages.json`) :
 
 ```
 python glb2html.py --convert-zones NOM.zones.json
@@ -238,7 +248,7 @@ L'original est gardé à côté (`NOM.zones.json.bak`). Correspondance :
 - `"type": "cast"` : `streams` devient `radio`, `link` devient `posterLink` ;
 - `"type": "audio"` : `folder` devient `music`, `link` devient `posterLink`.
 
-L'exemple contient quatorze zones, une de chaque cas :
+L'exemple contient dix-sept zones, une de chaque cas :
 
 | `id`              | Sorte    | Ce qu'elle montre                                                                              |
 | ----------------- | -------- | ---------------------------------------------------------------------------------------------- |
@@ -256,6 +266,9 @@ L'exemple contient quatorze zones, une de chaque cas :
 | `screen-clip`     | vidéo    | écran sur un mur : un fichier (`clip.mp4`), avec son (§ 5.21)                                 |
 | `screen-list`     | vidéo    | écran sur un mur : une liste, le dossier `videos` (avec `videos/playlist.json`) (§ 5.21)      |
 | `video-page`      | lien     | adresse YouTube ouverte dans une fenêtre flottante de la page (`frame`, § 5.7.1)              |
+| `screen-link`     | vidéo    | écran avec un lien : le titre est un lien dans la barre sous l'écran, ouvert dans une fenêtre flottante (`frame`) (§ 5.21) |
+| `screen-portal`   | vidéo    | écran avec un portail vers l'arrivée `gallery`, déclenché à moins de 3 m (`actionRadius`) (§ 5.21)                          |
+| `statue`          | modèle   | fichier `statue.glb` posé à part, taille 1,5, solide (§ 5.23)                                                              |
 
 **Un exemple par sorte multimédia.** Un fichier JSON n'accepte pas de commentaires : chaque exemple a son titre juste au-dessus, et son `id` dit ce qu'il montre. Ce sont des zones complètes, écrites comme la page les écrit : seules les clés utiles à la zone y figurent, et les réglages par défaut sont omis. Une zone s'ajoute à la liste du fichier `NOM.zones.json`, entre les accolades de la liste `[ ... ]`.
 
@@ -311,6 +324,41 @@ L'exemple contient quatorze zones, une de chaque cas :
  "sound": true,
  "w": 3.2,
  "h": 1.8
+}
+```
+
+**Écran vidéo avec un lien : le titre ouvre la page (`link`)**
+
+```json
+{
+ "id": "screen-link",
+ "label": "Making of",
+ "x": 30,
+ "y": 24,
+ "z": -40,
+ "yaw": 3.14,
+ "video": "making-of.mp4",
+ "w": 3.2,
+ "link": "https://ADRESSE/making-of",
+ "frame": true
+}
+```
+
+**Écran vidéo avec un portail : il part en s'approchant (`portal`, `actionRadius`)**
+
+```json
+{
+ "id": "screen-portal",
+ "label": "Gallery preview",
+ "x": 35,
+ "y": 24,
+ "z": -40,
+ "yaw": 3.14,
+ "video": "gallery.mp4",
+ "w": 3.2,
+ "portal": "",
+ "spawn": "gallery",
+ "actionRadius": 3
 }
 ```
 
@@ -418,6 +466,22 @@ L'exemple contient quatorze zones, une de chaque cas :
  "link": "https://www.youtube.com/watch?v=VIDEO_ID",
  "frame": true,
  "showName": true
+}
+```
+
+**Modèle 3D posé à part (`model`)**
+
+```json
+{
+ "id": "statue",
+ "label": "Statue",
+ "x": 12,
+ "y": 22,
+ "z": -30,
+ "yaw": 1.57,
+ "model": "statue.glb",
+ "scale": 1.5,
+ "solid": true
 }
 ```
 

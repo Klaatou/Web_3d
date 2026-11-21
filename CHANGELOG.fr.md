@@ -6,12 +6,24 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.12.0)
 
+### 21/11/2026 : documents des lots 1.12.39 à 1.12.43 (lot 1.12.44)
+
+- **Demande** (Klaatou) : mettre les documents à jour, exemples JSON compris.
+- **Fait** :
+  - `REFERENCE_JSON.md` (FR, EN) § 11.4 : `model`, `scale`, `pitch`, `roll`, `solid`, `actionRadius`, `modelLazy` ; défaut du cône (faux dans le format unifié) ; combinaisons (écran vidéo avec `link`, `portal`, `ha` ; `model` seul ou porteur d'une action) ; trois exemples JSON ;
+  - exemple `region.zones.sample.json` : 17 zones (`screen-link`, `screen-portal` ajoutés ; les README disaient 14 alors que le fichier en avait 15) ; README des exemples FR et EN ;
+  - manuel : § 5.21 (action de l'écran), § 5.23 (nouveau, modèle posé à part, `--model-lazy`), § 5.19 et § 5.20 et § 7.17 (cône), annexe ;
+  - `PROCEDURES.md`, `PROCEDURES_SIMPLES.md` (variante du § 17, nouveau § 18), `DEVELOPPEMENT.md` (ffmpeg des tests vidéo), index, historiques FR et EN.
+- **Vérifié** : `samples.py` (17 zones, 16 publiques, écrans vidéo avec action), `doc_options`, `build_reference`, `readme_liens`, `i18n` ; les trois exemples JSON ajoutés à `REFERENCE_JSON.md` sont valides et identiques à ceux du fichier d'exemple.
+- **Non fait** : `docs/REFERENCE_OPTIONS.md` est refait par `python build.py` chez Klaatou ; `CREATEURS.md` ne parle pas des zones : inchangé.
+- Fichiers : `docs/` (documents ci-dessus), `docs/samples/`, `tests/samples.py`, `VERSION`, les deux CHANGELOG.
+
 ### 21/11/2026 : les tests vidéo trouvent ffmpeg tout seuls (lot 1.12.43)
 
 - **Demande** (Klaatou) : `zone_video.py` et `zone_video_liste.py` s'arrêtent sur « ffmpeg absent » quand `ffmpeg.exe` n'est pas dans le PATH ; il faut que les tests le retrouvent.
 - **Fait** : nouvelle aide `tests/ffmpeg_chemin.py` : ffmpeg est cherché dans le PATH, sinon dans le fichier `tests/ffmpeg.chemin.txt` (une ligne : le chemin complet de `ffmpeg.exe`, fichier personnel ignoré par git) ; les deux tests l'utilisent, le message d'absence dit où le mettre ; `tests/tout.py` ne la prend pas pour un test.
 - **Vérifié** : l'aide dans les trois cas (PATH, fichier, rien) ; `zone_video_liste.py` lancé avec un PATH sans ffmpeg et le chemin dans le fichier ; `tout.py --liste` ne compte pas l'aide.
-- **Non fait** : mention dans `docs/fr/DEVELOPPEMENT.md` à la validation de Klaatou.
+- **Non fait** : mention dans `docs/fr/DEVELOPPEMENT.md` (faite au lot 1.12.44).
 - Fichiers : `tests/ffmpeg_chemin.py` (nouveau), `tests/zone_video.py`, `tests/zone_video_liste.py`, `tests/tout.py`, `.gitignore`.
 
 ### 21/11/2026 : actions sur les écrans `video` : lien, portail, commande (lot 1.12.42)

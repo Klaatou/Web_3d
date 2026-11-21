@@ -25,6 +25,7 @@ Cette page dit **quel document lire pour quoi**. Les documents anglais portent l
 | mettre une radio dans une région (clé `radio`, titre du morceau) | `PROCEDURES_SIMPLES.md` § 14 (pas à pas) ; `MANUEL.md` § 5.19 et § 10.25 |
 | mettre ma propre musique (mp3...) dans une région (clé `music`, playlist) | `PROCEDURES_SIMPLES.md` § 15 ; `MANUEL.md` § 5.20 |
 | mettre un écran vidéo sur un mur (clé `video`, liste de vidéos) | `PROCEDURES_SIMPLES.md` § 17 ; `MANUEL.md` § 5.21 |
+| poser un petit modèle `.glb` à part (clé `model`, solide, `--model-lazy`) | `PROCEDURES_SIMPLES.md` § 18 ; `MANUEL.md` § 5.23 |
 | ouvrir un lien dans une fenêtre flottante, YouTube compris (clé `frame`) | `MANUEL.md` § 5.7.1 |
 | comprendre quelle source sonore parle, couper le son (fenêtre Son, touche N) | `MANUEL.md` § 5.22 et § 7.66 |
 | mettre à jour les zones d'une région déjà en ligne (exporter, remplacer `NOM.zones.json`, publier) | `PROCEDURES_SIMPLES.md` § 16 ; `MANUEL.md` § 5.15 |

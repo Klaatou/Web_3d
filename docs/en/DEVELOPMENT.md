@@ -46,6 +46,8 @@ To run it in one go: `python .\tests\tout.py`. It runs each test one after the o
 
 Tests added with 1.8.x: `bouton_promenade.py`, `demarrage_lien.py`, `build_reference.py` and `convoar_dist.py`.
 
+**ffmpeg for the video tests** (1.12.43): `zone_video.py` and `zone_video_liste.py` build their test videos with ffmpeg. They look for it in the PATH, otherwise in the file `tests\ffmpeg.chemin.txt` (one line: the full path of `ffmpeg.exe`, a personal file that git ignores). Helper: `tests/ffmpeg_chemin.py`, which `tout.py` does not run as a test. Without ffmpeg, the test stops on "ffmpeg introuvable" and says where to put the path.
+
 Under Windows, a test that reads the output of a child program must start it with `PYTHONIOENCODING=utf-8` (otherwise its output is in cp1252), close its input (`stdin=subprocess.DEVNULL`, otherwise a tool waits for Enter) and, if that program writes a lot to its console, read it during the test (a Windows pipe only keeps 4 KB): `tests/build_reference.py`, `tests/console.py` and `tests/correctifs_v52.py` are examples. The presence servers started with a pipe go through `vider` of `tests/vider_tube.py`.
 
 ## 5. Publish a version

@@ -18,7 +18,7 @@ This folder holds **one example of each JSON file** that the page, the viewer, t
 
 ## The zones of the sample
 
-`region.zones.sample.json` contains 14 zones (`REFERENCE_JSON.md` § 11.4):
+`region.zones.sample.json` contains 17 zones (`REFERENCE_JSON.md` § 11.4):
 
 - arrivals: `default`, `gallery`
 - portals: `to-gallery` (same region, by walking into it), `to-other-region` (other region, sign), `back-home` (name shown)
@@ -27,8 +27,9 @@ This folder holds **one example of each JSON file** that the page, the viewer, t
 - picture: `painting-1` (optional `link` key: page opened on click)
 - radio (`radio`): `dance-floor` (streams of the `radio` list, played within range in walk mode; optional `poster` cover and `posterLink` page, shown in the Sound window)
 - music (`music`): `ambiance` (files of the `audio` folder, with a `poster` cover and a `posterLink`)
-- video screens (`video`): `screen-clip` (one file, with sound), `screen-list` (a folder of videos)
+- video screens (`video`): `screen-clip` (one file, with sound), `screen-list` (a folder of videos), `screen-link` (screen with a link: the title opens a floating window), `screen-portal` (screen with a portal, started when walking up to it, `actionRadius`)
 - link in a floating window: `video-page` (`link` with the `frame` key)
+- 3D model: `statue` (`.glb` file placed on its own, with `scale` and `solid`)
 
 ## Files of the presence server
 

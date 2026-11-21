@@ -18,7 +18,7 @@ Ce dossier contient **un exemple de chaque fichier JSON** que la page, le viewer
 
 ## Les zones de l'exemple
 
-`region.zones.sample.json` contient 14 zones (`REFERENCE_JSON.md` § 11.4) :
+`region.zones.sample.json` contient 17 zones (`REFERENCE_JSON.md` § 11.4) :
 
 - arrivées : `default`, `gallery`
 - portails : `to-gallery` (même région, en marchant dedans), `to-other-region` (autre région, panneau), `back-home` (nom affiché)
@@ -27,8 +27,9 @@ Ce dossier contient **un exemple de chaque fichier JSON** que la page, le viewer
 - image : `painting-1` (clé facultative `link` : page ouverte au clic)
 - radio (`radio`) : `dance-floor` (flux de la liste `radio`, joués à portée en promenade ; `poster` (pochette) et `posterLink` (page) facultatifs, montrés dans la fenêtre Son)
 - musique (`music`) : `ambiance` (fichiers du dossier `audio`, avec une pochette `poster` et un `posterLink`)
-- écrans vidéo (`video`) : `screen-clip` (un fichier, avec du son), `screen-list` (un dossier de vidéos)
+- écrans vidéo (`video`) : `screen-clip` (un fichier, avec du son), `screen-list` (un dossier de vidéos), `screen-link` (écran avec un lien : le titre ouvre une fenêtre flottante), `screen-portal` (écran avec un portail, déclenché à l'approche, `actionRadius`)
 - lien en fenêtre flottante : `video-page` (lien `link` avec la clé `frame`)
+- modèle 3D : `statue` (fichier `.glb` posé à part, avec `scale` et `solid`)
 
 ## Fichiers du serveur de présence
 

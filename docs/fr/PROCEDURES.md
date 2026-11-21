@@ -87,6 +87,8 @@ Clés utiles : `seaY` (hauteur de la mer, en m, repère de la page), `seaM` (la 
 | Zone liée à un objet du modèle | `MANUEL.md` § 5.9 (en tuiles : § 5.14) |
 | Zone privée (visible seulement avec le profil « private ») | `MANUEL.md` § 5.10 |
 | Image sur un mur (clé `image`) | viewer, type « Image (tableau sur un mur) », `MANUEL.md` § 5.11 ; pas à pas ci-dessous |
+| Modèle 3D posé à part (clé `model`, solide, chargement à la demande) | viewer, type « Modèle 3D (fichier .glb posé à part) », `MANUEL.md` § 5.23 ; pas à pas : `PROCEDURES_SIMPLES.md` § 18 |
+| Écran vidéo qui ouvre un lien, un portail ou une commande | viewer, menu « Action de l'écran » de la fiche, `MANUEL.md` § 5.21 |
 
 Les zones d'une région en tuiles s'écrivent dans le repère d'origine du modèle (aucun recentrage). Le viewer en mode tuiles produit ces coordonnées directement ; ne reporte pas à la main des coordonnées d'un autre GLB.
 

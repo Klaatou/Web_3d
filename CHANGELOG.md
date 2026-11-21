@@ -6,12 +6,24 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.12.0)
 
+### 21/11/2026: documents of batches 1.12.39 to 1.12.43 (batch 1.12.44)
+
+- **Request** (Klaatou): bring the documents up to date, JSON examples included.
+- **Done**:
+  - `REFERENCE_JSON.md` (FR, EN) § 11.4: `model`, `scale`, `pitch`, `roll`, `solid`, `actionRadius`, `modelLazy`; cone default (false in the unified format); combinations (video screen with `link`, `portal`, `ha`; `model` alone or carrying an action); three JSON examples;
+  - sample `region.zones.sample.json`: 17 zones (`screen-link`, `screen-portal` added; the READMEs said 14 while the file had 15); samples README, FR and EN;
+  - manual: § 5.21 (screen action), § 5.23 (new, model placed on its own, `--model-lazy`), § 5.19, § 5.20 and § 7.17 (cone), appendix;
+  - `PROCEDURES.md`, `SIMPLE_PROCEDURES.md` (variant of § 17, new § 18), `DEVELOPMENT.md` (ffmpeg of the video tests), index, histories FR and EN.
+- **Checked**: `samples.py` (17 zones, 16 public, video screens with an action), `doc_options`, `build_reference`, `readme_liens`, `i18n`; the three JSON examples added to `REFERENCE_JSON.md` are valid and identical to those of the sample file.
+- **Not done**: `docs/REFERENCE_OPTIONS.md` is rebuilt by `python build.py` on Klaatou's side; `CREATORS.md` does not talk about zones: unchanged.
+- Files: `docs/` (documents above), `docs/samples/`, `tests/samples.py`, `VERSION`, both CHANGELOGs.
+
 ### 21/11/2026: the video tests find ffmpeg by themselves (batch 1.12.43)
 
 - **Request** (Klaatou): `zone_video.py` and `zone_video_liste.py` stop on "ffmpeg absent" when `ffmpeg.exe` is not in the PATH; the tests have to find it.
 - **Done**: new helper `tests/ffmpeg_chemin.py`: ffmpeg is looked for in the PATH, otherwise in the file `tests/ffmpeg.chemin.txt` (one line: the full path of `ffmpeg.exe`, a personal file ignored by git); both tests use it, the missing message says where to put it; `tests/tout.py` does not take the helper for a test.
 - **Checked**: the helper in the three cases (PATH, file, nothing); `zone_video_liste.py` run with a PATH without ffmpeg and the path in the file; `tout.py --liste` does not count the helper.
-- **Not done**: a mention in `docs/fr/DEVELOPPEMENT.md` at Klaatou's validation.
+- **Not done**: a mention in `docs/en/DEVELOPMENT.md` (done in batch 1.12.44).
 - Files: `tests/ffmpeg_chemin.py` (new), `tests/zone_video.py`, `tests/zone_video_liste.py`, `tests/tout.py`, `.gitignore`.
 
 ### 21/11/2026: actions on `video` screens: link, portal, command (batch 1.12.42)

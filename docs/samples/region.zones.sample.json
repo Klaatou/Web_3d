@@ -162,6 +162,31 @@
   "frame": true
  },
  {
+  "id": "screen-link",
+  "label": "Making of",
+  "x": 30,
+  "y": 24,
+  "z": -40,
+  "yaw": 3.14,
+  "video": "making-of.mp4",
+  "w": 3.2,
+  "link": "https://ADRESSE/making-of",
+  "frame": true
+ },
+ {
+  "id": "screen-portal",
+  "label": "Gallery preview",
+  "x": 35,
+  "y": 24,
+  "z": -40,
+  "yaw": 3.14,
+  "video": "gallery.mp4",
+  "w": 3.2,
+  "portal": "",
+  "spawn": "gallery",
+  "actionRadius": 3
+ },
+ {
   "id": "statue",
   "label": "Statue",
   "x": 12,

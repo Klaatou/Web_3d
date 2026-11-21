@@ -302,3 +302,20 @@ Il te faut : tes fichiers vidéo (mp4 en H.264 : le plus compatible ; webm aussi
 6. **Plus tard** : ajouter, retirer ou renommer une vidéo d'une liste : **refaire `playlist.json`** (étape 2) et recopier le dossier en ligne.
 
 Rien ne joue ? La ligne **Vidéo** du diagnostic (bloc État, touche I, « Copier le diagnostic ») dit pourquoi : fichier introuvable, pas encore chargé, son demandé mais muet. `MANUEL.md` § 5.21, « Ça ne joue pas ? ».
+
+**Variante : l'écran ouvre une page, un portail ou une commande** (1.12.42). Dans la fiche de l'écran, le menu **« Action de l'écran »** : « lien » met le titre de la vidéo en lien dans la barre sous l'écran (un clic sur le titre ouvre la page) ; « portail » et « commande » se déclenchent quand on s'approche, à la « Distance de déclenchement ». La vidéo sert à montrer ce que l'action ouvre. `MANUEL.md` § 5.21, « Action de l'écran ».
+
+## 18. Poser un modèle 3D à part (un petit `.glb`)
+
+**Je veux poser un objet (une statue, un poste de radio, un meuble) dans ma région sans refaire son modèle.** Une zone « Modèle 3D » charge un fichier `.glb` à l'endroit voulu, avec sa taille et son inclinaison (`MANUEL.md` § 5.23).
+
+Il te faut : ton fichier `.glb` de l'objet, le dossier de ta région (celui où est le `.glb` de la région), Edge ou Chrome pour le viewer.
+
+1. **Ranger le fichier.** Le mettre dans le dossier de la région (par exemple `statue.glb`).
+2. **Poser le modèle dans le viewer.** Ouvrir `glb-viewer.html`, ouvrir le `.glb` de la région, **importer ses zones actuelles** (« Importer zones (.json) », `NOM.zones.json`). Type « Modèle 3D (fichier .glb posé à part) », clic à l'endroit voulu, nom du fichier dans « Fichier du modèle (.glb) ».
+3. **Régler** : « Taille (1 = telle quelle) », les deux inclinaisons (en degrés) et l'orientation ; cocher « Solide (on ne le traverse pas) » si les visiteurs ne doivent pas passer à travers.
+4. **Pour qu'il fasse quelque chose** (par exemple un poste de radio posé sur une zone radio), ne crée pas de zone « Modèle 3D » : renseigne le champ « Fichier du modèle » de la fiche lien, portail, commande, radio ou musique. Un clic sur le modèle d'une radio ou d'une musique ouvre la fenêtre Son.
+5. **Exporter, remplacer le fichier de zones, mettre en ligne** : procédure du **§ 16** (étapes 4 à 8). Copier aussi le fichier `.glb` du modèle dans le dossier de la région sur l'hébergement.
+6. **Essayer** : ouvrir la page (F5 ou Ctrl+F5) et s'approcher : le modèle se charge à moins de 150 m de sa zone. Avec beaucoup de modèles, réduire cette distance sans refaire la page : `python .\glb2html.py --update --model-lazy 60` (voir `MANUEL.md` § 9.3).
+
+Rien n'apparaît ? La console du navigateur (F12) dit « le modèle … n'a pas pu être lu » : nom de fichier faux, fichier absent en ligne, ou page ouverte depuis le disque (`file://`). `MANUEL.md` § 5.23.
