@@ -90,6 +90,11 @@ CAS = [
     dict(id="bmus", image="t.png", music="audio", tracks=["a.mp3"], poster="p.jpg", **P),                # tableau + musique, pochette choisie
     dict(id="combo2", video="v.mp4", link="a.html", **P),
     dict(id="combo3", mesh="porte", radio=["https://exemple.invalid/r"], **P),
+    dict(id="posa", link="a.html", pos=[120, 25.5, -80]),                                               # pos remplace x, y, z
+    dict(id="posb", link="a.html", pos=[1, 2, 3], x=9, y=9, z=9),                                       # pos et x, y, z : pos gagne, message
+    dict(id="posc", link="a.html", pos=[1, 2], x=4, y=5, z=6),                                          # pos invalide : ignoree, x, y, z gardes
+    dict(id="posd", arrival=True, pos=[7, 8, 9]),                                                       # arrivee avec pos
+    dict(id="pose", link="a.html", pos=[1, "2", 3], x=4, y=5, z=6),                                     # un texte dans pos : invalide
     dict(id="vide", label="Rien", **P),                                                                 # rien a montrer ni a faire
     dict(id="vide2", mesh="porte", **P),
 ]
@@ -128,7 +133,7 @@ async def main():
     pyz = g.clean_zones(CAS, "private", msgs)
     codes = {(m[0], m[1]) for m in msgs}
     attendu = {("ignored", "arr2"), ("unknown", "inconnu"), ("ignored", "ign"), ("visuals", "deuxv"), ("actions", "deuxa"),
-               ("combo", "combo2"), ("combo", "combo3"), ("empty", "vide"), ("empty", "vide2")}
+               ("posboth", "posb"), ("posbad", "posc"), ("posbad", "pose"), ("combo", "combo2"), ("combo", "combo3"), ("empty", "vide"), ("empty", "vide2")}
     rapport(codes == attendu, "Python : messages attendus (inconnue, ignoree, deux visuels, deux actions, pas encore possible, vide)", sorted(codes ^ attendu))
     ign = sorted(m[2] for m in msgs if m[:2] == ["ignored", "ign"])
     rapport(ign == ["frame", "poster", "sound"], "Python : portail avec frame, poster et sound : les trois cles signalees", ign)
@@ -140,6 +145,8 @@ async def main():
             and t["vid2"]["folder"] == "videos" and t["arr"]["type"] == "spawn" and t["deuxa"]["type"] == "url",
             "Python : chaque cle donne la bonne zone (tableau avec lien, portail lie, radio et lien de pochette, video en dossier, arrivee)", t.get("img2"))
 
+    rapport([(t[k]["x"], t[k]["y"], t[k]["z"]) for k in ("posa", "posb", "posc", "posd", "pose")] == [(120, 25.5, -80), (1, 2, 3), (4, 5, 6), (7, 8, 9), (4, 5, 6)] and "pos" not in g.zone_out(t["posa"]),
+            "Python : pos [x, y, z] remplace x, y, z (pos gagne si les deux, invalide ignoree), ecrit en x, y, z", [(t[k]["x"], t[k]["y"], t[k]["z"]) for k in ("posa", "posb", "posc", "posd", "pose")])
     rapport(t["bport"]["type"] == "portal" and t["bport"]["pic"] == "t.png" and t["bha"]["type"] == "ha" and t["bha"]["pic"] == "t.png"
             and t["brad"]["type"] == "cast" and t["brad"]["pic"] == "t.png" and t["bmus"]["type"] == "audio" and t["bmus"]["pic"] == "t.png"
             and t["bmus"].get("poster") == "p.jpg" and "pic" not in t["img2"] and "pic" not in t["mus"],

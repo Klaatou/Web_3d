@@ -2005,7 +2005,7 @@ function createViewer(container, cfg0, loader) {
   // et messages [code, id, a, b] ; zoneOut : zone interne -> zone du fichier (cles utiles seulement). Miroir exact de zone_in / zone_out (gen_tpl.py).
   // L'ancien format (cle type ou target) reste lu tel quel : c'est le format interne.
   const ZONE_KEYS = ['id', 'label', 'x', 'y', 'z', 'yaw', 'radius', 'trigger', 'showName', 'private', 'cone', 'shape', 'w', 'h', 'image', 'video', 'videoFolder', 'tracks', 'sound', 'mesh',
-    'link', 'frame', 'portal', 'spawn', 'ha', 'confirm', 'radio', 'music', 'poster', 'posterLink', 'arrival'];
+    'link', 'frame', 'portal', 'spawn', 'ha', 'confirm', 'radio', 'music', 'poster', 'posterLink', 'arrival', 'pos'];
   const ZONE_VIS = ['image', 'video', 'mesh'], ZONE_ACT = ['link', 'portal', 'ha', 'radio', 'music'];
   function zoneLegacy(z) { return !!z && typeof z === 'object' && ('type' in z || 'target' in z); }
   function zoneIn(z) {
@@ -2014,9 +2014,16 @@ function createViewer(container, cfg0, loader) {
     const set = k => on(k) && z[k] !== '';
     const str = v => typeof v === 'string' ? v : '';
     for (const k of Object.keys(z)) if (!ZONE_KEYS.includes(k)) msgs.push(['unknown', id, k]);
-    const o = { id: z.id, label: z.label, x: z.x, y: z.y, z: z.z, yaw: z.yaw, private: z.private };
+    let px = z.x, py = z.y, pz = z.z;
+    if (z.pos !== undefined && z.pos !== null) {   // 1.12.38 : pos [x, y, z] = x, y, z (meme ecriture que target de config.json) ; pos l'emporte
+      if (Array.isArray(z.pos) && z.pos.length === 3 && z.pos.every(n => typeof n === 'number' && isFinite(n))) {
+        if (z.x !== undefined || z.y !== undefined || z.z !== undefined) msgs.push(['posboth', id]);
+        [px, py, pz] = z.pos;
+      } else msgs.push(['posbad', id]);
+    }
+    const o = { id: z.id, label: z.label, x: px, y: py, z: pz, yaw: z.yaw, private: z.private };
     if (on('arrival')) {
-      for (const k of ZONE_KEYS) if (!['id', 'label', 'x', 'y', 'z', 'yaw', 'private', 'arrival'].includes(k) && set(k)) msgs.push(['ignored', id, k]);
+      for (const k of ZONE_KEYS) if (!['id', 'label', 'x', 'y', 'z', 'pos', 'yaw', 'private', 'arrival'].includes(k) && set(k)) msgs.push(['ignored', id, k]);
       o.type = 'spawn'; return { z: o, msgs };
     }
     const vis = ZONE_VIS.filter(on), act = ZONE_ACT.filter(on);

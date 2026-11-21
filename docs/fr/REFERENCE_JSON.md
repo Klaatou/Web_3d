@@ -161,6 +161,7 @@ Une clé inconnue, ou qui ne sert pas à cette zone, est ignorée et signalée :
 | `id`          | texte     | `z1`, `z2`... | nom court et unique : lettres minuscules, chiffres, `-` et `_`, 40 caractères au plus. L'arrivée `default` est le point d'entrée de la région |
 | `label`       | texte     | `""`          | nom affiché (infobulle, panneau), 60 caractères au plus                                                                                       |
 | `x`, `y`, `z` | nombre    | `0`           | position en mètres ; pour un tableau ou un écran, le centre de l'image                                                                        |
+| `pos`         | liste     | (absente)     | autre écriture de `x`, `y`, `z` : `[120, 25.5, -80]`, comme `target` de `config.json` ; se colle depuis « Copier ma position » (format `[x, y, z]`, fenêtre H). Avec `x`, `y`, `z` en plus, `pos` gagne et un message le dit ; une liste qui n'a pas trois nombres est ignorée et signalée |
 | `yaw`         | nombre    | `0`           | orientation en radians : sens du regard à l'arrivée, ou face du panneau, du tableau, de l'écran                                              |
 | `private`     | oui / non | `false`       | zone privée : absente des pages publiques (profil `public`)                                                                                   |
 

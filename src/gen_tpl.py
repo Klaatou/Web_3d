@@ -202,7 +202,7 @@ def audio_name(s):
 # et messages [code, id, a, b] ; zone_out : zone interne -> zone du fichier (cles utiles seulement). Miroir exact de zoneIn / zoneOut (core.js).
 # L'ancien format (cle type ou target) reste lu tel quel : c'est le format interne.
 ZONE_KEYS = ("id", "label", "x", "y", "z", "yaw", "radius", "trigger", "showName", "private", "cone", "shape", "w", "h", "image", "video", "videoFolder", "tracks", "sound", "mesh",
-             "link", "frame", "portal", "spawn", "ha", "confirm", "radio", "music", "poster", "posterLink", "arrival")
+             "link", "frame", "portal", "spawn", "ha", "confirm", "radio", "music", "poster", "posterLink", "arrival", "pos")
 ZONE_VIS = ("image", "video", "mesh")
 ZONE_ACT = ("link", "portal", "ha", "radio", "music")
 
@@ -220,10 +220,19 @@ def zone_in(z):
     for k in z:
         if k not in ZONE_KEYS:
             msgs.append(["unknown", zid, k])
-    o = {"id": z.get("id"), "label": z.get("label"), "x": z.get("x"), "y": z.get("y"), "z": z.get("z"), "yaw": z.get("yaw"), "private": z.get("private")}
+    px, py, pz = z.get("x"), z.get("y"), z.get("z")
+    pp = z.get("pos")
+    if pp is not None:   # 1.12.38 : pos [x, y, z] = x, y, z (meme ecriture que target de config.json) ; pos l'emporte
+        if isinstance(pp, list) and len(pp) == 3 and all(isinstance(n, (int, float)) and not isinstance(n, bool) and math.isfinite(n) for n in pp):
+            if "x" in z or "y" in z or "z" in z:
+                msgs.append(["posboth", zid])
+            px, py, pz = pp
+        else:
+            msgs.append(["posbad", zid])
+    o = {"id": z.get("id"), "label": z.get("label"), "x": px, "y": py, "z": pz, "yaw": z.get("yaw"), "private": z.get("private")}
     if on("arrival"):
         for k in ZONE_KEYS:
-            if k not in ("id", "label", "x", "y", "z", "yaw", "private", "arrival") and setk(k):
+            if k not in ("id", "label", "x", "y", "z", "pos", "yaw", "private", "arrival") and setk(k):
                 msgs.append(["ignored", zid, k])
         o["type"] = "spawn"
         return o, msgs

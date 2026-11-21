@@ -333,6 +333,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 21/11/2026 |  | after 1.12.0 | Batch 1.12.34: an `image` zone with `link` accepts `frame: true`: the board opens its link (for example a YouTube video) in the floating window instead of a new tab, and keeps its `trigger` (`"enter"`: walking in front); boxes in the editor, `lien_image.py` and `zone_frame.py` adapted |
 | 21/11/2026 |  | after 1.12.0 | Batch 1.12.35: unified zone format (no more `type` or `target`: what is shown and what happens, `arrival`, `posterLink`), written everywhere (viewer, `glb2html.py`), old format still read, messages for ignored keys and combinations not possible yet, `glb2html.py --convert-zones`; a picture hung high can be reached (height counted from its edges); samples, packages and documents in the new format; new test `zones_unifiees.py` |
 | 21/11/2026 |  | after 1.12.0 | Batch 1.12.36: end of the unified zones: a picture (`image`) combines with `portal`, `ha`, `radio` or `music` (fires on approach with `radius` and `trigger`), the picture is the default cover; `--convert-zones` documented for creators; `zones_unifiees.py` extended |
+| 21/11/2026 |  | after 1.12.0 | Batch 1.12.38: `pos` key `[x, y, z]` for a zone position (like `target` in `config.json`), "[x, y, z]" format in "Copy my position", messages for a duplicated or invalid `pos`; tests `zones_unifiees.py` and `v36.py` extended |
 ## Useful commands
 
 - See the history: `git log --oneline --decorate`

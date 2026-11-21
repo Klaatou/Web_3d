@@ -1186,7 +1186,7 @@ The viewer writes `targetExplicit` as true when the target of its camera is not 
 
 ### 7.22 Copy my position, "Go to"
 
-"**Copy my position**" (help panel) copies, depending on the list next to it (remembered): **URL** = the address of the page with `#pos=x,y,z,cap`; **xyz** = `68.2, 39.0, -823.3` (metres, decimal point, one decimal). The "**Go to**" field accepts both, as well as the earlier formats; with a full address containing `#pos=x,y,z,cap`, it also takes the heading.
+"**Copy my position**" (help panel) copies, depending on the list next to it (remembered): **URL** = the address of the page with `#pos=x,y,z,cap`; **xyz** = `68.2, 39.0, -823.3` (metres, decimal point, one decimal); **[x, y, z]** (1.12.38) = `[68.2, 39.0, -823.3]`, to paste as is into the `pos` key of a zone (`REFERENCE_JSON.md` § 11.4). The "**Go to**" field accepts both, as well as the earlier formats; with a full address containing `#pos=x,y,z,cap`, it also takes the heading.
 
 ### 7.23 Copy to the clipboard
 

@@ -161,6 +161,7 @@ An unknown key, or one that does not apply to this zone, is ignored and reported
 | `id`          | text     | `z1`, `z2`... | short, unique name: lowercase letters, digits, `-` and `_`, 40 characters at most. The `default` arrival is the entry of the region |
 | `label`       | text     | `""`          | name shown (tooltip, sign), 60 characters at most                                                                                  |
 | `x`, `y`, `z` | number   | `0`           | position in meters; for a picture or a screen, the centre of the image                                                            |
+| `pos`         | list      | (absent)      | another way to write `x`, `y`, `z`: `[120, 25.5, -80]`, like `target` in `config.json`; paste it from "Copy my position" (`[x, y, z]` format, H window). With `x`, `y`, `z` as well, `pos` wins and a message says so; a list that is not three numbers is ignored and reported |
 | `yaw`         | number   | `0`           | orientation in radians: direction of the gaze on arrival, or front of the sign, picture or screen                                 |
 | `private`     | yes / no | `false`       | private zone: left out of public pages (`public` profile)                                                                          |
 

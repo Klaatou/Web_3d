@@ -6,6 +6,17 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.12.0)
 
+### 21/11/2026 : clé `pos` pour la position d'une zone (lot 1.12.38)
+
+- **Demande** (Klaatou) : pouvoir recopier tel quel dans `zones.json` une coordonnée copiée depuis la fenêtre H, avec la syntaxe de `config.json` (`"target": [0, 13, 7]`).
+- **Fait** :
+  - clé `pos` : `[x, y, z]`, autre écriture de `x`, `y`, `z` ; avec les deux, `pos` gagne et un message le dit ; une liste qui n'a pas trois nombres est ignorée et signalée (`zoneIn` dans `src/core.js` et `zone_in` dans `src/gen_tpl.py`, miroirs exacts, messages `posboth` et `posbad`) ;
+  - lecture seulement : le viewer et `glb2html.py` continuent d'écrire `x`, `y`, `z`, les fichiers existants restent valides ;
+  - « Copier ma position » : nouveau format `[x, y, z]` (JSON), à côté de `URL` et `xyz` (qui ne changent pas).
+- **Vérifié** : `zones_unifiees.py` (pos seul, pos avec x, y, z, pos invalide, arrivée avec pos ; JavaScript et Python identiques), `v36.py` (format copié, mémorisé).
+- **Documents** : `REFERENCE_JSON.md` § 11.4, manuel (position copiée), procédures, historiques FR et EN.
+- Fichiers : `src/core.js`, `src/gen_tpl.py`, `src/template.html`, `src/i18n/fr.json`, `src/i18n/en.json`, `tests/zones_unifiees.py`, `tests/v36.py`, documents ci-dessus.
+
 ### 21/11/2026 : fin des zones unifiées (lot 1.12.36)
 
 - **Demande** (Klaatou) : finir les zones unifiées ; garder le petit script qui adapte les anciens JSON de zones, pour les rares créateurs qui auraient les leurs.

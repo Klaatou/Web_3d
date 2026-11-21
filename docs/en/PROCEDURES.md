@@ -175,7 +175,7 @@ For any bug report, paste the text of the status and help panels, and the consol
 | AZERTY or QWERTY keyboard | "Keyboard layout" setting of the page (Auto by default): the physical keys do not change, the help shows the letters of your layout |
 | Page language | "Language / Langue" setting (Auto, français, English), or `#lang=en` in the address |
 | Tools language | `--lang fr` or `--lang en` on each tool, or the `WEB3D_LANG` environment variable; with nothing, the system language. PowerShell, for one session: `$env:WEB3D_LANG = "fr"` |
-| Copy my position | "Copy my position" button (URL / xyz list); "Go to" accepts the `#pos=…` URL and `x, y, z` |
+| Copy my position | "Copy my position" button (URL / xyz / [x, y, z] list); "Go to" accepts the `#pos=…` URL and `x, y, z` |
 | Open or close the Settings | **O** key (toggle, like **H** and **I**) |
 | Mouse in walk mode | **G** toggles the capture (captures it if it is free, releases it if it is captured); the "Capture the mouse" button only captures; **Esc** releases it; a click never captures it |
 | Change the view | **V**: first person, third person, free camera; **M**: first / third person in walk mode, world map outside walk mode (**Ctrl+M**: map everywhere) |

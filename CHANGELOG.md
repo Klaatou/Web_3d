@@ -6,6 +6,17 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.12.0)
 
+### 21/11/2026: `pos` key for a zone position (batch 1.12.38)
+
+- **Request** (Klaatou): paste into `zones.json` a coordinate copied from the H window as is, with the syntax of `config.json` (`"target": [0, 13, 7]`).
+- **Done**:
+  - key `pos`: `[x, y, z]`, another way to write `x`, `y`, `z`; with both, `pos` wins and a message says so; a list that is not three numbers is ignored and reported (`zoneIn` in `src/core.js` and `zone_in` in `src/gen_tpl.py`, exact mirrors, messages `posboth` and `posbad`);
+  - read only: the viewer and `glb2html.py` still write `x`, `y`, `z`, existing files stay valid;
+  - "Copy my position": new `[x, y, z]` (JSON) format, next to `URL` and `xyz` (unchanged).
+- **Checked**: `zones_unifiees.py` (pos alone, pos with x, y, z, invalid pos, arrival with pos; JavaScript and Python identical), `v36.py` (copied format, remembered).
+- **Documents**: `REFERENCE_JSON.md` § 11.4, manual (copied position), procedures, FR and EN histories.
+- Files: `src/core.js`, `src/gen_tpl.py`, `src/template.html`, `src/i18n/fr.json`, `src/i18n/en.json`, `tests/zones_unifiees.py`, `tests/v36.py`, documents above.
+
 ### 21/11/2026: end of the unified zones (batch 1.12.36)
 
 - **Request** (Klaatou): finish the unified zones; keep the small script that adapts old zone JSON files, for the few creators who made their own.

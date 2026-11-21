@@ -473,6 +473,11 @@ async def main():
             rapport(re.fullmatch(r"-?\d+\.\d, -?\d+\.\d, -?\d+\.\d", xyz) is not None, "format xyz : « x, y, z » avec une décimale", xyz)
             pos = (await o.gw())["pos"]
             rapport(xyz == ", ".join(f"{round(v * 10) / 10:.1f}" for v in pos), "xyz = la position à 0,1 m", (xyz, pos))
+            await o.ev("(() => { const s = document.getElementById('linkFmt'); s.value = 'arr'; s.dispatchEvent(new Event('change')); document.getElementById('linkBtn').click(); })()")
+            await o.pg.wait_for_timeout(200)
+            arr = await o.ev("document.getElementById('linkOut').value")
+            rapport(arr == "[" + xyz + "]" and json.loads(arr) == [float(v) for v in xyz.split(", ")], "format [x, y, z] : « [x, y, z] » (JSON, se colle dans pos)", arr)
+            await o.ev("(() => { const s = document.getElementById('linkFmt'); s.value = 'xyz'; s.dispatchEvent(new Event('change')); })()")
             await o.pg.reload()
             await o.pg.wait_for_function("document.getElementById('msg') === null && window.__viewer", timeout=40000)
             rapport(await o.ev("document.getElementById('linkFmt').value") == "xyz", "le format choisi est mémorisé")

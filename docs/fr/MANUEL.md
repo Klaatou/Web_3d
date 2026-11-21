@@ -1186,7 +1186,7 @@ Le viewer écrit `targetExplicit` à vrai quand la cible de sa caméra n'est pas
 
 ### 7.22 Copier ma position, « Aller à »
 
-« **Copier ma position** » (panneau d'aide) copie, selon la liste à côté (mémorisée) : **URL** = l'adresse de la page avec `#pos=x,y,z,cap` ; **xyz** = `68.2, 39.0, -823.3` (mètres, point décimal, une décimale). Le champ « **Aller à** » accepte les deux, ainsi que les formats d'avant ; avec une adresse complète contenant `#pos=x,y,z,cap`, il reprend aussi l'orientation.
+« **Copier ma position** » (panneau d'aide) copie, selon la liste à côté (mémorisée) : **URL** = l'adresse de la page avec `#pos=x,y,z,cap` ; **xyz** = `68.2, 39.0, -823.3` (mètres, point décimal, une décimale) ; **[x, y, z]** (1.12.38) = `[68.2, 39.0, -823.3]`, à coller tel quel dans la clé `pos` d'une zone (`REFERENCE_JSON.md` § 11.4). Le champ « **Aller à** » accepte les deux, ainsi que les formats d'avant ; avec une adresse complète contenant `#pos=x,y,z,cap`, il reprend aussi l'orientation.
 
 ### 7.23 Copier dans le presse-papiers
 

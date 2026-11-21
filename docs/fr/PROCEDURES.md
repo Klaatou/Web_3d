@@ -175,7 +175,7 @@ Pour tout rapport de bug, colle le texte du panneau d'état et d'aide, et les me
 | Clavier AZERTY ou QWERTY | réglage « Clavier » de la page (Auto par défaut) : les touches physiques ne changent pas, l'aide affiche les lettres de ta disposition |
 | Langue de la page | réglage « Langue / Language » (Auto, français, English), ou `#lang=en` dans l'adresse |
 | Langue des outils | `--lang fr` ou `--lang en` sur chaque outil, ou la variable d'environnement `WEB3D_LANG` ; sans rien, la langue du système. PowerShell, une session : `$env:WEB3D_LANG = "fr"` |
-| Copier ma position | bouton « Copier ma position » (liste URL / xyz) ; « Aller à » accepte l'URL `#pos=…` et `x, y, z` |
+| Copier ma position | bouton « Copier ma position » (liste URL / xyz / [x, y, z]) ; « Aller à » accepte l'URL `#pos=…` et `x, y, z` |
 | Ouvrir / fermer les Réglages | touche **O** (bascule, comme **H** et **I**) |
 | Souris en promenade | **G** bascule la capture (capture si elle est libre, la libère si elle est capturée) ; le bouton « Capturer la souris » ne fait que capturer ; **Échap** la libère ; un clic ne la capture jamais |
 | Changer de vue | **V** : subjective, troisième personne, caméra libre ; **M** : subjective / troisième personne en promenade, carte des mondes hors promenade (**Ctrl+M** : carte partout) |

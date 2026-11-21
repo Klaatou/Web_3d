@@ -1419,13 +1419,14 @@ if (C.walk) {
   const lbt = document.createElement('button'), lout = document.createElement('input'), lfmt = document.createElement('select');
   lbt.id = 'linkBtn'; lbt.textContent = tr('page.copy.btn'); lout.id = 'linkOut'; lout.readOnly = true; lout.size = 28; lout.setAttribute('aria-label', tr('page.copy.aria'));
   lfmt.id = 'linkFmt'; lfmt.setAttribute('aria-label', tr('page.copy.fmt.aria'));
-  for (const [v, t] of [['url', 'URL'], ['xyz', 'xyz']]) lfmt.append(Object.assign(document.createElement('option'), { value: v, textContent: t }));
-  lfmt.value = lsGet('glb2html_copyfmt') === 'xyz' ? 'xyz' : 'url'; lfmt.onchange = () => lsSet('glb2html_copyfmt', lfmt.value);
+  for (const [v, t] of [['url', 'URL'], ['xyz', 'xyz'], ['arr', '[x, y, z]']]) lfmt.append(Object.assign(document.createElement('option'), { value: v, textContent: t }));
+  lfmt.value = ['xyz', 'arr'].includes(lsGet('glb2html_copyfmt')) ? lsGet('glb2html_copyfmt') : 'url'; lfmt.onchange = () => lsSet('glb2html_copyfmt', lfmt.value);
   lbt.onclick = async () => {
     const w = viewer.walking ? viewer.getWalk() : null, tg = viewer.controls.target, cp = viewer.camera.position;
     const p = w ? w.pos : tg.toArray(), yaw = w ? w.yaw : Math.atan2(-(tg.x - cp.x), -(tg.z - cp.z));
     let text;
     if (lfmt.value === 'xyz') text = p.map(f1).join(', ');
+    else if (lfmt.value === 'arr') text = '[' + p.map(f1).join(', ') + ']';   // 1.12.38 : se colle tel quel dans une cle pos de zones.json
     else { const u = new URL(location.href); u.hash = 'pos=' + p.concat([yaw]).map(x => String(Math.round(x * 100) / 100)).join(','); text = u.href; }
     lout.value = text;
     toast((await copyText(text, lout)) ? tr('page.toast.copied') : tr('page.toast.copyfail'));
