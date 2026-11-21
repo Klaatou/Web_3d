@@ -6,6 +6,14 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.12.0)
 
+### 21/11/2026 : un tableau image ouvre son lien dans la fenêtre flottante (lot 1.12.34)
+
+- **Demande** (Klaatou) : une image qui ouvre le mini-lecteur YouTube (la clé `poster` d'une zone `url` est ignorée : elle ne sert qu'aux zones radio et musique).
+- **Fait** : une zone `image` avec `link` accepte `"frame": true` ; le clic ou E ouvre le lien dans la fenêtre flottante, avec les mêmes règles que pour une zone `url` (YouTube, listes, repli en nouvel onglet pour `hop://`, contenu mixte et même origine). La clé n'est écrite que vraie, pour `url` et `image` (`cleanZone` et `clean_zones`). Un tableau avec `link` garde aussi son `trigger` (`"enter"`, `"both"` : le lien s'ouvre en marchant devant le tableau, dans son rayon `radius`, à la hauteur où l'invite « clic ou E » apparaît) ; avant, il était ramené à `"click"`. Case « Ouvrir dans une fenêtre flottante de la page » et choix du déclenchement dans la fiche d'un tableau de l'éditeur. Sans `frame` ni `trigger`, rien ne change.
+- **Vérifié** : `lien_image.py` (tableau avec `frame` : E ouvre le lecteur YouTube, aucun onglet ; tableau `"enter"` : la fenêtre s'ouvre en marchant devant, échec sans la correction de hauteur) et `zone_frame.py` (clé gardée pour `url` et `image`, Python et JavaScript identiques) ; `dist\` refait.
+- **Documents** : manuel § 5.7.1 et § 5.11 (lien du tableau), `REFERENCE_JSON.md` (`frame`), annexe, historiques FR et EN.
+- Fichiers : `src/core.js`, `src/gen_tpl.py`, `src/template.html`, `src/viewer_tpl.html`, `tests/lien_image.py`, `tests/zone_frame.py`, `dist\`, documents ci-dessus.
+
 ### 21/11/2026 : contrôle complet des documents contre le code (lot 1.12.33)
 
 - **Demande** (Klaatou) : tout vérifier et tout mettre à jour, en français et en anglais.

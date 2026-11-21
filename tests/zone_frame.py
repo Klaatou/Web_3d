@@ -6,7 +6,8 @@ Verifie l'adresse donnee au cadre (le bac a sable n'atteint ni YouTube ni les au
  - autre adresse https, et http depuis une page qui n'est pas en https -> cadre ; hop:// -> comme avant ; zone sans frame -> comme avant ;
  - page en https : http (contenu mixte) et meme origine -> pas de cadre (nouvel onglet) ;
  - en marchant dedans : rien n'est charge avant le clic sur le bouton ; une seule fenetre a la fois ; deplacement ; croix ;
- - la cle frame n'est gardee que vraie et seulement pour une zone url, en Python (clean_zones) et en JavaScript (cleanZone, setZones).
+ - la cle frame n'est gardee que vraie et seulement pour une zone url ou image (1.12.34), en Python (clean_zones) et en JavaScript (cleanZone, setZones) ;
+   le clic sur un tableau image avec frame est essaye dans lien_image.py.
 
 Prerequis : pip install playwright && playwright install chromium ; python build.py avant.
 Variable facultative : THREE_DIR (paquet npm three, hors ligne), CHROMIUM.
@@ -188,7 +189,7 @@ async def main():
             { id: 'c', type: 'portal', frame: true }, { id: 'd', type: 'url', target: 'https://x.invalid/', frame: 'oui' }, { id: 'e', type: 'image', frame: true },
             { id: 'f', type: 'ha', target: 'http://x.invalid/', frame: true }, { id: 'g', type: 'url', target: 'https://x.invalid/' }]);
             return window.__v.getZones().map(z => [z.id, z.frame === true ? 1 : ('frame' in z ? 2 : 0)]); })()""")
-        rapport(js == [["a", 1], ["b", 0], ["c", 0], ["d", 0], ["e", 0], ["f", 0], ["g", 0]], "JavaScript (setZones) : frame gardee vraie et seulement pour une zone url", js)
+        rapport(js == [["a", 1], ["b", 0], ["c", 0], ["d", 0], ["e", 1], ["f", 0], ["g", 0]], "JavaScript (setZones) : frame gardee vraie et seulement pour une zone url ou image", js)
         rapport(not errs, "aucune erreur JavaScript", errs)
 
         # Python (clean_zones) : meme resultat

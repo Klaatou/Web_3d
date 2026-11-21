@@ -145,7 +145,8 @@ async def viewer(br, port):
     sel = await pg.evaluate("document.querySelector('#zoneList details[open] summary') && document.querySelector('#zoneList details[open] summary').textContent")
     rapport(bool(sel) and "Essai" in sel, "editeur : un clic sur l'image la selectionne", sel)
     champs = await pg.evaluate("[...document.querySelectorAll('#zoneList details[open] label')].map(l => l.textContent)")
-    rapport(any("Image (nom de fichier" in c for c in champs) and any("0 = d'apr" in c for c in champs) and not any("Rayon" in c or "Confirm" in c for c in champs), "editeur : champs image, largeur, hauteur (0 = auto), sans portee ni confirmation", champs)
+    rapport(any("Image (nom de fichier" in c for c in champs) and any("0 = d'apr" in c for c in champs) and not any("Confirm" in c for c in champs) and any("Rayon" in c for c in champs) and any("clenchement" in c for c in champs),
+            "editeur : champs image, largeur, hauteur (0 = auto), rayon et declenchement (1.12.34), sans confirmation", champs)
     ou = await pg.evaluate("[...document.querySelectorAll('#zoneList details[open] small')].map(s => s.textContent)")
     rapport(any("Cherchée à : http://127.0.0.1:" in t and t.endswith("/tableau.png") for t in ou), "editeur : l'adresse ou l'image est cherchee est affichee sous le champ", ou)
     rapport(not errs, "viewer : aucune erreur JavaScript", errs)

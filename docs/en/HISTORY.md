@@ -330,6 +330,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 21/11/2026 |  | after 1.12.0 | Batch 1.12.31: private messages: click on the avatar or its name with a confirmation question; click on a name in a line replayed from the history, found by its name |
 | 21/11/2026 |  | after 1.12.0 | Batch 1.12.32: documents: histories put back in batch order, manual annex (§ 13) and § 10.27 (private messages, server side), README, overview, index, guide, procedures and CONVERT_OARS.md up to date for batches 1.12.16 to 1.12.31, two outdated statements corrected (manual § 5.20 and § 7.25) |
 | 21/11/2026 |  | after 1.12.0 | Batch 1.12.33: documents: full check of the documents against the code (zones, options, cross-references, configuration keys, labels, keys, server defaults); corrected: layout file (Sound window, `glb2html_sound*` and `glb2html_padPos` keys, `REFERENCE_JSON.md` § 11.9) and list of the keys kept in the browser (manual § 7.66) |
+| 21/11/2026 |  | after 1.12.0 | Batch 1.12.34: an `image` zone with `link` accepts `frame: true`: the board opens its link (for example a YouTube video) in the floating window instead of a new tab, and keeps its `trigger` (`"enter"`: walking in front); boxes in the editor, `lien_image.py` and `zone_frame.py` adapted |
 ## Useful commands
 
 - See the history: `git log --oneline --decorate`

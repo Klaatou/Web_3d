@@ -6,6 +6,14 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.12.0)
 
+### 21/11/2026: an image board opens its link in the floating window (batch 1.12.34)
+
+- **Request** (Klaatou): an image that opens the YouTube mini player (the `poster` key of a `url` zone is ignored: it only serves radio and music zones).
+- **Done**: an `image` zone with `link` accepts `"frame": true`; a click or E opens the link in the floating window, with the same rules as a `url` zone (YouTube, playlists, fallback to a new tab for `hop://`, mixed content and same origin). The key is only written when true, for `url` and `image` (`cleanZone` and `clean_zones`). A board with `link` also keeps its `trigger` (`"enter"`, `"both"`: the link opens when walking in front of the board, within its `radius`, at the height where the "click or E" prompt appears); before, it was forced to `"click"`. New box "Open in a floating window of the page" and trigger choice in the sheet of a board in the editor. Without `frame` or `trigger`, nothing changes.
+- **Checked**: `lien_image.py` (board with `frame`: E opens the YouTube player, no tab; `"enter"` board: the window opens when walking in front, fails without the height fix) and `zone_frame.py` (key kept for `url` and `image`, Python and JavaScript identical); `dist\` rebuilt.
+- **Documents**: manual § 5.7.1 and § 5.11 (board link), `REFERENCE_JSON.md` (`frame`), annex, FR and EN histories.
+- Files: `src/core.js`, `src/gen_tpl.py`, `src/template.html`, `src/viewer_tpl.html`, `tests/lien_image.py`, `tests/zone_frame.py`, `dist\`, documents above.
+
 ### 21/11/2026: full check of the documents against the code (batch 1.12.33)
 
 - **Request** (Klaatou): check everything and update everything, in French and in English.

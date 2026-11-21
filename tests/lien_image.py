@@ -81,6 +81,8 @@ ZONES = [image("avec", 0, "cible.html", label="Essai"), image("sans", 3), image(
          image("manque", 6, "cible.html", target="absent.png", w=1, h=1), image("abs", -6, "https://example.org/x", label="Absolu"),
          image("long", 8.5, "http://example.org/" + LONG, w=1),
          image("hopimg", -9, HOP, w=1, label="Hop image"),
+         dict(image("entre", -1.5, "https://www.youtube.com/watch?v=dQw4w9WgXcQ", w=1, label="Entree"), frame=True, trigger="enter"),   # 1.12.34 : declenchement en marchant devant
+         dict(image("cadre", -4.5, "https://www.youtube.com/watch?v=Qp7TR1RAjXc", w=1, label="Cadre"), frame=True),   # 1.12.34 : lien du tableau dans la fenetre flottante
          {"id": "u", "type": "url", "label": "Lien url", "target": "https://example.org/u", "x": -8, "y": 15, "z": 0, "yaw": 0, "radius": 2},
          {"id": "hopu", "type": "url", "label": "Lien hop", "target": HOP, "x": -12, "y": 15, "z": 0, "yaw": 0, "radius": 2},
          {"id": "ftp", "type": "url", "label": "Lien ftp", "target": "ftp://example.org/f", "x": -16, "y": 15, "z": 0, "yaw": 0, "radius": 2},
@@ -147,6 +149,22 @@ async def page_exportee(br, base):
     vis, txt = await invite(-3, -2)
     await pg.keyboard.press("e"); await pg.wait_for_timeout(350)
     rapport(vis and await ouvertes(pg) == [] and "Lien invalide" in await pg.evaluate("document.body.innerText"), "promenade devant un lien javascript: : invite, mais E refuse le lien", (vis, txt, await ouvertes(pg)))
+    vis, txt = await invite(-4.5, -2)
+    await pg.keyboard.press("e"); await pg.wait_for_timeout(500)
+    src = await pg.evaluate("(() => { const f = document.querySelector('#frameWin iframe'); return f ? f.getAttribute('src') : null; })()")
+    rapport(vis and await ouvertes(pg) == [] and bool(src) and src.startswith("https://www.youtube-nocookie.com/embed/Qp7TR1RAjXc"), "tableau avec lien et frame (1.12.34) : E ouvre le lecteur YouTube dans la fenetre flottante, pas de nouvel onglet", (vis, txt, await ouvertes(pg), src))
+    await pg.evaluate("(document.getElementById('frameWin') || {remove(){}}).remove()")
+    await pg.evaluate("window.__v.teleportTo([-1.5, 15, 0], 0)"); await pg.wait_for_timeout(500)
+    await pg.evaluate("window.__opened.length = 0")
+    await pg.keyboard.down("ArrowUp")   # en marchant vers le mur (une teleportation dans la zone ne la declenche pas, voulu)
+    try:
+        await pg.wait_for_function("!!document.getElementById('frameWin')", timeout=15000)
+    except Exception:
+        pass
+    await pg.keyboard.up("ArrowUp")
+    ouv = await pg.evaluate("(() => { const w = document.getElementById('frameWin'); return w ? [!!w.querySelector('.fwLoad'), w.querySelector('.fwTitle').textContent] : null; })()")
+    rapport(ouv == [True, "Entree"] and await ouvertes(pg) == [], "tableau avec trigger enter et frame (1.12.34) : marcher devant ouvre la fenetre (bouton Charger), pas de nouvel onglet", (ouv, await ouvertes(pg)))
+    await pg.evaluate("(document.getElementById('frameWin') || {remove(){}}).remove()")
     vis, txt = await invite(-8, 0)
     await pg.keyboard.press("e"); await pg.wait_for_timeout(350)
     rapport(vis and "Lien url" in txt and await ouvertes(pg) == ["https://example.org/u"], "contre-epreuve : une zone url garde invite et E", (vis, txt, await ouvertes(pg)))

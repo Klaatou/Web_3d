@@ -547,7 +547,7 @@ if ((C.zones || []).length || C.zonesLive) {
       fade.classList.add('on'); setTimeout(() => { location.href = u.href; }, 480);
     } else if (z.type === 'url' || z.type === 'image') {   // tableau avec lien (zone image) : comme une zone url
       const u = okLink(z.type === 'image' ? z.link : z.target); if (!u) return toast(tr('page.zone.badlink', label));
-      if (z.type === 'url' && z.frame && frameOpen(z, u, how, label)) return;   // 1.12.3 : fenetre flottante ; sinon (hop:, contenu mixte, meme origine) : comme avant
+      if (z.frame && frameOpen(z, u, how, label)) return;   // 1.12.3 : fenetre flottante ; sinon (hop:, contenu mixte, meme origine) : comme avant
       if (u.protocol === 'hop:') window.open(u.href, '_self'); else window.open(u.href, '_blank', 'noopener,noreferrer');   // hop: navigation directe (le navigateur propose d'ouvrir le viewer), pas d'onglet vide
       toast(tr('page.zone.opening', label));
     } else if (z.type === 'ha') {

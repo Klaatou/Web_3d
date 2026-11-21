@@ -16,8 +16,8 @@ Draco et Meshopt gérés automatiquement (décodeurs intégrés seulement si le 
 """
 from __future__ import annotations
 
-VERSION = "1.12.31 (21/11/2026)"
-SHELL_VERSION = "1.12.31 (21/11/2026)"   # numéro de version de la coquille (index.html) : écrit par build.py, ne change que si la coquille change
+VERSION = "1.12.34 (21/11/2026)"
+SHELL_VERSION = "1.12.34 (21/11/2026)"   # numéro de version de la coquille (index.html) : écrit par build.py, ne change que si la coquille change
 MAP_VERSION = "1.12.31 (21/11/2026)"       # numéro de version de la page de carte (carte.html) : idem
 
 import argparse
@@ -304,13 +304,13 @@ def clean_zones(zones, profile):
             "id": _slug(z.get("id")) or f"z{i + 1}", "type": t, "label": str(z.get("label") or "")[:60],
             "x": num(z.get("x"), 0, -1e5, 1e5), "y": num(z.get("y"), 0, -1e5, 1e5), "z": num(z.get("z"), 0, -1e5, 1e5),
             "yaw": num(z.get("yaw"), 0, -7, 7), "shape": "board" if z.get("shape") == "board" else "ring",
-            "trigger": (z.get("trigger") if z.get("trigger") in ("click", "enter", "both") else "click") if t in ("portal", "url") else "click",
+            "trigger": (z.get("trigger") if z.get("trigger") in ("click", "enter", "both") else "click") if t in ("portal", "url", "image") else "click",
             "radius": num(z.get("radius"), 20 if rng else 2, 0.5, 200 if rng else 50), "w": num(z.get("w"), 1.2 if img else 2.4, 0.1 if board else 0.5, 10), "h": num(z.get("h"), 0, 0, 6) if board else num(z.get("h"), 1.2, 0.3, 6),
             "target": "" if t == "cast" else str(resolve_image_name(z.get("target")) if img else (z.get("target") or ""))[:600], "spawn": _slug(z.get("spawn")),
             "confirm": bool(z.get("confirm")), "private": bool(z.get("private")), "showName": bool(z.get("showName")),
             "mesh": "" if t in ("spawn", "image", "cast", "audio", "video") else re.sub(r"[\x00-\x1f]", "", str(z.get("mesh") or ""))[:200],
         }
-        if t == "url" and z.get("frame") is True:   # 1.12.3 : fenetre flottante (lien ouvert dans la page) ; ecrit seulement s'il est vrai, comme core.js
+        if (t == "url" or img) and z.get("frame") is True:   # 1.12.3 : fenetre flottante (lien ouvert dans la page ; 1.12.34 : aussi pour le lien d'un tableau image) ; ecrit seulement s'il est vrai, comme core.js
             d["frame"] = True
         if img:   # lien facultatif d'un tableau (page ouverte au clic ou a E) : ecrit seulement s'il est rempli, comme core.js
             lk = re.sub(r"[\x00-\x1f]", "", str(z.get("link") or "")).strip()[:600]
@@ -3368,7 +3368,7 @@ function createViewer(container, cfg0, loader) {
   }
   const ZONE_TYPES = ['url', 'ha', 'portal', 'spawn', 'image', 'cast', 'audio', 'video'];   // audio (1.11.4) : fichiers son d'un dossier joues en boucle a portee ; cast (1.10.32) : radio, flux Icecast / SHOUTcast joue en promenade a portee, volume selon la distance
   const slug = s => String(s || '').toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
-  function zoneEntrant(z) { return z.type === 'portal' || z.type === 'url'; }   // zones qui se declenchent aussi en marchant dedans (trigger enter ou both) : portail et lien (hop:// compris)
+  function zoneEntrant(z) { return z.type === 'portal' || z.type === 'url' || (z.type === 'image' && !!z.link); }   // zones qui se declenchent aussi en marchant dedans (trigger enter ou both) : portail et lien (hop:// compris)
   // 1.11.4 : nom d'une piste : fichier relatif (sans « .. »), chemin /… ou adresse http(s) ; '' si autre chose (javascript:, data:, ...)
   function audioName(s) {
     if (typeof s !== 'string') return '';
@@ -3389,7 +3389,7 @@ function createViewer(container, cfg0, loader) {
       target: type === 'cast' ? '' : String(z.target || '').slice(0, 600), spawn: slug(z.spawn), confirm: !!z.confirm, private: !!z.private, showName: !!z.showName,
       mesh: type === 'spawn' || type === 'cast' || type === 'audio' || board ? '' : String(z.mesh || '').replace(/[\u0000-\u001f]/g, '').slice(0, 200)
     };
-    if (type !== 'portal' && type !== 'url') o.trigger = 'click';
+    if (type !== 'portal' && type !== 'url' && !img) o.trigger = 'click';   // 1.12.34 : un tableau image garde son declenchement (enter : le lien s'ouvre en marchant devant ; sans lien, il est ignore)
     if (vid && z.sound === true) o.sound = true;   // 1.12.9 : ecran video avec son (muet par defaut) ; ecrit seulement s'il est vrai, comme gen_tpl.py
     if (typeof z.cone === 'boolean' && type !== 'spawn' && !board) o.cone = z.cone;   // radio (1.10.35) : cone par defaut, cone: false pour le retirer   // repere (cone) facultatif : vrai = toujours, faux = jamais ; absent = selon le declenchement ; ecrit seulement s'il est vrai ou faux
     if (type === 'cast') {   // radio : tableau d'URLs (flux Icecast / SHOUTcast) ; on joue la premiere a portee, puis on enchaîne
@@ -3410,7 +3410,7 @@ function createViewer(container, cfg0, loader) {
       if (fd && !fd.split('/').includes('..')) o.folder = fd;
       if (Array.isArray(z.tracks)) { const tk = z.tracks.map(audioName).filter(Boolean).slice(0, 500); if (tk.length) o.tracks = tk; }
     }
-    if (type === 'url' && z.frame === true) o.frame = true;   // 1.12.3 : lien ouvert dans une fenetre flottante de la page au lieu d'un nouvel onglet ; ecrit seulement s'il est vrai, comme gen_tpl.py
+    if ((type === 'url' || img) && z.frame === true) o.frame = true;   // 1.12.3 : lien ouvert dans une fenetre flottante de la page au lieu d'un nouvel onglet (1.12.34 : aussi pour le lien d'un tableau image) ; ecrit seulement s'il est vrai, comme gen_tpl.py
     if (type === 'audio' || type === 'cast') {   // 1.12.26 : pochette (image) et lien facultatifs d'une zone radio / musique, montres dans la fenetre Son ; ecrits seulement s'ils sont remplis, comme gen_tpl.py
       const pt = String(z.poster || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 600); if (pt) o.poster = pt;
       const lk2 = String(z.link || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 600); if (lk2) o.link = lk2;
@@ -3442,7 +3442,7 @@ function createViewer(container, cfg0, loader) {
   let onCones = null;
   function coneFor(g, z, box) {
     if (zoneEditor) return false;
-    if (!(z.type === 'spawn' ? cfg.showSpawns : (typeof z.cone === 'boolean' ? z.cone : (z.type === 'portal' || z.type === 'cast' || z.type === 'audio' || z.trigger !== 'click')))) return false;
+    if (!(z.type === 'spawn' ? cfg.showSpawns : (typeof z.cone === 'boolean' ? z.cone : (z.type === 'portal' || z.type === 'cast' || z.type === 'audio' || (z.trigger !== 'click' && z.type !== 'image'))))) return false;
     const geo = new THREE.ConeGeometry(0.175, 0.5, 16);
     const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0xe8e8e8, fog: false }));
     m.rotation.x = Math.PI;   // pointe vers le bas
@@ -4153,7 +4153,7 @@ function createViewer(container, cfg0, loader) {
       if (z.type === 'spawn' || z.type === 'video' || zoneOff(z) || (z.type === 'image' && (!z.link || imgGone.has(z.id)))) continue;   // un tableau sans lien n'est pas une zone proche (pas d'invite « clic ou E »)
       const { d, dy } = zoneDist(z);
       if (zoneEntrant(z) && z.trigger !== 'click') {
-        const inside = d <= z.radius && dy > -1.5 && dy < 3.5, was = zoneInside.has(z.id);
+        const inside = d <= z.radius && (z.type === 'image' ? Math.abs(dy) < 3.5 : dy > -1.5 && dy < 3.5), was = zoneInside.has(z.id);   // 1.12.34 : un tableau est accroche plus haut que les pieds : meme tranche de hauteur que l'invite « clic ou E »
         if (inside && !was) { zoneInside.add(z.id); fireZone(z, 'enter'); }
         else if (!inside && was) zoneInside.delete(z.id);
       }
@@ -4636,7 +4636,7 @@ if ((C.zones || []).length || C.zonesLive) {
       fade.classList.add('on'); setTimeout(() => { location.href = u.href; }, 480);
     } else if (z.type === 'url' || z.type === 'image') {   // tableau avec lien (zone image) : comme une zone url
       const u = okLink(z.type === 'image' ? z.link : z.target); if (!u) return toast(tr('page.zone.badlink', label));
-      if (z.type === 'url' && z.frame && frameOpen(z, u, how, label)) return;   // 1.12.3 : fenetre flottante ; sinon (hop:, contenu mixte, meme origine) : comme avant
+      if (z.frame && frameOpen(z, u, how, label)) return;   // 1.12.3 : fenetre flottante ; sinon (hop:, contenu mixte, meme origine) : comme avant
       if (u.protocol === 'hop:') window.open(u.href, '_self'); else window.open(u.href, '_blank', 'noopener,noreferrer');   // hop: navigation directe (le navigateur propose d'ouvrir le viewer), pas d'onglet vide
       toast(tr('page.zone.opening', label));
     } else if (z.type === 'ha') {

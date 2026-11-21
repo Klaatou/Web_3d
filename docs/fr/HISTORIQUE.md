@@ -330,6 +330,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 21/11/2026 |  | après 1.12.0 | Lot 1.12.31 : messages privés : clic sur l'avatar ou son nom avec question de confirmation ; clic sur un pseudo d'une ligne rejouée de l'historique, retrouvé par son pseudo |
 | 21/11/2026 |  | après 1.12.0 | Lot 1.12.32 : documents : historiques remis dans l'ordre des lots, annexe du manuel (§ 13) et § 10.27 (messages privés côté serveur), README, vue d'ensemble, index, guide, procédures et CONVERTIR_OARS.md à jour pour les lots 1.12.16 à 1.12.31, deux affirmations périmées corrigées (manuel § 5.20 et § 7.25) |
 | 21/11/2026 |  | après 1.12.0 | Lot 1.12.33 : documents : contrôle complet des documents contre le code (zones, options, renvois, clés de configuration, libellés, touches, valeurs par défaut du serveur) ; corrigés : fichier de disposition (fenêtre Son, clés `glb2html_sound*` et `glb2html_padPos`, `REFERENCE_JSON.md` § 11.9) et liste des clés mémorisées dans le navigateur (manuel § 7.66) |
+| 21/11/2026 |  | après 1.12.0 | Lot 1.12.34 : une zone `image` avec `link` accepte `frame: true` : le tableau ouvre son lien (par exemple une vidéo YouTube) dans la fenêtre flottante au lieu d'un nouvel onglet, et garde son `trigger` (`"enter"` : en marchant devant) ; cases dans l'éditeur, `lien_image.py` et `zone_frame.py` adaptés |
 ## Commandes utiles
 
 - Voir l'historique : `git log --oneline --decorate`

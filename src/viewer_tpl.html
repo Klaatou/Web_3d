@@ -513,6 +513,9 @@ function renderZoneList() {
       d.appendChild(inp(tr('viewer.zf.w'), 'number', z.w, v => upd({ w: v }, true)));
       d.appendChild(inp(tr('viewer.zf.h.image'), 'number', z.h, v => upd({ h: v }, true)));
       d.appendChild(inp(tr('viewer.zf.link.image'), 'text', z.link || '', v => upd({ link: v })));
+      d.appendChild(inp(tr('viewer.zf.frame'), 'checkbox', z.frame, v => upd({ frame: v })));   // 1.12.34 : le lien du tableau s'ouvre dans la fenetre flottante
+      d.appendChild(inp(tr('viewer.zf.trigger'), 'select', z.trigger, v => upd({ trigger: v }, true), [['enter', tr('viewer.zf.trig.enter')], ['click', tr('viewer.zf.trig.click')], ['both', tr('viewer.zf.trig.both')]]));   // 1.12.34 : comme une zone url
+      d.appendChild(inp(tr('viewer.zf.r.ring'), 'number', z.radius, v => upd({ radius: v })));   // 1.12.34 : rayon de l'invite et du declenchement en marchant devant le tableau
     } else if (z.type === 'video') {   // 1.12.7 : ecran video : fichier ou adresse, largeur, hauteur, portee (la video joue seule a portee, sans son ; rien a cliquer)
       d.appendChild(inp(tr('viewer.zf.video'), 'text', z.target, v => upd({ target: v }, true)));
       d.appendChild(inp(tr('viewer.zf.video.folder'), 'text', z.folder || '', v => upd({ folder: v }, true)));   // 1.12.12 : liste de videos a la place du fichier
