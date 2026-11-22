@@ -6,6 +6,14 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.13.0)
 
+### 22/11/2026 : documents du lot 1.13.5 (lot 1.13.6)
+
+- **Demande** (Klaatou) : corriger les documents concernés par le lot 1.13.5 (noms de zone selon la langue, titre d'un lien YouTube).
+- **Fait** : `docs/fr/REFERENCE_JSON.md` et `docs/en/REFERENCE_JSON.md` § 11.4 : nouvelles lignes `labels` (tableau « où elle est ») et `linkTitle` (tableau des réglages), `labels` dans les clés d'un point d'arrivée, nouveau paragraphe « Titre d'un lien YouTube » (option `--link-titles`) ; `docs/fr/MANUEL.md` et `docs/en/MANUAL.md` : paragraphe du format des zones (§ 5), ce que montre la bulle (§ 7.13) et l'annexe (§ 13, bloc « 1.13.5 ») ; `docs/fr/HISTORIQUE.md` et `docs/en/HISTORY.md` : une ligne.
+- **Vérifié** : `verif_trad` sur les quatre paires (référence, manuel, historiques)  : 0 erreur ; `readme_liens`, `i18n`, `dist_a_jour` passent.
+- **Non fait** : `REPRISE.md` (livré seulement quand Klaatou le demande, règle 23) ; la référence des options (`docs/REFERENCE_OPTIONS.md`) vient déjà de `python build.py`.
+- Fichiers : `docs/fr/REFERENCE_JSON.md`, `docs/en/REFERENCE_JSON.md`, `docs/fr/MANUEL.md`, `docs/en/MANUAL.md`, `docs/fr/HISTORIQUE.md`, `docs/en/HISTORY.md`, `VERSION`, les deux CHANGELOG ; `dist\` est inchangé.
+
 ### 22/11/2026 : noms de zone selon la langue et bulle d'un lien YouTube (lot 1.13.5)
 
 - **Demande** (Klaatou) : le nom d'une zone doit suivre la langue de la page, et la bulle d'un lien YouTube doit montrer le titre de la vidéo, pas l'adresse.

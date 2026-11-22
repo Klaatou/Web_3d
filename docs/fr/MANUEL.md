@@ -460,7 +460,7 @@ Dans `--analyse`, la ligne « Lecture » indique les octets lus. Les positions n
 
 Le viewer (`glb-viewer.html`) est la page que tu ouvres avec ton `.glb`. Elle sert à **regarder** le modèle, à **régler** son affichage (mer, rotation, caméra, fiche de la région…), à **poser les zones** (points d'arrivée, portails, panneaux, liens, images, zones privées : voir le vocabulaire, § 1.1), à **capturer la vignette** de la carte des mondes et à **exporter** la page autonome, les zones (`NOM.zones.json`) et `regions.json`. Champs de `NOM.zones.json` : `REFERENCE_JSON.md` § 11.4. Pour que la page publiée voie les changements : § 6.16.
 
-**Format des zones (1.12.35).** Dans `NOM.zones.json`, une zone se décrit par ce qu'on voit (`image`, `video`, `mesh`, `model`, sinon un anneau ou un panneau) et ce qui se passe (`link`, `portal`, `ha`, `radio`, `music`, ou `arrival` pour un point d'arrivée) : la liste complète et les combinaisons possibles sont dans `REFERENCE_JSON.md` § 11.4. L'ancien format (`type`, `target`) reste lu ; `glb2html.py --convert-zones FICHIER` le réécrit.
+**Format des zones (1.12.35).** Dans `NOM.zones.json`, une zone se décrit par ce qu'on voit (`image`, `video`, `mesh`, `model`, sinon un anneau ou un panneau) et ce qui se passe (`link`, `portal`, `ha`, `radio`, `music`, ou `arrival` pour un point d'arrivée) : la liste complète et les combinaisons possibles sont dans `REFERENCE_JSON.md` § 11.4. L'ancien format (`type`, `target`) reste lu ; `glb2html.py --convert-zones FICHIER` le réécrit. **Nom selon la langue et titre d'un lien (1.13.5)** : `labels` (`{"fr": "...", "en": "..."}`) donne le nom de la zone dans la langue de la page ; `linkTitle` est le titre montré dans la bulle d'un lien à la place de l'adresse, et `glb2html.py --link-titles FICHIER` le remplit pour les liens YouTube (§ 11.4 de `REFERENCE_JSON.md`).
 
 ### 5.1 La règle qui explique 90 % des pannes
 
@@ -1147,7 +1147,7 @@ Dans la **page exportée** (autonome ou modulaire), il n'y a **aucun cylindre** 
 | **liée à un élément** | **rien**                                                                                          | le curseur devient une **main**, l'élément reçoit un léger **contour**, une **infobulle** affiche le nom et la destination |
 | **non liée**          | un **marqueur discret au sol** (petit disque plat de 0,4 m, semi-transparent, avec un anneau fin) | même chose : main, infobulle, le marqueur s'éclaircit                                                                      |
 
-L'infobulle donne le **nom** puis la **destination** : l'adresse web pour un lien, « Région : adresse (#arrivée) » pour un portail (« cette région » si la destination est vide), « Commande : nom » pour une commande Home Assistant (l'adresse du webhook n'est **jamais** affichée), le **nom du flux** pour une radio (1.13.2 : celui qui joue si c'est la radio qu'on écoute, sinon le flux retenu (1.13.3) ou le premier ; sans nom, l'adresse du flux). Un **clic** suit le lien. Un portail réglé « en marchant dedans » reste sans survol (il se déclenche seul).
+L'infobulle donne le **nom** puis la **destination** : l'adresse web pour un lien, « Région : adresse (#arrivée) » pour un portail (« cette région » si la destination est vide), « Commande : nom » pour une commande Home Assistant (l'adresse du webhook n'est **jamais** affichée), le **nom du flux** pour une radio (1.13.2 : celui qui joue si c'est la radio qu'on écoute, sinon le flux retenu (1.13.3) ou le premier ; sans nom, l'adresse du flux). Le **nom** est celui de la langue de la page quand la zone a des `labels` (1.13.5) ; pour un lien, la 2e ligne est le **titre** de la page (`linkTitle`) quand il est écrit, sinon `youtube.com` pour un lien YouTube. Un **clic** suit le lien. Un portail réglé « en marchant dedans » reste sans survol (il se déclenche seul).
 
 Aucun panneau de texte permanent : le nom ne s'affiche qu'au survol, ou quand on est à portée (« clic : … » en bas de l'écran).
 
@@ -2361,6 +2361,12 @@ Le détail, version par version, est dans `HISTORIQUE.md` (récit) et `CHANGELOG
 - **bulle d'une radio** : le nom du flux (celui qui joue, sinon le flux retenu ou le premier ; sans nom, l'adresse) à la place de l'adresse et de « … +N » (1.13.2, § 7.13)
 - **flux choisi retenu par zone** : retrouvé au retour dans la zone, après un rechargement et à la visite suivante, clé `glb2html_radio_` du navigateur (1.13.3, § 5.19, § 7.66)
 - documents des lots 1.13.2 et 1.13.3 (manuel § 5.19, § 7.13 et § 7.66, historiques)
+
+**Ajouts de la 1.13.5 (lots 1.13.5 et 1.13.6)**
+
+- **nom de zone selon la langue** : clé `labels` `{fr, en}` (ou le même objet dans `label`), la page prend le nom de sa langue, sinon `label`, sinon l'id (1.13.5, § 7.13, `REFERENCE_JSON.md` § 11.4)
+- **titre d'un lien dans la bulle** : clé `linkTitle`, remplie à la génération par `glb2html.py --link-titles` (le navigateur du visiteur ne contacte jamais YouTube) ; sans titre, `youtube.com` pour un lien YouTube (1.13.5, § 7.13)
+- documents du lot 1.13.5 (`REFERENCE_JSON.md` § 11.4, manuel § 5 (format des zones), § 7.13, historiques)
 
 Tout ce qui suit est dans la **1.1.0** (publiée le 31/10/2026). Le détail, lot par lot, est dans `CHANGELOG.fr.md`.
 

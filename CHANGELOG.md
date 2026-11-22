@@ -6,6 +6,14 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.13.0)
 
+### 22/11/2026: documents of batch 1.13.5 (batch 1.13.6)
+
+- **Request** (Klaatou): fix the documents concerned by batch 1.13.5 (zone names by language, title of a YouTube link).
+- **Done**: `docs/fr/REFERENCE_JSON.md` and `docs/en/REFERENCE_JSON.md` section 11.4: new rows `labels` (in the "where it is" table) and `linkTitle` (in the settings table), `labels` in the keys used by an arrival point, new paragraph "Title of a YouTube link" (option `--link-titles`); `docs/fr/MANUEL.md` and `docs/en/MANUAL.md`: zone format paragraph (section 5), what the bubble shows (section 7.13) and the appendix (section 13, block "1.13.5"); `docs/fr/HISTORIQUE.md` and `docs/en/HISTORY.md`: one row.
+- **Checked**: `verif_trad` on the four pairs (reference, manual, histories): 0 errors; `readme_liens`, `i18n`, `dist_a_jour` pass.
+- **Not done**: `REPRISE.md` (only delivered when Klaatou asks, rule 23); the options reference (`docs/REFERENCE_OPTIONS.md`) already comes from `python build.py`.
+- Files: `docs/fr/REFERENCE_JSON.md`, `docs/en/REFERENCE_JSON.md`, `docs/fr/MANUEL.md`, `docs/en/MANUAL.md`, `docs/fr/HISTORIQUE.md`, `docs/en/HISTORY.md`, `VERSION`, both CHANGELOGs; `dist\` is unchanged.
+
 ### 22/11/2026: zone names by language and the bubble of a YouTube link (batch 1.13.5)
 
 - **Request** (Klaatou): the name of a zone must follow the language of the page, and the bubble over a YouTube link must show the title of the video, not the address.

@@ -161,6 +161,7 @@ An unknown key, or one that does not apply to this zone, is ignored and reported
 | ------------- | -------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | `id`          | text     | `z1`, `z2`... | short, unique name: lowercase letters, digits, `-` and `_`, 40 characters at most. The `default` arrival is the entry of the region |
 | `label`       | text     | `""`          | name shown (tooltip, sign), 60 characters at most                                                                                  |
+| `labels`      | object   | (absent)      | name shown **per language**: `{"fr": "Vidéo YouTube", "en": "YouTube video"}` (60 characters at most each, other languages ignored); the page takes the name of its language, otherwise `label`, otherwise the `id` (1.13.5); writing this object in `label` is also read |
 | `x`, `y`, `z` | number   | `0`           | position in meters; for a picture or a screen, the centre of the image; for a model, the origin of the `.glb` file                |
 | `pos`         | list      | (absent)      | another way to write `x`, `y`, `z`: `[120, 25.5, -80]`, like `target` in `config.json`; paste it from "Copy my position" (`[x, y, z]` format, H window). With `x`, `y`, `z` as well, `pos` wins and a message says so; a list that is not three numbers is ignored and reported |
 | `yaw`         | number   | `0`           | orientation in radians: direction of the gaze on arrival, or front of the sign, picture, screen or model                          |
@@ -185,7 +186,7 @@ An unknown key, or one that does not apply to this zone, is ignored and reported
 | `ha`      | text     | **command**: address called, for example a Home Assistant webhook (§ 5.7.2)                                                               |
 | `radio`   | list     | **radio**: the streams, one `["label", "url"]` pair per stream, the name first (`""` without a name); a lone address is also accepted (§ 5.19) |
 | `music`   | text     | **music**: subfolder of the sound files, relative to the region folder (for example `"audio"`), or `""` with `tracks` (§ 5.20)          |
-| `arrival` | yes / no | **arrival point** (`true`): nothing to show or do, only `id`, `label`, `x`, `y`, `z`, `yaw` and `private` are used (§ 5.4)              |
+| `arrival` | yes / no | **arrival point** (`true`): nothing to show or do, only `id`, `label`, `labels`, `x`, `y`, `z`, `yaw` and `private` are used (§ 5.4)              |
 
 **Settings**: each one only applies to some zones.
 
@@ -197,6 +198,7 @@ An unknown key, or one that does not apply to this zone, is ignored and reported
 | `cone`        | yes / no | `false`                  | without `image`, `video` or `model` alone | marker (cone) above the zone: `true` turns it on; absent or `false`: no cone (since 1.12.41; the old format keeps its behavior, see below). The T key hides them |
 | `w`, `h`      | number   | see the text             | `image`, `video`, sign      | width and height in meters (see below the table)                                                                                                        |
 | `frame`       | yes / no | `false`                  | `link`                      | `true`: the page opens in a floating window of the page instead of a new tab; YouTube becomes a player there (§ 5.7.1)                                  |
+| `linkTitle`   | text     | (absent)                 | `link`                      | title of the page of the link (for example of a YouTube video), shown in the bubble in place of the address (1.13.5); filled by `glb2html.py --link-titles`; 120 characters at most |
 | `spawn`       | text     | `""`                     | `portal`                    | `id` of the arrival aimed at (empty = `default`)                                                                                                        |
 | `confirm`     | yes / no | `false`                  | `ha`                        | asks for a confirmation before calling the address                                                                                                      |
 | `videoFolder` | text     | `""`                     | `video`                     | subfolder of the videos, read from `playlist.json` (§ 5.21)                                                                                             |
@@ -230,6 +232,14 @@ A picture with `link` and `trigger` `"enter"` or `"both"` opens its link when wa
 - arrival point (`arrival`), alone.
 
 The other combinations (a video screen or an object of the model (`mesh`) with a radio or music) are not possible yet: the zone is not shown and a message says so. A zone with nothing to show or do is not shown either. Two things to show, or two actions: the first one in the list above is kept, the others are reported.
+
+**Title of a YouTube link (1.13.5).** The bubble of a YouTube link shows `linkTitle` (the title of the video); without it, it shows `youtube.com`. The title is not asked by the visitors' browsers: it is put in the file once, with
+
+```
+python glb2html.py --link-titles NOM.zones.json
+```
+
+The command asks the oEmbed service of YouTube (a network access is needed) for each YouTube link without `linkTitle`, writes it into the file (list of zones, or settings file with `zones`), keeps the original in `NOM.zones.json.bak`, reports a link whose title is not found (private video, network) and touches neither a `linkTitle` already written nor any other link. Run it again when a link is added, then regenerate the page.
 
 **Old format (up to 1.12.34)**. Zones with `type` and `target` are still read, and keep their former behavior for the cone: with no `cone` key, a cone for a portal, a radio, music or a trigger other than `click`. `glb2html.py` says how many it read; the viewer and `glb2html.py` rewrite them in the new format as soon as they save the zones. To rewrite a hand-written file at once (list of zones or `.reglages.json` file):
 

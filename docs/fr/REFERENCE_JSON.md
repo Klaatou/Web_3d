@@ -161,6 +161,7 @@ Une clé inconnue, ou qui ne sert pas à cette zone, est ignorée et signalée :
 | ------------- | --------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | `id`          | texte     | `z1`, `z2`... | nom court et unique : lettres minuscules, chiffres, `-` et `_`, 40 caractères au plus. L'arrivée `default` est le point d'entrée de la région |
 | `label`       | texte     | `""`          | nom affiché (infobulle, panneau), 60 caractères au plus                                                                                       |
+| `labels`      | objet     | (absente)     | nom affiché **par langue** : `{"fr": "Vidéo YouTube", "en": "YouTube video"}` (60 caractères au plus chacun, autres langues ignorées) ; la page prend le nom de sa langue, sinon `label`, sinon l'`id` (1.13.5) ; écrire cet objet dans `label` est aussi lu |
 | `x`, `y`, `z` | nombre    | `0`           | position en mètres ; pour un tableau ou un écran, le centre de l'image ; pour un modèle, l'origine du fichier `.glb`                         |
 | `pos`         | liste     | (absente)     | autre écriture de `x`, `y`, `z` : `[120, 25.5, -80]`, comme `target` de `config.json` ; se colle depuis « Copier ma position » (format `[x, y, z]`, fenêtre H). Avec `x`, `y`, `z` en plus, `pos` gagne et un message le dit ; une liste qui n'a pas trois nombres est ignorée et signalée |
 | `yaw`         | nombre    | `0`           | orientation en radians : sens du regard à l'arrivée, ou face du panneau, du tableau, de l'écran ou du modèle                                 |
@@ -185,7 +186,7 @@ Une clé inconnue, ou qui ne sert pas à cette zone, est ignorée et signalée :
 | `ha`      | texte     | **commande** : adresse appelée, par exemple un webhook Home Assistant (§ 5.7.2)                                                                   |
 | `radio`   | liste     | **radio** : les flux, une paire `["label", "url"]` par flux, le nom d'abord (`""` sans nom) ; une adresse seule est aussi acceptée (§ 5.19)      |
 | `music`   | texte     | **musique** : sous-dossier des fichiers son, relatif au dossier de la région (par exemple `"audio"`), ou `""` avec `tracks` (§ 5.20)              |
-| `arrival` | oui / non | **point d'arrivée** (`true`) : rien à voir ni à faire, seuls `id`, `label`, `x`, `y`, `z`, `yaw` et `private` servent (§ 5.4)                    |
+| `arrival` | oui / non | **point d'arrivée** (`true`) : rien à voir ni à faire, seuls `id`, `label`, `labels`, `x`, `y`, `z`, `yaw` et `private` servent (§ 5.4)                    |
 
 **Réglages** : chacun ne sert qu'avec certaines zones.
 
@@ -197,6 +198,7 @@ Une clé inconnue, ou qui ne sert pas à cette zone, est ignorée et signalée :
 | `cone`        | oui / non | `false`                   | sans `image`, `video` ni `model` seul | repère (cône) au-dessus de la zone : `true` l'allume ; absente ou `false` : pas de cône (depuis la 1.12.41 ; l'ancien format garde son comportement, voir plus bas). La touche T les masque |
 | `w`, `h`      | nombre    | voir le texte             | `image`, `video`, panneau    | largeur et hauteur en mètres (voir sous le tableau)                                                                                                            |
 | `frame`       | oui / non | `false`                   | `link`                       | `true` : la page s'ouvre dans une fenêtre flottante de la page au lieu d'un nouvel onglet ; YouTube y devient un lecteur (§ 5.7.1)                             |
+| `linkTitle`   | texte     | (absente)                 | `link`                       | titre de la page du lien (par exemple d'une vidéo YouTube), montré dans la bulle à la place de l'adresse (1.13.5) ; rempli par `glb2html.py --link-titles` ; 120 caractères au plus |
 | `spawn`       | texte     | `""`                      | `portal`                     | `id` de l'arrivée visée (vide = `default`)                                                                                                                     |
 | `confirm`     | oui / non | `false`                   | `ha`                         | demande une confirmation avant d'appeler l'adresse                                                                                                             |
 | `videoFolder` | texte     | `""`                      | `video`                      | sous-dossier des vidéos, lu dans `playlist.json` (§ 5.21)                                                                                                      |
@@ -230,6 +232,14 @@ Un tableau avec `link` et `trigger` `"enter"` ou `"both"` ouvre son lien quand o
 - point d'arrivée (`arrival`), seul.
 
 Les autres combinaisons (écran vidéo ou objet du modèle (`mesh`) avec une radio ou une musique) ne sont pas encore possibles : la zone n'est pas affichée et un message le dit. Une zone sans rien à montrer ni à faire n'est pas affichée non plus. Deux choses à voir, ou deux actions : la première de la liste ci-dessus est gardée, les autres sont signalées.
+
+**Titre d'un lien YouTube (1.13.5).** La bulle d'un lien YouTube montre `linkTitle` (le titre de la vidéo) ; sans lui, elle montre `youtube.com`. Le titre n'est pas demandé par le navigateur des visiteurs : on le met dans le fichier une fois, avec
+
+```
+python glb2html.py --link-titles NOM.zones.json
+```
+
+La commande interroge le service oEmbed de YouTube (il faut un accès réseau) pour chaque lien YouTube sans `linkTitle`, l'écrit dans le fichier (liste de zones, ou fichier de réglages avec `zones`), garde l'original dans `NOM.zones.json.bak`, signale un lien dont le titre est introuvable (vidéo privée, réseau) et ne touche ni un `linkTitle` déjà écrit ni un autre lien. À relancer quand on ajoute un lien, puis régénérer la page.
 
 **Ancien format (jusqu'à la 1.12.34)**. Les zones avec `type` et `target` sont toujours lues, et gardent leur comportement d'avant pour le cône : sans clé `cone`, un cône pour un portail, une radio, une musique ou un déclenchement autre que `click`. `glb2html.py` dit combien il en a lu ; le viewer et `glb2html.py` les réécrivent au nouveau format dès qu'ils enregistrent les zones. Pour réécrire un fichier à la main d'un coup (liste de zones ou fichier `.reglages.json`) :
 

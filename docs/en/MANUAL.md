@@ -460,7 +460,7 @@ In `--analyse`, the "Reading" line gives the bytes read. Positions are only read
 
 The viewer (`glb-viewer.html`) is the page you open with your `.glb`. It is used to **look at** the model, to **adjust** how it is displayed (sea, rotation, camera, region card…), to **place the zones** (arrival points, portals, signs, links, images, private zones: see the vocabulary, § 1.1), to **capture the thumbnail** of the world map and to **export** the standalone page, the zones (`NOM.zones.json`) and `regions.json`. Fields of `NOM.zones.json`: `REFERENCE_JSON.md` § 11.4. For the published page to see the changes: § 6.16.
 
-**Zone format (1.12.35).** In `NOM.zones.json`, a zone is described by what is shown (`image`, `video`, `mesh`, `model`, otherwise a ring or a sign) and what happens (`link`, `portal`, `ha`, `radio`, `music`, or `arrival` for an arrival point): the full list and the possible combinations are in `REFERENCE_JSON.md` § 11.4. The old format (`type`, `target`) is still read; `glb2html.py --convert-zones FILE` rewrites it.
+**Zone format (1.12.35).** In `NOM.zones.json`, a zone is described by what is shown (`image`, `video`, `mesh`, `model`, otherwise a ring or a sign) and what happens (`link`, `portal`, `ha`, `radio`, `music`, or `arrival` for an arrival point): the full list and the possible combinations are in `REFERENCE_JSON.md` § 11.4. The old format (`type`, `target`) is still read; `glb2html.py --convert-zones FILE` rewrites it. **Name by language and title of a link (1.13.5)**: `labels` (`{"fr": "...", "en": "..."}`) gives the name of the zone in the language of the page; `linkTitle` is the title shown in the bubble of a link in place of the address, and `glb2html.py --link-titles FILE` fills it for YouTube links (§ 11.4 of `REFERENCE_JSON.md`).
 
 ### 5.1 The rule that explains 90 % of failures
 
@@ -1147,7 +1147,7 @@ In the **exported page** (standalone or modular), there is **no cylinder** for w
 | **linked to an element** | **nothing**                                                                                        | the cursor becomes a **hand**, the element gets a light **outline**, a **tooltip** shows the name and the destination |
 | **unlinked**             | a **discreet marker on the ground** (small flat disc of 0.4 m, semi-transparent, with a thin ring) | same thing: hand, tooltip, the marker brightens                                                                       |
 
-The tooltip gives the **name** then the **destination**: the web address for a link, "Region: address (#arrival)" for a portal ("this region" if the destination is empty), "Command: name" for a Home Assistant command (the webhook address is **never** shown), the **stream name** for a radio (1.13.2: the one playing if it is the radio being listened to, otherwise the remembered stream (1.13.3) or the first one; without a name, the address of the stream). A **click** follows the link. A portal set to "walking into it" has no hover (it triggers by itself).
+The tooltip gives the **name** then the **destination**: the web address for a link, "Region: address (#arrival)" for a portal ("this region" if the destination is empty), "Command: name" for a Home Assistant command (the webhook address is **never** shown), the **stream name** for a radio (1.13.2: the one playing if it is the radio being listened to, otherwise the remembered stream (1.13.3) or the first one; without a name, the address of the stream). The **name** is the one of the language of the page when the zone has `labels` (1.13.5); for a link, the 2nd line is the **title** of the page (`linkTitle`) when it is written, otherwise `youtube.com` for a YouTube link. A **click** follows the link. A portal set to "walking into it" has no hover (it triggers by itself).
 
 No permanent text sign: the name only appears on hover, or when you are within range ("click: …" at the bottom of the screen).
 
@@ -2361,6 +2361,12 @@ The detail, version by version, is in `HISTORY.md` (narrative) and `CHANGELOG.md
 - **bubble of a radio**: the stream name (the one playing, otherwise the remembered stream or the first one; without a name, the address) instead of the address and "... +N" (1.13.2, § 7.13)
 - **stream chosen is remembered per zone**: found again on coming back into the zone, after a reload and at the next visit, browser key `glb2html_radio_` (1.13.3, § 5.19, § 7.66)
 - documents of batches 1.13.2 and 1.13.3 (manual § 5.19, § 7.13 and § 7.66, histories)
+
+**Additions of 1.13.5 (batches 1.13.5 and 1.13.6)**
+
+- **zone name by language**: key `labels` `{fr, en}` (or the same object in `label`), the page takes the name of its language, otherwise `label`, otherwise the id (1.13.5, § 7.13, `REFERENCE_JSON.md` § 11.4)
+- **title of a link in the bubble**: key `linkTitle`, filled at generation by `glb2html.py --link-titles` (the visitor's browser never contacts YouTube); without a title, `youtube.com` for a YouTube link (1.13.5, § 7.13)
+- documents of batch 1.13.5 (`REFERENCE_JSON.md` § 11.4, manual § 5 (zone format), § 7.13, histories)
 
 Everything below is in **1.1.0** (released on 31/10/2026). The detail, batch by batch, is in `CHANGELOG.md`.
 
