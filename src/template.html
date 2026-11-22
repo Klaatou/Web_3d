@@ -897,6 +897,7 @@ const RADIO = (() => {
   return {
     set(z, g, d, o, l) { const ch = !cur !== !z || (z && cur && z.id !== cur.id), back = !ch && out && !o; if (ch) { if (cur) badClear(cur); selIdx = 0; } if (back && cur) badClear(cur); cur = z; gain = g; dist = d || 0; const oc = out !== !!o, lc = lost !== !!l; out = !!o; lost = !!l; selSync(); if (ch || oc || lc) refresh(); else { if (a && src && !a.paused) a.volume = lvl(); if (shown === 'page.radio.playing' || shown === 'page.radio.waiting' || shown === 'page.radio.far') show(shown); radioTip(tip()); } },
     setSelEl,
+    idxOf: z => (cur && z && z.id === cur.id ? selIdx : 0),   // 1.13.2 : flux choisi pour la bulle d'une radio (celui de la zone ecoutee, sinon le premier)
     setIdx(i) { selIdx = i; bad.delete(bk()); srcPref('radio'); refresh(); },   // choisir un flux le reessaie, meme s'il avait echoue
     title(url, t) { titles.set(url, t); if (cur && activeUrl() === url && shown) show(shown); },
     refresh, playing: () => !!(a && src && !a.paused), level: () => (a && src ? a.volume : 0)
@@ -993,7 +994,7 @@ const audioArbitre = () => {
 };
 const srcPref = k => { const y = srcFrameOn(); SRC.yt = false; SRC.pref = k; if (!VIS[k]) { srcSetFlag(k, true); visSave(); } audioArbitre(); if (y) srcRefresh(); };   // 1.12.22 : un geste sur une source reprend la main sur la fenetre YouTube (la page ne peut pas arreter le lecteur : il continue)   // un geste du visiteur sur une source (choix d'un flux, piste suivante, clic sur un ecran) la rend prioritaire
 srcRefresh = () => { RADIO.refresh(); MUSIC.refresh(); };
-if (C.walk) { viewer.onCast = (z, g, d, o) => { rZ = z; rG = g; rD = d || 0; rO = !!o; audioArbitre(); }; viewer.onAudio = (z, g, d, o) => { mZ = z; mG = g; mD = d || 0; mO = !!o; audioArbitre(); }; viewer.onRadio = (url, t) => RADIO.title(url, t); }
+if (C.walk) { viewer.onCast = (z, g, d, o) => { rZ = z; rG = g; rD = d || 0; rO = !!o; audioArbitre(); }; viewer.onAudio = (z, g, d, o) => { mZ = z; mG = g; mD = d || 0; mO = !!o; audioArbitre(); }; viewer.onRadio = (url, t) => RADIO.title(url, t); viewer.castTipIdx = z => RADIO.idxOf(z); }
 viewer.onVideoTalk = (z, g, d) => { if (z && (!vZ || vZ.id !== z.id)) SRC.pref = null; vZ = z; vG = g; vD = d || 0; audioArbitre(); };   // 1.12.21 : l'ecran a son le plus proche (core.js) entre dans l'arbitrage
 viewer.onVideoAct = z => { if (z && z.sound) srcPref('video'); };   // le visiteur lance un ecran (clic, piste suivante ou precedente)
 viewer.videoSound = () => VIS.sounds && VIS.video && !SRC.mute && SRC.win === 'video' && !srcFrameOn() && SND.acted() ? Math.max(0, Math.min(1, VIS.srcVolume / 100)) : 0;   // 1.12.9 : son des ecrans video (zones avec sound: true) ; 1.12.21 : seulement si l'ecran gagne l'arbitrage, case Videos cochee, son des sources non coupe et aucune fenetre flottante chargee

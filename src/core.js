@@ -1894,7 +1894,7 @@ function createViewer(container, cfg0, loader) {
   const zoneGroup = new THREE.Group(); scene.add(zoneGroup);
   let selId = null;
   let zones = [], zoneHit = [], zoneAll = [], zoneInside = new Set(), nearZone = null, zoneEditor = false, selBox = null, onZone = null, onNear = null;
-  let castCur = null, castGain = 0, onCast = null, onRadio = null, radioWant = '';   // radioWant : flux dont la page veut le titre (redemandé à la reconnexion)   // 1.10.32 : zone radio (type cast) la plus proche a portee et son gain (1 au centre, 0 au bord) ; onCast(zone|null, gain) a chaque changement
+  let castCur = null, castGain = 0, onCast = null, onRadio = null, castTipIdx = null, radioWant = '';   // radioWant : flux dont la page veut le titre (redemandé à la reconnexion)   // 1.10.32 : zone radio (type cast) la plus proche a portee et son gain (1 au centre, 0 au bord) ; onCast(zone|null, gain) a chaque changement
   let castM = -1, audM = -1, castO = false, audO = false;   // 1.11.18 : castO / audO : la zone est hors de portee (affichee seulement, jusqu'a 2 fois la portee)   // 1.11.17 : distance entiere (m) deja transmise a la page pour la radio et pour la musique
   function castReset() { const was = castCur; castCur = null; castGain = 0; castM = -1; castO = false; if (was && onCast) onCast(null, 0, 0, false); }
   let audCur = null, audGain = 0, onAudio = null;   // 1.11.4 : zone audio (type audio) la plus proche a portee et son gain, comme la radio ; onAudio(zone|null, gain) a chaque changement
@@ -1960,10 +1960,17 @@ function createViewer(container, cfg0, loader) {
   // page exportée : marqueur discret au sol (id de zone -> matériaux), infobulle au survol
   const MARK_OP = 0.4, markerMat = new Map();
   let tipEl = null;
+  // 1.13.2 : 2e ligne de la bulle d'une radio : le nom du flux choisi (celui qui joue si c'est la radio ecoutee, sinon le premier), a defaut son adresse
+  function castTipSub(z) {
+    const s = z.streams || [];
+    if (!s.length) return '';
+    const i = castTipIdx ? castTipIdx(z) : 0, st = s[i] || s[0];
+    return st[0] || st[1];
+  }
   function zoneTipText(z) {
     const name = z.label || z.id;
     if (z.type === 'url') return [name, z.target];
-    if (z.type === 'cast') return [name, (z.streams && z.streams.length ? (z.streams.length > 1 ? z.streams[0][1] + ' … +' + (z.streams.length - 1) : z.streams[0][1]) : '')];
+    if (z.type === 'cast') return [name, castTipSub(z)];
     if (z.type === 'audio') return [name, z.folder || ''];
     if (z.type === 'image') return [name, z.link || ''];
     if (z.type === 'video') return [name, (z.folder || (z.tracks && z.tracks.length > 1) ? tr('core.tip.video.list') : tr('core.tip.video'))];
@@ -1979,7 +1986,7 @@ function createViewer(container, cfg0, loader) {
     }
     const [t, sub] = zoneTipText(z);
     const ds = tipObj ? ' · ' + tr('core.tip.dist', coneDist(tipObj)) : '';   // v37 : distance au visiteur, mise à jour à chaque mouvement
-    const key = z.id + '|' + ds;
+    const key = z.id + '|' + sub + '|' + ds;
     if (tipEl.dataset.zone !== key) {
       tipEl.dataset.zone = key; tipEl.textContent = '';
       const b = document.createElement('b'); b.textContent = sub ? t : t + ds; tipEl.appendChild(b);
@@ -3146,7 +3153,7 @@ function createViewer(container, cfg0, loader) {
     // boîte (monde) de l'élément de ce nom : { min, max, center, count } ou null
     meshInfo(name) { const m = findMeshes(name); const b = m.length ? refBox(name, m) : null; if (!b) return null; return { min: b.min.toArray(), max: b.max.toArray(), center: b.getCenter(new THREE.Vector3()).toArray(), size: b.getSize(new THREE.Vector3()).toArray(), count: m.length }; },
     set linkMode(v) { linkLock = !!v; },
-    isTraversable(o) { return isIgnoredMesh(o, parseIgnore(cfg.walkIgnore)); }, getZones() { return zones.map(z => Object.assign({}, z)); }, zoneMessages() { return zoneMsgs.slice(); }, zoneIn, zoneOut, set onZone(f) { onZone = f; }, set videoSound(f) { videoSound = typeof f === 'function' ? f : null; }, set onVideoTalk(f) { onVideoTalk = typeof f === 'function' ? f : null; }, set onVideoAct(f) { onVideoAct = typeof f === 'function' ? f : null; }, set onNear(f) { onNear = f; }, set onCast(f) { onCast = f; }, set onAudio(f) { onAudio = f; }, audioTracks, set onRadio(f) { onRadio = f; }, radioAsk(url) { radioWant = String(url || ''); if (P.ws && P.ws.readyState === 1 && P.id) P.ws.send(JSON.stringify({ t: 'radio', url: radioWant })); },
+    isTraversable(o) { return isIgnoredMesh(o, parseIgnore(cfg.walkIgnore)); }, getZones() { return zones.map(z => Object.assign({}, z)); }, zoneMessages() { return zoneMsgs.slice(); }, zoneIn, zoneOut, set onZone(f) { onZone = f; }, set videoSound(f) { videoSound = typeof f === 'function' ? f : null; }, set onVideoTalk(f) { onVideoTalk = typeof f === 'function' ? f : null; }, set onVideoAct(f) { onVideoAct = typeof f === 'function' ? f : null; }, set onNear(f) { onNear = f; }, set onCast(f) { onCast = f; }, set onAudio(f) { onAudio = f; }, audioTracks, set onRadio(f) { onRadio = f; }, set castTipIdx(f) { castTipIdx = typeof f === 'function' ? f : null; }, radioAsk(url) { radioWant = String(url || ''); if (P.ws && P.ws.readyState === 1 && P.id) P.ws.send(JSON.stringify({ t: 'radio', url: radioWant })); },
     captureTop(size = 320, hide = []) {
       if (!model) return null;
       const box = new THREE.Box3().setFromObject(model), c = box.getCenter(new THREE.Vector3()), sz = box.getSize(new THREE.Vector3());

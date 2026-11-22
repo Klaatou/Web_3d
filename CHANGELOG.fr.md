@@ -6,6 +6,17 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.13.0)
 
+### 22/11/2026 : la bulle d'une radio donne le nom du flux (lot 1.13.2)
+
+- **Demande** (Klaatou) : la bulle qui s'affiche sur une radio montrait l'adresse du flux ; elle doit montrer le nom du flux, et le mieux est le nom du flux choisi et en cours de diffusion.
+- **Cause** : `zoneTipText` (`core.js`) construisait la deuxième ligne avec `streams[0][1]`, l'adresse du premier flux, suivie de « ... +N » quand il y en avait plusieurs ; le flux choisi dans la fenêtre Son (`selIdx`, dans `RADIO`) était hors de sa portée.
+- **Fait** : la deuxième ligne est désormais le nom du flux choisi quand cette radio est celle qu'on écoute, sinon le nom de son premier flux (celui qui démarrerait) ; un flux sans nom garde son adresse ; le « ... +N » disparaît. Nouvelle fonction `castTipSub` et crochet `viewer.castTipIdx` dans `core.js`, renseigné par `template.html` avec le nouveau `RADIO.idxOf` ; la clé de cache de la bulle contient sa deuxième ligne (un changement de flux se voit au mouvement suivant de la souris).
+- **Numérotation** : 1.13.2 ; le 1.13.1 reste réservé au lot du README, non appliqué.
+- **Vérifié** (bac à sable, Chromium) : nouveau test `tests/bulle_radio.py` (échoue sur la 1.13.0, passe maintenant) ; `zone_cast`, `radio_flux`, `radio_titre`, `arbitrage_son`, `zone_model`, `v24`, `v34`, `i18n` et `dist_a_jour` passent.
+- **Non essayé** : Edge, Windows, écrans tactiles (pas de survol).
+- **Reste à mettre à jour** : manuel et procédures, s'ils décrivent la bulle d'une zone radio (à vérifier à la validation du lot).
+- Fichiers : `src/core.js`, `src/template.html`, `tests/bulle_radio.py` (nouveau), `VERSION`, les deux CHANGELOG ; `dist\` et `VERSIONS.json` viennent de `python build.py`.
+
 ## 1.13.0 (21/11/2026)
 
 ### 21/11/2026 : publication 1.13.0 : écrans vidéo, messages privés, un seul son à la fois, zones unifiées et modèles posés

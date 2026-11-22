@@ -6,6 +6,17 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.13.0)
 
+### 22/11/2026: the bubble of a radio shows the stream name (batch 1.13.2)
+
+- **Request** (Klaatou): the bubble that appears over a radio showed the stream address; it should show the stream label, and best of all the label of the stream chosen and playing.
+- **Cause**: `zoneTipText` (`core.js`) built the second line from `streams[0][1]`, the address of the first stream, followed by " ... +N" when there were several; the stream chosen in the Sound window (`selIdx`, inside `RADIO`) was out of its reach.
+- **Done**: the second line is now the name of the chosen stream when this radio is the one being listened to, otherwise the name of its first stream (the one that would start); a stream without a name keeps its address; the " ... +N" is gone. New function `castTipSub` and hook `viewer.castTipIdx` in `core.js`, set by `template.html` to the new `RADIO.idxOf`; the cache key of the bubble now includes its second line (a change of stream shows at the next mouse move).
+- **Numbering**: 1.13.2; 1.13.1 stays reserved for the README batch, not applied yet.
+- **Checked** (sandbox, Chromium): new test `tests/bulle_radio.py` (fails on 1.13.0, passes now); `zone_cast`, `radio_flux`, `radio_titre`, `arbitrage_son`, `zone_model`, `v24`, `v34`, `i18n` and `dist_a_jour` pass.
+- **Not tried**: Edge, Windows, touch screens (no hover there).
+- **Remaining to update**: manual and procedures, if they describe the bubble of a radio zone (to check at the validation of the batch).
+- Files: `src/core.js`, `src/template.html`, `tests/bulle_radio.py` (new), `VERSION`, both CHANGELOGs; `dist\` and `VERSIONS.json` come from `python build.py`.
+
 ## 1.13.0 (21/11/2026)
 
 ### 21/11/2026: release 1.13.0: video screens, private messages, one sound at a time, unified zones and placed models
