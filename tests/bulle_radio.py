@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Test de la bulle d'une zone radio (1.13.2) : la 2e ligne donne le NOM du flux (pas son adresse) ; celui du flux choisi quand c'est la radio ecoutee,
-sinon celui du premier flux ; sans nom, l'adresse ; plus de « ... +N ». Meme famille que zone_cast.
+sinon celui du flux retenu (1.13.3 ; le premier si aucun) ; sans nom, l'adresse ; plus de « ... +N ». Meme famille que zone_cast.
 
 Prerequis : pip install playwright && playwright install chromium ; python build.py avant.
 Variable facultative : THREE_DIR (paquet npm three, hors ligne), CHROMIUM.
@@ -104,9 +104,10 @@ async def main():
         await pg.evaluate("window.__r.setIdx(2)"); await pg.wait_for_timeout(300)
         t = await bulle(pg, "salle")
         rapport(t is not None and "127.0.0.1" in t and "Rock" not in t and "Jazz" not in t, "3e flux, sans nom : son adresse (pas le nom d'un autre flux)", t)
+        await pg.evaluate("window.__r.setIdx(1)"); await pg.wait_for_timeout(300)
         await pg.evaluate("window.__v.toggleWalk()"); await pg.wait_for_timeout(400)
         t = await bulle(pg, "salle")
-        rapport(t is not None and "Jazz" in t and "Rock" not in t, "retour en vue globale (plus de radio ecoutee) : la bulle redonne le premier flux", t)
+        rapport(t is not None and "Rock" in t and "Jazz" not in t, "retour en vue globale (plus de radio ecoutee) : la bulle donne le flux retenu (1.13.3 ; avant : le premier)", t)
         rapport(not errs, "aucune erreur JavaScript", errs)
         await br.close()
     print()

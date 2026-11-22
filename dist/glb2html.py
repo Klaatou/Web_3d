@@ -16,8 +16,8 @@ Draco et Meshopt gérés automatiquement (décodeurs intégrés seulement si le 
 """
 from __future__ import annotations
 
-VERSION = "1.13.2 (22/11/2026)"
-SHELL_VERSION = "1.13.2 (22/11/2026)"   # numéro de version de la coquille (index.html) : écrit par build.py, ne change que si la coquille change
+VERSION = "1.13.3 (22/11/2026)"
+SHELL_VERSION = "1.13.3 (22/11/2026)"   # numéro de version de la coquille (index.html) : écrit par build.py, ne change que si la coquille change
 MAP_VERSION = "1.12.39 (21/11/2026)"       # numéro de version de la page de carte (carte.html) : idem
 
 import argparse
@@ -5446,6 +5446,12 @@ const RADIO = (() => {
   let a = null, cur = null, gain = 0, dist = 0, out = false, lost = false, src = '', shown = '', asked = '', selIdx = 0;   // asked : flux dont la page a demandé le titre au serveur (1.11.1) ; out : zone hors de portée (1.11.18) ; selIdx : flux choisi dans la liste (1.11.13)
   const titles = new Map();   // 1.10.34 : url du flux -> titre du morceau (serveur de présence --radios) ; '' = inconnu
   const bad = new Map();   // zone id + flux -> cause de l'echec (code MEDIA_ERR_* et message du navigateur) ; oubliee quand on sort de la portee (reessai au retour) et quand on choisit ce flux dans la liste (1.11.20 : par flux, pas par zone)
+  // 1.13.3 : le flux choisi dans une zone radio a plusieurs flux est retenu par region (zone -> adresse du flux) et retrouve au retour dans la zone, et a la visite suivante
+  const PICK_KEY = 'glb2html_radio_' + (C.room || 'x');
+  const picks = new Map();
+  try { const o = JSON.parse(localStorage.getItem(PICK_KEY) || '{}'); if (o && typeof o === 'object') for (const [k, v] of Object.entries(o)) if (typeof v === 'string' && picks.size < 200) picks.set(k.slice(0, 80), v.slice(0, 600)); } catch (e) {}
+  const pickSave = () => { try { localStorage.setItem(PICK_KEY, JSON.stringify(Object.fromEntries(picks))); } catch (e) {} };
+  const pickIdx = z => { const u = z && z.streams ? picks.get(z.id) : null, i = u ? z.streams.findIndex(s => s[1] === u) : -1; return i > 0 ? i : 0; };   // flux retenu s'il existe encore dans la zone, sinon le premier
   const bk = () => cur ? cur.id + '\u0001' + selIdx : '';
   const badClear = z => { for (const k of [...bad.keys()]) if (k.startsWith(z.id + '\u0001')) bad.delete(k); };
   const ERR = { 1: 'MEDIA_ERR_ABORTED', 2: 'MEDIA_ERR_NETWORK', 3: 'MEDIA_ERR_DECODE', 4: 'MEDIA_ERR_SRC_NOT_SUPPORTED' };
@@ -5517,10 +5523,10 @@ const RADIO = (() => {
   const refresh = () => { refresh0(); ask(); };
   for (const ev of ['pointerdown', 'keydown', 'touchstart']) addEventListener(ev, () => { if (cur && (!a || a.paused)) refresh(); }, true);   // après la première action : le flux démarre (SND a déjà noté l'action : il écoute avant)
   return {
-    set(z, g, d, o, l) { const ch = !cur !== !z || (z && cur && z.id !== cur.id), back = !ch && out && !o; if (ch) { if (cur) badClear(cur); selIdx = 0; } if (back && cur) badClear(cur); cur = z; gain = g; dist = d || 0; const oc = out !== !!o, lc = lost !== !!l; out = !!o; lost = !!l; selSync(); if (ch || oc || lc) refresh(); else { if (a && src && !a.paused) a.volume = lvl(); if (shown === 'page.radio.playing' || shown === 'page.radio.waiting' || shown === 'page.radio.far') show(shown); radioTip(tip()); } },
+    set(z, g, d, o, l) { const ch = !cur !== !z || (z && cur && z.id !== cur.id), back = !ch && out && !o; if (ch) { if (cur) badClear(cur); selIdx = z ? pickIdx(z) : 0; } if (back && cur) badClear(cur); cur = z; gain = g; dist = d || 0; const oc = out !== !!o, lc = lost !== !!l; out = !!o; lost = !!l; selSync(); if (ch || oc || lc) refresh(); else { if (a && src && !a.paused) a.volume = lvl(); if (shown === 'page.radio.playing' || shown === 'page.radio.waiting' || shown === 'page.radio.far') show(shown); radioTip(tip()); } },
     setSelEl,
-    idxOf: z => (cur && z && z.id === cur.id ? selIdx : 0),   // 1.13.2 : flux choisi pour la bulle d'une radio (celui de la zone ecoutee, sinon le premier)
-    setIdx(i) { selIdx = i; bad.delete(bk()); srcPref('radio'); refresh(); },   // choisir un flux le reessaie, meme s'il avait echoue
+    idxOf: z => (cur && z && z.id === cur.id ? selIdx : pickIdx(z)),   // 1.13.2 : flux choisi pour la bulle d'une radio (celui de la zone ecoutee, sinon le flux retenu ou le premier)
+    setIdx(i) { selIdx = i; if (cur && cur.streams && cur.streams.length > 1 && cur.streams[i]) { picks.delete(cur.id); picks.set(cur.id, cur.streams[i][1]); if (picks.size > 200) picks.delete(picks.keys().next().value); pickSave(); } bad.delete(bk()); srcPref('radio'); refresh(); },   // choisir un flux le reessaie, meme s'il avait echoue
     title(url, t) { titles.set(url, t); if (cur && activeUrl() === url && shown) show(shown); },
     refresh, playing: () => !!(a && src && !a.paused), level: () => (a && src ? a.volume : 0)
   };

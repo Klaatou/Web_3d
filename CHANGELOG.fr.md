@@ -6,6 +6,17 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.13.0)
 
+### 22/11/2026 : le flux choisi sur une radio est retenu (lot 1.13.3)
+
+- **Demande** (Klaatou) : la radio qu'on écoute doit être mémorisée, pour la retrouver au retour dans la région.
+- **Cause** : `RADIO.set` (`template.html`) remettait le flux choisi au premier à chaque entrée dans la zone (`selIdx = 0`), et le choix n'était gardé nulle part. C'était la règle notée dans `REPRISE.md` (« quitter la zone ramène au premier flux ») ; ce lot la remplace.
+- **Fait** : le flux choisi dans une zone radio à plusieurs flux est retenu **par zone**, sous la forme id de la zone -> adresse du flux, dans le navigateur (clé `glb2html_radio_` + région, comme les autres clés propres à une région). Il est retrouvé au retour dans la zone, après un rechargement de la page et à la visite suivante. Si l'adresse retenue n'existe plus dans la zone, c'est le premier flux ; une valeur retenue abîmée est ignorée ; une radio à un seul flux ne retient rien ; 200 zones au plus. La bulle d'une radio (lot 1.13.2) montre le flux retenu même quand cette radio n'est pas celle qui joue. Nouveautés de `template.html` : `pickIdx`, `pickSave`, `picks` ; `RADIO.idxOf` les utilise.
+- **Tests** : nouveau `tests/radio_memoire.py` (12 contrôles : première visite, choix retenu, sortie et retour, flux unique, rechargement, bulle, adresse disparue, quatre sortes de valeur abîmée ; 5 échouent sans le lot) ; `tests/radio_flux.py` (le contrôle « quitter la zone ramène au premier flux » attend maintenant le flux choisi) et `tests/bulle_radio.py` (vue globale : le flux retenu) suivent la nouvelle règle.
+- **Vérifié** (bac à sable, Chromium) : `radio_memoire`, `radio_flux`, `radio_titre`, `bulle_radio`, `zone_cast`, `arbitrage_son`, `zone_model`, `v24`, `v34`, `i18n` et `dist_a_jour` passent.
+- **Non essayé** : Edge, Windows ; le choix fait dans la liste de la fenêtre Son (même `RADIO.setIdx` que la liste de la fenêtre État, testé par cette dernière).
+- **Reste à mettre à jour** : section du manuel sur la radio (la phrase « quitter la zone ramène au premier flux », `docs/fr/MANUEL.md` ligne 750 et son équivalent anglais), à la validation du lot.
+- Fichiers : `src/template.html`, `tests/radio_memoire.py` (nouveau), `tests/radio_flux.py`, `tests/bulle_radio.py`, `VERSION`, les deux CHANGELOG ; `dist\` et `VERSIONS.json` viennent de `python build.py`.
+
 ### 22/11/2026 : la bulle d'une radio donne le nom du flux (lot 1.13.2)
 
 - **Demande** (Klaatou) : la bulle qui s'affiche sur une radio montrait l'adresse du flux ; elle doit montrer le nom du flux, et le mieux est le nom du flux choisi et en cours de diffusion.

@@ -170,10 +170,11 @@ async def main():
         await pg.evaluate("document.getElementById('stateRadioCk').click()")
         await jouer("window.__r.playing()")
         rapport(await pg.evaluate("window.__r.playing()") and not await pg.evaluate("document.getElementById('stateMusicCk').checked || document.getElementById('visMusic').checked"), "case Radio recochee : la radio reprend, la musique est decochee partout (une seule source)")
-        # ---- quitter la zone : retour au premier flux
+        # ---- quitter la zone puis y revenir : le flux choisi est retrouve (1.13.3 ; avant : retour au premier flux)
+        avant = await pg.evaluate("document.getElementById('radioSel').value")
         await pg.evaluate("window.__v.teleportTo([0, 15, 100], 0)"); await pg.wait_for_timeout(400)
         await pg.evaluate("window.__v.teleportTo([0, 15, 10], 0)"); await pg.wait_for_timeout(600)
-        rapport(await pg.evaluate("document.getElementById('radioSel').value") == "0", "quitter la zone puis y revenir : retour au premier flux", await pg.evaluate("document.getElementById('radioSel').value"))
+        rapport(avant != "0" and await pg.evaluate("document.getElementById('radioSel').value") == avant, "quitter la zone puis y revenir : le flux choisi est retrouve (1.13.3)", (avant, await pg.evaluate("document.getElementById('radioSel').value")))
         # editeur du viewer : avec plusieurs flux, la saisie de la premiere adresse change celle du premier flux (meme forme de correctif que viewer_tpl.html)
         r = await pg.evaluate("(() => { const l = window.__v.getZones(); const z = l.find(x => x.id === 'multi'); const v = 'http://nouveau.invalid/x'; Object.assign(z, { streams: [[z.streams && z.streams[0] ? z.streams[0][0] : '', v], ...(z.streams || []).slice(1)] }); const o = window.__v.setZones(l, { editor: true }).find(x => x.id === 'multi'); return [o.streams.length, o.streams[0][1], o.streams[0][0]]; })()")
         rapport(r == [3, "http://nouveau.invalid/x", "Casse"] and "...(z.streams || []).slice(1)" in (DIST / "glb-viewer.html").read_text(encoding="utf-8"), "editeur : modifier la premiere adresse change le premier flux (3 flux, label garde) ; le viewer contient le correctif", r)

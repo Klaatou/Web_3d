@@ -6,6 +6,17 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.13.0)
 
+### 22/11/2026: the stream chosen on a radio is remembered (batch 1.13.3)
+
+- **Request** (Klaatou): the radio being listened to should be remembered, to be found again on coming back to the region.
+- **Cause**: `RADIO.set` (`template.html`) put the chosen stream back to the first one at every entry into the zone (`selIdx = 0`), and the choice was kept nowhere. This was the rule noted in `REPRISE.md` ("leaving the zone brings back the first stream"); this batch replaces it.
+- **Done**: choosing a stream in a radio zone with several streams is remembered **per zone**, as zone id -> stream address, in the browser (key `glb2html_radio_` + region, next to the other per-region keys). It is found again when coming back into the zone, after a reload of the page and at the next visit. If the remembered address no longer exists in the zone, the first stream is used; a damaged stored value is ignored; a radio with a single stream stores nothing; 200 zones at most. The bubble of a radio (batch 1.13.2) shows the remembered stream even when that radio is not the one playing. New in `template.html`: `pickIdx`, `pickSave`, `picks`; `RADIO.idxOf` uses them.
+- **Tests**: new `tests/radio_memoire.py` (12 checks: first visit, choice kept, leaving and coming back, single stream, reload, bubble, vanished address, four kinds of damaged value; 5 of them fail without the batch); `tests/radio_flux.py` (the check "leaving the zone brings back the first stream" now expects the chosen stream) and `tests/bulle_radio.py` (global view: the remembered stream) follow the new rule.
+- **Checked** (sandbox, Chromium): `radio_memoire`, `radio_flux`, `radio_titre`, `bulle_radio`, `zone_cast`, `arbitrage_son`, `zone_model`, `v24`, `v34`, `i18n` and `dist_a_jour` pass.
+- **Not tried**: Edge, Windows; the choice made from the Sound window list (same `RADIO.setIdx` as the State window list, tested through the latter).
+- **Remaining to update**: manual section on the radio (the sentence "leaving the zone brings back the first stream", FR `docs/fr/MANUEL.md` line 750 and its English counterpart), at the validation of the batch.
+- Files: `src/template.html`, `tests/radio_memoire.py` (new), `tests/radio_flux.py`, `tests/bulle_radio.py`, `VERSION`, both CHANGELOGs; `dist\` and `VERSIONS.json` come from `python build.py`.
+
 ### 22/11/2026: the bubble of a radio shows the stream name (batch 1.13.2)
 
 - **Request** (Klaatou): the bubble that appears over a radio showed the stream address; it should show the stream label, and best of all the label of the stream chosen and playing.
