@@ -342,6 +342,9 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 21/11/2026 |  | après 1.12.0 | Lot 1.12.44 : documents des lots 1.12.39 à 1.12.43 : `REFERENCE_JSON.md` § 11.4 (clés `model`, `scale`, `pitch`, `roll`, `solid`, `actionRadius`, `modelLazy`, cône), manuel § 5.21, § 5.23 (nouveau), § 7.17 et annexe, `PROCEDURES.md`, `PROCEDURES_SIMPLES.md` § 17 et § 18, `DEVELOPPEMENT.md`, index ; exemple de zones à 17 zones (`screen-link`, `screen-portal`) et README des exemples ; `samples.py` |
 | 21/11/2026 |  | après 1.12.0 | Lot 1.12.45 : `verif_trad` à 0 erreur : commandes `/mp`, `/ignore`, `/unignore` du manuel anglais écrites comme le français, `NOM.zones.json` dans `SIMPLE_PROCEDURES.md` ; documents seulement |
 | 21/11/2026 |  | 1.13.0 | Publication 1.13.0 : `VERSION` 1.13.0 ; `CHANGELOG.fr.md` et `CHANGELOG.md` ; réunit les lots 1.12.1 à 1.12.45 (zones lien en fenêtre flottante, écrans vidéo, un seul son à la fois, messages privés, zones unifiées, zone `model`) ; titre du manuel, vue d'ensemble |
+| 22/11/2026 |  | après 1.13.0 | Lot 1.13.2 : la bulle d'une radio donne le nom du flux (celui qui joue, sinon le premier) au lieu de l'adresse : `core.js` (`castTipSub`, crochet `castTipIdx`), `template.html` (`RADIO.idxOf`), test `bulle_radio` |
+| 22/11/2026 |  | après 1.13.0 | Lot 1.13.3 : le flux choisi sur une radio est retenu par zone (retour dans la zone, rechargement, visite suivante) : `template.html` (`pickIdx`, `pickSave`), clé `glb2html_radio_`, test `radio_memoire` |
+| 22/11/2026 |  | après 1.13.0 | Lot 1.13.4 : documents des lots 1.13.2 et 1.13.3 (manuel § 5.19, § 7.13, § 7.66 et annexe § 13, historiques) |
 ## Commandes utiles
 
 - Voir l'historique : `git log --oneline --decorate`

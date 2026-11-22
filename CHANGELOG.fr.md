@@ -6,6 +6,14 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.13.0)
 
+### 22/11/2026 : documents des lots 1.13.2 et 1.13.3 (lot 1.13.4)
+
+- **Demande** (Klaatou) : corriger les documents concernés par les lots radio 1.13.2 (bulle) et 1.13.3 (flux retenu).
+- **Fait** : `docs/fr/MANUEL.md` et `docs/en/MANUAL.md` : § 5.19 (le flux choisi est retenu pour la zone ; la phrase « quitter la zone ramène au premier flux » est retirée), § 7.13 (ce que montre la bulle d'une radio), § 7.66 (la clé `glb2html_radio_` dans la liste de ce que la page retient dans le navigateur) et l'annexe (§ 13, bloc « 1.13.2 à 1.13.4 ») ; `docs/fr/HISTORIQUE.md` et `docs/en/HISTORY.md` : une ligne par lot (1.13.2, 1.13.3, 1.13.4).
+- **Vérifié** : `verif_trad` sur le manuel et sur les historiques : 0 erreur ; l'ancienne formulation (« premier flux », « first stream », « +N ») cherchée dans les documents et les README : seule la phrase ci-dessus était concernée.
+- **Non fait** : `REPRISE.md` (§ 5, règle « quitter la zone ramène au premier flux »), livré seulement quand Klaatou le demande (règle 23).
+- Fichiers : `docs/fr/MANUEL.md`, `docs/en/MANUAL.md`, `docs/fr/HISTORIQUE.md`, `docs/en/HISTORY.md`, `VERSION`, les deux CHANGELOG ; `dist\` est inchangé.
+
 ### 22/11/2026 : le flux choisi sur une radio est retenu (lot 1.13.3)
 
 - **Demande** (Klaatou) : la radio qu'on écoute doit être mémorisée, pour la retrouver au retour dans la région.

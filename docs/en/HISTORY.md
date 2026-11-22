@@ -342,6 +342,9 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 21/11/2026 |  | after 1.12.0 | Batch 1.12.44: documents of batches 1.12.39 to 1.12.43: `REFERENCE_JSON.md` § 11.4 (keys `model`, `scale`, `pitch`, `roll`, `solid`, `actionRadius`, `modelLazy`, cone), manual § 5.21, § 5.23 (new), § 7.17 and appendix, `PROCEDURES.md`, `SIMPLE_PROCEDURES.md` § 17 and § 18, `DEVELOPMENT.md`, index; zones sample with 17 zones (`screen-link`, `screen-portal`) and samples README; `samples.py` |
 | 21/11/2026 |  | after 1.12.0 | Batch 1.12.45: `verif_trad` at 0 errors: `/mp`, `/ignore`, `/unignore` commands of the English manual written like the French one, `NOM.zones.json` in `SIMPLE_PROCEDURES.md`; documents only |
 | 21/11/2026 |  | 1.13.0 | Release 1.13.0: `VERSION` 1.13.0; `CHANGELOG.fr.md` and `CHANGELOG.md`; gathers batches 1.12.1 to 1.12.45 (link zones in a floating window, video screens, one sound at a time, private messages, unified zones, `model` zone); manual title, overview |
+| 22/11/2026 |  | after 1.13.0 | Batch 1.13.2: the bubble of a radio gives the stream name (the one playing, otherwise the first) instead of the address: `core.js` (`castTipSub`, `castTipIdx` hook), `template.html` (`RADIO.idxOf`), `bulle_radio` test |
+| 22/11/2026 |  | after 1.13.0 | Batch 1.13.3: the stream chosen on a radio is remembered per zone (coming back into the zone, reload, next visit): `template.html` (`pickIdx`, `pickSave`), `glb2html_radio_` key, `radio_memoire` test |
+| 22/11/2026 |  | after 1.13.0 | Batch 1.13.4: documents of batches 1.13.2 and 1.13.3 (manual § 5.19, § 7.13, § 7.66 and appendix § 13, histories) |
 ## Useful commands
 
 - See the history: `git log --oneline --decorate`

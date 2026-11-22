@@ -6,6 +6,14 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.13.0)
 
+### 22/11/2026: documents of batches 1.13.2 and 1.13.3 (batch 1.13.4)
+
+- **Request** (Klaatou): fix the documents concerned by the radio batches 1.13.2 (bubble) and 1.13.3 (stream remembered).
+- **Done**: `docs/fr/MANUEL.md` and `docs/en/MANUAL.md`: section 5.19 (the stream chosen is remembered for the zone; the sentence "leaving the zone goes back to the first stream" is removed), section 7.13 (what the bubble of a radio shows), section 7.66 (the `glb2html_radio_` key in the list of what the page keeps in the browser) and the appendix (section 13, block "1.13.2 to 1.13.4"); `docs/fr/HISTORIQUE.md` and `docs/en/HISTORY.md`: one row per batch (1.13.2, 1.13.3, 1.13.4).
+- **Checked**: `verif_trad` on the manual and on the histories: 0 errors; the old wording ("premier flux", "first stream", "+N") searched in the documents and READMEs: only the sentence above was concerned.
+- **Not done**: `REPRISE.md` (section 5, rule "leaving the zone brings back the first stream"), only delivered when Klaatou asks for it (rule 23).
+- Files: `docs/fr/MANUEL.md`, `docs/en/MANUAL.md`, `docs/fr/HISTORIQUE.md`, `docs/en/HISTORY.md`, `VERSION`, both CHANGELOGs; `dist\` is unchanged.
+
 ### 22/11/2026: the stream chosen on a radio is remembered (batch 1.13.3)
 
 - **Request** (Klaatou): the radio being listened to should be remembered, to be found again on coming back to the region.
