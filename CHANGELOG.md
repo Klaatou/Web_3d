@@ -6,6 +6,19 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.13.0)
 
+### 22/11/2026: zone names by language and the bubble of a YouTube link (batch 1.13.5)
+
+- **Request** (Klaatou): the name of a zone must follow the language of the page, and the bubble over a YouTube link must show the title of the video, not the address.
+- **Done**: new optional key `labels` in the zones file, `{"fr": "...", "en": "..."}` (60 characters at most, other languages ignored): the page shows the name of its own language everywhere a zone name is shown (bubble, spawn list and buttons, prompts, toasts, Sound and State windows), then `label`, then the id. A zone without `labels` behaves as before; the same `{"fr", "en"}` object written in `label` itself is read as `labels` (never shown as "[object Object]"). Internally the key is `labs` (`labels` is already the list of stream names of the old radio format, which is still read as before). New optional key `linkTitle` on a link zone (or an image or video screen that opens a link): the title of the page of the link, shown on the second line of the bubble in place of the address. Without it, a YouTube link shows `youtube.com` (not the whole address); any other link still shows its address.
+- **Where the title comes from**: not from the visitors' browsers (a hover would contact YouTube for each visitor). New option `glb2html.py --link-titles FILE` (a zones file, or a settings file with `zones`): asks the oEmbed service of YouTube once per YouTube link that has no `linkTitle`, writes it into the file (original kept in `FILE.bak`), then stops; a link whose title is not found is left as it is and reported; a `linkTitle` already written is never touched. The title is then in the generated page like any other key.
+- **Mirrors**: `zoneIn`, `zoneOut`, `cleanZone`, `cleanLabs` (`core.js`) and `zone_in`, `zone_out`, `clean_zones`, `clean_labs` (`gen_tpl.py`) written together; `docs/REFERENCE_OPTIONS.md` rebuilt (new option).
+- **Tests**: new `tests/zone_labels.py` (35 checks: names in `fr-FR` and `en-GB`, fallback to `label` then id, bubble with title / without title / other link, JS and Python give the same zones and the same output, round trip, old radio `labels` list not taken for a name, `--link-titles` on a list and on a settings file with a simulated oEmbed service, title already written, link not YouTube, title not found, service unreachable, second run).
+- **Checked** (sandbox, Chromium): `zone_labels`, `zones_unifiees`, `zone_cast`, `radio_flux`, `radio_titre`, `bulle_radio`, `radio_memoire`, `zone_model`, `zone_frame`, `lien_image`, `zone_video`, `zones_url_cone`, `zone_audio`, `zone_apercu`, `zone_pochette`, `zone_distance`, `zones_numeros`, `image_zone`, `editeur_cone`, `editeur_video_action`, `arbitrage_son`, `v24`, `v34`, `v40`, `build_reference`, `samples`, `i18n`, `doc_options`, `readme_liens` and `dist_a_jour` pass.
+- **Not tried**: the real oEmbed service of YouTube (no network in the sandbox: simulated by `WEB3D_OEMBED`, a variable that only exists for the tests); Edge, Windows.
+- **Not done**: the editor of the viewer still shows and edits the raw `label` (the `labels` and `linkTitle` keys are kept and written back unchanged).
+- **Remaining to update**: `docs/REFERENCE_JSON` section 11.4 (keys `labels` and `linkTitle`), the manual (zone names, bubble, option `--link-titles`) and the histories, at the validation of the batch.
+- Files: `src/core.js`, `src/template.html`, `src/gen_tpl.py`, `src/i18n/fr.json`, `src/i18n/en.json`, `tests/zone_labels.py` (new), `docs/REFERENCE_OPTIONS.md`, `VERSION`, both CHANGELOGs; `dist\` and `VERSIONS.json` come from `python build.py`.
+
 ### 22/11/2026: documents of batches 1.13.2 and 1.13.3 (batch 1.13.4)
 
 - **Request** (Klaatou): fix the documents concerned by the radio batches 1.13.2 (bubble) and 1.13.3 (stream remembered).

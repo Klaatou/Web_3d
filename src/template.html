@@ -474,8 +474,8 @@ if ((C.zones || []).length || C.zonesLive) {
   };
   const haSend = z => {
     const now = Date.now(); if (cool[z.id] && now - cool[z.id] < 3000) return; cool[z.id] = now;
-    fetch(z.target, { method: 'POST', mode: 'no-cors', body: new URLSearchParams({ zone: z.label || z.id, visitor: visitor() }) })
-      .then(() => toast(tr('page.zone.cmdsent', z.label || z.id))).catch(() => toast(tr('page.zone.cmdfail', z.label || z.id)));
+    fetch(z.target, { method: 'POST', mode: 'no-cors', body: new URLSearchParams({ zone: viewer.zoneLabel(z) || z.id, visitor: visitor() }) })
+      .then(() => toast(tr('page.zone.cmdsent', viewer.zoneLabel(z) || z.id))).catch(() => toast(tr('page.zone.cmdfail', viewer.zoneLabel(z) || z.id)));
   };
   // 1.12.3 : zone lien « fenetre flottante » (cle frame) : la page s'affiche dans un cadre deplacable au lieu d'un nouvel onglet
   const ytEmbed = (u, auto) => {   // lien YouTube (watch, youtu.be, shorts, live, embed) -> lecteur integre sans cookies ; null si ce n'est pas un lien de video
@@ -531,7 +531,7 @@ if ((C.zones || []).length || C.zonesLive) {
     return true;
   };
   viewer.onZone = (z, how) => {
-    const label = z.label || z.id;
+    const label = viewer.zoneLabel(z) || z.id;
     if (z.type === 'portal') {
       // destination vide ou égale à cette page : déplacement dans la même région, vers son point d'arrivée
       const same = !String(z.target || '').trim() || (() => { const x = okUrl(z.target); if (!x) return false; x.hash = ''; const h = new URL(location.href); h.hash = ''; return x.href === h.href; })();
@@ -559,7 +559,7 @@ if ((C.zones || []).length || C.zonesLive) {
   };
   const pr = document.getElementById('zonePrompt');
   viewer.onNear = z => { nearNow = z; refreshNear(); };
-  refreshNear = () => { pr.hidden = !nearNow; if (nearNow) pr.textContent = tr('page.zone.prompt', nearNow.label || nearNow.id); };   // v36 : E déclenche de nouveau la zone proche (comme avant la v35)
+  refreshNear = () => { pr.hidden = !nearNow; if (nearNow) pr.textContent = tr('page.zone.prompt', viewer.zoneLabel(nearNow) || nearNow.id); };   // v36 : E déclenche de nouveau la zone proche (comme avant la v35)
 }
 if ((C.map || []).length || C.mapUrl) {
   let MAP = (C.map || []).slice();
@@ -834,13 +834,13 @@ const RADIO = (() => {
   const badClear = z => { for (const k of [...bad.keys()]) if (k.startsWith(z.id + '\u0001')) bad.delete(k); };
   const ERR = { 1: 'MEDIA_ERR_ABORTED', 2: 'MEDIA_ERR_NETWORK', 3: 'MEDIA_ERR_DECODE', 4: 'MEDIA_ERR_SRC_NOT_SUPPORTED' };
   const cause = () => a && a.error ? (ERR[a.error.code] || 'MEDIA_ERR_' + a.error.code) + (a.error.message ? ' : ' + a.error.message : '') : '?';
-  const label = () => cur ? (cur.label || cur.id) : '';
+  const label = () => cur ? (viewer.zoneLabel(cur) || cur.id) : '';
   const streamTitle = () => cur ? ((cur.streams && cur.streams[selIdx] && cur.streams[selIdx][0]) || label()) : '';   // 1.11.26 : titre du flux choisi (streams = [[label, url], ...] de la zone) ; repli sur le label de la zone, puis son id
   const activeUrl = () => cur && cur.streams && cur.streams.length ? cur.streams[selIdx][1] : '';
   const tip = () => {   // 1.11.19 : info-bulle de la ligne Radio : zone, flux, titre, distance et etat, commandes
     if (!cur) return '';
     const n = cur.streams ? cur.streams.length : 1, L = [];
-    if (cur.label || n <= 1) L.push(tr('page.tip.radio.zone', cur.label || streamTitle()));   // 1.11.26 : sans label de zone et avec plusieurs flux, la ligne Flux suffit (le label du flux n'est pas dit deux fois)
+    if (viewer.zoneLabel(cur) || n <= 1) L.push(tr('page.tip.radio.zone', viewer.zoneLabel(cur) || streamTitle()));   // 1.11.26 : sans label de zone et avec plusieurs flux, la ligne Flux suffit (le label du flux n'est pas dit deux fois)
     if (n > 1) L.push(tr('page.tip.radio.stream', streamTitle(), selIdx + 1, n));
     const tt = titles.get(activeUrl()); if (tt && shown === 'page.radio.playing') L.push(tr('page.tip.radio.title', tt));
     L.push(tr(out ? 'page.tip.dist.out' : 'page.tip.dist.in', Math.round(dist), Math.round(cur.radius * 10) / 10));
@@ -917,7 +917,7 @@ const MUSIC = (() => {
   const lists = new Map(), bad = new Map(), pos = new Map();   // zone id -> pistes [{ name, url }] ; zone id -> { key, cause } ; zone id -> piste en cours
   const ERR = { 1: 'MEDIA_ERR_ABORTED', 2: 'MEDIA_ERR_NETWORK', 3: 'MEDIA_ERR_DECODE', 4: 'MEDIA_ERR_SRC_NOT_SUPPORTED' };
   const cause = () => a && a.error ? (ERR[a.error.code] || 'MEDIA_ERR_' + a.error.code) + (a.error.message ? ' : ' + a.error.message : '') : '?';
-  const label = () => cur ? (cur.label || cur.id) : '';
+  const label = () => cur ? (viewer.zoneLabel(cur) || cur.id) : '';
   const tip = () => {   // 1.11.19 : info-bulle de la ligne Musique : zone, piste, distance et etat, commandes
     if (!cur) return '';
     const n = tracks.length, L = [tr('page.tip.music.zone', label())];
@@ -1225,7 +1225,7 @@ if (C.walk) {
   const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
   const keyLabels = () => KB.keys();
   // v40 : arrivées de la région (« default » d'abord, puis par nom)
-  const spawnList = () => viewer.getZones().filter(z => z.type === 'spawn').sort((a, b) => (b.id === 'default') - (a.id === 'default') || String(a.label || a.id).localeCompare(String(b.label || b.id), LANG));
+  const spawnList = () => viewer.getZones().filter(z => z.type === 'spawn').sort((a, b) => (b.id === 'default') - (a.id === 'default') || String(viewer.zoneLabel(a) || a.id).localeCompare(String(viewer.zoneLabel(b) || b.id), LANG));
   const walkGroups = () => { const K = keyLabels(); return [
     grp(tr('page.help.g.move'), [tr('page.help.move', K.fwd + K.left + K.back + K.right), tr('page.help.run', K.fwd, K.back), tr('page.help.jump'), tr('page.help.tp'), tr('page.help.home')]),
     fly ? grp(tr('page.help.g.fly'), [tr('page.help.fly'), tr('page.help.up'), tr('page.help.takeoff'), tr('page.help.down')]) : null,
@@ -1476,7 +1476,7 @@ if (C.walk) {
   refreshSpawns = () => {
     const list = spawnList(); spawnCount = list.length; spb.textContent = '';
     for (const s of list) {
-      const b = document.createElement('button'), name = s.label || s.id;
+      const b = document.createElement('button'), name = viewer.zoneLabel(s) || s.id;
       b.type = 'button'; b.textContent = name;
       b.onmousedown = e => e.preventDefault();   // pas de focus : Espace et Entrée restent à la promenade et au chat
       b.onclick = () => {
@@ -1510,7 +1510,7 @@ if (C.walk) {
   snb.insertBefore(pstB, lnone);
   let pstKey = '', pstU = null, pstZ = null;
   const pstOk = u => { try { const x = new URL(u, location.href); return (x.protocol === 'hop:' || x.protocol === 'http:' || x.protocol === 'https:' || (location.protocol === 'file:' && x.protocol === 'file:')) ? x : null; } catch (e) { return null; } };   // meme regle que okLink (liens des zones url et image), qui n'est pas visible d'ici
-  const pstGo = () => { if (!pstU) return; if (pstU.protocol === 'hop:') window.open(pstU.href, '_self'); else window.open(pstU.href, '_blank', 'noopener,noreferrer'); toast(tr('page.zone.opening', (pstZ && (pstZ.label || pstZ.id)) || '')); };
+  const pstGo = () => { if (!pstU) return; if (pstU.protocol === 'hop:') window.open(pstU.href, '_self'); else window.open(pstU.href, '_blank', 'noopener,noreferrer'); toast(tr('page.zone.opening', (pstZ && (viewer.zoneLabel(pstZ) || pstZ.id)) || '')); };
   pstB.onmousedown = e => e.preventDefault(); pstB.onclick = pstGo;
   pstB.onkeydown = e => { if (pstU && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); e.stopPropagation(); pstGo(); } };
   pstI.onload = () => { pstB.hidden = !pstKey; }; pstI.onerror = () => { pstB.hidden = true; };
@@ -1520,7 +1520,7 @@ if (C.walk) {
     if (key === pstKey) return;
     pstKey = key; pstZ = z || null; pstU = key && z.link ? pstOk(z.link) : null; pstB.hidden = true; pstI.removeAttribute('src');
     if (!key) return;
-    const nm = z.label || z.id;
+    const nm = viewer.zoneLabel(z) || z.id;
     pstI.alt = tr('page.sound.poster.alt', nm);
     if (pstU) { pstB.setAttribute('role', 'button'); pstB.tabIndex = 0; pstB.title = tr('page.sound.poster.open') + ' : ' + nm; pstB.setAttribute('aria-label', tr('page.sound.poster.open') + ' : ' + nm); }
     else { pstB.removeAttribute('role'); pstB.removeAttribute('tabindex'); pstB.removeAttribute('title'); pstB.removeAttribute('aria-label'); }
@@ -1549,7 +1549,7 @@ if (C.walk) {
     if (!mcountS.hidden) mcountS.textContent = ' ' + (MUSIC.trackIndex() + 1) + '/' + MUSIC.count() + ' ';
     soundNone();
   };
-  videoTxt = (z, d) => { srcSync(sSv, 'video'); lvdS.hidden = !z; setSrcTx(sSv, z ? tr('page.video.playing', z.label || z.id) : '', z ? distTxt(z, d) : '', false); soundNone(); };   // 1.12.21 : « Video : … » tant qu'un ecran a son joue et gagne l'arbitrage
+  videoTxt = (z, d) => { srcSync(sSv, 'video'); lvdS.hidden = !z; setSrcTx(sSv, z ? tr('page.video.playing', viewer.zoneLabel(z) || z.id) : '', z ? distTxt(z, d) : '', false); soundNone(); };   // 1.12.21 : « Video : … » tant qu'un ecran a son joue et gagne l'arbitrage
   radioTip = t => { rTip0(t); lrdS.title = t || ''; };
   musicTip = t => { mTip0(t); lmuS.title = t || ''; };
   soundToggle = () => { if (soundP.open) soundP.hide(); else soundP.show(); applyHelp(viewer.walking); place(); };

@@ -1624,7 +1624,7 @@ function createViewer(container, cfg0, loader) {
   // reperage des zones image (page exportee, case « Numeros des zones image ») : un gros numero devant chaque zone, masque par le decor (depthTest), jamais cliquable
   function zoneNumText(z) {
     const f = String(z.target || '').split(/[?#]/)[0].split('/').pop(), m = /^\d+/.exec(f) || /\d+/.exec(f);   // numero au debut du nom de fichier, sinon le premier numero du nom
-    return m ? String(parseInt(m[0], 10)) : (z.label || z.id);
+    return m ? String(parseInt(m[0], 10)) : (zlabel(z) || z.id);
   }
   function makeNumber(z) {
     const text = zoneNumText(z), cv = document.createElement('canvas'); cv.width = 256; cv.height = 128;
@@ -1967,12 +1967,17 @@ function createViewer(container, cfg0, loader) {
     const i = castTipIdx ? castTipIdx(z) : 0, st = s[i] || s[0];
     return st[0] || st[1];
   }
+  // 1.13.5 : nom d'une zone dans la langue de la page (labs.fr / labs.en), sinon label ; '' si aucun des deux
+  function zlabel(z) { return (z && z.labs && z.labs[LANG]) || (z && z.label) || ''; }
+  // 1.13.5 : 2e ligne de la bulle d'un lien : le titre de la page (linkTitle) s'il existe, sinon « youtube.com » pour un lien YouTube (pas l'adresse entiere), sinon l'adresse
+  const YT_RX = /^https?:\/\/(?:www\.|m\.|music\.)?(?:youtube\.com|youtube-nocookie\.com|youtu\.be)\//i;
+  function linkSub(z, u) { return z.ltitle || (YT_RX.test(String(u || '')) ? 'youtube.com' : (u || '')); }
   function zoneTipText(z) {
-    const name = z.label || z.id;
-    if (z.type === 'url') return [name, z.target];
+    const name = zlabel(z) || z.id;
+    if (z.type === 'url') return [name, linkSub(z, z.target)];
     if (z.type === 'cast') return [name, castTipSub(z)];
     if (z.type === 'audio') return [name, z.folder || ''];
-    if (z.type === 'image') return [name, z.link || ''];
+    if (z.type === 'image') return [name, linkSub(z, z.link)];
     if (z.type === 'video') return [name, (z.folder || (z.tracks && z.tracks.length > 1) ? tr('core.tip.video.list') : tr('core.tip.video'))];
     if (z.type === 'ha') return [name, tr('core.tip.cmd', name)];
     return [name, tr('core.tip.region', (String(z.target || '').trim() || tr('core.tip.thisregion')) + (z.spawn ? ' #' + z.spawn : ''))];
@@ -2014,7 +2019,7 @@ function createViewer(container, cfg0, loader) {
   // et messages [code, id, a, b] ; zoneOut : zone interne -> zone du fichier (cles utiles seulement). Miroir exact de zone_in / zone_out (gen_tpl.py).
   // L'ancien format (cle type ou target) reste lu tel quel : c'est le format interne.
   const ZONE_KEYS = ['id', 'label', 'x', 'y', 'z', 'yaw', 'radius', 'trigger', 'showName', 'private', 'cone', 'shape', 'w', 'h', 'image', 'video', 'videoFolder', 'tracks', 'sound', 'mesh',
-    'link', 'frame', 'portal', 'spawn', 'ha', 'confirm', 'radio', 'music', 'poster', 'posterLink', 'arrival', 'pos', 'model', 'scale', 'pitch', 'roll', 'solid', 'actionRadius'];
+    'link', 'frame', 'portal', 'spawn', 'ha', 'confirm', 'radio', 'music', 'poster', 'posterLink', 'arrival', 'pos', 'model', 'scale', 'pitch', 'roll', 'solid', 'actionRadius', 'labels', 'linkTitle'];
   const ZONE_VIS = ['image', 'video', 'mesh', 'model'], ZONE_ACT = ['link', 'portal', 'ha', 'radio', 'music'];
   function zoneLegacy(z) { return !!z && typeof z === 'object' && ('type' in z || 'target' in z); }
   function zoneIn(z) {
@@ -2031,8 +2036,9 @@ function createViewer(container, cfg0, loader) {
       } else msgs.push(['posbad', id]);
     }
     const o = { id: z.id, label: z.label, x: px, y: py, z: pz, yaw: z.yaw, private: z.private };
+    if (z.labels !== undefined && z.labels !== null) o.labs = z.labels;   // 1.13.5 : labels { fr, en } = nom de la zone selon la langue de la page (cle interne labs : labels est deja la liste des noms de flux de l'ancienne radio)
     if (on('arrival')) {
-      for (const k of ZONE_KEYS) if (!['id', 'label', 'x', 'y', 'z', 'pos', 'yaw', 'private', 'arrival'].includes(k) && set(k)) msgs.push(['ignored', id, k]);
+      for (const k of ZONE_KEYS) if (!['id', 'label', 'labels', 'x', 'y', 'z', 'pos', 'yaw', 'private', 'arrival'].includes(k) && set(k)) msgs.push(['ignored', id, k]);
       o.type = 'spawn'; return { z: o, msgs };
     }
     const vis = ZONE_VIS.filter(on), act = ZONE_ACT.filter(on);
@@ -2043,7 +2049,7 @@ function createViewer(container, cfg0, loader) {
     if (!a && v !== 'image' && v !== 'video' && v !== 'model') { msgs.push(['empty', id]); return { z: null, msgs }; }
     const sound = a === 'radio' || a === 'music', wh = v === 'image' || v === 'video' || (!v && z.shape === 'board'), deco = v === 'model' && !a;   // 1.12.39 : model seul = decor (ni rayon, ni repere, ni nom)
     const ok = { radius: !deco, showName: !deco, cone: v !== 'image' && v !== 'video' && !deco, trigger: (a === 'link' || a === 'portal') && v !== 'video', shape: !v, w: wh, h: wh, scale: v === 'model', pitch: v === 'model', roll: v === 'model', solid: v === 'model',
-      videoFolder: v === 'video', sound: v === 'video', tracks: v === 'video' || a === 'music', frame: a === 'link', spawn: a === 'portal', confirm: a === 'ha', poster: sound, posterLink: sound, actionRadius: v === 'video' && (a === 'portal' || a === 'ha') };
+      videoFolder: v === 'video', sound: v === 'video', tracks: v === 'video' || a === 'music', frame: a === 'link', spawn: a === 'portal', confirm: a === 'ha', poster: sound, posterLink: sound, actionRadius: v === 'video' && (a === 'portal' || a === 'ha'), linkTitle: a === 'link' };
     for (const k of Object.keys(ok)) if (!ok[k] && set(k)) msgs.push(['ignored', id, k]);
     let t;
     if (v === 'image' && (!a || a === 'link')) { t = 'image'; o.target = str(z.image); if (a === 'link') { o.link = str(z.link); o.frame = z.frame; } }
@@ -2064,6 +2070,7 @@ function createViewer(container, cfg0, loader) {
     if (ok.tracks) o.tracks = z.tracks;
     if (sound) { o.poster = z.poster; o.link = z.posterLink; }
     if (v === 'mesh') o.mesh = z.mesh;
+    if (a === 'link' && str(z.linkTitle)) o.ltitle = z.linkTitle;   // 1.13.5 : titre de la page du lien (ex. d'une video YouTube), montre dans la bulle a la place de l'adresse
     if (v === 'model') { o.mdl = str(z.model); o.mscale = z.scale; o.pitch = z.pitch; o.roll = z.roll; o.solid = z.solid; }   // 1.12.39 : fichier .glb pose a part (decor ou porteur d'une action)
     if (v === 'image' && t !== 'image') o.pic = str(z.image);   // 1.12.36 : tableau-portail, tableau-commande, tableau qui joue une radio ou une musique : l'image est dans pic
     for (const k of ['radius', 'trigger', 'showName', 'cone', 'shape', 'w', 'h']) if (ok[k]) o[k] = z[k];
@@ -2076,6 +2083,7 @@ function createViewer(container, cfg0, loader) {
   function zoneOut(o) {
     const t = o.type, r = { id: o.id };
     if (o.label) r.label = o.label;
+    if (o.labs && Object.keys(o.labs).length) r.labels = o.labs;
     r.x = o.x; r.y = o.y; r.z = o.z;
     if (o.yaw) r.yaw = o.yaw;
     if (t === 'spawn') { r.arrival = true; if (o.private) r.private = true; return r; }
@@ -2101,11 +2109,18 @@ function createViewer(container, cfg0, loader) {
     else if (t === 'ha') { r.ha = o.target; if (o.confirm) r.confirm = true; }
     else if (t === 'cast') r.radio = o.streams || [];
     else if (t === 'audio') { r.music = o.folder || ''; if (o.tracks) r.tracks = o.tracks; }
+    if ((t === 'url' || t === 'video' || (t === 'image' && o.link)) && o.ltitle) r.linkTitle = o.ltitle;
     if (t === 'cast' || t === 'audio') { if (o.poster) r.poster = o.poster; if (o.link) r.posterLink = o.link; }
     if (t !== 'model' && (o.cone === true || (typeof o.cone !== 'boolean' && coneAuto(o)))) r.cone = true;   // 1.12.41 : ecrit seulement quand il est vrai (faux = defaut)
     if (o.showName && t !== 'model') r.showName = true;
     if (o.private) r.private = true;
     return r;
+  }
+  function cleanLabs(v) {   // 1.13.5 : { fr: '...', en: '...' } (60 caracteres au plus) ; les autres langues sont ignorees ; null s'il n'y a rien
+    if (!v || typeof v !== 'object' || Array.isArray(v)) return null;
+    const r = {};
+    for (const k of ['fr', 'en']) { const s = typeof v[k] === 'string' ? v[k].replace(/[\u0000-\u001f]/g, '').trim().slice(0, 60) : ''; if (s) r[k] = s; }
+    return Object.keys(r).length ? r : null;
   }
   function cleanZone(z, i) {
     const num = (v, d, lo, hi) => { v = Number(v); return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d; };
@@ -2117,7 +2132,7 @@ function createViewer(container, cfg0, loader) {
     const mdl = ['model', 'portal', 'ha', 'url', 'cast', 'audio'].includes(type) && !pic ? String(z.mdl || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 600) : '';   // 1.12.39 : fichier .glb d'une zone model, ou d'un portail, d'une commande, d'un lien, d'une radio, d'une musique
     const board = img || vid || !!pic, pimg = img || !!pic;   // 1.12.7 : video : ecran sur un mur, joue a portee (comme musique et radio : portee 20 m par defaut, jusqu'a 200)
     const o = {
-      id: slug(z.id) || ('z' + (i + 1)), type, label: String(z.label || '').slice(0, 60),
+      id: slug(z.id) || ('z' + (i + 1)), type, label: (z.label && typeof z.label === 'object') ? '' : String(z.label || '').slice(0, 60),   // 1.13.5 : label { fr, en } = labels (jamais « [object Object] »)
       x: num(z.x, 0, -1e5, 1e5), y: num(z.y, 0, -1e5, 1e5), z: num(z.z, 0, -1e5, 1e5), yaw: num(z.yaw, 0, -7, 7),
       shape: z.shape === 'board' ? 'board' : 'ring', trigger: ['click', 'enter', 'both'].includes(z.trigger) ? z.trigger : 'click',
       radius: num(z.radius, rng ? 20 : 2, 0.5, rng ? 200 : 50), w: num(z.w, pimg ? 1.2 : 2.4, board ? 0.1 : 0.5, 10), h: board ? num(z.h, 0, 0, 6) : num(z.h, 1.2, 0.3, 6),
@@ -2162,7 +2177,9 @@ function createViewer(container, cfg0, loader) {
       const pt = String(z.poster || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 600); if (pt) o.poster = pt;
       const lk2 = String(z.link || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 600); if (lk2) o.link = lk2;
     }
-    if (img) { const lk = String(z.link || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 600); if (lk) o.link = lk; }   // lien facultatif d'un tableau : page ouverte au clic ou a E ; ecrit seulement s'il est rempli
+    if (img) { const lk = String(z.link || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 600); if (lk) o.link = lk; }
+    const lb = cleanLabs(z.labs !== undefined ? z.labs : (Array.isArray(z.labels) ? undefined : (z.labels !== undefined && z.labels !== null ? z.labels : z.label))); if (lb) o.labs = lb;   // 1.13.5 : nom par langue (fr, en) ; ecrit seulement s'il est rempli, comme gen_tpl.py
+    if (type === 'url' || (img && o.link) || act === 'url') { const lt = String(z.ltitle || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 120); if (lt) o.ltitle = lt; }   // lien facultatif d'un tableau : page ouverte au clic ou a E ; ecrit seulement s'il est rempli
     return o;
   }
   function boardTex(label, sub, w, h) {
@@ -2445,7 +2462,7 @@ function createViewer(container, cfg0, loader) {
         const c = cv.getContext('2d'), W = 1024, H = 128, cy = H / 2;
         c.clearRect(0, 0, W, H); c.fillStyle = 'rgba(0,0,0,0.8)'; c.fillRect(0, 0, W, H);
         c.fillStyle = '#fff'; c.font = 'bold 40px sans-serif'; c.textBaseline = 'middle';
-        const lk = z.act === 'url', list = st.tracks.length > 1, ttl = lk ? (z.label || (tk ? tk.name : '')) : (tk ? tk.name : '');   // 1.12.42 : avec un lien, le titre est le lien (souligne, fleche), un clic dessus ouvre la page
+        const lk = z.act === 'url', list = st.tracks.length > 1, ttl = lk ? (zlabel(z) || (tk ? tk.name : '')) : (tk ? tk.name : '');   // 1.12.42 : avec un lien, le titre est le lien (souligne, fleche), un clic dessus ouvre la page
         const txt = (list ? (st.ti + 1) + '/' + st.tracks.length + '   ' : '') + ttl, maxw = lk ? 470 : 520; let sh = txt;
         while (sh.length > 2 && c.measureText(sh).width > maxw) sh = sh.slice(0, -1);
         const shown = sh === txt ? txt : sh.trimEnd() + '\u2026'; c.fillText(shown, 28, cy);
@@ -2759,7 +2776,7 @@ function createViewer(container, cfg0, loader) {
         if (zoneEditor) {
           const rm = new THREE.Mesh(new THREE.RingGeometry(0.25, 0.4, 24), new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide, fog: false }));
           rm.rotation.x = -Math.PI / 2; rm.position.y = 0.05; rm.userData.zone = z; g.add(rm); zoneAll.push(rm);
-          const lab = makeLabel((z.label || z.id) + (z.private ? tr('core.private') : '')); lab.position.y = 2.9; lab.material.depthTest = false; lab.renderOrder = 999; g.add(lab);
+          const lab = makeLabel((zlabel(z) || z.id) + (z.private ? tr('core.private') : '')); lab.position.y = 2.9; lab.material.depthTest = false; lab.renderOrder = 999; g.add(lab);
         } else if (z.type !== 'model') coneFor(g, z);
         zoneGroup.add(g);
         continue;
@@ -2790,7 +2807,7 @@ function createViewer(container, cfg0, loader) {
         const hasCone = coneFor(g, z, link.box);
         if (!zoneEditor && !z.showName && !hasCone) continue;
         if (zoneEditor) g.add(outlineOf(link.box));
-        if (zoneEditor || z.showName) { const lab = makeLabel(zoneEditor ? (z.label || kind) + ' ⇢ ' + z.mesh + priv : (z.label || z.id)); lab.position.set((link.box.min.x + link.box.max.x) / 2, link.box.max.y + 0.9, (link.box.min.z + link.box.max.z) / 2); g.add(lab); if (!zoneEditor) zoneLabs.push(lab); }
+        if (zoneEditor || z.showName) { const lab = makeLabel(zoneEditor ? (z.label || kind) + ' ⇢ ' + z.mesh + priv : (zlabel(z) || z.id)); lab.position.set((link.box.min.x + link.box.max.x) / 2, link.box.max.y + 0.9, (link.box.min.z + link.box.max.z) / 2); g.add(lab); if (!zoneEditor) zoneLabs.push(lab); }
         zoneGroup.add(g);
         continue;
       }
@@ -2812,7 +2829,7 @@ function createViewer(container, cfg0, loader) {
         // éditeur : le cylindre (portée de la zone) reste toujours visible, pour repérer et positionner ; le panneau s'y ajoute
         if (z.shape === 'board') {
           const sub = kind + (clickable ? tr('core.clickable') : '') + priv;
-          const plane = new THREE.Mesh(new THREE.PlaneGeometry(z.w, z.h), new THREE.MeshBasicMaterial({ map: boardTex(z.label || kind, sub, z.w, z.h), fog: false }));
+          const plane = new THREE.Mesh(new THREE.PlaneGeometry(z.w, z.h), new THREE.MeshBasicMaterial({ map: boardTex(zlabel(z) || kind, sub, z.w, z.h), fog: false }));
           plane.position.y = 0.9 + z.h / 2; g.add(plane); main = plane; backOf(plane);
           const post = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.92, 0.1), new THREE.MeshStandardMaterial({ color: 0x333333 })); post.position.y = 0.46; g.add(post);
         }
@@ -2823,10 +2840,10 @@ function createViewer(container, cfg0, loader) {
         r1.rotation.x = -Math.PI / 2; r1.position.y = 0.05; g.add(r1);
         const r2 = new THREE.Mesh(new THREE.RingGeometry(Math.max(0.02, rad - 0.3), Math.max(0.04, rad - 0.16), 64), new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, fog: false }));
         r2.rotation.x = -Math.PI / 2; r2.position.y = 0.055; g.add(r2);
-        if (z.shape !== 'board') { const lab = makeLabel((z.label || kind) + priv); lab.position.y = 2.9; g.add(lab); }
+        if (z.shape !== 'board') { const lab = makeLabel((zlabel(z) || kind) + priv); lab.position.y = 2.9; g.add(lab); }
       } else if (z.showName && z.shape === 'board') {
         // page exportée, « Toujours afficher le nom » : le panneau
-        const plane = new THREE.Mesh(new THREE.PlaneGeometry(z.w, z.h), new THREE.MeshBasicMaterial({ map: boardTex(z.label || kind, kind + (clickable ? tr('core.clickable') : ''), z.w, z.h), fog: false }));
+        const plane = new THREE.Mesh(new THREE.PlaneGeometry(z.w, z.h), new THREE.MeshBasicMaterial({ map: boardTex(zlabel(z) || kind, kind + (clickable ? tr('core.clickable') : ''), z.w, z.h), fog: false }));
         plane.position.y = 0.9 + z.h / 2; g.add(plane); main = plane; backOf(plane); zoneLabs.push(plane);
         const post = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.92, 0.1), new THREE.MeshStandardMaterial({ color: 0x333333 })); post.position.y = 0.46; g.add(post); zoneLabs.push(post);
       } else {
@@ -2853,7 +2870,7 @@ function createViewer(container, cfg0, loader) {
           const hit = new THREE.Mesh(new THREE.CircleGeometry(hr, hr > 1 ? 48 : 16), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide })); hit.visible = false;
           hit.rotation.x = -Math.PI / 2; hit.position.y = 0.06; g.add(hit); main = hit;
         }
-        if (z.showName) { const lab = makeLabel(z.label || z.id); lab.position.y = 1.2; g.add(lab); zoneLabs.push(lab); }
+        if (z.showName) { const lab = makeLabel(zlabel(z) || z.id); lab.position.y = 1.2; g.add(lab); zoneLabs.push(lab); }
       }
       coneFor(g, z);
       if (main) { main.userData.zone = z; zoneAll.push(main); if (clickable) zoneHit.push(main); }
@@ -3153,7 +3170,7 @@ function createViewer(container, cfg0, loader) {
     // boîte (monde) de l'élément de ce nom : { min, max, center, count } ou null
     meshInfo(name) { const m = findMeshes(name); const b = m.length ? refBox(name, m) : null; if (!b) return null; return { min: b.min.toArray(), max: b.max.toArray(), center: b.getCenter(new THREE.Vector3()).toArray(), size: b.getSize(new THREE.Vector3()).toArray(), count: m.length }; },
     set linkMode(v) { linkLock = !!v; },
-    isTraversable(o) { return isIgnoredMesh(o, parseIgnore(cfg.walkIgnore)); }, getZones() { return zones.map(z => Object.assign({}, z)); }, zoneMessages() { return zoneMsgs.slice(); }, zoneIn, zoneOut, set onZone(f) { onZone = f; }, set videoSound(f) { videoSound = typeof f === 'function' ? f : null; }, set onVideoTalk(f) { onVideoTalk = typeof f === 'function' ? f : null; }, set onVideoAct(f) { onVideoAct = typeof f === 'function' ? f : null; }, set onNear(f) { onNear = f; }, set onCast(f) { onCast = f; }, set onAudio(f) { onAudio = f; }, audioTracks, set onRadio(f) { onRadio = f; }, set castTipIdx(f) { castTipIdx = typeof f === 'function' ? f : null; }, radioAsk(url) { radioWant = String(url || ''); if (P.ws && P.ws.readyState === 1 && P.id) P.ws.send(JSON.stringify({ t: 'radio', url: radioWant })); },
+    isTraversable(o) { return isIgnoredMesh(o, parseIgnore(cfg.walkIgnore)); }, getZones() { return zones.map(z => Object.assign({}, z)); }, zoneLabel: zlabel, zoneMessages() { return zoneMsgs.slice(); }, zoneIn, zoneOut, set onZone(f) { onZone = f; }, set videoSound(f) { videoSound = typeof f === 'function' ? f : null; }, set onVideoTalk(f) { onVideoTalk = typeof f === 'function' ? f : null; }, set onVideoAct(f) { onVideoAct = typeof f === 'function' ? f : null; }, set onNear(f) { onNear = f; }, set onCast(f) { onCast = f; }, set onAudio(f) { onAudio = f; }, audioTracks, set onRadio(f) { onRadio = f; }, set castTipIdx(f) { castTipIdx = typeof f === 'function' ? f : null; }, radioAsk(url) { radioWant = String(url || ''); if (P.ws && P.ws.readyState === 1 && P.id) P.ws.send(JSON.stringify({ t: 'radio', url: radioWant })); },
     captureTop(size = 320, hide = []) {
       if (!model) return null;
       const box = new THREE.Box3().setFromObject(model), c = box.getCenter(new THREE.Vector3()), sz = box.getSize(new THREE.Vector3());

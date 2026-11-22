@@ -2079,5 +2079,10 @@
  "py.glb2html.zmsg.converted": "{0} : {1} zone(s) réécrite(s) au nouveau format ; original gardé dans {2}",
  "py.glb2html.zmsg.nothing": "{0} : rien à convertir (déjà au nouveau format)",
  "py.glb2html.zmsg.badfile": "{0} : ni une liste de zones ni un fichier de réglages avec « zones »",
+ "py.glb2html.link_titles": "ajoute à chaque zone au lien YouTube de ce fichier de zones (ou de réglages) le titre de la vidéo (clé linkTitle, montrée dans la bulle), puis s'arrête ; l'original est gardé à côté (.bak)",
+ "py.glb2html.ltmsg.titre": "{0} : « {1} »",
+ "py.glb2html.ltmsg.echec": "{0} : titre introuvable pour {1} (réseau ou vidéo privée) ; zone laissée telle quelle",
+ "py.glb2html.ltmsg.rien": "{0} : aucun titre à ajouter",
+ "py.glb2html.ltmsg.ecrit": "{0} : {1} titre(s) ajouté(s) ; original gardé dans {2}",
  "viewer.zf.pic": "Image (tableau sur un mur à la place de l'anneau)"
 }

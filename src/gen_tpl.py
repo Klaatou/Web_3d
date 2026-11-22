@@ -25,6 +25,7 @@ import base64
 import html
 import json
 import math
+import os
 import pathlib
 import re
 import shutil
@@ -203,7 +204,7 @@ def audio_name(s):
 # et messages [code, id, a, b] ; zone_out : zone interne -> zone du fichier (cles utiles seulement). Miroir exact de zoneIn / zoneOut (core.js).
 # L'ancien format (cle type ou target) reste lu tel quel : c'est le format interne.
 ZONE_KEYS = ("id", "label", "x", "y", "z", "yaw", "radius", "trigger", "showName", "private", "cone", "shape", "w", "h", "image", "video", "videoFolder", "tracks", "sound", "mesh",
-             "link", "frame", "portal", "spawn", "ha", "confirm", "radio", "music", "poster", "posterLink", "arrival", "pos", "model", "scale", "pitch", "roll", "solid", "actionRadius")
+             "link", "frame", "portal", "spawn", "ha", "confirm", "radio", "music", "poster", "posterLink", "arrival", "pos", "model", "scale", "pitch", "roll", "solid", "actionRadius", "labels", "linkTitle")
 ZONE_VIS = ("image", "video", "mesh", "model")
 ZONE_ACT = ("link", "portal", "ha", "radio", "music")
 
@@ -231,9 +232,11 @@ def zone_in(z):
         else:
             msgs.append(["posbad", zid])
     o = {"id": z.get("id"), "label": z.get("label"), "x": px, "y": py, "z": pz, "yaw": z.get("yaw"), "private": z.get("private")}
+    if z.get("labels") is not None:   # 1.13.5 : labels { fr, en } = nom de la zone selon la langue de la page (cle interne labs, comme core.js)
+        o["labs"] = z.get("labels")
     if on("arrival"):
         for k in ZONE_KEYS:
-            if k not in ("id", "label", "x", "y", "z", "pos", "yaw", "private", "arrival") and setk(k):
+            if k not in ("id", "label", "labels", "x", "y", "z", "pos", "yaw", "private", "arrival") and setk(k):
                 msgs.append(["ignored", zid, k])
         o["type"] = "spawn"
         return o, msgs
@@ -257,7 +260,7 @@ def zone_in(z):
     ok = {"radius": not deco, "showName": not deco, "cone": v not in ("image", "video") and not deco, "trigger": a in ("link", "portal") and v != "video", "shape": not v, "w": wh, "h": wh,
           "scale": v == "model", "pitch": v == "model", "roll": v == "model", "solid": v == "model",
           "videoFolder": v == "video", "sound": v == "video", "tracks": v == "video" or a == "music", "frame": a == "link", "spawn": a == "portal", "confirm": a == "ha",
-          "poster": sound, "posterLink": sound, "actionRadius": v == "video" and a in ("portal", "ha")}
+          "poster": sound, "posterLink": sound, "actionRadius": v == "video" and a in ("portal", "ha"), "linkTitle": a == "link"}
     for k, good in ok.items():
         if not good and setk(k):
             msgs.append(["ignored", zid, k])
@@ -310,6 +313,8 @@ def zone_in(z):
         o["link"] = z.get("posterLink")
     if v == "mesh":
         o["mesh"] = z.get("mesh")
+    if a == "link" and sstr(z.get("linkTitle")):   # 1.13.5 : titre de la page du lien, montre dans la bulle a la place de l'adresse
+        o["ltitle"] = z.get("linkTitle")
     if v == "model":   # 1.12.39 : fichier .glb pose a part (decor ou porteur d'une action)
         o["mdl"] = sstr(z.get("model"))
         o["mscale"] = z.get("scale")
@@ -363,6 +368,64 @@ def convert_zones_file(path):
     print(_tr("py.glb2html.zmsg.converted", p, len(old), bak))
 
 
+def clean_labs(v):
+    """1.13.5 : { fr: '...', en: '...' } (60 caracteres au plus) ; les autres langues sont ignorees ; None s'il n'y a rien. Miroir de cleanLabs (core.js)."""
+    if not isinstance(v, dict):
+        return None
+    r = {}
+    for k in ("fr", "en"):
+        x = v.get(k)
+        x = re.sub(r"[\x00-\x1f]", "", x).strip()[:60] if isinstance(x, str) else ""
+        if x:
+            r[k] = x
+    return r or None
+
+
+YT_RX = re.compile(r"^https?://(?:www\.|m\.|music\.)?(?:youtube\.com|youtube-nocookie\.com|youtu\.be)/", re.I)
+OEMBED_URL = "https://www.youtube.com/oembed"
+
+
+def fetch_link_title(url):
+    """1.13.5 : titre d'une video YouTube (oEmbed), '' si le lien n'est pas YouTube ou si la requete echoue. Appele a la generation seulement : le navigateur d'un visiteur ne contacte jamais YouTube au survol. WEB3D_OEMBED remplace l'adresse du service (tests)."""
+    if not YT_RX.match(str(url or "")):
+        return ""
+    try:
+        q = (os.environ.get("WEB3D_OEMBED") or OEMBED_URL) + "?" + urllib.parse.urlencode({"url": url, "format": "json"})
+        with urllib.request.urlopen(urllib.request.Request(q, headers={"User-Agent": "glb2html"}), timeout=10) as r:
+            t = json.loads(r.read().decode("utf-8")).get("title")
+    except Exception:
+        return ""
+    return re.sub(r"[\x00-\x1f]", "", t).strip()[:120] if isinstance(t, str) else ""
+
+
+def link_titles_file(path):
+    """1.13.5 : --link-titles : ajoute linkTitle (titre de la video) aux zones au lien YouTube d'une liste de zones, ou d'un fichier de reglages (cle zones), au format unifie ; un linkTitle deja ecrit n'est pas touche ; l'original reste dans FICHIER.bak."""
+    p = pathlib.Path(path)
+    raw = p.read_text(encoding="utf-8-sig")
+    data = json.loads(raw)
+    lst = data if isinstance(data, list) else (data.get("zones") if isinstance(data, dict) else None)
+    if not isinstance(lst, list):
+        sys.exit(_tr("py.glb2html.zmsg.badfile", p))
+    n = 0
+    for z in lst:
+        if not isinstance(z, dict) or zone_legacy(z) or z.get("linkTitle") or not isinstance(z.get("link"), str):
+            continue
+        t = fetch_link_title(z["link"])
+        if t:
+            z["linkTitle"] = t
+            n += 1
+            print(_tr("py.glb2html.ltmsg.titre", z.get("id", ""), t))
+        elif YT_RX.match(z["link"]):
+            print(_tr("py.glb2html.ltmsg.echec", z.get("id", ""), z["link"]))
+    if not n:
+        print(_tr("py.glb2html.ltmsg.rien", p))
+        return
+    bak = p.with_name(p.name + ".bak")
+    bak.write_text(raw, encoding="utf-8")
+    p.write_text(json.dumps(data, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    print(_tr("py.glb2html.ltmsg.ecrit", p, n, bak))
+
+
 def cone_auto(o):
     """Cone d'une zone de l'ancien format sans la cle cone (comportement d'avant, voir coneFor) : zone_out l'ecrit tel quel. Miroir de coneAuto (core.js)."""
     return o.get("type") in ("portal", "cast", "audio") or (o.get("trigger") != "click" and o.get("type") != "image" and o.get("type") != "video")
@@ -373,6 +436,8 @@ def zone_out(o):
     r = {"id": o.get("id")}
     if o.get("label"):
         r["label"] = o["label"]
+    if o.get("labs"):
+        r["labels"] = o["labs"]
     r["x"], r["y"], r["z"] = o.get("x"), o.get("y"), o.get("z")
     if o.get("yaw"):
         r["yaw"] = o["yaw"]
@@ -455,6 +520,8 @@ def zone_out(o):
         r["music"] = o.get("folder") or ""
         if o.get("tracks"):
             r["tracks"] = o["tracks"]
+    if t in ("url", "video", "image") and o.get("ltitle") and (t != "image" or o.get("link")):
+        r["linkTitle"] = o["ltitle"]
     if t in ("cast", "audio"):
         if o.get("poster"):
             r["poster"] = o["poster"]
@@ -499,7 +566,7 @@ def clean_zones(zones, profile, msgs=None):
         rng = t in ("cast", "audio") or vid
         act = z.get("act") if vid and z.get("act") in ("url", "portal", "ha") else ""   # 1.12.42 : action d'un ecran video (act, atarget, aradius), comme core.js
         d = {
-            "id": _slug(z.get("id")) or f"z{i + 1}", "type": t, "label": str(z.get("label") or "")[:60],
+            "id": _slug(z.get("id")) or f"z{i + 1}", "type": t, "label": "" if isinstance(z.get("label"), (dict, list)) else str(z.get("label") or "")[:60],   # 1.13.5 : label { fr, en } = labels (jamais un objet affiche tel quel)
             "x": num(z.get("x"), 0, -1e5, 1e5), "y": num(z.get("y"), 0, -1e5, 1e5), "z": num(z.get("z"), 0, -1e5, 1e5),
             "yaw": num(z.get("yaw"), 0, -7, 7), "shape": "board" if z.get("shape") == "board" else "ring",
             "trigger": (z.get("trigger") if z.get("trigger") in ("click", "enter", "both") else "click") if t in ("portal", "url", "image") else "click",
@@ -533,6 +600,13 @@ def clean_zones(zones, profile, msgs=None):
             lk = re.sub(r"[\x00-\x1f]", "", str(z.get("link") or "")).strip()[:600]
             if lk:
                 d["link"] = lk
+        lb = clean_labs(z.get("labs") if z.get("labs") is not None else (None if isinstance(z.get("labels"), list) else (z.get("labels") if z.get("labels") is not None else z.get("label"))))   # 1.13.5 : nom par langue (fr, en) ; ecrit seulement s'il est rempli, comme core.js
+        if lb:
+            d["labs"] = lb
+        if t == "url" or (img and d.get("link")) or act == "url":   # 1.13.5 : titre de la page du lien (120 car. au plus), comme core.js
+            lt = re.sub(r"[\x00-\x1f]", "", str(z.get("ltitle") or "")).strip()[:120]
+            if lt:
+                d["ltitle"] = lt
         if t in ("audio", "cast"):   # 1.12.26 : pochette (image) et lien facultatifs d'une zone radio / musique, montres dans la fenetre Son ; ecrits seulement s'ils sont remplis, comme core.js
             pt = re.sub(r"[\x00-\x1f]", "", str(z.get("poster") or "")).strip()[:600]
             if pt:
@@ -2136,6 +2210,7 @@ def main():
     ap.add_argument("--light", action=argparse.BooleanOptionalAction, default=LIGHT_ENABLED, help=_tr("py.glb2html.help.light"))
     ap.add_argument("--credit", action=argparse.BooleanOptionalAction, default=True, help=_tr("py.glb2html.help.credit"))
     ap.add_argument("--title", help=_tr("py.glb2html.titre_de_la_page"))
+    ap.add_argument("--link-titles", metavar="FILE", help=_tr("py.glb2html.link_titles"))
     ap.add_argument("--vendor", type=pathlib.Path, help=_tr("py.glb2html.racine_d_un_paquet_npm_three"))
     a = ap.parse_args()
     if a.convert_zones:   # 1.12.35 : conversion seule, rien d'autre n'est fait
@@ -2143,6 +2218,12 @@ def main():
         if f is None:
             sys.exit(_tr("py.glb2html.erreur_0_introuvable", a.convert_zones))
         convert_zones_file(f)
+        return
+    if a.link_titles:   # 1.13.5 : titres des videos YouTube seuls, rien d'autre n'est fait
+        f = find_beside(a.link_titles)
+        if f is None:
+            sys.exit(_tr("py.glb2html.erreur_0_introuvable", a.link_titles))
+        link_titles_file(f)
         return
     S = {}
     if a.maj and a.settings:
