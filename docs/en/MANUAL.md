@@ -815,7 +815,7 @@ A zone of type `audio` plays the **sound files of a folder** (mp3, ogg, wav...) 
 
 ### 5.21 Video screen on a wall (`video`, 1.12.7 to 1.12.14)
 
-A zone of type `video` is a **screen laid on a wall**, like an "image" picture (§ 5.11), whose picture is a **video** (mp4, webm, m4v, ogv). Nothing is downloaded until the visitor is within range: the screen loads on approach.
+A zone of type `video` is a **screen laid on a wall**, like an "image" picture (§ 5.11), whose picture is a **video** (mp4, webm, m4v, ogv). **Since 1.13.7**, a screen that is **seen** (in the camera's field of view, closer than `zoneInfoDist`, 150 m by default) loads the start of its file and shows its **first image**, paused, with the proportions of the video, instead of a dark box; a screen behind the visitor or out of view downloads nothing. Before 1.13.7, nothing was downloaded until within range.
 
 - **Placing**: in the viewer, type "Video (screen on a wall)", then click on the wall.
   - Fields: "File or address of the video" (`video`), width (`w`, 2.4 m by default), height (`h`, **0 = from the video's aspect ratio**), "Range" (`radius`, 20 m by default, 0.5 to **200 m**), "Screen sound" (`sound`), "Video folder" (`videoFolder`, see below).
@@ -826,10 +826,12 @@ A zone of type `video` is a **screen laid on a wall**, like an "image" picture (
   - Missing file: the screen disappears and the console says so.
 - **Playback**: within range **and** in the camera's field of view, the video plays in a loop, **muted**; one second after turning away or leaving the range, or if the tab is hidden, it pauses.
   - **At most 8 screens play at once** (the closest).
+  - **Preview** (1.13.7): only the start of the file (`preload="metadata"`), 4 loads at a time at most; playback loads the rest. When moving away, the screen stays on the current image.
   - If the system asks for reduced motion (`prefers-reduced-motion`), only the first frame is shown.
   - **Distance is measured from the visitor** (eye height) while walking, from the camera outside walk mode; the field of view is always measured from the camera.
   - A screen is not a "near zone": no "click or E" prompt.
 - **Click = pause / play**: a click on a playing screen stops it, another restarts it. The stop lasts while the visitor stays within range (leaving and coming back restarts it by itself; turning away does not cancel it). The click triggers no zone action and sends nothing to presence. The tooltip on hover says so.
+- **Click out of range** (1.13.7): a click on a screen that is seen but out of range **starts** it, **without sound** (sound stays reserved to the range), as long as it stays in view; a second click stops it; once out of view (one second of grace), it stops and only starts again with a new click. On entering the range, it plays as usual.
 - **Sound**: `sound: true` (field "Screen sound").
   - **Only one screen speaks**: among the playing screens with sound, the one closest to the visitor; the others play, muted.
   - Volume = `(1 - distance / range)` x the **radio / music volume** of the Sound window (§ 7.66), at least 5 % of that level.
@@ -859,8 +861,8 @@ A zone of type `video` is a **screen laid on a wall**, like an "image" picture (
   - Outside walk mode there is no prompt and no entering a zone.
 - **Not playing?** The **Video** line of the Diagnostic ("Copy the diagnostic", key I) gives, per screen, the zone, the target, the file read and the state: "not loaded yet", "ready, paused", "playing", "stopped by a click", "failed (file not found or unreadable)", with "track N/total: name" for a list and "sound N %" or "sound requested but muted" (Sound setting off, no click yet, or a closer screen is speaking).
 - **Putting it online**: copy the videos (and `playlist.json`) with the rest of the region; the zones only say the name, or `"folder": "videos"`. Step by step: `SIMPLE_PROCEDURES.md` § 17.
-- **Tried**: `tests/zone_video.py` (JavaScript = Python cleaning, nothing requested out of range, muted looping playback, pause when turning away and moving away, cap of 8, texture really drawn, reduced motion, sound before start, only one screen speaks) and `tests/zone_video_liste.py` (lists, order, skipped track, bar, icons, 3 s delay).
-  - **Not tried**: Edge without hardware acceleration, the real refusal of playback with sound under Edge, large files, a server without CORS, touch, a test with two real screens.
+- **Tried**: `tests/zone_video.py` (JavaScript = Python cleaning, since 1.13.7 first image out of range (paused, proportions, drawn on screen, nothing requested for a screen out of view) and click out of range (start without sound, second click, stop out of view), muted looping playback, pause when turning away and moving away, cap of 8, texture really drawn, reduced motion, sound before start, only one screen speaks) and `tests/zone_video_liste.py` (lists, order, skipped track, bar, icons, 3 s delay).
+  - **Not tried**: the network volume of the preview on a large real file, Edge without hardware acceleration, the real refusal of playback with sound under Edge, large files, a server without CORS, touch, a test with two real screens.
   - **Since 1.12.42**: `tests/zone_video_liste.py` (link title of a single video and of a list, click on the title), `tests/zones_unifiees.py` (screen with a portal: teleports within `actionRadius`, not at the playing range) and `tests/editeur_video_action.py` (viewer form). Since 1.12.43, `zone_video.py` and `zone_video_liste.py` look for ffmpeg in the PATH, then in `tests/ffmpeg.chemin.txt` (`DEVELOPMENT.md`).
 
 ### 5.22 One sound source at a time, mute button and N key (1.12.21)
@@ -2367,6 +2369,12 @@ The detail, version by version, is in `HISTORY.md` (narrative) and `CHANGELOG.md
 - **zone name by language**: key `labels` `{fr, en}` (or the same object in `label`), the page takes the name of its language, otherwise `label`, otherwise the id (1.13.5, § 7.13, `REFERENCE_JSON.md` § 11.4)
 - **title of a link in the bubble**: key `linkTitle`, filled at generation by `glb2html.py --link-titles` (the visitor's browser never contacts YouTube); without a title, `youtube.com` for a YouTube link (1.13.5, § 7.13)
 - documents of batch 1.13.5 (`REFERENCE_JSON.md` § 11.4, manual § 5 (zone format), § 7.13, histories)
+
+**Additions of 1.13.7 (batches 1.13.7 and 1.13.8)**
+
+- **first image of video screens**: a screen that is seen (closer than 150 m) shows its first image, paused, with the right proportions, instead of a dark box (1.13.7, § 5.21)
+- **click out of range**: starts a video screen, without sound; a second click stops it (1.13.7, § 5.21)
+- documents of batch 1.13.7 (manual § 5.21, `REFERENCE_JSON.md` § 11.4, histories)
 
 Everything below is in **1.1.0** (released on 31/10/2026). The detail, batch by batch, is in `CHANGELOG.md`.
 

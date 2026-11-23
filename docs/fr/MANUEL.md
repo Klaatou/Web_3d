@@ -815,7 +815,7 @@ Une zone de type `audio` fait jouer en boucle les **fichiers son d'un dossier** 
 
 ### 5.21 Écran vidéo sur un mur (`video`, 1.12.7 à 1.12.14)
 
-Une zone de type `video` est un **écran plaqué sur un mur**, comme un tableau « image » (§ 5.11), dont l'image est une **vidéo** (mp4, webm, m4v, ogv). Rien n'est téléchargé avant que le visiteur soit à portée : l'écran se charge à l'approche.
+Une zone de type `video` est un **écran plaqué sur un mur**, comme un tableau « image » (§ 5.11), dont l'image est une **vidéo** (mp4, webm, m4v, ogv). **Depuis la 1.13.7**, un écran **vu** (dans le champ de la caméra, à moins de `zoneInfoDist`, 150 m par défaut) charge le début de son fichier et montre sa **première image**, en pause, aux proportions de la vidéo, au lieu d'un pavé sombre ; un écran derrière soi ou hors du champ ne télécharge rien. Avant la 1.13.7, rien n'était téléchargé avant d'être à portée.
 
 - **Poser** : dans le viewer, type « Vidéo (écran sur un mur) », puis clic sur le mur.
   - Champs : « Fichier ou adresse de la vidéo » (`video`), largeur (`w`, 2,4 m par défaut), hauteur (`h`, **0 = d'après le rapport de la vidéo**), « Portée » (`radius`, 20 m par défaut, 0,5 à **200 m**), « Son de l'écran » (`sound`), « Dossier de vidéos » (`videoFolder`, voir plus bas).
@@ -826,10 +826,12 @@ Une zone de type `video` est un **écran plaqué sur un mur**, comme un tableau 
   - Fichier absent : l'écran disparaît et la console le dit.
 - **Lecture** : à portée **et** dans le champ de la caméra, la vidéo joue en boucle, **muette** ; une seconde après avoir tourné le dos ou quitté la portée, ou si l'onglet est caché, elle se met en pause.
   - **Au plus 8 écrans jouent à la fois** (les plus proches).
+  - **Aperçu** (1.13.7) : le début du fichier seulement (`preload="metadata"`), 4 chargements à la fois au plus ; la lecture charge le reste. En s'éloignant, l'écran reste sur l'image en cours.
   - Si le système demande le mouvement réduit (`prefers-reduced-motion`), seule la première image est montrée.
   - **La distance est mesurée depuis le visiteur** (hauteur des yeux) en promenade, depuis la caméra hors promenade ; le champ de vision se mesure toujours depuis la caméra.
   - Un écran n'est pas une « zone proche » : pas d'invite « clic ou E ».
 - **Clic = pause / lecture** : un clic sur l'écran qui joue l'arrête, un autre le relance. L'arrêt dure tant que le visiteur reste à portée (en sortir et revenir relance seul ; tourner le dos ne l'annule pas). Le clic ne déclenche aucune action de zone et n'envoie rien à la présence. L'infobulle au survol le dit.
+- **Clic hors de portée** (1.13.7) : un clic sur un écran vu mais hors de portée le **lance**, **sans son** (le son reste réservé à la portée), tant qu'il reste dans le champ ; un second clic l'arrête ; s'il sort du champ (une seconde de grâce), il s'arrête et ne repart qu'avec un nouveau clic. En entrant dans la portée, il joue comme d'habitude.
 - **Du son** : `sound: true` (champ « Son de l'écran »).
   - **Un seul écran parle** : parmi les écrans à son qui jouent, le plus proche du visiteur ; les autres jouent, muets.
   - Volume = `(1 - distance / portée)` x le **volume radio / musique** de la fenêtre Son (§ 7.66), au moins 5 % de ce niveau.
@@ -859,8 +861,8 @@ Une zone de type `video` est un **écran plaqué sur un mur**, comme un tableau 
   - Hors promenade, il n'y a ni invite ni entrée dans une zone.
 - **Ça ne joue pas ?** La ligne **Vidéo** du Diagnostic (« Copier le diagnostic », touche I) donne, par écran, la zone, la cible, le fichier lu et l'état : « pas encore chargée », « prête, en pause », « lecture », « arrêtée par un clic », « échec (fichier introuvable ou illisible) », avec « piste N/total : nom » pour une liste et « son N % » ou « son demandé mais muet » (réglage Son coupé, pas encore de clic, ou un écran plus proche parle).
 - **Mettre en ligne** : copier les vidéos (et `playlist.json`) avec le reste de la région ; les zones disent seulement le nom, ou `"folder": "videos"`. Pas à pas : `PROCEDURES_SIMPLES.md` § 17.
-- **Essayé** : `tests/zone_video.py` (nettoyage JavaScript = Python, rien demandé hors de portée, lecture muette en boucle, pause en tournant le dos et en s'éloignant, plafond de 8, texture réellement dessinée, mouvement réduit, son avant le démarrage, un seul écran parle) et `tests/zone_video_liste.py` (listes, ordre, piste sautée, barre, icônes, délai de 3 s).
-  - **Non essayé** : Edge sans accélération matérielle, le refus réel de lecture avec son sous Edge, de gros fichiers, un serveur sans CORS, le toucher, un essai à deux écrans réels.
+- **Essayé** : `tests/zone_video.py` (nettoyage JavaScript = Python, depuis la 1.13.7 première image hors de portée (en pause, proportions, dessinée à l'écran, rien demandé pour un écran hors du champ) et clic hors de portée (lancement sans son, second clic, arrêt hors du champ), lecture muette en boucle, pause en tournant le dos et en s'éloignant, plafond de 8, texture réellement dessinée, mouvement réduit, son avant le démarrage, un seul écran parle) et `tests/zone_video_liste.py` (listes, ordre, piste sautée, barre, icônes, délai de 3 s).
+  - **Non essayé** : le volume réseau de l'aperçu sur un gros fichier réel, Edge sans accélération matérielle, le refus réel de lecture avec son sous Edge, de gros fichiers, un serveur sans CORS, le toucher, un essai à deux écrans réels.
   - **Depuis la 1.12.42** : `tests/zone_video_liste.py` (titre-lien d'une vidéo seule et d'une liste, clic sur le titre), `tests/zones_unifiees.py` (écran avec portail : téléporte à moins de `actionRadius`, pas à la portée de lecture) et `tests/editeur_video_action.py` (fiche du viewer). Depuis la 1.12.43, `zone_video.py` et `zone_video_liste.py` cherchent ffmpeg dans le PATH, puis dans `tests/ffmpeg.chemin.txt` (`DEVELOPPEMENT.md`).
 
 ### 5.22 Une seule source sonore à la fois, bouton muet et touche N (1.12.21)
@@ -2367,6 +2369,12 @@ Le détail, version par version, est dans `HISTORIQUE.md` (récit) et `CHANGELOG
 - **nom de zone selon la langue** : clé `labels` `{fr, en}` (ou le même objet dans `label`), la page prend le nom de sa langue, sinon `label`, sinon l'id (1.13.5, § 7.13, `REFERENCE_JSON.md` § 11.4)
 - **titre d'un lien dans la bulle** : clé `linkTitle`, remplie à la génération par `glb2html.py --link-titles` (le navigateur du visiteur ne contacte jamais YouTube) ; sans titre, `youtube.com` pour un lien YouTube (1.13.5, § 7.13)
 - documents du lot 1.13.5 (`REFERENCE_JSON.md` § 11.4, manuel § 5 (format des zones), § 7.13, historiques)
+
+**Ajouts de la 1.13.7 (lots 1.13.7 et 1.13.8)**
+
+- **première image des écrans vidéo** : un écran vu (à moins de 150 m) montre sa première image, en pause, aux bonnes proportions, au lieu d'un pavé sombre (1.13.7, § 5.21)
+- **clic hors de portée** : lance un écran vidéo, sans son ; un second clic l'arrête (1.13.7, § 5.21)
+- documents du lot 1.13.7 (manuel § 5.21, `REFERENCE_JSON.md` § 11.4, historiques)
 
 Tout ce qui suit est dans la **1.1.0** (publiée le 31/10/2026). Le détail, lot par lot, est dans `CHANGELOG.fr.md`.
 

@@ -346,6 +346,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 22/11/2026 |  | after 1.13.0 | Batch 1.13.3: the stream chosen on a radio is remembered per zone (coming back into the zone, reload, next visit): `template.html` (`pickIdx`, `pickSave`), `glb2html_radio_` key, `radio_memoire` test |
 | 22/11/2026 |  | after 1.13.0 | Batch 1.13.4: documents of batches 1.13.2 and 1.13.3 (manual § 5.19, § 7.13, § 7.66 and appendix § 13, histories) |
 | 22/11/2026 |  | after 1.13.0 | Batch 1.13.5: zone name by language (`labels`) and video title in the bubble of a YouTube link (`linkTitle`, option `--link-titles`); batch 1.13.6: their documents (`REFERENCE_JSON.md` § 11.4, manual, appendix § 13, histories) |
+| 23/11/2026 |  | after 1.13.0 | Batch 1.13.7: first image of the video screens in view (paused, with the right proportions) and click out of range to start them, without sound; batch 1.13.8: their documents (manual § 5.21, `REFERENCE_JSON.md` § 11.4, appendix § 13, histories) |
 ## Useful commands
 
 - See the history: `git log --oneline --decorate`

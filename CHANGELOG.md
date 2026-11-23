@@ -6,6 +6,13 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.13.0)
 
+### 23/11/2026: documents of batch 1.13.7 (batch 1.13.8)
+
+- **Request** (Klaatou): update the documents for batch 1.13.7 (first image of the video screens, click out of range).
+- **Done**: `docs/fr/MANUEL.md` and `docs/en/MANUAL.md` section 5.21 (opening paragraph, preview, click out of range, tests, not tried) and the appendix (section 13, block "1.13.7"); `docs/fr/REFERENCE_JSON.md` and `docs/en/REFERENCE_JSON.md` section 11.4 (row `radius`); `docs/fr/HISTORIQUE.md` and `docs/en/HISTORY.md`: one row.
+- **Checked**: `verif_trad` on the three pairs: 0 errors; `readme_liens` passes.
+- Files: `docs/fr/MANUEL.md`, `docs/en/MANUAL.md`, `docs/fr/REFERENCE_JSON.md`, `docs/en/REFERENCE_JSON.md`, `docs/fr/HISTORIQUE.md`, `docs/en/HISTORY.md`, `VERSION`, both CHANGELOGs; `dist\` is unchanged.
+
 ### 23/11/2026: video screens show their first image, and a click starts them out of range (batch 1.13.7)
 
 - **Request** (Klaatou): on arriving in a region, video screens were black boxes, not even with the right proportions; they should show their first image (started but paused), and a click should start a screen even out of range.

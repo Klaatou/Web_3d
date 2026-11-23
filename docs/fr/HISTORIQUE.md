@@ -346,6 +346,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 22/11/2026 |  | après 1.13.0 | Lot 1.13.3 : le flux choisi sur une radio est retenu par zone (retour dans la zone, rechargement, visite suivante) : `template.html` (`pickIdx`, `pickSave`), clé `glb2html_radio_`, test `radio_memoire` |
 | 22/11/2026 |  | après 1.13.0 | Lot 1.13.4 : documents des lots 1.13.2 et 1.13.3 (manuel § 5.19, § 7.13, § 7.66 et annexe § 13, historiques) |
 | 22/11/2026 |  | après 1.13.0 | Lot 1.13.5 : nom de zone selon la langue (`labels`) et titre de la vidéo dans la bulle d'un lien YouTube (`linkTitle`, option `--link-titles`) ; lot 1.13.6 : leurs documents (`REFERENCE_JSON.md` § 11.4, manuel, annexe § 13, historiques) |
+| 23/11/2026 |  | après 1.13.0 | Lot 1.13.7 : première image des écrans vidéo vus (en pause, aux bonnes proportions) et clic hors de portée pour les lancer, sans son ; lot 1.13.8 : leurs documents (manuel § 5.21, `REFERENCE_JSON.md` § 11.4, annexe § 13, historiques) |
 ## Commandes utiles
 
 - Voir l'historique : `git log --oneline --decorate`

@@ -6,6 +6,13 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.13.0)
 
+### 23/11/2026 : documents du lot 1.13.7 (lot 1.13.8)
+
+- **Demande** (Klaatou) : mettre à jour les documents du lot 1.13.7 (première image des écrans vidéo, clic hors de portée).
+- **Fait** : `docs/fr/MANUEL.md` et `docs/en/MANUAL.md` § 5.21 (paragraphe d'ouverture, aperçu, clic hors de portée, tests, non essayé) et l'annexe (§ 13, bloc « 1.13.7 ») ; `docs/fr/REFERENCE_JSON.md` et `docs/en/REFERENCE_JSON.md` § 11.4 (ligne `radius`) ; `docs/fr/HISTORIQUE.md` et `docs/en/HISTORY.md` : une ligne.
+- **Vérifié** : `verif_trad` sur les trois paires : 0 erreur ; `readme_liens` passe.
+- Fichiers : `docs/fr/MANUEL.md`, `docs/en/MANUAL.md`, `docs/fr/REFERENCE_JSON.md`, `docs/en/REFERENCE_JSON.md`, `docs/fr/HISTORIQUE.md`, `docs/en/HISTORY.md`, `VERSION`, les deux CHANGELOG ; `dist\` est inchangé.
+
 ### 23/11/2026 : les écrans vidéo montrent leur première image, et un clic les lance hors de portée (lot 1.13.7)
 
 - **Demande** (Klaatou) : en arrivant dans une région, les écrans vidéo étaient des pavés noirs, même pas aux bonnes proportions ; ils doivent montrer leur première image (démarrés mais en pause), et un clic doit lancer un écran même hors de portée.
