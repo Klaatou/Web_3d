@@ -85,7 +85,7 @@ async def aller(pg, x, z, yaw=0):
 
 DIAG = "() => Object.fromEntries(window.__v.videoDiag().map(d => [d.id, d]))"
 ELEM = """(id) => { let r = null; window.__v.scene.traverse(n => { const s = n.userData && n.userData.vid; if (s && n.parent && n.parent.userData.zoneId === id) r = { ready: s.ready, failed: s.failed, vis: n.visible, sy: n.scale.y, sx: n.scale.x,
-    v: s.v ? { paused: s.v.paused, muted: s.v.muted, vol: s.v.volume, loop: s.v.loop, t: s.v.currentTime, w: s.v.videoWidth } : null }; }); return r; }"""
+    v: s.v ? { paused: s.v.paused, muted: s.v.muted, vol: s.v.volume, loop: s.v.loop, t: s.v.currentTime, w: s.v.videoWidth, preload: s.v.preload } : null }; }); return r; }"""
 
 
 async def etat(pg, i):
@@ -143,14 +143,28 @@ async def main():
             py = g2h.clean_zones(test, "private")
             rapport(js == py, "JavaScript (cleanZone) et Python (clean_zones) : meme resultat pour la zone video", (js, py))
             rapport(js[0]["radius"] == 20 and js[1]["radius"] == 200 and js[1]["w"] == 10 and js[1]["h"] == 6 and js[2]["radius"] == 0.5 and js[2]["w"] == 0.1 and js[2]["h"] == 0, "bornes : portee 20 par defaut (0,5 a 200), largeur 0,1 a 10, hauteur 0 a 6", js)
+            reqs.clear()   # 1.13.7 : la vue d'ensemble du chargement a pu montrer (et donc charger) tous les ecrans ; on compte a partir d'ici, en promenade
             await pg.evaluate("(l) => window.__v.setZones(l)", zones())
             await pg.wait_for_timeout(300)
 
-            # rien n'est demande hors de portee
-            hors = [u for u in reqs if "medias/" in u]
-            rapport(not hors, "hors de portee : aucun fichier video demande", hors)
+            # 1.13.7 : hors de portee, un ecran vu montre sa premiere image (en pause, aux proportions de la video, rien ne joue) ; un ecran derriere soi ne demande rien
+            ok = await attendre(pg, "clip", "pause")
             e0 = await pg.evaluate(ELEM, "clip")
-            rapport(await etat(pg, "clip") == "wait" and e0 and e0["v"] is None, "hors de portee : aucun lecteur cree (etat : pas encore charge)", (await pg.evaluate(DIAG), e0))
+            rapport(ok and e0 and e0["ready"] and e0["v"]["paused"] and e0["v"]["w"] == 320 and abs(e0["sy"] - 2.4 * 180 / 320) < 0.01, "hors de portee, ecran vu : premiere image chargee, en pause, aux proportions de la video", e0)
+            rapport(e0["v"]["preload"] == "metadata", "hors de portee : apercu par le debut du fichier seulement (preload metadata)", e0)
+            try:   # la premiere image est dessinee (mire de couleurs au centre), pas le pave sombre
+                from PIL import Image
+                import io
+                await pg.wait_for_timeout(300)
+                im = Image.open(io.BytesIO(await pg.screenshot())).convert("RGB"); W, H = im.size
+                cols = {(r // 32, g // 32, b // 32) for r, g, b in im.crop((W // 2 - 40, H // 2 - 20, W // 2 + 40, H // 2 + 20)).getdata()}
+                rapport(len(cols) >= 5, "hors de portee : la premiere image est dessinee a l'ecran (couleurs variees au centre)", len(cols))
+            except ImportError:
+                print("[--]    Pillow absent : controle des pixels ignore")
+            rapport(not await pg.evaluate("window.__plays.length"), "hors de portee : aucune lecture lancee", await pg.evaluate("window.__plays"))
+            em = [await pg.evaluate(ELEM, "m%d" % k) for k in range(10)]
+            el = await pg.evaluate(ELEM, "loin")
+            rapport(all(e and e["v"] is None for e in em) and el["v"] is None and not any("loin" in u for u in reqs), "ecrans hors du champ (derriere soi, sur le cote) : aucun lecteur cree, rien demande", (em, el))
 
             # a portee : nom nu -> medias/clip.mp4 absent, puis medias/clip.webm ; joue muet en boucle
             await aller(pg, 0, -14, 0)
@@ -161,7 +175,7 @@ async def main():
             e1 = await pg.evaluate(ELEM, "clip"); await pg.wait_for_timeout(800); e2 = await pg.evaluate(ELEM, "clip")
             rapport(e1 and e1["v"] and e1["v"]["muted"] and e1["v"]["loop"] and not e1["v"]["paused"] and e2["v"]["t"] != e1["v"]["t"], "lecture muette, en boucle, le temps avance", (e1, e2))
             rapport(abs(e2["sy"] - 2.4 * 180 / 320) < 0.01 and e2["v"]["w"] == 320, "hauteur d'apres le rapport de la video (h = 0)", e2)
-            rapport(not any("loin" in u for u in reqs), "l'ecran lointain n'a toujours rien demande", [u for u in reqs if "loin" in u])
+            rapport(await etat(pg, "loin") in ("wait", "pause"), "l'ecran lointain (hors de portee) ne joue pas", await pg.evaluate(DIAG))
 
             # la video est bien dessinee a l'ecran : des couleurs variees au centre (la mire d'essai), pas le sombre d'attente
             try:
@@ -202,6 +216,23 @@ async def main():
             await aller(pg, 0, -14, 0)
             await pg.mouse.click(cx, cy); await pg.wait_for_timeout(300); await pg.mouse.click(cx, cy); await pg.wait_for_timeout(300)
 
+            # 1.13.7 : hors de portee, un clic lance l'ecran (sans son) ; un second clic l'arrete ; hors du champ, la lecture lancee s'arrete et ne repart pas seule
+            await aller(pg, 0, 4, 0)   # 24 m de l'ecran, portee 12
+            rapport(await attendre(pg, "clip", "pause", 4000), "hors de portee : en pause")
+            await pg.mouse.click(cx, cy)
+            rapport(await attendre(pg, "clip", "play", 3000), "hors de portee : un clic lance l'ecran", await pg.evaluate(DIAG))
+            await pg.mouse.click(cx, cy); await pg.wait_for_timeout(400)
+            rapport((await pg.evaluate(ELEM, "clip"))["v"]["paused"], "hors de portee : un second clic l'arrete")
+            await pg.wait_for_timeout(1200)
+            rapport(await etat(pg, "clip") == "pause", "arretee hors de portee : elle ne repart pas seule", await etat(pg, "clip"))
+            await pg.mouse.click(cx, cy); await attendre(pg, "clip", "play", 3000)
+            await aller(pg, 0, 4, 3.14159)
+            rapport(await attendre(pg, "clip", "pause", 4000), "lancee hors de portee, puis dos tourne : pause")
+            await aller(pg, 0, 4, 0); await pg.wait_for_timeout(1500)
+            rapport(await etat(pg, "clip") == "pause", "de nouveau face a l'ecran, hors de portee : elle ne repart pas sans nouveau clic", await etat(pg, "clip"))
+            await aller(pg, 0, -14, 0)
+            rapport(await attendre(pg, "clip", "play", 4000), "de retour a portee : lecture comme avant")
+
             # vue libre : la camera reste devant l'ecran, c'est le visiteur qui s'eloigne -> pause ; il revient -> reprise
             await pg.evaluate("window.__v.setView('free')"); await pg.wait_for_timeout(300)
             c0 = (await pg.evaluate("window.__v.getWalk()"))["cam"]
@@ -229,6 +260,19 @@ async def main():
             await pg.evaluate("window.__v.videoSound = () => 0"); await pg.wait_for_timeout(500)
             m = [(await pg.evaluate(ELEM, i))["v"] for i in ("s1", "s2", "s3")]
             rapport(all(x["muted"] for x in m) and all(not x["paused"] for x in m), "niveau 0 : les trois ecrans jouent, muets", m)
+            # 1.13.7 : un ecran a son lance hors de portee joue sans son
+            await pg.evaluate("window.__v.videoSound = () => 0.8")
+            await aller(pg, 80, 6, 0)   # 26 m de s1 (portee 12)
+            await attendre(pg, "s1", "pause", 4000)
+            await pg.mouse.click(cx, cy)
+            ok = await attendre(pg, "s1", "play", 3000); await pg.wait_for_timeout(500)
+            e = await pg.evaluate(ELEM, "s1")
+            rapport(ok and e["v"]["muted"], "ecran a son lance hors de portee : il joue, muet", e)
+            await pg.mouse.click(cx, cy); await pg.wait_for_timeout(300)
+            await pg.evaluate("window.__v.videoSound = () => 0")
+            await aller(pg, 82, -14, 0)
+            for i in ("s1", "s2", "s3"):
+                await attendre(pg, i, "play")
             await pg.mouse.click(10, 10)   # geste de l'utilisateur (la politique du navigateur l'exige pour le son)
             await pg.evaluate("window.__v.videoSound = () => 0.8"); await pg.wait_for_timeout(700)
             e = [(await pg.evaluate(ELEM, i))["v"] for i in ("s1", "s2", "s3")]

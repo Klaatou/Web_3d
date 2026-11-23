@@ -6,6 +6,17 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.13.0)
 
+### 23/11/2026: video screens show their first image, and a click starts them out of range (batch 1.13.7)
+
+- **Request** (Klaatou): on arriving in a region, video screens were black boxes, not even with the right proportions; they should show their first image (started but paused), and a click should start a screen even out of range.
+- **Cause**: `src/core.js`, `videoPlane`: the screen was created dark (`color: 0x111111`) in 16:9, and the video was only created at the first play request, i.e. within `radius` and in view.
+- **Done**: a screen in view and closer than `zoneInfoDist` (150 m by default) loads the start of its file (`preload="metadata"`, 4 loads at a time at most) without playing: its first image and its proportions replace the dark box; a screen behind the visitor or out of view loads nothing. The current image of a paused video is now sent to the graphics card (a `VideoTexture` only follows played frames: without this the preview stayed dark). Out of range, a click on a screen starts it, without sound, as long as it stays in view; a second click stops it; once out of view it stops and does not start again without a new click. Within range, nothing changes.
+- **Tests**: `tests/zone_video.py` updated: the checks "nothing requested out of range" encoded the replaced behavior; they become: first image loaded, paused, right proportions, drawn on screen (pixels), `preload` metadata, no play, nothing requested for screens out of view; new checks for the click out of range (start, second click stops, does not restart by itself, stops when turning away, no sound for a sound screen).
+- **Checked** (sandbox, Chromium): `zone_video`, `zone_video_liste`, `editeur_video_action`, `arbitrage_son`, `lien_image`, `zones_unifiees`, `zone_labels`, `v24`, `v34`, `v40`, `build_reference`, `samples`, `dist_a_jour`, `i18n`, `doc_options` and `readme_liens` pass.
+- **Not tried**: Edge, Windows; the network volume of a large real file with `preload="metadata"` (only a small test file here).
+- **Remaining to update**: the manual (section on video screens), at the validation of the batch.
+- Files: `src/core.js`, `tests/zone_video.py`, `VERSION`, both CHANGELOGs; `dist\` and `VERSIONS.json` come from `python build.py`.
+
 ### 22/11/2026: documents of batch 1.13.5 (batch 1.13.6)
 
 - **Request** (Klaatou): fix the documents concerned by batch 1.13.5 (zone names by language, title of a YouTube link).

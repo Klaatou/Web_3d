@@ -2380,12 +2380,12 @@ function createViewer(container, cfg0, loader) {
     }
     if (n) { dirty = true; animTicks++; }
   }
-  // 1.12.7 : zone video : un ecran sur un mur (comme un tableau « image »), dont la texture est un fichier video (mp4, webm...). Rien n'est telecharge avant d'etre a portee
-  // (radius) et dans le champ de la camera ; la video joue alors, sans son, en boucle, et se met en pause quand on s'eloigne ou qu'on regarde ailleurs. Le nom du fichier se
+  // 1.12.7 : zone video : un ecran sur un mur (comme un tableau « image »), dont la texture est un fichier video (mp4, webm...). 1.13.7 : vu (dans le champ, a moins de zoneInfoDist), l'ecran charge
+  // le debut du fichier et montre sa premiere image ; a portee (radius) et dans le champ de la camera, ou apres un clic, la video joue, sans son, en boucle, et se met en pause quand on s'eloigne ou qu'on regarde ailleurs. Le nom du fichier se
   // cherche comme celui d'une image (medias/ puis dossier de la region ; sans extension : .mp4, .webm, .m4v, .ogv). Au plus VID_MAX videos jouent a la fois : les plus proches.
   // Une video d'un autre site doit autoriser le CORS, sinon WebGL refuse la texture.
   const vidPlanes = new Map(), vidFrustum = new THREE.Frustum(), vidM = new THREE.Matrix4(), vidP = new THREE.Vector3(), vidEye = new THREE.Vector3(); let videoSound = null, onVideoTalk = null, onVideoAct = null, vidTalkId = '', vidTalkG = 0, vidLast = 0, vidDec = 0, vidHover = null, vidAim = null;   // 1.12.9 : videoSound() rend le niveau sonore voulu (0 a 1) ; 0 = muet (reglage Son coupe, pas encore de geste de l'utilisateur) ; fourni par la page
-  const VID_MAX = 8, VID_EXTS = ['mp4', 'webm', 'm4v', 'ogv'];
+  const VID_MAX = 8, VID_PEEK = 4, VID_EXTS = ['mp4', 'webm', 'm4v', 'ogv'];
   function videoPlane(z) {
     const mat = new THREE.MeshBasicMaterial({ color: 0x111111, transparent: true });   // sombre tant que la video n'a pas de premiere image
     const pl = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat); backOf(pl);
@@ -2479,7 +2479,8 @@ function createViewer(container, cfg0, loader) {
     const ensure = () => {
       if (st.v || st.failed || st.dead) return;
       const v = document.createElement('video');
-      v.muted = true; v.defaultMuted = true; v.loop = true; v.playsInline = true; v.preload = 'auto'; v.crossOrigin = 'anonymous';
+      v.muted = true; v.defaultMuted = true; v.loop = true; v.playsInline = true; v.preload = 'metadata';   // 1.13.7 : le debut du fichier seulement, assez pour la premiere image ; la lecture charge le reste
+      v.crossOrigin = 'anonymous';
       v.setAttribute('muted', ''); v.setAttribute('playsinline', '');
       st.v = v;
       v.addEventListener('error', () => { if (!st.dead && st.tracks) nextCand(); });   // fichier absent ou illisible : emplacement suivant, puis piste suivante
@@ -2491,6 +2492,7 @@ function createViewer(container, cfg0, loader) {
           const tex = new THREE.VideoTexture(v); tex.colorSpace = THREE.SRGBColorSpace;
           mat.map = tex; mat.color.set(0xffffff); mat.needsUpdate = true;
         }
+        if (mat.map) mat.map.needsUpdate = true;   // 1.13.7 : video en pause (apercu) : l'image courante est envoyee quand meme (VideoTexture ne suit que les images jouees)
         pl.scale.y = hOf(v.videoWidth, v.videoHeight); place(); dirty = true;   // chaque piste a son rapport largeur / hauteur
         if (st.want) play();
       });
@@ -2501,6 +2503,7 @@ function createViewer(container, cfg0, loader) {
         }, e => { console.warn(tr('core.video.list', z.label || z.id, e && e.message || e)); if (!st.dead) absent(); });
       } else nextCand();
     };
+    st.peek = ensure;   // 1.13.7 : ecran vu (dans le champ, a moins de zoneInfoDist) : la video se charge sans jouer, sa premiere image et ses proportions remplacent le pave sombre
     st.set = on => {   // demande de lecture (a portee et visible) ou de pause
       st.want = on;
       if (on) { ensure(); if (st.ready && st.v.paused) play(); } else if (st.v && st.ready && !st.v.paused) st.v.pause();
@@ -2522,17 +2525,19 @@ function createViewer(container, cfg0, loader) {
       for (const pl of [...vidPlanes.keys()]) { let o = pl; while (o.parent) o = o.parent; if (o !== scene) vidPlanes.delete(pl); }   // ecran retire de la scene
       if (!vidPlanes.size) return;
       camera.updateMatrixWorld(); vidM.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse); vidFrustum.setFromProjectionMatrix(vidM);
-      const cand = [];
+      const cand = []; let peeks = 0;
+      for (const { st } of vidPlanes.values()) if (st.v && !st.ready && !st.failed) peeks++;   // 1.13.7 : chargements en cours
       for (const [pl, { z, st }] of vidPlanes) {
         if (st.failed) continue;
         let d = 0, want = false;
-        if (pl.visible && !document.hidden) { pl.getWorldPosition(vidP); d = vidP.distanceTo(walking ? vidEye.set(W.pos.x, W.pos.y + 1.7, W.pos.z) : camera.position); if (d > z.radius) st.off = false; want = d <= z.radius && !st.off && vidFrustum.intersectsObject(pl); }   // st.off : arretee par un clic ; reprend seulement par un autre clic, ou en revenant apres etre sorti de la portee
-        if (want) cand.push([d, st, z]); else if (st.want && now - st.seen > 1000) st.set(false);   // une seconde de grace : un regard de cote ne coupe pas la video
+        if (pl.visible && !document.hidden) { pl.getWorldPosition(vidP); d = vidP.distanceTo(walking ? vidEye.set(W.pos.x, W.pos.y + 1.7, W.pos.z) : camera.position); if (d > z.radius) st.off = false; const inV = vidFrustum.intersectsObject(pl); want = (d <= z.radius || st.go) && !st.off && inV;
+          if (!want && inV && !st.v && st.peek && d <= zoneInfoDist() && peeks < VID_PEEK) { peeks++; st.peek(); } }   // 1.13.7 : st.go = lancee par un clic hors de portee ; apercu (premiere image) des ecrans vus, VID_PEEK chargements a la fois   // st.off : arretee par un clic ; reprend seulement par un autre clic, ou en revenant apres etre sorti de la portee
+        if (want) cand.push([d, st, z]); else if (st.want && now - st.seen > 1000) { st.go = false; st.set(false); }   // une seconde de grace : un regard de cote ne coupe pas la video
       }
       cand.sort((a, b) => a[0] - b[0]);
       cand.forEach(([, st], i) => { if (i < VID_MAX) { st.seen = now; if (!st.want) st.set(true); } else if (st.want) st.set(false); });
       // son (1.12.9) : seul l'ecran a son le plus proche parle, volume = (1 - distance / portee) x niveau de la page ; les autres restent muets
-      const talk = cand.slice(0, VID_MAX).find(c => c[2].sound);
+      const talk = cand.slice(0, VID_MAX).find(c => c[2].sound && c[0] <= c[2].radius);   // 1.13.7 : un ecran lance hors de portee joue sans son
       // 1.12.21 : l'ecran a son le plus proche est signale a la page (onVideoTalk : zone, gain 0.05 a 1, distance) a chaque changement ; la page decide (arbitrage radio / musique / video) puis videoSound() rend le niveau
       const tId = talk ? talk[2].id : '', tG = talk ? Math.max(0.05, 1 - talk[0] / talk[2].radius) : 0;
       if (tId !== vidTalkId || Math.abs(tG - vidTalkG) > 0.01) { vidTalkId = tId; vidTalkG = tG; if (onVideoTalk) onVideoTalk(talk ? talk[2] : null, tG, talk ? talk[0] : 0); }
@@ -2553,8 +2558,7 @@ function createViewer(container, cfg0, loader) {
     for (const { st } of vidPlanes.values()) { const v = st.v; if (v && st.ready && !v.paused && v.currentTime !== st.ct) { st.ct = v.currentTime; n++; } }
     if (n) dirty = true;   // nouvelle image video : la scene est redessinee (la boucle ne dessine qu'a la demande)
   }
-  // clic sur un ecran : pause si elle joue, lecture si elle a ete arretee par un clic ; sans effet hors portee, avant le chargement ou apres un echec
-  // clic sur un ecran : pause si elle joue, lecture si elle a ete arretee par un clic ; sans effet hors portee, avant le chargement ou apres un echec.
+    // clic sur un ecran : pause si elle joue, lecture si elle a ete arretee par un clic, ou lancee hors de portee (1.13.7) ; sans effet apres un echec.
   // 1.12.13 : clic sur la barre de pistes (bar = vrai) : u < 0.55 rien, jusqu'a 0.69 precedente, jusqu'a 0.83 pause / lecture, au-dela suivante (memes bornes que le dessin de la barre)
   function videoClick(id, u, bar) {
     for (const { z, st } of vidPlanes.values()) {
@@ -2562,9 +2566,10 @@ function createViewer(container, cfg0, loader) {
       const now = performance.now(); st.barUntil = now + 3000;
       if (bar && u < 0.55) { if (z.act === 'url') fireZone(z, 'act'); return; }   // 1.12.42 : le titre de la barre est le lien de l'ecran
       if (bar && st.tracks && st.tracks.length < 2) return;   // barre d'une seule video (titre-lien seulement) : pas de boutons
-      if (bar && (u < 0.69 || u >= 0.83)) { if (st.step) { st.off = false; vidDec = 0; vidLast = 0; st.step(u < 0.69 ? -1 : 1); dirty = true; if (onVideoAct) onVideoAct(z); } return; }   // 1.12.21 : onVideoAct : le visiteur lance un ecran (la page le rend prioritaire)
+      if (bar && (u < 0.69 || u >= 0.83)) { if (st.step) { st.off = false; st.go = true; vidDec = 0; vidLast = 0; st.step(u < 0.69 ? -1 : 1); dirty = true; if (onVideoAct) onVideoAct(z); } return; }   // 1.12.21 : onVideoAct : le visiteur lance un ecran (la page le rend prioritaire)
       if (st.off) { st.off = false; vidDec = 0; vidLast = 0; if (onVideoAct) onVideoAct(z); }   // la decision de lecture est refaite tout de suite
-      else if (st.want) { st.off = true; st.set(false); }
+      else if (st.want) { st.off = true; st.go = false; st.set(false); }
+      else { st.go = true; vidDec = 0; vidLast = 0; }   // 1.13.7 : hors de portee, un clic lance l'ecran (sans son) tant qu'il reste dans le champ ; un autre clic l'arrete
       dirty = true; return;
     }
   }

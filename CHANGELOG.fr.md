@@ -6,6 +6,17 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.13.0)
 
+### 23/11/2026 : les écrans vidéo montrent leur première image, et un clic les lance hors de portée (lot 1.13.7)
+
+- **Demande** (Klaatou) : en arrivant dans une région, les écrans vidéo étaient des pavés noirs, même pas aux bonnes proportions ; ils doivent montrer leur première image (démarrés mais en pause), et un clic doit lancer un écran même hors de portée.
+- **Cause** : `src/core.js`, `videoPlane` : l'écran était créé sombre (`color: 0x111111`) en 16/9, et la vidéo n'était créée qu'à la première demande de lecture, c'est-à-dire à portée (`radius`) et dans le champ.
+- **Fait** : un écran dans le champ et à moins de `zoneInfoDist` (150 m par défaut) charge le début de son fichier (`preload="metadata"`, 4 chargements à la fois au plus) sans jouer : sa première image et ses proportions remplacent le pavé sombre ; un écran derrière le visiteur ou hors du champ ne charge rien. L'image courante d'une vidéo en pause est maintenant envoyée à la carte graphique (une `VideoTexture` ne suit que les images jouées : sans cela l'aperçu restait sombre). Hors de portée, un clic sur un écran le lance, sans son, tant qu'il reste dans le champ ; un second clic l'arrête ; sorti du champ, il s'arrête et ne repart pas sans nouveau clic. À portée, rien ne change.
+- **Tests** : `tests/zone_video.py` mis à jour : les contrôles « rien n'est demandé hors de portée » décrivaient le comportement remplacé ; ils deviennent : première image chargée, en pause, aux bonnes proportions, dessinée à l'écran (pixels), `preload` metadata, aucune lecture, rien de demandé pour les écrans hors du champ ; nouveaux contrôles du clic hors de portée (lancement, second clic qui arrête, pas de reprise seule, arrêt en tournant le dos, pas de son pour un écran à son).
+- **Vérifié** (bac à sable, Chromium) : `zone_video`, `zone_video_liste`, `editeur_video_action`, `arbitrage_son`, `lien_image`, `zones_unifiees`, `zone_labels`, `v24`, `v34`, `v40`, `build_reference`, `samples`, `dist_a_jour`, `i18n`, `doc_options` et `readme_liens` passent.
+- **Non essayé** : Edge, Windows ; le volume réseau d'un gros fichier réel avec `preload="metadata"` (seulement un petit fichier d'essai ici).
+- **Reste à mettre à jour** : le manuel (section des écrans vidéo), à la validation du lot.
+- Fichiers : `src/core.js`, `tests/zone_video.py`, `VERSION`, les deux CHANGELOG ; `dist\` et `VERSIONS.json` viennent de `python build.py`.
+
 ### 22/11/2026 : documents du lot 1.13.5 (lot 1.13.6)
 
 - **Demande** (Klaatou) : corriger les documents concernés par le lot 1.13.5 (noms de zone selon la langue, titre d'un lien YouTube).
