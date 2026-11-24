@@ -1334,6 +1334,7 @@
  "viewer.kind.model": "Model",
  "viewer.zone.t.model": "3D model (separate .glb file)",
  "viewer.zf.model": "Model file (.glb)",
+ "viewer.zf.model.dirbtn": "Choose the region folder (model preview)",
  "viewer.zf.mscale": "Size (1 = as is)",
  "viewer.zf.pitch": "Tilt forward / back (degrees)",
  "viewer.zf.roll": "Tilt sideways (degrees)",

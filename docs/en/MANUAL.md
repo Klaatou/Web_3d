@@ -889,6 +889,7 @@ A `model` zone places a **separate `.glb` file** (a radio set, a statue, a piece
   - `x`, `y`, `z` (or `pos`) are the **origin of the `.glb`**.
   - The "Model file" field also exists in the link, portal, command, radio and music forms: the model carries the action there.
 - **The file** is looked for like a picture: relative to the region folder, or a full address. Not found or unreadable: nothing is placed and the console writes a warning (no error). Page opened from the disk (`file://`): the browser refuses to read it, as for track lists.
+  - **In the viewer (1.13.12)**, the model is read from the **region folder** that you pick with the "Choose the region folder (model preview)" button of the form (Edge or Chrome, as for pictures): the file in the folder comes before one that would be next to `glb-viewer.html`, a subfolder is accepted, and the choice is remembered. With no folder chosen, the viewer looks for the model next to `glb-viewer.html` (viewer served over http). Model not found: the zone is placed anyway and exported correctly, only the model does not show in the viewer.
 - **Decoration or action carrier**:
   - `model` alone is a **decoration**: no radius, no marker, no name (`radius`, `showName` and `cone` are reported as ignored).
   - With `link`, `portal`, `ha`, `radio` or `music`, it **carries the action**: clickable like a picture, cone if `cone` is true, trigger by walking (`trigger`). Example: a radio set placed on a radio zone.
@@ -2379,6 +2380,10 @@ The detail, version by version, is in `HISTORY.md` (narrative) and `CHANGELOG.md
 **Additions of 1.13.11 (batch 1.13.11)**
 
 - **viewer editor**: fields "Displayed name in French" and "Displayed name in English" (`labels`) and "Link title" (`linkTitle`) in the form of a zone (1.13.11, § 5)
+
+**Additions of 1.13.12 (batch 1.13.12)**
+
+- **viewer**: the model of a `model` zone is read from the region folder picked with the button of the form, like pictures; no need to copy the `.glb` next to `glb-viewer.html` any more (1.13.12, § 5.23)
 
 Everything below is in **1.1.0** (released on 31/10/2026). The detail, batch by batch, is in `CHANGELOG.md`.
 

@@ -458,6 +458,7 @@ function zoneDefaults(type) {
 }
 function modelFields(d, z, upd, inp) {   // 1.12.39 : taille, inclinaisons (degres a l'ecran, radians dans le fichier comme yaw) et solide d'un modele
   if (z.type !== 'model' && !z.mdl) return;
+  const bm = document.createElement('button'); bm.className = 'wide'; bm.textContent = tr('viewer.zf.model.dirbtn'); bm.onclick = () => chooseImagesDir(); d.appendChild(bm);   // 1.13.12 : le modele se lit dans le dossier de la region (comme les images)
   const deg = v => Math.round((v || 0) * 180 / Math.PI * 10) / 10;
   d.appendChild(inp(tr('viewer.zf.mscale'), 'number', z.mscale === undefined ? 1 : z.mscale, v => upd({ mscale: v }, true)));
   d.appendChild(inp(tr('viewer.zf.pitch'), 'number', deg(z.pitch), v => upd({ pitch: v * Math.PI / 180 }, true)));

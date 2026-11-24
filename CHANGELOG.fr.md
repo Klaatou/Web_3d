@@ -6,6 +6,16 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.13.0)
 
+### 24/11/2026 : viewer : le modèle d'une zone `model` se lit dans le dossier de la région (lot 1.13.12)
+
+- **Demande** (Klaatou) : une zone image se lit dans le dossier de la région choisi dans le viewer (par exemple `medias`) ; un modèle `.glb` non : il fallait le copier à côté de `glb-viewer.html` et servir le viewer en http.
+- **Cause** : `src/core.js`, `mdlLoad` : le modèle était chargé par une simple requête web (`freshFetch(imageUrl(...))`) et ne passait pas par le lecteur de dossier (`imageResolver`) que le viewer donne aux images.
+- **Fait** : dans le viewer, `mdlLoad` demande d'abord le fichier au dossier de la région choisi (même lecteur que les images, sous-dossier accepté) et garde la requête web habituelle si le dossier n'est pas choisi ou n'a pas le fichier. La page publiée n'a pas de lecteur de dossier : rien ne change pour elle. Le bouton « Choisir le dossier de la région (aperçu du modèle) » apparaît dans la fiche de toute zone qui porte un modèle (zone `model`, lien, portail, commande, radio, musique avec un `model`) ; le dossier est retenu comme pour les images. Deux textes dans `fr.json` et `en.json`.
+- **Tests** : nouveau `tests/modele_dossier.py` (sans dossier : seul le modèle à côté de la page est lu, un fichier absent n'affiche rien ; mauvais dossier refusé ; bon dossier : le fichier du dossier passe avant celui de la page, sous-dossier lu, le modèle absent du dossier garde l'adresse habituelle ; rechargement : dossier retenu). 5 contrôles échouent sans le lot.
+- **Documents** : manuel § 5.23 et annexe, `PROCEDURES_SIMPLES.md` § 18 (étape du viewer corrigée, **nouvelle variante sans le viewer avec `glb2html.py`**), historiques.
+- **Non essayé** : Edge, Windows ; le vrai sélecteur de dossier (remplacé ici par un dossier OPFS, comme pour les images) ; un `.glb` de plusieurs Mo.
+- Fichiers : `src/core.js`, `src/viewer_tpl.html`, `src/i18n/fr.json`, `src/i18n/en.json`, `tests/modele_dossier.py` (nouveau), `docs/fr/MANUEL.md`, `docs/en/MANUAL.md`, `docs/fr/PROCEDURES_SIMPLES.md`, `docs/en/SIMPLE_PROCEDURES.md`, historiques FR et EN, `VERSION`, les deux CHANGELOG ; `dist\` et `VERSIONS.json` viennent de `python build.py`.
+
 ### 24/11/2026 : éditeur du viewer : nom par langue et titre du lien (lot 1.13.11)
 
 - **Demande** (Klaatou) : l'éditeur du viewer ne montrait que le `label` brut : pas de champ pour `labels` (nom par langue) ni pour `linkTitle` (titre du lien, 1.13.5).

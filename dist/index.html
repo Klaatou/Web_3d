@@ -546,7 +546,7 @@ function diagShow(text, status, select) {
 function diagText(viewer, extra) {
   const x = extra || {}, L = (k, v) => tr('core.diag.line', k, v), out = [tr('core.diag.title')];
   const nb = (v, d) => (Number.isFinite(v) ? i18nNum(v, d || 0) : '?');   // nombres à la manière de la langue (virgule en français)
-  out.push(L(tr('core.diag.version'), '1.13.7 (23/11/2026)' + (x.cfgVersion && x.cfgVersion !== '1.13.7 (23/11/2026)' ? ' ; ' + tr('core.diag.cfgver', x.cfgVersion) : '')));
+  out.push(L(tr('core.diag.version'), '1.13.12 (24/11/2026)' + (x.cfgVersion && x.cfgVersion !== '1.13.12 (24/11/2026)' ? ' ; ' + tr('core.diag.cfgver', x.cfgVersion) : '')));
   out.push(L(tr('core.diag.date'), new Date().toLocaleString(({ fr: 'fr-FR', en: 'en-GB' })[LANG]) + ' ; ' + tr('core.diag.uptime', nb(performance.now() / 1000))));
   out.push(L(tr('core.diag.page'), location.protocol + (location.host ? '//ADRESSE' : '//') + location.pathname + location.search));
   out.push(L(tr('core.diag.lang'), LANG + ' · ' + ((navigator.languages || []).join(',') || navigator.language || '?') + ' · ' + KB.layout().toUpperCase()));
@@ -3162,9 +3162,13 @@ function createViewer(container, cfg0, loader) {
   async function mdlLoad(e) {
     const gen = mdlGen; e.st = 'loading';
     try {
-      const r = await freshFetch(imageUrl(e.z.mdl));
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      const gltf = await loader.parseAsync(await r.arrayBuffer(), '');
+      let buf = null;
+      if (imageResolver) {   // 1.13.12 : dans le viewer, le modele se lit d'abord dans le dossier de la region choisi (comme les images) ; absent ou refuse : adresse habituelle
+        let u = null; try { u = await imageResolver(e.z.mdl); } catch (_) { u = null; }
+        if (u) { try { const q = await fetch(u); if (q.ok) buf = await q.arrayBuffer(); } catch (_) {} URL.revokeObjectURL(u); }
+      }
+      if (!buf) { const r = await freshFetch(imageUrl(e.z.mdl)); if (!r.ok) throw new Error('HTTP ' + r.status); buf = await r.arrayBuffer(); }
+      const gltf = await loader.parseAsync(buf, '');
       if (gen !== mdlGen || mdlState.get(e.z.id) !== e) { disposeObject(gltf.scene); return; }
       mdlReady(e, gltf.scene);
     } catch (err) {
@@ -4738,7 +4742,7 @@ if (C.walk) {
   rsSel.onchange = () => { const si = parseInt(rsSel.value, 10) || 0; RADIO.setIdx(si); };
   sbody.insertBefore(rsSel, lrd);
   RADIO.setSelEl(rsSel);
-  mkLine('verInfo').textContent = tr('page.state.version', '1.13.7 (23/11/2026)', C.version || '?');   // 1.6.17 : version de la page (index.html, ou glb2html.py pour une page autonome) et de la configuration
+  mkLine('verInfo').textContent = tr('page.state.version', '1.13.12 (24/11/2026)', C.version || '?');   // 1.6.17 : version de la page (index.html, ou glb2html.py pour une page autonome) et de la configuration
   // v39 : bouton « Copier le diagnostic » sous le contenu de la fenêtre (reste visible quand elle est réduite) : lignes affichées + diagText (core.js) ;
   // si le navigateur refuse la copie, le texte s'affiche sélectionné dessous (Ctrl+C)
   {

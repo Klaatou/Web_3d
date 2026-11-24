@@ -1334,6 +1334,7 @@
  "viewer.kind.model": "Modèle",
  "viewer.zone.t.model": "Modèle 3D (fichier .glb posé à part)",
  "viewer.zf.model": "Fichier du modèle (.glb)",
+ "viewer.zf.model.dirbtn": "Choisir le dossier de la région (aperçu du modèle)",
  "viewer.zf.mscale": "Taille (1 = telle quelle)",
  "viewer.zf.pitch": "Inclinaison avant / arrière (degrés)",
  "viewer.zf.roll": "Inclinaison sur le côté (degrés)",

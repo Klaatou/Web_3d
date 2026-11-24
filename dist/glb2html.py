@@ -16,8 +16,8 @@ Draco et Meshopt gérés automatiquement (décodeurs intégrés seulement si le 
 """
 from __future__ import annotations
 
-VERSION = "1.13.7 (23/11/2026)"
-SHELL_VERSION = "1.13.7 (23/11/2026)"   # numéro de version de la coquille (index.html) : écrit par build.py, ne change que si la coquille change
+VERSION = "1.13.12 (24/11/2026)"
+SHELL_VERSION = "1.13.12 (24/11/2026)"   # numéro de version de la coquille (index.html) : écrit par build.py, ne change que si la coquille change
 MAP_VERSION = "1.12.39 (21/11/2026)"       # numéro de version de la page de carte (carte.html) : idem
 
 import argparse
@@ -4476,9 +4476,13 @@ function createViewer(container, cfg0, loader) {
   async function mdlLoad(e) {
     const gen = mdlGen; e.st = 'loading';
     try {
-      const r = await freshFetch(imageUrl(e.z.mdl));
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      const gltf = await loader.parseAsync(await r.arrayBuffer(), '');
+      let buf = null;
+      if (imageResolver) {   // 1.13.12 : dans le viewer, le modele se lit d'abord dans le dossier de la region choisi (comme les images) ; absent ou refuse : adresse habituelle
+        let u = null; try { u = await imageResolver(e.z.mdl); } catch (_) { u = null; }
+        if (u) { try { const q = await fetch(u); if (q.ok) buf = await q.arrayBuffer(); } catch (_) {} URL.revokeObjectURL(u); }
+      }
+      if (!buf) { const r = await freshFetch(imageUrl(e.z.mdl)); if (!r.ok) throw new Error('HTTP ' + r.status); buf = await r.arrayBuffer(); }
+      const gltf = await loader.parseAsync(buf, '');
       if (gen !== mdlGen || mdlState.get(e.z.id) !== e) { disposeObject(gltf.scene); return; }
       mdlReady(e, gltf.scene);
     } catch (err) {

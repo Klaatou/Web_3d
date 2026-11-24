@@ -889,6 +889,7 @@ Une zone `model` pose un **fichier `.glb` à part** (un poste de radio, une stat
   - `x`, `y`, `z` (ou `pos`) sont l'**origine du `.glb`**.
   - Le champ « Fichier du modèle » existe aussi dans les fiches lien, portail, commande, radio et musique : le modèle y porte l'action.
 - **Le fichier** se cherche comme une image : relatif au dossier de la région, ou adresse complète. Introuvable ou illisible : rien n'est posé et la console écrit un avertissement (pas d'erreur). Page ouverte depuis le disque (`file://`) : le navigateur refuse la lecture, comme pour les listes de pistes.
+  - **Dans le viewer (1.13.12)**, le modèle se lit dans le **dossier de la région** que tu choisis avec le bouton « Choisir le dossier de la région (aperçu du modèle) » de la fiche (Edge ou Chrome, comme pour les images) : le fichier du dossier passe avant celui qui serait à côté de `glb-viewer.html`, un sous-dossier est accepté, et le choix est retenu. Sans dossier choisi, le viewer cherche le modèle à côté de `glb-viewer.html` (viewer servi en http). Modèle introuvable : la zone est posée quand même et exportée correctement, seul le modèle n'apparaît pas dans le viewer.
 - **Décor ou porteur d'une action** :
   - `model` seul est un **décor** : ni rayon, ni repère, ni nom (`radius`, `showName` et `cone` sont signalés comme ignorés).
   - Avec `link`, `portal`, `ha`, `radio` ou `music`, il **porte l'action** : cliquable comme un tableau, cône si `cone` est vrai, déclenchement en marchant (`trigger`). Exemple : un poste de radio posé sur une zone radio.
@@ -2379,6 +2380,10 @@ Le détail, version par version, est dans `HISTORIQUE.md` (récit) et `CHANGELOG
 **Ajouts de la 1.13.11 (lot 1.13.11)**
 
 - **éditeur du viewer** : champs « Nom affiché en français » et « Nom affiché en anglais » (`labels`) et « Titre du lien » (`linkTitle`) dans la fiche d'une zone (1.13.11, § 5)
+
+**Ajouts de la 1.13.12 (lot 1.13.12)**
+
+- **viewer** : le modèle d'une zone `model` se lit dans le dossier de la région choisi par le bouton de la fiche, comme les images ; plus besoin de copier le `.glb` à côté de `glb-viewer.html` (1.13.12, § 5.23)
 
 Tout ce qui suit est dans la **1.1.0** (publiée le 31/10/2026). Le détail, lot par lot, est dans `CHANGELOG.fr.md`.
 

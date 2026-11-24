@@ -6,6 +6,16 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.13.0)
 
+### 24/11/2026: viewer: the model of a `model` zone is read from the region folder (batch 1.13.12)
+
+- **Request** (Klaatou): a picture zone is read from the region folder picked in the viewer (for example `medias`); a `.glb` model was not: it had to be copied next to `glb-viewer.html` and the viewer served over http.
+- **Cause**: `src/core.js`, `mdlLoad`: the model was loaded by a plain web request (`freshFetch(imageUrl(...))`) and did not go through the folder reader (`imageResolver`) that the viewer gives to pictures.
+- **Done**: in the viewer, `mdlLoad` first asks the picked region folder for the file (same reader as pictures, subfolder accepted) and keeps the usual web request when no folder is picked or the folder does not have the file. The published page has no folder reader: nothing changes for it. The "Choose the region folder (model preview)" button appears in the form of every zone that carries a model (`model` zone, link, portal, command, radio, music with a `model`); the folder is remembered as for pictures. Two texts in `fr.json` and `en.json`.
+- **Tests**: new `tests/modele_dossier.py` (no folder: only the model next to the page is read, a missing file shows nothing; wrong folder refused; right folder: the file in the folder comes before the one next to the page, subfolder read, a model missing from the folder keeps the usual address; reload: folder remembered). 5 checks fail without the batch.
+- **Documents**: manual § 5.23 and annex, `PROCEDURES_SIMPLES.md` § 18 (viewer step corrected, **new variant without the viewer with `glb2html.py`**), histories.
+- **Not tried**: Edge, Windows; the real folder picker (replaced here by an OPFS folder, as for pictures); a `.glb` of several MB.
+- Files: `src/core.js`, `src/viewer_tpl.html`, `src/i18n/fr.json`, `src/i18n/en.json`, `tests/modele_dossier.py` (new), `docs/fr/MANUEL.md`, `docs/en/MANUAL.md`, `docs/fr/PROCEDURES_SIMPLES.md`, `docs/en/SIMPLE_PROCEDURES.md`, FR and EN histories, `VERSION`, both CHANGELOGs; `dist\` and `VERSIONS.json` come from `python build.py`.
+
 ### 24/11/2026: viewer editor: name per language and link title (batch 1.13.11)
 
 - **Request** (Klaatou): the viewer's editor only showed the raw `label`: no field for `labels` (name per language) nor for `linkTitle` (link title, 1.13.5).

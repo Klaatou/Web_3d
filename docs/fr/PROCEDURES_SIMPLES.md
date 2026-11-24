@@ -312,10 +312,26 @@ Rien ne joue ? La ligne **Vidéo** du diagnostic (bloc État, touche I, « Copie
 Il te faut : ton fichier `.glb` de l'objet, le dossier de ta région (celui où est le `.glb` de la région), Edge ou Chrome pour le viewer.
 
 1. **Ranger le fichier.** Le mettre dans le dossier de la région (par exemple `statue.glb`).
-2. **Poser le modèle dans le viewer.** Ouvrir `glb-viewer.html`, ouvrir le `.glb` de la région, **importer ses zones actuelles** (« Importer zones (.json) », `NOM.zones.json`). Type « Modèle 3D (fichier .glb posé à part) », clic à l'endroit voulu, nom du fichier dans « Fichier du modèle (.glb) ».
+2. **Poser le modèle dans le viewer.** Ouvrir `glb-viewer.html`, ouvrir le `.glb` de la région, **importer ses zones actuelles** (« Importer zones (.json) », `NOM.zones.json`). Type « Modèle 3D (fichier .glb posé à part) », clic à l'endroit voulu, nom du fichier dans « Fichier du modèle (.glb) ». **Pour voir le modèle dans le viewer**, clique sur « Choisir le dossier de la région (aperçu du modèle) » (Edge ou Chrome) et choisis le dossier qui contient le `.glb` de la région : le viewer y lit le modèle, comme les images. Sans ce choix, la zone est posée quand même et exportée correctement, mais le modèle n'apparaît pas dans le viewer.
 3. **Régler** : « Taille (1 = telle quelle) », les deux inclinaisons (en degrés) et l'orientation ; cocher « Solide (on ne le traverse pas) » si les visiteurs ne doivent pas passer à travers.
 4. **Pour qu'il fasse quelque chose** (par exemple un poste de radio posé sur une zone radio), ne crée pas de zone « Modèle 3D » : renseigne le champ « Fichier du modèle » de la fiche lien, portail, commande, radio ou musique. Un clic sur le modèle d'une radio ou d'une musique ouvre la fenêtre Son.
 5. **Exporter, remplacer le fichier de zones, mettre en ligne** : procédure du **§ 16** (étapes 4 à 8). Copier aussi le fichier `.glb` du modèle dans le dossier de la région sur l'hébergement.
 6. **Essayer** : ouvrir la page (F5 ou Ctrl+F5) et s'approcher : le modèle se charge à moins de 150 m de sa zone. Avec beaucoup de modèles, réduire cette distance sans refaire la page : `python .\glb2html.py --update --model-lazy 60` (voir `MANUEL.md` § 9.3).
 
 Rien n'apparaît ? La console du navigateur (F12) dit « le modèle … n'a pas pu être lu » : nom de fichier faux, fichier absent en ligne, ou page ouverte depuis le disque (`file://`). `MANUEL.md` § 5.23.
+
+### Variante : poser le modèle sans le viewer, avec `glb2html.py`
+
+Même résultat en écrivant la zone à la main dans le fichier de zones, puis en laissant `glb2html.py` la contrôler et la réécrire.
+
+1. **Copier le fichier de zones actuel** de la région (`NOM.zones.json`) hors du dépôt, par exemple dans le dossier temporaire, sous le nom `zones.json`.
+2. **Ajouter l'entrée du modèle** dans la liste de ce `zones.json` :
+
+```json
+{"id": "poste", "label": "Poste", "model": "poste.glb", "x": 3, "y": 0, "z": -4, "yaw": 0, "scale": 1.5, "solid": true}
+```
+
+   `x`, `y`, `z` sont l'origine du `.glb` ; `yaw` est en radians. Pour un poste de radio, ajouter `"model": "poste.glb"` à la zone radio existante au lieu de créer une zone.
+3. **Garder l'ancien fichier** de la région (par exemple sous le nom `NOM.zones.avant.json`) : la commande suivante le remplace sans en faire de copie.
+4. **Réécrire les zones seules** : `python .\glb2html.py -o "CHEMIN\NOM.html" --zones-only --zones "CHEMIN\zones.json"`. Le compte rendu donne le nombre de zones et signale les clés refusées (par exemple `radius`, inutile sur un modèle seul). Ni la config ni la coquille ne sont touchées. Les zones `private` sont retirées du fichier écrit (profil public par défaut, `--profile`).
+5. **Copier le `.glb` du modèle** dans le dossier de la région, puis essayer et publier comme au § 16 (étapes 6 à 8).

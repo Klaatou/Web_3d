@@ -2716,9 +2716,13 @@ function createViewer(container, cfg0, loader) {
   async function mdlLoad(e) {
     const gen = mdlGen; e.st = 'loading';
     try {
-      const r = await freshFetch(imageUrl(e.z.mdl));
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      const gltf = await loader.parseAsync(await r.arrayBuffer(), '');
+      let buf = null;
+      if (imageResolver) {   // 1.13.12 : dans le viewer, le modele se lit d'abord dans le dossier de la region choisi (comme les images) ; absent ou refuse : adresse habituelle
+        let u = null; try { u = await imageResolver(e.z.mdl); } catch (_) { u = null; }
+        if (u) { try { const q = await fetch(u); if (q.ok) buf = await q.arrayBuffer(); } catch (_) {} URL.revokeObjectURL(u); }
+      }
+      if (!buf) { const r = await freshFetch(imageUrl(e.z.mdl)); if (!r.ok) throw new Error('HTTP ' + r.status); buf = await r.arrayBuffer(); }
+      const gltf = await loader.parseAsync(buf, '');
       if (gen !== mdlGen || mdlState.get(e.z.id) !== e) { disposeObject(gltf.scene); return; }
       mdlReady(e, gltf.scene);
     } catch (err) {

@@ -350,6 +350,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 24/11/2026 |  | après 1.13.0 | Lot 1.13.9 : README : modèles 3D posés à part, image combinable avec portail, radio, musique ou commande, mini lecteur ; documents seulement |
 | 24/11/2026 |  | après 1.13.0 | Lot 1.13.10 : README : la démo compte cinq régions ; manuel § 5.21 : mkv essayé sous Firefox ; documents seulement |
 | 24/11/2026 |  | après 1.13.0 | Lot 1.13.11 : éditeur du viewer : champs « nom affiché » par langue (`labels`) et « titre du lien » (`linkTitle`) |
+| 24/11/2026 |  | après 1.13.0 | Lot 1.13.12 : viewer : le modèle d'une zone `model` se lit dans le dossier de la région choisi (comme les images) ; procédure `glb2html.py` pour poser un modèle |
 ## Commandes utiles
 
 - Voir l'historique : `git log --oneline --decorate`

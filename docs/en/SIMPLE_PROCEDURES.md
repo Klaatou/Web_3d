@@ -312,10 +312,26 @@ Nothing plays? The **Video** line of the diagnostic (State block, key I, "Copy t
 You need: your object's `.glb` file, your region folder (the one with the region's `.glb`), Edge or Chrome for the viewer.
 
 1. **Put the file away.** Put it in the region folder (for example `statue.glb`).
-2. **Place the model in the viewer.** Open `glb-viewer.html`, open the region's `.glb`, **import its current zones** ("Import zones (.json)", `NOM.zones.json`). Type "3D model (separate .glb file)", click where you want it, file name in "Model file (.glb)".
+2. **Place the model in the viewer.** Open `glb-viewer.html`, open the region's `.glb`, **import its current zones** ("Import zones (.json)", `NOM.zones.json`). Type "3D model (separate .glb file)", click where you want it, file name in "Model file (.glb)". **To see the model in the viewer**, click "Choose the region folder (model preview)" (Edge or Chrome) and pick the folder that contains the region's `.glb`: the viewer reads the model there, like pictures. Without this choice, the zone is placed anyway and exported correctly, but the model does not show in the viewer.
 3. **Adjust**: "Size (1 = as is)", the two tilts (in degrees) and the orientation; tick "Solid (cannot be walked through)" if visitors must not walk through it.
 4. **To make it do something** (for example a radio set placed on a radio zone), do not create a "3D model" zone: fill in the "Model file" field of the link, portal, command, radio or music form. A click on the model of a radio or of music opens the Sound window.
 5. **Export, replace the zones file, put online**: procedure of **§ 16** (steps 4 to 8). Also copy the model's `.glb` file to the region folder on the host.
 6. **Try it**: open the page (F5 or Ctrl+F5) and walk up: the model loads within 150 m of its zone. With many models, reduce that distance without rebuilding the page: `python .\glb2html.py --update --model-lazy 60` (see `MANUAL.md` § 9.3).
 
 Nothing shows up? The browser console (F12) says "the model … could not be read": wrong file name, file missing online, or page opened from the disk (`file://`). `MANUAL.md` § 5.23.
+
+### Variant: place the model without the viewer, with `glb2html.py`
+
+Same result by writing the zone by hand in the zones file, then letting `glb2html.py` check and rewrite it.
+
+1. **Copy the current zones file** of the region (`NOM.zones.json`) out of the repository, for example into the temporary folder, as `zones.json`.
+2. **Add the model entry** to the list of this `zones.json`:
+
+```json
+{"id": "poste", "label": "Poste", "model": "poste.glb", "x": 3, "y": 0, "z": -4, "yaw": 0, "scale": 1.5, "solid": true}
+```
+
+   `x`, `y`, `z` are the origin of the `.glb`; `yaw` is in radians. For a radio set, add `"model": "poste.glb"` to the existing radio zone instead of creating a zone.
+3. **Keep the old file** of the region (for example as `NOM.zones.avant.json`): the next command replaces it without making a copy.
+4. **Rewrite the zones only**: `python .\glb2html.py -o "CHEMIN\NOM.html" --zones-only --zones "CHEMIN\zones.json"`. The report gives the number of zones and reports refused keys (for example `radius`, useless on a model alone). Neither the config nor the shell is touched. `private` zones are removed from the written file (public profile by default, `--profile`).
+5. **Copy the model's `.glb`** into the region folder, then try and publish as in § 16 (steps 6 to 8).
