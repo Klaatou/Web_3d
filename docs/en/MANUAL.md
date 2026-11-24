@@ -460,7 +460,7 @@ In `--analyse`, the "Reading" line gives the bytes read. Positions are only read
 
 The viewer (`glb-viewer.html`) is the page you open with your `.glb`. It is used to **look at** the model, to **adjust** how it is displayed (sea, rotation, camera, region card…), to **place the zones** (arrival points, portals, signs, links, images, private zones: see the vocabulary, § 1.1), to **capture the thumbnail** of the world map and to **export** the standalone page, the zones (`NOM.zones.json`) and `regions.json`. Fields of `NOM.zones.json`: `REFERENCE_JSON.md` § 11.4. For the published page to see the changes: § 6.16.
 
-**Zone format (1.12.35).** In `NOM.zones.json`, a zone is described by what is shown (`image`, `video`, `mesh`, `model`, otherwise a ring or a sign) and what happens (`link`, `portal`, `ha`, `radio`, `music`, or `arrival` for an arrival point): the full list and the possible combinations are in `REFERENCE_JSON.md` § 11.4. The old format (`type`, `target`) is still read; `glb2html.py --convert-zones FILE` rewrites it. **Name by language and title of a link (1.13.5)**: `labels` (`{"fr": "...", "en": "..."}`) gives the name of the zone in the language of the page; `linkTitle` is the title shown in the bubble of a link in place of the address, and `glb2html.py --link-titles FILE` fills it for YouTube links (§ 11.4 of `REFERENCE_JSON.md`).
+**Zone format (1.12.35).** In `NOM.zones.json`, a zone is described by what is shown (`image`, `video`, `mesh`, `model`, otherwise a ring or a sign) and what happens (`link`, `portal`, `ha`, `radio`, `music`, or `arrival` for an arrival point): the full list and the possible combinations are in `REFERENCE_JSON.md` § 11.4. The old format (`type`, `target`) is still read; `glb2html.py --convert-zones FILE` rewrites it. **Name by language and title of a link (1.13.5)**: `labels` (`{"fr": "...", "en": "..."}`) gives the name of the zone in the language of the page; `linkTitle` is the title shown in the bubble of a link in place of the address, and `glb2html.py --link-titles FILE` fills it for YouTube links (§ 11.4 of `REFERENCE_JSON.md`). **In the viewer's editor (1.13.11)**, the form of every zone has, under "Displayed name", the fields "Displayed name in French" and "Displayed name in English" (`labels`, 60 characters at most; emptying both removes the key), and the zones that open a link (link zone, picture with a link, video screen with a link action) have "Link title" (`linkTitle`, 120 characters at most).
 
 ### 5.1 The rule that explains 90 % of failures
 
@@ -2375,6 +2375,10 @@ The detail, version by version, is in `HISTORY.md` (narrative) and `CHANGELOG.md
 - **first image of video screens**: a screen that is seen (closer than 150 m) shows its first image, paused, with the right proportions, instead of a dark box (1.13.7, § 5.21)
 - **click out of range**: starts a video screen, without sound; a second click stops it (1.13.7, § 5.21)
 - documents of batch 1.13.7 (manual § 5.21, `REFERENCE_JSON.md` § 11.4, histories)
+
+**Additions of 1.13.11 (batch 1.13.11)**
+
+- **viewer editor**: fields "Displayed name in French" and "Displayed name in English" (`labels`) and "Link title" (`linkTitle`) in the form of a zone (1.13.11, § 5)
 
 Everything below is in **1.1.0** (released on 31/10/2026). The detail, batch by batch, is in `CHANGELOG.md`.
 

@@ -460,7 +460,7 @@ Dans `--analyse`, la ligne « Lecture » indique les octets lus. Les positions n
 
 Le viewer (`glb-viewer.html`) est la page que tu ouvres avec ton `.glb`. Elle sert à **regarder** le modèle, à **régler** son affichage (mer, rotation, caméra, fiche de la région…), à **poser les zones** (points d'arrivée, portails, panneaux, liens, images, zones privées : voir le vocabulaire, § 1.1), à **capturer la vignette** de la carte des mondes et à **exporter** la page autonome, les zones (`NOM.zones.json`) et `regions.json`. Champs de `NOM.zones.json` : `REFERENCE_JSON.md` § 11.4. Pour que la page publiée voie les changements : § 6.16.
 
-**Format des zones (1.12.35).** Dans `NOM.zones.json`, une zone se décrit par ce qu'on voit (`image`, `video`, `mesh`, `model`, sinon un anneau ou un panneau) et ce qui se passe (`link`, `portal`, `ha`, `radio`, `music`, ou `arrival` pour un point d'arrivée) : la liste complète et les combinaisons possibles sont dans `REFERENCE_JSON.md` § 11.4. L'ancien format (`type`, `target`) reste lu ; `glb2html.py --convert-zones FICHIER` le réécrit. **Nom selon la langue et titre d'un lien (1.13.5)** : `labels` (`{"fr": "...", "en": "..."}`) donne le nom de la zone dans la langue de la page ; `linkTitle` est le titre montré dans la bulle d'un lien à la place de l'adresse, et `glb2html.py --link-titles FICHIER` le remplit pour les liens YouTube (§ 11.4 de `REFERENCE_JSON.md`).
+**Format des zones (1.12.35).** Dans `NOM.zones.json`, une zone se décrit par ce qu'on voit (`image`, `video`, `mesh`, `model`, sinon un anneau ou un panneau) et ce qui se passe (`link`, `portal`, `ha`, `radio`, `music`, ou `arrival` pour un point d'arrivée) : la liste complète et les combinaisons possibles sont dans `REFERENCE_JSON.md` § 11.4. L'ancien format (`type`, `target`) reste lu ; `glb2html.py --convert-zones FICHIER` le réécrit. **Nom selon la langue et titre d'un lien (1.13.5)** : `labels` (`{"fr": "...", "en": "..."}`) donne le nom de la zone dans la langue de la page ; `linkTitle` est le titre montré dans la bulle d'un lien à la place de l'adresse, et `glb2html.py --link-titles FICHIER` le remplit pour les liens YouTube (§ 11.4 de `REFERENCE_JSON.md`). **Dans l'éditeur du viewer (1.13.11)**, la fiche de chaque zone a, sous « Nom affiché », les champs « Nom affiché en français » et « Nom affiché en anglais » (`labels`, 60 caractères au plus ; vider les deux retire la clé), et les zones qui ouvrent un lien (zone lien, tableau avec lien, écran vidéo à action lien) ont « Titre du lien » (`linkTitle`, 120 caractères au plus).
 
 ### 5.1 La règle qui explique 90 % des pannes
 
@@ -2375,6 +2375,10 @@ Le détail, version par version, est dans `HISTORIQUE.md` (récit) et `CHANGELOG
 - **première image des écrans vidéo** : un écran vu (à moins de 150 m) montre sa première image, en pause, aux bonnes proportions, au lieu d'un pavé sombre (1.13.7, § 5.21)
 - **clic hors de portée** : lance un écran vidéo, sans son ; un second clic l'arrête (1.13.7, § 5.21)
 - documents du lot 1.13.7 (manuel § 5.21, `REFERENCE_JSON.md` § 11.4, historiques)
+
+**Ajouts de la 1.13.11 (lot 1.13.11)**
+
+- **éditeur du viewer** : champs « Nom affiché en français » et « Nom affiché en anglais » (`labels`) et « Titre du lien » (`linkTitle`) dans la fiche d'une zone (1.13.11, § 5)
 
 Tout ce qui suit est dans la **1.1.0** (publiée le 31/10/2026). Le détail, lot par lot, est dans `CHANGELOG.fr.md`.
 

@@ -349,6 +349,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 23/11/2026 |  | after 1.13.0 | Batch 1.13.7: first image of the video screens in view (paused, with the right proportions) and click out of range to start them, without sound; batch 1.13.8: their documents (manual § 5.21, `REFERENCE_JSON.md` § 11.4, appendix § 13, histories) |
 | 24/11/2026 |  | after 1.13.0 | Batch 1.13.9: README: separately placed 3D models, picture combinable with portal, radio, music or command, mini player; documents only |
 | 24/11/2026 |  | after 1.13.0 | Batch 1.13.10: README: the demo has five regions; manual § 5.21: mkv tried in Firefox; documents only |
+| 24/11/2026 |  | after 1.13.0 | Batch 1.13.11: viewer editor: "displayed name" per language (`labels`) and "link title" (`linkTitle`) fields |
 ## Useful commands
 
 - See the history: `git log --oneline --decorate`

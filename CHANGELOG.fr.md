@@ -6,6 +6,16 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.13.0)
 
+### 24/11/2026 : éditeur du viewer : nom par langue et titre du lien (lot 1.13.11)
+
+- **Demande** (Klaatou) : l'éditeur du viewer ne montrait que le `label` brut : pas de champ pour `labels` (nom par langue) ni pour `linkTitle` (titre du lien, 1.13.5).
+- **Cause** : `src/viewer_tpl.html`, `renderZoneList` : la fiche n'avait qu'un champ « Nom affiché » (`label`) ; `labs` et `ltitle` étaient gardés tels quels à la relecture (`getZones` / `setZones`) mais sans champ pour les saisir.
+- **Fait** : deux champs sous « Nom affiché » pour toutes les zones, « Nom affiché en français » et « Nom affiché en anglais » (`labels`, 60 caractères) ; la saisie d'une langue relit la zone courante, donc ne perd pas l'autre ; vider les deux retire la clé. Un champ « Titre du lien » (`linkTitle`, 120 caractères) pour une zone lien, un tableau avec lien et un écran vidéo à action lien ; absent pour les autres zones. Trois textes dans `fr.json` et `en.json`.
+- **Tests** : nouveau `tests/editeur_labels.py` (champs présents ou absents selon la zone, saisie des deux langues, titres, sens inverse : vider une langue, vider les deux, vider le titre ; page générée et `NOM.zones.json` : `labels` et `linkTitle` écrits seulement quand ils sont remplis).
+- **Non essayé** : Edge, Windows ; le tactile.
+- **Documents** : manuel § 5 et annexe, `REFERENCE_JSON.md` § 11.4 (lignes `labels` et `linkTitle`), historiques.
+- Fichiers : `src/viewer_tpl.html`, `src/i18n/fr.json`, `src/i18n/en.json`, `tests/editeur_labels.py` (nouveau), `docs/fr/MANUEL.md`, `docs/en/MANUAL.md`, `docs/fr/REFERENCE_JSON.md`, `docs/en/REFERENCE_JSON.md`, historiques FR et EN, `VERSION`, les deux CHANGELOG ; `dist\` et `VERSIONS.json` viennent de `python build.py`.
+
 ### 24/11/2026 : README : cinq régions ; manuel : mkv essayé sous Firefox (lot 1.13.10)
 
 - **Demande** (Klaatou) : corriger la ligne de la démo des README (« deux régions » alors que la démo en compte cinq) et noter dans le manuel § 5.21 que les clips `.mkv` ont été essayés sous Firefox.

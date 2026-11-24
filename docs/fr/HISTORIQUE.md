@@ -349,6 +349,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 23/11/2026 |  | après 1.13.0 | Lot 1.13.7 : première image des écrans vidéo vus (en pause, aux bonnes proportions) et clic hors de portée pour les lancer, sans son ; lot 1.13.8 : leurs documents (manuel § 5.21, `REFERENCE_JSON.md` § 11.4, annexe § 13, historiques) |
 | 24/11/2026 |  | après 1.13.0 | Lot 1.13.9 : README : modèles 3D posés à part, image combinable avec portail, radio, musique ou commande, mini lecteur ; documents seulement |
 | 24/11/2026 |  | après 1.13.0 | Lot 1.13.10 : README : la démo compte cinq régions ; manuel § 5.21 : mkv essayé sous Firefox ; documents seulement |
+| 24/11/2026 |  | après 1.13.0 | Lot 1.13.11 : éditeur du viewer : champs « nom affiché » par langue (`labels`) et « titre du lien » (`linkTitle`) |
 ## Commandes utiles
 
 - Voir l'historique : `git log --oneline --decorate`

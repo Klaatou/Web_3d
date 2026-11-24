@@ -501,6 +501,12 @@ function renderZoneList() {
     const upd = (patch, rerender) => { const list = viewer.getZones(); Object.assign(list[idx], patch); zonesSync(list, rerender); };
     d.appendChild(inp(tr('viewer.zf.id'), 'text', z.id, v => { zoneSel = null; upd({ id: v }, true); }));
     d.appendChild(inp(tr('viewer.zf.label'), 'text', z.label, v => upd({ label: v }, true)));
+    const nameBy = (k, key) => {   // 1.13.11 : nom affiche par langue (labels fr / en) ; relit la zone courante pour garder l'autre langue ; vide = cle retiree
+      const w = inp(tr(key), 'text', (z.labs && z.labs[k]) || '', val => { const o = Object.assign({}, viewer.getZones()[idx].labs); if (String(val).trim()) o[k] = val; else delete o[k]; upd({ labs: Object.keys(o).length ? o : undefined }); });
+      w.querySelector('input').maxLength = 60; return w;
+    };
+    d.appendChild(nameBy('fr', 'viewer.zf.label.fr')); d.appendChild(nameBy('en', 'viewer.zf.label.en'));
+    const linkTitle = () => { const w = inp(tr('viewer.zf.linktitle'), 'text', z.ltitle || '', val => upd({ ltitle: val })); w.querySelector('input').maxLength = 120; return w; };   // 1.13.11 : titre du lien (linkTitle), montre dans la bulle a la place de l'adresse
     if (z.type === 'image') {
       d.appendChild(inp(tr('viewer.zf.image'), 'text', z.target, v => { imageNameFromDir(v).then(r => {
         if (r.nodir) setStatus(tr('viewer.zf.image.nodir', v));
@@ -523,6 +529,7 @@ function renderZoneList() {
       d.appendChild(inp(tr('viewer.zf.w'), 'number', z.w, v => upd({ w: v }, true)));
       d.appendChild(inp(tr('viewer.zf.h.image'), 'number', z.h, v => upd({ h: v }, true)));
       d.appendChild(inp(tr('viewer.zf.link.image'), 'text', z.link || '', v => upd({ link: v })));
+      d.appendChild(linkTitle());
       d.appendChild(inp(tr('viewer.zf.frame'), 'checkbox', z.frame, v => upd({ frame: v })));   // 1.12.34 : le lien du tableau s'ouvre dans la fenetre flottante
       d.appendChild(inp(tr('viewer.zf.trigger'), 'select', z.trigger, v => upd({ trigger: v }, true), [['enter', tr('viewer.zf.trig.enter')], ['click', tr('viewer.zf.trig.click')], ['both', tr('viewer.zf.trig.both')]]));   // 1.12.34 : comme une zone url
       d.appendChild(inp(tr('viewer.zf.r.ring'), 'number', z.radius, v => upd({ radius: v })));   // 1.12.34 : rayon de l'invite et du declenchement en marchant devant le tableau
@@ -538,7 +545,7 @@ function renderZoneList() {
       d.appendChild(inp(tr('viewer.zf.r.video'), 'number', z.radius, v => upd({ radius: v }, true)));
       d.appendChild(inp(tr('viewer.zf.sound'), 'select', z.sound ? 'on' : 'off', v => upd({ sound: v === 'on' ? true : undefined }, true), [['off', tr('viewer.zf.sound.off')], ['on', tr('viewer.zf.sound.on')]]));   // 1.12.9
       d.appendChild(inp(tr('viewer.zf.vact'), 'select', z.act || '', v => upd({ act: v || undefined, trigger: v === 'portal' || v === 'ha' ? 'enter' : 'click' }, true), [['', tr('viewer.zf.vact.none')], ['url', tr('viewer.zf.vact.url')], ['portal', tr('viewer.zf.vact.portal')], ['ha', tr('viewer.zf.vact.ha')]]));   // 1.12.42 : action de l'ecran
-      if (z.act === 'url') { d.appendChild(inp(tr('viewer.zf.url'), 'text', z.atarget || '', v => upd({ atarget: v }))); d.appendChild(inp(tr('viewer.zf.frame'), 'checkbox', z.frame, v => upd({ frame: v }))); }
+      if (z.act === 'url') { d.appendChild(inp(tr('viewer.zf.url'), 'text', z.atarget || '', v => upd({ atarget: v }))); d.appendChild(linkTitle()); d.appendChild(inp(tr('viewer.zf.frame'), 'checkbox', z.frame, v => upd({ frame: v }))); }
       else if (z.act === 'portal') { d.appendChild(inp(tr('viewer.zf.target'), 'text', z.atarget || '', v => upd({ atarget: v }))); d.appendChild(inp(tr('viewer.zf.spawn'), 'text', z.spawn, v => upd({ spawn: v }))); }
       else if (z.act === 'ha') { d.appendChild(inp(tr('viewer.zf.ha'), 'text', z.atarget || '', v => upd({ atarget: v }))); d.appendChild(inp(tr('viewer.zf.confirm'), 'checkbox', z.confirm, v => upd({ confirm: v }))); }
       if (z.act === 'portal' || z.act === 'ha') d.appendChild(inp(tr('viewer.zf.vact.r'), 'number', z.aradius || 2, v => upd({ aradius: v })));
@@ -568,6 +575,7 @@ function renderZoneList() {
         d.appendChild(inp(tr('viewer.zf.trigger'), 'select', z.trigger, v => upd({ trigger: v }, true), [['enter', tr('viewer.zf.trig.enter')], ['click', tr('viewer.zf.trig.click')], ['both', tr('viewer.zf.trig.both')]]));
       } else if (z.type === 'url') {
         d.appendChild(inp(tr('viewer.zf.url'), 'text', z.target, v => upd({ target: v })));
+        d.appendChild(linkTitle());
         d.appendChild(inp(tr('viewer.zf.frame'), 'checkbox', z.frame, v => upd({ frame: v })));
         d.appendChild(inp(tr('viewer.zf.trigger'), 'select', z.trigger, v => upd({ trigger: v }, true), [['enter', tr('viewer.zf.trig.enter')], ['click', tr('viewer.zf.trig.click')], ['both', tr('viewer.zf.trig.both')]]));
       } else { d.appendChild(inp(tr('viewer.zf.ha'), 'text', z.target, v => upd({ target: v }))); d.appendChild(inp(tr('viewer.zf.confirm'), 'checkbox', z.confirm, v => upd({ confirm: v }))); }

@@ -6,6 +6,16 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.13.0)
 
+### 24/11/2026: viewer editor: name per language and link title (batch 1.13.11)
+
+- **Request** (Klaatou): the viewer's editor only showed the raw `label`: no field for `labels` (name per language) nor for `linkTitle` (link title, 1.13.5).
+- **Cause**: `src/viewer_tpl.html`, `renderZoneList`: the form had a single "Displayed name" field (`label`); `labs` and `ltitle` were kept as they are when the zones are read back (`getZones` / `setZones`) but had no field to type them.
+- **Done**: two fields under "Displayed name" for every zone, "Displayed name in French" and "Displayed name in English" (`labels`, 60 characters); typing one language reads the current zone again, so it does not lose the other; emptying both removes the key. A "Link title" field (`linkTitle`, 120 characters) for a link zone, a picture with a link and a video screen with a link action; absent for the other zones. Three texts in `fr.json` and `en.json`.
+- **Tests**: new `tests/editeur_labels.py` (fields present or absent depending on the zone, typing both languages, titles, reverse direction: emptying one language, both, the title; generated page and `NOM.zones.json`: `labels` and `linkTitle` written only when filled).
+- **Not tried**: Edge, Windows; touch.
+- **Documents**: manual § 5 and annex, `REFERENCE_JSON.md` § 11.4 (`labels` and `linkTitle` rows), histories.
+- Files: `src/viewer_tpl.html`, `src/i18n/fr.json`, `src/i18n/en.json`, `tests/editeur_labels.py` (new), `docs/fr/MANUEL.md`, `docs/en/MANUAL.md`, `docs/fr/REFERENCE_JSON.md`, `docs/en/REFERENCE_JSON.md`, FR and EN histories, `VERSION`, both CHANGELOGs; `dist\` and `VERSIONS.json` come from `python build.py`.
+
 ### 24/11/2026: README: five regions; manual: mkv tried in Firefox (batch 1.13.10)
 
 - **Request** (Klaatou): fix the demo line of the READMEs ("two regions" while the demo has five) and note in the manual § 5.21 that `.mkv` clips were tried in Firefox.
