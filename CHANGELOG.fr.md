@@ -6,6 +6,14 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.13.0)
 
+### 24/11/2026 : README : modèles 3D, image combinable, mini lecteur (lot 1.13.9)
+
+- **Demande** (Klaatou) : annoncer dans le README les nouvelles zones (les modèles `.glb` posés à part, qu'il met aussi dans les régions de la démo).
+- **Fait** : `README.fr.md` et `README.md` (liste des fonctions et section « Zones ») : modèles 3D posés à part (§ 5.23), une image peut être aussi un portail, une radio, une musique ou une commande (§ 5.11), la fenêtre flottante s'appelle « mini lecteur ».
+- **Vérifié** : `tests/readme_liens.py` ; `verif_trad.py` sur les historiques : 0 erreur ; sur la paire des README : les 3 mêmes erreurs qu'avant le lot (noms de documents `docs/fr/…` et `docs/en/…`), inchangées.
+- **Non fait** : la ligne de la démo du README (« deux régions reliées par des portails ») est périmée, la démo en compte cinq ; hors de ce lot.
+- Fichiers : `README.fr.md`, `README.md`, historiques FR et EN, `VERSION`, les deux CHANGELOG.
+
 ### 23/11/2026 : documents du lot 1.13.7 (lot 1.13.8)
 
 - **Demande** (Klaatou) : mettre à jour les documents du lot 1.13.7 (première image des écrans vidéo, clic hors de portée).

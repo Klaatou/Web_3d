@@ -6,6 +6,14 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.13.0)
 
+### 24/11/2026: README: 3D models, combinable picture, mini player (batch 1.13.9)
+
+- **Request** (Klaatou): announce the new zones in the README (the `.glb` models placed separately, which he also puts in the demo regions).
+- **Done**: `README.fr.md` and `README.md` (feature list and "Zones" section): 3D models placed separately (§ 5.23), a picture can also be a portal, a radio, a music player or a command (§ 5.11), the floating window is called the "mini player".
+- **Checked**: `tests/readme_liens.py`; `verif_trad.py` on the histories: 0 errors; on the README pair: the same 3 errors as before the batch (document names `docs/fr/...` and `docs/en/...`), unchanged.
+- **Not done**: the demo line of the README ("two regions linked by portals") is out of date, the demo has five; outside this batch.
+- Files: `README.fr.md`, `README.md`, FR and EN histories, `VERSION`, both CHANGELOGs.
+
 ### 23/11/2026: documents of batch 1.13.7 (batch 1.13.8)
 
 - **Request** (Klaatou): update the documents for batch 1.13.7 (first image of the video screens, click out of range).
