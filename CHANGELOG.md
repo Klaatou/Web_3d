@@ -6,6 +6,16 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.13.0)
 
+### 24/11/2026: glb2html.py: `.bak` backup of zones and config, the region's own zones file never rewritten by itself (batch 1.13.13)
+
+- **Request** (Klaatou): the "place a model with `glb2html.py`" procedure had `NOM.zones.json` copied to a temporary folder; why not edit it in place and give it to the script, and why does the script not keep a copy?
+- **Finding** (tried): `--zones-only --zones NOM.zones.json` (the region's own file) reads it then **rewrites it as a public profile**: `private` zones (home-automation command…) vanish from it, with no backup. `NOM.config.json` is also overwritten without backup by `--config-only`, `--update` and generation. `--update` and `--tiles` already knew not to rewrite a file given as both source and destination.
+- **Done** (`src/gen_tpl.py`): (1) `zones_same_file`: when `--zones` designates the region's `NOM.zones.json` (`--zones-only`, including a standalone page with `--zones-live`, `--config-only`, generation from a `.glb`), the file is read for checking (the report points out refused zones and ignored keys) and is not rewritten; (2) `ecrire_avec_bak`: before overwriting `NOM.zones.json` or `NOM.config.json` whose content changes, the old one is kept as `NOM.zones.json.bak` / `NOM.config.json.bak` (only the most recent) and the script says so; identical content: no `.bak`. One text in `fr.json` and `en.json`.
+- **Tests**: new `tests/zones_bak.py` (8 checks: first write without `.bak`; the region's own file given as source never rewritten with `--zones-only`, `--config-only` and on regeneration, private zone kept; another source: `.bak` then public version; same content: no `.bak`; config `.bak` with `--config-only` and `--update`).
+- **Test adapted**: `tests/modulaire.py` now expects `boite.config.json.bak` beside the region's files (the test's `--config-only` command changes the config, so the old one is kept).
+- **Documents**: `SIMPLE_PROCEDURES.md` § 18 (variant rewritten: `NOM.zones.json` is edited in place after a copy, the `glb2html.py` check is optional and harmless, `-o` only names the region), manual § 6.1 and annex, histories.
+- **Not tried**: Windows; `--tiles` with a freshly modified zones file (path already protected before this batch).
+
 ### 24/11/2026: viewer: the model of a `model` zone is read from the region folder (batch 1.13.12)
 
 - **Request** (Klaatou): a picture zone is read from the region folder picked in the viewer (for example `medias`); a `.glb` model was not: it had to be copied next to `glb-viewer.html` and the viewer served over http.

@@ -1432,6 +1432,28 @@ def write_atomic(path: pathlib.Path, data: bytes):
     tmp.replace(path)
 
 
+def ecrire_avec_bak(path: pathlib.Path, data: bytes):
+    """1.13.13 : ecrit un fichier de zones ; s'il existe deja et que le contenu change, l'ancien reste dans FICHIER.bak (la derniere version seulement)."""
+    if path.is_file():
+        try:
+            old = path.read_bytes()
+        except OSError:
+            old = None
+        if old is not None and old != data:
+            bak = path.with_name(path.name + ".bak")
+            write_atomic(bak, old)
+            print(_tr("py.glb2html.zones_ancien_garde_0", bak))
+    write_atomic(path, data)
+
+
+def zones_same_file(zones_opt, dest: pathlib.Path):
+    """1.13.13 : vrai si --zones designe le fichier de zones de destination lui-meme (alors il est lu pour verification, jamais reecrit : une reecriture en profil public en retirerait les zones privees)."""
+    if not zones_opt or not dest.is_file():
+        return False
+    zf = find_beside(zones_opt)
+    return zf is not None and zf.resolve() == dest.resolve()
+
+
 def write_modular_lib(out_dir: pathlib.Path, vendor_dir, lib_url=None):
     """Écrit lib/three-X/ à côté des pages (partagé par toutes les pages du dossier) : modules à plat, imports réécrits,
     Draco et Meshopt toujours présents (la coquille ne sait pas ce que contient le .glb). v37 : lib_url déplace le dossier (rien n'est écrit pour une adresse complète)."""
@@ -1643,7 +1665,7 @@ def write_live_zones(out_path, kw):
     zones = clean_zones(json.loads(ZONES_JSON) if zones is None else zones, kw.get("profile", PROFILE))
     target = out_path.with_name(name)
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(json.dumps([zone_out(z) for z in zones], ensure_ascii=False, indent=1), encoding="utf-8")   # 1.12.35 : ecrit au format unifie
+    ecrire_avec_bak(target, json.dumps([zone_out(z) for z in zones], ensure_ascii=False, indent=1).encode("utf-8"))   # 1.12.35 : ecrit au format unifie ; 1.13.13 : ancien fichier garde en .bak
     print(_tr("py.glb2html.zones_0_zone_s_profil_1", len(zones), kw.get('profile', PROFILE), target))
 
 
@@ -1656,7 +1678,7 @@ def write_modular_zones(zones_path: pathlib.Path, kw):
     """Écrit <page>.zones.json (zones nettoyées, filtrées selon le profil), relu par la page à chaque ouverture."""
     profile = kw.get("profile", PROFILE)
     zones = clean_zones(json.loads(ZONES_JSON) if kw.get("zones") is None else kw["zones"], profile)
-    write_atomic(zones_path, json.dumps([zone_out(z) for z in zones], ensure_ascii=False, indent=1).encode("utf-8"))   # 1.12.35 : ecrit au format unifie
+    ecrire_avec_bak(zones_path, json.dumps([zone_out(z) for z in zones], ensure_ascii=False, indent=1).encode("utf-8"))   # 1.12.35 : ecrit au format unifie ; 1.13.13 : ancien fichier garde en .bak
     print(_tr("py.glb2html.zones_0_zone_s_profil_1", len(zones), profile, zones_path))
 
 
@@ -1710,6 +1732,7 @@ def generate(glb_path: pathlib.Path, out_path: pathlib.Path, vendor_dir, modular
         print(_tr("py.glb2html.erreur_0", e), file=sys.stderr)
         return False
     out_path.parent.mkdir(parents=True, exist_ok=True)
+    zones_keep = kw.pop("zones_keep", False)   # 1.13.13 : --zones designe deja X.zones.json de destination : lu pour verification, jamais reecrit
     if modular:
         glb_out, cfg_out, zones_out = modular_names(out_path)
         if not shell or lib_missing(shell_dir_of(shell, out_path), kw.get("lib_url")):
@@ -1717,7 +1740,7 @@ def generate(glb_path: pathlib.Path, out_path: pathlib.Path, vendor_dir, modular
         write_atomic(glb_out, data)
         write_config(cfg_out, glb_path.name, kw)
         # sans source de zones, un X.zones.json existant (peut-être modifié à la main) n'est pas écrasé
-        if zones_given(kw) or not zones_out.is_file():
+        if (zones_given(kw) and not zones_keep) or not zones_out.is_file():
             write_modular_zones(zones_out, kw)
     write_shell_page(out_path, shell, page)
     if shell:
@@ -1886,7 +1909,7 @@ def generate_tiles(tiles_path: pathlib.Path, doc, out_path: pathlib.Path, vendor
 def write_config(cfg_path: pathlib.Path, name: str, kw):
     """Écrit <page>.config.json = le dictionnaire cfg de la page modulaire (carte comprise, zones exclues), JSON sans BOM."""
     cfg = build_cfg(name, **kw, modular=True)
-    write_atomic(cfg_path, json.dumps(cfg, ensure_ascii=False, indent=1).encode("utf-8"))
+    ecrire_avec_bak(cfg_path, json.dumps(cfg, ensure_ascii=False, indent=1).encode("utf-8"))   # 1.13.13 : ancien fichier garde en .bak s'il change
     return cfg
 
 
@@ -2042,7 +2065,7 @@ def run_maj(a, kw, explicit, S_reg):
         print(_tr("py.glb2html.maj_0_remplace_par_1", glb_out.name, inp.name))
     elif not a.tiles and not old.get("tiles") and not glb_out.is_file():
         print(_tr("py.glb2html.avertissement_0_introuvable_a_cote_de", glb_out.name), file=sys.stderr)
-    write_atomic(cfg_out, json.dumps(cfg, ensure_ascii=False, indent=1).encode("utf-8"))
+    ecrire_avec_bak(cfg_out, json.dumps(cfg, ensure_ascii=False, indent=1).encode("utf-8"))
     print(_tr("py.glb2html.maj_0_mis_a_jour_glb2html", cfg_out.name, VERSION) + (_tr("py.glb2html.0_cle_s_changee_s", len(changes)) if changes else _tr("py.glb2html.aucune_cle_changee")) + _tr("py.glb2html.0_gardee_s_telle_s_quelle", len(old) - len([c for c in changes if c[0] in old])))
     for k, o, n in changes:
         print(f"  {k} : {json.dumps(o, ensure_ascii=False)[:80]} -> {json.dumps(n, ensure_ascii=False)[:80]}")
@@ -2332,6 +2355,10 @@ def main():
             sys.exit(_tr("py.glb2html.erreur_zones_only_demande_o_page"))
         out = pathlib.Path(a.output)
         if a.zones_live:   # page autonome qui recharge ses zones
+            _ln = live_zones_name(out, a.zones_live)
+            if _ln and zones_same_file(a.zones, out.with_name(_ln)):
+                print(_tr("py.glb2html.zones_zones_deja_en_place_0_2", out.with_name(_ln)))
+                sys.exit(0)
             write_live_zones(out, dict(kw, zones_live=a.zones_live))
             sys.exit(0)
         if not out.suffix:
@@ -2340,6 +2367,9 @@ def main():
             sys.exit(_tr("py.glb2html.erreur_zones_only_demande_zones_live", modular_names(out)[1].name))
         if zones_arg is None:
             sys.exit(_tr("py.glb2html.erreur_zones_only_demande_zones_fichier"))
+        if zones_same_file(a.zones, modular_names(out)[2]):   # 1.13.13 : lu pour verification, jamais reecrit par lui-meme
+            print(_tr("py.glb2html.zones_zones_deja_en_place_0_2", modular_names(out)[2]))
+            sys.exit(0)
         write_modular_zones(modular_names(out)[2], kw)
         sys.exit(0)
     if a.config_only and not a.tiles:
@@ -2368,7 +2398,9 @@ def main():
             where_note(reg, a.output)
         write_config(cfg_out, name, kw)
         print(_tr("py.glb2html.ok_reglages_0_coquille_et_glb", cfg_out, VERSION))
-        if a.zones:   # les zones ne sont touchées que si --zones est donné
+        if a.zones and zones_same_file(a.zones, zones_out):   # 1.13.13
+            print(_tr("py.glb2html.zones_zones_deja_en_place_0_2", zones_out))
+        elif a.zones:   # les zones ne sont touchées que si --zones est donné
             write_modular_zones(zones_out, kw)
         else:
             print(_tr("py.glb2html.zones_0_non_modifie_donne_zones", zones_out.name))
@@ -2491,6 +2523,9 @@ def main():
         kw["map_entries"] = register_region(reg, entry)
         print(_tr("py.glb2html.carte_0_ajoutee_ou_mise_a", entry['name'], reg, len(map_regions(kw['map_entries']))))
         where_note(reg, a.output)
+    if (a.modular or a.shared_shell) and zones_same_file(a.zones, modular_names(out)[2]):   # 1.13.13
+        kw["zones_keep"] = True
+        print(_tr("py.glb2html.zones_zones_deja_en_place_0_2", modular_names(out)[2]))
     ok = generate(inp, out, a.vendor, modular=a.modular, shell=a.shared_shell, **kw)
     if ok and a.map_page:
         entries = kw["map_entries"] if kw.get("map_entries") is not None else json.loads(MAP_JSON)

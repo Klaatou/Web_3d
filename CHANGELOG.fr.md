@@ -6,6 +6,16 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.13.0)
 
+### 24/11/2026 : glb2html.py : sauvegarde `.bak` des zones et de la config, fichier de zones de la région jamais réécrit par lui-même (lot 1.13.13)
+
+- **Demande** (Klaatou) : la procédure « poser un modèle avec `glb2html.py` » faisait copier `NOM.zones.json` dans un dossier temporaire ; pourquoi ne pas l'éditer sur place et le donner au script, et pourquoi le script n'en garde-t-il pas une copie ?
+- **Constat** (essayé) : `--zones-only --zones NOM.zones.json` (le fichier de la région lui-même) le relit puis le **réécrit en profil public** : les zones `private` (commande domotique…) en disparaissent, sans aucune sauvegarde. `NOM.config.json` est aussi écrasé sans sauvegarde par `--config-only`, `--update` et la génération. `--update` et `--tiles` savaient déjà ne pas réécrire un fichier donné comme source et destination à la fois.
+- **Fait** (`src/gen_tpl.py`) : (1) `zones_same_file` : quand `--zones` désigne le `NOM.zones.json` de la région (`--zones-only`, y compris page autonome avec `--zones-live`, `--config-only`, génération d'un `.glb`), le fichier est lu pour vérification (le compte rendu signale zones refusées et clés ignorées) et n'est pas réécrit ; (2) `ecrire_avec_bak` : avant d'écraser `NOM.zones.json` ou `NOM.config.json` dont le contenu change, l'ancien est gardé sous `NOM.zones.json.bak` / `NOM.config.json.bak` (le plus récent seulement) et le script l'annonce ; contenu identique : pas de `.bak`. Un texte dans `fr.json` et `en.json`.
+- **Tests** : nouveau `tests/zones_bak.py` (8 contrôles : première écriture sans `.bak` ; fichier de la région donné comme source jamais réécrit avec `--zones-only`, `--config-only` et en régénération, zone privée gardée ; autre source : `.bak` puis version publique ; même contenu : pas de `.bak` ; `.bak` de la config avec `--config-only` et `--update`).
+- **Test adapté** : `tests/modulaire.py` attend maintenant `boite.config.json.bak` à côté des fichiers de la région (la commande `--config-only` du test modifie la config, donc l'ancienne est gardée).
+- **Documents** : `PROCEDURES_SIMPLES.md` § 18 (variante réécrite : on édite `NOM.zones.json` sur place après une copie, le contrôle par `glb2html.py` est facultatif et sans risque, `-o` ne fait que nommer la région), manuel § 6.1 et annexe, historiques.
+- **Non essayé** : Windows ; `--tiles` avec un fichier de zones tout juste modifié (chemin déjà protégé avant ce lot).
+
 ### 24/11/2026 : viewer : le modèle d'une zone `model` se lit dans le dossier de la région (lot 1.13.12)
 
 - **Demande** (Klaatou) : une zone image se lit dans le dossier de la région choisi dans le viewer (par exemple `medias`) ; un modèle `.glb` non : il fallait le copier à côté de `glb-viewer.html` et servir le viewer en http.

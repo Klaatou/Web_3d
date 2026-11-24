@@ -320,18 +320,19 @@ You need: your object's `.glb` file, your region folder (the one with the region
 
 Nothing shows up? The browser console (F12) says "the model … could not be read": wrong file name, file missing online, or page opened from the disk (`file://`). `MANUAL.md` § 5.23.
 
-### Variant: place the model without the viewer, with `glb2html.py`
+### Variant: place the model without the viewer, by editing the file by hand
 
-Same result by writing the zone by hand in the zones file, then letting `glb2html.py` check and rewrite it.
+Same result by writing the zone by hand in `NOM.zones.json`, the zones file of the region. The page reads that file at each opening: `glb2html.py` is not needed, it only checks what you wrote.
 
-1. **Copy the current zones file** of the region (`NOM.zones.json`) out of the repository, for example into the temporary folder, as `zones.json`.
-2. **Add the model entry** to the list of this `zones.json`:
+1. **Keep a copy**: copy `NOM.zones.json` under another name in the same folder (for example `NOM.zones.avant.json`).
+2. **Add the model entry** to the list of `NOM.zones.json` itself (in the region folder), with a text editor:
 
 ```json
 {"id": "poste", "label": "Poste", "model": "poste.glb", "x": 3, "y": 0, "z": -4, "yaw": 0, "scale": 1.5, "solid": true}
 ```
 
    `x`, `y`, `z` are the origin of the `.glb`; `yaw` is in radians. For a radio set, add `"model": "poste.glb"` to the existing radio zone instead of creating a zone.
-3. **Keep the old file** of the region (for example as `NOM.zones.avant.json`): the next command replaces it without making a copy.
-4. **Rewrite the zones only**: `python .\glb2html.py -o "CHEMIN\NOM.html" --zones-only --zones "CHEMIN\zones.json"`. The report gives the number of zones and reports refused keys (for example `radius`, useless on a model alone). Neither the config nor the shell is touched. `private` zones are removed from the written file (public profile by default, `--profile`).
-5. **Copy the model's `.glb`** into the region folder, then try and publish as in § 16 (steps 6 to 8).
+3. **Check (optional)**: `python .\glb2html.py -o "CHEMIN\DOSSIER\NOM.html" --zones-only --zones "CHEMIN\DOSSIER\NOM.zones.json"`. Here `-o` only says which region is meant: `NOM.html` does not need to exist and is not written, and the shared `index.html` shell is not touched. Since you give it the region's own file, the script **reads it without rewriting it**: it reports "zones already in place" and points out refused keys (for example `radius`, useless on a model alone). Nothing changes in your files, `private` zones stay.
+4. **Copy the model's `.glb`** to the region folder, then try and publish as in § 16 (steps 6 to 8).
+
+If you give `--zones-only` **another** zones file (a full list that you keep elsewhere), the script writes the region's `NOM.zones.json` as a **public version** (`private` zones removed) and keeps the old one as `NOM.zones.json.bak`. Likewise `--config-only`, `--update` and regeneration keep the old `NOM.config.json` as `NOM.config.json.bak` when they change it. Only one `.bak` is kept: the most recent.

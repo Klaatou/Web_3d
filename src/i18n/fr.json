@@ -711,6 +711,7 @@
  "py.glb2html.zones_0_non_modifie_donne_zones": "[zones] {0} non modifié (donne --zones FILE pour le réécrire)",
  "py.glb2html.zones_0_zone_s_lue_s": "[zones] {0} zone(s) lue(s) dans {1}",
  "py.glb2html.zones_0_zone_s_profil_1": "[zones] {0} zone(s), profil {1} -> {2}",
+ "py.glb2html.zones_ancien_garde_0": "[sauvegarde] ancien fichier gardé : {0}",
  "py.glb2html.zones_zones_deja_en_place_0": "[zones] zones déjà en place : {0} (non réécrit)",
  "py.glb2html.zones_zones_deja_en_place_0_2": "[zones] zones déjà en place : {0} (lu pour vérification, non réécrit ni copié)",
  "py.glb2tiles.0_1_0f_m_du_centre": "« {0} » ({1:.0f} m du centre, étendue {2:.0f} m)",

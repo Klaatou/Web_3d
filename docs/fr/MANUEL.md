@@ -933,6 +933,7 @@ dossier/
 
 Règles :
 
+- **Fichiers de zones et de config (1.13.13).** Avant d'écraser un `NOM.zones.json` ou un `NOM.config.json` qui existe et dont le contenu change, le script garde l'ancien sous `NOM.zones.json.bak` ou `NOM.config.json.bak` (le plus récent seulement, il remplace le `.bak` précédent). Quand `--zones` désigne **le `NOM.zones.json` de la région lui-même** (`--zones-only`, `--config-only`, génération), le fichier est lu pour vérification (zones refusées, clés ignorées) et **jamais réécrit** : une réécriture en profil public en aurait retiré les zones `private`. `--update` et `--tiles` faisaient déjà ainsi.
 - `-o` désigne la **région** : son nom sans extension donne NOM. `region.html` n'est pas écrit ; sont écrits `region.glb`, `region.config.json`, `region.zones.json`, plus `index.html` et `lib/three-0.160.0/` **s'ils sont absents**. Une coquille existante n'est jamais écrasée (les autres régions la partagent) : si elle diffère de celle de la version courante, le script avertit ; la supprimer pour la renouveler.
 - `--register` écrit l'adresse `index.html?region=NOM` dans `regions.json` (sauf `--region-url` ou fiche du `.reglages.json`). Les portails et la carte ajoutent `#spawn=…` après la query string : `index.html?region=NOM#spawn=default&name=…`. « ● vous êtes ici » reconnaît la région par son salon, puis par l'adresse complète (query string comprise).
 - **Sans paramètre `region`**, la coquille se comporte comme avant : elle déduit ses fichiers du nom de la page (`index.html` charge `index.config.json`, `index.glb`, `index.zones.json`). Les pages déjà publiées et leurs coquilles continuent donc de marcher, sans rien changer. Sans paramètre ni fichier correspondant, la page affiche « Erreur : … introuvable (HTTP 404) » avec le nom du fichier cherché.
@@ -2380,6 +2381,10 @@ Le détail, version par version, est dans `HISTORIQUE.md` (récit) et `CHANGELOG
 **Ajouts de la 1.13.11 (lot 1.13.11)**
 
 - **éditeur du viewer** : champs « Nom affiché en français » et « Nom affiché en anglais » (`labels`) et « Titre du lien » (`linkTitle`) dans la fiche d'une zone (1.13.11, § 5)
+
+**Ajouts de la 1.13.13 (lot 1.13.13)**
+
+- **glb2html.py** : `NOM.zones.json` et `NOM.config.json` écrasés → l'ancien reste en `.bak` ; `--zones` désignant le fichier de zones de la région lui-même : lu pour vérification, jamais réécrit (§ 6.1)
 
 **Ajouts de la 1.13.12 (lot 1.13.12)**
 

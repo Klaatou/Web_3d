@@ -12,12 +12,12 @@
   "version": "1.6.3 (06/11/2026)"
  },
  "glb-viewer.html": {
-  "hash": "63ca2265dca42454bc43fb6673ecaa72b3b763e959dd9bca43ca94a474e675ad",
-  "version": "1.13.12 (24/11/2026)"
+  "hash": "f8b2e0b09d37da888c7a39a133abab5332033cfa747c18d76678ed30f5d27e20",
+  "version": "1.13.13 (24/11/2026)"
  },
  "glb2html.py": {
-  "hash": "5523e4ac873e2405603b20f1b2a23269c7c78e445ab5c9ec6a0e5ef1f0424ae4",
-  "version": "1.13.12 (24/11/2026)"
+  "hash": "513423455d4f1c38b60cc2b323f2a9ddb5c07553939d31c99f2b10dc06474d04",
+  "version": "1.13.13 (24/11/2026)"
  },
  "glb2tiles.py": {
   "hash": "8699401f6ebf428e7d209ea776ae71d7e7b184358f743f66343c45b619480b58",

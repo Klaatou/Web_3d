@@ -350,6 +350,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 24/11/2026 |  | after 1.13.0 | Batch 1.13.9: README: separately placed 3D models, picture combinable with portal, radio, music or command, mini player; documents only |
 | 24/11/2026 |  | after 1.13.0 | Batch 1.13.10: README: the demo has five regions; manual § 5.21: mkv tried in Firefox; documents only |
 | 24/11/2026 |  | after 1.13.0 | Batch 1.13.11: viewer editor: "displayed name" per language (`labels`) and "link title" (`linkTitle`) fields |
+| 24/11/2026 |  | after 1.13.0 | Batch 1.13.13: `glb2html.py`: old `NOM.zones.json` / `NOM.config.json` kept as `.bak`; the region's zones file given as source is never rewritten; variant of procedure § 18 rewritten |
 | 24/11/2026 |  | after 1.13.0 | Batch 1.13.12: viewer: the model of a `model` zone is read from the picked region folder (like pictures); `glb2html.py` procedure to place a model |
 ## Useful commands
 

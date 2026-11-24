@@ -320,18 +320,19 @@ Il te faut : ton fichier `.glb` de l'objet, le dossier de ta région (celui où 
 
 Rien n'apparaît ? La console du navigateur (F12) dit « le modèle … n'a pas pu être lu » : nom de fichier faux, fichier absent en ligne, ou page ouverte depuis le disque (`file://`). `MANUEL.md` § 5.23.
 
-### Variante : poser le modèle sans le viewer, avec `glb2html.py`
+### Variante : poser le modèle sans le viewer, en modifiant le fichier à la main
 
-Même résultat en écrivant la zone à la main dans le fichier de zones, puis en laissant `glb2html.py` la contrôler et la réécrire.
+Même résultat en écrivant la zone à la main dans `NOM.zones.json`, le fichier de zones de la région. La page relit ce fichier à chaque ouverture : `glb2html.py` n'est pas nécessaire, il sert seulement à contrôler ce que tu as écrit.
 
-1. **Copier le fichier de zones actuel** de la région (`NOM.zones.json`) hors du dépôt, par exemple dans le dossier temporaire, sous le nom `zones.json`.
-2. **Ajouter l'entrée du modèle** dans la liste de ce `zones.json` :
+1. **Garder une copie** : copier `NOM.zones.json` sous un autre nom dans le même dossier (par exemple `NOM.zones.avant.json`).
+2. **Ajouter l'entrée du modèle** dans la liste de `NOM.zones.json` lui-même (dans le dossier de la région), avec un éditeur de texte :
 
 ```json
 {"id": "poste", "label": "Poste", "model": "poste.glb", "x": 3, "y": 0, "z": -4, "yaw": 0, "scale": 1.5, "solid": true}
 ```
 
    `x`, `y`, `z` sont l'origine du `.glb` ; `yaw` est en radians. Pour un poste de radio, ajouter `"model": "poste.glb"` à la zone radio existante au lieu de créer une zone.
-3. **Garder l'ancien fichier** de la région (par exemple sous le nom `NOM.zones.avant.json`) : la commande suivante le remplace sans en faire de copie.
-4. **Réécrire les zones seules** : `python .\glb2html.py -o "CHEMIN\NOM.html" --zones-only --zones "CHEMIN\zones.json"`. Le compte rendu donne le nombre de zones et signale les clés refusées (par exemple `radius`, inutile sur un modèle seul). Ni la config ni la coquille ne sont touchées. Les zones `private` sont retirées du fichier écrit (profil public par défaut, `--profile`).
-5. **Copier le `.glb` du modèle** dans le dossier de la région, puis essayer et publier comme au § 16 (étapes 6 à 8).
+3. **Contrôler (facultatif)** : `python .\glb2html.py -o "CHEMIN\DOSSIER\NOM.html" --zones-only --zones "CHEMIN\DOSSIER\NOM.zones.json"`. Ici `-o` sert seulement à dire de quelle région il s'agit : `NOM.html` n'a pas besoin d'exister et n'est pas écrit, la coquille `index.html` commune n'est pas touchée. Comme tu lui donnes le fichier même de la région, le script le **lit sans le réécrire** : il annonce « zones déjà en place » et signale les clés refusées (par exemple `radius`, inutile sur un modèle seul). Rien n'est changé dans tes fichiers, les zones `private` y restent.
+4. **Copier le `.glb` du modèle** dans le dossier de la région, puis essayer et publier comme au § 16 (étapes 6 à 8).
+
+Si tu donnes à `--zones-only` un **autre** fichier de zones (une liste complète que tu gardes ailleurs), le script écrit le `NOM.zones.json` de la région en **version publique** (zones `private` retirées) et garde l'ancien sous `NOM.zones.json.bak`. De même, `--config-only`, `--update` et la régénération gardent l'ancien `NOM.config.json` sous `NOM.config.json.bak` quand ils le modifient. Un seul `.bak` est gardé : le plus récent.

@@ -317,7 +317,7 @@ async def test_coquille_commune(br):
     run(DATA / "walk3.glb", "-o", site2 / "walk3.html", *comm, "--room", "walk3", "--region-name", "Marche", "--region-xy", "1001,1000", "--zones", tmp / "zw2.json")
     run("-o", site2 / "boite.html", "--config-only", "--shared-shell", "--register", reg, "--room", "boite", "--region-name", "Boîte", "--region-xy", "1000,1000")   # la carte de boite connaît walk3
     noms = sorted(p.name for p in site2.iterdir())
-    rapport(noms == ["boite.config.json", "boite.glb", "boite.zones.json", "default.json", "index.html", "lib", "walk3.config.json", "walk3.glb", "walk3.zones.json"], "--shared-shell : par région seulement X.glb, X.config.json, X.zones.json ; une coquille index.html et un lib/ partagés", noms)
+    rapport(noms == ["boite.config.json", "boite.config.json.bak", "boite.glb", "boite.zones.json", "default.json", "index.html", "lib", "walk3.config.json", "walk3.glb", "walk3.zones.json"], "--shared-shell : par région seulement X.glb, X.config.json, X.zones.json ; une coquille index.html et un lib/ partagés", noms)
     rapport((site2 / "index.html").read_bytes() == coques["boite"], "la coquille commune est identique, octet pour octet, à celle des pages modulaires")
     rapport("index.html?region=boite" in r.stdout, "la ligne [OK] donne l'adresse index.html?region=NOM", r.stdout[-300:])
     entrees = {e["room"]: e for e in json.loads(reg.read_text(encoding="utf-8"))}

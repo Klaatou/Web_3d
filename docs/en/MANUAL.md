@@ -933,6 +933,7 @@ dossier/
 
 Rules:
 
+- **Zones and config files (1.13.13).** Before overwriting an existing `NOM.zones.json` or `NOM.config.json` whose content changes, the script keeps the old one as `NOM.zones.json.bak` or `NOM.config.json.bak` (only the most recent; it replaces the previous `.bak`). When `--zones` designates **the region's own `NOM.zones.json`** (`--zones-only`, `--config-only`, generation), the file is read for checking (refused zones, ignored keys) and **never rewritten**: a rewrite in public profile would have removed the `private` zones. `--update` and `--tiles` already did so.
 - `-o` designates the **region**: its name without extension gives NOM. `region.html` is not written; written are `region.glb`, `region.config.json`, `region.zones.json`, plus `index.html` and `lib/three-0.160.0/` **if they are missing**. An existing shell is never overwritten (the other regions share it): if it differs from the one of the current version, the script warns; delete it to renew it.
 - `--register` writes the address `index.html?region=NOM` into `regions.json` (unless `--region-url` or a card in `.reglages.json`). Portals and the map add `#spawn=…` after the query string: `index.html?region=NOM#spawn=default&name=…`. "● you are here" recognises the region by its room, then by the full address (query string included).
 - **Without a `region` parameter**, the shell behaves as before: it deduces its files from the page's name (`index.html` loads `index.config.json`, `index.glb`, `index.zones.json`). Pages already published and their shells therefore keep working, without changing anything. Without a parameter or a matching file, the page shows "Error: … not found (HTTP 404)" with the name of the file looked for.
@@ -2380,6 +2381,10 @@ The detail, version by version, is in `HISTORY.md` (narrative) and `CHANGELOG.md
 **Additions of 1.13.11 (batch 1.13.11)**
 
 - **viewer editor**: fields "Displayed name in French" and "Displayed name in English" (`labels`) and "Link title" (`linkTitle`) in the form of a zone (1.13.11, § 5)
+
+**Additions of 1.13.13 (batch 1.13.13)**
+
+- **glb2html.py**: `NOM.zones.json` and `NOM.config.json` overwritten → the old one stays as `.bak`; `--zones` designating the region's own zones file: read for checking, never rewritten (§ 6.1)
 
 **Additions of 1.13.12 (batch 1.13.12)**
 
