@@ -6,6 +6,13 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.13.0)
 
+### 24/11/2026 : README : cinq régions ; manuel : mkv essayé sous Firefox (lot 1.13.10)
+
+- **Demande** (Klaatou) : corriger la ligne de la démo des README (« deux régions » alors que la démo en compte cinq) et noter dans le manuel § 5.21 que les clips `.mkv` ont été essayés sous Firefox.
+- **Fait** : `README.fr.md` et `README.md` ligne 9 : « cinq régions reliées par des portails » ; `docs/fr/MANUEL.md` et `docs/en/MANUAL.md` § 5.21 (puce « Le fichier ») : un nom sans extension n'essaie pas `.mkv`, avec son extension des clips `.mkv` ont joué en ligne sous Firefox (essayé par Klaatou le 22/11/2026), les autres navigateurs ne sont pas essayés.
+- **Vérifié** : `tests/readme_liens.py` ; `verif_trad.py` sur la paire du manuel : 0 erreur ; sur la paire des README : les 3 mêmes erreurs qu'avant le lot (noms de documents), inchangées.
+- Fichiers : `README.fr.md`, `README.md`, `docs/fr/MANUEL.md`, `docs/en/MANUAL.md`, historiques FR et EN, `VERSION`, les deux CHANGELOG ; `dist\` est inchangé.
+
 ### 24/11/2026 : README : modèles 3D, image combinable, mini lecteur (lot 1.13.9)
 
 - **Demande** (Klaatou) : annoncer dans le README les nouvelles zones (les modèles `.glb` posés à part, qu'il met aussi dans les régions de la démo).

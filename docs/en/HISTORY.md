@@ -348,6 +348,7 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 22/11/2026 |  | after 1.13.0 | Batch 1.13.5: zone name by language (`labels`) and video title in the bubble of a YouTube link (`linkTitle`, option `--link-titles`); batch 1.13.6: their documents (`REFERENCE_JSON.md` § 11.4, manual, appendix § 13, histories) |
 | 23/11/2026 |  | after 1.13.0 | Batch 1.13.7: first image of the video screens in view (paused, with the right proportions) and click out of range to start them, without sound; batch 1.13.8: their documents (manual § 5.21, `REFERENCE_JSON.md` § 11.4, appendix § 13, histories) |
 | 24/11/2026 |  | after 1.13.0 | Batch 1.13.9: README: separately placed 3D models, picture combinable with portal, radio, music or command, mini player; documents only |
+| 24/11/2026 |  | after 1.13.0 | Batch 1.13.10: README: the demo has five regions; manual § 5.21: mkv tried in Firefox; documents only |
 ## Useful commands
 
 - See the history: `git log --oneline --decorate`

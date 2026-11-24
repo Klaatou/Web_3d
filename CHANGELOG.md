@@ -6,6 +6,13 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.13.0)
 
+### 24/11/2026: README: five regions; manual: mkv tried in Firefox (batch 1.13.10)
+
+- **Request** (Klaatou): fix the demo line of the READMEs ("two regions" while the demo has five) and note in the manual § 5.21 that `.mkv` clips were tried in Firefox.
+- **Done**: `README.fr.md` and `README.md` line 9: "five regions linked by portals"; `docs/fr/MANUEL.md` and `docs/en/MANUAL.md` § 5.21 ("The file" bullet): a name without extension does not try `.mkv`, with its extension `.mkv` clips played online in Firefox (tried by Klaatou on 22/11/2026), other browsers not tried.
+- **Checked**: `tests/readme_liens.py`; `verif_trad.py` on the manual pair: 0 errors; on the README pair: the same 3 errors as before the batch (document names), unchanged.
+- Files: `README.fr.md`, `README.md`, `docs/fr/MANUEL.md`, `docs/en/MANUAL.md`, FR and EN histories, `VERSION`, both CHANGELOGs; `dist\` is unchanged.
+
 ### 24/11/2026: README: 3D models, combinable picture, mini player (batch 1.13.9)
 
 - **Request** (Klaatou): announce the new zones in the README (the `.glb` models placed separately, which he also puts in the demo regions).
