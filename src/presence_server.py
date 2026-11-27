@@ -390,7 +390,7 @@ def log(kind, room, who, extra=""):
 
 class Peer:
     __slots__ = ("id", "ws", "name", "color", "p", "yaw", "last", "ip", "chat_times", "spectator", "uidh", "t0", "zone_t", "room", "color_t", "hist_t",
-                 "wall0", "walk_s", "walk0", "vname", "label", "name_t", "radio", "radio_t", "idle", "dm_times")
+                 "wall0", "walk_s", "walk0", "vname", "label", "name_t", "radio", "radio_t", "idle", "dm_times", "rtc_times")
 
     def __init__(self, pid, ws, name, color, ip, spectator, uidh, room):
         self.id, self.ws, self.name, self.color, self.ip = pid, ws, name, color, ip
@@ -398,6 +398,7 @@ class Peer:
         self.p, self.yaw, self.last, self.zone_t, self.color_t, self.hist_t, self.name_t = None, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
         self.chat_times = []
         self.dm_times = []      # 1.12.29 : heures des derniers messages prives (cadence propre)
+        self.rtc_times = []     # 1.13.14 : heures des derniers messages de signalisation de la voix (cadence propre)
         self.t0 = time.monotonic()
         self.wall0, self.walk_s, self.vname = time.time(), 0.0, ""      # v48 : journal des visites
         self.walk0 = None if spectator else self.t0
@@ -773,6 +774,7 @@ async def refuse(ws, why, room, ip, detail):
 # ----------------------------------------------------------------- journal des visites (v48)
 VKEYS: dict = {}         # salon -> {"salt", "hash", "added"} : empreinte de la clé d'accès, jamais la clé
 VTRY: dict = {}          # IP -> instants des derniers essais de clé refusés (5 par minute au plus)
+SPEAKERS: dict = {}      # 1.13.14 : salon -> id de l'orateur (mode orateur : la parole d'un seul visiteur, que tout le salon entend) ; absent : personne
 VISIT_GAP = 120          # s : une reconnexion du même navigateur dans le même salon moins de 2 min après la fin = même visite
 VISIT_RECENT_DAYS, VISIT_RECENT_MAX = 30, 1000
 VKEY_ALPHA = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
@@ -905,21 +907,32 @@ def visits_summary(room):
             "recent": recent[:VISIT_RECENT_MAX], "recentAll": len(recent)}
 
 
-def visits_answer(ip, msg):
-    """réponse à {"t": "visits", "room", "key"} : le résumé si la clé du salon est juste ; 5 clés refusées par minute et par IP au plus"""
-    room = clean_room(msg.get("room"))
-    if not OPTS.visits:
-        return {"t": "visits", "ok": False, "why": "off"}
+def vkey_check(ip, room, key):
+    """1.13.14 : "" si la clé du salon est juste ; "rate" (5 essais refusés par minute et par IP, la clé n'est alors pas regardée) ou "key" sinon ;
+    le journal est écrit par l'appelant. Commun au journal des visites et au mode orateur : une seule limite d'essais"""
     now = time.time()
     ipk = ip_group(ip)
     tries = [x for x in VTRY.get(ipk, []) if now - x < 60]
     VTRY[ipk] = tries
     if len(tries) >= 5:
+        return "rate"
+    e = VKEYS.get(room)
+    if not e or not hmac.compare_digest(e["hash"], vkey_hash(e["salt"], key)):
+        tries.append(now)
+        return "key"
+    return ""
+
+
+def visits_answer(ip, msg):
+    """réponse à {"t": "visits", "room", "key"} : le résumé si la clé du salon est juste ; 5 clés refusées par minute et par IP au plus"""
+    room = clean_room(msg.get("room"))
+    if not OPTS.visits:
+        return {"t": "visits", "ok": False, "why": "off"}
+    why = vkey_check(ip, room, msg.get("key"))
+    if why == "rate":
         log(_tr("py.presence.ev.visits"), room, f"ip {ip_for_log(ip)}", _tr("py.presence.visits.rate"))
         return {"t": "visits", "ok": False, "why": "rate"}
-    e = VKEYS.get(room)
-    if not e or not hmac.compare_digest(e["hash"], vkey_hash(e["salt"], msg.get("key"))):
-        tries.append(now)
+    if why:
         log(_tr("py.presence.ev.visits"), room, f"ip {ip_for_log(ip)}", _tr("py.presence.visits.badkey"))
         return {"t": "visits", "ok": False, "why": "key"}
     log(_tr("py.presence.ev.visits"), room, f"ip {ip_for_log(ip)}", _tr("py.presence.visits.granted"))
@@ -1212,6 +1225,25 @@ def walkers(room, idle=False):
     return [p for p in ROOMS.get(room, {}).values() if not p.spectator and (idle or not p.idle)]
 
 
+RTC_MAX = 3000           # 1.13.14 : taille maximale (JSON) de la donnée d'un message rtc ; le serveur n'accepte que 4096 octets par message (max_size)
+RTC_BURST = 200          # 1.13.14 : messages rtc par fenêtre de 10 s et par visiteur (une connexion de voix en envoie une dizaine)
+
+
+async def speaker_set(room, pid):
+    """1.13.14 : l'orateur du salon (pid ; 0 : personne) ; tout le salon, spectateurs compris, en est prévenu"""
+    if pid:
+        SPEAKERS[room] = pid
+    else:
+        SPEAKERS.pop(room, None)
+    await broadcast(room, {"t": "speaker", "id": pid})
+
+
+async def speaker_clear(room, pid):
+    """1.13.14 : le visiteur pid part ou devient spectateur : s'il était l'orateur, il n'y a plus d'orateur"""
+    if SPEAKERS.get(room) == pid:
+        await speaker_set(room, 0)
+
+
 async def idle_walker(peer, now):
     """1.10.37 : le promeneur n'a envoye aucune position depuis --idle-walk minutes (page en arriere-plan) : il devient muet"""
     minutes = int((now - max(peer.last, peer.walk0 or peer.t0)) // 60)
@@ -1388,7 +1420,8 @@ async def handler(ws):
         peers = ROOMS.setdefault(room, {})      # v51 : créé ici seulement (un refus plus haut ne laisse plus de salon vide)
         peers[pid] = peer
         await ws.send(json.dumps({"t": "welcome", "id": pid, "name": peer.name, "color": peer.color, "peers": existing,
-                                  "history": list(HISTORY.get(room, ()))[-OPTS.history:] if OPTS.history > 0 else [], "role": "spectator" if spectator else "walker", "dm": not OPTS.no_dm},
+                                  "history": list(HISTORY.get(room, ()))[-OPTS.history:] if OPTS.history > 0 else [], "role": "spectator" if spectator else "walker", "dm": not OPTS.no_dm,
+                                  "voice": not OPTS.no_voice, "ice": [] if OPTS.no_voice else OPTS.ice, "speaker": SPEAKERS.get(room, 0)},
                                  separators=(",", ":")))
         log(_tr("py.presence.ev.connect"), room, peer.who(), "spectateur" if spectator else _tr("py.presence.promeneur_0_dans_le_salon", len(walkers(room))))
         if not spectator:
@@ -1417,6 +1450,7 @@ async def handler(ws):
                     etait_muet, peer.idle = peer.idle, False
                     peer.spectator, peer.p = True, None
                     peer.walk_mark(False)
+                    await speaker_clear(room, pid)      # 1.13.14
                     if not etait_muet:      # 1.10.37 : les autres ont deja recu « leave » quand il est devenu muet
                         await broadcast(room, {"t": "leave", "id": pid}, exclude=peer)
                     log(_tr("py.presence.ev.walk"), room, peer.who(), _tr("py.presence.ev.end"))
@@ -1491,6 +1525,61 @@ async def handler(ws):
                 log(_tr("py.presence.dm"), room, peer.who(), "-> " + dest.who())
                 await send_safe(dest.ws, json.dumps({"t": "dm", "id": pid, "name": peer.name, "k": peer_key(peer), "text": text, "ts": ts}, separators=(",", ":")))
                 await send_safe(ws, json.dumps({"t": "dm", "id": dest.id, "name": dest.name, "k": peer_key(dest), "text": text, "ts": ts, "self": True}, separators=(",", ":")))
+            elif t == "rtc":
+                # 1.13.14 : signalisation de la voix {t:'rtc', to:id, d:{...}} : le destinataire recoit {t:'rtc', id, d} (rien pour l'expediteur) ;
+                # erreurs {t:'rtcerr', to, why} : off, rate, gone, self ; jamais diffuse, jamais garde, contenu jamais journalise
+                to, d = m.get("to"), m.get("d")
+                if isinstance(to, bool) or not isinstance(to, int) or not isinstance(d, dict):
+                    continue
+                if OPTS.no_voice:
+                    await send_safe(ws, json.dumps({"t": "rtcerr", "to": to, "why": "off"}))
+                    continue
+                if len(json.dumps(d, ensure_ascii=False, separators=(",", ":"))) > RTC_MAX:
+                    continue
+                now = time.monotonic()
+                peer.rtc_times = [x for x in peer.rtc_times if now - x < 10]
+                if len(peer.rtc_times) >= RTC_BURST:
+                    await send_safe(ws, json.dumps({"t": "rtcerr", "to": to, "why": "rate"}))
+                    continue
+                dest = ROOMS.get(room, {}).get(to)
+                why = "self" if dest is peer else ("gone" if dest is None or dest.spectator else "")
+                if why:
+                    await send_safe(ws, json.dumps({"t": "rtcerr", "to": to, "why": why}))
+                    continue
+                peer.rtc_times.append(now)
+                await send_safe(dest.ws, json.dumps({"t": "rtc", "id": pid, "d": d}, ensure_ascii=False, separators=(",", ":")))
+            elif t == "speaker":
+                # 1.13.14 : mode orateur {t:'speaker', key, to?:id} : avec la cle du salon (celle du journal des visites), l'orateur est le visiteur to, ou soi-meme sans to ;
+                # {t:'speaker', key, off:true} arrete l'orateur ; {t:'speaker', off:true} sans cle, par l'orateur lui-meme ; le salon recoit {t:'speaker', id} (0 : personne) ;
+                # erreurs {t:'speakererr', why} : off (--no-voice), key, rate, gone ; la cle n'est jamais journalisee
+                if OPTS.no_voice:
+                    await send_safe(ws, json.dumps({"t": "speakererr", "why": "off"}))
+                    continue
+                to, key = m.get("to"), m.get("key")
+                if m.get("off") is True and key is None and SPEAKERS.get(room) == pid:
+                    await speaker_set(room, 0)
+                    log(_tr("py.presence.ev.speaker"), room, peer.who(), _tr("py.presence.speaker.off"))
+                    continue
+                if not isinstance(key, str) or isinstance(to, bool) or not (to is None or isinstance(to, int)):
+                    continue
+                why = vkey_check(peer.ip, room, key)
+                if why == "rate":
+                    log(_tr("py.presence.ev.speaker"), room, peer.who(), _tr("py.presence.speaker.rate"))
+                elif why:
+                    log(_tr("py.presence.ev.speaker"), room, peer.who(), _tr("py.presence.speaker.badkey"))
+                if why:
+                    await send_safe(ws, json.dumps({"t": "speakererr", "why": why}))
+                    continue
+                if m.get("off") is True:
+                    await speaker_set(room, 0)
+                    log(_tr("py.presence.ev.speaker"), room, peer.who(), _tr("py.presence.speaker.off"))
+                    continue
+                dest = peer if to is None else ROOMS.get(room, {}).get(to)
+                if dest is None or dest.spectator:
+                    await send_safe(ws, json.dumps({"t": "speakererr", "why": "gone"}))
+                    continue
+                await speaker_set(room, dest.id)
+                log(_tr("py.presence.ev.speaker"), room, peer.who(), _tr("py.presence.speaker.on", dest.who()))
             elif t == "history":
                 # v37 : page plus ancienne de l'historique du salon : {t:'history', before: n, n: 50} -> {t:'history', msgs:[...], more:bool}
                 now = time.monotonic()
@@ -1532,6 +1621,7 @@ async def handler(ws):
         if peer is not None and room in ROOMS:
             radio_leave(peer)
             ROOMS[room].pop(peer.id, None)
+            await speaker_clear(room, peer.id)      # 1.13.14 : l'orateur part : plus d'orateur
             if not peer.spectator and not peer.idle:      # 1.10.37 : un muet a deja ete annonce parti
                 await broadcast(room, {"t": "leave", "id": peer.id})
             dur = int(time.monotonic() - peer.t0)
@@ -1576,6 +1666,8 @@ async def main():
     ap.add_argument("--chat-burst", type=int, default=5, help=_tr("py.presence.messages_max_par_fenetre_de_10"))
     ap.add_argument("--history", type=int, default=200, help=_tr("py.presence.derniers_messages_rejoues_aux_nouveaux_arriv"))
     ap.add_argument("--no-dm", action="store_true", help=_tr("py.presence.help.no_dm"))
+    ap.add_argument("--no-voice", action="store_true", help=_tr("py.presence.help.no_voice"))
+    ap.add_argument("--ice", action="append", metavar="stun:ADRESSE:PORT", help=_tr("py.presence.help.ice"))
     ap.add_argument("--identities", default="presence_identities.json", help=_tr("py.presence.registre_des_noms_reserves_vide_en"))
     ap.add_argument("--name-ttl-days", type=int, default=365, help=_tr("py.presence.un_nom_non_utilise_depuis_ce"))
     ap.add_argument("--max-names", type=int, default=10000, help=_tr("py.presence.help.max_names"))
@@ -1603,6 +1695,9 @@ async def main():
     OPTS = ap.parse_args()
     if OPTS.map_names_key is not None and len(OPTS.map_names_key) < MAP_KEY_MIN:
         ap.error(_tr("py.presence.map_key_short", MAP_KEY_MIN))
+    OPTS.ice = [u.strip() for u in (OPTS.ice or []) if u.strip()]      # 1.13.14 : serveurs STUN envoyes aux pages (aucun par defaut)
+    if len(OPTS.ice) > 4 or not all(re.fullmatch(r"stuns?:[A-Za-z0-9.:\[\]-]{1,200}", u) for u in OPTS.ice):
+        ap.error(_tr("py.presence.ice_bad"))
     try:
         sys.stdout.reconfigure(line_buffering=True, errors="replace")
     except (AttributeError, ValueError):

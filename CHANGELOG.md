@@ -6,6 +6,14 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.13.0)
 
+### 27/11/2026: presence server: voice, part one (signalling and speaker mode by the room key) (batch 1.13.14)
+
+- **Request** (Klaatou): add voice dialogue between visitors, without another server for the audio (WebRTC from browser to browser: the presence server only does the signalling); a "speaker mode" to unblock a session (conference) before going through Icecast, to be given **without** the server console.
+- **Done** (`src/presence_server.py`): (1) message `{t:'rtc', to, d}` relayed to a visitor of the same room, who receives `{t:'rtc', id, d}` (nothing for the sender); `rtcerr` errors (`off`, `rate`, `gone`, `self`); `d` of 3000 characters at most (the server only accepts 4096 bytes per message), 200 messages per 10 s and per visitor; never broadcast, kept or logged; (2) options `--no-voice` and `--ice stun:ADDRESS:PORT` (repeatable, 4 at most, `stun:` or `stuns:` only, none by default: nothing goes to a third party without it); the `welcome` message carries `voice`, `ice` and `speaker`; (3) speaker mode: `{t:'speaker', key, to?}` with the room key (the one of the visits journal, created by the `visits-key` command) makes visitor `to` the speaker, or oneself without `to`; `{t:'speaker', key, off:true}` ends it, and `{t:'speaker', off:true}` without a key by the speaker themselves; the room (spectators included) receives `{t:'speaker', id}` (0: nobody); `speakererr` errors (`off`, `key`, `rate`, `gone`); the floor is lost when the speaker leaves or becomes a spectator; "speaker" event in the log, never the key; does not need `--visits`, only a room key; (4) the key check of `visits_answer` becomes `vkey_check`, shared: the same 5 refusals per minute and per address for the visits journal and for speaker mode. Eight texts in `fr.json` and `en.json`.
+- **Tests**: new `tests/presence_voice.py` (relay, errors, too big, rate, `--no-voice`, `--ice`, speaker mode, key attempt limit, console without content or key).
+- **Not done yet**: the page (microphone, connections between visitors, spatial sound, key field, "Give the floor" menu): next batch. **Not tried**: Windows, a real browser, a real STUN server.
+- **Still to update**: manual (options `--no-voice` and `--ice`, `rtc` and `speaker` messages), procedures, histories, `REFERENCE_OPTIONS.md` (rebuilt by `python build.py`).
+
 ### 24/11/2026: glb2html.py: `.bak` backup of zones and config, the region's own zones file never rewritten by itself (batch 1.13.13)
 
 - **Request** (Klaatou): the "place a model with `glb2html.py`" procedure had `NOM.zones.json` copied to a temporary folder; why not edit it in place and give it to the script, and why does the script not keep a copy?

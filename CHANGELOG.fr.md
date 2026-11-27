@@ -6,6 +6,14 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.13.0)
 
+### 27/11/2026 : serveur de présence : voix, première partie (signalisation et mode orateur par la clé du salon) (lot 1.13.14)
+
+- **Demande** (Klaatou) : ajouter les dialogues à la voix entre visiteurs, sans serveur de plus pour l'audio (WebRTC de navigateur à navigateur : le serveur de présence ne fait que la signalisation) ; un « mode orateur » pour débloquer une séance (conférence) avant de passer par Icecast, à donner **sans** la console du serveur.
+- **Fait** (`src/presence_server.py`) : (1) message `{t:'rtc', to, d}` relayé vers un visiteur du même salon, qui reçoit `{t:'rtc', id, d}` (rien pour l'expéditeur) ; erreurs `rtcerr` (`off`, `rate`, `gone`, `self`) ; `d` de 3000 caractères au plus (le serveur n'accepte que 4096 octets par message), 200 messages par 10 s et par visiteur ; jamais diffusé, gardé ni journalisé ; (2) options `--no-voice` et `--ice stun:ADRESSE:PORT` (répétable, 4 au plus, `stun:` ou `stuns:` seulement, aucune par défaut : rien ne part chez un tiers sans elle) ; le message `welcome` porte `voice`, `ice` et `speaker` ; (3) mode orateur : `{t:'speaker', key, to?}` avec la clé du salon (celle du journal des visites, créée par la commande `visits-key`) rend orateur le visiteur `to`, ou soi-même sans `to` ; `{t:'speaker', key, off:true}` l'arrête, et `{t:'speaker', off:true}` sans clé par l'orateur lui-même ; le salon (spectateurs compris) reçoit `{t:'speaker', id}` (0 : personne) ; erreurs `speakererr` (`off`, `key`, `rate`, `gone`) ; la parole se perd quand l'orateur part ou devient spectateur ; événement « orateur » au journal, jamais la clé ; ne demande pas `--visits`, seulement une clé de salon ; (4) la vérification de clé de `visits_answer` devient `vkey_check`, commune : mêmes 5 refus par minute et par adresse pour le journal des visites et pour le mode orateur. Huit textes dans `fr.json` et `en.json`.
+- **Tests** : nouveau `tests/presence_voice.py` (relais, erreurs, trop gros, cadence, `--no-voice`, `--ice`, mode orateur, limite d'essais de clé, console sans contenu ni clé).
+- **Pas encore fait** : la page (micro, connexions entre visiteurs, son spatial, champ de la clé, menu « Donner la parole ») : lot suivant. **Non essayé** : Windows, un vrai navigateur, un vrai serveur STUN.
+- **Reste à mettre à jour** : manuel (options `--no-voice` et `--ice`, messages `rtc` et `speaker`), procédures, historiques, `REFERENCE_OPTIONS.md` (refait par `python build.py`).
+
 ### 24/11/2026 : glb2html.py : sauvegarde `.bak` des zones et de la config, fichier de zones de la région jamais réécrit par lui-même (lot 1.13.13)
 
 - **Demande** (Klaatou) : la procédure « poser un modèle avec `glb2html.py` » faisait copier `NOM.zones.json` dans un dossier temporaire ; pourquoi ne pas l'éditer sur place et le donner au script, et pourquoi le script n'en garde-t-il pas une copie ?
