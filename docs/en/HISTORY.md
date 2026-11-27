@@ -355,6 +355,10 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 27/11/2026 |  | after 1.13.0 | Batch 1.13.14: presence server: voice, part one (`rtc` message, speaker mode by the room key, `--no-voice`, `--ice`) |
 | 27/11/2026 |  | after 1.13.0 | Batch 1.13.15: page: "Voice" button and window, WebRTC links, spatial sound, X key, speaker mode, "Give the floor" |
 | 27/11/2026 |  | after 1.13.0 | Batch 1.13.16: documents: voice (manual § 7.60 and § 10.28, procedure 6.11, README; the IP is seen by linked visitors); documents only |
+| 27/11/2026 |  | after 1.13.0 | Batch 1.13.17: documents: `visits-key ROOM` identical in both languages; documents only |
+| 27/11/2026 |  | after 1.13.0 | Batch 1.13.18: voice: in every pair of visitors, the last to arrive is now heard by the first (their voice was not sent) |
+| 27/11/2026 |  | after 1.13.0 | Batch 1.13.19: voice: audience mute in speaker mode (server: `mute`; page: checkbox, microphone closed, only the speaker's voice) |
+| 27/11/2026 |  | after 1.13.0 | Batch 1.13.20: documents: audience mute, explanation of batch 1.13.18; documents only |
 ## Useful commands
 
 - See the history: `git log --oneline --decorate`

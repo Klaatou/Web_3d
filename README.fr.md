@@ -186,7 +186,7 @@ Le réglage « Clavier » (Auto, AZERTY ou QWERTY) ne change que les lettres aff
 
 ## Serveur de présence
 
-Positions, chat (historique `--history-file`), messages privés (`--no-dm` les refuse, manuel § 10.27), voix entre visiteurs en WebRTC (`--no-voice`, `--ice`, mode orateur par la clé du salon ; manuel § 10.28 et § 7.60 : se parler expose l'adresse IP), modération depuis sa console (`liste`, `ejecter`, `bannir`, `bans`, `debannir`, `rooms`, `visits-key`, `creators`, `aide` ; alias anglais `list`, `kick`, `ban`, `unban`, `help`), compteurs de visiteurs pour la carte, journal des visites sans adresse IP (`--visits`) que le créateur consulte avec `#visits` et sa clé, accueil d'autres créateurs (`--creators` : pages déclarées, salons réservés par un préfixe, manuel § 10.10). Le rendre public sans montrer son adresse IP : procédures § 11. Détail : manuel § 10.
+Positions, chat (historique `--history-file`), messages privés (`--no-dm` les refuse, manuel § 10.27), voix entre visiteurs en WebRTC (`--no-voice`, `--ice`, mode orateur par la clé du salon, avec micros du public coupables ; manuel § 10.28 et § 7.60 : se parler expose l'adresse IP), modération depuis sa console (`liste`, `ejecter`, `bannir`, `bans`, `debannir`, `rooms`, `visits-key`, `creators`, `aide` ; alias anglais `list`, `kick`, `ban`, `unban`, `help`), compteurs de visiteurs pour la carte, journal des visites sans adresse IP (`--visits`) que le créateur consulte avec `#visits` et sa clé, accueil d'autres créateurs (`--creators` : pages déclarées, salons réservés par un préfixe, manuel § 10.10). Le rendre public sans montrer son adresse IP : procédures § 11. Détail : manuel § 10.
 
 ## Langue
 

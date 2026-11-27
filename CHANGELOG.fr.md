@@ -6,18 +6,24 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.13.0)
 
+### 27/11/2026 : documents : muet du public et explication du lot 1.13.18 (lot 1.13.20)
+
+- **Demande** (Klaatou) : expliquer plus clairement le défaut du lot 1.13.18 (« offre », « plus petit identifiant » ne parlaient pas) et documenter le muet du public.
+- **Fait** (documents seulement, aucun code) : entrée du lot 1.13.18 réécrite en clair ; `MANUEL.md` et `MANUAL.md` : § 7.60 (puce « Couper les micros du public » : case, micro fermé, questions par « Donner la parole », limite), § 10.28 (`mute`, `nospeaker`, `welcome.mute`) et annexe des ajouts ; procédure 6.11 ; README ; historiques (lots 1.13.17 à 1.13.20).
+- **Non essayé** : la voix sur un vrai réseau, Windows, Edge.
+
 ### 27/11/2026 : voix : muet du public en mode orateur (lot 1.13.19)
 
 - **Demande** (Klaatou) : l'orateur peut couper les micros du public (case dans la fenêtre « Voix », avec la clé du salon) ; pour les questions on réutilise « Donner la parole » ; fin de l'orateur : tout le monde est démuté ; l'état est donné aussi aux arrivants.
 - **Fait** (`src/presence_server.py`, `src/core.js`, `src/template.html`, `src/i18n`) : (1) serveur : message `{t:'speaker', key, mute:true|false}` (clé du salon, il faut un orateur : sinon `speakererr` `nospeaker`) ; l'état est diffusé dans `{t:'speaker', id, mute:true}` (`mute` absent = micros libres) et donné aux arrivants par `welcome` (`mute`) ; il tombe quand l'orateur s'arrête, part ou passe spectateur, et reste quand la parole passe à un autre visiteur ; (2) page : micro fermé pour tous sauf l'orateur, touche X et « Micro ouvert » sans effet (message « Micro coupé par l'orateur. »), case « Couper les micros du public » dans la fenêtre « Voix » de l'orateur ; (3) réception : tant que le muet est actif, seule la voix de l'orateur est jouée (une page modifiée qui émettrait quand même n'est pas entendue des pages à jour) et il n'y a plus de lien de proximité entre membres du public ; l'orateur n'entend pas le public.
 - **Limite** : la voix passe de navigateur à navigateur, sans serveur : le muet est appliqué par la page de chacun ; une page modifiée peut l'ignorer chez elle. Ce n'est pas une garantie de sécurité.
 - **Non essayé** : Windows, Edge, vrai réseau, plus de trois visiteurs.
-- **Reste à mettre à jour** : manuel (§ 7.60, § 10.28), procédures, historiques (documents en un lot à part). **Serveur public** : `presence_server.py` 1.13.19 à déployer (le muet n'existe pas sans lui).
+- **Reste à mettre à jour** : rien (documents faits au lot 1.13.20). **Serveur public** : `presence_server.py` 1.13.19 à déployer (le muet n'existe pas sans lui).
 
 ### 27/11/2026 : voix : la voix de celui qui répond à l'offre est envoyée (lot 1.13.18)
 
-- **Constat** (en essayant le lot suivant) : dans un lien, seule la voix de celui qui fait l'offre (le plus petit identifiant) était envoyée ; celui qui répond ne transmettait rien (0 octet) bien que le lien s'affiche « connecté ». Le visiteur d'identifiant le plus petit n'entendait donc pas les autres. Les essais du lot 1.13.15 ne mesuraient l'audio que dans un sens.
-- **Cause** : `src/core.js`, `vOpen` créait une ligne audio (`addTransceiver`) des deux côtés ; côté répondeur, le navigateur crée une autre ligne à partir de l'offre, et celle qui portait le micro restait inutilisée.
+- **Constat** (en essayant le lot suivant) : quand deux visiteurs proches se parlent, leurs navigateurs se connectent directement ; dans chaque paire, c'est celui qui est arrivé en premier dans le salon (le serveur donne un numéro à chacun à son arrivée) qui lance la connexion. **Dans chaque paire, le visiteur arrivé après n'envoyait pas sa voix à celui arrivé avant** : le premier arrivé n'entendait pas le second, alors que le second entendait le premier, et le lien s'affichait « connecté » des deux côtés. Rien à voir avec le mode orateur ni « Donner la parole » : ça touchait toute paire de visiteurs, orateur compris (un orateur arrivé après un auditeur n'était pas entendu de lui). Les essais du lot 1.13.15 ne mesuraient l'audio que dans un sens.
+- **Cause** : `src/core.js`, `vOpen` préparait une ligne audio avec le micro des deux côtés ; côté visiteur arrivé après, la connexion en créait une autre (sans micro) à partir de la proposition de l'autre, et celle qui portait le micro restait inutilisée.
 - **Fait** (`src/core.js`) : seul l'offreur crée sa ligne audio ; le répondeur, après réception de l'offre, passe ses lignes audio en envoi et réception et y branche son micro avant de répondre.
 - **Tests** : `tests/voix_page.py` : nouveau contrôle de l'audio dans l'autre sens (échoue sans le correctif : 0 octet reçu).
 - **Non essayé** : Windows, Edge, vrai réseau, plus de trois visiteurs.

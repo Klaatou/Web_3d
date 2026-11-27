@@ -355,6 +355,10 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 27/11/2026 |  | après 1.13.0 | Lot 1.13.14 : serveur de présence : voix, première partie (message `rtc`, mode orateur par la clé du salon, `--no-voice`, `--ice`) |
 | 27/11/2026 |  | après 1.13.0 | Lot 1.13.15 : page : bouton et fenêtre « Voix », liens WebRTC, son spatial, touche X, mode orateur, « Donner la parole » |
 | 27/11/2026 |  | après 1.13.0 | Lot 1.13.16 : documents : voix (manuel § 7.60 et § 10.28, procédure 6.11, README ; l'IP est vue des visiteurs reliés) ; documents seulement |
+| 27/11/2026 |  | après 1.13.0 | Lot 1.13.17 : documents : `visits-key ROOM` identique dans les deux langues ; documents seulement |
+| 27/11/2026 |  | après 1.13.0 | Lot 1.13.18 : voix : dans chaque paire de visiteurs, le dernier arrivé est maintenant entendu du premier (sa voix n'était pas envoyée) |
+| 27/11/2026 |  | après 1.13.0 | Lot 1.13.19 : voix : muet du public en mode orateur (serveur : `mute` ; page : case, micro fermé, voix de l'orateur seule) |
+| 27/11/2026 |  | après 1.13.0 | Lot 1.13.20 : documents : muet du public, explication du lot 1.13.18 ; documents seulement |
 ## Commandes utiles
 
 - Voir l'historique : `git log --oneline --decorate`

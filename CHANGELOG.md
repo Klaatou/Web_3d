@@ -6,18 +6,24 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.13.0)
 
+### 27/11/2026: documents: audience mute and explanation of batch 1.13.18 (batch 1.13.20)
+
+- **Request** (Klaatou): explain the batch 1.13.18 defect more clearly ("offer" and "smaller identifier" were not meaningful) and document the audience mute.
+- **Done** (documents only, no code): batch 1.13.18 entry rewritten in plain words; `MANUEL.md` and `MANUAL.md`: § 7.60 ("Mute the audience microphones" bullet: checkbox, closed microphone, questions through "Give the floor", limit), § 10.28 (`mute`, `nospeaker`, `welcome.mute`) and the additions annex; procedure 6.11; README; histories (batches 1.13.17 to 1.13.20).
+- **Not tried**: voice on a real network, Windows, Edge.
+
 ### 27/11/2026: voice: audience mute in speaker mode (batch 1.13.19)
 
 - **Request** (Klaatou): the speaker can mute the audience microphones (checkbox in the "Voice" window, with the room key); questions reuse "Give the floor"; when the speaker ends, everybody is unmuted; the state is also given to people who arrive.
 - **Done** (`src/presence_server.py`, `src/core.js`, `src/template.html`, `src/i18n`): (1) server: message `{t:'speaker', key, mute:true|false}` (room key, a speaker is required: otherwise `speakererr` `nospeaker`); the state is broadcast in `{t:'speaker', id, mute:true}` (no `mute` = microphones free) and given to newcomers by `welcome` (`mute`); it falls when the speaker stops, leaves or becomes a spectator, and stays when the floor goes to another visitor; (2) page: microphone closed for everybody but the speaker, key X and "Open microphone" have no effect (message "Microphone muted by the speaker."), checkbox "Mute the audience microphones" in the speaker's "Voice" window; (3) reception: while the mute is on, only the speaker's voice is played (a modified page that still sends is not heard by up-to-date pages) and there are no proximity links between audience members; the speaker does not hear the audience.
 - **Limit**: voice goes from browser to browser, without a server: the mute is applied by each visitor's page; a modified page can ignore it on its own side. This is not a security guarantee.
 - **Not tried**: Windows, Edge, a real network, more than three visitors.
-- **Still to update**: manual (§ 7.60, § 10.28), procedures, histories (documents in a separate batch). **Public server**: `presence_server.py` 1.13.19 to deploy (the mute does not exist without it).
+- **Still to update**: nothing (documents done in batch 1.13.20). **Public server**: `presence_server.py` 1.13.19 to deploy (the mute does not exist without it).
 
 ### 27/11/2026: voice: the voice of the one who answers the offer is sent (batch 1.13.18)
 
-- **Finding** (while trying the next batch): in a link, only the voice of the one who makes the offer (the smaller identifier) was sent; the one who answers sent nothing (0 bytes) although the link showed "connected". The visitor with the smaller identifier therefore did not hear the others. The batch 1.13.15 tests only measured audio in one direction.
-- **Cause**: `src/core.js`, `vOpen` created an audio line (`addTransceiver`) on both sides; on the answering side the browser creates another line from the offer, and the one that carried the microphone stayed unused.
+- **Finding** (while trying the next batch): when two nearby visitors talk, their browsers connect directly; in each pair, the one who arrived first in the room (the server gives each visitor a number on arrival) starts the connection. **In each pair, the visitor who arrived later did not send their voice to the one who arrived earlier**: the first to arrive did not hear the second, while the second heard the first, and the link showed "connected" on both sides. Nothing to do with speaker mode or "Give the floor": it affected every pair of visitors, the speaker included (a speaker who arrived after a listener was not heard by them). The batch 1.13.15 tests only measured audio in one direction.
+- **Cause**: `src/core.js`, `vOpen` prepared an audio line carrying the microphone on both sides; on the side of the visitor who arrived later, the connection created another one (without microphone) from the other's proposal, and the one that carried the microphone stayed unused.
 - **Done** (`src/core.js`): only the offerer creates its audio line; the answerer, after receiving the offer, sets its audio lines to send and receive and attaches its microphone before answering.
 - **Tests**: `tests/voix_page.py`: new check of the audio in the other direction (fails without the fix: 0 bytes received).
 - **Not tried**: Windows, Edge, a real network, more than three visitors.
