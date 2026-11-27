@@ -6,6 +6,15 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.13.0)
 
+### 27/11/2026: voice: the voice of the one who answers the offer is sent (batch 1.13.18)
+
+- **Finding** (while trying the next batch): in a link, only the voice of the one who makes the offer (the smaller identifier) was sent; the one who answers sent nothing (0 bytes) although the link showed "connected". The visitor with the smaller identifier therefore did not hear the others. The batch 1.13.15 tests only measured audio in one direction.
+- **Cause**: `src/core.js`, `vOpen` created an audio line (`addTransceiver`) on both sides; on the answering side the browser creates another line from the offer, and the one that carried the microphone stayed unused.
+- **Done** (`src/core.js`): only the offerer creates its audio line; the answerer, after receiving the offer, sets its audio lines to send and receive and attaches its microphone before answering.
+- **Tests**: `tests/voix_page.py`: new check of the audio in the other direction (fails without the fix: 0 bytes received).
+- **Not tried**: Windows, Edge, a real network, more than three visitors.
+- **Still to update**: no document describes this mechanism.
+
 ### 27/11/2026: documents: `visits-key ROOM` identical in both languages (batch 1.13.17)
 
 - **Finding**: `verif_trad.py` gave 1 error on the manual and 1 on the procedures since batch 1.13.16: the inline code `visits-key SALON` (FR) was not identical to `visits-key ROOM` (EN); the check had not been run before that batch was delivered.

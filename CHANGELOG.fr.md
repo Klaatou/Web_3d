@@ -6,6 +6,15 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.13.0)
 
+### 27/11/2026 : voix : la voix de celui qui répond à l'offre est envoyée (lot 1.13.18)
+
+- **Constat** (en essayant le lot suivant) : dans un lien, seule la voix de celui qui fait l'offre (le plus petit identifiant) était envoyée ; celui qui répond ne transmettait rien (0 octet) bien que le lien s'affiche « connecté ». Le visiteur d'identifiant le plus petit n'entendait donc pas les autres. Les essais du lot 1.13.15 ne mesuraient l'audio que dans un sens.
+- **Cause** : `src/core.js`, `vOpen` créait une ligne audio (`addTransceiver`) des deux côtés ; côté répondeur, le navigateur crée une autre ligne à partir de l'offre, et celle qui portait le micro restait inutilisée.
+- **Fait** (`src/core.js`) : seul l'offreur crée sa ligne audio ; le répondeur, après réception de l'offre, passe ses lignes audio en envoi et réception et y branche son micro avant de répondre.
+- **Tests** : `tests/voix_page.py` : nouveau contrôle de l'audio dans l'autre sens (échoue sans le correctif : 0 octet reçu).
+- **Non essayé** : Windows, Edge, vrai réseau, plus de trois visiteurs.
+- **Reste à mettre à jour** : aucun document ne décrit ce mécanisme.
+
 ### 27/11/2026 : documents : `visits-key ROOM` identique dans les deux langues (lot 1.13.17)
 
 - **Constat** : `verif_trad.py` donnait 1 erreur sur le manuel et 1 sur les procédures depuis le lot 1.13.16 : le code en ligne `visits-key SALON` (FR) n'était pas identique à `visits-key ROOM` (EN) ; le contrôle n'avait pas été lancé avant la livraison de ce lot.

@@ -557,7 +557,7 @@ function diagShow(text, status, select) {
 function diagText(viewer, extra) {
   const x = extra || {}, L = (k, v) => tr('core.diag.line', k, v), out = [tr('core.diag.title')];
   const nb = (v, d) => (Number.isFinite(v) ? i18nNum(v, d || 0) : '?');   // nombres à la manière de la langue (virgule en français)
-  out.push(L(tr('core.diag.version'), '1.13.15 (27/11/2026)' + (x.cfgVersion && x.cfgVersion !== '1.13.15 (27/11/2026)' ? ' ; ' + tr('core.diag.cfgver', x.cfgVersion) : '')));
+  out.push(L(tr('core.diag.version'), '1.13.18 (27/11/2026)' + (x.cfgVersion && x.cfgVersion !== '1.13.18 (27/11/2026)' ? ' ; ' + tr('core.diag.cfgver', x.cfgVersion) : '')));
   out.push(L(tr('core.diag.date'), new Date().toLocaleString(({ fr: 'fr-FR', en: 'en-GB' })[LANG]) + ' ; ' + tr('core.diag.uptime', nb(performance.now() / 1000))));
   out.push(L(tr('core.diag.page'), location.protocol + (location.host ? '//ADRESSE' : '//') + location.pathname + location.search));
   out.push(L(tr('core.diag.lang'), LANG + ' · ' + ((navigator.languages || []).join(',') || navigator.language || '?') + ' · ' + KB.layout().toUpperCase()));
@@ -2220,8 +2220,7 @@ function createViewer(container, cfg0, loader) {
     const pc = new RTCPeerConnection({ iceServers: V.ice.length ? [{ urls: V.ice.slice() }] : [] });
     const l = { id, pc, state: 'wait', t0: performance.now(), initiator, queue: [], remote: false, speaking: false, quiet: 0, dis: 0, el: null, src: null, an: null, buf: null, pn: null, gs: null, gd: null };
     V.links.set(id, l);
-    const tc = pc.addTransceiver('audio', { direction: 'sendrecv' });
-    if (V.track) tc.sender.replaceTrack(V.track).catch(() => {});
+    if (initiator) { const tc = pc.addTransceiver('audio', { direction: 'sendrecv' }); if (V.track) tc.sender.replaceTrack(V.track).catch(() => {}); }   // 1.13.18 : seul l'offreur cree sa ligne audio ; le repondeur utilise celle que l'offre lui fait creer
     pc.onicecandidate = e => { if (e.candidate) vSend(id, { k: 'c', c: { candidate: e.candidate.candidate, sdpMid: e.candidate.sdpMid, sdpMLineIndex: e.candidate.sdpMLineIndex } }); };
     pc.ontrack = e => vAttach(l, e.streams && e.streams[0] ? e.streams[0] : new MediaStream([e.track]));
     pc.onconnectionstatechange = () => {
@@ -2250,7 +2249,7 @@ function createViewer(container, cfg0, loader) {
       vClose(m.id, false);      // une nouvelle offre remplace le lien (l'autre a recommence)
       const l = vOpen(m.id, false); if (!l) return;
       V.hi.add(m.id);
-      try { await l.pc.setRemoteDescription({ type: 'offer', sdp: d.sdp }); l.remote = true; await vFlush(l); const a = await l.pc.createAnswer(); await l.pc.setLocalDescription(a); vSend(m.id, { k: 'a', sdp: l.pc.localDescription.sdp }); } catch (e) { vFail(l); }
+      try { await l.pc.setRemoteDescription({ type: 'offer', sdp: d.sdp }); l.remote = true; for (const x of l.pc.getTransceivers()) { x.direction = 'sendrecv'; if (V.track) await x.sender.replaceTrack(V.track); } await vFlush(l); const a = await l.pc.createAnswer(); await l.pc.setLocalDescription(a); vSend(m.id, { k: 'a', sdp: l.pc.localDescription.sdp }); } catch (e) { vFail(l); }
     }
     else if (k === 'a') {
       const l = V.links.get(m.id); if (!l || typeof d.sdp !== 'string' || d.sdp.length > 3000) return;
@@ -4958,7 +4957,7 @@ if (C.walk) {
   rsSel.onchange = () => { const si = parseInt(rsSel.value, 10) || 0; RADIO.setIdx(si); };
   sbody.insertBefore(rsSel, lrd);
   RADIO.setSelEl(rsSel);
-  mkLine('verInfo').textContent = tr('page.state.version', '1.13.15 (27/11/2026)', C.version || '?');   // 1.6.17 : version de la page (index.html, ou glb2html.py pour une page autonome) et de la configuration
+  mkLine('verInfo').textContent = tr('page.state.version', '1.13.18 (27/11/2026)', C.version || '?');   // 1.6.17 : version de la page (index.html, ou glb2html.py pour une page autonome) et de la configuration
   // v39 : bouton « Copier le diagnostic » sous le contenu de la fenêtre (reste visible quand elle est réduite) : lignes affichées + diagText (core.js) ;
   // si le navigateur refuse la copie, le texte s'affiche sélectionné dessous (Ctrl+C)
   {

@@ -1763,8 +1763,7 @@ function createViewer(container, cfg0, loader) {
     const pc = new RTCPeerConnection({ iceServers: V.ice.length ? [{ urls: V.ice.slice() }] : [] });
     const l = { id, pc, state: 'wait', t0: performance.now(), initiator, queue: [], remote: false, speaking: false, quiet: 0, dis: 0, el: null, src: null, an: null, buf: null, pn: null, gs: null, gd: null };
     V.links.set(id, l);
-    const tc = pc.addTransceiver('audio', { direction: 'sendrecv' });
-    if (V.track) tc.sender.replaceTrack(V.track).catch(() => {});
+    if (initiator) { const tc = pc.addTransceiver('audio', { direction: 'sendrecv' }); if (V.track) tc.sender.replaceTrack(V.track).catch(() => {}); }   // 1.13.18 : seul l'offreur cree sa ligne audio ; le repondeur utilise celle que l'offre lui fait creer
     pc.onicecandidate = e => { if (e.candidate) vSend(id, { k: 'c', c: { candidate: e.candidate.candidate, sdpMid: e.candidate.sdpMid, sdpMLineIndex: e.candidate.sdpMLineIndex } }); };
     pc.ontrack = e => vAttach(l, e.streams && e.streams[0] ? e.streams[0] : new MediaStream([e.track]));
     pc.onconnectionstatechange = () => {
@@ -1793,7 +1792,7 @@ function createViewer(container, cfg0, loader) {
       vClose(m.id, false);      // une nouvelle offre remplace le lien (l'autre a recommence)
       const l = vOpen(m.id, false); if (!l) return;
       V.hi.add(m.id);
-      try { await l.pc.setRemoteDescription({ type: 'offer', sdp: d.sdp }); l.remote = true; await vFlush(l); const a = await l.pc.createAnswer(); await l.pc.setLocalDescription(a); vSend(m.id, { k: 'a', sdp: l.pc.localDescription.sdp }); } catch (e) { vFail(l); }
+      try { await l.pc.setRemoteDescription({ type: 'offer', sdp: d.sdp }); l.remote = true; for (const x of l.pc.getTransceivers()) { x.direction = 'sendrecv'; if (V.track) await x.sender.replaceTrack(V.track); } await vFlush(l); const a = await l.pc.createAnswer(); await l.pc.setLocalDescription(a); vSend(m.id, { k: 'a', sdp: l.pc.localDescription.sdp }); } catch (e) { vFail(l); }
     }
     else if (k === 'a') {
       const l = V.links.get(m.id); if (!l || typeof d.sdp !== 'string' || d.sdp.length > 3000) return;

@@ -4,7 +4,7 @@
 Verifie :
 1.  bouton Voix visible en promenade (serveur avec voix) ; fenetre Voix ; micro refuse = message, rien ne demarre ;
 2.  deux visiteurs proches activent micro + ecoute : un lien WebRTC 'link' de chaque cote, un seul lien par paire ;
-3.  l'audio circule (octets recus > 0) ; parler = micro ouvert (touche X tenue), relache = ferme ;
+3.  l'audio circule (octets recus > 0), dans les DEUX sens (1.13.18 : le repondeur a l'offre n'envoyait rien) ; parler = micro ouvert (touche X tenue), relache = ferme ;
 4.  son spatial : le lien est sur le chemin de proximite (spatial vrai, gain proximite 1, gain orateur 0) ;
 5.  s'eloigner au-dela de 36 m ferme le lien, revenir le rouvre ;
 6.  mode orateur : mauvaise cle refusee (message) ; bonne cle : orateur annonce aux deux, son direct (spatial faux), meme a 100 m ; fin de l'orateur ;
@@ -72,6 +72,10 @@ async def main():
             sb = await b.ev(V + "voiceStats()"); sa = await a.ev(V + "voiceStats()")
             rapport(sb and sb[0]["received"] > 0 and sa[0]["sent"] > 0, "l'audio circule (octets envoyes par Ana, recus par Ben)", (sa, sb))
             rapport(sb[0]["spatial"] is True, "lien sur le chemin de proximite (spatial)")
+            await b.ev(V + "voiceTalk(true)"); await a.pg.wait_for_timeout(2500)
+            sb2 = await b.ev(V + "voiceStats()"); sa2 = await a.ev(V + "voiceStats()")
+            rapport(bool(sa2) and bool(sb2) and sa2[0]["received"] > 0 and sb2[0]["sent"] > 0, "l'audio circule aussi dans l'autre sens (Ben, qui repond a l'offre, vers Ana)", (sa2, sb2))
+            await b.ev(V + "voiceTalk(false)")
             await a.ev(V + "voiceTalk(false)")
             await a.touche("KeyX"); 
             await a.key("keydown", "KeyX"); await a.pg.wait_for_timeout(200)
