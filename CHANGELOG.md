@@ -6,6 +6,14 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.13.0)
 
+### 27/11/2026: voice: audience mute in speaker mode (batch 1.13.19)
+
+- **Request** (Klaatou): the speaker can mute the audience microphones (checkbox in the "Voice" window, with the room key); questions reuse "Give the floor"; when the speaker ends, everybody is unmuted; the state is also given to people who arrive.
+- **Done** (`src/presence_server.py`, `src/core.js`, `src/template.html`, `src/i18n`): (1) server: message `{t:'speaker', key, mute:true|false}` (room key, a speaker is required: otherwise `speakererr` `nospeaker`); the state is broadcast in `{t:'speaker', id, mute:true}` (no `mute` = microphones free) and given to newcomers by `welcome` (`mute`); it falls when the speaker stops, leaves or becomes a spectator, and stays when the floor goes to another visitor; (2) page: microphone closed for everybody but the speaker, key X and "Open microphone" have no effect (message "Microphone muted by the speaker."), checkbox "Mute the audience microphones" in the speaker's "Voice" window; (3) reception: while the mute is on, only the speaker's voice is played (a modified page that still sends is not heard by up-to-date pages) and there are no proximity links between audience members; the speaker does not hear the audience.
+- **Limit**: voice goes from browser to browser, without a server: the mute is applied by each visitor's page; a modified page can ignore it on its own side. This is not a security guarantee.
+- **Not tried**: Windows, Edge, a real network, more than three visitors.
+- **Still to update**: manual (§ 7.60, § 10.28), procedures, histories (documents in a separate batch). **Public server**: `presence_server.py` 1.13.19 to deploy (the mute does not exist without it).
+
 ### 27/11/2026: voice: the voice of the one who answers the offer is sent (batch 1.13.18)
 
 - **Finding** (while trying the next batch): in a link, only the voice of the one who makes the offer (the smaller identifier) was sent; the one who answers sent nothing (0 bytes) although the link showed "connected". The visitor with the smaller identifier therefore did not hear the others. The batch 1.13.15 tests only measured audio in one direction.

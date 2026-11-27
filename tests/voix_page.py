@@ -9,7 +9,9 @@ Verifie :
 5.  s'eloigner au-dela de 36 m ferme le lien, revenir le rouvre ;
 6.  mode orateur : mauvaise cle refusee (message) ; bonne cle : orateur annonce aux deux, son direct (spatial faux), meme a 100 m ; fin de l'orateur ;
 7.  couper la voix ferme les liens des deux cotes ; ecoute seule recoit sans envoyer ; aucune erreur de page ;
-8.  serveur --no-voice : aucun bouton Voix.
+8.  serveur --no-voice : aucun bouton Voix ;
+9.  1.13.19 muet du public : sans orateur rien ne change ; l'orateur coupe les micros (case) : micro et touche X bloques chez le public, aucun son du public joue,
+    l'orateur s'entend toujours ; un arrivant est muet des l'accueil ; la parole donnee garde le muet ; rendre, fin de l'orateur : tout est libre.
 Non teste ici : Windows, Edge, vrai reseau et serveur STUN, tactile. Lancer : python tests/voix_page.py (apres python build.py)
 """
 import asyncio, hashlib, json, os, sys
@@ -146,6 +148,46 @@ async def main():
             await a.ev("window.__viewer.teleportTo([0, 15, 0], 0)"); await a.pg.wait_for_timeout(3000)
             rapport(await a.ev(LINKS) == 1 and await b.ev(LINKS) == 2 and await t3.ev(LINKS) == 1, "A(0) B(20) E(40) : B entend les deux, A et E ne s'entendent pas",
                     [await o.ev(V + "voiceInfo().peers.map(p => p.name + ':' + p.state)") for o in (a, b, t3)])
+
+            print("--- public muet")
+            idb, ide = await b.ev(V + "voiceInfo().me"), await t3.ev(V + "voiceInfo().me")
+            await a.ev(V + "voiceStop()"); await a.pg.wait_for_timeout(800); await a.ev(V + "voiceStart(true)")      # Ana revient avec un micro (public qui peut parler)
+            await a.attendre(LINKS + " === 1", 40); await b.attendre(LINKS + " === 2", 40)
+            await b.ev(V + "voiceMute(%s, true)" % json.dumps(CLE)); await b.pg.wait_for_timeout(700)
+            rapport(not await b.ev(V + "voiceInfo().mute"), "muet sans orateur : sans effet")
+            await b.ev(V + "voiceSpeaker(%s)" % json.dumps(CLE)); await b.pg.wait_for_timeout(800)
+            rapport(await a.ev(V + "voiceInfo().speaker") == idb and not await a.ev(V + "voiceInfo().muted"), "orateur sans muet : le public parle librement")
+            await a.ev(V + "voiceTalk(true)"); await a.pg.wait_for_timeout(500)
+            await b.ev(V + "voiceMute(%s, true)" % json.dumps(CLE)); await b.pg.wait_for_timeout(1000)
+            etat = [(await o.ev(V + "voiceInfo().mute"), await o.ev(V + "voiceInfo().muted")) for o in (a, b, t3)]
+            rapport(etat == [(True, True), (True, False), (True, True)], "muet : le public est muet, l'orateur non", etat)
+            rapport(await a.ev(V + "voiceInfo().talk") and not await a.ev(V + "voiceInfo().speaking"), "chez le public : micro demande ouvert mais ferme (ne parle pas)")
+            await a.key("keydown", "KeyX"); await a.pg.wait_for_timeout(300); await a.key("keyup", "KeyX")
+            rapport("coup" in (await a.txt("toast")).lower() or "muted" in (await a.txt("toast")).lower(), "touche X chez le public : message micro coupe", await a.txt("toast"))
+            await b.ev(V + "voiceTalk(true)"); await b.pg.wait_for_timeout(2500)
+            sb = await b.ev(V + "voiceStats()"); sa = await a.ev(V + "voiceStats()")
+            rapport(bool(sb) and all(not x["heard"] for x in sb), "chez l'orateur : la voix du public n'est pas jouee", sb)
+            rapport(bool(sa) and any(x["heard"] and not x["spatial"] for x in sa) and all(x["heard"] or x["spatial"] for x in sa), "chez le public : la voix de l'orateur est jouee", sa)
+            rapport(any(x["received"] > 0 for x in sa), "l'audio de l'orateur arrive au public", sa)
+            ctx4 = await br.new_context(viewport={"width": 1000, "height": 700}, permissions=["microphone"])
+            t4 = await Onglet(br).ouvrir(url("Voix"), init=STUB + nom("Zoe"), ctx=ctx4)
+            await t4.attendre(V + "walking && " + V + "voiceOK", 40)
+            await t4.pg.wait_for_timeout(800)
+            rapport(await t4.ev(V + "voiceInfo().mute") and await t4.ev(V + "voiceInfo().muted"), "un arrivant est muet des l'accueil", await t4.ev(V + "voiceInfo()"))
+            await t4.ev(V + "voiceStart(true)"); await t4.ev(V + "voiceTalk(true)"); await t4.pg.wait_for_timeout(500)
+            rapport(not await t4.ev(V + "voiceInfo().speaking"), "l'arrivant ne peut pas parler")
+            await b.ev(V + "voiceSpeaker(%s, %d)" % (json.dumps(CLE), ide)); await b.pg.wait_for_timeout(1000)
+            etat = [(await o.ev(V + "voiceInfo().speaker") == ide, await o.ev(V + "voiceInfo().mute"), await o.ev(V + "voiceInfo().muted")) for o in (a, b, t3, t4)]
+            rapport(etat == [(True, True, True), (True, True, True), (True, True, False), (True, True, True)], "la parole passe a Eva : le muet reste, elle seule est libre", etat)
+            await b.ev(V + "voiceSpeaker(%s)" % json.dumps(CLE)); await b.pg.wait_for_timeout(1000)
+            await b.ev(V + "voiceMute(%s, false)" % json.dumps(CLE)); await b.pg.wait_for_timeout(1000)
+            etat = [(await o.ev(V + "voiceInfo().mute"), await o.ev(V + "voiceInfo().muted")) for o in (a, b, t3, t4)]
+            rapport(etat == [(False, False)] * 4, "mute:false : tout le monde est libre", etat)
+            await b.ev(V + "voiceMute(%s, true)" % json.dumps(CLE)); await b.pg.wait_for_timeout(800)
+            await b.ev(V + "voiceSpeakerOff(%s)" % json.dumps(CLE)); await b.pg.wait_for_timeout(1000)
+            etat = [(await o.ev(V + "voiceInfo().speaker"), await o.ev(V + "voiceInfo().mute"), await o.ev(V + "voiceInfo().muted")) for o in (a, b, t3, t4)]
+            rapport(etat == [(0, False, False)] * 4, "fin de l'orateur : tout est libre", etat)
+            rapport(not (a.errs + b.errs + t3.errs + t4.errs), "aucune erreur de page", (a.errs + b.errs + t3.errs + t4.errs)[:5])
 
             print("--- micro refuse")
             ctxc = await br.new_context(viewport={"width": 1000, "height": 700})

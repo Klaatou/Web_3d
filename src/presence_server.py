@@ -775,6 +775,7 @@ async def refuse(ws, why, room, ip, detail):
 VKEYS: dict = {}         # salon -> {"salt", "hash", "added"} : empreinte de la clé d'accès, jamais la clé
 VTRY: dict = {}          # IP -> instants des derniers essais de clé refusés (5 par minute au plus)
 SPEAKERS: dict = {}      # 1.13.14 : salon -> id de l'orateur (mode orateur : la parole d'un seul visiteur, que tout le salon entend) ; absent : personne
+MUTED: dict = {}        # 1.13.19 : salon -> True quand l'orateur a coupe les micros du public (tombe avec l'orateur) ; absent : micros libres
 VISIT_GAP = 120          # s : une reconnexion du même navigateur dans le même salon moins de 2 min après la fin = même visite
 VISIT_RECENT_DAYS, VISIT_RECENT_MAX = 30, 1000
 VKEY_ALPHA = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
@@ -1235,7 +1236,11 @@ async def speaker_set(room, pid):
         SPEAKERS[room] = pid
     else:
         SPEAKERS.pop(room, None)
-    await broadcast(room, {"t": "speaker", "id": pid})
+        MUTED.pop(room, None)      # 1.13.19 : plus d'orateur : les micros du public sont rendus
+    msg = {"t": "speaker", "id": pid}
+    if MUTED.get(room):
+        msg["mute"] = True      # 1.13.19 : absent = micros libres
+    await broadcast(room, msg)
 
 
 async def speaker_clear(room, pid):
@@ -1421,7 +1426,7 @@ async def handler(ws):
         peers[pid] = peer
         await ws.send(json.dumps({"t": "welcome", "id": pid, "name": peer.name, "color": peer.color, "peers": existing,
                                   "history": list(HISTORY.get(room, ()))[-OPTS.history:] if OPTS.history > 0 else [], "role": "spectator" if spectator else "walker", "dm": not OPTS.no_dm,
-                                  "voice": not OPTS.no_voice, "ice": [] if OPTS.no_voice else OPTS.ice, "speaker": SPEAKERS.get(room, 0)},
+                                  "voice": not OPTS.no_voice, "ice": [] if OPTS.no_voice else OPTS.ice, "speaker": SPEAKERS.get(room, 0), "mute": bool(MUTED.get(room))},
                                  separators=(",", ":")))
         log(_tr("py.presence.ev.connect"), room, peer.who(), "spectateur" if spectator else _tr("py.presence.promeneur_0_dans_le_salon", len(walkers(room))))
         if not spectator:
@@ -1551,7 +1556,8 @@ async def handler(ws):
             elif t == "speaker":
                 # 1.13.14 : mode orateur {t:'speaker', key, to?:id} : avec la cle du salon (celle du journal des visites), l'orateur est le visiteur to, ou soi-meme sans to ;
                 # {t:'speaker', key, off:true} arrete l'orateur ; {t:'speaker', off:true} sans cle, par l'orateur lui-meme ; le salon recoit {t:'speaker', id} (0 : personne) ;
-                # erreurs {t:'speakererr', why} : off (--no-voice), key, rate, gone ; la cle n'est jamais journalisee
+                # erreurs {t:'speakererr', why} : off (--no-voice), key, rate, gone, nospeaker ; la cle n'est jamais journalisee ;
+                # 1.13.19 : {t:'speaker', key, mute:true|false} coupe ou rend les micros du public (il faut un orateur) ; le salon recoit {t:'speaker', id, mute:true} (mute absent = libres)
                 if OPTS.no_voice:
                     await send_safe(ws, json.dumps({"t": "speakererr", "why": "off"}))
                     continue
@@ -1573,6 +1579,18 @@ async def handler(ws):
                 if m.get("off") is True:
                     await speaker_set(room, 0)
                     log(_tr("py.presence.ev.speaker"), room, peer.who(), _tr("py.presence.speaker.off"))
+                    continue
+                if isinstance(m.get("mute"), bool):      # 1.13.19 : micros du public coupes ou rendus ; il faut un orateur
+                    orateur = SPEAKERS.get(room, 0)
+                    if not orateur:
+                        await send_safe(ws, json.dumps({"t": "speakererr", "why": "nospeaker"}))
+                        continue
+                    if m["mute"]:
+                        MUTED[room] = True
+                    else:
+                        MUTED.pop(room, None)
+                    await speaker_set(room, orateur)
+                    log(_tr("py.presence.ev.speaker"), room, peer.who(), _tr("py.presence.speaker.mute") if m["mute"] else _tr("py.presence.speaker.unmute"))
                     continue
                 dest = peer if to is None else ROOMS.get(room, {}).get(to)
                 if dest is None or dest.spectator:

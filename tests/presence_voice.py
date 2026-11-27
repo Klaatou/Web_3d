@@ -16,6 +16,9 @@ Verifie :
     perd quand l'orateur part ou devient spectateur ; un salon sans cle refuse ;
 7.  5 cles refusees par minute et par adresse : la sixieme repond rate meme avec la bonne cle ;
 8.  la console ne contient ni le contenu d'un message rtc, ni une cle, et montre l'evenement orateur.
+9.  1.13.19 muet du public : sans orateur, {t:'speaker', key, mute} repond nospeaker ; mauvaise cle refusee ; avec un orateur, le salon (spectateur compris) recoit
+    {t:'speaker', id, mute:true}, un arrivant trouve mute vrai dans welcome ; la parole donnee a un autre garde le muet ; mute:false le rend (mute absent) ;
+    la fin de l'orateur, son depart ou son passage en spectateur le rend ; un nouvel orateur n'est pas muet ; la console montre l'evenement sans cle.
 Sur le main d'origine (1.13.13) : echec des le premier test (welcome sans voice).
 
 Prerequis : pip install websockets ; python build.py avant. Lancer : python tests/presence_voice.py
@@ -200,6 +203,62 @@ async def orateur(port):
     return res
 
 
+async def public_muet(port):
+    res = []
+    a, wa = await entrer(port, "Alice", "a")
+    b, wb = await entrer(port, "Bob", "b")
+    c, wc = await entrer(port, "Carol", "c")
+    s, ws_ = await entrer(port, "Spec", "s", spectateur=True)
+    ia, ib, ic = wa["id"], wb["id"], wc["id"]
+    tous = [a, b, c, s]
+    res.append((wa.get("mute") is False, "welcome : mute faux sans orateur", wa.get("mute")))
+
+    async def vu(attendu, nom, qui=None):
+        qui = tous if qui is None else qui
+        r = [await recv_t(x, "speaker") for x in qui]
+        res.append((r == [attendu] * len(qui), nom, r))
+
+    await envoyer(a, t="speaker", key=CLE, mute=True)
+    e = await recv_t(a, "speakererr")
+    res.append((e == {"t": "speakererr", "why": "nospeaker"}, "muet sans orateur : nospeaker", e))
+    await envoyer(a, t="speaker", key=CLE)
+    await vu({"t": "speaker", "id": ia}, "A orateur : pas de mute dans le message")
+    await envoyer(b, t="speaker", key=MAUVAISE, mute=True)
+    e = await recv_t(b, "speakererr")
+    res.append((e == {"t": "speakererr", "why": "key"}, "muet avec une mauvaise cle : key", e))
+    res.append(((await recv_t(a, "speaker", 0.2)) is None, "muet refuse : rien de diffuse", None))
+    await envoyer(b, t="speaker", key=CLE, mute=True)
+    await vu({"t": "speaker", "id": ia, "mute": True}, "muet par la cle : tout le salon, spectateur compris, recoit mute vrai")
+    e1, wn = await entrer(port, "Eve", "e")
+    tous.append(e1)
+    res.append((wn.get("speaker") == ia and wn.get("mute") is True, "un arrivant trouve l'orateur et mute vrai dans welcome", (wn.get("speaker"), wn.get("mute"))))
+    await envoyer(b, t="speaker", key=CLE, to=ic)
+    await vu({"t": "speaker", "id": ic, "mute": True}, "la parole passe a C : le muet reste", tous)
+    await envoyer(b, t="speaker", key=CLE, mute=False)
+    await vu({"t": "speaker", "id": ic}, "mute:false : micros rendus (mute absent)", tous)
+    await envoyer(b, t="speaker", key=CLE, mute=True)
+    await vu({"t": "speaker", "id": ic, "mute": True}, "muet de nouveau", tous)
+    await envoyer(c, t="speaker", off=True)
+    await vu({"t": "speaker", "id": 0}, "fin de l'orateur : micros rendus (mute absent)", tous)
+    e2, wn2 = await entrer(port, "Fay", "f")
+    tous.append(e2)
+    res.append((wn2.get("speaker") == 0 and wn2.get("mute") is False, "apres la fin : welcome mute faux", (wn2.get("speaker"), wn2.get("mute"))))
+    await envoyer(a, t="speaker", key=CLE)
+    await vu({"t": "speaker", "id": ia}, "un nouvel orateur n'est pas muet", (a, b, c, s, e1, e2))
+    await envoyer(b, t="speaker", key=CLE, mute=True)
+    await vu({"t": "speaker", "id": ia, "mute": True}, "muet", (a, b, c, s, e1, e2))
+    await a.close()
+    await vu({"t": "speaker", "id": 0}, "l'orateur part : micros rendus", (b, c, s, e1, e2))
+    await envoyer(b, t="speaker", key=CLE)
+    await vu({"t": "speaker", "id": ib}, "B orateur", (b, c, s, e1, e2))
+    await envoyer(b, t="speaker", key=CLE, mute=True)
+    await vu({"t": "speaker", "id": ib, "mute": True}, "muet", (b, c, s, e1, e2))
+    await envoyer(b, t="role", walker=False)
+    await vu({"t": "speaker", "id": 0}, "l'orateur devient spectateur : micros rendus", (b, c, s, e1, e2))
+    await fermer(b, c, s, e1, e2)
+    return res
+
+
 async def cadence_cles(port):
     a, wa = await entrer(port, "Alice", "a")
     r = []
@@ -240,6 +299,10 @@ fuite = [k for k in (CLE, CLE.replace("-", ""), MAUVAISE) if k.lower() in out.lo
 rapport(not fuite, "la console ne contient aucune cle (ni bonne, ni refusee)", fuite)
 rapport(bool(re.search(r"orateur.*Alice", out)), "la console montre l'evenement orateur", out[-300:])
 serveur_et_essai(cadence_cles, "--visits-keys", cles)
+out = serveur_et_essai(public_muet, "--visits-keys", cles, sortie=True)
+fuite = [k for k in (CLE, CLE.replace("-", ""), MAUVAISE) if k.lower() in out.lower()]
+rapport(not fuite, "muet du public : la console ne contient aucune cle", fuite)
+rapport(bool(re.search(r"orateur.*micros du public", out)), "muet du public : la console montre l'evenement", out[-300:])
 
 for ice in (["http://exemple"], ["stun:a:1"] * 5, ["stun:"], ["turn:127.0.0.1:3478"]):
     args = [x for u in ice for x in ("--ice", u)]

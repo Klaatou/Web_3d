@@ -2419,7 +2419,7 @@ if (C.presenceUrl && C.walk && C.chat) {
       r1.append(btn(tr('page.vc.stop'), () => { viewer.voiceStop(); vDraw(); }));
       if (i.mic) {
         const hold = btn(tr('page.vc.hold'), () => {}); hold.onpointerdown = () => { viewer.voiceTalk(true); vDraw(); }; hold.onpointerup = hold.onpointerleave = hold.onpointercancel = () => { if (!vOpenMic) { viewer.voiceTalk(false); vDraw(); } };
-        if (i.talk) hold.className = 'hold'; r1.append(hold);
+        if (i.talk) hold.className = 'hold'; if (i.muted) hold.disabled = true; r1.append(hold);
       }
     }
     bd.append(r1);
@@ -2427,7 +2427,7 @@ if (C.presenceUrl && C.walk && C.chat) {
     if (i.on && i.mic) {
       const lb = el('label'); lb.append(vOpen, document.createTextNode(' ' + tr('page.vc.openmic')));
       vOpen.onchange = () => { vOpenMic = vOpen.checked; viewer.voiceTalk(vOpenMic); vDraw(); };
-      bd.append(lb, el('div', tr(i.speaking ? 'page.vc.talking' : 'page.vc.silent'), 'vcTip'));
+      bd.append(lb, el('div', tr(i.muted ? 'page.vc.muted' : i.speaking ? 'page.vc.talking' : 'page.vc.silent'), 'vcTip'));
     }
     if (i.on) {
       const lv = el('label', tr('page.vc.vol') + ' '); const rg = el('input'); rg.type = 'range'; rg.min = 0; rg.max = 100; rg.value = Math.round((vVolNow) * 100);
@@ -2447,6 +2447,13 @@ if (C.presenceUrl && C.walk && C.chat) {
     const r2 = el('div', '', 'vcRow');
     r2.append(btn(tr('page.vc.sp.me.btn'), () => { vkSet(kin.value.trim()); if (!viewer.voiceSpeaker(kin.value.trim())) toast(tr('page.vc.err.off')); }), btn(tr('page.vc.sp.off'), () => { if (!viewer.voiceSpeakerOff(kin.value.trim())) toast(tr('page.vc.err.off')); }));
     bd.append(kin, r2);
+    if (sp && sp === i.me) {      // 1.13.19 : l'orateur coupe ou rend les micros du public (clé du salon)
+      const mu = el('input'); mu.type = 'checkbox'; mu.checked = i.mute;
+      const ml = el('label'); ml.append(mu, document.createTextNode(' ' + tr('page.vc.mute.box')));
+      mu.onchange = () => { vkSet(kin.value.trim()); if (!viewer.voiceMute(kin.value.trim(), mu.checked)) toast(tr('page.vc.err.off')); };
+      bd.append(ml);
+    }
+    if (i.mute) bd.append(el('div', tr('page.vc.mute.on'), 'vcTip'));
     const others = viewer.getPresence().peers.filter(p => p.visible !== false);
     if (others.length) {
       bd.append(el('div', tr('page.vc.sp.tip'), 'vcTip'));
@@ -2456,10 +2463,10 @@ if (C.presenceUrl && C.walk && C.chat) {
   let vVolNow = 1;
   vb.onclick = () => { if (!vw) vw = vMake(); vw.w.hidden = !vw.w.hidden; if (!vw.w.hidden) vDraw(); };
   viewer.onVoice = () => { vb.classList.toggle('on', viewer.voiceOn); vDraw(); };
-  viewer.onVoiceErr = e => toast(tr('page.vc.err.' + (['key', 'rate', 'gone', 'off'].includes(e.why) ? e.why : 'off')));
+  viewer.onVoiceErr = e => { toast(tr('page.vc.err.' + (['key', 'rate', 'gone', 'nospeaker', 'off'].includes(e.why) ? e.why : 'off'))); const ae = document.activeElement; if (ae && ae.type === 'checkbox') ae.blur(); vDraw(); };
   setInterval(() => { vb.hidden = !(viewer.voiceOK || viewer.voiceOn); vDraw(); }, 1000);
   const typing = e => { const n = e.target && e.target.tagName; return n === 'INPUT' || n === 'TEXTAREA' || n === 'SELECT'; };
-  addEventListener('keydown', e => { if (e.code === 'KeyX' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && !typing(e) && viewer.voiceOn && viewer.voiceInfo().mic) { vTalkKey = true; viewer.voiceTalk(true); vDraw(); } });
+  addEventListener('keydown', e => { if (e.code === 'KeyX' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && !typing(e) && viewer.voiceOn && viewer.voiceInfo().mic) { vTalkKey = true; if (viewer.voiceInfo().muted) toast(tr('page.vc.muted')); viewer.voiceTalk(true); vDraw(); } });
   addEventListener('keyup', e => { if (e.code === 'KeyX' && vTalkKey) { vTalkKey = false; if (!vOpenMic) viewer.voiceTalk(false); vDraw(); } });
   addEventListener('blur', () => { if (vTalkKey) { vTalkKey = false; if (!vOpenMic) viewer.voiceTalk(false); } });
 }
