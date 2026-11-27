@@ -6,6 +6,16 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.13.0)
 
+### 27/11/2026 : page : voix entre visiteurs, fenêtre « Voix », mode orateur (lot 1.13.15)
+
+- **Demande** (Klaatou) : suite du lot 1.13.14 : la page (micro, connexions, son spatial, champ de la clé, « Donner la parole »).
+- **Fait** (`src/core.js`, `src/template.html`) : (1) moteur WebRTC dans la page : un lien audio par visiteur proche (ouvert à 30 m ou moins, fermé au-delà de 36 m, 8 liens au plus), le plus petit identifiant fait l'offre, signalisation par `rtc` ; (2) son spatial (PannerNode, volume linéaire de 1 m à 30 m) ; (3) mode orateur : sa voix est envoyée à chacun, sans distance (20 auditeurs au plus, estimation), l'orateur est annoncé par `speaker` ; (4) un lien en échec n'est pas retenté avant 60 s ; (5) bouton « Voix » (visible si le serveur a la voix) et fenêtre : démarrer micro + écoute ou écoute seule, couper, parler en tenant la touche X ou micro ouvert, volume, visiteurs proches avec leur état (connecté, connexion, impossible), orateur : champ de la clé du salon (gardée dans le navigateur, `web3d.vkey`), « Devenir orateur », « Fin de l'orateur », « Donner la parole » ; (6) API `voiceOK/voiceOn/voiceStart/voiceStop/voiceTalk/voiceVolume/voiceInfo/voiceStats/voiceSpeaker/voiceSpeakerOff` et `onVoice/onVoiceErr` ; (7) aucun message sur l'adresse IP (demande de Klaatou).
+- **Corrigé pendant l'essai** : un « hi » envoyé avant que l'autre active sa voix était perdu et les deux ne se connectaient jamais ; un « hi » reçu reçoit maintenant toujours une réponse.
+- **Tests** : nouveau `tests/voix_page.py` (27 contrôles, deux puis trois Chromium avec micro simulé : liens, audio reçu, touche X, distance, orateur à 100 m, coupure, écoute seule, micro refusé, `--no-voice`).
+- **Pas de commande console** pour retirer un orateur (il se retire par la clé dans la page, en quittant ou en coupant sa voix).
+- **Non essayé** : Windows, Edge, vrai réseau et vrai serveur STUN, écran tactile, plus de 3 visiteurs.
+- **Reste à mettre à jour** : manuel, procédures, historiques.
+
 ### 27/11/2026 : serveur de présence : voix, première partie (signalisation et mode orateur par la clé du salon) (lot 1.13.14)
 
 - **Demande** (Klaatou) : ajouter les dialogues à la voix entre visiteurs, sans serveur de plus pour l'audio (WebRTC de navigateur à navigateur : le serveur de présence ne fait que la signalisation) ; un « mode orateur » pour débloquer une séance (conférence) avant de passer par Icecast, à donner **sans** la console du serveur.

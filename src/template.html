@@ -137,6 +137,17 @@ body.padOn #bar{max-width:max(200px,calc(50vw - 90px))}   /* v46 : la barre pass
 .mpIn{box-sizing:border-box;width:100%;font:inherit;padding:4px;border:2px solid #000;border-radius:6px}
 body.touch .mpIn{font-size:16px}
 body.dmOn #chatLog b[data-pid]{cursor:pointer;text-decoration:underline dotted}
+#voiceBtn{font:12px/1.4 ui-monospace,Consolas,monospace;background:#fffffff0;color:#000;border:1px solid #000;border-radius:6px;padding:7px 10px;cursor:pointer}
+#voiceBtn.on{background:#000;color:#fff}
+.vcWin{width:min(340px,94vw);height:min(380px,70vh)}
+.vcBody{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:6px;display:flex;flex-direction:column;gap:6px}
+.vcBody .vcRow{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.vcBody .vcRow span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vcBody button{font:inherit;background:#fff;color:#000;border:1px solid #000;border-radius:5px;padding:2px 8px;cursor:pointer}
+.vcBody button.hold{background:#000;color:#fff}
+.vcBody h4{margin:4px 0 0;font:inherit;font-weight:bold;border-bottom:1px solid #000}
+.vcBody input[type=password],.vcBody input[type=text]{box-sizing:border-box;width:100%;font:inherit;padding:3px;border:2px solid #000;border-radius:6px}
+.vcBody .vcTip{font-style:italic}
 #zonePrompt{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);z-index:30;font:13px/1.4 ui-monospace,Consolas,monospace;background:#000;color:#fff;border-radius:6px;padding:6px 12px}
 #fade{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .45s;z-index:50}
 #fade.on{opacity:1;pointer-events:auto}
@@ -285,7 +296,7 @@ __I18N__
 <div id="presence" hidden><span data-i18n="page.presence.label">Pseudo : </span><input id="presenceName" maxlength="24" placeholder="Visiteur" data-i18n-ph="page.visitor"><div id="presenceStatus"></div></div>
 <a id="credit" href="https://github.com/Klaatou/Web_3d" target="_blank" rel="noopener" data-i18n-aria="common.credit.tip"><img src="__CREDIT_ICON__" alt="" width="32" height="32"><span id="creditTip" role="tooltip" data-i18n="common.credit.tip">Réalisé avec Web_3d : voir le projet sur GitHub</span></a>
 <div id="dock"><div id="hudL"><div id="walkHint" hidden><button type="button" id="helpHead" class="fold" aria-expanded="true">▾ Aide</button><div id="helpBody"></div></div><div id="stateInfo" hidden><button type="button" id="stateHead" class="fold" aria-expanded="true">▾ État</button><div id="stateBody"></div></div><div id="spawnInfo" hidden><button type="button" id="spawnHead" class="fold" aria-expanded="true">▾ Arrivées</button><div id="spawnBody"></div></div><div id="soundInfo" hidden><button type="button" id="soundHead" class="fold" aria-expanded="true">&#9662; Son</button><div id="soundBody"></div></div></div>
-<div id="bar"><button id="walkBtn" hidden></button><button id="flyBtn" hidden aria-pressed="false" data-i18n="page.btn.fly">Voler / Atterrir</button><button id="grabBtn" hidden data-i18n="page.btn.grab">Capturer la souris</button><button id="homeBtn" hidden data-i18n="page.btn.home">Retour à l'arrivée (R)</button><button id="centerBtn" type="button" hidden data-i18n="page.btn.center" data-i18n-title="page.btn.center.tip">Recentrer la vue</button><button id="helpBtn" hidden></button><button id="mapBtn" hidden data-i18n="page.btn.map">Carte (M)</button><button id="padBtn" type="button" hidden></button></div></div>
+<div id="bar"><button id="walkBtn" hidden></button><button id="flyBtn" hidden aria-pressed="false" data-i18n="page.btn.fly">Voler / Atterrir</button><button id="grabBtn" hidden data-i18n="page.btn.grab">Capturer la souris</button><button id="homeBtn" hidden data-i18n="page.btn.home">Retour à l'arrivée (R)</button><button id="centerBtn" type="button" hidden data-i18n="page.btn.center" data-i18n-title="page.btn.center.tip">Recentrer la vue</button><button id="helpBtn" hidden></button><button id="mapBtn" hidden data-i18n="page.btn.map">Carte (M)</button><button id="voiceBtn" type="button" hidden data-i18n="page.btn.voice">Voix</button><button id="padBtn" type="button" hidden></button></div></div>
 <script type="application/json" id="cfg">__CONFIG__</script>
 <script type="application/octet-stream" id="glb">__GLB_B64__</script>
 <script type="module">
@@ -2366,6 +2377,91 @@ if (C.presenceUrl && C.walk && C.chat) {
   }, 1000);
   CTL.chat = { open: () => !!(openChat && openChat()), get isOpen() { return !inp.hidden; }, get unread() { return unread; } };
   setInterval(render, 1000);
+}
+{
+  // 1.13.15 : fenetre « Voix » (WebRTC entre visiteurs, mode orateur) ; touche X : parler tant qu'elle est tenue
+  const vb = document.getElementById('voiceBtn');
+  let vw = null, vTalkKey = false, vOpenMic = false, vInfoNow = null, vDraw = () => {};
+  const vkGet = () => { try { return localStorage.getItem('web3d.vkey') || ''; } catch (e) { return ''; } };
+  const vkSet = v => { try { if (v) localStorage.setItem('web3d.vkey', v); else localStorage.removeItem('web3d.vkey'); } catch (e) {} };
+  const vMake = () => {
+    const w = document.createElement('div'); w.className = 'mpWin vcWin'; w.hidden = true; w.setAttribute('role', 'dialog'); w.style.right = '16px'; w.style.top = '90px';
+    const hd = document.createElement('div'); hd.className = 'mpHead';
+    const tt = document.createElement('span'); tt.className = 'mpTitle'; tt.textContent = tr('page.vc.title');
+    const hb = (txt, tip, f) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = txt; b.title = tip; b.setAttribute('aria-label', tip); b.onclick = f; return b; };
+    hd.append(tt, hb('–', tr('page.mp.min'), () => w.classList.toggle('min')), hb('✕', tr('page.vc.close'), () => { w.hidden = true; }));
+    const bd = document.createElement('div'); bd.className = 'vcBody mpBody'; bd.style.flexDirection = 'column';
+    w.append(hd, bd); document.body.appendChild(w);
+    let dx = 0, dy = 0, drag = false;
+    hd.onpointerdown = e => { if (e.target.closest('button')) return; const r = w.getBoundingClientRect(); dx = e.clientX - r.left; dy = e.clientY - r.top; drag = true; w.style.right = 'auto'; try { hd.setPointerCapture(e.pointerId); } catch (x) {} };
+    hd.onpointermove = e => { if (drag) { w.style.left = Math.max(0, Math.min(innerWidth - 60, e.clientX - dx)) + 'px'; w.style.top = Math.max(0, Math.min(innerHeight - 30, e.clientY - dy)) + 'px'; } };
+    hd.onpointerup = hd.onpointercancel = () => { drag = false; };
+    w.addEventListener('keydown', e => e.stopPropagation());
+    return { w, bd };
+  };
+  const el = (tag, txt, cls) => { const e = document.createElement(tag); if (txt) e.textContent = txt; if (cls) e.className = cls; return e; };
+  const btn = (txt, f) => { const b = el('button', txt); b.type = 'button'; b.onclick = f; return b; };
+  const doStart = async mic => {
+    const r = await viewer.voiceStart(mic);
+    if (!r.ok) toast(tr('page.vc.err.' + (r.why || 'off')));
+    vDraw();
+  };
+  vDraw = () => {
+    if (!vw || vw.w.hidden) return;
+    const i = viewer.voiceInfo(), bd = vw.bd; vInfoNow = i;
+    if (bd.contains(document.activeElement) && document.activeElement.tagName === 'INPUT') return;   // ne pas casser la saisie de la cle
+    bd.textContent = '';
+    if (!i.ok && !i.on) { bd.append(el('div', tr('page.vc.off'))); return; }
+    bd.append(el('div', i.on ? tr(i.mic ? 'page.vc.on.mic' : 'page.vc.on.listen') : tr('page.vc.off.idle')));
+    const r1 = el('div', '', 'vcRow');
+    if (!i.on) { r1.append(btn(tr('page.vc.start'), () => doStart(true)), btn(tr('page.vc.listen'), () => doStart(false))); }
+    else {
+      r1.append(btn(tr('page.vc.stop'), () => { viewer.voiceStop(); vDraw(); }));
+      if (i.mic) {
+        const hold = btn(tr('page.vc.hold'), () => {}); hold.onpointerdown = () => { viewer.voiceTalk(true); vDraw(); }; hold.onpointerup = hold.onpointerleave = hold.onpointercancel = () => { if (!vOpenMic) { viewer.voiceTalk(false); vDraw(); } };
+        if (i.talk) hold.className = 'hold'; r1.append(hold);
+      }
+    }
+    bd.append(r1);
+    const vOpen = el('input'); vOpen.type = 'checkbox'; vOpen.checked = vOpenMic;
+    if (i.on && i.mic) {
+      const lb = el('label'); lb.append(vOpen, document.createTextNode(' ' + tr('page.vc.openmic')));
+      vOpen.onchange = () => { vOpenMic = vOpen.checked; viewer.voiceTalk(vOpenMic); vDraw(); };
+      bd.append(lb, el('div', tr(i.speaking ? 'page.vc.talking' : 'page.vc.silent'), 'vcTip'));
+    }
+    if (i.on) {
+      const lv = el('label', tr('page.vc.vol') + ' '); const rg = el('input'); rg.type = 'range'; rg.min = 0; rg.max = 100; rg.value = Math.round((vVolNow) * 100);
+      rg.oninput = () => { vVolNow = rg.value / 100; viewer.voiceVolume(vVolNow); }; lv.append(rg); bd.append(lv);
+    }
+    bd.append(el('h4', tr('page.vc.peers')));
+    if (!i.peers.length) bd.append(el('div', tr('page.vc.none'), 'vcTip'));
+    for (const p of i.peers) {
+      const r = el('div', '', 'vcRow'); r.append(el('span', p.name + ' — ' + tr('page.vc.st.' + p.state) + (p.speaking ? ' · ' + tr('page.vc.speaking') : '')));
+      bd.append(r);
+    }
+    bd.append(el('h4', tr('page.vc.sp.title')));
+    const sp = i.speaker, spP = sp ? (viewer.getPresence().peers.find(p => p.id === sp)) : null;
+    bd.append(el('div', sp ? tr('page.vc.sp.now', sp === i.me ? tr('page.vc.sp.me') : (spP ? spP.name : '?')) : tr('page.vc.sp.none')));
+    const kin = el('input'); kin.type = 'password'; kin.autocomplete = 'off'; kin.placeholder = tr('page.vc.sp.key'); kin.setAttribute('aria-label', tr('page.vc.sp.key')); kin.value = vkGet();
+    kin.addEventListener('change', () => vkSet(kin.value.trim()));
+    const r2 = el('div', '', 'vcRow');
+    r2.append(btn(tr('page.vc.sp.me.btn'), () => { vkSet(kin.value.trim()); if (!viewer.voiceSpeaker(kin.value.trim())) toast(tr('page.vc.err.off')); }), btn(tr('page.vc.sp.off'), () => { if (!viewer.voiceSpeakerOff(kin.value.trim())) toast(tr('page.vc.err.off')); }));
+    bd.append(kin, r2);
+    const others = viewer.getPresence().peers.filter(p => p.visible !== false);
+    if (others.length) {
+      bd.append(el('div', tr('page.vc.sp.tip'), 'vcTip'));
+      for (const p of others) { const r = el('div', '', 'vcRow'); r.append(el('span', p.name), btn(tr('page.vc.sp.give'), () => { vkSet(kin.value.trim()); if (!viewer.voiceSpeaker(kin.value.trim(), p.id)) toast(tr('page.vc.err.off')); })); bd.append(r); }
+    }
+  };
+  let vVolNow = 1;
+  vb.onclick = () => { if (!vw) vw = vMake(); vw.w.hidden = !vw.w.hidden; if (!vw.w.hidden) vDraw(); };
+  viewer.onVoice = () => { vb.classList.toggle('on', viewer.voiceOn); vDraw(); };
+  viewer.onVoiceErr = e => toast(tr('page.vc.err.' + (['key', 'rate', 'gone', 'off'].includes(e.why) ? e.why : 'off')));
+  setInterval(() => { vb.hidden = !(viewer.voiceOK || viewer.voiceOn); vDraw(); }, 1000);
+  const typing = e => { const n = e.target && e.target.tagName; return n === 'INPUT' || n === 'TEXTAREA' || n === 'SELECT'; };
+  addEventListener('keydown', e => { if (e.code === 'KeyX' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && !typing(e) && viewer.voiceOn && viewer.voiceInfo().mic) { vTalkKey = true; viewer.voiceTalk(true); vDraw(); } });
+  addEventListener('keyup', e => { if (e.code === 'KeyX' && vTalkKey) { vTalkKey = false; if (!vOpenMic) viewer.voiceTalk(false); vDraw(); } });
+  addEventListener('blur', () => { if (vTalkKey) { vTalkKey = false; if (!vOpenMic) viewer.voiceTalk(false); } });
 }
 if (C.presenceUrl && C.walk) {
   const box = document.getElementById('presence'), st = document.getElementById('presenceStatus'), inp = document.getElementById('presenceName');

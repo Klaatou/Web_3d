@@ -6,6 +6,16 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.13.0)
 
+### 27/11/2026: page: voice between visitors, "Voice" window, speaker mode (batch 1.13.15)
+
+- **Request** (Klaatou): follow-up of lot 1.13.14: the page side (microphone, connections, spatial sound, key field, "Give the floor").
+- **Done** (`src/core.js`, `src/template.html`): (1) WebRTC engine in the page: one audio link per nearby visitor (opened at 30 m or less, closed beyond 36 m, 8 links at most), the lowest id makes the offer, signalling through `rtc`; (2) spatial sound (PannerNode, linear volume from 1 m to 30 m); (3) speaker mode: the speaker's voice is sent to everyone, no distance (20 listeners at most, an estimate), announced by `speaker`; (4) a failed link is not retried before 60 s; (5) "Voice" button (shown when the server has voice) and window: start mic + listening or listen only, stop, talk by holding the X key or open mic, volume, nearby visitors with state, speaker: room key field (kept in the browser, `web3d.vkey`), "Become speaker", "End speaker", "Give the floor"; (6) API `voiceOK/voiceOn/voiceStart/voiceStop/voiceTalk/voiceVolume/voiceInfo/voiceStats/voiceSpeaker/voiceSpeakerOff` and `onVoice/onVoiceErr`; (7) no IP address message (Klaatou's request).
+- **Fixed during testing**: a "hi" sent before the other visitor turned voice on was lost and the two never connected; a received "hi" now always gets an answer.
+- **Tests**: new `tests/voix_page.py` (27 checks, two then three Chromium with a simulated microphone: links, received audio, X key, distance, speaker at 100 m, stop, listen only, refused microphone, `--no-voice`).
+- **No console command** to remove a speaker (removed with the key in the page, by leaving or by turning voice off).
+- **Not tried**: Windows, Edge, real network and real STUN server, touch screen, more than 3 visitors.
+- **Still to update**: manual, procedures, histories.
+
 ### 27/11/2026: presence server: voice, part one (signalling and speaker mode by the room key) (batch 1.13.14)
 
 - **Request** (Klaatou): add voice dialogue between visitors, without another server for the audio (WebRTC from browser to browser: the presence server only does the signalling); a "speaker mode" to unblock a session (conference) before going through Icecast, to be given **without** the server console.

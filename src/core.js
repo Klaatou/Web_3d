@@ -1715,12 +1715,202 @@ function createViewer(container, cfg0, loader) {
   }
   // v34 : un visiteur change de couleur en cours de connexion : corps et losange prennent la nouvelle couleur
   function recolorPeer(q, color) { q.color = color; q.g.traverse(o => { if (o.userData.tint && o.material) o.material.color.setHex(color); }); dirty = true; }
-  function removePeer(id) { const q = P.peers.get(id); if (q) { disposeAvatar(q.g); P.peers.delete(id); } }
-  function clearPeers() { for (const id of [...P.peers.keys()]) removePeer(id); }
+  function removePeer(id) { vPeerGone(id); const q = P.peers.get(id); if (q) { disposeAvatar(q.g); P.peers.delete(id); } }
+  function clearPeers() { for (const id of [...P.peers.keys()]) removePeer(id); vReset(); }
+  // ===== 1.13.15 : voix. WebRTC de navigateur a navigateur : l'audio ne passe PAS par le serveur de presence, qui ne fait que relayer la signalisation (messages 'rtc' {to, d}).
+  // d.k : 'hi' (ma voix est active), 'bye' (je coupe ma voix), 'o' offre, 'a' reponse, 'c' candidat ICE, 'x' (je ferme ce lien). Un lien par visiteur proche (au plus VOICE_MAX, a moins de
+  // VOICE_RANGE m ; il se ferme au-dela de VOICE_DROP), le plus petit identifiant fait l'offre. Son spatialise (PannerNode). Mode orateur : sa voix est entendue de tout le salon,
+  // sans distance (au plus VOICE_SPEAKER_MAX auditeurs : l'orateur envoie sa voix a chacun). Un lien qui echoue (reseau) n'est pas retente avant VOICE_RETRY ms.
+  const VOICE_RANGE = 30, VOICE_DROP = 36, VOICE_MAX = 8, VOICE_SPEAKER_MAX = 20, VOICE_WAIT = 20000, VOICE_RETRY = 60000, VOICE_LOST = 6000;
+  const V = { ok: false, ice: [], speaker: 0, on: false, mic: false, talk: false, vol: 1, stream: null, track: null, ctx: null, master: null, an: null, buf: null, level: 0, speaking: false,
+    links: new Map(), hi: new Set(), hiSent: new Set(), fail: new Map(), t1: 0, t2: 0, sig: '', tmp: new THREE.Vector3() };
+  let onVoice = null, onVoiceErr = null;
+  const vOK = () => V.ok && walking && !!P.ws && P.ws.readyState === 1 && !!P.id;
+  const vSend = (id, d) => { if (!P.ws || P.ws.readyState !== 1 || !P.id) return false; P.ws.send(JSON.stringify({ t: 'rtc', to: id, d })); return true; };
+  function vInfo() {
+    const peers = [], seen = new Set();
+    for (const l of V.links.values()) { const q = P.peers.get(l.id); seen.add(l.id); peers.push({ id: l.id, name: q ? q.name : '?', k: q ? q.k : '', state: l.state, speaking: !!l.speaking }); }
+    for (const id of V.fail.keys()) { const q = P.peers.get(id); if (q && !seen.has(id)) peers.push({ id, name: q.name, k: q.k, state: 'fail', speaking: false }); }
+    return { ok: vOK(), on: V.on, mic: V.mic, talk: V.talk, speaking: V.speaking, level: Math.round(V.level * 100) / 100, speaker: V.speaker, me: P.id, peers };
+  }
+  function vEmit(force) {
+    const i = vInfo(), sig = [i.ok, i.on, i.mic, i.talk, i.speaking, i.speaker, i.peers.map(p => p.id + ':' + p.state + ':' + (p.speaking ? 1 : 0)).join(',')].join('|');
+    if (!force && sig === V.sig) return;
+    V.sig = sig; if (onVoice) onVoice(i);
+  }
+  function vClose(id, tell) {
+    const l = V.links.get(id); if (!l) return;
+    V.links.delete(id);
+    if (tell) vSend(id, { k: 'x' });
+    try { l.pc.onicecandidate = null; l.pc.ontrack = null; l.pc.onconnectionstatechange = null; l.pc.close(); } catch (e) {}
+    try { if (l.el) { l.el.pause(); l.el.srcObject = null; } for (const n of [l.src, l.pn, l.gs, l.gd, l.an]) if (n) n.disconnect(); } catch (e) {}
+  }
+  function vFail(l) { if (V.links.get(l.id) !== l) return; V.fail.set(l.id, performance.now()); vClose(l.id, true); vEmit(true); }
+  function vMix(l) { if (!l.gs) return; const sp = V.speaker && V.speaker === l.id; l.gs.gain.value = sp ? 0 : 1; l.gd.gain.value = sp ? 1 : 0; }
+  function vAttach(l, stream) {
+    if (!V.ctx || l.src) return;
+    const el = new Audio(); el.muted = true; el.srcObject = stream; const pl = el.play(); if (pl && pl.catch) pl.catch(() => {}); l.el = el;   // Chrome : un flux distant n'entre dans Web Audio que s'il est aussi branche sur un element media
+    l.src = V.ctx.createMediaStreamSource(stream);
+    l.an = V.ctx.createAnalyser(); l.an.fftSize = 512; l.buf = new Uint8Array(l.an.fftSize); l.src.connect(l.an);
+    l.pn = V.ctx.createPanner(); l.pn.panningModel = 'HRTF'; l.pn.distanceModel = 'linear'; l.pn.refDistance = 1; l.pn.maxDistance = VOICE_RANGE; l.pn.rolloffFactor = 1;
+    l.gs = V.ctx.createGain(); l.gd = V.ctx.createGain();
+    l.src.connect(l.pn); l.pn.connect(l.gs); l.gs.connect(V.master);      // voix de proximite : position et distance
+    l.src.connect(l.gd); l.gd.connect(V.master);                          // voix de l'orateur : directe, partout pareil
+    vMix(l);
+  }
+  function vOpen(id, initiator) {
+    if (V.links.has(id) || !V.on || typeof RTCPeerConnection === 'undefined') return null;
+    const pc = new RTCPeerConnection({ iceServers: V.ice.length ? [{ urls: V.ice.slice() }] : [] });
+    const l = { id, pc, state: 'wait', t0: performance.now(), initiator, queue: [], remote: false, speaking: false, quiet: 0, dis: 0, el: null, src: null, an: null, buf: null, pn: null, gs: null, gd: null };
+    V.links.set(id, l);
+    const tc = pc.addTransceiver('audio', { direction: 'sendrecv' });
+    if (V.track) tc.sender.replaceTrack(V.track).catch(() => {});
+    pc.onicecandidate = e => { if (e.candidate) vSend(id, { k: 'c', c: { candidate: e.candidate.candidate, sdpMid: e.candidate.sdpMid, sdpMLineIndex: e.candidate.sdpMLineIndex } }); };
+    pc.ontrack = e => vAttach(l, e.streams && e.streams[0] ? e.streams[0] : new MediaStream([e.track]));
+    pc.onconnectionstatechange = () => {
+      if (V.links.get(id) !== l) return;
+      const s = pc.connectionState;
+      if (s === 'connected') { l.state = 'link'; l.dis = 0; vEmit(true); }
+      else if (s === 'failed' || s === 'closed') vFail(l);
+      else if (s === 'disconnected') l.dis = performance.now();
+    };
+    return l;
+  }
+  async function vOffer(l) {
+    try { const o = await l.pc.createOffer(); await l.pc.setLocalDescription(o); vSend(l.id, { k: 'o', sdp: l.pc.localDescription.sdp }); } catch (e) { vFail(l); }
+  }
+  async function vFlush(l) { const q = l.queue; l.queue = []; for (const c of q) { try { await l.pc.addIceCandidate(c); } catch (e) {} } }
+  async function vRtc(m) {
+    const d = m.d; if (!d || typeof d !== 'object' || !Number.isInteger(m.id)) return;
+    const q = P.peers.get(m.id), k = d.k;
+    if (q && q.k && P.ignored.has(q.k)) return;
+    if (k === 'hi') { if (!V.on) return; V.hi.add(m.id); if (d.r !== 1) { V.hiSent.add(m.id); vSend(m.id, { k: 'hi', r: 1 }); } V.t1 = 0; return; }   // un 'hi' recu recoit toujours une reponse (r:1, qui n'en appelle pas d'autre) : le 'hi' envoye avant que l'autre active sa voix est perdu
+    if (k === 'bye') { V.hi.delete(m.id); V.hiSent.delete(m.id); V.fail.delete(m.id); vClose(m.id, false); vEmit(true); return; }
+    if (k === 'x') { const l = V.links.get(m.id); if (l && l.state !== 'link') V.fail.set(m.id, performance.now()); vClose(m.id, false); vEmit(true); return; }
+    if (!V.on || !q) return;
+    if (k === 'o') {
+      if (typeof d.sdp !== 'string' || d.sdp.length > 3000) return;
+      vClose(m.id, false);      // une nouvelle offre remplace le lien (l'autre a recommence)
+      const l = vOpen(m.id, false); if (!l) return;
+      V.hi.add(m.id);
+      try { await l.pc.setRemoteDescription({ type: 'offer', sdp: d.sdp }); l.remote = true; await vFlush(l); const a = await l.pc.createAnswer(); await l.pc.setLocalDescription(a); vSend(m.id, { k: 'a', sdp: l.pc.localDescription.sdp }); } catch (e) { vFail(l); }
+    }
+    else if (k === 'a') {
+      const l = V.links.get(m.id); if (!l || typeof d.sdp !== 'string' || d.sdp.length > 3000) return;
+      try { await l.pc.setRemoteDescription({ type: 'answer', sdp: d.sdp }); l.remote = true; await vFlush(l); } catch (e) { vFail(l); }
+    }
+    else if (k === 'c') {
+      const l = V.links.get(m.id), c = d.c; if (!l || !c || typeof c.candidate !== 'string') return;
+      const ci = { candidate: c.candidate.slice(0, 400), sdpMid: typeof c.sdpMid === 'string' ? c.sdpMid.slice(0, 20) : null, sdpMLineIndex: Number.isInteger(c.sdpMLineIndex) ? c.sdpMLineIndex : null };
+      if (l.remote) { try { await l.pc.addIceCandidate(ci); } catch (e) {} } else l.queue.push(ci);
+    }
+  }
+  function vWelcome(m) {
+    V.ok = m.voice === true;
+    V.ice = Array.isArray(m.ice) ? m.ice.filter(u => typeof u === 'string' && /^stuns?:/.test(u)).slice(0, 4) : [];
+    V.speaker = Number.isInteger(m.speaker) ? m.speaker : 0;
+    V.t1 = 0; vEmit(true);
+  }
+  function vPeerGone(id) { vClose(id, false); V.hi.delete(id); V.hiSent.delete(id); V.fail.delete(id); if (V.speaker === id) V.speaker = 0; }
+  function vReset() {      // la connexion de presence est perdue : plus de lien, plus d'orateur ; le micro reste pris, la voix repart au prochain welcome
+    for (const id of [...V.links.keys()]) vClose(id, false);
+    V.hi.clear(); V.hiSent.clear(); V.fail.clear(); V.speaker = 0; V.ok = false; vEmit(true);
+  }
+  async function vStart(mic) {
+    if (V.on) return { ok: true, mic: V.mic };
+    if (!vOK()) return { ok: false, why: 'off' };
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC || typeof RTCPeerConnection === 'undefined') return { ok: false, why: 'support' };
+    const ctx = new AC();      // cree tout de suite (dans le geste du visiteur) : le navigateur le laisse alors sonner
+    let stream = null;
+    if (mic) {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { try { ctx.close(); } catch (e) {} return { ok: false, why: 'nomic' }; }
+      try { stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }); }
+      catch (e) { try { ctx.close(); } catch (x) {} return { ok: false, why: e && (e.name === 'NotAllowedError' || e.name === 'SecurityError') ? 'denied' : 'nomic' }; }
+    }
+    if (!vOK() || V.on) { if (stream) stream.getTracks().forEach(t => t.stop()); try { ctx.close(); } catch (e) {} return { ok: V.on, why: 'off' }; }
+    V.ctx = ctx; V.master = ctx.createGain(); V.master.gain.value = V.vol; V.master.connect(ctx.destination);
+    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+    V.stream = stream; V.track = stream ? stream.getAudioTracks()[0] || null : null; V.mic = !!V.track;
+    if (V.track) { V.track.enabled = V.talk; const s = ctx.createMediaStreamSource(new MediaStream([V.track])); V.an = ctx.createAnalyser(); V.an.fftSize = 512; V.buf = new Uint8Array(V.an.fftSize); s.connect(V.an); }
+    V.on = true; V.t1 = 0; vEmit(true);
+    return { ok: true, mic: V.mic };
+  }
+  function vStop() {
+    if (!V.on) return;
+    for (const id of V.hiSent) vSend(id, { k: 'bye' });
+    for (const id of [...V.links.keys()]) vClose(id, false);
+    if (V.speaker && V.speaker === P.id && P.ws && P.ws.readyState === 1) P.ws.send(JSON.stringify({ t: 'speaker', off: true }));
+    V.hi.clear(); V.hiSent.clear(); V.fail.clear();
+    if (V.stream) V.stream.getTracks().forEach(t => t.stop());
+    if (V.ctx) { try { V.ctx.close(); } catch (e) {} }
+    V.on = false; V.mic = false; V.stream = V.track = V.ctx = V.master = V.an = V.buf = null; V.level = 0; V.speaking = false;
+    vEmit(true);
+  }
+  function vTalk(b) { V.talk = !!b; if (V.track) V.track.enabled = V.talk; V.t2 = 0; }
+  function vVol(v) { V.vol = Math.max(0, Math.min(1, Number(v) || 0)); if (V.master) V.master.gain.value = V.vol; }
+  function vRms(an, buf) { an.getByteTimeDomainData(buf); let s = 0; for (let i = 0; i < buf.length; i++) { const v = (buf[i] - 128) / 128; s += v * v; } return Math.sqrt(s / buf.length); }
+  function vPos(node, x, y, z) { if (node.positionX) { node.positionX.value = x; node.positionY.value = y; node.positionZ.value = z; } else node.setPosition(x, y, z); }
+  function vLinks(now) {
+    if (!vOK()) return;
+    const sp = V.speaker, iAmSp = !!sp && sp === P.id, me = W.pos, cand = [];
+    for (const q of P.peers.values()) {
+      if (!q.g.visible) continue;
+      const d = Math.hypot(q.tx - me.x, q.ty - me.y, q.tz - me.z), ign = !!q.k && P.ignored.has(q.k), lk = V.links.get(q.id), spRel = !!sp && (q.id === sp || iAmSp);
+      cand.push({ q, d, spRel, want: !ign && (spRel || d <= (lk ? VOICE_DROP : VOICE_RANGE)), ign });
+    }
+    cand.sort((a, b) => a.d - b.d);
+    let nNear = 0, nSp = 0;
+    for (const c of cand) {
+      c.ok = c.want;
+      if (c.ok) { if (c.spRel) { if (++nSp > (iAmSp ? VOICE_SPEAKER_MAX : 1)) c.ok = false; } else if (++nNear > VOICE_MAX) c.ok = false; }
+    }
+    for (const c of cand) {
+      const id = c.q.id, lk = V.links.get(id), blocked = V.fail.has(id) && now - V.fail.get(id) < VOICE_RETRY;
+      if (c.ign) { if (V.hiSent.has(id)) { vSend(id, { k: 'bye' }); V.hiSent.delete(id); V.hi.delete(id); } if (lk) vClose(id, true); continue; }
+      if (c.ok) {
+        if (!V.hiSent.has(id)) { V.hiSent.add(id); vSend(id, { k: 'hi' }); }
+        if (!lk && !blocked && V.hi.has(id) && P.id < id) { const l = vOpen(id, true); if (l) vOffer(l); }
+      }
+      else if (lk) vClose(id, true);
+    }
+    for (const l of [...V.links.values()]) {
+      if (l.state === 'wait' && now - l.t0 > VOICE_WAIT) vFail(l);
+      else if (l.dis && l.pc.connectionState !== 'connected' && now - l.dis > VOICE_LOST) vFail(l);
+    }
+    for (const [id, t] of [...V.fail]) if (now - t >= VOICE_RETRY) V.fail.delete(id);
+  }
+  function vTick(dt, now) {
+    if (!V.on) return;
+    if (!walking) { vStop(); return; }
+    if (V.ctx && V.ctx.state === 'suspended') V.ctx.resume().catch(() => {});
+    if (V.ctx) {
+      const L = V.ctx.listener, p = camera.position, f = camera.getWorldDirection(V.tmp);
+      if (L.positionX) { L.positionX.value = p.x; L.positionY.value = p.y; L.positionZ.value = p.z; L.forwardX.value = f.x; L.forwardY.value = f.y; L.forwardZ.value = f.z; L.upX.value = 0; L.upY.value = 1; L.upZ.value = 0; }
+      else { L.setPosition(p.x, p.y, p.z); L.setOrientation(f.x, f.y, f.z, 0, 1, 0); }
+      for (const l of V.links.values()) { const q = P.peers.get(l.id); if (l.pn && q) vPos(l.pn, q.g.position.x, q.g.position.y + 1.6, q.g.position.z); }
+    }
+    if (now - V.t1 > 400) { V.t1 = now; vLinks(now); }
+    if (now - V.t2 > 120) {
+      V.t2 = now;
+      if (V.an) { V.level = vRms(V.an, V.buf); V.speaking = V.talk && V.level > 0.02; }
+      for (const l of V.links.values()) if (l.an) { if (vRms(l.an, l.buf) > 0.015) l.quiet = now; l.speaking = now - l.quiet < 400; }
+      vEmit(false);
+    }
+  }
+  async function vStats() {
+    const out = [];
+    for (const l of V.links.values()) {
+      let bytes = 0, sent = 0;
+      try { (await l.pc.getStats()).forEach(r => { if (r.type === 'inbound-rtp' && r.kind === 'audio') bytes += r.bytesReceived || 0; if (r.type === 'outbound-rtp' && r.kind === 'audio') sent += r.bytesSent || 0; }); } catch (e) {}
+      out.push({ id: l.id, state: l.state, received: bytes, sent, conn: l.pc.connectionState, spatial: !(V.speaker && V.speaker === l.id) });
+    }
+    return out;
+  }
   function presenceMsg(m) {
     if (!m || typeof m !== 'object') return;
     if (m.t === 'welcome') {
-      P.id = m.id; P.dm = m.dm === true; (m.peers || []).forEach(addPeer); pStatus('online'); dodgeWelcome();
+      P.id = m.id; P.dm = m.dm === true; (m.peers || []).forEach(addPeer); pStatus('online'); dodgeWelcome(); vWelcome(m);
       P.serverColor = Number.isInteger(m.color) && m.color >= 0 && m.color <= 0xFFFFFF ? m.color : null;
       if (m.name) setMyName(m.name);
       if (m.role === 'spectator' && walking && P.ws) P.ws.send(JSON.stringify({ t: 'role', walker: true, name: P.name }));
@@ -1741,6 +1931,10 @@ function createViewer(container, cfg0, loader) {
       onDM({ id: m.id, name: cleanName(m.name) || '?', k, text: String(m.text || '').slice(0, 200), self, ts: Number.isFinite(m.ts) ? m.ts : Date.now() / 1000 });
     }
     else if (m.t === 'dmerr') { if (onDMErr) onDMErr({ to: m.to, why: String(m.why || '').slice(0, 12) }); }
+    else if (m.t === 'rtc') vRtc(m);
+    else if (m.t === 'rtcerr') { if (m.why === 'off') { V.ok = false; vEmit(true); } else if (m.why === 'gone' && Number.isInteger(m.to)) vClose(m.to, false); }
+    else if (m.t === 'speaker') { V.speaker = Number.isInteger(m.id) ? m.id : 0; for (const l of V.links.values()) vMix(l); V.t1 = 0; vEmit(true); }
+    else if (m.t === 'speakererr') { if (onVoiceErr) onVoiceErr({ why: String(m.why || '').slice(0, 12) }); }
     else if (m.t === 'history') {   // v37 : page plus ancienne de l'historique du salon (réponse à requestHistory)
       if (onHistory && cfg.chat !== false) onHistory({ more: m.more === true, msgs: (Array.isArray(m.msgs) ? m.msgs : []).slice(0, 100).map(h => ({ id: h.id, name: cleanName(h.name) || '?', text: String(h.text || '').slice(0, 200), self: false, history: true, n: Number.isFinite(h.n) ? h.n : undefined, ts: Number.isFinite(h.t) ? h.t : undefined })) });
     }
@@ -1853,6 +2047,7 @@ function createViewer(container, cfg0, loader) {
   for (const ev of ['keydown', 'pointerdown']) window.addEventListener(ev, e => { if (BL.on) blinkStop(); }, true);
   function presenceTick(dt, now) {
     blinkTick(now);
+    vTick(dt, now);
     if (P.peers.size) {
       const a = 1 - Math.exp(-dt * 10);
       for (const q of P.peers.values()) {
@@ -3203,6 +3398,16 @@ function createViewer(container, cfg0, loader) {
     // v37 : demande les n messages précédant le message numéro `before` ; un ancien serveur ne répond pas (la page masque alors le bouton)
     requestHistory(before, n) { if (!P.ws || P.ws.readyState !== 1 || !P.id || !Number.isFinite(before)) return false; P.ws.send(JSON.stringify({ t: 'history', before, n: n || 50 })); return true; },
     set onHistory(f) { onHistory = f; },
+    // 1.13.15 : voix (WebRTC) : voiceOK / voiceOn / voiceStart(avecMicro) / voiceStop / voiceTalk(b) / voiceVolume(0..1) / voiceInfo() / voiceStats() ; mode orateur : voiceSpeaker(cle, versId) / voiceSpeakerOff(cle) ; onVoice(info) / onVoiceErr({why})
+    get voiceOK() { return vOK(); }, get voiceOn() { return V.on; },
+    voiceStart(mic) { return vStart(mic !== false); }, voiceStop() { vStop(); }, voiceTalk(b) { vTalk(b); }, voiceVolume(v) { vVol(v); }, voiceInfo() { return vInfo(); }, voiceStats() { return vStats(); },
+    voiceSpeaker(key, to) {
+      if (!vOK()) return false;
+      const m = { t: 'speaker', key: String(key || '').slice(0, 40) }; if (Number.isInteger(to)) m.to = to;
+      P.ws.send(JSON.stringify(m)); return true;
+    },
+    voiceSpeakerOff(key) { if (!vOK()) return false; const m = { t: 'speaker', off: true }; if (key) m.key = String(key).slice(0, 40); P.ws.send(JSON.stringify(m)); return true; },
+    set onVoice(f) { onVoice = f; }, set onVoiceErr(f) { onVoiceErr = f; },
     // 1.12.30 : messages prives : sendDM(id, texte) ; onDM / onDMErr ; setIgnored(cles) remplace la liste des visiteurs ignores (chat, bulles et MP)
     sendDM(to, text) {
       const t = String(text || '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, 200);
