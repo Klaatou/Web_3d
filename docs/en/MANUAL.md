@@ -1524,6 +1524,21 @@ A metallic material (`metalness` above 0.05: OpenSim's PBR metals, but also any 
 - **Sound window** (1.11.24, 1.11.25): a small **Sound** window repeats the Radio and Music lines of the State block (text, distance, previous / next with n/N, box to cut the source, stream list) so the sound can be followed once the State window is closed. The State block lines do not change. **Open**: the **▲ arrow** of the Radio or Music line opens Sound **and closes the State window**; a **click on the cone** of a radio or audio zone within range shows or hides it (out of range: nothing; that click is not reported to the presence server). **Close**: the ✕ cross. Sound can be moved, snaps to the stacks, is resized by its right edge, its size follows its content, and it is part of the **window layout** (§ 7.44): saved, loaded and reset with the others. The **title** gives the type of the active zone, the nearest one (or the one whose box is ticked; only one is active at a time): "Sound · Radio" or "Sound · Audio playlist". **Volume** (1.11.28, 1.11.29): a loudspeaker icon (black drawing, 0, 1 or 2 waves depending on the level) in the header, left of the cross, shows a **slider** from 1 to 100 (50 by default) that sets **the radio and music of the zones**, independently of the Sounds volume of Settings (which now only sets the beeps; with no saved value, the slider takes the Sounds value). Escape hides it. To mute: the box of the Radio or Music line. Value kept by the browser (`srcVolume`), not in the layout. `tests/fenetre_son.py` (Chromium on Linux); **not tried**: Windows, Edge, touch.
 - **Video, mute and N key** (1.12.21): the Sound window has a **"♪ Video: NAME"** line (with its "Zone videos" box) when a screen with sound speaks, and a **mute button** (crossed speaker, left of the volume) that mutes or restores radio, music and videos; the **N** key does the same. Ticking a source unticks the other two, and the help (H) carries a line "N: mute / unmute the zone sound" (§ 5.22).
 - **What the page keeps in the browser** (survey 1.12.33, beyond the settings already cited): position and width of the Sound window (`glb2html_sound`, `glb2html_soundFold`, `glb2html_soundW`), pad position (`glb2html_padPos`), portal markers (`glb2html_cones`), language (`glb2html_lang`), name (`glb2html_name`), copy format of the position (`glb2html_copyfmt`), hidden "About the region" panel (`web3d.about.hide.` followed by the region name), light rendering (`glb2html_light_` followed by the room), visit key (`glb2html_visits_` followed by the room) and the stream chosen on each multi-stream radio (`glb2html_radio_` followed by the room, 1.13.3). None of this leaves the browser; "Original values" and the layout (§ 7.44) clear only part of it.
+
+### 7.60 Voice between visitors: "Voice" window (1.13.15)
+
+When the presence server has voice (default; `--no-voice` turns it off, § 10.28), a **Voice** button appears in the bar while walking. It opens a floating window (movable, collapsible):
+
+- **Enable mic + listening**: the browser asks for microphone permission (refused: a message, nothing starts); **Listen only**: no microphone. **Stop voice** closes everything.
+- **Talking**: hold the **X** key (or the "Talk" button), or tick **Open microphone**. Otherwise your microphone is closed: nobody hears you.
+- **Proximity voice**: you hear visitors **30 m away or less**, louder when they are close, silent at 30 m, and placed left or right according to their direction (spatial sound). Each pair of nearby visitors has its own link: with three or more close to each other, everybody hears everybody; but A 20 m from B and B 20 m from C do not necessarily hear each other (A and C are 40 m apart). A link closes beyond 36 m. **At most 8 links** per visitor (the nearest).
+- **Voice may not get through**: the direct link fails on some networks (company firewall, mobile network, two strict routers, or a STUN server that is missing or unreachable). The window then shows it for that visitor: connected, connecting..., or **failed (network)**; that visitor does not hear you and you do not hear them (both directions), with no other message. The page retries after 60 s. It is **not guaranteed**: only the cases tried (same machine, three-browser test) are verified. An evolution is possible: a relay server (TURN), not planned for now (§ 10.28).
+- **Speaker mode**: for a talk (the whole room hears one visitor, whatever the distance). It needs the **room key**, the same as the visits journal (`visits-key ROOM` in the server console, § 10.28): type it in the window field (kept in this browser, `web3d.vkey`), then **Become speaker**, or **Give the floor** next to another visitor. **End speaker** (with the key) stops it; the speaker also stops by leaving the room or turning voice off. Up to **20 listeners** (an estimate: the speaker sends the voice to each one, their computer and connection are the limit); beyond that, use a radio (Icecast). An ignored visitor (Ignore, § 7.25) is neither heard nor linked.
+- **Your IP address**: talking to someone uses a **direct browser-to-browser link**; every visitor linked to you therefore sees your IP address (like any server you connect to), and the STUN server given by `--ice` (§ 10.28) sees the address of each visitor who queries it. Listen only: you are linked the same way.
+- No voice is recorded or goes through the presence server (it only relays the connection messages).
+
+**Not tried**: Windows, Edge, real network with a STUN server, touch screen, more than three visitors. Tried: `tests/voix_page.py` (two then three Chromium with a simulated microphone on one machine).
+
 ## 8. Load a tiled region in the page (`glb2html.py --tiles`, v30)
 
 A region of several hundred MB or several GB does not fit in a browser: after `glb2tiles.py` (§ 4.1), the **shell** loads only the tiles close to the avatar and unloads the distant ones, and (v31) shows in the distance the **light overview** `NOM.overview.glb` when it exists. Without the `tiles` field in `NOM.config.json`, the page behaves exactly as before (a single `NOM.glb`).
@@ -1937,6 +1952,18 @@ The presence server passes **private messages** (DMs) from one walker to another
 - **Key `k`**: a short fingerprint (12 characters) of the visitor's internal identifier, stable between two connections of the same browser, not reversible. Since 1.12.30 it is published with a visitor's public data (`welcome`, `join`): this is what lets "Ignore" hide a person even if they change nickname. A visitor without a persistent identifier gets a key that changes at each connection.
 - **Personal data**: the text of a DM is not broadcast, not kept in the history, not written to the log or the console (only the "sender -> recipient" event appears there).
 - **Tried**: `tests/presence_mp.py` (real server) and `tests/presence_mp_page.py` (page, Chromium). **Not tried**: Windows, Edge, touch screen.
+
+### 10.28 Voice: `--no-voice`, `--ice`, `rtc` and `speaker` messages (1.13.14 and 1.13.15)
+
+Voice is **browser-to-browser WebRTC**: the audio does not go through the presence server, which only relays the connection messages. What the visitor sees is in § 7.60.
+
+- **`--no-voice`**: turns voice off (`welcome` carries `voice: false`, the page hides the button). On by default.
+- **`--ice stun:HOST:PORT`** (repeatable, 4 at most; `stuns:` accepted): STUN server addresses given to the browsers (`welcome.ice`) so that voice crosses the Internet between visitors behind a router, for example `--ice stun:stun.l.google.com:19302` (Google's public STUN, not tried here). Without `--ice`, voice only works between visitors on the same local network. **Voice may not get through** between some visitors (firewall, mobile network, strict routers): only a TURN (relay) server would fix that; it is **not handled for now** and may be the subject of a later evolution: it would need a separate server (coturn) on a machine with open UDP ports, which Tailscale Funnel (TCP 443, 8443, 10000) does not allow (a VPS does).
+- **Protocol**: `{t:'rtc', to:id, d}` is relayed to visitor `to` of the same room, who receives `{t:'rtc', id, d}` (nothing for the sender); `d`: 3000 characters at most; 200 messages per 10 s per visitor; errors `{t:'rtcerr', to, why}` (`off`, `rate`, `gone`, `self`); walkers only; content never kept or logged.
+- **Speaker**: `{t:'speaker', key, to?}` (the room key; `to` gives the floor to someone else), `{t:'speaker', key, off:true}` or `{t:'speaker', off:true}` (by the speaker, no key). The room receives `{t:'speaker', id}` (0: nobody); `welcome` carries `speaker`. `speakererr` errors: `off`, `key`, `rate`, `gone`. The key is the visits journal one (`visits-key ROOM`), **no `--visits` option needed**; 5 refusals per minute per IP, shared with the visits journal; the key is never logged. The speaker drops on leaving or becoming a spectator; not when idle.
+- **No console command** to remove a speaker: it is removed with the key in the page.
+- **IP addresses**: visitors linked to talk see each other's IP address, and the STUN server sees everyone's. Tell the visitors (§ 7.60); the page shows no warning.
+- **Tried**: `tests/presence_voice.py` (server) and `tests/voix_page.py` (page, Chromium). **Not tried**: Windows, Edge, real STUN, touch screen.
 
 ## 11. JSON file reference (v43)
 
@@ -2381,6 +2408,10 @@ The detail, version by version, is in `HISTORY.md` (narrative) and `CHANGELOG.md
 **Additions of 1.13.11 (batch 1.13.11)**
 
 - **viewer editor**: fields "Displayed name in French" and "Displayed name in English" (`labels`) and "Link title" (`linkTitle`) in the form of a zone (1.13.11, § 5)
+
+**Additions of 1.13.14 to 1.13.16 (batches 1.13.14 to 1.13.16)**
+
+- **voice between visitors** (browser-to-browser WebRTC): server (`--no-voice`, `--ice`, `rtc` and `speaker` messages, 1.13.14, § 10.28), page ("Voice" button and window, spatial sound at 30 m, X key, speaker mode by the room key, 1.13.15, § 7.60); the IP address is seen by linked visitors (§ 7.60)
 
 **Additions of 1.13.13 (batch 1.13.13)**
 

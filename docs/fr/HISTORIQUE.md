@@ -352,6 +352,9 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 24/11/2026 |  | après 1.13.0 | Lot 1.13.11 : éditeur du viewer : champs « nom affiché » par langue (`labels`) et « titre du lien » (`linkTitle`) |
 | 24/11/2026 |  | après 1.13.0 | Lot 1.13.13 : `glb2html.py` : ancien `NOM.zones.json` / `NOM.config.json` gardé en `.bak` ; le fichier de zones de la région donné comme source n'est jamais réécrit ; variante de la procédure § 18 réécrite |
 | 24/11/2026 |  | après 1.13.0 | Lot 1.13.12 : viewer : le modèle d'une zone `model` se lit dans le dossier de la région choisi (comme les images) ; procédure `glb2html.py` pour poser un modèle |
+| 27/11/2026 |  | après 1.13.0 | Lot 1.13.14 : serveur de présence : voix, première partie (message `rtc`, mode orateur par la clé du salon, `--no-voice`, `--ice`) |
+| 27/11/2026 |  | après 1.13.0 | Lot 1.13.15 : page : bouton et fenêtre « Voix », liens WebRTC, son spatial, touche X, mode orateur, « Donner la parole » |
+| 27/11/2026 |  | après 1.13.0 | Lot 1.13.16 : documents : voix (manuel § 7.60 et § 10.28, procédure 6.11, README ; l'IP est vue des visiteurs reliés) ; documents seulement |
 ## Commandes utiles
 
 - Voir l'historique : `git log --oneline --decorate`

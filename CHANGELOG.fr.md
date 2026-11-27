@@ -6,6 +6,12 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.13.0)
 
+### 27/11/2026 : documents : voix (lot 1.13.16)
+
+- **Demande** (Klaatou) : adapter manuels et autres documents à la voix ; dans le manuel, préciser que se connecter à quelqu'un pour lui parler expose son adresse IP (la page, elle, n'affiche aucun avertissement) ; dire clairement que la voix peut ne pas passer sur certains réseaux et qu'un serveur relais (TURN) pourra faire l'objet d'une évolution.
+- **Fait** (documents seulement, aucun code) : `MANUEL.md` et `MANUAL.md` : § 7.60 (fenêtre « Voix », portée 30 m, son spatial, touche X, mode orateur, adresse IP) et § 10.28 (`--no-voice`, `--ice`, messages `rtc` et `speaker`, TURN non géré, pas de commande console) et annexe des ajouts ; `PROCEDURES.md` et `PROCEDURES.md` EN : procédure 6.11 ; README FR et EN ; historiques FR et EN (lots 1.13.14 à 1.13.16).
+- **Non essayé** : la voix sur un vrai réseau avec STUN.
+
 ### 27/11/2026 : page : voix entre visiteurs, fenêtre « Voix », mode orateur (lot 1.13.15)
 
 - **Demande** (Klaatou) : suite du lot 1.13.14 : la page (micro, connexions, son spatial, champ de la clé, « Donner la parole »).

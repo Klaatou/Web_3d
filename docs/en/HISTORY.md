@@ -352,6 +352,9 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 24/11/2026 |  | after 1.13.0 | Batch 1.13.11: viewer editor: "displayed name" per language (`labels`) and "link title" (`linkTitle`) fields |
 | 24/11/2026 |  | after 1.13.0 | Batch 1.13.13: `glb2html.py`: old `NOM.zones.json` / `NOM.config.json` kept as `.bak`; the region's zones file given as source is never rewritten; variant of procedure § 18 rewritten |
 | 24/11/2026 |  | after 1.13.0 | Batch 1.13.12: viewer: the model of a `model` zone is read from the picked region folder (like pictures); `glb2html.py` procedure to place a model |
+| 27/11/2026 |  | after 1.13.0 | Batch 1.13.14: presence server: voice, part one (`rtc` message, speaker mode by the room key, `--no-voice`, `--ice`) |
+| 27/11/2026 |  | after 1.13.0 | Batch 1.13.15: page: "Voice" button and window, WebRTC links, spatial sound, X key, speaker mode, "Give the floor" |
+| 27/11/2026 |  | after 1.13.0 | Batch 1.13.16: documents: voice (manual § 7.60 and § 10.28, procedure 6.11, README; the IP is seen by linked visitors); documents only |
 ## Useful commands
 
 - See the history: `git log --oneline --decorate`

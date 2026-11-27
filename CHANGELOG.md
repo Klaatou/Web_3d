@@ -6,6 +6,12 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.13.0)
 
+### 27/11/2026: documents: voice (batch 1.13.16)
+
+- **Request** (Klaatou): adapt the manuals and other documents to voice; in the manual, state that connecting to someone to talk exposes one's IP address (the page itself shows no warning); state clearly that voice may not get through on some networks and that a relay server (TURN) may be a later evolution.
+- **Done** (documents only, no code): `MANUEL.md` and `MANUAL.md`: § 7.60 ("Voice" window, 30 m range, spatial sound, X key, speaker mode, IP address) and § 10.28 (`--no-voice`, `--ice`, `rtc` and `speaker` messages, TURN not handled, no console command) and additions annex; FR and EN `PROCEDURES.md`: procedure 6.11; FR and EN README; FR and EN histories (batches 1.13.14 to 1.13.16).
+- **Not tried**: voice on a real network with STUN.
+
 ### 27/11/2026: page: voice between visitors, "Voice" window, speaker mode (batch 1.13.15)
 
 - **Request** (Klaatou): follow-up of lot 1.13.14: the page side (microphone, connections, spatial sound, key field, "Give the floor").
