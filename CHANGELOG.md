@@ -6,6 +6,11 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.13.0)
 
+### 27/11/2026: documents: `visits-key ROOM` identical in both languages (batch 1.13.17)
+
+- **Finding**: `verif_trad.py` gave 1 error on the manual and 1 on the procedures since batch 1.13.16: the inline code `visits-key SALON` (FR) was not identical to `visits-key ROOM` (EN); the check had not been run before that batch was delivered.
+- **Done** (documents only): `MANUEL.md` (§ 7.60, § 10.28) and `PROCEDURES.md` (procedure 6.11) write `visits-key ROOM`, like § 10.3; `verif_trad`: 0 errors on the manual and the procedures.
+
 ### 27/11/2026: documents: voice (batch 1.13.16)
 
 - **Request** (Klaatou): adapt the manuals and other documents to voice; in the manual, state that connecting to someone to talk exposes one's IP address (the page itself shows no warning); state clearly that voice may not get through on some networks and that a relay server (TURN) may be a later evolution.

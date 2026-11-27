@@ -6,6 +6,11 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.13.0)
 
+### 27/11/2026 : documents : `visits-key ROOM` identique dans les deux langues (lot 1.13.17)
+
+- **Constat** : `verif_trad.py` donnait 1 erreur sur le manuel et 1 sur les procédures depuis le lot 1.13.16 : le code en ligne `visits-key SALON` (FR) n'était pas identique à `visits-key ROOM` (EN) ; le contrôle n'avait pas été lancé avant la livraison de ce lot.
+- **Fait** (documents seulement) : `MANUEL.md` (§ 7.60, § 10.28) et `PROCEDURES.md` (procédure 6.11) écrivent `visits-key ROOM`, comme le § 10.3 ; `verif_trad` : 0 erreur sur le manuel et les procédures.
+
 ### 27/11/2026 : documents : voix (lot 1.13.16)
 
 - **Demande** (Klaatou) : adapter manuels et autres documents à la voix ; dans le manuel, préciser que se connecter à quelqu'un pour lui parler expose son adresse IP (la page, elle, n'affiche aucun avertissement) ; dire clairement que la voix peut ne pas passer sur certains réseaux et qu'un serveur relais (TURN) pourra faire l'objet d'une évolution.
