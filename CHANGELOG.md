@@ -6,6 +6,16 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.13.0)
 
+### 28/11/2026: Voice window: Talk button kept dark with the open microphone, tooltips, choosing the speaker (batch 1.13.26)
+
+- **Request** (Klaatou): (1) with "Open microphone", the "Talk (X key)" button must stay dark like when X is held; (2) tooltips on the buttons, especially for speaker mode, with the way to choose the visitor who gets the speaker role.
+- **Cause of (1)** (`src/template.html`, `vDraw`): the guard that protects typing the room key skipped the redraw as soon as any `INPUT` had the focus; the checkbox ticked by the click is one, so neither the immediate redraw nor the one-second ones happened (with the X key the checkbox has no focus: it worked). Same defect for the "Mute the audience microphones" checkbox (the "Audience microphones are muted" state did not show right away).
+- **Done**: the guard now only covers text fields and the volume slider, not checkboxes; a tooltip (`title`) on every button, checkbox and field of the Voice window, in French and English; the one of "Give the floor" names the visitor; the text above the list says how to choose the speaker ("Give the floor" next to the visitor's name in the list, room key required).
+- **Tried here**: `tests/voix_page.py` (new section: button dark right away and durably, back to normal when unticked, mute checkbox, non-empty tooltips, tooltip naming the visitor); the test fails on the previous code.
+- **Not tried**: Windows, Edge, touch (no `title` tooltip on touch screens).
+- **Black dot on the tab**: not a defect, it is the browser's recording indicator while the microphone stream is open (`vStop` releases it); unchanged.
+- **Still to update**: manual § 7.60 (tooltips, choosing the speaker), histories.
+
 ### 28/11/2026: documents: moderation from the page, voice help (batch 1.13.25)
 
 - **Request** (Klaatou): write down the link to give a creator and the launch parameter of the presence server.

@@ -2401,7 +2401,7 @@ if (C.presenceUrl && C.walk && C.chat) {
     return { w, bd };
   };
   const el = (tag, txt, cls) => { const e = document.createElement(tag); if (txt) e.textContent = txt; if (cls) e.className = cls; return e; };
-  const btn = (txt, f) => { const b = el('button', txt); b.type = 'button'; b.onclick = f; return b; };
+  const btn = (txt, f, tip) => { const b = el('button', txt); b.type = 'button'; b.onclick = f; if (tip) b.title = tip; return b; };   // 1.13.26 : tip = bulle
   const doStart = async mic => {
     const r = await viewer.voiceStart(mic);
     if (!r.ok) toast(tr('page.vc.err.' + (r.why || 'off')));
@@ -2410,28 +2410,28 @@ if (C.presenceUrl && C.walk && C.chat) {
   vDraw = () => {
     if (!vw || vw.w.hidden) return;
     const i = viewer.voiceInfo(), bd = vw.bd; vInfoNow = i;
-    if (bd.contains(document.activeElement) && document.activeElement.tagName === 'INPUT') return;   // ne pas casser la saisie de la cle
+    const ae = document.activeElement; if (bd.contains(ae) && ae.tagName === 'INPUT' && ae.type !== 'checkbox') return;   // ne pas casser la saisie de la cle ni le curseur de volume ; une case cochee ne bloque pas le redessin (1.13.26 : le bouton Parler restait clair avec « Micro ouvert en continu »)
     bd.textContent = '';
     if (!i.ok && !i.on) { bd.append(el('div', tr('page.vc.off'))); return; }
     bd.append(el('div', i.on ? tr(i.mic ? 'page.vc.on.mic' : 'page.vc.on.listen') : tr('page.vc.off.idle')));
     const r1 = el('div', '', 'vcRow');
-    if (!i.on) { r1.append(btn(tr('page.vc.start'), () => doStart(true)), btn(tr('page.vc.listen'), () => doStart(false))); }
+    if (!i.on) { r1.append(btn(tr('page.vc.start'), () => doStart(true), tr('page.vc.start.tip')), btn(tr('page.vc.listen'), () => doStart(false), tr('page.vc.listen.tip'))); }
     else {
-      r1.append(btn(tr('page.vc.stop'), () => { viewer.voiceStop(); vDraw(); }));
+      r1.append(btn(tr('page.vc.stop'), () => { viewer.voiceStop(); vDraw(); }, tr('page.vc.stop.tip')));
       if (i.mic) {
-        const hold = btn(tr('page.vc.hold'), () => {}); hold.onpointerdown = () => { viewer.voiceTalk(true); vDraw(); }; hold.onpointerup = hold.onpointerleave = hold.onpointercancel = () => { if (!vOpenMic) { viewer.voiceTalk(false); vDraw(); } };
+        const hold = btn(tr('page.vc.hold'), () => {}, tr('page.vc.hold.tip')); hold.onpointerdown = () => { viewer.voiceTalk(true); vDraw(); }; hold.onpointerup = hold.onpointerleave = hold.onpointercancel = () => { if (!vOpenMic) { viewer.voiceTalk(false); vDraw(); } };
         if (i.talk) hold.className = 'hold'; if (i.muted) hold.disabled = true; r1.append(hold);
       }
     }
     bd.append(r1);
     const vOpen = el('input'); vOpen.type = 'checkbox'; vOpen.checked = vOpenMic;
     if (i.on && i.mic) {
-      const lb = el('label'); lb.append(vOpen, document.createTextNode(' ' + tr('page.vc.openmic')));
+      const lb = el('label'); lb.title = tr('page.vc.openmic.tip'); lb.append(vOpen, document.createTextNode(' ' + tr('page.vc.openmic')));
       vOpen.onchange = () => { vOpenMic = vOpen.checked; viewer.voiceTalk(vOpenMic); vDraw(); };
       bd.append(lb, el('div', tr(i.muted ? (i.dj ? 'page.vc.dj' : 'page.vc.muted') : i.speaking ? 'page.vc.talking' : 'page.vc.silent'), 'vcTip'));
     }
     if (i.on) {
-      const lv = el('label', tr('page.vc.vol') + ' '); const rg = el('input'); rg.type = 'range'; rg.min = 0; rg.max = 100; rg.value = Math.round((vVolNow) * 100);
+      const lv = el('label', tr('page.vc.vol') + ' '); lv.title = tr('page.vc.vol.tip'); const rg = el('input'); rg.type = 'range'; rg.min = 0; rg.max = 100; rg.value = Math.round((vVolNow) * 100);
       rg.oninput = () => { vVolNow = rg.value / 100; viewer.voiceVolume(vVolNow); }; lv.append(rg); bd.append(lv);
     }
     bd.append(el('h4', tr('page.vc.peers')));
@@ -2443,14 +2443,14 @@ if (C.presenceUrl && C.walk && C.chat) {
     bd.append(el('h4', tr('page.vc.sp.title')));
     const sp = i.speaker, spP = sp ? (viewer.getPresence().peers.find(p => p.id === sp)) : null;
     bd.append(el('div', sp ? tr('page.vc.sp.now', sp === i.me ? tr('page.vc.sp.me') : (spP ? spP.name : '?')) : tr('page.vc.sp.none')));
-    const kin = el('input'); kin.type = 'password'; kin.autocomplete = 'off'; kin.placeholder = tr('page.vc.sp.key'); kin.setAttribute('aria-label', tr('page.vc.sp.key')); kin.value = vkGet();
+    const kin = el('input'); kin.type = 'password'; kin.autocomplete = 'off'; kin.placeholder = tr('page.vc.sp.key'); kin.setAttribute('aria-label', tr('page.vc.sp.key')); kin.title = tr('page.vc.sp.key.tip'); kin.value = vkGet();
     kin.addEventListener('change', () => vkSet(kin.value.trim()));
     const r2 = el('div', '', 'vcRow');
-    r2.append(btn(tr('page.vc.sp.me.btn'), () => { vkSet(kin.value.trim()); if (!viewer.voiceSpeaker(kin.value.trim())) toast(tr('page.vc.err.off')); }), btn(tr('page.vc.sp.off'), () => { if (!viewer.voiceSpeakerOff(kin.value.trim())) toast(tr('page.vc.err.off')); }));
+    r2.append(btn(tr('page.vc.sp.me.btn'), () => { vkSet(kin.value.trim()); if (!viewer.voiceSpeaker(kin.value.trim())) toast(tr('page.vc.err.off')); }, tr('page.vc.sp.me.tip')), btn(tr('page.vc.sp.off'), () => { if (!viewer.voiceSpeakerOff(kin.value.trim())) toast(tr('page.vc.err.off')); }, tr('page.vc.sp.off.tip')));
     bd.append(kin, r2);
     if (sp && sp === i.me) {      // 1.13.19 : l'orateur coupe ou rend les micros du public (clé du salon)
       const mu = el('input'); mu.type = 'checkbox'; mu.checked = i.mute;
-      const ml = el('label'); ml.append(mu, document.createTextNode(' ' + tr('page.vc.mute.box')));
+      const ml = el('label'); ml.title = tr('page.vc.mute.box.tip'); ml.append(mu, document.createTextNode(' ' + tr('page.vc.mute.box')));
       mu.onchange = () => { vkSet(kin.value.trim()); if (!viewer.voiceMute(kin.value.trim(), mu.checked)) toast(tr('page.vc.err.off')); };
       bd.append(ml);
     }
@@ -2458,7 +2458,7 @@ if (C.presenceUrl && C.walk && C.chat) {
     const others = viewer.getPresence().peers.filter(p => p.visible !== false);
     if (others.length) {
       bd.append(el('div', tr('page.vc.sp.tip'), 'vcTip'));
-      for (const p of others) { const r = el('div', '', 'vcRow'); r.append(el('span', p.name), btn(tr('page.vc.sp.give'), () => { vkSet(kin.value.trim()); if (!viewer.voiceSpeaker(kin.value.trim(), p.id)) toast(tr('page.vc.err.off')); })); bd.append(r); }
+      for (const p of others) { const r = el('div', '', 'vcRow'); r.append(el('span', p.name), btn(tr('page.vc.sp.give'), () => { vkSet(kin.value.trim()); if (!viewer.voiceSpeaker(kin.value.trim(), p.id)) toast(tr('page.vc.err.off')); }, tr('page.vc.sp.give.tip', p.name))); bd.append(r); }
     }
   };
   let vVolNow = 1;

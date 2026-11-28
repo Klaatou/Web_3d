@@ -7,6 +7,16 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 ## Non publié (après la 1.13.0)
 
 
+### 28/11/2026 : fenêtre Voix : bouton Parler noirci en continu, bulles explicatives, désignation de l'orateur (lot 1.13.26)
+
+- **Demande** (Klaatou) : (1) avec « Micro ouvert en continu », le bouton « Parler (touche X) » doit rester noirci comme quand on tient X ; (2) des bulles explicatives sur les boutons, surtout pour le mode orateur, avec la façon de désigner le visiteur à qui on passe le rôle.
+- **Cause du (1)** (`src/template.html`, `vDraw`) : la garde qui protège la saisie de la clé du salon sautait le redessin dès qu'un `INPUT` avait le focus ; la case cochée par le clic en est un, donc ni le redessin immédiat ni ceux d'une seconde n'avaient lieu (avec la touche X, la case n'a pas le focus : ça marchait). Même défaut pour la case « Couper les micros du public » (l'état « Micros du public coupés » ne s'affichait pas tout de suite).
+- **Fait** : la garde ne vise plus que les champs de saisie et le curseur de volume, pas les cases ; une bulle (`title`) sur chaque bouton, case et champ de la fenêtre Voix, en français et en anglais ; celle de « Donner la parole » nomme le visiteur ; le texte au-dessus de la liste dit comment désigner l'orateur (« Donner la parole » en face du nom du visiteur, dans la liste, clé du salon requise).
+- **Essayé ici** : `tests/voix_page.py` (nouvelle section : bouton noirci tout de suite et durablement, redevient normal case décochée, case du muet, bulles non vides, bulle nommant le visiteur) ; le test échoue sur le code d'avant.
+- **Non essayé** : Windows, Edge, le toucher (pas de bulle `title` au toucher).
+- **Rond noir de l'onglet** : pas un défaut, c'est le témoin d'enregistrement du navigateur tant que le flux du micro est ouvert (`vStop` le libère) ; inchangé.
+- **Reste à mettre à jour** : manuel § 7.60 (bulles, désignation de l'orateur), historiques.
+
 ### 28/11/2026 : documents : modération depuis la page, aide voix (lot 1.13.25)
 
 - **Demande** (Klaatou) : noter le lien à donner à un créateur et le paramètre de lancement du serveur de présence.

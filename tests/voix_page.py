@@ -12,6 +12,8 @@ Verifie :
 8.  serveur --no-voice : aucun bouton Voix ;
 9.  1.13.19 muet du public : sans orateur rien ne change ; l'orateur coupe les micros (case) : micro et touche X bloques chez le public, aucun son du public joue,
     l'orateur s'entend toujours ; un arrivant est muet des l'accueil ; la parole donnee garde le muet ; rendre, fin de l'orateur : tout est libre.
+10. 1.13.26 fenetre Voix : « Micro ouvert en continu » noircit le bouton Parler tout de suite et durablement, la case du muet affiche son etat tout de suite,
+    chaque bouton, case et champ a sa bulle (« Donner la parole » nomme le visiteur).
 Non teste ici : Windows, Edge, vrai reseau et serveur STUN, tactile. Lancer : python tests/voix_page.py (apres python build.py)
 """
 import asyncio, hashlib, json, os, sys
@@ -189,6 +191,34 @@ async def main():
             await b.ev(V + "voiceSpeakerOff(%s)" % json.dumps(CLE)); await b.pg.wait_for_timeout(1000)
             etat = [(await o.ev(V + "voiceInfo().speaker"), await o.ev(V + "voiceInfo().mute"), await o.ev(V + "voiceInfo().muted")) for o in (a, b, t3, t4)]
             rapport(etat == [(0, False, False)] * 4, "fin de l'orateur : tout est libre", etat)
+            print("--- fenetre Voix : bouton Parler et bulles (1.13.26)")
+            WIN = "document.querySelector('.vcWin:not([hidden])')"
+            HOLD = WIN + ".querySelector('button.hold')"
+            CLIC = "(() => { const c = document.querySelectorAll('.vcWin input[type=checkbox]')[%d]; c.focus(); c.click(); })()"      # focus puis clic : la case garde le focus, comme sous la souris
+            await b.ev(V + "voiceTalk(false)")
+            await b.pg.click("#voiceBtn"); await b.pg.wait_for_timeout(700)
+            rapport(await b.ev("!!" + WIN), "la fenetre Voix s'ouvre")
+            rapport(not await b.ev("!!" + HOLD), "micro ferme : le bouton Parler n'est pas noirci")
+            await b.ev(CLIC % 0); await b.pg.wait_for_timeout(500)
+            rapport(await b.ev("!!" + HOLD), "micro ouvert en continu : le bouton Parler est noirci tout de suite")
+            await b.pg.wait_for_timeout(2500)
+            rapport(await b.ev("!!" + HOLD) and await b.ev(V + "voiceInfo().talk"), "... et le reste apres les redessins")
+            await b.ev(CLIC % 0); await b.pg.wait_for_timeout(500)
+            rapport(not await b.ev("!!" + HOLD) and not await b.ev(V + "voiceInfo().talk"), "case decochee : le bouton redevient normal, micro ferme")
+            await b.ev(V + "voiceSpeaker(%s)" % json.dumps(CLE)); await b.pg.wait_for_timeout(1500)
+            n = await b.ev(WIN + ".querySelectorAll('input[type=checkbox]').length")
+            rapport(n == 2, "orateur : la case « Couper les micros du public » apparait", n)
+            await b.ev("(() => { const k = document.querySelector('.vcWin input[type=password]'); k.value = %s; k.dispatchEvent(new Event('change')); })()" % json.dumps(CLE))      # la cle tapee dans le champ
+            await b.pg.wait_for_timeout(1300)
+            await b.ev(CLIC % 1); await b.pg.wait_for_timeout(1500)
+            rapport(await b.ev(V + "voiceInfo().mute") and await b.ev("[...%s.querySelectorAll('.vcTip')].some(e => /public coup|Audience microphones are muted/i.test(e.textContent))" % WIN),
+                    "case du muet cochee : l'etat s'affiche tout de suite dans la fenetre")
+            tips = await b.ev("[...%s.querySelectorAll('button, input[type=password], label')].filter(e => !e.closest('.mpHead')).map(e => [e.textContent.trim().slice(0, 30), e.title])" % WIN)
+            vides = [t for t in tips if not t[1]]
+            rapport(len(tips) >= 7 and not vides, "chaque bouton, case et champ de la fenetre Voix a sa bulle", vides or len(tips))
+            rapport(any("Ana" in t[1] for t in tips), "la bulle de « Donner la parole » nomme le visiteur designe", [t for t in tips if "Ana" in t[1]])
+            await b.ev(V + "voiceMute(%s, false)" % json.dumps(CLE)); await b.pg.wait_for_timeout(800)
+            await b.ev(V + "voiceSpeakerOff(%s)" % json.dumps(CLE)); await b.pg.wait_for_timeout(1000)
             rapport(not (a.errs + b.errs + t3.errs + t4.errs), "aucune erreur de page", (a.errs + b.errs + t3.errs + t4.errs)[:5])
 
             print("--- micro refuse")
