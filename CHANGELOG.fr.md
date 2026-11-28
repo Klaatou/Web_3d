@@ -6,6 +6,19 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.13.0)
 
+
+### 28/11/2026 : modération depuis la page : éjecter et bannir par les créateurs, bannissements par salon (lot 1.13.24)
+
+- **Demande** (Klaatou) : la modération (éjecter, bannir) n'existait que dans la console du serveur de présence, inaccessible aux créateurs des régions ; l'hôte ne peut pas toujours être joignable.
+- **Fait** : fenêtre « Modération » dans la page (bouton affiché avec `#mod` dans l'adresse ou une clé du salon mémorisée) : liste des visiteurs du salon, Éjecter, Bannir (minutes, motif), liste des bans du salon, Débannir, avec la clé du salon (celle du journal des visites). Serveur : message `mod` (`list`, `kick`, `ban`, `unban`), réponse `moderr`, option `--no-mod`, mêmes limites d'essais de clé que le journal des visites. Un ban posé depuis la page porte `room` et ne vaut que pour ce salon ; les bans de la console et les anciens fichiers restent valables pour tout le serveur ; la console `bans` écrit « [salon X] ».
+- **Essayé** : `tests/presence_mod.py` (24 contrôles), `tests/mod_page.py` (12), régressions `tests/presence_voice.py`, `tests/presence_live.py`, `tests/voix_page.py`, `tests/live_page.py`, `tests/v48.py`, `tests/v51.py`, `tests/ipv6.py`, `tests/oublier.py`, `tests/console.py`. **Non essayé** : Windows, Edge.
+- **Documents** : manuel § 7.67 et § 10.30, procédure 5, `CREATEURS.md`, historique.
+
+### 28/11/2026 : aide (H) : voix, touche X et bouton Voix (lot 1.13.23)
+
+- **Demande** (Klaatou) : la fenêtre d'aide de la visualisation ne disait rien de la voix.
+- **Fait** : en promenade, un groupe « Voix » apparaît dans l'aide (H) quand la voix est disponible : bouton Voix, touche X maintenue pour parler, micro coupé par l'orateur ou par un DJ en direct. Absent avec `--no-voice`. Clés `page.help.g.voice` et `page.help.voice.*` (fr, en). Test ajouté à `tests/voix_page.py`.
+
 ### 28/11/2026 : documents : micros coupés pendant un DJ en direct et commandes de console orateur / muet (lot 1.13.22)
 
 - **Demande** (Klaatou) : « vas y pour les docs » après le lot 1.13.21.

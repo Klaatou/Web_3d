@@ -1724,7 +1724,7 @@ function createViewer(container, cfg0, loader) {
   const VOICE_RANGE = 30, VOICE_DROP = 36, VOICE_MAX = 8, VOICE_SPEAKER_MAX = 20, VOICE_WAIT = 20000, VOICE_RETRY = 60000, VOICE_LOST = 6000;
   const V = { ok: false, ice: [], speaker: 0, mute: false, dj: false, on: false, mic: false, talk: false, vol: 1, stream: null, track: null, ctx: null, master: null, an: null, buf: null, level: 0, speaking: false,
     links: new Map(), hi: new Set(), hiSent: new Set(), fail: new Map(), t1: 0, t2: 0, sig: '', tmp: new THREE.Vector3() };
-  let onVoice = null, onVoiceErr = null;
+  let onVoice = null, onVoiceErr = null, onMod = null, onModErr = null;
   const vOK = () => V.ok && walking && !!P.ws && P.ws.readyState === 1 && !!P.id;
   // 1.13.19 : muet du public : l'orateur a coupe les micros ; seul l'orateur parle (son micro reste libre) ; la page de chacun ferme son micro et ne joue que la voix de l'orateur
   const vMuted = () => V.dj || (V.mute && V.speaker !== 0 && V.speaker !== P.id);   // 1.13.21 : V.dj = un DJ est en direct dans la zone radio ou je me trouve (le serveur le dit) : micro coupe, meme pour l'orateur
@@ -1938,6 +1938,11 @@ function createViewer(container, cfg0, loader) {
     else if (m.t === 'rtcerr') { if (m.why === 'off') { V.ok = false; vEmit(true); } else if (m.why === 'gone' && Number.isInteger(m.to)) vClose(m.to, false); }
     else if (m.t === 'live') { V.dj = m.on === true; vTrack(); V.t1 = 0; vEmit(true); }   // 1.13.21 : DJ en direct dans ma zone radio (voir liveSet)
     else if (m.t === 'speaker') { V.speaker = Number.isInteger(m.id) ? m.id : 0; V.mute = m.mute === true && V.speaker !== 0; vTrack(); for (const l of V.links.values()) vMix(l); V.t1 = 0; vEmit(true); }
+    else if (m.t === 'mod') {   // 1.13.24 : moderation depuis la page : etat du salon (visiteurs, bannissements)
+      if (onMod) onMod({ peers: (Array.isArray(m.peers) ? m.peers : []).slice(0, 200).filter(q => q && Number.isInteger(q.id)).map(q => ({ id: q.id, name: cleanName(q.name), spectator: q.spectator === true })),
+        bans: (Array.isArray(m.bans) ? m.bans : []).slice(0, 200).filter(b => b && Number.isFinite(b.at)).map(b => ({ at: b.at, name: String(b.name || '').slice(0, 40), until: Number.isFinite(b.until) ? b.until : 0, reason: String(b.reason || '').slice(0, 100) })) });
+    }
+    else if (m.t === 'moderr') { if (onModErr) onModErr({ why: String(m.why || '').slice(0, 12) }); }
     else if (m.t === 'speakererr') { if (onVoiceErr) onVoiceErr({ why: String(m.why || '').slice(0, 12) }); }
     else if (m.t === 'history') {   // v37 : page plus ancienne de l'historique du salon (réponse à requestHistory)
       if (onHistory && cfg.chat !== false) onHistory({ more: m.more === true, msgs: (Array.isArray(m.msgs) ? m.msgs : []).slice(0, 100).map(h => ({ id: h.id, name: cleanName(h.name) || '?', text: String(h.text || '').slice(0, 200), self: false, history: true, n: Number.isFinite(h.n) ? h.n : undefined, ts: Number.isFinite(h.t) ? h.t : undefined })) });
@@ -3426,6 +3431,17 @@ function createViewer(container, cfg0, loader) {
     voiceSpeakerOff(key) { if (!vOK()) return false; const m = { t: 'speaker', off: true }; if (key) m.key = String(key).slice(0, 40); P.ws.send(JSON.stringify(m)); return true; },
     voiceMute(key, on) { if (!vOK()) return false; P.ws.send(JSON.stringify({ t: 'speaker', key: String(key || '').slice(0, 40), mute: on !== false })); return true; },   // 1.13.19 : couper (true) ou rendre (false) les micros du public ; il faut un orateur
     set onVoice(f) { onVoice = f; }, set onVoiceErr(f) { onVoiceErr = f; },
+    // 1.13.24 : moderation depuis la page (cle du salon) : modRequest(cle, 'list' | 'kick' | 'ban' | 'unban', { to, minutes, reason, at }) ; onMod({peers, bans}) ; onModErr({why})
+    modRequest(key, act, o) {
+      if (!P.ws || P.ws.readyState !== 1 || !P.id) return false;
+      const m = { t: 'mod', key: String(key || '').slice(0, 40), act: String(act) }; o = o || {};
+      if (Number.isInteger(o.to)) m.to = o.to;
+      if (Number.isFinite(o.minutes)) m.minutes = o.minutes;
+      if (o.reason) m.reason = String(o.reason).slice(0, 80);
+      if (Number.isFinite(o.at)) m.at = o.at;
+      P.ws.send(JSON.stringify(m)); return true;
+    },
+    set onMod(f) { onMod = f; }, set onModErr(f) { onModErr = f; },
     // 1.12.30 : messages prives : sendDM(id, texte) ; onDM / onDMErr ; setIgnored(cles) remplace la liste des visiteurs ignores (chat, bulles et MP)
     sendDM(to, text) {
       const t = String(text || '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, 200);

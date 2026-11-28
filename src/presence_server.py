@@ -390,7 +390,7 @@ def log(kind, room, who, extra=""):
 
 class Peer:
     __slots__ = ("id", "ws", "name", "color", "p", "yaw", "last", "ip", "chat_times", "spectator", "uidh", "t0", "zone_t", "room", "color_t", "hist_t",
-                 "wall0", "walk_s", "walk0", "vname", "label", "name_t", "radio", "radio_t", "idle", "dm_times", "rtc_times", "live", "live_t", "dj")
+                 "wall0", "walk_s", "walk0", "vname", "label", "name_t", "radio", "radio_t", "idle", "dm_times", "rtc_times", "live", "live_t", "dj", "mod_t")
 
     def __init__(self, pid, ws, name, color, ip, spectator, uidh, room):
         self.id, self.ws, self.name, self.color, self.ip = pid, ws, name, color, ip
@@ -405,6 +405,7 @@ class Peer:
         self.label = ""      # pseudo d'affichage pour la carte d'un visiteur en vue globale (seulement avec --map-names-key)
         self.radio, self.radio_t = "", 0.0      # 1.10.34 : flux radio écouté (adresse autorisée), heure de la dernière demande
         self.live, self.live_t, self.dj = set(), 0.0, False      # 1.13.21 : flux « direct » de la zone radio ou il se trouve, heure de la derniere demande, micro coupe par un DJ en direct
+        self.mod_t = 0.0      # 1.13.24 : heure de la derniere demande de moderation (cadence propre)
         self.idle = False      # 1.10.37 : promeneur muet (aucune position depuis --idle-walk minutes) : ni compté ni montré, garde sa place
 
     def walk_mark(self, walking):
@@ -1229,7 +1230,8 @@ def bans_save():
     os.replace(tmp, OPTS.bans)
 
 
-def is_banned(uidh, ip):
+def is_banned(uidh, ip, room=None):
+    """1.13.24 : un bannissement porteur de "room" (pose depuis la page par un createur) ne vaut que pour ce salon ; sans salon connu (premiere verification, avant le hello), il est ignore"""
     now = time.time()
     gone = [e for e in BANS if e.get("until") and e["until"] <= now]
     if gone:
@@ -1238,6 +1240,8 @@ def is_banned(uidh, ip):
         bans_save()
     iph = {REG.hash("ip:" + ip), REG.hash("ip:" + ip_group(ip))}      # l'adresse exacte (anciens bannissements) ou son groupe (IPv6 : prefixe /64)
     for e in BANS:
+        if e.get("room") and e["room"] != room:
+            continue
         if (e.get("key") and e["key"] == uidh) or e.get("ip") in iph:
             return e
     return None
@@ -1260,6 +1264,86 @@ async def kick_peer(peer, reason, banned=False):
         await peer.ws.close(code=4002 if banned else 4001, reason=reason[:100])
     except Exception:
         pass
+
+
+def mod_bans(room):
+    """1.13.24 : bannissements encore valides poses depuis la page pour ce salon"""
+    now = time.time()
+    return [e for e in BANS if e.get("room") == room and (not e.get("until") or e["until"] > now)]
+
+
+def mod_state(room, me, skip=None):
+    """1.13.24 : reponse {t:'mod'} : les autres visiteurs du salon (id, pseudo, spectateur) et les bannissements du salon (at : identifiant, until : 0 = definitif)"""
+    peers = [{"id": p.id, "name": p.name or "", "spectator": bool(p.spectator)} for p in sorted(ROOMS.get(room, {}).values(), key=lambda q: q.id) if p is not me and p is not skip]
+    bans = [{"at": e.get("added", 0), "name": e.get("name", "?"), "until": e.get("until", 0), "reason": e.get("reason", "")} for e in mod_bans(room)]
+    return {"t": "mod", "ok": True, "peers": peers, "bans": bans}
+
+
+async def mod_request(peer, room, m):
+    """1.13.24 : moderation depuis la page, avec la cle du salon (celle du journal des visites et du mode orateur) :
+    {t:'mod', key, act:'list'} -> {t:'mod', ok, peers, bans} ; act 'kick' ou 'ban' avec to:id (ban : minutes, 0 = definitif, defaut 60 ; reason) ; act 'unban' avec at (identifiant d'une ligne de bans).
+    Reste dans le salon de l'appelant : jamais un autre salon ; un bannissement pose ici ne vaut que pour ce salon ; la cle n'est jamais journalisee.
+    Erreurs {t:'moderr', why} : off (--no-mod), key, rate, gone, self"""
+    ws = peer.ws
+
+    async def err(why):
+        await send_safe(ws, json.dumps({"t": "moderr", "why": why}))
+    if OPTS.no_mod:
+        await err("off")
+        return
+    now = time.monotonic()
+    if now - peer.mod_t < 0.3:
+        await err("rate")
+        return
+    peer.mod_t = now
+    key, act = m.get("key"), m.get("act")
+    if not isinstance(key, str) or act not in ("list", "kick", "ban", "unban"):
+        return
+    why = vkey_check(peer.ip, room, key)
+    if why:
+        log(_tr("py.presence.ev.mod"), room, peer.who(), _tr("py.presence.mod.rate") if why == "rate" else _tr("py.presence.mod.badkey"))
+        await err(why)
+        return
+    skip = None
+    if act == "unban":
+        at = m.get("at")
+        if isinstance(at, bool) or not isinstance(at, (int, float)):
+            return
+        e = next((x for x in mod_bans(room) if x.get("added") == at), None)
+        if e is None:
+            await err("gone")
+            return
+        BANS.remove(e)
+        bans_save()
+        log(_tr("py.presence.ev.ban"), room, peer.who(), _tr("py.presence.mod.unban", e.get("name", "?")))
+    elif act in ("kick", "ban"):
+        to = m.get("to")
+        if isinstance(to, bool) or not isinstance(to, int):
+            return
+        if to == peer.id:
+            await err("self")
+            return
+        dest = ROOMS.get(room, {}).get(to)
+        if dest is None:
+            await err("gone")
+            return
+        ban = act == "ban"
+        reason = clean_text(m.get("reason"), 80) or (_tr("py.presence.comportement_inapproprie") if ban else _tr("py.presence.ejecte_par_l_hote"))
+        if ban:
+            minutes = m.get("minutes", 60)
+            if isinstance(minutes, bool) or not isinstance(minutes, (int, float)) or not math.isfinite(minutes):
+                minutes = 60
+            until = 0 if minutes <= 0 else time.time() + min(minutes, 525600) * 60
+            BANS.append({"key": "" if dest.uidh.startswith("anon-") else dest.uidh, "ip": REG.hash("ip:" + ip_group(dest.ip)), "until": until, "room": room,
+                         "name": dest.name or _tr("py.presence.spectator_paren"), "reason": reason, "added": time.time()})
+            bans_save()
+            log(_tr("py.presence.ev.ban"), room, dest.who(), f"{fmt_until(until)} : {reason} " + _tr("py.presence.mod.by", peer.who()))
+            asyncio.create_task(kick_peer(dest, reason, banned=True))
+        else:
+            log(_tr("py.presence.ev.kick"), room, dest.who(), f"{reason} " + _tr("py.presence.mod.by", peer.who()))
+            asyncio.create_task(kick_peer(dest, reason))
+        skip = dest
+    await send_safe(ws, json.dumps(mod_state(room, peer, skip), ensure_ascii=False, separators=(",", ":")))
 
 
 def fmt_until(u):
@@ -1381,7 +1465,7 @@ async def run_command(line):
         if not live:
             print(_tr("py.presence.aucun_bannissement"))
         for i, e in enumerate(live, 1):
-            print(_tr("py.presence.0_1_20_jusqu_au_2", i, e.get('name', '?'), fmt_until(e.get('until', 0)), e.get('reason', '')))
+            print(_tr("py.presence.0_1_20_jusqu_au_2", i, e.get('name', '?'), fmt_until(e.get('until', 0)), e.get('reason', '')) + ((" " + _tr("py.presence.ban_room", e["room"])) if e.get("room") else ""))
     elif cmd in ("debannir", "unban"):
         now = time.time()
         live = [e for e in BANS if not e.get("until") or e["until"] > now]
@@ -1612,7 +1696,7 @@ async def handler(ws):
         uid = str(msg.get("uid") or "")[:128]
         uidh = REG.hash(uid) if len(uid) >= 16 else "anon-" + secrets.token_hex(8)
         spectator = bool(msg.get("spectator"))
-        eb = is_banned(uidh, ip)
+        eb = is_banned(uidh, ip, room)
         if eb:
             await ws.send(json.dumps({"t": "banned", "reason": eb.get("reason", ""), "until": eb.get("until", 0)}))
             log(_tr("py.presence.ev.refuse"), room, _tr("py.presence.cle_0_ip_1", uidh[:6], ip_for_log(ip)), _tr("py.presence.banned"))
@@ -1690,6 +1774,8 @@ async def handler(ws):
                     peer.color = c
                     if not peer.spectator:
                         await broadcast(room, {"t": "color", "id": pid, "color": c}, exclude=peer)
+            elif t == "mod":      # 1.13.24 : moderation depuis la page (cle du salon) ; permise aux spectateurs (un createur regarde souvent en vue globale)
+                await mod_request(peer, room, m)
             elif peer.spectator:
                 continue
             elif t == "pos":
@@ -1910,6 +1996,7 @@ async def main():
     ap.add_argument("--history", type=int, default=200, help=_tr("py.presence.derniers_messages_rejoues_aux_nouveaux_arriv"))
     ap.add_argument("--no-dm", action="store_true", help=_tr("py.presence.help.no_dm"))
     ap.add_argument("--no-voice", action="store_true", help=_tr("py.presence.help.no_voice"))
+    ap.add_argument("--no-mod", action="store_true", help=_tr("py.presence.help.no_mod"))      # 1.13.24
     ap.add_argument("--ice", action="append", metavar="stun:ADRESSE:PORT", help=_tr("py.presence.help.ice"))
     ap.add_argument("--identities", default="presence_identities.json", help=_tr("py.presence.registre_des_noms_reserves_vide_en"))
     ap.add_argument("--name-ttl-days", type=int, default=365, help=_tr("py.presence.un_nom_non_utilise_depuis_ce"))

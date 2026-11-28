@@ -60,7 +60,7 @@ Adresses IP, pseudos et messages sont des données personnelles : prévois d'inf
 
 ## 8. Ce que tu ne contrôles pas
 
-- La modération : l'hôte lit le journal et peut éjecter ou bannir un visiteur (`ejecter`, `bannir`).
+- La modération : l'hôte lit le journal et peut éjecter ou bannir un visiteur (`ejecter`, `bannir`). Depuis la 1.13.24, tu peux le faire toi-même depuis la page, avec la clé de ton salon : ouvre-la avec `#mod` à la fin de l'adresse, bouton « Modération » (manuel § 7.67). Ton bannissement ne vaut que pour ton salon.
 - La suspension de ton accès, tes limites, la durée de conservation.
 - La disponibilité du serveur : s'il s'arrête, ta page cesse ses essais de connexion après quelques tentatives et demande de la recharger (manuel § 7.58).
 

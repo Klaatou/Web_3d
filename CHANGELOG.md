@@ -6,6 +6,18 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.13.0)
 
+### 28/11/2026: moderation from the page: kick and ban by creators, per-room bans (batch 1.13.24)
+
+- **Request** (Klaatou): moderation (kick, ban) only existed in the presence server's console, out of reach of region creators; the host cannot always be available.
+- **Done**: "Moderation" window in the page (button shown with `#mod` in the address or a remembered room key): list of the room's visitors, Kick, Ban (minutes, reason), list of the room's bans, Unban, with the room key (the one for the visits log). Server: `mod` message (`list`, `kick`, `ban`, `unban`), `moderr` answer, `--no-mod` option, the same key-attempt limits as the visits log. A ban placed from the page carries `room` and only applies to that room; console bans and old files stay valid for the whole server; the `bans` console writes "[room X]".
+- **Tried**: `tests/presence_mod.py` (24 checks), `tests/mod_page.py` (12), regressions `tests/presence_voice.py`, `tests/presence_live.py`, `tests/voix_page.py`, `tests/live_page.py`, `tests/v48.py`, `tests/v51.py`, `tests/ipv6.py`, `tests/oublier.py`, `tests/console.py`. **Not tried**: Windows, Edge.
+- **Documents**: manual § 7.67 and § 10.30, procedure 5, `CREATORS.md`, history.
+
+### 28/11/2026: help (H): voice, X key and Voice button (batch 1.13.23)
+
+- **Request** (Klaatou): the viewer's help window said nothing about voice.
+- **Done**: in walking mode (walk), a "Voice" group appears in the help (H) when voice is available: Voice button, X key held to talk, microphone cut by the speaker or by a live DJ. Absent with `--no-voice`. Keys `page.help.g.voice` and `page.help.voice.*` (fr, en). Test added to `tests/voix_page.py`.
+
 ### 28/11/2026: documents: microphones muted during a live DJ and speaker / mute console commands (batch 1.13.22)
 
 - **Request** (Klaatou): "go for the docs" after batch 1.13.21.

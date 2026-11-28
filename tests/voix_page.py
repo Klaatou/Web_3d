@@ -57,6 +57,8 @@ async def main():
             rapport(await a.ev(V + "voiceOK") and await b.ev(V + "voiceOK"), "serveur avec voix : voiceOK des deux cotes")
             await a.pg.wait_for_timeout(1200)
             rapport(await a.ev("!document.getElementById('voiceBtn').hidden"), "bouton Voix visible en promenade")
+            GRP = "[...document.querySelectorAll('.grp .gt')].map(e => e.textContent).join('|')"
+            rapport(await a.ev("/Voix|Voice/.test(" + GRP + ")"), "1.13.23 : l'aide (H) a un groupe Voix quand la voix est disponible")
             await a.ev("document.getElementById('voiceBtn').click()")
             rapport(await a.ev("!!document.querySelector('.vcWin') && !document.querySelector('.vcWin').hidden"), "le bouton ouvre la fenetre Voix")
 
@@ -201,6 +203,7 @@ async def main():
             await d.attendre(V + "walking && " + V + "getPresence().state === 'online'", 40)
             await d.pg.wait_for_timeout(2500)
             rapport(not await d.ev(V + "voiceOK") and await d.ev("document.getElementById('voiceBtn').hidden"), "--no-voice : pas de bouton Voix")
+            rapport(not await d.ev("/Voix|Voice/.test(" + GRP + ")"), "1.13.23 : --no-voice : pas de groupe Voix dans l'aide")
         finally:
             await br.close()
     ps.terminate(); pn.terminate(); srv.terminate()

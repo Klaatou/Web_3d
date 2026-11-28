@@ -1541,6 +1541,16 @@ When the presence server has voice (default; `--no-voice` turns it off, § 10.28
 
 **Not tried**: Windows, Edge, real network with a STUN server, touch screen, more than three visitors. Tried: `tests/voix_page.py` (two to four Chromium with a simulated microphone on one machine).
 
+### 7.67 "Moderation" window: kick and ban from the page (1.13.24)
+
+Region creators no longer need the server host to kick or ban: the page does it with the **room key** (the one for the visits log, § 10.3; the same as for speaker mode).
+
+- **The "Moderation" button** appears in the bar when the page is connected to the presence server **and** the address carries `#mod` (for example `https://…/index.html#mod`) or a room key is already remembered by the browser (`web3d.vkey`, the same slot as speaker mode). Ordinary visitors do not see it.
+- **The window** (movable, collapsible) asks for the room key, which is sent again **on every action** (never logged on the server side). It lists the other visitors in the room, spectators included, each with **Kick** and **Ban**, above two fields: the ban length in minutes (60 by default, 0 = permanent) and an optional reason (80 characters). Further down, the list of this room's bans, with **Unban**. The list refreshes every 5 s while the key is good. A creator watching in the global view (spectator) can moderate.
+- **A creator's ban only applies to their room**: the banned visitor can enter the server's other rooms. The host's console bans (`bannir`) stay valid for the whole server. A creator only sees and lifts the bans placed from the page for their room; the host sees them all with `bans`, followed by "[room X]".
+- **Log**: "ban" and "kick" lines as in the console, followed by "(from the page, by …)"; "moderation" lines for a refused key. The same 5 refused keys per minute and per address as for the visits log.
+- **Tried**: `tests/presence_mod.py` (real server, protocol) and `tests/mod_page.py` (real page, Chromium). **Not tried**: Windows, Edge, touch.
+
 ## 8. Load a tiled region in the page (`glb2html.py --tiles`, v30)
 
 A region of several hundred MB or several GB does not fit in a browser: after `glb2tiles.py` (§ 4.1), the **shell** loads only the tiles close to the avatar and unloads the distant ones, and (v31) shows in the distance the **light overview** `NOM.overview.glb` when it exists. Without the `tiles` field in `NOM.config.json`, the page behaves exactly as before (a single `NOM.glb`).
@@ -1977,6 +1987,17 @@ The server can mute the microphones of the visitors within range of the radio zo
 - **How**: the page sends `{t:'live', urls:[…]}`: the streams of the radio zone the visitor is in, within range, whether they listen or not (empty list when leaving; one request per second at most, the page spaces its own by at least 1.5 s; spectators are ignored; only the file's streams count). The server reads the status **while a visitor is in the zone of a live stream**, never otherwise, and sends `{t:'live', on:true|false}` to every visitor whose state changes; someone arriving during the live receives it at once. Status unreadable once: the state is kept; twice in a row: the microphones are restored.
 - **Log**: "direct" lines: "DJ en direct : micros coupés dans la zone", "fin du direct : micros rendus", "statut d'Icecast illisible (CAUSE)" (in the server's language).
 - **Tried**: `tests/presence_live.py` (real presence server, fake Icecast, console) and `tests/live_page.py` (real page, Chromium with a simulated microphone). **Not tried**: a real Icecast (the shape of `status-json.xsl` comes from its documentation), Windows, Edge, AzuraCast.
+
+### 10.30 Moderation from the page: `mod` message, `--no-mod`, per-room bans (1.13.24)
+
+Creators kick and ban from the page (§ 7.67), without going through the host's console.
+
+- **Message**: `{t:'mod', key, act, …}` with the room key (the one for the visits log and speaker mode; § 10.3). `act` is `list` (answer `{t:'mod', ok, peers, bans}`: the other visitors in the room and the room's bans), `kick` or `ban` with `to` (the visitor's number; `ban` accepts `minutes`, 0 = permanent, 60 by default, and `reason`), `unban` with `at` (the identifier of a line of `bans`). After an action, the answer is the updated list. Errors `{t:'moderr', why}`: `off`, `key`, `rate`, `gone`, `self`.
+- **Limits**: the caller's room only, never another; spectators allowed; one request every 0.3 s at most; 5 refused keys per minute and per address (the same limit as the visits log and speaker mode); reason of 80 characters.
+- **`--no-mod`**: refuses these messages (`moderr` `off`); the host's console stays available.
+- **Per-room bans**: a ban placed from the page carries `room` in the `--bans` file and only applies to that room (visitor key and address). A ban without `room`, like all the old ones and those from the console, applies to the whole server: the existing file stays valid as it is. The `bans` console writes "[room X]" after the room bans; `debannir N` lifts those too.
+- **Log**: "ban" and "kick" lines followed by "(from the page, by …)", "moderation" lines (key refused, too many attempts); the key is never written.
+- **Tried**: `tests/presence_mod.py` and `tests/mod_page.py`. **Not tried**: Windows, Edge.
 
 ## 11. JSON file reference (v43)
 
@@ -2421,6 +2442,11 @@ The detail, version by version, is in `HISTORY.md` (narrative) and `CHANGELOG.md
 **Additions of 1.13.11 (batch 1.13.11)**
 
 - **viewer editor**: fields "Displayed name in French" and "Displayed name in English" (`labels`) and "Link title" (`linkTitle`) in the form of a zone (1.13.11, § 5)
+
+**Additions of 1.13.23 and 1.13.24 (batches 1.13.23 and 1.13.24)**
+
+- **help (H)**: "Voice" group (Voice button, X key, muted microphone) when voice is available (1.13.23, § 7.60)
+- **moderation from the page**: "Moderation" window (kick, ban, unban with the room key, button shown with `#mod` or a remembered key, § 7.67); server: `mod` message, `--no-mod`, per-room bans (`room`), § 10.30 (1.13.24)
 
 **Additions of 1.13.14 to 1.13.16 (batches 1.13.14 to 1.13.16)**
 

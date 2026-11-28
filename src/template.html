@@ -296,7 +296,7 @@ __I18N__
 <div id="presence" hidden><span data-i18n="page.presence.label">Pseudo : </span><input id="presenceName" maxlength="24" placeholder="Visiteur" data-i18n-ph="page.visitor"><div id="presenceStatus"></div></div>
 <a id="credit" href="https://github.com/Klaatou/Web_3d" target="_blank" rel="noopener" data-i18n-aria="common.credit.tip"><img src="__CREDIT_ICON__" alt="" width="32" height="32"><span id="creditTip" role="tooltip" data-i18n="common.credit.tip">Réalisé avec Web_3d : voir le projet sur GitHub</span></a>
 <div id="dock"><div id="hudL"><div id="walkHint" hidden><button type="button" id="helpHead" class="fold" aria-expanded="true">▾ Aide</button><div id="helpBody"></div></div><div id="stateInfo" hidden><button type="button" id="stateHead" class="fold" aria-expanded="true">▾ État</button><div id="stateBody"></div></div><div id="spawnInfo" hidden><button type="button" id="spawnHead" class="fold" aria-expanded="true">▾ Arrivées</button><div id="spawnBody"></div></div><div id="soundInfo" hidden><button type="button" id="soundHead" class="fold" aria-expanded="true">&#9662; Son</button><div id="soundBody"></div></div></div>
-<div id="bar"><button id="walkBtn" hidden></button><button id="flyBtn" hidden aria-pressed="false" data-i18n="page.btn.fly">Voler / Atterrir</button><button id="grabBtn" hidden data-i18n="page.btn.grab">Capturer la souris</button><button id="homeBtn" hidden data-i18n="page.btn.home">Retour à l'arrivée (R)</button><button id="centerBtn" type="button" hidden data-i18n="page.btn.center" data-i18n-title="page.btn.center.tip">Recentrer la vue</button><button id="helpBtn" hidden></button><button id="mapBtn" hidden data-i18n="page.btn.map">Carte (M)</button><button id="voiceBtn" type="button" hidden data-i18n="page.btn.voice">Voix</button><button id="padBtn" type="button" hidden></button></div></div>
+<div id="bar"><button id="walkBtn" hidden></button><button id="flyBtn" hidden aria-pressed="false" data-i18n="page.btn.fly">Voler / Atterrir</button><button id="grabBtn" hidden data-i18n="page.btn.grab">Capturer la souris</button><button id="homeBtn" hidden data-i18n="page.btn.home">Retour à l'arrivée (R)</button><button id="centerBtn" type="button" hidden data-i18n="page.btn.center" data-i18n-title="page.btn.center.tip">Recentrer la vue</button><button id="helpBtn" hidden></button><button id="mapBtn" hidden data-i18n="page.btn.map">Carte (M)</button><button id="voiceBtn" type="button" hidden data-i18n="page.btn.voice">Voix</button><button id="modBtn" type="button" hidden data-i18n="page.btn.mod">Modération</button><button id="padBtn" type="button" hidden></button></div></div>
 <script type="application/json" id="cfg">__CONFIG__</script>
 <script type="application/octet-stream" id="glb">__GLB_B64__</script>
 <script type="module">
@@ -1243,6 +1243,7 @@ if (C.walk) {
     grp(tr('page.help.g.view'), [tr('page.help.view'), tr('page.help.m'), tr('page.help.wheel'), tr('page.help.end'), tr('page.help.alt')]),
     grp(tr('page.help.g.mouse'), [tr('page.help.mouse'), tr('page.help.esc'), tr('page.help.grab')]),
     (C.chat && on) ? grp(tr('page.help.g.chat'), [tr('page.help.chat.enter'), tr('page.help.chat.esc'), tr('page.help.chat.arrows'), tr('page.help.chat.fold')]) : null,
+    (viewer.voiceOK || viewer.voiceOn) ? grp(tr('page.help.g.voice'), [tr('page.help.voice.btn'), tr('page.help.voice.x'), tr('page.help.voice.cut')]) : null,
     (hasZones || C.names) ? grp(tr('page.help.g.zones'), [hasZones ? tr('page.help.zone.click') : '', hasZones ? tr('page.help.zone.cone') : '', hasZones ? tr('page.help.zone.mute') : '', C.names ? tr('page.help.zone.name') : '']) : null,
     grp(tr('page.help.g.page'), [tr('page.help.quit'), tr('page.help.h'), tr('page.help.i'), spawnList().length ? tr('page.help.l') : '', tr('page.help.o'), ABOUT.found ? tr('page.help.about') : '', hasMap ? tr('page.help.map.ctrl') : '', tr('page.help.k')])
   ].filter(Boolean); };
@@ -2384,12 +2385,12 @@ if (C.presenceUrl && C.walk && C.chat) {
   let vw = null, vTalkKey = false, vOpenMic = false, vInfoNow = null, vDraw = () => {};
   const vkGet = () => { try { return localStorage.getItem('web3d.vkey') || ''; } catch (e) { return ''; } };
   const vkSet = v => { try { if (v) localStorage.setItem('web3d.vkey', v); else localStorage.removeItem('web3d.vkey'); } catch (e) {} };
-  const vMake = () => {
+  const vMake = (title = tr('page.vc.title'), closeTip = tr('page.vc.close')) => {
     const w = document.createElement('div'); w.className = 'mpWin vcWin'; w.hidden = true; w.setAttribute('role', 'dialog'); w.style.right = '16px'; w.style.top = '90px';
     const hd = document.createElement('div'); hd.className = 'mpHead';
-    const tt = document.createElement('span'); tt.className = 'mpTitle'; tt.textContent = tr('page.vc.title');
+    const tt = document.createElement('span'); tt.className = 'mpTitle'; tt.textContent = title;
     const hb = (txt, tip, f) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = txt; b.title = tip; b.setAttribute('aria-label', tip); b.onclick = f; return b; };
-    hd.append(tt, hb('–', tr('page.mp.min'), () => w.classList.toggle('min')), hb('✕', tr('page.vc.close'), () => { w.hidden = true; }));
+    hd.append(tt, hb('–', tr('page.mp.min'), () => w.classList.toggle('min')), hb('✕', closeTip, () => { w.hidden = true; }));
     const bd = document.createElement('div'); bd.className = 'vcBody mpBody'; bd.style.flexDirection = 'column';
     w.append(hd, bd); document.body.appendChild(w);
     let dx = 0, dy = 0, drag = false;
@@ -2469,6 +2470,53 @@ if (C.presenceUrl && C.walk && C.chat) {
   addEventListener('keydown', e => { if (e.code === 'KeyX' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && !typing(e) && viewer.voiceOn && viewer.voiceInfo().mic) { vTalkKey = true; if (viewer.voiceInfo().muted) toast(tr(viewer.voiceInfo().dj ? 'page.vc.dj' : 'page.vc.muted')); viewer.voiceTalk(true); vDraw(); } });
   addEventListener('keyup', e => { if (e.code === 'KeyX' && vTalkKey) { vTalkKey = false; if (!vOpenMic) viewer.voiceTalk(false); vDraw(); } });
   addEventListener('blur', () => { if (vTalkKey) { vTalkKey = false; if (!vOpenMic) viewer.voiceTalk(false); } });
+  // 1.13.24 : fenetre « Moderation » pour les createurs : eject / bannissement du salon avec la cle du salon (la meme que le journal des visites et le mode orateur) ;
+  // le bouton apparait quand l'adresse porte #mod ou qu'une cle est deja memorisee ; un bannissement pose ici ne vaut que pour ce salon
+  const mb = document.getElementById('modBtn');
+  let mww = null, mS = null, mOk = false, mPend = '', mKey = vkGet(), mMin = '60', mWhy = '';
+  const mWanted = () => /(^#|[&,;])mod($|[&,;=])/.test(location.hash) || !!vkGet();
+  const mFmt = u => u ? tr('page.mod.until', new Date(u * 1000).toLocaleString()) : tr('page.mod.forever');
+  const mAct = (act, o) => {
+    mKey = mKey.trim(); if (!mKey) { toast(tr('page.mod.err.key')); return; }
+    vkSet(mKey); mPend = act === 'list' ? '' : act;
+    if (!viewer.modRequest(mKey, act, o)) { mPend = ''; toast(tr('page.mod.err.off')); }
+  };
+  const mDraw = () => {
+    if (!mww || mww.w.hidden) return;
+    const bd = mww.bd; if (bd.contains(document.activeElement) && document.activeElement.tagName === 'INPUT') return;   // ne pas casser la saisie
+    bd.textContent = '';
+    const kin = el('input'); kin.type = 'password'; kin.autocomplete = 'off'; kin.placeholder = tr('page.mod.key'); kin.setAttribute('aria-label', tr('page.mod.key')); kin.value = mKey;
+    kin.addEventListener('input', () => { mKey = kin.value; });
+    const rk = el('div', '', 'vcRow'); rk.append(btn(tr('page.mod.refresh'), () => { mKey = kin.value; mAct('list'); }));
+    bd.append(el('div', tr('page.mod.hint'), 'vcTip'), kin, rk);
+    if (!mS) return;
+    const mi = el('input'); mi.type = 'text'; mi.inputMode = 'numeric'; mi.value = mMin; mi.setAttribute('aria-label', tr('page.mod.minutes')); mi.addEventListener('input', () => { mMin = mi.value; });
+    const wi = el('input'); wi.type = 'text'; wi.maxLength = 80; wi.value = mWhy; wi.placeholder = tr('page.mod.reason'); wi.setAttribute('aria-label', tr('page.mod.reason')); wi.addEventListener('input', () => { mWhy = wi.value; });
+    const lm = el('label', tr('page.mod.minutes') + ' '); lm.append(mi);
+    bd.append(lm, wi, el('h4', tr('page.mod.visitors')));
+    if (!mS.peers.length) bd.append(el('div', tr('page.mod.none'), 'vcTip'));
+    for (const q of mS.peers) {
+      const r = el('div', '', 'vcRow');
+      r.append(el('span', (q.name || (q.spectator ? tr('page.mod.spectator') : '?')) + (q.name && q.spectator ? ' ' + tr('page.mod.spectator') : '')),
+        btn(tr('page.mod.kick'), () => mAct('kick', { to: q.id, reason: mWhy.trim() })),
+        btn(tr('page.mod.ban'), () => { const n = parseFloat(String(mMin).replace(',', '.')); mAct('ban', { to: q.id, minutes: Number.isFinite(n) ? n : 60, reason: mWhy.trim() }); }));
+      bd.append(r);
+    }
+    bd.append(el('h4', tr('page.mod.bans')));
+    if (!mS.bans.length) bd.append(el('div', tr('page.mod.bans.none'), 'vcTip'));
+    for (const b of mS.bans) {
+      const r = el('div', '', 'vcRow'); r.append(el('span', b.name + ' — ' + mFmt(b.until) + (b.reason ? ' — ' + b.reason : '')), btn(tr('page.mod.unban'), () => mAct('unban', { at: b.at }))); bd.append(r);
+    }
+  };
+  viewer.onMod = s => {
+    mS = s; mOk = true;
+    if (mPend) { toast(tr('page.mod.done.' + mPend)); mPend = ''; }
+    mDraw();
+  };
+  viewer.onModErr = e => { mPend = ''; if (e.why === 'key') mOk = false; toast(tr('page.mod.err.' + (['key', 'rate', 'gone', 'self', 'off'].includes(e.why) ? e.why : 'off'))); };
+  mb.onclick = () => { if (!mww) mww = vMake(tr('page.mod.title'), tr('page.mod.close')); mww.w.hidden = !mww.w.hidden; if (!mww.w.hidden) { mDraw(); if (mKey.trim()) mAct('list'); } };
+  setInterval(() => { mb.hidden = !(mWanted() && viewer.getPresence().state === 'online'); if (mww && !mww.w.hidden && mOk && !mb.hidden) mAct('list'); }, 5000);
+  setTimeout(() => { mb.hidden = !(mWanted() && viewer.getPresence().state === 'online'); }, 1500);
 }
 if (C.presenceUrl && C.walk) {
   const box = document.getElementById('presence'), st = document.getElementById('presenceStatus'), inp = document.getElementById('presenceName');

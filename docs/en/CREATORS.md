@@ -60,7 +60,7 @@ IP addresses, nicknames and messages are personal data: plan to inform your visi
 
 ## 8. What you do not control
 
-- Moderation: the host reads the log and can kick or ban a visitor (`ejecter`, `bannir`).
+- Moderation: the host reads the log and can kick or ban a visitor (`ejecter`, `bannir`). Since 1.13.24, you can do it yourself from the page, with your room's key: open it with `#mod` at the end of the address, "Moderation" button (manual § 7.67). Your ban only applies to your room.
 - The suspension of your access, your limits, the retention period.
 - The availability of the server: if it stops, your page gives up connecting after a few attempts and asks to be reloaded (manual § 7.58).
 

@@ -361,6 +361,8 @@ The first versions were all made on 18/10/2026. This history was **reconstructed
 | 27/11/2026 |  | after 1.13.0 | Batch 1.13.20: documents: audience mute, explanation of batch 1.13.18; documents only |
 | 28/11/2026 |  | after 1.13.0 | Batch 1.13.21: voice: microphones muted during a live DJ within range of the radio zone (server: `--live`, `--live-every`, `live` message; page: microphone closed); console: `orateurs`, `orateur`, `muet` |
 | 28/11/2026 |  | after 1.13.0 | Batch 1.13.22: documents: microphones muted during a live DJ and the speaker and mute console commands (manual § 7.60, § 10.28 and § 10.29, procedures 5 and 11, README); documents only |
+| 28/11/2026 |  | after 1.13.0 | Batch 1.13.23: help (H): "Voice" group (Voice button, X key, muted microphone); test in `tests/voix_page.py` |
+| 28/11/2026 |  | after 1.13.0 | Batch 1.13.24: moderation from the page: "Moderation" window (kick, ban, unban with the room key), server: `mod` message, `--no-mod`, per-room bans; tests `tests/presence_mod.py` and `tests/mod_page.py`; manual § 7.67 and § 10.30, procedures 5, creators |
 ## Useful commands
 
 - See the history: `git log --oneline --decorate`

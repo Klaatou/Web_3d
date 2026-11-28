@@ -1541,6 +1541,16 @@ Quand le serveur de présence a la voix (par défaut ; `--no-voice` la coupe, §
 
 **Non essayé** : Windows, Edge, vrai réseau avec serveur STUN, écran tactile, plus de trois visiteurs. Essayé : `tests/voix_page.py` (deux à quatre Chromium avec micro simulé sur une même machine).
 
+### 7.67 Fenêtre « Modération » : éjecter et bannir depuis la page (1.13.24)
+
+Les créateurs de la région n'ont plus besoin de l'hôte du serveur pour éjecter ou bannir : la page le fait avec la **clé du salon** (celle du journal des visites, § 10.3 ; la même que pour le mode orateur).
+
+- **Le bouton « Modération »** apparaît dans la barre quand la page est connectée au serveur de présence **et** que l'adresse porte `#mod` (par exemple `https://…/index.html#mod`) ou qu'une clé du salon est déjà mémorisée par le navigateur (`web3d.vkey`, la même case que le mode orateur). Les visiteurs ordinaires ne le voient pas.
+- **La fenêtre** (déplaçable, repliable) demande la clé du salon, qui est renvoyée **à chaque action** (jamais journalisée côté serveur). Elle liste les autres visiteurs du salon, spectateurs compris, chacun avec **Éjecter** et **Bannir**, au-dessus de deux champs : la durée du ban en minutes (60 par défaut, 0 = définitif) et un motif facultatif (80 caractères). Plus bas, la liste des bannissements de ce salon, avec **Débannir**. La liste se rafraîchit toutes les 5 s quand la clé est bonne. Un créateur qui regarde en vue globale (spectateur) peut modérer.
+- **Le ban d'un créateur ne vaut que pour son salon** : le visiteur banni peut entrer dans les autres salons du serveur. Les bannissements de la console de l'hôte (`bannir`) restent valables pour tout le serveur. Un créateur ne voit et ne lève que les bannissements posés depuis la page pour son salon ; l'hôte les voit tous avec `bans`, suivis de « [salon X] ».
+- **Journal** : lignes « bannissement » et « éjection » comme à la console, suivies de « (depuis la page, par …) » ; lignes « modération » pour une clé refusée. Les mêmes 5 clés refusées par minute et par adresse que pour le journal des visites.
+- **Essayé** : `tests/presence_mod.py` (vrai serveur, protocole) et `tests/mod_page.py` (vraie page, Chromium). **Non essayé** : Windows, Edge, tactile.
+
 ## 8. Charger une région en tuiles dans la page (`glb2html.py --tiles`, v30)
 
 Une région de plusieurs centaines de Mo ou de plusieurs Go ne tient pas dans un navigateur : après `glb2tiles.py` (§ 4.1), la **coquille** charge seulement les tuiles proches de l'avatar et décharge les lointaines, et (v31) affiche au loin la **vue d'ensemble légère** `NOM.overview.glb` quand elle existe. Sans le champ `tiles` dans `NOM.config.json`, la page se comporte exactement comme avant (un seul `NOM.glb`).
@@ -1977,6 +1987,17 @@ Le serveur peut couper les micros des visiteurs qui sont à portée de la zone r
 - **Comment** : la page envoie `{t:'live', urls:[…]}` : les flux de la zone radio où se trouve le visiteur, à portée, qu'il l'écoute ou non (liste vide en sortant ; une demande par seconde au plus, la page espace les siennes d'au moins 1,5 s ; les spectateurs sont ignorés ; seuls les flux du fichier comptent). Le serveur lit le statut **tant qu'un visiteur est dans la zone d'un flux direct**, jamais sinon, et envoie `{t:'live', on:true|false}` à chaque visiteur dont l'état change ; un arrivant pendant le direct le reçoit tout de suite. Statut illisible une fois : l'état est gardé ; deux fois de suite : les micros sont rendus.
 - **Journal** : lignes « direct » : « DJ en direct : micros coupés dans la zone », « fin du direct : micros rendus », « statut d'Icecast illisible (CAUSE) ».
 - **Essayé** : `tests/presence_live.py` (vrai serveur de présence, faux Icecast, console) et `tests/live_page.py` (vraie page, Chromium avec micro simulé). **Non essayé** : un vrai Icecast (la forme de `status-json.xsl` vient de sa documentation), Windows, Edge, AzuraCast.
+
+### 10.30 Modération depuis la page : message `mod`, `--no-mod`, bannissements par salon (1.13.24)
+
+Les créateurs éjectent et bannissent depuis la page (§ 7.67), sans passer par la console de l'hôte.
+
+- **Message** : `{t:'mod', key, act, …}` avec la clé du salon (celle du journal des visites et du mode orateur ; § 10.3). `act` vaut `list` (réponse `{t:'mod', ok, peers, bans}` : les autres visiteurs du salon et les bannissements du salon), `kick` ou `ban` avec `to` (numéro du visiteur ; `ban` accepte `minutes`, 0 = définitif, 60 par défaut, et `reason`), `unban` avec `at` (identifiant d'une ligne de `bans`). Après une action, la réponse est la liste à jour. Erreurs `{t:'moderr', why}` : `off`, `key`, `rate`, `gone`, `self`.
+- **Limites** : le salon de l'appelant seulement, jamais un autre ; spectateurs permis ; une demande toutes les 0,3 s au plus ; 5 clés refusées par minute et par adresse (la même limite que le journal des visites et le mode orateur) ; motif de 80 caractères.
+- **`--no-mod`** : refuse ces messages (`moderr` `off`) ; la console de l'hôte reste disponible.
+- **Bannissements par salon** : un ban posé depuis la page porte `room` dans le fichier `--bans` et ne vaut que pour ce salon (clé de visiteur et adresse). Un ban sans `room`, comme tous les anciens et ceux de la console, vaut pour tout le serveur : le fichier existant reste valable tel quel. La console `bans` écrit « [salon X] » après les bans de salon ; `debannir N` lève aussi ceux-là.
+- **Journal** : lignes « bannissement » et « éjection » suivies de « (depuis la page, par …) », lignes « modération » (clé refusée, trop d'essais) ; la clé n'est jamais écrite.
+- **Essayé** : `tests/presence_mod.py` et `tests/mod_page.py`. **Non essayé** : Windows, Edge.
 
 ## 11. Référence des fichiers JSON (v43)
 
@@ -2421,6 +2442,11 @@ Le détail, version par version, est dans `HISTORIQUE.md` (récit) et `CHANGELOG
 **Ajouts de la 1.13.11 (lot 1.13.11)**
 
 - **éditeur du viewer** : champs « Nom affiché en français » et « Nom affiché en anglais » (`labels`) et « Titre du lien » (`linkTitle`) dans la fiche d'une zone (1.13.11, § 5)
+
+**Ajouts de la 1.13.23 et de la 1.13.24 (lots 1.13.23 et 1.13.24)**
+
+- **aide (H)** : groupe « Voix » (bouton Voix, touche X, micro coupé) quand la voix est disponible (1.13.23, § 7.60)
+- **modération depuis la page** : fenêtre « Modération » (éjecter, bannir, débannir avec la clé du salon, bouton affiché avec `#mod` ou une clé mémorisée, § 7.67) ; serveur : message `mod`, `--no-mod`, bannissements par salon (`room`), § 10.30 (1.13.24)
 
 **Ajouts de la 1.13.14 à la 1.13.16 (lots 1.13.14 à 1.13.16)**
 
