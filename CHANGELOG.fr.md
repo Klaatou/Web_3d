@@ -6,6 +6,12 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.13.0)
 
+### 28/11/2026 : documents : micros coupés pendant un DJ en direct et commandes de console orateur / muet (lot 1.13.22)
+
+- **Demande** (Klaatou) : « vas y pour les docs » après le lot 1.13.21.
+- **Fait** : manuel (§ 7.60 : micro coupé pendant un DJ en direct ; § 10.28 : commandes de console `orateurs`, `orateur`, `muet`, à la place de « pas de commande console » ; nouveau § 10.29 : `--live`, `--live-every`, message `live`, ce qu'il faut côté Icecast ; annexe), procédures 5 (commandes) et 11 (voix et DJ), README, historiques (lots 1.13.21 et 1.13.22), en français et en anglais ; aucun changement de code. `docs/REFERENCE_OPTIONS.md` est refait par `python build.py` (les options `--live` et `--live-every` y sont déjà depuis la 1.13.21).
+- **Non fait** : `PROCEDURES_SIMPLES.md`, `CREATEURS.md`, `REFERENCE_JSON.md` (le fichier `--live` n'est pas un fichier de configuration de région), `DEVELOPPEMENT.md`.
+
 ### 28/11/2026 : voix : muet pendant un DJ en direct (zone radio) et commandes de console orateur / muet (lot 1.13.21)
 
 - **Demande** (Klaatou) : lot 2 du muet : quand un DJ est en direct sur un flux Icecast, les micros de ceux qui sont à portée de sa zone radio se coupent (les autres gardent leur voix) ; les radios de base, en continu, ne coupent rien. Et la console du serveur de présence gère les orateurs et le muet des salons.

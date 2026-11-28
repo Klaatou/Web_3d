@@ -186,7 +186,7 @@ The "Keyboard" setting (Auto, AZERTY or QWERTY) only changes the letters shown i
 
 ## Presence server
 
-Positions, chat (history `--history-file`), private messages (`--no-dm` refuses them, manual § 10.27), voice between visitors over WebRTC (`--no-voice`, `--ice`, speaker mode by the room key, with mutable audience microphones; manual § 10.28 and § 7.60: talking exposes the IP address), moderation from its console (`liste`, `ejecter`, `bannir`, `bans`, `debannir`, `rooms`, `visits-key`, `creators`, `aide`; English aliases `list`, `kick`, `ban`, `unban`, `help`), visitor counters for the map, a visit log without IP addresses (`--visits`) that the creator reads with `#visits` and their key, hosting of other creators (`--creators`: declared pages, rooms reserved by a prefix, manual § 10.10). Making it public without showing its IP address: procedures § 11. Details: manual § 10.
+Positions, chat (history `--history-file`), private messages (`--no-dm` refuses them, manual § 10.27), voice between visitors over WebRTC (`--no-voice`, `--ice`, speaker mode by the room key, with mutable audience microphones, `--live` to mute them during a live DJ; manual § 10.28, § 10.29 and § 7.60: talking exposes the IP address), moderation from its console (`liste`, `ejecter`, `bannir`, `bans`, `debannir`, `rooms`, `visits-key`, `creators`, `orateurs`, `orateur`, `muet`, `aide`; English aliases `list`, `kick`, `ban`, `unban`, `help`), visitor counters for the map, a visit log without IP addresses (`--visits`) that the creator reads with `#visits` and their key, hosting of other creators (`--creators`: declared pages, rooms reserved by a prefix, manual § 10.10). Making it public without showing its IP address: procedures § 11. Details: manual § 10.
 
 ## Language
 

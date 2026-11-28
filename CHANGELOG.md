@@ -6,6 +6,12 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.13.0)
 
+### 28/11/2026: documents: microphones muted during a live DJ and speaker / mute console commands (batch 1.13.22)
+
+- **Request** (Klaatou): "go for the docs" after batch 1.13.21.
+- **Done**: manual (§ 7.60: microphone muted during a live DJ; § 10.28: console commands `orateurs`, `orateur`, `muet`, in place of "no console command"; new § 10.29: `--live`, `--live-every`, the `live` message, what Icecast needs; annex), procedures 5 (commands) and 11 (voice and DJ), README, histories (batches 1.13.21 and 1.13.22), in French and English; no code change. `docs/REFERENCE_OPTIONS.md` is rebuilt by `python build.py` (the `--live` and `--live-every` options have been in it since 1.13.21).
+- **Not done**: `SIMPLE_PROCEDURES.md`, `CREATORS.md`, `REFERENCE_JSON.md` (the `--live` file is not a region configuration file), `DEVELOPMENT.md`.
+
 ### 28/11/2026: voice: mute during a live DJ (radio zone) and speaker / mute console commands (batch 1.13.21)
 
 - **Request** (Klaatou): batch 2 of the mute: while a DJ is live on an Icecast stream, the microphones of those within range of its radio zone are muted (the others keep their voice); base radios, which run continuously, mute nothing. And the presence server console manages the rooms' speakers and mute.

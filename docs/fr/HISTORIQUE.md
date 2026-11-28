@@ -359,6 +359,8 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 27/11/2026 |  | après 1.13.0 | Lot 1.13.18 : voix : dans chaque paire de visiteurs, le dernier arrivé est maintenant entendu du premier (sa voix n'était pas envoyée) |
 | 27/11/2026 |  | après 1.13.0 | Lot 1.13.19 : voix : muet du public en mode orateur (serveur : `mute` ; page : case, micro fermé, voix de l'orateur seule) |
 | 27/11/2026 |  | après 1.13.0 | Lot 1.13.20 : documents : muet du public, explication du lot 1.13.18 ; documents seulement |
+| 28/11/2026 |  | après 1.13.0 | Lot 1.13.21 : voix : micros coupés pendant un DJ en direct à portée de la zone radio (serveur : `--live`, `--live-every`, message `live` ; page : micro fermé) ; console : `orateurs`, `orateur`, `muet` |
+| 28/11/2026 |  | après 1.13.0 | Lot 1.13.22 : documents : micros coupés pendant un DJ en direct et commandes de console orateur et muet (manuel § 7.60, § 10.28 et § 10.29, procédures 5 et 11, README) ; documents seulement |
 ## Commandes utiles
 
 - Voir l'historique : `git log --oneline --decorate`
