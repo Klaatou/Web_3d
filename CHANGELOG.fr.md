@@ -7,6 +7,12 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 ## Non publié (après la 1.13.0)
 
 
+### 28/11/2026 : documents : modération depuis la page, aide voix (lot 1.13.25)
+
+- **Demande** (Klaatou) : noter le lien à donner à un créateur et le paramètre de lancement du serveur de présence.
+- **Fait** : manuel § 10.30 (mise en route : aucune option à ajouter, `visits-key SALON`, adresse suivie de `#mod` ou `&mod`), `REFERENCE_JSON.md` (champ `room` de `presence_bans.json`), exemple `presence_bans.sample.json`, README, `PROCEDURES_SIMPLES.md`.
+- **Non fait** : `DEVELOPPEMENT.md` (rien à y changer).
+
 ### 28/11/2026 : modération depuis la page : éjecter et bannir par les créateurs, bannissements par salon (lot 1.13.24)
 
 - **Demande** (Klaatou) : la modération (éjecter, bannir) n'existait que dans la console du serveur de présence, inaccessible aux créateurs des régions ; l'hôte ne peut pas toujours être joignable.

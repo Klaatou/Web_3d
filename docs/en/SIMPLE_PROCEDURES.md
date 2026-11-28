@@ -122,7 +122,7 @@ Open the moderation console from the PC; to leave it without stopping the server
 ssh -t UTILISATEUR@ADRESSE_VM "tmux attach -t presence"
 ```
 
-In the console: `version` gives the version and fingerprint of the server; `liste`, `ejecter`, `bannir`, `creators`, `aide`. Update the server **only** if the fingerprint shown by `version` differs from the one `python build.py` lists for `presence_server.py`: send the file, then, on the VM as root, `systemctl restart web3d-presence`.
+In the console: `version` gives the version and fingerprint of the server; `liste`, `ejecter`, `bannir`, `creators`, `aide`. Creators moderate themselves from their page: type `visits-key SALON` (the key is shown only once), give them the key and their page address followed by `#mod` (or `&mod` if the address already has a `#`); no option to add to the server's launch line. Update the server **only** if the fingerprint shown by `version` differs from the one `python build.py` lists for `presence_server.py`: send the file, then, on the VM as root, `systemctl restart web3d-presence`.
 
 ```powershell
 scp "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist\presence_server.py" UTILISATEUR@ADRESSE_VM:/home/UTILISATEUR/presence/

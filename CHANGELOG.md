@@ -6,6 +6,12 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.13.0)
 
+### 28/11/2026: documents: moderation from the page, voice help (batch 1.13.25)
+
+- **Request** (Klaatou): write down the link to give a creator and the launch parameter of the presence server.
+- **Done**: manual § 10.30 (setup: no option to add, `visits-key SALON`, address followed by `#mod` or `&mod`), `REFERENCE_JSON.md` (`room` field of `presence_bans.json`), example `presence_bans.sample.json`, README, `SIMPLE_PROCEDURES.md`.
+- **Not done**: `DEVELOPPEMENT.md` (nothing to change there).
+
 ### 28/11/2026: moderation from the page: kick and ban by creators, per-room bans (batch 1.13.24)
 
 - **Request** (Klaatou): moderation (kick, ban) only existed in the presence server's console, out of reach of region creators; the host cannot always be available.

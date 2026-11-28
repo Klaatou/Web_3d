@@ -1992,6 +1992,7 @@ The server can mute the microphones of the visitors within range of the radio zo
 
 Creators kick and ban from the page (§ 7.67), without going through the host's console.
 
+- **Setup**: no option to add to the server's launch line (moderation is on, `--no-mod` turns it off). In the console, `visits-key SALON` gives the room key (shown only once, it replaces the old one). The creator opens their page with `#mod` at the end of the address (`&mod` if the address already has a `#`), clicks "Moderation" and pastes the key, which their browser remembers.
 - **Message**: `{t:'mod', key, act, …}` with the room key (the one for the visits log and speaker mode; § 10.3). `act` is `list` (answer `{t:'mod', ok, peers, bans}`: the other visitors in the room and the room's bans), `kick` or `ban` with `to` (the visitor's number; `ban` accepts `minutes`, 0 = permanent, 60 by default, and `reason`), `unban` with `at` (the identifier of a line of `bans`). After an action, the answer is the updated list. Errors `{t:'moderr', why}`: `off`, `key`, `rate`, `gone`, `self`.
 - **Limits**: the caller's room only, never another; spectators allowed; one request every 0.3 s at most; 5 refused keys per minute and per address (the same limit as the visits log and speaker mode); reason of 80 characters.
 - **`--no-mod`**: refuses these messages (`moderr` `off`); the host's console stays available.

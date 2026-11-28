@@ -1992,6 +1992,7 @@ Le serveur peut couper les micros des visiteurs qui sont à portée de la zone r
 
 Les créateurs éjectent et bannissent depuis la page (§ 7.67), sans passer par la console de l'hôte.
 
+- **Mise en route** : aucune option à ajouter au lancement du serveur (la modération est active, `--no-mod` la coupe). Dans la console, `visits-key SALON` donne la clé du salon (affichée une seule fois, elle remplace l'ancienne). Le créateur ouvre sa page avec `#mod` à la fin de l'adresse (`&mod` si l'adresse a déjà un `#`), clique sur « Modération » et colle la clé, que son navigateur mémorise.
 - **Message** : `{t:'mod', key, act, …}` avec la clé du salon (celle du journal des visites et du mode orateur ; § 10.3). `act` vaut `list` (réponse `{t:'mod', ok, peers, bans}` : les autres visiteurs du salon et les bannissements du salon), `kick` ou `ban` avec `to` (numéro du visiteur ; `ban` accepte `minutes`, 0 = définitif, 60 par défaut, et `reason`), `unban` avec `at` (identifiant d'une ligne de `bans`). Après une action, la réponse est la liste à jour. Erreurs `{t:'moderr', why}` : `off`, `key`, `rate`, `gone`, `self`.
 - **Limites** : le salon de l'appelant seulement, jamais un autre ; spectateurs permis ; une demande toutes les 0,3 s au plus ; 5 clés refusées par minute et par adresse (la même limite que le journal des visites et le mode orateur) ; motif de 80 caractères.
 - **`--no-mod`** : refuse ces messages (`moderr` `off`) ; la console de l'hôte reste disponible.

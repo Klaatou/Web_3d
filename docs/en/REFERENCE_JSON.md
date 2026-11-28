@@ -612,6 +612,7 @@ The server writes them itself; edit them by hand only with the server stopped. "
 | `name`   | text   | nickname at the time of the ban                                                                                  |
 | `reason` | text   | reason given                                                                                                     |
 | `added`  | number | date of the ban in seconds since 1970                                                                            |
+| `room`   | text   | optional (1.13.24): the room the ban applies to; set by a creator from the page. Absent: the ban applies to the whole server (console, old files) |
 
 **Chat history** (`--history-file` option): this is not a single-block JSON file, but **one message per line**, each line being a small JSON. Never an IP address.
 

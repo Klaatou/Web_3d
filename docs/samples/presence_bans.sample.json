@@ -14,5 +14,14 @@
   "name": "Visitor#ABCD",
   "reason": "insults",
   "added": 1792838400.0
+ },
+ {
+  "key": "",
+  "ip": "5d41e3b1f1c8a1e2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f7081929",
+  "until": 4102444800,
+  "room": "alice.galerie",
+  "name": "Visitor#WXYZ",
+  "reason": "noise",
+  "added": 1792839000.0
  }
 ]

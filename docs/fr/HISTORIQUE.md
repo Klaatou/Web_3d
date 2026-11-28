@@ -363,6 +363,7 @@ Les premières versions ont toutes été faites le 18/10/2026. Cet historique a 
 | 28/11/2026 |  | après 1.13.0 | Lot 1.13.22 : documents : micros coupés pendant un DJ en direct et commandes de console orateur et muet (manuel § 7.60, § 10.28 et § 10.29, procédures 5 et 11, README) ; documents seulement |
 | 28/11/2026 |  | après 1.13.0 | Lot 1.13.23 : aide (H) : groupe « Voix » (bouton Voix, touche X, micro coupé) ; test dans `tests/voix_page.py` |
 | 28/11/2026 |  | après 1.13.0 | Lot 1.13.24 : modération depuis la page : fenêtre « Modération » (éjecter, bannir, débannir avec la clé du salon), serveur : message `mod`, `--no-mod`, bannissements par salon ; tests `tests/presence_mod.py` et `tests/mod_page.py` ; manuel § 7.67 et § 10.30, procédures 5, créateurs |
+| 28/11/2026 |  | après 1.13.0 | Lot 1.13.25 : documents : mise en route de la modération par la page (manuel § 10.30), champ `room` de `presence_bans.json` (référence et exemple), README, procédures simples ; documents seulement |
 ## Commandes utiles
 
 - Voir l'historique : `git log --oneline --decorate`

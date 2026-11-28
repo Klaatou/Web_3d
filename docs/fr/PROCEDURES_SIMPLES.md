@@ -122,7 +122,7 @@ Ouvrir la console de modération depuis le PC ; pour en sortir sans arrêter le 
 ssh -t UTILISATEUR@ADRESSE_VM "tmux attach -t presence"
 ```
 
-Dans la console : `version` donne la version et l'empreinte du serveur ; `liste`, `ejecter`, `bannir`, `creators`, `aide`. Mettre le serveur à jour **seulement** si l'empreinte affichée par `version` diffère de celle que `python build.py` liste pour `presence_server.py` : envoyer le fichier, puis, sur la VM en root, `systemctl restart web3d-presence`.
+Dans la console : `version` donne la version et l'empreinte du serveur ; `liste`, `ejecter`, `bannir`, `creators`, `aide`. Les créateurs modèrent eux-mêmes depuis leur page : tape `visits-key SALON` (la clé s'affiche une seule fois), donne-leur la clé et l'adresse de leur page suivie de `#mod` (ou `&mod` si l'adresse a déjà un `#`) ; aucune option à ajouter au lancement du serveur. Mettre le serveur à jour **seulement** si l'empreinte affichée par `version` diffère de celle que `python build.py` liste pour `presence_server.py` : envoyer le fichier, puis, sur la VM en root, `systemctl restart web3d-presence`.
 
 ```powershell
 scp "P:\_OpenSim\SL&OS\Web_3d\web_3d\dist\presence_server.py" UTILISATEUR@ADRESSE_VM:/home/UTILISATEUR/presence/

@@ -612,6 +612,7 @@ Le serveur les écrit lui-même ; on ne les modifie à la main que serveur arrê
 | `name`   | texte  | pseudo au moment du bannissement                                                                                                        |
 | `reason` | texte  | raison donnée                                                                                                                           |
 | `added`  | nombre | date du bannissement en secondes depuis 1970                                                                                            |
+| `room`   | texte  | facultatif (1.13.24) : salon pour lequel le bannissement vaut ; posé par un créateur depuis la page. Absent : le bannissement vaut pour tout le serveur (console, anciens fichiers) |
 
 **Historique du chat** (option `--history-file`) : ce n'est pas un fichier JSON d'un seul bloc, mais **un message par ligne**, chaque ligne étant un petit JSON. Jamais d'adresse IP.
 
