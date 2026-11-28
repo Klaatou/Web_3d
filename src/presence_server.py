@@ -390,7 +390,7 @@ def log(kind, room, who, extra=""):
 
 class Peer:
     __slots__ = ("id", "ws", "name", "color", "p", "yaw", "last", "ip", "chat_times", "spectator", "uidh", "t0", "zone_t", "room", "color_t", "hist_t",
-                 "wall0", "walk_s", "walk0", "vname", "label", "name_t", "radio", "radio_t", "idle", "dm_times", "rtc_times")
+                 "wall0", "walk_s", "walk0", "vname", "label", "name_t", "radio", "radio_t", "idle", "dm_times", "rtc_times", "live", "live_t", "dj")
 
     def __init__(self, pid, ws, name, color, ip, spectator, uidh, room):
         self.id, self.ws, self.name, self.color, self.ip = pid, ws, name, color, ip
@@ -404,6 +404,7 @@ class Peer:
         self.walk0 = None if spectator else self.t0
         self.label = ""      # pseudo d'affichage pour la carte d'un visiteur en vue globale (seulement avec --map-names-key)
         self.radio, self.radio_t = "", 0.0      # 1.10.34 : flux radio écouté (adresse autorisée), heure de la dernière demande
+        self.live, self.live_t, self.dj = set(), 0.0, False      # 1.13.21 : flux « direct » de la zone radio ou il se trouve, heure de la derniere demande, micro coupe par un DJ en direct
         self.idle = False      # 1.10.37 : promeneur muet (aucune position depuis --idle-walk minutes) : ni compté ni montré, garde sa place
 
     def walk_mark(self, walking):
@@ -633,6 +634,139 @@ async def radio_ask(peer, url):
         st["task"] = asyncio.create_task(radio_poll(url))
     else:
         await send_safe(peer.ws, json.dumps({"t": "radio", "url": url, "title": st["title"]}, ensure_ascii=False, separators=(",", ":")))
+
+# 1.13.21 : DJ en direct. --live FICHIER = liste JSON des flux « direct » (adresse du flux telle qu'elle est ecrite dans la zone radio ; un objet
+# {"url": ..., "status": ...} donne une adresse de statut autre que ORIGINE/status-json.xsl). La page envoie {t: "live", urls: [...]} : les flux de la zone
+# radio ou se trouve le visiteur, a portee, qu'il ecoute ou non (liste vide en sortant). Tant qu'un visiteur est dans une zone dont un flux est « direct »,
+# le serveur lit status-json.xsl d'Icecast toutes les --live-every secondes : le flux est en direct quand un point de montage de meme chemin a une source
+# connectee (le montage direct, replie sur le montage de base, n'apparait que lorsqu'un DJ est branche). Les visiteurs de la zone recoivent
+# {t: "live", on: true|false} : leur page ferme le micro. Les radios de base ne sont jamais dans ce fichier : elles ne coupent rien.
+LIVE_OK = {}             # adresse du flux direct -> adresse du statut (fichier --live)
+LIVE_STAT = {"mtime": None, "checked": 0.0}
+LIVE = {}                # adresse -> {"on": bool, "peers": {Peer}, "task": Task|None, "fails": int, "why": str}
+LIVE_MAX_BYTES = 1 << 20     # statut lu : 1 Mo au plus
+
+
+def live_reload(force=False):
+    """relit le fichier --live s'il a change (au plus une fois toutes les 2 s) ; fichier absent ou illisible : plus aucun flux direct"""
+    global LIVE_OK
+    if not OPTS.live:
+        return
+    now = time.monotonic()
+    if not force and now - LIVE_STAT["checked"] < 2:
+        return
+    LIVE_STAT["checked"] = now
+    try:
+        mt = os.path.getmtime(OPTS.live)
+    except OSError:
+        if LIVE_STAT["mtime"] != "missing" or force:
+            print(_tr("py.presence.live.missing", OPTS.live))
+        LIVE_STAT["mtime"], LIVE_OK = "missing", {}
+        return
+    if mt == LIVE_STAT["mtime"] and not force:
+        return
+    LIVE_STAT["mtime"] = mt
+    try:
+        import urllib.parse
+        with open(OPTS.live, encoding="utf-8") as f:
+            lst = json.load(f)
+        if not isinstance(lst, list):
+            raise ValueError("liste attendue")
+        ok = {}
+        for it in lst:
+            u, st = (it, "") if isinstance(it, str) else ((it.get("url"), it.get("status")) if isinstance(it, dict) else (None, None))
+            if not isinstance(u, str) or not re.match(r"^https?://", u.strip(), re.I):
+                continue
+            u = u.strip()
+            if not isinstance(st, str) or not re.match(r"^https?://", st.strip(), re.I):
+                sp = urllib.parse.urlsplit(u)
+                st = sp.scheme + "://" + sp.netloc + "/status-json.xsl"
+            ok[u] = st.strip()
+        LIVE_OK = ok
+    except (OSError, ValueError) as e:
+        print(_tr("py.presence.live.bad", OPTS.live, e))
+
+
+def live_status_sync(url, status):
+    """(True si un point de montage du chemin de url a une source connectee, False sinon, None si le statut est illisible ; raison) ; jamais d'exception"""
+    import urllib.request, urllib.parse
+    try:
+        req = urllib.request.Request(status, headers={"User-Agent": "Web_3d-presence/" + version_tag().split(" ")[0], "Accept": "application/json"})
+        with urllib.request.urlopen(req, timeout=5) as r:
+            data = json.loads(r.read(LIVE_MAX_BYTES).decode("utf-8", "replace"))
+    except Exception as e:
+        return None, f"{type(e).__name__}: {e}"
+    src = (data.get("icestats") or {}).get("source") if isinstance(data, dict) and isinstance(data.get("icestats"), dict) else None
+    if isinstance(src, dict):
+        src = [src]
+    if not isinstance(src, list):
+        src = []
+    mount = urllib.parse.urlsplit(url).path
+    for s in src:
+        if isinstance(s, dict) and isinstance(s.get("listenurl"), str) and urllib.parse.urlsplit(s["listenurl"]).path == mount:
+            return True, ""
+    return False, ""
+
+
+async def live_push(peers):
+    """prévient chaque visiteur de la liste de l'état voulu pour lui (en direct dans une de ses zones) quand il change"""
+    for p in peers:
+        dj = any(LIVE.get(u, {}).get("on") for u in p.live)
+        if dj != p.dj:
+            p.dj = dj
+            await send_safe(p.ws, json.dumps({"t": "live", "on": dj}, separators=(",", ":")))
+
+
+async def live_poll(url):
+    """relève le statut tant qu'un visiteur est dans une zone de ce flux ; prévient les visiteurs quand le DJ arrive ou part"""
+    st = LIVE[url]
+    try:
+        while st["peers"] and url in LIVE_OK:
+            on, why = await asyncio.to_thread(live_status_sync, url, LIVE_OK[url])
+            if on is None:
+                st["fails"] += 1
+                if why != st["why"]:
+                    log(_tr("py.presence.live"), "-", clean_text(url, 120), _tr("py.presence.live.err", why))
+                st["why"] = why
+                on = st["on"] and st["fails"] < 2      # un statut illisible une fois : l'etat est garde ; deux fois de suite : micros rendus
+            else:
+                st["fails"], st["why"] = 0, ""
+            if on != st["on"]:
+                st["on"] = on
+                log(_tr("py.presence.live"), "-", clean_text(url, 120), _tr("py.presence.live.on") if on else _tr("py.presence.live.off"))
+                await live_push(list(st["peers"]))
+            await asyncio.sleep(OPTS.live_every)
+        if st["on"] and url not in LIVE_OK:      # flux retire du fichier : plus de direct
+            st["on"] = False
+            await live_push(list(st["peers"]))
+    finally:
+        st["task"] = None
+        if not st["peers"]:
+            LIVE.pop(url, None)
+
+
+def live_leave(peer):
+    for u in peer.live:
+        if u in LIVE:
+            LIVE[u]["peers"].discard(peer)
+    peer.live, peer.dj = set(), False
+
+
+async def live_ask(peer, urls):
+    """la page dit quels flux a la zone radio ou se trouve le visiteur (liste vide : il n'est dans aucune) : seuls les flux de --live comptent"""
+    live_reload()
+    new = set(u for u in urls if u in LIVE_OK)
+    for u in peer.live - new:
+        if u in LIVE:
+            LIVE[u]["peers"].discard(peer)
+    for u in new - peer.live:
+        st = LIVE.setdefault(u, {"on": False, "peers": set(), "task": None, "fails": 0, "why": ""})
+        st["peers"].add(peer)
+        if st["task"] is None or st["task"].done():
+            st["task"] = asyncio.create_task(live_poll(u))
+    peer.live = new
+    await live_push([peer])
+
 CR_ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,32}$")
 
 
@@ -960,6 +1094,85 @@ def rooms_command():
     print(_tr("py.presence.rooms.note"))
 
 
+def room_find(txt):
+    """1.13.21 : (salon connu dont le nom est txt : casse exacte, sinon sans casse ; '' et la cle du message si introuvable ou ambigu)"""
+    names = set(ROOMS) | set(SPEAKERS)
+    if txt in names:
+        return txt, ""
+    low = [r for r in names if r.lower() == txt.lower()]
+    if len(low) == 1:
+        return low[0], ""
+    return "", "py.presence.spk.room_many" if low else "py.presence.spk.room_none"
+
+
+def speakers_command():
+    """orateurs : par salon, l'orateur, les micros du public et les visiteurs dont le micro est coupe par un DJ en direct"""
+    rooms = sorted((r for r, d in ROOMS.items() if d), key=lambda r: (r.lower(), r))
+    if not rooms:
+        print(_tr("py.presence.spk.none"))
+    for r in rooms:
+        sp = ROOMS[r].get(SPEAKERS.get(r, 0))
+        who = _tr("py.presence.spk.who", sp.name or _tr("py.presence.spectator_paren"), sp.id) if sp else _tr("py.presence.nobody")
+        print(_tr("py.presence.spk.line", r, who, _tr("py.presence.spk.cut") if MUTED.get(r) else _tr("py.presence.spk.free"), sum(1 for p in ROOMS[r].values() if p.dj)))
+
+
+async def speaker_command(rest):
+    """orateur : liste ; orateur <n°|nom> : donne la parole a ce visiteur (dans son salon) ; orateur off <salon> : retire l'orateur"""
+    rest = rest.strip()
+    if not rest:
+        speakers_command()
+        return
+    first, _, tail = rest.partition(" ")
+    if first.lower() == "off":
+        room, why = room_find(tail.strip())
+        if not room:
+            print(_tr(why, tail.strip()) if tail.strip() else _tr("py.presence.spk.usage"))
+            return
+        await speaker_set(room, 0)
+        log(_tr("py.presence.ev.speaker"), room, "-", _tr("py.presence.speaker.off"))
+        print(room + " : " + _tr("py.presence.speaker.off"))
+        return
+    found = find_peers(rest)
+    if not found:
+        print(_tr("py.presence.personne_ne_correspond_a_0_tape", rest))
+        return
+    if len(found) > 1:
+        print(_tr("py.presence.plusieurs_visiteurs_correspondent_utilise_le"), ", ".join(f"n°{p.id}" for p in found))
+        return
+    peer = found[0]
+    if peer.spectator:
+        print(_tr("py.presence.spk.spectator", peer.name or _tr("py.presence.spectator_paren")))
+        return
+    await speaker_set(peer.room, peer.id)
+    log(_tr("py.presence.ev.speaker"), peer.room, "-", _tr("py.presence.speaker.on", peer.who()))
+    print(peer.room + " : " + _tr("py.presence.speaker.on", peer.name))
+
+
+async def mute_command(rest):
+    """muet <salon> on|off : coupe ou rend les micros du public du salon (il faut un orateur, comme pour la case de la fenetre Voix)"""
+    parts = rest.strip().rsplit(None, 1)
+    if len(parts) != 2 or parts[1].lower() not in ("on", "off"):
+        print(_tr("py.presence.spk.usage_mute"))
+        return
+    room, why = room_find(parts[0])
+    if not room:
+        print(_tr(why, parts[0]))
+        return
+    on = parts[1].lower() == "on"
+    orateur = SPEAKERS.get(room, 0)
+    if on and not orateur:
+        print(_tr("py.presence.spk.nospeaker", room))
+        return
+    if on:
+        MUTED[room] = True
+    else:
+        MUTED.pop(room, None)
+    if orateur:
+        await speaker_set(room, orateur)
+    log(_tr("py.presence.ev.speaker"), room, "-", _tr("py.presence.speaker.mute") if on else _tr("py.presence.speaker.unmute"))
+    print(room + " : " + (_tr("py.presence.speaker.mute") if on else _tr("py.presence.speaker.unmute")))
+
+
 def vkey_command(rest):
     """visits-key SALON : nouvelle clé (remplace l'ancienne) ; visits-key SALON off : la retire ; visits-key : liste"""
     parts = rest.split()
@@ -1158,6 +1371,10 @@ async def run_command(line):
         creators_command()
     elif cmd in ("visits-key", "cle-visites"):
         vkey_command(rest)
+    elif cmd in ("orateurs", "orateur", "speakers", "speaker"):      # 1.13.21
+        await speaker_command(rest)
+    elif cmd in ("muet", "mute"):      # 1.13.21
+        await mute_command(rest)
     elif cmd == "bans":
         now = time.time()
         live = [e for e in BANS if not e.get("until") or e["until"] > now]
@@ -1456,6 +1673,7 @@ async def handler(ws):
                     peer.spectator, peer.p = True, None
                     peer.walk_mark(False)
                     await speaker_clear(room, pid)      # 1.13.14
+                    live_leave(peer)      # 1.13.21 : un spectateur n'a pas de micro
                     if not etait_muet:      # 1.10.37 : les autres ont deja recu « leave » quand il est devenu muet
                         await broadcast(room, {"t": "leave", "id": pid}, exclude=peer)
                     log(_tr("py.presence.ev.walk"), room, peer.who(), _tr("py.presence.ev.end"))
@@ -1633,11 +1851,18 @@ async def handler(ws):
                     continue
                 peer.radio_t = now
                 await radio_ask(peer, str(m.get("url") or "").strip()[:600])
+            elif t == "live":      # 1.13.21 : flux de la zone radio ou se trouve le visiteur (micro coupe pendant un DJ en direct, flux de --live seulement)
+                now = time.monotonic()
+                if peer.spectator or now - peer.live_t < 1 or not isinstance(m.get("urls"), list):
+                    continue
+                peer.live_t = now
+                await live_ask(peer, [u.strip()[:600] for u in m["urls"][:8] if isinstance(u, str)])
     except (websockets.ConnectionClosed, asyncio.TimeoutError, ValueError):
         pass
     finally:
         if peer is not None and room in ROOMS:
             radio_leave(peer)
+            live_leave(peer)      # 1.13.21
             ROOMS[room].pop(peer.id, None)
             await speaker_clear(room, peer.id)      # 1.13.14 : l'orateur part : plus d'orateur
             if not peer.spectator and not peer.idle:      # 1.10.37 : un muet a deja ete annonce parti
@@ -1708,6 +1933,8 @@ async def main():
     ap.add_argument("--creators", default="", metavar="FILE", help=_tr("py.presence.help.creators"))
     ap.add_argument("--radios", default="", metavar="FILE", help=_tr("py.presence.help.radios"))
     ap.add_argument("--radios-every", type=int, default=30, metavar="N", help=_tr("py.presence.help.radios_every"))
+    ap.add_argument("--live", default="", metavar="FILE", help=_tr("py.presence.help.live"))
+    ap.add_argument("--live-every", type=int, default=10, metavar="N", help=_tr("py.presence.help.live_every"))
     ap.add_argument("--cert", help=_tr("py.presence.certificat_tls_wss"))
     ap.add_argument("--key", help=_tr("py.presence.cle_privee_tls"))
     OPTS = ap.parse_args()
@@ -1729,6 +1956,8 @@ async def main():
     OPTS.creators = here(OPTS.creators) if OPTS.creators else ""
     OPTS.radios = here(OPTS.radios) if OPTS.radios else ""
     OPTS.radios_every = max(5, OPTS.radios_every)
+    OPTS.live = here(OPTS.live) if OPTS.live else ""
+    OPTS.live_every = max(5, OPTS.live_every)
     OPTS.idle_walk = max(0.0, OPTS.idle_walk) if math.isfinite(OPTS.idle_walk) else 3.0
     REG = Registry(OPTS.identities or None, OPTS.name_ttl_days, [x for x in OPTS.reserved.split(",")], OPTS.max_names)
     setup_log()
@@ -1737,6 +1966,7 @@ async def main():
     vkeys_load()
     creators_reload(force=True)
     radios_reload(force=True)
+    live_reload(force=True)
     if OPTS.visits:
         try:
             visits_purge()
@@ -1770,6 +2000,7 @@ async def main():
             if OPTS.visits:
                 LOG.info(_tr("py.presence.visits_on", OPTS.visits, OPTS.visits_days, _tr("py.presence.visits.yes") if OPTS.visits_names else _tr("py.presence.visits.no")))
             LOG.info(_tr("py.presence.radios_on", len(RADIOS_OK), OPTS.radios, OPTS.radios_every) if OPTS.radios else _tr("py.presence.radios_off"))
+            LOG.info(_tr("py.presence.live_on", len(LIVE_OK), OPTS.live, OPTS.live_every) if OPTS.live else _tr("py.presence.live_off"))
             LOG.info(_tr("py.presence.idle_on", OPTS.idle_walk) if OPTS.idle_walk > 0 else _tr("py.presence.idle_off"))
             if OPTS.map_names_key:
                 LOG.info(_tr("py.presence.map_names_on"))

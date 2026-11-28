@@ -1722,22 +1722,22 @@ function createViewer(container, cfg0, loader) {
   // VOICE_RANGE m ; il se ferme au-dela de VOICE_DROP), le plus petit identifiant fait l'offre. Son spatialise (PannerNode). Mode orateur : sa voix est entendue de tout le salon,
   // sans distance (au plus VOICE_SPEAKER_MAX auditeurs : l'orateur envoie sa voix a chacun). Un lien qui echoue (reseau) n'est pas retente avant VOICE_RETRY ms.
   const VOICE_RANGE = 30, VOICE_DROP = 36, VOICE_MAX = 8, VOICE_SPEAKER_MAX = 20, VOICE_WAIT = 20000, VOICE_RETRY = 60000, VOICE_LOST = 6000;
-  const V = { ok: false, ice: [], speaker: 0, mute: false, on: false, mic: false, talk: false, vol: 1, stream: null, track: null, ctx: null, master: null, an: null, buf: null, level: 0, speaking: false,
+  const V = { ok: false, ice: [], speaker: 0, mute: false, dj: false, on: false, mic: false, talk: false, vol: 1, stream: null, track: null, ctx: null, master: null, an: null, buf: null, level: 0, speaking: false,
     links: new Map(), hi: new Set(), hiSent: new Set(), fail: new Map(), t1: 0, t2: 0, sig: '', tmp: new THREE.Vector3() };
   let onVoice = null, onVoiceErr = null;
   const vOK = () => V.ok && walking && !!P.ws && P.ws.readyState === 1 && !!P.id;
   // 1.13.19 : muet du public : l'orateur a coupe les micros ; seul l'orateur parle (son micro reste libre) ; la page de chacun ferme son micro et ne joue que la voix de l'orateur
-  const vMuted = () => V.mute && V.speaker !== 0 && V.speaker !== P.id;
+  const vMuted = () => V.dj || (V.mute && V.speaker !== 0 && V.speaker !== P.id);   // 1.13.21 : V.dj = un DJ est en direct dans la zone radio ou je me trouve (le serveur le dit) : micro coupe, meme pour l'orateur
   const vTrack = () => { if (V.track) V.track.enabled = V.talk && !vMuted(); };
   const vSend = (id, d) => { if (!P.ws || P.ws.readyState !== 1 || !P.id) return false; P.ws.send(JSON.stringify({ t: 'rtc', to: id, d })); return true; };
   function vInfo() {
     const peers = [], seen = new Set();
     for (const l of V.links.values()) { const q = P.peers.get(l.id); seen.add(l.id); peers.push({ id: l.id, name: q ? q.name : '?', k: q ? q.k : '', state: l.state, speaking: !!l.speaking }); }
     for (const id of V.fail.keys()) { const q = P.peers.get(id); if (q && !seen.has(id)) peers.push({ id, name: q.name, k: q.k, state: 'fail', speaking: false }); }
-    return { ok: vOK(), on: V.on, mic: V.mic, talk: V.talk, speaking: V.speaking, level: Math.round(V.level * 100) / 100, speaker: V.speaker, mute: V.mute && V.speaker !== 0, muted: vMuted(), me: P.id, peers };
+    return { ok: vOK(), on: V.on, mic: V.mic, talk: V.talk, speaking: V.speaking, level: Math.round(V.level * 100) / 100, speaker: V.speaker, mute: V.mute && V.speaker !== 0, dj: V.dj, muted: vMuted(), me: P.id, peers };
   }
   function vEmit(force) {
-    const i = vInfo(), sig = [i.ok, i.on, i.mic, i.talk, i.speaking, i.speaker, i.mute, i.muted, i.peers.map(p => p.id + ':' + p.state + ':' + (p.speaking ? 1 : 0)).join(',')].join('|');
+    const i = vInfo(), sig = [i.ok, i.on, i.mic, i.talk, i.speaking, i.speaker, i.mute, i.dj, i.muted, i.peers.map(p => p.id + ':' + p.state + ':' + (p.speaking ? 1 : 0)).join(',')].join('|');
     if (!force && sig === V.sig) return;
     V.sig = sig; if (onVoice) onVoice(i);
   }
@@ -1816,7 +1816,7 @@ function createViewer(container, cfg0, loader) {
   function vPeerGone(id) { vClose(id, false); V.hi.delete(id); V.hiSent.delete(id); V.fail.delete(id); if (V.speaker === id) { V.speaker = 0; V.mute = false; vTrack(); } }
   function vReset() {      // la connexion de presence est perdue : plus de lien, plus d'orateur ; le micro reste pris, la voix repart au prochain welcome
     for (const id of [...V.links.keys()]) vClose(id, false);
-    V.hi.clear(); V.hiSent.clear(); V.fail.clear(); V.speaker = 0; V.mute = false; V.ok = false; vTrack(); vEmit(true);
+    V.hi.clear(); V.hiSent.clear(); V.fail.clear(); V.speaker = 0; V.mute = false; V.dj = false; V.ok = false; vTrack(); vEmit(true);
   }
   async function vStart(mic) {
     if (V.on) return { ok: true, mic: V.mic };
@@ -1917,6 +1917,7 @@ function createViewer(container, cfg0, loader) {
       if (m.name) setMyName(m.name);
       if (m.role === 'spectator' && walking && P.ws) P.ws.send(JSON.stringify({ t: 'role', walker: true, name: P.name }));
       if (radioWant && P.ws) P.ws.send(JSON.stringify({ t: 'radio', url: radioWant }));   // reconnexion : le titre de la radio écoutée
+      liveSent = '[]'; liveSend();   // 1.13.21 : reconnexion : la zone radio ou je me trouve
       if (onChat && cfg.chat !== false) (m.history || []).forEach(h => onChat({ id: h.id, name: cleanName(h.name) || '?', text: String(h.text || '').slice(0, 200), self: false, history: true, n: Number.isFinite(h.n) ? h.n : undefined, ts: Number.isFinite(h.t) ? h.t : undefined }));
     }
     else if (m.t === 'join') { const had = P.peers.has(m.id) || m.id === P.id; addPeer(m); pStatus('online'); if (onChat && cfg.chat !== false) onChat({ system: true, text: tr('core.joined', cleanName(m.name) || '?') }); if (!had && onPeer) onPeer('join', cleanName(m.name) || '?'); }   // v36 : onPeer = visiteur EN PROMENADE qui arrive ou part (jamais moi, jamais la liste initiale)
@@ -1935,6 +1936,7 @@ function createViewer(container, cfg0, loader) {
     else if (m.t === 'dmerr') { if (onDMErr) onDMErr({ to: m.to, why: String(m.why || '').slice(0, 12) }); }
     else if (m.t === 'rtc') vRtc(m);
     else if (m.t === 'rtcerr') { if (m.why === 'off') { V.ok = false; vEmit(true); } else if (m.why === 'gone' && Number.isInteger(m.to)) vClose(m.to, false); }
+    else if (m.t === 'live') { V.dj = m.on === true; vTrack(); V.t1 = 0; vEmit(true); }   // 1.13.21 : DJ en direct dans ma zone radio (voir liveSet)
     else if (m.t === 'speaker') { V.speaker = Number.isInteger(m.id) ? m.id : 0; V.mute = m.mute === true && V.speaker !== 0; vTrack(); for (const l of V.links.values()) vMix(l); V.t1 = 0; vEmit(true); }
     else if (m.t === 'speakererr') { if (onVoiceErr) onVoiceErr({ why: String(m.why || '').slice(0, 12) }); }
     else if (m.t === 'history') {   // v37 : page plus ancienne de l'historique du salon (réponse à requestHistory)
@@ -2091,9 +2093,22 @@ function createViewer(container, cfg0, loader) {
   const zoneGroup = new THREE.Group(); scene.add(zoneGroup);
   let selId = null;
   let zones = [], zoneHit = [], zoneAll = [], zoneInside = new Set(), nearZone = null, zoneEditor = false, selBox = null, onZone = null, onNear = null;
-  let castCur = null, castGain = 0, onCast = null, onRadio = null, castTipIdx = null, radioWant = '';   // radioWant : flux dont la page veut le titre (redemandé à la reconnexion)   // 1.10.32 : zone radio (type cast) la plus proche a portee et son gain (1 au centre, 0 au bord) ; onCast(zone|null, gain) a chaque changement
+  let castCur = null, castGain = 0, onCast = null, onRadio = null, castTipIdx = null, radioWant = '', liveWant = '[]', liveSent = '[]', liveAt = -1e9, liveTm = 0;   // radioWant : flux dont la page veut le titre (redemandé à la reconnexion)   // 1.10.32 : zone radio (type cast) la plus proche a portee et son gain (1 au centre, 0 au bord) ; onCast(zone|null, gain) a chaque changement
   let castM = -1, audM = -1, castO = false, audO = false;   // 1.11.18 : castO / audO : la zone est hors de portee (affichee seulement, jusqu'a 2 fois la portee)   // 1.11.17 : distance entiere (m) deja transmise a la page pour la radio et pour la musique
-  function castReset() { const was = castCur; castCur = null; castGain = 0; castM = -1; castO = false; if (was && onCast) onCast(null, 0, 0, false); }
+  // 1.13.21 : les flux de la zone radio ou je me trouve (a portee, que je l'ecoute ou non) sont dits au serveur, qui coupe mon micro quand un DJ est en direct sur l'un d'eux (--live) ;
+  // au plus un message par 1,5 s (la derniere valeur voulue est envoyee a l'echeance), le serveur ignore ce qui arrive moins d'une seconde apres le precedent
+  function liveSend() {
+    if (liveWant === liveSent || !(P.ws && P.ws.readyState === 1 && P.id)) return;
+    const wait = liveAt + 1500 - performance.now();
+    if (wait > 0) { clearTimeout(liveTm); liveTm = setTimeout(liveSend, wait); return; }
+    liveSent = liveWant; liveAt = performance.now(); P.ws.send(JSON.stringify({ t: 'live', urls: JSON.parse(liveWant) }));
+  }
+  function liveSet() {
+    const z = castCur && !castO ? castCur : null, u = [];
+    if (z && Array.isArray(z.streams)) for (const s of z.streams) { const a = String(Array.isArray(s) ? s[1] : s || '').slice(0, 600); if (a && u.length < 8) u.push(a); }
+    liveWant = JSON.stringify(u); liveSend();
+  }
+  function castReset() { const was = castCur; castCur = null; castGain = 0; castM = -1; castO = false; if (was && onCast) onCast(null, 0, 0, false); liveSet(); }
   let audCur = null, audGain = 0, onAudio = null;   // 1.11.4 : zone audio (type audio) la plus proche a portee et son gain, comme la radio ; onAudio(zone|null, gain) a chaque changement
   function audioReset() { const was = audCur; audCur = null; audGain = 0; audM = -1; audO = false; if (was && onAudio) onAudio(null, 0, 0, false); }
   const imgH = new Map();   // 1.12.35 : hauteur reelle de chaque tableau (m), connue au chargement de l'image ; sert a boardReach
@@ -3234,7 +3249,7 @@ function createViewer(container, cfg0, loader) {
     if (best !== nearZone) { nearZone = best; if (onNear) onNear(best); }
     const cg = cast ? Math.max(0.05, 1 - cd / cast.radius) : 0;
     const cs = cast || castF, co = !cast && !!castF, cdd = cast ? cd : cdF, cm = cs ? Math.round(cdd) : -1;   // 1.11.17 : la page affiche la distance a la source : rappel aussi quand les metres entiers changent
-    if (cs !== castCur || Math.abs(cg - castGain) > 0.01 || cm !== castM || co !== castO) { castCur = cs; castGain = cg; castM = cm; castO = co; if (onCast) onCast(cs, cg, cs ? cdd : 0, co); }
+    if (cs !== castCur || Math.abs(cg - castGain) > 0.01 || cm !== castM || co !== castO) { castCur = cs; castGain = cg; castM = cm; castO = co; if (onCast) onCast(cs, cg, cs ? cdd : 0, co); liveSet(); }
     const ag = aud ? Math.max(0.05, 1 - ad / aud.radius) : 0;
     const as = aud || audF, ao = !aud && !!audF, add = aud ? ad : adF, am = as ? Math.round(add) : -1;
     if (as !== audCur || Math.abs(ag - audGain) > 0.01 || am !== audM || ao !== audO) { audCur = as; audGain = ag; audM = am; audO = ao; if (onAudio) onAudio(as, ag, as ? add : 0, ao); }

@@ -2427,7 +2427,7 @@ if (C.presenceUrl && C.walk && C.chat) {
     if (i.on && i.mic) {
       const lb = el('label'); lb.append(vOpen, document.createTextNode(' ' + tr('page.vc.openmic')));
       vOpen.onchange = () => { vOpenMic = vOpen.checked; viewer.voiceTalk(vOpenMic); vDraw(); };
-      bd.append(lb, el('div', tr(i.muted ? 'page.vc.muted' : i.speaking ? 'page.vc.talking' : 'page.vc.silent'), 'vcTip'));
+      bd.append(lb, el('div', tr(i.muted ? (i.dj ? 'page.vc.dj' : 'page.vc.muted') : i.speaking ? 'page.vc.talking' : 'page.vc.silent'), 'vcTip'));
     }
     if (i.on) {
       const lv = el('label', tr('page.vc.vol') + ' '); const rg = el('input'); rg.type = 'range'; rg.min = 0; rg.max = 100; rg.value = Math.round((vVolNow) * 100);
@@ -2466,7 +2466,7 @@ if (C.presenceUrl && C.walk && C.chat) {
   viewer.onVoiceErr = e => { toast(tr('page.vc.err.' + (['key', 'rate', 'gone', 'nospeaker', 'off'].includes(e.why) ? e.why : 'off'))); const ae = document.activeElement; if (ae && ae.type === 'checkbox') ae.blur(); vDraw(); };
   setInterval(() => { vb.hidden = !(viewer.voiceOK || viewer.voiceOn); vDraw(); }, 1000);
   const typing = e => { const n = e.target && e.target.tagName; return n === 'INPUT' || n === 'TEXTAREA' || n === 'SELECT'; };
-  addEventListener('keydown', e => { if (e.code === 'KeyX' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && !typing(e) && viewer.voiceOn && viewer.voiceInfo().mic) { vTalkKey = true; if (viewer.voiceInfo().muted) toast(tr('page.vc.muted')); viewer.voiceTalk(true); vDraw(); } });
+  addEventListener('keydown', e => { if (e.code === 'KeyX' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && !typing(e) && viewer.voiceOn && viewer.voiceInfo().mic) { vTalkKey = true; if (viewer.voiceInfo().muted) toast(tr(viewer.voiceInfo().dj ? 'page.vc.dj' : 'page.vc.muted')); viewer.voiceTalk(true); vDraw(); } });
   addEventListener('keyup', e => { if (e.code === 'KeyX' && vTalkKey) { vTalkKey = false; if (!vOpenMic) viewer.voiceTalk(false); vDraw(); } });
   addEventListener('blur', () => { if (vTalkKey) { vTalkKey = false; if (!vOpenMic) viewer.voiceTalk(false); } });
 }

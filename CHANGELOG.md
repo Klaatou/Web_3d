@@ -6,6 +6,14 @@ French version: [`CHANGELOG.fr.md`](CHANGELOG.fr.md). The entries before 1.0.0 (
 
 ## Unreleased (after 1.13.0)
 
+### 28/11/2026: voice: mute during a live DJ (radio zone) and speaker / mute console commands (batch 1.13.21)
+
+- **Request** (Klaatou): batch 2 of the mute: while a DJ is live on an Icecast stream, the microphones of those within range of its radio zone are muted (the others keep their voice); base radios, which run continuously, mute nothing. And the presence server console manages the rooms' speakers and mute.
+- **Done** (`src/presence_server.py`, `src/core.js`, `src/template.html`, `src/i18n`, `tests/presence_live.py`, `tests/live_page.py`): (1) server: option `--live FILE` (JSON list of "live" streams: the stream address as in the radio zone, or an object `{"url", "status"}`; the default status address is `status-json.xsl` at the stream's origin) and `--live-every N` (10 s by default, 5 at least); the page sends `{t:'live', urls:[...]}` (the streams of the radio zone the visitor is in, within range, whether they listen or not; empty list when leaving), the server reads `status-json.xsl` while a visitor is in a zone with a live stream: the stream is live when a mount point of the same path has a connected source (the live mount, falling back to the base mount, only shows up while a DJ is connected); each visitor concerned receives `{t:'live', on:true|false}` when their state changes; unreadable status once: state kept, twice in a row: microphones restored; (2) page: `voiceInfo().dj`, microphone closed while `dj` is true (the speaker too), key X and "Open microphone" without effect, message "Microphone muted: live DJ."; (3) console: `orateurs` (per room: speaker, audience microphones, number of visitors muted by a DJ), `orateur <n°|nom>` (gives the floor in their room), `orateur off <salon>`, `muet <salon> on|off` (a speaker is needed); the help lists them.
+- **Tried here**: `tests/presence_live.py` (33 checks, real server and fake Icecast: streams, DJ arriving and leaving, leaving the zone, rate, unreadable status, console) and `tests/live_page.py` (real page, Chromium with a simulated microphone).
+- **Not tried**: a real Icecast (only the shape of `status-json.xsl` is taken from its documentation), Windows, Edge, more than two visitors; a `hidden` mount does not appear in the status; AzuraCast and other radio managers are not read.
+- **Still to update**: documents (manual, procedures, README, histories) in the next batch. **Public server**: `presence_server.py` 1.13.21 to deploy, with `--live` for the DJ mute; without it the page stays as before.
+
 ### 27/11/2026: documents: audience mute and explanation of batch 1.13.18 (batch 1.13.20)
 
 - **Request** (Klaatou): explain the batch 1.13.18 defect more clearly ("offer" and "smaller identifier" were not meaningful) and document the audience mute.

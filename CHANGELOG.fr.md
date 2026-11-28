@@ -6,6 +6,14 @@ Version anglaise : [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Non publié (après la 1.13.0)
 
+### 28/11/2026 : voix : muet pendant un DJ en direct (zone radio) et commandes de console orateur / muet (lot 1.13.21)
+
+- **Demande** (Klaatou) : lot 2 du muet : quand un DJ est en direct sur un flux Icecast, les micros de ceux qui sont à portée de sa zone radio se coupent (les autres gardent leur voix) ; les radios de base, en continu, ne coupent rien. Et la console du serveur de présence gère les orateurs et le muet des salons.
+- **Fait** (`src/presence_server.py`, `src/core.js`, `src/template.html`, `src/i18n`, `tests/presence_live.py`, `tests/live_page.py`) : (1) serveur : option `--live FICHIER` (liste JSON des flux « direct » : l'adresse du flux comme dans la zone radio, ou un objet `{"url", "status"}` ; l'adresse de statut par défaut est `status-json.xsl` à la racine du serveur du flux) et `--live-every N` (10 s par défaut, 5 au moins) ; la page envoie `{t:'live', urls:[...]}` (les flux de la zone radio où se trouve le visiteur, à portée, qu'il écoute ou non ; liste vide en sortant), le serveur lit `status-json.xsl` tant qu'un visiteur est dans une zone dont un flux est « direct » : le flux est en direct quand un point de montage de même chemin a une source connectée (le montage direct, replié sur le montage de base, n'apparaît que lorsqu'un DJ est branché) ; chaque visiteur concerné reçoit `{t:'live', on:true|false}` quand son état change ; statut illisible une fois : état gardé, deux fois de suite : micros rendus ; (2) page : `voiceInfo().dj`, micro fermé tant que `dj` est vrai (même pour l'orateur), touche X et « Micro ouvert » sans effet, message « Micro coupé : DJ en direct. » ; (3) console : `orateurs` (par salon : orateur, micros du public, nombre de visiteurs coupés par un DJ), `orateur <n°|nom>` (donne la parole dans son salon), `orateur off <salon>`, `muet <salon> on|off` (il faut un orateur) ; l'aide les cite.
+- **Essayé ici** : `tests/presence_live.py` (33 contrôles, serveur réel et faux Icecast : flux, DJ qui arrive et part, sortie de zone, cadence, statut illisible, console) et `tests/live_page.py` (page réelle, Chromium avec micro simulé).
+- **Non essayé** : un vrai Icecast (seule la forme de `status-json.xsl` est reprise de sa documentation), Windows, Edge, plus de deux visiteurs ; un montage `hidden` n'apparaît pas dans le statut ; AzuraCast et les autres régies ne sont pas lus.
+- **Reste à mettre à jour** : documents (manuel, procédures, README, historiques) au lot suivant. **Serveur public** : `presence_server.py` 1.13.21 à déployer, avec `--live` pour le muet de DJ ; sans lui la page reste comme avant.
+
 ### 27/11/2026 : documents : muet du public et explication du lot 1.13.18 (lot 1.13.20)
 
 - **Demande** (Klaatou) : expliquer plus clairement le défaut du lot 1.13.18 (« offre », « plus petit identifiant » ne parlaient pas) et documenter le muet du public.
